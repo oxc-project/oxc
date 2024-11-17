@@ -21,6 +21,8 @@ Arguments:
     -t,--table <path>     Path to file where rule markdown table will be saved.
     -r,--rule-docs <path> Path to directory where rule doc pages will be saved.
                           A directory will be created if one doesn't exist.
+    --git-ref <ref>       Git commit, branch, or tag to be used in the generated links.
+                          If not supplied, `main` will be used.
     -h,--help             Show this help message.
 
 ";
@@ -28,6 +30,7 @@ Arguments:
 /// `cargo run -p website linter-rules --table
 /// /path/to/oxc/oxc-project.github.io/src/docs/guide/usage/linter/generated-rules.md
 /// --rule-docs /path/to/oxc/oxc-project.github.io/src/docs/guide/usage/linter/rules
+/// --git-ref dc9dc03872101c15b0d02f05ce45705565665829
 /// `
 /// <https://oxc.rs/docs/guide/usage/linter/rules.html>
 pub fn print_rules(mut args: Arguments) {
@@ -37,7 +40,7 @@ pub fn print_rules(mut args: Arguments) {
         return;
     }
 
-    let table = RuleTable::new();
+    let git_ref = args.opt_value_from_str("--git-ref").unwrap();
     let table_path = args.opt_value_from_str::<_, PathBuf>(["-t", "--table"]).unwrap();
     let rules_dir = args.opt_value_from_str::<_, PathBuf>(["-r", "--rule-docs"]).unwrap();
 
@@ -51,6 +54,8 @@ pub fn print_rules(mut args: Arguments) {
                 Cow::Borrowed(p)
             }
         });
+
+    let table = RuleTable::new();
 
     if let Some(table_path) = table_path {
         let table_path = pwd.join(table_path).canonicalize().unwrap();
@@ -71,13 +76,13 @@ pub fn print_rules(mut args: Arguments) {
             !rules_dir.is_file(),
             "Cannot write rule docs to a file. Please specify a directory."
         );
-        write_rule_doc_pages(&table, &rules_dir);
+        write_rule_doc_pages(&table, &rules_dir, git_ref.unwrap_or("main".to_string()).as_str());
     }
 
     println!("Done.");
 }
 
-fn write_rule_doc_pages(table: &RuleTable, outdir: &Path) {
+fn write_rule_doc_pages(table: &RuleTable, outdir: &Path, git_ref: &str) {
     for rule in table.sections.iter().flat_map(|section| &section.rows) {
         let plugin_path = outdir.join(&rule.plugin);
         fs::create_dir_all(&plugin_path).unwrap();
@@ -86,7 +91,7 @@ fn write_rule_doc_pages(table: &RuleTable, outdir: &Path) {
             fs::remove_file(&page_path).unwrap();
         }
         println!("{}", page_path.display());
-        let docs = render_rule_docs_page(rule).unwrap();
+        let docs = render_rule_docs_page(rule, git_ref).unwrap();
         fs::write(&page_path, docs).unwrap();
     }
 }
