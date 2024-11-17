@@ -368,20 +368,34 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         }
     }
 
+    // `#[inline]` because this is a hot path
+    #[inline]
     fn enter_identifier_reference(
         &mut self,
         ident: &mut IdentifierReference<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.transform_identifier_reference_for_arguments(ident, ctx);
+        // Do this check here rather than in `transform_identifier_reference_for_arguments`
+        // so that the fast path for "no transform required" doesn't require a function call
+        let arguments_needs_transform = *self.arguments_needs_transform_stack.last();
+        if arguments_needs_transform {
+            self.transform_identifier_reference_for_arguments(ident, ctx);
+        }
     }
 
+    // `#[inline]` because this is a hot path
+    #[inline]
     fn enter_binding_identifier(
         &mut self,
         ident: &mut BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.transform_binding_identifier_for_arguments(ident, ctx);
+        // Do this check here rather than in `transform_binding_identifier_for_arguments`
+        // so that the fast path for "no transform required" doesn't require a function call
+        let arguments_needs_transform = *self.arguments_needs_transform_stack.last();
+        if arguments_needs_transform {
+            self.transform_binding_identifier_for_arguments(ident, ctx);
+        }
     }
 }
 
@@ -907,8 +921,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         ident: &mut IdentifierReference<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let arguments_needs_transform = *self.arguments_needs_transform_stack.last();
-        if !arguments_needs_transform || &ident.name != "arguments" {
+        if &ident.name != "arguments" {
             return;
         }
 
@@ -952,11 +965,9 @@ impl<'a> ArrowFunctionConverter<'a> {
         ident: &mut BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let arguments_needs_transform = *self.arguments_needs_transform_stack.last();
-        if !arguments_needs_transform
-            || ctx.current_scope_flags().is_strict_mode() // `arguments` is not allowed to be defined in strict mode
-            || &ident.name != "arguments"
-        {
+        // `arguments` is not allowed to be defined in strict mode.
+        // Check if strict mode first to avoid the more expensive string comparison check if possible.
+        if ctx.current_scope_flags().is_strict_mode() || &ident.name != "arguments" {
             return;
         }
 
