@@ -10,7 +10,7 @@ use oxc_linter::table::RuleTableRow;
 
 use super::HtmlWriter;
 
-pub fn render_rule_docs_page(rule: &RuleTableRow) -> Result<String, fmt::Error> {
+pub fn render_rule_docs_page(rule: &RuleTableRow, git_ref: &str) -> Result<String, fmt::Error> {
     const APPROX_FIX_CATEGORY_AND_PLUGIN_LEN: usize = 512;
     let RuleTableRow { name, documentation, plugin, turned_on_by_default, autofix, category } =
         rule;
@@ -52,22 +52,23 @@ pub fn render_rule_docs_page(rule: &RuleTableRow) -> Result<String, fmt::Error> 
         writeln!(page, "\n{}", *docs)?;
     }
 
-    let rule_source = rule_source(rule);
+    let rule_source = rule_source(rule, git_ref);
     writeln!(page, "\n## References")?;
     writeln!(page, "- [Rule Source]({rule_source})")?;
 
     Ok(page.into())
 }
 
-fn rule_source(rule: &RuleTableRow) -> String {
+fn rule_source(rule: &RuleTableRow, git_ref: &str) -> String {
     use std::sync::OnceLock;
 
     use project_root::get_project_root;
 
-    const GITHUB_URL: &str = "https://github.com/oxc-project/oxc/blob/main";
+    const GITHUB_BASE_URL: &str = "https://github.com/oxc-project/oxc/blob/";
     const LINT_RULES_DIR: &str = "crates/oxc_linter/src/rules";
     static ROOT: OnceLock<PathBuf> = OnceLock::new();
 
+    let github_url: String = GITHUB_BASE_URL.to_owned() + git_ref;
     let root = ROOT.get_or_init(|| get_project_root().unwrap());
 
     // Some rules are folders with a mod.rs file, others are just a rust file
@@ -82,5 +83,5 @@ fn rule_source(rule: &RuleTableRow) -> String {
     assert!(rule_path.exists(), "Rule source not found: {}", rule_path.display());
     assert!(rule_path.is_file(), "Rule source is not a file: {}", rule_path.display());
 
-    rule_path.to_string_lossy().replace(root.to_str().unwrap(), GITHUB_URL)
+    rule_path.to_string_lossy().replace(root.to_str().unwrap(), github_url.as_str())
 }
