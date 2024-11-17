@@ -90,7 +90,7 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Box as ArenaBox, String as ArenaString, Vec as ArenaVec};
-use oxc_ast::{ast::*, AstBuilder, NONE};
+use oxc_ast::{ast::*, NONE};
 use oxc_data_structures::stack::SparseStack;
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{CompactStr, SPAN};
@@ -568,7 +568,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         let super_methods = self.super_methods.as_mut()?;
 
         let mut argument = None;
-        let mut property = Atom::empty();
+        let mut property = "";
         let init = match expr.to_member_expression_mut() {
             MemberExpression::ComputedMemberExpression(computed_member) => {
                 if !matches!(computed_member.object, Expression::Super(_)) {
@@ -585,7 +585,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 }
 
                 // Used to generate the name of the arrow function.
-                property = static_member.property.name.clone();
+                property = static_member.property.name.as_str();
                 ctx.ast.move_expression(expr)
             }
             MemberExpression::PrivateFieldExpression(_) => {
@@ -594,8 +594,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             }
         };
 
-        let binding_name =
-            Self::generate_super_binding_name(assign_value.is_some(), &property, ctx.ast);
+        let binding_name = Self::generate_super_binding_name(assign_value.is_some(), property, ctx);
         let super_info = super_methods.entry(binding_name.clone()).or_insert_with(|| {
             let binding = ctx
                 .generate_uid_in_current_scope(&binding_name, SymbolFlags::FunctionScopedVariable);
@@ -801,10 +800,10 @@ impl<'a> ArrowFunctionConverter<'a> {
     /// Generate a binding name for the super method, like `_superprop_getXXX`.
     fn generate_super_binding_name(
         is_assignment: bool,
-        property: &Atom<'a>,
-        ast: AstBuilder<'a>,
+        property: &str,
+        ctx: &TraverseCtx<'a>,
     ) -> Atom<'a> {
-        let mut name = ArenaString::new_in(ast.allocator);
+        let mut name = ArenaString::new_in(ctx.ast.allocator);
 
         name.push_str("superprop_");
         if is_assignment {
@@ -820,7 +819,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         if property.len() > 1 {
             name.push_str(&property[1..]);
         }
-        ast.atom(name.into_bump_str())
+        ctx.ast.atom(name.into_bump_str())
     }
 
     /// Whether to transform the `arguments` identifier.
