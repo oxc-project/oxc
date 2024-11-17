@@ -351,6 +351,13 @@ impl ScopeTree {
         }
     }
 
+    /// Rename a binding to a new name.
+    pub fn rename_binding(&mut self, scope_id: ScopeId, old_name: &str, new_name: CompactStr) {
+        if let Some(symbol_id) = self.bindings[scope_id].shift_remove(old_name) {
+            self.bindings[scope_id].insert(new_name, symbol_id);
+        }
+    }
+
     /// Reserve memory for an `additional` number of scopes.
     pub fn reserve(&mut self, additional: usize) {
         self.parent_ids.reserve(additional);

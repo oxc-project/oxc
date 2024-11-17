@@ -102,6 +102,12 @@ impl SymbolTable {
         &self.names[symbol_id]
     }
 
+    /// Rename a symbol.
+    #[inline]
+    pub fn rename(&mut self, symbol_id: SymbolId, new_name: CompactStr) {
+        self.names[symbol_id] = new_name;
+    }
+
     #[inline]
     pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactStr) {
         self.names[symbol_id] = name;

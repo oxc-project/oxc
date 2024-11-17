@@ -190,6 +190,22 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.x2_es2020.enter_big_int_literal(node, ctx);
     }
 
+    fn enter_binding_identifier(
+        &mut self,
+        node: &mut BindingIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.common.enter_binding_identifier(node, ctx);
+    }
+
+    fn enter_identifier_reference(
+        &mut self,
+        node: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.common.enter_identifier_reference(node, ctx);
+    }
+
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_binding_pattern(pat, ctx);
