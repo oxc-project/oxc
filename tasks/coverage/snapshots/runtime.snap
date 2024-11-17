@@ -2,7 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18055/18055 (100.00%)
-Positive Passed: 17796/18055 (98.57%)
+Positive Passed: 17798/18055 (98.58%)
 tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-multiple.js
 transform error: Test262Error: Expected SameValue(«0», «2») to be true
 
@@ -446,12 +446,6 @@ transform error: Test262Error: Expected a TypeError to be thrown but no exceptio
 
 tasks/coverage/test262/test/language/expressions/class/heritage-async-arrow-function.js
 transform error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-object.js
-minify error: Test262Error: The result of (0n != {valueOf: function() {return 0n;}}) is false Expected SameValue(«true», «false») to be true
-
-tasks/coverage/test262/test/language/expressions/equals/bigint-and-object.js
-minify error: Test262Error: The result of (0n == {valueOf: function() {return 0n;}}) is true Expected SameValue(«false», «true») to be true
 
 tasks/coverage/test262/test/language/expressions/exponentiation/bigint-negative-exponent-throws.js
 transform error: Test262Error: (-1n) ** -1n throws RangeError Expected a RangeError but got a TypeError

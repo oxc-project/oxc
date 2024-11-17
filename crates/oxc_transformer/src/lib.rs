@@ -3,7 +3,7 @@
 //! References:
 //! * <https://www.typescriptlang.org/tsconfig#target>
 //! * <https://babel.dev/docs/presets>
-//! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformer.ts>
+//! * <https://github.com/microsoft/TypeScript/blob/v5.6.3/src/compiler/transformer.ts>
 
 use std::path::Path;
 

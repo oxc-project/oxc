@@ -102,7 +102,7 @@ export interface ParseResult {
 /**
  * Babel Parser Options
  *
- * <https://github.com/babel/babel/blob/main/packages/babel-parser/typings/babel-parser.d.ts>
+ * <https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/typings/babel-parser.d.ts>
  */
 export interface ParserOptions {
   sourceType?: 'script' | 'module' | 'unambiguous' | undefined

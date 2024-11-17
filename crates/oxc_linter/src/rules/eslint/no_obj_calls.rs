@@ -164,7 +164,7 @@ impl Rule for NoObjCalls {
 #[test]
 fn test() {
     use crate::tester::Tester;
-    // see: https://github.com/eslint/eslint/blob/main/tests/lib/rules/no-obj-calls.js
+    // see: https://github.com/eslint/eslint/blob/v9.9.1/tests/lib/rules/no-obj-calls.js
 
     let pass = vec![
         ("const m = Math;", None),

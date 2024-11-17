@@ -48,7 +48,7 @@
 //!
 //! Reference:
 //! * Babel docs: <https://babeljs.io/docs/en/babel-plugin-transform-async-to-generator>
-//! * Babel implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-async-to-generator>
+//! * Babel implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-async-to-generator>
 //! * Async / Await TC39 proposal: <https://github.com/tc39/proposal-async-await>
 
 use std::mem;
@@ -310,7 +310,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 let id = caller_function.id.as_ref().unwrap();
                 // If the function has an id, then we need to return the id.
                 // `function foo() { ... }` -> `function foo() {} return foo;`
-                let reference = ctx.create_bound_reference_id(
+                let reference = ctx.create_bound_ident_expr(
                     SPAN,
                     id.name.clone(),
                     id.symbol_id(),
@@ -318,8 +318,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 );
                 let statement = Statement::FunctionDeclaration(caller_function);
                 statements.push(statement);
-                let argument = Some(Expression::Identifier(ctx.alloc(reference)));
-                statements.push(ctx.ast.statement_return(SPAN, argument));
+                statements.push(ctx.ast.statement_return(SPAN, Some(reference)));
             } else {
                 // If the function doesn't have an id, then we need to return the function itself.
                 // `function() { ... }` -> `return function() { ... };`
@@ -597,9 +596,12 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "arguments");
-        let arguments_ident =
-            ctx.create_reference_id(SPAN, Atom::from("arguments"), symbol_id, ReferenceFlags::Read);
-        let arguments_ident = Argument::Identifier(ctx.alloc(arguments_ident));
+        let arguments_ident = Argument::from(ctx.create_ident_expr(
+            SPAN,
+            Atom::from("arguments"),
+            symbol_id,
+            ReferenceFlags::Read,
+        ));
 
         // (this, arguments)
         let mut arguments = ctx.ast.vec_with_capacity(2);
@@ -637,7 +639,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let mut function = Self::create_function(None, params, body, scope_id, ctx);
         function.generator = true;
         let arguments = ctx.ast.vec1(Argument::FunctionExpression(function));
-        self.ctx.helper_call_expr(self.helper, arguments, ctx)
+        self.ctx.helper_call_expr(self.helper, SPAN, arguments, ctx)
     }
 
     /// Creates a helper declaration statement for async-to-generator transformation.

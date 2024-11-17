@@ -1,11 +1,11 @@
-/// Port from https://github.com/getsentry/rust-sourcemap/blob/master/src/decoder.rs
+/// Port from https://github.com/getsentry/rust-sourcemap/blob/9.1.0/src/decoder.rs
 /// It is a helper for decode vlq soucemap string to `SourceMap`.
 use std::sync::Arc;
 
 use crate::error::{Error, Result};
 use crate::{SourceMap, Token};
 
-/// See <https://github.com/tc39/source-map/blob/main/source-map-rev3.md>.
+/// See <https://github.com/tc39/source-map/blob/1930e58ffabefe54038f7455759042c6e3dd590e/source-map-rev3.md>.
 #[derive(serde::Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct JSONSourceMap {

@@ -31,7 +31,7 @@
 //! helperName(...arguments);
 //! ```
 //!
-//! Based on [@babel/plugin-transform-runtime](https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-runtime).
+//! Based on [@babel/plugin-transform-runtime](https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-runtime).
 //!
 //! ### External ([`HelperLoaderMode::External`])
 //!
@@ -43,7 +43,7 @@
 //! babelHelpers.helperName(...arguments);
 //! ```
 //!
-//! Based on [@babel/plugin-external-helpers](https://github.com/babel/babel/tree/main/packages/babel-plugin-external-helpers).
+//! Based on [@babel/plugin-external-helpers](https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-external-helpers).
 //!
 //! ### Inline ([`HelperLoaderMode::Inline`])
 //!
@@ -58,7 +58,7 @@
 //! helperName(...arguments);
 //! ```
 //!
-//! Based on [@babel/helper](https://github.com/babel/babel/tree/main/packages/babel-helpers).
+//! Based on [@babel/helper](https://github.com/babel/babel/tree/v7.26.2/packages/babel-helpers).
 //!
 //! ## Implementation
 //!
@@ -73,7 +73,7 @@ use serde::Deserialize;
 use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
 use oxc_ast::ast::{Argument, CallExpression, Expression, TSTypeParameterInstantiation};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, Span, SPAN};
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 use crate::TransformCtx;
@@ -183,12 +183,13 @@ impl<'a> TransformCtx<'a> {
     pub fn helper_call(
         &self,
         helper: Helper,
+        span: Span,
         arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> CallExpression<'a> {
         let callee = self.helper_load(helper, ctx);
         ctx.ast.call_expression(
-            SPAN,
+            span,
             callee,
             None::<TSTypeParameterInstantiation<'a>>,
             arguments,
@@ -200,12 +201,13 @@ impl<'a> TransformCtx<'a> {
     pub fn helper_call_expr(
         &self,
         helper: Helper,
+        span: Span,
         arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let callee = self.helper_load(helper, ctx);
         ctx.ast.expression_call(
-            SPAN,
+            span,
             callee,
             None::<TSTypeParameterInstantiation<'a>>,
             arguments,
@@ -277,9 +279,8 @@ impl<'a> HelperLoaderStore<'a> {
         static HELPER_VAR: &str = "babelHelpers";
 
         let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), HELPER_VAR);
-        let ident =
-            ctx.create_reference_id(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
-        let object = Expression::Identifier(ctx.alloc(ident));
+        let object =
+            ctx.create_ident_expr(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
         let property = ctx.ast.identifier_name(SPAN, Atom::from(helper.name()));
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }

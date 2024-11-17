@@ -10,7 +10,7 @@ fn no_exports_found(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("No exports found").with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-unused-modules.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-unused-modules.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedModules {
     missing_exports: bool,

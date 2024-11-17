@@ -18,7 +18,7 @@ fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-cycle.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
 #[derive(Debug, Clone)]
 pub struct NoCycle {
     /// maximum dependency depth to traverse

@@ -297,7 +297,7 @@ mod tests {
     #[test]
     fn test() {
         // test cases taken from eslint. See:
-        // https://github.com/eslint/eslint/blob/main/tests/lib/rules/no-control-regex.js
+        // https://github.com/eslint/eslint/blob/v9.9.1/tests/lib/rules/no-control-regex.js
         Tester::new(
             NoControlRegex::NAME,
             vec![

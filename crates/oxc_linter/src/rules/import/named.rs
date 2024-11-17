@@ -11,7 +11,7 @@ fn named_diagnostic(imported_name: &str, module_name: &str, span: Span) -> OxcDi
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/named.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/named.md>
 #[derive(Debug, Default, Clone)]
 pub struct Named;
 

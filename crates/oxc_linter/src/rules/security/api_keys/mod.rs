@@ -72,7 +72,7 @@ declare_oxc_lint!(
     /// One possible alternative is to store secrets in a secure secrets manager
     /// (such as [AWS
     /// KMS](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/kms/),
-    /// [HashiCorp Vault](https://github.com/nodevault/node-vault/tree/master),
+    /// [HashiCorp Vault](https://github.com/nodevault/node-vault/tree/v0.10.2),
     /// [Pangea](https://pangea.cloud/docs/sdk/js/vault#retrieve), etc.) and
     /// request them when your application starts (e.g. a Docker container, an
     /// EC2).

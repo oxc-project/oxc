@@ -38,7 +38,7 @@ declare_oxc_lint!(
     correctness
 );
 
-// Keep in sync with next.js polyfills file : https://github.com/vercel/next.js/blob/master/packages/next-polyfill-nomodule/src/index.js
+// Keep in sync with next.js polyfills file : https://github.com/vercel/next.js/blob/v15.0.2/packages/next-polyfill-nomodule/src/index.js
 const NEXT_POLYFILLED_FEATURES: Set<&'static str> = phf_set! {
     "Array.prototype.@@iterator",
     "Array.prototype.at",

@@ -88,7 +88,7 @@ fn throw(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Throwing an error is a side-effect").with_label(span)
 }
 
-/// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/master/src/rules/no-side-effects-in-initialization.ts>
+/// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/v1.12.2/src/rules/no-side-effects-in-initialization.ts>
 #[derive(Debug, Default, Clone)]
 pub struct NoSideEffectsInInitialization(Box<NoSideEffectsInInitiallizationOptions>);
 

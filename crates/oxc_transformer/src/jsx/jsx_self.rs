@@ -26,7 +26,7 @@
 //!
 //! ## References:
 //!
-//! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-react-jsx-self/src/index.ts>
+//! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-jsx-self/src/index.ts>
 
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;

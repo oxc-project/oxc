@@ -17,9 +17,9 @@ fn no_var_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoVar;
 
-// doc: https://github.com/eslint/eslint/blob/main/docs/src/rules/no-var.md
-// code: https://github.com/eslint/eslint/blob/main/lib/rules/no-var.js
-// test: https://github.com/eslint/eslint/blob/main/tests/lib/rules/no-var.js
+// doc: https://github.com/eslint/eslint/blob/v9.9.1/docs/src/rules/no-var.md
+// code: https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/no-var.js
+// test: https://github.com/eslint/eslint/blob/v9.9.1/tests/lib/rules/no-var.js
 
 declare_oxc_lint!(
     /// ### What it does

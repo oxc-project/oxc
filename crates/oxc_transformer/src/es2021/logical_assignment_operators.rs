@@ -51,7 +51,7 @@
 //! Implementation based on [@babel/plugin-transform-logical-assignment-operators](https://babel.dev/docs/babel-plugin-transform-logical-assignment-operators).
 //!
 //! ## References:
-//! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-logical-assignment-operators>
+//! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-logical-assignment-operators>
 //! * Logical Assignment TC39 proposal: <https://github.com/tc39/proposal-logical-assignment>
 
 use oxc_allocator::CloneIn;
@@ -134,7 +134,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         let symbol_id = reference.symbol_id();
         let left_expr = Expression::Identifier(ctx.alloc(ident.clone()));
 
-        let ident = ctx.create_reference_id(
+        let ident = ctx.create_ident_reference(
             SPAN,
             ident.name.clone(),
             symbol_id,

@@ -61,7 +61,7 @@
 //!
 //! Reference:
 //! * Babel docs: <https://babeljs.io/docs/en/babel-plugin-transform-async-generator-functions>
-//! * Babel implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-async-generator-functions>
+//! * Babel implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-async-generator-functions>
 //! * Async Iteration TC39 proposal: <https://github.com/tc39/proposal-async-iteration>
 
 mod for_await;
@@ -166,9 +166,11 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         expr.argument.as_mut().map(|argument| {
             let argument = Argument::from(ctx.ast.move_expression(argument));
             let arguments = ctx.ast.vec1(argument);
-            let mut argument = self.ctx.helper_call_expr(Helper::AsyncIterator, arguments, ctx);
+            let mut argument =
+                self.ctx.helper_call_expr(Helper::AsyncIterator, SPAN, arguments, ctx);
             let arguments = ctx.ast.vec1(Argument::from(argument));
-            argument = self.ctx.helper_call_expr(Helper::AsyncGeneratorDelegate, arguments, ctx);
+            argument =
+                self.ctx.helper_call_expr(Helper::AsyncGeneratorDelegate, SPAN, arguments, ctx);
             ctx.ast.expression_yield(SPAN, expr.delegate, Some(argument))
         })
     }
@@ -199,7 +201,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
 
         let mut argument = ctx.ast.move_expression(&mut expr.argument);
         let arguments = ctx.ast.vec1(Argument::from(argument));
-        argument = self.ctx.helper_call_expr(Helper::AwaitAsyncGenerator, arguments, ctx);
+        argument = self.ctx.helper_call_expr(Helper::AwaitAsyncGenerator, SPAN, arguments, ctx);
 
         Some(ctx.ast.expression_yield(SPAN, false, Some(argument)))
     }

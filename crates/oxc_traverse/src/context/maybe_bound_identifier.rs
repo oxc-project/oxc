@@ -218,7 +218,7 @@ impl<'a> MaybeBoundIdentifier<'a> {
         flags: ReferenceFlags,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        ctx.create_reference_id(span, self.name.clone(), self.symbol_id, flags)
+        ctx.create_ident_reference(span, self.name.clone(), self.symbol_id, flags)
     }
 
     /// Create `Expression::Identifier` referencing this binding, with specified `Span` and `ReferenceFlags`

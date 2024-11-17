@@ -365,7 +365,7 @@ fn test() {
             }
         }
         ",
-        // source: https://github.com/biomejs/biome/blob/main/crates/biome_js_analyze/tests/specs/performance/noAccumulatingSpread/valid.jsonc#L3C1-L23C52
+        // source: https://github.com/biomejs/biome/blob/cli/v1.9.4/crates/biome_js_analyze/tests/specs/performance/noAccumulatingSpread/valid.jsonc#L3C1-L23C52
         "foo.reduce((acc, bar) => {acc.push(bar); return acc;}, [])",
         "foo.reduceRight((acc, bar) => {acc.push(bar); return acc;}, [])",
         // Array - Allow spreading the item into the accumulator
@@ -420,7 +420,7 @@ fn test() {
             let temp = { ...acc, x }
             return temp
         }, {})",
-        // source https://github.com/biomejs/biome/blob/main/crates/biome_js_analyze/tests/specs/performance/noAccumulatingSpread/invalid.jsonc#L2-L32
+        // source https://github.com/biomejs/biome/blob/cli/v1.9.4/crates/biome_js_analyze/tests/specs/performance/noAccumulatingSpread/invalid.jsonc#L2-L32
         // Array - Arrow return
         "foo.reduce((acc, bar) => [...acc, bar], [])",
         "foo.reduceRight((acc, bar) => [...acc, bar], [])",

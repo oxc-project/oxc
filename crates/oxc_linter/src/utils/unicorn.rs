@@ -39,7 +39,7 @@ pub fn is_empty_stmt(stmt: &Statement) -> bool {
     }
 }
 
-// ref: https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/rules/utils/array-or-object-prototype-property.js
+// ref: https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v56.0.0/rules/utils/array-or-object-prototype-property.js
 pub fn is_prototype_property(
     member_expr: &MemberExpression,
     property: &str,

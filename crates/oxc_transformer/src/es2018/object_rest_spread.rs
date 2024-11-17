@@ -23,7 +23,7 @@
 //! Implementation based on [@babel/plugin-transform-object-rest-spread](https://babeljs.io/docs/babel-plugin-transform-object-rest-spread).
 //!
 //! ## References:
-//! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-object-rest-spread>
+//! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-object-rest-spread>
 //! * Object rest/spread TC39 proposal: <https://github.com/tc39/proposal-object-rest-spread>
 
 use serde::Deserialize;
@@ -141,9 +141,8 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     }
 
     fn object_assign(symbol_id: Option<SymbolId>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        let ident =
-            ctx.create_reference_id(SPAN, Atom::from("Object"), symbol_id, ReferenceFlags::Read);
-        let object = Expression::Identifier(ctx.alloc(ident));
+        let object =
+            ctx.create_ident_expr(SPAN, Atom::from("Object"), symbol_id, ReferenceFlags::Read);
         let property = ctx.ast.identifier_name(SPAN, Atom::from("assign"));
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }

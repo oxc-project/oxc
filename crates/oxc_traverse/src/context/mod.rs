@@ -434,7 +434,7 @@ impl<'a> TraverseCtx<'a> {
     }
 
     /// Create an `IdentifierReference` bound to a `SymbolId`.
-    pub fn create_bound_reference_id(
+    pub fn create_bound_ident_reference(
         &mut self,
         span: Span,
         name: Atom<'a>,
@@ -443,6 +443,18 @@ impl<'a> TraverseCtx<'a> {
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_bound_reference(symbol_id, flags);
         self.ast.identifier_reference_with_reference_id(span, name, reference_id)
+    }
+
+    /// Create an `Expression::Identifier` bound to a `SymbolId`.
+    pub fn create_bound_ident_expr(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        symbol_id: SymbolId,
+        flags: ReferenceFlags,
+    ) -> Expression<'a> {
+        let ident = self.create_bound_ident_reference(span, name, symbol_id, flags);
+        Expression::Identifier(self.ast.alloc(ident))
     }
 
     /// Create an unbound reference.
@@ -458,7 +470,7 @@ impl<'a> TraverseCtx<'a> {
     }
 
     /// Create an unbound `IdentifierReference`.
-    pub fn create_unbound_reference_id(
+    pub fn create_unbound_ident_reference(
         &mut self,
         span: Span,
         name: Atom<'a>,
@@ -466,6 +478,17 @@ impl<'a> TraverseCtx<'a> {
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_unbound_reference(name.to_compact_str(), flags);
         self.ast.identifier_reference_with_reference_id(span, name, reference_id)
+    }
+
+    /// Create an unbound `Expression::Identifier`.
+    pub fn create_unbound_ident_expr(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        flags: ReferenceFlags,
+    ) -> Expression<'a> {
+        let ident = self.create_unbound_ident_reference(span, name, flags);
+        Expression::Identifier(self.ast.alloc(ident))
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -486,9 +509,9 @@ impl<'a> TraverseCtx<'a> {
 
     /// Create an `IdentifierReference` optionally bound to a `SymbolId`.
     ///
-    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_reference_id`
-    /// or `TraverseCtx::create_unbound_reference_id`.
-    pub fn create_reference_id(
+    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_ident_reference`
+    /// or `TraverseCtx::create_unbound_ident_reference`.
+    pub fn create_ident_reference(
         &mut self,
         span: Span,
         name: Atom<'a>,
@@ -496,9 +519,27 @@ impl<'a> TraverseCtx<'a> {
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         if let Some(symbol_id) = symbol_id {
-            self.create_bound_reference_id(span, name, symbol_id, flags)
+            self.create_bound_ident_reference(span, name, symbol_id, flags)
         } else {
-            self.create_unbound_reference_id(span, name, flags)
+            self.create_unbound_ident_reference(span, name, flags)
+        }
+    }
+
+    /// Create an `Expression::Identifier` optionally bound to a `SymbolId`.
+    ///
+    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_ident_expr`
+    /// or `TraverseCtx::create_unbound_ident_expr`.
+    pub fn create_ident_expr(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        symbol_id: Option<SymbolId>,
+        flags: ReferenceFlags,
+    ) -> Expression<'a> {
+        if let Some(symbol_id) = symbol_id {
+            self.create_bound_ident_expr(span, name, symbol_id, flags)
+        } else {
+            self.create_unbound_ident_expr(span, name, flags)
         }
     }
 
