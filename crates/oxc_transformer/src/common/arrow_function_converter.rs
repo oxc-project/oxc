@@ -812,13 +812,21 @@ impl<'a> ArrowFunctionConverter<'a> {
             name.push_str("get");
         }
 
-        // Capitalize the first letter of the property name.
-        if let Some(first_byte) = property.as_bytes().first() {
-            name.push(first_byte.to_ascii_uppercase() as char);
+        // Capitalize the first letter of the property name
+        if let Some(&first_byte) = property.as_bytes().first() {
+            if first_byte.is_ascii() {
+                name.push(first_byte.to_ascii_uppercase() as char);
+                if property.len() > 1 {
+                    name.push_str(&property[1..]);
+                }
+            } else {
+                let mut chars = property.chars();
+                let first_char = chars.next().unwrap();
+                name.extend(first_char.to_uppercase());
+                name.push_str(chars.as_str());
+            }
         }
-        if property.len() > 1 {
-            name.push_str(&property[1..]);
-        }
+
         ctx.ast.atom(name.into_bump_str())
     }
 
