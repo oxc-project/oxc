@@ -87,7 +87,10 @@
 //! The Implementation based on
 //! <https://github.com/babel/babel/blob/d20b314c14533ab86351ecf6ca6b7296b66a57b3/packages/babel-traverse/src/path/conversion.ts#L170-L247>
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use std::hash::BuildHasherDefault;
+
+use indexmap::IndexMap;
+use rustc_hash::{FxHashSet, FxHasher};
 
 use oxc_allocator::{Box as ArenaBox, String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
@@ -101,6 +104,8 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::EnvOptions;
+
+type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 /// Mode for arrow function conversion
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -129,7 +134,9 @@ pub struct ArrowFunctionConverter<'a> {
     this_var_stack: SparseStack<BoundIdentifier<'a>>,
     arguments_var_stack: SparseStack<BoundIdentifier<'a>>,
     renamed_arguments_symbol_ids: FxHashSet<SymbolId>,
-    super_methods: Option<FxHashMap<Atom<'a>, SuperMethodInfo<'a>>>,
+    // TODO(improve-on-babel): `FxHashMap` would suffice here. Iteration order is not important.
+    // Only using `FxIndexMap` for predictable iteration order to match Babel's output.
+    super_methods: Option<FxIndexMap<Atom<'a>, SuperMethodInfo<'a>>>,
 }
 
 impl<'a> ArrowFunctionConverter<'a> {
@@ -187,7 +194,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         self.arguments_var_stack.push(None);
         if self.is_async_only() && func.r#async && Self::is_class_method_like_ancestor(ctx.parent())
         {
-            self.super_methods = Some(FxHashMap::default());
+            self.super_methods = Some(FxIndexMap::default());
         }
     }
 
@@ -1013,7 +1020,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         let is_class_method_like = Self::is_class_method_like_ancestor(ctx.parent());
         let declarations_count = usize::from(arguments.is_some())
             + if is_class_method_like {
-                self.super_methods.as_ref().map_or(0, FxHashMap::len)
+                self.super_methods.as_ref().map_or(0, FxIndexMap::len)
             } else {
                 0
             }
@@ -1033,7 +1040,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         // `_superprop_getSomething = () => super.getSomething;`
         if is_class_method_like {
             if let Some(super_methods) = self.super_methods.as_mut() {
-                declarations.extend(super_methods.drain().map(|(_, super_method)| {
+                declarations.extend(super_methods.drain(..).map(|(_, super_method)| {
                     Self::generate_super_method(target_scope_id, super_method, ctx)
                 }));
             }
