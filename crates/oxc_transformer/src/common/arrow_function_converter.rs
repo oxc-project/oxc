@@ -89,10 +89,11 @@
 
 use std::hash::BuildHasherDefault;
 
+use compact_str::CompactString;
 use indexmap::IndexMap;
 use rustc_hash::{FxHashSet, FxHasher};
 
-use oxc_allocator::{Box as ArenaBox, String as ArenaString, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_data_structures::stack::SparseStack;
 use oxc_semantic::{ReferenceFlags, SymbolId};
@@ -120,13 +121,20 @@ pub enum ArrowFunctionConverterMode {
     AsyncOnly,
 }
 
+#[derive(PartialEq, Eq, Hash)]
+struct SuperMethodKey<'a> {
+    /// If it is true, the method should accept a value parameter.
+    is_assignment: bool,
+    /// Name of property getter/setter is for.
+    /// Empty string for computed properties.
+    property: &'a str,
+}
+
 struct SuperMethodInfo<'a> {
     binding: BoundIdentifier<'a>,
     super_expr: Expression<'a>,
     /// If it is true, the method should accept a prop parameter.
     is_computed: bool,
-    /// If it is true, the method should accept a value parameter.
-    is_assignment: bool,
 }
 
 pub struct ArrowFunctionConverter<'a> {
@@ -136,7 +144,7 @@ pub struct ArrowFunctionConverter<'a> {
     renamed_arguments_symbol_ids: FxHashSet<SymbolId>,
     // TODO(improve-on-babel): `FxHashMap` would suffice here. Iteration order is not important.
     // Only using `FxIndexMap` for predictable iteration order to match Babel's output.
-    super_methods: Option<FxIndexMap<Atom<'a>, SuperMethodInfo<'a>>>,
+    super_methods: Option<FxIndexMap<SuperMethodKey<'a>, SuperMethodInfo<'a>>>,
 }
 
 impl<'a> ArrowFunctionConverter<'a> {
@@ -601,16 +609,13 @@ impl<'a> ArrowFunctionConverter<'a> {
             }
         };
 
-        let binding_name = Self::generate_super_binding_name(assign_value.is_some(), property, ctx);
-        let super_info = super_methods.entry(binding_name.clone()).or_insert_with(|| {
+        let is_assignment = assign_value.is_some();
+        let key = SuperMethodKey { is_assignment, property };
+        let super_info = super_methods.entry(key).or_insert_with(|| {
+            let binding_name = Self::generate_super_binding_name(is_assignment, property);
             let binding = ctx
                 .generate_uid_in_current_scope(&binding_name, SymbolFlags::FunctionScopedVariable);
-            SuperMethodInfo {
-                binding,
-                super_expr: init,
-                is_computed: argument.is_some(),
-                is_assignment: assign_value.is_some(),
-            }
+            SuperMethodInfo { binding, super_expr: init, is_computed: argument.is_some() }
         });
 
         let callee = super_info.binding.create_read_expression(ctx);
@@ -729,10 +734,10 @@ impl<'a> ArrowFunctionConverter<'a> {
     fn generate_super_method(
         target_scope_id: ScopeId,
         super_method: SuperMethodInfo<'a>,
+        is_assignment: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> VariableDeclarator<'a> {
-        let SuperMethodInfo { binding, super_expr: mut init, is_computed, is_assignment } =
-            super_method;
+        let SuperMethodInfo { binding, super_expr: mut init, is_computed } = super_method;
 
         Self::adjust_binding_scope(target_scope_id, &binding, ctx);
         let scope_id =
@@ -805,21 +810,16 @@ impl<'a> ArrowFunctionConverter<'a> {
     }
 
     /// Generate a binding name for the super method, like `superprop_getXXX`.
-    fn generate_super_binding_name(
-        is_assignment: bool,
-        property: &str,
-        ctx: &TraverseCtx<'a>,
-    ) -> Atom<'a> {
-        let start =
-            if is_assignment { Atom::from("superprop_set") } else { Atom::from("superprop_get") };
-
-        let Some(&first_byte) = property.as_bytes().first() else {
-            return start;
+    fn generate_super_binding_name(is_assignment: bool, property: &str) -> CompactString {
+        let mut name = if is_assignment {
+            CompactString::const_new("superprop_set")
+        } else {
+            CompactString::const_new("superprop_get")
         };
 
-        let mut name =
-            ArenaString::with_capacity_in(start.len() + property.len(), ctx.ast.allocator);
-        name.push_str(start.as_str());
+        let Some(&first_byte) = property.as_bytes().first() else {
+            return name;
+        };
 
         // Capitalize the first letter of the property name.
         // Fast path for ASCII (very common case).
@@ -843,7 +843,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         } else {
             #[cold]
             #[inline(never)]
-            fn push_unicode(property: &str, name: &mut ArenaString) {
+            fn push_unicode(property: &str, name: &mut CompactString) {
                 let mut chars = property.chars();
                 let first_char = chars.next().unwrap();
                 name.extend(first_char.to_uppercase());
@@ -852,7 +852,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             push_unicode(property, &mut name);
         }
 
-        ctx.ast.atom(name.into_bump_str())
+        name
     }
 
     /// Whether to transform the `arguments` identifier.
@@ -1037,11 +1037,18 @@ impl<'a> ArrowFunctionConverter<'a> {
             declarations.push(arguments);
         }
 
-        // `_superprop_getSomething = () => super.getSomething;`
+        // `_superprop_getSomething = () => super.something;`
+        // `_superprop_setSomething = _value => super.something = _value;`
+        // `_superprop_set = (_prop, _value) => super[_prop] = _value;`
         if is_class_method_like {
             if let Some(super_methods) = self.super_methods.as_mut() {
-                declarations.extend(super_methods.drain(..).map(|(_, super_method)| {
-                    Self::generate_super_method(target_scope_id, super_method, ctx)
+                declarations.extend(super_methods.drain(..).map(|(key, super_method)| {
+                    Self::generate_super_method(
+                        target_scope_id,
+                        super_method,
+                        key.is_assignment,
+                        ctx,
+                    )
                 }));
             }
         }
