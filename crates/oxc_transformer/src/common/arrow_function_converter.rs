@@ -797,34 +797,52 @@ impl<'a> ArrowFunctionConverter<'a> {
         )
     }
 
-    /// Generate a binding name for the super method, like `_superprop_getXXX`.
+    /// Generate a binding name for the super method, like `superprop_getXXX`.
     fn generate_super_binding_name(
         is_assignment: bool,
         property: &str,
         ctx: &TraverseCtx<'a>,
     ) -> Atom<'a> {
-        let mut name = ArenaString::new_in(ctx.ast.allocator);
+        let start =
+            if is_assignment { Atom::from("superprop_set") } else { Atom::from("superprop_get") };
 
-        name.push_str("superprop_");
-        if is_assignment {
-            name.push_str("set");
+        let Some(&first_byte) = property.as_bytes().first() else {
+            return start;
+        };
+
+        let mut name =
+            ArenaString::with_capacity_in(start.len() + property.len(), ctx.ast.allocator);
+        name.push_str(start.as_str());
+
+        // Capitalize the first letter of the property name.
+        // Fast path for ASCII (very common case).
+        // TODO(improve-on-babel): We could just use format `superprop_get_prop` and avoid capitalizing.
+        if first_byte.is_ascii() {
+            // We know `IdentifierName`s begin with `a-z`, `A-Z`, `_` or `$` if ASCII,
+            // so can use a slightly cheaper conversion than `u8::to_ascii_uppercase`.
+            // Adapted from `u8::to_ascii_uppercase`'s implementation.
+            // https://godbolt.org/z/5Txa6Pv9z
+            #[inline]
+            fn ascii_ident_first_char_uppercase(b: u8) -> u8 {
+                const ASCII_CASE_MASK: u8 = 0b0010_0000;
+                let is_lower_case = b >= b'a';
+                b ^ (u8::from(is_lower_case) * ASCII_CASE_MASK)
+            }
+
+            name.push(ascii_ident_first_char_uppercase(first_byte) as char);
+            if property.len() > 1 {
+                name.push_str(&property[1..]);
+            }
         } else {
-            name.push_str("get");
-        }
-
-        // Capitalize the first letter of the property name
-        if let Some(&first_byte) = property.as_bytes().first() {
-            if first_byte.is_ascii() {
-                name.push(first_byte.to_ascii_uppercase() as char);
-                if property.len() > 1 {
-                    name.push_str(&property[1..]);
-                }
-            } else {
+            #[cold]
+            #[inline(never)]
+            fn push_unicode(property: &str, name: &mut ArenaString) {
                 let mut chars = property.chars();
                 let first_char = chars.next().unwrap();
                 name.extend(first_char.to_uppercase());
                 name.push_str(chars.as_str());
             }
+            push_unicode(property, &mut name);
         }
 
         ctx.ast.atom(name.into_bump_str())
