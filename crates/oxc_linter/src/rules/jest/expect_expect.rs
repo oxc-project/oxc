@@ -248,16 +248,21 @@ fn check_statements<'a>(
     visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    statements.iter().any(|statement| {
-        if let Statement::ExpressionStatement(expr_stmt) = statement {
-            return check_assert_function_used(
-                &expr_stmt.expression,
-                assert_function_names,
-                visited,
-                ctx,
-            );
+    statements.iter().any(|statement| match statement {
+        Statement::ExpressionStatement(expr_stmt) => {
+            check_assert_function_used(&expr_stmt.expression, assert_function_names, visited, ctx)
         }
-        false
+        Statement::BlockStatement(block_stmt) => {
+            check_statements(&block_stmt.body, assert_function_names, visited, ctx)
+        }
+        Statement::IfStatement(if_stmt) => {
+            if let Statement::BlockStatement(block_stmt) = &if_stmt.consequent {
+                check_statements(&block_stmt.body, assert_function_names, visited, ctx)
+            } else {
+                false
+            }
+        }
+        _ => false,
     })
 }
 
@@ -287,32 +292,6 @@ fn convert_pattern(pattern: &str) -> CompactStr {
     format!("(?ui)^{pattern}(\\.|$)").into()
 }
 
-#[test]
-fn debug() {
-    use crate::tester::Tester;
-
-    let mut pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
-
-    let mut fail = vec![];
-
-    let pass_vitest = vec![(
-        "
-                import { test } from 'vitest';
-                test.skip(\"skipped test\", () => {})
-            ",
-        None,
-    )];
-
-    let fail_vitest = vec![];
-
-    pass.extend(pass_vitest);
-    fail.extend(fail_vitest);
-
-    Tester::new(ExpectExpect::NAME, pass, fail)
-        .with_jest_plugin(true)
-        .with_vitest_plugin(true)
-        .test();
-}
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -434,6 +413,32 @@ fn test() {
                     throw new Error('nope')
                 };
                 await expect(asyncFunction()).rejects.toThrow();
+            });
+            "#,
+            None,
+        ),
+        (
+            r#"
+            it("should not warn on await expect", async () => {
+                if(true) {
+                    const asyncFunction = async () => {
+                        throw new Error('nope')
+                    };
+                    await expect(asyncFunction()).rejects.toThrow();
+                }
+            });
+            "#,
+            None,
+        ),
+        (
+            r#"
+            it("should not warn on await expect", async () => {
+                {
+                    const asyncFunction = async () => {
+                        throw new Error('nope')
+                    };
+                    await expect(asyncFunction()).rejects.toThrow();
+                }
             });
             "#,
             None,
