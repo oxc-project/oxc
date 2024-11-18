@@ -20,11 +20,11 @@ pub struct PreferStringRaw;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefers use of String.raw to prevent extra escaping.
+    /// Prefers use of String.raw to avoid escaping \.
     ///
     /// ### Why is this bad?
     ///
-    /// Using String.raw can improve readability of string values that contain backslashes.
+    /// Excessive backslashes can make string values less readable which can be avoided by using `String.raw`.
     ///
     /// ### Example
     ///
