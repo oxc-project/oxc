@@ -117,6 +117,34 @@ impl<'alloc, T> Vec<'alloc, T> {
         Self(vec)
     }
 
+    /// Create a new [`Vec`] from a fixed-size array, allocated in the given `allocator`.
+    ///
+    /// This is preferable to `from_iter_in` where source is an array, as size is statically known,
+    /// and compiler is more likely to construct the values directly in arena, rather than constructing
+    /// on stack and then copying to arena.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let allocator = Allocator::default();
+    ///
+    /// let array: [u32; 4] = [1, 2, 3, 4];
+    /// let vec = Vec::from_array_in(array, &allocator);
+    /// ```
+    #[inline]
+    pub fn from_array_in<const N: usize>(array: [T; N], allocator: &'alloc Allocator) -> Self {
+        let boxed = Box::new_in(array, allocator);
+        let ptr = Box::into_non_null(boxed).as_ptr().cast::<T>();
+        // SAFETY: `ptr` has correct alignment - it was just allocated as `[T; N]`.
+        // `ptr` was allocated with correct size for `[T; N]`.
+        // `len` and `capacity` are both `N`.
+        // Allocated size cannot be larger than `isize::MAX`, or `Box::new_in` would have failed.
+        let vec = unsafe { vec::Vec::from_raw_parts_in(ptr, N, N, &**allocator) };
+        Self(ManuallyDrop::new(vec))
+    }
+
     /// Converts the vector into [`Box<[T]>`][owned slice].
     ///
     /// Any excess capacity the vector has will not be included in the slice.

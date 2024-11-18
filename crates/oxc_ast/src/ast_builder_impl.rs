@@ -67,6 +67,16 @@ impl<'a> AstBuilder<'a> {
         Vec::from_iter_in(iter, self.allocator)
     }
 
+    /// Create [`Vec`] from a fixed-size array.
+    ///
+    /// This is preferable to `vec_from_iter` where source is an array, as size is statically known,
+    /// and compiler is more likely to construct the values directly in arena, rather than constructing
+    /// on stack and then copying to arena.
+    #[inline]
+    pub fn vec_from_array<T, const N: usize>(self, array: [T; N]) -> Vec<'a, T> {
+        Vec::from_array_in(array, self.allocator)
+    }
+
     /// Move a string slice into the memory arena, returning a reference to the slice
     /// in the heap.
     #[inline]

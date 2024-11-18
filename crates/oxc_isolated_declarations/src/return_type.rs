@@ -113,7 +113,7 @@ impl<'a> FunctionReturnType<'a> {
 
             let types = transformer
                 .ast
-                .vec_from_iter([expr_type, transformer.ast.ts_type_undefined_keyword(SPAN)]);
+                .vec_from_array([expr_type, transformer.ast.ts_type_undefined_keyword(SPAN)]);
             expr_type = transformer.ast.ts_type_union_type(SPAN, types);
         }
         Some(expr_type)

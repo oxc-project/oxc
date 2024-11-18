@@ -156,9 +156,7 @@ impl<'a, 'b> PeepholeFoldConstants {
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
             let left = ctx.ast.move_expression(&mut logical_expr.left);
             let right = ctx.ast.move_expression(&mut logical_expr.right);
-            let mut vec = ctx.ast.vec_with_capacity(2);
-            vec.push(left);
-            vec.push(right);
+            let vec = ctx.ast.vec_from_array([left, right]);
             let sequence_expr = ctx.ast.expression_sequence(logical_expr.span, vec);
             return Some(sequence_expr);
         } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left {
@@ -201,7 +199,7 @@ impl<'a, 'b> PeepholeFoldConstants {
             ValueType::Null | ValueType::Undefined => {
                 Some(if left.may_have_side_effects() {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
-                    let expressions = ctx.ast.vec_from_iter([
+                    let expressions = ctx.ast.vec_from_array([
                         ctx.ast.move_expression(&mut logical_expr.left),
                         ctx.ast.move_expression(&mut logical_expr.right),
                     ]);

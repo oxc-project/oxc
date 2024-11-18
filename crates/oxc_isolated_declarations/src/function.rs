@@ -99,7 +99,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 SPAN,
                                 self.ast.ts_type_union_type(
                                     SPAN,
-                                    self.ast.vec_from_iter([
+                                    self.ast.vec_from_array([
                                         ts_type,
                                         self.ast.ts_type_undefined_keyword(SPAN),
                                     ]),

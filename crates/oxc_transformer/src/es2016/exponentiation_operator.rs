@@ -545,7 +545,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         let property = ctx.ast.identifier_name(SPAN, "pow");
         let callee =
             Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
-        let arguments = ctx.ast.vec_from_iter([Argument::from(left), Argument::from(right)]);
+        let arguments = ctx.ast.vec_from_array([Argument::from(left), Argument::from(right)]);
         ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
     }
 
