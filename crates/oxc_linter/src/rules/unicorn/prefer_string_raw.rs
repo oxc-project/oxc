@@ -1,10 +1,7 @@
-use std::collections::HashMap;
-
 use oxc_ast::{
     ast::{JSXAttributeValue, PropertyKey, TSEnumMemberName},
     AstKind,
 };
-use oxc_cfg::graph::Direction;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::StringCharAt;
 use oxc_macros::declare_oxc_lint;
@@ -163,7 +160,6 @@ impl Rule for PreferStringRaw {
 
         ctx.diagnostic_with_fix(prefer_string_raw(string_literal.span), |fixer| {
             let end = string_literal.span.start;
-            let span = Span::new(end, end);
             let before = ctx.source_range(oxc_span::Span::new(0, end));
 
             let mut fix = format!("String.raw`{unescaped}`");
