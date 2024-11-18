@@ -151,11 +151,11 @@ impl Rule for PreferStringRaw {
         let raw = ctx.source_range(string_literal.span);
 
         let last_char_index = raw.len() - 2;
-        if let Some('\\') = raw.char_at(Some(last_char_index as f64)) {
+        if raw.char_at(Some(last_char_index as f64)) == Some('\\') {
             return;
-        };
+        }
 
-        if !raw.contains("\\\\") || raw.contains('`') || raw.contains("${") {
+        if !raw.contains(r"\\") || raw.contains('`') || raw.contains("${") {
             return;
         }
 
@@ -231,6 +231,7 @@ fn test() {
                 "\\\\a\\\\b" = "baz",
              }
         "#,
+        r"const a = 'a\\';",
     ];
 
     let fail = vec![
