@@ -263,9 +263,11 @@ fn test_import_type() {
 fn test_multiple_export_var() {
     let test = SemanticTester::js(
         "
-    export const x = 1, y = 2;
+    export var x = 1, y = 2, [z] = [3], { a: b } = { a: 4 };
     ",
     );
     test.has_some_symbol("x").contains_flags(SymbolFlags::Export).test();
     test.has_some_symbol("y").contains_flags(SymbolFlags::Export).test();
+    test.has_some_symbol("z").contains_flags(SymbolFlags::Export).test();
+    test.has_some_symbol("b").contains_flags(SymbolFlags::Export).test();
 }
