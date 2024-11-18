@@ -99,9 +99,11 @@ impl Runner for LintRunner {
 
         let cwd = std::env::current_dir().unwrap();
 
-        let mut oxlintrc = if let Some(config_path) = basic_options.config.as_ref() {
+        let mut oxlintrc = Oxlintrc::default();
+
+        if let Some(config_path) = basic_options.config.as_ref() {
             match Oxlintrc::from_file(config_path) {
-                Ok(config) => config,
+                Ok(config) => oxlintrc = config,
                 Err(diagnostic) => {
                     let handler = GraphicalReportHandler::new();
                     let mut err = String::new();
@@ -112,7 +114,27 @@ impl Runner for LintRunner {
                 }
             }
         } else {
-            Oxlintrc::default()
+            // no config argument is provided,
+            // auto detect possible files from current work directory
+            let search_configs = &[
+                "oxlintrc.json",
+                "oxlint.json",
+                ".oxlintrc.json",
+                ".oxlint.json",
+                ".oxlintrc",
+                ".eslintrc",
+                ".eslintrc.json",
+            ];
+
+            for config_file in search_configs {
+                let mut config_path = cwd.clone();
+                config_path.push(config_file);
+
+                if let Ok(result) = Oxlintrc::from_file(&config_path) {
+                    oxlintrc = result;
+                    break;
+                };
+            }
         };
 
         enable_plugins.apply_overrides(&mut oxlintrc.plugins);
@@ -386,6 +408,16 @@ mod test {
         assert_eq!(result.number_of_warnings, 1); // triggered by no_empty_file
         assert_eq!(result.number_of_errors, 0);
     }
+
+    // ToDo: enable test when we can change the `cwd` of the process
+    // #[test]
+    // fn oxlint_config_auto_detection() {
+    //     let args = &["fixtures/auto_config_detection/debugger.js"];
+    //     let result = test(args);
+    //     assert_eq!(result.number_of_files, 1);
+    //     assert_eq!(result.number_of_warnings, 0);
+    //     assert_eq!(result.number_of_errors, 1);
+    // }
 
     #[test]
     fn eslintrc_no_undef() {
