@@ -6,6 +6,7 @@ use std::{
     sync::Arc,
 };
 
+use oxc_ecmascript::BoundNames;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{ast::*, AstKind, Visit};
@@ -579,6 +580,12 @@ impl<'a> SemanticBuilder<'a> {
                             self.add_export_flag_to_identifier(name.as_str());
                         }
                     }
+                }
+
+                if let Some(decl) = &decl.declaration {
+                    decl.bound_names(&mut |ident| {
+                        self.add_export_flag_to_identifier(ident.name.as_str());
+                    });
                 }
             }
         }

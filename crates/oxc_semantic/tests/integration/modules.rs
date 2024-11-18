@@ -258,3 +258,14 @@ fn test_import_type() {
         .contains_flags(SymbolFlags::TypeImport)
         .test();
 }
+
+#[test]
+fn test_multiple_export_var() {
+    let test = SemanticTester::js(
+        "
+    export const x = 1, y = 2;
+    ",
+    );
+    test.has_some_symbol("x").contains_flags(SymbolFlags::Export).test();
+    test.has_some_symbol("y").contains_flags(SymbolFlags::Export).test();
+}
