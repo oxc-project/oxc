@@ -250,7 +250,7 @@ fn test() {
     let fix = vec![
         (
             r#"const file = "C:\\windows\\style\\path\\to\\file.js";"#,
-            r#"const file = String.raw`C:\windows\style\path\to\file.js`;"#,
+            r"const file = String.raw`C:\windows\style\path\to\file.js`;",
             None,
         ),
         (
