@@ -20,11 +20,24 @@ pub struct PreferStringRaw;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Prefers use of String.raw to prevent extra escaping.
+    ///
     /// ### Why is this bad?
     ///
+    /// Using String.raw can improve readability of string values that contain backslashes.
+    ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// TODO
+    /// const file = "C:\\windows\\style\\path\\to\\file.js";
+    /// const regexp = new RegExp('foo\\.bar');
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// const file = String.raw`C:\windows\style\path\to\file.js`;
+    /// const regexp = new RegExp(String.raw`foo\.bar`);
     /// ```
     PreferStringRaw,
     style,
@@ -192,6 +205,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass: Vec<&str> = vec![
+        r"const file = String.raw`C:\windows\style\path\to\file.js`;",
+        r"const regexp = new RegExp(String.raw`foo\.bar`);",
         r"a = '\''",
         r"'a\\b'",
         r#"import foo from "./foo\\bar.js";"#,
@@ -219,6 +234,8 @@ fn test() {
     ];
 
     let fail = vec![
+        r#"const file = "C:\\windows\\style\\path\\to\\file.js";"#,
+        r"const regexp = new RegExp('foo\\.bar');",
         r"a = 'a\\b'",
         r"a = {['a\\b']: b}",
         r"function a() {return'a\\b'}",
@@ -231,6 +248,16 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            r#"const file = "C:\\windows\\style\\path\\to\\file.js";"#,
+            r#"const file = String.raw`C:\windows\style\path\to\file.js`;"#,
+            None,
+        ),
+        (
+            r"const regexp = new RegExp('foo\\.bar');",
+            r"const regexp = new RegExp(String.raw`foo\.bar`);",
+            None,
+        ),
         (r"a = 'a\\b'", r"a = String.raw`a\b`", None),
         (r"a = {['a\\b']: b}", r"a = {[String.raw`a\b`]: b}", None),
         (r"function a() {return'a\\b'}", r"function a() {return String.raw`a\b`}", None),
