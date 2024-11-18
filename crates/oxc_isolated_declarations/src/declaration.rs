@@ -41,12 +41,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &VariableDeclaration<'a>,
         declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
     ) -> Box<'a, VariableDeclaration<'a>> {
-        self.ast.alloc_variable_declaration(
-            decl.span,
-            decl.kind,
-            self.ast.vec_from_iter(declarations),
-            self.is_declare(),
-        )
+        self.ast.alloc_variable_declaration(decl.span, decl.kind, declarations, self.is_declare())
     }
 
     pub(crate) fn transform_variable_declarator(
