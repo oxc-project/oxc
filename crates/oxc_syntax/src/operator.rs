@@ -78,16 +78,20 @@ impl AssignmentOperator {
     /// Returns `true` for `+=`, `-=`, `*=`, `/=`, `%=`, and `**=`.
     #[rustfmt::skip]
     pub fn is_arithmetic(self) -> bool {
-        matches!(self, Self::Addition | Self::Subtraction | Self::Multiplication
-                | Self::Division | Self::Remainder | Self::Exponential
+        matches!(
+            self,
+            Self::Addition | Self::Subtraction | Self::Multiplication
+            | Self::Division | Self::Remainder | Self::Exponential
         )
     }
 
     /// Returns `true` for `|=`, `^=`, `&=`, `<<=`, `>>=`, and `>>>=`.
     #[rustfmt::skip]
     pub fn is_bitwise(self) -> bool {
-        matches!(self, Self::BitwiseOR | Self::BitwiseXOR | Self::BitwiseAnd
-                | Self::ShiftLeft | Self::ShiftRight | Self::ShiftRightZeroFill
+        matches!(
+            self,
+            Self::BitwiseOR | Self::BitwiseXOR | Self::BitwiseAnd
+            | Self::ShiftLeft | Self::ShiftRight | Self::ShiftRightZeroFill
         )
     }
 
@@ -209,8 +213,11 @@ impl BinaryOperator {
     /// Returns `true` for arithmetic operators
     #[rustfmt::skip]
     pub fn is_arithmetic(self) -> bool {
-        matches!(self, Self::Addition | Self::Subtraction | Self::Multiplication
-                | Self::Division | Self::Remainder | Self::Exponential)
+        matches!(
+            self,
+            Self::Addition | Self::Subtraction | Self::Multiplication
+            | Self::Division | Self::Remainder | Self::Exponential
+        )
     }
 
     /// Returns `true` for multiplication (`*`), division (`/`), and remainder
