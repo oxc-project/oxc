@@ -225,7 +225,7 @@ fn test() {
         r"function* a() {yield'a\\b'}",
         r"function a() {throw'a\\b'}",
         r"if (typeof'a\\b' === 'string') {}",
-        r"function a() {void'a\\b'}",
+        r"const a = () => void'a\\b';",
         r"const foo = 'foo \\x46';",
         r"for (const f of'a\\b') {}",
     ];
@@ -234,6 +234,19 @@ fn test() {
         (r"a = 'a\\b'", r"a = String.raw`a\b`", None),
         (r"a = {['a\\b']: b}", r"a = {[String.raw`a\b`]: b}", None),
         (r"function a() {return'a\\b'}", r"function a() {return String.raw`a\b`}", None),
+        (r"const foo = 'foo \\x46';", r"const foo = String.raw`foo \x46`;", None),
+        (r"for (const f of'a\\b') {}", r"for (const f of String.raw`a\b`) {}", None),
+        (r"a = 'a\\b'", r"a = String.raw`a\b`", None),
+        (r"a = {['a\\b']: b}", r"a = {[String.raw`a\b`]: b}", None),
+        (r"function a() {return'a\\b'}", r"function a() {return String.raw`a\b`}", None),
+        (r"function* a() {yield'a\\b'}", r"function* a() {yield String.raw`a\b`}", None),
+        (r"function a() {throw'a\\b'}", r"function a() {throw String.raw`a\b`}", None),
+        (
+            r"if (typeof'a\\b' === 'string') {}",
+            r"if (typeof String.raw`a\b` === 'string') {}",
+            None,
+        ),
+        (r"const a = () => void'a\\b';", r"const a = () => void String.raw`a\b`;", None),
         (r"const foo = 'foo \\x46';", r"const foo = String.raw`foo \x46`;", None),
         (r"for (const f of'a\\b') {}", r"for (const f of String.raw`a\b`) {}", None),
     ];

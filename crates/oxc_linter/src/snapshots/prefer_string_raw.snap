@@ -45,9 +45,9 @@ snapshot_kind: text
   help: Replace `'a\\b'` with ` String.raw`a\b``.
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
-   ╭─[prefer_string_raw.tsx:1:19]
- 1 │ function a() {void'a\\b'}
-   ·                   ──────
+   ╭─[prefer_string_raw.tsx:1:21]
+ 1 │ const a = () => void'a\\b';
+   ·                     ──────
    ╰────
   help: Replace `'a\\b'` with ` String.raw`a\b``.
 
