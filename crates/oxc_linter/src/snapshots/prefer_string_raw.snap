@@ -2,30 +2,65 @@
 source: crates/oxc_linter/src/tester.rs
 snapshot_kind: text
 ---
-  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\\`.
+  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:5]
  1 │ a = 'a\\b'
    ·     ──────
    ╰────
   help: Replace `'a\\b'` with `String.raw`a\b``.
 
-  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\\`.
+  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:7]
  1 │ a = {['a\\b']: b}
    ·       ──────
    ╰────
   help: Replace `'a\\b'` with `String.raw`a\b``.
 
-  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\\`.
+  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:21]
  1 │ function a() {return'a\\b'}
    ·                     ──────
    ╰────
-  help: Replace `'a\\b'` with `String.raw`a\b``.
+  help: Replace `'a\\b'` with ` String.raw`a\b``.
 
-  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\\`.
+  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:21]
+ 1 │ function* a() {yield'a\\b'}
+   ·                     ──────
+   ╰────
+  help: Replace `'a\\b'` with ` String.raw`a\b``.
+
+  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:20]
+ 1 │ function a() {throw'a\\b'}
+   ·                    ──────
+   ╰────
+  help: Replace `'a\\b'` with ` String.raw`a\b``.
+
+  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:11]
+ 1 │ if (typeof'a\\b' === 'string') {}
+   ·           ──────
+   ╰────
+  help: Replace `'a\\b'` with ` String.raw`a\b``.
+
+  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:19]
+ 1 │ function a() {void'a\\b'}
+   ·                   ──────
+   ╰────
+  help: Replace `'a\\b'` with ` String.raw`a\b``.
+
+  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:13]
  1 │ const foo = 'foo \\x46';
    ·             ───────────
    ╰────
   help: Replace `'foo \\x46'` with `String.raw`foo \x46``.
+
+  ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
+   ╭─[prefer_string_raw.tsx:1:16]
+ 1 │ for (const f of'a\\b') {}
+   ·                ──────
+   ╰────
+  help: Replace `'a\\b'` with ` String.raw`a\b``.

@@ -1,12 +1,21 @@
+use std::collections::HashMap;
+
 use oxc_ast::{
     ast::{JSXAttributeValue, PropertyKey, TSEnumMemberName},
     AstKind,
 };
+use oxc_cfg::graph::Direction;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::StringCharAt;
 use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use oxc_syntax::keyword::RESERVED_KEYWORDS;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
+
+fn prefer_string_raw(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(r"`String.raw` should be used to avoid escaping `\`.").with_label(span)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferStringRaw;
@@ -21,7 +30,7 @@ declare_oxc_lint!(
     /// TODO
     /// ```
     PreferStringRaw,
-    restriction,
+    style,
     fix,
 );
 
@@ -90,7 +99,6 @@ impl Rule for PreferStringRaw {
                     if let Some(AstKind::ObjectProperty(prop)) =
                         ctx.nodes().parent_node(parent_node.id()).map(AstNode::kind)
                     {
-                        // todo: shared util
                         let PropertyKey::StringLiteral(key) = &prop.key else {
                             return;
                         };
@@ -153,12 +161,34 @@ impl Rule for PreferStringRaw {
             return;
         }
 
-        ctx.diagnostic_with_fix(
-            OxcDiagnostic::warn(r"`String.raw` should be used to avoid escaping `\\`.")
-                .with_label(string_literal.span),
-            |fixer| fixer.replace(string_literal.span, format!("String.raw`{unescaped}`")),
-        );
+        ctx.diagnostic_with_fix(prefer_string_raw(string_literal.span), |fixer| {
+            let end = string_literal.span.start;
+            let span = Span::new(end, end);
+            let before = ctx.source_range(oxc_span::Span::new(0, end));
+
+            let mut fix = format!("String.raw`{unescaped}`");
+
+            if ends_with_keyword(before) {
+                fix = format!(" {fix}");
+            }
+
+            fixer.replace(string_literal.span, fix)
+        });
     }
+}
+
+pub fn ends_with_keyword(source: &str) -> bool {
+    for keyword in &RESERVED_KEYWORDS {
+        if source.ends_with(keyword) {
+            return true;
+        }
+    }
+
+    if source.ends_with("of") {
+        return true;
+    }
+
+    false
 }
 
 #[test]
@@ -173,8 +203,8 @@ fn test() {
         r#"export * from "./foo\\bar.js";"#,
         r"a = {'a\\b': 1}",
         "
-         	a = '\\\\a \\
-         		b'
+            a = '\\\\a \\
+                b'
          ",
         r"a = 'a\\b\u{51}c'",
         "a = 'a\\\\b`'",
@@ -182,12 +212,12 @@ fn test() {
         r#"<Component attribute="a\\b" />"#,
         r#"
              enum Files {
-             	Foo = "C:\\\\path\\\\to\\\\foo.js",
+                Foo = "C:\\\\path\\\\to\\\\foo.js",
              }
         "#,
         r#"
              enum Foo {
-             	"\\\\a\\\\b" = "baz",
+                "\\\\a\\\\b" = "baz",
              }
         "#,
     ];
@@ -196,14 +226,20 @@ fn test() {
         r"a = 'a\\b'",
         r"a = {['a\\b']: b}",
         r"function a() {return'a\\b'}",
+        r"function* a() {yield'a\\b'}",
+        r"function a() {throw'a\\b'}",
+        r"if (typeof'a\\b' === 'string') {}",
+        r"function a() {void'a\\b'}",
         r"const foo = 'foo \\x46';",
+        r"for (const f of'a\\b') {}",
     ];
 
     let fix = vec![
         (r"a = 'a\\b'", r"a = String.raw`a\b`", None),
         (r"a = {['a\\b']: b}", r"a = {[String.raw`a\b`]: b}", None),
-        (r"function a() {return 'a\\b'}", r"function a() {return String.raw`a\b`}", None),
+        (r"function a() {return'a\\b'}", r"function a() {return String.raw`a\b`}", None),
         (r"const foo = 'foo \\x46';", r"const foo = String.raw`foo \x46`;", None),
+        (r"for (const f of'a\\b') {}", r"for (const f of String.raw`a\b`) {}", None),
     ];
 
     Tester::new(PreferStringRaw::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
