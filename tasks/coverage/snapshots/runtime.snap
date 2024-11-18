@@ -2,142 +2,7 @@ commit: 06454619
 
 runtime Summary:
 AST Parsed     : 18055/18055 (100.00%)
-Positive Passed: 17798/18055 (98.58%)
-tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-multiple.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-null.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-single-args.js
-transform error: Test262Error: Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-spread-operator.js
-transform error: Test262Error: Expected SameValue(«0», «4») to be true
-
-tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-undefined.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-args-trailing-comma-multiple.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-args-trailing-comma-null.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-args-trailing-comma-single-args.js
-transform error: Test262Error: Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-args-trailing-comma-spread-operator.js
-transform error: Test262Error: Expected SameValue(«0», «4») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-args-trailing-comma-undefined.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-static-args-trailing-comma-multiple.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-static-args-trailing-comma-null.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-static-args-trailing-comma-single-args.js
-transform error: Test262Error: Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-static-args-trailing-comma-spread-operator.js
-transform error: Test262Error: Expected SameValue(«0», «4») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-gen-meth-static-args-trailing-comma-undefined.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-multiple.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-null.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-single-args.js
-transform error: Test262Error: Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-spread-operator.js
-transform error: Test262Error: Expected SameValue(«0», «4») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-args-trailing-comma-undefined.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-static-args-trailing-comma-multiple.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-static-args-trailing-comma-null.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-static-args-trailing-comma-single-args.js
-transform error: Test262Error: Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-static-args-trailing-comma-spread-operator.js
-transform error: Test262Error: Expected SameValue(«0», «4») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-decl-async-private-gen-meth-static-args-trailing-comma-undefined.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-args-trailing-comma-multiple.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-args-trailing-comma-null.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-args-trailing-comma-single-args.js
-transform error: Test262Error: Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-args-trailing-comma-spread-operator.js
-transform error: Test262Error: Expected SameValue(«0», «4») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-args-trailing-comma-undefined.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-static-args-trailing-comma-multiple.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-static-args-trailing-comma-null.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-static-args-trailing-comma-single-args.js
-transform error: Test262Error: Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-static-args-trailing-comma-spread-operator.js
-transform error: Test262Error: Expected SameValue(«0», «4») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-gen-meth-static-args-trailing-comma-undefined.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-args-trailing-comma-multiple.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-args-trailing-comma-null.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-args-trailing-comma-single-args.js
-transform error: Test262Error: Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-args-trailing-comma-spread-operator.js
-transform error: Test262Error: Expected SameValue(«0», «4») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-args-trailing-comma-undefined.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-static-args-trailing-comma-multiple.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-static-args-trailing-comma-null.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-static-args-trailing-comma-single-args.js
-transform error: Test262Error: Expected SameValue(«0», «1») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-static-args-trailing-comma-spread-operator.js
-transform error: Test262Error: Expected SameValue(«0», «4») to be true
-
-tasks/coverage/test262/test/language/arguments-object/cls-expr-async-private-gen-meth-static-args-trailing-comma-undefined.js
-transform error: Test262Error: Expected SameValue(«0», «2») to be true
-
+Positive Passed: 17855/18055 (98.89%)
 tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 codegen error: Test262Error: descriptor value should be ; object value should be 
 
@@ -176,9 +41,6 @@ tasks/coverage/test262/test/language/expressions/async-function/named-reassign-f
 transform error: Test262Error: Expected SameValue(«1», «function BindingIdentifier() {
 		return _BindingIdentifier.apply(this, arguments);
 	}») to be true
-
-tasks/coverage/test262/test/language/expressions/async-function/named-returns-async-arrow-returns-arguments-from-parent-function.js
-transform error: Test262Error: Expected SameValue(«false», «true») to be true
 
 tasks/coverage/test262/test/language/expressions/async-function/named-strict-error-reassign-fn-name-in-body-in-arrow.js
 transform error: Test262Error: Expected SameValue(«0», «1») to be true
@@ -360,9 +222,6 @@ transform error: ReferenceError: Cannot access 'y' before initialization
 tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-ref-self.js
 transform error: ReferenceError: Cannot access 'x' before initialization
 
-tasks/coverage/test262/test/language/expressions/class/async-method/returns-async-arrow-returns-arguments-from-parent-function.js
-transform error: Test262Error: Expected SameValue(«false», «true») to be true
-
 tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-abrupt.js
 transform error: Test262Error: 
 
@@ -371,9 +230,6 @@ transform error: ReferenceError: Cannot access 'y' before initialization
 
 tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-ref-self.js
 transform error: ReferenceError: Cannot access 'x' before initialization
-
-tasks/coverage/test262/test/language/expressions/class/async-method-static/returns-async-arrow-returns-arguments-from-parent-function.js
-transform error: Test262Error: Expected SameValue(«false», «true») to be true
 
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-async-next.js
 transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
@@ -435,12 +291,6 @@ transform error: Test262Error: reject reason Expected SameValue(«TypeError: The
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-sync-throw.js
 transform error: throw-arg-1
 
-tasks/coverage/test262/test/language/expressions/class/elements/async-private-method/returns-async-arrow-returns-arguments-from-parent-function.js
-transform error: Test262Error: Expected SameValue(«false», «true») to be true
-
-tasks/coverage/test262/test/language/expressions/class/elements/async-private-method-static/returns-async-arrow-returns-arguments-from-parent-function.js
-transform error: Test262Error: Expected SameValue(«false», «true») to be true
-
 tasks/coverage/test262/test/language/expressions/class/heritage-arrow-function.js
 transform error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -495,9 +345,6 @@ transform error: ReferenceError: Cannot access 'x' before initialization
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-eval-var-scope-syntax-err.js
 transform error: SyntaxError: Identifier 'a' has already been declared
 
-tasks/coverage/test262/test/language/expressions/object/method-definition/async-returns-async-arrow-returns-arguments-from-parent-function.js
-transform error: Test262Error: Expected SameValue(«false», «true») to be true
-
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-super-call-param.js
 transform error: ReferenceError: _superprop_getMethod is not defined
 
@@ -509,9 +356,6 @@ transform error: Test262Error: Expected SameValue(«true», «false») to be tru
 
 tasks/coverage/test262/test/language/statements/async-function/forbidden-ext/b1/async-func-decl-forbidden-ext-direct-access-prop-caller.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
-
-tasks/coverage/test262/test/language/statements/async-function/returns-async-arrow-returns-arguments-from-parent-function.js
-transform error: Test262Error: Expected SameValue(«false», «true») to be true
 
 tasks/coverage/test262/test/language/statements/async-generator/forbidden-ext/b1/async-gen-func-decl-forbidden-ext-direct-access-prop-arguments.js
 transform error: Test262Error: Expected SameValue(«true», «false») to be true
@@ -639,9 +483,6 @@ transform error: ReferenceError: Cannot access 'y' before initialization
 tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-ref-self.js
 transform error: ReferenceError: Cannot access 'x' before initialization
 
-tasks/coverage/test262/test/language/statements/class/async-method/returns-async-arrow-returns-arguments-from-parent-function.js
-transform error: Test262Error: Expected SameValue(«false», «true») to be true
-
 tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-abrupt.js
 transform error: Test262Error: 
 
@@ -650,9 +491,6 @@ transform error: ReferenceError: Cannot access 'y' before initialization
 
 tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-ref-self.js
 transform error: ReferenceError: Cannot access 'x' before initialization
-
-tasks/coverage/test262/test/language/statements/class/async-method-static/returns-async-arrow-returns-arguments-from-parent-function.js
-transform error: Test262Error: Expected SameValue(«false», «true») to be true
 
 tasks/coverage/test262/test/language/statements/class/definition/methods-async-super-call-param.js
 transform error: ReferenceError: _superprop_getMethod is not defined
@@ -716,15 +554,6 @@ transform error: Test262Error: reject reason Expected SameValue(«TypeError: The
 
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-sync-throw.js
 transform error: throw-arg-1
-
-tasks/coverage/test262/test/language/statements/class/elements/async-private-method/returns-async-arrow-returns-arguments-from-parent-function.js
-transform error: Test262Error: Expected SameValue(«false», «true») to be true
-
-tasks/coverage/test262/test/language/statements/class/elements/async-private-method-static/returns-async-arrow-returns-arguments-from-parent-function.js
-transform error: Test262Error: Expected SameValue(«false», «true») to be true
-
-tasks/coverage/test262/test/language/statements/class/static-init-arguments-methods.js
-transform error: Test262Error: Actual [async method] and expected [] should have the same contents. body
 
 tasks/coverage/test262/test/language/statements/class/subclass/superclass-async-function.js
 transform error: TypeError: Cannot redefine property: prototype
