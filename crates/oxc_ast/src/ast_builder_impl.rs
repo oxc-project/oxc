@@ -56,9 +56,7 @@ impl<'a> AstBuilder<'a> {
     /// Create a new arena-allocated [`Vec`] initialized with a single element.
     #[inline]
     pub fn vec1<T>(self, value: T) -> Vec<'a, T> {
-        let mut vec = self.vec_with_capacity(1);
-        vec.push(value);
-        vec
+        self.vec_from_array([value])
     }
 
     /// Collect an iterator into a new arena-allocated [`Vec`].
