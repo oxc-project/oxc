@@ -186,7 +186,7 @@ impl Rule for PreferStringRaw {
     }
 }
 
-pub fn ends_with_keyword(source: &str) -> bool {
+fn ends_with_keyword(source: &str) -> bool {
     for keyword in &RESERVED_KEYWORDS {
         if source.ends_with(keyword) {
             return true;
