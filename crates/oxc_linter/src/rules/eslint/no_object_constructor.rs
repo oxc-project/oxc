@@ -5,11 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_object_constructor_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
@@ -51,7 +47,6 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoObjectConstructor {
-
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (span, callee, arguments, type_parameters) = match node.kind() {
             AstKind::CallExpression(call_expr) => (
@@ -60,12 +55,9 @@ impl Rule for NoObjectConstructor {
                 &call_expr.arguments,
                 &call_expr.type_parameters,
             ),
-            AstKind::NewExpression(new_expr) => (
-                new_expr.span,
-                &new_expr.callee,
-                &new_expr.arguments,
-                &new_expr.type_parameters,
-            ),
+            AstKind::NewExpression(new_expr) => {
+                (new_expr.span, &new_expr.callee, &new_expr.arguments, &new_expr.type_parameters)
+            }
             _ => {
                 return;
             }
@@ -79,7 +71,9 @@ impl Rule for NoObjectConstructor {
             && arguments.len() == 0
             && type_parameters.is_none()
         {
-            ctx.diagnostic(crate::rules::eslint::no_object_constructor::no_object_constructor_diagnostic(span));
+            ctx.diagnostic(
+                crate::rules::eslint::no_object_constructor::no_object_constructor_diagnostic(span),
+            );
         }
     }
 }
