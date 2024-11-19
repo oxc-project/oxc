@@ -179,6 +179,7 @@ impl Runner for LintRunner {
 }
 
 impl LintRunner {
+    #[must_use]
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
         self.cwd = cwd;
         self
@@ -244,7 +245,7 @@ impl LintRunner {
 
 #[cfg(all(test, not(target_os = "windows")))]
 mod test {
-    use std::{env, path::PathBuf};
+    use std::env;
 
     use super::LintRunner;
     use crate::cli::{lint_command, CliRunResult, LintResult, Runner};
@@ -267,7 +268,7 @@ mod test {
         let mut current_cwd = env::current_dir().unwrap();
         current_cwd.push(cwd);
 
-        match LintRunner::new(options).with_cwd(PathBuf::from(current_cwd)).run() {
+        match LintRunner::new(options).with_cwd(current_cwd).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
             other => panic!("{other:?}"),
         }
