@@ -294,3 +294,10 @@ fn in_expr_in_sequence_in_for_loop_init() {
         "for ((\"hidden\" in a) && (m = a.hidden), r = 0; s > r; r++) {}\n",
     );
 }
+
+#[test]
+fn in_expr_in_arrow_function_expression() {
+    test("() => ('foo' in bar)", "() => \"foo\" in bar;\n");
+    test("() => 'foo' in bar", "() => \"foo\" in bar;\n");
+    test("() => { ('foo' in bar) }", "() => {\n\t\"foo\" in bar;\n};\n");
+}

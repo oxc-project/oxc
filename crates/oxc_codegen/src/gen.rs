@@ -1623,7 +1623,7 @@ impl<'a> GenExpr for ArrowFunctionExpression<'a> {
             if self.expression {
                 if let Some(Statement::ExpressionStatement(stmt)) = &self.body.statements.first() {
                     p.start_of_arrow_expr = p.code_len();
-                    stmt.expression.print_expr(p, Precedence::Comma, ctx.and_forbid_in(true));
+                    stmt.expression.print_expr(p, Precedence::Comma, ctx);
                 }
             } else {
                 self.body.print(p, ctx);
