@@ -135,7 +135,8 @@
     "package": "vsce package --no-dependencies -o oxc_language_server.vsix",
     "install-extension": "code --install-extension oxc_language_server.vsix --force",
     "server:build:debug": "cargo build -p oxc_language_server",
-    "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release"
+    "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
+    "lint": "npx oxlint --config=oxlint.json --tsconfig=tsconfig.json"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -144,6 +145,7 @@
     "cross-env": "^7.0.3",
     "esbuild": "^0.24.0",
     "ovsx": "^0.10.0",
+    "oxlint": "^0.11.1",
     "typescript": "^5.4.5"
   },
   "dependencies": {
