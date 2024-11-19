@@ -52,16 +52,19 @@ impl Runner for LintRunner {
         let now = Instant::now();
 
         let mut cwd = env::current_dir().expect("Failed to get current working directory");
-        
+
         // append the working directory paths
         if let Some(working_dir) = basic_options.working_dir {
             cwd.push(working_dir);
 
-            paths = paths.into_iter().map(|x| {
-                let mut new = cwd.clone();
-                new.push(x);
-                new
-            }).collect()
+            paths = paths
+                .into_iter()
+                .map(|x| {
+                    let mut new = cwd.clone();
+                    new.push(x);
+                    new
+                })
+                .collect()
         }
 
         // The ignore crate whitelists explicit paths, but priority
