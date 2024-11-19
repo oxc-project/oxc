@@ -11,8 +11,6 @@ Basic Configuration
                               * tries to be compatible with the ESLint v8's format
         --tsconfig=<./tsconfig.json>  TypeScript `tsconfig.json` path for reading path alias and
                               project references for import plugin
-        --working-dir=<./package/sub-package>  The working directory where oxlint should be executed
-                              appends the path to the current work directory
 
 Allowing / Denying Multiple Lints
    Accumulate rules and categories from left to right on the command-line.

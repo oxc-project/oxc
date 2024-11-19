@@ -1,4 +1,4 @@
-use std::{env, io::BufWriter, time::Instant};
+use std::{env, io::BufWriter, path::PathBuf, time::Instant};
 
 use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
@@ -18,13 +18,14 @@ use crate::{
 
 pub struct LintRunner {
     options: LintCommand,
+    cwd: PathBuf,
 }
 
 impl Runner for LintRunner {
     type Options = LintCommand;
 
     fn new(options: Self::Options) -> Self {
-        Self { options }
+        Self { options, cwd: env::current_dir().expect("Failed to get current working directory") }
     }
 
     fn run(self) -> CliRunResult {
@@ -51,21 +52,15 @@ impl Runner for LintRunner {
         let provided_path_count = paths.len();
         let now = Instant::now();
 
-        let mut cwd = env::current_dir().expect("Failed to get current working directory");
-
-        // append the working directory paths
-        if let Some(working_dir) = basic_options.working_dir {
-            cwd.push(working_dir);
-
-            paths = paths
-                .into_iter()
-                .map(|x| {
-                    let mut path_with_cwd = cwd.clone();
-                    path_with_cwd.push(x);
-                    path_with_cwd
-                })
-                .collect();
-        }
+        // append cwd to all paths
+        paths = paths
+            .into_iter()
+            .map(|x| {
+                let mut path_with_cwd = self.cwd.clone();
+                path_with_cwd.push(x);
+                path_with_cwd
+            })
+            .collect();
 
         // The ignore crate whitelists explicit paths, but priority
         // should be given to the ignore file. Many users lint
@@ -88,7 +83,7 @@ impl Runner for LintRunner {
                 });
             }
 
-            paths.push(cwd.clone());
+            paths.push(self.cwd.clone());
         }
 
         let filter = match Self::get_filters(filter) {
@@ -137,8 +132,8 @@ impl Runner for LintRunner {
             };
         }
 
-        let mut options =
-            LintServiceOptions::new(cwd, paths).with_cross_module(builder.plugins().has_import());
+        let mut options = LintServiceOptions::new(self.cwd, paths)
+            .with_cross_module(builder.plugins().has_import());
 
         let linter = builder.build();
 
@@ -184,6 +179,11 @@ impl Runner for LintRunner {
 }
 
 impl LintRunner {
+    pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
+        self.cwd = cwd;
+        self
+    }
+
     fn get_diagnostic_service(
         warning_options: &WarningOptions,
         output_options: &OutputOptions,
@@ -244,6 +244,8 @@ impl LintRunner {
 
 #[cfg(all(test, not(target_os = "windows")))]
 mod test {
+    use std::{env, path::PathBuf};
+
     use super::LintRunner;
     use crate::cli::{lint_command, CliRunResult, LintResult, Runner};
 
@@ -252,6 +254,20 @@ mod test {
         new_args.extend(args);
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         match LintRunner::new(options).run() {
+            CliRunResult::LintResult(lint_result) => lint_result,
+            other => panic!("{other:?}"),
+        }
+    }
+
+    fn test_with_cwd(cwd: &str, args: &[&str]) -> LintResult {
+        let mut new_args = vec!["--silent"];
+        new_args.extend(args);
+        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
+
+        let mut current_cwd = env::current_dir().unwrap();
+        current_cwd.push(cwd);
+
+        match LintRunner::new(options).with_cwd(PathBuf::from(current_cwd)).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
             other => panic!("{other:?}"),
         }
@@ -285,6 +301,16 @@ mod test {
         assert!(result.number_of_rules > 0);
         assert_eq!(result.number_of_files, 3);
         assert_eq!(result.number_of_warnings, 3);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn cwd() {
+        let args = &["debugger.js"];
+        let result = test_with_cwd("fixtures/linter", args);
+        assert!(result.number_of_rules > 0);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -536,16 +562,6 @@ mod test {
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 2);
-        assert_eq!(result.number_of_errors, 0);
-    }
-
-    #[test]
-    fn working_dir_option() {
-        let args = &["--working-dir", "fixtures/linter", "debugger.js"];
-        let result = test(args);
-        assert!(result.number_of_rules > 0);
-        assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
     }
 

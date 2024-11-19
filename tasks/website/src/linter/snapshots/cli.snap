@@ -13,8 +13,6 @@ snapshot_kind: text
 * tries to be compatible with the ESLint v8's format
 - **`    --tsconfig`**=_`<./tsconfig.json>`_ &mdash; 
   TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
-- **`    --working-dir`**=_`<./package/sub-package>`_ &mdash; 
-  The working directory where oxlint should be executed appends the path to the current work directory
 
 
 
