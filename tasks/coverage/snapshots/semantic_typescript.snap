@@ -47454,11 +47454,11 @@ rebuilt        : ScopeId(0): []
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator12.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["obj"]
-rebuilt        : ScopeId(0): ["_ref", "obj"]
+rebuilt        : ScopeId(0): ["_obj$arr", "obj"]
 Bindings mismatch:
-after transform: ScopeId(1): ["_ref", "i"]
+after transform: ScopeId(1): ["_obj$arr", "i"]
 rebuilt        : ScopeId(1): ["i"]
-Symbol scope ID mismatch for "_ref":
+Symbol scope ID mismatch for "_obj$arr":
 after transform: SymbolId(2): ScopeId(1)
 rebuilt        : SymbolId(0): ScopeId(0)
 
