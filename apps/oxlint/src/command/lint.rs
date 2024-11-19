@@ -68,6 +68,11 @@ pub struct BasicOptions {
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
+    
+    /// The working directory where oxlint should be executed
+    /// defaults to `env::current_dir()`
+    #[bpaf(long("working-dir"), hide_usage)]
+    pub working_dir: Option<PathBuf>,
 }
 
 // This is formatted according to

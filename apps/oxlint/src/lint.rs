@@ -51,6 +51,19 @@ impl Runner for LintRunner {
         let provided_path_count = paths.len();
         let now = Instant::now();
 
+        let mut cwd = env::current_dir().expect("Failed to get current working directory");
+        
+        // append the working directory paths
+        if let Some(working_dir) = basic_options.working_dir {
+            cwd.push(working_dir);
+
+            paths = paths.into_iter().map(|x| {
+                let mut new = cwd.clone();
+                new.push(x);
+                new
+            }).collect()
+        }
+
         // The ignore crate whitelists explicit paths, but priority
         // should be given to the ignore file. Many users lint
         // automatically and pass a list of changed files explicitly.
@@ -72,13 +85,7 @@ impl Runner for LintRunner {
                 });
             }
 
-            if let Ok(cwd) = env::current_dir() {
-                paths.push(cwd);
-            } else {
-                return CliRunResult::InvalidOptions {
-                    message: "Failed to get current working directory.".to_string(),
-                };
-            }
+            paths.push(cwd.clone());
         }
 
         let filter = match Self::get_filters(filter) {
@@ -96,8 +103,6 @@ impl Runner for LintRunner {
             Walk::new(&paths, &ignore_options).with_extensions(Extensions(extensions)).paths();
 
         let number_of_files = paths.len();
-
-        let cwd = std::env::current_dir().unwrap();
 
         let mut oxlintrc = if let Some(config_path) = basic_options.config.as_ref() {
             match Oxlintrc::from_file(config_path) {
@@ -131,6 +136,7 @@ impl Runner for LintRunner {
 
         let mut options =
             LintServiceOptions::new(cwd, paths).with_cross_module(builder.plugins().has_import());
+
         let linter = builder.build();
 
         let tsconfig = basic_options.tsconfig;
@@ -527,6 +533,16 @@ mod test {
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn working_dir_option() {
+        let args = &["--working-dir", "fixtures/linter", "debugger.js"];
+        let result = test(args);
+        assert!(result.number_of_rules > 0);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
     }
 
