@@ -60,11 +60,11 @@ impl Runner for LintRunner {
             paths = paths
                 .into_iter()
                 .map(|x| {
-                    let mut new = cwd.clone();
-                    new.push(x);
-                    new
+                    let mut path_with_cwd = cwd.clone();
+                    path_with_cwd.push(x);
+                    path_with_cwd
                 })
-                .collect()
+                .collect();
         }
 
         // The ignore crate whitelists explicit paths, but priority
