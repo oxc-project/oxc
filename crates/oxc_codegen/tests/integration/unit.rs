@@ -174,8 +174,8 @@ fn conditional() {
 fn coalesce() {
     test_minify("a ?? b", "a??b;");
     test_minify("a ?? b ?? c ?? d", "a??b??c??d;");
-    test_minify("a ?? (b ?? (c ?? d))", "a??(b??(c??d));");
-    test_minify("(a ?? (b ?? (c ?? d)))", "a??(b??(c??d));");
+    test_minify("a ?? (b ?? (c ?? d))", "a??b??c??d;");
+    test_minify("(a ?? (b ?? (c ?? d)))", "a??b??c??d;");
     test_minify("a, b ?? c", "a,b??c;");
     test_minify("(a, b) ?? c", "(a,b)??c;");
     test_minify("a, b ?? c, d", "a,b??c,d;");
@@ -188,8 +188,8 @@ fn coalesce() {
 #[test]
 fn logical_or() {
     test_minify("a || b || c", "a||b||c;");
-    test_minify("(a || (b || c)) || d", "a||(b||c)||d;");
-    test_minify("a || (b || (c || d))", "a||(b||(c||d));");
+    test_minify("(a || (b || c)) || d", "a||b||c||d;");
+    test_minify("a || (b || (c || d))", "a||b||c||d;");
     test_minify("a || b && c", "a||b&&c;");
     test_minify("(a || b) && c", "(a||b)&&c;");
     test_minify("a, b || c, d", "a,b||c,d;");
@@ -201,7 +201,7 @@ fn logical_or() {
 #[test]
 fn logical_and() {
     test_minify("a && b && c", "a&&b&&c;");
-    test_minify("a && ((b && c) && d)", "a&&(b&&c&&d);");
+    test_minify("a && ((b && c) && d)", "a&&b&&c&&d;");
     test_minify("((a && b) && c) && d", "a&&b&&c&&d;");
     test_minify("(a || b) && (c || d)", "(a||b)&&(c||d);");
     test_minify("a, b && c, d", "a,b&&c,d;");
