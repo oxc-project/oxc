@@ -102,3 +102,6 @@ pub const SKIP_TESTS: &[&str] = &[
     "babel-preset-env/test/fixtures/debug",
     "babel-preset-env/test/fixtures/debug-babel-7",
 ];
+
+pub const SNAPSHOT_TESTS: &[&str] =
+    &["babel-plugin-transform-object-rest-spread", "babel-plugin-transform-optional-chaining"];

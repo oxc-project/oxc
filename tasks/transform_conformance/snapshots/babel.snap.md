@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 319/633
+Passed: 327/574
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -296,170 +296,6 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (5/59)
-* assumption-ignoreFunctionLength/parameters-object-rest-used-in-default/input.js
-x Output mismatch
-
-* assumption-objectRestNoSymbols/rest-assignment-expression/input.js
-x Output mismatch
-
-* assumption-objectRestNoSymbols/rest-computed/input.js
-x Output mismatch
-
-* assumption-objectRestNoSymbols/rest-nested/input.js
-x Output mismatch
-
-* assumption-objectRestNoSymbols/rest-var-declaration/input.js
-x Output mismatch
-
-* assumption-pureGetters/rest-remove-unused-excluded-keys/input.js
-x Output mismatch
-
-* assumption-pureGetters/spread-single-call/input.js
-x Output mismatch
-
-* assumption-setSpreadProperties/assignment/input.js
-x Output mismatch
-
-* assumption-setSpreadProperties/expression/input.js
-x Output mismatch
-
-* assumption-setSpreadProperties/targets-support-object-assign/input.js
-x Output mismatch
-
-* assumption-setSpreadProperties-with-useBuiltIns/assignment/input.js
-x Output mismatch
-
-* assumption-setSpreadProperties-with-useBuiltIns/expression/input.js
-x Output mismatch
-
-* object-rest/assignment-expression/input.js
-x Output mismatch
-
-* object-rest/catch-clause/input.js
-x Output mismatch
-
-* object-rest/duplicate-decl-bug/input.js
-x Output mismatch
-
-* object-rest/export/input.mjs
-x Output mismatch
-
-* object-rest/for-x/input.js
-x Output mismatch
-
-* object-rest/for-x-array-pattern/input.js
-x Output mismatch
-
-* object-rest/for-x-completion-record/input.js
-x Output mismatch
-
-* object-rest/impure-computed/input.js
-x Output mismatch
-
-* object-rest/nested/input.js
-x Output mismatch
-
-* object-rest/nested-2/input.js
-x Output mismatch
-
-* object-rest/nested-array/input.js
-x Output mismatch
-
-* object-rest/nested-array-2/input.js
-x Output mismatch
-
-* object-rest/nested-computed-key/input.js
-x Output mismatch
-
-* object-rest/nested-default-value/input.js
-x Output mismatch
-
-* object-rest/nested-literal-property/input.js
-x Output mismatch
-
-* object-rest/nested-order/input.js
-x Output mismatch
-
-* object-rest/non-string-computed/input.js
-x Output mismatch
-
-* object-rest/null-destructuring/input.js
-x Output mismatch
-
-* object-rest/object-ref-computed/input.js
-x Output mismatch
-
-* object-rest/parameters/input.js
-x Output mismatch
-
-* object-rest/parameters-object-rest-used-in-default/input.js
-x Output mismatch
-
-* object-rest/remove-unused-excluded-keys-loose/input.js
-x Output mismatch
-
-* object-rest/symbol/input.js
-x Output mismatch
-
-* object-rest/template-literal-allLiterals-true-no-hoisting/input.js
-x Output mismatch
-
-* object-rest/template-literal-property-allLiterals-false/input.js
-x Output mismatch
-
-* object-rest/template-literal-property-allLiterals-true/input.js
-x Output mismatch
-
-* object-rest/variable-destructuring/input.js
-x Output mismatch
-
-* object-rest/with-array-rest/input.js
-x Output mismatch
-
-* object-spread/expression/input.js
-x Output mismatch
-
-* object-spread/side-effect/input.js
-x Output mismatch
-
-* object-spread-loose/assignment/input.js
-x Output mismatch
-
-* object-spread-loose/expression/input.js
-x Output mismatch
-
-* object-spread-loose/parameters-object-rest-used-in-default/input.js
-x Output mismatch
-
-* object-spread-loose/side-effect/input.js
-x Output mismatch
-
-* object-spread-loose/variable-declaration/input.js
-x Output mismatch
-
-* object-spread-loose-builtins/expression/input.js
-x Output mismatch
-
-* object-spread-loose-builtins/side-effect/input.js
-x Output mismatch
-
-* regression/gh-4904/input.js
-x Output mismatch
-
-* regression/gh-5151/input.js
-x Output mismatch
-
-* regression/gh-7304/input.mjs
-x Output mismatch
-
-* regression/gh-7388/input.js
-x Output mismatch
-
-* regression/gh-8323/input.js
-x Output mismatch
-
-
 # babel-plugin-transform-async-to-generator (11/28)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 x Output mismatch
@@ -572,7 +408,7 @@ rebuilt        : ScopeId(1): []
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (43/155)
+# babel-plugin-transform-typescript (45/155)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1205,12 +1041,6 @@ rebuilt        : SymbolId(2) "AliasModule"
 Unresolved reference IDs mismatch for "LongNameModule":
 after transform: [ReferenceId(1), ReferenceId(5)]
 rebuilt        : [ReferenceId(1)]
-
-* namespace/ambient-module-nested/input.ts
-Ambient modules cannot be nested in other modules or namespaces.
-
-* namespace/ambient-module-nested-exported/input.ts
-Ambient modules cannot be nested in other modules or namespaces.
 
 * namespace/clobber-class/input.ts
 Missing SymbolId: "_A"
@@ -2167,30 +1997,9 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 
-# babel-plugin-transform-react-jsx (124/145)
+# babel-plugin-transform-react-jsx (135/145)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 x Output mismatch
-
-* pure/false-pragma-comment-automatic-runtime/input.js
-pragma and pragmaFrag cannot be set when runtime is automatic.
-
-* pure/false-pragma-option-automatic-runtime/input.js
-pragma and pragmaFrag cannot be set when runtime is automatic.
-
-* pure/true-pragma-comment-automatic-runtime/input.js
-pragma and pragmaFrag cannot be set when runtime is automatic.
-
-* pure/true-pragma-option-automatic-runtime/input.js
-pragma and pragmaFrag cannot be set when runtime is automatic.
-
-* pure/unset-pragma-comment-automatic-runtime/input.js
-pragma and pragmaFrag cannot be set when runtime is automatic.
-
-* pure/unset-pragma-option-automatic-runtime/input.js
-pragma and pragmaFrag cannot be set when runtime is automatic.
-
-* react/should-disallow-spread-children/input.js
-Spread children are not supported in React.
 
 * react/should-disallow-valueless-key/input.js
 
@@ -2225,17 +2034,8 @@ Spread children are not supported in React.
    `----
 
 
-* react/should-warn-when-importSource-is-set/input.js
-importSource cannot be set when runtime is classic.
-
-* react/should-warn-when-importSource-pragma-is-set/input.js
-importSource cannot be set when runtime is classic.
-
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
-
-* react-automatic/should-disallow-spread-children/input.js
-Spread children are not supported in React.
 
 * react-automatic/should-disallow-valueless-key/input.js
 
@@ -2269,9 +2069,6 @@ Spread children are not supported in React.
    :  ^^^^^^^
    `----
 
-
-* react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
-pragma and pragmaFrag cannot be set when runtime is automatic.
 
 * spread-transform/transform-to-babel-extend/input.js
 x Output mismatch

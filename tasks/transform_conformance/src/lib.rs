@@ -75,59 +75,61 @@ impl TestRunner {
             (packages_root(), CONFORMANCE_SNAPSHOT, EXEC_SNAPSHOT),
             (oxc_test_root(), OXC_CONFORMANCE_SNAPSHOT, OXC_EXEC_SNAPSHOT),
         ] {
-            let (transform_paths, exec_files) =
-                Self::glob_files(root, self.options.filter.as_ref());
-            self.generate_snapshot(root, &snap_root().join(snapshot), transform_paths);
-
-            if self.options.exec && !exec_files.is_empty() {
+            if self.options.exec {
                 let fixture_root = fixture_root();
                 let _ = fs::remove_dir_all(&fixture_root);
                 let _ = fs::create_dir(&fixture_root);
-                let dest = snap_root().join(exec_snapshot);
-                self.generate_snapshot(root, &dest, exec_files);
-                self.run_vitest(&dest);
+            }
+            let transform_paths = Self::generate_test_cases(root, self.options.filter.as_ref());
+            self.generate_snapshot(root, &snap_root().join(snapshot), transform_paths);
+            if self.options.exec {
+                self.run_vitest(&snap_root().join(exec_snapshot));
             }
         }
     }
 
-    fn glob_files(
+    fn generate_test_cases(
         root: &Path,
         filter: Option<&String>,
-    ) -> (IndexMap<String, Vec<TestCase>>, IndexMap<String, Vec<TestCase>>) {
+    ) -> IndexMap<String, Vec<TestCase>> {
         let cwd = root.parent().unwrap_or(root);
         // use `IndexMap` to keep the order of the test cases the same in insert order.
         let mut transform_files = IndexMap::<String, Vec<TestCase>>::new();
-        let mut exec_files = IndexMap::<String, Vec<TestCase>>::new();
 
         for case in PLUGINS {
             let root = root.join(case).join("test/fixtures");
-            let (mut transform_paths, mut exec_paths): (Vec<TestCase>, Vec<TestCase>) =
-                WalkDir::new(root)
-                    .into_iter()
-                    .filter_map(Result::ok)
-                    .filter_map(|e| {
-                        let path = e.path();
-                        if let Some(filter) = filter {
-                            if !path.to_string_lossy().contains(filter) {
-                                return None;
-                            }
+
+            let mut cases = WalkDir::new(root)
+                .into_iter()
+                .filter_map(Result::ok)
+                .filter(|e| {
+                    if let Some(filter) = filter {
+                        if !e.path().to_string_lossy().contains(filter) {
+                            return false;
                         }
-                        TestCase::new(cwd, path).filter(|test_case| !test_case.skip_test_case())
-                    })
-                    .partition(|case| case.kind == TestCaseKind::Conformance);
+                    }
+                    true
+                })
+                .filter_map(|e| TestCase::new(cwd, e.path()))
+                .filter(|test_case| !test_case.skip_test_case())
+                .map(|mut case| {
+                    case.test(filter.is_some());
+                    case
+                })
+                .collect::<Vec<_>>();
 
-            transform_paths.sort_unstable_by(|a, b| a.path.cmp(&b.path));
-            exec_paths.sort_unstable_by(|a, b| a.path.cmp(&b.path));
+            cases.sort_unstable_by(|a, b| a.path.cmp(&b.path));
 
-            if !transform_paths.is_empty() {
-                transform_files.insert((*case).to_string(), transform_paths);
-            }
-            if !exec_paths.is_empty() {
-                exec_files.insert((*case).to_string(), exec_paths);
+            let transform_cases = cases
+                .into_iter()
+                .filter(|case| case.kind == TestCaseKind::Conformance)
+                .collect::<Vec<_>>();
+            if !transform_cases.is_empty() {
+                transform_files.insert((*case).to_string(), transform_cases);
             }
         }
 
-        (transform_files, exec_files)
+        transform_files
     }
 
     fn generate_snapshot(&self, root: &Path, dest: &Path, paths: IndexMap<String, Vec<TestCase>>) {
@@ -142,13 +144,8 @@ impl TestRunner {
             total += num_of_tests;
 
             // Run the test
-            let (passed, failed): (Vec<TestCase>, Vec<TestCase>) = test_cases
-                .into_iter()
-                .map(|mut test_case| {
-                    test_case.test(self.options.filter.is_some());
-                    test_case
-                })
-                .partition(|test_case| test_case.errors.is_empty());
+            let (passed, failed): (Vec<TestCase>, Vec<TestCase>) =
+                test_cases.into_iter().partition(|test_case| test_case.errors.is_empty());
             all_passed_count += passed.len();
 
             // Snapshot

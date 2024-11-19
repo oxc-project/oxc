@@ -16,7 +16,7 @@ use oxc::{
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 
 use crate::{
-    constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
+    constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS, SNAPSHOT_TESTS},
     driver::Driver,
     fixture_root, oxc_test_root, packages_root,
 };
@@ -25,8 +25,9 @@ use crate::{
 pub struct TestCase {
     pub kind: TestCaseKind,
     pub path: PathBuf,
-    pub options: BabelOptions,
-    pub transform_options: Result<TransformOptions, Vec<Error>>,
+    options: BabelOptions,
+    source_type: SourceType,
+    transform_options: Result<TransformOptions, Vec<Error>>,
     pub errors: Vec<OxcDiagnostic>,
 }
 
@@ -34,6 +35,7 @@ pub struct TestCase {
 pub enum TestCaseKind {
     Conformance,
     Exec,
+    Snapshot,
 }
 
 impl TestCase {
@@ -54,18 +56,44 @@ impl TestCase {
             TestCaseKind::Exec
         }
         // named `input.[ext]` or `input.d.ts`
-        else if (path.file_stem().is_some_and(|name| name == "input")
-            && path
-                .extension()
-                .is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap())))
-            || path.file_name().is_some_and(|name| name == "input.d.ts")
+        else if path.file_stem().is_some_and(|name| name == "input" || name == "input.d")
+            && path.extension().is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap()))
         {
-            TestCaseKind::Conformance
+            if path
+                .strip_prefix(packages_root())
+                .is_ok_and(|p| SNAPSHOT_TESTS.iter().any(|t| p.to_string_lossy().starts_with(t)))
+            {
+                TestCaseKind::Snapshot
+            } else {
+                TestCaseKind::Conformance
+            }
         } else {
             return None;
         };
 
-        Some(Self { kind, path, options, transform_options, errors })
+        let source_type = Self::source_type(&path, &options);
+
+        Some(Self { kind, path, options, source_type, transform_options, errors })
+    }
+
+    fn source_type(path: &Path, options: &BabelOptions) -> SourceType {
+        // Some babel test cases have a js extension, but contain typescript code.
+        // Therefore, if the typescript plugin exists, enable typescript.
+        let mut source_type = SourceType::from_path(path)
+            .unwrap()
+            .with_script(true)
+            .with_jsx(options.plugins.syntax_jsx);
+        source_type = match options.source_type.as_deref() {
+            Some("unambiguous") => source_type.with_unambiguous(true),
+            Some("script") => source_type.with_script(true),
+            Some("module") => source_type.with_module(true),
+            Some(s) => panic!("Unexpected source type {s}"),
+            None => source_type,
+        };
+        source_type = source_type.with_typescript(
+            options.plugins.typescript.is_some() || options.plugins.syntax_typescript.is_some(),
+        );
+        source_type
     }
 
     pub fn skip_test_case(&self) -> bool {
@@ -131,33 +159,42 @@ impl TestCase {
         false
     }
 
-    fn transform(&self, path: &Path) -> Result<Driver, OxcDiagnostic> {
+    fn transform(&self, mode: HelperLoaderMode) -> Result<String, String> {
+        let path = &self.path;
         let transform_options = match &self.transform_options {
             Ok(transform_options) => transform_options,
             Err(json_err) => {
-                return Err(OxcDiagnostic::error(format!("{json_err:?}")));
+                let error = json_err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");
+                return Err(error);
             }
         };
 
         let source_text = fs::read_to_string(path).unwrap();
 
-        // Some babel test cases have a js extension, but contain typescript code.
-        // Therefore, if the typescript plugin exists, enable typescript.
-        let source_type = SourceType::from_path(path).unwrap().with_typescript(
-            self.options.plugins.syntax_typescript.is_some()
-                || self.options.plugins.typescript.is_some(),
-        );
-
+        let project_root = project_root();
         let mut options = transform_options.clone();
-        options.helper_loader.mode = HelperLoaderMode::Runtime;
-        let driver = Driver::new(false, options).execute(&source_text, source_type, path);
-        Ok(driver)
+        options.helper_loader.mode = mode;
+        let mut driver = Driver::new(false, options).execute(&source_text, self.source_type, path);
+        let errors = driver.errors();
+        if !errors.is_empty() {
+            let source = NamedSource::new(
+                path.strip_prefix(project_root).unwrap().to_string_lossy(),
+                source_text.to_string(),
+            );
+            return Err(errors
+                .into_iter()
+                .map(|err| format!("{:?}", err.with_source_code(source.clone())))
+                .collect::<Vec<_>>()
+                .join("\n"));
+        }
+        Ok(driver.printed())
     }
 
     pub fn test(&mut self, filtered: bool) {
         match self.kind {
             TestCaseKind::Conformance => self.test_conformance(filtered),
             TestCaseKind::Exec => self.test_exec(filtered),
+            TestCaseKind::Snapshot => {}
         }
     }
 
@@ -172,61 +209,22 @@ impl TestCase {
         let allocator = Allocator::default();
         let input = fs::read_to_string(&self.path).unwrap();
 
-        let source_type = {
-            let mut source_type = SourceType::from_path(&self.path)
-                .unwrap()
-                .with_script(true)
-                .with_jsx(self.options.plugins.syntax_jsx);
-
-            source_type = match self.options.source_type.as_deref() {
-                Some("unambiguous") => source_type.with_unambiguous(true),
-                Some("script") => source_type.with_script(true),
-                Some("module") => source_type.with_module(true),
-                Some(s) => panic!("Unexpected source type {s}"),
-                None => source_type,
-            };
-
-            source_type = source_type.with_typescript(
-                self.options.plugins.typescript.is_some()
-                    || self.options.plugins.syntax_typescript.is_some(),
-            );
-
-            source_type
-        };
-
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("output_path: {output_path:?}");
         }
 
-        let project_root = project_root();
         let mut transformed_code = String::new();
         let mut actual_errors = None;
         let mut transform_options = None;
 
-        match &self.transform_options {
-            Err(json_err) => {
-                let error = json_err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");
+        match self.transform(HelperLoaderMode::External) {
+            Err(error) => {
                 actual_errors.replace(get_babel_error(&error));
             }
-            Ok(options) => {
-                transform_options.replace(options.clone());
-                let mut driver =
-                    Driver::new(false, options.clone()).execute(&input, source_type, &self.path);
-                transformed_code = driver.printed();
-                let errors = driver.errors();
-                if !errors.is_empty() {
-                    let source = NamedSource::new(
-                        self.path.strip_prefix(project_root).unwrap().to_string_lossy(),
-                        input.to_string(),
-                    );
-                    let error = errors
-                        .into_iter()
-                        .map(|err| format!("{:?}", err.with_source_code(source.clone())))
-                        .collect::<Vec<_>>()
-                        .join("\n");
-                    actual_errors.replace(get_babel_error(&error));
-                }
+            Ok(code) => {
+                transform_options.replace(self.transform_options.as_ref().unwrap().clone());
+                transformed_code = code;
             }
         }
 
@@ -243,7 +241,7 @@ impl TestCase {
                 String::default,
                 |output| {
                     // Get expected code by parsing the source text, so we can get the same code generated result.
-                    let ret = Parser::new(&allocator, &output, source_type)
+                    let ret = Parser::new(&allocator, &output, self.source_type)
                         .with_options(ParseOptions {
                             // Related: async to generator, regression
                             allow_return_outside_function: true,
@@ -309,7 +307,7 @@ impl TestCase {
             if let Some(options) = transform_options {
                 let mismatch_errors =
                     Driver::new(/* check transform mismatch */ true, options)
-                        .execute(&input, source_type, &self.path)
+                        .execute(&input, self.source_type, &self.path)
                         .errors();
                 self.errors.extend(mismatch_errors);
             }
@@ -324,8 +322,8 @@ impl TestCase {
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
         }
 
-        let result = match self.transform(&self.path) {
-            Ok(mut driver) => driver.printed(),
+        let result = match self.transform(HelperLoaderMode::Runtime) {
+            Ok(code) => code,
             Err(error) => {
                 if filtered {
                     println!("Transform Errors:\n{error:?}\n",);
