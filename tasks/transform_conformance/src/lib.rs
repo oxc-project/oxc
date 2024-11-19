@@ -80,7 +80,7 @@ impl TestRunner {
                 let _ = fs::remove_dir_all(&fixture_root);
                 let _ = fs::create_dir(&fixture_root);
             }
-            let transform_paths = Self::generate_test_cases(root, self.options.filter.as_ref());
+            let transform_paths = Self::generate_test_cases(root, &self.options);
             self.generate_snapshot(root, &snap_root().join(snapshot), transform_paths);
             if self.options.exec {
                 self.run_vitest(&snap_root().join(exec_snapshot));
@@ -90,7 +90,7 @@ impl TestRunner {
 
     fn generate_test_cases(
         root: &Path,
-        filter: Option<&String>,
+        options: &TestRunnerOptions,
     ) -> IndexMap<String, Vec<TestCase>> {
         let cwd = root.parent().unwrap_or(root);
         // use `IndexMap` to keep the order of the test cases the same in insert order.
@@ -103,7 +103,7 @@ impl TestRunner {
                 .into_iter()
                 .filter_map(Result::ok)
                 .filter(|e| {
-                    if let Some(filter) = filter {
+                    if let Some(filter) = &options.filter {
                         if !e.path().to_string_lossy().contains(filter) {
                             return false;
                         }
@@ -113,7 +113,7 @@ impl TestRunner {
                 .filter_map(|e| TestCase::new(cwd, e.path()))
                 .filter(|test_case| !test_case.skip_test_case())
                 .map(|mut case| {
-                    case.test(filter.is_some());
+                    case.test(options);
                     case
                 })
                 .collect::<Vec<_>>();

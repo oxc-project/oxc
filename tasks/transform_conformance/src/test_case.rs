@@ -18,7 +18,7 @@ use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 use crate::{
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS, SNAPSHOT_TESTS},
     driver::Driver,
-    fixture_root, oxc_test_root, packages_root, snap_root,
+    fixture_root, oxc_test_root, packages_root, snap_root, TestRunnerOptions,
 };
 
 #[derive(Debug)]
@@ -190,10 +190,15 @@ impl TestCase {
         Ok(driver.printed())
     }
 
-    pub fn test(&mut self, filtered: bool) {
+    pub fn test(&mut self, options: &TestRunnerOptions) {
+        let filtered = options.filter.is_some();
         match self.kind {
             TestCaseKind::Conformance => self.test_conformance(filtered),
-            TestCaseKind::Exec => self.test_exec(filtered),
+            TestCaseKind::Exec => {
+                if options.exec {
+                    self.test_exec(filtered);
+                }
+            }
             TestCaseKind::Snapshot => self.test_snapshot(filtered),
         }
     }
