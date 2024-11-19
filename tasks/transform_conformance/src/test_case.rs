@@ -18,7 +18,7 @@ use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 use crate::{
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS, SNAPSHOT_TESTS},
     driver::Driver,
-    fixture_root, oxc_test_root, packages_root,
+    fixture_root, oxc_test_root, packages_root, snap_root,
 };
 
 #[derive(Debug)]
@@ -194,7 +194,7 @@ impl TestCase {
         match self.kind {
             TestCaseKind::Conformance => self.test_conformance(filtered),
             TestCaseKind::Exec => self.test_exec(filtered),
-            TestCaseKind::Snapshot => {}
+            TestCaseKind::Snapshot => self.test_snapshot(filtered),
         }
     }
 
@@ -342,7 +342,6 @@ impl TestCase {
             .unwrap();
         let new_file_name: String =
             normalize_path(unprefixed_path).split('/').collect::<Vec<&str>>().join("-");
-
         let mut target_path = fixture_root().join(new_file_name);
         target_path.set_extension("test.js");
         let content = Self::template(content);
@@ -372,6 +371,24 @@ test("exec", () => {{
 {code}
 }})"#
         )
+    }
+
+    fn test_snapshot(&self, filtered: bool) {
+        let result = match self.transform(HelperLoaderMode::Runtime) {
+            Ok(code) => code,
+            Err(error) => error,
+        };
+        let path = snap_root().join(self.path.strip_prefix(packages_root()).unwrap());
+        if filtered {
+            println!("Input path: {:?}", &self.path);
+            println!("Output path: {path:?}");
+            println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
+            println!("Output:\n{result}\n");
+        }
+        if fs::write(&path, &result).is_err() {
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, &result).unwrap();
+        }
     }
 }
 

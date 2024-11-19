@@ -7,7 +7,7 @@ use crate::{
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
     es2017::ES2017Options,
-    es2018::{ES2018Options, ObjectRestSpreadOptions},
+    es2018::ES2018Options,
     es2019::ES2019Options,
     es2020::ES2020Options,
     es2021::ES2021Options,
@@ -71,15 +71,7 @@ impl EnvOptions {
             },
             es2016: ES2016Options { exponentiation_operator: true },
             es2017: ES2017Options { async_to_generator: true },
-            es2018: ES2018Options {
-                // Turned off because it is not ready.
-                object_rest_spread: if include_unfinished_plugins {
-                    Some(ObjectRestSpreadOptions::default())
-                } else {
-                    None
-                },
-                async_generator_functions: true,
-            },
+            es2018: ES2018Options { object_rest_spread: None, async_generator_functions: true },
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options {
                 nullish_coalescing_operator: true,
