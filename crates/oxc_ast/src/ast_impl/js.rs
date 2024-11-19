@@ -1011,16 +1011,6 @@ impl<'a> Function<'a> {
     }
 }
 
-// FIXME: This is a workaround for we can't get current address by `TraverseCtx`,
-// we will remove this once we support `TraverseCtx::current_address`.
-// See: <https://github.com/oxc-project/oxc/pull/6881#discussion_r1816560516>
-impl GetAddress for Function<'_> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self)
-    }
-}
-
 impl<'a> FormalParameters<'a> {
     /// Number of parameters bound in this parameter list.
     pub fn parameters_count(&self) -> usize {
