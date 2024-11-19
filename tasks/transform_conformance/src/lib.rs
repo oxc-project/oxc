@@ -13,7 +13,7 @@ use std::{
 use constants::PLUGINS;
 use indexmap::IndexMap;
 use oxc_tasks_common::{normalize_path, project_root, Snapshot};
-use test_case::TestCaseKind;
+use test_case::{TestCase, TestCaseKind};
 use walkdir::WalkDir;
 
 #[test]
@@ -93,15 +93,15 @@ impl TestRunner {
     fn glob_files(
         root: &Path,
         filter: Option<&String>,
-    ) -> (IndexMap<String, Vec<TestCaseKind>>, IndexMap<String, Vec<TestCaseKind>>) {
+    ) -> (IndexMap<String, Vec<TestCase>>, IndexMap<String, Vec<TestCase>>) {
         let cwd = root.parent().unwrap_or(root);
         // use `IndexMap` to keep the order of the test cases the same in insert order.
-        let mut transform_files = IndexMap::<String, Vec<TestCaseKind>>::new();
-        let mut exec_files = IndexMap::<String, Vec<TestCaseKind>>::new();
+        let mut transform_files = IndexMap::<String, Vec<TestCase>>::new();
+        let mut exec_files = IndexMap::<String, Vec<TestCase>>::new();
 
         for case in PLUGINS {
             let root = root.join(case).join("test/fixtures");
-            let (mut transform_paths, mut exec_paths): (Vec<TestCaseKind>, Vec<TestCaseKind>) =
+            let (mut transform_paths, mut exec_paths): (Vec<TestCase>, Vec<TestCase>) =
                 WalkDir::new(root)
                     .into_iter()
                     .filter_map(Result::ok)
@@ -112,12 +112,12 @@ impl TestRunner {
                                 return None;
                             }
                         }
-                        TestCaseKind::new(cwd, path).filter(|test_case| !test_case.skip_test_case())
+                        TestCase::new(cwd, path).filter(|test_case| !test_case.skip_test_case())
                     })
-                    .partition(|p| matches!(p, TestCaseKind::Transform(_)));
+                    .partition(|case| case.kind == TestCaseKind::Conformance);
 
-            transform_paths.sort_unstable_by(|a, b| a.path().cmp(b.path()));
-            exec_paths.sort_unstable_by(|a, b| a.path().cmp(b.path()));
+            transform_paths.sort_unstable_by(|a, b| a.path.cmp(&b.path));
+            exec_paths.sort_unstable_by(|a, b| a.path.cmp(&b.path));
 
             if !transform_paths.is_empty() {
                 transform_files.insert((*case).to_string(), transform_paths);
@@ -130,12 +130,7 @@ impl TestRunner {
         (transform_files, exec_files)
     }
 
-    fn generate_snapshot(
-        &self,
-        root: &Path,
-        dest: &Path,
-        paths: IndexMap<String, Vec<TestCaseKind>>,
-    ) {
+    fn generate_snapshot(&self, root: &Path, dest: &Path, paths: IndexMap<String, Vec<TestCase>>) {
         let mut snapshot = String::new();
         let mut total = 0;
         let mut all_passed = vec![];
@@ -147,13 +142,13 @@ impl TestRunner {
             total += num_of_tests;
 
             // Run the test
-            let (passed, failed): (Vec<TestCaseKind>, Vec<TestCaseKind>) = test_cases
+            let (passed, failed): (Vec<TestCase>, Vec<TestCase>) = test_cases
                 .into_iter()
                 .map(|mut test_case| {
                     test_case.test(self.options.filter.is_some());
                     test_case
                 })
-                .partition(|test_case| test_case.errors().is_empty());
+                .partition(|test_case| test_case.errors.is_empty());
             all_passed_count += passed.len();
 
             // Snapshot
@@ -166,9 +161,9 @@ impl TestRunner {
                 for test_case in failed {
                     snapshot.push_str("* ");
                     snapshot.push_str(&normalize_path(
-                        test_case.path().strip_prefix(&case_root).unwrap(),
+                        test_case.path.strip_prefix(&case_root).unwrap(),
                     ));
-                    let errors = test_case.errors();
+                    let errors = test_case.errors;
                     if !errors.is_empty() {
                         snapshot.push('\n');
                         for error in errors {
