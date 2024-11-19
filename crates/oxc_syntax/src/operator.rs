@@ -95,6 +95,35 @@ impl AssignmentOperator {
         )
     }
 
+    /// Get [`LogicalOperator`] corresponding to this [`AssignmentOperator`].
+    pub fn to_logical_operator(self) -> Option<LogicalOperator> {
+        match self {
+            Self::LogicalAnd => Some(LogicalOperator::And),
+            Self::LogicalOr => Some(LogicalOperator::Or),
+            Self::LogicalNullish => Some(LogicalOperator::Coalesce),
+            _ => None,
+        }
+    }
+
+    /// Get [`BinaryOperator`] corresponding to this [`AssignmentOperator`].
+    pub fn to_binary_operator(self) -> Option<BinaryOperator> {
+        match self {
+            Self::Addition => Some(BinaryOperator::Addition),
+            Self::Subtraction => Some(BinaryOperator::Subtraction),
+            Self::Multiplication => Some(BinaryOperator::Multiplication),
+            Self::Division => Some(BinaryOperator::Division),
+            Self::Remainder => Some(BinaryOperator::Remainder),
+            Self::ShiftLeft => Some(BinaryOperator::ShiftLeft),
+            Self::ShiftRight => Some(BinaryOperator::ShiftRight),
+            Self::ShiftRightZeroFill => Some(BinaryOperator::ShiftRightZeroFill),
+            Self::BitwiseOR => Some(BinaryOperator::BitwiseOR),
+            Self::BitwiseXOR => Some(BinaryOperator::BitwiseXOR),
+            Self::BitwiseAnd => Some(BinaryOperator::BitwiseAnd),
+            Self::Exponential => Some(BinaryOperator::Exponential),
+            _ => None,
+        }
+    }
+
     /// Get the string representation of this operator.
     ///
     /// This is the same as how the operator appears in source code.
