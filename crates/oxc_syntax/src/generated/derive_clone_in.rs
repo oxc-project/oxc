@@ -44,16 +44,16 @@ impl<'alloc> CloneIn<'alloc> for AssignmentOperator {
             Self::Multiplication => AssignmentOperator::Multiplication,
             Self::Division => AssignmentOperator::Division,
             Self::Remainder => AssignmentOperator::Remainder,
+            Self::Exponential => AssignmentOperator::Exponential,
             Self::ShiftLeft => AssignmentOperator::ShiftLeft,
             Self::ShiftRight => AssignmentOperator::ShiftRight,
             Self::ShiftRightZeroFill => AssignmentOperator::ShiftRightZeroFill,
             Self::BitwiseOR => AssignmentOperator::BitwiseOR,
             Self::BitwiseXOR => AssignmentOperator::BitwiseXOR,
             Self::BitwiseAnd => AssignmentOperator::BitwiseAnd,
-            Self::LogicalAnd => AssignmentOperator::LogicalAnd,
             Self::LogicalOr => AssignmentOperator::LogicalOr,
+            Self::LogicalAnd => AssignmentOperator::LogicalAnd,
             Self::LogicalNullish => AssignmentOperator::LogicalNullish,
-            Self::Exponential => AssignmentOperator::Exponential,
         }
     }
 }
@@ -70,20 +70,20 @@ impl<'alloc> CloneIn<'alloc> for BinaryOperator {
             Self::LessEqualThan => BinaryOperator::LessEqualThan,
             Self::GreaterThan => BinaryOperator::GreaterThan,
             Self::GreaterEqualThan => BinaryOperator::GreaterEqualThan,
-            Self::ShiftLeft => BinaryOperator::ShiftLeft,
-            Self::ShiftRight => BinaryOperator::ShiftRight,
-            Self::ShiftRightZeroFill => BinaryOperator::ShiftRightZeroFill,
             Self::Addition => BinaryOperator::Addition,
             Self::Subtraction => BinaryOperator::Subtraction,
             Self::Multiplication => BinaryOperator::Multiplication,
             Self::Division => BinaryOperator::Division,
             Self::Remainder => BinaryOperator::Remainder,
+            Self::Exponential => BinaryOperator::Exponential,
+            Self::ShiftLeft => BinaryOperator::ShiftLeft,
+            Self::ShiftRight => BinaryOperator::ShiftRight,
+            Self::ShiftRightZeroFill => BinaryOperator::ShiftRightZeroFill,
             Self::BitwiseOR => BinaryOperator::BitwiseOR,
             Self::BitwiseXOR => BinaryOperator::BitwiseXOR,
             Self::BitwiseAnd => BinaryOperator::BitwiseAnd,
             Self::In => BinaryOperator::In,
             Self::Instanceof => BinaryOperator::Instanceof,
-            Self::Exponential => BinaryOperator::Exponential,
         }
     }
 }
@@ -103,8 +103,8 @@ impl<'alloc> CloneIn<'alloc> for UnaryOperator {
     type Cloned = UnaryOperator;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::UnaryNegation => UnaryOperator::UnaryNegation,
             Self::UnaryPlus => UnaryOperator::UnaryPlus,
+            Self::UnaryNegation => UnaryOperator::UnaryNegation,
             Self::LogicalNot => UnaryOperator::LogicalNot,
             Self::BitwiseNot => UnaryOperator::BitwiseNot,
             Self::Typeof => UnaryOperator::Typeof,

@@ -1714,16 +1714,16 @@ export type AssignmentOperator =
   | '*='
   | '/='
   | '%='
+  | '**='
   | '<<='
   | '>>='
   | '>>>='
   | '|='
   | '^='
   | '&='
-  | '&&='
   | '||='
-  | '??='
-  | '**=';
+  | '&&='
+  | '??=';
 
 export type BinaryOperator =
   | '=='
@@ -1734,24 +1734,24 @@ export type BinaryOperator =
   | '<='
   | '>'
   | '>='
-  | '<<'
-  | '>>'
-  | '>>>'
   | '+'
   | '-'
   | '*'
   | '/'
   | '%'
+  | '**'
+  | '<<'
+  | '>>'
+  | '>>>'
   | '|'
   | '^'
   | '&'
   | 'in'
-  | 'instanceof'
-  | '**';
+  | 'instanceof';
 
 export type LogicalOperator = '||' | '&&' | '??';
 
-export type UnaryOperator = '-' | '+' | '!' | '~' | 'typeof' | 'void' | 'delete';
+export type UnaryOperator = '+' | '-' | '!' | '~' | 'typeof' | 'void' | 'delete';
 
 export type UpdateOperator = '++' | '--';
 

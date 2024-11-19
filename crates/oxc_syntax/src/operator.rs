@@ -37,42 +37,42 @@ pub enum AssignmentOperator {
     /// `%=`
     #[estree(rename = "%=")]
     Remainder = 5,
+    /// `**=`
+    #[estree(rename = "**=")]
+    Exponential = 6,
     /// `<<=`
     #[estree(rename = "<<=")]
-    ShiftLeft = 6,
+    ShiftLeft = 7,
     /// `>>=`
     #[estree(rename = ">>=")]
-    ShiftRight = 7,
+    ShiftRight = 8,
     /// `>>>=`
     #[estree(rename = ">>>=")]
-    ShiftRightZeroFill = 8,
+    ShiftRightZeroFill = 9,
     /// `|=`
     #[estree(rename = "|=")]
-    BitwiseOR = 9,
+    BitwiseOR = 10,
     /// `^=`
     #[estree(rename = "^=")]
-    BitwiseXOR = 10,
+    BitwiseXOR = 11,
     /// `&=`
     #[estree(rename = "&=")]
-    BitwiseAnd = 11,
-    /// `&&=`
-    #[estree(rename = "&&=")]
-    LogicalAnd = 12,
+    BitwiseAnd = 12,
     /// `||=`
     #[estree(rename = "||=")]
     LogicalOr = 13,
+    /// `&&=`
+    #[estree(rename = "&&=")]
+    LogicalAnd = 14,
     /// `??=`
     #[estree(rename = "??=")]
-    LogicalNullish = 14,
-    /// `**=`
-    #[estree(rename = "**=")]
-    Exponential = 15,
+    LogicalNullish = 15,
 }
 
 impl AssignmentOperator {
     /// Returns `true` for '||=`, `&&=`, and `??=`.
     pub fn is_logical(self) -> bool {
-        matches!(self, Self::LogicalAnd | Self::LogicalOr | Self::LogicalNullish)
+        matches!(self, Self::LogicalOr | Self::LogicalAnd | Self::LogicalNullish)
     }
 
     /// Returns `true` for `+=`, `-=`, `*=`, `/=`, `%=`, and `**=`.
@@ -90,16 +90,16 @@ impl AssignmentOperator {
     pub fn is_bitwise(self) -> bool {
         matches!(
             self,
-            Self::BitwiseOR | Self::BitwiseXOR | Self::BitwiseAnd
-            | Self::ShiftLeft | Self::ShiftRight | Self::ShiftRightZeroFill
+            Self::ShiftLeft | Self::ShiftRight | Self::ShiftRightZeroFill
+            | Self::BitwiseOR | Self::BitwiseXOR | Self::BitwiseAnd
         )
     }
 
     /// Get [`LogicalOperator`] corresponding to this [`AssignmentOperator`].
     pub fn to_logical_operator(self) -> Option<LogicalOperator> {
         match self {
-            Self::LogicalAnd => Some(LogicalOperator::And),
             Self::LogicalOr => Some(LogicalOperator::Or),
+            Self::LogicalAnd => Some(LogicalOperator::And),
             Self::LogicalNullish => Some(LogicalOperator::Coalesce),
             _ => None,
         }
@@ -113,13 +113,13 @@ impl AssignmentOperator {
             Self::Multiplication => Some(BinaryOperator::Multiplication),
             Self::Division => Some(BinaryOperator::Division),
             Self::Remainder => Some(BinaryOperator::Remainder),
+            Self::Exponential => Some(BinaryOperator::Exponential),
             Self::ShiftLeft => Some(BinaryOperator::ShiftLeft),
             Self::ShiftRight => Some(BinaryOperator::ShiftRight),
             Self::ShiftRightZeroFill => Some(BinaryOperator::ShiftRightZeroFill),
             Self::BitwiseOR => Some(BinaryOperator::BitwiseOR),
             Self::BitwiseXOR => Some(BinaryOperator::BitwiseXOR),
             Self::BitwiseAnd => Some(BinaryOperator::BitwiseAnd),
-            Self::Exponential => Some(BinaryOperator::Exponential),
             _ => None,
         }
     }
@@ -135,16 +135,16 @@ impl AssignmentOperator {
             Self::Multiplication => "*=",
             Self::Division => "/=",
             Self::Remainder => "%=",
+            Self::Exponential => "**=",
             Self::ShiftLeft => "<<=",
             Self::ShiftRight => ">>=",
             Self::ShiftRightZeroFill => ">>>=",
             Self::BitwiseOR => "|=",
             Self::BitwiseXOR => "^=",
             Self::BitwiseAnd => "&=",
-            Self::LogicalAnd => "&&=",
             Self::LogicalOr => "||=",
+            Self::LogicalAnd => "&&=",
             Self::LogicalNullish => "??=",
-            Self::Exponential => "**=",
         }
     }
 }
@@ -182,48 +182,48 @@ pub enum BinaryOperator {
     /// `>=`
     #[estree(rename = ">=")]
     GreaterEqualThan = 7,
-    /// `<<`
-    #[estree(rename = "<<")]
-    ShiftLeft = 8,
-    /// `>>`
-    #[estree(rename = ">>")]
-    ShiftRight = 9,
-    /// `>>>`
-    #[estree(rename = ">>>")]
-    ShiftRightZeroFill = 10,
     /// `+`
     #[estree(rename = "+")]
-    Addition = 11,
+    Addition = 8,
     /// `-`
     #[estree(rename = "-")]
-    Subtraction = 12,
+    Subtraction = 9,
     /// `*`
     #[estree(rename = "*")]
-    Multiplication = 13,
+    Multiplication = 10,
     /// `/`
     #[estree(rename = "/")]
-    Division = 14,
+    Division = 11,
     /// `%`
     #[estree(rename = "%")]
-    Remainder = 15,
-    /// `|`
-    #[estree(rename = "|")]
-    BitwiseOR = 16,
-    /// `^`
-    #[estree(rename = "^")]
-    BitwiseXOR = 17,
-    /// `&`
-    #[estree(rename = "&")]
-    BitwiseAnd = 18,
-    /// `in`
-    #[estree(rename = "in")]
-    In = 19,
-    /// `instanceof`
-    #[estree(rename = "instanceof")]
-    Instanceof = 20,
+    Remainder = 12,
     /// `**`
     #[estree(rename = "**")]
-    Exponential = 21,
+    Exponential = 13,
+    /// `<<`
+    #[estree(rename = "<<")]
+    ShiftLeft = 14,
+    /// `>>`
+    #[estree(rename = ">>")]
+    ShiftRight = 15,
+    /// `>>>`
+    #[estree(rename = ">>>")]
+    ShiftRightZeroFill = 16,
+    /// `|`
+    #[estree(rename = "|")]
+    BitwiseOR = 17,
+    /// `^`
+    #[estree(rename = "^")]
+    BitwiseXOR = 18,
+    /// `&`
+    #[estree(rename = "&")]
+    BitwiseAnd = 19,
+    /// `in`
+    #[estree(rename = "in")]
+    In = 20,
+    /// `instanceof`
+    #[estree(rename = "instanceof")]
+    Instanceof = 21,
 }
 
 impl BinaryOperator {
@@ -262,7 +262,7 @@ impl BinaryOperator {
 
     /// Returns `true` if this is an [`In`](BinaryOperator::In) operator.
     pub fn is_in(self) -> bool {
-        matches!(self, Self::In)
+        self == Self::In
     }
 
     /// Returns `true` for any bitwise operator
@@ -321,20 +321,20 @@ impl BinaryOperator {
             Self::LessEqualThan => "<=",
             Self::GreaterThan => ">",
             Self::GreaterEqualThan => ">=",
-            Self::ShiftLeft => "<<",
-            Self::ShiftRight => ">>",
-            Self::ShiftRightZeroFill => ">>>",
             Self::Addition => "+",
             Self::Subtraction => "-",
             Self::Multiplication => "*",
             Self::Division => "/",
             Self::Remainder => "%",
+            Self::Exponential => "**",
+            Self::ShiftLeft => "<<",
+            Self::ShiftRight => ">>",
+            Self::ShiftRightZeroFill => ">>>",
             Self::BitwiseOR => "|",
             Self::BitwiseXOR => "^",
             Self::BitwiseAnd => "&",
             Self::In => "in",
             Self::Instanceof => "instanceof",
-            Self::Exponential => "**",
         }
     }
 
@@ -444,12 +444,12 @@ impl GetPrecedence for LogicalOperator {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
 pub enum UnaryOperator {
-    /// `-`
-    #[estree(rename = "-")]
-    UnaryNegation = 0,
     /// `+`
     #[estree(rename = "+")]
-    UnaryPlus = 1,
+    UnaryPlus = 0,
+    /// `-`
+    #[estree(rename = "-")]
+    UnaryNegation = 1,
     /// `!`
     #[estree(rename = "!")]
     LogicalNot = 2,
@@ -470,24 +470,24 @@ pub enum UnaryOperator {
 impl UnaryOperator {
     /// Returns `true` if this operator is a unary arithmetic operator.
     pub fn is_arithmetic(self) -> bool {
-        matches!(self, Self::UnaryNegation | Self::UnaryPlus)
+        matches!(self, Self::UnaryPlus | Self::UnaryNegation)
     }
 
     /// Returns `true` if this operator is a [`LogicalNot`].
     ///
     /// [`LogicalNot`]: UnaryOperator::LogicalNot
     pub fn is_not(self) -> bool {
-        matches!(self, Self::LogicalNot)
+        self == Self::LogicalNot
     }
 
     /// Returns `true` if this operator is a bitwise operator.
     pub fn is_bitwise(self) -> bool {
-        matches!(self, Self::BitwiseNot)
+        self == Self::BitwiseNot
     }
 
     /// Returns `true` if this is the [`void`](UnaryOperator::Void) operator.
     pub fn is_void(self) -> bool {
-        matches!(self, Self::Void)
+        self == Self::Void
     }
 
     /// Returns `true` if this operator is a keyword instead of punctuation.
@@ -498,8 +498,8 @@ impl UnaryOperator {
     /// Get the string representation of this operator as it appears in source code.
     pub fn as_str(&self) -> &'static str {
         match self {
-            Self::UnaryNegation => "-",
             Self::UnaryPlus => "+",
+            Self::UnaryNegation => "-",
             Self::LogicalNot => "!",
             Self::BitwiseNot => "~",
             Self::Typeof => "typeof",
