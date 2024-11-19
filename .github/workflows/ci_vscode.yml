@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: ./.github/actions/pnpm
-    
+
       - name: Test VSCode
         working-directory: editors/vscode
-        run: pnpm run test
+        run: xvfb-run -a pnpm run test
