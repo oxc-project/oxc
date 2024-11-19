@@ -1,10 +1,13 @@
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 
 mod constants;
+mod driver;
+mod exec;
+mod test_case;
+
 use std::{
     fs,
     path::{Path, PathBuf},
-    process::Command,
 };
 
 use constants::PLUGINS;
@@ -12,9 +15,6 @@ use indexmap::IndexMap;
 use oxc_tasks_common::{normalize_path, project_root, Snapshot};
 use test_case::TestCaseKind;
 use walkdir::WalkDir;
-
-mod driver;
-mod test_case;
 
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
@@ -63,17 +63,6 @@ const OXC_CONFORMANCE_SNAPSHOT: &str = "oxc.snap.md";
 const EXEC_SNAPSHOT: &str = "babel_exec.snap.md";
 const OXC_EXEC_SNAPSHOT: &str = "oxc_exec.snap.md";
 
-struct SnapshotOption {
-    paths: IndexMap<String, Vec<TestCaseKind>>,
-    dest: PathBuf,
-}
-
-impl SnapshotOption {
-    fn new(paths: IndexMap<String, Vec<TestCaseKind>>, file_name: &'static str) -> Self {
-        Self { paths, dest: snap_root().join(file_name) }
-    }
-}
-
 impl TestRunner {
     pub fn new(options: TestRunnerOptions) -> Self {
         let snapshot = Snapshot::new(&babel_root(), /* show_commit */ true);
@@ -88,14 +77,15 @@ impl TestRunner {
         ] {
             let (transform_paths, exec_files) =
                 Self::glob_files(root, self.options.filter.as_ref());
-            self.generate_snapshot(root, SnapshotOption::new(transform_paths, snapshot));
+            self.generate_snapshot(root, &snap_root().join(snapshot), transform_paths);
 
             if self.options.exec && !exec_files.is_empty() {
                 let fixture_root = fixture_root();
                 let _ = fs::remove_dir_all(&fixture_root);
                 let _ = fs::create_dir(&fixture_root);
-                self.generate_snapshot(root, SnapshotOption::new(exec_files, exec_snapshot));
-                self.run_vitest(&SnapshotOption::new(IndexMap::default(), exec_snapshot));
+                let dest = snap_root().join(exec_snapshot);
+                self.generate_snapshot(root, &dest, exec_files);
+                self.run_vitest(&dest);
             }
         }
     }
@@ -140,8 +130,12 @@ impl TestRunner {
         (transform_files, exec_files)
     }
 
-    fn generate_snapshot(&self, root: &Path, option: SnapshotOption) {
-        let SnapshotOption { paths, dest } = option;
+    fn generate_snapshot(
+        &self,
+        root: &Path,
+        dest: &Path,
+        paths: IndexMap<String, Vec<TestCaseKind>>,
+    ) {
         let mut snapshot = String::new();
         let mut total = 0;
         let mut all_passed = vec![];
@@ -194,32 +188,7 @@ impl TestRunner {
             let snapshot = format!(
                 "Passed: {all_passed_count}/{total}\n\n# All Passed:\n{all_passed}\n\n\n{snapshot}"
             );
-            self.snapshot.save(&dest, &snapshot);
+            self.snapshot.save(dest, &snapshot);
         }
-    }
-
-    fn run_vitest(&self, option: &SnapshotOption) {
-        let version = String::from("node: ")
-            + &String::from_utf8(Command::new("node").arg("--version").output().unwrap().stdout)
-                .unwrap();
-        let output = Command::new("node")
-            .current_dir(conformance_root())
-            .env("NO_COLOR", "1")
-            .args([
-                "--run",
-                "vitest",
-                "--",
-                "run",
-                "--reporter=basic",
-                "--exclude=\"\"",
-                "--no-color",
-                "./fixtures",
-            ])
-            .output()
-            .unwrap();
-        let content = if output.stderr.is_empty() { output.stdout } else { output.stderr };
-        let output = String::from_utf8(content).unwrap();
-        let output = version + &output;
-        self.snapshot.save(&option.dest, &output);
     }
 }
