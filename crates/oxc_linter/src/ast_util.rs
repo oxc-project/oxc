@@ -344,9 +344,9 @@ pub fn is_method_call<'a>(
     let callee_without_parentheses = call_expr.callee.without_parentheses();
     let member_expr = match callee_without_parentheses {
         match_member_expression!(Expression) => callee_without_parentheses.to_member_expression(),
-        Expression::ChainExpression(chain) => match chain.expression {
-            match_member_expression!(ChainElement) => chain.expression.to_member_expression(),
-            ChainElement::CallExpression(_) => return false,
+        Expression::ChainExpression(chain) => match chain.expression.member_expression() {
+            Some(e) => e,
+            None => return false,
         },
         _ => return false,
     };

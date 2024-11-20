@@ -129,7 +129,7 @@ impl GetterReturn {
                 match_member_expression!(ChainElement) => {
                     Self::handle_member_expression(ce.expression.to_member_expression())
                 }
-                ChainElement::CallExpression(_) => {
+                ChainElement::CallExpression(_) | ChainElement::TSNonNullExpression(_) => {
                     false // todo: make a test for this
                 }
             },

@@ -1310,6 +1310,10 @@ impl<'a> ContentEq for ChainElement<'a> {
                 Self::CallExpression(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
             },
+            Self::TSNonNullExpression(it) => match other {
+                Self::TSNonNullExpression(other) if ContentEq::content_eq(it, other) => true,
+                _ => false,
+            },
             Self::ComputedMemberExpression(it) => match other {
                 Self::ComputedMemberExpression(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,

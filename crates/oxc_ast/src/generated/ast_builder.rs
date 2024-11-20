@@ -3092,6 +3092,22 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
+    /// Build a [`ChainElement::TSNonNullExpression`]
+    ///
+    /// This node contains a [`TSNonNullExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - expression
+    #[inline]
+    pub fn chain_element_ts_non_null_expression(
+        self,
+        span: Span,
+        expression: Expression<'a>,
+    ) -> ChainElement<'a> {
+        ChainElement::TSNonNullExpression(self.alloc(self.ts_non_null_expression(span, expression)))
+    }
+
     /// Build a [`ParenthesizedExpression`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_parenthesized_expression`] instead.

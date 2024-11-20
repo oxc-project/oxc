@@ -587,11 +587,14 @@ impl<'a> ParserImpl<'a> {
     fn map_to_chain_expression(&mut self, span: Span, expr: Expression<'a>) -> Expression<'a> {
         match expr {
             match_member_expression!(Expression) => {
-                let member_expr = MemberExpression::try_from(expr).unwrap();
+                let member_expr = expr.into_member_expression();
                 self.ast.expression_chain(span, ChainElement::from(member_expr))
             }
             Expression::CallExpression(result) => {
                 self.ast.expression_chain(span, ChainElement::CallExpression(result))
+            }
+            Expression::TSNonNullExpression(result) => {
+                self.ast.expression_chain(span, ChainElement::TSNonNullExpression(result))
             }
             expr => expr,
         }

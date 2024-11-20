@@ -462,10 +462,9 @@ impl<'a> MemberExpression<'a> {
     #[allow(missing_docs)]
     pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
         let object_matches = match self.object().without_parentheses() {
-            Expression::ChainExpression(x) => match &x.expression {
-                ChainElement::CallExpression(_) => false,
-                match_member_expression!(ChainElement) => {
-                    let member_expr = x.expression.to_member_expression();
+            Expression::ChainExpression(x) => match x.expression.member_expression() {
+                None => false,
+                Some(member_expr) => {
                     member_expr.object().without_parentheses().is_specific_id(object)
                 }
             },
@@ -519,6 +518,19 @@ impl<'a> StaticMemberExpression<'a> {
             }
 
             return object;
+        }
+    }
+}
+
+impl<'a> ChainElement<'a> {
+    /// Returns the member expression.
+    pub fn member_expression(&self) -> Option<&MemberExpression<'a>> {
+        match self {
+            ChainElement::TSNonNullExpression(e) => match &e.expression {
+                match_member_expression!(Expression) => e.expression.as_member_expression(),
+                _ => None,
+            },
+            _ => self.as_member_expression(),
         }
     }
 }

@@ -641,6 +641,7 @@ impl<'a> ContentHash for ChainElement<'a> {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
             Self::CallExpression(it) => ContentHash::content_hash(it, state),
+            Self::TSNonNullExpression(it) => ContentHash::content_hash(it, state),
             Self::ComputedMemberExpression(it) => ContentHash::content_hash(it, state),
             Self::StaticMemberExpression(it) => ContentHash::content_hash(it, state),
             Self::PrivateFieldExpression(it) => ContentHash::content_hash(it, state),

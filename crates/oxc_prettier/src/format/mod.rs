@@ -2438,6 +2438,7 @@ impl<'a> Format<'a> for ChainElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::CallExpression(expr) => expr.format(p),
+            Self::TSNonNullExpression(expr) => expr.format(p),
             match_member_expression!(Self) => self.to_member_expression().format(p),
         }
     }

@@ -106,6 +106,10 @@ impl<'a, 'ctx> Traverse<'a> for TypeScript<'a, 'ctx> {
         self.annotations.enter_call_expression(expr, ctx);
     }
 
+    fn enter_chain_element(&mut self, element: &mut ChainElement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_chain_element(element, ctx);
+    }
+
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.enter_class(class, ctx);
     }

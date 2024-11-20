@@ -1210,6 +1210,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ChainElement<'old_alloc> {
             Self::CallExpression(it) => {
                 ChainElement::CallExpression(CloneIn::clone_in(it, allocator))
             }
+            Self::TSNonNullExpression(it) => {
+                ChainElement::TSNonNullExpression(CloneIn::clone_in(it, allocator))
+            }
             Self::ComputedMemberExpression(it) => {
                 ChainElement::ComputedMemberExpression(CloneIn::clone_in(it, allocator))
             }
