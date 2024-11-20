@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-plusplus): Unary operator '++' used.
    ╭─[no_plusplus.tsx:1:14]

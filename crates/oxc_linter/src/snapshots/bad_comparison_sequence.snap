@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ oxc(bad-comparison-sequence): Bad comparison sequence
    ╭─[bad_comparison_sequence.tsx:1:5]

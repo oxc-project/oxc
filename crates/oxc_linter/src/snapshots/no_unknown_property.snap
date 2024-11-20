@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
    ╭─[no_unknown_property.tsx:1:6]

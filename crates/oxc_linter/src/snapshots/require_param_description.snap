@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-jsdoc(require-param-description): Missing JSDoc `@param` description.
    ╭─[require_param_description.tsx:3:17]

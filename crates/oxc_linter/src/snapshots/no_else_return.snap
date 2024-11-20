@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-else-return): Unnecessary 'else' after 'return'.
    ╭─[no_else_return.tsx:1:6]

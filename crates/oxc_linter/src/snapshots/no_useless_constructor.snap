@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-useless-constructor): Empty constructors are unnecessary
    ╭─[no_useless_constructor.tsx:1:11]

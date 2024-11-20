@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-unused-vars): Identifier 'Fragment' is imported but never used.
    ╭─[no_unused_vars.tsx:3:18]

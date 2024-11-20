@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
    ╭─[no_invalid_regexp.tsx:1:9]
