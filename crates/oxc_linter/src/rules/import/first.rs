@@ -72,7 +72,7 @@ declare_oxc_lint!(
     ///
     /// ### Options
     ///
-    /// with `"absolute-import"`:
+    /// with `"absolute-first"`:
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
