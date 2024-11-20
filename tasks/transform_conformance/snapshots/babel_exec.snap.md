@@ -5,11 +5,11 @@ node: v22.11.0
 
  FAIL  fixtures/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js [ fixtures/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js ]
 Error: 'eval' and 'arguments' cannot be used as a binding identifier in strict mode
- ❯ getRollupError ../../node_modules/.pnpm/rollup@4.24.0/node_modules/rollup/dist/es/shared/parseAst.js:395:41
- ❯ convertProgram ../../node_modules/.pnpm/rollup@4.24.0/node_modules/rollup/dist/es/shared/parseAst.js:1083:26
- ❯ parseAstAsync ../../node_modules/.pnpm/rollup@4.24.0/node_modules/rollup/dist/es/shared/parseAst.js:2069:106
- ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.8_@types+node@22.9.0/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:52319:11
- ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.8_@types+node@22.9.0/node_modules/vite/dist/node/chunks/dep-CDnG8rE7.js:51917:72
+ ❯ getRollupError ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:396:41
+ ❯ convertProgram ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:1084:26
+ ❯ parseAstAsync ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:2070:106
+ ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52381:11
+ ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:51979:72
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
 
