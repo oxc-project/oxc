@@ -1,0 +1,16 @@
+# Default to project owner @Boshen
+
+@Boshen
+
+# Ignore lock files
+
+Cargo.lock
+pnpm-lock.yaml
+
+# Crates
+
+/crates/oxc_transformer @overlookmotel @dunqing
+/crates/oxc_semantic @Boshen @dunqing
+/crates/oxc_data_structures @overlookmotel
+/crates/oxc_traverse @overlookmotel
+/crates/oxc_isolated_declarations @dunqing
