@@ -1,4 +1,9 @@
-use std::{env, io::BufWriter, path::{Path, PathBuf}, time::Instant};
+use std::{
+    env,
+    io::BufWriter,
+    path::{Path, PathBuf},
+    time::Instant,
+};
 
 use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
@@ -238,10 +243,7 @@ impl LintRunner {
     // when config is provided, but not found, an CliRunResult is returned, else the oxlintrc config file is returned
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
-    fn find_oxlint_config(
-        cwd: &Path,
-        config: &Option<PathBuf>,
-    ) -> Result<Oxlintrc, CliRunResult> {
+    fn find_oxlint_config(cwd: &Path, config: &Option<PathBuf>) -> Result<Oxlintrc, CliRunResult> {
         if let Some(config_path) = config {
             return match Oxlintrc::from_file(config_path) {
                 Ok(config) => Ok(config),
@@ -275,7 +277,7 @@ impl LintRunner {
             if let Ok(result) = Oxlintrc::from_file(&config_path) {
                 return Ok(result);
             };
-        }        
+        }
 
         Ok(Oxlintrc::default())
     }
