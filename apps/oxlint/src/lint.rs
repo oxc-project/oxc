@@ -234,11 +234,14 @@ impl LintRunner {
         Ok(filters)
     }
 
-     // finds the oxlint config
+    // finds the oxlint config
     // when config is provided, but not found, an CliRunResult is returned, else the oxlintrc config file is returned
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
-    fn find_oxlint_config(cwd: &PathBuf, config: &Option<PathBuf>) -> Result<Oxlintrc, CliRunResult> {
+    fn find_oxlint_config(
+        cwd: &PathBuf,
+        config: &Option<PathBuf>,
+    ) -> Result<Oxlintrc, CliRunResult> {
         if let Some(config_path) = config {
             return match Oxlintrc::from_file(config_path) {
                 Ok(config) => Ok(config),

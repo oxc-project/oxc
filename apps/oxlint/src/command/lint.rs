@@ -62,7 +62,7 @@ pub struct BasicOptions {
     /// Oxlint configuration file (experimental)
     ///  * only `.json` extension is supported
     ///  * tries to be compatible with the ESLint v8's format
-    /// 
+    ///
     /// If not provided, Oxlint will look for the following files in the current working directory:
     ///  * `oxlintrc.json`
     ///  * `oxlint.json`
