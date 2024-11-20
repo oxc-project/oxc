@@ -57,6 +57,12 @@ snapshot_kind: text
    ╰────
 
   ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
+   ╭─[no_optional_chaining.tsx:1:1]
+ 1 │ a?.c?.b<c>
+   · ───────
+   ╰────
+
+  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
    ╭─[no_optional_chaining.tsx:1:9]
  1 │ var x = a?.b
    ·         ────

@@ -1987,9 +1987,7 @@ after transform: ["C", "T"]
 rebuilt        : ["C"]
 
 * type-arguments/optional-call/input.ts
-Unresolved references mismatch:
-after transform: ["Q", "T", "f", "x"]
-rebuilt        : ["f", "x"]
+x Output mismatch
 
 * type-arguments/tagged-template/input.ts
 Unresolved references mismatch:
