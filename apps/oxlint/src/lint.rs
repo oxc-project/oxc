@@ -379,6 +379,15 @@ mod test {
     }
 
     #[test]
+    fn ignore_flow() {
+        let args = &["--import-plugin", "fixtures/flow/index.mjs"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
     fn filter_allow_all() {
         let args = &["-A", "all", "fixtures/linter"];
         let result = test(args);
