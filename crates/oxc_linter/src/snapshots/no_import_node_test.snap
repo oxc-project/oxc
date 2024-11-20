@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-vitest(no-import-node-test): Do not import from `node:test`
    ╭─[no_import_node_test.tsx:1:22]

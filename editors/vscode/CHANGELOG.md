@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.12.0] - 2024-11-20
+
+### Bug Fixes
+
+- ba0b2ff editor: Reload workspace configuration after change (#7302) (Alexander S.)
+
+### Documentation
+
+- 4c124a8 editor/vscode: Update VS Code readme with installation instructions and available features (#7306) (Nicholas Rayburn)
+
+### Testing
+
+- 5190b7f editor: Add test setup (#7361) (Alexander S.)
+
 ## [0.11.1] - 2024-11-09
 
 ### Features

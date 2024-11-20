@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`
     ╭─[no_duplicate_head.tsx:9:19]

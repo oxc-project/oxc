@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.12.0] - 2024-11-20
+
+- 20d9080 linter: [**BREAKING**] Override plugins array when passed in config file (#7303) (camchenry)
+
+- 44375a5 ast: [**BREAKING**] Rename `TSEnumMemberName` enum variants (#7250) (overlookmotel)
+
+### Features
+
+- 1d9f528 linter: Implement `unicorn/prefer-string-raw` lint rule (#7335) (Ryan Walker)
+- d445e0f linter: Implement `unicorn/consistent-existence-index-check`  (#7262) (Ryan Walker)
+- 01ddf37 linter: Add `allowReject` option to `no-useless-promise-resolve-reject` (#7274) (no-yan)
+- 755a31b linter: Support bind function case for compatibility with `promise/no-return-wrap` (#7232) (no-yan)
+- 428770e linter: Add `import/no-namespace` rule (#7229) (Dmitry Zakharov)
+- 9c91151 linter: Implement typescript/no-empty-object-type (#6977) (Orenbek)
+- 2268a0e linter: Support `overrides` config field (#6974) (DonIsaac)
+- 3dcac1a linter: React/exhaustive-deps (#7151) (camc314)
+
+### Bug Fixes
+
+- bc0e72c linter: Handle user variables correctly for import/no_commonjs (#7316) (Dmitry Zakharov)
+- bf839c1 linter: False positive in `jest/expect-expect` (#7341) (dalaoshu)
+- ff2a1d4 linter: Move `exhaustive-deps` to `react` (#7251) (camc314)
+- df5c535 linter: Revert unmatched rule error (#7257) (Cameron A McHenry)
+- c4ed230 linter: Fix false positive in eslint/no-cond-assign (#7241) (camc314)
+- ef847da linter: False positive in `jsx-a11y/iframe-has-title` (#7253) (dalaoshu)
+- 62b6327 linter: React/exhaustive-deps update span for unknown deps diagnostic (#7249) (camc314)
+
+### Refactor
+
+- c6a4868 linter: Temporarily remove unknown rules checking (#7260) (camchenry)
+
 ## [0.11.1] - 2024-11-09
 
 - 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)

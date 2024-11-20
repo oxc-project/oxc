@@ -358,6 +358,7 @@ mod unicorn {
     pub mod prefer_regexp_test;
     pub mod prefer_set_size;
     pub mod prefer_spread;
+    pub mod prefer_string_raw;
     pub mod prefer_string_replace_all;
     pub mod prefer_string_slice;
     pub mod prefer_string_starts_ends_with;
@@ -475,10 +476,6 @@ mod jsdoc {
     pub mod require_returns_description;
     pub mod require_returns_type;
     pub mod require_yields;
-}
-
-mod tree_shaking {
-    pub mod no_side_effects_in_initialization;
 }
 
 mod promise {
@@ -829,7 +826,6 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::jsx_no_new_function_as_prop,
     react_perf::jsx_no_new_object_as_prop,
     security::api_keys,
-    tree_shaking::no_side_effects_in_initialization,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
     typescript::ban_ts_comment,
@@ -946,6 +942,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_regexp_test,
     unicorn::prefer_set_size,
     unicorn::prefer_spread,
+    unicorn::prefer_string_raw,
     unicorn::prefer_string_replace_all,
     unicorn::prefer_string_slice,
     unicorn::prefer_string_starts_ends_with,

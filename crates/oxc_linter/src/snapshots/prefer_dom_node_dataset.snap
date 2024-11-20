@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.tsx:1:9]

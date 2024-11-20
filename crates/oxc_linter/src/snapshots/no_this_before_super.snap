@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-this-before-super): Expected to always call super() before this/super property access.
    ╭─[no_this_before_super.tsx:1:21]

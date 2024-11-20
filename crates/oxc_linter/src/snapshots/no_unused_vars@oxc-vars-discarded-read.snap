@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:2:22]

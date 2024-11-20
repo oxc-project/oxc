@@ -1,4 +1,4 @@
-pub(crate) const PLUGINS: &[&str] = &[
+pub const PLUGINS: &[&str] = &[
     "babel-preset-env",
     // // ES2024
     // "babel-plugin-transform-unicode-sets-regex",
@@ -24,7 +24,7 @@ pub(crate) const PLUGINS: &[&str] = &[
     // "babel-plugin-transform-json-strings",
     // // ES2018
     "babel-plugin-transform-async-generator-functions",
-    "babel-plugin-transform-object-rest-spread",
+    // "babel-plugin-transform-object-rest-spread",
     // // [Regex] "babel-plugin-transform-unicode-property-regex",
     // "babel-plugin-transform-dotall-regex",
     // // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
@@ -61,7 +61,7 @@ pub(crate) const PLUGINS: &[&str] = &[
     "regexp",
 ];
 
-pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
+pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "proposal-decorators",
     "transform-class-properties",
     "transform-classes",
@@ -74,7 +74,7 @@ pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "transform-react-constant-elements",
 ];
 
-pub(crate) const SKIP_TESTS: &[&str] = &[
+pub const SKIP_TESTS: &[&str] = &[
     // Shouldn't report in transformer
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-cts",
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-mts",
@@ -102,3 +102,6 @@ pub(crate) const SKIP_TESTS: &[&str] = &[
     "babel-preset-env/test/fixtures/debug",
     "babel-preset-env/test/fixtures/debug-babel-7",
 ];
+
+pub const SNAPSHOT_TESTS: &[&str] =
+    &["babel-plugin-transform-object-rest-spread", "babel-plugin-transform-optional-chaining"];

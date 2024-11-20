@@ -1,0 +1,58 @@
+name: CI VSCode
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "pnpm-lock.yaml"
+      - "crates/oxc_language_server/**"
+      - "editors/vscode/**"
+      - ".github/worfkflows/ci_vscode.yml"
+  push:
+    branches:
+      - main
+      - "renovate/**"
+    paths:
+      - "pnpm-lock.yaml"
+      - "crates/oxc_language_server/**"
+      - "editors/vscode/**"
+      - ".github/worfkflows/ci_vscode.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+jobs:
+  compile:
+    name: Compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: ./.github/actions/pnpm
+
+      - name: Compile VSCode
+        working-directory: editors/vscode
+        run: pnpm run compile
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: ./.github/actions/pnpm
+
+      - name: Lint VSCode
+        working-directory: editors/vscode
+        run: pnpm run lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: ./.github/actions/pnpm
+
+      - name: Test VSCode
+        working-directory: editors/vscode
+        run: xvfb-run -a pnpm run test

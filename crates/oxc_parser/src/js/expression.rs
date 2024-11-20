@@ -674,9 +674,15 @@ impl<'a> ParserImpl<'a> {
                     self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_parameters)?
                 }
                 Kind::LAngle | Kind::ShiftLeft => {
+                    let optional_chain_span = (*in_optional_chain).then(|| self.end_span(lhs_span));
                     if let Some(Some(arguments)) =
                         self.try_parse(Self::parse_type_arguments_in_expression)
                     {
+                        // `a?.c?.b<c>`
+                        if let Some(optional_chain_span) = optional_chain_span {
+                            *in_optional_chain = false;
+                            lhs = self.map_to_chain_expression(optional_chain_span, lhs);
+                        }
                         lhs = self.ast.expression_ts_instantiation(
                             self.end_span(lhs_span),
                             lhs,

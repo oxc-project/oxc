@@ -76,9 +76,31 @@ bitflags! {
     #[cfg_attr(feature = "serialize", derive(Serialize))]
     pub struct ReferenceFlags: u8 {
         const None = 0;
-        /// A symbol is being read as a Value
+        /// A symbol is being read as a Value.
+        ///
+        /// This value can be derived from the spec:
+        ///
+        /// Under `Runtime Semantics: Evaluation`, when [`GetValue`](https://tc39.es/ecma262/#sec-getvalue) is called
+        /// on a expression, and the expression is an `IdentifierReference`.
+        ///
+        /// For example:
+        /// ```text
+        /// 1. Let lRef be ? Evaluation of Expression.
+        /// 2. Perform ? GetValue(lRef).
+        /// ```
         const Read = 1 << 0;
         /// A symbol is being written to in a Value context.
+        ///
+        /// This value can be derived from the spec:
+        ///
+        /// Under `Runtime Semantics: Evaluation`, when [`PutValue`](https://tc39.es/ecma262/#sec-putvalue) is called
+        /// on a expression, and the expression is an `IdentifierReference`.
+        ///
+        /// For example:
+        /// ```text
+        /// 1. Let lhs be ? Evaluation of LeftHandSideExpression.
+        /// 2. Perform ? PutValue(lhs, newValue).
+        /// ```
         const Write = 1 << 1;
         /// Used in type definitions.
         const Type = 1 << 2;

@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:1]

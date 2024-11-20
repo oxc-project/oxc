@@ -1,0 +1,6 @@
+{
+  "categories": {
+    "correctness": "error",
+    "perf": "error"
+  }
+}

@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
    ╭─[no_return_assign.tsx:1:23]
