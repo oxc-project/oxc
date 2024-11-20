@@ -7,7 +7,7 @@ import { MessageType, ShowMessageNotification } from 'vscode-languageclient';
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
-import { ConfigService } from './config';
+import { ConfigService } from './ConfigService';
 
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
@@ -25,7 +25,7 @@ let client: LanguageClient;
 let myStatusBarItem: StatusBarItem;
 
 export async function activate(context: ExtensionContext) {
-  const config = new ConfigService();
+  const configService = new ConfigService();
   const restartCommand = commands.registerCommand(
     OxcCommands.RestartServer,
     async () => {
@@ -58,7 +58,7 @@ export async function activate(context: ExtensionContext) {
   const toggleEnable = commands.registerCommand(
     OxcCommands.ToggleEnable,
     () => {
-      config.enable = !config.enable;
+      configService.config.enable = !configService.config.enable;
     },
   );
 
@@ -66,13 +66,13 @@ export async function activate(context: ExtensionContext) {
     restartCommand,
     showOutputCommand,
     toggleEnable,
-    config,
+    configService,
   );
 
   const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
 
   async function findBinary(): Promise<string> {
-    let bin = config.binPath;
+    let bin = configService.config.binPath;
     if (bin) {
       try {
         await fsPromises.access(bin);
@@ -148,7 +148,7 @@ export async function activate(context: ExtensionContext) {
       ],
     },
     initializationOptions: {
-      settings: config.toLanguageServerConfig(),
+      settings: configService.config.toLanguageServerConfig(),
     },
     outputChannel,
     traceOutputChannel: outputChannel,
@@ -188,8 +188,8 @@ export async function activate(context: ExtensionContext) {
     });
   });
 
-  config.onConfigChange = function onConfigChange() {
-    let settings = this.toLanguageServerConfig();
+  configService.onConfigChange = function onConfigChange() {
+    let settings = this.config.toLanguageServerConfig();
     updateStatsBar(settings.enable);
     client.sendNotification('workspace/didChangeConfiguration', { settings });
   };
@@ -213,7 +213,7 @@ export async function activate(context: ExtensionContext) {
 
     myStatusBarItem.backgroundColor = bgColor;
   }
-  updateStatsBar(config.enable);
+  updateStatsBar(configService.config.enable);
   client.start();
 }
 
