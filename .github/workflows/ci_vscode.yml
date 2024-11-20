@@ -45,3 +45,14 @@ jobs:
       - name: Lint VSCode
         working-directory: editors/vscode
         run: pnpm run lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: ./.github/actions/pnpm
+
+      - name: Test VSCode
+        working-directory: editors/vscode
+        run: xvfb-run -a pnpm run test

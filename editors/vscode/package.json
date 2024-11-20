@@ -136,11 +136,15 @@
     "install-extension": "code --install-extension oxc_language_server.vsix --force",
     "server:build:debug": "cargo build -p oxc_language_server",
     "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
-    "lint": "npx oxlint --config=oxlint.json --tsconfig=tsconfig.json"
+    "lint": "npx oxlint --config=oxlint.json --tsconfig=tsconfig.json",
+    "test": "esbuild client/config.spec.ts --bundle --outfile=out/config.spec.js --external:vscode --format=cjs --platform=node --target=node16 --minify --sourcemap && vscode-test"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.9",
     "@types/node": "^22.0.0",
     "@types/vscode": "1.95.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.24.0",
