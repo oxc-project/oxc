@@ -1,4 +1,4 @@
-use std::{env, io::BufWriter, path::PathBuf, time::Instant};
+use std::{env, io::BufWriter, path::{Path, PathBuf}, time::Instant};
 
 use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
@@ -239,7 +239,7 @@ impl LintRunner {
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(
-        cwd: &PathBuf,
+        cwd: &Path,
         config: &Option<PathBuf>,
     ) -> Result<Oxlintrc, CliRunResult> {
         if let Some(config_path) = config {
@@ -254,28 +254,28 @@ impl LintRunner {
                     });
                 }
             };
-        } else {
-            // no config argument is provided,
-            // auto detect possible files from current work directory
-            let search_configs = &[
-                "oxlintrc.json",
-                "oxlint.json",
-                ".oxlintrc.json",
-                ".oxlint.json",
-                ".oxlintrc",
-                ".eslintrc",
-                ".eslintrc.json",
-            ];
+        }
 
-            for config_file in search_configs {
-                let mut config_path = cwd.clone();
-                config_path.push(config_file);
+        // no config argument is provided,
+        // auto detect possible files from current work directory
+        let search_configs = &[
+            "oxlintrc.json",
+            "oxlint.json",
+            ".oxlintrc.json",
+            ".oxlint.json",
+            ".oxlintrc",
+            ".eslintrc",
+            ".eslintrc.json",
+        ];
 
-                if let Ok(result) = Oxlintrc::from_file(&config_path) {
-                    return Ok(result);
-                };
-            }
-        };
+        for config_file in search_configs {
+            let mut config_path = cwd.to_path_buf();
+            config_path.push(config_file);
+
+            if let Ok(result) = Oxlintrc::from_file(&config_path) {
+                return Ok(result);
+            };
+        }        
 
         Ok(Oxlintrc::default())
     }
