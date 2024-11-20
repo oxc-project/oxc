@@ -1,6 +1,7 @@
 ---
 source: tasks/website/src/linter/cli.rs
 expression: snapshot
+snapshot_kind: text
 ---
 Usage: [-c=<./oxlintrc.json>] [PATH]...
 
