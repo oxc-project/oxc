@@ -1,7 +1,6 @@
 import { workspace } from 'vscode';
-import { IDisposable } from './types';
 
-export class Config implements ConfigInterface, IDisposable {
+export class Config implements ConfigInterface {
   private static readonly _namespace = 'oxc';
 
   private _runTrigger!: Trigger;
@@ -12,10 +11,6 @@ export class Config implements ConfigInterface, IDisposable {
 
   constructor() {
     this.refresh();
-  }
-
-  dispose(): void | Promise<void> {
-    throw new Error('Method not implemented.');
   }
 
   public refresh(): void {
