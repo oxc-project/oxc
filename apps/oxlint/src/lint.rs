@@ -103,7 +103,7 @@ impl Runner for LintRunner {
         let number_of_files = paths.len();
 
         let mut oxlintrc = Oxlintrc::default();
-        
+
         if let Some(config_path) = basic_options.config.as_ref() {
             match Oxlintrc::from_file(config_path) {
                 Ok(config) => oxlintrc = config,
