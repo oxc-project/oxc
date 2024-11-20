@@ -14,3 +14,4 @@ pnpm-lock.yaml
 /crates/oxc_data_structures @overlookmotel
 /crates/oxc_traverse @overlookmotel
 /crates/oxc_isolated_declarations @dunqing
+/tasks/ast_tools
