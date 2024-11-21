@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+- f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)
+
+- 44375a5 ast: [**BREAKING**] Rename `TSEnumMemberName` enum variants (#7250) (overlookmotel)
+
+### Features
+
+- 82773cb codegen: Remove underscore from bigint (#7367) (Boshen)
+
+### Bug Fixes
+
+- c587dd3 codegen: Do not print parenthesis for `in` expression in ArrowFunctionExpression (#7360) (Dunqing)
+- a0766e6 codegen: Fix arithmetic overflow printing unspanned nodes (#7292) (overlookmotel)
+- 33ec4e6 codegen: Fix arithmetic overflow printing unspanned `NewExpression` (#7289) (overlookmotel)
+- 1282221 codegen: Print comments when block is empty (#7236) (Boshen)
+
+### Refactor
+
+- 58db9ef codegen: Do not print unnecessary parentheses if both sides use the same logical operator (#7325) (Dunqing)
+
 ## [0.36.0] - 2024-11-09
 
 - 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)

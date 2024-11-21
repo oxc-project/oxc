@@ -4,6 +4,57 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+- f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)
+
+- 41a0e60 ast: [**BREAKING**] Remove `impl GetAddress for Function` (#7343) (overlookmotel)
+
+- 1cbc624 traverse: [**BREAKING**] Rename `TraverseCtx` methods for creating `IdentifierReference`s (#7300) (overlookmotel)
+
+- e84ea2c traverse: [**BREAKING**] Remove `TraverseCtx::clone_identifier_reference` (#7266) (overlookmotel)
+
+- 44375a5 ast: [**BREAKING**] Rename `TSEnumMemberName` enum variants (#7250) (overlookmotel)
+
+### Features
+
+- 39afb48 allocator: Introduce `Vec::from_array_in` (#7331) (overlookmotel)
+- d608012 transform_conformance: Snapshot our transformed outputs (#7358) (Boshen)
+- 224775c transformer: Transform object rest spread (#7003) (Boshen)
+- 885e37f transformer: Optional Chaining (#6990) (Boshen)
+- 6a98ef1 transformer: Add `CompilerAssumptions` to `TransformContext` (#7369) (Boshen)
+- faf8dde traverse: Add methods for creating `Expression::Identifier`s (#7301) (overlookmotel)
+
+### Bug Fixes
+
+- b57d00d tasks/compat_data: Fix misplaced features (#7284) (Boshen)
+- c5f4ee7 transformer: Correct code comments (#7247) (overlookmotel)
+- 389b84e transformer/arrow-function: Handle unicode when capitalizing property name (#7311) (overlookmotel)
+- 7d75130 transformer/async-to-generator: `arguments` isn't correct after transformation (#7234) (Dunqing)
+- 5b5c8a9 transformer/nullish-coalescing: Correct span (#7269) (overlookmotel)
+
+### Performance
+
+- 510b95d transformer: Use `AstBuilder::vec_from_array` (#7333) (overlookmotel)
+- e09d2df transformer/arrow-function: Create super method binding names lazily (#7313) (overlookmotel)
+- 0a24703 transformer/arrow-function: Optimize `generate_super_binding_name` (#7312) (overlookmotel)
+- 44fd962 transformer/arrow-functions: Move arguments transform checks to aid inlining (#7322) (overlookmotel)
+- 26d3e96 transformer/arrow-functions: Store state of whether arguments needs transform (#7321) (overlookmotel)
+
+### Documentation
+
+- e219ae8 transformer/nullish-coalescing: Clarify doc comment (#7268) (overlookmotel)
+
+### Refactor
+
+- 4acf2db transformer: Helper loader methods take `Span` (#7304) (overlookmotel)
+- 871e19b transformer/arrow-function: Comments on possible improvement (#7320) (overlookmotel)
+- ea08c1f transformer/arrow-function: Reserve correct capacity for `Vec` (#7319) (overlookmotel)
+- 5cfe0b6 transformer/arrow-function: `generate_super_binding_name` take `&str` and `&TraverseCtx` (#7310) (overlookmotel)
+- 5d85386 transformer/arrow-functions: Use `IndexMap` for `super` getter/setters (#7317) (overlookmotel)
+- 9f5ae56 transformer/nullish-coalescing: Split main logic into separate function (#7273) (overlookmotel)
+- 345fbb9 transformer/nullish-coalescing: Avoid repeated symbol lookups (#7272) (overlookmotel)
+
 ## [0.36.0] - 2024-11-09
 
 - b11ed2c ast: [**BREAKING**] Remove useless `ObjectProperty::init` field (#7220) (Boshen)

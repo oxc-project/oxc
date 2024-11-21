@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+### Features
+
+- 39afb48 allocator: Introduce `Vec::from_array_in` (#7331) (overlookmotel)
+
+### Bug Fixes
+
+- cf99be0 minifier: Do not compare bigint with object (#7294) (7086cmd)
+
+### Testing
+
+- 0d6a66a minifier: Fix minimize condition tests (#7222) (7086cmd)
+
 ## [0.36.0] - 2024-11-09
 
 ### Refactor
