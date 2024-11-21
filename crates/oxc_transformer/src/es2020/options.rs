@@ -8,4 +8,7 @@ pub struct ES2020Options {
 
     #[serde(skip)]
     pub big_int: bool,
+
+    #[serde(skip)]
+    pub optional_chaining: bool,
 }

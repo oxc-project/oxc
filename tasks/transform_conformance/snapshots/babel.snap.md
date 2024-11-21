@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 327/574
+Passed: 328/575
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -408,7 +408,7 @@ rebuilt        : ScopeId(1): []
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (45/155)
+# babel-plugin-transform-typescript (46/156)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]

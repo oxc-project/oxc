@@ -658,6 +658,23 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                 ])),
             ),
             (
+                ES2020OptionalChaining,
+                EngineTargets::new(FxHashMap::from_iter([
+                    (Chrome, Version(91u32, 0u32, 0u32)),
+                    (Safari, Version(13u32, 1u32, 0u32)),
+                    (OperaMobile, Version(64u32, 0u32, 0u32)),
+                    (Samsung, Version(16u32, 0u32, 0u32)),
+                    (Node, Version(16u32, 9u32, 0u32)),
+                    (Firefox, Version(74u32, 0u32, 0u32)),
+                    (Deno, Version(1u32, 9u32, 0u32)),
+                    (Electron, Version(13u32, 0u32, 0u32)),
+                    (Opera, Version(77u32, 0u32, 0u32)),
+                    (Ios, Version(13u32, 4u32, 0u32)),
+                    (Edge, Version(91u32, 0u32, 0u32)),
+                    (Es, Version(2019u32, 0, 0)),
+                ])),
+            ),
+            (
                 ES2020NullishCoalescingOperator,
                 EngineTargets::new(FxHashMap::from_iter([
                     (Chrome, Version(80u32, 0u32, 0u32)),

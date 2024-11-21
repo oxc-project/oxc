@@ -297,6 +297,22 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         }
     }
 
+    fn enter_formal_parameters(
+        &mut self,
+        node: &mut FormalParameters<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x2_es2020.enter_formal_parameters(node, ctx);
+    }
+
+    fn exit_formal_parameters(
+        &mut self,
+        node: &mut FormalParameters<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x2_es2020.exit_formal_parameters(node, ctx);
+    }
+
     fn enter_formal_parameter(
         &mut self,
         param: &mut FormalParameter<'a>,

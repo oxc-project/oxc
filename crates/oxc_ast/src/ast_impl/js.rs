@@ -428,6 +428,15 @@ impl<'a> MemberExpression<'a> {
     }
 
     #[allow(missing_docs)]
+    pub fn object_mut(&mut self) -> &mut Expression<'a> {
+        match self {
+            MemberExpression::ComputedMemberExpression(expr) => &mut expr.object,
+            MemberExpression::StaticMemberExpression(expr) => &mut expr.object,
+            MemberExpression::PrivateFieldExpression(expr) => &mut expr.object,
+        }
+    }
+
+    #[allow(missing_docs)]
     pub fn static_property_name(&self) -> Option<&'a str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => {

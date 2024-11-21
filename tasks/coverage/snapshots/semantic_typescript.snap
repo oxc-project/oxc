@@ -2,7 +2,7 @@ commit: df9d1650
 
 semantic_typescript Summary:
 AST Parsed     : 6490/6490 (100.00%)
-Positive Passed: 2666/6490 (41.08%)
+Positive Passed: 2663/6490 (41.03%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -14527,7 +14527,7 @@ after transform: [ReferenceId(1), ReferenceId(14)]
 rebuilt        : [ReferenceId(3)]
 Unresolved reference IDs mismatch for "Symbol":
 after transform: [ReferenceId(8), ReferenceId(55), ReferenceId(69), ReferenceId(72)]
-rebuilt        : [ReferenceId(43), ReferenceId(46)]
+rebuilt        : [ReferenceId(46), ReferenceId(49)]
 Unresolved reference IDs mismatch for "WeakMap":
 after transform: [ReferenceId(5), ReferenceId(9)]
 rebuilt        : [ReferenceId(2)]
@@ -22667,11 +22667,11 @@ Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
 Bindings mismatch:
-after transform: ScopeId(5): ["T", "entry", "name"]
-rebuilt        : ScopeId(3): ["entry", "name"]
+after transform: ScopeId(5): ["T", "_this$entries$name", "entry", "name"]
+rebuilt        : ScopeId(3): ["_this$entries$name", "entry", "name"]
 Bindings mismatch:
-after transform: ScopeId(13): ["T", "p"]
-rebuilt        : ScopeId(7): ["p"]
+after transform: ScopeId(13): ["T", "_typeHandlers$p$t", "p"]
+rebuilt        : ScopeId(7): ["_typeHandlers$p$t", "p"]
 Unresolved references mismatch:
 after transform: ["console", "true"]
 rebuilt        : ["console"]
@@ -25597,8 +25597,8 @@ rebuilt        : ["assert", "broken", "isA", "isEmptyArray", "isEmptyStrOrUndefi
 
 tasks/coverage/typescript/tests/cases/compiler/narrowingUnionWithBang.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["BorkedType", "FixedType", "WorkingType", "borked", "fixed", "working"]
-rebuilt        : ScopeId(0): ["borked", "fixed", "working"]
+after transform: ScopeId(0): ["BorkedType", "FixedType", "WorkingType", "_fixed$thing", "borked", "fixed", "working"]
+rebuilt        : ScopeId(0): ["_fixed$thing", "borked", "fixed", "working"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
@@ -26606,6 +26606,18 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "a":
+after transform: SymbolId(3) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(3) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(3) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(3) "a"
+rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(3) "a"
 rebuilt        : <None>
@@ -37255,8 +37267,8 @@ rebuilt        : ScopeId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/typeParameterLeak.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Box", "BoxFactory", "BoxFactoryFactory", "BoxTypes", "b", "f"]
-rebuilt        : ScopeId(0): ["b"]
+after transform: ScopeId(0): ["Box", "BoxFactory", "BoxFactoryFactory", "BoxTypes", "_f", "b", "f"]
+rebuilt        : ScopeId(0): ["_f", "b"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
@@ -37431,8 +37443,8 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/typePredicatesOptionalChaining1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["X", "isNotNull", "title", "x"]
-rebuilt        : ScopeId(0): ["isNotNull", "title", "x"]
+after transform: ScopeId(0): ["X", "_x$y", "isNotNull", "title", "x"]
+rebuilt        : ScopeId(0): ["_x$y", "isNotNull", "title", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -40991,24 +41003,72 @@ after transform: ["Object"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers1.ts
-semantic error: Scope children mismatch:
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C"]
+rebuilt        : ScopeId(0): ["C", "_this", "_this2"]
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(4): ["_this", "_this2"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_this":
+after transform: SymbolId(1): ScopeId(4)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_this2":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(1): ScopeId(0)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers2.ts
-semantic error: Scope children mismatch:
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C"]
+rebuilt        : ScopeId(0): ["C", "_this", "_this2"]
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(4): ["_this", "_this2"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_this":
+after transform: SymbolId(1): ScopeId(4)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_this2":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(1): ScopeId(0)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers3.ts
-semantic error: Scope children mismatch:
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C"]
+rebuilt        : ScopeId(0): ["C", "_this", "_this2"]
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(4): ["_this", "_this2"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_this":
+after transform: SymbolId(1): ScopeId(4)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_this2":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(1): ScopeId(0)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers4.ts
-semantic error: Scope children mismatch:
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["C"]
+rebuilt        : ScopeId(0): ["C", "_this", "_this2"]
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(4): ["_this", "_this2"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_this":
+after transform: SymbolId(1): ScopeId(4)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_this2":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(1): ScopeId(0)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInInstanceMember2.ts
 semantic error: Bindings mismatch:
@@ -46127,6 +46187,18 @@ rebuilt        : <None>
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
 Reference symbol mismatch for "g":
 after transform: SymbolId(1) "g"
 rebuilt        : <None>
@@ -46135,6 +46207,18 @@ after transform: SymbolId(1) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "h":
 after transform: SymbolId(3) "h"
+rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
+rebuilt        : <None>
+Reference symbol mismatch for "x":
+after transform: SymbolId(0) "x"
 rebuilt        : <None>
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
@@ -48082,13 +48166,28 @@ rebuilt        : ["undefined"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/callChain/callChain.2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["o1", "o2", "o3"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["_o3$b", "o1", "o2", "o3"]
+rebuilt        : ScopeId(0): ["_o3$b"]
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
 rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
@@ -48099,8 +48198,8 @@ rebuilt        : ["o1", "o2", "o3"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/callChain/callChain.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["T", "o1", "o2", "o3", "o4", "o5", "v"]
-rebuilt        : ScopeId(0): ["v"]
+after transform: ScopeId(0): ["T", "_o", "_o3$b", "_o3$b10", "_o3$b11", "_o3$b12", "_o3$b2", "_o3$b3", "_o3$b4", "_o3$b5", "_o3$b6", "_o3$b7", "_o3$b8", "_o3$b9", "o1", "o2", "o3", "o4", "o5", "v"]
+rebuilt        : ScopeId(0): ["_o", "_o3$b", "_o3$b10", "_o3$b11", "_o3$b12", "_o3$b2", "_o3$b3", "_o3$b4", "_o3$b5", "_o3$b6", "_o3$b7", "_o3$b8", "_o3$b9", "v"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -48116,6 +48215,48 @@ rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
 rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
 rebuilt        : <None>
@@ -48139,6 +48280,72 @@ after transform: SymbolId(1) "o2"
 rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
@@ -48179,8 +48386,26 @@ rebuilt        : <None>
 Reference symbol mismatch for "o4":
 after transform: SymbolId(3) "o4"
 rebuilt        : <None>
+Reference symbol mismatch for "o4":
+after transform: SymbolId(3) "o4"
+rebuilt        : <None>
+Reference symbol mismatch for "o4":
+after transform: SymbolId(3) "o4"
+rebuilt        : <None>
 Reference symbol mismatch for "o5":
 after transform: SymbolId(7) "o5"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
 rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
@@ -48208,14 +48433,26 @@ rebuilt        : <None>
 Reference symbol mismatch for "value":
 after transform: SymbolId(2) "value"
 rebuilt        : <None>
+Reference symbol mismatch for "value":
+after transform: SymbolId(2) "value"
+rebuilt        : <None>
+Reference symbol mismatch for "value":
+after transform: SymbolId(2) "value"
+rebuilt        : <None>
+Reference symbol mismatch for "value":
+after transform: SymbolId(2) "value"
+rebuilt        : <None>
+Reference symbol mismatch for "value":
+after transform: SymbolId(2) "value"
+rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["value"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/callChain/parentheses.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["o1", "o2", "o3", "o4"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["_o4$b", "o1", "o2", "o3", "o4"]
+rebuilt        : ScopeId(0): ["_o4$b"]
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
 rebuilt        : <None>
@@ -48227,6 +48464,15 @@ after transform: SymbolId(0) "o1"
 rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
 rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
@@ -48243,14 +48489,29 @@ rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
-Reference symbol mismatch for "o1":
-after transform: SymbolId(0) "o1"
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
+rebuilt        : <None>
+Reference symbol mismatch for "o3":
+after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
 rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o4":
+after transform: SymbolId(3) "o4"
+rebuilt        : <None>
+Reference symbol mismatch for "o4":
+after transform: SymbolId(3) "o4"
 rebuilt        : <None>
 Reference symbol mismatch for "o4":
 after transform: SymbolId(3) "o4"
@@ -48270,10 +48531,28 @@ rebuilt        : ["o1", "o2", "o3", "o4"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/elementAccessChain/elementAccessChain.2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["o1", "o2", "o3"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["_o3$b", "_o3$b2", "o1", "o2", "o3"]
+rebuilt        : ScopeId(0): ["_o3$b", "_o3$b2"]
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
 rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
@@ -48293,11 +48572,17 @@ rebuilt        : ["o1", "o2", "o3"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/elementAccessChain/elementAccessChain.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["T", "o1", "o2", "o3", "o4", "o5", "o6"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["T", "_o", "_o3$b", "_o3$b2", "_o4$b", "_o4$b2", "_o5$b", "_o5$b2", "_o5$b3", "_o5$b4", "o1", "o2", "o3", "o4", "o5", "o6"]
+rebuilt        : ScopeId(0): ["_o", "_o3$b", "_o3$b2", "_o4$b", "_o4$b2", "_o5$b", "_o5$b2", "_o5$b3", "_o5$b4"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
 rebuilt        : <None>
@@ -48307,6 +48592,18 @@ rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
 rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
@@ -48318,6 +48615,18 @@ after transform: SymbolId(3) "o4"
 rebuilt        : <None>
 Reference symbol mismatch for "o4":
 after transform: SymbolId(3) "o4"
+rebuilt        : <None>
+Reference symbol mismatch for "o5":
+after transform: SymbolId(4) "o5"
+rebuilt        : <None>
+Reference symbol mismatch for "o5":
+after transform: SymbolId(4) "o5"
+rebuilt        : <None>
+Reference symbol mismatch for "o5":
+after transform: SymbolId(4) "o5"
+rebuilt        : <None>
+Reference symbol mismatch for "o5":
+after transform: SymbolId(4) "o5"
 rebuilt        : <None>
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
@@ -48333,6 +48642,30 @@ after transform: SymbolId(4) "o5"
 rebuilt        : <None>
 Reference symbol mismatch for "o6":
 after transform: SymbolId(5) "o6"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
 rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
@@ -48350,6 +48683,45 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["o1", "o2", "o3", "o4", "o5", "o6"]
 
+tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInLoop.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["list"]
+rebuilt        : ScopeId(0): ["_item$t", "list"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_item$t"]
+rebuilt        : ScopeId(5): []
+Symbol scope ID mismatch for "_item$t":
+after transform: SymbolId(4): ScopeId(5)
+rebuilt        : SymbolId(4): ScopeId(0)
+
+tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInParameterBindingPattern.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Bindings mismatch:
+after transform: ScopeId(2): ["_a", "c"]
+rebuilt        : ScopeId(3): ["_a"]
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(0))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Symbol scope ID mismatch for "c":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(2)
+
+tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInParameterInitializer.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Bindings mismatch:
+after transform: ScopeId(2): ["_a", "b"]
+rebuilt        : ScopeId(3): ["_a"]
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(0))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(1): ScopeId(2)
+
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInference.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "fnu", "ofnu", "osu", "su", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"]
@@ -48366,8 +48738,38 @@ rebuilt        : <None>
 Reference symbol mismatch for "su":
 after transform: SymbolId(2) "su"
 rebuilt        : <None>
+Reference symbol mismatch for "su":
+after transform: SymbolId(2) "su"
+rebuilt        : <None>
+Reference symbol mismatch for "su":
+after transform: SymbolId(2) "su"
+rebuilt        : <None>
+Reference symbol mismatch for "su":
+after transform: SymbolId(2) "su"
+rebuilt        : <None>
+Reference symbol mismatch for "su":
+after transform: SymbolId(2) "su"
+rebuilt        : <None>
+Reference symbol mismatch for "su":
+after transform: SymbolId(2) "su"
+rebuilt        : <None>
+Reference symbol mismatch for "su":
+after transform: SymbolId(2) "su"
+rebuilt        : <None>
 Reference symbol mismatch for "fnu":
 after transform: SymbolId(3) "fnu"
+rebuilt        : <None>
+Reference symbol mismatch for "fnu":
+after transform: SymbolId(3) "fnu"
+rebuilt        : <None>
+Reference symbol mismatch for "fnu":
+after transform: SymbolId(3) "fnu"
+rebuilt        : <None>
+Reference symbol mismatch for "su":
+after transform: SymbolId(2) "su"
+rebuilt        : <None>
+Reference symbol mismatch for "su":
+after transform: SymbolId(2) "su"
 rebuilt        : <None>
 Reference symbol mismatch for "su":
 after transform: SymbolId(2) "su"
@@ -48378,6 +48780,24 @@ rebuilt        : <None>
 Reference symbol mismatch for "osu":
 after transform: SymbolId(4) "osu"
 rebuilt        : <None>
+Reference symbol mismatch for "osu":
+after transform: SymbolId(4) "osu"
+rebuilt        : <None>
+Reference symbol mismatch for "osu":
+after transform: SymbolId(4) "osu"
+rebuilt        : <None>
+Reference symbol mismatch for "osu":
+after transform: SymbolId(4) "osu"
+rebuilt        : <None>
+Reference symbol mismatch for "osu":
+after transform: SymbolId(4) "osu"
+rebuilt        : <None>
+Reference symbol mismatch for "ofnu":
+after transform: SymbolId(5) "ofnu"
+rebuilt        : <None>
+Reference symbol mismatch for "ofnu":
+after transform: SymbolId(5) "ofnu"
+rebuilt        : <None>
 Reference symbol mismatch for "ofnu":
 after transform: SymbolId(5) "ofnu"
 rebuilt        : <None>
@@ -48387,10 +48807,22 @@ rebuilt        : ["fnu", "ofnu", "osu", "su", "unbox"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/propertyAccessChain/propertyAccessChain.2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["o1", "o2", "o3"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["_o3$b", "o1", "o2", "o3"]
+rebuilt        : ScopeId(0): ["_o3$b"]
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
 rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
@@ -48404,13 +48836,25 @@ rebuilt        : ["o1", "o2", "o3"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/propertyAccessChain/propertyAccessChain.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["T", "o1", "o2", "o3", "o4", "o5", "o6"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["T", "_o", "_o3$b", "_o4$b", "_o5$b", "o1", "o2", "o3", "o4", "o5", "o6"]
+rebuilt        : ScopeId(0): ["_o", "_o3$b", "_o4$b", "_o5$b"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
 rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
@@ -48424,11 +48868,32 @@ rebuilt        : <None>
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
 rebuilt        : <None>
+Reference symbol mismatch for "o5":
+after transform: SymbolId(4) "o5"
+rebuilt        : <None>
 Reference symbol mismatch for "o6":
 after transform: SymbolId(5) "o6"
 rebuilt        : <None>
 Reference symbol mismatch for "o1":
 after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o1":
+after transform: SymbolId(0) "o1"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
+rebuilt        : <None>
+Reference symbol mismatch for "o2":
+after transform: SymbolId(1) "o2"
 rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"

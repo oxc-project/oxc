@@ -31,7 +31,6 @@ pub struct TransformCtx<'a> {
 
     pub module: Module,
 
-    #[expect(dead_code)]
     pub assumptions: CompilerAssumptions,
 
     // Helpers
