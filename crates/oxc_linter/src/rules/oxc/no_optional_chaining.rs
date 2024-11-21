@@ -101,6 +101,9 @@ fn test() {
         ("a?.c?.b<c>", None),
         ("foo?.bar!", None),
         ("foo?.[bar]!", None),
+        ("x?.f<T>();", None),
+        ("x?.f?.<T>();", None),
+        ("f?.<Q>();", None),
         (
             "var x = a?.b",
             Some(serde_json::json!([{
