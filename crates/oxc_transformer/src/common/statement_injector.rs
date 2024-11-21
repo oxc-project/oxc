@@ -79,7 +79,6 @@ impl<'a> StatementInjectorStore<'a> {
 // The non-trivial inner functions are not marked `#[inline]` - compiler can decide whether to inline or not.
 impl<'a> StatementInjectorStore<'a> {
     /// Add a statement to be inserted immediately before the target statement.
-    #[expect(dead_code)]
     #[inline]
     pub fn insert_before<A: GetAddress>(&self, target: &A, stmt: Statement<'a>) {
         self.insert_before_address(target.address(), stmt);

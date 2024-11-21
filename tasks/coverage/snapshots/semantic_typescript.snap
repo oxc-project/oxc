@@ -2,7 +2,7 @@ commit: df9d1650
 
 semantic_typescript Summary:
 AST Parsed     : 6490/6490 (100.00%)
-Positive Passed: 2663/6490 (41.03%)
+Positive Passed: 2655/6490 (40.91%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -823,8 +823,8 @@ rebuilt        : SymbolId(0) "M"
 
 tasks/coverage/typescript/tests/cases/compiler/anyAndUnknownHaveFalsyComponents.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["foo1", "foo2", "isTreeHeader1", "isTreeHeader2", "x1", "x2", "y1", "y2"]
-rebuilt        : ScopeId(0): ["foo1", "foo2", "y1", "y2"]
+after transform: ScopeId(0): ["_objectSpread", "foo1", "foo2", "isTreeHeader1", "isTreeHeader2", "x1", "x2", "y1", "y2"]
+rebuilt        : ScopeId(0): ["_objectSpread", "foo1", "foo2", "y1", "y2"]
 Reference symbol mismatch for "x1":
 after transform: SymbolId(0) "x1"
 rebuilt        : <None>
@@ -838,8 +838,8 @@ Reference symbol mismatch for "isTreeHeader1":
 after transform: SymbolId(2) "isTreeHeader1"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["isTreeHeader1", "x1", "x2"]
+after transform: ["require"]
+rebuilt        : ["isTreeHeader1", "require", "x1", "x2"]
 
 tasks/coverage/typescript/tests/cases/compiler/anyIsAssignableToObject.ts
 semantic error: Bindings mismatch:
@@ -5573,8 +5573,8 @@ rebuilt        : ["DMap"]
 
 tasks/coverage/typescript/tests/cases/compiler/contextualTypeObjectSpreadExpression.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["I", "i"]
-rebuilt        : ScopeId(0): ["i"]
+after transform: ScopeId(0): ["I", "_objectSpread", "i"]
+rebuilt        : ScopeId(0): ["_objectSpread", "i"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -9066,8 +9066,8 @@ rebuilt        : ScopeId(2): ["obj"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitKeywordDestructuring.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["P", "f1", "f2", "f3", "f4", "f5"]
-rebuilt        : ScopeId(0): ["f1", "f2", "f3", "f4", "f5"]
+after transform: ScopeId(0): ["P", "_excluded", "_excluded2", "_excluded3", "_excluded4", "_excluded5", "_objectWithoutProperties", "f1", "f2", "f3", "f4", "f5"]
+rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_excluded4", "_excluded5", "_objectWithoutProperties", "f1", "f2", "f3", "f4", "f5"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
@@ -9535,7 +9535,7 @@ after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "AgeGroups":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitStringEnumUsedInNonlocalSpread.ts
 semantic error: Bindings mismatch:
@@ -9942,8 +9942,8 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationsWithRecursiveInternalTypesProduceUniqueTypeParams.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Key", "Value", "p1", "p2", "p3", "testRecFun", "updateIfChanged"]
-rebuilt        : ScopeId(0): ["p1", "p2", "p3", "testRecFun", "updateIfChanged"]
+after transform: ScopeId(0): ["Key", "Value", "_objectSpread", "p1", "p2", "p3", "testRecFun", "updateIfChanged"]
+rebuilt        : ScopeId(0): ["_objectSpread", "p1", "p2", "p3", "testRecFun", "updateIfChanged"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(8)]
@@ -10257,8 +10257,8 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/deeplyNestedTemplateLiteralIntersection.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Props", "R", "S", "T", "X", "_S", "a1", "a2", "b"]
-rebuilt        : ScopeId(0): ["a1", "a2", "b"]
+after transform: ScopeId(0): ["Props", "R", "S", "T", "X", "_S", "_objectSpread", "a1", "a2", "b"]
+rebuilt        : ScopeId(0): ["_objectSpread", "a1", "a2", "b"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): []
@@ -10634,8 +10634,8 @@ rebuilt        : ScopeId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/destructuringInitializerContextualTypeFromContext.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Child", "Parent", "Props", "SFC"]
-rebuilt        : ScopeId(0): ["Child", "Parent"]
+after transform: ScopeId(0): ["Child", "Parent", "Props", "SFC", "_excluded", "_excluded2", "_objectSpread", "_objectWithoutProperties"]
+rebuilt        : ScopeId(0): ["Child", "Parent", "_excluded", "_excluded2", "_objectSpread", "_objectWithoutProperties"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
@@ -11553,8 +11553,8 @@ rebuilt        : ["MyClassDecorator", "MyMethodDecorator"]
 
 tasks/coverage/typescript/tests/cases/compiler/emitHelpersWithLocalCollisions.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "__decorate", "dec", "o", "y"]
-rebuilt        : ScopeId(0): ["A", "o", "y"]
+after transform: ScopeId(0): ["A", "__decorate", "_objectSpread", "dec", "o", "y"]
+rebuilt        : ScopeId(0): ["A", "_objectSpread", "o", "y"]
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -15231,6 +15231,14 @@ Reference flags mismatch for "X":
 after transform: ReferenceId(2): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
+tasks/coverage/typescript/tests/cases/compiler/exportObjectRest.ts
+semantic error: Symbol flags mismatch for "x":
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol flags mismatch for "rest":
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
+
 tasks/coverage/typescript/tests/cases/compiler/exportPrivateType.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -17371,8 +17379,8 @@ rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/genericObjectSpreadResultInSwitch.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Params", "getType", "params"]
-rebuilt        : ScopeId(0): ["getType"]
+after transform: ScopeId(0): ["Params", "_excluded", "_objectWithoutProperties", "getType", "params"]
+rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "getType"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -17389,8 +17397,8 @@ Reference symbol mismatch for "params":
 after transform: SymbolId(6) "params"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["params"]
+after transform: ["require"]
+rebuilt        : ["params", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/genericOfACloduleType1.ts
 semantic error: Missing SymbolId: "M"
@@ -18120,14 +18128,14 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/identityAndDivergentNormalizedTypes.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ApiPost", "PostBody", "PostPath", "fx1", "post", "tmp"]
-rebuilt        : ScopeId(0): ["fx1", "post", "tmp"]
+after transform: ScopeId(0): ["ApiPost", "PostBody", "PostPath", "_excluded", "_objectWithoutProperties", "fx1", "post", "tmp"]
+rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "fx1", "post", "tmp"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Bindings mismatch:
-after transform: ScopeId(4): ["PATH", "body", "options", "path"]
-rebuilt        : ScopeId(1): ["body", "options", "path"]
+after transform: ScopeId(4): ["PATH", "_ref", "body", "options", "path"]
+rebuilt        : ScopeId(1): ["_ref", "body", "options", "path"]
 Bindings mismatch:
 after transform: ScopeId(5): ["PATH", "body", "path"]
 rebuilt        : ScopeId(2): ["body", "path"]
@@ -18135,8 +18143,8 @@ Bindings mismatch:
 after transform: ScopeId(6): ["P", "x", "y"]
 rebuilt        : ScopeId(3): ["x", "y"]
 Unresolved references mismatch:
-after transform: ["Extract", "Omit", "RequestInit"]
-rebuilt        : []
+after transform: ["Extract", "Omit", "RequestInit", "require"]
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/identityRelationNeverTypes.ts
 semantic error: Bindings mismatch:
@@ -18377,8 +18385,8 @@ rebuilt        : ["dec"]
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpersES6.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "_asyncToGenerator", "dec", "o", "y"]
-rebuilt        : ScopeId(0): ["A", "_asyncToGenerator", "o", "y"]
+after transform: ScopeId(0): ["A", "_asyncToGenerator", "_objectSpread", "dec", "o", "y"]
+rebuilt        : ScopeId(0): ["A", "_asyncToGenerator", "_objectSpread", "o", "y"]
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -18424,8 +18432,8 @@ rebuilt        : ["React", "o"]
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpersWithLocalCollisions.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "__decorate", "dec", "o", "y"]
-rebuilt        : ScopeId(0): ["A", "o", "y"]
+after transform: ScopeId(0): ["A", "__decorate", "_objectSpread", "dec", "o", "y"]
+rebuilt        : ScopeId(0): ["A", "_objectSpread", "o", "y"]
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -19349,8 +19357,8 @@ rebuilt        : ["test", "x1", "x2"]
 
 tasks/coverage/typescript/tests/cases/compiler/inferenceOptionalPropertiesToIndexSignatures.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a1", "a2", "a3", "a4", "obj", "param2", "query", "x1", "x2", "x3", "x4"]
-rebuilt        : ScopeId(0): ["a1", "a2", "a3", "a4", "obj", "param2", "query"]
+after transform: ScopeId(0): ["_objectSpread", "a1", "a2", "a3", "a4", "obj", "param2", "query", "x1", "x2", "x3", "x4"]
+rebuilt        : ScopeId(0): ["_objectSpread", "a1", "a2", "a3", "a4", "obj", "param2", "query"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
@@ -19367,8 +19375,8 @@ Reference symbol mismatch for "x4":
 after transform: SymbolId(5) "x4"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Math", "Object", "encodeURIComponent", "foo"]
-rebuilt        : ["Math", "Object", "encodeURIComponent", "foo", "x1", "x2", "x3", "x4"]
+after transform: ["Math", "Object", "encodeURIComponent", "foo", "require"]
+rebuilt        : ["Math", "Object", "encodeURIComponent", "foo", "require", "x1", "x2", "x3", "x4"]
 
 tasks/coverage/typescript/tests/cases/compiler/inferenceOuterResultNotIncorrectlyInstantiatedWithInnerResult.ts
 semantic error: Bindings mismatch:
@@ -21782,8 +21790,8 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), R
 
 tasks/coverage/typescript/tests/cases/compiler/jsxComplexSignatureHasApplicabilityError.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ArrowRendererHandler", "ArrowRendererProps", "AutocompleteResult", "ClearRendererHandler", "ExtractValueType", "FilterOptionHandler", "FilterOptionsHandler", "FocusOptionHandler", "HandlerRendererResult", "InputRendererHandler", "IsOptionUniqueHandler", "IsValidNewOptionHandler", "LoadOptionsAsyncHandler", "LoadOptionsHandler", "LoadOptionsLegacyHandler", "MenuRendererHandler", "MenuRendererProps", "NewOptionCreatorHandler", "Omit", "OnBlurHandler", "OnChangeHandler", "OnChangeMultipleHandler", "OnChangeSingleHandler", "OnCloseHandler", "OnFocusHandler", "OnInputChangeHandler", "OnInputKeyDownHandler", "OnMenuScrollToBottomHandler", "OnNewOptionClickHandler", "OnOpenHandler", "OnValueClickHandler", "Option", "OptionComponentProps", "OptionComponentType", "OptionRendererHandler", "OptionValues", "Options", "Overwrite", "PromptTextCreatorHandler", "Props", "React", "ReactSelectProps", "ReactSingleSelectProps", "SelectValueHandler", "ShouldKeyDownEventCreateNewOptionHandler", "ValueComponentProps", "ValueComponentType", "ValueRendererHandler", "_jsxFileName", "createReactSingleSelect"]
-rebuilt        : ScopeId(0): ["React", "_jsxFileName", "createReactSingleSelect"]
+after transform: ScopeId(0): ["ArrowRendererHandler", "ArrowRendererProps", "AutocompleteResult", "ClearRendererHandler", "ExtractValueType", "FilterOptionHandler", "FilterOptionsHandler", "FocusOptionHandler", "HandlerRendererResult", "InputRendererHandler", "IsOptionUniqueHandler", "IsValidNewOptionHandler", "LoadOptionsAsyncHandler", "LoadOptionsHandler", "LoadOptionsLegacyHandler", "MenuRendererHandler", "MenuRendererProps", "NewOptionCreatorHandler", "Omit", "OnBlurHandler", "OnChangeHandler", "OnChangeMultipleHandler", "OnChangeSingleHandler", "OnCloseHandler", "OnFocusHandler", "OnInputChangeHandler", "OnInputKeyDownHandler", "OnMenuScrollToBottomHandler", "OnNewOptionClickHandler", "OnOpenHandler", "OnValueClickHandler", "Option", "OptionComponentProps", "OptionComponentType", "OptionRendererHandler", "OptionValues", "Options", "Overwrite", "PromptTextCreatorHandler", "Props", "React", "ReactSelectProps", "ReactSingleSelectProps", "SelectValueHandler", "ShouldKeyDownEventCreateNewOptionHandler", "ValueComponentProps", "ValueComponentType", "ValueRendererHandler", "_jsxFileName", "_objectSpread", "createReactSingleSelect"]
+rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "createReactSingleSelect"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(10), ScopeId(12), ScopeId(13), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(36), ScopeId(37), ScopeId(38), ScopeId(39), ScopeId(40), ScopeId(41), ScopeId(42), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(52), ScopeId(53), ScopeId(54), ScopeId(55), ScopeId(56), ScopeId(57)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
@@ -21791,7 +21799,7 @@ Bindings mismatch:
 after transform: ScopeId(6): ["WrappedComponent", "WrappedProps"]
 rebuilt        : ScopeId(1): ["WrappedComponent"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(17), ReferenceId(19), ReferenceId(44), ReferenceId(50), ReferenceId(54), ReferenceId(82), ReferenceId(85), ReferenceId(88), ReferenceId(102), ReferenceId(180), ReferenceId(195), ReferenceId(206), ReferenceId(209), ReferenceId(233), ReferenceId(236), ReferenceId(240)]
+after transform: SymbolId(0): [ReferenceId(17), ReferenceId(19), ReferenceId(44), ReferenceId(50), ReferenceId(54), ReferenceId(82), ReferenceId(85), ReferenceId(88), ReferenceId(102), ReferenceId(180), ReferenceId(195), ReferenceId(206), ReferenceId(209), ReferenceId(233), ReferenceId(236), ReferenceId(242)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Unresolved references mismatch:
 after transform: ["Array", "Exclude", "HTMLAnchorElement", "HTMLDivElement", "HTMLInputElement", "JSX", "Pick", "Promise", "ReactSelectClass", "undefined"]
@@ -21994,8 +22002,8 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxGenericComponentWithSpreadingResultOfGenericFunction.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "otherProps"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
+after transform: ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "otherProps"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
@@ -25422,8 +25430,8 @@ rebuilt        : ScopeId(2): ["pet", "voice"]
 
 tasks/coverage/typescript/tests/cases/compiler/narrowingDestructuring.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["X", "Z", "farr", "func", "func2", "func3"]
-rebuilt        : ScopeId(0): ["farr", "func", "func2", "func3"]
+after transform: ScopeId(0): ["X", "Z", "_excluded", "_excluded2", "_excluded3", "_excluded4", "_objectWithoutProperties", "farr", "func", "func2", "func3"]
+rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_excluded4", "_objectWithoutProperties", "farr", "func", "func2", "func3"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6), ScopeId(9), ScopeId(12)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7), ScopeId(10)]
@@ -25450,8 +25458,8 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 
 tasks/coverage/typescript/tests/cases/compiler/narrowingNoInfer1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["TaggedA", "TaggedB", "TaggedUnion", "m", "map", "something"]
-rebuilt        : ScopeId(0): ["m", "map", "something"]
+after transform: ScopeId(0): ["TaggedA", "TaggedB", "TaggedUnion", "_objectSpread", "m", "map", "something"]
+rebuilt        : ScopeId(0): ["_objectSpread", "m", "map", "something"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
@@ -25459,8 +25467,8 @@ Bindings mismatch:
 after transform: ScopeId(4): ["A", "B", "f", "items"]
 rebuilt        : ScopeId(1): ["f", "items"]
 Unresolved references mismatch:
-after transform: ["NoInfer", "const", "test2"]
-rebuilt        : ["test2"]
+after transform: ["NoInfer", "const", "require", "test2"]
+rebuilt        : ["require", "test2"]
 
 tasks/coverage/typescript/tests/cases/compiler/narrowingPastLastAssignmentInModule.ts
 semantic error: Unresolved references mismatch:
@@ -25469,8 +25477,8 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/narrowingRestGenericCall.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Slugs", "call", "obj"]
-rebuilt        : ScopeId(0): ["call"]
+after transform: ScopeId(0): ["Slugs", "_excluded", "_objectWithoutProperties", "call", "obj"]
+rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "call"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -25481,8 +25489,8 @@ Reference symbol mismatch for "obj":
 after transform: SymbolId(5) "obj"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["console"]
-rebuilt        : ["console", "obj"]
+after transform: ["console", "require"]
+rebuilt        : ["console", "obj", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/narrowingTypeofDiscriminant.ts
 semantic error: Bindings mismatch:
@@ -25721,6 +25729,32 @@ rebuilt        : ScopeId(2): [SymbolId(4), SymbolId(5)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function)
+
+tasks/coverage/typescript/tests/cases/compiler/nestedObjectRest.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "x", "y"]
+rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "_ref2", "_ref3", "_ref4", "_ref5", "x", "y"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_ref3"]
+rebuilt        : ScopeId(1): []
+Bindings mismatch:
+after transform: ScopeId(2): ["_ref4", "_ref5"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(6): ScopeId(1)
+rebuilt        : SymbolId(6): ScopeId(0)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(7): ScopeId(2)
+rebuilt        : SymbolId(7): ScopeId(0)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(8): ScopeId(2)
+rebuilt        : SymbolId(8): ScopeId(0)
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(3): ReferenceFlags(Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | Write)
+Reference flags mismatch for "_ref4":
+after transform: ReferenceId(13): ReferenceFlags(Write)
+rebuilt        : ReferenceId(12): ReferenceFlags(Read | Write)
 
 tasks/coverage/typescript/tests/cases/compiler/nestedSelf.ts
 semantic error: Missing SymbolId: "M"
@@ -26469,8 +26503,8 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/objectInstantiationFromUnionSpread.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Fail", "Item", "Success", "f1", "f2"]
-rebuilt        : ScopeId(0): ["f1", "f2"]
+after transform: ScopeId(0): ["Fail", "Item", "Success", "_objectSpread", "f1", "f2"]
+rebuilt        : ScopeId(0): ["_objectSpread", "f1", "f2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
@@ -26478,8 +26512,8 @@ Bindings mismatch:
 after transform: ScopeId(7): ["T", "a"]
 rebuilt        : ScopeId(4): ["a"]
 Unresolved references mismatch:
-after transform: ["true"]
-rebuilt        : []
+after transform: ["require", "true"]
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/objectLitGetterSetter.ts
 semantic error: Unresolved references mismatch:
@@ -26557,8 +26591,8 @@ rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/objectRestBindingContextualInference.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ImageHolder", "SetupImageRefs", "SetupImages", "TestInterface", "prepare", "rest", "test"]
-rebuilt        : ScopeId(0): ["prepare", "rest"]
+after transform: ScopeId(0): ["ImageHolder", "SetupImageRefs", "SetupImages", "TestInterface", "_objectWithoutProperties", "_setupImages", "prepare", "rest", "test"]
+rebuilt        : ScopeId(0): ["_objectWithoutProperties", "_setupImages", "prepare", "rest"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): []
@@ -26566,8 +26600,43 @@ Reference symbol mismatch for "test":
 after transform: SymbolId(13) "test"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["File", "setupImages"]
-rebuilt        : ["setupImages", "test"]
+after transform: ["File", "require", "setupImages"]
+rebuilt        : ["require", "setupImages", "test"]
+
+tasks/coverage/typescript/tests/cases/compiler/objectRestSpread.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["_excluded", "_extends", "_obj", "_objectDestructuringEmpty", "_objectSpread", "_objectWithoutProperties", "_ref", "_ref2", "_ref3", "_ref4", "_ref5", "_ref6", "_toPropertyKey", "_wrapAsyncGenerator", "fn", "more", "nestedProp", "nestedRest", "obj", "other", "prop", "props", "test"]
+rebuilt        : ScopeId(0): ["_excluded", "_extends", "_objectDestructuringEmpty", "_objectSpread", "_objectWithoutProperties", "_ref", "_ref2", "_ref3", "_ref4", "_ref5", "_ref6", "_toPropertyKey", "_wrapAsyncGenerator", "fn", "more", "nestedProp", "nestedRest", "obj", "other", "prop", "props", "test"]
+Reference symbol mismatch for "_obj":
+after transform: SymbolId(18) "_obj"
+rebuilt        : <None>
+Reference symbol mismatch for "_obj":
+after transform: SymbolId(18) "_obj"
+rebuilt        : <None>
+Reference symbol mismatch for "_obj":
+after transform: SymbolId(18) "_obj"
+rebuilt        : <None>
+Reference symbol mismatch for "_obj":
+after transform: SymbolId(18) "_obj"
+rebuilt        : <None>
+Reference symbol mismatch for "_obj":
+after transform: SymbolId(18) "_obj"
+rebuilt        : <None>
+Reference flags mismatch for "prop":
+after transform: ReferenceId(8): ReferenceFlags(Write)
+rebuilt        : ReferenceId(42): ReferenceFlags(Read | Write)
+Reference flags mismatch for "_objectSpread":
+after transform: ReferenceId(49): ReferenceFlags(Read)
+rebuilt        : ReferenceId(43): ReferenceFlags(Read | Write)
+Reference flags mismatch for "obj":
+after transform: ReferenceId(9): ReferenceFlags(Write)
+rebuilt        : ReferenceId(44): ReferenceFlags(Read | Write)
+Reference flags mismatch for "_ref6":
+after transform: ReferenceId(41): ReferenceFlags(Read)
+rebuilt        : ReferenceId(45): ReferenceFlags(Read | Write)
+Unresolved references mismatch:
+after transform: ["require"]
+rebuilt        : ["_obj", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/observableInferenceCanBeMade.ts
 semantic error: Bindings mismatch:
@@ -31332,8 +31401,8 @@ rebuilt        : ScopeId(0): ["_jsx", "_jsxFileName"]
 
 tasks/coverage/typescript/tests/cases/compiler/reactNamespaceJSXEmit.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "_Bar", "_jsxFileName", "foo", "myReactLib", "x"]
-rebuilt        : ScopeId(0): ["_jsxFileName"]
+after transform: ScopeId(0): ["Bar", "_Bar", "_jsxFileName", "_objectSpread", "foo", "myReactLib", "x"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread"]
 Reference symbol mismatch for "Bar":
 after transform: SymbolId(2) "Bar"
 rebuilt        : <None>
@@ -31367,7 +31436,7 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Inner", "P"]
 rebuilt        : ScopeId(1): ["Inner"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(8)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(10)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/reactSFCAndFunctionResolvable.tsx
@@ -31404,10 +31473,10 @@ rebuilt        : ["Checkbox", "OtherRadio", "Radio", "condition1", "condition2"]
 
 tasks/coverage/typescript/tests/cases/compiler/reactTagNameComponentWithPropsNoOOM.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "Tag", "_jsxFileName", "children", "classes", "rest"]
-rebuilt        : ScopeId(0): ["React", "_jsxFileName", "children", "classes", "rest"]
+after transform: ScopeId(0): ["React", "Tag", "_jsxFileName", "_objectSpread", "children", "classes", "rest"]
+rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "children", "classes", "rest"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Tag":
 after transform: SymbolId(1) "Tag"
@@ -31418,10 +31487,10 @@ rebuilt        : ["Tag"]
 
 tasks/coverage/typescript/tests/cases/compiler/reactTagNameComponentWithPropsNoOOM2.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "Tag", "_jsxFileName", "children", "classes", "rest"]
-rebuilt        : ScopeId(0): ["React", "_jsxFileName", "children", "classes", "rest"]
+after transform: ScopeId(0): ["React", "Tag", "_jsxFileName", "_objectSpread", "children", "classes", "rest"]
+rebuilt        : ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "children", "classes", "rest"]
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(9)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(11)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 Reference symbol mismatch for "Tag":
 after transform: SymbolId(1) "Tag"
@@ -32642,14 +32711,14 @@ rebuilt        : SymbolId(7): []
 
 tasks/coverage/typescript/tests/cases/compiler/restParameterTypeInstantiation.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["TestGeneric", "removeF", "result"]
-rebuilt        : ScopeId(0): ["removeF", "result"]
+after transform: ScopeId(0): ["TestGeneric", "_excluded", "_objectWithoutProperties", "removeF", "result"]
+rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "removeF", "result"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Bindings mismatch:
-after transform: ScopeId(2): ["TX", "f", "rest"]
-rebuilt        : ScopeId(1): ["f", "rest"]
+after transform: ScopeId(2): ["TX", "_ref", "f", "rest"]
+rebuilt        : ScopeId(1): ["_ref", "f", "rest"]
 
 tasks/coverage/typescript/tests/cases/compiler/restTypeRetainsMappyness.ts
 semantic error: Bindings mismatch:
@@ -32664,17 +32733,23 @@ rebuilt        : ScopeId(1): ["arr", "fn"]
 
 tasks/coverage/typescript/tests/cases/compiler/restUnion2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["nullUnion", "rest2", "rest3", "undefinedUnion"]
-rebuilt        : ScopeId(0): ["rest2", "rest3"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "nullUnion", "rest2", "rest3", "undefinedUnion"]
+rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "rest2", "rest3"]
+Reference symbol mismatch for "undefinedUnion":
+after transform: SymbolId(0) "undefinedUnion"
+rebuilt        : <None>
 Reference symbol mismatch for "undefinedUnion":
 after transform: SymbolId(0) "undefinedUnion"
 rebuilt        : <None>
 Reference symbol mismatch for "nullUnion":
 after transform: SymbolId(2) "nullUnion"
 rebuilt        : <None>
+Reference symbol mismatch for "nullUnion":
+after transform: SymbolId(2) "nullUnion"
+rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["nullUnion", "undefinedUnion"]
+after transform: ["require"]
+rebuilt        : ["nullUnion", "require", "undefinedUnion"]
 
 tasks/coverage/typescript/tests/cases/compiler/returnInfiniteIntersection.ts
 semantic error: Bindings mismatch:
@@ -34917,8 +34992,8 @@ rebuilt        : ["Array", "foo1", "foo2"]
 
 tasks/coverage/typescript/tests/cases/compiler/spreadExpressionContextualType.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Apple", "Orange", "test", "test2"]
-rebuilt        : ScopeId(0): ["test", "test2"]
+after transform: ScopeId(0): ["Apple", "Orange", "_objectSpread", "test", "test2"]
+rebuilt        : ScopeId(0): ["_objectSpread", "test", "test2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -34936,8 +35011,8 @@ rebuilt        : ScopeId(1): ["thing"]
 
 tasks/coverage/typescript/tests/cases/compiler/spreadIdenticalTypesRemoved.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Animal", "Animal2", "billOwner", "clonePet"]
-rebuilt        : ScopeId(0): ["billOwner", "clonePet"]
+after transform: ScopeId(0): ["Animal", "Animal2", "_objectSpread", "billOwner", "clonePet"]
+rebuilt        : ScopeId(0): ["_objectSpread", "billOwner", "clonePet"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -34952,25 +35027,25 @@ rebuilt        : SymbolId(3): []
 
 tasks/coverage/typescript/tests/cases/compiler/spreadObjectNoCircular1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Box", "Foo", "b"]
-rebuilt        : ScopeId(0): ["Foo"]
+after transform: ScopeId(0): ["Box", "Foo", "_objectSpread", "b"]
+rebuilt        : ScopeId(0): ["Foo", "_objectSpread"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(2): [ReferenceId(0), ReferenceId(3)]
-rebuilt        : SymbolId(0): []
+rebuilt        : SymbolId(1): []
 Reference symbol mismatch for "b":
 after transform: SymbolId(1) "b"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["b"]
+after transform: ["require"]
+rebuilt        : ["b", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/spreadObjectPermutations.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a", "b", "c", "v_a", "v_ab", "v_abc", "v_ac", "v_acb", "v_b", "v_ba", "v_bac", "v_bc", "v_bca", "v_c", "v_ca", "v_cab", "v_cb", "v_cba"]
-rebuilt        : ScopeId(0): ["v_a", "v_ab", "v_abc", "v_ac", "v_acb", "v_b", "v_ba", "v_bac", "v_bc", "v_bca", "v_c", "v_ca", "v_cab", "v_cb", "v_cba"]
+after transform: ScopeId(0): ["_objectSpread", "a", "b", "c", "v_a", "v_ab", "v_abc", "v_ac", "v_acb", "v_b", "v_ba", "v_bac", "v_bc", "v_bca", "v_c", "v_ca", "v_cab", "v_cb", "v_cba"]
+rebuilt        : ScopeId(0): ["_objectSpread", "v_a", "v_ab", "v_abc", "v_ac", "v_acb", "v_b", "v_ba", "v_bac", "v_bc", "v_bca", "v_c", "v_ca", "v_cab", "v_cb", "v_cba"]
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
@@ -35071,30 +35146,30 @@ Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["a", "b", "c"]
+after transform: ["require"]
+rebuilt        : ["a", "b", "c", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/spreadObjectWithIndexDoesNotAddUndefinedToLocalIndex.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["m", "x"]
-rebuilt        : ScopeId(0): ["x"]
+after transform: ScopeId(0): ["_objectSpread", "m", "x"]
+rebuilt        : ScopeId(0): ["_objectSpread", "x"]
 Reference symbol mismatch for "m":
 after transform: SymbolId(0) "m"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["m"]
+after transform: ["require"]
+rebuilt        : ["m", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/spreadOfObjectLiteralAssignableToIndexSignature.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["RecordOfRecords", "RecordOfRecordsOrEmpty", "foo", "recordOfRecords", "recordsOfRecordsOrEmpty"]
-rebuilt        : ScopeId(0): ["foo", "recordOfRecords", "recordsOfRecordsOrEmpty"]
+after transform: ScopeId(0): ["RecordOfRecords", "RecordOfRecordsOrEmpty", "_objectSpread", "foo", "recordOfRecords", "recordsOfRecordsOrEmpty"]
+rebuilt        : ScopeId(0): ["_objectSpread", "foo", "recordOfRecords", "recordsOfRecordsOrEmpty"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Record", "undefined"]
-rebuilt        : ["undefined"]
+after transform: ["Record", "require", "undefined"]
+rebuilt        : ["require", "undefined"]
 
 tasks/coverage/typescript/tests/cases/compiler/spreadParameterTupleType.ts
 semantic error: Bindings mismatch:
@@ -35117,8 +35192,8 @@ rebuilt        : ScopeId(1): ["i", "rest", "singleton", "singletons"]
 
 tasks/coverage/typescript/tests/cases/compiler/spreadTypeRemovesReadonly.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ReadonlyData", "clone", "data"]
-rebuilt        : ScopeId(0): ["clone", "data"]
+after transform: ScopeId(0): ["ReadonlyData", "_objectSpread", "clone", "data"]
+rebuilt        : ScopeId(0): ["_objectSpread", "clone", "data"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -36387,14 +36462,14 @@ rebuilt        : ScopeId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/trivialSubtypeReductionNoStructuralCheck2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Wizard", "WizardStepProps", "props"]
-rebuilt        : ScopeId(0): ["Wizard"]
+after transform: ScopeId(0): ["Wizard", "WizardStepProps", "_objectSpread", "props"]
+rebuilt        : ScopeId(0): ["Wizard", "_objectSpread"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "Wizard":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4)]
-rebuilt        : SymbolId(0): []
+rebuilt        : SymbolId(1): []
 Reference symbol mismatch for "props":
 after transform: SymbolId(0) "props"
 rebuilt        : <None>
@@ -36530,8 +36605,8 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/tsxUnionSpread.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["AnimalComponent", "AnimalInfo", "CatInfo", "DogInfo", "JSX", "_jsx", "_jsxFileName", "component", "component2", "getProps", "props", "props2"]
-rebuilt        : ScopeId(0): ["AnimalComponent", "_jsx", "_jsxFileName", "component", "component2", "getProps", "props", "props2"]
+after transform: ScopeId(0): ["AnimalComponent", "AnimalInfo", "CatInfo", "DogInfo", "JSX", "_jsx", "_jsxFileName", "_objectSpread", "component", "component2", "getProps", "props", "props2"]
+rebuilt        : ScopeId(0): ["AnimalComponent", "_jsx", "_jsxFileName", "_objectSpread", "component", "component2", "getProps", "props", "props2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -38158,8 +38233,8 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/unionExcessPropsWithPartialMember.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "a", "ab"]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): ["A", "B", "_objectSpread", "a", "ab"]
+rebuilt        : ScopeId(0): ["_objectSpread"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
@@ -38170,8 +38245,8 @@ Reference symbol mismatch for "a":
 after transform: SymbolId(3) "a"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["a", "ab"]
+after transform: ["require"]
+rebuilt        : ["a", "ab", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/unionOfArraysFilterCall.ts
 semantic error: Bindings mismatch:
@@ -41004,37 +41079,73 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C"]
-rebuilt        : ScopeId(0): ["C", "_this", "_this2"]
+after transform: ScopeId(0): ["C", "_extends", "_objectDestructuringEmpty"]
+rebuilt        : ScopeId(0): ["C", "_extends", "_objectDestructuringEmpty", "_this", "_this2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Bindings mismatch:
-after transform: ScopeId(4): ["_this", "_this2"]
+after transform: ScopeId(4): ["_this", "_this2", "_x"]
 rebuilt        : ScopeId(1): []
 Symbol scope ID mismatch for "_this":
 after transform: SymbolId(1): ScopeId(4)
-rebuilt        : SymbolId(0): ScopeId(0)
+rebuilt        : SymbolId(2): ScopeId(0)
 Symbol scope ID mismatch for "_this2":
 after transform: SymbolId(2): ScopeId(4)
-rebuilt        : SymbolId(1): ScopeId(0)
+rebuilt        : SymbolId(3): ScopeId(0)
+Reference symbol mismatch for "_x":
+after transform: SymbolId(3) "_x"
+rebuilt        : <None>
+Reference symbol mismatch for "_x":
+after transform: SymbolId(3) "_x"
+rebuilt        : <None>
+Reference symbol mismatch for "_x":
+after transform: SymbolId(3) "_x"
+rebuilt        : <None>
+Reference symbol mismatch for "_x":
+after transform: SymbolId(3) "_x"
+rebuilt        : <None>
+Reference symbol mismatch for "_x":
+after transform: SymbolId(3) "_x"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["B", "require", "undefined"]
+rebuilt        : ["B", "_x", "require", "undefined"]
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C"]
-rebuilt        : ScopeId(0): ["C", "_this", "_this2"]
+after transform: ScopeId(0): ["C", "_extends", "_objectDestructuringEmpty"]
+rebuilt        : ScopeId(0): ["C", "_extends", "_objectDestructuringEmpty", "_this", "_this2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Bindings mismatch:
-after transform: ScopeId(4): ["_this", "_this2"]
+after transform: ScopeId(4): ["_this", "_this2", "_x"]
 rebuilt        : ScopeId(1): []
 Symbol scope ID mismatch for "_this":
 after transform: SymbolId(1): ScopeId(4)
-rebuilt        : SymbolId(0): ScopeId(0)
+rebuilt        : SymbolId(2): ScopeId(0)
 Symbol scope ID mismatch for "_this2":
 after transform: SymbolId(2): ScopeId(4)
-rebuilt        : SymbolId(1): ScopeId(0)
+rebuilt        : SymbolId(3): ScopeId(0)
+Reference symbol mismatch for "_x":
+after transform: SymbolId(3) "_x"
+rebuilt        : <None>
+Reference symbol mismatch for "_x":
+after transform: SymbolId(3) "_x"
+rebuilt        : <None>
+Reference symbol mismatch for "_x":
+after transform: SymbolId(3) "_x"
+rebuilt        : <None>
+Reference symbol mismatch for "_x":
+after transform: SymbolId(3) "_x"
+rebuilt        : <None>
+Reference symbol mismatch for "_x":
+after transform: SymbolId(3) "_x"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["B", "require", "undefined"]
+rebuilt        : ["B", "_x", "require", "undefined"]
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers3.ts
 semantic error: Bindings mismatch:
@@ -44418,6 +44529,11 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["yadda"]
 
+tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringObjectAssignmentPatternWithNestedSpread.ts
+semantic error: Reference flags mismatch for "a":
+after transform: ReferenceId(0): ReferenceFlags(Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | Write)
+
 tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringObjectBindingPatternAndAssignment1ES5.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["F", "F1", "a1", "a2", "b1", "b21", "b3", "b4", "b52", "bar", "c0", "c1", "d1", "foo", "foo1"]
@@ -44433,6 +44549,11 @@ rebuilt        : ScopeId(0): ["a1", "a2", "b1", "b21", "b3", "b4", "b52", "bar",
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+
+tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringObjectBindingPatternAndAssignment5.ts
+semantic error: Reference flags mismatch for "x":
+after transform: ReferenceId(0): ReferenceFlags(Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read | Write)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringObjectBindingPatternAndAssignment7.ts
 semantic error: Bindings mismatch:
@@ -44758,8 +44879,8 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/es6/templates/taggedTemplatesWithTypeArguments1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Stuff", "T", "a", "b", "c", "obj"]
-rebuilt        : ScopeId(0): ["a", "b", "c"]
+after transform: ScopeId(0): ["Stuff", "T", "_objectSpread", "a", "b", "c", "obj"]
+rebuilt        : ScopeId(0): ["_objectSpread", "a", "b", "c"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
@@ -50238,6 +50359,17 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
+tasks/coverage/typescript/tests/cases/conformance/functions/functionParameterObjectRestAndInitializers.ts
+semantic error: Symbol reference IDs mismatch for "a":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(6): []
+Reference symbol mismatch for "a":
+after transform: SymbolId(1) "a"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["require"]
+rebuilt        : ["a", "require"]
+
 tasks/coverage/typescript/tests/cases/conformance/functions/strictBindCallApply2.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Foo", "Test", "fb", "fn"]
@@ -51929,23 +52061,23 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty12
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Bindings mismatch:
-after transform: ScopeId(0): ["Button", "ButtonProp", "InnerButton", "InnerButtonProp", "React", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["Button", "InnerButton", "React", "_jsxFileName", "_reactJsxRuntime"]
+after transform: ScopeId(0): ["Button", "ButtonProp", "InnerButton", "InnerButtonProp", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime"]
+rebuilt        : ScopeId(0): ["Button", "InnerButton", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
 Symbol reference IDs mismatch for "Button":
 after transform: SymbolId(2): [ReferenceId(0)]
-rebuilt        : SymbolId(3): []
+rebuilt        : SymbolId(4): []
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(17)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(20), ReferenceId(21)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty16.tsx
 semantic error: Missing SymbolId: "React"
@@ -52108,14 +52240,14 @@ rebuilt        : ["React"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Child", "Component", "Composite", "Composite2", "Namespace", "React", "_jsxFileName", "_reactJsxRuntime", "bar", "foo", "hasOwnProperty", "x", "y", "z"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "x"]
+after transform: ScopeId(0): ["Child", "Component", "Composite", "Composite2", "Namespace", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "bar", "foo", "hasOwnProperty", "x", "y", "z"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
 Symbol span mismatch for "x":
 after transform: SymbolId(9): Span { start: 231, end: 236 }
-rebuilt        : SymbolId(2): Span { start: 537, end: 538 }
+rebuilt        : SymbolId(3): Span { start: 537, end: 538 }
 Symbol redeclarations mismatch for "x":
 after transform: SymbolId(9): [Span { start: 537, end: 538 }]
-rebuilt        : SymbolId(2): []
+rebuilt        : SymbolId(3): []
 Reference symbol mismatch for "Component":
 after transform: SymbolId(1) "Component"
 rebuilt        : <None>
@@ -52226,8 +52358,8 @@ rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution8.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime", "x"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "x"]
+after transform: ScopeId(0): ["JSX", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -52387,16 +52519,16 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxEmit2.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
+after transform: ScopeId(0): ["JSX", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxEmitSpreadAttribute.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "T1", "T10", "T11", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "__proto__", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["T1", "T10", "T11", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "_jsxFileName"]
+after transform: ScopeId(0): ["React", "T1", "T10", "T11", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "__proto__", "_jsxFileName", "_objectSpread"]
+rebuilt        : ScopeId(0): ["T1", "T10", "T11", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "_jsxFileName", "_objectSpread"]
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
 rebuilt        : <None>
@@ -52549,8 +52681,8 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType1.
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(5), SymbolId(9), SymbolId(14), SymbolId(15)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(6), SymbolId(9)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(5), SymbolId(9), SymbolId(14), SymbolId(15), SymbolId(16)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(7), SymbolId(10)]
 Bindings mismatch:
 after transform: ScopeId(1): ["Component", "T"]
 rebuilt        : ScopeId(1): ["Component"]
@@ -52561,28 +52693,28 @@ Bindings mismatch:
 after transform: ScopeId(5): ["Component", "T", "U"]
 rebuilt        : ScopeId(5): ["Component"]
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(27)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(31), ReferenceId(32)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType2.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(5), SymbolId(6), SymbolId(7)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
 Bindings mismatch:
 after transform: ScopeId(1): ["Component", "T"]
 rebuilt        : ScopeId(1): ["Component"]
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(9)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(11), ReferenceId(12)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType3.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
 Bindings mismatch:
 after transform: ScopeId(1): ["T"]
 rebuilt        : ScopeId(1): []
@@ -52591,20 +52723,20 @@ after transform: ScopeId(3): ["U"]
 rebuilt        : ScopeId(3): []
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(9)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(11), ReferenceId(12)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType4.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
 Bindings mismatch:
 after transform: ScopeId(1): ["T"]
 rebuilt        : ScopeId(1): []
@@ -52613,20 +52745,20 @@ after transform: ScopeId(3): ["U"]
 rebuilt        : ScopeId(3): []
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(9)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(11), ReferenceId(12)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType5.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
 Bindings mismatch:
 after transform: ScopeId(1): ["T"]
 rebuilt        : ScopeId(1): []
@@ -52635,20 +52767,20 @@ after transform: ScopeId(3): ["U"]
 rebuilt        : ScopeId(3): []
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(10)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(12), ReferenceId(13)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType6.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
 Bindings mismatch:
 after transform: ScopeId(1): ["T"]
 rebuilt        : ScopeId(1): []
@@ -52657,20 +52789,20 @@ after transform: ScopeId(3): ["U"]
 rebuilt        : ScopeId(3): []
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(10)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(12), ReferenceId(13)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType7.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(6), SymbolId(9), SymbolId(10)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(6), SymbolId(9), SymbolId(10), SymbolId(11)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(6)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -52684,15 +52816,15 @@ Unresolved references mismatch:
 after transform: ["Component", "JSX", "require"]
 rebuilt        : ["Component", "require"]
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(12)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(15), ReferenceId(16)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType8.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(6), SymbolId(9), SymbolId(10)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(6), SymbolId(9), SymbolId(10), SymbolId(11)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(6)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -52706,21 +52838,21 @@ Unresolved references mismatch:
 after transform: ["Component", "JSX", "require"]
 rebuilt        : ["Component", "require"]
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(12)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(14), ReferenceId(15)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType9.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(4), SymbolId(5), SymbolId(6)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
 Bindings mismatch:
 after transform: ScopeId(1): ["Ctor", "P"]
 rebuilt        : ScopeId(1): ["Ctor"]
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved references mismatch:
 after transform: ["JSX"]
 rebuilt        : ["require"]
@@ -52884,8 +53016,8 @@ rebuilt        : ["React"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit2.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["JSX", "React", "_jsxFileName", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
+after transform: ScopeId(0): ["JSX", "React", "_jsxFileName", "_objectSpread", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "p1", "p2", "p3", "spreads1", "spreads2", "spreads3", "spreads4", "spreads5"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -53007,8 +53139,8 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "render"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitSpreadAttribute.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["T1", "T10", "T11", "T12", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "__proto__", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["T1", "T10", "T11", "T12", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["T1", "T10", "T11", "T12", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "__proto__", "_jsx", "_jsxFileName", "_objectSpread"]
+rebuilt        : ScopeId(0): ["T1", "T10", "T11", "T12", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "_jsx", "_jsxFileName", "_objectSpread"]
 Reference symbol mismatch for "__proto__":
 after transform: SymbolId(36) "__proto__"
 rebuilt        : <None>
@@ -53116,40 +53248,40 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolut
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(10)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(11), ReferenceId(12)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution11.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Bindings mismatch:
-after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
-rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsxFileName", "_reactJsxRuntime", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
+after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
+rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "anyobj", "obj", "obj1", "obj3", "x", "x1", "x2", "x3", "x4", "x5"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved references mismatch:
 after transform: ["require", "true"]
 rebuilt        : ["require"]
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(31)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(40), ReferenceId(41)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution13.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Bindings mismatch:
-after transform: ScopeId(0): ["AnotherComponentProps", "ChildComponent", "Component", "ComponentProps", "React", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["ChildComponent", "Component", "React", "_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["AnotherComponentProps", "ChildComponent", "Component", "ComponentProps", "React", "_jsx", "_jsxFileName", "_objectSpread"]
+rebuilt        : ScopeId(0): ["ChildComponent", "Component", "React", "_jsx", "_jsxFileName", "_objectSpread"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
@@ -53161,8 +53293,8 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolut
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Bindings mismatch:
-after transform: ScopeId(0): ["AnotherComponent", "AnotherComponentProps", "Component", "ComponentProps", "React", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["AnotherComponent", "Component", "React", "_jsx", "_jsxFileName"]
+after transform: ScopeId(0): ["AnotherComponent", "AnotherComponentProps", "Component", "ComponentProps", "React", "_jsx", "_jsxFileName", "_objectSpread"]
+rebuilt        : ScopeId(0): ["AnotherComponent", "Component", "React", "_jsx", "_jsxFileName", "_objectSpread"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -53174,68 +53306,68 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolut
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Bindings mismatch:
-after transform: ScopeId(0): ["Poisoned", "PoisonedProp", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "p", "y"]
-rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "p", "y"]
+after transform: ScopeId(0): ["Poisoned", "PoisonedProp", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "obj", "p", "y"]
+rebuilt        : ScopeId(0): ["Poisoned", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "obj", "p", "y"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(11)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(12), ReferenceId(13)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution7.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Bindings mismatch:
-after transform: ScopeId(0): ["React", "TextComponent", "TextProps", "_jsxFileName", "_reactJsxRuntime", "textPropsFalse", "textPropsTrue", "y1", "y2"]
-rebuilt        : ScopeId(0): ["React", "TextComponent", "_jsxFileName", "_reactJsxRuntime", "textPropsFalse", "textPropsTrue", "y1", "y2"]
+after transform: ScopeId(0): ["React", "TextComponent", "TextProps", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "textPropsFalse", "textPropsTrue", "y1", "y2"]
+rebuilt        : ScopeId(0): ["React", "TextComponent", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "textPropsFalse", "textPropsTrue", "y1", "y2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved references mismatch:
 after transform: ["require", "true"]
 rebuilt        : ["require"]
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(15)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(17), ReferenceId(18)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution8.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Bindings mismatch:
-after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "obj3", "x", "x1"]
-rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "obj3", "x", "x1"]
+after transform: ScopeId(0): ["OverWriteAttr", "Prop", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "obj", "obj1", "obj3", "x", "x1"]
+rebuilt        : ScopeId(0): ["OverWriteAttr", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "obj", "obj1", "obj3", "x", "x1"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(14)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(18), ReferenceId(19)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution9.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Bindings mismatch:
-after transform: ScopeId(0): ["Opt", "OptionProp", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
-rebuilt        : ScopeId(0): ["Opt", "React", "_jsxFileName", "_reactJsxRuntime", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
+after transform: ScopeId(0): ["Opt", "OptionProp", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
+rebuilt        : ScopeId(0): ["Opt", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "obj", "obj1", "p", "y", "y1", "y2", "y3"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "React":
 after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
+rebuilt        : SymbolId(3) "React"
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(24)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(28), ReferenceId(29)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadChildren.tsx
 semantic error: Spread children are not supported in React.
@@ -53248,8 +53380,8 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionCompon
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13), SymbolId(14), SymbolId(15), SymbolId(16), SymbolId(17)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13), SymbolId(14), SymbolId(15), SymbolId(16)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13), SymbolId(14), SymbolId(15), SymbolId(16), SymbolId(17), SymbolId(18)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13), SymbolId(14), SymbolId(15), SymbolId(16), SymbolId(17)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
@@ -53257,13 +53389,13 @@ Unresolved references mismatch:
 after transform: ["JSX", "OneThing", "require"]
 rebuilt        : ["OneThing", "require"]
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(40)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(51), ReferenceId(52)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload3.tsx
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Context", "_jsxFileName", "_reactJsxRuntime", "obj2", "three1", "three2", "three3", "two1", "two2", "two3", "two4", "two5"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "obj2", "three1", "three2", "three3", "two1", "two2", "two3", "two4", "two5"]
+after transform: ScopeId(0): ["Context", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "obj2", "three1", "three2", "three3", "two1", "two2", "two3", "two4", "two5"]
+rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "obj2", "three1", "three2", "three3", "two1", "two2", "two3", "two4", "two5"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): []
@@ -53275,8 +53407,8 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionCompon
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Bindings mismatch:
-after transform: ScopeId(0): ["ButtonProps", "ClickableProps", "HyphenProps", "LinkProps", "MainButton", "React", "_jsx", "_jsxFileName", "b0", "b1", "b10", "b11", "b12", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "obj", "obj1", "obj2"]
-rebuilt        : ScopeId(0): ["MainButton", "React", "_jsx", "_jsxFileName", "b0", "b1", "b10", "b11", "b12", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "obj", "obj1", "obj2"]
+after transform: ScopeId(0): ["ButtonProps", "ClickableProps", "HyphenProps", "LinkProps", "MainButton", "React", "_jsx", "_jsxFileName", "_objectSpread", "b0", "b1", "b10", "b11", "b12", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "obj", "obj1", "obj2"]
+rebuilt        : ScopeId(0): ["MainButton", "React", "_jsx", "_jsxFileName", "_objectSpread", "b0", "b1", "b10", "b11", "b12", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "obj", "obj1", "obj2"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
@@ -53333,8 +53465,8 @@ tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionCompon
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(7), SymbolId(23), SymbolId(29), SymbolId(30)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(13)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(7), SymbolId(23), SymbolId(29), SymbolId(30), SymbolId(31)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(14)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -53345,15 +53477,15 @@ Unresolved references mismatch:
 after transform: ["JSX", "Link", "OverloadComponent", "require"]
 rebuilt        : ["Link", "OverloadComponent", "require"]
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(48)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(59), ReferenceId(60)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments5.tsx
 semantic error: Missing SymbolId: "React"
 Missing ReferenceId: "require"
 Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(12), SymbolId(19), SymbolId(20)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(7)]
+after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(12), SymbolId(19), SymbolId(20), SymbolId(21)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(8)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -53367,8 +53499,8 @@ Unresolved references mismatch:
 after transform: ["Component", "ComponentSpecific", "ComponentSpecific1", "JSX", "require"]
 rebuilt        : ["Component", "ComponentSpecific", "ComponentSpecific1", "require"]
 Unresolved reference IDs mismatch for "require":
-after transform: [ReferenceId(32)]
-rebuilt        : [ReferenceId(0), ReferenceId(1)]
+after transform: [ReferenceId(43), ReferenceId(44)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxTypeArgumentsJsxPreserveOutput.tsx
 semantic error: Missing SymbolId: "React"
@@ -55671,8 +55803,8 @@ rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(52), ReferenceId(54),
 
 tasks/coverage/typescript/tests/cases/conformance/types/literal/literalTypeWidening.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["E", "FAILURE", "LangCode", "Obj", "Result", "Set", "TestEvent", "a", "arr", "b", "doWork", "f1", "f2", "f3", "f4", "f5", "f6", "increment", "isFailure", "isSuccess", "keys", "langCodeSet", "langCodes", "onMouseOver", "result", "test", "x"]
-rebuilt        : ScopeId(0): ["E", "FAILURE", "Set", "a", "arr", "b", "doWork", "f1", "f2", "f3", "f4", "f5", "f6", "increment", "isFailure", "isSuccess", "keys", "langCodeSet", "langCodes", "onMouseOver", "result", "test", "x"]
+after transform: ScopeId(0): ["E", "FAILURE", "LangCode", "Obj", "Result", "Set", "TestEvent", "_excluded", "_objectSpread", "_objectWithoutProperties", "a", "arr", "b", "doWork", "f1", "f2", "f3", "f4", "f5", "f6", "increment", "isFailure", "isSuccess", "keys", "langCodeSet", "langCodes", "onMouseOver", "result", "test", "x"]
+rebuilt        : ScopeId(0): ["E", "FAILURE", "Set", "_excluded", "_objectSpread", "_objectWithoutProperties", "a", "arr", "b", "doWork", "f1", "f2", "f3", "f4", "f5", "f6", "increment", "isFailure", "isSuccess", "keys", "langCodeSet", "langCodes", "onMouseOver", "result", "test", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18)]
@@ -55702,25 +55834,25 @@ after transform: ScopeId(26): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(18): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "FAILURE":
 after transform: SymbolId(63): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
-rebuilt        : SymbolId(59): SymbolFlags(BlockScopedVariable | ConstVariable)
+rebuilt        : SymbolId(62): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch for "FAILURE":
 after transform: SymbolId(63): Span { start: 2229, end: 2236 }
-rebuilt        : SymbolId(59): Span { start: 2256, end: 2263 }
+rebuilt        : SymbolId(62): Span { start: 2256, end: 2263 }
 Symbol reference IDs mismatch for "FAILURE":
 after transform: SymbolId(63): [ReferenceId(55), ReferenceId(58), ReferenceId(66), ReferenceId(68)]
-rebuilt        : SymbolId(59): [ReferenceId(50), ReferenceId(54)]
+rebuilt        : SymbolId(62): [ReferenceId(50), ReferenceId(54)]
 Symbol redeclarations mismatch for "FAILURE":
 after transform: SymbolId(63): [Span { start: 2256, end: 2263 }]
-rebuilt        : SymbolId(59): []
+rebuilt        : SymbolId(62): []
 Symbol reference IDs mismatch for "langCodeSet":
 after transform: SymbolId(90): [ReferenceId(97), ReferenceId(99)]
-rebuilt        : SymbolId(76): [ReferenceId(70)]
+rebuilt        : SymbolId(79): [ReferenceId(70)]
 Symbol flags mismatch for "E":
 after transform: SymbolId(102): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(84): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(87): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "E":
-after transform: SymbolId(102): [ReferenceId(112), ReferenceId(113), ReferenceId(120)]
-rebuilt        : SymbolId(84): [ReferenceId(80), ReferenceId(82)]
+after transform: SymbolId(102): [ReferenceId(112), ReferenceId(113), ReferenceId(124)]
+rebuilt        : SymbolId(87): [ReferenceId(84), ReferenceId(86)]
 Unresolved references mismatch:
 after transform: ["NonNullable", "Object", "Record", "f", "nonWidening", "true", "widening"]
 rebuilt        : ["Object", "f", "nonWidening", "widening"]
@@ -56157,8 +56289,8 @@ rebuilt        : ["applySpec", "clone", "f20", "f21", "f22", "f23", "f24", "vali
 
 tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeConstraints.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["TargetProps", "f0", "f1", "f2", "f3", "f4", "modifier"]
-rebuilt        : ScopeId(0): ["f0", "f1", "f2", "f3", "f4", "modifier"]
+after transform: ScopeId(0): ["TargetProps", "_excluded", "_objectWithoutProperties", "f0", "f1", "f2", "f3", "f4", "modifier"]
+rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "f0", "f1", "f2", "f3", "f4", "modifier"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
@@ -56181,8 +56313,8 @@ Bindings mismatch:
 after transform: ScopeId(7): ["T", "bar", "rest", "targetProps"]
 rebuilt        : ScopeId(6): ["bar", "rest", "targetProps"]
 Unresolved references mismatch:
-after transform: ["Exclude", "Extract", "Pick", "Record"]
-rebuilt        : []
+after transform: ["Exclude", "Extract", "Pick", "Record", "require"]
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeIndexSignatureModifiers.ts
 semantic error: Bindings mismatch:
@@ -57046,8 +57178,8 @@ rebuilt        : [ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/types/rest/genericObjectRest.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Item", "a", "f1", "f2", "f3", "f4", "sa", "sb"]
-rebuilt        : ScopeId(0): ["a", "f1", "f2", "f3", "f4", "sa", "sb"]
+after transform: ScopeId(0): ["Item", "_excluded", "_excluded2", "_excluded3", "_excluded4", "_extends", "_objectDestructuringEmpty", "_objectWithoutProperties", "_toPropertyKey", "a", "f1", "f2", "f3", "f4", "sa", "sb"]
+rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_excluded4", "_extends", "_objectDestructuringEmpty", "_objectWithoutProperties", "_toPropertyKey", "a", "f1", "f2", "f3", "f4", "sa", "sb"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
@@ -57064,11 +57196,11 @@ Bindings mismatch:
 after transform: ScopeId(5): ["K1", "K2", "a1", "a2", "k1", "k2", "obj", "r1"]
 rebuilt        : ScopeId(4): ["a1", "a2", "k1", "k2", "obj", "r1"]
 Symbol reference IDs mismatch for "sa":
-after transform: SymbolId(16): [ReferenceId(10), ReferenceId(13)]
-rebuilt        : SymbolId(15): [ReferenceId(9)]
+after transform: SymbolId(16): [ReferenceId(10), ReferenceId(13), ReferenceId(51)]
+rebuilt        : SymbolId(23): [ReferenceId(32), ReferenceId(37)]
 Symbol reference IDs mismatch for "sb":
-after transform: SymbolId(17): [ReferenceId(11), ReferenceId(14)]
-rebuilt        : SymbolId(16): [ReferenceId(10)]
+after transform: SymbolId(17): [ReferenceId(11), ReferenceId(14), ReferenceId(52)]
+rebuilt        : SymbolId(24): [ReferenceId(33), ReferenceId(38)]
 
 tasks/coverage/typescript/tests/cases/conformance/types/rest/genericRestParameters2.ts
 semantic error: Bindings mismatch:
@@ -57338,6 +57470,23 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
+tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestForOf.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["_excluded", "_excluded2", "_objectSpread", "_objectWithoutProperties", "array", "rrestOff", "xx"]
+rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_objectSpread", "_objectWithoutProperties", "_ref2", "_ref3", "array", "rrestOff", "xx"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_ref2"]
+rebuilt        : ScopeId(3): []
+Bindings mismatch:
+after transform: ScopeId(4): ["_ref3"]
+rebuilt        : ScopeId(4): []
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(10): ScopeId(3)
+rebuilt        : SymbolId(10): ScopeId(0)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(11): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(0)
+
 tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestParameter.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(8)]
@@ -57350,14 +57499,14 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 
 tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestReadonly.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ObjType", "foo", "obj", "rest"]
-rebuilt        : ScopeId(0): ["foo", "obj", "rest"]
+after transform: ScopeId(0): ["ObjType", "_objectWithoutProperties", "foo", "obj", "rest"]
+rebuilt        : ScopeId(0): ["_objectWithoutProperties", "foo", "obj", "rest"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Readonly"]
-rebuilt        : []
+after transform: ["Readonly", "require"]
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/arrayOfFunctionTypes3.ts
 semantic error: Bindings mismatch:
@@ -57486,8 +57635,8 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/types/spread/objectSpread.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "Header", "a", "addAfter", "addBefore", "anything", "c", "changeTypeAfter", "changeTypeBoth", "combined", "combinedAfter", "combinedNestedChangeType", "conditionalSpreadBoolean", "conditionalSpreadNumber", "conditionalSpreadString", "container", "cplus", "exclusive", "f", "from16326", "genericSpread", "getter", "nested", "o", "o2", "op", "overlap", "overlapConflict", "override", "overwriteId", "propertyNested", "shortCutted", "spreadAny", "spreadC", "spreadFunc", "spreadNonPrimitive", "swap"]
-rebuilt        : ScopeId(0): ["C", "a", "addAfter", "addBefore", "anything", "c", "changeTypeAfter", "changeTypeBoth", "combined", "combinedAfter", "combinedNestedChangeType", "conditionalSpreadBoolean", "conditionalSpreadNumber", "conditionalSpreadString", "container", "cplus", "exclusive", "f", "from16326", "genericSpread", "getter", "nested", "o", "o2", "op", "overlap", "overlapConflict", "override", "overwriteId", "propertyNested", "shortCutted", "spreadAny", "spreadC", "spreadFunc", "spreadNonPrimitive", "swap"]
+after transform: ScopeId(0): ["C", "Header", "_objectSpread", "a", "addAfter", "addBefore", "anything", "c", "changeTypeAfter", "changeTypeBoth", "combined", "combinedAfter", "combinedNestedChangeType", "conditionalSpreadBoolean", "conditionalSpreadNumber", "conditionalSpreadString", "container", "cplus", "exclusive", "f", "from16326", "genericSpread", "getter", "nested", "o", "o2", "op", "overlap", "overlapConflict", "override", "overwriteId", "propertyNested", "shortCutted", "spreadAny", "spreadC", "spreadFunc", "spreadNonPrimitive", "swap"]
+rebuilt        : ScopeId(0): ["C", "_objectSpread", "a", "addAfter", "addBefore", "anything", "c", "changeTypeAfter", "changeTypeBoth", "combined", "combinedAfter", "combinedNestedChangeType", "conditionalSpreadBoolean", "conditionalSpreadNumber", "conditionalSpreadString", "container", "cplus", "exclusive", "f", "from16326", "genericSpread", "getter", "nested", "o", "o2", "op", "overlap", "overlapConflict", "override", "overwriteId", "propertyNested", "shortCutted", "spreadAny", "spreadC", "spreadFunc", "spreadNonPrimitive", "swap"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12)]
@@ -57499,28 +57648,33 @@ after transform: ScopeId(14): ["T", "U", "obj", "t", "u", "v", "w", "x01", "x02"
 rebuilt        : ScopeId(12): ["obj", "t", "u", "v", "w", "x01", "x02", "x03", "x04", "x05", "x06", "x07", "x09", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x18"]
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(32): [ReferenceId(36), ReferenceId(37)]
-rebuilt        : SymbolId(31): [ReferenceId(33)]
+rebuilt        : SymbolId(32): [ReferenceId(67)]
+
+tasks/coverage/typescript/tests/cases/conformance/types/spread/objectSpreadNoTransform.ts
+semantic error: Reference flags mismatch for "b":
+after transform: ReferenceId(1): ReferenceFlags(Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read | Write)
 
 tasks/coverage/typescript/tests/cases/conformance/types/spread/objectSpreadRepeatedComplexity.ts
 semantic error: Unresolved references mismatch:
-after transform: ["Record"]
-rebuilt        : []
+after transform: ["Record", "require"]
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/spread/objectSpreadRepeatedNullCheckPerf.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Props", "parseWithSpread"]
-rebuilt        : ScopeId(0): ["parseWithSpread"]
+after transform: ScopeId(0): ["Props", "_objectSpread", "parseWithSpread"]
+rebuilt        : ScopeId(0): ["_objectSpread", "parseWithSpread"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["Record", "undefined"]
-rebuilt        : ["undefined"]
+after transform: ["Record", "require", "undefined"]
+rebuilt        : ["require", "undefined"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/spread/spreadContextualTypedBindingPattern.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Person", "age", "alice", "bob", "naam"]
-rebuilt        : ScopeId(0): ["age", "naam"]
+after transform: ScopeId(0): ["Person", "_objectSpread", "age", "alice", "bob", "naam"]
+rebuilt        : ScopeId(0): ["_objectSpread", "age", "naam"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -57531,32 +57685,32 @@ Reference symbol mismatch for "alice":
 after transform: SymbolId(2) "alice"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["alice", "bob"]
+after transform: ["require"]
+rebuilt        : ["alice", "bob", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/spread/spreadExcessProperty.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "a1", "extra1"]
-rebuilt        : ScopeId(0): ["a1", "extra1"]
+after transform: ScopeId(0): ["A", "_objectSpread", "a1", "extra1"]
+rebuilt        : ScopeId(0): ["_objectSpread", "a1", "extra1"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/types/spread/spreadNonPrimitive.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["o", "x"]
-rebuilt        : ScopeId(0): ["x"]
+after transform: ScopeId(0): ["_objectSpread", "o", "x"]
+rebuilt        : ScopeId(0): ["_objectSpread", "x"]
 Reference symbol mismatch for "o":
 after transform: SymbolId(0) "o"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["o"]
+after transform: ["require"]
+rebuilt        : ["o", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/spread/spreadOverwritesProperty.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ab", "abq", "g", "h", "unused1", "unused2", "unused3"]
-rebuilt        : ScopeId(0): ["g", "h", "unused1", "unused2", "unused3"]
+after transform: ScopeId(0): ["_objectSpread", "ab", "abq", "g", "h", "unused1", "unused2", "unused3"]
+rebuilt        : ScopeId(0): ["_objectSpread", "g", "h", "unused1", "unused2", "unused3"]
 Reference symbol mismatch for "ab":
 after transform: SymbolId(0) "ab"
 rebuilt        : <None>
@@ -57570,13 +57724,13 @@ Reference symbol mismatch for "abq":
 after transform: SymbolId(1) "abq"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["ab", "abq"]
+after transform: ["require"]
+rebuilt        : ["ab", "abq", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/spread/spreadUnion4.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a", "b", "c"]
-rebuilt        : ScopeId(0): ["c"]
+after transform: ScopeId(0): ["_objectSpread", "a", "b", "c"]
+rebuilt        : ScopeId(0): ["_objectSpread", "c"]
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
@@ -57584,8 +57738,8 @@ Reference symbol mismatch for "b":
 after transform: SymbolId(1) "b"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["a", "b"]
+after transform: ["require"]
+rebuilt        : ["a", "b", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralCheckedInIf01.ts
 semantic error: Bindings mismatch:
@@ -59019,8 +59173,8 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/intersectionIncludingPropFromGlobalAugmentation.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Test1", "Test2", "hasOwn", "source", "target", "toString"]
-rebuilt        : ScopeId(0): ["hasOwn", "target", "toString"]
+after transform: ScopeId(0): ["Test1", "Test2", "_objectSpread", "hasOwn", "source", "target", "toString"]
+rebuilt        : ScopeId(0): ["_objectSpread", "hasOwn", "target", "toString"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []

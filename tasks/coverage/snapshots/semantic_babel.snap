@@ -299,7 +299,13 @@ after transform: ["a7", "const", "d", "o4"]
 rebuilt        : ["a7", "d", "o4"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/destructuring-assignment-in-parens/input.ts
-semantic error: Unresolved references mismatch:
+semantic error: Reference flags mismatch for "a":
+after transform: ReferenceId(14): ReferenceFlags(Write)
+rebuilt        : ReferenceId(13): ReferenceFlags(Read | Write)
+Reference flags mismatch for "x":
+after transform: ReferenceId(20): ReferenceFlags(Write)
+rebuilt        : ReferenceId(24): ReferenceFlags(Read | Write)
+Unresolved references mismatch:
 after transform: ["T", "a", "b", "c", "x", "y"]
 rebuilt        : ["a", "b", "c", "x", "y"]
 

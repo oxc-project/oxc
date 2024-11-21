@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 85/95
+Passed: 88/100
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -13,6 +13,18 @@ Passed: 85/95
 * babel-preset-typescript
 * babel-plugin-transform-react-jsx-source
 * regexp
+
+
+# babel-plugin-transform-object-rest-spread (3/5)
+* object-rest/assignment-expression/input.js
+Reference flags mismatch for "a2":
+after transform: ReferenceId(2): ReferenceFlags(Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Read | Write)
+
+* object-rest/export/input.js
+Symbol flags mismatch for "b0":
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Export)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 
 
 # babel-plugin-transform-typescript (2/9)

@@ -953,6 +953,16 @@ impl<'a> BindingPatternKind<'a> {
     }
 
     #[allow(missing_docs)]
+    pub fn is_object_pattern(&self) -> bool {
+        matches!(self, Self::ObjectPattern(_))
+    }
+
+    #[allow(missing_docs)]
+    pub fn is_array_pattern(&self) -> bool {
+        matches!(self, Self::ArrayPattern(_))
+    }
+
+    #[allow(missing_docs)]
     pub fn is_assignment_pattern(&self) -> bool {
         matches!(self, Self::AssignmentPattern(_))
     }

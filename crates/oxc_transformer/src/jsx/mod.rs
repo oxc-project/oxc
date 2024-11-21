@@ -1,7 +1,7 @@
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::TransformCtx;
+use crate::{es2018::ObjectRestSpreadOptions, TransformCtx};
 
 mod comments;
 mod diagnostics;
@@ -42,7 +42,12 @@ pub struct Jsx<'a, 'ctx> {
 
 // Constructors
 impl<'a, 'ctx> Jsx<'a, 'ctx> {
-    pub fn new(mut options: JsxOptions, ast: AstBuilder<'a>, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(
+        mut options: JsxOptions,
+        object_rest_spread_options: Option<ObjectRestSpreadOptions>,
+        ast: AstBuilder<'a>,
+        ctx: &'ctx TransformCtx<'a>,
+    ) -> Self {
         if options.jsx_plugin || options.development {
             options.conform();
         }
@@ -51,7 +56,7 @@ impl<'a, 'ctx> Jsx<'a, 'ctx> {
         } = options;
         let refresh = options.refresh.clone();
         Self {
-            implementation: JsxImpl::new(options, ast, ctx),
+            implementation: JsxImpl::new(options, object_rest_spread_options, ast, ctx),
             display_name: ReactDisplayName::new(ctx),
             enable_jsx_plugin: jsx_plugin,
             display_name_plugin,

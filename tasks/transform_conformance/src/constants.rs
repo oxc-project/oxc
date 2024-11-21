@@ -24,7 +24,7 @@ pub const PLUGINS: &[&str] = &[
     // "babel-plugin-transform-json-strings",
     // // ES2018
     "babel-plugin-transform-async-generator-functions",
-    // "babel-plugin-transform-object-rest-spread",
+    "babel-plugin-transform-object-rest-spread",
     // // [Regex] "babel-plugin-transform-unicode-property-regex",
     // "babel-plugin-transform-dotall-regex",
     // // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
@@ -100,6 +100,11 @@ pub const SKIP_TESTS: &[&str] = &[
     "babel-preset-env/test/fixtures/corejs3",
     "babel-preset-env/test/fixtures/debug",
     "babel-preset-env/test/fixtures/debug-babel-7",
+    // Assumptions are not implemented yet.
+    "babel-plugin-transform-object-rest-spread/test/fixtures/assumption",
+    "babel-plugin-transform-object-rest-spread/test/fixtures/object-spread-loose",
+    "babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/remove-unused-excluded-keys-loose",
+    "babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/regression/gh-8323"
 ];
 
 pub const SNAPSHOT_TESTS: &[&str] =

@@ -25,7 +25,6 @@ pub struct CompilerAssumptions {
     pub enumerable_module_meta: bool,
 
     #[serde(default)]
-    #[deprecated = "Not Implemented"]
     pub ignore_function_length: bool,
 
     #[serde(default)]
@@ -60,7 +59,6 @@ pub struct CompilerAssumptions {
     pub no_uninitialized_private_field_access: bool,
 
     #[serde(default)]
-    #[deprecated = "Not Implemented"]
     pub object_rest_no_symbols: bool,
 
     #[serde(default)]

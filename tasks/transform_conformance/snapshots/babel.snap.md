@@ -1,6 +1,6 @@
 commit: d20b314c
 
-Passed: 328/575
+Passed: 327/575
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -296,9 +296,18 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-async-to-generator (11/28)
+# babel-plugin-transform-async-to-generator (10/28)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
-x Output mismatch
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
+* assumption-ignoreFunctionLength-true/export-default-function/input.mjs
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
 
 * assumption-noNewArrows-false/basic/input.js
 x Output mismatch
@@ -2071,10 +2080,17 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 * spread-transform/transform-to-babel-extend/input.js
-x Output mismatch
+
+  x Option `loose` is not implemented for object-rest-spread.
+
 
 * spread-transform/transform-to-object-assign/input.js
-x Output mismatch
+
+  x Option `loose` is not implemented for object-rest-spread.
+
+
+  x Option `useBuiltIns` is not implemented for object-rest-spread.
+
 
 
 # babel-plugin-transform-react-jsx-development (8/11)

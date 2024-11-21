@@ -100,7 +100,10 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::TransformCtx;
+use crate::{
+    es2018::{ObjectRestSpread, ObjectRestSpreadOptions},
+    TransformCtx,
+};
 
 use super::diagnostics;
 
@@ -112,6 +115,7 @@ pub use super::{
 
 pub struct JsxImpl<'a, 'ctx> {
     options: JsxOptions,
+    object_rest_spread_options: Option<ObjectRestSpreadOptions>,
 
     ctx: &'ctx TransformCtx<'a>,
 
@@ -369,7 +373,12 @@ impl<'a> Pragma<'a> {
 }
 
 impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
-    pub fn new(options: JsxOptions, ast: AstBuilder<'a>, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(
+        options: JsxOptions,
+        object_rest_spread_options: Option<ObjectRestSpreadOptions>,
+        ast: AstBuilder<'a>,
+        ctx: &'ctx TransformCtx<'a>,
+    ) -> Self {
         let bindings = match options.runtime {
             JsxRuntime::Classic => {
                 if options.import_source.is_some() {
@@ -434,6 +443,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
 
         Self {
             options,
+            object_rest_spread_options,
             ctx,
             jsx_self: JsxSelf::new(ctx),
             jsx_source: JsxSource::new(ctx),
@@ -649,7 +659,15 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
 
         // If runtime is automatic that means we always to add `{ .. }` as the second argument even if it's empty
         if is_automatic || !properties.is_empty() {
-            let object_expression = ctx.ast.expression_object(SPAN, properties, None);
+            let mut object_expression = ctx.ast.expression_object(SPAN, properties, None);
+            if let Some(options) = self.object_rest_spread_options {
+                ObjectRestSpread::transform_object_expression(
+                    options,
+                    &mut object_expression,
+                    self.ctx,
+                    ctx,
+                );
+            }
             arguments.push(Argument::from(object_expression));
         } else if arguments.len() == 1 {
             // If not and second argument doesn't exist, we should add `null` as the second argument
