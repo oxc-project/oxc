@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.0] - 2024-11-21
+
+- f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)
+
+- 878189c parser,linter: [**BREAKING**] Add `ParserReturn::is_flow_language`; linter ignore flow error (#7373) (Boshen)
+
+- 7bf970a linter: [**BREAKING**] Remove tree_shaking plugin (#7372) (Boshen)
+
+### Features
+
+- 7f8747d linter: Implement `react/no-array-index-key` (#6960) (BitterGourd)
+- be152c0 linter: Add `typescript/no-require-imports` rule (#7315) (Dmitry Zakharov)
+- 849489e linter: Add suggestion for no-console (#4312) (DonIsaac)
+- 8cebdc8 linter: Allow appending plugins in override (#7379) (camchenry)
+- 8cfea3c oxc_cfg: Add implicit return instruction (#5568) (IWANABETHATGUY)
+- e6922df parser: Fix incorrect AST for `x?.f<T>()` (#7387) (Boshen)
+
+### Bug Fixes
+
+- e91c287 linter: Fix panic in react/no-array-index-key (#7395) (Boshen)
+- a32f5a7 linter/no-array-index-key: Compile error due to it uses a renamed API (#7391) (Dunqing)
+- 666b6c1 parser: Add missing `ChainExpression` in optional `TSInstantiationExpression` (#7371) (Boshen)
+
+### Documentation
+
+- df143ca linter: Add docs for config settings (#4827) (DonIsaac)
+- ad44cfa linter: Import/first options (#7381) (Zak)
+
+### Refactor
+
+- c34d649 linter: Use `scope_id` etc methods (#7394) (overlookmotel)
+
 ## [0.12.0] - 2024-11-20
 
 - 20d9080 linter: [**BREAKING**] Override plugins array when passed in config file (#7303) (camchenry)
