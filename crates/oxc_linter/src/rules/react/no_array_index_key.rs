@@ -121,7 +121,7 @@ fn check_react_clone_element<'a>(
 }
 
 fn find_index_param_name<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<&'a str> {
-    for ancestor in ctx.nodes().iter_parents(node.id()).skip(1) {
+    for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
         if let AstKind::CallExpression(call_expr) = ancestor.kind() {
             let Expression::StaticMemberExpression(expr) = &call_expr.callee else {
                 return None;
