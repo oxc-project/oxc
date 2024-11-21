@@ -264,10 +264,7 @@ impl LintRunner {
             "oxlintrc.json",
             "oxlint.json",
             ".oxlintrc.json",
-            ".oxlint.json",
-            ".oxlintrc",
-            ".eslintrc",
-            ".eslintrc.json",
+            ".oxlint.json"
         ];
 
         for config_file in search_configs {

@@ -17,9 +17,6 @@ snapshot_kind: text
 * `oxlint.json`
 * `.oxlintrc.json`
 * `.oxlint.json`
-* `.oxlintrc`
-* `.eslintrc`
-* `.eslintrc.json`
 - **`    --tsconfig`**=_`<./tsconfig.json>`_ &mdash; 
   TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
 

@@ -68,9 +68,6 @@ pub struct BasicOptions {
     ///  * `oxlint.json`
     ///  * `.oxlintrc.json`
     ///  * `.oxlint.json`
-    ///  * `.oxlintrc`
-    ///  * `.eslintrc`
-    ///  * `.eslintrc.json`
     #[bpaf(long, short, argument("./oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
