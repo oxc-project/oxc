@@ -27,9 +27,9 @@ export class Config implements ConfigInterface {
     return this._runTrigger;
   }
 
-  set runTrigger(value: Trigger) {
+  updateRunTrigger(value: Trigger): PromiseLike<void> {
     this._runTrigger = value;
-    workspace
+    return workspace
       .getConfiguration(Config._namespace)
       .update('lint.run', value);
   }
@@ -38,9 +38,9 @@ export class Config implements ConfigInterface {
     return this._enable;
   }
 
-  set enable(value: boolean) {
+  updateEnable(value: boolean): PromiseLike<void> {
     this._enable = value;
-    workspace
+    return workspace
       .getConfiguration(Config._namespace)
       .update('enable', value);
   }
@@ -49,9 +49,9 @@ export class Config implements ConfigInterface {
     return this._trace;
   }
 
-  set trace(value: TraceLevel) {
+  updateTrace(value: TraceLevel): PromiseLike<void> {
     this._trace = value;
-    workspace
+    return workspace
       .getConfiguration(Config._namespace)
       .update('trace.server', value);
   }
@@ -60,9 +60,9 @@ export class Config implements ConfigInterface {
     return this._configPath;
   }
 
-  set configPath(value: string) {
+  updateConfigPath(value: string): PromiseLike<void> {
     this._configPath = value;
-    workspace
+    return workspace
       .getConfiguration(Config._namespace)
       .update('configPath', value);
   }
@@ -71,9 +71,9 @@ export class Config implements ConfigInterface {
     return this._binPath;
   }
 
-  set binPath(value: string | undefined) {
+  updateBinPath(value: string | undefined): PromiseLike<void> {
     this._binPath = value;
-    workspace
+    return workspace
       .getConfiguration(Config._namespace)
       .update('path.server', value);
   }
