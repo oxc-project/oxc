@@ -77,7 +77,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             expr
                         }
                     }
-                    ConstantValue::String(v) => self.ast.expression_string_literal(SPAN, v),
+                    ConstantValue::String(v) => self.ast.expression_string_literal(SPAN, v, None),
                 }),
             );
 

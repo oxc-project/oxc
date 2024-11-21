@@ -72,6 +72,10 @@ impl<'a> ParserImpl<'a> {
                     Ok(self.ast.ts_enum_member_name_string_literal(
                         template.span,
                         template.quasi().unwrap(),
+                        Some(Atom::from(
+                            Span::new(template.span.start + 1, template.span.end - 1)
+                                .source_text(self.source_text),
+                        )),
                     ))
                 }
                 Expression::NumericLiteral(literal) => {

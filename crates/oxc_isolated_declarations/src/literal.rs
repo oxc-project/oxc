@@ -13,6 +13,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.alloc(self.ast.string_literal(
                     lit.span,
                     if let Some(cooked) = &item.value.cooked { cooked } else { &item.value.raw },
+                    None,
                 ))
             })
         } else {

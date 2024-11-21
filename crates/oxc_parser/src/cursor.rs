@@ -49,7 +49,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn cur_src(&self) -> &'a str {
         let range = self.cur_token().span();
         // SAFETY:
-        // range comes from the parser, which are ensured to meeting the criteria of `get_unchecked`.
+        // range comes from the lexer, which are ensured to meeting the criteria of `get_unchecked`.
 
         unsafe { self.source_text.get_unchecked(range.start as usize..range.end as usize) }
     }

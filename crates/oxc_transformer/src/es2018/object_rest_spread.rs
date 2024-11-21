@@ -326,7 +326,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
                 match e {
                     AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
                         let name = ident.binding.name.clone();
-                        let expr = ctx.ast.expression_string_literal(SPAN, name);
+                        let expr = ctx.ast.expression_string_literal(SPAN, name, None);
                         Some(ArrayExpressionElement::from(expr))
                     }
                     AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
@@ -968,14 +968,14 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
             // `let { a, ... rest }`
             PropertyKey::StaticIdentifier(ident) => {
                 let name = ident.name.clone();
-                let expr = ctx.ast.expression_string_literal(ident.span, name);
+                let expr = ctx.ast.expression_string_literal(ident.span, name, None);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { 'a', ... rest }`
             // `let { ['a'], ... rest }`
             PropertyKey::StringLiteral(lit) => {
                 let name = lit.value.clone();
-                let expr = ctx.ast.expression_string_literal(lit.span, name.clone());
+                let expr = ctx.ast.expression_string_literal(lit.span, name.clone(), None);
                 Some(ArrayExpressionElement::from(expr))
             }
             // `let { [`a`], ... rest }`
@@ -993,7 +993,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
                 if expr.is_literal() {
                     let span = expr.span();
                     let s = expr.to_js_string().unwrap();
-                    let expr = ctx.ast.expression_string_literal(span, s);
+                    let expr = ctx.ast.expression_string_literal(span, s, None);
                     return Some(ArrayExpressionElement::from(expr));
                 }
                 *all_primitives = false;

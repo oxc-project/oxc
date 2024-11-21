@@ -26,6 +26,7 @@ impl ContentHash for BooleanLiteral {
 impl<'a> ContentHash for StringLiteral<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.value, state);
+        ContentHash::content_hash(&self.raw, state);
     }
 }
 

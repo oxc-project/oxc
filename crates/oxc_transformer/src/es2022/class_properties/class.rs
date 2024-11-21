@@ -557,7 +557,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) -> Expression<'a> {
         let key = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
-                ctx.ast.expression_string_literal(ident.span, ident.name.clone())
+                ctx.ast.expression_string_literal(ident.span, ident.name.clone(), None)
             }
             key @ match_expression!(PropertyKey) => {
                 // TODO: This can also be a numeric key (non-computed). Maybe other key types?

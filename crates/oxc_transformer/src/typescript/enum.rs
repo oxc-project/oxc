@@ -234,7 +234,7 @@ impl<'a> TypeScriptEnum<'a> {
                             }
                             ConstantValue::String(str) => {
                                 prev_constant_value = None;
-                                ast.expression_string_literal(SPAN, str)
+                                ast.expression_string_literal(SPAN, str, None)
                             }
                         }
                     }
@@ -255,7 +255,7 @@ impl<'a> TypeScriptEnum<'a> {
             } else if let Some(prev_member_name) = prev_member_name {
                 let self_ref = {
                     let obj = param_binding.create_read_expression(ctx);
-                    let expr = ctx.ast.expression_string_literal(SPAN, prev_member_name);
+                    let expr = ctx.ast.expression_string_literal(SPAN, prev_member_name, None);
                     ast.member_expression_computed(SPAN, obj, expr, false).into()
                 };
 
@@ -271,7 +271,7 @@ impl<'a> TypeScriptEnum<'a> {
             // Foo["x"] = init
             let member_expr = {
                 let obj = param_binding.create_read_expression(ctx);
-                let expr = ast.expression_string_literal(SPAN, member_name);
+                let expr = ast.expression_string_literal(SPAN, member_name, None);
 
                 ast.member_expression_computed(SPAN, obj, expr, false)
             };
@@ -286,7 +286,7 @@ impl<'a> TypeScriptEnum<'a> {
                     ast.member_expression_computed(SPAN, obj, expr, false)
                 };
                 let left = SimpleAssignmentTarget::from(member_expr);
-                let right = ast.expression_string_literal(SPAN, member_name);
+                let right = ast.expression_string_literal(SPAN, member_name, None);
                 expr =
                     ast.expression_assignment(SPAN, AssignmentOperator::Assign, left.into(), right);
             }

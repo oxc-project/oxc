@@ -736,7 +736,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
     ) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
-                ctx.ast.expression_string_literal(ident.span, ident.name.clone())
+                ctx.ast.expression_string_literal(ident.span, ident.name.clone(), None)
             }
             JSXElementName::IdentifierReference(ident) => {
                 Expression::Identifier(ctx.alloc(ident.as_ref().clone()))
@@ -748,7 +748,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                 if self.options.throw_if_namespace {
                     self.ctx.error(diagnostics::namespace_does_not_support(namespaced.span));
                 }
-                ctx.ast.expression_string_literal(namespaced.span, namespaced.to_string())
+                ctx.ast.expression_string_literal(namespaced.span, namespaced.to_string(), None)
             }
             JSXElementName::ThisExpression(expr) => ctx.ast.expression_this(expr.span),
         }
@@ -830,7 +830,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
         match value {
             Some(JSXAttributeValue::StringLiteral(s)) => {
                 let jsx_text = Self::decode_entities(s.value.as_str());
-                ctx.ast.expression_string_literal(s.span, jsx_text)
+                ctx.ast.expression_string_literal(s.span, jsx_text, None)
             }
             Some(JSXAttributeValue::Element(e)) => {
                 self.transform_jsx(&JSXElementOrFragment::Element(e), ctx)
@@ -883,21 +883,21 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             JSXAttributeName::Identifier(ident) => {
                 let name = ident.name.clone();
                 if ident.name.contains('-') {
-                    PropertyKey::from(ctx.ast.expression_string_literal(ident.span, name))
+                    PropertyKey::from(ctx.ast.expression_string_literal(ident.span, name, None))
                 } else {
                     ctx.ast.property_key_identifier_name(ident.span, name)
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {
                 let name = ctx.ast.atom(&namespaced.to_string());
-                PropertyKey::from(ctx.ast.expression_string_literal(namespaced.span, name))
+                PropertyKey::from(ctx.ast.expression_string_literal(namespaced.span, name, None))
             }
         }
     }
 
     fn transform_jsx_text(text: &JSXText<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
         Self::fixup_whitespace_and_decode_entities(text.value.as_str())
-            .map(|s| ctx.ast.expression_string_literal(text.span, s))
+            .map(|s| ctx.ast.expression_string_literal(text.span, s, None))
     }
 
     /// JSX trims whitespace at the end and beginning of lines, except that the

@@ -1006,7 +1006,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         if ctx.scopes().root_scope_id() == target_scope_id {
             let argument = Expression::Identifier(ctx.ast.alloc(reference));
             let typeof_arguments = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
-            let undefined_literal = ctx.ast.expression_string_literal(SPAN, "undefined");
+            let undefined_literal = ctx.ast.expression_string_literal(SPAN, "undefined", None);
             let test = ctx.ast.expression_binary(
                 SPAN,
                 typeof_arguments,

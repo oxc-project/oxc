@@ -50,14 +50,18 @@ impl PeepholeReplaceKnownMethods {
                     "toLowerCase" => Some(ctx.ast.expression_string_literal(
                         call_expr.span,
                         string_lit.value.cow_to_lowercase(),
+                        None,
                     )),
                     "toUpperCase" => Some(ctx.ast.expression_string_literal(
                         call_expr.span,
                         string_lit.value.cow_to_uppercase(),
+                        None,
                     )),
-                    "trim" => Some(
-                        ctx.ast.expression_string_literal(call_expr.span, string_lit.value.trim()),
-                    ),
+                    "trim" => Some(ctx.ast.expression_string_literal(
+                        call_expr.span,
+                        string_lit.value.trim(),
+                        None,
+                    )),
                     _ => None,
                 },
                 "indexOf" | "lastIndexOf" => Self::try_fold_string_index_of(
@@ -167,6 +171,7 @@ impl PeepholeReplaceKnownMethods {
         return Some(ctx.ast.expression_string_literal(
             span,
             string_lit.value.as_str().substring(start_idx, end_idx),
+            None,
         ));
     }
 
@@ -200,7 +205,7 @@ impl PeepholeReplaceKnownMethods {
             .char_at(char_at_index)
             .map_or(String::new(), |v| v.to_string());
 
-        return Some(ctx.ast.expression_string_literal(span, result));
+        return Some(ctx.ast.expression_string_literal(span, result, None));
     }
 
     fn try_fold_string_char_code_at<'a>(
@@ -265,7 +270,7 @@ impl PeepholeReplaceKnownMethods {
             _ => unreachable!(),
         };
 
-        Some(ctx.ast.expression_string_literal(span, result))
+        Some(ctx.ast.expression_string_literal(span, result, None))
     }
 }
 

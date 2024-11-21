@@ -40,7 +40,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             ConstantValue::BigInt(n) => {
                 self.ast.expression_big_int_literal(span, n.to_string() + "n", BigintBase::Decimal)
             }
-            ConstantValue::String(s) => self.ast.expression_string_literal(span, s),
+            ConstantValue::String(s) => self.ast.expression_string_literal(span, s, None),
             ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),
             ConstantValue::Undefined => self.ast.void_0(span),
             ConstantValue::Null => self.ast.expression_null_literal(span),

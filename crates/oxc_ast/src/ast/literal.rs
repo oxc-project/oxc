@@ -65,7 +65,7 @@ pub struct NumericLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "raw?: undefined")]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral)]
 pub struct StringLiteral<'a> {
     /// Node location in source code
     pub span: Span,
@@ -73,6 +73,11 @@ pub struct StringLiteral<'a> {
     ///
     /// Any escape sequences in the raw code are unescaped.
     pub value: Atom<'a>,
+
+    /// The raw string as it appears in source code.
+    ///
+    /// `None` when this ast node is not constructed from the parser.
+    pub raw: Option<Atom<'a>>,
 }
 
 /// BigInt literal

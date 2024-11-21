@@ -50,6 +50,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for StringLiteral<'old_alloc> {
         StringLiteral {
             span: CloneIn::clone_in(&self.span, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
+            raw: CloneIn::clone_in(&self.raw, allocator),
         }
     }
 }

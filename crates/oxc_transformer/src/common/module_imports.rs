@@ -214,7 +214,7 @@ impl<'a> ModuleImportsStore<'a> {
         Statement::from(ctx.ast.module_declaration_import_declaration(
             SPAN,
             Some(specifiers),
-            ctx.ast.string_literal(SPAN, source),
+            ctx.ast.string_literal(SPAN, source, None),
             NONE,
             ImportOrExportKind::Value,
         ))
@@ -234,7 +234,7 @@ impl<'a> ModuleImportsStore<'a> {
         );
 
         let args = {
-            let arg = Argument::from(ctx.ast.expression_string_literal(SPAN, source));
+            let arg = Argument::from(ctx.ast.expression_string_literal(SPAN, source, None));
             ctx.ast.vec1(arg)
         };
         let Some(Import::Default(local)) = names.into_iter().next() else { unreachable!() };
