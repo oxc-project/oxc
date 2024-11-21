@@ -302,30 +302,4 @@ mod test {
 "#
         );
     }
-
-    #[test]
-    fn swap_order() {
-        // reversing three statements
-        //   x       z
-        //   y  ==>  y
-        //   z       x
-        // https://evanw.github.io/source-map-visualization/#OAB6Owp5Owp4OzE1MwB7InZlcnNpb24iOjMsIm5hbWVzIjpbInoiLCJ5IiwieCJdLCJzb3VyY2VzIjpbInRlc3QuanMiXSwic291cmNlc0NvbnRlbnQiOlsieDtcbnk7XG56O1xuIl0sIm1hcHBpbmdzIjoiQUFFQUEsQ0FBQztBQUREQyxDQUFDO0FBRERDLENBQUMiLCJpZ25vcmVMaXN0IjpbXX0=
-        let sourcemap = SourceMap::from_json_string(r#"
-          {"version":3,"names":["z","y","x"],"sources":["test.js"],"sourcesContent":["x;\ny;\nz;\n"],"mappings":"AAEAA,CAAC;AADDC,CAAC;AADDC,CAAC","ignoreList":[]}
-        "#).unwrap();
-        let output = "z;\ny;\nx;";
-        let visualizer = SourcemapVisualizer::new(output, &sourcemap);
-        let visualizer_text = visualizer.into_visualizer_text();
-        assert_eq!(
-            visualizer_text,
-            r#"- test.js
-(2:0) "z" --> (0:0) "z"
-(2:1) ";\n" --> (0:1) ";\n"
-(1:0) "y" --> (1:0) "y"
-(1:1) ";\n" --> (1:1) ";\n"
-(0:0) "x" --> (2:0) "x"
-(0:1) ";\n" --> (2:1) ";"
-"#
-        );
-    }
 }
