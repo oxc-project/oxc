@@ -1969,6 +1969,7 @@ dependencies = [
  "base64-simd",
  "cfg-if",
  "cow-utils",
+ "insta",
  "rayon",
  "rustc-hash",
  "serde",

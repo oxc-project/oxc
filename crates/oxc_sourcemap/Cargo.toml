@@ -28,6 +28,9 @@ serde_json = { workspace = true }
 
 rayon = { workspace = true, optional = true }
 
+[dev-dependencies]
+insta = { workspace = true, features = ["glob"] }
+
 [features]
 default = []
 concurrent = ["dep:rayon"]
