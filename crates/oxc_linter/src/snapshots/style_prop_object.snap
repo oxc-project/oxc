@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-react(style-prop-object): Style prop value must be an object
    ╭─[style_prop_object.tsx:1:12]

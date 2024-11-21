@@ -98,6 +98,9 @@ fn test() {
         ("var x = a/*?.*/?.b", None),
         ("var x = '?.'?.['?.']", None),
         ("var x = '?.'?.['?.']", None),
+        ("a?.c?.b<c>", None),
+        ("foo?.bar!", None),
+        ("foo?.[bar]!", None),
         (
             "var x = a?.b",
             Some(serde_json::json!([{

@@ -62,6 +62,7 @@ pub struct BabelPlugins {
     // ES2019
     pub optional_catch_binding: bool,
     // ES2020
+    pub optional_chaining: bool,
     pub nullish_coalescing_operator: bool,
     // ES2021
     pub logical_assignment_operators: bool,
@@ -127,6 +128,7 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                 }
                 "transform-async-generator-functions" => p.async_generator_functions = true,
                 "transform-optional-catch-binding" => p.optional_catch_binding = true,
+                "transform-optional-chaining" => p.optional_chaining = true,
                 "transform-nullish-coalescing-operator" => p.nullish_coalescing_operator = true,
                 "transform-logical-assignment-operators" => p.logical_assignment_operators = true,
                 "transform-class-static-block" => p.class_static_block = true,

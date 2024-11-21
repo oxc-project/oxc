@@ -838,6 +838,7 @@ impl<'a> Serialize for ChainElement<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ChainElement::CallExpression(x) => Serialize::serialize(x, serializer),
+            ChainElement::TSNonNullExpression(x) => Serialize::serialize(x, serializer),
             ChainElement::ComputedMemberExpression(x) => Serialize::serialize(x, serializer),
             ChainElement::StaticMemberExpression(x) => Serialize::serialize(x, serializer),
             ChainElement::PrivateFieldExpression(x) => Serialize::serialize(x, serializer),

@@ -609,6 +609,7 @@ impl<'a> GetSpanMut for ChainElement<'a> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),

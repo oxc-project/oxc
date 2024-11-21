@@ -113,12 +113,7 @@ impl ConfigStore {
 
     /// NOTE: this function must not borrow any entries from `self.cache` or DashMap will deadlock.
     fn apply_overrides(&self, override_ids: &[OverrideId]) -> ResolvedLinterState {
-        let plugins = self
-            .overrides
-            .iter()
-            .rev()
-            .find_map(|cfg| cfg.plugins)
-            .unwrap_or(self.base.config.plugins);
+        let mut plugins = self.base.config.plugins;
 
         let all_rules = RULES
             .iter()
@@ -135,10 +130,14 @@ impl ConfigStore {
 
         let overrides = override_ids.iter().map(|id| &self.overrides[*id]);
         for override_config in overrides {
-            if override_config.rules.is_empty() {
-                continue;
+            if !override_config.rules.is_empty() {
+                override_config.rules.override_rules(&mut rules, &all_rules);
             }
-            override_config.rules.override_rules(&mut rules, &all_rules);
+
+            // Append the override's plugins to the base list of enabled plugins.
+            if let Some(override_plugins) = override_config.plugins {
+                plugins |= override_plugins;
+            }
         }
 
         let rules = rules.into_iter().collect::<Vec<_>>();
@@ -158,7 +157,10 @@ impl ConfigStore {
 #[cfg(test)]
 mod test {
     use super::{ConfigStore, OxlintOverrides};
-    use crate::{config::LintConfig, AllowWarnDeny, LintPlugins, RuleEnum, RuleWithSeverity};
+    use crate::{
+        config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
+        AllowWarnDeny, LintPlugins, RuleEnum, RuleWithSeverity,
+    };
 
     macro_rules! from_json {
         ($json:tt) => {
@@ -169,11 +171,6 @@ mod test {
     #[allow(clippy::default_trait_access)]
     fn no_explicit_any() -> RuleWithSeverity {
         RuleWithSeverity::new(RuleEnum::NoExplicitAny(Default::default()), AllowWarnDeny::Warn)
-    }
-
-    #[allow(clippy::default_trait_access)]
-    fn no_cycle() -> RuleWithSeverity {
-        RuleWithSeverity::new(RuleEnum::NoCycle(Default::default()), AllowWarnDeny::Warn)
     }
 
     /// an empty ruleset is a no-op
@@ -217,26 +214,6 @@ mod test {
             rules_for_test_file.rules[0].rule.id(),
             rules_for_source_file.rules[0].rule.id()
         );
-    }
-
-    /// removing plugins strips rules from those plugins, even if no rules are
-    /// added/removed explicitly
-    #[test]
-    fn test_no_rules_and_remove_plugins() {
-        let base_rules = vec![no_cycle()];
-        let overrides = from_json!([{
-            "files": ["*.test.{ts,tsx}"],
-            "plugins": ["jest"],
-            "rules": {}
-        }]);
-        let config = LintConfig {
-            plugins: LintPlugins::default() | LintPlugins::IMPORT,
-            ..LintConfig::default()
-        };
-        let store = ConfigStore::new(base_rules, config, overrides);
-
-        assert_eq!(store.resolve("App.tsx".as_ref()).rules.len(), 1);
-        assert_eq!(store.resolve("App.test.tsx".as_ref()).rules.len(), 0);
     }
 
     #[test]
@@ -299,5 +276,37 @@ mod test {
         let src_app = store.resolve("src/App.tsx".as_ref()).rules;
         assert_eq!(src_app.len(), 1);
         assert_eq!(src_app[0].severity, AllowWarnDeny::Deny);
+    }
+
+    #[test]
+    fn test_add_plugins() {
+        let base_config = LintConfig {
+            plugins: LintPlugins::IMPORT,
+            env: OxlintEnv::default(),
+            settings: OxlintSettings::default(),
+            globals: OxlintGlobals::default(),
+        };
+        let overrides = from_json!([{
+            "files": ["*.jsx", "*.tsx"],
+            "plugins": ["react"],
+        }, {
+            "files": ["*.ts", "*.tsx"],
+            "plugins": ["typescript"],
+        }]);
+
+        let store = ConfigStore::new(vec![], base_config, overrides);
+        assert_eq!(store.base.config.plugins, LintPlugins::IMPORT);
+
+        let app = store.resolve("other.mjs".as_ref()).config;
+        assert_eq!(app.plugins, LintPlugins::IMPORT);
+
+        let app = store.resolve("App.jsx".as_ref()).config;
+        assert_eq!(app.plugins, LintPlugins::IMPORT | LintPlugins::REACT);
+
+        let app = store.resolve("App.ts".as_ref()).config;
+        assert_eq!(app.plugins, LintPlugins::IMPORT | LintPlugins::TYPESCRIPT);
+
+        let app = store.resolve("App.tsx".as_ref()).config;
+        assert_eq!(app.plugins, LintPlugins::IMPORT | LintPlugins::REACT | LintPlugins::TYPESCRIPT);
     }
 }

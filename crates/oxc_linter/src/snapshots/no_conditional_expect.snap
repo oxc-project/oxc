@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]

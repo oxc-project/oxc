@@ -220,6 +220,12 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.x1_jsx.enter_call_expression(expr, ctx);
     }
 
+    fn enter_chain_element(&mut self, element: &mut ChainElement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.enter_chain_element(element, ctx);
+        }
+    }
+
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_class(class, ctx);
@@ -289,6 +295,22 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_assignment_target(node, ctx);
         }
+    }
+
+    fn enter_formal_parameters(
+        &mut self,
+        node: &mut FormalParameters<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x2_es2020.enter_formal_parameters(node, ctx);
+    }
+
+    fn exit_formal_parameters(
+        &mut self,
+        node: &mut FormalParameters<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x2_es2020.exit_formal_parameters(node, ctx);
     }
 
     fn enter_formal_parameter(

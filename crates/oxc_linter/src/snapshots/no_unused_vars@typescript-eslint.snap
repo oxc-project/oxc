@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-unused-vars): Identifier 'ClassDecoratorFactory' is imported but never used.
    ╭─[no_unused_vars.ts:1:10]

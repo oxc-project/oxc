@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.
    ╭─[prefer_string_starts_ends_with.tsx:1:1]

@@ -452,7 +452,12 @@ export interface ChainExpression extends Span {
   expression: ChainElement;
 }
 
-export type ChainElement = CallExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;
+export type ChainElement =
+  | CallExpression
+  | TSNonNullExpression
+  | ComputedMemberExpression
+  | StaticMemberExpression
+  | PrivateFieldExpression;
 
 export interface ParenthesizedExpression extends Span {
   type: 'ParenthesizedExpression';

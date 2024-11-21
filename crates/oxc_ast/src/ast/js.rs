@@ -950,6 +950,8 @@ inherit_variants! {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub enum ChainElement<'a> {
     CallExpression(Box<'a, CallExpression<'a>>) = 0,
+    /// `foo?.baz!` or `foo?.[bar]!`
+    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 1,
     // `MemberExpression` variants added here by `inherit_variants!` macro
     @inherit MemberExpression
 }

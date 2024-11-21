@@ -77,6 +77,7 @@ impl EnvOptions {
                 nullish_coalescing_operator: true,
                 // Turn this on would throw error for all bigints.
                 big_int: false,
+                optional_chaining: true,
             },
             es2021: ES2021Options { logical_assignment_operators: true },
             es2022: ES2022Options {
@@ -173,6 +174,7 @@ impl From<EngineTargets> for EnvOptions {
             es2020: ES2020Options {
                 nullish_coalescing_operator: o.has_feature(ES2020NullishCoalescingOperator),
                 big_int: o.has_feature(ES2020BigInt),
+                optional_chaining: o.has_feature(ES2020OptionalChaining),
             },
             es2021: ES2021Options {
                 logical_assignment_operators: o.has_feature(ES2021LogicalAssignmentOperators),

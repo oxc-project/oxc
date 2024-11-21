@@ -587,11 +587,14 @@ impl<'a> ParserImpl<'a> {
     fn map_to_chain_expression(&mut self, span: Span, expr: Expression<'a>) -> Expression<'a> {
         match expr {
             match_member_expression!(Expression) => {
-                let member_expr = MemberExpression::try_from(expr).unwrap();
+                let member_expr = expr.into_member_expression();
                 self.ast.expression_chain(span, ChainElement::from(member_expr))
             }
             Expression::CallExpression(result) => {
                 self.ast.expression_chain(span, ChainElement::CallExpression(result))
+            }
+            Expression::TSNonNullExpression(result) => {
+                self.ast.expression_chain(span, ChainElement::TSNonNullExpression(result))
             }
             expr => expr,
         }
@@ -674,9 +677,15 @@ impl<'a> ParserImpl<'a> {
                     self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_parameters)?
                 }
                 Kind::LAngle | Kind::ShiftLeft => {
+                    let optional_chain_span = (*in_optional_chain).then(|| self.end_span(lhs_span));
                     if let Some(Some(arguments)) =
                         self.try_parse(Self::parse_type_arguments_in_expression)
                     {
+                        // `a?.c?.b<c>`
+                        if let Some(optional_chain_span) = optional_chain_span {
+                            *in_optional_chain = false;
+                            lhs = self.map_to_chain_expression(optional_chain_span, lhs);
+                        }
                         lhs = self.ast.expression_ts_instantiation(
                             self.end_span(lhs_span),
                             lhs,

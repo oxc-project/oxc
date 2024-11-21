@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(prefer-structured-clone): Use `structuredClone(…)` to create a deep clone.
    ╭─[prefer_structured_clone.tsx:1:1]

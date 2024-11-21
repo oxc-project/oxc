@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(use-isnan): Requires calls to isNaN() when checking for NaN
    ╭─[use_isnan.tsx:1:8]

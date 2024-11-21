@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-template-curly-in-string): Template placeholders will not interpolate in regular strings
    ╭─[no_template_curly_in_string.tsx:1:9]

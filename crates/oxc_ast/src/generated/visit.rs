@@ -2909,6 +2909,7 @@ pub mod walk {
     pub fn walk_chain_element<'a, V: Visit<'a>>(visitor: &mut V, it: &ChainElement<'a>) {
         match it {
             ChainElement::CallExpression(it) => visitor.visit_call_expression(it),
+            ChainElement::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
             match_member_expression!(ChainElement) => {
                 visitor.visit_member_expression(it.to_member_expression())
             }

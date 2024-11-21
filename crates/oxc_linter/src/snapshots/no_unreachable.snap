@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-unreachable): Unreachable code.
    ╭─[no_unreachable.tsx:1:28]

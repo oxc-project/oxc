@@ -135,6 +135,7 @@ pub(crate) const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
 /// [`program`]: ParserReturn::program
 /// [`errors`]: ParserReturn::errors
 /// [`panicked`]: ParserReturn::panicked
+#[non_exhaustive]
 pub struct ParserReturn<'a> {
     /// The parsed AST.
     ///
@@ -168,6 +169,9 @@ pub struct ParserReturn<'a> {
     /// [`program`]: ParserReturn::program
     /// [`errors`]: ParserReturn::errors
     pub panicked: bool,
+
+    /// Whether the file is [flow](https://flow.org).
+    pub is_flow_language: bool,
 }
 
 /// Parse options
@@ -415,10 +419,12 @@ impl<'a> ParserImpl<'a> {
         };
 
         self.check_unfinished_errors();
+        let mut is_flow_language = false;
         let mut errors = vec![];
         // only check for `@flow` if the file failed to parse.
         if !self.lexer.errors.is_empty() || !self.errors.is_empty() {
             if let Some(error) = self.flow_error() {
+                is_flow_language = true;
                 errors.push(error);
             }
         }
@@ -429,7 +435,7 @@ impl<'a> ParserImpl<'a> {
         }
         let irregular_whitespaces =
             self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
-        ParserReturn { program, errors, irregular_whitespaces, panicked }
+        ParserReturn { program, errors, irregular_whitespaces, panicked, is_flow_language }
     }
 
     pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
@@ -570,6 +576,7 @@ mod test {
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.program.is_empty());
         assert!(ret.errors.is_empty());
+        assert!(!ret.is_flow_language);
     }
 
     #[test]
@@ -597,6 +604,7 @@ mod test {
         ];
         for source in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(ret.is_flow_language);
             assert_eq!(ret.errors.len(), 1);
             assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
         }

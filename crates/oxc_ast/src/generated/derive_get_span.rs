@@ -609,6 +609,7 @@ impl<'a> GetSpan for ChainElement<'a> {
     fn span(&self) -> Span {
         match self {
             Self::CallExpression(it) => GetSpan::span(it.as_ref()),
+            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
             Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
             Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
             Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),

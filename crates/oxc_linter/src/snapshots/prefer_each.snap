@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-vitest(prefer-each): Enforce using `each` rather than manual loops
    ╭─[prefer_each.tsx:1:3]

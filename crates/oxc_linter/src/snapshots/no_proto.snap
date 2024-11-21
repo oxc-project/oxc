@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-proto): The '__proto__' property is deprecated
    ╭─[no_proto.tsx:1:9]

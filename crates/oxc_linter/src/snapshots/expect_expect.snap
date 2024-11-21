@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-vitest(expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]

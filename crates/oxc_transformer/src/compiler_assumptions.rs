@@ -45,7 +45,6 @@ pub struct CompilerAssumptions {
     pub no_class_calls: bool,
 
     #[serde(default)]
-    #[deprecated = "Not Implemented"]
     pub no_document_all: bool,
 
     #[serde(default)]
@@ -73,7 +72,6 @@ pub struct CompilerAssumptions {
     pub private_fields_as_properties: bool,
 
     #[serde(default)]
-    #[deprecated = "Not Implemented"]
     pub pure_getters: bool,
 
     #[serde(default)]

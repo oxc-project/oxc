@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ oxc(no-async-await): Unexpected async/await
    ╭─[no_async_await.tsx:1:1]

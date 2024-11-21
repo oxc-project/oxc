@@ -669,6 +669,9 @@ impl<'a> Prettier<'a> {
                 ChainElement::CallExpression(e) => {
                     Self::starts_with_no_lookahead_token(&e.callee, span)
                 }
+                ChainElement::TSNonNullExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.expression, span)
+                }
                 ChainElement::ComputedMemberExpression(e) => {
                     Self::starts_with_no_lookahead_token(&e.object, span)
                 }

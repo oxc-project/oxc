@@ -383,7 +383,12 @@ test("exec", () => {{
             Ok(code) => code,
             Err(error) => error,
         };
-        let path = snap_root().join(self.path.strip_prefix(packages_root()).unwrap());
+        let mut path = snap_root().join(self.path.strip_prefix(packages_root()).unwrap());
+        path.set_file_name("output");
+        let input_extension = self.path.extension().unwrap().to_str().unwrap();
+        let extension =
+            input_extension.chars().map(|c| if c == 't' { 'j' } else { c }).collect::<String>();
+        path.set_extension(extension);
         if filtered {
             println!("Input path: {:?}", &self.path);
             println!("Output path: {path:?}");

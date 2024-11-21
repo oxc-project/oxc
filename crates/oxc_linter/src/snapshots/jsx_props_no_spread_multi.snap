@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-react(jsx-props-no-spread-multi): Prop 'props' is spread multiple times.
    ╭─[jsx_props_no_spread_multi.tsx:3:16]

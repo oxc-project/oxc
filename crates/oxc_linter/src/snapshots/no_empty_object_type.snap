@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ typescript-eslint(no-empty-object-type): Do not use an empty interface declaration.
    ╭─[no_empty_object_type.tsx:1:16]

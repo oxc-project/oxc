@@ -151,3 +151,31 @@ impl JsonSchema for GlobSet {
         gen.subschema_for::<Vec<String>>()
     }
 }
+
+mod test {
+    #[test]
+    fn test_parsing_plugins() {
+        use super::*;
+        use serde_json::{from_value, json};
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx"],
+        }))
+        .unwrap();
+        assert_eq!(config.plugins, None);
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx"],
+            "plugins": [],
+        }))
+        .unwrap();
+        assert_eq!(config.plugins, Some(LintPlugins::empty()));
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx"],
+            "plugins": ["typescript", "react"],
+        }))
+        .unwrap();
+        assert_eq!(config.plugins, Some(LintPlugins::REACT | LintPlugins::TYPESCRIPT));
+    }
+}

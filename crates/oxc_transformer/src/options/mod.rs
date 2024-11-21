@@ -210,6 +210,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         };
 
         let es2020 = ES2020Options {
+            optional_chaining: options.plugins.optional_chaining || env.es2020.optional_chaining,
             nullish_coalescing_operator: options.plugins.nullish_coalescing_operator
                 || env.es2020.nullish_coalescing_operator,
             big_int: env.es2020.big_int,
