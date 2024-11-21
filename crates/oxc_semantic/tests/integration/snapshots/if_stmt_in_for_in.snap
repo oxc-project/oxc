@@ -2,6 +2,7 @@
 source: crates/oxc_semantic/tests/integration/cfg.rs
 expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/if_stmt_in_for_in.js
+snapshot_kind: text
 ---
 bb0: {
 
@@ -76,6 +77,7 @@ bb15: {
 
 bb16: {
 	statement
+	return
 }
 
 bb17: {
@@ -118,7 +120,8 @@ unreachable" shape = box]
 ExpressionStatement
 ExpressionStatement" shape = box]
     16 [ label = "bb16
-ExpressionStatement" shape = box]
+ExpressionStatement
+return" shape = box]
     17 [ label = "bb17" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 2 [ label="Error(Implicit)", style=dashed, color=red]

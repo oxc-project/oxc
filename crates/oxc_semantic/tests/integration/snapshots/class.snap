@@ -2,6 +2,7 @@
 source: crates/oxc_semantic/tests/integration/cfg.rs
 expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/class.js
+snapshot_kind: text
 ---
 bb0: {
 
@@ -17,6 +18,7 @@ bb2: {
 
 bb3: {
 	statement
+	return
 }
 
 bb4: {
@@ -28,7 +30,8 @@ digraph {
     1 [ label = "bb1" shape = box]
     2 [ label = "bb2" shape = box]
     3 [ label = "bb3
-ExpressionStatement" shape = box]
+ExpressionStatement
+return" shape = box]
     4 [ label = "bb4" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 2 [ label="Error(Implicit)", style=dashed, color=red]

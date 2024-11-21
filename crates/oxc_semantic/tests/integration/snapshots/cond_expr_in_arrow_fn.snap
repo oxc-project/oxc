@@ -2,6 +2,7 @@
 source: crates/oxc_semantic/tests/integration/cfg.rs
 expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/cond_expr_in_arrow_fn.js
+snapshot_kind: text
 ---
 bb0: {
 
@@ -32,7 +33,7 @@ bb6: {
 }
 
 bb7: {
-
+	return
 }
 
 digraph {
@@ -46,7 +47,8 @@ ExpressionStatement" shape = box]
 Condition(CallExpression(a))" shape = box]
     5 [ label = "bb5" shape = box]
     6 [ label = "bb6" shape = box]
-    7 [ label = "bb7" shape = box]
+    7 [ label = "bb7
+return" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
     1 -> 3 [ label="NewFunction"]
