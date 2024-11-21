@@ -34,8 +34,6 @@ impl<'a> SourcemapVisualizer<'a> {
             })
             .collect();
         let output_lines = Self::generate_line_utf16_tables(self.output);
-        // dbg!(&source_contents_lines_map, &output_lines);
-        // dbg!(self.sourcemap.get_tokens().into_iter().collect::<Vec<_>>());
 
         let mut s = String::new();
 
@@ -50,41 +48,40 @@ impl<'a> SourcemapVisualizer<'a> {
         for i in 0..tokens.len() {
             let t = &tokens[i];
             let source_id = match t.source_id {
-                None => continue,
                 Some(source_id) => source_id,
+                None => continue,
+            };
+            let source = match self.sourcemap.get_source(source_id) {
+                Some(source) => source,
+                None => continue,
+            };
+            let source_contents_lines = match source_contents_lines_map[source].as_ref() {
+                Some(source_contents_lines) => source_contents_lines,
+                None => continue,
             };
 
-            // find EOL
-            let dst_eol = output_lines[t.dst_line as usize].len();
-            let src_eol = source_contents_lines_map[self.sourcemap.get_source(source_id).unwrap()]
-                .as_ref()
-                .unwrap()[t.src_line as usize]
-                .len();
-
-            let mut dst_end_col = dst_eol as u32;
-            let mut src_end_col = src_eol as u32;
-
-            // find next dst column
-            if let Some(t2) = tokens.get(i + 1) {
-                if t2.dst_line == t.dst_line {
-                    dst_end_col = t2.dst_col;
+            // find next dst column or EOL
+            let dst_end_col = {
+                match tokens.get(i + 1) {
+                    Some(t2) if t2.dst_line == t.dst_line => t2.dst_col,
+                    _ => output_lines[t.dst_line as usize].len() as u32
                 }
-            }
+            };
 
-            // find next src column
-            for t2 in &tokens[i + 1..] {
-                if t2.dst_line == t.dst_line
-                    && t2.source_id == t.source_id
-                    && t2.src_line == t.src_line
-                {
-                    if t2.src_col > t.src_col {
-                        src_end_col = t2.src_col;
-                        break;
+            // find next src column or EOL
+            let src_end_col = 'result: {
+                for t2 in &tokens[i + 1..] {
+                    if t2.source_id == t.source_id && t2.src_line == t.src_line {
+                        // skip duplicate or backward
+                        if t2.src_col <= t.src_col {
+                            continue;
+                        }
+                        break 'result t2.src_col;
                     }
-                    continue;
+                    break;
                 }
-                break;
-            }
+                source_contents_lines[t.src_line as usize].len() as u32
+            };
 
             ranges.push(RangeMapping {
                 dst: ((t.dst_line, t.dst_col), (t.dst_line, dst_end_col)),
