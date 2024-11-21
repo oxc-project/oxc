@@ -49,7 +49,7 @@ impl Rule for InlineScriptId {
         }
 
         'references_loop: for reference in
-            ctx.semantic().symbol_references(specifier.local.symbol_id.get().unwrap())
+            ctx.semantic().symbol_references(specifier.local.symbol_id())
         {
             let Some(node) = ctx.nodes().parent_node(reference.node_id()) else {
                 return;

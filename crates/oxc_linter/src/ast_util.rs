@@ -295,10 +295,7 @@ pub fn get_symbol_id_of_variable(
     ident: &IdentifierReference,
     semantic: &Semantic<'_>,
 ) -> Option<SymbolId> {
-    let symbol_table = semantic.symbols();
-    let reference_id = ident.reference_id.get()?;
-    let reference = symbol_table.get_reference(reference_id);
-    reference.symbol_id()
+    semantic.symbols().get_reference(ident.reference_id()).symbol_id()
 }
 
 pub fn extract_regex_flags<'a>(

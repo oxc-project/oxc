@@ -304,8 +304,7 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
                     // })
                     // ```
                     // IMO: This is a fault of the original rule design...
-                    for resolve_ref in ctx.symbols().get_resolved_references(ident.symbol_id.get()?)
-                    {
+                    for resolve_ref in ctx.symbols().get_resolved_references(ident.symbol_id()) {
                         // Check if `resolve` is called with value
                         match ctx.nodes().parent_node(resolve_ref.node_id())?.kind() {
                             // `resolve(foo)`

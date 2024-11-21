@@ -138,7 +138,7 @@ pub fn find_initialized_binding<'a, 'b>(
             match &assignment.left.kind {
                 BindingPatternKind::BindingIdentifier(id) => {
                     // look for `x = {}`, or recurse if lhs is a binding pattern
-                    if id.symbol_id.get().is_some_and(|binding_id| binding_id == symbol_id) {
+                    if id.symbol_id() == symbol_id {
                         return Some((id.as_ref(), &assignment.right));
                     }
                     None

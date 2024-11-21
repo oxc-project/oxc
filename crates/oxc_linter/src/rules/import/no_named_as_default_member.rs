@@ -64,13 +64,12 @@ declare_oxc_lint!(
     NoNamedAsDefaultMember,
     suspicious
 );
+
 fn get_symbol_id_from_ident(
     ctx: &LintContext<'_>,
     ident: &IdentifierReference,
 ) -> Option<SymbolId> {
-    let reference_id = ident.reference_id.get().unwrap();
-    let reference = &ctx.symbols().references[reference_id];
-    reference.symbol_id()
+    ctx.symbols().get_reference(ident.reference_id()).symbol_id()
 }
 
 impl Rule for NoNamedAsDefaultMember {

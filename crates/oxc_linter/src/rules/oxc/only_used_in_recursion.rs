@@ -137,11 +137,7 @@ fn create_diagnostic(
     function_span: Span,
 ) {
     let is_last_arg = arg_index == function_parameters.items.len() - 1;
-    let is_exported = ctx
-        .semantic()
-        .symbols()
-        .get_flags(function_id.symbol_id.get().expect("`symbol_id` should be set"))
-        .is_export();
+    let is_exported = ctx.semantic().symbols().get_flags(function_id.symbol_id()).is_export();
 
     let is_diagnostic_only = !is_last_arg || is_exported;
 
@@ -153,26 +149,17 @@ fn create_diagnostic(
         only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()),
         |fixer| {
             let mut fix = fixer.new_fix_with_capacity(
-                ctx.semantic()
-                    .symbol_references(arg.symbol_id.get().expect("`symbol_id` should be set"))
-                    .count()
-                    + 1,
+                ctx.semantic().symbol_references(arg.symbol_id()).count() + 1,
             );
             fix.push(Fix::delete(arg.span()));
 
-            for reference in ctx
-                .semantic()
-                .symbol_references(arg.symbol_id.get().expect("`symbol_id` should be set"))
-            {
+            for reference in ctx.semantic().symbol_references(arg.symbol_id()) {
                 let node = ctx.nodes().get_node(reference.node_id());
                 fix.push(Fix::delete(node.span()));
             }
 
             // search for references to the function and remove the argument
-            for reference in ctx
-                .semantic()
-                .symbol_references(function_id.symbol_id.get().expect("`symbol_id` should be set"))
-            {
+            for reference in ctx.semantic().symbol_references(function_id.symbol_id()) {
                 let node = ctx.nodes().get_node(reference.node_id());
 
                 if let Some(AstKind::CallExpression(call_expr)) = ctx.nodes().parent_kind(node.id())
@@ -206,8 +193,7 @@ fn create_diagnostic_jsx(
     function_id: &BindingIdentifier,
     property: &BindingProperty,
 ) {
-    let Some(function_symbol_id) = function_id.symbol_id.get() else { return };
-    let is_exported = ctx.semantic().symbols().get_flags(function_symbol_id).is_export();
+    let is_exported = ctx.semantic().symbols().get_flags(function_id.symbol_id()).is_export();
 
     let Some(property_name) = &property.key.static_name() else { return };
     if is_exported {
@@ -215,7 +201,7 @@ fn create_diagnostic_jsx(
     }
 
     let Some(property_ident) = property.value.get_binding_identifier() else { return };
-    let Some(property_symbol_id) = property_ident.symbol_id.get() else { return };
+    let property_symbol_id = property_ident.symbol_id();
     let mut references = ctx.semantic().symbol_references(property_symbol_id);
 
     let has_spread_attribute = references.any(|x| used_with_spread_attribute(x.node_id(), ctx));
@@ -281,17 +267,14 @@ fn is_argument_only_used_in_recursion<'a>(
     arg_index: usize,
     ctx: &'a LintContext<'_>,
 ) -> bool {
-    let mut references = ctx
-        .semantic()
-        .symbol_references(arg.symbol_id.get().expect("`symbol_id` should be set"))
-        .peekable();
+    let mut references = ctx.semantic().symbol_references(arg.symbol_id()).peekable();
 
     // Avoid returning true for an empty iterator
     if references.peek().is_none() {
         return false;
     }
 
-    let function_symbol_id = function_id.symbol_id.get().unwrap();
+    let function_symbol_id = function_id.symbol_id();
 
     for reference in references {
         let Some(AstKind::Argument(argument)) = ctx.nodes().parent_kind(reference.node_id()) else {
@@ -325,15 +308,12 @@ fn is_property_only_used_in_recursion_jsx(
     function_ident: &BindingIdentifier,
     ctx: &LintContext,
 ) -> bool {
-    let Some(ident_symbol_id) = ident.symbol_id.get() else { return false };
-    let mut references = ctx.semantic().symbol_references(ident_symbol_id).peekable();
-
+    let mut references = ctx.semantic().symbol_references(ident.symbol_id()).peekable();
     if references.peek().is_none() {
         return false;
     }
 
-    let Some(function_symbol_id) = function_ident.symbol_id.get() else { return false };
-
+    let function_symbol_id = function_ident.symbol_id();
     for reference in references {
         // Conditions:
         // 1. The reference is inside a JSXExpressionContainer.
@@ -412,14 +392,12 @@ fn is_function_maybe_reassigned<'a>(
     function_id: &'a BindingIdentifier,
     ctx: &'a LintContext<'_>,
 ) -> bool {
-    ctx.semantic()
-        .symbol_references(function_id.symbol_id.get().expect("`symbol_id` should be set"))
-        .any(|reference| {
-            matches!(
-                ctx.nodes().parent_kind(reference.node_id()),
-                Some(AstKind::SimpleAssignmentTarget(_))
-            )
-        })
+    ctx.semantic().symbol_references(function_id.symbol_id()).any(|reference| {
+        matches!(
+            ctx.nodes().parent_kind(reference.node_id()),
+            Some(AstKind::SimpleAssignmentTarget(_))
+        )
+    })
 }
 
 fn get_jsx_element_symbol_id<'a>(

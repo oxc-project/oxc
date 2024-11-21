@@ -145,9 +145,7 @@ fn check_parents<'a>(
                 return InConditional(false);
             };
             let symbol_table = ctx.semantic().symbols();
-            let Some(symbol_id) = ident.symbol_id.get() else {
-                return InConditional(false);
-            };
+            let symbol_id = ident.symbol_id();
 
             // Consider cases like:
             // ```javascript

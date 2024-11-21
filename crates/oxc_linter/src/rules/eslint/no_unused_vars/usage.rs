@@ -731,21 +731,20 @@ impl<'s, 'a> Symbol<'s, 'a> {
         for parent in self.iter_relevant_parents_of(node_id) {
             match parent.kind() {
                 AstKind::Function(f) => {
-                    return f.id.as_ref().and_then(|id| id.symbol_id.get());
+                    return f.id.as_ref().map(BindingIdentifier::symbol_id);
                 }
                 AstKind::ArrowFunctionExpression(_) => {
                     needs_variable_identifier = true;
                     continue;
                 }
                 AstKind::VariableDeclarator(decl) if needs_variable_identifier => {
-                    return decl.id.get_binding_identifier().and_then(|id| id.symbol_id.get());
+                    return decl.id.get_binding_identifier().map(BindingIdentifier::symbol_id);
                 }
                 AstKind::AssignmentTarget(target) if needs_variable_identifier => {
                     return match target {
-                        AssignmentTarget::AssignmentTargetIdentifier(id) => id
-                            .reference_id
-                            .get()
-                            .and_then(|rid| self.symbols().get_reference(rid).symbol_id()),
+                        AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                            self.symbols().get_reference(id.reference_id()).symbol_id()
+                        }
                         _ => None,
                     };
                 }

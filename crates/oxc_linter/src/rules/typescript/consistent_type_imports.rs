@@ -203,9 +203,7 @@ impl Rule for ConsistentTypeImports {
 
         if let Some(specifiers) = &import_decl.specifiers {
             for specifier in specifiers {
-                let Some(symbol_id) = specifier.local().symbol_id.get() else {
-                    continue;
-                };
+                let symbol_id = specifier.local().symbol_id();
                 let no_type_qualifier = match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                         specifier.import_kind.is_value()

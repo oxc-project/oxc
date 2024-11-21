@@ -449,10 +449,9 @@ impl Rule for FuncNames {
                             |name| {
                                 // if this name shadows a variable in the outer scope **and** that name is referenced
                                 // inside the function body, it is unsafe to add a name to this function
-                                if ctx
-                                    .scopes()
-                                    .find_binding(func.scope_id.get().unwrap(), &name)
-                                    .map_or(false, |shadowed_var| {
+                                if ctx.scopes().find_binding(func.scope_id(), &name).map_or(
+                                    false,
+                                    |shadowed_var| {
                                         ctx.semantic().symbol_references(shadowed_var).any(
                                             |reference| {
                                                 func.span.contains_inclusive(
@@ -463,8 +462,8 @@ impl Rule for FuncNames {
                                                 )
                                             },
                                         )
-                                    })
-                                {
+                                    },
+                                ) {
                                     return fixer.noop();
                                 }
 

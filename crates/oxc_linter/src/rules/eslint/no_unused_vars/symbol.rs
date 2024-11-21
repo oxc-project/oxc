@@ -244,17 +244,14 @@ impl GetSpan for Symbol<'_, '_> {
 impl<'a> PartialEq<IdentifierReference<'a>> for Symbol<'_, 'a> {
     fn eq(&self, other: &IdentifierReference<'a>) -> bool {
         // cheap: no resolved reference means its a global reference
-        let Some(reference_id) = other.reference_id.get() else {
-            return false;
-        };
-        let reference = self.symbols().get_reference(reference_id);
+        let reference = self.symbols().get_reference(other.reference_id());
         reference.symbol_id().is_some_and(|symbol_id| self.id == symbol_id)
     }
 }
 
 impl<'a> PartialEq<BindingIdentifier<'a>> for Symbol<'_, 'a> {
     fn eq(&self, id: &BindingIdentifier<'a>) -> bool {
-        id.symbol_id.get().is_some_and(|id| self.id == id)
+        self.id == id.symbol_id()
     }
 }
 

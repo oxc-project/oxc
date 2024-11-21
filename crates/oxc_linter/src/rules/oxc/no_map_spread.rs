@@ -598,7 +598,7 @@ where
                 let v = Self {
                     ctx,
                     cb,
-                    cb_scope_id: f.scope_id.get().unwrap(),
+                    cb_scope_id: f.scope_id(),
                     is_in_return: f.expression,
                     return_span: f.expression.then(|| f.body.span()),
                 };
@@ -608,7 +608,7 @@ where
                 let v = Self {
                     ctx,
                     cb,
-                    cb_scope_id: f.scope_id.get().unwrap(),
+                    cb_scope_id: f.scope_id(),
                     is_in_return: false,
                     return_span: None,
                 };
