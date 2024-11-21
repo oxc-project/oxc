@@ -47,9 +47,6 @@ impl<'a> SourcemapVisualizer<'a> {
         }
         let mut ranges: Vec<RangeMapping> = vec![];
 
-        // (source_id, (src_start_line, src_start_col)) -> (src_end_line, src_end_col)
-        let mut src_range_map: FxHashMap<(u32, u32, u32), (u32, u32)> = FxHashMap::default();
-
         for i in 0..tokens.len() {
             let t = &tokens[i];
             let source_id = match t.source_id {
@@ -57,46 +54,87 @@ impl<'a> SourcemapVisualizer<'a> {
                 Some(source_id) => source_id,
             };
 
-            // find dst EOL or next dst column
+            // find EOL
             let dst_eol = output_lines[t.dst_line as usize].len();
             let src_eol = source_contents_lines_map[self.sourcemap.get_source(source_id).unwrap()].as_ref().unwrap()[t.src_line as usize].len();
 
-            let mut dst_end = (t.dst_line, dst_eol as u32);
-            let mut src_end = (t.src_line, src_eol as u32);
-            for t2 in &tokens[i+1..] {
-                if t2.dst_line != t.dst_line {
-                    break;
-                }
-                if t2.source_id == t.source_id {
-                    if t2.src_line != t.src_line {
-                        break;
-                    }
-                    if t2.src_col != t.src_col {
-                        dst_end = (t2.dst_line, t2.dst_col);
-                    }
-                    if t2.src_col > t.src_col {
-                        src_end = (t2.src_line, t2.src_col);
-                        break;
-                    }
-                } else {
-                    break;
+            let mut dst_end_col = dst_eol as u32;
+            let mut src_end_col = src_eol as u32;
+
+            // find next dst column
+            if let Some(t2) = tokens.get(i+1) {
+                if t2.dst_line == t.dst_line {
+                    dst_end_col = t2.dst_col;
                 }
             }
 
-            // check duplicate mapping range
-            if let Some(&src_end_dup) = src_range_map.get(&(source_id, t.src_line, t.src_col)) {
-                ranges.push(RangeMapping {
-                    dst: ((t.dst_line, t.dst_col), dst_end),
-                    src: (source_id, (t.src_line, t.src_col), src_end_dup),
-                });
-                continue;
+            // find next src column
+            for t2 in &tokens[i+1..] {
+                if t2.dst_line == t.dst_line && t2.source_id == t.source_id && t2.src_line == t.src_line {
+                    if t2.src_col > t.src_col {
+                        src_end_col = t2.src_col;
+                        break;
+                    }
+                    continue;
+                }
+                break;
             }
 
             ranges.push(RangeMapping {
-                dst: ((t.dst_line, t.dst_col), dst_end),
-                src: (source_id, (t.src_line, t.src_col), src_end),
+                dst: ((t.dst_line, t.dst_col), (t.dst_line, dst_end_col)),
+                src: (source_id, (t.src_line, t.src_col), (t.src_line, src_end_col)),
             });
-            src_range_map.insert((source_id, t.src_line, t.src_col), src_end);
+        }
+
+        if true {
+            let mut last_source: Option<&str> = None;
+            for range in ranges {
+                let (dst_start, dst_end) = range.dst;
+                let (source_id, src_start, src_end) = range.src;
+
+                let source = self.sourcemap.get_source(source_id).unwrap();
+                let source_contents_lines = source_contents_lines_map.get(source).unwrap().as_ref().unwrap();
+
+                // Print source
+                if last_source != Some(source) {
+                    s.push('-');
+                    s.push(' ');
+                    s.push_str(source);
+                    s.push('\n');
+                    last_source = Some(source);
+                }
+
+                s.push_str(&format!(
+                    "({}:{}-{}:{}) {:?}",
+                    src_start.0,
+                    src_start.1,
+                    src_end.0,
+                    src_end.1,
+                    Self::str_slice_by_token(
+                        source_contents_lines,
+                        (src_start.0, src_start.1),
+                        (src_end.0, src_end.1)
+                    )
+                ));
+
+                s.push_str(" --> ");
+
+                s.push_str(&format!(
+                    "({}:{}-{}:{}) {:?}",
+                    dst_start.0,
+                    dst_start.1,
+                    dst_end.0,
+                    dst_end.1,
+                    Self::str_slice_by_token(
+                        &output_lines,
+                        (dst_start.0, dst_start.1),
+                        (dst_end.0, dst_end.1)
+                    )
+                ));
+                s.push('\n');
+            }
+
+            return s;
         }
 
         self.sourcemap.get_tokens().reduce(|pre_token, token| {
@@ -270,17 +308,31 @@ mod test {
             r#"- shared.js
 (0:0-0:6) "const " --> (2:0-2:6) "const "
 (0:6-0:10) "a = " --> (2:6-2:10) "a = "
-(0:10-2:12) "'shared.js'\n\nexport { a }" --> (2:10-5:0) "'shared.js';\n\n// index.js\n"
+(0:10-0:22) "'shared.js'\n" --> (2:10-2:23) "'shared.js';\n"
 - index.js
 (1:0-1:6) "const " --> (5:0-5:6) "const "
 (1:6-1:10) "a = " --> (5:6-5:12) "a$1 = "
-(1:10-2:0) "'index.js'\n" --> (5:12-6:0) "'index.js';\n"
+(1:10-1:21) "'index.js'\n" --> (5:12-5:24) "'index.js';\n"
 (2:0-2:8) "console." --> (6:0-6:8) "console."
 (2:8-2:12) "log(" --> (6:8-6:12) "log("
 (2:12-2:15) "a, " --> (6:12-6:17) "a$1, "
 (2:15-2:18) "a2)" --> (6:17-6:19) "a)"
-(2:18-3:0) "\n" --> (6:19-7:0) ";\n"
+(2:18-2:19) "\n" --> (6:19-6:21) ";\n"
 "#
+//             r#"- shared.js
+// (0:0-0:6) "const " --> (2:0-2:6) "const "
+// (0:6-0:10) "a = " --> (2:6-2:10) "a = "
+// (0:10-2:12) "'shared.js'\n\nexport { a }" --> (2:10-5:0) "'shared.js';\n\n// index.js\n"
+// - index.js
+// (1:0-1:6) "const " --> (5:0-5:6) "const "
+// (1:6-1:10) "a = " --> (5:6-5:12) "a$1 = "
+// (1:10-2:0) "'index.js'\n" --> (5:12-6:0) "'index.js';\n"
+// (2:0-2:8) "console." --> (6:0-6:8) "console."
+// (2:8-2:12) "log(" --> (6:8-6:12) "log("
+// (2:12-2:15) "a, " --> (6:12-6:17) "a$1, "
+// (2:15-2:18) "a2)" --> (6:17-6:19) "a)"
+// (2:18-3:0) "\n" --> (6:19-7:0) ";\n"
+// "#
 //             r#"- shared.js
 // (0:0-0:6) "const " --> (2:0-2:6) "\nconst"
 // (0:6-0:10) "a = " --> (2:6-2:10) " a ="
@@ -315,12 +367,20 @@ mod test {
             visualizer_text,
         r#"- test.js
 (2:0-2:1) "z" --> (0:0-0:1) "z"
-(2:1-1:0) "" --> (0:1-1:0) ";\n"
+(2:1-2:3) ";\n" --> (0:1-0:3) ";\n"
 (1:0-1:1) "y" --> (1:0-1:1) "y"
-(1:1-0:0) "" --> (1:1-2:0) ";\n"
+(1:1-1:3) ";\n" --> (1:1-1:3) ";\n"
 (0:0-0:1) "x" --> (2:0-2:1) "x"
-(0:1-3:0) ";\ny;\nz;\n" --> (2:1-2:2) ";"
+(0:1-0:3) ";\n" --> (2:1-2:2) ";"
 "#
+//         r#"- test.js
+// (2:0-2:1) "z" --> (0:0-0:1) "z"
+// (2:1-1:0) "" --> (0:1-1:0) ";\n"
+// (1:0-1:1) "y" --> (1:0-1:1) "y"
+// (1:1-0:0) "" --> (1:1-2:0) ";\n"
+// (0:0-0:1) "x" --> (2:0-2:1) "x"
+// (0:1-3:0) ";\ny;\nz;\n" --> (2:1-2:2) ";"
+// "#
 //             r#"- test.js
 // (2:0-2:1) "\n" --> (0:0-0:1) "z"
 // (2:1-1:0) "" --> (0:1-1:0) ";"
