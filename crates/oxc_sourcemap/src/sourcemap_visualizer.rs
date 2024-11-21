@@ -34,8 +34,8 @@ impl<'a> SourcemapVisualizer<'a> {
             })
             .collect();
         let output_lines = Self::generate_line_utf16_tables(self.output);
-        dbg!(&source_contents_lines_map, &output_lines);
-        dbg!(self.sourcemap.get_tokens().into_iter().collect::<Vec<_>>());
+        // dbg!(&source_contents_lines_map, &output_lines);
+        // dbg!(self.sourcemap.get_tokens().into_iter().collect::<Vec<_>>());
 
         let mut s = String::new();
 
@@ -56,21 +56,27 @@ impl<'a> SourcemapVisualizer<'a> {
 
             // find EOL
             let dst_eol = output_lines[t.dst_line as usize].len();
-            let src_eol = source_contents_lines_map[self.sourcemap.get_source(source_id).unwrap()].as_ref().unwrap()[t.src_line as usize].len();
+            let src_eol = source_contents_lines_map[self.sourcemap.get_source(source_id).unwrap()]
+                .as_ref()
+                .unwrap()[t.src_line as usize]
+                .len();
 
             let mut dst_end_col = dst_eol as u32;
             let mut src_end_col = src_eol as u32;
 
             // find next dst column
-            if let Some(t2) = tokens.get(i+1) {
+            if let Some(t2) = tokens.get(i + 1) {
                 if t2.dst_line == t.dst_line {
                     dst_end_col = t2.dst_col;
                 }
             }
 
             // find next src column
-            for t2 in &tokens[i+1..] {
-                if t2.dst_line == t.dst_line && t2.source_id == t.source_id && t2.src_line == t.src_line {
+            for t2 in &tokens[i + 1..] {
+                if t2.dst_line == t.dst_line
+                    && t2.source_id == t.source_id
+                    && t2.src_line == t.src_line
+                {
                     if t2.src_col > t.src_col {
                         src_end_col = t2.src_col;
                         break;
@@ -93,7 +99,8 @@ impl<'a> SourcemapVisualizer<'a> {
                 let (source_id, src_start, src_end) = range.src;
 
                 let source = self.sourcemap.get_source(source_id).unwrap();
-                let source_contents_lines = source_contents_lines_map.get(source).unwrap().as_ref().unwrap();
+                let source_contents_lines =
+                    source_contents_lines_map.get(source).unwrap().as_ref().unwrap();
 
                 // Print source
                 if last_source != Some(source) {
@@ -105,11 +112,11 @@ impl<'a> SourcemapVisualizer<'a> {
                 }
 
                 s.push_str(&format!(
-                    "({}:{}-{}:{}) {:?}",
+                    "({}:{}) {:?}",
                     src_start.0,
                     src_start.1,
-                    src_end.0,
-                    src_end.1,
+                    // src_end.0,
+                    // src_end.1,
                     Self::str_slice_by_token(
                         source_contents_lines,
                         (src_start.0, src_start.1),
@@ -120,11 +127,11 @@ impl<'a> SourcemapVisualizer<'a> {
                 s.push_str(" --> ");
 
                 s.push_str(&format!(
-                    "({}:{}-{}:{}) {:?}",
+                    "({}:{}) {:?}",
                     dst_start.0,
                     dst_start.1,
-                    dst_end.0,
-                    dst_end.1,
+                    // dst_end.0,
+                    // dst_end.1,
                     Self::str_slice_by_token(
                         &output_lines,
                         (dst_start.0, dst_start.1),
@@ -244,7 +251,8 @@ impl<'a> SourcemapVisualizer<'a> {
                     if ch == '\r' && content.chars().nth(i + 1) == Some('\n') {
                         continue;
                     }
-                    tables.push(content[line_byte_offset..i + 1].encode_utf16().collect::<Vec<_>>());
+                    tables
+                        .push(content[line_byte_offset..i + 1].encode_utf16().collect::<Vec<_>>());
                     line_byte_offset = i + 1;
                 }
                 _ => {}
@@ -306,47 +314,19 @@ mod test {
         assert_eq!(
             visualizer_text,
             r#"- shared.js
-(0:0-0:6) "const " --> (2:0-2:6) "const "
-(0:6-0:10) "a = " --> (2:6-2:10) "a = "
-(0:10-0:22) "'shared.js'\n" --> (2:10-2:23) "'shared.js';\n"
+(0:0) "const " --> (2:0) "const "
+(0:6) "a = " --> (2:6) "a = "
+(0:10) "'shared.js'\n" --> (2:10) "'shared.js';\n"
 - index.js
-(1:0-1:6) "const " --> (5:0-5:6) "const "
-(1:6-1:10) "a = " --> (5:6-5:12) "a$1 = "
-(1:10-1:21) "'index.js'\n" --> (5:12-5:24) "'index.js';\n"
-(2:0-2:8) "console." --> (6:0-6:8) "console."
-(2:8-2:12) "log(" --> (6:8-6:12) "log("
-(2:12-2:15) "a, " --> (6:12-6:17) "a$1, "
-(2:15-2:18) "a2)" --> (6:17-6:19) "a)"
-(2:18-2:19) "\n" --> (6:19-6:21) ";\n"
+(1:0) "const " --> (5:0) "const "
+(1:6) "a = " --> (5:6) "a$1 = "
+(1:10) "'index.js'\n" --> (5:12) "'index.js';\n"
+(2:0) "console." --> (6:0) "console."
+(2:8) "log(" --> (6:8) "log("
+(2:12) "a, " --> (6:12) "a$1, "
+(2:15) "a2)" --> (6:17) "a)"
+(2:18) "\n" --> (6:19) ";\n"
 "#
-//             r#"- shared.js
-// (0:0-0:6) "const " --> (2:0-2:6) "const "
-// (0:6-0:10) "a = " --> (2:6-2:10) "a = "
-// (0:10-2:12) "'shared.js'\n\nexport { a }" --> (2:10-5:0) "'shared.js';\n\n// index.js\n"
-// - index.js
-// (1:0-1:6) "const " --> (5:0-5:6) "const "
-// (1:6-1:10) "a = " --> (5:6-5:12) "a$1 = "
-// (1:10-2:0) "'index.js'\n" --> (5:12-6:0) "'index.js';\n"
-// (2:0-2:8) "console." --> (6:0-6:8) "console."
-// (2:8-2:12) "log(" --> (6:8-6:12) "log("
-// (2:12-2:15) "a, " --> (6:12-6:17) "a$1, "
-// (2:15-2:18) "a2)" --> (6:17-6:19) "a)"
-// (2:18-3:0) "\n" --> (6:19-7:0) ";\n"
-// "#
-//             r#"- shared.js
-// (0:0-0:6) "const " --> (2:0-2:6) "\nconst"
-// (0:6-0:10) "a = " --> (2:6-2:10) " a ="
-// (0:10-2:13) "'shared.js'\n\nexport { a }" --> (2:10-5:0) " 'shared.js';\n\n// index.js"
-// - index.js
-// (1:0-1:6) "\nconst" --> (5:0-5:6) "\nconst"
-// (1:6-1:10) " a =" --> (5:6-5:12) " a$1 ="
-// (1:10-2:0) " 'index.js'" --> (5:12-6:0) " 'index.js';"
-// (2:0-2:8) "\nconsole" --> (6:0-6:8) "\nconsole"
-// (2:8-2:12) ".log" --> (6:8-6:12) ".log"
-// (2:12-2:15) "(a," --> (6:12-6:17) "(a$1,"
-// (2:15-2:18) " a2" --> (6:17-6:19) " a"
-// (2:18-3:1) ")\n" --> (6:19-7:1) ");\n"
-// "#
         );
     }
 
@@ -365,30 +345,14 @@ mod test {
         let visualizer_text = visualizer.into_visualizer_text();
         assert_eq!(
             visualizer_text,
-        r#"- test.js
-(2:0-2:1) "z" --> (0:0-0:1) "z"
-(2:1-2:3) ";\n" --> (0:1-0:3) ";\n"
-(1:0-1:1) "y" --> (1:0-1:1) "y"
-(1:1-1:3) ";\n" --> (1:1-1:3) ";\n"
-(0:0-0:1) "x" --> (2:0-2:1) "x"
-(0:1-0:3) ";\n" --> (2:1-2:2) ";"
+            r#"- test.js
+(2:0) "z" --> (0:0) "z"
+(2:1) ";\n" --> (0:1) ";\n"
+(1:0) "y" --> (1:0) "y"
+(1:1) ";\n" --> (1:1) ";\n"
+(0:0) "x" --> (2:0) "x"
+(0:1) ";\n" --> (2:1) ";"
 "#
-//         r#"- test.js
-// (2:0-2:1) "z" --> (0:0-0:1) "z"
-// (2:1-1:0) "" --> (0:1-1:0) ";\n"
-// (1:0-1:1) "y" --> (1:0-1:1) "y"
-// (1:1-0:0) "" --> (1:1-2:0) ";\n"
-// (0:0-0:1) "x" --> (2:0-2:1) "x"
-// (0:1-3:0) ";\ny;\nz;\n" --> (2:1-2:2) ";"
-// "#
-//             r#"- test.js
-// (2:0-2:1) "\n" --> (0:0-0:1) "z"
-// (2:1-1:0) "" --> (0:1-1:0) ";"
-// (1:0-1:1) "\n" --> (1:0-1:1) "\n"
-// (1:1-0:0) "" --> (1:1-2:0) "y;"
-// (0:0-0:1) "x" --> (2:0-2:1) "\n"
-// (0:1-3:1) ";\ny;\nz;\n" --> (2:1-2:3) "x;"
-// "#
         );
     }
 }
