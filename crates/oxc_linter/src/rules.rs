@@ -253,6 +253,7 @@ mod react {
     pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
     pub mod jsx_props_no_spread_multi;
+    pub mod no_array_index_key;
     pub mod no_children_prop;
     pub mod no_danger;
     pub mod no_danger_with_children;
@@ -804,6 +805,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_undef,
     react::jsx_no_useless_fragment,
     react::jsx_props_no_spread_multi,
+    react::no_array_index_key,
     react::no_children_prop,
     react::no_danger_with_children,
     react::no_danger,
