@@ -53,6 +53,22 @@ bitflags! {
     /// 2. Types being referenced as types
     /// 3. Values being used in type contexts
     ///
+    /// ## Values
+    /// Whether a reference is considered [`Read`] or [`Write`] is determined according to ECMA spec.
+    ///
+    /// See comments on [`Read`] and [`Write`] below.
+    ///
+    /// Counter-intuitively, `y` in `x = y = z` is [`Write`] only. `x = y = z` is equivalent to:
+    ///
+    /// ```js
+    /// var _temp = z;
+    /// y = _temp;
+    /// x = _temp;
+    /// ```
+    ///
+    /// See <https://github.com/oxc-project/oxc/issues/5165#issuecomment-2488333549> for a runtime test
+    /// to determine Read/Write operations in a code snippet.
+    ///
     /// ## Value as Type
     /// The [`ValueAsType`] flag is a temporary marker for references that need to
     /// resolve to value symbols initially, but will ultimately be treated as type references.
@@ -76,12 +92,12 @@ bitflags! {
     #[cfg_attr(feature = "serialize", derive(Serialize))]
     pub struct ReferenceFlags: u8 {
         const None = 0;
-        /// A symbol is being read as a Value.
+        /// Symbol is being read from as a Value.
         ///
-        /// This value can be derived from the spec:
+        /// Whether a reference is `Read` is as defined in the spec:
         ///
-        /// Under `Runtime Semantics: Evaluation`, when [`GetValue`](https://tc39.es/ecma262/#sec-getvalue) is called
-        /// on a expression, and the expression is an `IdentifierReference`.
+        /// Under `Runtime Semantics: Evaluation`, when [`GetValue`](https://tc39.es/ecma262/#sec-getvalue)
+        /// is called on a expression, and the expression is an `IdentifierReference`.
         ///
         /// For example:
         /// ```text
@@ -89,12 +105,12 @@ bitflags! {
         /// 2. Perform ? GetValue(lRef).
         /// ```
         const Read = 1 << 0;
-        /// A symbol is being written to in a Value context.
+        /// Symbol is being written to as a Value.
         ///
-        /// This value can be derived from the spec:
+        /// Whether a reference is `Write` is as defined in the spec:
         ///
-        /// Under `Runtime Semantics: Evaluation`, when [`PutValue`](https://tc39.es/ecma262/#sec-putvalue) is called
-        /// on a expression, and the expression is an `IdentifierReference`.
+        /// Under `Runtime Semantics: Evaluation`, when [`PutValue`](https://tc39.es/ecma262/#sec-putvalue)
+        /// is called on a expression, and the expression is an `IdentifierReference`.
         ///
         /// For example:
         /// ```text
@@ -109,7 +125,7 @@ bitflags! {
         /// The symbol being referenced is a value.
         ///
         /// Note that this does not necessarily indicate the reference is used
-        /// in a value context, since type queries are also flagged as [`Read`]
+        /// in a value context, since type queries are also flagged as [`Read`].
         ///
         /// [`Read`]: ReferenceFlags::Read
         const Value = Self::Read.bits() | Self::Write.bits();
