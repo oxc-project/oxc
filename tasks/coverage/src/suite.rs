@@ -10,7 +10,6 @@ use std::{
 use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
-use futures::future::join_all;
 use oxc::{
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
     span::SourceType,
@@ -58,10 +57,10 @@ pub trait Suite<T: Case> {
     }
 
     fn run_async(&mut self, args: &AppArgs) {
-        let rt = Runtime::new().unwrap();
+        use futures::{stream, StreamExt};
         self.read_test_cases("runtime", args);
-        let cases = self.get_test_cases_mut();
-        rt.block_on(join_all(cases.iter_mut().map(T::run_async)));
+        let cases = self.get_test_cases_mut().iter_mut().map(T::run_async);
+        Runtime::new().unwrap().block_on(stream::iter(cases).buffer_unordered(100).count());
         self.run_coverage("runtime", args);
         let _ = oxc_tasks_common::agent().delete("http://localhost:32055").call();
     }
