@@ -19,7 +19,6 @@ impl<'a> SourcemapVisualizer<'a> {
 
     #[allow(clippy::cast_possible_truncation)]
     pub fn into_visualizer_text(self) -> String {
-        let mut source_log_map = FxHashMap::default();
         let source_contents_lines_map: FxHashMap<String, Option<Vec<Vec<u16>>>> = self
             .sourcemap
             .get_sources()
@@ -113,105 +112,7 @@ impl<'a> SourcemapVisualizer<'a> {
             s.push('\n');
         }
 
-        if true {
-            return s;
-        }
-
-        self.sourcemap.get_tokens().reduce(|pre_token, token| {
-            if let Some(source) =
-                pre_token.get_source_id().and_then(|id| self.sourcemap.get_source(id))
-            {
-                if let Some(Some(source_contents_lines)) = source_contents_lines_map.get(source) {
-                    // Print source
-                    source_log_map.entry(source).or_insert_with(|| {
-                        s.push('-');
-                        s.push(' ');
-                        s.push_str(source);
-                        s.push('\n');
-                        true
-                    });
-
-                    // Print token
-                    if pre_token.get_source_id() == token.get_source_id() {
-                        s.push_str(&format!(
-                            "({}:{}-{}:{}) {:?}",
-                            pre_token.get_src_line(),
-                            pre_token.get_src_col(),
-                            token.get_src_line(),
-                            token.get_src_col(),
-                            Self::str_slice_by_token(
-                                source_contents_lines,
-                                (pre_token.get_src_line(), pre_token.get_src_col()),
-                                (token.get_src_line(), token.get_src_col())
-                            )
-                        ));
-                    } else if token.get_source_id().is_some() {
-                        Self::print_source_last_mapping(
-                            &mut s,
-                            source_contents_lines,
-                            (pre_token.get_src_line(), pre_token.get_src_col()),
-                        );
-                    }
-
-                    s.push_str(" --> ");
-
-                    s.push_str(&format!(
-                        "({}:{}-{}:{}) {:?}",
-                        pre_token.get_dst_line(),
-                        pre_token.get_dst_col(),
-                        token.get_dst_line(),
-                        token.get_dst_col(),
-                        Self::str_slice_by_token(
-                            &output_lines,
-                            (pre_token.get_dst_line(), pre_token.get_dst_col(),),
-                            (token.get_dst_line(), token.get_dst_col(),)
-                        )
-                    ));
-                    s.push('\n');
-                }
-            }
-
-            token
-        });
-
-        if let Some(last_token) =
-            self.sourcemap.get_token(self.sourcemap.get_tokens().count() as u32 - 1)
-        {
-            if let Some(Some(source_contents_lines)) = last_token
-                .get_source_id()
-                .and_then(|id| self.sourcemap.get_source(id))
-                .and_then(|source| source_contents_lines_map.get(source))
-            {
-                Self::print_source_last_mapping(
-                    &mut s,
-                    source_contents_lines,
-                    (last_token.get_src_line(), last_token.get_src_col()),
-                );
-            }
-            s.push_str(" --> ");
-            Self::print_source_last_mapping(
-                &mut s,
-                &output_lines,
-                (last_token.get_dst_line(), last_token.get_dst_col()),
-            );
-            s.push('\n');
-        }
-
         s
-    }
-
-    #[allow(clippy::cast_possible_truncation)]
-    fn print_source_last_mapping(s: &mut String, buff: &[Vec<u16>], start: (u32, u32)) {
-        let line = if buff.is_empty() { 0 } else { buff.len() as u32 - 1 };
-        let column = buff.last().map(|v| v.len() as u32).unwrap_or_default();
-        s.push_str(&format!(
-            "({}:{}-{}:{}) {:?}",
-            start.0,
-            start.1,
-            line,
-            column,
-            Self::str_slice_by_token(buff, start, (line, column))
-        ));
     }
 
     fn generate_line_utf16_tables(content: &str) -> Vec<Vec<u16>> {
@@ -265,41 +166,5 @@ impl<'a> SourcemapVisualizer<'a> {
 
         // Windows: Replace "\r\n" and replace with "\n"
         Cow::Owned(replaced.into_owned())
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn should_work() {
-        let sourcemap = SourceMap::from_json_string(r#"{
-            "version":3,
-            "sources":["shared.js","index.js"],
-            "sourcesContent":["const a = 'shared.js'\n\nexport { a }","import { a as a2 } from './shared'\nconst a = 'index.js'\nconsole.log(a, a2)\n"],
-            "names":["a","a$1"],
-            "mappings":";;AAAA,MAAMA,IAAI;;;ACCV,MAAMC,MAAI;AACV,QAAQ,IAAIA,KAAGD,EAAG"
-        }"#).unwrap();
-        let output = "\n// shared.js\nconst a = 'shared.js';\n\n// index.js\nconst a$1 = 'index.js';\nconsole.log(a$1, a);\n";
-        let visualizer = SourcemapVisualizer::new(output, &sourcemap);
-        let visualizer_text = visualizer.into_visualizer_text();
-        assert_eq!(
-            visualizer_text,
-            r#"- shared.js
-(0:0) "const " --> (2:0) "const "
-(0:6) "a = " --> (2:6) "a = "
-(0:10) "'shared.js'\n" --> (2:10) "'shared.js';\n"
-- index.js
-(1:0) "const " --> (5:0) "const "
-(1:6) "a = " --> (5:6) "a$1 = "
-(1:10) "'index.js'\n" --> (5:12) "'index.js';\n"
-(2:0) "console." --> (6:0) "console."
-(2:8) "log(" --> (6:8) "log("
-(2:12) "a, " --> (6:12) "a$1, "
-(2:15) "a2)" --> (6:17) "a)"
-(2:18) "\n" --> (6:19) ";\n"
-"#
-        );
     }
 }
