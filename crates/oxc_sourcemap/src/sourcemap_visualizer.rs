@@ -41,17 +41,10 @@ impl<'a> SourcemapVisualizer<'a> {
         let mut last_source: Option<&str> = None;
         for i in 0..tokens.len() {
             let t = &tokens[i];
-            let source_id = match t.source_id {
-                Some(source_id) => source_id,
-                None => continue,
-            };
-            let source = match self.sourcemap.get_source(source_id) {
-                Some(source) => source,
-                None => continue,
-            };
-            let source_contents_lines = match source_contents_lines_map[source].as_ref() {
-                Some(source_contents_lines) => source_contents_lines,
-                None => continue,
+            let Some(source_id) = t.source_id else { continue };
+            let Some(source) = self.sourcemap.get_source(source_id) else { continue };
+            let Some(source_contents_lines) = source_contents_lines_map[source].as_ref() else {
+                continue;
             };
 
             // find next dst column or EOL
@@ -125,8 +118,7 @@ impl<'a> SourcemapVisualizer<'a> {
                     if ch == '\r' && content.chars().nth(i + 1) == Some('\n') {
                         continue;
                     }
-                    tables
-                        .push(content[line_byte_offset..i + 1].encode_utf16().collect::<Vec<_>>());
+                    tables.push(content[line_byte_offset..=i].encode_utf16().collect::<Vec<_>>());
                     line_byte_offset = i + 1;
                 }
                 _ => {}
