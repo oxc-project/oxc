@@ -1,12 +1,14 @@
 import { strictEqual } from 'assert';
-import { ConfigService } from './config.js';
+import { Config } from './Config.js';
 
-suite('default values on initialization', () => {
-  const service = new ConfigService();
+suite('Config', () => {
+  test('default values on initialization', () => {
+    const config = new Config();
 
-  strictEqual(service.runTrigger, 'onType');
-  strictEqual(service.enable, true);
-  strictEqual(service.trace, 'off');
-  strictEqual(service.configPath, '.eslintrc');
-  strictEqual(service.binPath, '');
+    strictEqual(config.runTrigger, 'onType');
+    strictEqual(config.enable, true);
+    strictEqual(config.trace, 'off');
+    strictEqual(config.configPath, '.eslintrc');
+    strictEqual(config.binPath, '');
+  });
 });
