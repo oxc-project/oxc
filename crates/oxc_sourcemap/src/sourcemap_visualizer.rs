@@ -39,12 +39,7 @@ impl<'a> SourcemapVisualizer<'a> {
 
         let tokens = &self.sourcemap.tokens;
 
-        struct RangeMapping {
-            dst: ((u32, u32), (u32, u32)),
-            src: (u32, (u32, u32), (u32, u32)),
-        }
-        let mut ranges: Vec<RangeMapping> = vec![];
-
+        let mut last_source: Option<&str> = None;
         for i in 0..tokens.len() {
             let t = &tokens[i];
             let source_id = match t.source_id {
@@ -64,7 +59,7 @@ impl<'a> SourcemapVisualizer<'a> {
             let dst_end_col = {
                 match tokens.get(i + 1) {
                     Some(t2) if t2.dst_line == t.dst_line => t2.dst_col,
-                    _ => output_lines[t.dst_line as usize].len() as u32
+                    _ => output_lines[t.dst_line as usize].len() as u32,
                 }
             };
 
@@ -83,61 +78,42 @@ impl<'a> SourcemapVisualizer<'a> {
                 source_contents_lines[t.src_line as usize].len() as u32
             };
 
-            ranges.push(RangeMapping {
-                dst: ((t.dst_line, t.dst_col), (t.dst_line, dst_end_col)),
-                src: (source_id, (t.src_line, t.src_col), (t.src_line, src_end_col)),
-            });
+            // Print source
+            if last_source != Some(source) {
+                s.push('-');
+                s.push(' ');
+                s.push_str(source);
+                s.push('\n');
+                last_source = Some(source);
+            }
+
+            s.push_str(&format!(
+                "({}:{}) {:?}",
+                t.src_line,
+                t.src_col,
+                Self::str_slice_by_token(
+                    source_contents_lines,
+                    (t.src_line, t.src_col),
+                    (t.src_line, src_end_col)
+                )
+            ));
+
+            s.push_str(" --> ");
+
+            s.push_str(&format!(
+                "({}:{}) {:?}",
+                t.dst_line,
+                t.dst_col,
+                Self::str_slice_by_token(
+                    &output_lines,
+                    (t.dst_line, t.dst_col),
+                    (t.dst_line, dst_end_col)
+                )
+            ));
+            s.push('\n');
         }
 
         if true {
-            let mut last_source: Option<&str> = None;
-            for range in ranges {
-                let (dst_start, dst_end) = range.dst;
-                let (source_id, src_start, src_end) = range.src;
-
-                let source = self.sourcemap.get_source(source_id).unwrap();
-                let source_contents_lines =
-                    source_contents_lines_map.get(source).unwrap().as_ref().unwrap();
-
-                // Print source
-                if last_source != Some(source) {
-                    s.push('-');
-                    s.push(' ');
-                    s.push_str(source);
-                    s.push('\n');
-                    last_source = Some(source);
-                }
-
-                s.push_str(&format!(
-                    "({}:{}) {:?}",
-                    src_start.0,
-                    src_start.1,
-                    // src_end.0,
-                    // src_end.1,
-                    Self::str_slice_by_token(
-                        source_contents_lines,
-                        (src_start.0, src_start.1),
-                        (src_end.0, src_end.1)
-                    )
-                ));
-
-                s.push_str(" --> ");
-
-                s.push_str(&format!(
-                    "({}:{}) {:?}",
-                    dst_start.0,
-                    dst_start.1,
-                    // dst_end.0,
-                    // dst_end.1,
-                    Self::str_slice_by_token(
-                        &output_lines,
-                        (dst_start.0, dst_start.1),
-                        (dst_end.0, dst_end.1)
-                    )
-                ));
-                s.push('\n');
-            }
-
             return s;
         }
 
