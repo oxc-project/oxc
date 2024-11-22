@@ -8,7 +8,7 @@ use oxc::parser::ParseOptions;
 use oxc::{
     allocator::Allocator,
     codegen::{CodeGenerator, CodegenOptions},
-    diagnostics::{Error, NamedSource, OxcDiagnostic},
+    diagnostics::{NamedSource, OxcDiagnostic},
     parser::Parser,
     span::{SourceType, VALID_EXTENSIONS},
     transformer::{BabelOptions, HelperLoaderMode, TransformOptions},
@@ -27,7 +27,7 @@ pub struct TestCase {
     pub path: PathBuf,
     options: BabelOptions,
     source_type: SourceType,
-    transform_options: Result<TransformOptions, Vec<Error>>,
+    transform_options: Result<TransformOptions, Vec<String>>,
     pub errors: Vec<OxcDiagnostic>,
 }
 

@@ -8,8 +8,6 @@ use browserslist::Version;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_diagnostics::Error;
-
 use super::{
     babel::BabelTargets,
     engine::Engine,
@@ -42,7 +40,7 @@ impl EngineTargets {
     /// # Errors
     ///
     /// * Query is invalid.
-    pub fn try_from_query(query: &str) -> Result<Self, Error> {
+    pub fn try_from_query(query: &str) -> Result<Self, String> {
         BrowserslistQuery::Single(query.to_string()).exec()
     }
 

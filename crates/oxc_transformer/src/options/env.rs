@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use oxc_diagnostics::Error;
 use serde::Deserialize;
 
 use crate::{
@@ -101,11 +100,14 @@ impl EnvOptions {
     /// * When the query failed to parse.
     ///
     /// [browserslist]: <https://github.com/browserslist/browserslist>
-    pub fn from_browserslist_query(query: &str) -> Result<Self, Error> {
+    pub fn from_browserslist_query(query: &str) -> Result<Self, String> {
         EngineTargets::try_from_query(query).map(Self::from)
     }
 
-    pub(crate) fn from_target(s: &str) -> Result<Self, Error> {
+    /// # Errors
+    ///
+    /// * When the query failed to parse.
+    pub fn from_target(s: &str) -> Result<Self, String> {
         if s.contains(',') {
             Self::from_target_list(&s.split(',').collect::<Vec<_>>())
         } else {
@@ -113,7 +115,10 @@ impl EnvOptions {
         }
     }
 
-    pub(crate) fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, Error> {
+    /// # Errors
+    ///
+    /// * When the query failed to parse.
+    pub fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, String> {
         let mut es_target = None;
         let mut engine_targets = EngineTargets::default();
 
@@ -122,14 +127,14 @@ impl EnvOptions {
             // Parse `esXXXX`.
             if let Ok(target) = ESTarget::from_str(s) {
                 if let Some(target) = es_target {
-                    return Err(Error::msg(format!("'{target}' is already specified.")));
+                    return Err(format!("'{target}' is already specified."));
                 }
                 es_target = Some(target);
             } else {
                 // Parse `chromeXX`, `edgeXX` etc.
                 let (engine, version) = Engine::parse_name_and_version(s)?;
                 if engine_targets.insert(engine, version).is_some() {
-                    return Err(Error::msg(format!("'{s}' is already specified.")));
+                    return Err(format!("'{s}' is already specified."));
                 }
             }
         }
