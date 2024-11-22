@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
         AssignmentTarget, BindingIdentifier, BindingPattern, BindingPatternKind, Expression,
-        IdentifierReference,
+        IdentifierReference, SimpleAssignmentTarget,
     },
     NONE,
 };
@@ -120,6 +120,14 @@ impl<'a> BoundIdentifier<'a> {
         self.create_spanned_write_target(SPAN, ctx)
     }
 
+    /// Create `SimpleAssignmentTarget` referencing this binding, which is written to, with dummy `Span`
+    pub fn create_write_simple_target(
+        &self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        self.create_spanned_write_simple_target(SPAN, ctx)
+    }
+
     /// Create `IdentifierReference` referencing this binding, which is written to, with specified `Span`
     pub fn create_spanned_write_reference(
         &self,
@@ -147,6 +155,15 @@ impl<'a> BoundIdentifier<'a> {
         self.create_spanned_target(span, ReferenceFlags::Write, ctx)
     }
 
+    /// Create `SimpleAssignmentTarget` referencing this binding, which is written to, with specified `Span`
+    pub fn create_spanned_write_simple_target(
+        &self,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        self.create_spanned_simple_target(span, ReferenceFlags::Write, ctx)
+    }
+
     // --- Read and write ---
 
     /// Create `IdentifierReference` referencing this binding, which is read from + written to,
@@ -168,6 +185,15 @@ impl<'a> BoundIdentifier<'a> {
     /// with dummy `Span`
     pub fn create_read_write_target(&self, ctx: &mut TraverseCtx<'a>) -> AssignmentTarget<'a> {
         self.create_spanned_read_write_target(SPAN, ctx)
+    }
+
+    /// Create `SimpleAssignmentTarget` referencing this binding, which is read from + written to,
+    /// with dummy `Span`
+    pub fn create_read_write_simple_target(
+        &self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        self.create_spanned_read_write_simple_target(SPAN, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding, which is read from + written to,
@@ -200,6 +226,16 @@ impl<'a> BoundIdentifier<'a> {
         self.create_spanned_target(span, ReferenceFlags::Read | ReferenceFlags::Write, ctx)
     }
 
+    /// Create `SimpleAssignmentTarget` referencing this binding, which is read from + written to,
+    /// with specified `Span`
+    pub fn create_spanned_read_write_simple_target(
+        &self,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        self.create_spanned_simple_target(span, ReferenceFlags::Read | ReferenceFlags::Write, ctx)
+    }
+
     // --- Specified ReferenceFlags ---
 
     /// Create `IdentifierReference` referencing this binding, with specified `ReferenceFlags`
@@ -227,6 +263,15 @@ impl<'a> BoundIdentifier<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> AssignmentTarget<'a> {
         self.create_spanned_target(SPAN, flags, ctx)
+    }
+
+    /// Create `SimpleAssignmentTarget` referencing this binding, with specified `ReferenceFlags`
+    pub fn create_simple_target(
+        &self,
+        flags: ReferenceFlags,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        self.create_spanned_simple_target(SPAN, flags, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding, with specified `Span` and `ReferenceFlags`
@@ -260,5 +305,17 @@ impl<'a> BoundIdentifier<'a> {
     ) -> AssignmentTarget<'a> {
         let ident = self.create_spanned_reference(span, flags, ctx);
         AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident))
+    }
+
+    /// Create `SimpleAssignmentTarget::AssignmentTargetIdentifier` referencing this binding,
+    /// with specified `Span` and `ReferenceFlags`
+    pub fn create_spanned_simple_target(
+        &self,
+        span: Span,
+        flags: ReferenceFlags,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        let ident = self.create_spanned_reference(span, flags, ctx);
+        SimpleAssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident))
     }
 }
