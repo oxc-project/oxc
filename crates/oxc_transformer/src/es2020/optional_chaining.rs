@@ -387,7 +387,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                 // `foo.bar` -> `_foo$bar = foo.bar`
                 let binding = self.generate_binding(object, ctx);
                 *object = Self::create_assignment_expression(
-                    binding.create_read_write_target(ctx),
+                    binding.create_write_target(ctx),
                     ctx.ast.move_expression(object),
                     ctx,
                 );
@@ -572,7 +572,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                         let binding = self.generate_binding(object, ctx);
                         // `(_foo = foo)`
                         *object = Self::create_assignment_expression(
-                            binding.create_read_write_target(ctx),
+                            binding.create_write_target(ctx),
                             ctx.ast.move_expression(object),
                             ctx,
                         );
@@ -590,11 +590,8 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         // Replace the expression with the temp binding and assign the original expression to the temp binding
         let expr = mem::replace(expr, temp_binding.create_read_expression(ctx));
         // `(binding = expr)`
-        let assignment_expression = Self::create_assignment_expression(
-            temp_binding.create_read_write_target(ctx),
-            expr,
-            ctx,
-        );
+        let assignment_expression =
+            Self::create_assignment_expression(temp_binding.create_write_target(ctx), expr, ctx);
         // `(binding = expr) === null || binding === void 0`
         let expr = self.wrap_optional_check(
             assignment_expression,
@@ -640,11 +637,8 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         // Replace the expression with the temp binding and assign the original expression to the temp binding
         let expr = mem::replace(expr, temp_binding.create_read_expression(ctx));
         // `(binding = expr)`
-        let assignment_expression = Self::create_assignment_expression(
-            temp_binding.create_read_write_target(ctx),
-            expr,
-            ctx,
-        );
+        let assignment_expression =
+            Self::create_assignment_expression(temp_binding.create_write_target(ctx), expr, ctx);
 
         let reference = temp_binding.create_read_expression(ctx);
         // `left || (binding = expr) === null`

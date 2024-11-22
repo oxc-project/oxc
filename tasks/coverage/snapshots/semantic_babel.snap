@@ -2,7 +2,7 @@ commit: d20b314c
 
 semantic_babel Summary:
 AST Parsed     : 2210/2210 (100.00%)
-Positive Passed: 1814/2210 (82.08%)
+Positive Passed: 1841/2210 (83.30%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -10,19 +10,6 @@ rebuilt        : SymbolId(0): ScopeId(4294967294)
 Symbol scope ID mismatch for "g":
 after transform: SymbolId(1): ScopeId(4294967294)
 rebuilt        : SymbolId(1): ScopeId(4294967294)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/core/create-parenthesized-expressions/valid-pattern-in-object-rest-lhs/input.js
-semantic error: Reference flags mismatch for "_ref":
-after transform: ReferenceId(1): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Write)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/core/create-parenthesized-expressions/valid-pattern-in-object-rest-member-lhs/input.js
-semantic error: Reference flags mismatch for "_ref":
-after transform: ReferenceId(1): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Write)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 semantic error: Unexpected new.target expression
@@ -44,14 +31,6 @@ semantic error: Symbol flags mismatch for "_foo":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
 
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/3/input.js
-semantic error: Reference flags mismatch for "_a":
-after transform: ReferenceId(2): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Write)
-
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/25/input.js
 semantic error: Symbol flags mismatch for "_foo":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
@@ -64,228 +43,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
 Symbol flags mismatch for "_bar":
 after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
 rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await/input.js
-semantic error: Reference flags mismatch for "_iteratorAbruptCompletion":
-after transform: ReferenceId(3): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(8): ReferenceFlags(Write)
-Reference flags mismatch for "_step":
-after transform: ReferenceId(4): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(9): ReferenceFlags(Write)
-Reference flags mismatch for "_iteratorAbruptCompletion":
-after transform: ReferenceId(6): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(11): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await-async-of/input.js
-semantic error: Reference flags mismatch for "_iteratorAbruptCompletion":
-after transform: ReferenceId(4): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(8): ReferenceFlags(Write)
-Reference flags mismatch for "_step":
-after transform: ReferenceId(5): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(9): ReferenceFlags(Write)
-Reference flags mismatch for "_iteratorAbruptCompletion":
-after transform: ReferenceId(7): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(11): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/nullish-coalescing-operator/and-nullish/input.js
-semantic error: Reference flags mismatch for "_ref":
-after transform: ReferenceId(3): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/nullish-coalescing-operator/associativity/input.js
-semantic error: Reference flags mismatch for "_ref":
-after transform: ReferenceId(3): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "_a":
-after transform: ReferenceId(6): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(1): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/nullish-coalescing-operator/expression/input.js
-semantic error: Reference flags mismatch for "_foo":
-after transform: ReferenceId(1): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/nullish-coalescing-operator/multiline/input.js
-semantic error: Reference flags mismatch for "_ref":
-after transform: ReferenceId(3): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "_a":
-after transform: ReferenceId(6): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(1): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/nullish-coalescing-operator/nullish-and/input.js
-semantic error: Reference flags mismatch for "_a":
-after transform: ReferenceId(3): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/nullish-coalescing-operator/nullish-or/input.js
-semantic error: Reference flags mismatch for "_a":
-after transform: ReferenceId(3): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/nullish-coalescing-operator/or-nullish/input.js
-semantic error: Reference flags mismatch for "_ref":
-after transform: ReferenceId(3): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/call-trailing-comma-comments/input.js
-semantic error: Reference flags mismatch for "_foo":
-after transform: ReferenceId(3): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/chaining-off-optionally-chained-keys-named-class-or-function/input.js
-semantic error: Reference flags mismatch for "_foo":
-after transform: ReferenceId(5): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "_foo2":
-after transform: ReferenceId(8): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Write)
-Reference flags mismatch for "_foo3":
-after transform: ReferenceId(11): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(8): ReferenceFlags(Write)
-Reference flags mismatch for "_foo3":
-after transform: ReferenceId(14): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(11): ReferenceFlags(Write)
-Reference flags mismatch for "_foo4":
-after transform: ReferenceId(17): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(15): ReferenceFlags(Write)
-Reference flags mismatch for "_foo4":
-after transform: ReferenceId(20): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(18): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/function-call/input.js
-semantic error: Reference flags mismatch for "_func":
-after transform: ReferenceId(10): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "_func2":
-after transform: ReferenceId(13): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Write)
-Reference flags mismatch for "_a":
-after transform: ReferenceId(16): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(10): ReferenceFlags(Write)
-Reference flags mismatch for "_a$func":
-after transform: ReferenceId(19): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(13): ReferenceFlags(Write)
-Reference flags mismatch for "_a2":
-after transform: ReferenceId(23): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(18): ReferenceFlags(Write)
-Reference flags mismatch for "_a2$func":
-after transform: ReferenceId(26): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(21): ReferenceFlags(Write)
-Reference flags mismatch for "_a$func2":
-after transform: ReferenceId(31): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(28): ReferenceFlags(Write)
-Reference flags mismatch for "_a3":
-after transform: ReferenceId(29): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(29): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/member-access/input.js
-semantic error: Reference flags mismatch for "_foo":
-after transform: ReferenceId(4): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "_foo2":
-after transform: ReferenceId(7): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Write)
-Reference flags mismatch for "_foo2":
-after transform: ReferenceId(10): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(7): ReferenceFlags(Write)
-Reference flags mismatch for "_foo$bar":
-after transform: ReferenceId(13): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(11): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/member-access-bracket/input.js
-semantic error: Reference flags mismatch for "_obj":
-after transform: ReferenceId(11): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "_obj2":
-after transform: ReferenceId(14): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Write)
-Reference flags mismatch for "_obj2":
-after transform: ReferenceId(17): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(8): ReferenceFlags(Write)
-Reference flags mismatch for "_obj3":
-after transform: ReferenceId(20): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(14): ReferenceFlags(Write)
-Reference flags mismatch for "_obj4":
-after transform: ReferenceId(23): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(18): ReferenceFlags(Write)
-Reference flags mismatch for "_obj4":
-after transform: ReferenceId(26): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(21): ReferenceFlags(Write)
-Reference flags mismatch for "_obj$a":
-after transform: ReferenceId(29): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(25): ReferenceFlags(Write)
-Reference flags mismatch for "_obj$a2":
-after transform: ReferenceId(32): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(30): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/optioanl-chain-expression/input.js
-semantic error: Reference flags mismatch for "_a$b":
-after transform: ReferenceId(2): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/parenthised-chain/input.js
-semantic error: Reference flags mismatch for "_a":
-after transform: ReferenceId(4): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "_a2":
-after transform: ReferenceId(7): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Write)
-Reference flags mismatch for "_a3":
-after transform: ReferenceId(10): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(8): ReferenceFlags(Write)
-Reference flags mismatch for "_a3":
-after transform: ReferenceId(13): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(11): ReferenceFlags(Write)
-Reference flags mismatch for "_a3":
-after transform: ReferenceId(16): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(14): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/separated-chaining/input.js
-semantic error: Reference flags mismatch for "_a":
-after transform: ReferenceId(3): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "_a":
-after transform: ReferenceId(6): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(3): ReferenceFlags(Write)
-Reference flags mismatch for "_a$b$c":
-after transform: ReferenceId(9): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(7): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/optional-chaining/super-method-class/input.js
-semantic error: Reference flags mismatch for "_super":
-after transform: ReferenceId(2): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(1): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2021/logical-assignment-operator/and-and-equals/input.js
-semantic error: Reference flags mismatch for "a":
-after transform: ReferenceId(4): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(1): ReferenceFlags(Write)
-Reference flags mismatch for "_obj":
-after transform: ReferenceId(5): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(3): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2021/logical-assignment-operator/mallet/input.js
-semantic error: Reference flags mismatch for "a":
-after transform: ReferenceId(4): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(1): ReferenceFlags(Write)
-Reference flags mismatch for "_obj":
-after transform: ReferenceId(5): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(3): ReferenceFlags(Write)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2021/logical-assignment-operator/qq-equals/input.js
-semantic error: Reference flags mismatch for "_a":
-after transform: ReferenceId(5): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "a":
-after transform: ReferenceId(4): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Write)
-Reference flags mismatch for "_obj$a":
-after transform: ReferenceId(10): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(6): ReferenceFlags(Write)
-Reference flags mismatch for "_obj":
-after transform: ReferenceId(8): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(7): ReferenceFlags(Write)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -326,24 +83,8 @@ semantic error: Unexpected token
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
 semantic error: Identifier `x` has already been declared
 
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-module/for-await/input.js
-semantic error: Reference flags mismatch for "_iteratorAbruptCompletion":
-after transform: ReferenceId(3): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Write)
-Reference flags mismatch for "_step":
-after transform: ReferenceId(4): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(3): ReferenceFlags(Write)
-Reference flags mismatch for "_iteratorAbruptCompletion":
-after transform: ReferenceId(6): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Write)
-
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 semantic error: `await` is only allowed within async functions and at the top levels of modules
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-export-declaration/export-default-from-as-identifier-3/input.js
-semantic error: Reference flags mismatch for "_from":
-after transform: ReferenceId(1): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
 semantic error: Symbol scope ID mismatch for "a":
@@ -414,16 +155,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/optional-chaining/input.js
-semantic error: Reference flags mismatch for "_foo":
-after transform: ReferenceId(5): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "_foo2":
-after transform: ReferenceId(8): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Write)
-Reference flags mismatch for "_foo2$foo":
-after transform: ReferenceId(11): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(7): ReferenceFlags(Write)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["T", "foo"]
 rebuilt        : ["foo"]
 
@@ -557,10 +289,7 @@ after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/as/input.ts
-semantic error: Reference flags mismatch for "_ref":
-after transform: ReferenceId(11): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(7): ReferenceFlags(Write)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["T", "x", "y"]
 rebuilt        : ["x", "y"]
 
@@ -570,13 +299,7 @@ after transform: ["a7", "const", "d", "o4"]
 rebuilt        : ["a7", "d", "o4"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/destructuring-assignment-in-parens/input.ts
-semantic error: Reference flags mismatch for "_b":
-after transform: ReferenceId(22): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(10): ReferenceFlags(Write)
-Reference flags mismatch for "_y":
-after transform: ReferenceId(29): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(21): ReferenceFlags(Write)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["T", "a", "b", "c", "x", "y"]
 rebuilt        : ["a", "b", "c", "x", "y"]
 
@@ -1720,11 +1443,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/optional-chaining/type-arguments/input.ts
-semantic error: Reference flags mismatch for "_example$inner":
-after transform: ReferenceId(2): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/async-arrow-generic-9560/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["T"]
@@ -2539,16 +2257,7 @@ after transform: ["T", "U", "f"]
 rebuilt        : ["f"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain/input.ts
-semantic error: Reference flags mismatch for "_f":
-after transform: ReferenceId(8): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "_f2":
-after transform: ReferenceId(11): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Write)
-Reference flags mismatch for "_f3":
-after transform: ReferenceId(14): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(8): ReferenceFlags(Write)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Q", "W", "f"]
 rebuilt        : ["f"]
 
@@ -2564,21 +2273,12 @@ after transform: ["f", "true"]
 rebuilt        : ["f"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-binary-operator/input.ts
-semantic error: Reference flags mismatch for "_ref":
-after transform: ReferenceId(3): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["a", "b", "c"]
 rebuilt        : ["a", "c"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-optional-chain/input.ts
-semantic error: Reference flags mismatch for "_a":
-after transform: ReferenceId(5): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
-Reference flags mismatch for "_a2":
-after transform: ReferenceId(8): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Write)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["a", "c"]
 rebuilt        : ["a"]
 

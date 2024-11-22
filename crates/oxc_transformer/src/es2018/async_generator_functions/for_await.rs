@@ -282,7 +282,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                 Some(ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    iterator_abrupt_completion.create_read_write_target(ctx),
+                    iterator_abrupt_completion.create_write_target(ctx),
                     ctx.ast.expression_unary(
                         SPAN,
                         UnaryOperator::LogicalNot,
@@ -293,7 +293,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                                 ctx.ast.expression_assignment(
                                     SPAN,
                                     AssignmentOperator::Assign,
-                                    step_key.create_read_write_target(ctx),
+                                    step_key.create_write_target(ctx),
                                     ctx.ast.expression_await(
                                         SPAN,
                                         ctx.ast.expression_call(
@@ -319,7 +319,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                 Some(ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    iterator_abrupt_completion.create_read_write_target(ctx),
+                    iterator_abrupt_completion.create_write_target(ctx),
                     ctx.ast.expression_boolean_literal(SPAN, false),
                 )),
                 {
