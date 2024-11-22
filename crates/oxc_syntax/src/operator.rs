@@ -70,6 +70,11 @@ pub enum AssignmentOperator {
 }
 
 impl AssignmentOperator {
+    /// Returns `true` for `=`.
+    pub fn is_assign(self) -> bool {
+        self == Self::Assign
+    }
+
     /// Returns `true` for '||=`, `&&=`, and `??=`.
     pub fn is_logical(self) -> bool {
         matches!(self, Self::LogicalOr | Self::LogicalAnd | Self::LogicalNullish)

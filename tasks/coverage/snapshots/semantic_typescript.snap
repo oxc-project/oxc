@@ -2,7 +2,7 @@ commit: df9d1650
 
 semantic_typescript Summary:
 AST Parsed     : 6490/6490 (100.00%)
-Positive Passed: 2655/6490 (40.91%)
+Positive Passed: 2623/6490 (40.42%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -3619,11 +3619,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/commentOnParenthesizedExpressionOpenParen1.ts
-semantic error: Reference flags mismatch for "j":
-after transform: ReferenceId(0): ReferenceFlags(Read | Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/compiler/commentOnSignature1.ts
 semantic error: Scope children mismatch:
@@ -10632,6 +10627,14 @@ Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
 
+tasks/coverage/typescript/tests/cases/compiler/destructuringAssignmentWithStrictNullChecks.ts
+semantic error: Reference flags mismatch for "_ref":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference flags mismatch for "bar":
+after transform: ReferenceId(0): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+
 tasks/coverage/typescript/tests/cases/compiler/destructuringInitializerContextualTypeFromContext.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Child", "Parent", "Props", "SFC", "_excluded", "_excluded2", "_objectSpread", "_objectWithoutProperties"]
@@ -10915,6 +10918,9 @@ rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "ListItemVariant":
 after transform: SymbolId(7): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(11), ReferenceId(12), ReferenceId(24)]
 rebuilt        : SymbolId(6): [ReferenceId(5), ReferenceId(15)]
+Reference flags mismatch for "_data$menuItemsVarian":
+after transform: ReferenceId(14): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/compiler/discriminatedUnionWithIndexSignature.ts
 semantic error: Bindings mismatch:
@@ -14516,6 +14522,9 @@ tasks/coverage/typescript/tests/cases/compiler/esNextWeakRefs_IterableWeakMap.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["K", "V"]
 rebuilt        : ScopeId(2): []
+Reference flags mismatch for "_this$weakMap$get":
+after transform: ReferenceId(74): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(25): ReferenceFlags(Write)
 Unresolved references mismatch:
 after transform: ["FinalizationRegistry", "Generator", "Iterable", "Object", "Set", "Symbol", "WeakMap", "WeakRef", "undefined"]
 rebuilt        : ["FinalizationRegistry", "Object", "Set", "Symbol", "WeakMap", "WeakRef", "undefined"]
@@ -15822,6 +15831,15 @@ tasks/coverage/typescript/tests/cases/compiler/forAwaitForUnion.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T", "_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "source"]
 rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "source"]
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(7): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(8): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(10): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(11): ReferenceFlags(Write)
 Unresolved references mismatch:
 after transform: ["AsyncIterable", "Iterable", "arguments", "require"]
 rebuilt        : ["arguments", "require"]
@@ -17955,6 +17973,9 @@ rebuilt        : ScopeId(0): ["NumberOrObject", "NumberOrString", "NumberOrUndef
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(8), ScopeId(16), ScopeId(17)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(8), ScopeId(16)]
+Reference flags mismatch for "_this$_x":
+after transform: ReferenceId(22): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/compiler/global.ts
 semantic error: Missing SymbolId: "M"
@@ -22680,6 +22701,12 @@ rebuilt        : ScopeId(3): ["_this$entries$name", "entry", "name"]
 Bindings mismatch:
 after transform: ScopeId(13): ["T", "_typeHandlers$p$t", "p"]
 rebuilt        : ScopeId(7): ["_typeHandlers$p$t", "p"]
+Reference flags mismatch for "_this$entries$name":
+after transform: ReferenceId(33): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference flags mismatch for "_typeHandlers$p$t":
+after transform: ReferenceId(36): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(11): ReferenceFlags(Write)
 Unresolved references mismatch:
 after transform: ["console", "true"]
 rebuilt        : ["console"]
@@ -23420,9 +23447,6 @@ rebuilt        : SymbolId(20): [ReferenceId(14), ReferenceId(15), ReferenceId(17
 Symbol reference IDs mismatch for "localFunction":
 after transform: SymbolId(25): [ReferenceId(13)]
 rebuilt        : SymbolId(21): []
-Reference flags mismatch for "x":
-after transform: ReferenceId(12): ReferenceFlags(Write)
-rebuilt        : ReferenceId(16): ReferenceFlags(Read | Write)
 
 tasks/coverage/typescript/tests/cases/compiler/methodSignatureDeclarationEmit1.ts
 semantic error: Scope children mismatch:
@@ -23579,6 +23603,17 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
+tasks/coverage/typescript/tests/cases/compiler/modularizeLibrary_Dom.asynciterable.ts
+semantic error: Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+
 tasks/coverage/typescript/tests/cases/compiler/modularizeLibrary_NoErrorDuplicateLibOptions1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Baz", "_asyncToGenerator", "_out", "console", "f", "gen", "gen2", "m", "o", "o1", "out", "p", "reg", "s", "str", "t"]
@@ -23611,6 +23646,17 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Array", "Map", "Math", "Promise", "Proxy", "Reflect", "RegExp", "Symbol", "arguments", "require"]
 rebuilt        : ["Array", "Map", "Math", "Promise", "Proxy", "Reflect", "RegExp", "Symbol", "arguments", "console", "require"]
+
+tasks/coverage/typescript/tests/cases/compiler/modularizeLibrary_Worker.asynciterable.ts
+semantic error: Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAliasAsFunctionArgument.ts
 semantic error: Missing SymbolId: "a"
@@ -25610,6 +25656,9 @@ rebuilt        : ScopeId(0): ["_fixed$thing", "borked", "fixed", "working"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
+Reference flags mismatch for "_fixed$thing":
+after transform: ReferenceId(22): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/compiler/nearbyIdenticalGenericLambdasAssignable.ts
 semantic error: Bindings mismatch:
@@ -25749,12 +25798,18 @@ rebuilt        : SymbolId(7): ScopeId(0)
 Symbol scope ID mismatch for "_ref5":
 after transform: SymbolId(8): ScopeId(2)
 rebuilt        : SymbolId(8): ScopeId(0)
-Reference flags mismatch for "_ref":
-after transform: ReferenceId(3): ReferenceFlags(Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read | Write)
-Reference flags mismatch for "_ref4":
-after transform: ReferenceId(13): ReferenceFlags(Write)
-rebuilt        : ReferenceId(12): ReferenceFlags(Read | Write)
+Reference flags mismatch for "_ref2":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
+Reference flags mismatch for "x":
+after transform: ReferenceId(0): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_ref5":
+after transform: ReferenceId(14): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(14): ReferenceFlags(Write)
+Reference flags mismatch for "y":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(17): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/compiler/nestedSelf.ts
 semantic error: Missing SymbolId: "M"
@@ -26292,6 +26347,9 @@ rebuilt        : ScopeId(3): ["x"]
 Bindings mismatch:
 after transform: ScopeId(5): ["T", "obj"]
 rebuilt        : ScopeId(5): ["obj"]
+Reference flags mismatch for "_this":
+after transform: ReferenceId(21): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(17): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/compiler/nonNullableWithNullableGenericIndexedAccessArg.ts
 semantic error: Bindings mismatch:
@@ -26610,30 +26668,30 @@ rebuilt        : ScopeId(0): ["_excluded", "_extends", "_objectDestructuringEmpt
 Reference symbol mismatch for "_obj":
 after transform: SymbolId(18) "_obj"
 rebuilt        : <None>
+Reference flags mismatch for "_obj":
+after transform: ReferenceId(28): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
 Reference symbol mismatch for "_obj":
 after transform: SymbolId(18) "_obj"
 rebuilt        : <None>
-Reference symbol mismatch for "_obj":
-after transform: SymbolId(18) "_obj"
-rebuilt        : <None>
-Reference symbol mismatch for "_obj":
-after transform: SymbolId(18) "_obj"
-rebuilt        : <None>
-Reference symbol mismatch for "_obj":
-after transform: SymbolId(18) "_obj"
-rebuilt        : <None>
-Reference flags mismatch for "prop":
-after transform: ReferenceId(8): ReferenceFlags(Write)
-rebuilt        : ReferenceId(42): ReferenceFlags(Read | Write)
-Reference flags mismatch for "_objectSpread":
-after transform: ReferenceId(49): ReferenceFlags(Read)
-rebuilt        : ReferenceId(43): ReferenceFlags(Read | Write)
 Reference flags mismatch for "obj":
-after transform: ReferenceId(9): ReferenceFlags(Write)
-rebuilt        : ReferenceId(44): ReferenceFlags(Read | Write)
-Reference flags mismatch for "_ref6":
-after transform: ReferenceId(41): ReferenceFlags(Read)
-rebuilt        : ReferenceId(45): ReferenceFlags(Read | Write)
+after transform: ReferenceId(2): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(14): ReferenceFlags(Write)
+Reference symbol mismatch for "_obj":
+after transform: SymbolId(18) "_obj"
+rebuilt        : <None>
+Reference symbol mismatch for "_obj":
+after transform: SymbolId(18) "_obj"
+rebuilt        : <None>
+Reference symbol mismatch for "_obj":
+after transform: SymbolId(18) "_obj"
+rebuilt        : <None>
+Reference flags mismatch for "_ref5":
+after transform: ReferenceId(43): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(41): ReferenceFlags(Write)
+Reference flags mismatch for "props":
+after transform: ReferenceId(12): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(50): ReferenceFlags(Write)
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["_obj", "require"]
@@ -31318,6 +31376,20 @@ rebuilt        : ScopeId(0): ["foo"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/typescript/tests/cases/compiler/propertyAccessExpressionInnerComments.ts
+semantic error: Reference flags mismatch for "_Array":
+after transform: ReferenceId(9): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+Reference flags mismatch for "_Array2":
+after transform: ReferenceId(12): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(8): ReferenceFlags(Write)
+Reference flags mismatch for "_Array3":
+after transform: ReferenceId(15): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(12): ReferenceFlags(Write)
+Reference flags mismatch for "_Array4":
+after transform: ReferenceId(18): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(16): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/compiler/propertyAccessOnObjectLiteral.ts
 semantic error: Symbol reference IDs mismatch for "A":
@@ -37347,6 +37419,9 @@ rebuilt        : ScopeId(0): ["_f", "b"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference flags mismatch for "_f":
+after transform: ReferenceId(15): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 Reference symbol mismatch for "f":
 after transform: SymbolId(8) "f"
 rebuilt        : <None>
@@ -37526,6 +37601,9 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Bindings mismatch:
 after transform: ScopeId(2): ["A", "x"]
 rebuilt        : ScopeId(1): ["x"]
+Reference flags mismatch for "_x$y":
+after transform: ReferenceId(16): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(8): ReferenceFlags(Write)
 Unresolved references mismatch:
 after transform: ["NonNullable", "undefined"]
 rebuilt        : ["undefined"]
@@ -37545,6 +37623,12 @@ rebuilt        : ScopeId(0): ["getBreedSizeWithFunction", "getBreedSizeWithoutFu
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
+Reference flags mismatch for "_animal$breed":
+after transform: ReferenceId(13): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference flags mismatch for "_animal$breed2":
+after transform: ReferenceId(18): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(11): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/compiler/typeReferenceDirectives1.ts
 semantic error: Bindings mismatch:
@@ -38317,6 +38401,9 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(4): [ScopeId(5)]
 rebuilt        : ScopeId(2): []
+Reference flags mismatch for "_options$something":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 Reference symbol mismatch for "val":
 after transform: SymbolId(2) "val"
 rebuilt        : <None>
@@ -40892,6 +40979,9 @@ tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/class
 semantic error: Symbol reference IDs mismatch for "C":
 after transform: SymbolId(1): [ReferenceId(2)]
 rebuilt        : SymbolId(1): []
+Reference flags mismatch for "getX":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock17.ts
 semantic error: Scope children mismatch:
@@ -40900,6 +40990,14 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(6)]
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(7), ReferenceId(13)]
 rebuilt        : SymbolId(1): [ReferenceId(10)]
+Reference flags mismatch for "friendA":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock28.ts
+semantic error: Reference flags mismatch for "foo":
+after transform: ReferenceId(0): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/constructorDeclarations/classConstructorParametersAccessibility3.ts
 semantic error: Symbol reference IDs mismatch for "Derived":
@@ -41093,9 +41191,18 @@ rebuilt        : SymbolId(2): ScopeId(0)
 Symbol scope ID mismatch for "_this2":
 after transform: SymbolId(2): ScopeId(4)
 rebuilt        : SymbolId(3): ScopeId(0)
+Reference flags mismatch for "_this":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+Reference flags mismatch for "_this2":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
 Reference symbol mismatch for "_x":
 after transform: SymbolId(3) "_x"
 rebuilt        : <None>
+Reference flags mismatch for "_x":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
 Reference symbol mismatch for "_x":
 after transform: SymbolId(3) "_x"
 rebuilt        : <None>
@@ -41128,9 +41235,18 @@ rebuilt        : SymbolId(2): ScopeId(0)
 Symbol scope ID mismatch for "_this2":
 after transform: SymbolId(2): ScopeId(4)
 rebuilt        : SymbolId(3): ScopeId(0)
+Reference flags mismatch for "_this":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+Reference flags mismatch for "_this2":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
 Reference symbol mismatch for "_x":
 after transform: SymbolId(3) "_x"
 rebuilt        : <None>
+Reference flags mismatch for "_x":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
 Reference symbol mismatch for "_x":
 after transform: SymbolId(3) "_x"
 rebuilt        : <None>
@@ -41163,6 +41279,12 @@ rebuilt        : SymbolId(0): ScopeId(0)
 Symbol scope ID mismatch for "_this2":
 after transform: SymbolId(2): ScopeId(4)
 rebuilt        : SymbolId(1): ScopeId(0)
+Reference flags mismatch for "_this":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference flags mismatch for "_this2":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers4.ts
 semantic error: Bindings mismatch:
@@ -41180,6 +41302,12 @@ rebuilt        : SymbolId(0): ScopeId(0)
 Symbol scope ID mismatch for "_this2":
 after transform: SymbolId(2): ScopeId(4)
 rebuilt        : SymbolId(1): ScopeId(0)
+Reference flags mismatch for "_this":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference flags mismatch for "_this2":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInInstanceMember2.ts
 semantic error: Bindings mismatch:
@@ -41223,6 +41351,19 @@ Symbol redeclarations mismatch for "C":
 after transform: SymbolId(1): [Span { start: 185, end: 186 }]
 rebuilt        : SymbolId(0): []
 
+tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameFieldAssignment.ts
+semantic error: Reference flags mismatch for "_this":
+after transform: ReferenceId(14): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+Reference flags mismatch for "_A$getInstance":
+after transform: ReferenceId(18): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameFieldCallExpression.ts
+semantic error: Reference flags mismatch for "_this$fieldFunc":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+
 tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameFieldDestructuredBinding.ts
 semantic error: Symbol reference IDs mismatch for "A":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3)]
@@ -41232,6 +41373,16 @@ tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/p
 semantic error: Symbol reference IDs mismatch for "Test":
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
+
+tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldAssignment.ts
+semantic error: Reference flags mismatch for "_A$getClass":
+after transform: ReferenceId(29): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(20): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldCallExpression.ts
+semantic error: Reference flags mismatch for "_A$fieldFunc":
+after transform: ReferenceId(12): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldDestructuredBinding.ts
 semantic error: Symbol reference IDs mismatch for "A":
@@ -43623,57 +43774,110 @@ rebuilt        : <None>
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
+Reference flags mismatch for "a":
+after transform: ReferenceId(9): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 Reference symbol mismatch for "b":
 after transform: SymbolId(1) "b"
 rebuilt        : <None>
 Reference symbol mismatch for "b":
 after transform: SymbolId(1) "b"
 rebuilt        : <None>
+Reference flags mismatch for "b":
+after transform: ReferenceId(10): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
+Reference flags mismatch for "_c":
+after transform: ReferenceId(12): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
 Reference symbol mismatch for "c":
 after transform: SymbolId(2) "c"
 rebuilt        : <None>
 Reference symbol mismatch for "c":
 after transform: SymbolId(2) "c"
 rebuilt        : <None>
+Reference flags mismatch for "c":
+after transform: ReferenceId(11): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(8): ReferenceFlags(Write)
 Reference symbol mismatch for "d":
 after transform: SymbolId(3) "d"
 rebuilt        : <None>
 Reference symbol mismatch for "d":
 after transform: SymbolId(3) "d"
 rebuilt        : <None>
+Reference flags mismatch for "d":
+after transform: ReferenceId(15): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
 Reference symbol mismatch for "e":
 after transform: SymbolId(4) "e"
 rebuilt        : <None>
 Reference symbol mismatch for "e":
 after transform: SymbolId(4) "e"
 rebuilt        : <None>
+Reference flags mismatch for "e":
+after transform: ReferenceId(16): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(12): ReferenceFlags(Write)
+Reference flags mismatch for "_f":
+after transform: ReferenceId(18): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(13): ReferenceFlags(Write)
 Reference symbol mismatch for "f":
 after transform: SymbolId(5) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
 after transform: SymbolId(5) "f"
 rebuilt        : <None>
+Reference flags mismatch for "f":
+after transform: ReferenceId(17): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(17): ReferenceFlags(Write)
 Reference symbol mismatch for "g":
 after transform: SymbolId(6) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "g":
 after transform: SymbolId(6) "g"
 rebuilt        : <None>
+Reference flags mismatch for "g":
+after transform: ReferenceId(21): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(19): ReferenceFlags(Write)
 Reference symbol mismatch for "h":
 after transform: SymbolId(7) "h"
 rebuilt        : <None>
 Reference symbol mismatch for "h":
 after transform: SymbolId(7) "h"
 rebuilt        : <None>
+Reference flags mismatch for "h":
+after transform: ReferenceId(22): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(21): ReferenceFlags(Write)
+Reference flags mismatch for "_i":
+after transform: ReferenceId(24): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(22): ReferenceFlags(Write)
 Reference symbol mismatch for "i":
 after transform: SymbolId(8) "i"
 rebuilt        : <None>
 Reference symbol mismatch for "i":
 after transform: SymbolId(8) "i"
 rebuilt        : <None>
+Reference flags mismatch for "i":
+after transform: ReferenceId(23): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(26): ReferenceFlags(Write)
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
+
+tasks/coverage/typescript/tests/cases/conformance/es2021/logicalAssignment/logicalAssignment10.ts
+semantic error: Reference flags mismatch for "_obj$_incr":
+after transform: ReferenceId(11): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference flags mismatch for "_incr":
+after transform: ReferenceId(9): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+Reference flags mismatch for "_oobj$obj$_incr":
+after transform: ReferenceId(18): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(11): ReferenceFlags(Write)
+Reference flags mismatch for "_oobj$obj":
+after transform: ReferenceId(14): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(12): ReferenceFlags(Write)
+Reference flags mismatch for "_incr2":
+after transform: ReferenceId(15): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(14): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/es2021/logicalAssignment/logicalAssignment2.ts
 semantic error: Bindings mismatch:
@@ -43700,6 +43904,9 @@ rebuilt        : <None>
 Reference symbol mismatch for "result":
 after transform: SymbolId(1) "result"
 rebuilt        : <None>
+Reference flags mismatch for "_c$baz":
+after transform: ReferenceId(25): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
 Reference symbol mismatch for "c":
 after transform: SymbolId(4) "c"
 rebuilt        : <None>
@@ -43709,36 +43916,69 @@ rebuilt        : <None>
 Reference symbol mismatch for "result":
 after transform: SymbolId(1) "result"
 rebuilt        : <None>
+Reference flags mismatch for "_a$foo":
+after transform: ReferenceId(28): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(12): ReferenceFlags(Write)
+Reference symbol mismatch for "a":
+after transform: SymbolId(2) "a"
+rebuilt        : <None>
+Reference flags mismatch for "_baz":
+after transform: ReferenceId(29): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(14): ReferenceFlags(Write)
+Reference symbol mismatch for "result":
+after transform: SymbolId(1) "result"
+rebuilt        : <None>
+Reference flags mismatch for "_b$foo":
+after transform: ReferenceId(32): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(18): ReferenceFlags(Write)
+Reference symbol mismatch for "b":
+after transform: SymbolId(3) "b"
+rebuilt        : <None>
+Reference flags mismatch for "_baz2":
+after transform: ReferenceId(33): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(20): ReferenceFlags(Write)
+Reference symbol mismatch for "result":
+after transform: SymbolId(1) "result"
+rebuilt        : <None>
+Reference flags mismatch for "_c$foo$_baz":
+after transform: ReferenceId(40): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(24): ReferenceFlags(Write)
+Reference flags mismatch for "_c$foo":
+after transform: ReferenceId(36): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(25): ReferenceFlags(Write)
+Reference symbol mismatch for "c":
+after transform: SymbolId(4) "c"
+rebuilt        : <None>
+Reference flags mismatch for "_baz3":
+after transform: ReferenceId(37): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(27): ReferenceFlags(Write)
+Reference symbol mismatch for "result":
+after transform: SymbolId(1) "result"
+rebuilt        : <None>
+Reference flags mismatch for "_a$foo$bar":
+after transform: ReferenceId(43): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(33): ReferenceFlags(Write)
 Reference symbol mismatch for "a":
 after transform: SymbolId(2) "a"
 rebuilt        : <None>
 Reference symbol mismatch for "result":
 after transform: SymbolId(1) "result"
 rebuilt        : <None>
+Reference flags mismatch for "_b$foo$bar":
+after transform: ReferenceId(45): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(37): ReferenceFlags(Write)
 Reference symbol mismatch for "b":
 after transform: SymbolId(3) "b"
 rebuilt        : <None>
 Reference symbol mismatch for "result":
 after transform: SymbolId(1) "result"
 rebuilt        : <None>
-Reference symbol mismatch for "c":
-after transform: SymbolId(4) "c"
-rebuilt        : <None>
-Reference symbol mismatch for "result":
-after transform: SymbolId(1) "result"
-rebuilt        : <None>
-Reference symbol mismatch for "a":
-after transform: SymbolId(2) "a"
-rebuilt        : <None>
-Reference symbol mismatch for "result":
-after transform: SymbolId(1) "result"
-rebuilt        : <None>
-Reference symbol mismatch for "b":
-after transform: SymbolId(3) "b"
-rebuilt        : <None>
-Reference symbol mismatch for "result":
-after transform: SymbolId(1) "result"
-rebuilt        : <None>
+Reference flags mismatch for "_c$foo$bar$baz":
+after transform: ReferenceId(49): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(41): ReferenceFlags(Write)
+Reference flags mismatch for "_c$foo$bar":
+after transform: ReferenceId(47): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(42): ReferenceFlags(Write)
 Reference symbol mismatch for "c":
 after transform: SymbolId(4) "c"
 rebuilt        : <None>
@@ -43774,6 +44014,9 @@ rebuilt        : <None>
 Reference symbol mismatch for "result":
 after transform: SymbolId(1) "result"
 rebuilt        : <None>
+Reference flags mismatch for "_c$baz":
+after transform: ReferenceId(13): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
 Reference symbol mismatch for "c":
 after transform: SymbolId(4) "c"
 rebuilt        : <None>
@@ -43791,6 +44034,9 @@ tasks/coverage/typescript/tests/cases/conformance/es2021/logicalAssignment/logic
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_x$a", "x"]
 rebuilt        : ScopeId(0): ["_x$a"]
+Reference flags mismatch for "_x$a":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -44530,9 +44776,12 @@ after transform: []
 rebuilt        : ["yadda"]
 
 tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringObjectAssignmentPatternWithNestedSpread.ts
-semantic error: Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(6): ReferenceFlags(Read | Write)
+semantic error: Reference flags mismatch for "_ref2":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+Reference flags mismatch for "b":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(8): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringObjectBindingPatternAndAssignment1ES5.ts
 semantic error: Bindings mismatch:
@@ -44551,9 +44800,12 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 
 tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringObjectBindingPatternAndAssignment5.ts
-semantic error: Reference flags mismatch for "x":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read | Write)
+semantic error: Reference flags mismatch for "_ref":
+after transform: ReferenceId(2): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "y":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringObjectBindingPatternAndAssignment7.ts
 semantic error: Bindings mismatch:
@@ -45045,6 +45297,148 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
 Unresolved references mismatch:
 after transform: ["Iterable", "Symbol", "foo", "undefined"]
 rebuilt        : ["Symbol", "foo", "undefined"]
+
+tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitCompoundExponentiationAssignmentWithIndexingOnLHS1.ts
+semantic error: Reference flags mismatch for "_i":
+after transform: ReferenceId(17): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+Reference flags mismatch for "_i2":
+after transform: ReferenceId(22): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
+Reference flags mismatch for "_i3":
+after transform: ReferenceId(27): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(14): ReferenceFlags(Write)
+Reference flags mismatch for "_i4":
+after transform: ReferenceId(32): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(21): ReferenceFlags(Write)
+Reference flags mismatch for "_j":
+after transform: ReferenceId(38): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(31): ReferenceFlags(Write)
+Reference flags mismatch for "_j2":
+after transform: ReferenceId(43): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(38): ReferenceFlags(Write)
+Reference flags mismatch for "_j3":
+after transform: ReferenceId(48): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(45): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitCompoundExponentiationAssignmentWithIndexingOnLHS2.ts
+semantic error: Reference flags mismatch for "_foo":
+after transform: ReferenceId(13): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "_foo2":
+after transform: ReferenceId(17): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
+Reference flags mismatch for "_foo3":
+after transform: ReferenceId(21): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(13): ReferenceFlags(Write)
+Reference flags mismatch for "_foo4":
+after transform: ReferenceId(25): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(18): ReferenceFlags(Write)
+Reference flags mismatch for "_foo5":
+after transform: ReferenceId(29): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(23): ReferenceFlags(Write)
+Reference flags mismatch for "_foo6":
+after transform: ReferenceId(33): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(28): ReferenceFlags(Write)
+Reference flags mismatch for "_foo7":
+after transform: ReferenceId(37): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(33): ReferenceFlags(Write)
+Reference flags mismatch for "_foo8":
+after transform: ReferenceId(42): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(40): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitCompoundExponentiationAssignmentWithIndexingOnLHS4.ts
+semantic error: Reference flags mismatch for "_incrementIdx":
+after transform: ReferenceId(21): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
+Reference flags mismatch for "_incrementIdx2":
+after transform: ReferenceId(26): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(13): ReferenceFlags(Write)
+Reference flags mismatch for "_incrementIdx3":
+after transform: ReferenceId(31): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(21): ReferenceFlags(Write)
+Reference flags mismatch for "_incrementIdx4":
+after transform: ReferenceId(36): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(29): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitCompoundExponentiationAssignmentWithPropertyAccessingOnLHS1.ts
+semantic error: Reference flags mismatch for "_foo":
+after transform: ReferenceId(11): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "_foo2":
+after transform: ReferenceId(15): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_foo3":
+after transform: ReferenceId(19): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(11): ReferenceFlags(Write)
+Reference flags mismatch for "_foo4":
+after transform: ReferenceId(23): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(16): ReferenceFlags(Write)
+Reference flags mismatch for "_foo5":
+after transform: ReferenceId(27): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(21): ReferenceFlags(Write)
+Reference flags mismatch for "_foo6":
+after transform: ReferenceId(31): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(26): ReferenceFlags(Write)
+Reference flags mismatch for "_foo7":
+after transform: ReferenceId(35): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(31): ReferenceFlags(Write)
+Reference flags mismatch for "_foo8":
+after transform: ReferenceId(40): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(38): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitCompoundExponentiationOperator2.ts
+semantic error: Reference flags mismatch for "comp":
+after transform: ReferenceId(2): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(12): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(18): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(24): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(10): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(30): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(12): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(36): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(14): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(42): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(16): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(48): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(18): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(54): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(20): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(60): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(22): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(67): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(24): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(74): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(26): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(81): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(28): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(88): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(30): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(95): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(32): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(102): ReferenceFlags(Write)
+Reference flags mismatch for "comp":
+after transform: ReferenceId(34): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(109): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorWithEnum.ts
 semantic error: Bindings mismatch:
@@ -45912,21 +46306,45 @@ rebuilt        : <None>
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference flags mismatch for "x":
+after transform: ReferenceId(16): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference flags mismatch for "x":
+after transform: ReferenceId(17): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(8): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference flags mismatch for "x":
+after transform: ReferenceId(18): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(11): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference flags mismatch for "x":
+after transform: ReferenceId(19): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(14): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference flags mismatch for "_x":
+after transform: ReferenceId(21): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(16): ReferenceFlags(Write)
+Reference flags mismatch for "x":
+after transform: ReferenceId(20): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(20): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference flags mismatch for "_x2":
+after transform: ReferenceId(25): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(22): ReferenceFlags(Write)
+Reference flags mismatch for "x":
+after transform: ReferenceId(24): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(26): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -46403,6 +46821,11 @@ Unresolved reference IDs mismatch for "DecoratorProvider":
 after transform: [ReferenceId(0), ReferenceId(4), ReferenceId(8)]
 rebuilt        : [ReferenceId(3)]
 
+tasks/coverage/typescript/tests/cases/conformance/esDecorators/metadata/esDecoratorsMetadata3.ts
+semantic error: Reference flags mismatch for "_context$metadata$key":
+after transform: ReferenceId(13): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/metadata/esDecoratorsMetadata5.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "metadata"]
@@ -46413,6 +46836,17 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["metadata"]
+
+tasks/coverage/typescript/tests/cases/conformance/esnext/logicalAssignment/logicalAssignment11.ts
+semantic error: Reference flags mismatch for "_d":
+after transform: ReferenceId(7): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+Reference flags mismatch for "_e":
+after transform: ReferenceId(13): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+Reference flags mismatch for "e":
+after transform: ReferenceId(12): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(13): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arrayLiteralInference.ts
 semantic error: Scope children mismatch:
@@ -47655,6 +48089,9 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingO
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Reference flags mismatch for "_f":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator12.ts
 semantic error: Bindings mismatch:
@@ -47666,6 +48103,9 @@ rebuilt        : ScopeId(1): ["i"]
 Symbol scope ID mismatch for "_obj$arr":
 after transform: SymbolId(2): ScopeId(1)
 rebuilt        : SymbolId(0): ScopeId(0)
+Reference flags mismatch for "_obj$arr":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator2.ts
 semantic error: Bindings mismatch:
@@ -47760,6 +48200,21 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingO
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_ref", "_ref2", "_ref3", "_ref4", "_ref5", "a1", "a2", "a3", "a4", "a5", "a6", "aa1"]
 rebuilt        : ScopeId(0): ["_ref", "_ref2", "_ref3", "_ref4", "_ref5", "aa1"]
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(7): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+Reference flags mismatch for "_ref2":
+after transform: ReferenceId(10): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "_ref3":
+after transform: ReferenceId(13): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference flags mismatch for "_ref4":
+after transform: ReferenceId(16): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
+Reference flags mismatch for "_ref5":
+after transform: ReferenceId(19): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
 Reference symbol mismatch for "a1":
 after transform: SymbolId(0) "a1"
 rebuilt        : <None>
@@ -47869,12 +48324,27 @@ rebuilt        : ScopeId(0): ["_a$m", "_a$m2", "_a$p", "_ref", "_ref2", "n1", "n
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
+Reference flags mismatch for "_a$p":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
+Reference flags mismatch for "_a$m":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(11): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(8): ReferenceFlags(Write)
+Reference flags mismatch for "_ref2":
+after transform: ReferenceId(14): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+Reference flags mismatch for "_a$m2":
+after transform: ReferenceId(17): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : <None>
@@ -47908,6 +48378,11 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["f"]
 
+tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperatorInAsyncGenerator.ts
+semantic error: Reference flags mismatch for "_a$b":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
+
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperatorInParameterBindingPattern.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["a"]
@@ -47918,6 +48393,14 @@ rebuilt        : ScopeId(2): ["c"]
 Symbol scope ID mismatch for "_a":
 after transform: SymbolId(2): ScopeId(2)
 rebuilt        : SymbolId(0): ScopeId(0)
+Reference flags mismatch for "_a":
+after transform: ReferenceId(2): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperatorInParameterInitializer.ts
+semantic error: Reference flags mismatch for "_a":
+after transform: ReferenceId(2): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator_es2020.ts
 semantic error: Bindings mismatch:
@@ -48307,6 +48790,9 @@ rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
@@ -48432,72 +48918,108 @@ rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b":
+after transform: ReferenceId(57): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(36): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b2":
+after transform: ReferenceId(61): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(41): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b3":
+after transform: ReferenceId(65): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(46): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b4":
+after transform: ReferenceId(69): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(51): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b5":
+after transform: ReferenceId(73): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(56): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b6":
+after transform: ReferenceId(77): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(61): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b7":
+after transform: ReferenceId(81): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(66): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b8":
+after transform: ReferenceId(85): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(71): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b9":
+after transform: ReferenceId(89): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(76): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b10":
+after transform: ReferenceId(93): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(81): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b11":
+after transform: ReferenceId(97): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(86): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b12":
+after transform: ReferenceId(101): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(91): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
@@ -48513,6 +49035,9 @@ rebuilt        : <None>
 Reference symbol mismatch for "o4":
 after transform: SymbolId(3) "o4"
 rebuilt        : <None>
+Reference flags mismatch for "_o":
+after transform: ReferenceId(107): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(100): ReferenceFlags(Write)
 Reference symbol mismatch for "o5":
 after transform: SymbolId(7) "o5"
 rebuilt        : <None>
@@ -48569,6 +49094,14 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["value"]
+
+tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/callChain/callChainWithSuper.ts
+semantic error: Reference flags mismatch for "_super$method":
+after transform: ReferenceId(2): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "_super$method2":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/callChain/parentheses.ts
 semantic error: Bindings mismatch:
@@ -48634,6 +49167,9 @@ rebuilt        : <None>
 Reference symbol mismatch for "o4":
 after transform: SymbolId(3) "o4"
 rebuilt        : <None>
+Reference flags mismatch for "_o4$b":
+after transform: ReferenceId(22): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(20): ReferenceFlags(Write)
 Reference symbol mismatch for "o4":
 after transform: SymbolId(3) "o4"
 rebuilt        : <None>
@@ -48649,6 +49185,19 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["o1", "o2", "o3", "o4"]
+
+tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/callChain/superMethodCall.ts
+semantic error: Reference flags mismatch for "_super$method":
+after transform: ReferenceId(2): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference flags mismatch for "_super$method2":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/callChain/thisMethodCall.ts
+semantic error: Reference flags mismatch for "_this$method":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/elementAccessChain/elementAccessChain.2.ts
 semantic error: Bindings mismatch:
@@ -48681,9 +49230,15 @@ rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b":
+after transform: ReferenceId(12): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b2":
+after transform: ReferenceId(15): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(13): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
@@ -48725,42 +49280,87 @@ rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b":
+after transform: ReferenceId(23): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b2":
+after transform: ReferenceId(26): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(13): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o4$b":
+after transform: ReferenceId(29): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(17): ReferenceFlags(Write)
 Reference symbol mismatch for "o4":
 after transform: SymbolId(3) "o4"
 rebuilt        : <None>
+Reference flags mismatch for "_o4$b":
+after transform: ReferenceId(32): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(20): ReferenceFlags(Write)
+Reference flags mismatch for "_o4$b2":
+after transform: ReferenceId(35): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(24): ReferenceFlags(Write)
 Reference symbol mismatch for "o4":
 after transform: SymbolId(3) "o4"
 rebuilt        : <None>
+Reference flags mismatch for "_o4$b2":
+after transform: ReferenceId(38): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(27): ReferenceFlags(Write)
+Reference flags mismatch for "_o5$b":
+after transform: ReferenceId(41): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(31): ReferenceFlags(Write)
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
 rebuilt        : <None>
+Reference flags mismatch for "_o5$b":
+after transform: ReferenceId(45): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(34): ReferenceFlags(Write)
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
 rebuilt        : <None>
+Reference flags mismatch for "_o5$b2":
+after transform: ReferenceId(48): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(39): ReferenceFlags(Write)
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
 rebuilt        : <None>
+Reference flags mismatch for "_o5$b2":
+after transform: ReferenceId(52): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(42): ReferenceFlags(Write)
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
 rebuilt        : <None>
+Reference flags mismatch for "_o5$b3":
+after transform: ReferenceId(55): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(47): ReferenceFlags(Write)
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
 rebuilt        : <None>
+Reference flags mismatch for "_o5$b3":
+after transform: ReferenceId(59): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(50): ReferenceFlags(Write)
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
 rebuilt        : <None>
+Reference flags mismatch for "_o5$b4":
+after transform: ReferenceId(62): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(55): ReferenceFlags(Write)
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
 rebuilt        : <None>
+Reference flags mismatch for "_o5$b4":
+after transform: ReferenceId(66): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(58): ReferenceFlags(Write)
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
 rebuilt        : <None>
+Reference flags mismatch for "_o":
+after transform: ReferenceId(69): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(63): ReferenceFlags(Write)
 Reference symbol mismatch for "o6":
 after transform: SymbolId(5) "o6"
 rebuilt        : <None>
@@ -48814,6 +49414,9 @@ rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "_item$t":
 after transform: SymbolId(4): ScopeId(5)
 rebuilt        : SymbolId(4): ScopeId(0)
+Reference flags mismatch for "_item$t":
+after transform: ReferenceId(9): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInParameterBindingPattern.ts
 semantic error: Scope children mismatch:
@@ -48828,6 +49431,9 @@ rebuilt        : ScopeId(3): Some(ScopeId(2))
 Symbol scope ID mismatch for "c":
 after transform: SymbolId(1): ScopeId(2)
 rebuilt        : SymbolId(1): ScopeId(2)
+Reference flags mismatch for "_a":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInParameterInitializer.ts
 semantic error: Scope children mismatch:
@@ -48842,6 +49448,23 @@ rebuilt        : ScopeId(3): Some(ScopeId(2))
 Symbol scope ID mismatch for "b":
 after transform: SymbolId(1): ScopeId(2)
 rebuilt        : SymbolId(1): ScopeId(2)
+Reference flags mismatch for "_a":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInTypeAssertions.ts
+semantic error: Reference flags mismatch for "_foo$m":
+after transform: ReferenceId(10): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "_foo$m2":
+after transform: ReferenceId(14): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_foo$m3":
+after transform: ReferenceId(18): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(11): ReferenceFlags(Write)
+Reference flags mismatch for "_foo$m4":
+after transform: ReferenceId(22): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(16): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInference.ts
 semantic error: Bindings mismatch:
@@ -48948,6 +49571,9 @@ rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
@@ -48980,18 +49606,36 @@ rebuilt        : <None>
 Reference symbol mismatch for "o2":
 after transform: SymbolId(1) "o2"
 rebuilt        : <None>
+Reference flags mismatch for "_o3$b":
+after transform: ReferenceId(14): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
 Reference symbol mismatch for "o3":
 after transform: SymbolId(2) "o3"
 rebuilt        : <None>
+Reference flags mismatch for "_o4$b":
+after transform: ReferenceId(17): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
 Reference symbol mismatch for "o4":
 after transform: SymbolId(3) "o4"
 rebuilt        : <None>
+Reference flags mismatch for "_o4$b":
+after transform: ReferenceId(20): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(13): ReferenceFlags(Write)
+Reference flags mismatch for "_o5$b":
+after transform: ReferenceId(23): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(17): ReferenceFlags(Write)
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
 rebuilt        : <None>
+Reference flags mismatch for "_o5$b":
+after transform: ReferenceId(27): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(20): ReferenceFlags(Write)
 Reference symbol mismatch for "o5":
 after transform: SymbolId(4) "o5"
 rebuilt        : <None>
+Reference flags mismatch for "_o":
+after transform: ReferenceId(30): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(25): ReferenceFlags(Write)
 Reference symbol mismatch for "o6":
 after transform: SymbolId(5) "o6"
 rebuilt        : <None>
@@ -51974,6 +52618,11 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
+tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeReferenceToImport.ts
+semantic error: Reference flags mismatch for "_require":
+after transform: ReferenceId(9): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+
 tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeTag.ts
 semantic error: Unresolved references mismatch:
 after transform: ["Function", "Promise"]
@@ -51986,6 +52635,37 @@ rebuilt        : ScopeId(0): ["a", "b", "c"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
+
+tasks/coverage/typescript/tests/cases/conformance/jsdoc/thisPrototypeMethodCompoundAssignment.ts
+semantic error: Reference flags mismatch for "_Element$prototype$re":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+Reference flags mismatch for "_Element$prototype":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "_this$parentNode":
+after transform: ReferenceId(7): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/jsdoc/thisPrototypeMethodCompoundAssignmentJs.ts
+semantic error: Reference flags mismatch for "_Element$prototype$re":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+Reference flags mismatch for "_Element$prototype":
+after transform: ReferenceId(2): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "_this$parentNode":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_Element$prototype2$r":
+after transform: ReferenceId(12): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+Reference flags mismatch for "_Element$prototype2":
+after transform: ReferenceId(10): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
+Reference flags mismatch for "_this$parentNode2":
+after transform: ReferenceId(16): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(15): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/jsdoc/tsNoCheckForTypescript.ts
 semantic error: Bindings mismatch:
@@ -54418,6 +55098,17 @@ Unresolved references mismatch:
 after transform: ["HTMLCanvasElement", "HTMLDivElement", "HTMLElement", "HTMLSpanElement"]
 rebuilt        : []
 
+tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Iterators/parserForOfStatement23.ts
+semantic error: Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(8): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(7): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(11): ReferenceFlags(Write)
+
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/Symbols/parserSymbolIndexer1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["I"]
@@ -54577,6 +55268,11 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
+tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment10_1.ts
+semantic error: Reference flags mismatch for "_Outer$app":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+
 tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment30.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Combo", "c"]
@@ -54584,6 +55280,31 @@ rebuilt        : ScopeId(0): ["c"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment8_1.ts
+semantic error: Reference flags mismatch for "_my$app":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignment9_1.ts
+semantic error: Reference flags mismatch for "_my$predicate":
+after transform: ReferenceId(27): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(8): ReferenceFlags(Write)
+Reference flags mismatch for "_my$predicate$sort":
+after transform: ReferenceId(30): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(18): ReferenceFlags(Write)
+Reference flags mismatch for "_window$min":
+after transform: ReferenceId(33): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(27): ReferenceFlags(Write)
+Reference flags mismatch for "_this$min$nest":
+after transform: ReferenceId(36): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(32): ReferenceFlags(Write)
+Reference flags mismatch for "_self$min$nest$other":
+after transform: ReferenceId(39): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(36): ReferenceFlags(Write)
+Reference flags mismatch for "_global$min$property":
+after transform: ReferenceId(42): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(41): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerEnum1.ts
 semantic error: Bindings mismatch:
@@ -54725,6 +55446,15 @@ rebuilt        : ScopeId(9): []
 Symbol scope ID mismatch for "d1":
 after transform: SymbolId(1): ScopeId(2)
 rebuilt        : SymbolId(9): ScopeId(3)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(11): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(12): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(14): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
 semantic error: Missing SymbolId: "N"
@@ -54777,6 +55507,15 @@ rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "d1":
 after transform: SymbolId(1): ScopeId(2)
 rebuilt        : SymbolId(9): ScopeId(3)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(7): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(12): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsNamedEvaluationDecoratorsAndClassFields.ts
 semantic error: Bindings mismatch:
@@ -55133,6 +55872,26 @@ tasks/coverage/typescript/tests/cases/conformance/statements/for-await-ofStateme
 semantic error: Symbol flags mismatch for "_f":
 after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+
+tasks/coverage/typescript/tests/cases/conformance/statements/for-await-ofStatements/forAwaitPerIterationBindingDownlevel.ts
+semantic error: Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(28): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(20): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(29): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(21): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(31): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(23): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsArray.ts
 semantic error: Unresolved references mismatch:
@@ -55467,39 +56226,147 @@ rebuilt        : ScopeId(0): ["_asyncIterator", "_asyncToGenerator", "_awaitAsyn
 Reference symbol mismatch for "asyncIterable":
 after transform: SymbolId(0) "asyncIterable"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(24): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(25): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(11): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(27): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(13): ReferenceFlags(Write)
 Reference symbol mismatch for "iterable":
 after transform: SymbolId(1) "iterable"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion2":
+after transform: ReferenceId(38): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(25): ReferenceFlags(Write)
+Reference flags mismatch for "_step2":
+after transform: ReferenceId(39): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(26): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion2":
+after transform: ReferenceId(41): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(28): ReferenceFlags(Write)
 Reference symbol mismatch for "iterableOfPromise":
 after transform: SymbolId(2) "iterableOfPromise"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion3":
+after transform: ReferenceId(52): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(40): ReferenceFlags(Write)
+Reference flags mismatch for "_step3":
+after transform: ReferenceId(53): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(41): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion3":
+after transform: ReferenceId(55): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(43): ReferenceFlags(Write)
 Reference symbol mismatch for "asyncIterable":
 after transform: SymbolId(0) "asyncIterable"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion4":
+after transform: ReferenceId(66): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(55): ReferenceFlags(Write)
+Reference flags mismatch for "_step4":
+after transform: ReferenceId(67): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(56): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion4":
+after transform: ReferenceId(69): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(58): ReferenceFlags(Write)
 Reference symbol mismatch for "iterable":
 after transform: SymbolId(1) "iterable"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion5":
+after transform: ReferenceId(80): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(71): ReferenceFlags(Write)
+Reference flags mismatch for "_step5":
+after transform: ReferenceId(81): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(72): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion5":
+after transform: ReferenceId(83): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(74): ReferenceFlags(Write)
 Reference symbol mismatch for "iterableOfPromise":
 after transform: SymbolId(2) "iterableOfPromise"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion6":
+after transform: ReferenceId(94): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(87): ReferenceFlags(Write)
+Reference flags mismatch for "_step6":
+after transform: ReferenceId(95): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(88): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion6":
+after transform: ReferenceId(97): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(90): ReferenceFlags(Write)
 Reference symbol mismatch for "asyncIterable":
 after transform: SymbolId(0) "asyncIterable"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion7":
+after transform: ReferenceId(114): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(109): ReferenceFlags(Write)
+Reference flags mismatch for "_step7":
+after transform: ReferenceId(115): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(110): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion7":
+after transform: ReferenceId(117): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(113): ReferenceFlags(Write)
 Reference symbol mismatch for "iterable":
 after transform: SymbolId(1) "iterable"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion8":
+after transform: ReferenceId(130): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(126): ReferenceFlags(Write)
+Reference flags mismatch for "_step8":
+after transform: ReferenceId(131): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(127): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion8":
+after transform: ReferenceId(133): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(130): ReferenceFlags(Write)
 Reference symbol mismatch for "iterableOfPromise":
 after transform: SymbolId(2) "iterableOfPromise"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion9":
+after transform: ReferenceId(146): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(143): ReferenceFlags(Write)
+Reference flags mismatch for "_step9":
+after transform: ReferenceId(147): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(144): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion9":
+after transform: ReferenceId(149): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(147): ReferenceFlags(Write)
 Reference symbol mismatch for "asyncIterable":
 after transform: SymbolId(0) "asyncIterable"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion10":
+after transform: ReferenceId(162): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(160): ReferenceFlags(Write)
+Reference flags mismatch for "_step10":
+after transform: ReferenceId(163): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(161): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion10":
+after transform: ReferenceId(165): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(164): ReferenceFlags(Write)
 Reference symbol mismatch for "iterable":
 after transform: SymbolId(1) "iterable"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion11":
+after transform: ReferenceId(178): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(178): ReferenceFlags(Write)
+Reference flags mismatch for "_step11":
+after transform: ReferenceId(179): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(179): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion11":
+after transform: ReferenceId(181): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(182): ReferenceFlags(Write)
 Reference symbol mismatch for "iterableOfPromise":
 after transform: SymbolId(2) "iterableOfPromise"
 rebuilt        : <None>
+Reference flags mismatch for "_iteratorAbruptCompletion12":
+after transform: ReferenceId(194): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(196): ReferenceFlags(Write)
+Reference flags mismatch for "_step12":
+after transform: ReferenceId(195): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(197): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion12":
+after transform: ReferenceId(197): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(200): ReferenceFlags(Write)
 Unresolved references mismatch:
 after transform: ["AsyncIterable", "Iterable", "Promise", "arguments", "require"]
 rebuilt        : ["arguments", "asyncIterable", "iterable", "iterableOfPromise", "require"]
@@ -55919,12 +56786,21 @@ rebuilt        : <None>
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
+Reference flags mismatch for "_x$a":
+after transform: ReferenceId(12): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
+Reference flags mismatch for "_x$a2":
+after transform: ReferenceId(15): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
+Reference flags mismatch for "_x$a3":
+after transform: ReferenceId(18): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(13): ReferenceFlags(Write)
 Reference symbol mismatch for "x":
 after transform: SymbolId(0) "x"
 rebuilt        : <None>
@@ -57470,6 +58346,32 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
+tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestAssignment.ts
+semantic error: Reference flags mismatch for "_complex":
+after transform: ReferenceId(12): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
+Reference flags mismatch for "nested":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(8): ReferenceFlags(Write)
+Reference flags mismatch for "rest":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(11): ReferenceFlags(Write)
+Reference flags mismatch for "_overEmit":
+after transform: ReferenceId(28): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(25): ReferenceFlags(Write)
+Reference flags mismatch for "_ref4":
+after transform: ReferenceId(37): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(31): ReferenceFlags(Write)
+Reference flags mismatch for "nested2":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(34): ReferenceFlags(Write)
+Reference flags mismatch for "c":
+after transform: ReferenceId(9): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(40): ReferenceFlags(Write)
+Reference flags mismatch for "rest2":
+after transform: ReferenceId(10): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(43): ReferenceFlags(Write)
+
 tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestForOf.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_excluded", "_excluded2", "_objectSpread", "_objectWithoutProperties", "array", "rrestOff", "xx"]
@@ -57486,6 +58388,12 @@ rebuilt        : SymbolId(10): ScopeId(0)
 Symbol scope ID mismatch for "_ref3":
 after transform: SymbolId(11): ScopeId(4)
 rebuilt        : SymbolId(11): ScopeId(0)
+Reference flags mismatch for "_ref3":
+after transform: ReferenceId(17): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
+Reference flags mismatch for "rrestOff":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(14): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/types/rest/objectRestParameter.ts
 semantic error: Scope children mismatch:
@@ -57651,9 +58559,12 @@ after transform: SymbolId(32): [ReferenceId(36), ReferenceId(37)]
 rebuilt        : SymbolId(32): [ReferenceId(67)]
 
 tasks/coverage/typescript/tests/cases/conformance/types/spread/objectSpreadNoTransform.ts
-semantic error: Reference flags mismatch for "b":
-after transform: ReferenceId(1): ReferenceFlags(Write)
-rebuilt        : ReferenceId(6): ReferenceFlags(Read | Write)
+semantic error: Reference flags mismatch for "_o":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+Reference flags mismatch for "rest":
+after transform: ReferenceId(2): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(8): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/types/spread/objectSpreadRepeatedComplexity.ts
 semantic error: Unresolved references mismatch:
@@ -59373,6 +60284,20 @@ rebuilt        : ScopeId(0): ["x", "y", "z"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
+
+tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/comparable/equalityWithtNullishCoalescingAssignment.ts
+semantic error: Reference flags mismatch for "_a":
+after transform: ReferenceId(10): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+Reference flags mismatch for "a":
+after transform: ReferenceId(9): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+Reference flags mismatch for "_x":
+after transform: ReferenceId(14): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+Reference flags mismatch for "x":
+after transform: ReferenceId(13): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(13): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/comparable/independentPropertyVariance.ts
 semantic error: Bindings mismatch:

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-unused-vars): Function 'foox' is declared but never used.
    ╭─[no_unused_vars.tsx:1:10]
@@ -260,6 +259,15 @@ snapshot_kind: text
    ·          ╰── 'f' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used.
+   ╭─[no_unused_vars.tsx:1:20]
+ 1 │ function f() { var a = 1; return function(){ f(a = 2); }; }
+   ·                    ┬                           ┬
+   ·                    │                           ╰── it was last assigned here
+   ·                    ╰── 'a' is declared here
+   ╰────
+  help: Did you mean to use this variable?
 
   ⚠ eslint(no-unused-vars): Identifier 'x' is imported but never used.
    ╭─[no_unused_vars.tsx:1:8]

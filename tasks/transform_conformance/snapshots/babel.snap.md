@@ -1,12 +1,10 @@
 commit: d20b314c
 
-Passed: 327/575
+Passed: 308/575
 
 # All Passed:
 * babel-plugin-transform-class-static-block
-* babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-optional-catch-binding
-* babel-plugin-transform-async-generator-functions
 * babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
@@ -273,7 +271,156 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-nullish-coalescing-operator (5/12)
+# babel-plugin-transform-logical-assignment-operators (0/6)
+* logical-assignment/anonymous-functions-transform/input.js
+Reference flags mismatch for "a":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "a":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
+Reference flags mismatch for "a":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
+
+* logical-assignment/arrow-functions-transform/input.js
+Reference flags mismatch for "a":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "a":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
+Reference flags mismatch for "a":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
+
+* logical-assignment/general-semantics/input.js
+Reference flags mismatch for "_deep$obj":
+after transform: ReferenceId(97): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(27): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj2":
+after transform: ReferenceId(99): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(33): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj3":
+after transform: ReferenceId(101): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(39): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj4":
+after transform: ReferenceId(103): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(45): ReferenceFlags(Write)
+Reference flags mismatch for "_key":
+after transform: ReferenceId(106): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(52): ReferenceFlags(Write)
+Reference flags mismatch for "_key2":
+after transform: ReferenceId(109): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(61): ReferenceFlags(Write)
+Reference flags mismatch for "_key3":
+after transform: ReferenceId(112): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(70): ReferenceFlags(Write)
+Reference flags mismatch for "_key4":
+after transform: ReferenceId(115): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(79): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj5":
+after transform: ReferenceId(117): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(87): ReferenceFlags(Write)
+Reference flags mismatch for "_key5":
+after transform: ReferenceId(118): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(89): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj6":
+after transform: ReferenceId(121): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(99): ReferenceFlags(Write)
+Reference flags mismatch for "_key6":
+after transform: ReferenceId(122): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(101): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj7":
+after transform: ReferenceId(125): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(111): ReferenceFlags(Write)
+Reference flags mismatch for "_key7":
+after transform: ReferenceId(126): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(113): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj8":
+after transform: ReferenceId(129): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(123): ReferenceFlags(Write)
+Reference flags mismatch for "_key8":
+after transform: ReferenceId(130): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(125): ReferenceFlags(Write)
+
+* logical-assignment/named-functions-transform/input.js
+Reference flags mismatch for "a":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "a":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
+Reference flags mismatch for "a":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
+
+* logical-assignment/null-coalescing/input.js
+Reference flags mismatch for "_obj$x":
+after transform: ReferenceId(57): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_obj$x2":
+after transform: ReferenceId(61): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(14): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj$x":
+after transform: ReferenceId(66): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(26): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj":
+after transform: ReferenceId(64): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(27): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj2$x":
+after transform: ReferenceId(71): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(35): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj2":
+after transform: ReferenceId(69): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(36): ReferenceFlags(Write)
+Reference flags mismatch for "_obj$_key":
+after transform: ReferenceId(77): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(46): ReferenceFlags(Write)
+Reference flags mismatch for "_key":
+after transform: ReferenceId(75): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(48): ReferenceFlags(Write)
+Reference flags mismatch for "_obj$_key2":
+after transform: ReferenceId(83): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(58): ReferenceFlags(Write)
+Reference flags mismatch for "_key2":
+after transform: ReferenceId(81): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(60): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj3$_key":
+after transform: ReferenceId(90): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(72): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj3":
+after transform: ReferenceId(86): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(73): ReferenceFlags(Write)
+Reference flags mismatch for "_key3":
+after transform: ReferenceId(87): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(75): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj4$_key":
+after transform: ReferenceId(97): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(87): ReferenceFlags(Write)
+Reference flags mismatch for "_deep$obj4":
+after transform: ReferenceId(93): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(88): ReferenceFlags(Write)
+Reference flags mismatch for "_key4":
+after transform: ReferenceId(94): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(90): ReferenceFlags(Write)
+
+* logical-assignment/null-coalescing-without-other/input.js
+Reference flags mismatch for "o":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
+Reference flags mismatch for "_o":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference flags mismatch for "_o2":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
+Reference flags mismatch for "_b":
+after transform: ReferenceId(7): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
+
+
+# babel-plugin-transform-nullish-coalescing-operator (2/12)
 * assumption-noDocumentAll/transform/input.js
 x Output mismatch
 
@@ -292,8 +439,113 @@ x Output mismatch
 * assumption-noDocumentAll/transform-static-refs-in-function/input.js
 x Output mismatch
 
+* nullish-coalescing/transform-in-default-destructuring/input.js
+Reference flags mismatch for "_foo$bar":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+
+* nullish-coalescing/transform-in-default-param/input.js
+Reference flags mismatch for "_foo$bar":
+after transform: ReferenceId(2): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+
+* nullish-coalescing/transform-in-function/input.js
+Reference flags mismatch for "_opts$foo":
+after transform: ReferenceId(1): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
+
 * nullish-coalescing/transform-loose/input.js
 x Output mismatch
+
+
+# babel-plugin-transform-async-generator-functions (11/19)
+* for-await/async-arrow/input.js
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+
+* for-await/async-function/input.js
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+
+* for-await/async-function-no-transform/input.js
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
+
+* for-await/async-generator/input.js
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(8): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
+
+* for-await/create-async-from-sync-iterator/input.js
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(7): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(10): ReferenceFlags(Write)
+
+* for-await/destructuring/input.js
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(6): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(7): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(7): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(9): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(9): ReferenceFlags(Write)
+
+* for-await/lhs-member-expression/input.js
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(4): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(7): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(6): ReferenceFlags(Write)
+
+* for-await/re-declare-var-in-init-body/input.js
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(2): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
+Reference flags mismatch for "_step":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(3): ReferenceFlags(Write)
+Reference flags mismatch for "_iteratorAbruptCompletion":
+after transform: ReferenceId(5): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(5): ReferenceFlags(Write)
 
 
 # babel-plugin-transform-async-to-generator (10/28)
@@ -358,9 +610,14 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-exponentiation-operator (3/4)
+# babel-plugin-transform-exponentiation-operator (2/4)
 * regression/4349/input.js
 x Output mismatch
+
+* regression/4403/input.js
+Reference flags mismatch for "_ref":
+after transform: ReferenceId(3): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 
 
 # babel-plugin-transform-arrow-functions (3/11)
@@ -417,7 +674,7 @@ rebuilt        : ScopeId(1): []
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (46/156)
+# babel-plugin-transform-typescript (45/156)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -2004,6 +2261,11 @@ rebuilt        : ["f", "x"]
 Unresolved references mismatch:
 after transform: ["T", "f"]
 rebuilt        : ["f"]
+
+* variable-declaration/non-null-in-optional-chain/input.ts
+Reference flags mismatch for "_a$b":
+after transform: ReferenceId(4): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(2): ReferenceFlags(Write)
 
 
 # babel-plugin-transform-react-jsx (135/145)

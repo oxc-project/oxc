@@ -106,6 +106,12 @@ rebuilt        : SymbolId(34): [ReferenceId(65), ReferenceId(216)]
 Symbol scope ID mismatch for "_untitledTextModel$te":
 after transform: SymbolId(138): ScopeId(14)
 rebuilt        : SymbolId(63): ScopeId(20)
+Reference flags mismatch for "_await$accessor$edito":
+after transform: ReferenceId(351): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(80): ReferenceFlags(Write)
+Reference flags mismatch for "_untitledTextModel$te":
+after transform: ReferenceId(356): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(90): ReferenceFlags(Write)
 Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(36), ReferenceId(39), ReferenceId(82), ReferenceId(114), ReferenceId(153), ReferenceId(282)]
 rebuilt        : [ReferenceId(289)]

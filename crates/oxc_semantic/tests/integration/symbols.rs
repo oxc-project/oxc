@@ -63,7 +63,7 @@ fn test_var_read_write() {
 
     SemanticTester::js("let x = 0; x++")
         .has_some_symbol("x")
-        .has_number_of_reads(0)
+        .has_number_of_reads(1)
         .has_number_of_writes(1)
         .test();
 
@@ -389,7 +389,7 @@ fn test_arrow_implicit_return() {
 
     SemanticTester::js("let i = 0; const x = () => { ++i }")
         .has_root_symbol("i")
-        .has_number_of_reads(0)
+        .has_number_of_reads(1)
         .has_number_of_writes(1)
         .test();
 
@@ -407,7 +407,7 @@ fn test_arrow_implicit_return() {
 
     SemanticTester::js("let i = 1; const foo = () => () => { i++ }")
         .has_root_symbol("i")
-        .has_number_of_reads(0)
+        .has_number_of_reads(1)
         .has_number_of_writes(1)
         .test();
 }
@@ -435,7 +435,7 @@ fn test_tagged_templates() {
         import styled from 'styled-components';
 
         import { Prose, ProseProps } from './prose';
-        
+
         interface Props extends ProseProps {
           density?: number;
         }
