@@ -296,7 +296,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         match expr {
             Expression::Identifier(ident) => {
                 let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-                binding.create_spanned_expression(ident.span, ReferenceFlags::Read, ctx)
+                binding.create_spanned_read_expression(ident.span, ctx)
             }
             _ => expr.clone_in(ctx.ast.allocator),
         }
