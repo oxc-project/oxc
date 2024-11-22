@@ -191,6 +191,10 @@ impl TestCase {
     }
 
     pub fn test(&mut self, options: &TestRunnerOptions) {
+        if options.debug {
+            println!("{}", self.path.to_string_lossy());
+        }
+
         let filtered = options.filter.is_some();
         match self.kind {
             TestCaseKind::Conformance => self.test_conformance(filtered),
