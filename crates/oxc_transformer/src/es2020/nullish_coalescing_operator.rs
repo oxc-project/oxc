@@ -129,7 +129,7 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
         let assignment = ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
-            binding.create_read_write_target(ctx),
+            binding.create_write_target(ctx),
             logical_expr.left,
         );
         let mut new_expr = Self::create_conditional_expression(

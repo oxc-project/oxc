@@ -154,6 +154,26 @@ impl JsonSchema for GlobSet {
 
 mod test {
     #[test]
+    fn test_globset() {
+        use super::*;
+        use serde_json::{from_value, json};
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx",],
+        }))
+        .unwrap();
+        assert!(config.files.globs.is_match("/some/path/foo.tsx"));
+        assert!(!config.files.globs.is_match("/some/path/foo.ts"));
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["lib/*.ts",],
+        }))
+        .unwrap();
+        assert!(config.files.globs.is_match("lib/foo.ts"));
+        assert!(!config.files.globs.is_match("src/foo.ts"));
+    }
+
+    #[test]
     fn test_parsing_plugins() {
         use super::*;
         use serde_json::{from_value, json};

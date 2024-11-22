@@ -64,6 +64,12 @@ declare_oxc_lint!(
     dangerous_fix
 );
 
+fn is_exported(id: &BindingIdentifier<'_>, ctx: &LintContext<'_>) -> bool {
+    let module_record = ctx.module_record();
+    module_record.exported_bindings.contains_key(id.name.as_str())
+        || module_record.export_default.is_some_and(|default| default == id.span)
+}
+
 impl Rule for OnlyUsedInRecursion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (function_id, function_parameters, function_span) = match node.kind() {
@@ -137,9 +143,8 @@ fn create_diagnostic(
     function_span: Span,
 ) {
     let is_last_arg = arg_index == function_parameters.items.len() - 1;
-    let is_exported = ctx.semantic().symbols().get_flags(function_id.symbol_id()).is_export();
 
-    let is_diagnostic_only = !is_last_arg || is_exported;
+    let is_diagnostic_only = !is_last_arg || is_exported(function_id, ctx);
 
     if is_diagnostic_only {
         return ctx.diagnostic(only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()));
@@ -193,10 +198,8 @@ fn create_diagnostic_jsx(
     function_id: &BindingIdentifier,
     property: &BindingProperty,
 ) {
-    let is_exported = ctx.semantic().symbols().get_flags(function_id.symbol_id()).is_export();
-
     let Some(property_name) = &property.key.static_name() else { return };
-    if is_exported {
+    if is_exported(function_id, ctx) {
         return ctx.diagnostic(only_used_in_recursion_diagnostic(property.span(), property_name));
     }
 
@@ -783,8 +786,8 @@ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
               }
               export default test;
             ",
-            r"function test(a) {
-                  test(a)
+            r"function test() {
+                  test()
               }
               export default test;
             ",

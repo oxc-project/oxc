@@ -232,8 +232,7 @@ impl NoUnusedVars {
         }
 
         // Order matters. We want to call cheap/high "yield" functions first.
-        let is_exported = symbol.is_exported();
-        let is_used = is_exported || symbol.has_usages(self);
+        let is_used = symbol.is_exported() || symbol.has_usages(self);
 
         match (is_used, is_ignored) {
             (true, true) => {
@@ -305,12 +304,6 @@ impl NoUnusedVars {
                     return;
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern));
-            }
-            AstKind::Class(_) | AstKind::Function(_) => {
-                if self.is_allowed_class_or_function(symbol) {
-                    return;
-                }
-                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None));
             }
             AstKind::TSModuleDeclaration(namespace) => {
                 if self.is_allowed_ts_namespace(symbol, namespace) {

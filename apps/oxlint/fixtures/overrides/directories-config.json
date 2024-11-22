@@ -1,0 +1,19 @@
+{
+  "rules": {
+    "no-debugger": "off"
+  },
+  "overrides": [
+    {
+      "files": ["lib/*.{js,ts}", "src/*"],
+      "rules": {
+        "no-debugger": "error"
+      }
+    },
+    {
+      "files": ["**/tests/*"],
+      "rules": {
+        "no-debugger": "warn"
+      }
+    }
+  ]
+}

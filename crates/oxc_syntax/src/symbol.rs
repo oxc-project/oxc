@@ -76,29 +76,27 @@ bitflags! {
         const BlockScopedVariable     = 1 << 1;
         /// A const variable (const)
         const ConstVariable           = 1 << 2;
-        /// Is this symbol inside an export declaration
-        const Export                  = 1 << 4;
-        const Class                   = 1 << 5;
+        const Class                   = 1 << 3;
         /// `try {} catch(catch_variable) {}`
-        const CatchVariable           = 1 << 6;
+        const CatchVariable           = 1 << 4;
         /// A function declaration or expression
-        const Function                = 1 << 7;
+        const Function                = 1 << 5;
         /// Imported ESM binding
-        const Import                  = 1 << 8;
+        const Import                  = 1 << 6;
         /// Imported ESM type-only binding
-        const TypeImport              = 1 << 9;
+        const TypeImport              = 1 << 7;
         // Type specific symbol flags
-        const TypeAlias               = 1 << 10;
-        const Interface               = 1 << 11;
-        const RegularEnum             = 1 << 12;
-        const ConstEnum               = 1 << 13;
-        const EnumMember              = 1 << 14;
-        const TypeLiteral             = 1 << 15;
-        const TypeParameter           = 1 << 16;
-        const NameSpaceModule         = 1 << 17;
-        const ValueModule             = 1 << 18;
+        const TypeAlias               = 1 << 8;
+        const Interface               = 1 << 9;
+        const RegularEnum             = 1 << 10;
+        const ConstEnum               = 1 << 11;
+        const EnumMember              = 1 << 12;
+        const TypeLiteral             = 1 << 13;
+        const TypeParameter           = 1 << 14;
+        const NameSpaceModule         = 1 << 15;
+        const ValueModule             = 1 << 16;
         // In a dts file or there is a declare flag
-        const Ambient                 = 1 << 19;
+        const Ambient                 = 1 << 17;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
@@ -197,11 +195,6 @@ impl SymbolFlags {
     #[inline]
     pub fn is_function_scoped_declaration(&self) -> bool {
         self.contains(Self::FunctionScopedVariable)
-    }
-
-    #[inline]
-    pub fn is_export(&self) -> bool {
-        self.contains(Self::Export)
     }
 
     #[inline]

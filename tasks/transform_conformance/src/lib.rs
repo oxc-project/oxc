@@ -24,6 +24,7 @@ fn test() {
 
 #[derive(Default, Clone)]
 pub struct TestRunnerOptions {
+    pub debug: bool,
     pub filter: Option<String>,
     pub exec: bool,
 }

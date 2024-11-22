@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/named-type1.ts
-snapshot_kind: text
 ---
 [
   {
@@ -19,7 +18,7 @@ snapshot_kind: text
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(Export | TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 0,
         "name": "X",
         "node": "TSTypeAliasDeclaration",

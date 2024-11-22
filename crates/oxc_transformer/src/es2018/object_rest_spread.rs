@@ -35,7 +35,7 @@ use oxc_allocator::{CloneIn, GetAddress, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString};
-use oxc_semantic::{IsGlobalReference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{IsGlobalReference, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
@@ -244,7 +244,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
             expressions.push(ctx.ast.expression_assignment(
                 SPAN,
                 op,
-                reference_builder.maybe_bound_identifier.create_read_write_target(ctx),
+                reference_builder.maybe_bound_identifier.create_write_target(ctx),
                 expr,
             ));
         }
@@ -266,12 +266,6 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
                 ctx,
             );
             if let BindingPatternOrAssignmentTarget::AssignmentTarget(lhs) = lhs {
-                if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &lhs {
-                    ctx.symbols_mut()
-                        .get_reference_mut(ident.reference_id())
-                        .flags_mut()
-                        .insert(ReferenceFlags::Read);
-                }
                 expressions.push(ctx.ast.expression_assignment(SPAN, op, lhs, rhs));
             }
         }

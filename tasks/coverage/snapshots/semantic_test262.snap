@@ -6270,9 +6270,6 @@ rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "_step$value":
 after transform: SymbolId(15): ScopeId(2)
 rebuilt        : SymbolId(16): ScopeId(3)
-Reference flags mismatch for "x":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(15): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-rest-skip-non-enumerable.js
 semantic error: Bindings mismatch:
@@ -6339,12 +6336,6 @@ rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "_step$value":
 after transform: SymbolId(13): ScopeId(2)
 rebuilt        : SymbolId(15): ScopeId(3)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(14): ReferenceFlags(Read | Write)
-Reference flags mismatch for "b":
-after transform: ReferenceId(1): ReferenceFlags(Write)
-rebuilt        : ReferenceId(15): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-elem-id-init-fn-name-class.js
 semantic error: Bindings mismatch:
@@ -8570,9 +8561,6 @@ rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "_step$value":
 after transform: SymbolId(16): ScopeId(2)
 rebuilt        : SymbolId(17): ScopeId(3)
-Reference flags mismatch for "x":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(17): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-skip-non-enumerable.js
 semantic error: Bindings mismatch:
@@ -8639,12 +8627,6 @@ rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "_step$value":
 after transform: SymbolId(14): ScopeId(2)
 rebuilt        : SymbolId(16): ScopeId(3)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(16): ReferenceFlags(Read | Write)
-Reference flags mismatch for "b":
-after transform: ReferenceId(1): ReferenceFlags(Write)
-rebuilt        : ReferenceId(17): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-elem-id-init-fn-name-class.js
 semantic error: Bindings mismatch:
@@ -10786,9 +10768,6 @@ rebuilt        : SymbolId(4): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(5): ScopeId(0)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-computed-property.js
 semantic error: Bindings mismatch:
@@ -10806,9 +10785,6 @@ rebuilt        : SymbolId(6): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(5): ScopeId(2)
 rebuilt        : SymbolId(7): ScopeId(0)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-descriptors.js
 semantic error: Bindings mismatch:
@@ -10894,9 +10870,6 @@ rebuilt        : SymbolId(6): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(5): ScopeId(2)
 rebuilt        : SymbolId(7): ScopeId(0)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-1dot.js
 semantic error: Bindings mismatch:
@@ -10914,9 +10887,6 @@ rebuilt        : SymbolId(6): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(5): ScopeId(2)
 rebuilt        : SymbolId(7): ScopeId(0)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-1dot0.js
 semantic error: Bindings mismatch:
@@ -10934,9 +10904,6 @@ rebuilt        : SymbolId(6): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(5): ScopeId(2)
 rebuilt        : SymbolId(7): ScopeId(0)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-1e0.js
 semantic error: Bindings mismatch:
@@ -10954,9 +10921,6 @@ rebuilt        : SymbolId(6): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(5): ScopeId(2)
 rebuilt        : SymbolId(7): ScopeId(0)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-array-1.js
 semantic error: Bindings mismatch:
@@ -10974,9 +10938,6 @@ rebuilt        : SymbolId(6): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(5): ScopeId(2)
 rebuilt        : SymbolId(7): ScopeId(0)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-array-1e0.js
 semantic error: Bindings mismatch:
@@ -10994,9 +10955,6 @@ rebuilt        : SymbolId(6): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(5): ScopeId(2)
 rebuilt        : SymbolId(7): ScopeId(0)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-non-string-computed-property-string-1.js
 semantic error: Bindings mismatch:
@@ -11014,9 +10972,6 @@ rebuilt        : SymbolId(6): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(5): ScopeId(2)
 rebuilt        : SymbolId(7): ScopeId(0)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-number.js
 semantic error: Bindings mismatch:
@@ -11085,9 +11040,6 @@ rebuilt        : SymbolId(7): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(7): ScopeId(2)
 rebuilt        : SymbolId(8): ScopeId(0)
-Reference flags mismatch for "x":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/obj-rest-skip-non-enumerable.js
 semantic error: Bindings mismatch:
@@ -11224,12 +11176,6 @@ rebuilt        : SymbolId(6): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(5): ScopeId(2)
 rebuilt        : SymbolId(7): ScopeId(0)
-Reference flags mismatch for "a":
-after transform: ReferenceId(0): ReferenceFlags(Write)
-rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
-Reference flags mismatch for "b":
-after transform: ReferenceId(1): ReferenceFlags(Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read | Write)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-rest-getter.js
 semantic error: Bindings mismatch:

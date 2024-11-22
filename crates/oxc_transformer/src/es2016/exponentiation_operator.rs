@@ -37,7 +37,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -155,15 +155,14 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
 
         // Make sure side-effects of evaluating `left` only happen once
         let reference = ctx.scoping.symbols_mut().get_reference_mut(ident.reference_id());
+
+        // `left **= right` is being transformed to `left = Math.pow(left, right)`,
+        // so if `left` is no longer being read from, update its `ReferenceFlags`.
+        *reference.flags_mut() = ReferenceFlags::Write;
+
         let pow_left = if let Some(symbol_id) = reference.symbol_id() {
             // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
             // No need for a temp var.
-            // `left **= right` is being transformed to `left = Math.pow(left, right)`,
-            // so if `left` is no longer being read from, update its `ReferenceFlags`.
-            if matches!(ctx.ancestry.parent(), Ancestor::ExpressionStatementExpression(_)) {
-                *reference.flags_mut() = ReferenceFlags::Write;
-            }
-
             ctx.create_bound_ident_expr(SPAN, ident.name.clone(), symbol_id, ReferenceFlags::Read)
         } else {
             // Unbound reference. Could possibly trigger a getter so we need to only evaluate it once.
@@ -571,7 +570,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         temp_var_inits.push(ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
-            binding.create_read_write_target(ctx),
+            binding.create_write_target(ctx),
             expr,
         ));
 

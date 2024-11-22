@@ -270,7 +270,6 @@ fn test_vars_reassignment() {
         }
         ",
         "let a = 0; let b = a++; f(b);",
-        "let a = 0, b = 1; let c = b = a = 1; f(c+b);",
         // implicit returns
         "
 		let i = 0;
@@ -332,6 +331,7 @@ fn test_vars_reassignment() {
         "let a = 0; let b = (0, (a++, 0)); f(b);",
         "let a = 0; let b = ((0, a++), 0); f(b);",
         "let a = 0; let b = (a, 0) + 1; f(b);",
+        "let a = 0, b = 1; let c = b = a = 1; f(c+b);",
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
@@ -819,11 +819,7 @@ fn test_used_declarations() {
         "export const Foo = class Bar {}",
         "export const Foo = @SomeDecorator() class Foo {}",
     ];
-    let fail = vec![
-        // array is not used, so the function is not used
-        ";[function foo() {}]",
-        ";[class Foo {}]",
-    ];
+    let fail = vec![];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
         .intentionally_allow_no_fix_tests()
