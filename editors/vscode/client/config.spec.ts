@@ -8,7 +8,7 @@ suite('Config', () => {
     const keys = ['lint.run', 'enable', 'trace.server', 'configPath', 'path.server'];
 
     await Promise.all(keys.map(key => wsConfig.update(key, undefined)));
-  })
+  });
 
   test('default values on initialization', () => {
     const config = new Config();
