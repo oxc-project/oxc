@@ -51,7 +51,7 @@ use std::mem;
 
 use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, NONE};
-use oxc_semantic::{IsGlobalReference, SymbolFlags};
+use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
@@ -180,17 +180,26 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         }
     }
 
-    /// Check if we should create a temp variable for the identifier
+    /// Check if we should create a temp variable for the identifier.
     ///
-    /// Except for `eval`, we should create a temp variable for all global references
-    fn should_create_temp_variable_for_identifier(
+    /// Except for `eval`, we should create a temp variable for all global references.
+    ///
+    /// If no temp variable required, returns `MaybeBoundIdentifier` for existing variable/global.
+    /// If temp variable is required, returns `None`.
+    fn get_existing_binding_for_identifier(
         &self,
         ident: &IdentifierReference<'a>,
         ctx: &TraverseCtx<'a>,
-    ) -> bool {
-        !self.ctx.assumptions.pure_getters
-            && ident.is_global_reference(ctx.symbols())
-            && ident.name != "eval"
+    ) -> Option<MaybeBoundIdentifier<'a>> {
+        let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
+        if self.ctx.assumptions.pure_getters
+            || binding.to_bound_identifier().is_some()
+            || ident.name == "eval"
+        {
+            Some(binding)
+        } else {
+            None
+        }
     }
 
     /// Return `left === null`
@@ -544,8 +553,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         // If the expression is an identifier and it's not a global reference, we just wrap it with checks
         // `foo` -> `foo === null || foo === void 0`
         if let Expression::Identifier(ident) = expr {
-            if !self.should_create_temp_variable_for_identifier(ident, ctx) {
-                let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
+            if let Some(binding) = self.get_existing_binding_for_identifier(ident, ctx) {
                 let left1 = binding.create_read_expression(ctx);
                 let left2 = binding.create_read_expression(ctx);
                 if ident.name == "eval" {
@@ -568,18 +576,17 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                 // If the [`MemberExpression::object`] is a global reference, we need to assign it to a temp binding.
                 // i.e `foo` -> `(_foo = foo)`
                 if let Expression::Identifier(ident) = object {
-                    let binding = if self.should_create_temp_variable_for_identifier(ident, ctx) {
-                        let binding = self.generate_binding(object, ctx);
-                        // `(_foo = foo)`
-                        *object = Self::create_assignment_expression(
-                            binding.create_write_target(ctx),
-                            ctx.ast.move_expression(object),
-                            ctx,
-                        );
-                        binding.to_maybe_bound_identifier()
-                    } else {
-                        MaybeBoundIdentifier::from_identifier_reference(ident, ctx)
-                    };
+                    let binding =
+                        self.get_existing_binding_for_identifier(ident, ctx).unwrap_or_else(|| {
+                            let binding = self.generate_binding(object, ctx);
+                            // `(_foo = foo)`
+                            *object = Self::create_assignment_expression(
+                                binding.create_write_target(ctx),
+                                ctx.ast.move_expression(object),
+                                ctx,
+                            );
+                            binding.to_maybe_bound_identifier()
+                        });
                     self.set_binding_context(binding);
                 } else if matches!(object, Expression::Super(_)) {
                     self.set_this_context();
