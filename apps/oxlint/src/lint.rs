@@ -695,4 +695,13 @@ mod test {
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
     }
+
+    #[test]
+    fn test_overrides_directories() {
+        let result =
+            test(&["-c", "fixtures/overrides/directories-config.json", "fixtures/overrides"]);
+        assert_eq!(result.number_of_files, 7);
+        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_errors, 2);
+    }
 }

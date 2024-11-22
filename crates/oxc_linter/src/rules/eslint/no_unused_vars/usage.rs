@@ -92,6 +92,10 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     /// Check if this [`Symbol`] has any [`Reference`]s that are considered a usage.
     pub fn has_usages(&self, options: &NoUnusedVars) -> bool {
+        if self.is_function_or_class_declaration_used() {
+            return true;
+        }
+
         // Use symbol flags to skip the usage checks we are certain don't need
         // to be run.
         let do_reassignment_checks = self.is_possibly_reassignable();

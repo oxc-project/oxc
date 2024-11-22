@@ -94,9 +94,10 @@ impl LinterBuilder {
             categories,
             rules: oxlintrc_rules,
             overrides,
+            path,
         } = oxlintrc;
 
-        let config = LintConfig { plugins, settings, env, globals };
+        let config = LintConfig { plugins, settings, env, globals, path: Some(path) };
         let options = LintOptions::default();
         let rules =
             if start_empty { FxHashSet::default() } else { Self::warn_correctness(plugins) };

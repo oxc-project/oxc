@@ -92,8 +92,24 @@ impl ConfigStore {
         let mut overrides_to_apply: Vec<OverrideId> = Vec::new();
         let mut hasher = FxBuildHasher.build_hasher();
 
+        // Compute the path of the file relative to the configuration file for glob matching. Globs should match
+        // relative to the location of the configuration file.
+        // - path: /some/path/like/this/to/file.js
+        // - config_path: /some/path/like/.oxlintrc.json
+        // => relative_path: this/to/file.js
+        // TODO: Handle nested configuration file paths.
+        let relative_path = if let Some(config_path) = &self.base.config.path {
+            if let Some(parent) = config_path.parent() {
+                path.strip_prefix(parent).unwrap_or(path)
+            } else {
+                path
+            }
+        } else {
+            path
+        };
+
         for (id, override_config) in self.overrides.iter_enumerated() {
-            if override_config.files.is_match(path) {
+            if override_config.files.is_match(relative_path) {
                 overrides_to_apply.push(id);
                 id.hash(&mut hasher);
             }
@@ -285,6 +301,7 @@ mod test {
             env: OxlintEnv::default(),
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
+            path: None,
         };
         let overrides = from_json!([{
             "files": ["*.jsx", "*.tsx"],

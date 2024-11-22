@@ -365,9 +365,8 @@ mod tests {
             // assignment expressions count as read-write
             (SourceType::default(), "let a = 1, b; b = a += 5", ReferenceFlags::read_write()),
             (SourceType::default(), "let a = 1; a += 5", ReferenceFlags::read_write()),
-            // note: we consider a to be written, and the read of `1` propagates upwards
-            (SourceType::default(), "let a, b; b = a = 1", ReferenceFlags::read_write()),
-            (SourceType::default(), "let a, b; b = (a = 1)", ReferenceFlags::read_write()),
+            (SourceType::default(), "let a, b; b = a = 1", ReferenceFlags::write()),
+            (SourceType::default(), "let a, b; b = (a = 1)", ReferenceFlags::write()),
             (SourceType::default(), "let a, b, c; b = c = a", ReferenceFlags::read()),
             // sequences return last read_write in sequence
             (SourceType::default(), "let a, b; b = (0, a++)", ReferenceFlags::read_write()),
@@ -404,12 +403,11 @@ mod tests {
             // least, or now)
             (SourceType::default(), "let a, b; b = (a, 0)", ReferenceFlags::read()),
             (SourceType::default(), "let a, b; b = (--a, 0)", ReferenceFlags::read_write()),
-            // other reads after a is written
-            // a = 1 writes, but the CallExpression reads the rhs (1) so a isn't read
             (
                 SourceType::default(),
                 "let a; function foo(a) { return a }; foo(a = 1)",
-                ReferenceFlags::read_write(),
+                //                                        ^ write
+                ReferenceFlags::write(),
             ),
             // member expression
             (SourceType::default(), "let a; a.b = 1", ReferenceFlags::read()),
@@ -417,14 +415,16 @@ mod tests {
             (
                 SourceType::default(),
                 "let a; let b; let c; b[c[a = c['a']] = 'c'] = 'b'",
-                ReferenceFlags::read_write(),
+                //                        ^ write
+                ReferenceFlags::write(),
             ),
             (
                 SourceType::default(),
                 "let a; let b; let c; a[c[b = c['a']] = 'c'] = 'b'",
                 ReferenceFlags::read(),
             ),
-            (SourceType::default(), "console.log;let a=0;a++", ReferenceFlags::write()),
+            (SourceType::default(), "console.log;let a=0;a++", ReferenceFlags::read_write()),
+            //                                           ^^^ UpdateExpression is always a read | write
             // typescript
             (typescript, "let a: number = 1; (a as any) = true", ReferenceFlags::write()),
             (typescript, "let a: number = 1; a = true as any", ReferenceFlags::write()),
