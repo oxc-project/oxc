@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/default2.ts
-snapshot_kind: text
 ---
 [
   {
@@ -11,7 +10,7 @@ snapshot_kind: text
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | Export)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "a",
         "node": "VariableDeclarator(a)",

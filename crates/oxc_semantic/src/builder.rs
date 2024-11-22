@@ -564,32 +564,6 @@ impl<'a> SemanticBuilder<'a> {
     pub(crate) fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
         self.symbols.add_redeclaration(symbol_id, span);
     }
-
-    fn add_export_flag_to_export_identifiers(&mut self, program: &Program<'a>) {
-        for stmt in &program.body {
-            if let Statement::ExportDefaultDeclaration(decl) = stmt {
-                if let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration {
-                    self.add_export_flag_to_identifier(ident.name.as_str());
-                }
-            }
-            if let Statement::ExportNamedDeclaration(decl) = stmt {
-                for specifier in &decl.specifiers {
-                    if specifier.export_kind.is_value() {
-                        if let Some(name) = specifier.local.identifier_name() {
-                            self.add_export_flag_to_identifier(name.as_str());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /// Flag the symbol bound to an identifier in the current scope as exported.
-    fn add_export_flag_to_identifier(&mut self, name: &str) {
-        if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, name) {
-            self.symbols.union_flag(symbol_id, SymbolFlags::Export);
-        }
-    }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
@@ -1870,19 +1844,7 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::ExportDefaultDeclaration(decl) => {
-                // Only if the declaration has an ID, we mark it as an export
-                if match &decl.declaration {
-                    ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.id.is_some(),
-                    ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.is_some(),
-                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => true,
-                    _ => false,
-                } {
-                    self.current_symbol_flags |= SymbolFlags::Export;
-                }
-            }
             AstKind::ExportNamedDeclaration(decl) => {
-                self.current_symbol_flags |= SymbolFlags::Export;
                 if decl.export_kind.is_type() {
                     self.current_reference_flags = ReferenceFlags::Type;
                 }
@@ -1959,7 +1921,6 @@ impl<'a> SemanticBuilder<'a> {
                     .get(module_declaration.id.name().as_str())
                     .copied();
                 self.namespace_stack.push(symbol_id);
-                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
@@ -2048,15 +2009,9 @@ impl<'a> SemanticBuilder<'a> {
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::Program(program) => {
-                self.add_export_flag_to_export_identifiers(program);
-            }
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
-            }
-            AstKind::BindingIdentifier(_) => {
-                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::ExportSpecifier(_) => {
                 if !self.current_reference_flags.is_type_only() {
