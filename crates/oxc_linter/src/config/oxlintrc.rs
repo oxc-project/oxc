@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use oxc_diagnostics::OxcDiagnostic;
 use schemars::JsonSchema;
@@ -85,6 +85,9 @@ pub struct Oxlintrc {
     /// Add, remove, or otherwise reconfigure rules for specific files or groups of files.
     #[serde(skip_serializing_if = "OxlintOverrides::is_empty")]
     pub overrides: OxlintOverrides,
+    /// Absolute path to the configuration file.
+    #[serde(skip)]
+    pub path: PathBuf,
 }
 
 impl Oxlintrc {
@@ -116,9 +119,14 @@ impl Oxlintrc {
             OxcDiagnostic::error(format!("Failed to parse eslint config {path:?}.\n{err}"))
         })?;
 
-        let config = Self::deserialize(&json).map_err(|err| {
+        let mut config = Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
+
+        // Get absolute path from `path`
+        let absolute_path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+
+        config.path = absolute_path;
 
         Ok(config)
     }
@@ -137,6 +145,7 @@ mod test {
         assert!(config.rules.is_empty());
         assert_eq!(config.settings, OxlintSettings::default());
         assert_eq!(config.env, OxlintEnv::default());
+        assert_eq!(config.path, PathBuf::default());
     }
 
     #[test]
