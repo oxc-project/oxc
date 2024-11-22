@@ -23,7 +23,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// 2. Catch variables are always parameter-like and will therefore never have
     ///    a function declaration.
     #[inline]
-    const fn is_maybe_callable(&self) -> bool {
+    fn is_maybe_callable(&self) -> bool {
         // NOTE: imports are technically callable, but that call will never
         // occur within its own declaration since it's declared in another
         // module.
@@ -47,8 +47,8 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// eslint's original rule requires it. Const reassignments are not a syntax
     /// error in JavaScript, only TypeScript.
     #[inline]
-    const fn is_possibly_reassignable(&self) -> bool {
-        self.flags().intersects(SymbolFlags::Variable)
+    fn is_possibly_reassignable(&self) -> bool {
+        self.flags().is_variable()
     }
 
     /// Check if this [`Symbol`] is definitely reassignable.
@@ -65,10 +65,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// - `var` and `let` variable declarations
     /// - function parameters
     #[inline]
-    const fn is_definitely_reassignable_variable(&self) -> bool {
+    fn is_definitely_reassignable_variable(&self) -> bool {
         let f = self.flags();
-        f.intersects(SymbolFlags::Variable)
-            && !f.contains(SymbolFlags::ConstVariable.union(SymbolFlags::Function))
+        f.is_variable() && !f.contains(SymbolFlags::ConstVariable.union(SymbolFlags::Function))
     }
 
     /// Checks if this [`Symbol`] could be used as a type reference within its
@@ -77,7 +76,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// This does _not_ imply this symbol is a type (negative cases include type
     /// imports, type parameters, etc).
     #[inline]
-    const fn could_have_type_reference_within_own_decl(&self) -> bool {
+    fn could_have_type_reference_within_own_decl(&self) -> bool {
         #[rustfmt::skip]
         const TYPE_DECLS: SymbolFlags = SymbolFlags::TypeAlias
             .union(SymbolFlags::Interface)
