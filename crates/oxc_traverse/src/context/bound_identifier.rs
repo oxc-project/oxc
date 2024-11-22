@@ -250,7 +250,8 @@ impl<'a> BoundIdentifier<'a> {
         Expression::Identifier(ctx.alloc(ident))
     }
 
-    /// Create `Expression::Identifier` referencing this binding, with specified `Span` and `ReferenceFlags`
+    /// Create `AssignmentTarget::AssignmentTargetIdentifier` referencing this binding,
+    /// with specified `Span` and `ReferenceFlags`
     pub fn create_spanned_target(
         &self,
         span: Span,
