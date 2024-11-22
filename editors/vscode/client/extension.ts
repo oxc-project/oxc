@@ -58,7 +58,7 @@ export async function activate(context: ExtensionContext) {
   const toggleEnable = commands.registerCommand(
     OxcCommands.ToggleEnable,
     () => {
-      configService.config.enable = !configService.config.enable;
+      configService.config.updateEnable(!configService.config.enable);
     },
   );
 
