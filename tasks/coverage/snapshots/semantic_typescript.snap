@@ -53451,24 +53451,15 @@ after transform: SymbolId(6) "M"
 rebuilt        : SymbolId(4) "M"
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "d1"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(7): [ScopeId(2), ScopeId(15)]
 rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(8), ScopeId(9)]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(8): Some(ScopeId(5))
-Bindings mismatch:
-after transform: ScopeId(2): ["d1"]
-rebuilt        : ScopeId(9): []
 Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(4)]
 rebuilt        : ScopeId(9): []
-Symbol scope ID mismatch for "d1":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(9): ScopeId(3)
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.1.ts
 semantic error: Missing SymbolId: "N"
@@ -53503,24 +53494,15 @@ after transform: SymbolId(2): [ReferenceId(3)]
 rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForAwaitOf.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
-rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "d1"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(6): [ScopeId(2)]
 rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-Bindings mismatch:
-after transform: ScopeId(2): ["d1"]
-rebuilt        : ScopeId(7): []
 Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3)]
 rebuilt        : ScopeId(7): []
-Symbol scope ID mismatch for "d1":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(9): ScopeId(3)
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsNamedEvaluationDecoratorsAndClassFields.ts
 semantic error: Bindings mismatch:

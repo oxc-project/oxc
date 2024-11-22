@@ -786,15 +786,6 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     ) {
         BindingMover::new(target_scope_id, ctx).visit_binding_identifier(ident);
     }
-
-    #[inline]
-    pub fn move_bindings_to_target_scope_for_statement(
-        target_scope_id: ScopeId,
-        stmt: &Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        BindingMover::new(target_scope_id, ctx).visit_statement(stmt);
-    }
 }
 
 /// Moves the bindings from original scope to target scope.
