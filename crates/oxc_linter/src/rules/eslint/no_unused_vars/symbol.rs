@@ -105,11 +105,6 @@ impl<'s, 'a> Symbol<'s, 'a> {
         self.nodes().ancestors(self.declaration_id())
     }
 
-    #[inline]
-    pub fn iter_relevant_parents(&self) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
-        self.iter_relevant_parents_of(self.declaration_id())
-    }
-
     pub fn iter_relevant_parents_of(
         &self,
         node_id: NodeId,
@@ -176,10 +171,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// NOTE: does not support CJS right now.
     pub fn is_exported(&self) -> bool {
         let is_in_exportable_scope = self.is_root() || self.is_in_ts_namespace();
-        (is_in_exportable_scope
-            && (self.flags.contains(SymbolFlags::Export)
-                || self.semantic.module_record().exported_bindings.contains_key(self.name())))
-            || self.in_export_node()
+        is_in_exportable_scope
+            && (self.semantic.module_record().exported_bindings.contains_key(self.name())
+                || self.in_export_node())
     }
 
     #[inline]
@@ -194,7 +188,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 AstKind::ModuleDeclaration(module) => {
                     return module.is_export();
                 }
-                AstKind::ExportDefaultDeclaration(_) => {
+                AstKind::ExportNamedDeclaration(_) | AstKind::ExportDefaultDeclaration(_) => {
                     return true;
                 }
                 AstKind::VariableDeclaration(_)

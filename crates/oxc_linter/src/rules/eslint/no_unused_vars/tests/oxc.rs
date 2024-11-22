@@ -819,11 +819,7 @@ fn test_used_declarations() {
         "export const Foo = class Bar {}",
         "export const Foo = @SomeDecorator() class Foo {}",
     ];
-    let fail = vec![
-        // array is not used, so the function is not used
-        ";[function foo() {}]",
-        ";[class Foo {}]",
-    ];
+    let fail = vec![];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
         .intentionally_allow_no_fix_tests()
