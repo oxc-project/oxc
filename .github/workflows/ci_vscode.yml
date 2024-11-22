@@ -46,6 +46,17 @@ jobs:
         working-directory: editors/vscode
         run: pnpm run lint
 
+  type-check:
+    name: Type-Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: ./.github/actions/pnpm
+
+      - name: Type-Check VSCode
+        working-directory: editors/vscode
+        run: pnpm run type-check
+
   test:
     name: Test
     runs-on: ubuntu-latest
