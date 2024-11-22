@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, CallExpression, Expression, UnaryOperator},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -16,11 +16,16 @@ use crate::{
 };
 
 fn over_method(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `.some(…)` over `.find(…)`or `.findLast(…)`.").with_label(span)
+    OxcDiagnostic::warn("Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.").with_label(span)
 }
 
 fn non_zero_filter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `.some(…)` over non-zero length check from `.filter(…)`.")
+        .with_label(span)
+}
+
+fn negative_one_or_zero_filter(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.")
         .with_label(span)
 }
 
@@ -55,12 +60,15 @@ declare_oxc_lint!(
 impl Rule for PreferArraySome {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
+            // `.find(…)`
+            // `.findLast(…)`
             AstKind::CallExpression(call_expr) => {
                 if !is_method_call(call_expr, None, Some(&["find", "findLast"]), Some(1), Some(2)) {
                     return;
                 }
 
                 let is_compare = is_checking_undefined(node, call_expr, ctx);
+
                 if !is_compare && !is_boolean_node(node, ctx) {
                     return;
                 }
@@ -87,6 +95,97 @@ impl Rule for PreferArraySome {
                 );
             }
             AstKind::BinaryExpression(bin_expr) => {
+                // `.{findIndex,findLastIndex}(…) !== -1`
+                // `.{findIndex,findLastIndex}(…) != -1`
+                // `.{findIndex,findLastIndex}(…) > -1`
+                // `.{findIndex,findLastIndex}(…) === -1`
+                // `.{findIndex,findLastIndex}(…) == -1`
+                // `.{findIndex,findLastIndex}(…) >= 0`
+                // `.{findIndex,findLastIndex}(…) < 0`
+                let with_negative_one = matches!(
+                    bin_expr.operator,
+                    BinaryOperator::StrictInequality
+                        | BinaryOperator::Inequality
+                        | BinaryOperator::GreaterThan
+                        | BinaryOperator::StrictEquality
+                        | BinaryOperator::Equality
+                ) && matches!(
+                    bin_expr.right.without_parentheses(),
+                    Expression::UnaryExpression(_)
+                );
+
+                let matches_against_zero = matches!(
+                    bin_expr.operator,
+                    BinaryOperator::GreaterEqualThan | BinaryOperator::LessThan
+                );
+
+                if with_negative_one {
+                    if let Expression::UnaryExpression(right_unary_expr) =
+                        &bin_expr.right.without_parentheses()
+                    {
+                        if matches!(right_unary_expr.operator, UnaryOperator::UnaryNegation)
+                            && right_unary_expr.argument.is_number_literal()
+                            && right_unary_expr.argument.is_number_value(1_f64)
+                        {
+                            let Expression::CallExpression(left_call_expr) =
+                                &bin_expr.left.without_parentheses()
+                            else {
+                                return;
+                            };
+
+                            let Some(argument) = left_call_expr.arguments.first() else {
+                                return;
+                            };
+
+                            if matches!(argument, Argument::SpreadElement(_)) {
+                                return;
+                            }
+
+                            if is_method_call(
+                                left_call_expr,
+                                None,
+                                Some(&["findIndex", "findLastIndex"]),
+                                None,
+                                Some(1),
+                            ) {
+                                // TODO: fixer
+                                ctx.diagnostic(negative_one_or_zero_filter(
+                                    call_expr_method_callee_info(left_call_expr).unwrap().0,
+                                ));
+                            }
+                        }
+                    }
+                }
+
+                if matches_against_zero {
+                    let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
+                        return;
+                    };
+
+                    let Expression::CallExpression(left_call_expr) =
+                        &bin_expr.left.without_parentheses()
+                    else {
+                        return;
+                    };
+
+                    if right_num_lit.raw == "0"
+                        && is_method_call(
+                            left_call_expr,
+                            None,
+                            Some(&["findIndex", "findLastIndex"]),
+                            None,
+                            Some(1),
+                        )
+                    {
+                        // TODO: fixer
+                        ctx.diagnostic(negative_one_or_zero_filter(
+                            call_expr_method_callee_info(left_call_expr).unwrap().0,
+                        ));
+                    }
+                }
+
+                // `.filter(…).length > 0`
+                // `.filter(…).length !== 0`
                 if !matches!(
                     bin_expr.operator,
                     BinaryOperator::GreaterThan | BinaryOperator::StrictInequality
@@ -281,6 +380,17 @@ fn test() {
         r"foo.find(fn) >= undefined",
         r"foo.find(fn) instanceof undefined",
         r#"typeof foo.find(fn) === "undefined""#,
+        // findIndex: negative one
+        r"foo.notMatchedMethod(bar) !== -1",
+        r"new foo.findIndex(bar) !== -1",
+        r"foo.findIndex(bar, extraArgument) !== -1",
+        r"foo.findIndex(bar) instanceof -1",
+        r"foo.findIndex(...bar) !== -1",
+        // findLastIndex: negative one
+        r"new foo.findLastIndex(bar) !== -1",
+        r"foo.findLastIndex(bar, extraArgument) !== -1",
+        r"foo.findLastIndex(bar) instanceof -1",
+        r"foo.findLastIndex(...bar) !== -1",
     ];
 
     let fail = vec![
@@ -297,6 +407,26 @@ fn test() {
         r"foo.find(fn) != undefined",
         r"foo.find(fn) !== undefined",
         r#"a = (( ((foo.find(fn))) == ((null)) )) ? "no" : "yes";"#,
+        // findIndex: negative one || ( >= || < ) 0
+        r"foo.findIndex(bar) !== -1",
+        r"foo.findIndex(bar) != -1",
+        r"foo.findIndex(bar) > - 1",
+        r"foo.findIndex(bar) === -1",
+        r"foo.findIndex(bar) == - 1",
+        r"foo.findIndex(bar) >= 0",
+        r"foo.findIndex(bar) < 0",
+        r"foo.findIndex(bar) !== (( - 1 ))",
+        r"foo.findIndex(element => element.bar === 1) !== (( - 1 ))",
+        // findLastIndex: negative one || ( >= || < ) 0
+        r"foo.findLastIndex(bar) !== -1",
+        r"foo.findLastIndex(bar) != -1",
+        r"foo.findLastIndex(bar) > - 1",
+        r"foo.findLastIndex(bar) === -1",
+        r"foo.findLastIndex(bar) == - 1",
+        r"foo.findLastIndex(bar) >= 0",
+        r"foo.findLastIndex(bar) < 0",
+        r"foo.findLastIndex(bar) !== (( - 1 ))",
+        r"foo.findLastIndex(element => element.bar === 1) !== (( - 1 ))",
     ];
 
     let fix = vec![
