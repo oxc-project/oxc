@@ -262,14 +262,11 @@ impl LintRunner {
 
         // no config argument is provided,
         // auto detect default config file from current work directory
+        // or return the default configuration, when no valid file is found
         let mut config_path = cwd.to_path_buf();
         config_path.push(Self::DEFAULT_OXLINTRC);
 
-        if let Ok(result) = Oxlintrc::from_file(&config_path) {
-            return Ok(result);
-        };
-
-        Ok(Oxlintrc::default())
+        Oxlintrc::from_file(&config_path).or_else(|_| Ok(Oxlintrc::default()))
     }
 }
 
