@@ -13,14 +13,7 @@ use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
-        CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
-        CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
-        DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
-        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        InitializeParams, InitializeResult, InitializedParams, OneOf, ServerCapabilities,
-        ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit, Url,
-        WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
-        WorkspaceServerCapabilities,
+        CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams, CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic, DiagnosticOptions, DiagnosticServerCapabilities, DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportResult, FullDocumentDiagnosticReport, InitializeParams, InitializeResult, InitializedParams, OneOf, RelatedFullDocumentDiagnosticReport, ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities
     },
     Client, LanguageServer, LspService, Server,
 };
@@ -31,6 +24,7 @@ struct Backend {
     client: Client,
     root_uri: OnceCell<Option<Url>>,
     server_linter: RwLock<ServerLinter>,
+    document_content_cache: DashMap<Url, String>,
     diagnostics_report_map: DashMap<String, Vec<DiagnosticReport>>,
     options: Mutex<Options>,
     gitignore_glob: Mutex<Vec<Gitignore>>,
@@ -114,6 +108,12 @@ impl LanguageServer for Backend {
                     }),
                     file_operations: None,
                 }),
+                diagnostic_provider: Some(DiagnosticServerCapabilities::Options(DiagnosticOptions {
+                    identifier: Some("oxc".into()),
+                    inter_file_dependencies: false,
+                    workspace_diagnostics: false,
+                    work_done_progress_options: WorkDoneProgressOptions::default(),
+                })),
                 code_action_provider: Some(CodeActionProviderCapability::Options(
                     CodeActionOptions {
                         code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
@@ -187,57 +187,47 @@ impl LanguageServer for Backend {
         Ok(())
     }
 
-    async fn did_save(&self, params: DidSaveTextDocumentParams) {
-        debug!("oxc server did save");
-        // drop as fast as possible
-        let run_level = { self.options.lock().await.get_lint_level() };
-        if run_level < SyntheticRunLevel::OnSave {
-            return;
-        }
-        let uri = params.text_document.uri;
-        if self.is_ignored(&uri).await {
-            return;
-        }
-        self.handle_file_update(uri, None, None).await;
-    }
-
-    /// When the document changed, it may not be written to disk, so we should
-    /// get the file context from the language client
-    async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        let run_level = { self.options.lock().await.get_lint_level() };
-        if run_level < SyntheticRunLevel::OnType {
-            return;
-        }
-
-        let uri = &params.text_document.uri;
-        if self.is_ignored(uri).await {
-            return;
-        }
-        let content = params.content_changes.first().map(|c| c.text.clone());
-        self.handle_file_update(
-            params.text_document.uri,
-            content,
-            Some(params.text_document.version),
-        )
-        .await;
-    }
-
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        let run_level = { self.options.lock().await.get_lint_level() };
-        if run_level <= SyntheticRunLevel::Disable {
-            return;
-        }
-        if self.is_ignored(&params.text_document.uri).await {
-            return;
-        }
-        self.handle_file_update(params.text_document.uri, None, Some(params.text_document.version))
-            .await;
+        self.document_content_cache.insert(params.text_document.uri, params.text_document.text);
     }
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
-        let uri = params.text_document.uri.to_string();
-        self.diagnostics_report_map.remove(&uri);
+        self.document_content_cache.remove(&params.text_document.uri);
     }
+
+    async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        let content = params.content_changes.first().map(|c| c.text.clone());
+
+        if let Some(content) = content {
+            self.document_content_cache.insert(params.text_document.uri, content);
+        }
+    }
+
+    async fn diagnostic(&self, params: DocumentDiagnosticParams) -> Result<DocumentDiagnosticReportResult> {
+        let content = self.document_content_cache.get(&params.text_document.uri).map(|entry| entry.value().to_owned());
+
+        let Some(entry) = self.document_content_cache.get(&params.text_document.uri) else {
+            return Err(Error::new(ErrorCode::InvalidParams));
+        };
+        
+        let Some(result) = self.lint_uri(entry.key(), content).await else {
+            return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {
+                related_documents: None,
+                full_document_diagnostic_report: FullDocumentDiagnosticReport::default()
+            })))
+        };
+
+        self.diagnostics_report_map.insert(entry.key().to_string(), result.clone());
+
+        Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {
+            related_documents: None,
+            full_document_diagnostic_report: FullDocumentDiagnosticReport {
+                items: result.into_iter().map(|report| report.diagnostic).collect(),
+                ..FullDocumentDiagnosticReport::default()
+            },
+        })))
+    }
+
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
         let uri = params.text_document.uri;
@@ -381,19 +371,24 @@ impl Backend {
         }
     }
 
-    async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
-        if let Some(Some(_root_uri)) = self.root_uri.get() {
-            if let Some(diagnostics) = self.server_linter.read().await.run_single(&uri, content) {
-                self.client
-                    .publish_diagnostics(
-                        uri.clone(),
-                        diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                        version,
-                    )
-                    .await;
+    async fn lint_uri(&self, uri: &Url, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+        let Some(Some(_root_uri)) = self.root_uri.get() else {
+            return None;
+        };
 
-                self.diagnostics_report_map.insert(uri.to_string(), diagnostics);
-            }
+        self.server_linter.read().await.run_single(&uri, content) 
+    }
+    async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
+        if let Some(diagnostics) = self.lint_uri(&uri, content).await {
+            self.client
+                .publish_diagnostics(
+                    uri.clone(),
+                    diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
+                    version,
+                )
+                .await;
+
+            self.diagnostics_report_map.insert(uri.to_string(), diagnostics);
         }
     }
 
@@ -435,11 +430,13 @@ async fn main() {
 
     let server_linter = ServerLinter::new();
     let diagnostics_report_map = DashMap::new();
+    let document_content_cache = DashMap::new();
 
     let (service, socket) = LspService::build(|client| Backend {
         client,
         root_uri: OnceCell::new(),
         server_linter: RwLock::new(server_linter),
+        document_content_cache,
         diagnostics_report_map,
         options: Mutex::new(Options::default()),
         gitignore_glob: Mutex::new(vec![]),

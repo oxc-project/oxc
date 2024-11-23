@@ -152,6 +152,20 @@ export async function activate(context: ExtensionContext) {
     },
     outputChannel,
     traceOutputChannel: outputChannel,
+    diagnosticPullOptions: {
+      onChange: true,
+      onSave: true,
+      onTabs: false,
+      filter: (_, mode) => {
+        if (mode === 'onType' && configService.config.runTrigger !== 'onType') {
+          return true;
+        } else if (mode === 'onSave' && configService.config.runTrigger !== 'onSave') {
+          return true;
+        }
+
+        return !configService.config.enable
+      }
+    }
   };
 
   // Create the language client and start the client.
