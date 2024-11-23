@@ -13,9 +13,10 @@ fn es_target() {
         ("es2015", "a ** b"),
         ("es2016", "async function foo() {}"),
         ("es2017", "({ ...x })"),
-        ("es2017", "try {} catch {}"),
+        ("es2018", "try {} catch {}"),
+        ("es2019", "a?.b"),
         ("es2019", "a ?? b"),
-        ("es2019", "a ||= b"),
+        ("es2020", "a ||= b"),
         ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
     ];
