@@ -8,7 +8,6 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_object_constructor_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Disallow calls to the `Object` constructor without an argument")
         .with_help("Use object literal notation {} instead")
         .with_label(span)
@@ -87,7 +86,7 @@ fn test() {
         "const createObject = Object => new Object()",
         "var Object; new Object;",
         // Disabled because the eslint-test uses languageOptions: { globals: { Object: "off" } }
-        /* "new Object()", */
+        // "new Object()",
     ];
 
     let fail = vec![
@@ -98,96 +97,81 @@ fn test() {
         "const obj = Object?.();",
         "(new Object() instanceof Object);",
         // Semicolon required before `({})` to compensate for ASI
-        /*
-        "foo
-         Object()",
+        "Object()",
         "foo()
-         Object()",
-        "new foo
-         Object()",
-        "(a++)
-         Object()",
-        "++a
-         Object()",
-        "const foo = function() {}
-         Object()",
-        "const foo = class {}
-         Object()",
-        "foo = this.return
-         Object()",
+        Object()",
         "var yield = bar.yield
-         Object()",
+        Object()",
         "var foo = { bar: baz }
-         Object()",
-        ("<foo />
-         Object()", languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } })
-        ("<foo></foo>
-         Object()", languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } })*/
-
+        Object()",
+        "<foo />
+        Object()",
+        "<foo></foo>
+        Object()",
         // No semicolon required before `({})` because ASI does not occur
-        /*
+        "Object()",
         "{}
-         Object()",
+        Object()",
         "function foo() {}
-         Object()",
+        Object()",
         "class Foo {}
-         Object()",
+        Object()",
         "foo: Object();",
         "foo();Object();",
         "{ Object(); }",
         "if (a) Object();",
         "if (a); else Object();",
         "while (a) Object();",
-        "do Object();
-         while (a);",
+        "do Object(); while (a);",
         "for (let i = 0; i < 10; i++) Object();",
         "for (const prop in obj) Object();",
         "for (const element of iterable) Object();",
-        "with (obj) Object();",*/
-
+        "with (obj) Object();",
         // No semicolon required before `({})` because ASI still occurs
-        /*
         "const foo = () => {}
-         Object()",
+        Object()",
         "a++
-         Object()",
+        Object()",
         "a--
-         Object()",
+        Object()",
         "function foo() {
-             return
-             Object();
-         }",
+            return
+            Object();
+        }",
         "function * foo() {
-             yield
-             Object();
-         }",
-        "do {}
-         while (a)
-         Object()",
+            yield
+            Object();
+        }",
+        "do {} while (a) Object()",
         "debugger
-         Object()",
+        Object()",
         "for (;;) {
-             break
-             Object()
-         }",
-        "for (;;) {
-             continue
-             Object()
-         }",
+            break
+            Object()
+        }",
+        r"for (;;) {
+            continue
+            Object()
+        }",
         "foo: break foo
-         Object()",
+        Object()",
         "foo: while (true) continue foo
+        Object()",
+        "const foo = bar
+        export { foo }
+        Object()",
+        "export { foo } from 'bar'
+        Object()",
+        r"export * as foo from 'bar'
+        Object()",
+        "import foo from 'bar
          Object()",
-        ("const foo = bar
-         export { foo }
-         Object()", languageOptions: { sourceType: "module" }),
-        ("export { foo } from 'bar'
-         Object()", languageOptions: { sourceType: "module" }),
-        ("export * as foo from 'bar'
-         Object()", languageOptions: { sourceType: "module" }),
-        ("import foo from 'bar'
-         Object()", languageOptions: { sourceType: "module" })
-         */
+        "var yield = 5;
+        yield: while (foo) {
+            if (bar)
+                break yield
+            new Object();
+        }",
     ];
 
     Tester::new(NoObjectConstructor::NAME, pass, fail).test_and_snapshot();
