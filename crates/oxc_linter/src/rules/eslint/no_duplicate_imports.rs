@@ -7,16 +7,22 @@ use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_duplicate_imports_diagnostic(module_name: &str, span: Span) -> OxcDiagnostic {
+fn no_duplicate_imports_diagnostic(module_name: &str, span: Span, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{}' import is duplicated", module_name))
         .with_help("Merge the duplicated import into a single import statement")
-        .with_label(span)
+        .with_labels([
+            span.label("This import is duplicated"),
+            span2.label("Can be merged with this import"),
+        ])
 }
 
-fn no_duplicate_exports_diagnostic(module_name: &str, span: Span) -> OxcDiagnostic {
+fn no_duplicate_exports_diagnostic(module_name: &str, span: Span, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{}' export is duplicated", module_name))
         .with_help("Merge the duplicated exports into a single export statement")
-        .with_label(span)
+        .with_labels([
+            span.label("This export is duplicated"),
+            span2.label("Can be merged with this"),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -102,7 +108,11 @@ impl Rule for NoDuplicateImports {
             if let Some(existing) = import_map.get(source) {
                 let can_merge = can_merge_imports(&import_type, existing, same_statement);
                 if can_merge {
-                    ctx.diagnostic(no_duplicate_imports_diagnostic(source, span));
+                    ctx.diagnostic(no_duplicate_imports_diagnostic(
+                        source,
+                        span,
+                        existing.first().unwrap().1,
+                    ));
                     continue;
                 }
             }
@@ -127,7 +137,14 @@ impl Rule for NoDuplicateImports {
         side_effect_import_map.iter().for_each(|(source, spans)| {
             if spans.len() > 1 {
                 spans.iter().for_each(|span| {
-                    ctx.diagnostic(no_duplicate_imports_diagnostic(source, *span));
+                    let i = spans.iter().position(|s| s == span).unwrap();
+                    if i > 0 {
+                        ctx.diagnostic(no_duplicate_imports_diagnostic(
+                            source,
+                            *span,
+                            spans.first().unwrap().clone(),
+                        ));
+                    }
                 });
             }
         });
@@ -144,12 +161,20 @@ impl Rule for NoDuplicateImports {
                                 .iter()
                                 .any(|(t, _, _)| matches!(t, ImportType::AllButDefault))
                             {
-                                ctx.diagnostic(no_duplicate_exports_diagnostic(source, span));
+                                ctx.diagnostic(no_duplicate_exports_diagnostic(
+                                    source,
+                                    span,
+                                    existing.first().unwrap().1,
+                                ));
                                 continue;
                             }
                         }
-                        if side_effect_import_map.get(source).is_some() {
-                            ctx.diagnostic(no_duplicate_exports_diagnostic(source, span));
+                        if let Some(existing) = side_effect_import_map.get(source) {
+                            ctx.diagnostic(no_duplicate_exports_diagnostic(
+                                source,
+                                span,
+                                *existing.first().unwrap(),
+                            ));
                             continue;
                         }
                         import_map.entry(source).or_default().push((
@@ -163,7 +188,11 @@ impl Rule for NoDuplicateImports {
                         if existing.iter().any(|(t, _, _)| {
                             matches!(t, ImportType::Named | ImportType::SideEffect)
                         }) {
-                            ctx.diagnostic(no_duplicate_exports_diagnostic(source, span));
+                            ctx.diagnostic(no_duplicate_exports_diagnostic(
+                                source,
+                                span,
+                                existing.first().unwrap().1,
+                            ));
                             continue;
                         }
                     }
@@ -186,7 +215,11 @@ impl Rule for NoDuplicateImports {
                             if existing.iter().any(|(t, _, _)| {
                                 matches!(t, ImportType::Default | ImportType::Namespace)
                             }) {
-                                ctx.diagnostic(no_duplicate_exports_diagnostic(source, span));
+                                ctx.diagnostic(no_duplicate_exports_diagnostic(
+                                    source,
+                                    span,
+                                    existing.first().unwrap().1,
+                                ));
                                 continue;
                             }
 
@@ -201,7 +234,11 @@ impl Rule for NoDuplicateImports {
                                 || (matches!(t, ImportType::Default)
                                     && *module_type == ModuleType::Import)
                         }) {
-                            ctx.diagnostic(no_duplicate_exports_diagnostic(source, span));
+                            ctx.diagnostic(no_duplicate_exports_diagnostic(
+                                source,
+                                span,
+                                existing.first().unwrap().1,
+                            ));
                             continue;
                         }
                     }
