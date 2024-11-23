@@ -72,7 +72,6 @@ impl Rule for NoObjectConstructor {
             && type_parameters.is_none()
         {
             ctx.diagnostic(no_object_constructor_diagnostic(span));
-
         }
     }
 }
