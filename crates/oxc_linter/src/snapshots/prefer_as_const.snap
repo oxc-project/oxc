@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
    ╭─[prefer_as_const.tsx:1:9]

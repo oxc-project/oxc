@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-react(iframe-missing-sandbox): An iframe element is missing a sandbox attribute
    ╭─[iframe_missing_sandbox.tsx:1:2]

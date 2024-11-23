@@ -2,7 +2,7 @@ use base64::prelude::{Engine, BASE64_STANDARD};
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
-use oxc_allocator::{CloneIn, GetAddress, Vec as ArenaVec};
+use oxc_allocator::{Address, CloneIn, GetAddress, Vec as ArenaVec};
 use oxc_ast::{ast::*, match_expression, AstBuilder, NONE};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -289,8 +289,9 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
             // which is a `Statement::ExportDefaultDeclaration`
             Ancestor::ExportDefaultDeclarationDeclaration(decl) => decl.address(),
             // Otherwise just a `function Foo() {}`
-            // which is a `Statement::FunctionDeclaration`
-            _ => func.address(),
+            // which is a `Statement::FunctionDeclaration`.
+            // `Function` is always stored in a `Box`, so has a stable memory address.
+            _ => Address::from_ptr(func),
         };
         self.ctx.statement_injector.insert_after(&address, statement);
     }
@@ -391,11 +392,10 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     fn create_registration(
         &mut self,
         persistent_id: Atom<'a>,
-        reference_flags: ReferenceFlags,
         ctx: &mut TraverseCtx<'a>,
     ) -> AssignmentTarget<'a> {
         let binding = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
-        let target = binding.create_target(reference_flags, ctx);
+        let target = binding.create_target(ReferenceFlags::Write, ctx);
         self.registrations.push((binding, persistent_id));
         target
     }
@@ -477,11 +477,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             *expr = ctx.ast.expression_assignment(
                 SPAN,
                 AssignmentOperator::Assign,
-                self.create_registration(
-                    ctx.ast.atom(inferred_name),
-                    ReferenceFlags::read_write(),
-                    ctx,
-                ),
+                self.create_registration(ctx.ast.atom(inferred_name), ctx),
                 ctx.ast.move_expression(expr),
             );
         }
@@ -495,7 +491,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         id: &BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let left = self.create_registration(id.name.clone(), ReferenceFlags::Write, ctx);
+        let left = self.create_registration(id.name.clone(), ctx);
         let right = ctx.create_bound_ident_expr(
             SPAN,
             id.name.clone(),

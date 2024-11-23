@@ -261,6 +261,10 @@ fn test() {
                 "disallowArithmeticOperators": false
             }])),
         ),
+        ("x?.f<T>();", None),
+        ("x?.f?.<T>();", None),
+        ("f?.<Q>();", None),
+        ("a?.c?.b<c>", None),
     ];
 
     let fail = vec![

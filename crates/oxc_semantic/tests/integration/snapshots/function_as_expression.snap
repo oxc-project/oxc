@@ -2,6 +2,7 @@
 source: crates/oxc_semantic/tests/integration/cfg.rs
 expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/function_as_expression.js
+snapshot_kind: text
 ---
 bb0: {
 
@@ -16,7 +17,7 @@ bb2: {
 }
 
 bb3: {
-
+	return
 }
 
 bb4: {
@@ -28,7 +29,7 @@ bb5: {
 }
 
 bb6: {
-
+	return
 }
 
 bb7: {
@@ -40,7 +41,7 @@ bb8: {
 }
 
 bb9: {
-
+	return
 }
 
 bb10: {
@@ -52,7 +53,7 @@ bb11: {
 }
 
 bb12: {
-
+	return
 }
 
 bb13: {
@@ -64,7 +65,7 @@ bb14: {
 }
 
 bb15: {
-
+	return
 }
 
 bb16: {
@@ -76,7 +77,7 @@ bb17: {
 }
 
 bb18: {
-
+	return
 }
 
 bb19: {
@@ -88,7 +89,7 @@ bb20: {
 }
 
 bb21: {
-
+	return
 }
 
 bb22: {
@@ -100,7 +101,7 @@ bb23: {
 }
 
 bb24: {
-
+	return
 }
 
 bb25: {
@@ -120,7 +121,7 @@ bb28: {
 }
 
 bb29: {
-
+	return
 }
 
 bb30: {
@@ -140,7 +141,7 @@ bb33: {
 }
 
 bb34: {
-
+	return
 }
 
 bb35: {
@@ -152,7 +153,7 @@ bb36: {
 }
 
 bb37: {
-
+	return
 }
 
 bb38: {
@@ -164,50 +165,61 @@ digraph {
     1 [ label = "bb1
 ExpressionStatement" shape = box]
     2 [ label = "bb2" shape = box]
-    3 [ label = "bb3" shape = box]
+    3 [ label = "bb3
+return" shape = box]
     4 [ label = "bb4
 ExpressionStatement" shape = box]
     5 [ label = "bb5" shape = box]
-    6 [ label = "bb6" shape = box]
+    6 [ label = "bb6
+return" shape = box]
     7 [ label = "bb7" shape = box]
     8 [ label = "bb8" shape = box]
-    9 [ label = "bb9" shape = box]
+    9 [ label = "bb9
+return" shape = box]
     10 [ label = "bb10
 ExpressionStatement" shape = box]
     11 [ label = "bb11" shape = box]
-    12 [ label = "bb12" shape = box]
+    12 [ label = "bb12
+return" shape = box]
     13 [ label = "bb13
 ExpressionStatement" shape = box]
     14 [ label = "bb14" shape = box]
-    15 [ label = "bb15" shape = box]
+    15 [ label = "bb15
+return" shape = box]
     16 [ label = "bb16
 ExpressionStatement" shape = box]
     17 [ label = "bb17" shape = box]
-    18 [ label = "bb18" shape = box]
+    18 [ label = "bb18
+return" shape = box]
     19 [ label = "bb19
 ExpressionStatement" shape = box]
     20 [ label = "bb20" shape = box]
-    21 [ label = "bb21" shape = box]
+    21 [ label = "bb21
+return" shape = box]
     22 [ label = "bb22
 ExpressionStatement" shape = box]
     23 [ label = "bb23" shape = box]
-    24 [ label = "bb24" shape = box]
+    24 [ label = "bb24
+return" shape = box]
     25 [ label = "bb25" shape = box]
     26 [ label = "bb26" shape = box]
     27 [ label = "bb27
 ExpressionStatement" shape = box]
     28 [ label = "bb28" shape = box]
-    29 [ label = "bb29" shape = box]
+    29 [ label = "bb29
+return" shape = box]
     30 [ label = "bb30" shape = box]
     31 [ label = "bb31" shape = box]
     32 [ label = "bb32
 ExpressionStatement" shape = box]
     33 [ label = "bb33" shape = box]
-    34 [ label = "bb34" shape = box]
+    34 [ label = "bb34
+return" shape = box]
     35 [ label = "bb35
 ExpressionStatement" shape = box]
     36 [ label = "bb36" shape = box]
-    37 [ label = "bb37" shape = box]
+    37 [ label = "bb37
+return" shape = box]
     38 [ label = "bb38" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 2 [ label="Error(Implicit)", style=dashed, color=red]

@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/declaration-merging/function-namespace.ts
-snapshot_kind: text
 ---
 [
   {
@@ -20,7 +19,7 @@ snapshot_kind: text
         "node": "TSModuleDeclaration(Foo)",
         "symbols": [
           {
-            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | Export)",
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
             "id": 1,
             "name": "x",
             "node": "VariableDeclarator(x)",

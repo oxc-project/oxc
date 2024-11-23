@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]

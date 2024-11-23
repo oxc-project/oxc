@@ -143,6 +143,10 @@ pub enum Helper {
     AsyncToGenerator,
     ObjectSpread2,
     WrapAsyncGenerator,
+    Extends,
+    ObjectDestructuringEmpty,
+    ObjectWithoutProperties,
+    ToPropertyKey,
 }
 
 impl Helper {
@@ -154,6 +158,10 @@ impl Helper {
             Self::AsyncToGenerator => "asyncToGenerator",
             Self::ObjectSpread2 => "objectSpread2",
             Self::WrapAsyncGenerator => "wrapAsyncGenerator",
+            Self::Extends => "extends",
+            Self::ObjectDestructuringEmpty => "objectDestructuringEmpty",
+            Self::ObjectWithoutProperties => "objectWithoutProperties",
+            Self::ToPropertyKey => "toPropertyKey",
         }
     }
 }

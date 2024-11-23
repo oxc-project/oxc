@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ typescript-eslint(ban-ts-comment): Do not use @ts-expect-error because it alters compilation errors.
    ╭─[ban_ts_comment.tsx:1:3]

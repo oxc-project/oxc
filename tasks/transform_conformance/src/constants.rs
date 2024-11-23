@@ -1,4 +1,4 @@
-pub(crate) const PLUGINS: &[&str] = &[
+pub const PLUGINS: &[&str] = &[
     "babel-preset-env",
     // // ES2024
     // "babel-plugin-transform-unicode-sets-regex",
@@ -15,7 +15,7 @@ pub(crate) const PLUGINS: &[&str] = &[
     // "babel-plugin-transform-export-namespace-from",
     // "babel-plugin-transform-dynamic-import",
     "babel-plugin-transform-nullish-coalescing-operator",
-    // "babel-plugin-transform-optional-chaining",
+    "babel-plugin-transform-optional-chaining",
     // // [Syntax] "babel-plugin-transform-syntax-bigint",
     // // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
     // // [Syntax] "babel-plugin-transform-syntax-import-meta",
@@ -61,20 +61,19 @@ pub(crate) const PLUGINS: &[&str] = &[
     "regexp",
 ];
 
-pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
+pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "proposal-decorators",
     "transform-class-properties",
     "transform-classes",
     "transform-destructuring",
     "transform-modules-commonjs",
-    "transform-optional-chaining",
     "transform-parameters",
     "transform-private-methods",
     "transform-property-literals",
     "transform-react-constant-elements",
 ];
 
-pub(crate) const SKIP_TESTS: &[&str] = &[
+pub const SKIP_TESTS: &[&str] = &[
     // Shouldn't report in transformer
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-cts",
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-mts",
@@ -101,4 +100,12 @@ pub(crate) const SKIP_TESTS: &[&str] = &[
     "babel-preset-env/test/fixtures/corejs3",
     "babel-preset-env/test/fixtures/debug",
     "babel-preset-env/test/fixtures/debug-babel-7",
+    // Assumptions are not implemented yet.
+    "babel-plugin-transform-object-rest-spread/test/fixtures/assumption",
+    "babel-plugin-transform-object-rest-spread/test/fixtures/object-spread-loose",
+    "babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/remove-unused-excluded-keys-loose",
+    "babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/regression/gh-8323"
 ];
+
+pub const SNAPSHOT_TESTS: &[&str] =
+    &["babel-plugin-transform-object-rest-spread", "babel-plugin-transform-optional-chaining"];

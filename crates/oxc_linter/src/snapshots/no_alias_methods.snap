@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-vitest(no-alias-methods): Unexpected alias "toBeCalled"
    ╭─[no_alias_methods.tsx:1:11]

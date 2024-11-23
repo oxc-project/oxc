@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.0] - 2024-11-21
+
+- 878189c parser,linter: [**BREAKING**] Add `ParserReturn::is_flow_language`; linter ignore flow error (#7373) (Boshen)
+
+### Features
+
+
+## [0.12.0] - 2024-11-20
+
+### Features
+
+- 2268a0e linter: Support `overrides` config field (#6974) (DonIsaac)
+- d3a0119 oxlint: Add `cwd` property to `LintRunner` (#7352) (Alexander S.)
+
+### Bug Fixes
+
+- df5c535 linter: Revert unmatched rule error (#7257) (Cameron A McHenry)
+
 ## [0.11.0] - 2024-11-03
 
 - 1f2a6c6 linter: [**BREAKING**] Report unmatched rules with error exit code (#7027) (camchenry)

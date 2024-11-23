@@ -3,8 +3,6 @@ use std::sync::OnceLock;
 use dashmap::DashMap;
 use serde::Deserialize;
 
-use oxc_diagnostics::{Error, OxcDiagnostic};
-
 use super::EngineTargets;
 
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq, PartialOrd, Ord, Hash)]
@@ -20,7 +18,7 @@ fn cache() -> &'static DashMap<BrowserslistQuery, EngineTargets> {
 }
 
 impl BrowserslistQuery {
-    pub fn exec(&self) -> Result<EngineTargets, Error> {
+    pub fn exec(&self) -> Result<EngineTargets, String> {
         if let Some(v) = cache().get(self) {
             return Ok(v.clone());
         }
@@ -50,9 +48,7 @@ impl BrowserslistQuery {
                     .collect::<Vec<_>>();
                 EngineTargets::parse_versions(versions)
             }
-            Err(err) => {
-                return Err(OxcDiagnostic::error(format!("failed to resolve query: {err}")).into())
-            }
+            Err(err) => return Err(format!("failed to resolve query: {err}")),
         };
 
         cache().insert(self.clone(), result.clone());

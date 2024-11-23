@@ -452,7 +452,12 @@ export interface ChainExpression extends Span {
   expression: ChainElement;
 }
 
-export type ChainElement = CallExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;
+export type ChainElement =
+  | CallExpression
+  | TSNonNullExpression
+  | ComputedMemberExpression
+  | StaticMemberExpression
+  | PrivateFieldExpression;
 
 export interface ParenthesizedExpression extends Span {
   type: 'ParenthesizedExpression';
@@ -1714,16 +1719,16 @@ export type AssignmentOperator =
   | '*='
   | '/='
   | '%='
+  | '**='
   | '<<='
   | '>>='
   | '>>>='
   | '|='
   | '^='
   | '&='
-  | '&&='
   | '||='
-  | '??='
-  | '**=';
+  | '&&='
+  | '??=';
 
 export type BinaryOperator =
   | '=='
@@ -1734,24 +1739,24 @@ export type BinaryOperator =
   | '<='
   | '>'
   | '>='
-  | '<<'
-  | '>>'
-  | '>>>'
   | '+'
   | '-'
   | '*'
   | '/'
   | '%'
+  | '**'
+  | '<<'
+  | '>>'
+  | '>>>'
   | '|'
   | '^'
   | '&'
   | 'in'
-  | 'instanceof'
-  | '**';
+  | 'instanceof';
 
 export type LogicalOperator = '||' | '&&' | '??';
 
-export type UnaryOperator = '-' | '+' | '!' | '~' | 'typeof' | 'void' | 'delete';
+export type UnaryOperator = '+' | '-' | '!' | '~' | 'typeof' | 'void' | 'delete';
 
 export type UpdateOperator = '++' | '--';
 

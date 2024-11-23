@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:13]

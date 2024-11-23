@@ -34,7 +34,7 @@ fn test() {
     let pass = vec![
         (
             "var foo = 5;
-			
+
 			label: while (true) {
 			    console.log(foo);
 			    break label;
@@ -43,7 +43,7 @@ fn test() {
         ),
         (
             "var foo = 5;
-			
+
 			while (true) {
 			    console.log(foo);
 			    break;

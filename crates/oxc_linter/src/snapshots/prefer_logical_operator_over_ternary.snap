@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]

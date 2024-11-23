@@ -89,9 +89,11 @@ pub struct TransformOptions {
     pub inject: Option<FxHashMap<String, Either<String, Vec<String>>>>,
 }
 
-impl From<TransformOptions> for oxc_transformer::TransformOptions {
-    fn from(options: TransformOptions) -> Self {
-        Self {
+impl TryFrom<TransformOptions> for oxc_transformer::TransformOptions {
+    type Error = String;
+
+    fn try_from(options: TransformOptions) -> Result<Self, Self::Error> {
+        Ok(Self {
             cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
             typescript: options
                 .typescript
@@ -99,7 +101,7 @@ impl From<TransformOptions> for oxc_transformer::TransformOptions {
                 .unwrap_or_default(),
             jsx: options.jsx.map(Into::into).unwrap_or_default(),
             ..Self::default()
-        }
+        })
     }
 }
 

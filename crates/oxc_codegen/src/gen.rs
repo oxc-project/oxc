@@ -1163,12 +1163,14 @@ impl<'a> GenExpr for NumericLiteral<'a> {
 
 impl<'a> Gen for BigIntLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        if self.raw.starts_with('-') {
+        let raw = self.raw.as_str().cow_replace('_', "");
+        if raw.starts_with('-') {
             p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
         }
+
         p.print_space_before_identifier();
         p.add_source_mapping(self.span.start);
-        p.print_str(self.raw.as_str());
+        p.print_str(&raw);
     }
 }
 
@@ -1623,7 +1625,7 @@ impl<'a> GenExpr for ArrowFunctionExpression<'a> {
             if self.expression {
                 if let Some(Statement::ExpressionStatement(stmt)) = &self.body.statements.first() {
                     p.start_of_arrow_expr = p.code_len();
-                    stmt.expression.print_expr(p, Precedence::Comma, ctx.and_forbid_in(true));
+                    stmt.expression.print_expr(p, Precedence::Comma, ctx);
                 }
             } else {
                 self.body.print(p, ctx);
@@ -2047,6 +2049,7 @@ impl<'a> GenExpr for ChainExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::Postfix, |p| match &self.expression {
             ChainElement::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ChainElement::TSNonNullExpression(expr) => expr.print_expr(p, precedence, ctx),
             match_member_expression!(ChainElement) => {
                 self.expression.to_member_expression().print_expr(p, precedence, ctx);
             }

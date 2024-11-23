@@ -3,7 +3,7 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
     operator::BinaryOperator,
@@ -576,22 +576,33 @@ impl<'a> ParserImpl<'a> {
         let mut in_optional_chain = false;
         let lhs = self.parse_member_expression_or_higher(&mut in_optional_chain)?;
         let lhs = self.parse_call_expression_rest(span, lhs, &mut in_optional_chain)?;
-        if in_optional_chain {
+        if !in_optional_chain {
+            return Ok(lhs);
+        }
+        // Add `ChainExpression` to `a?.c?.b<c>`;
+        if let Expression::TSInstantiationExpression(mut expr) = lhs {
+            expr.expression = self.map_to_chain_expression(
+                expr.expression.span(),
+                self.ast.move_expression(&mut expr.expression),
+            );
+            Ok(Expression::TSInstantiationExpression(expr))
+        } else {
             let span = self.end_span(span);
             Ok(self.map_to_chain_expression(span, lhs))
-        } else {
-            Ok(lhs)
         }
     }
 
-    fn map_to_chain_expression(&mut self, span: Span, expr: Expression<'a>) -> Expression<'a> {
+    fn map_to_chain_expression(&self, span: Span, expr: Expression<'a>) -> Expression<'a> {
         match expr {
             match_member_expression!(Expression) => {
-                let member_expr = MemberExpression::try_from(expr).unwrap();
+                let member_expr = expr.into_member_expression();
                 self.ast.expression_chain(span, ChainElement::from(member_expr))
             }
-            Expression::CallExpression(result) => {
-                self.ast.expression_chain(span, ChainElement::CallExpression(result))
+            Expression::CallExpression(e) => {
+                self.ast.expression_chain(span, ChainElement::CallExpression(e))
+            }
+            Expression::TSNonNullExpression(e) => {
+                self.ast.expression_chain(span, ChainElement::TSNonNullExpression(e))
             }
             expr => expr,
         }

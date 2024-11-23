@@ -2,7 +2,6 @@ use std::{str::FromStr, sync::OnceLock};
 
 use browserslist::Version;
 use cow_utils::CowUtils;
-use oxc_diagnostics::Error;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
@@ -38,17 +37,17 @@ impl Engine {
     ///
     /// * No matching target
     /// * Invalid version
-    pub fn parse_name_and_version(s: &str) -> Result<(Engine, Version), Error> {
+    pub fn parse_name_and_version(s: &str) -> Result<(Engine, Version), String> {
         let s = s.cow_to_ascii_lowercase();
         for (name, engine) in engines() {
             if let Some(v) = s.strip_prefix(name) {
                 return Version::from_str(v).map(|version| (*engine,version))
-                    .map_err(|_| Error::msg(
-                        r#"All version numbers must be in the format "X", "X.Y", or "X.Y.Z" where X, Y, and Z are non-negative integers."#,
-                    ));
+                    .map_err(|_|
+                        String::from(r#"All version numbers must be in the format "X", "X.Y", or "X.Y.Z" where X, Y, and Z are non-negative integers."#),
+                    );
             }
         }
-        Err(Error::msg(format!("Invalid target '{s}'.")))
+        Err(format!("Invalid target '{s}'."))
     }
 }
 

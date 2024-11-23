@@ -199,7 +199,11 @@ impl Runtime {
             .parse();
 
         if !ret.errors.is_empty() {
-            return ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
+            return if ret.is_flow_language {
+                vec![]
+            } else {
+                ret.errors.into_iter().map(|err| Message::new(err, None)).collect()
+            };
         };
 
         // Build the module record to unblock other threads from waiting for too long.

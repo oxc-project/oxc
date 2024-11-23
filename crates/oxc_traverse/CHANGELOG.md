@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+- f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)
+
+- 1cbc624 traverse: [**BREAKING**] Rename `TraverseCtx` methods for creating `IdentifierReference`s (#7300) (overlookmotel)
+
+- e84ea2c traverse: [**BREAKING**] Remove `TraverseCtx::clone_identifier_reference` (#7266) (overlookmotel)
+
+- 44375a5 ast: [**BREAKING**] Rename `TSEnumMemberName` enum variants (#7250) (overlookmotel)
+
+### Features
+
+- 6cfb5df transformer: Support generate proper binding name from ChainExpression (#7326) (Dunqing)
+- 234c7b9 traverse: Implement `GatherNodeParts` for member expression types (#7363) (overlookmotel)
+- faf8dde traverse: Add methods for creating `Expression::Identifier`s (#7301) (overlookmotel)
+- 8c754b1 traverse: Introduce `MaybeBoundIdentifier` (#7265) (overlookmotel)
+
+### Bug Fixes
+
+
+### Documentation
+
+- 834c94d traverse: Tidy doc comments for `TraverseCtx::is_static` (#7267) (overlookmotel)
+
+### Refactor
+
+- de472ca ast: Move `StringLiteral` definition higher up (#7270) (overlookmotel)
+- 7a48728 traverse: Reorder imports (#7264) (overlookmotel)
+
 ## [0.36.0] - 2024-11-09
 
 - b11ed2c ast: [**BREAKING**] Remove useless `ObjectProperty::init` field (#7220) (Boshen)

@@ -171,6 +171,7 @@ mod typescript {
     pub mod no_non_null_asserted_nullish_coalescing;
     pub mod no_non_null_asserted_optional_chain;
     pub mod no_non_null_assertion;
+    pub mod no_require_imports;
     pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
@@ -253,6 +254,7 @@ mod react {
     pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
     pub mod jsx_props_no_spread_multi;
+    pub mod no_array_index_key;
     pub mod no_children_prop;
     pub mod no_danger;
     pub mod no_danger_with_children;
@@ -359,6 +361,7 @@ mod unicorn {
     pub mod prefer_regexp_test;
     pub mod prefer_set_size;
     pub mod prefer_spread;
+    pub mod prefer_string_raw;
     pub mod prefer_string_replace_all;
     pub mod prefer_string_slice;
     pub mod prefer_string_starts_ends_with;
@@ -478,15 +481,12 @@ mod jsdoc {
     pub mod require_yields;
 }
 
-mod tree_shaking {
-    pub mod no_side_effects_in_initialization;
-}
-
 mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
     pub mod no_callback_in_promise;
     pub mod no_new_statics;
+    pub mod no_promise_in_callback;
     pub mod no_return_in_finally;
     pub mod param_names;
     pub mod prefer_await_to_callbacks;
@@ -787,6 +787,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::uninvoked_array_callback,
     promise::avoid_new,
     promise::catch_or_return,
+    promise::no_promise_in_callback,
     promise::no_callback_in_promise,
     promise::no_new_statics,
     promise::no_return_in_finally,
@@ -808,6 +809,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_undef,
     react::jsx_no_useless_fragment,
     react::jsx_props_no_spread_multi,
+    react::no_array_index_key,
     react::no_children_prop,
     react::no_danger_with_children,
     react::no_danger,
@@ -831,7 +833,6 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::jsx_no_new_function_as_prop,
     react_perf::jsx_no_new_object_as_prop,
     security::api_keys,
-    tree_shaking::no_side_effects_in_initialization,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
     typescript::ban_ts_comment,
@@ -855,6 +856,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_non_null_asserted_nullish_coalescing,
     typescript::no_non_null_asserted_optional_chain,
     typescript::no_non_null_assertion,
+    typescript::no_require_imports,
     typescript::no_this_alias,
     typescript::no_unnecessary_type_constraint,
     typescript::no_unsafe_declaration_merging,
@@ -948,6 +950,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_regexp_test,
     unicorn::prefer_set_size,
     unicorn::prefer_spread,
+    unicorn::prefer_string_raw,
     unicorn::prefer_string_replace_all,
     unicorn::prefer_string_slice,
     unicorn::prefer_string_starts_ends_with,

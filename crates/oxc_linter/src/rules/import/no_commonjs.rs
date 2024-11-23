@@ -10,7 +10,6 @@ use oxc_ast::{
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_commonjs_diagnostic(span: Span, name: &str, actual: &str) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(format!("Expected {name} instead of {actual}"))
         .with_help("Do not use CommonJS `require` calls and `module.exports` or `exports.*`")
         .with_label(span)
@@ -214,6 +213,10 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
+                if ctx.scopes().find_binding(ctx.scopes().root_scope_id(), "require").is_some() {
+                    return;
+                }
+
                 if let Argument::TemplateLiteral(template_literal) = &call_expr.arguments[0] {
                     if template_literal.expressions.len() != 0 {
                         return;
@@ -299,6 +302,15 @@ fn test() {
             Some(json!([{ "allowRequire": false }])),
         ),
         (r#"try { require("x") } catch (error) {}"#, None),
+        // covers user variables
+        (
+            "
+            import { createRequire } from 'module';
+            const require = createRequire();
+            require('remark-preset-prettier');
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![

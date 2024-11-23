@@ -6,7 +6,6 @@ mod nextjs;
 mod promise;
 mod react;
 mod react_perf;
-mod tree_shaking;
 mod unicorn;
 mod vitest;
 
@@ -14,7 +13,7 @@ use std::{io, path::Path};
 
 pub use self::{
     config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*, react_perf::*,
-    tree_shaking::*, unicorn::*, vitest::*,
+    unicorn::*, vitest::*,
 };
 
 /// List of Jest rules that have Vitest equivalents.

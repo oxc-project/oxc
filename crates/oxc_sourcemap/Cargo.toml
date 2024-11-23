@@ -1,6 +1,6 @@
 [package]
 name = "oxc_sourcemap"
-version = "0.36.0"
+version = "0.37.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -27,6 +27,9 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 
 rayon = { workspace = true, optional = true }
+
+[dev-dependencies]
+insta = { workspace = true, features = ["glob"] }
 
 [features]
 default = []

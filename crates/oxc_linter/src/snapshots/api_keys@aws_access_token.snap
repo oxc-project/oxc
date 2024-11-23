@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ oxc-security(api-keys/aws-access-token): Detected an AWS Access Key ID, which may lead to unauthorized access to AWS resources.
    ╭─[api_keys.tsx:1:11]

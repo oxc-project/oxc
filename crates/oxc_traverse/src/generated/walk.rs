@@ -1271,6 +1271,9 @@ pub(crate) unsafe fn walk_chain_element<'a, Tr: Traverse<'a>>(
         ChainElement::CallExpression(node) => {
             walk_call_expression(traverser, (&mut **node) as *mut _, ctx)
         }
+        ChainElement::TSNonNullExpression(node) => {
+            walk_ts_non_null_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
         ChainElement::ComputedMemberExpression(_)
         | ChainElement::StaticMemberExpression(_)
         | ChainElement::PrivateFieldExpression(_) => {

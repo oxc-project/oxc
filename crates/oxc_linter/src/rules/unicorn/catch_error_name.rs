@@ -100,7 +100,7 @@ impl Rule for CatchErrorName {
                 }
 
                 if binding_ident.name.starts_with('_') {
-                    if symbol_has_references(binding_ident.symbol_id.get(), ctx) {
+                    if symbol_has_references(binding_ident.symbol_id(), ctx) {
                         ctx.diagnostic(catch_error_name_diagnostic(
                             binding_ident.name.as_str(),
                             &self.name,
@@ -161,7 +161,7 @@ impl CatchErrorName {
                     }
 
                     if v.name.starts_with('_') {
-                        if symbol_has_references(v.symbol_id.get(), ctx) {
+                        if symbol_has_references(v.symbol_id(), ctx) {
                             ctx.diagnostic(catch_error_name_diagnostic(
                                 v.name.as_str(),
                                 &self.name,
@@ -185,7 +185,7 @@ impl CatchErrorName {
                     }
 
                     if binding_ident.name.starts_with('_') {
-                        if symbol_has_references(binding_ident.symbol_id.get(), ctx) {
+                        if symbol_has_references(binding_ident.symbol_id(), ctx) {
                             ctx.diagnostic(catch_error_name_diagnostic(
                                 binding_ident.name.as_str(),
                                 &self.name,
@@ -209,11 +209,8 @@ impl CatchErrorName {
     }
 }
 
-fn symbol_has_references(symbol_id: Option<SymbolId>, ctx: &LintContext) -> bool {
-    if let Some(symbol_id) = symbol_id {
-        return ctx.semantic().symbol_references(symbol_id).next().is_some();
-    }
-    false
+fn symbol_has_references(symbol_id: SymbolId, ctx: &LintContext) -> bool {
+    ctx.semantic().symbol_references(symbol_id).next().is_some()
 }
 
 #[test]

@@ -134,12 +134,8 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         let symbol_id = reference.symbol_id();
         let left_expr = Expression::Identifier(ctx.alloc(ident.clone()));
 
-        let ident = ctx.create_ident_reference(
-            SPAN,
-            ident.name.clone(),
-            symbol_id,
-            ReferenceFlags::read_write(),
-        );
+        let ident =
+            ctx.create_ident_reference(SPAN, ident.name.clone(), symbol_id, ReferenceFlags::Write);
         let assign_target = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident));
         (left_expr, assign_target)
     }
@@ -152,7 +148,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         if let Some(ident) = self.maybe_generate_memoised(&static_expr.object, ctx) {
             // (_o = o).a
             let right = ctx.ast.move_expression(&mut static_expr.object);
-            let target = ident.create_read_write_target(ctx);
+            let target = ident.create_write_target(ctx);
             let object =
                 ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, right);
             let left_expr = Expression::from(ctx.ast.member_expression_static(
@@ -207,7 +203,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         if let Some(ident) = self.maybe_generate_memoised(&computed_expr.object, ctx) {
             // (_o = object)
             let right = ctx.ast.move_expression(&mut computed_expr.object);
-            let target = ident.create_read_write_target(ctx);
+            let target = ident.create_write_target(ctx);
             let object =
                 ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, right);
 
@@ -220,7 +216,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
                 expression = ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    property.create_read_write_target(ctx),
+                    property.create_write_target(ctx),
                     expression,
                 );
             }
@@ -259,7 +255,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
                         ctx.ast.expression_assignment(
                             SPAN,
                             AssignmentOperator::Assign,
-                            property_ident.create_read_write_target(ctx),
+                            property_ident.create_write_target(ctx),
                             ctx.ast.move_expression(&mut expression),
                         )
                     } else {
@@ -300,7 +296,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         match expr {
             Expression::Identifier(ident) => {
                 let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-                binding.create_spanned_expression(ident.span, ReferenceFlags::Read, ctx)
+                binding.create_spanned_read_expression(ident.span, ctx)
             }
             _ => expr.clone_in(ctx.ast.allocator),
         }

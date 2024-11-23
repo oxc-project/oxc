@@ -3033,6 +3033,7 @@ pub mod walk_mut {
     pub fn walk_chain_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ChainElement<'a>) {
         match it {
             ChainElement::CallExpression(it) => visitor.visit_call_expression(it),
+            ChainElement::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
             match_member_expression!(ChainElement) => {
                 visitor.visit_member_expression(it.to_member_expression_mut())
             }

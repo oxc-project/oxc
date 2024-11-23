@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
    ╭─[no_array_reduce.tsx:1:7]

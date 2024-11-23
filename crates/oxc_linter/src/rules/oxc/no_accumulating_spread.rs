@@ -135,10 +135,7 @@ impl Rule for NoAccumulatingSpread {
         let symbols = ctx.semantic().symbols();
 
         // get the AST node + symbol id of the declaration of the identifier
-        let Some(reference_id) = ident.reference_id.get() else {
-            return;
-        };
-        let reference = symbols.get_reference(reference_id);
+        let reference = symbols.get_reference(ident.reference_id());
         let Some(referenced_symbol_id) = reference.symbol_id() else {
             return;
         };
@@ -305,7 +302,7 @@ fn get_reduce_diagnostic<'a>(
 
 fn get_identifier_symbol_id(ident: &BindingPatternKind<'_>) -> Option<SymbolId> {
     match ident {
-        BindingPatternKind::BindingIdentifier(ident) => ident.symbol_id.get(),
+        BindingPatternKind::BindingIdentifier(ident) => Some(ident.symbol_id()),
         BindingPatternKind::AssignmentPattern(ident) => get_identifier_symbol_id(&ident.left.kind),
         _ => None,
     }

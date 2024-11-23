@@ -7,7 +7,7 @@ use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, TraverseCtx};
 
 use super::AsyncGeneratorFunctions;
-use crate::{common::helper_loader::Helper, es2017::AsyncGeneratorExecutor};
+use crate::common::helper_loader::Helper;
 
 impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
     /// Check the parent node to see if multiple statements are allowed.
@@ -254,7 +254,6 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
             let block_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
             let for_statement_scope_id =
                 ctx.create_child_scope(block_scope_id, ScopeFlags::empty());
-            ctx.scopes_mut().change_parent_id(for_of_scope_id, Some(block_scope_id));
 
             let for_statement = Statement::ForStatement(ctx.ast.alloc_for_statement_with_scope_id(
                 SPAN,
@@ -282,7 +281,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                 Some(ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    iterator_abrupt_completion.create_read_write_target(ctx),
+                    iterator_abrupt_completion.create_write_target(ctx),
                     ctx.ast.expression_unary(
                         SPAN,
                         UnaryOperator::LogicalNot,
@@ -293,7 +292,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                                 ctx.ast.expression_assignment(
                                     SPAN,
                                     AssignmentOperator::Assign,
-                                    step_key.create_read_write_target(ctx),
+                                    step_key.create_write_target(ctx),
                                     ctx.ast.expression_await(
                                         SPAN,
                                         ctx.ast.expression_call(
@@ -319,7 +318,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                 Some(ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    iterator_abrupt_completion.create_read_write_target(ctx),
+                    iterator_abrupt_completion.create_write_target(ctx),
                     ctx.ast.expression_boolean_literal(SPAN, false),
                 )),
                 {
@@ -330,28 +329,17 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                             for_statement_body_scope_id,
                             Some(for_statement_scope_id),
                         );
-                        let statement = body.first().unwrap();
-                        AsyncGeneratorExecutor::move_bindings_to_target_scope_for_statement(
-                            for_statement_body_scope_id,
-                            statement,
-                            ctx,
-                        );
                     }
 
                     Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
                         SPAN,
                         body,
-                        for_statement_body_scope_id,
+                        for_of_scope_id,
                     ))
                 },
                 for_statement_scope_id,
             ));
 
-            // // If has a label, we need to wrap the for statement with a labeled statement.
-            // // e.g. `label: for await (let i of test) {}` to `label: { for (let i of test) {} }`
-            // if let Some(label) = label {
-            //     statement = ctx.ast.statement_labeled(SPAN, label, statement);
-            // }
             ctx.ast.block_statement_with_scope_id(SPAN, ctx.ast.vec1(for_statement), block_scope_id)
         };
 

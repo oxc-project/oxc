@@ -126,7 +126,7 @@ fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContex
 
         if ((ident.name == "Object" && OBJECT_MUTATION_METHODS.contains(property_name))
             || (ident.name == "Reflect" && REFLECT_MUTATION_METHODS.contains(property_name)))
-            && ident.reference_id.get().is_some_and(|id| !ctx.symbols().has_binding(id))
+            && !ctx.symbols().has_binding(ident.reference_id())
         {
             return expr
                 .arguments

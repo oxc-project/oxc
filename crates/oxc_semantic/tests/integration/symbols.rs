@@ -6,9 +6,8 @@ use crate::util::SemanticTester;
 fn test_class_simple() {
     SemanticTester::js("export class Foo {};")
         .has_root_symbol("Foo")
-        .contains_flags(SymbolFlags::Class | SymbolFlags::Export)
+        .contains_flags(SymbolFlags::Class)
         .has_number_of_references(0)
-        .is_exported()
         .test();
 
     SemanticTester::js("class Foo {}; let f = new Foo()")
@@ -63,7 +62,7 @@ fn test_var_read_write() {
 
     SemanticTester::js("let x = 0; x++")
         .has_some_symbol("x")
-        .has_number_of_reads(0)
+        .has_number_of_reads(1)
         .has_number_of_writes(1)
         .test();
 
@@ -122,44 +121,6 @@ fn test_types_simple() {
         .has_number_of_references(1)
         .has_number_of_references_where(1, Reference::is_type)
         .test();
-}
-
-#[test]
-fn test_export_flag() {
-    let tester = SemanticTester::js(
-        "
-        const a = 1;
-        export { a, b as d };
-        class b {}
-        export default c;
-        function c() {}
-    ",
-    );
-
-    tester.has_root_symbol("a").is_exported().test();
-    tester.has_root_symbol("b").is_exported().test();
-    tester.has_root_symbol("c").is_exported().test();
-}
-
-#[test]
-fn test_export_default_flag() {
-    let tester = SemanticTester::ts(
-        "
-        export default function func() {}
-        export default class cls {}
-        export default interface face {}
-
-        export default (function funcExpr() {});
-        export default (function(param) {});
-    ",
-    );
-
-    tester.has_root_symbol("func").is_exported().test();
-    tester.has_root_symbol("cls").is_exported().test();
-    tester.has_root_symbol("face").is_exported().test();
-
-    tester.has_symbol("funcExpr").is_not_exported().test();
-    tester.has_symbol("param").is_not_exported().test();
 }
 
 #[test]
@@ -389,7 +350,7 @@ fn test_arrow_implicit_return() {
 
     SemanticTester::js("let i = 0; const x = () => { ++i }")
         .has_root_symbol("i")
-        .has_number_of_reads(0)
+        .has_number_of_reads(1)
         .has_number_of_writes(1)
         .test();
 
@@ -407,7 +368,7 @@ fn test_arrow_implicit_return() {
 
     SemanticTester::js("let i = 1; const foo = () => () => { i++ }")
         .has_root_symbol("i")
-        .has_number_of_reads(0)
+        .has_number_of_reads(1)
         .has_number_of_writes(1)
         .test();
 }
@@ -435,7 +396,7 @@ fn test_tagged_templates() {
         import styled from 'styled-components';
 
         import { Prose, ProseProps } from './prose';
-        
+
         interface Props extends ProseProps {
           density?: number;
         }
