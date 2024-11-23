@@ -176,6 +176,8 @@ impl Runner for LintRunner {
 }
 
 impl LintRunner {
+    const DEFAULT_OXLINTRC: &'static str = ".oxlintrc.json";
+
     #[must_use]
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
         self.cwd = cwd;
@@ -259,22 +261,13 @@ impl LintRunner {
         }
 
         // no config argument is provided,
-        // auto detect possible files from current work directory
-        let search_configs = &[
-            "oxlintrc.json",
-            "oxlint.json",
-            ".oxlintrc.json",
-            ".oxlint.json"
-        ];
+        // auto detect default config file from current work directory
+        let mut config_path = cwd.to_path_buf();
+        config_path.push(Self::DEFAULT_OXLINTRC);
 
-        for config_file in search_configs {
-            let mut config_path = cwd.to_path_buf();
-            config_path.push(config_file);
-
-            if let Ok(result) = Oxlintrc::from_file(&config_path) {
-                return Ok(result);
-            };
-        }
+        if let Ok(result) = Oxlintrc::from_file(&config_path) {
+            return Ok(result);
+        };
 
         Ok(Oxlintrc::default())
     }
