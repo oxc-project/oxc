@@ -8,7 +8,10 @@ use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
-use super::replace_global_defines::{DotDefine, ReplaceGlobalDefines};
+use super::{
+    replace_global_defines::{DotDefine, ReplaceGlobalDefines},
+    DotDefineMemberExpression,
+};
 
 #[derive(Debug, Clone)]
 pub struct InjectGlobalVariablesConfig {
@@ -233,7 +236,11 @@ impl<'a> InjectGlobalVariables<'a> {
     fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::StaticMemberExpression(member) = expr {
             for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
-                if ReplaceGlobalDefines::is_dot_define(ctx.symbols(), dot_define, member) {
+                if ReplaceGlobalDefines::is_dot_define(
+                    ctx.symbols(),
+                    dot_define,
+                    DotDefineMemberExpression::StaticMemberExpression(member),
+                ) {
                     // If this is first replacement made for this dot define,
                     // create `Atom` for replacement, and record in `replaced_dot_defines`
                     let value_atom = value_atom.get_or_insert_with(|| {

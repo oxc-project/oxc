@@ -53,13 +53,18 @@ fn dot() {
     test("process.env.NODE_ENV", "production", config.clone());
     test("process.env", "process.env", config.clone());
     test("process.env.foo.bar", "process.env.foo.bar", config.clone());
-    test("process", "process", config);
+    test("process", "process", config.clone());
+
+    // computed member expression
+    test("process['env'].NODE_ENV", "production", config.clone());
 }
 
 #[test]
 fn dot_nested() {
     let config = ReplaceGlobalDefinesConfig::new(&[("process", "production")]).unwrap();
-    test("foo.process.NODE_ENV", "foo.process.NODE_ENV", config);
+    test("foo.process.NODE_ENV", "foo.process.NODE_ENV", config.clone());
+    // computed member expression
+    test("foo['process'].NODE_ENV", "foo['process'].NODE_ENV", config);
 }
 
 #[test]
