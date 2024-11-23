@@ -1,14 +1,9 @@
 use std::collections::HashMap;
 
-use oxc_ast::{
-    ast::{
-        ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportDeclarationSpecifier,
-    },
-    AstKind,
-};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
+use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -54,24 +49,12 @@ declare_oxc_lint!(
     nursery,
     pending);
 
-#[derive(Debug, Clone)]
-enum DeclarationType {
-    Import,
-    Export,
-}
-
-#[derive(Debug, Clone)]
-enum Specifier {
+#[derive(Debug, Clone, PartialEq)]
+enum ImportType {
     Named,
     Default,
     Namespace,
-    All,
-}
-
-#[derive(Debug, Clone)]
-struct ModuleEntry {
-    specifier: Specifier,
-    declaration_type: DeclarationType,
+    SideEffect,
 }
 
 impl Rule for NoDuplicateImports {
@@ -86,147 +69,169 @@ impl Rule for NoDuplicateImports {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let semantic = ctx.semantic();
-        let nodes = semantic.nodes();
+        let module_record = ctx.module_record();
+        let mut import_map: HashMap<&CompactStr, Vec<(ImportType, Span, bool)>> = HashMap::new(); // Added bool for same_statement
+        let mut current_span: Option<Span> = None;
 
-        let mut modules: HashMap<String, Vec<ModuleEntry>> = HashMap::new();
+        println!("source_text: {:?}", ctx.source_text());
+        // Handle bare imports first
+        if module_record.import_entries.is_empty() {
+            for (source, requests) in &module_record.requested_modules {
+                for request in requests {
+                    if request.is_import() {
+                        if let Some(existing) = import_map.get(source) {
+                            // Bare imports can't be duplicated at all
+                            if !existing.is_empty() {
+                                ctx.diagnostic(no_duplicate_imports_diagnostic(
+                                    source,
+                                    request.span(),
+                                ));
+                                continue;
+                            }
+                        }
+                        import_map.entry(source).or_default().push((
+                            ImportType::SideEffect,
+                            request.span(),
+                            false,
+                        ));
+                    }
+                }
+            }
+        }
+        // Handle regular imports
+        for entry in &module_record.import_entries {
+            let source = entry.module_request.name();
+            let span = entry.module_request.span();
 
-        for node in nodes {
-            match node.kind() {
-                AstKind::ImportDeclaration(import_decl) => {
-                    handle_import(import_decl, &mut modules, ctx);
+            let same_statement = if let Some(curr_span) = current_span {
+                curr_span == span
+            } else {
+                current_span = Some(span);
+                true
+            };
+
+            let import_type = match &entry.import_name {
+                ImportImportName::Name(_) => ImportType::Named,
+                ImportImportName::NamespaceObject => ImportType::Namespace,
+                ImportImportName::Default(_) => ImportType::Default,
+            };
+
+            println!("- source {source:?}, import_type {import_type:?},  same_statement: {same_statement}");
+            if let Some(existing) = import_map.get(source) {
+                let can_merge = can_merge_imports(&import_type, existing, same_statement);
+                if can_merge {
+                    ctx.diagnostic(no_duplicate_imports_diagnostic(source, span));
+                    continue;
                 }
-                AstKind::ExportNamedDeclaration(export_decl) if self.include_exports => {
-                    handle_export(export_decl, &mut modules, ctx);
+            }
+
+            import_map.entry(source).or_default().push((import_type, span, same_statement));
+
+            if !same_statement {
+                current_span = Some(span);
+            }
+        }
+
+        // Handle exports if includeExports is true
+        if self.include_exports {
+            // Handle star exports
+            for entry in &module_record.star_export_entries {
+                println!("star_export_entry: {:?}", entry);
+                if let Some(module_request) = &entry.module_request {
+                    let source = module_request.name();
+                    let span = entry.span;
+
+                    if let Some(existing) = import_map.get(source) {
+                        if existing.iter().any(|(t, _, _)| {
+                            matches!(t, ImportType::Named | ImportType::SideEffect)
+                        }) {
+                            ctx.diagnostic(no_duplicate_exports_diagnostic(source, span));
+                            continue;
+                        }
+                    }
+
+                    import_map.entry(source).or_default().push((
+                        ImportType::SideEffect,
+                        span,
+                        false,
+                    ));
                 }
-                AstKind::ExportAllDeclaration(export_decl) if self.include_exports => {
-                    handle_export_all(export_decl, &mut modules, ctx);
+            }
+
+            // Handle indirect exports
+            for entry in &module_record.indirect_export_entries {
+                println!("indirect_export_entry: {:?}", entry);
+
+                if let Some(module_request) = &entry.module_request {
+                    let source = module_request.name();
+                    let span = entry.span;
+
+                    if !entry.local_name.is_null() {
+                        if let Some(existing) = import_map.get(source) {
+                            if existing.iter().any(|(t, _, _)| {
+                                matches!(t, ImportType::Named | ImportType::SideEffect)
+                            }) {
+                                ctx.diagnostic(no_duplicate_exports_diagnostic(source, span));
+                                continue;
+                            }
+                        }
+
+                        import_map.entry(source).or_default().push((
+                            ImportType::Named,
+                            span,
+                            false,
+                        ));
+                    }
                 }
-                _ => {}
             }
         }
     }
 }
 
-fn handle_import(
-    import_decl: &ImportDeclaration,
-    modules: &mut HashMap<String, Vec<ModuleEntry>>,
-    ctx: &LintContext,
-) {
-    let source = &import_decl.source;
-    let module_name = source.value.to_string();
-    let mut specifier = Specifier::All;
+fn can_merge_imports(
+    current_type: &ImportType,
+    existing: &[(ImportType, Span, bool)],
+    same_statement: bool,
+) -> bool {
+    println!("existing: {existing:?}");
+    for (existing_type, _, is_same_stmt) in existing {
+        // Allow multiple imports in the same statement
+        println!("same_statement: {same_statement}, is_same_stmt: {is_same_stmt}");
+        if same_statement {
+            return false;
+        }
 
-    if let Some(specifiers) = &import_decl.specifiers {
-        let has_namespace = specifiers.iter().any(|s| match s {
-            ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => false,
-            ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => true,
-            _ => false,
-        });
+        println!("current_type: {:?}, existing_type: {:?}", current_type, existing_type);
+        match (current_type, existing_type) {
+            // Side effect imports can't be merged with anything
+            (ImportType::SideEffect, _) | (_, ImportType::SideEffect) => return false,
 
-        specifier = if specifiers.iter().any(|s| match s {
-            ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => true,
-            _ => false,
-        }) {
-            Specifier::Default
-        } else if specifiers.iter().any(|s| match s {
-            ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => true,
-            _ => false,
-        }) {
-            Specifier::Namespace
-        } else {
-            Specifier::Named
-        };
+            // Namespace imports can't be merged with named imports
+            (ImportType::Namespace, ImportType::Named)
+            | (ImportType::Named, ImportType::Namespace) => return false,
 
-        if has_namespace {
-            return;
+            // Default imports can't be duplicated
+            (ImportType::Default, ImportType::Default) => return false,
+
+            // Named imports from the same module can be merged unless there's a namespace import
+            (ImportType::Named, ImportType::Named) => {
+                if existing
+                    .iter()
+                    .any(|(t, _, same_stmt)| *t == ImportType::Namespace && *same_stmt)
+                {
+                    return true;
+                }
+            }
+            (ImportType::Named, ImportType::Default) => {
+                if existing.iter().any(|(t, _, same_stmt)| *t == ImportType::Named && *same_stmt) {
+                    return true;
+                }
+            }
+            // Other combinations are allowed
+            _ => continue,
         }
     }
-
-    if let Some(existing_modules) = modules.get(&module_name) {
-        if existing_modules.iter().any(|entry| {
-            matches!(entry.declaration_type, DeclarationType::Import)
-                || matches!(
-                    (entry.declaration_type.clone(), entry.specifier.clone()),
-                    (DeclarationType::Export, Specifier::All)
-                )
-        }) {
-            ctx.diagnostic(no_duplicate_imports_diagnostic(&module_name, import_decl.span));
-            return;
-        }
-    }
-
-    let entry = ModuleEntry { declaration_type: DeclarationType::Import, specifier };
-    modules.entry(module_name.clone()).or_default().push(entry);
-}
-
-fn handle_export(
-    export_decl: &ExportNamedDeclaration,
-    modules: &mut HashMap<String, Vec<ModuleEntry>>,
-    ctx: &LintContext,
-) {
-    let source = match &export_decl.source {
-        Some(source) => source,
-        None => return,
-    };
-    let module_name = source.value.to_string();
-
-    if let Some(existing_modules) = modules.get(&module_name) {
-        if existing_modules.iter().any(|entry| {
-            matches!(entry.declaration_type, DeclarationType::Export)
-                || matches!(entry.declaration_type, DeclarationType::Import)
-        }) {
-            ctx.diagnostic(no_duplicate_exports_diagnostic(&module_name, export_decl.span));
-        }
-    }
-
-    modules.entry(module_name).or_default().push(ModuleEntry {
-        declaration_type: DeclarationType::Export,
-        specifier: Specifier::Named,
-    });
-}
-
-fn handle_export_all(
-    export_decl: &ExportAllDeclaration,
-    modules: &mut HashMap<String, Vec<ModuleEntry>>,
-    ctx: &LintContext,
-) {
-    let source = &export_decl.source;
-    let module_name = source.value.to_string();
-
-    let exported_name = export_decl.exported.clone();
-
-    if let Some(existing_modules) = modules.get(&module_name) {
-        if existing_modules.iter().any(|entry| {
-            matches!(
-                (&entry.declaration_type, &entry.specifier),
-                (DeclarationType::Import, Specifier::All)
-            ) || matches!(
-                (&entry.declaration_type, &entry.specifier),
-                (DeclarationType::Export, Specifier::All)
-            )
-        }) {
-            ctx.diagnostic(no_duplicate_exports_diagnostic(&module_name, export_decl.span));
-        }
-
-        if exported_name.is_none() {
-            return;
-        }
-
-        if existing_modules.iter().any(|entry| {
-            matches!(
-                (&entry.declaration_type, &entry.specifier),
-                (DeclarationType::Import, Specifier::Default)
-            )
-        }) {
-            ctx.diagnostic(no_duplicate_exports_diagnostic(&module_name, export_decl.span));
-        }
-    }
-
-    modules
-        .entry(module_name)
-        .or_default()
-        .push(ModuleEntry { declaration_type: DeclarationType::Export, specifier: Specifier::All });
+    true
 }
 
 #[test]
