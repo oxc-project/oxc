@@ -96,6 +96,7 @@ mod eslint {
     pub mod no_new_wrappers;
     pub mod no_nonoctal_decimal_escape;
     pub mod no_obj_calls;
+    pub mod no_object_constructor;
     pub mod no_plusplus;
     pub mod no_proto;
     pub mod no_prototype_builtins;
@@ -525,6 +526,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_classes_per_file,
     eslint::max_lines,
     eslint::max_params,
+    eslint::no_object_constructor,
     eslint::no_alert,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
