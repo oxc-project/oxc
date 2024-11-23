@@ -35,7 +35,7 @@ use oxc_allocator::{CloneIn, GetAddress, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString};
-use oxc_semantic::{IsGlobalReference, ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
@@ -998,9 +998,9 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
                 }
                 *all_primitives = false;
                 if let Expression::Identifier(ident) = expr {
-                    if !ident.is_global_reference(ctx.symbols()) {
-                        let expr = MaybeBoundIdentifier::from_identifier_reference(ident, ctx)
-                            .create_read_expression(ctx);
+                    let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
+                    if let Some(binding) = binding.to_bound_identifier() {
+                        let expr = binding.create_read_expression(ctx);
                         return Some(ArrayExpressionElement::from(expr));
                     }
                 }
