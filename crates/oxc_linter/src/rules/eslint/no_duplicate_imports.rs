@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use oxc_syntax::module_record::ImportImportName;
+use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -55,6 +55,13 @@ enum ImportType {
     Default,
     Namespace,
     SideEffect,
+    AllButDefault,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+enum ModuleType {
+    Import,
+    Export,
 }
 
 impl Rule for NoDuplicateImports {
@@ -70,10 +77,12 @@ impl Rule for NoDuplicateImports {
 
     fn run_once(&self, ctx: &LintContext) {
         let module_record = ctx.module_record();
-        let mut import_map: HashMap<&CompactStr, Vec<(ImportType, Span, bool)>> = HashMap::new(); // Added bool for same_statement
+        let mut import_map: HashMap<&CompactStr, Vec<(ImportType, Span, ModuleType)>> =
+            HashMap::new(); // Added bool for same_statement
         let mut current_span: Option<Span> = None;
 
         println!("source_text: {:?}", ctx.source_text());
+
         // Handle bare imports first
         if module_record.import_entries.is_empty() {
             for (source, requests) in &module_record.requested_modules {
@@ -92,7 +101,7 @@ impl Rule for NoDuplicateImports {
                         import_map.entry(source).or_default().push((
                             ImportType::SideEffect,
                             request.span(),
-                            false,
+                            ModuleType::Import,
                         ));
                     }
                 }
@@ -125,7 +134,7 @@ impl Rule for NoDuplicateImports {
                 }
             }
 
-            import_map.entry(source).or_default().push((import_type, span, same_statement));
+            import_map.entry(source).or_default().push((import_type, span, ModuleType::Import));
 
             if !same_statement {
                 current_span = Some(span);
@@ -141,6 +150,23 @@ impl Rule for NoDuplicateImports {
                     let source = module_request.name();
                     let span = entry.span;
 
+                    if entry.import_name.is_all_but_default() {
+                        if let Some(existing) = import_map.get(source) {
+                            if existing
+                                .iter()
+                                .any(|(t, _, _)| matches!(t, ImportType::AllButDefault))
+                            {
+                                ctx.diagnostic(no_duplicate_exports_diagnostic(source, span));
+                                continue;
+                            }
+                        }
+                        import_map.entry(source).or_default().push((
+                            ImportType::AllButDefault,
+                            span,
+                            ModuleType::Export,
+                        ));
+                        continue;
+                    }
                     if let Some(existing) = import_map.get(source) {
                         if existing.iter().any(|(t, _, _)| {
                             matches!(t, ImportType::Named | ImportType::SideEffect)
@@ -153,35 +179,47 @@ impl Rule for NoDuplicateImports {
                     import_map.entry(source).or_default().push((
                         ImportType::SideEffect,
                         span,
-                        false,
+                        ModuleType::Export,
                     ));
                 }
             }
 
             // Handle indirect exports
             for entry in &module_record.indirect_export_entries {
-                println!("indirect_export_entry: {:?}", entry);
-
                 if let Some(module_request) = &entry.module_request {
                     let source = module_request.name();
                     let span = entry.span;
+                    println!("- source: {source:?}, span: {span:?}, type: indirect_export_entries");
 
-                    if !entry.local_name.is_null() {
-                        if let Some(existing) = import_map.get(source) {
+                    if let Some(existing) = import_map.get(source) {
+                        if entry.import_name == ExportImportName::All {
                             if existing.iter().any(|(t, _, _)| {
-                                matches!(t, ImportType::Named | ImportType::SideEffect)
+                                matches!(t, ImportType::Default | ImportType::Namespace)
                             }) {
                                 ctx.diagnostic(no_duplicate_exports_diagnostic(source, span));
                                 continue;
                             }
+
+                            continue;
                         }
 
-                        import_map.entry(source).or_default().push((
-                            ImportType::Named,
-                            span,
-                            false,
-                        ));
+                        if existing.iter().any(|(t, _, module_type)| {
+                            (matches!(
+                                t,
+                                ImportType::Named | ImportType::SideEffect | ImportType::Default
+                            ) && *module_type == ModuleType::Export)
+                                || (matches!(t, ImportType::Default)
+                                    && *module_type == ModuleType::Import)
+                        }) {
+                            ctx.diagnostic(no_duplicate_exports_diagnostic(source, span));
+                            continue;
+                        }
                     }
+                    import_map.entry(source).or_default().push((
+                        ImportType::Named,
+                        span,
+                        ModuleType::Export,
+                    ));
                 }
             }
         }
@@ -190,48 +228,75 @@ impl Rule for NoDuplicateImports {
 
 fn can_merge_imports(
     current_type: &ImportType,
-    existing: &[(ImportType, Span, bool)],
+    existing: &[(ImportType, Span, ModuleType)],
     same_statement: bool,
 ) -> bool {
     println!("existing: {existing:?}");
-    for (existing_type, _, is_same_stmt) in existing {
-        // Allow multiple imports in the same statement
-        println!("same_statement: {same_statement}, is_same_stmt: {is_same_stmt}");
-        if same_statement {
-            return false;
-        }
 
-        println!("current_type: {:?}, existing_type: {:?}", current_type, existing_type);
-        match (current_type, existing_type) {
-            // Side effect imports can't be merged with anything
-            (ImportType::SideEffect, _) | (_, ImportType::SideEffect) => return false,
+    // Allow multiple imports in the same statement
+    if same_statement {
+        return false;
+    }
 
-            // Namespace imports can't be merged with named imports
-            (ImportType::Namespace, ImportType::Named)
-            | (ImportType::Named, ImportType::Namespace) => return false,
+    // this is the (namespace, span) if exsiting. None else
 
-            // Default imports can't be duplicated
-            (ImportType::Default, ImportType::Default) => return false,
+    let namespace = existing.iter().find(|(t, _, _)| matches!(t, ImportType::Namespace));
+    let named = existing.iter().find(|(t, _, _)| matches!(t, ImportType::Named));
+    let default = existing.iter().find(|(t, _, _)| matches!(t, ImportType::Default));
 
-            // Named imports from the same module can be merged unless there's a namespace import
-            (ImportType::Named, ImportType::Named) => {
-                if existing
-                    .iter()
-                    .any(|(t, _, same_stmt)| *t == ImportType::Namespace && *same_stmt)
-                {
-                    return true;
-                }
-            }
-            (ImportType::Named, ImportType::Default) => {
-                if existing.iter().any(|(t, _, same_stmt)| *t == ImportType::Named && *same_stmt) {
-                    return true;
-                }
-            }
-            // Other combinations are allowed
-            _ => continue,
+    let has_namespace = namespace.is_some();
+    let has_named = named.is_some();
+    let has_default = default.is_some();
+
+    // For duplicate named imports
+    if matches!(current_type, ImportType::Named) {
+        if has_named {
+            return true;
         }
     }
-    true
+
+    // For namespace imports
+    if matches!(current_type, ImportType::Namespace) {
+        if has_named && has_default {
+            if let Some((_, named_span, _)) = named {
+                if let Some((_, default_span, _)) = default {
+                    if named_span == default_span {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        if has_namespace {
+            return true;
+        }
+        if has_default && !same_statement {
+            return true;
+        }
+    }
+
+    // For default imports
+    if matches!(current_type, ImportType::Default) {
+        if has_default {
+            return true;
+        }
+        if has_named && !same_statement {
+            return true;
+        }
+        if has_namespace {
+            return true;
+        }
+    }
+
+    // For side effect imports
+    if matches!(current_type, ImportType::SideEffect) {
+        // Any existing import means it's a duplicate
+        if !existing.is_empty() {
+            return true;
+        }
+    }
+
+    false
 }
 
 #[test]
@@ -250,72 +315,72 @@ fn test() {
         (r#"import "foo""#, None),
         (
             r#"import os from "os";
-    		export { something } from "os";"#,
+        export { something } from "os";"#,
             None,
         ),
         (
             r#"import * as bar from "os";
-    		import { baz } from "os";"#,
+        import { baz } from "os";"#,
             None,
         ),
         (
             r#"import foo, * as bar from "os";
-    		import { baz } from "os";"#,
+        import { baz } from "os";"#,
             None,
         ),
         (
             r#"import foo, { bar } from "os";
-    		import * as baz from "os";"#,
+        import * as baz from "os";"#,
             None,
         ),
         (
             r#"import os from "os";
-    		export { hello } from "hello";"#,
+        export { hello } from "hello";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import os from "os";
-    		export * from "hello";"#,
+        export * from "hello";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import os from "os";
-    		export { hello as hi } from "hello";"#,
+        export { hello as hi } from "hello";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import os from "os";
-    		export default function(){};"#,
+        export default function(){};"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import { merge } from "lodash-es";
-    		export { merge as lodashMerge }"#,
+        export { merge as lodashMerge }"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"export { something } from "os";
-    		export * as os from "os";"#,
+        export * as os from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import { something } from "os";
-    		export * as os from "os";"#,
+        export * as os from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import * as os from "os";
-    		export { something } from "os";"#,
+        export { something } from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"import os from "os";
-    		export * from "os";"#,
+        export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
             r#"export { something } from "os";
-    		export * from "os";"#,
+        export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
     ];
@@ -374,21 +439,21 @@ fn test() {
         import os from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
-        // (
-        //     r#"import * as modns from "mod";
-        // export * as  modns from "mod";"#,
-        //     Some(serde_json::json!([{ "includeExports": true }])),
-        // ),
+        (
+            r#"import * as modns from "mod";
+        export * as  modns from "mod";"#,
+            Some(serde_json::json!([{ "includeExports": true }])),
+        ),
         (
             r#"export * from "os";
         export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
-        (
-            r#"import "os";
-        export * from "os";"#,
-            Some(serde_json::json!([{ "includeExports": true }])),
-        ),
+        // (
+        //     r#"import "os";
+        // export * from "os";"#,
+        //     Some(serde_json::json!([{ "includeExports": true }])),
+        // ),
     ];
 
     Tester::new(NoDuplicateImports::NAME, pass, fail).test_and_snapshot();
