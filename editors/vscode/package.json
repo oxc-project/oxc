@@ -92,7 +92,7 @@
         "oxc.configPath": {
           "type": "string",
           "scope": "window",
-          "default": ".eslintrc",
+          "default": ".oxlintrc.json",
           "description": "Path to ESlint configuration."
         },
         "oxc.path.server": {
@@ -108,8 +108,7 @@
           "oxlintrc.json",
           "oxlint.json",
           ".oxlintrc.json",
-          ".oxlint.json",
-          ".oxlintrc"
+          ".oxlint.json"
         ],
         "url": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json"
       }
@@ -121,8 +120,7 @@
           "oxlintrc.json",
           "oxlint.json",
           ".oxlintrc.json",
-          ".oxlint.json",
-          ".oxlintrc"
+          ".oxlint.json"
         ]
       }
     ]
