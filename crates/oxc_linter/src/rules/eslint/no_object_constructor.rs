@@ -71,9 +71,8 @@ impl Rule for NoObjectConstructor {
             && arguments.len() == 0
             && type_parameters.is_none()
         {
-            ctx.diagnostic(
-                crate::rules::eslint::no_object_constructor::no_object_constructor_diagnostic(span),
-            );
+            ctx.diagnostic(no_object_constructor_diagnostic(span));
+
         }
     }
 }
