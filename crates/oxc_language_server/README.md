@@ -4,14 +4,14 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 
 ## Server Capabilities
 
-- Text Document Sync: `FULL`, Documents are synced by always sending the full content of the document
+- [Text Document Synchronization](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_synchronization): `FULL`,
 - Workspace
-  - Workspace Folders: `true`
+  - [Workspace Folders](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceFoldersServerCapabilities): `true`
   - File Operations: `false`
-- Code Actions Provider:
+- [Code Actions Provider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionKind):
   - `quickfix`
 
-## Supported LSP Specifications
+## Supported LSP Specifications from Server
 
 - [initialize](https://microsoft.github.io/language-server-protocol/specification#initialize)
 - [initialized](https://microsoft.github.io/language-server-protocol/specification#initialized)
@@ -21,15 +21,13 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 
 #### [workspace/didChangeConfiguration](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeConfiguration)
 
--- ToDo
-
-When settings like `configPath` is changing
+The server expect this request when settings like `run`, `enable` or `configPath` are changed.
+The server will revalidate or reset the diagnostics for all open files and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
 
 #### [workspace/didChangeWatchedFiles](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeWatchedFiles)
 
--- ToDo
-
-When oxlint configuration is changing
+The server expect this request when the oxlint configuration is changed.
+The server will revalidate the diagnostics for all open files and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
 
 ### TextDocument
 
@@ -49,8 +47,16 @@ When oxlint configuration is changing
 
 #### [textDocument/didClose](https://microsoft.github.io/language-server-protocol/specification#textDocument_didClose)
 
-- ToDo
+-- ToDo
 
 #### [textDocument/codeAction](https://microsoft.github.io/language-server-protocol/specification#textDocument_codeAction)
 
-- ToDo
+-- ToDo
+
+## Expected LSP Specification from Client
+
+### TextDocument
+
+#### [textDocument/publishDiagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics)
+
+-- ToDo
