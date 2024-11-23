@@ -45,7 +45,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     #[inline]
-    pub const fn flags(&self) -> SymbolFlags {
+    pub fn flags(&self) -> SymbolFlags {
         self.flags
     }
 
