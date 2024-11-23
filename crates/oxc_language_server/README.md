@@ -22,12 +22,12 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 
 #### [workspace/didChangeConfiguration](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeConfiguration)
 
-The server expect this request when settings like `run`, `enable` or `configPath` are changed.
+The server expects this request when settings like `run`, `enable` or `configPath` are changed.
 The server will revalidate or reset the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
 
 #### [workspace/didChangeWatchedFiles](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeWatchedFiles)
 
-The server expect this request when the oxlint configuration is changed.
+The server expects this request when the oxlint configuration is changed.
 The server will revalidate the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
 
 ### TextDocument
