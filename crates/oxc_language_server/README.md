@@ -14,6 +14,7 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 ## Supported LSP Specifications from Server
 
 - [initialize](https://microsoft.github.io/language-server-protocol/specification#initialize)
+  - Returns the [Server Capabilities](#server-capabilities)
 - [initialized](https://microsoft.github.io/language-server-protocol/specification#initialized)
 - [shutdown](https://microsoft.github.io/language-server-protocol/specification#shutdown)
 
@@ -22,36 +23,34 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 #### [workspace/didChangeConfiguration](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeConfiguration)
 
 The server expect this request when settings like `run`, `enable` or `configPath` are changed.
-The server will revalidate or reset the diagnostics for all open files and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
+The server will revalidate or reset the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
 
 #### [workspace/didChangeWatchedFiles](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeWatchedFiles)
 
 The server expect this request when the oxlint configuration is changed.
-The server will revalidate the diagnostics for all open files and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
+The server will revalidate the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
 
 ### TextDocument
 
--- ToDo
-
 #### [textDocument/didOpen](https://microsoft.github.io/language-server-protocol/specification#textDocument_didOpen)
 
--- ToDo
+The server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
 
 #### [textDocument/didSave](https://microsoft.github.io/language-server-protocol/specification#textDocument_didSave)
 
--- ToDo
+When the configuration `run` is set to `onSave`, the server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
 
 #### [textDocument/didChange](https://microsoft.github.io/language-server-protocol/specification#textDocument_didChange)
 
--- ToDo
+When the configuration `run` is set to `onType`, the server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
 
 #### [textDocument/didClose](https://microsoft.github.io/language-server-protocol/specification#textDocument_didClose)
 
--- ToDo
+It will remove the reference internal.
 
 #### [textDocument/codeAction](https://microsoft.github.io/language-server-protocol/specification#textDocument_codeAction)
 
--- ToDo
+Returns a list of [CodeAction](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_codeAction)
 
 ## Expected LSP Specification from Client
 
@@ -59,4 +58,4 @@ The server will revalidate the diagnostics for all open files and send a [textDo
 
 #### [textDocument/publishDiagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics)
 
--- ToDo
+Returns a [PublishDiagnostic object](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsParams)
