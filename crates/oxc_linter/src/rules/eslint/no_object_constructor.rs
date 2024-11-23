@@ -97,6 +97,97 @@ fn test() {
         "Object() instanceof Object;",
         "const obj = Object?.();",
         "(new Object() instanceof Object);",
+        // Semicolon required before `({})` to compensate for ASI
+        /*
+        "foo
+         Object()",
+        "foo()
+         Object()",
+        "new foo
+         Object()",
+        "(a++)
+         Object()",
+        "++a
+         Object()",
+        "const foo = function() {}
+         Object()",
+        "const foo = class {}
+         Object()",
+        "foo = this.return
+         Object()",
+        "var yield = bar.yield
+         Object()",
+        "var foo = { bar: baz }
+         Object()",
+        ("<foo />
+         Object()", languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } })
+        ("<foo></foo>
+         Object()", languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } })*/
+
+        // No semicolon required before `({})` because ASI does not occur
+        /*
+        "{}
+         Object()",
+        "function foo() {}
+         Object()",
+        "class Foo {}
+         Object()",
+        "foo: Object();",
+        "foo();Object();",
+        "{ Object(); }",
+        "if (a) Object();",
+        "if (a); else Object();",
+        "while (a) Object();",
+        "do Object();
+         while (a);",
+        "for (let i = 0; i < 10; i++) Object();",
+        "for (const prop in obj) Object();",
+        "for (const element of iterable) Object();",
+        "with (obj) Object();",*/
+
+        // No semicolon required before `({})` because ASI still occurs
+        /*
+        "const foo = () => {}
+         Object()",
+        "a++
+         Object()",
+        "a--
+         Object()",
+        "function foo() {
+             return
+             Object();
+         }",
+        "function * foo() {
+             yield
+             Object();
+         }",
+        "do {}
+         while (a)
+         Object()",
+        "debugger
+         Object()",
+        "for (;;) {
+             break
+             Object()
+         }",
+        "for (;;) {
+             continue
+             Object()
+         }",
+        "foo: break foo
+         Object()",
+        "foo: while (true) continue foo
+         Object()",
+        ("const foo = bar
+         export { foo }
+         Object()", languageOptions: { sourceType: "module" }),
+        ("export { foo } from 'bar'
+         Object()", languageOptions: { sourceType: "module" }),
+        ("export * as foo from 'bar'
+         Object()", languageOptions: { sourceType: "module" }),
+        ("import foo from 'bar'
+         Object()", languageOptions: { sourceType: "module" })
+         */
     ];
 
     Tester::new(NoObjectConstructor::NAME, pass, fail).test_and_snapshot();
