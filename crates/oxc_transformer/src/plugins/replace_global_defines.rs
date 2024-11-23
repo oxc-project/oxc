@@ -137,7 +137,9 @@ impl ReplaceGlobalDefinesConfig {
 
         if parts.len() == 1 {
             if !is_identifier_name(parts[0]) {
-                return Err(vec![OxcDiagnostic::error(format!("`{key}` is not an identifier."))]);
+                return Err(vec![OxcDiagnostic::error(format!(
+                    "The define key `{key}` is not an identifier."
+                ))]);
             }
             return Ok(IdentifierType::Identifier);
         }
@@ -148,7 +150,9 @@ impl ReplaceGlobalDefinesConfig {
 
         for part in &parts[0..normalized_parts_len] {
             if !is_identifier_name(part) {
-                return Err(vec![OxcDiagnostic::error(format!("`{key}` is not an identifier."))]);
+                return Err(vec![OxcDiagnostic::error(format!(
+                    "The define key `{key}` contains an invalid identifier `{part}`."
+                ))]);
             }
         }
         if is_import_meta {
@@ -167,7 +171,7 @@ impl ReplaceGlobalDefinesConfig {
         // StaticMemberExpression with postfix wildcard
         } else if normalized_parts_len != parts.len() {
             Err(vec![OxcDiagnostic::error(
-                "postfix wildcard is only allowed for `import.meta`.".to_string(),
+                "The postfix wildcard is only allowed for `import.meta`.".to_string(),
             )])
         } else {
             Ok(IdentifierType::DotDefines {
