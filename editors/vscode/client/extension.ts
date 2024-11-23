@@ -163,9 +163,9 @@ export async function activate(context: ExtensionContext) {
           return true;
         }
 
-        return !configService.config.enable
-      }
-    }
+        return !configService.config.enable;
+      },
+    },
   };
 
   // Create the language client and start the client.

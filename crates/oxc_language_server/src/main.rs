@@ -13,7 +13,16 @@ use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
-        CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams, CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic, DiagnosticOptions, DiagnosticServerCapabilities, DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportResult, FullDocumentDiagnosticReport, InitializeParams, InitializeResult, InitializedParams, OneOf, RelatedFullDocumentDiagnosticReport, ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities
+        CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
+        CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
+        DiagnosticOptions, DiagnosticServerCapabilities, DidChangeConfigurationParams,
+        DidChangeTextDocumentParams, DidChangeWatchedFilesParams, DidCloseTextDocumentParams,
+        DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentDiagnosticParams,
+        DocumentDiagnosticReport, DocumentDiagnosticReportResult, FullDocumentDiagnosticReport,
+        InitializeParams, InitializeResult, InitializedParams, OneOf,
+        RelatedFullDocumentDiagnosticReport, ServerCapabilities, ServerInfo,
+        TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions,
+        WorkspaceEdit, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
     },
     Client, LanguageServer, LspService, Server,
 };
@@ -108,12 +117,14 @@ impl LanguageServer for Backend {
                     }),
                     file_operations: None,
                 }),
-                diagnostic_provider: Some(DiagnosticServerCapabilities::Options(DiagnosticOptions {
-                    identifier: Some("oxc".into()),
-                    inter_file_dependencies: false,
-                    workspace_diagnostics: false,
-                    work_done_progress_options: WorkDoneProgressOptions::default(),
-                })),
+                diagnostic_provider: Some(DiagnosticServerCapabilities::Options(
+                    DiagnosticOptions {
+                        identifier: Some("oxc".into()),
+                        inter_file_dependencies: false,
+                        workspace_diagnostics: false,
+                        work_done_progress_options: WorkDoneProgressOptions::default(),
+                    },
+                )),
                 code_action_provider: Some(CodeActionProviderCapability::Options(
                     CodeActionOptions {
                         code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
@@ -203,31 +214,40 @@ impl LanguageServer for Backend {
         }
     }
 
-    async fn diagnostic(&self, params: DocumentDiagnosticParams) -> Result<DocumentDiagnosticReportResult> {
-        let content = self.document_content_cache.get(&params.text_document.uri).map(|entry| entry.value().to_owned());
+    async fn diagnostic(
+        &self,
+        params: DocumentDiagnosticParams,
+    ) -> Result<DocumentDiagnosticReportResult> {
+        let content = self
+            .document_content_cache
+            .get(&params.text_document.uri)
+            .map(|entry| entry.value().to_owned());
 
         let Some(entry) = self.document_content_cache.get(&params.text_document.uri) else {
             return Err(Error::new(ErrorCode::InvalidParams));
         };
-        
+
         let Some(result) = self.lint_uri(entry.key(), content).await else {
-            return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {
-                related_documents: None,
-                full_document_diagnostic_report: FullDocumentDiagnosticReport::default()
-            })))
+            return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
+                RelatedFullDocumentDiagnosticReport {
+                    related_documents: None,
+                    full_document_diagnostic_report: FullDocumentDiagnosticReport::default(),
+                },
+            )));
         };
 
         self.diagnostics_report_map.insert(entry.key().to_string(), result.clone());
 
-        Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {
-            related_documents: None,
-            full_document_diagnostic_report: FullDocumentDiagnosticReport {
-                items: result.into_iter().map(|report| report.diagnostic).collect(),
-                ..FullDocumentDiagnosticReport::default()
+        Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
+            RelatedFullDocumentDiagnosticReport {
+                related_documents: None,
+                full_document_diagnostic_report: FullDocumentDiagnosticReport {
+                    items: result.into_iter().map(|report| report.diagnostic).collect(),
+                    ..FullDocumentDiagnosticReport::default()
+                },
             },
-        })))
+        )))
     }
-
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
         let uri = params.text_document.uri;
@@ -376,7 +396,7 @@ impl Backend {
             return None;
         };
 
-        self.server_linter.read().await.run_single(&uri, content) 
+        self.server_linter.read().await.run_single(&uri, content)
     }
     async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
         if let Some(diagnostics) = self.lint_uri(&uri, content).await {
