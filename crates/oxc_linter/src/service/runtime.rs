@@ -11,7 +11,7 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
-use oxc_semantic::SemanticBuilder;
+use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
 use rustc_hash::FxHashSet;
@@ -199,6 +199,9 @@ impl Runtime {
             .parse();
 
         if !ret.errors.is_empty() {
+            if self.resolver.is_some() {
+                self.modules.add_resolved_module(path, Arc::new(ModuleRecord::default()));
+            }
             return if ret.is_flow_language {
                 vec![]
             } else {

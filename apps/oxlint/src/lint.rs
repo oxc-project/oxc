@@ -388,6 +388,16 @@ mod test {
     }
 
     #[test]
+    // https://github.com/oxc-project/oxc/issues/7406
+    fn ignore_flow_import_plugin_directory() {
+        let args = &["--import-plugin", "-A all", "-D no-cycle", "fixtures/flow/"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 2);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
     fn filter_allow_all() {
         let args = &["-A", "all", "fixtures/linter"];
         let result = test(args);
