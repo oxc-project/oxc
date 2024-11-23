@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.1] - 2024-11-23
+
+- 6f0fe38 semantic: [**BREAKING**] Correct all `ReferenceFlags::Write` according to the spec (#7388) (Dunqing)
+
+### Features
+
+- 4ad26b9 linter: Add `no-promise-in-callback` (#7307) (no-yan)
+
+### Bug Fixes
+
+- 8507464 linter: Hanging when source has syntax/is flow (#7432) (Cameron)
+- e88cf1b linter: Make `overrides` globs relative to config path (#7407) (camchenry)
+- 9002e97 linter: Add proper support for findIndex and findLastIndex for `unicorn/prefer-array-some` (#7405) (Dmitry Zakharov)
+
+### Documentation
+
+- 6730e3e linter: Add more examples for `unicorn/prefer-array-some` (#7411) (Dmitry Zakharov)
+
+### Refactor
+
+- 6c0d31b linter: Remove useless `const` declaration (#7430) (Song Gao)
+- c8adc46 linter/no-unused-vars: Improve implementation to remove using SymbolFlags::Export (#7412) (Dunqing)
+- c90537f linter/only-used-in-recursion: Improve implementation to remove using SymbolFlags::Export (#7413) (Dunqing)
+
 ## [0.13.0] - 2024-11-21
 
 - f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)

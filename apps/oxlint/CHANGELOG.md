@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.1] - 2024-11-23
+
+### Features
+
+- 9558087 oxlint: Auto detect config file in CLI (#7348) (Alexander S.)
+
+### Bug Fixes
+
+- 8507464 linter: Hanging when source has syntax/is flow (#7432) (Cameron)
+- e88cf1b linter: Make `overrides` globs relative to config path (#7407) (camchenry)
+
 ## [0.13.0] - 2024-11-21
 
 - 878189c parser,linter: [**BREAKING**] Add `ParserReturn::is_flow_language`; linter ignore flow error (#7373) (Boshen)
