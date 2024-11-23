@@ -37,16 +37,19 @@ mod ast;
 /// It marks where `Visit::enter_scope` and `Visit::exit_scope` events should be fired for this AST type.
 ///
 /// ## `#[visit(args(arg = expr))]`
+///
 /// This attribute can only occur on `struct` fields, or `enum` variants.
 /// Accepts an argument name and an expression.
 /// `expr` is an expression that would evaluate to `ScopeFlags`.
 /// This argument can only be used at places where the AST type is `Function`.
 ///
 /// ## `#[span]`
+///
 /// This attribute can be used to hint to `ast_tools` which field should be used to obtain the span
 /// of this AST type.
 ///
 /// ## `#[generate_derive(...)]`
+///
 /// This attribute has the same purpose as Rust's `#[derive(...)]` macro.
 /// It is used to derive traits for the types.
 /// However, instead of expanding the derive at compile-time, we generate the derived code at build time
@@ -55,6 +58,7 @@ mod ast;
 /// defined in.
 ///
 /// ## `#[ts]`
+///
 /// Marks a struct field as only relevant for TypeScript ASTs.
 ///
 /// # Derive Helper Attributes
@@ -63,6 +67,7 @@ mod ast;
 /// via `generate_derive`.
 ///
 /// ## `#[clone_in(default)]`
+///
 /// This attribute is only used by `CloneIn` derive.
 /// `struct` fields marked with this attribute at cloning will use the `Default::default()` value
 /// instead of `CloneIn::clone_in` to initialize.
