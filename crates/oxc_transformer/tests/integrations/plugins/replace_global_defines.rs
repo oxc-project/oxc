@@ -89,3 +89,18 @@ fn dot_with_postfix_mixed() {
     test("import.meta.somethingelse", "metaProperty", config.clone());
     test("import.meta", "1", config);
 }
+
+#[test]
+fn optional_chain() {
+    let config = ReplaceGlobalDefinesConfig::new(&[("a.b.c", "1")]).unwrap();
+    test("a.b.c", "1", config.clone());
+    test("a?.b.c", "1", config.clone());
+    test("a.b?.c", "1", config.clone());
+    test("a['b']['c']", "1", config.clone());
+    test("a?.['b']['c']", "1", config.clone());
+    test("a['b']?.['c']", "1", config.clone());
+
+    test_same("a[b][c]", config.clone());
+    test_same("a?.[b][c]", config.clone());
+    test_same("a[b]?.[c]", config.clone());
+}

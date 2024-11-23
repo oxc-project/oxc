@@ -254,39 +254,31 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
+            Expression::ChainExpression(chain) => {
+                let Some(new_expr) =
+                    chain.expression.as_member_expression_mut().and_then(|item| match item {
+                        MemberExpression::ComputedMemberExpression(
+                            ref mut computed_member_expr,
+                        ) => self.replace_dot_computed_member_expr(ctx, computed_member_expr),
+                        MemberExpression::StaticMemberExpression(ref mut member) => {
+                            self.replace_dot_static_member_expr(ctx, member)
+                        }
+                        MemberExpression::PrivateFieldExpression(_) => None,
+                    })
+                else {
+                    return;
+                };
+                *expr = new_expr;
+            }
             Expression::StaticMemberExpression(member) => {
-                for dot_define in &self.config.0.dot {
-                    if Self::is_dot_define(
-                        ctx.symbols(),
-                        dot_define,
-                        DotDefineMemberExpression::StaticMemberExpression(member),
-                    ) {
-                        let value = self.parse_value(&dot_define.value);
-                        *expr = value;
-                        return;
-                    }
-                }
-                for meta_property_define in &self.config.0.meta_property {
-                    if Self::is_meta_property_define(meta_property_define, member) {
-                        let value = self.parse_value(&meta_property_define.value);
-                        *expr = value;
-                        return;
-                    }
+                if let Some(new_expr) = self.replace_dot_static_member_expr(ctx, member) {
+                    *expr = new_expr;
                 }
             }
             Expression::ComputedMemberExpression(member) => {
-                for dot_define in &self.config.0.dot {
-                    if Self::is_dot_define(
-                        ctx.symbols(),
-                        dot_define,
-                        DotDefineMemberExpression::ComputedMemberExpression(member),
-                    ) {
-                        let value = self.parse_value(&dot_define.value);
-                        *expr = value;
-                        return;
-                    }
+                if let Some(new_expr) = self.replace_dot_computed_member_expr(ctx, member) {
+                    *expr = new_expr;
                 }
-                // TODO: meta_property_define
             }
             Expression::MetaProperty(meta_property) => {
                 if let Some(ref replacement) = self.config.0.import_meta {
@@ -299,6 +291,49 @@ impl<'a> ReplaceGlobalDefines<'a> {
             }
             _ => {}
         }
+    }
+
+    fn replace_dot_computed_member_expr(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+        member: &mut ComputedMemberExpression<'a>,
+    ) -> Option<Expression<'a>> {
+        for dot_define in &self.config.0.dot {
+            if Self::is_dot_define(
+                ctx.symbols(),
+                dot_define,
+                DotDefineMemberExpression::ComputedMemberExpression(member),
+            ) {
+                let value = self.parse_value(&dot_define.value);
+                return Some(value);
+            }
+        }
+        // TODO: meta_property_define
+        None
+    }
+
+    fn replace_dot_static_member_expr(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+        member: &mut StaticMemberExpression<'a>,
+    ) -> Option<Expression<'a>> {
+        for dot_define in &self.config.0.dot {
+            if Self::is_dot_define(
+                ctx.symbols(),
+                dot_define,
+                DotDefineMemberExpression::StaticMemberExpression(member),
+            ) {
+                let value = self.parse_value(&dot_define.value);
+                return Some(value);
+            }
+        }
+        for meta_property_define in &self.config.0.meta_property {
+            if Self::is_meta_property_define(meta_property_define, member) {
+                let value = self.parse_value(&meta_property_define.value);
+                return Some(value);
+            }
+        }
+        None
     }
 
     pub fn is_meta_property_define(
