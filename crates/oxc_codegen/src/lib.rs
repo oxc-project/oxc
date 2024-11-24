@@ -401,7 +401,7 @@ impl<'a> Codegen<'a> {
             self.dedent();
             self.print_indent();
         }
-        self.add_source_mapping(span, span.end);
+        self.add_source_mapping_end(span);
         self.print_ascii_byte(b'}');
     }
 
@@ -645,6 +645,15 @@ impl<'a> Codegen<'a> {
         }
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             sourcemap_builder.add_source_mapping(self.code.as_bytes(), position, None);
+        }
+    }
+
+    fn add_source_mapping_end(&mut self, span: Span) {
+        if span == SPAN {
+            return;
+        }
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
         }
     }
 

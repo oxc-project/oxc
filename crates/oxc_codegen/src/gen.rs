@@ -812,7 +812,7 @@ impl<'a> Gen for ImportDeclaration<'a> {
             p.print_hard_space();
             with_clause.print(p, ctx);
         }
-        p.add_source_mapping(self.span, self.span.end);
+        p.add_source_mapping_end(self.span);
         p.print_semicolon_after_statement();
     }
 }
@@ -1382,7 +1382,7 @@ impl<'a> GenExpr for CallExpression<'a> {
                 p.print_list(&self.arguments, ctx);
             }
             p.print_ascii_byte(b')');
-            p.add_source_mapping(self.span, self.span.end);
+            p.add_source_mapping_end(self.span);
         });
     }
 }
@@ -1446,7 +1446,7 @@ impl<'a> Gen for ArrayExpression<'a> {
             p.dedent();
             p.print_indent();
         }
-        p.add_source_mapping(self.span, self.span.end);
+        p.add_source_mapping_end(self.span);
         p.print_ascii_byte(b']');
     }
 }
@@ -1482,7 +1482,7 @@ impl<'a> GenExpr for ObjectExpression<'a> {
             } else if len > 0 {
                 p.print_soft_space();
             }
-            p.add_source_mapping(self.span, self.span.end);
+            p.add_source_mapping_end(self.span);
             p.print_ascii_byte(b'}');
         });
     }
@@ -1848,7 +1848,7 @@ impl<'a> Gen for ArrayAssignmentTarget<'a> {
             p.print_comma();
         }
         p.print_ascii_byte(b']');
-        p.add_source_mapping(self.span, self.span.end);
+        p.add_source_mapping_end(self.span);
     }
 }
 
@@ -1865,7 +1865,7 @@ impl<'a> Gen for ObjectAssignmentTarget<'a> {
             target.print(p, ctx);
         }
         p.print_ascii_byte(b'}');
-        p.add_source_mapping(self.span, self.span.end);
+        p.add_source_mapping_end(self.span);
     }
 }
 
@@ -2676,7 +2676,7 @@ impl<'a> Gen for ObjectPattern<'a> {
             p.print_soft_space();
         }
         p.print_ascii_byte(b'}');
-        p.add_source_mapping(self.span, self.span.end);
+        p.add_source_mapping_end(self.span);
     }
 }
 
@@ -2751,7 +2751,7 @@ impl<'a> Gen for ArrayPattern<'a> {
             rest.print(p, ctx);
         }
         p.print_ascii_byte(b']');
-        p.add_source_mapping(self.span, self.span.end);
+        p.add_source_mapping_end(self.span);
     }
 }
 
