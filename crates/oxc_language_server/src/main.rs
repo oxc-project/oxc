@@ -17,12 +17,12 @@ use tower_lsp::{
         CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
         DiagnosticOptions, DiagnosticServerCapabilities, DidChangeConfigurationParams,
         DidChangeTextDocumentParams, DidChangeWatchedFilesParams, DidCloseTextDocumentParams,
-        DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentDiagnosticParams,
-        DocumentDiagnosticReport, DocumentDiagnosticReportResult, FullDocumentDiagnosticReport,
-        InitializeParams, InitializeResult, InitializedParams, OneOf,
-        RelatedFullDocumentDiagnosticReport, ServerCapabilities, ServerInfo,
-        TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions,
-        WorkspaceEdit, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+        DidOpenTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
+        DocumentDiagnosticReportResult, FullDocumentDiagnosticReport, InitializeParams,
+        InitializeResult, InitializedParams, OneOf, RelatedFullDocumentDiagnosticReport,
+        ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit,
+        Url, WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
+        WorkspaceServerCapabilities,
     },
     Client, LanguageServer, LspService, Server,
 };
@@ -33,7 +33,7 @@ struct Backend {
     client: Client,
     root_uri: OnceCell<Option<Url>>,
     server_linter: RwLock<ServerLinter>,
-    document_content_cache: DashMap<Url, String>,
+    document_content_cache: DashMap<String, String>,
     diagnostics_report_map: DashMap<String, Vec<DiagnosticReport>>,
     options: Mutex<Options>,
     gitignore_glob: Mutex<Vec<Gitignore>>,
@@ -165,7 +165,7 @@ impl LanguageServer for Backend {
         debug!("{:?}", &changed_options.get_lint_level());
         if changed_options.get_lint_level() == SyntheticRunLevel::Disable {
             // clear all exists diagnostics when linter is disabled
-            let opened_files = self.diagnostics_report_map.iter().map(|k| k.key().to_string());
+            let opened_files = self.document_content_cache.iter().map(|k| k.key().to_string());
             let cleared_diagnostics = opened_files
                 .into_iter()
                 .map(|uri| {
@@ -180,6 +180,7 @@ impl LanguageServer for Backend {
                 })
                 .collect::<Vec<_>>();
             self.publish_all_diagnostics(&cleared_diagnostics).await;
+            self.diagnostics_report_map.clear();
         }
         *self.options.lock().await = changed_options;
     }
@@ -199,18 +200,19 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        self.document_content_cache.insert(params.text_document.uri, params.text_document.text);
+        self.document_content_cache
+            .insert(params.text_document.uri.to_string(), params.text_document.text);
     }
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
-        self.document_content_cache.remove(&params.text_document.uri);
+        self.document_content_cache.remove(&params.text_document.uri.to_string());
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let content = params.content_changes.first().map(|c| c.text.clone());
 
         if let Some(content) = content {
-            self.document_content_cache.insert(params.text_document.uri, content);
+            self.document_content_cache.insert(params.text_document.uri.to_string(), content);
         }
     }
 
@@ -218,16 +220,22 @@ impl LanguageServer for Backend {
         &self,
         params: DocumentDiagnosticParams,
     ) -> Result<DocumentDiagnosticReportResult> {
+        // the file is ignored, return empty result
+        if self.is_ignored(&params.text_document.uri).await {
+            return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
+                RelatedFullDocumentDiagnosticReport {
+                    related_documents: None,
+                    full_document_diagnostic_report: FullDocumentDiagnosticReport::default(),
+                },
+            )));
+        }
+
         let content = self
             .document_content_cache
-            .get(&params.text_document.uri)
+            .get(&params.text_document.uri.to_string())
             .map(|entry| entry.value().to_owned());
 
-        let Some(entry) = self.document_content_cache.get(&params.text_document.uri) else {
-            return Err(Error::new(ErrorCode::InvalidParams));
-        };
-
-        let Some(result) = self.lint_uri(entry.key(), content).await else {
+        let Some(result) = self.lint_uri(&params.text_document.uri, content).await else {
             return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
                 RelatedFullDocumentDiagnosticReport {
                     related_documents: None,
@@ -235,8 +243,6 @@ impl LanguageServer for Backend {
                 },
             )));
         };
-
-        self.diagnostics_report_map.insert(entry.key().to_string(), result.clone());
 
         Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
             RelatedFullDocumentDiagnosticReport {
@@ -357,10 +363,12 @@ impl Backend {
     }
 
     async fn revalidate_open_files(&self) {
-        join_all(self.diagnostics_report_map.iter().map(|map| {
-            let url = Url::from_str(map.key()).expect("should convert to path");
-
-            self.handle_file_update(url, None, None)
+        join_all(self.document_content_cache.iter().map(|map| {
+            self.lint_file_and_publish_diagnostic(
+                Url::from_str(map.key()).unwrap(),
+                Some(map.value().clone()),
+                None,
+            )
         }))
         .await;
     }
@@ -396,9 +404,20 @@ impl Backend {
             return None;
         };
 
-        self.server_linter.read().await.run_single(&uri, content)
+        let result = self.server_linter.read().await.run_single(&uri, content);
+
+        if result.is_some() {
+            self.diagnostics_report_map.insert(uri.to_string(), result.clone().unwrap());
+        }
+
+        result
     }
-    async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {
+    async fn lint_file_and_publish_diagnostic(
+        &self,
+        uri: Url,
+        content: Option<String>,
+        version: Option<i32>,
+    ) {
         if let Some(diagnostics) = self.lint_uri(&uri, content).await {
             self.client
                 .publish_diagnostics(
@@ -407,8 +426,6 @@ impl Backend {
                     version,
                 )
                 .await;
-
-            self.diagnostics_report_map.insert(uri.to_string(), diagnostics);
         }
     }
 
