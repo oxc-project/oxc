@@ -390,7 +390,7 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_curly_braces<F: FnOnce(&mut Self)>(&mut self, span: Span, single_line: bool, op: F) {
-        self.add_source_mapping_by_span(span, span.start);
+        self.add_source_mapping(span, span.start);
         self.print_ascii_byte(b'{');
         if !single_line {
             self.print_soft_newline();
@@ -401,21 +401,21 @@ impl<'a> Codegen<'a> {
             self.dedent();
             self.print_indent();
         }
-        self.add_source_mapping_by_span(span, span.end);
+        self.add_source_mapping(span, span.end);
         self.print_ascii_byte(b'}');
     }
 
-    fn print_block_start(&mut self, position: u32) {
-        self.add_source_mapping(position);
+    fn print_block_start(&mut self, span: Span, position: u32) {
+        self.add_source_mapping(span, position);
         self.print_ascii_byte(b'{');
         self.print_soft_newline();
         self.indent();
     }
 
-    fn print_block_end(&mut self, position: u32) {
+    fn print_block_end(&mut self, span: Span, position: u32) {
         self.dedent();
         self.print_indent();
-        self.add_source_mapping(position);
+        self.add_source_mapping(span, position);
         self.print_ascii_byte(b'}');
     }
 
@@ -639,13 +639,7 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(self.quote);
     }
 
-    fn add_source_mapping(&mut self, position: u32) {
-        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            sourcemap_builder.add_source_mapping(self.code.as_bytes(), position, None);
-        }
-    }
-
-    fn add_source_mapping_by_span(&mut self, span: Span, position: u32) {
+    fn add_source_mapping(&mut self, span: Span, position: u32) {
         if span == SPAN {
             return;
         }
