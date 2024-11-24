@@ -194,7 +194,7 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
             p.print_block_start(stmt.span(), stmt.span().start);
             stmt.print(p, ctx);
             p.needs_semicolon = false;
-            p.print_block_end(stmt.span(), stmt.span().end);
+            p.print_block_end(stmt.span());
             if if_stmt.alternate.is_some() {
                 p.print_soft_space();
             } else {
@@ -824,7 +824,7 @@ impl<'a> Gen for WithClause<'a> {
         p.print_soft_space();
         p.print_block_start(self.span, self.span.start);
         p.print_sequence(&self.with_entries, ctx);
-        p.print_block_end(self.span, self.span.end);
+        p.print_block_end(self.span);
     }
 }
 

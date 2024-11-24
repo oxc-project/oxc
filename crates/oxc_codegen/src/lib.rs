@@ -412,10 +412,10 @@ impl<'a> Codegen<'a> {
         self.indent();
     }
 
-    fn print_block_end(&mut self, span: Span, position: u32) {
+    fn print_block_end(&mut self, span: Span) {
         self.dedent();
         self.print_indent();
-        self.add_source_mapping(span, position);
+        self.add_source_mapping_end(span);
         self.print_ascii_byte(b'}');
     }
 
