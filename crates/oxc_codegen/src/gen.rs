@@ -63,7 +63,7 @@ impl<'a> Gen for Hashbang<'a> {
 
 impl<'a> Gen for Directive<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
         // So here should print original `directive` value, the `expression` value is escaped str.
@@ -152,7 +152,7 @@ impl<'a> Gen for Statement<'a> {
 
 impl<'a> Gen for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.start_of_stmt = p.code_len();
         p.print_expression(&self.expression);
@@ -166,7 +166,7 @@ impl<'a> Gen for ExpressionStatement<'a> {
 
 impl<'a> Gen for IfStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         print_if(self, p, ctx);
     }
@@ -255,7 +255,7 @@ impl<'a> Gen for BlockStatement<'a> {
 
 impl<'a> Gen for ForStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("for");
         p.print_soft_space();
@@ -286,7 +286,7 @@ impl<'a> Gen for ForStatement<'a> {
 
 impl<'a> Gen for ForInStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("for");
         p.print_soft_space();
@@ -304,7 +304,7 @@ impl<'a> Gen for ForInStatement<'a> {
 
 impl<'a> Gen for ForOfStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("for");
         if self.r#await {
@@ -350,7 +350,7 @@ impl<'a> Gen for ForStatementLeft<'a> {
 
 impl<'a> Gen for WhileStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("while");
         p.print_soft_space();
@@ -363,7 +363,7 @@ impl<'a> Gen for WhileStatement<'a> {
 
 impl<'a> Gen for DoWhileStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("do ");
         if let Statement::BlockStatement(block) = &self.body {
@@ -388,7 +388,7 @@ impl<'a> Gen for DoWhileStatement<'a> {
 
 impl Gen for EmptyStatement {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_semicolon();
         p.print_soft_newline();
@@ -397,7 +397,7 @@ impl Gen for EmptyStatement {
 
 impl<'a> Gen for ContinueStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("continue");
         if let Some(label) = &self.label {
@@ -410,7 +410,7 @@ impl<'a> Gen for ContinueStatement<'a> {
 
 impl<'a> Gen for BreakStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("break");
         if let Some(label) = &self.label {
@@ -423,7 +423,7 @@ impl<'a> Gen for BreakStatement<'a> {
 
 impl<'a> Gen for SwitchStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("switch");
         p.print_soft_space();
@@ -433,7 +433,7 @@ impl<'a> Gen for SwitchStatement<'a> {
         p.print_soft_space();
         p.print_curly_braces(self.span, self.cases.is_empty(), |p| {
             for case in &self.cases {
-                p.add_source_mapping(case.span, case.span.start);
+                p.add_source_mapping(case.span);
                 case.print(p, ctx);
             }
         });
@@ -472,7 +472,7 @@ impl<'a> Gen for SwitchCase<'a> {
 
 impl<'a> Gen for ReturnStatement<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
         p.print_str("return");
@@ -487,7 +487,7 @@ impl<'a> Gen for ReturnStatement<'a> {
 impl<'a> Gen for LabeledStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         if !p.options.minify && (p.indent > 0 || p.print_next_indent_as_space) {
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             p.print_indent();
         }
         p.print_space_before_identifier();
@@ -499,7 +499,7 @@ impl<'a> Gen for LabeledStatement<'a> {
 
 impl<'a> Gen for TryStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_space_before_identifier();
         p.print_str("try");
@@ -529,7 +529,7 @@ impl<'a> Gen for TryStatement<'a> {
 
 impl<'a> Gen for ThrowStatement<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("throw ");
         p.print_expression(&self.argument);
@@ -539,7 +539,7 @@ impl<'a> Gen for ThrowStatement<'a> {
 
 impl<'a> Gen for WithStatement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("with");
         p.print_ascii_byte(b'(');
@@ -551,7 +551,7 @@ impl<'a> Gen for WithStatement<'a> {
 
 impl Gen for DebuggerStatement {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("debugger");
         p.print_semicolon_after_statement();
@@ -560,7 +560,7 @@ impl Gen for DebuggerStatement {
 
 impl<'a> Gen for VariableDeclaration<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         if self.declare {
             p.print_str("declare ");
         }
@@ -619,7 +619,7 @@ impl<'a> Gen for Function<'a> {
         p.print_annotation_comments(self.span.start);
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             if self.declare {
                 p.print_str("declare ");
             }
@@ -724,7 +724,7 @@ impl<'a> Gen for FormalParameters<'a> {
 
 impl<'a> Gen for ImportDeclaration<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("import ");
         if self.import_kind.is_type() {
@@ -819,7 +819,7 @@ impl<'a> Gen for ImportDeclaration<'a> {
 
 impl<'a> Gen for WithClause<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         self.attributes_keyword.print(p, ctx);
         p.print_soft_space();
         p.print_block_start(self.span, self.span.start);
@@ -844,7 +844,7 @@ impl<'a> Gen for ImportAttribute<'a> {
 
 impl<'a> Gen for ExportNamedDeclaration<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
 
         if p.options.print_annotation_comments() {
@@ -967,7 +967,7 @@ impl<'a> Gen for ModuleExportName<'a> {
 
 impl<'a> Gen for ExportAllDeclaration<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("export ");
         if self.export_kind.is_type() {
@@ -992,7 +992,7 @@ impl<'a> Gen for ExportAllDeclaration<'a> {
 
 impl<'a> Gen for ExportDefaultDeclaration<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_indent();
         p.print_str("export default ");
         self.declaration.print(p, ctx);
@@ -1085,7 +1085,7 @@ impl<'a> Gen for IdentifierReference<'a> {
 
 impl<'a> Gen for IdentifierName<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_str(self.name.as_str());
     }
 }
@@ -1107,7 +1107,7 @@ impl<'a> Gen for LabelIdentifier<'a> {
 
 impl Gen for BooleanLiteral {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_space_before_identifier();
         p.print_str(self.as_str());
     }
@@ -1116,14 +1116,14 @@ impl Gen for BooleanLiteral {
 impl Gen for NullLiteral {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_str("null");
     }
 }
 
 impl<'a> GenExpr for NumericLiteral<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         let value = self.value;
         if ctx.contains(Context::TYPESCRIPT) {
             p.print_str(self.raw);
@@ -1169,14 +1169,14 @@ impl<'a> Gen for BigIntLiteral<'a> {
         }
 
         p.print_space_before_identifier();
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_str(&raw);
     }
 }
 
 impl<'a> Gen for RegExpLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         let last = p.last_byte();
         let pattern_text = self.regex.pattern.source_text(p.source_text);
         // Avoid forming a single-line comment or "</script" sequence
@@ -1277,7 +1277,7 @@ fn print_unquoted_str(s: &str, quote: u8, p: &mut Codegen) {
 
 impl<'a> Gen for StringLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         let s = self.value.as_str();
         p.wrap_quote(|p, quote| {
             print_unquoted_str(s, quote, p);
@@ -1287,7 +1287,7 @@ impl<'a> Gen for StringLiteral<'a> {
 
 impl Gen for ThisExpression {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_space_before_identifier();
         p.print_str("this");
     }
@@ -1357,7 +1357,7 @@ impl<'a> GenExpr for CallExpression<'a> {
             if is_export_default {
                 p.start_of_default_export = p.code_len();
             }
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             self.callee.print_expr(p, Precedence::Postfix, Context::empty());
             if self.optional {
                 p.print_str("?.");
@@ -1412,7 +1412,7 @@ impl<'a> Gen for ArrayExpressionElement<'a> {
 
 impl<'a> Gen for SpreadElement<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_ellipsis();
         self.argument.print_expr(p, Precedence::Comma, Context::empty());
     }
@@ -1421,7 +1421,7 @@ impl<'a> Gen for SpreadElement<'a> {
 impl<'a> Gen for ArrayExpression<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         let is_multi_line = self.elements.len() > 2;
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
         if is_multi_line {
             p.indent();
@@ -1458,7 +1458,7 @@ impl<'a> GenExpr for ObjectExpression<'a> {
         let is_multi_line = len > 1;
         let wrap = p.start_of_stmt == n || p.start_of_arrow_expr == n;
         p.wrap(wrap, |p| {
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             p.print_ascii_byte(b'{');
             if is_multi_line {
                 p.indent();
@@ -1500,16 +1500,16 @@ impl<'a> Gen for ObjectPropertyKind<'a> {
 impl<'a> Gen for ObjectProperty<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         if let Expression::FunctionExpression(func) = &self.value {
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             let is_accessor = match &self.kind {
                 PropertyKind::Init => false,
                 PropertyKind::Get => {
-                    p.add_source_mapping(self.span, self.span.start);
+                    p.add_source_mapping(self.span);
                     p.print_str("get ");
                     true
                 }
                 PropertyKind::Set => {
-                    p.add_source_mapping(self.span, self.span.start);
+                    p.add_source_mapping(self.span);
                     p.print_str("set ");
                     true
                 }
@@ -1599,7 +1599,7 @@ impl<'a> GenExpr for ArrowFunctionExpression<'a> {
         p.wrap(precedence >= Precedence::Assign, |p| {
             p.print_annotation_comments(self.span.start);
             if self.r#async {
-                p.add_source_mapping(self.span, self.span.start);
+                p.add_source_mapping(self.span);
                 p.print_str("async");
             }
 
@@ -1610,7 +1610,7 @@ impl<'a> GenExpr for ArrowFunctionExpression<'a> {
             if let Some(type_parameters) = &self.type_parameters {
                 type_parameters.print(p, ctx);
             }
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             p.print_ascii_byte(b'(');
             self.params.print(p, ctx);
             p.print_ascii_byte(b')');
@@ -1637,7 +1637,7 @@ impl<'a> GenExpr for ArrowFunctionExpression<'a> {
 impl<'a> GenExpr for YieldExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
         p.wrap(precedence >= Precedence::Assign, |p| {
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             p.print_space_before_identifier();
             p.print_str("yield");
             if self.delegate {
@@ -1659,7 +1659,7 @@ impl<'a> GenExpr for UpdateExpression<'a> {
         let operator = self.operator.as_str();
         p.wrap(precedence >= self.precedence(), |p| {
             if self.prefix {
-                p.add_source_mapping(self.span, self.span.start);
+                p.add_source_mapping(self.span);
                 p.print_space_before_operator(self.operator.into());
                 p.print_str(operator);
                 p.prev_op = Some(self.operator.into());
@@ -1826,7 +1826,7 @@ impl<'a> Gen for AssignmentTargetPattern<'a> {
 
 impl<'a> Gen for ArrayAssignmentTarget<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
         for (index, item) in self.elements.iter().enumerate() {
             if index != 0 {
@@ -1841,7 +1841,7 @@ impl<'a> Gen for ArrayAssignmentTarget<'a> {
             if !self.elements.is_empty() {
                 p.print_comma();
             }
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             target.print(p, ctx);
         }
         if self.trailing_comma.is_some() {
@@ -1854,14 +1854,14 @@ impl<'a> Gen for ArrayAssignmentTarget<'a> {
 
 impl<'a> Gen for ObjectAssignmentTarget<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');
         p.print_list(&self.properties, ctx);
         if let Some(target) = &self.rest {
             if !self.properties.is_empty() {
                 p.print_comma();
             }
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             target.print(p, ctx);
         }
         p.print_ascii_byte(b'}');
@@ -1963,7 +1963,7 @@ impl<'a> GenExpr for ImportExpression<'a> {
             || self.arguments.first().is_some_and(|argument| p.has_comment(argument.span().start));
 
         p.wrap(wrap, |p| {
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             p.print_str("import(");
             if has_comment {
                 p.indent();
@@ -2003,7 +2003,7 @@ impl<'a> Gen for TemplateLiteral<'a> {
         let mut expressions = self.expressions.iter();
 
         for quasi in &self.quasis {
-            p.add_source_mapping(quasi.span, quasi.span.start);
+            p.add_source_mapping(quasi.span);
             p.print_str(quasi.value.raw.as_str());
 
             if let Some(expr) = expressions.next() {
@@ -2019,7 +2019,7 @@ impl<'a> Gen for TemplateLiteral<'a> {
 
 impl<'a> Gen for TaggedTemplateExpression<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         self.tag.print_expr(p, Precedence::Postfix, Context::empty());
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.print(p, ctx);
@@ -2030,7 +2030,7 @@ impl<'a> Gen for TaggedTemplateExpression<'a> {
 
 impl Gen for Super {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_str("super");
     }
 }
@@ -2038,7 +2038,7 @@ impl Gen for Super {
 impl<'a> GenExpr for AwaitExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= self.precedence(), |p| {
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             p.print_str("await ");
             self.argument.print_expr(p, Precedence::Exponentiation, ctx);
         });
@@ -2066,7 +2066,7 @@ impl<'a> GenExpr for NewExpression<'a> {
         p.wrap(wrap, |p| {
             p.print_annotation_comments(self.span.start);
             p.print_space_before_identifier();
-            p.add_source_mapping(self.span, self.span.start);
+            p.add_source_mapping(self.span);
             p.print_str("new ");
             self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
             p.print_ascii_byte(b'(');
@@ -2152,7 +2152,7 @@ impl<'a> GenExpr for TSTypeAssertion<'a> {
 
 impl<'a> Gen for MetaProperty<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         self.meta.print(p, ctx);
         p.print_ascii_byte(b'.');
         self.property.print(p, ctx);
@@ -2161,7 +2161,7 @@ impl<'a> Gen for MetaProperty<'a> {
 
 impl<'a> Gen for Class<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
@@ -2361,7 +2361,7 @@ impl<'a> Gen for JSXAttributeItem<'a> {
 
 impl<'a> Gen for JSXOpeningElement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'<');
         self.name.print(p, ctx);
         for attr in &self.attributes {
@@ -2385,7 +2385,7 @@ impl<'a> Gen for JSXOpeningElement<'a> {
 
 impl<'a> Gen for JSXClosingElement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_str("</");
         self.name.print(p, ctx);
         p.print_ascii_byte(b'>');
@@ -2406,21 +2406,21 @@ impl<'a> Gen for JSXElement<'a> {
 
 impl Gen for JSXOpeningFragment {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_str("<>");
     }
 }
 
 impl Gen for JSXClosingFragment {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_str("</>");
     }
 }
 
 impl<'a> Gen for JSXText<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_str(self.value.as_str());
     }
 }
@@ -2456,7 +2456,7 @@ impl<'a> Gen for JSXFragment<'a> {
 
 impl<'a> Gen for StaticBlock<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_str("static");
         p.print_soft_space();
         p.print_curly_braces(self.span, self.body.is_empty(), |p| {
@@ -2471,7 +2471,7 @@ impl<'a> Gen for StaticBlock<'a> {
 
 impl<'a> Gen for MethodDefinition<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         for decorator in &self.decorators {
             decorator.print(p, ctx);
             p.print_hard_space();
@@ -2538,7 +2538,7 @@ impl<'a> Gen for MethodDefinition<'a> {
 
 impl<'a> Gen for PropertyDefinition<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         for decorator in &self.decorators {
             decorator.print(p, ctx);
             p.print_hard_space();
@@ -2585,7 +2585,7 @@ impl<'a> Gen for PropertyDefinition<'a> {
 
 impl<'a> Gen for AccessorProperty<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         for decorator in &self.decorators {
             decorator.print(p, ctx);
             p.print_hard_space();
@@ -2660,7 +2660,7 @@ impl<'a> Gen for BindingPatternKind<'a> {
 
 impl<'a> Gen for ObjectPattern<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');
         if !self.is_empty() {
             p.print_soft_space();
@@ -2682,7 +2682,7 @@ impl<'a> Gen for ObjectPattern<'a> {
 
 impl<'a> Gen for BindingProperty<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         if self.computed {
             p.print_ascii_byte(b'[');
         }
@@ -2724,7 +2724,7 @@ impl<'a> Gen for BindingProperty<'a> {
 
 impl<'a> Gen for BindingRestElement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_ellipsis();
         self.argument.print(p, ctx);
     }
@@ -2732,7 +2732,7 @@ impl<'a> Gen for BindingRestElement<'a> {
 
 impl<'a> Gen for ArrayPattern<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
         for (index, item) in self.elements.iter().enumerate() {
             if index != 0 {
@@ -2783,7 +2783,7 @@ impl<'a> Gen for Decorator<'a> {
             }
         }
 
-        p.add_source_mapping(self.span, self.span.start);
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'@');
         let wrap = need_wrap(&self.expression);
         p.wrap(wrap, |p| {
