@@ -16,7 +16,7 @@ suite('Config', () => {
     strictEqual(config.runTrigger, 'onType');
     strictEqual(config.enable, true);
     strictEqual(config.trace, 'off');
-    strictEqual(config.configPath, '.eslintrc');
+    strictEqual(config.configPath, '.oxlintrc.json');
     strictEqual(config.binPath, '');
   });
 
