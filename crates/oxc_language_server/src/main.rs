@@ -1,4 +1,5 @@
 mod linter;
+mod server_capabilities;
 
 use std::{fmt::Debug, path::PathBuf, str::FromStr};
 
@@ -13,21 +14,18 @@ use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
-        CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
-        CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
-        DiagnosticOptions, DiagnosticServerCapabilities, DidChangeConfigurationParams,
-        DidChangeTextDocumentParams, DidChangeWatchedFilesParams, DidCloseTextDocumentParams,
-        DidOpenTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
-        DocumentDiagnosticReportResult, FullDocumentDiagnosticReport, InitializeParams,
-        InitializeResult, InitializedParams, OneOf, RelatedFullDocumentDiagnosticReport,
-        ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit,
-        Url, WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
-        WorkspaceServerCapabilities,
+        CodeAction, CodeActionKind, CodeActionOrCommand, CodeActionParams, CodeActionResponse,
+        ConfigurationItem, Diagnostic, DidChangeConfigurationParams, DidChangeTextDocumentParams,
+        DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+        DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportResult,
+        FullDocumentDiagnosticReport, InitializeParams, InitializeResult, InitializedParams,
+        RelatedFullDocumentDiagnosticReport, ServerInfo, TextEdit, Url, WorkspaceEdit,
     },
     Client, LanguageServer, LspService, Server,
 };
 
 use crate::linter::{DiagnosticReport, ServerLinter};
+use crate::server_capabilities::ServerCapabilities;
 
 struct Backend {
     client: Client,
@@ -78,39 +76,11 @@ impl LanguageServer for Backend {
             *self.options.lock().await = value;
         }
         self.init_linter_config().await;
+
         Ok(InitializeResult {
             server_info: Some(ServerInfo { name: "oxc".into(), version: None }),
             offset_encoding: None,
-            capabilities: ServerCapabilities {
-                text_document_sync: Some(TextDocumentSyncCapability::Kind(
-                    TextDocumentSyncKind::FULL,
-                )),
-                workspace: Some(WorkspaceServerCapabilities {
-                    workspace_folders: Some(WorkspaceFoldersServerCapabilities {
-                        supported: Some(true),
-                        change_notifications: Some(OneOf::Left(true)),
-                    }),
-                    file_operations: None,
-                }),
-                diagnostic_provider: Some(DiagnosticServerCapabilities::Options(
-                    DiagnosticOptions {
-                        identifier: Some("oxc".into()),
-                        inter_file_dependencies: false,
-                        workspace_diagnostics: false,
-                        work_done_progress_options: WorkDoneProgressOptions::default(),
-                    },
-                )),
-                code_action_provider: Some(CodeActionProviderCapability::Options(
-                    CodeActionOptions {
-                        code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
-                        work_done_progress_options: WorkDoneProgressOptions {
-                            work_done_progress: None,
-                        },
-                        resolve_provider: None,
-                    },
-                )),
-                ..ServerCapabilities::default()
-            },
+            capabilities: ServerCapabilities::from(params.capabilities).into(),
         })
     }
 
