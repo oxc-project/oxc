@@ -48,29 +48,17 @@ enum Run {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct Options {
-    run: Run,
     enable: bool,
     config_path: String,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { enable: true, run: Run::default(), config_path: ".eslintrc".into() }
+        Self { enable: true, config_path: ".eslintrc".into() }
     }
 }
 
 impl Options {
-    fn get_lint_level(&self) -> SyntheticRunLevel {
-        if self.enable {
-            match self.run {
-                Run::OnSave => SyntheticRunLevel::OnSave,
-                Run::OnType => SyntheticRunLevel::OnType,
-            }
-        } else {
-            SyntheticRunLevel::Disable
-        }
-    }
-
     fn get_config_path(&self) -> Option<PathBuf> {
         if self.config_path.is_empty() {
             None
@@ -78,13 +66,6 @@ impl Options {
             Some(PathBuf::from(&self.config_path))
         }
     }
-}
-
-#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
-enum SyntheticRunLevel {
-    Disable,
-    OnSave,
-    OnType,
 }
 
 #[tower_lsp::async_trait]
@@ -162,8 +143,8 @@ impl LanguageServer for Backend {
                 options
             };
 
-        debug!("{:?}", &changed_options.get_lint_level());
-        if changed_options.get_lint_level() == SyntheticRunLevel::Disable {
+        debug!("{:?}", &changed_options.enable);
+        if !changed_options.enable {
             // clear all exists diagnostics when linter is disabled
             let opened_files = self.document_content_cache.iter().map(|k| k.key().to_string());
             let cleared_diagnostics = opened_files
@@ -404,7 +385,7 @@ impl Backend {
             return None;
         };
 
-        let result = self.server_linter.read().await.run_single(&uri, content);
+        let result = self.server_linter.read().await.run_single(uri, content);
 
         if result.is_some() {
             self.diagnostics_report_map.insert(uri.to_string(), result.clone().unwrap());
