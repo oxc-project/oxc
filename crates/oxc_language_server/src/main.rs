@@ -153,11 +153,13 @@ impl LanguageServer for Backend {
 
         let current_option = &self.options.lock().await.clone();
 
-        debug!("
+        debug!(
+            "
         configuration changed:
         incoming: {changed_options:?}
         current: {current_option:?}
-        ");
+        "
+        );
 
         if current_option.get_lint_level() != changed_options.get_lint_level()
             && changed_options.get_lint_level() == SyntheticRunLevel::Disable
