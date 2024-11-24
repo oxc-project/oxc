@@ -19,7 +19,7 @@ export class Config implements ConfigInterface {
     this._runTrigger = conf.get<Trigger>('lint.run') || 'onType';
     this._enable = conf.get<boolean>('enable') ?? true;
     this._trace = conf.get<TraceLevel>('trace.server') || 'off';
-    this._configPath = conf.get<string>('configPath') || '.eslintrc';
+    this._configPath = conf.get<string>('configPath') || '.oxlintrc.json';
     this._binPath = conf.get<string>('path.server');
   }
 
@@ -124,7 +124,7 @@ interface ConfigInterface {
    *
    * `oxc.configPath`
    *
-   * @default ".eslintrc"
+   * @default ".oxlintrc.json"
    */
   configPath: string;
   /**

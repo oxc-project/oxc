@@ -1,4 +1,4 @@
-commit: df9d1650
+commit: d85767ab
 
 transpile Summary:
 AST Parsed     : 20/20 (100.00%)
@@ -549,37 +549,3 @@ export {};
  45 | export class InClassMethodBad { o(array: T = [], rParam: string): void { } };
     :                                   ^^^^^^^^^^^^^
     `----
-
-#### "typescript/tests/cases/transpile/declarationRestParameters.ts" ####
-//// [v1.ts] ////
-export const v1 = (...a: [n: "n", a: "a"]): { a: typeof a } => {
-	return null!;
-};
-
-//// [v2.ts] ////
-const n = Symbol();
-export const v2 = (...a: [n: "n", a: "a"]): {
-	a: typeof a;
-	n: typeof n;
-} => {
-	return null!;
-};
-
-//// [v1.d.ts] ////
-export declare const v1: (...a: [n: "n", a: "a"]) => { a: typeof a };
-
-//// [v2.d.ts] ////
-declare const n: unknown;
-export declare const v2: (...a: [n: "n", a: "a"]) => {
-	a: typeof a;
-	n: typeof n;
-};
-export {};
-
-  x TS9010: Variable must have an explicit type annotation with
-  | --isolatedDeclarations.
-   ,-[v2.d.ts:1:7]
- 1 | const n = Symbol();
-   :       ^
- 2 | export const v2 = (...a: [n: "n", a: "a"]): {
-   `----
