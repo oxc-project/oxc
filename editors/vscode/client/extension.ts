@@ -142,8 +142,7 @@ export async function activate(context: ExtensionContext) {
     synchronize: {
       // Notify the server about file config changes in the workspace
       fileEvents: [
-        workspace.createFileSystemWatcher('**/.eslintr{c,c.json}'),
-        workspace.createFileSystemWatcher('**/.oxlint{.json,rc.json,rc}'),
+        workspace.createFileSystemWatcher('**/.oxlint{.json,rc.json}'),
         workspace.createFileSystemWatcher('**/oxlint{.json,rc.json}'),
       ],
     },
