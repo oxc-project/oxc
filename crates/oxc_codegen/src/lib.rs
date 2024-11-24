@@ -19,7 +19,7 @@ use oxc_ast::ast::{
     BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program, Statement,
 };
 use oxc_mangler::Mangler;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
@@ -390,7 +390,7 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_curly_braces<F: FnOnce(&mut Self)>(&mut self, span: Span, single_line: bool, op: F) {
-        self.add_source_mapping(span.start);
+        self.add_source_mapping_by_span(span, span.start);
         self.print_ascii_byte(b'{');
         if !single_line {
             self.print_soft_newline();
@@ -401,7 +401,7 @@ impl<'a> Codegen<'a> {
             self.dedent();
             self.print_indent();
         }
-        self.add_source_mapping(span.end);
+        self.add_source_mapping_by_span(span, span.end);
         self.print_ascii_byte(b'}');
     }
 
@@ -645,7 +645,19 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    fn add_source_mapping_by_span(&mut self, span: Span, position: u32) {
+        if span == SPAN {
+            return;
+        }
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), position, None);
+        }
+    }
+
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
+        if span == SPAN {
+            return;
+        }
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
         }
