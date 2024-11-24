@@ -227,9 +227,6 @@ jobs:
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.src == 'true'
 
-      - uses: oven-sh/setup-bun@v2
-        if: steps.filter.outputs.src == 'true'
-
       - uses: ./.github/actions/pnpm
         if: steps.filter.outputs.src == 'true'
 
