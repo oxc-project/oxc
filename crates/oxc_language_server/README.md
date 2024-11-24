@@ -8,6 +8,9 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 - Workspace
   - [Workspace Folders](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceFoldersServerCapabilities): `true`
   - File Operations: `false`
+- [Diagnostic Provider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_pullDiagnostics)
+  - `interFileDependencies`: `false`
+  - `workspaceDiagnostics`: `false`
 - [Code Actions Provider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionKind):
   - `quickfix`
 
@@ -34,19 +37,19 @@ The server will revalidate the diagnostics for all open files and send one or mo
 
 #### [textDocument/didOpen](https://microsoft.github.io/language-server-protocol/specification#textDocument_didOpen)
 
-The server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
-
-#### [textDocument/didSave](https://microsoft.github.io/language-server-protocol/specification#textDocument_didSave)
-
-When the configuration `run` is set to `onSave`, the server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
+It will save the reference internal.
 
 #### [textDocument/didChange](https://microsoft.github.io/language-server-protocol/specification#textDocument_didChange)
 
-When the configuration `run` is set to `onType`, the server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
+It will update the reference internal.
 
 #### [textDocument/didClose](https://microsoft.github.io/language-server-protocol/specification#textDocument_didClose)
 
 It will remove the reference internal.
+
+#### [textDocument/diagnostic](https://microsoft.github.io/language-server-protocol/specification#textDocument_diagnostic)
+
+Returns all Diagnostics for the requested file
 
 #### [textDocument/codeAction](https://microsoft.github.io/language-server-protocol/specification#textDocument_codeAction)
 
