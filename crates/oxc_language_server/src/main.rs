@@ -38,13 +38,7 @@ struct Backend {
     options: Mutex<Options>,
     gitignore_glob: Mutex<Vec<Gitignore>>,
 }
-#[derive(Debug, Serialize, Deserialize, Default, PartialEq, PartialOrd, Clone, Copy)]
-#[serde(rename_all = "camelCase")]
-enum Run {
-    OnSave,
-    #[default]
-    OnType,
-}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct Options {
