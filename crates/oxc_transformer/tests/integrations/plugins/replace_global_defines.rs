@@ -104,3 +104,36 @@ fn optional_chain() {
     test_same("a?.[b][c]", config.clone());
     test_same("a[b]?.[c]", config.clone());
 }
+
+#[test]
+fn dot_define_with_destruct() {
+    let config = ReplaceGlobalDefinesConfig::new(&[(
+        "process.env.NODE_ENV",
+        "{'a': 1, b: 2, c: true, d: {a: b}}",
+    )])
+    .unwrap();
+    test(
+        "const {a, c} = process.env.NODE_ENV",
+        "const { a, c } = {\n\t'a': 1,\n\tc: true};",
+        config.clone(),
+    );
+    // bailout
+    test(
+        "const {[any]: alias} = process.env.NODE_ENV",
+        "const { [any]: alias } = {\n\t'a': 1,\n\tb: 2,\n\tc: true,\n\td: { a: b }\n};",
+        config.clone(),
+    );
+
+    // should filterout unused key even rhs objectExpr has SpreadElement
+
+    let config = ReplaceGlobalDefinesConfig::new(&[(
+        "process.env.NODE_ENV",
+        "{'a': 1, b: 2, c: true, ...unknown}",
+    )])
+    .unwrap();
+    test(
+        "const {a} = process.env.NODE_ENV",
+        "const { a } = {\n\t'a': 1,\n\t...unknown\n};\n",
+        config.clone(),
+    );
+}

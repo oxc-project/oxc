@@ -7,7 +7,8 @@ use oxc_parser::Parser;
 use oxc_semantic::{IsGlobalReference, ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SourceType};
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut, Ancestor, Traverse, TraverseCtx};
+use rustc_hash::FxHashSet;
 
 /// Configuration for [ReplaceGlobalDefines].
 ///
@@ -324,13 +325,13 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 DotDefineMemberExpression::StaticMemberExpression(member),
             ) {
                 let value = self.parse_value(&dot_define.value);
-                return Some(value);
+                return Some(destructing_dot_define_optimizer(value, ctx));
             }
         }
         for meta_property_define in &self.config.0.meta_property {
             if Self::is_meta_property_define(meta_property_define, member) {
                 let value = self.parse_value(&meta_property_define.value);
-                return Some(value);
+                return Some(destructing_dot_define_optimizer(value, ctx));
             }
         }
         None
@@ -497,4 +498,62 @@ fn static_property_name_of_computed_expr<'b, 'a: 'b>(
         }
         _ => None,
     }
+}
+
+fn destructing_dot_define_optimizer<'ast>(
+    mut expr: Expression<'ast>,
+    ctx: &mut TraverseCtx<'ast>,
+) -> Expression<'ast> {
+    let Expression::ObjectExpression(ref mut obj) = expr else { return expr };
+    let parent = ctx.parent();
+    let destruct_obj_pat = match parent {
+        Ancestor::VariableDeclaratorInit(declarator) => match declarator.id().kind {
+            BindingPatternKind::ObjectPattern(ref pat) => pat,
+            _ => return expr,
+        },
+        _ => {
+            return expr;
+        }
+    };
+    let mut needed_keys = FxHashSet::default();
+    for prop in &destruct_obj_pat.properties {
+        match prop.key.name() {
+            Some(key) => {
+                needed_keys.insert(key);
+            }
+            // if there exists a none static key, we can't optimize
+            None => {
+                return expr;
+            }
+        }
+    }
+
+    // here we iterate the object properties twice
+    // for the first time we check if all the keys are static
+    // for the second time we only keep the needed keys
+    // Another way to do this is mutate the objectExpr only the fly,
+    // but need to save the checkpoint(to return the original Expr if there are any dynamic key exists) which is a memory clone,
+    // cpu is faster than memory allocation
+    let mut should_preserved_keys = Vec::with_capacity(obj.properties.len());
+    for prop in &obj.properties {
+        let v = match prop {
+            ObjectPropertyKind::ObjectProperty(prop) => {
+                // not static key just preserve it
+                if let Some(name) = prop.key.name() {
+                    needed_keys.contains(&name)
+                } else {
+                    true
+                }
+            }
+            // not static key
+            ObjectPropertyKind::SpreadProperty(_) => true,
+        };
+        should_preserved_keys.push(v);
+    }
+
+    // we could ensure `should_preserved_keys` has the same length as `obj.properties`
+    // the method copy from std doc https://doc.rust-lang.org/std/vec/struct.Vec.html#examples-26
+    let mut iter = should_preserved_keys.iter();
+    obj.properties.retain(|_| *iter.next().unwrap());
+    expr
 }
