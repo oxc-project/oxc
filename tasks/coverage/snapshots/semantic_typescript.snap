@@ -1,8 +1,8 @@
-commit: df9d1650
+commit: d85767ab
 
 semantic_typescript Summary:
-AST Parsed     : 6490/6490 (100.00%)
-Positive Passed: 2660/6490 (40.99%)
+AST Parsed     : 6503/6503 (100.00%)
+Positive Passed: 2665/6503 (40.98%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -4104,6 +4104,41 @@ rebuilt        : ScopeId(1): ScopeFlags(Function)
 Reference symbol mismatch for "NS":
 after transform: SymbolId(0) "NS"
 rebuilt        : SymbolId(0) "NS"
+
+tasks/coverage/typescript/tests/cases/compiler/computedPropertiesWithSetterAssignment.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Foo", "Props", "foo", "k"]
+rebuilt        : ScopeId(0): ["Props", "k"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(1): ["Props", "k"]
+rebuilt        : ScopeId(1): ["Props"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol reference IDs mismatch for "k":
+after transform: SymbolId(0): [ReferenceId(3), ReferenceId(5), ReferenceId(13)]
+rebuilt        : SymbolId(0): [ReferenceId(9)]
+Symbol flags mismatch for "Props":
+after transform: SymbolId(1): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+Reference symbol mismatch for "foo":
+after transform: SymbolId(4) "foo"
+rebuilt        : <None>
+Reference symbol mismatch for "foo":
+after transform: SymbolId(4) "foo"
+rebuilt        : <None>
+Reference symbol mismatch for "foo":
+after transform: SymbolId(4) "foo"
+rebuilt        : <None>
+Reference symbol mismatch for "foo":
+after transform: SymbolId(4) "foo"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Iterable", "Set", "Symbol"]
+rebuilt        : ["Symbol", "foo"]
 
 tasks/coverage/typescript/tests/cases/compiler/computedPropertyNameAndTypeParameterConflict.ts
 semantic error: Bindings mismatch:
@@ -9406,6 +9441,11 @@ Unresolved references mismatch:
 after transform: ["const"]
 rebuilt        : []
 
+tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeofRest.ts
+semantic error: Symbol reference IDs mismatch for "a":
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
+
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeofThisInClass.ts
 semantic error: Unresolved references mismatch:
 after transform: ["this"]
@@ -10287,6 +10327,26 @@ rebuilt        : SymbolId(1) "A"
 Unresolved references mismatch:
 after transform: ["module"]
 rebuilt        : ["module", "require"]
+
+tasks/coverage/typescript/tests/cases/compiler/dependentReturnType8.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["array", "getObject", "record"]
+rebuilt        : ScopeId(0): ["getObject"]
+Bindings mismatch:
+after transform: ScopeId(1): ["T", "group"]
+rebuilt        : ScopeId(1): ["group"]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): []
+Reference symbol mismatch for "record":
+after transform: SymbolId(0) "record"
+rebuilt        : <None>
+Reference symbol mismatch for "array":
+after transform: SymbolId(1) "array"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Record", "undefined"]
+rebuilt        : ["array", "record", "undefined"]
 
 tasks/coverage/typescript/tests/cases/compiler/destructureOfVariableSameAsShorthand.ts
 semantic error: Bindings mismatch:
@@ -32008,6 +32068,11 @@ Symbol reference IDs mismatch for "Bar":
 after transform: SymbolId(3): [ReferenceId(2), ReferenceId(5)]
 rebuilt        : SymbolId(2): [ReferenceId(0)]
 
+tasks/coverage/typescript/tests/cases/compiler/signatureOverloadsWithComments.ts
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(2): [ScopeId(3)]
+
 tasks/coverage/typescript/tests/cases/compiler/silentNeverPropagation.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["ModuleWithState", "MoreState", "State", "breaks"]
@@ -36726,6 +36791,17 @@ after transform: ReferenceId(7): ReferenceFlags(Type)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Partial", "Readonly"]
+rebuilt        : []
+
+tasks/coverage/typescript/tests/cases/compiler/typedArrayConstructorOverloads.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["TypedArrayConstructor", "makeTypedArray"]
+rebuilt        : ScopeId(0): ["makeTypedArray"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Unresolved references mismatch:
+after transform: ["ArrayBuffer", "BigInt64ArrayConstructor", "Float64ArrayConstructor"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/typedArrays.ts
@@ -49285,6 +49361,47 @@ Unresolved references mismatch:
 after transform: ["AsyncGenerator", "Generator", "Partial", "Record", "Symbol", "f1", "f2", "require"]
 rebuilt        : ["Symbol", "f1", "f2", "require"]
 
+tasks/coverage/typescript/tests/cases/conformance/generators/yieldStatementNoAsiAfterTransform.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["a", "t1", "t10", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"]
+rebuilt        : ScopeId(0): ["t1", "t10", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["a"]
+
 tasks/coverage/typescript/tests/cases/conformance/importAttributes/importAttributes7.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_f", "a", "f"]
@@ -53886,6 +54003,47 @@ Symbol reference IDs mismatch for "a":
 after transform: SymbolId(8): [ReferenceId(9)]
 rebuilt        : SymbolId(7): []
 
+tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["a", "t1", "t10", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"]
+rebuilt        : ScopeId(0): ["t1", "t10", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"]
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Reference symbol mismatch for "a":
+after transform: SymbolId(0) "a"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["a"]
+
 tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatements.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "D", "I", "fn1", "fn10", "fn11", "fn12", "fn13", "fn2", "fn3", "fn4", "fn5", "fn6", "fn7", "fn8"]
@@ -54027,6 +54185,14 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Promise"]
 rebuilt        : ["x1", "x2"]
+
+tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesWithExtendsDependingOnTypeVariables.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["Bar", "Res1"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/types/conditional/variance.ts
 semantic error: Bindings mismatch:

@@ -1,6 +1,6 @@
-commit: d20b314c
+commit: 54a8389f
 
-Passed: 327/575
+Passed: 327/582
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -13,7 +13,7 @@ Passed: 327/575
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (41/127)
+# babel-preset-env (43/130)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
@@ -152,6 +152,9 @@ x Output mismatch
 * preset-options/no-options/input.mjs
 x Output mismatch
 
+* preset-options/regexp-modifiers-chrome-121/input.js
+x Output mismatch
+
 * preset-options/reserved-keys-ie8/input.mjs
 x Output mismatch
 
@@ -224,6 +227,9 @@ x Output mismatch
 * preset-options-babel-7/no-options/input.mjs
 x Output mismatch
 
+* preset-options-babel-7/regexp-modifiers-chrome-121/input.js
+x Output mismatch
+
 * preset-options-babel-7/reserved-keys-ie8/input.mjs
 x Output mismatch
 
@@ -261,9 +267,6 @@ x Output mismatch
 x Output mismatch
 
 * sanity/transform-duplicate-keys/input.js
-x Output mismatch
-
-* shipped-proposals/import-assertions/input.mjs
 x Output mismatch
 
 * shipped-proposals/new-class-features-chrome-90/input.js
@@ -358,8 +361,20 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-exponentiation-operator (3/4)
+# babel-plugin-transform-exponentiation-operator (2/7)
+* exponentiation-operator/memoise-object/input.js
+x Output mismatch
+
+* exponentiation-operator/memoise-object-in-default-args/input.js
+x Output mismatch
+
 * regression/4349/input.js
+x Output mismatch
+
+* regression/4349-keep-super/input.js
+x Output mismatch
+
+* regression/4403/input.js
 x Output mismatch
 
 
@@ -389,7 +404,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-preset-typescript (11/16)
+# babel-preset-typescript (10/17)
 * jsx-compat/ts-invalid/input.ts
 
   x Expected `>` but found `/`
@@ -414,6 +429,12 @@ after transform: ScopeId(1): ["T"]
 rebuilt        : ScopeId(1): []
 
 * opts/optimizeConstEnums/input.ts
+x Output mismatch
+
+* opts/rewriteImportExtensions/input.ts
+x Output mismatch
+
+* opts/rewriteImportExtensions-createImportExpressions/input.ts
 x Output mismatch
 
 

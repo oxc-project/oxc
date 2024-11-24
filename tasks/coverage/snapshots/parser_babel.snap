@@ -1,12 +1,15 @@
-commit: d20b314c
+commit: 54a8389f
 
 parser_babel Summary:
-AST Parsed     : 2197/2210 (99.41%)
-Positive Passed: 2183/2210 (98.78%)
-Negative Passed: 1510/1633 (92.47%)
+AST Parsed     : 2205/2218 (99.41%)
+Positive Passed: 2190/2218 (98.74%)
+Negative Passed: 1510/1634 (92.41%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-specified/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/escape-string/non-octal-eight-and-nine/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-func/input.js
@@ -25,8 +28,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/comma-after-spread-nested/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/no-pattern-in-rest/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-trailing-comma/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/invalid-trailing-comma/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-delete-optional-private-property/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/super-inside-function/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/yield-in-class-property-in-generator/input.js
@@ -438,6 +439,39 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/eval/input.ts:9:18]
+  8 │ declare function eval(): void;
+  9 │ declare function arguments(): void;
+    ·                  ─────────
+ 10 │ 
+    ╰────
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval-babel-7/input.ts
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/eval-babel-7/input.ts:3:25]
+ 2 │     export namespace ns {
+ 3 │         export function eval(): void;
+   ·                         ────
+ 4 │         export function arguments(): void;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/eval-babel-7/input.ts:4:25]
+ 3 │         export function eval(): void;
+ 4 │         export function arguments(): void;
+   ·                         ─────────
+ 5 │     }
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/eval-babel-7/input.ts:8:18]
+ 7 │ 
+ 8 │ declare function eval(): void;
+   ·                  ────
+ 9 │ declare function arguments(): void;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/eval-babel-7/input.ts:9:18]
   8 │ declare function eval(): void;
   9 │ declare function arguments(): void;
     ·                  ─────────
