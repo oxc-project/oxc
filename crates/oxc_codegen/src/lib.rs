@@ -405,7 +405,7 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b'}');
     }
 
-    fn print_block_start(&mut self, span: Span, position: u32) {
+    fn print_block_start(&mut self, span: Span) {
         self.add_source_mapping(span);
         self.print_ascii_byte(b'{');
         self.print_soft_newline();

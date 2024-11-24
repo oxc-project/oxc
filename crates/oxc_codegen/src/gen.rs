@@ -191,7 +191,7 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
         }
         stmt if wrap_to_avoid_ambiguous_else(stmt) => {
             p.print_soft_space();
-            p.print_block_start(stmt.span(), stmt.span().start);
+            p.print_block_start(stmt.span());
             stmt.print(p, ctx);
             p.needs_semicolon = false;
             p.print_block_end(stmt.span());
@@ -822,7 +822,7 @@ impl<'a> Gen for WithClause<'a> {
         p.add_source_mapping(self.span);
         self.attributes_keyword.print(p, ctx);
         p.print_soft_space();
-        p.print_block_start(self.span, self.span.start);
+        p.print_block_start(self.span);
         p.print_sequence(&self.with_entries, ctx);
         p.print_block_end(self.span);
     }
