@@ -185,7 +185,7 @@ impl LanguageServer for Backend {
 
         *self.options.lock().await = changed_options.clone();
 
-        // revalidate the config and alle open files, when lint level is not disabled and the config path is changed
+        // revalidate the config and all open files, when lint level is not disabled and the config path is changed
         if changed_options.get_lint_level() != SyntheticRunLevel::Disable
             && changed_options
                 .get_config_path()
