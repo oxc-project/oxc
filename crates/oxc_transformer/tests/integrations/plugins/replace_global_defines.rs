@@ -137,3 +137,48 @@ fn dot_define_with_destruct() {
         config.clone(),
     );
 }
+
+#[test]
+fn this_expr() {
+    let config =
+        ReplaceGlobalDefinesConfig::new(&[("this", "1"), ("this.foo", "2"), ("this.foo.bar", "3")])
+            .unwrap();
+    test(
+        "this, this.foo, this.foo.bar, this.foo.baz, this.bar",
+        "1, 2, 3, 2 .baz, 1 .bar;\n",
+        config.clone(),
+    );
+
+    test(
+        r"
+// This code should be the same as above
+(() => {
+	ok(
+		this,
+		this.foo,
+		this.foo.bar,
+		this.foo.baz,
+		this.bar,
+	);
+})();
+    ",
+        "(() => {\n\tok(1, 2, 3, 2 .baz, 1 .bar);\n})();\n",
+        config.clone(),
+    );
+
+    test_same(
+        r"
+// Nothing should be substituted in this code
+(function() {
+	doNotSubstitute(
+		this,
+		this.foo,
+		this.foo.bar,
+		this.foo.baz,
+		this.bar,
+	);
+})();
+    ",
+        config,
+    );
+}

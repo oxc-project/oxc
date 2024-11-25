@@ -1,10 +1,11 @@
 use std::{cmp::Ordering, sync::Arc};
 
+use lazy_static::lazy_static;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
-use oxc_semantic::{IsGlobalReference, ScopeTree, SymbolTable};
+use oxc_semantic::{IsGlobalReference, ScopeFlags, ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SourceType};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{traverse_mut, Ancestor, Traverse, TraverseCtx};
@@ -19,9 +20,19 @@ use rustc_hash::FxHashSet;
 #[derive(Debug, Clone)]
 pub struct ReplaceGlobalDefinesConfig(Arc<ReplaceGlobalDefinesConfigImpl>);
 
+lazy_static! {
+    static ref THIS_ATOM: Atom<'static> = Atom::from("this");
+}
+
+#[derive(Debug)]
+struct IdentifierDefine {
+    identifier_defines: Vec<(/* key */ CompactStr, /* value */ CompactStr)>,
+    /// Whether user want to replace `ThisExpression`, avoid linear scan for each `ThisExpression`
+    has_this_expr_define: bool,
+}
 #[derive(Debug)]
 struct ReplaceGlobalDefinesConfigImpl {
-    identifier: Vec<(/* key */ CompactStr, /* value */ CompactStr)>,
+    identifier: IdentifierDefine,
     dot: Vec<DotDefine>,
     meta_property: Vec<MetaPropertyDefine>,
     /// extra field to avoid linear scan `meta_property` to check if it has `import.meta` every
@@ -78,6 +89,7 @@ impl ReplaceGlobalDefinesConfig {
         let mut dot_defines = vec![];
         let mut meta_properties_defines = vec![];
         let mut import_meta = None;
+        let mut has_this_expr_define = false;
         for (key, value) in defines {
             let key = key.as_ref();
 
@@ -86,6 +98,7 @@ impl ReplaceGlobalDefinesConfig {
 
             match Self::check_key(key)? {
                 IdentifierType::Identifier => {
+                    has_this_expr_define |= key == "this";
                     identifier_defines.push((CompactStr::new(key), CompactStr::new(value)));
                 }
                 IdentifierType::DotDefines { parts } => {
@@ -124,7 +137,7 @@ impl ReplaceGlobalDefinesConfig {
             }
         });
         Ok(Self(Arc::new(ReplaceGlobalDefinesConfigImpl {
-            identifier: identifier_defines,
+            identifier: IdentifierDefine { identifier_defines, has_this_expr_define },
             dot: dot_defines,
             meta_property: meta_properties_defines,
             import_meta,
@@ -240,16 +253,33 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_identifier_defines(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::Identifier(ident) = expr else { return };
-        if !ident.is_global_reference(ctx.symbols()) {
-            return;
-        }
-        for (key, value) in &self.config.0.identifier {
-            if ident.name.as_str() == key {
-                let value = self.parse_value(value);
-                *expr = value;
-                break;
+        match expr {
+            Expression::Identifier(ident) => {
+                if !ident.is_global_reference(ctx.symbols()) {
+                    return;
+                }
+
+                for (key, value) in &self.config.0.identifier.identifier_defines {
+                    if ident.name.as_str() == key {
+                        let value = self.parse_value(value);
+                        *expr = value;
+                        break;
+                    }
+                }
             }
+            Expression::ThisExpression(_)
+                if self.config.0.identifier.has_this_expr_define
+                    && should_replace_this_expr(ctx.current_scope_flags()) =>
+            {
+                for (key, value) in &self.config.0.identifier.identifier_defines {
+                    if key.as_str() == "this" {
+                        let value = self.parse_value(value);
+                        *expr = value;
+                        break;
+                    }
+                }
+            }
+            _ => {}
         }
     }
 
@@ -301,7 +331,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     ) -> Option<Expression<'a>> {
         for dot_define in &self.config.0.dot {
             if Self::is_dot_define(
-                ctx.symbols(),
+                ctx,
                 dot_define,
                 DotDefineMemberExpression::ComputedMemberExpression(member),
             ) {
@@ -320,7 +350,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     ) -> Option<Expression<'a>> {
         for dot_define in &self.config.0.dot {
             if Self::is_dot_define(
-                ctx.symbols(),
+                ctx,
                 dot_define,
                 DotDefineMemberExpression::StaticMemberExpression(member),
             ) {
@@ -415,12 +445,12 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     pub fn is_dot_define<'b>(
-        symbols: &SymbolTable,
+        ctx: &mut TraverseCtx<'a>,
         dot_define: &DotDefine,
         member: DotDefineMemberExpression<'b, 'a>,
     ) -> bool {
         debug_assert!(dot_define.parts.len() > 1);
-
+        let should_replace_this_expr = should_replace_this_expr(ctx.current_scope_flags());
         let Some(mut cur_part_name) = member.name() else {
             return false;
         };
@@ -447,10 +477,14 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         })
                     }
                     Expression::Identifier(ident) => {
-                        if !ident.is_global_reference(symbols) {
+                        if !ident.is_global_reference(ctx.symbols()) {
                             return false;
                         }
                         cur_part_name = &ident.name;
+                        None
+                    }
+                    Expression::ThisExpression(_) if should_replace_this_expr => {
+                        cur_part_name = &THIS_ATOM;
                         None
                     }
                     _ => None,
@@ -556,4 +590,8 @@ fn destructing_dot_define_optimizer<'ast>(
     let mut iter = should_preserved_keys.iter();
     obj.properties.retain(|_| *iter.next().unwrap());
     expr
+}
+
+const fn should_replace_this_expr(scope_flags: ScopeFlags) -> bool {
+    !scope_flags.contains(ScopeFlags::Function) || scope_flags.contains(ScopeFlags::Arrow)
 }

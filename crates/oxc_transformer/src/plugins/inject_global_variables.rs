@@ -237,7 +237,7 @@ impl<'a> InjectGlobalVariables<'a> {
         if let Expression::StaticMemberExpression(member) = expr {
             for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
                 if ReplaceGlobalDefines::is_dot_define(
-                    ctx.symbols(),
+                    ctx,
                     dot_define,
                     DotDefineMemberExpression::StaticMemberExpression(member),
                 ) {
