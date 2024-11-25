@@ -19,7 +19,7 @@ use crate::{
 };
 
 fn anchor_has_ambiguous_text(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected ambigious anchor link text.").with_label(span)
+    OxcDiagnostic::warn("Unexpected ambagious anchor link text.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
