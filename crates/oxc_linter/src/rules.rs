@@ -951,6 +951,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_regexp_test,
     unicorn::prefer_set_size,
     unicorn::prefer_string_raw,
+    unicorn::prefer_string_replace_all,
     unicorn::prefer_string_slice,
     unicorn::prefer_string_starts_ends_with,
     unicorn::prefer_structured_clone,
