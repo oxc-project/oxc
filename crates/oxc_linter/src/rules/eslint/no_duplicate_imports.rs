@@ -52,7 +52,7 @@ declare_oxc_lint!(
     /// import something from 'another-module';
     /// ```
     NoDuplicateImports,
-    nursery,
+    style,
     pending);
 
 #[derive(Debug, Clone, PartialEq)]
