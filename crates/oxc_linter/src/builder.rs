@@ -95,6 +95,7 @@ impl LinterBuilder {
             rules: oxlintrc_rules,
             overrides,
             path,
+            ignore_patterns: _,
         } = oxlintrc;
 
         let config = LintConfig { plugins, settings, env, globals, path: Some(path) };

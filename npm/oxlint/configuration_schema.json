@@ -32,6 +32,14 @@
         }
       ]
     },
+    "ignorePatterns": {
+      "description": "Globs to ignore during linting. These are resolved from the configuration file path.",
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "overrides": {
       "description": "Add, remove, or otherwise reconfigure rules for specific files or groups of files.",
       "allOf": [
