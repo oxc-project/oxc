@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,7 +8,7 @@ use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_duplicate_imports_diagnostic(module_name: &str, span: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{}' import is duplicated", module_name))
+    OxcDiagnostic::warn(format!("'{module_name}' import is duplicated"))
         .with_help("Merge the duplicated import into a single import statement")
         .with_labels([
             span.label("This import is duplicated"),
@@ -17,7 +17,7 @@ fn no_duplicate_imports_diagnostic(module_name: &str, span: Span, span2: Span) -
 }
 
 fn no_duplicate_exports_diagnostic(module_name: &str, span: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{}' export is duplicated", module_name))
+    OxcDiagnostic::warn(format!("'{module_name}' export is duplicated"))
         .with_help("Merge the duplicated exports into a single export statement")
         .with_labels([
             span.label("This export is duplicated"),
@@ -83,10 +83,10 @@ impl Rule for NoDuplicateImports {
 
     fn run_once(&self, ctx: &LintContext) {
         let module_record = ctx.module_record();
-        let mut import_map: HashMap<&CompactStr, Vec<(ImportType, Span, ModuleType)>> =
-            HashMap::new();
+        let mut import_map: FxHashMap<&CompactStr, Vec<(ImportType, Span, ModuleType)>> =
+            FxHashMap::default();
         let mut current_span: Option<Span> = None;
-        let mut side_effect_import_map: HashMap<&CompactStr, Vec<Span>> = HashMap::new();
+        let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<Span>> = FxHashMap::default();
 
         for entry in &module_record.import_entries {
             let source = entry.module_request.name();
@@ -126,28 +126,26 @@ impl Rule for NoDuplicateImports {
 
         for (source, requests) in &module_record.requested_modules {
             for request in requests {
-                if request.is_import() {
-                    if module_record.import_entries.is_empty() {
-                        side_effect_import_map.entry(source).or_default().push(request.span());
-                    }
+                if request.is_import() && module_record.import_entries.is_empty() {
+                    side_effect_import_map.entry(source).or_default().push(request.span());
                 }
             }
         }
 
-        side_effect_import_map.iter().for_each(|(source, spans)| {
+        for (source, spans) in &side_effect_import_map {
             if spans.len() > 1 {
-                spans.iter().for_each(|span| {
+                for span in spans {
                     let i = spans.iter().position(|s| s == span).unwrap();
                     if i > 0 {
                         ctx.diagnostic(no_duplicate_imports_diagnostic(
                             source,
                             *span,
-                            spans.first().unwrap().clone(),
+                            *spans.first().unwrap(),
                         ));
                     }
-                });
+                }
             }
-        });
+        }
 
         if self.include_exports {
             for entry in &module_record.star_export_entries {
@@ -270,10 +268,8 @@ fn can_merge_imports(
     let has_named = named.is_some();
     let has_default = default.is_some();
 
-    if matches!(current_type, ImportType::Named) {
-        if has_named {
-            return true;
-        }
+    if matches!(current_type, ImportType::Named) && has_named {
+        return true;
     }
 
     if matches!(current_type, ImportType::Namespace) {
@@ -307,10 +303,8 @@ fn can_merge_imports(
         }
     }
 
-    if matches!(current_type, ImportType::SideEffect) {
-        if !existing.is_empty() {
-            return true;
-        }
+    if matches!(current_type, ImportType::SideEffect) && !existing.is_empty() {
+        return true;
     }
 
     false
