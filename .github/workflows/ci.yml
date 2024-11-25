@@ -241,6 +241,10 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           tools: just
 
+      - name: Update transformer fixtures
+        if: steps.filter.outputs.src == 'true'
+        run: node tasks/transform_conformance/update_fixtures.js
+
       - name: Check Conformance
         if: steps.filter.outputs.src == 'true'
         run: |

@@ -39,6 +39,7 @@ submodules:
   just clone-submodule tasks/coverage/babel https://github.com/babel/babel.git 54a8389fa31ce4fd18b0335b05832dc1ad3cc21f
   just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript.git d85767abfd83880cea17cea70f9913e9c4496dcc
   just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier.git 52829385bcc4d785e58ae2602c0b098a643523c9
+  node tasks/transform_conformance/update_fixtures.js
 
 # Install git pre-commit to format files
 install-hook:

@@ -2,10 +2,21 @@
   "name": "transform_conformance",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "vitest": "vitest"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/plugin-external-helpers": "^7.25.9",
+    "@babel/plugin-proposal-decorators": "^7.25.9",
+    "@babel/plugin-transform-arrow-functions": "^7.25.9",
+    "@babel/plugin-transform-class-properties": "^7.25.9",
+    "@babel/plugin-transform-class-static-block": "^7.26.0",
+    "@babel/plugin-transform-exponentiation-operator": "^7.25.9",
+    "@babel/plugin-transform-logical-assignment-operators": "^7.25.9",
+    "@babel/plugin-transform-optional-chaining": "^7.25.9",
+    "@babel/plugin-transform-private-methods": "^7.25.9",
     "@babel/runtime": "^7.26.0"
   }
 }
