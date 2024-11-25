@@ -267,6 +267,6 @@ source: crates/oxc_linter/src/tester.rs
  1 │ 
  2 │             const a: Array<'foo' | 'bar'> = ['foo', 'bar']
    ·                   ────────────────────────────────────────
- 3 │             
+ 3 │ 
    ╰────
   help: Switch to `Set`
