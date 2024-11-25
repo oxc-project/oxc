@@ -153,11 +153,13 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        let symbol_table = ctx.symbols();
-
-        if symbol_table.get_flags(symbol_id).is_export() {
+        let module_record = ctx.module_record();
+        if module_record.exported_bindings.contains_key(ident.name.as_str())
+            || module_record.export_default.is_some_and(|default| default == ident.span)
+        {
             return;
         }
+        let symbol_table = ctx.symbols();
 
         let mut references = symbol_table.get_resolved_references(symbol_id).peekable();
 
