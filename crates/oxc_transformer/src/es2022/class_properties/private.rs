@@ -815,6 +815,48 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // See `private/tagged-template` fixture.
     }
 
+    /// Transform private field in assignment pattern.
+    ///
+    /// Instance prop:
+    /// * `[object.#prop] = arr` -> `[_toSetter(_classPrivateFieldSet, [_prop, object])._] = arr`
+    /// * `({x: object.#prop} = obj)` -> `({ x: _toSetter(_classPrivateFieldSet, [_prop, object])._ } = obj)`
+    ///
+    /// Static prop:
+    /// (same as `Expression::PrivateFieldExpression` is transformed to)
+    /// * `[object.#prop] = arr` -> `[_assertClassBrand(Class, object, _prop)._] = arr`
+    /// * `({x: object.#prop} = obj)` -> `({ x: _assertClassBrand(Class, object, _prop)._ } = obj)`
+    //
+    // `#[inline]` because most `AssignmentTarget`s are not `PrivateFieldExpression`s.
+    // So we want to bail out in that common case without the cost of a function call.
+    // Transform of `PrivateFieldExpression`s in broken out into `transform_assignment_target_impl` to
+    // keep this function as small as possible.
+    #[inline]
+    pub(super) fn transform_assignment_target(
+        &mut self,
+        target: &mut AssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // `object.#prop` in assignment pattern.
+        // Must be in assignment pattern, as `enter_expression` already transformed `AssignmentExpression`s.
+        if matches!(target, AssignmentTarget::PrivateFieldExpression(_)) {
+            self.transform_assignment_target_impl(target, ctx);
+        }
+    }
+
+    #[expect(clippy::unused_self)]
+    fn transform_assignment_target_impl(
+        &mut self,
+        target: &mut AssignmentTarget<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        let AssignmentTarget::PrivateFieldExpression(_private_field) = target else {
+            unreachable!()
+        };
+
+        // TODO: `[object.#prop] = value`
+        // TODO: `({x: object.#prop} = value)`
+    }
+
     /// Duplicate object to be used in get/set pair.
     ///
     /// If `object` may have side effects, create a temp var `_object` and assign to it.

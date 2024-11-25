@@ -302,10 +302,16 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
                 // TODO: `transform_tagged_template_expression` is no-op at present
                 self.transform_tagged_template_expression(expr, ctx);
             }
-            // TODO: `[object.#prop] = value`
-            // TODO: `({x: object.#prop} = value)`
             _ => {}
         }
+    }
+
+    fn enter_assignment_target(
+        &mut self,
+        target: &mut AssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.transform_assignment_target(target, ctx);
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
