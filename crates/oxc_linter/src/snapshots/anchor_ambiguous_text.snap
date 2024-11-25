@@ -1,0 +1,170 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>here</a>;
+   · ───────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>HERE</a>;
+   · ───────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>click here</a>;
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>learn more</a>;
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>learn      more</a>;
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>learn more.</a>;
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>learn more?</a>;
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>learn more,</a>;
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>learn more!</a>;
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>learn more;</a>;
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>learn more:</a>;
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>link</a>;
+   · ───────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>a link</a>;
+   · ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a aria-label="click here">something</a>;
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a> a link </a>;
+   · ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>a<i></i> link</a>;
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a><i></i>a link</a>;
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a><span>click</span> here</a>;
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a><span> click </span> here</a>;
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a><span aria-hidden>more text</span>learn more</a>;
+   · ───────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a><span aria-hidden="true">more text</span>learn more</a>;
+   · ──────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a><img alt="click here"/></a>;
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a alt="tutorial on using eslint-plugin-jsx-a11y">click here</a>;
+   · ────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a><span alt="tutorial on using eslint-plugin-jsx-a11y">click here</span></a>;
+   · ─────────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a><CustomElement>click</CustomElement> here</a>;
+   · ────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <Link>here</Link>
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a><Image alt="click here" /></a>
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Unexpected ambagious anchor link text.
+   ╭─[anchor_ambiguous_text.tsx:1:1]
+ 1 │ <a>a disallowed word</a>
+   · ────────────────────────
+   ╰────
