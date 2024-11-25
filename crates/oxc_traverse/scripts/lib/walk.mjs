@@ -129,9 +129,9 @@ function generateWalkForStruct(type, types) {
     if (index === 0) {
       tagCode = `
         let pop_token = ctx.push_stack(
-            Ancestor::${type.name}${fieldCamelName}(
-                ancestor::${type.name}Without${fieldCamelName}(node, PhantomData)
-            )
+          Ancestor::${type.name}${fieldCamelName}(
+            ancestor::${type.name}Without${fieldCamelName}(node, PhantomData)
+          )
         );
       `;
     } else {
