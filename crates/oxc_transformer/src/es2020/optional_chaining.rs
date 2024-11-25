@@ -101,7 +101,7 @@ impl<'a, 'ctx> Traverse<'a> for OptionalChaining<'a, 'ctx> {
             {
                 self.transform_update_expression(expr, ctx);
             }
-            _ => (),
+            _ => {}
         };
     }
 
