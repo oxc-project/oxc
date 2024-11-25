@@ -1,7 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of class itself.
 
-use oxc_allocator::Address;
+use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{
@@ -35,7 +35,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) {
         let Expression::ClassExpression(class) = expr else { unreachable!() };
 
-        let expr_count = self.transform_class_expression_start(class, ctx);
+        let class_address = class.address();
+        let expr_count = self.transform_class_expression_start(class, class_address, ctx);
         if expr_count > 0 {
             self.transform_class_expression_finish(expr, expr_count, ctx);
         }
@@ -44,10 +45,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     fn transform_class_expression_start(
         &mut self,
         class: &mut Class<'a>,
+        class_address: Address,
         ctx: &mut TraverseCtx<'a>,
     ) -> usize {
         // Check this class isn't being visited twice
-        let class_address = Address::from_ptr(class);
         if *self.class_expression_addresses_stack.last() == class_address {
             // This class has already been transformed, and we're now encountering it again
             // in the sequence expression which was substituted for it. So don't transform it again!
