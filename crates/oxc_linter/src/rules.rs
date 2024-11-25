@@ -250,6 +250,7 @@ mod react {
     pub mod jsx_key;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
+    pub mod jsx_no_script_url;
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
@@ -805,6 +806,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_key,
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
+    react::jsx_no_script_url,
     react::jsx_no_target_blank,
     react::jsx_no_undef,
     react::jsx_no_useless_fragment,

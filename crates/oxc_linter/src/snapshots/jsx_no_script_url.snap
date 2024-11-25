@@ -1,0 +1,88 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
+   ╭─[jsx_no_script_url.tsx:1:4]
+ 1 │ <a href="javascript:"></a>
+   ·    ──────────────────
+   ╰────
+  help: Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.
+
+  ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
+   ╭─[jsx_no_script_url.tsx:1:4]
+ 1 │ <a href="javascript:void(0)"></a>
+   ·    ─────────────────────────
+   ╰────
+  help: Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.
+
+  ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
+   ╭─[jsx_no_script_url.tsx:1:4]
+ 1 │ ╭─▶ <a href="j
+ 2 │ │   
+ 3 │ │   
+ 4 │ │               a
+ 5 │ ╰─▶ v   ascript:"></a>
+   ╰────
+  help: Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.
+
+  ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
+   ╭─[jsx_no_script_url.tsx:1:6]
+ 1 │ <Foo to="javascript:"></Foo>
+   ·      ────────────────
+   ╰────
+  help: Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.
+
+  ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
+   ╭─[jsx_no_script_url.tsx:1:6]
+ 1 │ <Foo href="javascript:"></Foo>
+   ·      ──────────────────
+   ╰────
+  help: Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.
+
+  ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
+   ╭─[jsx_no_script_url.tsx:1:4]
+ 1 │ <a href="javascript:void(0)"></a>
+   ·    ─────────────────────────
+   ╰────
+  help: Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.
+
+  ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
+   ╭─[jsx_no_script_url.tsx:1:6]
+ 1 │ <Foo to="javascript:"></Foo>
+   ·      ────────────────
+   ╰────
+  help: Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.
+
+  ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
+   ╭─[jsx_no_script_url.tsx:1:6]
+ 1 │ <Foo href="javascript:"></Foo>
+   ·      ──────────────────
+   ╰────
+  help: Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.
+
+  ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
+   ╭─[jsx_no_script_url.tsx:3:17]
+ 2 │                   <div>
+ 3 │                     <Foo href="javascript:"></Foo>
+   ·                          ──────────────────
+ 4 │                     <Bar link="javascript:"></Bar>
+   ╰────
+  help: Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.
+
+  ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
+   ╭─[jsx_no_script_url.tsx:4:17]
+ 3 │                     <Foo href="javascript:"></Foo>
+ 4 │                     <Bar link="javascript:"></Bar>
+   ·                          ──────────────────
+ 5 │                   </div>
+   ╰────
+  help: Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.
+
+  ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
+   ╭─[jsx_no_script_url.tsx:4:17]
+ 3 │                     <Foo href="javascript:"></Foo>
+ 4 │                     <Bar link="javascript:"></Bar>
+   ·                          ──────────────────
+ 5 │                   </div>
+   ╰────
+  help: Use event handlers instead if you can. If you need to generate unsafe HTML, try using dangerouslySetInnerHTML instead.
