@@ -1,8 +1,8 @@
-commit: 06454619
+commit: fd979d85
 
 runtime Summary:
 AST Parsed     : 18055/18055 (100.00%)
-Positive Passed: 17851/18055 (98.87%)
+Positive Passed: 17852/18055 (98.88%)
 tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 codegen error: Test262Error: descriptor value should be ; object value should be 
 
@@ -290,9 +290,6 @@ transform error: Test262Error: reject reason Expected SameValue(«TypeError: The
 
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-sync-throw.js
 transform error: throw-arg-1
-
-tasks/coverage/test262/test/language/expressions/class/heritage-arrow-function.js
-transform error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/class/heritage-async-arrow-function.js
 transform error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
