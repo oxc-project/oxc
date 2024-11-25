@@ -35,6 +35,7 @@
     "build-base": "wasm-pack build --release --no-pack",
     "copy-files": "cp ./package.json ../../npm/parser-wasm/package.json && cp ./README.md ../../npm/parser-wasm/README.md",
     "clean-files": "rm ../../npm/parser-wasm/*/.gitignore",
-    "test": "node ./test-node.mjs"
+    "test": "node ./test-node.mjs",
+    "check": "tsc --lib es2020,dom ./node/oxc_parser_wasm.d.ts"
   }
 }

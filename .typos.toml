@@ -24,6 +24,7 @@ extend-exclude = [
   "tasks/prettier_conformance/snapshots",
   "tasks/transform_conformance/tests/**/output.js",
   "tasks/transform_conformance/snapshots",
+  "npm/oxc-wasm/oxc_wasm.js"
 ]
 
 [default]

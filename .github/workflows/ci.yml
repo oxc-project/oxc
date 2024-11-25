@@ -131,13 +131,15 @@ jobs:
           rustup target add wasm32-unknown-unknown
           cargo check -p oxc_wasm --target wasm32-unknown-unknown
       - uses: ./.github/actions/pnpm
+
       - run: just build-wasm debug
+      - working-directory: npm/oxc-wasm
+        run: pnpm run check
+
       - working-directory: wasm/parser
         run: pnpm run build
-      - name: Check output types
-        run: |
-          npx -y -p typescript tsc --lib es2020,dom npm/oxc-wasm/oxc_wasm.d.ts
-          npx -y -p typescript tsc --lib es2020,dom npm/parser-wasm/node/oxc_parser_wasm.d.ts
+      - working-directory: npm/parser-wasm
+        run: pnpm run check
 
   typos:
     name: Spell Check

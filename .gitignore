@@ -9,6 +9,7 @@ target/
 /tasks/benchmark/codspeed/node_modules/
 /tasks/transform_conformance/node_modules/
 /tasks/compat_data/node_modules/
+/npm/*/node_modules
 
 # vscode
 /editors/vscode/.vscode-test/
