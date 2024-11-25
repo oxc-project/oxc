@@ -157,7 +157,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         let reference = ctx.scoping.symbols_mut().get_reference_mut(ident.reference_id());
 
         // `left **= right` is being transformed to `left = Math.pow(left, right)`,
-        // so if `left` is no longer being read from, update its `ReferenceFlags`.
+        // so `left` in `left =` is no longer being read from
         *reference.flags_mut() = ReferenceFlags::Write;
 
         let pow_left = if let Some(symbol_id) = reference.symbol_id() {
