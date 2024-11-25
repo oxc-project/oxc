@@ -91,12 +91,11 @@ bitflags! {
         const RegularEnum             = 1 << 10;
         const ConstEnum               = 1 << 11;
         const EnumMember              = 1 << 12;
-        const TypeLiteral             = 1 << 13;
-        const TypeParameter           = 1 << 14;
-        const NameSpaceModule         = 1 << 15;
-        const ValueModule             = 1 << 16;
+        const TypeParameter           = 1 << 13;
+        const NameSpaceModule         = 1 << 14;
+        const ValueModule             = 1 << 15;
         // In a dts file or there is a declare flag
-        const Ambient                 = 1 << 17;
+        const Ambient                 = 1 << 16;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
@@ -104,7 +103,7 @@ bitflags! {
         const BlockScoped = Self::BlockScopedVariable.bits() | Self::Enum.bits() | Self::Class.bits();
 
         const Value = Self::Variable.bits() | Self::Class.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::ValueModule.bits();
-        const Type =  Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::TypeLiteral.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
+        const Type =  Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
 
         /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the
         /// same name, or any other value that is not a variable, e.g. ValueModule or Class

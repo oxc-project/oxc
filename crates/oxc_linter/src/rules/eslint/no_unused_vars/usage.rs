@@ -30,10 +30,8 @@ impl<'s, 'a> Symbol<'s, 'a> {
         const IMPORT: SymbolFlags = SymbolFlags::Import.union(SymbolFlags::TypeImport);
         // note: intetionally do not use `SymbolFlags::is_type` here, since that
         // can return `true` for values
-        const TYPE: SymbolFlags = SymbolFlags::TypeAlias
-            .union(SymbolFlags::TypeLiteral)
-            .union(SymbolFlags::TypeParameter)
-            .union(SymbolFlags::Interface);
+        const TYPE: SymbolFlags =
+            SymbolFlags::TypeAlias.union(SymbolFlags::TypeParameter).union(SymbolFlags::Interface);
         const ENUM: SymbolFlags = SymbolFlags::Enum.union(SymbolFlags::EnumMember);
         const NAMESPACE_LIKE: SymbolFlags =
             SymbolFlags::NameSpaceModule.union(SymbolFlags::ValueModule);
