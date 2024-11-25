@@ -65,6 +65,7 @@ mod generated {
     pub mod derive_content_hash;
     #[cfg(feature = "serialize")]
     pub mod derive_estree;
+    pub mod derive_get_address;
     pub mod derive_get_span;
     pub mod derive_get_span_mut;
     pub mod get_id;

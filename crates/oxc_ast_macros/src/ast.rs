@@ -77,6 +77,8 @@ fn abs_trait(
         (quote!(::oxc_span::GetSpan), TokenStream::default())
     } else if ident == "GetSpanMut" {
         (quote!(::oxc_span::GetSpanMut), TokenStream::default())
+    } else if ident == "GetAddress" {
+        (quote!(::oxc_allocator::GetAddress), TokenStream::default())
     } else if ident == "ContentEq" {
         (quote!(::oxc_span::cmp::ContentEq), TokenStream::default())
     } else if ident == "ContentHash" {
