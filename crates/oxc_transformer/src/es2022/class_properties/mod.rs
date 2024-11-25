@@ -136,7 +136,7 @@ pub struct ClassPropertiesOptions {
 pub struct ClassProperties<'a, 'ctx> {
     // Options
     set_public_class_fields: bool,
-    static_block: bool,
+    transform_static_blocks: bool,
 
     ctx: &'ctx TransformCtx<'a>,
 
@@ -200,7 +200,7 @@ struct PrivateProp<'a> {
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     pub fn new(
         options: ClassPropertiesOptions,
-        static_block: bool,
+        transform_static_blocks: bool,
         ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
         // TODO: Raise error if these 2 options are inconsistent
@@ -209,7 +209,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         Self {
             set_public_class_fields,
-            static_block,
+            transform_static_blocks,
             ctx,
             private_props_stack: SparseStack::new(),
             class_expression_addresses_stack: NonEmptyStack::new(Address::DUMMY),

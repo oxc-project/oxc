@@ -319,7 +319,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 }
                 ClassElement::StaticBlock(_) => {
                     // Static block only necessitates transforming class if it's being transformed
-                    if self.static_block {
+                    if self.transform_static_blocks {
                         has_static_prop_or_static_block = true;
                         continue;
                     }
@@ -371,7 +371,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     false
                 }
                 ClassElement::StaticBlock(block) => {
-                    if self.static_block {
+                    if self.transform_static_blocks {
                         self.convert_static_block(block, ctx);
                         false
                     } else {
