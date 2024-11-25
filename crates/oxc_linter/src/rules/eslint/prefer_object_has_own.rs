@@ -87,21 +87,12 @@ impl Rule for PreferObjectHasOwn {
                 ctx.diagnostic(diagnostic);
             } else {
                 ctx.diagnostic_with_fix(diagnostic, |fixer| {
-                    let before_token_of_replace_span = if replace_target_span.start > 1 {
-                        Some(ctx.source_range(Span::new(
-                            replace_target_span.start - 1,
-                            replace_target_span.start,
-                        )))
-                    } else {
-                        None
-                    };
-                    let replacement = match before_token_of_replace_span {
-                        Some(token) => match token {
-                            " " | "=" | "/" | "(" => "Object.hasOwn",
-                            _ => " Object.hasOwn",
-                        },
-                        _ => "Object.hasOwn",
-                    };
+                    let needs_space = replace_target_span.start > 1
+                        && !ctx
+                            .source_range(Span::new(0, replace_target_span.start))
+                            .ends_with(&[' ', '=', '/', '(']);
+
+                    let replacement = if needs_space { " Object.hasOwn" } else { "Object.hasOwn" };
                     fixer.replace(replace_target_span, replacement)
                 });
             }
@@ -238,6 +229,8 @@ fn test() {
         "Object[`hasOwnProperty`][`call`](object, property);",
         "({})['hasOwnProperty']['call'](object, property);",
         "({})[`hasOwnProperty`][`call`](object, property);",
+        // Issue: <https://github.com/oxc-project/oxc/issues/7450>
+        "Object.prototype.hasOwnProperty.call(C,x);",
     ];
 
     let fix = vec![
@@ -385,6 +378,8 @@ fn test() {
             "Object.hasOwn(object, property);",
             None,
         ),
+        // Issue: <https://github.com/oxc-project/oxc/issues/7450>
+        ("Object.prototype.hasOwnProperty.call(C,x);", " Object.hasOwn(C,x);", None),
     ];
     Tester::new(PreferObjectHasOwn::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
