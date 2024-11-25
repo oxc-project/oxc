@@ -100,7 +100,7 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
 fn is_multiple_calls(node: &AstNode, ctx: &LintContext, root_scope_id: ScopeId) -> bool {
     let mut was_in_root_scope = node.scope_id() == root_scope_id;
     let mut is_multiple = false;
-    for parent in ctx.nodes().iter_parents(node.id()) {
+    for parent in ctx.nodes().ancestors(node.id()) {
         let parent_scope = parent.scope_id();
         if was_in_root_scope && parent_scope != root_scope_id {
             is_multiple = false;
@@ -797,7 +797,7 @@ fn test() {
         ",
         "
             const a: Array<'foo' | 'bar'> = ['foo', 'bar']
-            
+
             for (let i = 0; i < 3; i++) {
             	if (a.includes(someString)) {
             		console.log(123)
