@@ -1,4 +1,5 @@
 use oxc_allocator::Box;
+use oxc_allocator::CloneIn;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -44,8 +45,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 .transform_class(decl, Some(false))
                 .map(|d| (None, ExportDefaultDeclarationKind::ClassDeclaration(d))),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                Some((None, unsafe { self.ast.copy(&decl.declaration) }))
+                Some((None, decl.declaration.clone_in(self.ast.allocator)))
             }
             declaration @ match_expression!(ExportDefaultDeclarationKind) => self
                 .transform_export_expression(declaration.to_expression())
@@ -115,30 +115,33 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Option<Box<'a, ImportDeclaration<'a>>> {
         let specifiers = decl.specifiers.as_ref()?;
 
-        // SAFETY: `ast.copy` is unsound! We need to fix.
-        let mut specifiers = unsafe { self.ast.copy(specifiers) };
-        specifiers.retain(|specifier| match specifier {
-            ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                self.scope.has_reference(&specifier.local.name)
-            }
-            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                self.scope.has_reference(&specifier.local.name)
-            }
-            ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                self.scope.has_reference(&specifier.name())
+        let mut new_specifiers = self.ast.vec_with_capacity(specifiers.len());
+        specifiers.iter().for_each(|specifier| {
+            let is_referenced = match specifier {
+                ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                    self.scope.has_reference(&specifier.local.name)
+                }
+                ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                    self.scope.has_reference(&specifier.local.name)
+                }
+                ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
+                    self.scope.has_reference(&specifier.name())
+                }
+            };
+            if is_referenced {
+                new_specifiers.push(specifier.clone_in(self.ast.allocator));
             }
         });
-        if specifiers.is_empty() {
+
+        if new_specifiers.is_empty() {
             // We don't need to print this import statement
             None
         } else {
             Some(self.ast.alloc_import_declaration(
                 decl.span,
-                Some(specifiers),
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&decl.source) },
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&decl.with_clause) },
+                Some(new_specifiers),
+                decl.source.clone(),
+                decl.with_clause.clone_in(self.ast.allocator),
                 decl.import_kind,
             ))
         }

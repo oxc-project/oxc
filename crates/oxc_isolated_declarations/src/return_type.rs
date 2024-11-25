@@ -1,5 +1,6 @@
 use std::cell::Cell;
 
+use oxc_allocator::CloneIn;
 use oxc_ast::{
     ast::{
         ArrowFunctionExpression, BindingIdentifier, Expression, Function, FunctionBody,
@@ -162,7 +163,7 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
                 return;
             }
         }
-        // SAFETY: `ast.copy` is unsound! We need to fix.
-        self.return_expression = Some(unsafe { self.ast.copy(&stmt.argument) });
+
+        self.return_expression = Some(stmt.argument.clone_in(self.ast.allocator));
     }
 }

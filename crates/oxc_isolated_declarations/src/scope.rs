@@ -1,7 +1,7 @@
-use std::cell::Cell;
-
 use bitflags::bitflags;
 use rustc_hash::FxHashMap;
+
+use std::cell::Cell;
 
 use oxc_ast::ast::*;
 use oxc_ast::{visit::walk::*, Visit};
