@@ -8,13 +8,6 @@ use oxc_ast::ast::*;
 
 use crate::context::LintContext;
 
-pub fn skip_chain_expression<'a>(expr: &'a Expression<'a>) -> Option<&MemberExpression<'a>> {
-    match expr.without_parenthesized() {
-        Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
-        expr => expr.as_member_expression()
-    }
-}
-
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
 /// 1. Literal booleans (`true` or `false`)
@@ -71,10 +64,6 @@ fn is_logical_identity(op: LogicalOperator, expr: &Expression) -> bool {
 ///   if coerced to that type, the value will be constant.
 pub trait IsConstant<'a, 'b> {
     fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool;
-}
-
-pub trait IsArray {
-    fn is_array(&self) -> bool;
 }
 
 impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
@@ -169,15 +158,6 @@ impl<'a, 'b> IsConstant<'a, 'b> for Argument<'a> {
         match self {
             Self::SpreadElement(element) => element.is_constant(in_boolean_position, ctx),
             match_expression!(Self) => self.to_expression().is_constant(in_boolean_position, ctx),
-        }
-    }
-}
-
-impl IsArray for Argument<'_> {
-    fn is_array(&self) -> bool {
-        match self {
-            Argument::ArrayExpression(_) => true,
-            _ => false
         }
     }
 }
@@ -428,4 +408,11 @@ pub fn get_function_like_declaration<'b>(
     let decl = parent.kind().as_variable_declarator()?;
 
     decl.id.get_binding_identifier()
+}
+
+pub fn skip_chain_expression<'a>(expr: &'a Expression<'a>) -> Option<&MemberExpression<'a>> {
+    match expr.get_inner_expression() {
+        Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
+        expr => expr.as_member_expression(),
+    }
 }

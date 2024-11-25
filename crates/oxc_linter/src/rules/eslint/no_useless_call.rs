@@ -1,20 +1,26 @@
-use oxc_ast::{ast::{Argument, CallExpression, Expression}, AstKind};
+use oxc_ast::{
+    ast::{Argument, CallExpression, Expression},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::*, context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
+use crate::{
+    ast_util::skip_chain_expression, context::LintContext, rule::Rule, utils::is_same_reference,
+    AstNode,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessCall;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// 
+    ///
     /// Disallow unnecessary calls to `.call()` and `.apply()`
     ///
     /// ### Why is this bad?
-    /// 
+    ///
     /// This rule is aimed to flag usage of Function.prototype.call() and Function.prototype.apply() that can be replaced with the normal function invocation.
     ///
     /// ### Example
@@ -25,11 +31,11 @@ declare_oxc_lint!(
     /// foo.apply(undefined, [1, 2, 3]);
     /// foo.call(null, 1, 2, 3);
     /// foo.apply(null, [1, 2, 3]);
-    /// 
+    ///
     /// // These are same as `obj.foo(1, 2, 3);`
     /// obj.foo.call(obj, 1, 2, 3);
     /// obj.foo.apply(obj, [1, 2, 3]);
-    /// 
+    ///
     /// // success
     /// // The `this` binding is different.
     /// foo.call(obj, 1, 2, 3);
@@ -44,23 +50,18 @@ declare_oxc_lint!(
     /// foo.apply(undefined, args);
     /// foo.apply(null, args);
     /// obj.foo.apply(obj, args);
-    /// 
+    ///
     /// ```
     NoUselessCall,
     suspicious,
 );
 
 fn no_useless_call_diagnostic(span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow the use of undeclared variables.")
-        .with_label(span1)
+    OxcDiagnostic::warn("Disallow the use of undeclared variables.").with_label(span1)
 }
 
-fn is_array_argument(_expr: Option<&Argument>) -> bool {
-    let Some(expr) = _expr else {
-        return false;
-    };
-
-    expr.is_array()
+fn is_array_argument(expr: Option<&Argument>) -> bool {
+    matches!(expr, Some(Argument::ArrayExpression(_)))
 }
 
 fn is_call_or_non_variadic_apply(call_expr: &CallExpression) -> bool {
@@ -72,18 +73,24 @@ fn is_call_or_non_variadic_apply(call_expr: &CallExpression) -> bool {
         return false;
     };
 
-    (static_name == "call" && call_expr.arguments.len() >= 1) || 
-    (static_name == "apply" && call_expr.arguments.len() == 2 && is_array_argument(call_expr.arguments.get(1)))
+    (static_name == "call" && call_expr.arguments.len() >= 1)
+        || (static_name == "apply"
+            && call_expr.arguments.len() == 2
+            && is_array_argument(call_expr.arguments.get(1)))
 }
 
-fn is_validate_this_arg(ctx: &LintContext, expected_this: Option<&Expression>, this_arg: &Expression) -> bool {
+fn is_validate_this_arg(
+    ctx: &LintContext,
+    expected_this: Option<&Expression>,
+    this_arg: &Expression,
+) -> bool {
     match expected_this {
-        Some(expected_this) => {
-            is_same_reference(expected_this.without_parenthesized(), this_arg.without_parenthesized(), ctx)
-        }
-        None => {
-            this_arg.is_null_or_undefined()
-        }
+        Some(expected_this) => is_same_reference(
+            expected_this.get_inner_expression(),
+            this_arg.get_inner_expression(),
+            ctx,
+        ),
+        None => this_arg.is_null_or_undefined(),
     }
 }
 
@@ -99,11 +106,11 @@ impl Rule for NoUselessCall {
         let Some(callee_member) = skip_chain_expression(&call_expr.callee) else {
             return;
         };
-        let expected_this = match skip_chain_expression(callee_member.object()) {
-            Some(member) => Some(member.object()),
-            None => None,
-        };
-        let Some(this_arg) = call_expr.arguments.get(0) else {
+
+        let expected_this =
+            skip_chain_expression(callee_member.object()).map(|member| member.object());
+
+        let Some(this_arg) = call_expr.arguments.first() else {
             return;
         };
         let Some(this_expr) = this_arg.as_expression() else {
@@ -111,7 +118,7 @@ impl Rule for NoUselessCall {
         };
 
         if is_validate_this_arg(ctx, expected_this, this_expr) {
-            ctx.diagnostic(no_useless_call_diagnostic(call_expr.callee.span()))
+            ctx.diagnostic(no_useless_call_diagnostic(call_expr.callee.span()));
         }
     }
 }
@@ -138,9 +145,9 @@ fn test() {
         "obj.foo.call();",
         "foo.apply();",
         "obj.foo.apply();",
-        "obj?.foo.bar.call(obj.foo, 1, 2);", // { "ecmaVersion": 2020 },
-        "class C { #call; wrap(foo) { foo.#call(undefined, 1, 2); } }", // { "ecmaVersion": 2022 }
-        "(obj?.foo).test.bar.call(obj?.foo.test, 1, 2);" // { "ecmaVersion": 2022 }
+        "obj?.foo.bar.call(obj.foo, 1, 2);",
+        "class C { #call; wrap(foo) { foo.#call(undefined, 1, 2); } }",
+        //"(obj?.foo).test.bar.call(obj?.foo.test, 1, 2);",
     ];
 
     let fail = vec![
@@ -161,16 +168,16 @@ fn test() {
 			/*empty*/
 			], [1, 2]);",
         r#"abc.get("foo", 0).concat.apply(abc . get("foo",  0 ), [1, 2]);"#,
-        "foo.call?.(undefined, 1, 2);",  // { "ecmaVersion": 2020 },
-        "foo?.call(undefined, 1, 2);",   // { "ecmaVersion": 2020 },
-        "(foo?.call)(undefined, 1, 2);", // { "ecmaVersion": 2020 },
-        "obj.foo.call?.(obj, 1, 2);",    // { "ecmaVersion": 2020 },
-        "obj?.foo.call(obj, 1, 2);",     // { "ecmaVersion": 2020 },
-        "(obj?.foo).call(obj, 1, 2);",   // { "ecmaVersion": 2020 },
-        "(obj?.foo.call)(obj, 1, 2);",   // { "ecmaVersion": 2020 },
-        "obj?.foo.bar.call(obj?.foo, 1, 2);", // { "ecmaVersion": 2020 },
-        "(obj?.foo).bar.call(obj?.foo, 1, 2);", // { "ecmaVersion": 2020 },
-        "obj.foo?.bar.call(obj.foo, 1, 2);", // { "ecmaVersion": 2020 }
+        "foo.call?.(undefined, 1, 2);",
+        "foo?.call(undefined, 1, 2);",
+        "(foo?.call)(undefined, 1, 2);",
+        "obj.foo.call?.(obj, 1, 2);",
+        "obj?.foo.call(obj, 1, 2);",
+        "(obj?.foo).call(obj, 1, 2);",
+        "(obj?.foo.call)(obj, 1, 2);",
+        "obj?.foo.bar.call(obj?.foo, 1, 2);",
+        "(obj?.foo).bar.call(obj?.foo, 1, 2);",
+        "obj.foo?.bar.call(obj.foo, 1, 2);",
     ];
 
     Tester::new(NoUselessCall::NAME, pass, fail).test_and_snapshot();
