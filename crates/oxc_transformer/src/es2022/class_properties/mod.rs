@@ -57,6 +57,44 @@
 //! }
 //! ```
 //!
+//! ## Options
+//!
+//! ### `loose`
+//!
+//! This option can also be enabled with `CompilerAssumptions::set_public_class_fields`.
+//!
+//! When `true`, class properties are compiled to use an assignment expression instead of
+//! `_defineProperty` helper.
+//!
+//! #### Example
+//!
+//! Input:
+//! ```js
+//! class C {
+//!   foo = 123;
+//! }
+//! ```
+//!
+//! With `loose: false` (default):
+//!
+//! ```js
+//! class C {
+//!   constructor() {
+//!     babelHelpers.defineProperty(this, "foo", 123);
+//!   }
+//! }
+//! ```
+//!
+//! With `loose: true`:
+//!
+//! ```js
+//! class C {
+//!   constructor() {
+//!     this.foo = 123;
+//!   }
+//! }
+//! ```
+//!
 //! ## Implementation
 //!
 //! WORK IN PROGRESS. INCOMPLETE.
@@ -135,12 +173,16 @@ pub struct ClassPropertiesOptions {
 /// [module docs]: self
 pub struct ClassProperties<'a, 'ctx> {
     // Options
+    //
+    /// If `true`, set properties with `=`, instead of `_defineProperty` helper.
     set_public_class_fields: bool,
+    /// If `true`, transform static blocks.
     transform_static_blocks: bool,
 
     ctx: &'ctx TransformCtx<'a>,
 
     // State during whole AST
+    //
     /// Stack of private props.
     /// Pushed to when entering a class (`None` if class has no private props, `Some` if it does).
     /// Entries are a mapping from private prop name to binding for temp var.
@@ -150,7 +192,6 @@ pub struct ClassProperties<'a, 'ctx> {
     // then stack will get out of sync.
     // TODO: Should push to the stack only when entering class body, because `#x` in class `extends`
     // clause resolves to `#x` in *outer* class, not the current class.
-    // TODO(improve-on-babel): Order that temp vars are created in is not important. Use `FxHashMap` instead.
     private_props_stack: SparseStack<PrivateProps<'a>>,
     /// Addresses of class expressions being processed, to prevent same class being visited twice.
     /// Have to use a stack because the revisit doesn't necessarily happen straight after the first visit.
@@ -158,6 +199,7 @@ pub struct ClassProperties<'a, 'ctx> {
     class_expression_addresses_stack: NonEmptyStack<Address>,
 
     // State during transform of class
+    //
     /// `true` for class declaration, `false` for class expression
     is_declaration: bool,
     /// Var for class.
@@ -184,6 +226,7 @@ enum ClassName<'a> {
 /// Details of private properties for a class.
 struct PrivateProps<'a> {
     /// Private properties for class. Indexed by property name.
+    // TODO(improve-on-babel): Order that temp vars are created in is not important. Use `FxHashMap` instead.
     props: FxIndexMap<Atom<'a>, PrivateProp<'a>>,
     /// Binding for class name
     class_name_binding: Option<BoundIdentifier<'a>>,
