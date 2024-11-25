@@ -127,7 +127,7 @@ export interface JsxOptions {
   /**
    * Enable React Fast Refresh .
    *
-   * Conforms to the implementation in {@link https://github.com/facebook/react/tree/main/packages/react-refresh}
+   * Conforms to the implementation in {@link https://github.com/facebook/react/tree/v18.3.1/packages/react-refresh}
    *
    * @default false
    */
@@ -203,6 +203,21 @@ export interface TransformOptions {
   typescript?: TypeScriptOptions
   /** Configure how TSX and JSX are transformed. */
   jsx?: JsxOptions
+  /**
+   * Sets the target environment for the generated JavaScript.
+   *
+   * The lowest target is `es2015`.
+   *
+   * Example:
+   *
+   * * 'es2015'
+   * * ['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']
+   *
+   * @default `esnext` (No transformation)
+   *
+   * @see [esbuild#target](<https://esbuild.github.io/api/#target)
+   */
+  target?: string | Array<string>
   /** Define Plugin */
   define?: Record<string, string>
   /** Inject Plugin */

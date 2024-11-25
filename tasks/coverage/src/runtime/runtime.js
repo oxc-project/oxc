@@ -1,4 +1,4 @@
-// https://github.com/evanw/esbuild/blob/main/scripts/test262.js
+// https://github.com/evanw/esbuild/blob/v0.24.0/scripts/test262.js
 //
 import fs from 'node:fs';
 import { createServer } from 'node:http';

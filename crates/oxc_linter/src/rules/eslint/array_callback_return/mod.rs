@@ -132,7 +132,7 @@ impl Rule for ArrayCallbackReturn {
     }
 }
 
-/// Code ported from [eslint](https://github.com/eslint/eslint/blob/main/lib/rules/array-callback-return.js)
+/// Code ported from [eslint](https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/array-callback-return.js)
 /// We're currently on a `Function` or `ArrowFunctionExpression`, findout if it is an argument
 /// to the target array methods we're interested in.
 pub fn get_array_method_name<'a>(

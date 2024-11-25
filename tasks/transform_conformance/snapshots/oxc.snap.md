@@ -1,12 +1,13 @@
-commit: d20b314c
+commit: 54a8389f
 
-Passed: 82/92
+Passed: 90/100
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-async-generator-functions
+* babel-plugin-transform-object-rest-spread
 * babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
@@ -110,12 +111,9 @@ rebuilt        : ScopeId(3): [SymbolId(6), SymbolId(7)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
-Symbol flags mismatch for "Q":
-after transform: SymbolId(8): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
-rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol flags mismatch for "T":
-after transform: SymbolId(9): SymbolFlags(FunctionScopedVariable | Export | TypeAlias)
-rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable | Export)
+after transform: SymbolId(9): SymbolFlags(FunctionScopedVariable | TypeAlias)
+rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch for "T":
 after transform: SymbolId(9): Span { start: 205, end: 206 }
 rebuilt        : SymbolId(8): Span { start: 226, end: 227 }
@@ -134,8 +132,8 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 Symbol flags mismatch for "A":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export | Import)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Import)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch for "A":
 after transform: SymbolId(0): Span { start: 57, end: 58 }
 rebuilt        : SymbolId(0): Span { start: 79, end: 83 }
@@ -146,14 +144,14 @@ Symbol redeclarations mismatch for "A":
 after transform: SymbolId(0): [Span { start: 79, end: 83 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "T":
-after transform: SymbolId(1): SymbolFlags(Export | Import | TypeAlias)
-rebuilt        : SymbolId(1): SymbolFlags(Export | Import)
+after transform: SymbolId(1): SymbolFlags(Import | TypeAlias)
+rebuilt        : SymbolId(1): SymbolFlags(Import)
 Symbol redeclarations mismatch for "T":
 after transform: SymbolId(1): [Span { start: 170, end: 171 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "B":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Export | Import | TypeAlias)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Import | TypeAlias)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch for "B":
 after transform: SymbolId(2): Span { start: 267, end: 268 }
 rebuilt        : SymbolId(2): Span { start: 289, end: 293 }

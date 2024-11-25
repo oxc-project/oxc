@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_isolated_declarations/tests/mod.rs
 input_file: crates/oxc_isolated_declarations/tests/fixtures/as-const.ts
+snapshot_kind: text
 ---
 ```
 ==================== .D.TS ====================
@@ -9,7 +10,7 @@ declare const F: {
 	readonly string: "string";
 	readonly templateLiteral: "templateLiteral";
 	readonly number: 1.23;
-	readonly bigint: -1_2_3n;
+	readonly bigint: -123n;
 	readonly boolean: true;
 	readonly null: null;
 	readonly undefined: undefined;

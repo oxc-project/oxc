@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+- f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)
+
+### Features
+
+- 897d3b1 ast: Serialize StringLiterals to ESTree without `raw` (#7263) (ottomated)
+
+### Bug Fixes
+
+
+### Performance
+
+- c335f92 syntax: Reorder operator enum variants (#7351) (overlookmotel)
+
+### Refactor
+
+- de472ca ast: Move `StringLiteral` definition higher up (#7270) (overlookmotel)
+
 ## [0.36.0] - 2024-11-09
 
 - b11ed2c ast: [**BREAKING**] Remove useless `ObjectProperty::init` field (#7220) (Boshen)

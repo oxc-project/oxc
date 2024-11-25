@@ -1,6 +1,6 @@
 //! Arena Box.
 //!
-//! Originally based on [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/ast/src/arena.rs)
+//! Originally based on [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/24004745a8ed4939fc0dc7332bfd1268ac52285f/crates/ast/src/arena.rs)
 
 use std::{
     self,
@@ -98,6 +98,13 @@ impl<'alloc, T: ?Sized> Box<'alloc, T> {
     #[inline]
     pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
         Self(ptr, PhantomData)
+    }
+
+    /// Consume a [`Box`] and return a [`NonNull`] pointer to its contents.
+    #[inline]
+    #[expect(clippy::needless_pass_by_value)]
+    pub fn into_non_null(boxed: Self) -> NonNull<T> {
+        boxed.0
     }
 }
 

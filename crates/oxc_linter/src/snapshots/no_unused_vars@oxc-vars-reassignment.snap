@@ -98,3 +98,12 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:5]
+ 1 │ let a = 0, b = 1; let c = b = a = 1; f(c+b);
+   ·     ┬                         ┬
+   ·     │                         ╰── it was last assigned here
+   ·     ╰── 'a' is declared here
+   ╰────
+  help: Did you mean to use this variable?

@@ -122,13 +122,12 @@ impl<'a> TypeScriptEnum<'a> {
         } else {
             // }(Foo || {});
             let op = LogicalOperator::Or;
-            let left = ctx.create_bound_reference_id(
+            let left = ctx.create_bound_ident_expr(
                 decl.id.span,
                 enum_name.clone(),
                 var_symbol_id,
                 ReferenceFlags::Read,
             );
-            let left = Expression::Identifier(ctx.alloc(left));
             let right = ast.expression_object(SPAN, ast.vec(), None);
             let expression = ast.expression_logical(SPAN, left, op, right);
             ast.vec1(Argument::from(expression))
@@ -138,7 +137,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         if is_already_declared {
             let op = AssignmentOperator::Assign;
-            let left = ctx.create_bound_reference_id(
+            let left = ctx.create_bound_ident_reference(
                 decl.id.span,
                 enum_name.clone(),
                 var_symbol_id,

@@ -20,4 +20,4 @@ The compressor is responsible for rewriting statements and expressions for minim
 
 ## Terser Tests
 
-The fixtures are copied from https://github.com/terser/terser/tree/master/test/compress
+The fixtures are copied from https://github.com/terser/terser/tree/v5.9.0/test/compress

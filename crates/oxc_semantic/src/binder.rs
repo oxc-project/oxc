@@ -395,7 +395,7 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
 impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         // do not bind `global` for `declare global { ... }`
-        if matches!(self.kind, TSModuleDeclarationKind::Global) {
+        if self.kind == TSModuleDeclarationKind::Global {
             return;
         }
 
@@ -409,11 +409,8 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
             SymbolFlags::None,
         );
 
-        // do not bind `global` for `declare global { ... }`
-        if !self.kind.is_global() {
-            if let TSModuleDeclarationName::Identifier(id) = &self.id {
-                id.symbol_id.set(Some(symbol_id));
-            }
+        if let TSModuleDeclarationName::Identifier(id) = &self.id {
+            id.symbol_id.set(Some(symbol_id));
         }
     }
 }

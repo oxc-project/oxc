@@ -53,13 +53,18 @@ fn dot() {
     test("process.env.NODE_ENV", "production", config.clone());
     test("process.env", "process.env", config.clone());
     test("process.env.foo.bar", "process.env.foo.bar", config.clone());
-    test("process", "process", config);
+    test("process", "process", config.clone());
+
+    // computed member expression
+    test("process['env'].NODE_ENV", "production", config.clone());
 }
 
 #[test]
 fn dot_nested() {
     let config = ReplaceGlobalDefinesConfig::new(&[("process", "production")]).unwrap();
-    test("foo.process.NODE_ENV", "foo.process.NODE_ENV", config);
+    test("foo.process.NODE_ENV", "foo.process.NODE_ENV", config.clone());
+    // computed member expression
+    test("foo['process'].NODE_ENV", "foo['process'].NODE_ENV", config);
 }
 
 #[test]
@@ -83,4 +88,97 @@ fn dot_with_postfix_mixed() {
     test("import.meta.env", "env", config.clone());
     test("import.meta.somethingelse", "metaProperty", config.clone());
     test("import.meta", "1", config);
+}
+
+#[test]
+fn optional_chain() {
+    let config = ReplaceGlobalDefinesConfig::new(&[("a.b.c", "1")]).unwrap();
+    test("a.b.c", "1", config.clone());
+    test("a?.b.c", "1", config.clone());
+    test("a.b?.c", "1", config.clone());
+    test("a['b']['c']", "1", config.clone());
+    test("a?.['b']['c']", "1", config.clone());
+    test("a['b']?.['c']", "1", config.clone());
+
+    test_same("a[b][c]", config.clone());
+    test_same("a?.[b][c]", config.clone());
+    test_same("a[b]?.[c]", config.clone());
+}
+
+#[test]
+fn dot_define_with_destruct() {
+    let config = ReplaceGlobalDefinesConfig::new(&[(
+        "process.env.NODE_ENV",
+        "{'a': 1, b: 2, c: true, d: {a: b}}",
+    )])
+    .unwrap();
+    test(
+        "const {a, c} = process.env.NODE_ENV",
+        "const { a, c } = {\n\t'a': 1,\n\tc: true};",
+        config.clone(),
+    );
+    // bailout
+    test(
+        "const {[any]: alias} = process.env.NODE_ENV",
+        "const { [any]: alias } = {\n\t'a': 1,\n\tb: 2,\n\tc: true,\n\td: { a: b }\n};",
+        config.clone(),
+    );
+
+    // should filterout unused key even rhs objectExpr has SpreadElement
+
+    let config = ReplaceGlobalDefinesConfig::new(&[(
+        "process.env.NODE_ENV",
+        "{'a': 1, b: 2, c: true, ...unknown}",
+    )])
+    .unwrap();
+    test(
+        "const {a} = process.env.NODE_ENV",
+        "const { a } = {\n\t'a': 1,\n\t...unknown\n};\n",
+        config.clone(),
+    );
+}
+
+#[test]
+fn this_expr() {
+    let config =
+        ReplaceGlobalDefinesConfig::new(&[("this", "1"), ("this.foo", "2"), ("this.foo.bar", "3")])
+            .unwrap();
+    test(
+        "this, this.foo, this.foo.bar, this.foo.baz, this.bar",
+        "1, 2, 3, 2 .baz, 1 .bar;\n",
+        config.clone(),
+    );
+
+    test(
+        r"
+// This code should be the same as above
+(() => {
+	ok(
+		this,
+		this.foo,
+		this.foo.bar,
+		this.foo.baz,
+		this.bar,
+	);
+})();
+    ",
+        "(() => {\n\tok(1, 2, 3, 2 .baz, 1 .bar);\n})();\n",
+        config.clone(),
+    );
+
+    test_same(
+        r"
+// Nothing should be substituted in this code
+(function() {
+	doNotSubstitute(
+		this,
+		this.foo,
+		this.foo.bar,
+		this.foo.baz,
+		this.bar,
+	);
+})();
+    ",
+        config,
+    );
 }

@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-import(unambiguous): This module could be mistakenly parsed as script instead of module
    ╭─[index.ts:1:1]

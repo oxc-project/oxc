@@ -3,8 +3,6 @@ use std::str::FromStr;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_diagnostics::Error;
-
 pub use browserslist::Version;
 
 use crate::options::{BrowserslistQuery, Engine, EngineTargets};
@@ -35,7 +33,7 @@ pub enum BabelTargetsValue {
 }
 
 impl TryFrom<BabelTargets> for EngineTargets {
-    type Error = Error;
+    type Error = String;
     fn try_from(value: BabelTargets) -> Result<Self, Self::Error> {
         match value {
             BabelTargets::String(s) => BrowserslistQuery::Single(s).exec(),
@@ -52,7 +50,7 @@ impl TryFrom<BabelTargets> for EngineTargets {
                         continue;
                     };
                     let BabelTargetsValue::String(v) = value else {
-                        return Err(Error::msg(format!("{value:?} is not a string for {key}.")));
+                        return Err(format!("{value:?} is not a string for {key}."));
                     };
                     // TODO: Implement this target.
                     if key == "node" && v == "current" {
@@ -66,16 +64,14 @@ impl TryFrom<BabelTargets> for EngineTargets {
                     // <https://babel.dev/docs/options#targets>:
                     // Supported environments: android, chrome, deno, edge, electron, firefox, ie, ios, node, opera, rhino, safari, samsung.
                     let Ok(engine) = Engine::from_str(&key) else {
-                        return Err(Error::msg(format!("engine '{key}' is not supported.")));
+                        return Err(format!("engine '{key}' is not supported."));
                     };
                     match Version::parse(&v) {
                         Ok(version) => {
                             engine_targets.insert(engine, version);
                         }
                         Err(err) => {
-                            return Err(oxc_diagnostics::Error::msg(format!(
-                                "Failed to parse `{v}` for `{key}`\n{err:?}"
-                            )))
+                            return Err(format!("Failed to parse `{v}` for `{key}`\n{err:?}"))
                         }
                     }
                 }

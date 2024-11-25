@@ -7,7 +7,7 @@ use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, TraverseCtx};
 
 use super::AsyncGeneratorFunctions;
-use crate::{common::helper_loader::Helper, es2017::AsyncGeneratorExecutor};
+use crate::common::helper_loader::Helper;
 
 impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
     /// Check the parent node to see if multiple statements are allowed.
@@ -150,6 +150,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         let iterator = ctx.ast.move_expression(&mut stmt.right);
         let iterator = self.ctx.helper_call_expr(
             Helper::AsyncIterator,
+            SPAN,
             ctx.ast.vec1(Argument::from(iterator)),
             ctx,
         );
@@ -253,37 +254,34 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
             let block_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
             let for_statement_scope_id =
                 ctx.create_child_scope(block_scope_id, ScopeFlags::empty());
-            ctx.scopes_mut().change_parent_id(for_of_scope_id, Some(block_scope_id));
 
             let for_statement = Statement::ForStatement(ctx.ast.alloc_for_statement_with_scope_id(
                 SPAN,
                 Some(ctx.ast.for_statement_init_variable_declaration(
                     SPAN,
                     VariableDeclarationKind::Var,
-                    {
-                        let mut items = ctx.ast.vec_with_capacity(2);
-                        items.push(ctx.ast.variable_declarator(
+                    ctx.ast.vec_from_array([
+                        ctx.ast.variable_declarator(
                             SPAN,
                             VariableDeclarationKind::Var,
                             iterator_key.create_binding_pattern(ctx),
                             Some(iterator),
                             false,
-                        ));
-                        items.push(ctx.ast.variable_declarator(
+                        ),
+                        ctx.ast.variable_declarator(
                             SPAN,
                             VariableDeclarationKind::Var,
                             step_key.create_binding_pattern(ctx),
                             None,
                             false,
-                        ));
-                        items
-                    },
+                        ),
+                    ]),
                     false,
                 )),
                 Some(ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    iterator_abrupt_completion.create_read_write_target(ctx),
+                    iterator_abrupt_completion.create_write_target(ctx),
                     ctx.ast.expression_unary(
                         SPAN,
                         UnaryOperator::LogicalNot,
@@ -294,7 +292,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                                 ctx.ast.expression_assignment(
                                     SPAN,
                                     AssignmentOperator::Assign,
-                                    step_key.create_read_write_target(ctx),
+                                    step_key.create_write_target(ctx),
                                     ctx.ast.expression_await(
                                         SPAN,
                                         ctx.ast.expression_call(
@@ -320,7 +318,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                 Some(ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    iterator_abrupt_completion.create_read_write_target(ctx),
+                    iterator_abrupt_completion.create_write_target(ctx),
                     ctx.ast.expression_boolean_literal(SPAN, false),
                 )),
                 {
@@ -331,28 +329,17 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                             for_statement_body_scope_id,
                             Some(for_statement_scope_id),
                         );
-                        let statement = body.first().unwrap();
-                        AsyncGeneratorExecutor::move_bindings_to_target_scope_for_statement(
-                            for_statement_body_scope_id,
-                            statement,
-                            ctx,
-                        );
                     }
 
                     Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
                         SPAN,
                         body,
-                        for_statement_body_scope_id,
+                        for_of_scope_id,
                     ))
                 },
                 for_statement_scope_id,
             ));
 
-            // // If has a label, we need to wrap the for statement with a labeled statement.
-            // // e.g. `label: for await (let i of test) {}` to `label: { for (let i of test) {} }`
-            // if let Some(label) = label {
-            //     statement = ctx.ast.statement_labeled(SPAN, label, statement);
-            // }
             ctx.ast.block_statement_with_scope_id(SPAN, ctx.ast.vec1(for_statement), block_scope_id)
         };
 
@@ -370,9 +357,8 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                 {
                     ctx.ast.block_statement_with_scope_id(
                         SPAN,
-                        {
-                            let mut items = ctx.ast.vec_with_capacity(2);
-                            items.push(ctx.ast.statement_expression(
+                        ctx.ast.vec_from_array([
+                            ctx.ast.statement_expression(
                                 SPAN,
                                 ctx.ast.expression_assignment(
                                     SPAN,
@@ -380,8 +366,8 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                                     iterator_had_error_key.create_write_target(ctx),
                                     ctx.ast.expression_boolean_literal(SPAN, true),
                                 ),
-                            ));
-                            items.push(ctx.ast.statement_expression(
+                            ),
+                            ctx.ast.statement_expression(
                                 SPAN,
                                 ctx.ast.expression_assignment(
                                     SPAN,
@@ -389,9 +375,8 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
                                     iterator_error_key.create_write_target(ctx),
                                     err_ident.create_read_expression(ctx),
                                 ),
-                            ));
-                            items
-                        },
+                            ),
+                        ]),
                         block_scope_id,
                     )
                 },

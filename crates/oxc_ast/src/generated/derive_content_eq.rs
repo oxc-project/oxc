@@ -35,6 +35,12 @@ impl<'a> ContentEq for NumericLiteral<'a> {
     }
 }
 
+impl<'a> ContentEq for StringLiteral<'a> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
 impl<'a> ContentEq for BigIntLiteral<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.raw, &other.raw)
@@ -72,12 +78,6 @@ impl<'a> ContentEq for RegExpPattern<'a> {
                 _ => false,
             },
         }
-    }
-}
-
-impl<'a> ContentEq for StringLiteral<'a> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.value, &other.value)
     }
 }
 
@@ -1308,6 +1308,10 @@ impl<'a> ContentEq for ChainElement<'a> {
         match self {
             Self::CallExpression(it) => match other {
                 Self::CallExpression(other) if ContentEq::content_eq(it, other) => true,
+                _ => false,
+            },
+            Self::TSNonNullExpression(it) => match other {
+                Self::TSNonNullExpression(other) if ContentEq::content_eq(it, other) => true,
                 _ => false,
             },
             Self::ComputedMemberExpression(it) => match other {

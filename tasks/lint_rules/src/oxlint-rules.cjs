@@ -26,13 +26,16 @@ const readAllImplementedRuleNames = async () => {
     }
 
     if (found) {
-      const prefixedName = line
+      let prefixedName = line
         .replaceAll(',', '')
         .replaceAll('::', '/')
         .replaceAll('_', '-');
 
       // Ignore no reference rules
       if (prefixedName.startsWith('oxc/')) continue;
+      if (prefixedName.startsWith('node/')) {
+        prefixedName = prefixedName.replace(/^node/, 'n');
+      }
 
       rules.add(prefixedName);
     }

@@ -56,15 +56,23 @@ impl<'a> AstBuilder<'a> {
     /// Create a new arena-allocated [`Vec`] initialized with a single element.
     #[inline]
     pub fn vec1<T>(self, value: T) -> Vec<'a, T> {
-        let mut vec = self.vec_with_capacity(1);
-        vec.push(value);
-        vec
+        self.vec_from_array([value])
     }
 
     /// Collect an iterator into a new arena-allocated [`Vec`].
     #[inline]
     pub fn vec_from_iter<T, I: IntoIterator<Item = T>>(self, iter: I) -> Vec<'a, T> {
         Vec::from_iter_in(iter, self.allocator)
+    }
+
+    /// Create [`Vec`] from a fixed-size array.
+    ///
+    /// This is preferable to `vec_from_iter` where source is an array, as size is statically known,
+    /// and compiler is more likely to construct the values directly in arena, rather than constructing
+    /// on stack and then copying to arena.
+    #[inline]
+    pub fn vec_from_array<T, const N: usize>(self, array: [T; N]) -> Vec<'a, T> {
+        Vec::from_array_in(array, self.allocator)
     }
 
     /// Move a string slice into the memory arena, returning a reference to the slice

@@ -44,6 +44,16 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for NumericLiteral<'old_alloc> 
     }
 }
 
+impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for StringLiteral<'old_alloc> {
+    type Cloned = StringLiteral<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        StringLiteral {
+            span: CloneIn::clone_in(&self.span, allocator),
+            value: CloneIn::clone_in(&self.value, allocator),
+        }
+    }
+}
+
 impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for BigIntLiteral<'old_alloc> {
     type Cloned = BigIntLiteral<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
@@ -83,16 +93,6 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'old_alloc> {
             Self::Raw(it) => RegExpPattern::Raw(CloneIn::clone_in(it, allocator)),
             Self::Invalid(it) => RegExpPattern::Invalid(CloneIn::clone_in(it, allocator)),
             Self::Pattern(it) => RegExpPattern::Pattern(CloneIn::clone_in(it, allocator)),
-        }
-    }
-}
-
-impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for StringLiteral<'old_alloc> {
-    type Cloned = StringLiteral<'new_alloc>;
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        StringLiteral {
-            span: CloneIn::clone_in(&self.span, allocator),
-            value: CloneIn::clone_in(&self.value, allocator),
         }
     }
 }
@@ -1209,6 +1209,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ChainElement<'old_alloc> {
         match self {
             Self::CallExpression(it) => {
                 ChainElement::CallExpression(CloneIn::clone_in(it, allocator))
+            }
+            Self::TSNonNullExpression(it) => {
+                ChainElement::TSNonNullExpression(CloneIn::clone_in(it, allocator))
             }
             Self::ComputedMemberExpression(it) => {
                 ChainElement::ComputedMemberExpression(CloneIn::clone_in(it, allocator))

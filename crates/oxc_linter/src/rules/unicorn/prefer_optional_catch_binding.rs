@@ -85,7 +85,7 @@ impl Rule for PreferOptionalCatchBinding {
 fn get_param_references_count(binding_pat: &BindingPattern, ctx: &LintContext) -> usize {
     match &binding_pat.kind {
         BindingPatternKind::BindingIdentifier(binding_ident) => {
-            ctx.semantic().symbol_references(binding_ident.symbol_id.get().unwrap()).count()
+            ctx.semantic().symbol_references(binding_ident.symbol_id()).count()
         }
         BindingPatternKind::ObjectPattern(object_pat) => {
             let mut count = 0;

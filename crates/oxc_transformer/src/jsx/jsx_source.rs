@@ -31,7 +31,7 @@
 //!
 //! ## References:
 //!
-//! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
+//! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
 
 use ropey::Rope;
 
@@ -176,10 +176,7 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
                 .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
         };
 
-        let mut properties = ctx.ast.vec_with_capacity(3);
-        properties.push(filename);
-        properties.push(line_number);
-        properties.push(column_number);
+        let properties = ctx.ast.vec_from_array([filename, line_number, column_number]);
         ctx.ast.expression_object(SPAN, properties, None)
     }
 

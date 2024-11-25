@@ -1,8 +1,8 @@
-commit: d20b314c
+commit: 54a8389f
 
 semantic_babel Summary:
-AST Parsed     : 2210/2210 (100.00%)
-Positive Passed: 1841/2210 (83.30%)
+AST Parsed     : 2218/2218 (100.00%)
+Positive Passed: 1846/2218 (83.23%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -599,6 +599,12 @@ Cannot assign to 'arguments' in strict mode
 Cannot assign to 'eval' in strict mode
 Cannot assign to 'arguments' in strict mode
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval-babel-7/input.ts
+semantic error: Cannot assign to 'eval' in strict mode
+Cannot assign to 'arguments' in strict mode
+Cannot assign to 'eval' in strict mode
+Cannot assign to 'arguments' in strict mode
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/function-rest-trailing-comma/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -711,16 +717,16 @@ semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export-const/input.ts
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
-after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export-declare-const/input.ts
 semantic error: Bindings mismatch:
@@ -838,8 +844,8 @@ Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "D":
-after transform: SymbolId(3): SymbolFlags(Export | RegularEnum)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Export)
+after transform: SymbolId(3): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/nested-same-name/input.ts
 semantic error: Missing SymbolId: "N"
@@ -853,9 +859,6 @@ rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Binding symbols mismatch:
 after transform: ScopeId(1): [SymbolId(2), SymbolId(3)]
 rebuilt        : ScopeId(1): [SymbolId(2), SymbolId(3)]
-Symbol flags mismatch for "x":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/annotated/input.ts
 semantic error: Bindings mismatch:
@@ -1419,6 +1422,14 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/global-in-module-babel-7/input.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["m"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["M", "N", "m"]
@@ -1428,6 +1439,14 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare/input.ts
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["M", "N", "m"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare-babel-7/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["M", "N", "m"]
 rebuilt        : ScopeId(0): []
@@ -1491,8 +1510,8 @@ Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
-after transform: SymbolId(1): SymbolFlags(Export | RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+after transform: SymbolId(1): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/issue-7742/input.ts
 semantic error: Bindings mismatch:
@@ -1621,16 +1640,16 @@ semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "Test":
-after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-enum-before/input.ts
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "Test":
-after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-func-in-declare-module/input.ts
 semantic error: Bindings mismatch:

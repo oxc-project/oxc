@@ -1,6 +1,6 @@
 #!/usr/bin/env -S just --justfile
 
-set windows-shell := ["powershell"]
+set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 set shell := ["bash", "-cu"]
 
 _default:
@@ -16,7 +16,10 @@ alias new-typescript-rule := new-ts-rule
 # or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
+  # Rust related init
   cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear dprint -y
+  # Node.js related init
+  pnpm install
 
 # When ready, run the same CI commands
 ready:
@@ -32,10 +35,10 @@ ready:
 
 # Clone or update submodules
 submodules:
-  just clone-submodule tasks/coverage/test262 git@github.com:tc39/test262.git 0645461999632a17426e45d044ee519a0f07d022
-  just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git d20b314c14533ab86351ecf6ca6b7296b66a57b3
-  just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git df9d16503f6755dd071e4c591b9d21c39d03d95e
-  just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git 52829385bcc4d785e58ae2602c0b098a643523c9
+  just clone-submodule tasks/coverage/test262 https://github.com/tc39/test262.git fd979d85d4e4b74ef1ed097d25c71263417d5aad
+  just clone-submodule tasks/coverage/babel https://github.com/babel/babel.git 54a8389fa31ce4fd18b0335b05832dc1ad3cc21f
+  just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript.git d85767abfd83880cea17cea70f9913e9c4496dcc
+  just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier.git 52829385bcc4d785e58ae2602c0b098a643523c9
 
 # Install git pre-commit to format files
 install-hook:
@@ -128,8 +131,7 @@ autoinherit:
 
 # Test Transform
 test-transform *args='':
-  cargo run -p oxc_transform_conformance -- {{args}}
-  cargo run -p oxc_transform_conformance -- --exec  {{args}}
+  cargo run -p oxc_transform_conformance -- --exec {{args}}
 
 # Install wasm-pack
 install-wasm:
@@ -192,12 +194,19 @@ new-vitest-rule name:
 new-security-rule name:
     cargo run -p rulegen {{name}} security
 
+[unix]
 clone-submodule dir url sha:
   cd {{dir}} || git init {{dir}}
   cd {{dir}} && git remote add origin {{url}} || true
   cd {{dir}} && git fetch --depth=1 origin {{sha}} && git reset --hard {{sha}}
 
+[windows]
+clone-submodule dir url sha:
+  if (-not (Test-Path {{dir}}/.git)) { git init {{dir}} }
+  cd {{dir}} ; if ((git remote) -notcontains 'origin') { git remote add origin {{url}} } else { git remote set-url origin {{url}} }
+  cd {{dir}} ; git fetch --depth=1 origin {{sha}} ; git reset --hard {{sha}}
+
 website path:
-  cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules
+  cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD)
   cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md

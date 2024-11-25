@@ -428,6 +428,15 @@ impl<'a> MemberExpression<'a> {
     }
 
     #[allow(missing_docs)]
+    pub fn object_mut(&mut self) -> &mut Expression<'a> {
+        match self {
+            MemberExpression::ComputedMemberExpression(expr) => &mut expr.object,
+            MemberExpression::StaticMemberExpression(expr) => &mut expr.object,
+            MemberExpression::PrivateFieldExpression(expr) => &mut expr.object,
+        }
+    }
+
+    #[allow(missing_docs)]
     pub fn static_property_name(&self) -> Option<&'a str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => {
@@ -462,10 +471,9 @@ impl<'a> MemberExpression<'a> {
     #[allow(missing_docs)]
     pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
         let object_matches = match self.object().without_parentheses() {
-            Expression::ChainExpression(x) => match &x.expression {
-                ChainElement::CallExpression(_) => false,
-                match_member_expression!(ChainElement) => {
-                    let member_expr = x.expression.to_member_expression();
+            Expression::ChainExpression(x) => match x.expression.member_expression() {
+                None => false,
+                Some(member_expr) => {
                     member_expr.object().without_parentheses().is_specific_id(object)
                 }
             },
@@ -519,6 +527,19 @@ impl<'a> StaticMemberExpression<'a> {
             }
 
             return object;
+        }
+    }
+}
+
+impl<'a> ChainElement<'a> {
+    /// Returns the member expression.
+    pub fn member_expression(&self) -> Option<&MemberExpression<'a>> {
+        match self {
+            ChainElement::TSNonNullExpression(e) => match &e.expression {
+                match_member_expression!(Expression) => e.expression.as_member_expression(),
+                _ => None,
+            },
+            _ => self.as_member_expression(),
         }
     }
 }
@@ -932,6 +953,16 @@ impl<'a> BindingPatternKind<'a> {
     }
 
     #[allow(missing_docs)]
+    pub fn is_object_pattern(&self) -> bool {
+        matches!(self, Self::ObjectPattern(_))
+    }
+
+    #[allow(missing_docs)]
+    pub fn is_array_pattern(&self) -> bool {
+        matches!(self, Self::ArrayPattern(_))
+    }
+
+    #[allow(missing_docs)]
     pub fn is_assignment_pattern(&self) -> bool {
         matches!(self, Self::AssignmentPattern(_))
     }
@@ -1008,16 +1039,6 @@ impl<'a> Function<'a> {
     /// `true` if this function's body has a `"use strict"` directive.
     pub fn is_strict(&self) -> bool {
         self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())
-    }
-}
-
-// FIXME: This is a workaround for we can't get current address by `TraverseCtx`,
-// we will remove this once we support `TraverseCtx::current_address`.
-// See: <https://github.com/oxc-project/oxc/pull/6881#discussion_r1816560516>
-impl GetAddress for Function<'_> {
-    #[inline]
-    fn address(&self) -> Address {
-        Address::from_ptr(self)
     }
 }
 

@@ -46,6 +46,12 @@ pub enum BinaryishOperator {
     Logical(LogicalOperator),
 }
 
+impl BinaryishOperator {
+    fn is_binary(self) -> bool {
+        matches!(self, Self::Binary(_))
+    }
+}
+
 fn print_binary_operator(op: BinaryOperator, p: &mut Codegen) {
     let operator = op.as_str();
     if op.is_keyword() {
@@ -148,9 +154,15 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
     pub fn check_and_prepare(&mut self, p: &mut Codegen) -> bool {
         let e = self.e;
-        self.operator = e.operator();
 
-        self.wrap = self.precedence >= self.operator.precedence()
+        // We don't need to print parentheses if both sides use the same logical operator
+        // For example: `(a     &&     b)         && c` should be printed as `a && b && c`
+        //                      ^^  e.operator()  ^^ self.operator
+        let precedence_check = self.precedence >= e.operator().precedence()
+            && (self.operator.is_binary() || self.precedence != self.operator.precedence());
+
+        self.operator = e.operator();
+        self.wrap = precedence_check
             || (self.operator == BinaryishOperator::Binary(BinaryOperator::In)
                 && self.ctx.intersects(Context::FORBID_IN));
 

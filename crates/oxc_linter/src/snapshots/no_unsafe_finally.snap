@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-unsafe-finally): Unsafe finally block
    ╭─[no_unsafe_finally.tsx:7:2]

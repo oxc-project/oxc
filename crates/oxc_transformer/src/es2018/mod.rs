@@ -2,10 +2,11 @@ pub(crate) mod async_generator_functions;
 mod object_rest_spread;
 mod options;
 
-use oxc_ast::ast::{Expression, ForOfStatement, Function, Statement};
+use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::TransformCtx;
+
 use async_generator_functions::AsyncGeneratorFunctions;
 pub use object_rest_spread::{ObjectRestSpread, ObjectRestSpreadOptions};
 pub use options::ES2018Options;
@@ -32,6 +33,12 @@ impl<'a, 'ctx> ES2018<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for ES2018<'a, 'ctx> {
+    fn exit_program(&mut self, program: &mut oxc_ast::ast::Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.object_rest_spread.is_some() {
+            self.object_rest_spread.exit_program(program, ctx);
+        }
+    }
+
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.object_rest_spread.is_some() {
             self.object_rest_spread.enter_expression(expr, ctx);
@@ -56,15 +63,56 @@ impl<'a, 'ctx> Traverse<'a> for ES2018<'a, 'ctx> {
         }
     }
 
-    fn enter_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_for_in_statement(&mut self, stmt: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.object_rest_spread.is_some() {
+            self.object_rest_spread.enter_for_in_statement(stmt, ctx);
+        }
+    }
+
+    fn enter_for_of_statement(&mut self, stmt: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.async_generator_functions {
-            self.async_generator_functions.enter_for_of_statement(node, ctx);
+            self.async_generator_functions.enter_for_of_statement(stmt, ctx);
+        }
+        if self.options.object_rest_spread.is_some() {
+            self.object_rest_spread.enter_for_of_statement(stmt, ctx);
+        }
+    }
+
+    fn enter_arrow_function_expression(
+        &mut self,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.object_rest_spread.is_some() {
+            self.object_rest_spread.enter_arrow_function_expression(arrow, ctx);
+        }
+    }
+
+    fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.object_rest_spread.is_some() {
+            self.object_rest_spread.enter_function(func, ctx);
         }
     }
 
     fn exit_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.async_generator_functions {
             self.async_generator_functions.exit_function(node, ctx);
+        }
+    }
+
+    fn enter_variable_declaration(
+        &mut self,
+        decl: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.object_rest_spread.is_some() {
+            self.object_rest_spread.enter_variable_declaration(decl, ctx);
+        }
+    }
+
+    fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.object_rest_spread.is_some() {
+            self.object_rest_spread.enter_catch_clause(clause, ctx);
         }
     }
 }

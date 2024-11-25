@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-constructor-return): Unexpected return statement in constructor.
    ╭─[no_constructor_return.tsx:1:27]

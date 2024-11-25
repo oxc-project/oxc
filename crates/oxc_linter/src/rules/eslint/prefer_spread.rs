@@ -128,6 +128,7 @@ fn check_eslint_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
         Expression::ChainExpression(chain) => match chain.expression {
             match_member_expression!(ChainElement) => chain.expression.to_member_expression(),
             ChainElement::CallExpression(_) => return,
+            _ => return,
         },
         _ => return,
     };
@@ -180,6 +181,7 @@ fn as_member_expression_without_chain_expression<'a>(
         Expression::ChainExpression(chain_expr) => match chain_expr.expression {
             match_member_expression!(ChainElement) => chain_expr.expression.as_member_expression(),
             ChainElement::CallExpression(_) => None,
+            _ => None,
         },
         match_member_expression!(Expression) => expr.as_member_expression(),
         _ => None,

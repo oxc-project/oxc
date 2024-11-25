@@ -1,6 +1,6 @@
 import { assert, describe, it } from 'vitest';
 
-import oxc from './index';
+import oxc from '../index';
 
 describe('isolated declaration', () => {
   const code = `

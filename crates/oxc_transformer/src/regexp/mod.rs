@@ -180,21 +180,13 @@ impl<'a, 'ctx> Traverse<'a> for RegExp<'a, 'ctx> {
 
         let callee = {
             let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "RegExp");
-            let ident = ctx.create_reference_id(
-                SPAN,
-                Atom::from("RegExp"),
-                symbol_id,
-                ReferenceFlags::read(),
-            );
-            Expression::Identifier(ctx.alloc(ident))
+            ctx.create_ident_expr(SPAN, Atom::from("RegExp"), symbol_id, ReferenceFlags::read())
         };
 
-        let mut arguments = ctx.ast.vec_with_capacity(2);
-        arguments.push(Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_source)));
-
-        let flags_str = flags.to_string();
-        let flags_str = Argument::from(ctx.ast.expression_string_literal(SPAN, flags_str));
-        arguments.push(flags_str);
+        let arguments = ctx.ast.vec_from_array([
+            Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_source)),
+            Argument::from(ctx.ast.expression_string_literal(SPAN, flags.to_string())),
+        ]);
 
         *expr = ctx.ast.expression_new(regexp.span, callee, arguments, NONE);
     }

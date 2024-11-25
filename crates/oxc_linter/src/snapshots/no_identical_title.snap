@@ -1,6 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 216
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-vitest(no-identical-title): Test title is used multiple times in the same describe block.
    ╭─[no_identical_title.tsx:4:20]

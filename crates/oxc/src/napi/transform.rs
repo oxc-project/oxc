@@ -1,4 +1,4 @@
-// NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/babel__core/index.d.ts).
+// NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/b5dc32740d9b45d11cff9b025896dd333c795b39/types/babel__core/index.d.ts).
 
 #![allow(rustdoc::bare_urls)]
 
@@ -8,7 +8,7 @@ use napi::Either;
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
-use oxc_transformer::{JsxRuntime, RewriteExtensionsMode};
+use oxc_transformer::{EnvOptions, JsxRuntime, RewriteExtensionsMode};
 
 use super::{isolated_declarations::IsolatedDeclarationsOptions, source_map::SourceMap};
 
@@ -80,6 +80,20 @@ pub struct TransformOptions {
     /// Configure how TSX and JSX are transformed.
     pub jsx: Option<JsxOptions>,
 
+    /// Sets the target environment for the generated JavaScript.
+    ///
+    /// The lowest target is `es2015`.
+    ///
+    /// Example:
+    ///
+    /// * 'es2015'
+    /// * ['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']
+    ///
+    /// @default `esnext` (No transformation)
+    ///
+    /// @see [esbuild#target](https://esbuild.github.io/api/#target)
+    pub target: Option<Either<String, Vec<String>>>,
+
     /// Define Plugin
     #[napi(ts_type = "Record<string, string>")]
     pub define: Option<FxHashMap<String, String>>,
@@ -89,17 +103,25 @@ pub struct TransformOptions {
     pub inject: Option<FxHashMap<String, Either<String, Vec<String>>>>,
 }
 
-impl From<TransformOptions> for oxc_transformer::TransformOptions {
-    fn from(options: TransformOptions) -> Self {
-        Self {
+impl TryFrom<TransformOptions> for oxc_transformer::TransformOptions {
+    type Error = String;
+
+    fn try_from(options: TransformOptions) -> Result<Self, Self::Error> {
+        let env = match options.target {
+            Some(Either::A(s)) => EnvOptions::from_target(&s)?,
+            Some(Either::B(list)) => EnvOptions::from_target_list(&list)?,
+            _ => EnvOptions::default(),
+        };
+        Ok(Self {
             cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
             typescript: options
                 .typescript
                 .map(oxc_transformer::TypeScriptOptions::from)
                 .unwrap_or_default(),
             jsx: options.jsx.map(Into::into).unwrap_or_default(),
+            env,
             ..Self::default()
-        }
+        })
     }
 }
 
@@ -241,7 +263,7 @@ pub struct JsxOptions {
 
     /// Enable React Fast Refresh .
     ///
-    /// Conforms to the implementation in {@link https://github.com/facebook/react/tree/main/packages/react-refresh}
+    /// Conforms to the implementation in {@link https://github.com/facebook/react/tree/v18.3.1/packages/react-refresh}
     ///
     /// @default false
     pub refresh: Option<Either<bool, ReactRefreshOptions>>,

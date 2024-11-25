@@ -66,7 +66,9 @@ use oxc_semantic::{ScopeTree, SymbolTable};
 
 pub mod ast_operations;
 mod context;
-pub use context::{BoundIdentifier, TraverseAncestry, TraverseCtx, TraverseScoping};
+pub use context::{
+    BoundIdentifier, MaybeBoundIdentifier, TraverseAncestry, TraverseCtx, TraverseScoping,
+};
 
 mod generated {
     pub mod ancestor;

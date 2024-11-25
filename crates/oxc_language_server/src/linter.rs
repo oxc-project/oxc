@@ -274,6 +274,7 @@ impl IsolatedLintHandler {
 
             let semantic_ret = SemanticBuilder::new()
                 .with_cfg(true)
+                .with_scope_tree_child_ids(true)
                 .with_check_syntax_error(true)
                 .build(&ret.program);
 

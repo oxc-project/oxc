@@ -295,10 +295,7 @@ pub fn get_symbol_id_of_variable(
     ident: &IdentifierReference,
     semantic: &Semantic<'_>,
 ) -> Option<SymbolId> {
-    let symbol_table = semantic.symbols();
-    let reference_id = ident.reference_id.get()?;
-    let reference = symbol_table.get_reference(reference_id);
-    reference.symbol_id()
+    semantic.symbols().get_reference(ident.reference_id()).symbol_id()
 }
 
 pub fn extract_regex_flags<'a>(
@@ -344,9 +341,9 @@ pub fn is_method_call<'a>(
     let callee_without_parentheses = call_expr.callee.without_parentheses();
     let member_expr = match callee_without_parentheses {
         match_member_expression!(Expression) => callee_without_parentheses.to_member_expression(),
-        Expression::ChainExpression(chain) => match chain.expression {
-            match_member_expression!(ChainElement) => chain.expression.to_member_expression(),
-            ChainElement::CallExpression(_) => return false,
+        Expression::ChainExpression(chain) => match chain.expression.member_expression() {
+            Some(e) => e,
+            None => return false,
         },
         _ => return false,
     };

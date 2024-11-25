@@ -2,6 +2,7 @@
 source: crates/oxc_semantic/tests/integration/cfg.rs
 expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/do_while_break.js
+snapshot_kind: text
 ---
 bb0: {
 
@@ -50,7 +51,7 @@ bb10: {
 }
 
 bb11: {
-
+	return
 }
 
 bb12: {
@@ -78,7 +79,8 @@ unreachable" shape = box]
     9 [ label = "bb9
 Condition(true)" shape = box]
     10 [ label = "bb10" shape = box]
-    11 [ label = "bb11" shape = box]
+    11 [ label = "bb11
+return" shape = box]
     12 [ label = "bb12" shape = box]
     1 -> 0 [ label="Error(Implicit)", style=dashed, color=red]
     3 -> 2 [ label="Error(Implicit)", style=dashed, color=red]

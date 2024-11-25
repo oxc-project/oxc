@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use oxc_diagnostics::Error;
 use serde::Deserialize;
 
 use crate::{
@@ -72,12 +71,7 @@ impl EnvOptions {
             es2016: ES2016Options { exponentiation_operator: true },
             es2017: ES2017Options { async_to_generator: true },
             es2018: ES2018Options {
-                // Turned off because it is not ready.
-                object_rest_spread: if include_unfinished_plugins {
-                    Some(ObjectRestSpreadOptions::default())
-                } else {
-                    None
-                },
+                object_rest_spread: Some(ObjectRestSpreadOptions::default()),
                 async_generator_functions: true,
             },
             es2019: ES2019Options { optional_catch_binding: true },
@@ -85,6 +79,7 @@ impl EnvOptions {
                 nullish_coalescing_operator: true,
                 // Turn this on would throw error for all bigints.
                 big_int: false,
+                optional_chaining: true,
             },
             es2021: ES2021Options { logical_assignment_operators: true },
             es2022: ES2022Options {
@@ -105,11 +100,14 @@ impl EnvOptions {
     /// * When the query failed to parse.
     ///
     /// [browserslist]: <https://github.com/browserslist/browserslist>
-    pub fn from_browserslist_query(query: &str) -> Result<Self, Error> {
+    pub fn from_browserslist_query(query: &str) -> Result<Self, String> {
         EngineTargets::try_from_query(query).map(Self::from)
     }
 
-    pub(crate) fn from_target(s: &str) -> Result<Self, Error> {
+    /// # Errors
+    ///
+    /// * When the query failed to parse.
+    pub fn from_target(s: &str) -> Result<Self, String> {
         if s.contains(',') {
             Self::from_target_list(&s.split(',').collect::<Vec<_>>())
         } else {
@@ -117,7 +115,10 @@ impl EnvOptions {
         }
     }
 
-    pub(crate) fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, Error> {
+    /// # Errors
+    ///
+    /// * When the query failed to parse.
+    pub fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, String> {
         let mut es_target = None;
         let mut engine_targets = EngineTargets::default();
 
@@ -126,14 +127,14 @@ impl EnvOptions {
             // Parse `esXXXX`.
             if let Ok(target) = ESTarget::from_str(s) {
                 if let Some(target) = es_target {
-                    return Err(Error::msg(format!("'{target}' is already specified.")));
+                    return Err(format!("'{target}' is already specified."));
                 }
                 es_target = Some(target);
             } else {
                 // Parse `chromeXX`, `edgeXX` etc.
                 let (engine, version) = Engine::parse_name_and_version(s)?;
                 if engine_targets.insert(engine, version).is_some() {
-                    return Err(Error::msg(format!("'{s}' is already specified.")));
+                    return Err(format!("'{s}' is already specified."));
                 }
             }
         }
@@ -176,14 +177,15 @@ impl From<EngineTargets> for EnvOptions {
                 async_generator_functions: o.has_feature(ES2018AsyncGeneratorFunctions),
             },
             es2019: ES2019Options {
-                optional_catch_binding: o.has_feature(ES2018OptionalCatchBinding),
+                optional_catch_binding: o.has_feature(ES2019OptionalCatchBinding),
             },
             es2020: ES2020Options {
                 nullish_coalescing_operator: o.has_feature(ES2020NullishCoalescingOperator),
                 big_int: o.has_feature(ES2020BigInt),
+                optional_chaining: o.has_feature(ES2020OptionalChaining),
             },
             es2021: ES2021Options {
-                logical_assignment_operators: o.has_feature(ES2020LogicalAssignmentOperators),
+                logical_assignment_operators: o.has_feature(ES2021LogicalAssignmentOperators),
             },
             es2022: ES2022Options {
                 class_static_block: o.has_feature(ES2022ClassStaticBlock),

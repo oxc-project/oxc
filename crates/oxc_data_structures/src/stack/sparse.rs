@@ -192,6 +192,12 @@ impl<T> SparseStack<T> {
         self.has_values.len()
     }
 
+    /// Get number of filled entries on the stack.
+    #[inline]
+    pub fn filled_len(&self) -> usize {
+        self.values.len()
+    }
+
     /// Get capacity of stack for any entries (either `Some` or `None`).
     ///
     /// Capacity is always at least 1. Stack is never empty.
@@ -208,5 +214,17 @@ impl<T> SparseStack<T> {
     #[inline]
     pub fn filled_capacity(&self) -> usize {
         self.values.capacity()
+    }
+
+    /// Get filled entries of stack as a slice `&[T]`.
+    #[inline]
+    pub fn as_slice(&self) -> &[T] {
+        self.values.as_slice()
+    }
+
+    /// Get filled entries of stack as a mutable slice `&mut [T]`.
+    #[inline]
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
+        self.values.as_mut_slice()
     }
 }

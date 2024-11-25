@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use oxc_diagnostics::OxcDiagnostic;
 use schemars::JsonSchema;
@@ -85,6 +85,9 @@ pub struct Oxlintrc {
     /// Add, remove, or otherwise reconfigure rules for specific files or groups of files.
     #[serde(skip_serializing_if = "OxlintOverrides::is_empty")]
     pub overrides: OxlintOverrides,
+    /// Absolute path to the configuration file.
+    #[serde(skip)]
+    pub path: PathBuf,
 }
 
 impl Oxlintrc {
@@ -116,9 +119,14 @@ impl Oxlintrc {
             OxcDiagnostic::error(format!("Failed to parse eslint config {path:?}.\n{err}"))
         })?;
 
-        let config = Self::deserialize(&json).map_err(|err| {
+        let mut config = Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
+
+        // Get absolute path from `path`
+        let absolute_path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+
+        config.path = absolute_path;
 
         Ok(config)
     }
@@ -137,34 +145,34 @@ mod test {
         assert!(config.rules.is_empty());
         assert_eq!(config.settings, OxlintSettings::default());
         assert_eq!(config.env, OxlintEnv::default());
+        assert_eq!(config.path, PathBuf::default());
     }
 
     #[test]
     fn test_oxlintrc_de_plugins_empty_array() {
         let config: Oxlintrc = serde_json::from_value(json!({ "plugins": [] })).unwrap();
+        assert_eq!(config.plugins, LintPlugins::empty());
+    }
+
+    #[test]
+    fn test_oxlintrc_empty_config_plugins() {
+        let config: Oxlintrc = serde_json::from_str(r"{}").unwrap();
         assert_eq!(config.plugins, LintPlugins::default());
     }
 
     #[test]
-    fn test_oxlintrc_de_plugins_enabled_by_default() {
-        // NOTE(@DonIsaac): creating a Value with `json!` then deserializing it with serde_json::from_value
-        // Errs with "invalid type: string \"eslint\", expected a borrowed string" and I can't
-        // figure out why. This seems to work. Why???
-        let configs = [
-            r#"{ "plugins": ["eslint"] }"#,
-            r#"{ "plugins": ["oxc"] }"#,
-            r#"{ "plugins": ["deepscan"] }"#, // alias for oxc
-        ];
-        // ^ these plugins are enabled by default already
-        for oxlintrc in configs {
-            let config: Oxlintrc = serde_json::from_str(oxlintrc).unwrap();
-            assert_eq!(config.plugins, LintPlugins::default());
-        }
-    }
+    fn test_oxlintrc_specifying_plugins_will_override() {
+        let config: Oxlintrc = serde_json::from_str(r#"{ "plugins": ["react", "oxc"] }"#).unwrap();
+        assert_eq!(config.plugins, LintPlugins::REACT.union(LintPlugins::OXC));
+        let config: Oxlintrc =
+            serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn"] }"#).unwrap();
+        assert_eq!(config.plugins, LintPlugins::TYPESCRIPT.union(LintPlugins::UNICORN));
+        let config: Oxlintrc =
+            serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn", "react", "oxc", "import", "jsdoc", "jest", "vitest", "jsx-a11y", "nextjs", "react-perf", "promise", "node", "security"] }"#).unwrap();
+        assert_eq!(config.plugins, LintPlugins::all());
 
-    #[test]
-    fn test_oxlintrc_de_plugins_new() {
-        let config: Oxlintrc = serde_json::from_str(r#"{ "plugins": ["import"] }"#).unwrap();
-        assert_eq!(config.plugins, LintPlugins::default().union(LintPlugins::IMPORT));
+        let config: Oxlintrc =
+            serde_json::from_str(r#"{ "plugins": ["typescript", "@typescript-eslint"] }"#).unwrap();
+        assert_eq!(config.plugins, LintPlugins::TYPESCRIPT);
     }
 }

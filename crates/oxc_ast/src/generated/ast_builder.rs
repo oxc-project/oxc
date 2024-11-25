@@ -116,6 +116,36 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.numeric_literal(span, value, raw, base), self.allocator)
     }
 
+    /// Build a [`StringLiteral`].
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal`] instead.
+    ///
+    /// ## Parameters
+    /// - span: Node location in source code
+    /// - value: The value of the string.
+    #[inline]
+    pub fn string_literal<A>(self, span: Span, value: A) -> StringLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        StringLiteral { span, value: value.into_in(self.allocator) }
+    }
+
+    /// Build a [`StringLiteral`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal`] instead.
+    ///
+    /// ## Parameters
+    /// - span: Node location in source code
+    /// - value: The value of the string.
+    #[inline]
+    pub fn alloc_string_literal<A>(self, span: Span, value: A) -> Box<'a, StringLiteral<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        Box::new_in(self.string_literal(span, value), self.allocator)
+    }
+
     /// Build a [`BigIntLiteral`].
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_big_int_literal`] instead.
@@ -188,36 +218,6 @@ impl<'a> AstBuilder<'a> {
         S: IntoIn<'a, &'a str>,
     {
         Box::new_in(self.reg_exp_literal(span, regex, raw), self.allocator)
-    }
-
-    /// Build a [`StringLiteral`].
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal`] instead.
-    ///
-    /// ## Parameters
-    /// - span: Node location in source code
-    /// - value: The value of the string.
-    #[inline]
-    pub fn string_literal<A>(self, span: Span, value: A) -> StringLiteral<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        StringLiteral { span, value: value.into_in(self.allocator) }
-    }
-
-    /// Build a [`StringLiteral`], and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal`] instead.
-    ///
-    /// ## Parameters
-    /// - span: Node location in source code
-    /// - value: The value of the string.
-    #[inline]
-    pub fn alloc_string_literal<A>(self, span: Span, value: A) -> Box<'a, StringLiteral<'a>>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        Box::new_in(self.string_literal(span, value), self.allocator)
     }
 
     /// Build a [`Program`].
@@ -3090,6 +3090,22 @@ impl<'a> AstBuilder<'a> {
             arguments,
             optional,
         )))
+    }
+
+    /// Build a [`ChainElement::TSNonNullExpression`]
+    ///
+    /// This node contains a [`TSNonNullExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - expression
+    #[inline]
+    pub fn chain_element_ts_non_null_expression(
+        self,
+        span: Span,
+        expression: Expression<'a>,
+    ) -> ChainElement<'a> {
+        ChainElement::TSNonNullExpression(self.alloc(self.ts_non_null_expression(span, expression)))
     }
 
     /// Build a [`ParenthesizedExpression`].

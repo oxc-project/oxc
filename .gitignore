@@ -11,6 +11,7 @@ target/
 /tasks/compat_data/node_modules/
 
 # vscode
+/editors/vscode/.vscode-test/
 /editors/vscode/node_modules/
 /editors/vscode/icon.png
 /editors/vscode/out/

@@ -62,8 +62,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         if property.accessibility.map_or(true, |a| !a.is_private()) {
             if property.type_annotation.is_some() {
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                type_annotations = unsafe { self.ast.copy(&property.type_annotation) };
+                type_annotations = property.type_annotation.clone_in(self.ast.allocator);
             } else if let Some(expr) = property.value.as_ref() {
                 let ts_type = if property.readonly {
                     // `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
@@ -75,8 +74,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 .transform_template_to_string(lit)
                                 .map(Expression::StringLiteral);
                         } else {
-                            // SAFETY: `ast.copy` is unsound! We need to fix.
-                            value = Some(unsafe { self.ast.copy(expr) });
+                            value = Some(expr.clone_in(self.ast.allocator));
                         }
                         None
                     }
@@ -96,8 +94,7 @@ impl<'a> IsolatedDeclarations<'a> {
             property.r#type,
             property.span,
             self.ast.vec(),
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&property.key) },
+            property.key.clone_in(self.ast.allocator),
             value,
             property.computed,
             property.r#static,
@@ -122,15 +119,12 @@ impl<'a> IsolatedDeclarations<'a> {
         let value = self.ast.alloc_function(
             FunctionType::TSEmptyBodyFunctionExpression,
             function.span,
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&function.id) },
+            function.id.clone_in(self.ast.allocator),
             false,
             false,
             false,
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&function.type_parameters) },
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&function.this_param) },
+            function.type_parameters.clone_in(self.ast.allocator),
+            function.this_param.clone_in(self.ast.allocator),
             params,
             return_type,
             NONE,
@@ -140,8 +134,7 @@ impl<'a> IsolatedDeclarations<'a> {
             definition.r#type,
             definition.span,
             self.ast.vec(),
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&definition.key) },
+            definition.key.clone_in(self.ast.allocator),
             value,
             definition.kind,
             definition.computed,
@@ -221,8 +214,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.create_class_property(
                     r#type,
                     method.span,
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    unsafe { self.ast.copy(&method.key) },
+                    method.key.clone_in(self.ast.allocator),
                     method.r#static,
                     method.r#override,
                     self.transform_accessibility(method.accessibility),
@@ -259,8 +251,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         None
                     } else {
                         // transformed params will definitely have type annotation
-                        // SAFETY: `ast.copy` is unsound! We need to fix.
-                        unsafe { self.ast.copy(&params.items[index].pattern.type_annotation) }
+
+                        params.items[index].pattern.type_annotation.clone_in(self.ast.allocator)
                     };
                 if let Some(new_element) =
                     self.transform_formal_parameter_to_class_property(param, type_annotation)
@@ -499,14 +491,12 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.r#type,
                         property.span,
                         self.ast.vec(),
-                        // SAFETY: `ast.copy` is unsound! We need to fix.
-                        unsafe { self.ast.copy(&property.key) },
+                        property.key.clone_in(self.ast.allocator),
                         None,
                         property.computed,
                         property.r#static,
                         property.definite,
-                        // SAFETY: `ast.copy` is unsound! We need to fix.
-                        unsafe { self.ast.copy(&property.type_annotation) },
+                        property.type_annotation.clone_in(self.ast.allocator),
                         property.accessibility,
                     );
                     elements.push(new_element);
@@ -515,8 +505,8 @@ impl<'a> IsolatedDeclarations<'a> {
                     if self.has_internal_annotation(signature.span) {
                         continue;
                     }
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    unsafe { self.ast.copy(element) }
+
+                    element.clone_in(self.ast.allocator)
                 }),
             }
         }
@@ -542,16 +532,11 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.r#type,
             decl.span,
             self.ast.vec(),
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&decl.id) },
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&decl.type_parameters) },
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&decl.super_class) },
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&decl.super_type_parameters) },
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&decl.implements) },
+            decl.id.clone_in(self.ast.allocator),
+            decl.type_parameters.clone_in(self.ast.allocator),
+            decl.super_class.clone_in(self.ast.allocator),
+            decl.super_type_parameters.clone_in(self.ast.allocator),
+            decl.implements.clone_in(self.ast.allocator),
             body,
             decl.r#abstract,
             declare.unwrap_or_else(|| self.is_declare()),

@@ -186,6 +186,7 @@ impl<'a> GatherNodeParts<'a> for Expression<'a> {
             Self::ParenthesizedExpression(expr) => expr.gather(f),
             Self::UnaryExpression(expr) => expr.gather(f),
             Self::UpdateExpression(expr) => expr.gather(f),
+            Self::ChainExpression(expr) => expr.gather(f),
             Self::MetaProperty(expr) => expr.gather(f),
             Self::JSXElement(expr) => expr.gather(f),
             Self::JSXFragment(expr) => expr.gather(f),
@@ -198,22 +199,55 @@ impl<'a> GatherNodeParts<'a> for Expression<'a> {
     }
 }
 
+impl<'a> GatherNodeParts<'a> for ChainExpression<'a> {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        self.expression.gather(f);
+    }
+}
+
+impl<'a> GatherNodeParts<'a> for ChainElement<'a> {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        match self {
+            ChainElement::CallExpression(expr) => expr.gather(f),
+            expr => expr.to_member_expression().gather(f),
+        }
+    }
+}
+
 impl<'a> GatherNodeParts<'a> for MemberExpression<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => {
-                expr.object.gather(f);
-                expr.expression.gather(f);
+                expr.gather(f);
             }
             MemberExpression::StaticMemberExpression(expr) => {
-                expr.object.gather(f);
-                expr.property.gather(f);
+                expr.gather(f);
             }
             MemberExpression::PrivateFieldExpression(expr) => {
-                expr.object.gather(f);
-                expr.field.gather(f);
+                expr.gather(f);
             }
         }
+    }
+}
+
+impl<'a> GatherNodeParts<'a> for ComputedMemberExpression<'a> {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        self.object.gather(f);
+        self.expression.gather(f);
+    }
+}
+
+impl<'a> GatherNodeParts<'a> for StaticMemberExpression<'a> {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        self.object.gather(f);
+        self.property.gather(f);
+    }
+}
+
+impl<'a> GatherNodeParts<'a> for PrivateFieldExpression<'a> {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        self.object.gather(f);
+        self.field.gather(f);
     }
 }
 

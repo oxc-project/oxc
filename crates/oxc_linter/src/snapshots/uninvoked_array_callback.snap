@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ oxc(uninvoked-array-callback): Uninvoked array callback
    ╭─[uninvoked_array_callback.tsx:1:14]

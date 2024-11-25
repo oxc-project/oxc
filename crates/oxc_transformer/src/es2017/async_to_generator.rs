@@ -48,7 +48,7 @@
 //!
 //! Reference:
 //! * Babel docs: <https://babeljs.io/docs/en/babel-plugin-transform-async-to-generator>
-//! * Babel implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-async-to-generator>
+//! * Babel implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-async-to-generator>
 //! * Async / Await TC39 proposal: <https://github.com/tc39/proposal-async-await>
 
 use std::mem;
@@ -297,37 +297,34 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
 
         {
             // Modify the wrapper function to add new body, params, and scope_id.
-            let mut statements = ctx.ast.vec_with_capacity(3);
-            let statement = self.create_async_to_generator_declaration(
+            let async_to_gen_decl = self.create_async_to_generator_declaration(
                 &bound_ident,
                 params,
                 body,
                 generator_scope_id,
                 ctx,
             );
-            statements.push(statement);
-            if has_function_id {
+            let statements = if has_function_id {
                 let id = caller_function.id.as_ref().unwrap();
                 // If the function has an id, then we need to return the id.
                 // `function foo() { ... }` -> `function foo() {} return foo;`
-                let reference = ctx.create_bound_reference_id(
+                let reference = ctx.create_bound_ident_expr(
                     SPAN,
                     id.name.clone(),
                     id.symbol_id(),
                     ReferenceFlags::Read,
                 );
-                let statement = Statement::FunctionDeclaration(caller_function);
-                statements.push(statement);
-                let argument = Some(Expression::Identifier(ctx.alloc(reference)));
-                statements.push(ctx.ast.statement_return(SPAN, argument));
+                let func_decl = Statement::FunctionDeclaration(caller_function);
+                let statement_return = ctx.ast.statement_return(SPAN, Some(reference));
+                ctx.ast.vec_from_array([async_to_gen_decl, func_decl, statement_return])
             } else {
                 // If the function doesn't have an id, then we need to return the function itself.
                 // `function() { ... }` -> `return function() { ... };`
                 let statement_return = ctx
                     .ast
                     .statement_return(SPAN, Some(Expression::FunctionExpression(caller_function)));
-                statements.push(statement_return);
-            }
+                ctx.ast.vec_from_array([async_to_gen_decl, statement_return])
+            };
             debug_assert!(wrapper_function.body.is_none());
             wrapper_function.r#async = false;
             wrapper_function.generator = false;
@@ -383,15 +380,16 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
 
         // function _name() { _ref.apply(this, arguments); }
         {
-            let mut statements = ctx.ast.vec_with_capacity(2);
-            statements.push(self.create_async_to_generator_assignment(
-                &bound_ident,
-                params,
-                body,
-                generator_scope_id,
-                ctx,
-            ));
-            statements.push(Self::create_apply_call_statement(&bound_ident, ctx));
+            let statements = ctx.ast.vec_from_array([
+                self.create_async_to_generator_assignment(
+                    &bound_ident,
+                    params,
+                    body,
+                    generator_scope_id,
+                    ctx,
+                ),
+                Self::create_apply_call_statement(&bound_ident, ctx),
+            ]);
             let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), statements);
 
             let scope_id = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
@@ -469,9 +467,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 generator_function_id,
                 ctx,
             );
-            let mut statements = ctx.ast.vec_with_capacity(2);
-            statements.push(statement);
-            statements.push(caller_function);
+            let statements = ctx.ast.vec_from_array([statement, caller_function]);
             let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), statements);
             let params = Self::create_empty_params(ctx);
             let wrapper_function = Self::create_function(None, params, body, wrapper_scope_id, ctx);
@@ -597,14 +593,16 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "arguments");
-        let arguments_ident =
-            ctx.create_reference_id(SPAN, Atom::from("arguments"), symbol_id, ReferenceFlags::Read);
-        let arguments_ident = Argument::Identifier(ctx.alloc(arguments_ident));
+        let arguments_ident = Argument::from(ctx.create_ident_expr(
+            SPAN,
+            Atom::from("arguments"),
+            symbol_id,
+            ReferenceFlags::Read,
+        ));
 
         // (this, arguments)
-        let mut arguments = ctx.ast.vec_with_capacity(2);
-        arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
-        arguments.push(arguments_ident);
+        let this = Argument::from(ctx.ast.expression_this(SPAN));
+        let arguments = ctx.ast.vec_from_array([this, arguments_ident]);
         // _ref.apply
         let callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
@@ -637,7 +635,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let mut function = Self::create_function(None, params, body, scope_id, ctx);
         function.generator = true;
         let arguments = ctx.ast.vec1(Argument::FunctionExpression(function));
-        self.ctx.helper_call_expr(self.helper, arguments, ctx)
+        self.ctx.helper_call_expr(self.helper, SPAN, arguments, ctx)
     }
 
     /// Creates a helper declaration statement for async-to-generator transformation.
@@ -787,15 +785,6 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         BindingMover::new(target_scope_id, ctx).visit_binding_identifier(ident);
-    }
-
-    #[inline]
-    pub fn move_bindings_to_target_scope_for_statement(
-        target_scope_id: ScopeId,
-        stmt: &Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        BindingMover::new(target_scope_id, ctx).visit_statement(stmt);
     }
 }
 

@@ -1,0 +1,54 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/assignment/array.js
+---
+[
+  {
+    "children": [],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "read",
+        "node": "VariableDeclarator(read)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "read",
+            "node_id": 17
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 3,
+            "name": "read",
+            "node_id": 25
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 1,
+        "name": "write",
+        "node": "VariableDeclarator(write)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Write)",
+            "id": 0,
+            "name": "write",
+            "node_id": 16
+          },
+          {
+            "flags": "ReferenceFlags(Write)",
+            "id": 2,
+            "name": "write",
+            "node_id": 24
+          }
+        ]
+      }
+    ]
+  }
+]

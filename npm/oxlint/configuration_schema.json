@@ -236,9 +236,11 @@
       }
     },
     "JSXA11yPluginSettings": {
+      "description": "Configure JSX A11y plugin rules.\n\nSee [eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s configuration for a full reference.",
       "type": "object",
       "properties": {
         "components": {
+          "description": "To have your custom components be checked as DOM elements, you can provide a mapping of your component names to the DOM element name.\n\n## Example\n\n```json { \"settings\": { \"jsx-a11y\": { \"components\": { \"Link\": \"a\", \"IconButton\": \"button\" } } } } ```",
           "default": {},
           "type": "object",
           "additionalProperties": {
@@ -246,6 +248,7 @@
           }
         },
         "polymorphicPropName": {
+          "description": "An optional setting that define the prop your code uses to create polymorphic components. This setting will be used to determine the element type in rules that require semantic context.\n\nFor example, if you set the `polymorphicPropName` to `as`, then this element:\n\n```jsx <Box as=\"h3\">Hello</Box> ```\n\nWill be treated as an `h3`. If not set, this component will be treated as a `Box`.",
           "type": [
             "string",
             "null"
@@ -260,9 +263,11 @@
       }
     },
     "NextPluginSettings": {
+      "description": "Configure Next.js plugin rules.",
       "type": "object",
       "properties": {
         "rootDir": {
+          "description": "The root directory of the Next.js project.\n\nThis is particularly useful when you have a monorepo and your Next.js project is in a subfolder.\n\n## Example\n\n```json { \"settings\": { \"next\": { \"rootDir\": \"apps/dashboard/\" } } } ```",
           "default": [],
           "allOf": [
             {
@@ -378,7 +383,8 @@
       "$ref": "#/definitions/DummyRuleMap"
     },
     "OxlintSettings": {
-      "description": "Shared settings for plugins",
+      "title": "Oxlint Plugin Settings",
+      "description": "Configure the behavior of linter plugins.\n\n## Example\n\nHere's an example if you're using Next.js in a monorepo:\n\n```json { \"settings\": { \"next\": { \"rootDir\": \"apps/dashboard/\" }, \"react\": { \"linkComponents\": [ { \"name\": \"Link\", \"linkAttribute\": \"to\" } ] }, \"jsx-a11y\": { \"components\": { \"Link\": \"a\", \"Button\": \"button\" } } } } ```",
       "type": "object",
       "properties": {
         "jsdoc": {
@@ -433,9 +439,11 @@
       }
     },
     "ReactPluginSettings": {
+      "description": "Configure React plugin rules.\n\nDerived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)",
       "type": "object",
       "properties": {
         "formComponents": {
+          "description": "Components used as alternatives to `<form>` for forms, such as `<Formik>`.\n\n## Example\n\n```jsonc { \"settings\": { \"react\": { \"formComponents\": [ \"CustomForm\", // OtherForm is considered a form component and has an endpoint attribute { \"name\": \"OtherForm\", \"formAttribute\": \"endpoint\" }, // allows specifying multiple properties if necessary { \"name\": \"Form\", \"formAttribute\": [\"registerEndpoint\", \"loginEndpoint\"] } ] } } } ```",
           "default": [],
           "type": "array",
           "items": {
@@ -443,6 +451,7 @@
           }
         },
         "linkComponents": {
+          "description": "Components used as alternatives to `<a>` for linking, such as `<Link>`.\n\n## Example\n\n```jsonc { \"settings\": { \"react\": { \"linkComponents\": [ \"HyperLink\", // Use `linkAttribute` for components that use a different prop name // than `href`. { \"name\": \"MyLink\", \"linkAttribute\": \"to\" }, // allows specifying multiple properties if necessary { \"name\": \"Link\", \"linkAttribute\": [\"to\", \"href\"] } ] } } } ```",
           "default": [],
           "type": "array",
           "items": {

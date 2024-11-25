@@ -59,7 +59,7 @@ fn shorthand() {
     test("let { x } = y", "let { x } = y;\n");
     test("({ x: (x) })", "({ x });\n");
     test("({ x } = y)", "({x} = y);\n");
-    // https://github.com/tc39/test262/blob/main/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
+    // https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/test/language/expressions/object/__proto__-permitted-dup-shorthand.js
     test("var obj = { __proto__, __proto__, };", "var obj = {\n\t__proto__,\n\t__proto__\n};\n");
     test("var obj = { __proto__: __proto__, };", "var obj = { __proto__: __proto__ };\n");
 }
@@ -174,8 +174,8 @@ fn conditional() {
 fn coalesce() {
     test_minify("a ?? b", "a??b;");
     test_minify("a ?? b ?? c ?? d", "a??b??c??d;");
-    test_minify("a ?? (b ?? (c ?? d))", "a??(b??(c??d));");
-    test_minify("(a ?? (b ?? (c ?? d)))", "a??(b??(c??d));");
+    test_minify("a ?? (b ?? (c ?? d))", "a??b??c??d;");
+    test_minify("(a ?? (b ?? (c ?? d)))", "a??b??c??d;");
     test_minify("a, b ?? c", "a,b??c;");
     test_minify("(a, b) ?? c", "(a,b)??c;");
     test_minify("a, b ?? c, d", "a,b??c,d;");
@@ -188,8 +188,8 @@ fn coalesce() {
 #[test]
 fn logical_or() {
     test_minify("a || b || c", "a||b||c;");
-    test_minify("(a || (b || c)) || d", "a||(b||c)||d;");
-    test_minify("a || (b || (c || d))", "a||(b||(c||d));");
+    test_minify("(a || (b || c)) || d", "a||b||c||d;");
+    test_minify("a || (b || (c || d))", "a||b||c||d;");
     test_minify("a || b && c", "a||b&&c;");
     test_minify("(a || b) && c", "(a||b)&&c;");
     test_minify("a, b || c, d", "a,b||c,d;");
@@ -201,7 +201,7 @@ fn logical_or() {
 #[test]
 fn logical_and() {
     test_minify("a && b && c", "a&&b&&c;");
-    test_minify("a && ((b && c) && d)", "a&&(b&&c&&d);");
+    test_minify("a && ((b && c) && d)", "a&&b&&c&&d;");
     test_minify("((a && b) && c) && d", "a&&b&&c&&d;");
     test_minify("(a || b) && (c || d)", "(a||b)&&(c||d);");
     test_minify("a, b && c, d", "a,b&&c,d;");
@@ -293,4 +293,76 @@ fn in_expr_in_sequence_in_for_loop_init() {
         "for (('hidden' in a) && (m = a.hidden), r = 0; s > r; r++) {}",
         "for ((\"hidden\" in a) && (m = a.hidden), r = 0; s > r; r++) {}\n",
     );
+}
+
+#[test]
+fn in_expr_in_arrow_function_expression() {
+    test("() => ('foo' in bar)", "() => \"foo\" in bar;\n");
+    test("() => 'foo' in bar", "() => \"foo\" in bar;\n");
+    test("() => { ('foo' in bar) }", "() => {\n\t\"foo\" in bar;\n};\n");
+}
+
+#[test]
+fn big_int() {
+    test("9007199254740991n;", "9007199254740991n;\n");
+    test("-9007199254740991n;", "-9007199254740991n;\n");
+    test("-90_0719_92547_40991n;", "-9007199254740991n;\n");
+    test("+9007199254740991n;", "+9007199254740991n;\n");
+    test("1000n", "1000n;\n");
+    test("-15n", "-15n;\n");
+
+    test("100_000_000n;", "100000000n;\n");
+    test("10000000000000000n;", "10000000000000000n;\n");
+    test("0n;", "0n;\n");
+    test("+0n;", "+0n;\n");
+    test("-0n;", "-0n;\n");
+
+    test("0x1_0n;", "0x10n;\n");
+    test("0x10n;", "0x10n;\n");
+
+    test("0b1_01n;", "0b101n;\n");
+    test("0b101n;", "0b101n;\n");
+    test("0b101_101n;", "0b101101n;\n");
+    test("0b10_1n", "0b101n;\n");
+
+    test("0o13n;", "0o13n;\n");
+    test("0o7n", "0o7n;\n");
+
+    test("0x2_0n", "0x20n;\n");
+    test("0xfabn", "0xfabn;\n");
+    test("0xaef_en;", "0xaefen;\n");
+    test("0xaefen;", "0xaefen;\n");
+}
+
+#[test]
+#[ignore = "Minify bigint is not implemented."]
+fn big_int_minify() {
+    test_minify("9007199254740991n", "9007199254740991n;");
+    test_minify("-9007199254740991n;", "-9007199254740991n;");
+    test_minify("-90_0719_92547_40991n;", "-9007199254740991n;");
+    test_minify("+9007199254740991n;", "+9007199254740991n;");
+    test_minify("1000n", "1000n;");
+    test_minify("-15n", "-15n;");
+
+    test_minify("100_000_000n;", "100000000n;");
+    test_minify("10000000000000000n;", "0x2386f26fc10000n;");
+    test_minify("0n;", "0n;");
+    test_minify("+0n;", "+0n;");
+    test_minify("-0n;", "-0n;");
+
+    test_minify("0x1_0n;", "16n;");
+    test_minify("0x10n;", "16n;");
+
+    test_minify("0b1_01n;", "5n;");
+    test_minify("0b101n;", "5n;");
+    test_minify("0b101_101n;", "45n;");
+    test_minify("0b10_1n", "5n;");
+
+    test_minify("0o13n;", "11n;");
+    test_minify("0o7n", "7n;");
+
+    test_minify("0x2_0n", "32n;");
+    test_minify("0xfabn", "4011n;");
+    test_minify("0xaef_en;", "44798n;");
+    test_minify("0xaefen;", "44798n;");
 }

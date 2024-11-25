@@ -201,54 +201,6 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
-    /// Check that this symbol is exported.
-    ///
-    /// Export status is checked using the symbol's [`SymbolFlags`], not by
-    /// checking the [`oxc_semantic::ModuleRecord`].
-    ///
-    /// For the inverse of this assertion, use [`SymbolTester::is_not_exported`].
-    #[allow(clippy::wrong_self_convention)]
-    pub fn is_exported(mut self) -> Self {
-        self.test_result = match self.test_result {
-            Ok(symbol_id) => {
-                let binding = self.target_symbol_name.clone();
-                if self.semantic.symbols().get_flags(symbol_id).is_export() {
-                    Ok(symbol_id)
-                } else {
-                    Err(OxcDiagnostic::error(format!(
-                        "Expected {binding} to be exported with SymbolFlags::Export"
-                    )))
-                }
-            }
-            e => e,
-        };
-        self
-    }
-
-    /// Check that this symbol is not exported.
-    ///
-    /// Export status is checked using the symbol's [`SymbolFlags`], not by
-    /// checking the [`oxc_semantic::ModuleRecord`].
-    ///
-    /// For the inverse of this assertion, use [`SymbolTester::is_exported`].
-    #[allow(clippy::wrong_self_convention)]
-    pub fn is_not_exported(mut self) -> Self {
-        self.test_result = match self.test_result {
-            Ok(symbol_id) => {
-                let binding = self.target_symbol_name.clone();
-                if self.semantic.symbols().get_flags(symbol_id).contains(SymbolFlags::Export) {
-                    Err(OxcDiagnostic::error(format!(
-                        "Expected {binding} to not be exported. Symbol has export flag."
-                    )))
-                } else {
-                    Ok(symbol_id)
-                }
-            }
-            e => e,
-        };
-        self
-    }
-
     #[allow(clippy::wrong_self_convention)]
     pub fn is_in_scope(mut self, expected_flags: ScopeFlags) -> Self {
         let target_name: &str = self.target_symbol_name.as_ref();

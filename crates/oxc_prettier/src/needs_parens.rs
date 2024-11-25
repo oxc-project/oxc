@@ -1,6 +1,6 @@
 //! Direct port of needs-parens for adding or removing parentheses.
 //!
-//! See <https://github.com/prettier/prettier/blob/main/src/language-js/needs-parens.js>
+//! See <https://github.com/prettier/prettier/blob/3.3.3/src/language-js/needs-parens.js>
 
 #![allow(
     clippy::unused_self,
@@ -668,6 +668,9 @@ impl<'a> Prettier<'a> {
             Expression::ChainExpression(e) => match &e.expression {
                 ChainElement::CallExpression(e) => {
                     Self::starts_with_no_lookahead_token(&e.callee, span)
+                }
+                ChainElement::TSNonNullExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.expression, span)
                 }
                 ChainElement::ComputedMemberExpression(e) => {
                     Self::starts_with_no_lookahead_token(&e.object, span)

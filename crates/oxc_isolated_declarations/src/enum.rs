@@ -1,5 +1,6 @@
 use rustc_hash::FxHashMap;
 
+use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::ToInt32;
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -17,8 +18,6 @@ enum ConstantValue {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    /// # Panics
-    /// if the enum member is a template literal with substitutions.
     pub fn transform_ts_enum_declaration(
         &mut self,
         decl: &TSEnumDeclaration<'a>,
@@ -54,8 +53,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
             let member = self.ast.ts_enum_member(
                 member.span,
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&member.id) },
+                member.id.clone_in(self.ast.allocator),
                 value.map(|v| match v {
                     ConstantValue::Number(v) => {
                         let is_negative = v < 0.0;
@@ -88,8 +86,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         Some(self.ast.declaration_ts_enum(
             decl.span,
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&decl.id) },
+            decl.id.clone_in(self.ast.allocator),
             members,
             decl.r#const,
             self.is_declare(),

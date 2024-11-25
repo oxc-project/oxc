@@ -1,4 +1,9 @@
-use std::{env, io::BufWriter, time::Instant};
+use std::{
+    env,
+    io::BufWriter,
+    path::{Path, PathBuf},
+    time::Instant,
+};
 
 use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
@@ -18,13 +23,14 @@ use crate::{
 
 pub struct LintRunner {
     options: LintCommand,
+    cwd: PathBuf,
 }
 
 impl Runner for LintRunner {
     type Options = LintCommand;
 
     fn new(options: Self::Options) -> Self {
-        Self { options }
+        Self { options, cwd: env::current_dir().expect("Failed to get current working directory") }
     }
 
     fn run(self) -> CliRunResult {
@@ -51,6 +57,16 @@ impl Runner for LintRunner {
         let provided_path_count = paths.len();
         let now = Instant::now();
 
+        // append cwd to all paths
+        paths = paths
+            .into_iter()
+            .map(|x| {
+                let mut path_with_cwd = self.cwd.clone();
+                path_with_cwd.push(x);
+                path_with_cwd
+            })
+            .collect();
+
         // The ignore crate whitelists explicit paths, but priority
         // should be given to the ignore file. Many users lint
         // automatically and pass a list of changed files explicitly.
@@ -72,13 +88,7 @@ impl Runner for LintRunner {
                 });
             }
 
-            if let Ok(cwd) = env::current_dir() {
-                paths.push(cwd);
-            } else {
-                return CliRunResult::InvalidOptions {
-                    message: "Failed to get current working directory.".to_string(),
-                };
-            }
+            paths.push(self.cwd.clone());
         }
 
         let filter = match Self::get_filters(filter) {
@@ -97,23 +107,13 @@ impl Runner for LintRunner {
 
         let number_of_files = paths.len();
 
-        let cwd = std::env::current_dir().unwrap();
+        let config_search_result = Self::find_oxlint_config(&self.cwd, &basic_options.config);
 
-        let mut oxlintrc = if let Some(config_path) = basic_options.config.as_ref() {
-            match Oxlintrc::from_file(config_path) {
-                Ok(config) => config,
-                Err(diagnostic) => {
-                    let handler = GraphicalReportHandler::new();
-                    let mut err = String::new();
-                    handler.render_report(&mut err, &diagnostic).unwrap();
-                    return CliRunResult::InvalidOptions {
-                        message: format!("Failed to parse configuration file.\n{err}"),
-                    };
-                }
-            }
-        } else {
-            Oxlintrc::default()
-        };
+        if let Err(err) = config_search_result {
+            return err;
+        }
+
+        let mut oxlintrc = config_search_result.unwrap();
 
         enable_plugins.apply_overrides(&mut oxlintrc.plugins);
 
@@ -129,8 +129,9 @@ impl Runner for LintRunner {
             };
         }
 
-        let mut options =
-            LintServiceOptions::new(cwd, paths).with_cross_module(builder.plugins().has_import());
+        let mut options = LintServiceOptions::new(self.cwd, paths)
+            .with_cross_module(builder.plugins().has_import());
+
         let linter = builder.build();
 
         let tsconfig = basic_options.tsconfig;
@@ -175,6 +176,14 @@ impl Runner for LintRunner {
 }
 
 impl LintRunner {
+    const DEFAULT_OXLINTRC: &'static str = ".oxlintrc.json";
+
+    #[must_use]
+    pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
+        self.cwd = cwd;
+        self
+    }
+
     fn get_diagnostic_service(
         warning_options: &WarningOptions,
         output_options: &OutputOptions,
@@ -231,10 +240,40 @@ impl LintRunner {
 
         Ok(filters)
     }
+
+    // finds the oxlint config
+    // when config is provided, but not found, an CliRunResult is returned, else the oxlintrc config file is returned
+    // when no config is provided, it will search for the default file names in the current working directory
+    // when no file is found, the default configuration is returned
+    fn find_oxlint_config(cwd: &Path, config: &Option<PathBuf>) -> Result<Oxlintrc, CliRunResult> {
+        if let Some(config_path) = config {
+            return match Oxlintrc::from_file(config_path) {
+                Ok(config) => Ok(config),
+                Err(diagnostic) => {
+                    let handler = GraphicalReportHandler::new();
+                    let mut err = String::new();
+                    handler.render_report(&mut err, &diagnostic).unwrap();
+                    return Err(CliRunResult::InvalidOptions {
+                        message: format!("Failed to parse configuration file.\n{err}"),
+                    });
+                }
+            };
+        }
+
+        // no config argument is provided,
+        // auto detect default config file from current work directory
+        // or return the default configuration, when no valid file is found
+        let mut config_path = cwd.to_path_buf();
+        config_path.push(Self::DEFAULT_OXLINTRC);
+
+        Oxlintrc::from_file(&config_path).or_else(|_| Ok(Oxlintrc::default()))
+    }
 }
 
 #[cfg(all(test, not(target_os = "windows")))]
 mod test {
+    use std::env;
+
     use super::LintRunner;
     use crate::cli::{lint_command, CliRunResult, LintResult, Runner};
 
@@ -243,6 +282,20 @@ mod test {
         new_args.extend(args);
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         match LintRunner::new(options).run() {
+            CliRunResult::LintResult(lint_result) => lint_result,
+            other => panic!("{other:?}"),
+        }
+    }
+
+    fn test_with_cwd(cwd: &str, args: &[&str]) -> LintResult {
+        let mut new_args = vec!["--silent"];
+        new_args.extend(args);
+        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
+
+        let mut current_cwd = env::current_dir().unwrap();
+        current_cwd.push(cwd);
+
+        match LintRunner::new(options).with_cwd(current_cwd).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
             other => panic!("{other:?}"),
         }
@@ -276,6 +329,16 @@ mod test {
         assert!(result.number_of_rules > 0);
         assert_eq!(result.number_of_files, 3);
         assert_eq!(result.number_of_warnings, 3);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn cwd() {
+        let args = &["debugger.js"];
+        let result = test_with_cwd("fixtures/linter", args);
+        assert!(result.number_of_rules > 0);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -343,6 +406,25 @@ mod test {
     }
 
     #[test]
+    fn ignore_flow() {
+        let args = &["--import-plugin", "fixtures/flow/index.mjs"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    // https://github.com/oxc-project/oxc/issues/7406
+    fn ignore_flow_import_plugin_directory() {
+        let args = &["--import-plugin", "-A all", "-D no-cycle", "fixtures/flow/"];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 2);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
     fn filter_allow_all() {
         let args = &["-A", "all", "fixtures/linter"];
         let result = test(args);
@@ -385,6 +467,15 @@ mod test {
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1); // triggered by no_empty_file
         assert_eq!(result.number_of_errors, 0);
+    }
+
+    #[test]
+    fn oxlint_config_auto_detection() {
+        let args = &["debugger.js"];
+        let result = test_with_cwd("fixtures/auto_config_detection", args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
     }
 
     #[test]
@@ -649,5 +740,14 @@ mod test {
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
+    }
+
+    #[test]
+    fn test_overrides_directories() {
+        let result =
+            test(&["-c", "fixtures/overrides/directories-config.json", "fixtures/overrides"]);
+        assert_eq!(result.number_of_files, 7);
+        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_errors, 2);
     }
 }

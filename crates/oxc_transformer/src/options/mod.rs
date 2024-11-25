@@ -10,8 +10,6 @@ mod module;
 
 use std::path::PathBuf;
 
-use oxc_diagnostics::Error;
-
 use crate::{
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
@@ -97,7 +95,7 @@ impl TransformOptions {
     /// * Same targets specified multiple times.
     /// * No matching target.
     /// * Invalid version.
-    pub fn from_target(s: &str) -> Result<Self, Error> {
+    pub fn from_target(s: &str) -> Result<Self, String> {
         EnvOptions::from_target(s).map(|env| Self { env, ..Self::default() })
     }
 
@@ -115,7 +113,7 @@ impl TransformOptions {
     /// * Same targets specified multiple times.
     /// * No matching target.
     /// * Invalid version.
-    pub fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, Error> {
+    pub fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, String> {
         EnvOptions::from_target_list(list).map(|env| Self { env, ..Self::default() })
     }
 }
@@ -129,13 +127,13 @@ impl From<ESTarget> for TransformOptions {
 }
 
 impl TryFrom<&BabelOptions> for TransformOptions {
-    type Error = Vec<Error>;
+    type Error = Vec<String>;
 
     /// If the `options` contains any unknown fields, they will be returned as a list of errors.
     fn try_from(options: &BabelOptions) -> Result<Self, Self::Error> {
-        let mut errors = Vec::<Error>::new();
-        errors.extend(options.plugins.errors.iter().map(|err| Error::msg(err.clone())));
-        errors.extend(options.presets.errors.iter().map(|err| Error::msg(err.clone())));
+        let mut errors = Vec::<String>::new();
+        errors.extend(options.plugins.errors.iter().map(Clone::clone));
+        errors.extend(options.presets.errors.iter().map(Clone::clone));
 
         let typescript = options
             .presets
@@ -210,6 +208,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         };
 
         let es2020 = ES2020Options {
+            optional_chaining: options.plugins.optional_chaining || env.es2020.optional_chaining,
             nullish_coalescing_operator: options.plugins.nullish_coalescing_operator
                 || env.es2020.nullish_coalescing_operator,
             big_int: env.es2020.big_int,

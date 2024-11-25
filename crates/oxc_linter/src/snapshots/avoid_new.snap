@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-promise(avoid-new): Avoid creating new promises
    ╭─[avoid_new.tsx:1:9]

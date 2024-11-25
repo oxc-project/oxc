@@ -1,0 +1,118 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/assignment/read-write-operators.ts
+---
+[
+  {
+    "children": [],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "Foo",
+        "node": "VariableDeclarator(Foo)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Write)",
+            "id": 0,
+            "name": "Foo",
+            "node_id": 9
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 1,
+            "name": "Foo",
+            "node_id": 15
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 2,
+            "name": "Foo",
+            "node_id": 21
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 3,
+            "name": "Foo",
+            "node_id": 27
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 4,
+            "name": "Foo",
+            "node_id": 33
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 5,
+            "name": "Foo",
+            "node_id": 39
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 6,
+            "name": "Foo",
+            "node_id": 45
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 7,
+            "name": "Foo",
+            "node_id": 51
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 8,
+            "name": "Foo",
+            "node_id": 57
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 9,
+            "name": "Foo",
+            "node_id": 63
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 10,
+            "name": "Foo",
+            "node_id": 69
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 11,
+            "name": "Foo",
+            "node_id": 75
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 12,
+            "name": "Foo",
+            "node_id": 81
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 13,
+            "name": "Foo",
+            "node_id": 87
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 14,
+            "name": "Foo",
+            "node_id": 93
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 15,
+            "name": "Foo",
+            "node_id": 99
+          }
+        ]
+      }
+    ]
+  }
+]

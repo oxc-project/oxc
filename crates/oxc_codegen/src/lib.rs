@@ -1,7 +1,7 @@
 //! Oxc Codegen
 //!
 //! Code adapted from
-//! * [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
+//! * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer.go)
 #![warn(missing_docs)]
 
 mod binary_expr_visitor;
@@ -19,7 +19,7 @@ use oxc_ast::ast::{
     BindingIdentifier, BlockStatement, Comment, Expression, IdentifierReference, Program, Statement,
 };
 use oxc_mangler::Mangler;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
@@ -390,7 +390,7 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_curly_braces<F: FnOnce(&mut Self)>(&mut self, span: Span, single_line: bool, op: F) {
-        self.add_source_mapping(span.start);
+        self.add_source_mapping(span);
         self.print_ascii_byte(b'{');
         if !single_line {
             self.print_soft_newline();
@@ -401,21 +401,21 @@ impl<'a> Codegen<'a> {
             self.dedent();
             self.print_indent();
         }
-        self.add_source_mapping(span.end);
+        self.add_source_mapping_end(span);
         self.print_ascii_byte(b'}');
     }
 
-    fn print_block_start(&mut self, position: u32) {
-        self.add_source_mapping(position);
+    fn print_block_start(&mut self, span: Span) {
+        self.add_source_mapping(span);
         self.print_ascii_byte(b'{');
         self.print_soft_newline();
         self.indent();
     }
 
-    fn print_block_end(&mut self, position: u32) {
+    fn print_block_end(&mut self, span: Span) {
         self.dedent();
         self.print_indent();
-        self.add_source_mapping(position);
+        self.add_source_mapping_end(span);
         self.print_ascii_byte(b'}');
     }
 
@@ -639,13 +639,28 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(self.quote);
     }
 
-    fn add_source_mapping(&mut self, position: u32) {
+    fn add_source_mapping(&mut self, span: Span) {
+        if span == SPAN {
+            return;
+        }
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            sourcemap_builder.add_source_mapping(self.code.as_bytes(), position, None);
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.start, None);
+        }
+    }
+
+    fn add_source_mapping_end(&mut self, span: Span) {
+        if span == SPAN {
+            return;
+        }
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
         }
     }
 
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
+        if span == SPAN {
+            return;
+        }
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
         }

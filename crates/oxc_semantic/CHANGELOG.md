@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+### Features
+
+- 3dcac1a linter: React/exhaustive-deps (#7151) (camc314)
+- 8cfea3c oxc_cfg: Add implicit return instruction (#5568) (IWANABETHATGUY)
+
+### Bug Fixes
+
+- 7d75130 transformer/async-to-generator: `arguments` isn't correct after transformation (#7234) (Dunqing)
+
+### Refactor
+
+- 84038ee semantic: Shorten code (#7277) (overlookmotel)
+- 9e85cc1 semantic: Remove duplicated code (#7276) (overlookmotel)
+
+### Testing
+
+- 080a67b semantic: Semantic checker store conformance pass/fail info in a separate file (#7235) (Boshen)
+
 ## [0.36.0] - 2024-11-09
 
 - b11ed2c ast: [**BREAKING**] Remove useless `ObjectProperty::init` field (#7220) (Boshen)

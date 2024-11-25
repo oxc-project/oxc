@@ -341,7 +341,6 @@ const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "promise" => "eslint-plugin-promise",
     "react_perf" => "eslint-plugin-react-perf",
     "react" => "eslint-plugin-react",
-    "tree_shaking" => "eslint-plugin-tree-shaking",
     "typescript" => "typescript-eslint",
     "unicorn" => "eslint-plugin-unicorn",
     "vitest" => "eslint-plugin-vitest",

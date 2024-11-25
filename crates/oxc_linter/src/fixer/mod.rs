@@ -11,7 +11,7 @@ use crate::LintContext;
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
-/// [`RuleFixer`]: https://github.com/eslint/eslint/blob/main/lib/linter/rule-fixer.js
+/// [`RuleFixer`]: https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/rule-fixer.js
 #[derive(Clone, Copy)]
 #[must_use]
 pub struct RuleFixer<'c, 'a: 'c> {
@@ -671,7 +671,7 @@ mod test {
     }
 
     // Remain test caces picked from eslint
-    // <https://github.com/eslint/eslint/blob/main/tests/lib/linter/report-translator.js>
+    // <https://github.com/eslint/eslint/blob/v9.9.1/tests/lib/linter/report-translator.js>
     // 1. Combining autofixes
     #[test]
     fn merge_fixes_into_one() {

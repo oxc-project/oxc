@@ -1,4 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
 

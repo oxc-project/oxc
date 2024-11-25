@@ -12,7 +12,7 @@ use crate::{
 // #[diagnostic(severity(warning), help(""))]
 // struct NoDeprecatedDiagnostic(CompactStr, #[label] pub Span);
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-deprecated.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-deprecated.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoDeprecated;
 

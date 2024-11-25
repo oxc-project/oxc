@@ -2,6 +2,7 @@
 source: crates/oxc_semantic/tests/integration/cfg.rs
 expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/function_in_finally.js
+snapshot_kind: text
 ---
 bb0: {
 
@@ -29,7 +30,7 @@ bb5: {
 }
 
 bb6: {
-
+	return
 }
 
 bb7: {
@@ -51,7 +52,8 @@ ExpressionStatement" shape = box]
     4 [ label = "bb4
 BlockStatement" shape = box]
     5 [ label = "bb5" shape = box]
-    6 [ label = "bb6" shape = box]
+    6 [ label = "bb6
+return" shape = box]
     7 [ label = "bb7
 ExpressionStatement" shape = box]
     8 [ label = "bb8" shape = box]

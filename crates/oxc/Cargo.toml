@@ -1,6 +1,6 @@
 [package]
 name = "oxc"
-version = "0.36.0"
+version = "0.37.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -34,7 +34,6 @@ oxc_regular_expression = { workspace = true }
 oxc_cfg = { workspace = true, optional = true }
 oxc_codegen = { workspace = true, optional = true }
 oxc_diagnostics = { workspace = true }
-oxc_index = { workspace = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
 oxc_mangler = { workspace = true, optional = true }
 oxc_minifier = { workspace = true, optional = true }

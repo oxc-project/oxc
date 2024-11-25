@@ -133,7 +133,7 @@ const defineSSRCustomElement = () => {
         const Component = // #__PURE__
         React.forwardRef((props, ref) => {});
         ",
-        // Copy from <https://github.com/rolldown-rs/rolldown/blob/main/crates/rolldown/tests/esbuild/dce/remove_unused_pure_comment_calls/entry.js>
+        // Copy from <https://github.com/rolldown-rs/rolldown/blob/v0.14.0/crates/rolldown/tests/esbuild/dce/remove_unused_pure_comment_calls/entry.js>
         "
         function bar() {}
         let bare = foo(bar);

@@ -72,6 +72,22 @@ impl<'a, 'ctx> Traverse<'a> for Common<'a, 'ctx> {
         self.arrow_function_converter.exit_function(func, ctx);
     }
 
+    fn enter_arrow_function_expression(
+        &mut self,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.arrow_function_converter.enter_arrow_function_expression(arrow, ctx);
+    }
+
+    fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_converter.enter_function_body(body, ctx);
+    }
+
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.arrow_function_converter.exit_function_body(body, ctx);
+    }
+
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.arrow_function_converter.enter_static_block(block, ctx);
     }
@@ -102,5 +118,21 @@ impl<'a, 'ctx> Traverse<'a> for Common<'a, 'ctx> {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.arrow_function_converter.exit_expression(expr, ctx);
+    }
+
+    fn enter_binding_identifier(
+        &mut self,
+        node: &mut BindingIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.arrow_function_converter.enter_binding_identifier(node, ctx);
+    }
+
+    fn enter_identifier_reference(
+        &mut self,
+        node: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.arrow_function_converter.enter_identifier_reference(node, ctx);
     }
 }

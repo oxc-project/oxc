@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 1 argument
    ╭─[valid_expect.tsx:1:1]

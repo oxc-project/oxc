@@ -19,7 +19,7 @@ impl TestFiles {
         }
     }
 
-    /// These are kept in sync with <https://github.com/privatenumber/minification-benchmarks/tree/master>
+    /// These are kept in sync with <https://github.com/privatenumber/minification-benchmarks/tree/d8d54ceeb206d318fa288b152904adf715b076b2>
     /// for checking against minification size in `tasks/minsize/minsize.snap`.
     pub fn minifier() -> Self {
         Self {

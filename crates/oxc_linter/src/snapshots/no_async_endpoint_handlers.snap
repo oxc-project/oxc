@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ oxc(no-async-endpoint-handlers): Express endpoint handlers should not be async.
    ╭─[no_async_endpoint_handlers.tsx:1:14]

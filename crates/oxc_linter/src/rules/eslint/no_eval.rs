@@ -1,4 +1,4 @@
-// Ported from https://github.com/eslint/eslint/tree/main/lib/rules/no-eval.js
+// Ported from https://github.com/eslint/eslint/tree/v9.9.1/lib/rules/no-eval.js
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

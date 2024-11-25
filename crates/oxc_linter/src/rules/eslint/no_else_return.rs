@@ -183,7 +183,7 @@ fn is_safe_from_name_collisions(
 
     match stmt {
         Statement::BlockStatement(block) => {
-            let block_scope_id = block.scope_id.get().unwrap();
+            let block_scope_id = block.scope_id();
             let bindings = scopes.get_bindings(block_scope_id);
             let parent_bindings = scopes.get_bindings(parent_scope_id);
 

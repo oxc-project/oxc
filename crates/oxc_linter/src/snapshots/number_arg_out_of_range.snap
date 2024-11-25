@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ oxc(number-arg-out-of-range): Radix or precision arguments of number-related functions should not exceed the limit
    ╭─[number_arg_out_of_range.tsx:1:20]

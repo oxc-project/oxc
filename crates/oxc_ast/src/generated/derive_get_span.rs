@@ -34,6 +34,13 @@ impl<'a> GetSpan for NumericLiteral<'a> {
     }
 }
 
+impl<'a> GetSpan for StringLiteral<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl<'a> GetSpan for BigIntLiteral<'a> {
     #[inline]
     fn span(&self) -> Span {
@@ -42,13 +49,6 @@ impl<'a> GetSpan for BigIntLiteral<'a> {
 }
 
 impl<'a> GetSpan for RegExpLiteral<'a> {
-    #[inline]
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
-impl<'a> GetSpan for StringLiteral<'a> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -609,6 +609,7 @@ impl<'a> GetSpan for ChainElement<'a> {
     fn span(&self) -> Span {
         match self {
             Self::CallExpression(it) => GetSpan::span(it.as_ref()),
+            Self::TSNonNullExpression(it) => GetSpan::span(it.as_ref()),
             Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
             Self::StaticMemberExpression(it) => GetSpan::span(it.as_ref()),
             Self::PrivateFieldExpression(it) => GetSpan::span(it.as_ref()),

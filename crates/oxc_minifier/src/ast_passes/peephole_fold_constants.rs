@@ -14,7 +14,7 @@ use crate::{node_util::Ctx, CompressorPass};
 
 /// Constant Folding
 ///
-/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
+/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 pub struct PeepholeFoldConstants {
     changed: bool,
 }
@@ -156,9 +156,7 @@ impl<'a, 'b> PeepholeFoldConstants {
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
             let left = ctx.ast.move_expression(&mut logical_expr.left);
             let right = ctx.ast.move_expression(&mut logical_expr.right);
-            let mut vec = ctx.ast.vec_with_capacity(2);
-            vec.push(left);
-            vec.push(right);
+            let vec = ctx.ast.vec_from_array([left, right]);
             let sequence_expr = ctx.ast.expression_sequence(logical_expr.span, vec);
             return Some(sequence_expr);
         } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left {
@@ -201,7 +199,7 @@ impl<'a, 'b> PeepholeFoldConstants {
             ValueType::Null | ValueType::Undefined => {
                 Some(if left.may_have_side_effects() {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
-                    let expressions = ctx.ast.vec_from_iter([
+                    let expressions = ctx.ast.vec_from_array([
                         ctx.ast.move_expression(&mut logical_expr.left),
                         ctx.ast.move_expression(&mut logical_expr.right),
                     ]);
@@ -362,14 +360,14 @@ impl<'a, 'b> PeepholeFoldConstants {
                 }
             }
 
-            if matches!(left, ValueType::String | ValueType::Number)
+            if matches!(left, ValueType::String | ValueType::Number | ValueType::BigInt)
                 && matches!(right, ValueType::Object)
             {
                 return None;
             }
 
             if matches!(left, ValueType::Object)
-                && matches!(right, ValueType::String | ValueType::Number)
+                && matches!(right, ValueType::String | ValueType::Number | ValueType::BigInt)
             {
                 return None;
             }
@@ -449,7 +447,7 @@ impl<'a, 'b> PeepholeFoldConstants {
     }
 }
 
-/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeFoldConstantsTest.java>
+/// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeFoldConstantsTest.java>
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
@@ -874,6 +872,13 @@ mod test {
     }
 
     #[test]
+    fn test_object_bigint_comparison() {
+        test_same("{ valueOf: function() { return 0n; } } != 0n");
+        test_same("0n != { valueOf: function() { return 0n; } }");
+        test_same("0n != { toString: function() { return '0'; } }");
+    }
+
+    #[test]
     fn test_nan_comparison() {
         test("NaN < 1", "false");
         test("NaN <= 1", "false");
@@ -1151,7 +1156,7 @@ mod test {
         test("1 << -1", "1<<-1");
         test("1 >> 32", "1>>32");
 
-        // Regression on #6161, ported from <https://github.com/tc39/test262/blob/main/test/language/expressions/unsigned-right-shift/S9.6_A2.2.js>.
+        // Regression on #6161, ported from <https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/test/language/expressions/unsigned-right-shift/S9.6_A2.2.js>.
         test("-2147483647 >>> 0", "2147483649");
         test("-2147483648 >>> 0", "2147483648");
         test("-2147483649 >>> 0", "2147483647");

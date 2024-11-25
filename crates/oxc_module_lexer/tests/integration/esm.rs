@@ -1,4 +1,4 @@
-//! <https://github.com/guybedford/es-module-lexer/blob/main/test/_unit.cjs>
+//! <https://github.com/guybedford/es-module-lexer/blob/1.5.4/test/_unit.cjs>
 
 use oxc_allocator::Allocator;
 use oxc_module_lexer::ImportType;

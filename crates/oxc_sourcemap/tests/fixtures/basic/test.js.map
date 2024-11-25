@@ -1,0 +1,7 @@
+{
+  "version":3,
+  "sources":["shared.js","index.js"],
+  "sourcesContent":["const a = 'shared.js'\n\nexport { a }","import { a as a2 } from './shared'\nconst a = 'index.js'\nconsole.log(a, a2)\n"],
+  "names":["a","a$1"],
+  "mappings":";;AAAA,MAAMA,IAAI;;;ACCV,MAAMC,MAAI;AACV,QAAQ,IAAIA,KAAGD,EAAG"
+}

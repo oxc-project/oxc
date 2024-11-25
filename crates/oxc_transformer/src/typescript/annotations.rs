@@ -181,6 +181,21 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
         expr.type_parameters = None;
     }
 
+    fn enter_chain_element(&mut self, element: &mut ChainElement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let ChainElement::TSNonNullExpression(e) = element {
+            *element = match ctx.ast.move_expression(e.expression.get_inner_expression_mut()) {
+                Expression::CallExpression(call_expr) => ChainElement::CallExpression(call_expr),
+                expr @ match_member_expression!(Expression) => {
+                    ChainElement::from(expr.into_member_expression())
+                }
+                _ => {
+                    /* syntax error */
+                    return;
+                }
+            }
+        }
+    }
+
     fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
         class.type_parameters = None;
         class.super_type_parameters = None;

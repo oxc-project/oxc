@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-import(no-named-as-default-member): "baz" also has a named export "a"
    ╭─[index.js:1:46]

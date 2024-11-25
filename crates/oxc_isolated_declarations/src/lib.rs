@@ -3,7 +3,7 @@
 //! References:
 //! * <https://devblogs.microsoft.com/typescript/announcing-typescript-5-5-rc/#isolated-declarations>
 //! * <https://www.typescriptlang.org/tsconfig#isolatedDeclarations>
-//! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformers/declarations.ts>
+//! * <https://github.com/microsoft/TypeScript/blob/v5.6.3/src/compiler/transformers/declarations.ts>
 
 mod class;
 mod declaration;
@@ -21,7 +21,6 @@ mod types;
 
 use std::{cell::RefCell, mem};
 
-use diagnostics::function_with_assigning_properties;
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
 use oxc_diagnostics::OxcDiagnostic;
@@ -29,6 +28,7 @@ use oxc_span::{Atom, GetSpan, SourceType, SPAN};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::scope::ScopeTree;
+use diagnostics::function_with_assigning_properties;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct IsolatedDeclarationsOptions {

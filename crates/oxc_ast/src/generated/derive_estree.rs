@@ -31,6 +31,12 @@ impl<'a> Serialize for NumericLiteral<'a> {
     }
 }
 
+impl<'a> Serialize for StringLiteral<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
+    }
+}
+
 impl<'a> Serialize for BigIntLiteral<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         crate::serialize::ESTreeLiteral::from(self).serialize(serializer)
@@ -59,16 +65,6 @@ impl<'a> Serialize for RegExpPattern<'a> {
             RegExpPattern::Invalid(x) => Serialize::serialize(x, serializer),
             RegExpPattern::Pattern(x) => Serialize::serialize(x, serializer),
         }
-    }
-}
-
-impl<'a> Serialize for StringLiteral<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", "StringLiteral")?;
-        self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
-        map.serialize_entry("value", &self.value)?;
-        map.end()
     }
 }
 
@@ -842,6 +838,7 @@ impl<'a> Serialize for ChainElement<'a> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             ChainElement::CallExpression(x) => Serialize::serialize(x, serializer),
+            ChainElement::TSNonNullExpression(x) => Serialize::serialize(x, serializer),
             ChainElement::ComputedMemberExpression(x) => Serialize::serialize(x, serializer),
             ChainElement::StaticMemberExpression(x) => Serialize::serialize(x, serializer),
             ChainElement::PrivateFieldExpression(x) => Serialize::serialize(x, serializer),

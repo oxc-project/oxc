@@ -36,19 +36,15 @@
 //! Implementation based on [@babel/plugin-transform-class-static-block](https://babel.dev/docs/babel-plugin-transform-class-static-block).
 //!
 //! ## References:
-//! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-class-static-block>
+//! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-class-static-block>
 //! * Class static initialization blocks TC39 proposal: <https://github.com/tc39/proposal-class-static-block>
 
 use itoa::Buffer as ItoaBuffer;
 
 use oxc_allocator::String as ArenaString;
-use oxc_ast::{ast::*, Visit, NONE};
-use oxc_semantic::SymbolTable;
+use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
-use oxc_syntax::{
-    reference::ReferenceFlags,
-    scope::{ScopeFlags, ScopeId},
-};
+use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::{Traverse, TraverseCtx};
 
 pub struct ClassStaticBlock;
@@ -191,35 +187,7 @@ impl ClassStaticBlock {
         // Remove the scope for the static block from the scope chain
         ctx.remove_scope_for_expression(scope_id, &expr);
 
-        // If expression is an assignment, left side has moved from a write-only position to a read + write one.
-        // `static { x = 1; }` -> `static #_ = x = 1;`
-        // So set `ReferenceFlags::Read` on the left side.
-        if let Expression::AssignmentExpression(assign_expr) = &expr {
-            if assign_expr.operator == AssignmentOperator::Assign {
-                let mut setter = ReferenceFlagsSetter { symbols: ctx.symbols_mut() };
-                setter.visit_assignment_target(&assign_expr.left);
-            }
-        }
-
         expr
-    }
-}
-
-/// Visitor which sets `ReferenceFlags::Read` flag on all `IdentifierReference`s.
-/// It skips `MemberExpression`s, because their flags are not affected by the change in position.
-struct ReferenceFlagsSetter<'s> {
-    symbols: &'s mut SymbolTable,
-}
-
-impl<'a, 's> Visit<'a> for ReferenceFlagsSetter<'s> {
-    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        let reference_id = ident.reference_id();
-        let reference = self.symbols.get_reference_mut(reference_id);
-        *reference.flags_mut() |= ReferenceFlags::Read;
-    }
-
-    fn visit_member_expression(&mut self, _member_expr: &MemberExpression<'a>) {
-        // Don't traverse further
     }
 }
 

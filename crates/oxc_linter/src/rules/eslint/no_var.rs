@@ -17,9 +17,9 @@ fn no_var_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoVar;
 
-// doc: https://github.com/eslint/eslint/blob/main/docs/src/rules/no-var.md
-// code: https://github.com/eslint/eslint/blob/main/lib/rules/no-var.js
-// test: https://github.com/eslint/eslint/blob/main/tests/lib/rules/no-var.js
+// doc: https://github.com/eslint/eslint/blob/v9.9.1/docs/src/rules/no-var.md
+// code: https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/no-var.js
+// test: https://github.com/eslint/eslint/blob/v9.9.1/tests/lib/rules/no-var.js
 
 declare_oxc_lint!(
     /// ### What it does
@@ -71,7 +71,7 @@ fn is_written_to(binding_pat: &BindingPattern, ctx: &LintContext) -> bool {
     match &binding_pat.kind {
         BindingPatternKind::BindingIdentifier(binding_ident) => ctx
             .semantic()
-            .symbol_references(binding_ident.symbol_id.get().expect("symbol id should be set"))
+            .symbol_references(binding_ident.symbol_id())
             .any(oxc_semantic::Reference::is_write),
         BindingPatternKind::ObjectPattern(object_pat) => {
             if object_pat.properties.iter().any(|prop| is_written_to(&prop.value, ctx)) {

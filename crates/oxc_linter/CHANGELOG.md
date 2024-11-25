@@ -4,6 +4,93 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.1] - 2024-11-23
+
+- 6f0fe38 semantic: [**BREAKING**] Correct all `ReferenceFlags::Write` according to the spec (#7388) (Dunqing)
+
+### Features
+
+- 4ad26b9 linter: Add `no-promise-in-callback` (#7307) (no-yan)
+
+### Bug Fixes
+
+- 8507464 linter: Hanging when source has syntax/is flow (#7432) (Cameron)
+- e88cf1b linter: Make `overrides` globs relative to config path (#7407) (camchenry)
+- 9002e97 linter: Add proper support for findIndex and findLastIndex for `unicorn/prefer-array-some` (#7405) (Dmitry Zakharov)
+
+### Documentation
+
+- 6730e3e linter: Add more examples for `unicorn/prefer-array-some` (#7411) (Dmitry Zakharov)
+
+### Refactor
+
+- 6c0d31b linter: Remove useless `const` declaration (#7430) (Song Gao)
+- c8adc46 linter/no-unused-vars: Improve implementation to remove using SymbolFlags::Export (#7412) (Dunqing)
+- c90537f linter/only-used-in-recursion: Improve implementation to remove using SymbolFlags::Export (#7413) (Dunqing)
+
+## [0.13.0] - 2024-11-21
+
+- f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)
+
+- 878189c parser,linter: [**BREAKING**] Add `ParserReturn::is_flow_language`; linter ignore flow error (#7373) (Boshen)
+
+- 7bf970a linter: [**BREAKING**] Remove tree_shaking plugin (#7372) (Boshen)
+
+### Features
+
+- 7f8747d linter: Implement `react/no-array-index-key` (#6960) (BitterGourd)
+- be152c0 linter: Add `typescript/no-require-imports` rule (#7315) (Dmitry Zakharov)
+- 849489e linter: Add suggestion for no-console (#4312) (DonIsaac)
+- 8cebdc8 linter: Allow appending plugins in override (#7379) (camchenry)
+- 8cfea3c oxc_cfg: Add implicit return instruction (#5568) (IWANABETHATGUY)
+- e6922df parser: Fix incorrect AST for `x?.f<T>()` (#7387) (Boshen)
+
+### Bug Fixes
+
+- e91c287 linter: Fix panic in react/no-array-index-key (#7395) (Boshen)
+- a32f5a7 linter/no-array-index-key: Compile error due to it uses a renamed API (#7391) (Dunqing)
+- 666b6c1 parser: Add missing `ChainExpression` in optional `TSInstantiationExpression` (#7371) (Boshen)
+
+### Documentation
+
+- df143ca linter: Add docs for config settings (#4827) (DonIsaac)
+- ad44cfa linter: Import/first options (#7381) (Zak)
+
+### Refactor
+
+- c34d649 linter: Use `scope_id` etc methods (#7394) (overlookmotel)
+
+## [0.12.0] - 2024-11-20
+
+- 20d9080 linter: [**BREAKING**] Override plugins array when passed in config file (#7303) (camchenry)
+
+- 44375a5 ast: [**BREAKING**] Rename `TSEnumMemberName` enum variants (#7250) (overlookmotel)
+
+### Features
+
+- 1d9f528 linter: Implement `unicorn/prefer-string-raw` lint rule (#7335) (Ryan Walker)
+- d445e0f linter: Implement `unicorn/consistent-existence-index-check`  (#7262) (Ryan Walker)
+- 01ddf37 linter: Add `allowReject` option to `no-useless-promise-resolve-reject` (#7274) (no-yan)
+- 755a31b linter: Support bind function case for compatibility with `promise/no-return-wrap` (#7232) (no-yan)
+- 428770e linter: Add `import/no-namespace` rule (#7229) (Dmitry Zakharov)
+- 9c91151 linter: Implement typescript/no-empty-object-type (#6977) (Orenbek)
+- 2268a0e linter: Support `overrides` config field (#6974) (DonIsaac)
+- 3dcac1a linter: React/exhaustive-deps (#7151) (camc314)
+
+### Bug Fixes
+
+- bc0e72c linter: Handle user variables correctly for import/no_commonjs (#7316) (Dmitry Zakharov)
+- bf839c1 linter: False positive in `jest/expect-expect` (#7341) (dalaoshu)
+- ff2a1d4 linter: Move `exhaustive-deps` to `react` (#7251) (camc314)
+- df5c535 linter: Revert unmatched rule error (#7257) (Cameron A McHenry)
+- c4ed230 linter: Fix false positive in eslint/no-cond-assign (#7241) (camc314)
+- ef847da linter: False positive in `jsx-a11y/iframe-has-title` (#7253) (dalaoshu)
+- 62b6327 linter: React/exhaustive-deps update span for unknown deps diagnostic (#7249) (camc314)
+
+### Refactor
+
+- c6a4868 linter: Temporarily remove unknown rules checking (#7260) (camchenry)
+
 ## [0.11.1] - 2024-11-09
 
 - 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)

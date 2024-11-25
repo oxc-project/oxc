@@ -10,7 +10,6 @@ use oxc_ast::{
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_commonjs_diagnostic(span: Span, name: &str, actual: &str) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(format!("Expected {name} instead of {actual}"))
         .with_help("Do not use CommonJS `require` calls and `module.exports` or `exports.*`")
         .with_label(span)
@@ -128,7 +127,7 @@ fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
         is_conditional(parent, ctx)
     }
 }
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-commonjs.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-commonjs.md>
 impl Rule for NoCommonjs {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
@@ -211,6 +210,10 @@ impl Rule for NoCommonjs {
                 }
 
                 if !call_expr.is_require_call() {
+                    return;
+                }
+
+                if ctx.scopes().find_binding(ctx.scopes().root_scope_id(), "require").is_some() {
                     return;
                 }
 
@@ -299,6 +302,15 @@ fn test() {
             Some(json!([{ "allowRequire": false }])),
         ),
         (r#"try { require("x") } catch (error) {}"#, None),
+        // covers user variables
+        (
+            "
+            import { createRequire } from 'module';
+            const require = createRequire();
+            require('remark-preset-prettier');
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![

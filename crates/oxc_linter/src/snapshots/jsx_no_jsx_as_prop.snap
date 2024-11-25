@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-react-perf(jsx-no-jsx-as-prop): JSX attribute values should not contain other JSX.
    ╭─[jsx_no_jsx_as_prop.tsx:1:31]

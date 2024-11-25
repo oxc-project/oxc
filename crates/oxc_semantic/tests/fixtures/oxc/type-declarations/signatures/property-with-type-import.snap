@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/oxc/type-declarations/signatures/property-with-type-import.ts
-snapshot_kind: text
 ---
 [
   {
@@ -73,7 +72,7 @@ snapshot_kind: text
         ]
       },
       {
-        "flags": "SymbolFlags(Export | Interface)",
+        "flags": "SymbolFlags(Interface)",
         "id": 2,
         "name": "A",
         "node": "TSInterfaceDeclaration",

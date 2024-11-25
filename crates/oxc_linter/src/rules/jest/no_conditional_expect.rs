@@ -51,7 +51,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-expect.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-conditional-expect.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json
@@ -145,9 +145,7 @@ fn check_parents<'a>(
                 return InConditional(false);
             };
             let symbol_table = ctx.semantic().symbols();
-            let Some(symbol_id) = ident.symbol_id.get() else {
-                return InConditional(false);
-            };
+            let symbol_id = ident.symbol_id();
 
             // Consider cases like:
             // ```javascript

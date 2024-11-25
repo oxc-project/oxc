@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::default_true;
 
-// <https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md>
+// <https://github.com/gajus/eslint-plugin-jsdoc/blob/v50.5.0/docs/settings.md>
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct JSDocPluginSettings {
@@ -123,7 +123,7 @@ impl JSDocPluginSettings {
                 Some(Cow::Borrowed(message))
             }
             _ => {
-                // https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#default-preferred-aliases
+                // https://github.com/gajus/eslint-plugin-jsdoc/blob/v50.5.0/docs/settings.md#default-preferred-aliases
                 let aliased_name = match original_name {
                     "virtual" => "abstract",
                     "extends" => "augments",

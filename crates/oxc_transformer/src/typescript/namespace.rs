@@ -491,12 +491,10 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
             assignments.push(Self::create_assignment_statement(name.clone(), id.name.clone(), ctx));
         });
 
-        let mut stmts = ctx.ast.vec_with_capacity(2);
-        stmts.push(Statement::VariableDeclaration(var_decl));
-        stmts.push(
+        ctx.ast.vec_from_array([
+            Statement::VariableDeclaration(var_decl),
             ctx.ast.statement_expression(SPAN, ctx.ast.expression_sequence(SPAN, assignments)),
-        );
-        stmts
+        ])
     }
 }
 

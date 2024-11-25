@@ -57,9 +57,6 @@ const REACT_PERF_TEST_PATH: &str =
 const NODE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint-community/eslint-plugin-n/master/tests/lib/rules";
 
-const TREE_SHAKING_PATH: &str =
-    "https://raw.githubusercontent.com/lukastaegert/eslint-plugin-tree-shaking/master/src/rules";
-
 const PROMISE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint-community/eslint-plugin-promise/main/__tests__";
 
@@ -598,7 +595,6 @@ pub enum RuleKind {
     NextJS,
     JSDoc,
     Node,
-    TreeShaking,
     Promise,
     Vitest,
     Security,
@@ -618,7 +614,6 @@ impl RuleKind {
             "nextjs" => Self::NextJS,
             "jsdoc" => Self::JSDoc,
             "n" => Self::Node,
-            "tree-shaking" => Self::TreeShaking,
             "promise" => Self::Promise,
             "vitest" => Self::Vitest,
             "security" => Self::Security,
@@ -642,7 +637,6 @@ impl Display for RuleKind {
             Self::NextJS => write!(f, "eslint-plugin-next"),
             Self::JSDoc => write!(f, "eslint-plugin-jsdoc"),
             Self::Node => write!(f, "eslint-plugin-n"),
-            Self::TreeShaking => write!(f, "eslint-plugin-tree-shaking"),
             Self::Promise => write!(f, "eslint-plugin-promise"),
             Self::Vitest => write!(f, "eslint-plugin-vitest"),
             Self::Security => write!(f, "security"),
@@ -672,7 +666,6 @@ fn main() {
         RuleKind::NextJS => format!("{NEXT_JS_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{camel_rule_name}.js"),
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
-        RuleKind::TreeShaking => format!("{TREE_SHAKING_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Oxc | RuleKind::Security => String::new(),
@@ -680,7 +673,7 @@ fn main() {
     let language = match rule_kind {
         RuleKind::Typescript | RuleKind::Oxc => "ts",
         RuleKind::NextJS => "tsx",
-        RuleKind::React | RuleKind::ReactPerf | RuleKind::JSXA11y | RuleKind::TreeShaking => "jsx",
+        RuleKind::React | RuleKind::ReactPerf | RuleKind::JSXA11y => "jsx",
         _ => "js",
     };
 
@@ -795,7 +788,6 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
         RuleKind::JSXA11y => "jsx_a11y",
         RuleKind::Oxc => "oxc",
         RuleKind::NextJS => "nextjs",
-        RuleKind::TreeShaking => "tree_shaking",
         RuleKind::Promise => "promise",
         RuleKind::Vitest => "vitest",
         RuleKind::Node => "node",

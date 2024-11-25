@@ -13,9 +13,10 @@ fn es_target() {
         ("es2015", "a ** b"),
         ("es2016", "async function foo() {}"),
         ("es2017", "({ ...x })"),
-        ("es2017", "try {} catch {}"),
+        ("es2018", "try {} catch {}"),
+        ("es2019", "a?.b"),
         ("es2019", "a ?? b"),
-        ("es2019", "a ||= b"),
+        ("es2020", "a ||= b"),
         ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
     ];
@@ -56,7 +57,7 @@ fn target_list_pass() {
     let result = TransformOptions::from_target(target).unwrap();
     assert!(!result.env.es2019.optional_catch_binding);
     assert!(!result.env.es2020.nullish_coalescing_operator);
-    assert!(!result.env.es2021.logical_assignment_operators);
+    assert!(result.env.es2021.logical_assignment_operators);
     assert!(result.env.es2022.class_static_block);
 }
 

@@ -1,4 +1,4 @@
-// https://github.com/Kilian/electron-to-chromium/blob/master/chromium-versions.js
+// https://github.com/Kilian/electron-to-chromium/blob/v1.5.60/chromium-versions.js
 
 module.exports = {
   '39': '0.20',

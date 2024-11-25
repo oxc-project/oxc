@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-react(no-unescaped-entities): `>` can be escaped with &gt;
    ╭─[no_unescaped_entities.tsx:3:24]

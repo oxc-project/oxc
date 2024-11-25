@@ -47,7 +47,7 @@ impl Deref for ConsistentTypeImports {
     }
 }
 
-/// <https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
+/// <https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/docs/rules/consistent-type-imports.mdx>
 #[derive(Default, Debug, Clone)]
 pub struct ConsistentTypeImportsConfig {
     disallow_type_annotations: DisallowTypeAnnotations,
@@ -203,9 +203,7 @@ impl Rule for ConsistentTypeImports {
 
         if let Some(specifiers) = &import_decl.specifiers {
             for specifier in specifiers {
-                let Some(symbol_id) = specifier.local().symbol_id.get() else {
-                    continue;
-                };
+                let symbol_id = specifier.local().symbol_id();
                 let no_type_qualifier = match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                         specifier.import_kind.is_value()

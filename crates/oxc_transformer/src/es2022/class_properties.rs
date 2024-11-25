@@ -57,9 +57,9 @@
 //!
 //! ## References:
 //! * Babel plugin implementation:
-//!   * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-class-properties>
-//!   * <https://github.com/babel/babel/blob/main/packages/babel-helper-create-class-features-plugin/src/index.ts>
-//!   * <https://github.com/babel/babel/blob/main/packages/babel-helper-create-class-features-plugin/src/fields.ts>
+//!   * <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-class-properties>
+//!   * <https://github.com/babel/babel/blob/v7.26.2/packages/babel-helper-create-class-features-plugin/src/index.ts>
+//!   * <https://github.com/babel/babel/blob/v7.26.2/packages/babel-helper-create-class-features-plugin/src/fields.ts>
 //! * Class properties TC39 proposal: <https://github.com/tc39/proposal-class-fields>
 
 use serde::Deserialize;

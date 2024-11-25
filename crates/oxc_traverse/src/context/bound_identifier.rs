@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
         AssignmentTarget, BindingIdentifier, BindingPattern, BindingPatternKind, Expression,
-        IdentifierReference,
+        IdentifierReference, SimpleAssignmentTarget,
     },
     NONE,
 };
@@ -9,6 +9,8 @@ use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 
 use crate::TraverseCtx;
+
+use super::MaybeBoundIdentifier;
 
 /// Info about a binding, from which one can create a `BindingIdentifier` or `IdentifierReference`s.
 ///
@@ -52,6 +54,11 @@ impl<'a> BoundIdentifier<'a> {
     /// Create `BoundIdentifier` from a `BindingIdentifier`
     pub fn from_binding_ident(ident: &BindingIdentifier<'a>) -> Self {
         Self { name: ident.name.clone(), symbol_id: ident.symbol_id() }
+    }
+
+    /// Convert `BoundIdentifier` to `MaybeBoundIdentifier`
+    pub fn to_maybe_bound_identifier(&self) -> MaybeBoundIdentifier<'a> {
+        MaybeBoundIdentifier::new(self.name.clone(), Some(self.symbol_id))
     }
 
     /// Create `BindingIdentifier` for this binding
@@ -113,6 +120,14 @@ impl<'a> BoundIdentifier<'a> {
         self.create_spanned_write_target(SPAN, ctx)
     }
 
+    /// Create `SimpleAssignmentTarget` referencing this binding, which is written to, with dummy `Span`
+    pub fn create_write_simple_target(
+        &self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        self.create_spanned_write_simple_target(SPAN, ctx)
+    }
+
     /// Create `IdentifierReference` referencing this binding, which is written to, with specified `Span`
     pub fn create_spanned_write_reference(
         &self,
@@ -140,6 +155,15 @@ impl<'a> BoundIdentifier<'a> {
         self.create_spanned_target(span, ReferenceFlags::Write, ctx)
     }
 
+    /// Create `SimpleAssignmentTarget` referencing this binding, which is written to, with specified `Span`
+    pub fn create_spanned_write_simple_target(
+        &self,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        self.create_spanned_simple_target(span, ReferenceFlags::Write, ctx)
+    }
+
     // --- Read and write ---
 
     /// Create `IdentifierReference` referencing this binding, which is read from + written to,
@@ -161,6 +185,15 @@ impl<'a> BoundIdentifier<'a> {
     /// with dummy `Span`
     pub fn create_read_write_target(&self, ctx: &mut TraverseCtx<'a>) -> AssignmentTarget<'a> {
         self.create_spanned_read_write_target(SPAN, ctx)
+    }
+
+    /// Create `SimpleAssignmentTarget` referencing this binding, which is read from + written to,
+    /// with dummy `Span`
+    pub fn create_read_write_simple_target(
+        &self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        self.create_spanned_read_write_simple_target(SPAN, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding, which is read from + written to,
@@ -193,6 +226,16 @@ impl<'a> BoundIdentifier<'a> {
         self.create_spanned_target(span, ReferenceFlags::Read | ReferenceFlags::Write, ctx)
     }
 
+    /// Create `SimpleAssignmentTarget` referencing this binding, which is read from + written to,
+    /// with specified `Span`
+    pub fn create_spanned_read_write_simple_target(
+        &self,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        self.create_spanned_simple_target(span, ReferenceFlags::Read | ReferenceFlags::Write, ctx)
+    }
+
     // --- Specified ReferenceFlags ---
 
     /// Create `IdentifierReference` referencing this binding, with specified `ReferenceFlags`
@@ -222,6 +265,15 @@ impl<'a> BoundIdentifier<'a> {
         self.create_spanned_target(SPAN, flags, ctx)
     }
 
+    /// Create `SimpleAssignmentTarget` referencing this binding, with specified `ReferenceFlags`
+    pub fn create_simple_target(
+        &self,
+        flags: ReferenceFlags,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        self.create_spanned_simple_target(SPAN, flags, ctx)
+    }
+
     /// Create `IdentifierReference` referencing this binding, with specified `Span` and `ReferenceFlags`
     pub fn create_spanned_reference(
         &self,
@@ -229,7 +281,7 @@ impl<'a> BoundIdentifier<'a> {
         flags: ReferenceFlags,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        ctx.create_bound_reference_id(span, self.name.clone(), self.symbol_id, flags)
+        ctx.create_bound_ident_reference(span, self.name.clone(), self.symbol_id, flags)
     }
 
     /// Create `Expression::Identifier` referencing this binding, with specified `Span` and `ReferenceFlags`
@@ -243,7 +295,8 @@ impl<'a> BoundIdentifier<'a> {
         Expression::Identifier(ctx.alloc(ident))
     }
 
-    /// Create `Expression::Identifier` referencing this binding, with specified `Span` and `ReferenceFlags`
+    /// Create `AssignmentTarget::AssignmentTargetIdentifier` referencing this binding,
+    /// with specified `Span` and `ReferenceFlags`
     pub fn create_spanned_target(
         &self,
         span: Span,
@@ -252,5 +305,17 @@ impl<'a> BoundIdentifier<'a> {
     ) -> AssignmentTarget<'a> {
         let ident = self.create_spanned_reference(span, flags, ctx);
         AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident))
+    }
+
+    /// Create `SimpleAssignmentTarget::AssignmentTargetIdentifier` referencing this binding,
+    /// with specified `Span` and `ReferenceFlags`
+    pub fn create_spanned_simple_target(
+        &self,
+        span: Span,
+        flags: ReferenceFlags,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        let ident = self.create_spanned_reference(span, flags, ctx);
+        SimpleAssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident))
     }
 }

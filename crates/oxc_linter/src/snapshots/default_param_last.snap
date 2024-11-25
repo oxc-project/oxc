@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(default-param-last): Default parameters should be last
    ╭─[default_param_last.tsx:1:12]

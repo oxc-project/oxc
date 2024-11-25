@@ -39,7 +39,7 @@ impl<'a> Codegen<'a> {
 
     /// `#__PURE__` Notation Specification
     ///
-    /// <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/pure-notation-spec.md>
+    /// <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/c14f7e197cb225c9eee877143536665ce3150712/pure-notation-spec.md>
     fn is_annotation_comment(&self, comment: &Comment) -> bool {
         let s = comment.content_span().source_text(self.source_text).trim_start();
         if let Some(s) = s.strip_prefix(['@', '#']) {

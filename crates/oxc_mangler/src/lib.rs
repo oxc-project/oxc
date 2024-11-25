@@ -14,7 +14,7 @@ pub struct MangleOptions {
 /// # Name Mangler / Symbol Minification
 ///
 /// See:
-///   * [esbuild](https://github.com/evanw/esbuild/blob/main/docs/architecture.md#symbol-minification)
+///   * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/docs/architecture.md#symbol-minification)
 ///
 /// This algorithm is targeted for better gzip compression.
 ///

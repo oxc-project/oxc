@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_allocator::{Box, CloneIn};
 use oxc_ast::{ast::*, NONE};
 use oxc_span::{Span, SPAN};
 
@@ -28,15 +28,12 @@ impl<'a> IsolatedDeclarations<'a> {
             Some(self.ast.alloc_function(
                 func.r#type,
                 func.span,
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&func.id) },
+                func.id.clone_in(self.ast.allocator),
                 false,
                 false,
                 declare.unwrap_or_else(|| self.is_declare()),
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&func.type_parameters) },
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&func.this_param) },
+                func.type_parameters.clone_in(self.ast.allocator),
+                func.this_param.clone_in(self.ast.allocator),
                 params,
                 return_type,
                 NONE,
@@ -62,11 +59,9 @@ impl<'a> IsolatedDeclarations<'a> {
         let is_assignment_pattern = pattern.kind.is_assignment_pattern();
         let mut pattern =
             if let BindingPatternKind::AssignmentPattern(pattern) = &param.pattern.kind {
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&pattern.left) }
+                pattern.left.clone_in(self.ast.allocator)
             } else {
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&param.pattern) }
+                param.pattern.clone_in(self.ast.allocator)
             };
 
         FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern.kind);
@@ -75,10 +70,7 @@ impl<'a> IsolatedDeclarations<'a> {
             let type_annotation = pattern
                 .type_annotation
                 .as_ref()
-                .map(|type_annotation| {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    unsafe { self.ast.copy(&type_annotation.type_annotation) }
-                })
+                .map(|type_annotation| type_annotation.type_annotation.clone_in(self.ast.allocator))
                 .or_else(|| {
                     // report error for has no type annotation
                     let new_type = self.infer_type_from_formal_parameter(param);
@@ -99,7 +91,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 SPAN,
                                 self.ast.ts_type_union_type(
                                     SPAN,
-                                    self.ast.vec_from_iter([
+                                    self.ast.vec_from_array([
                                         ts_type,
                                         self.ast.ts_type_undefined_keyword(SPAN),
                                     ]),
@@ -112,8 +104,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 });
 
             pattern = self.ast.binding_pattern(
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&pattern.kind) },
+                pattern.kind.clone_in(self.ast.allocator),
                 type_annotation,
                 // if it's assignment pattern, it's optional
                 pattern.optional || (!is_remaining_params_have_required && is_assignment_pattern),
@@ -128,8 +119,7 @@ impl<'a> IsolatedDeclarations<'a> {
         params: &FormalParameters<'a>,
     ) -> Box<'a, FormalParameters<'a>> {
         if params.kind.is_signature() || (params.rest.is_none() && params.items.is_empty()) {
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            return self.ast.alloc(unsafe { self.ast.copy(params) });
+            return self.ast.alloc(params.clone_in(self.ast.allocator));
         }
 
         let items =
@@ -151,8 +141,7 @@ impl<'a> IsolatedDeclarations<'a> {
             params.span,
             FormalParameterKind::Signature,
             items,
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&params.rest) },
+            params.rest.clone_in(self.ast.allocator),
         )
     }
 }

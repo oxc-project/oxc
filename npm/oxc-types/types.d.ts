@@ -19,6 +19,12 @@ export interface NumericLiteral extends Span {
   raw: string;
 }
 
+export interface StringLiteral extends Span {
+  type: 'Literal';
+  value: string;
+  raw?: undefined;
+}
+
 export interface BigIntLiteral extends Span {
   type: 'Literal';
   raw: string;
@@ -39,11 +45,6 @@ export interface RegExp {
 }
 
 export type RegExpPattern = string | string | Pattern;
-
-export interface StringLiteral extends Span {
-  type: 'StringLiteral';
-  value: string;
-}
 
 export interface Program extends Span {
   type: 'Program';
@@ -451,7 +452,12 @@ export interface ChainExpression extends Span {
   expression: ChainElement;
 }
 
-export type ChainElement = CallExpression | ComputedMemberExpression | StaticMemberExpression | PrivateFieldExpression;
+export type ChainElement =
+  | CallExpression
+  | TSNonNullExpression
+  | ComputedMemberExpression
+  | StaticMemberExpression
+  | PrivateFieldExpression;
 
 export interface ParenthesizedExpression extends Span {
   type: 'ParenthesizedExpression';
@@ -1713,16 +1719,16 @@ export type AssignmentOperator =
   | '*='
   | '/='
   | '%='
+  | '**='
   | '<<='
   | '>>='
   | '>>>='
   | '|='
   | '^='
   | '&='
-  | '&&='
   | '||='
-  | '??='
-  | '**=';
+  | '&&='
+  | '??=';
 
 export type BinaryOperator =
   | '=='
@@ -1733,24 +1739,24 @@ export type BinaryOperator =
   | '<='
   | '>'
   | '>='
-  | '<<'
-  | '>>'
-  | '>>>'
   | '+'
   | '-'
   | '*'
   | '/'
   | '%'
+  | '**'
+  | '<<'
+  | '>>'
+  | '>>>'
   | '|'
   | '^'
   | '&'
   | 'in'
-  | 'instanceof'
-  | '**';
+  | 'instanceof';
 
 export type LogicalOperator = '||' | '&&' | '??';
 
-export type UnaryOperator = '-' | '+' | '!' | '~' | 'typeof' | 'void' | 'delete';
+export type UnaryOperator = '+' | '-' | '!' | '~' | 'typeof' | 'void' | 'delete';
 
 export type UpdateOperator = '++' | '--';
 

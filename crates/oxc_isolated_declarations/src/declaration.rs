@@ -1,8 +1,6 @@
 use std::cell::Cell;
 
-use oxc_allocator::Box;
-use oxc_allocator::CloneIn;
-use oxc_allocator::Vec;
+use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast::visit::walk_mut::walk_ts_signatures;
 use oxc_ast::{Visit, VisitMut};
@@ -41,12 +39,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &VariableDeclaration<'a>,
         declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
     ) -> Box<'a, VariableDeclaration<'a>> {
-        self.ast.alloc_variable_declaration(
-            decl.span,
-            decl.kind,
-            self.ast.vec_from_iter(declarations),
-            self.is_declare(),
-        )
+        self.ast.alloc_variable_declaration(decl.span, decl.kind, declarations, self.is_declare())
     }
 
     pub(crate) fn transform_variable_declarator(
@@ -81,8 +74,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         init =
                             self.transform_template_to_string(lit).map(Expression::StringLiteral);
                     } else {
-                        // SAFETY: `ast.copy` is unsound! We need to fix.
-                        init = Some(unsafe { self.ast.copy(init_expr) });
+                        init = Some(init_expr.clone_in(self.ast.allocator));
                     }
                 } else if !decl.kind.is_const()
                     || !matches!(init_expr, Expression::TemplateLiteral(_))
@@ -99,14 +91,10 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
         let id = binding_type.map_or_else(
-            || {
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&decl.id) }
-            },
+            || decl.id.clone_in(self.ast.allocator),
             |ts_type| {
                 self.ast.binding_pattern(
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    unsafe { self.ast.copy(&decl.id.kind) },
+                    decl.id.kind.clone_in(self.ast.allocator),
                     Some(self.ast.ts_type_annotation(SPAN, ts_type)),
                     decl.id.optional,
                 )
@@ -133,13 +121,11 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &Box<'a, TSModuleDeclaration<'a>>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         if decl.declare {
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            return unsafe { self.ast.copy(decl) };
+            return decl.clone_in(self.ast.allocator);
         }
 
         let Some(body) = &decl.body else {
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            return unsafe { self.ast.copy(decl) };
+            return decl.clone_in(self.ast.allocator);
         };
 
         match body {
@@ -147,8 +133,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 let inner = self.transform_ts_module_declaration(decl);
                 self.ast.alloc_ts_module_declaration(
                     decl.span,
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    unsafe { self.ast.copy(&decl.id) },
+                    decl.id.clone_in(self.ast.allocator),
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
                     decl.kind,
                     self.is_declare(),
@@ -158,8 +143,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 let body = self.transform_ts_module_block(block);
                 self.ast.alloc_ts_module_declaration(
                     decl.span,
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    unsafe { self.ast.copy(&decl.id) },
+                    decl.id.clone_in(self.ast.allocator),
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),
                     decl.kind,
                     self.is_declare(),
@@ -237,8 +221,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Declaration::TSImportEqualsDeclaration(decl) => {
                 if !check_binding || self.scope.has_reference(&decl.id.name) {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    Some(Declaration::TSImportEqualsDeclaration(unsafe { self.ast.copy(decl) }))
+                    Some(Declaration::TSImportEqualsDeclaration(decl.clone_in(self.ast.allocator)))
                 } else {
                     None
                 }
