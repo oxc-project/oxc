@@ -99,6 +99,24 @@ impl LanguageServer for Backend {
             info!("language server version: {:?}", env!("CARGO_PKG_VERSION"));
             *self.options.lock().await = value;
         }
+
+        // check if the client support some code action literal support
+        let code_action_provider = if params.capabilities.text_document.is_some_and(|capability| {
+            capability.code_action.is_some_and(|code_action| {
+                code_action.code_action_literal_support.is_some_and(|literal_support| {
+                    !literal_support.code_action_kind.value_set.is_empty()
+                })
+            })
+        }) {
+            Some(CodeActionProviderCapability::Options(CodeActionOptions {
+                code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
+                work_done_progress_options: WorkDoneProgressOptions { work_done_progress: None },
+                resolve_provider: None,
+            }))
+        } else {
+            None
+        };
+
         self.init_linter_config().await;
         Ok(InitializeResult {
             server_info: Some(ServerInfo { name: "oxc".into(), version: None }),
@@ -114,15 +132,7 @@ impl LanguageServer for Backend {
                     }),
                     file_operations: None,
                 }),
-                code_action_provider: Some(CodeActionProviderCapability::Options(
-                    CodeActionOptions {
-                        code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
-                        work_done_progress_options: WorkDoneProgressOptions {
-                            work_done_progress: None,
-                        },
-                        resolve_provider: None,
-                    },
-                )),
+                code_action_provider,
                 ..ServerCapabilities::default()
             },
         })
