@@ -18,6 +18,15 @@ impl Derive for DeriveGetSpan {
         "GetSpan"
     }
 
+    fn prelude() -> TokenStream {
+        quote! {
+            #![allow(clippy::match_same_arms)]
+
+            ///@@line_break
+            use oxc_span::{Span, GetSpan};
+        }
+    }
+
     fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
         let self_type = quote!(&self);
         let result_type = quote!(Span);
@@ -36,15 +45,6 @@ impl Derive for DeriveGetSpan {
             reference,
         )
     }
-
-    fn prelude() -> TokenStream {
-        quote! {
-            #![allow(clippy::match_same_arms)]
-
-            ///@@line_break
-            use oxc_span::{Span, GetSpan};
-        }
-    }
 }
 
 pub struct DeriveGetSpanMut;
@@ -54,6 +54,15 @@ define_derive!(DeriveGetSpanMut);
 impl Derive for DeriveGetSpanMut {
     fn trait_name() -> &'static str {
         "GetSpanMut"
+    }
+
+    fn prelude() -> TokenStream {
+        quote! {
+            #![allow(clippy::match_same_arms)]
+
+            ///@@line_break
+            use oxc_span::{Span, GetSpanMut};
+        }
     }
 
     fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
@@ -73,15 +82,6 @@ impl Derive for DeriveGetSpanMut {
             unbox,
             reference,
         )
-    }
-
-    fn prelude() -> TokenStream {
-        quote! {
-            #![allow(clippy::match_same_arms)]
-
-            ///@@line_break
-            use oxc_span::{Span, GetSpanMut};
-        }
     }
 }
 

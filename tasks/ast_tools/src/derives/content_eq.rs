@@ -27,15 +27,6 @@ impl Derive for DeriveContentEq {
         "ContentEq"
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
-        let (other, body) = match &def {
-            TypeDef::Enum(it) => derive_enum(it),
-            TypeDef::Struct(it) => derive_struct(it),
-        };
-
-        impl_content_eq(def, other, &body)
-    }
-
     fn prelude() -> TokenStream {
         quote! {
             // NOTE: writing long match expressions formats better than using `matches` macro.
@@ -44,6 +35,15 @@ impl Derive for DeriveContentEq {
             ///@@line_break
             use oxc_span::cmp::ContentEq;
         }
+    }
+
+    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
+        let (other, body) = match &def {
+            TypeDef::Enum(it) => derive_enum(it),
+            TypeDef::Struct(it) => derive_struct(it),
+        };
+
+        impl_content_eq(def, other, &body)
     }
 }
 

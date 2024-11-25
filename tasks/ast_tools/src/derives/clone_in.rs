@@ -19,19 +19,19 @@ impl Derive for DeriveCloneIn {
         "CloneIn"
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
-        match &def {
-            TypeDef::Enum(it) => derive_enum(it),
-            TypeDef::Struct(it) => derive_struct(it),
-        }
-    }
-
     fn prelude() -> TokenStream {
         quote! {
             #![allow(clippy::default_trait_access)]
 
             ///@@line_break
             use oxc_allocator::{Allocator, CloneIn};
+        }
+    }
+
+    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
+        match &def {
+            TypeDef::Enum(it) => derive_enum(it),
+            TypeDef::Struct(it) => derive_struct(it),
         }
     }
 }

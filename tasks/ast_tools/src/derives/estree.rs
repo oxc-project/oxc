@@ -26,6 +26,15 @@ impl Derive for DeriveESTree {
         "estree".to_string()
     }
 
+    fn prelude() -> TokenStream {
+        quote! {
+            #![allow(unused_imports, unused_mut, clippy::match_same_arms)]
+
+            ///@@line_break
+            use serde::{Serialize, Serializer, ser::SerializeMap};
+        }
+    }
+
     fn derive(&mut self, def: &TypeDef, schema: &Schema) -> TokenStream {
         if let TypeDef::Struct(def) = def {
             if def
@@ -52,15 +61,6 @@ impl Derive for DeriveESTree {
                     #body
                 }
             }
-        }
-    }
-
-    fn prelude() -> TokenStream {
-        quote! {
-            #![allow(unused_imports, unused_mut, clippy::match_same_arms)]
-
-            ///@@line_break
-            use serde::{Serialize, Serializer, ser::SerializeMap};
         }
     }
 }

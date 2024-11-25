@@ -25,15 +25,6 @@ impl Derive for DeriveContentHash {
         "ContentHash"
     }
 
-    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
-        let (hasher, body) = match &def {
-            TypeDef::Enum(it) => derive_enum(it),
-            TypeDef::Struct(it) => derive_struct(it),
-        };
-
-        impl_content_hash(def, hasher, &body)
-    }
-
     fn prelude() -> TokenStream {
         quote! {
             #![allow(clippy::match_same_arms)]
@@ -44,6 +35,15 @@ impl Derive for DeriveContentHash {
             ///@@line_break
             use oxc_span::hash::ContentHash;
         }
+    }
+
+    fn derive(&mut self, def: &TypeDef, _: &Schema) -> TokenStream {
+        let (hasher, body) = match &def {
+            TypeDef::Enum(it) => derive_enum(it),
+            TypeDef::Struct(it) => derive_struct(it),
+        };
+
+        impl_content_hash(def, hasher, &body)
     }
 }
 

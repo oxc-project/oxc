@@ -32,11 +32,11 @@ pub trait Derive {
         Self::trait_name().to_case(Case::Snake)
     }
 
-    fn derive(&mut self, def: &TypeDef, schema: &Schema) -> TokenStream;
-
     fn prelude() -> TokenStream {
         TokenStream::default()
     }
+
+    fn derive(&mut self, def: &TypeDef, schema: &Schema) -> TokenStream;
 
     // Standard methods
 
