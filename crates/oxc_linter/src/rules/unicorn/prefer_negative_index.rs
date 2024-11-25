@@ -12,7 +12,6 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, fixer::Fix, rule::Rule, utils::is_same_reference, AstNode};
 
 fn prefer_negative_index_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Prefer negative index over .length - index when possible").with_label(span)
 }
 
@@ -65,123 +64,116 @@ impl Rule for PreferNegativeIndex {
 
         let callee_object_expr = call_expr.callee.to_member_expression().object();
 
-        if let Some(name) = call_expr.callee_name() {
-            let is_prototype_call = name == "call";
-            let is_prototype_apply = name == "apply";
-            let is_prototype = callee_object_expr.is_member_expression()
-                && (is_prototype_call || is_prototype_apply);
+        let Some(name) = call_expr.callee_name() else { return };
+        let is_prototype_call = name == "call";
+        let is_prototype_apply = name == "apply";
+        let is_prototype =
+            callee_object_expr.is_member_expression() && (is_prototype_call || is_prototype_apply);
 
-            let Some(callee_name) = (if is_prototype {
-                callee_object_expr.to_member_expression().static_property_name()
-            } else {
-                Some(name)
-            }) else {
-                return;
-            };
+        let Some(callee_name) = (if is_prototype {
+            callee_object_expr.to_member_expression().static_property_name()
+        } else {
+            Some(name)
+        }) else {
+            return;
+        };
 
-            let callee_type = if is_prototype {
-                get_prototype_callee_type(callee_object_expr.to_member_expression().object())
-            } else {
-                TypeOptions::Literal
-            };
+        let callee_type = if is_prototype {
+            get_prototype_callee_type(callee_object_expr.to_member_expression().object())
+        } else {
+            TypeOptions::Literal
+        };
 
-            let Some(identifier_expr) = (match (callee_type, callee_name) {
-                (TypeOptions::String, "slice" | "at")
-                | (TypeOptions::TypedArray, "slice" | "at" | "with" | "subarray")
-                | (TypeOptions::Array, "slice" | "at" | "splice" | "with" | "toSpliced")
-                | (
-                    TypeOptions::Literal,
-                    "slice" | "at" | "splice" | "subarray" | "with" | "toSpliced",
-                ) => {
-                    if is_prototype {
+        let identifier_expr = match (callee_type, callee_name) {
+            (TypeOptions::String, "slice" | "at")
+            | (TypeOptions::TypedArray, "slice" | "at" | "with" | "subarray")
+            | (TypeOptions::Array, "slice" | "at" | "splice" | "with" | "toSpliced")
+            | (
+                TypeOptions::Literal,
+                "slice" | "at" | "splice" | "subarray" | "with" | "toSpliced",
+            ) => {
+                if is_prototype {
+                    let Some(first_arg) =
                         call_expr.arguments.first().and_then(Argument::as_expression)
+                    else {
+                        return;
+                    };
+                    first_arg
+                } else {
+                    callee_object_expr
+                }
+            }
+            _ => return,
+        };
+
+        let mut member_exprs: Vec<&StaticMemberExpression> = Vec::new();
+        let range_increment = if matches!(callee_name, "slice" | "subarray") { 2 } else { 1 };
+        let arg_range_start = usize::from(is_prototype);
+        let arg_range_end = if is_prototype_apply {
+            arg_range_start + 1
+        } else {
+            arg_range_start + range_increment
+        };
+
+        for (i, argument) in call_expr.arguments.iter().enumerate() {
+            if i >= arg_range_end {
+                break;
+            }
+
+            let Some(arg_expr) = argument.as_expression() else {
+                continue;
+            };
+
+            match arg_expr {
+                Expression::BinaryExpression(binary_expr) => {
+                    let Some(member_expr) = get_binary_left_expr(binary_expr) else {
+                        continue;
+                    };
+
+                    if is_same_node(identifier_expr, &member_expr.object, ctx) {
+                        member_exprs.push(member_expr);
+                    }
+                }
+                Expression::ArrayExpression(array_expr) => {
+                    for (j, element) in array_expr.elements.iter().enumerate() {
+                        if j >= range_increment {
+                            break;
+                        }
+                        if let ArrayExpressionElement::BinaryExpression(binary_expr) = element {
+                            let Some(el_member_expr) = get_binary_left_expr(binary_expr) else {
+                                continue;
+                            };
+
+                            if is_same_node(identifier_expr, &el_member_expr.object, ctx) {
+                                member_exprs.push(el_member_expr);
+                            }
+                        }
+                    }
+                }
+                _ => continue,
+            }
+        }
+
+        if !member_exprs.is_empty() {
+            ctx.diagnostic_with_fix(prefer_negative_index_diagnostic(call_expr.span), |fixer| {
+                let mut fixes = fixer.new_fix_with_capacity(member_exprs.len());
+
+                for member_expr in member_exprs {
+                    let member_expr_span = member_expr.span();
+                    let member_expr_next_end = member_expr_span.end + 1;
+                    let member_expr_with_next_span =
+                        Span::new(member_expr_span.start, member_expr_next_end);
+                    let member_expr_with_next_str = ctx.source_range(member_expr_with_next_span);
+
+                    if member_expr_with_next_str.ends_with(' ') {
+                        fixes.push(Fix::delete(member_expr_with_next_span));
                     } else {
-                        Some(callee_object_expr)
+                        fixes.push(Fix::delete(member_expr_span));
                     }
                 }
-                _ => None,
-            }) else {
-                return;
-            };
 
-            let mut member_exprs: Vec<&StaticMemberExpression> = Vec::new();
-            let range_increment = if matches!(callee_name, "slice" | "subarray") { 2 } else { 1 };
-            let arg_range_start = usize::from(is_prototype);
-            let arg_range_end = if is_prototype_apply {
-                arg_range_start + 1
-            } else {
-                arg_range_start + range_increment
-            };
-
-            for (i, argument) in call_expr.arguments.iter().enumerate() {
-                if i >= arg_range_end {
-                    break;
-                }
-
-                let Some(arg_expr) = argument.as_expression() else {
-                    continue;
-                };
-
-                match arg_expr {
-                    Expression::BinaryExpression(binary_expr) => {
-                        let Some(member_expr) = get_binary_left_expr(binary_expr) else {
-                            continue;
-                        };
-
-                        if is_same_node(identifier_expr, &member_expr.object, ctx) {
-                            member_exprs.push(member_expr);
-                        }
-                    }
-                    Expression::ArrayExpression(array_expr) => {
-                        for (j, element) in array_expr.elements.iter().enumerate() {
-                            if j >= range_increment {
-                                break;
-                            }
-
-                            match element {
-                                ArrayExpressionElement::BinaryExpression(el_binary_expr) => {
-                                    let Some(el_member_expr) = get_binary_left_expr(el_binary_expr)
-                                    else {
-                                        continue;
-                                    };
-
-                                    if is_same_node(identifier_expr, &el_member_expr.object, ctx) {
-                                        member_exprs.push(el_member_expr);
-                                    }
-                                }
-                                _ => continue,
-                            }
-                        }
-                    }
-                    _ => continue,
-                }
-            }
-
-            if !member_exprs.is_empty() {
-                ctx.diagnostic_with_fix(
-                    prefer_negative_index_diagnostic(call_expr.span),
-                    |_fixer| {
-                        let mut fixes: Vec<Fix<'a>> = vec![];
-
-                        for member_expr in member_exprs {
-                            let member_expr_span = member_expr.span();
-                            let member_expr_next_end = member_expr_span.end + 1;
-                            let member_expr_with_next_span =
-                                Span::new(member_expr_span.start, member_expr_next_end);
-                            let member_expr_with_next_str =
-                                ctx.source_range(member_expr_with_next_span);
-
-                            if member_expr_with_next_str.ends_with(' ') {
-                                fixes.push(Fix::delete(member_expr_with_next_span));
-                            } else {
-                                fixes.push(Fix::delete(member_expr_span));
-                            }
-                        }
-
-                        fixes
-                    },
-                );
-            }
+                fixes
+            });
         }
     }
 }
