@@ -1,4 +1,3 @@
-use cow_utils::CowUtils;
 use std::borrow::Cow;
 
 use oxc_ast::{
@@ -56,17 +55,17 @@ impl std::ops::Deref for AnchorAmbiguousText {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Inspects anchor link text for the use of ambigious words.
+    /// Inspects anchor link text for the use of ambiguous words.
     ///
     /// This rule checks the text from the anchor element `aria-label` if available.
     /// In absence of an anchor `aria-label` it combines the following text of it's children:
-    /// * `aria-label` if avaialble
+    /// * `aria-label` if available
     /// * if the child is an image, the `alt` text
     /// * the text content of the HTML element
     ///
     /// ### Why is this bad?
     ///
-    /// Screenreaders users rely on link text for context, ambigious words such as "click here" do
+    /// Screen readers users rely on link text for context, ambiguous words such as "click here" do
     /// not provide enough context.
     ///
     /// ### Examples
@@ -124,15 +123,18 @@ impl Rule for AnchorAmbiguousText {
             return;
         }
 
-        if self.words.contains(&normalize_str(text)) {
+        if self.words.contains(&normalize_str(&text)) {
             ctx.diagnostic(anchor_has_ambiguous_text(jsx_el.span));
         }
     }
 }
 
 // https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/65c9338c62c558d3c1c2dbf5ecc55cf04dbfe80c/src/util/getAccessibleChildText.js#L15
-fn normalize_str(text: Cow<'_, str>) -> CompactStr {
-    let mut normalized_str = text.cow_to_lowercase().to_string();
+fn normalize_str(text: &str) -> CompactStr {
+    // `to_lowercase` is disallowed. however we need to remove certain chars later which requires converting to a String
+    // the overhead of going &str -> cow string -> string is greater than just using to_lowercase
+    #[allow(clippy::disallowed_methods)]
+    let mut normalized_str = text.to_lowercase();
     normalized_str.retain(|c| {
         c != ','
             && c != '.'
