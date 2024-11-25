@@ -1,10 +1,10 @@
-pub(crate) const PLUGINS: &[&str] = &[
+pub const PLUGINS: &[&str] = &[
     "babel-preset-env",
     // // ES2024
     // "babel-plugin-transform-unicode-sets-regex",
     // // ES2022
     // "babel-plugin-transform-class-properties",
-    // "babel-plugin-transform-class-static-block",
+    "babel-plugin-transform-class-static-block",
     // "babel-plugin-transform-private-methods",
     // "babel-plugin-transform-private-property-in-object",
     // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
@@ -15,7 +15,7 @@ pub(crate) const PLUGINS: &[&str] = &[
     // "babel-plugin-transform-export-namespace-from",
     // "babel-plugin-transform-dynamic-import",
     "babel-plugin-transform-nullish-coalescing-operator",
-    // "babel-plugin-transform-optional-chaining",
+    "babel-plugin-transform-optional-chaining",
     // // [Syntax] "babel-plugin-transform-syntax-bigint",
     // // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
     // // [Syntax] "babel-plugin-transform-syntax-import-meta",
@@ -23,13 +23,13 @@ pub(crate) const PLUGINS: &[&str] = &[
     "babel-plugin-transform-optional-catch-binding",
     // "babel-plugin-transform-json-strings",
     // // ES2018
-    // "babel-plugin-transform-async-generator-functions",
+    "babel-plugin-transform-async-generator-functions",
     "babel-plugin-transform-object-rest-spread",
     // // [Regex] "babel-plugin-transform-unicode-property-regex",
     // "babel-plugin-transform-dotall-regex",
     // // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
     // // ES2017
-    // "babel-plugin-transform-async-to-generator",
+    "babel-plugin-transform-async-to-generator",
     // ES2016
     "babel-plugin-transform-exponentiation-operator",
     // ES2015
@@ -61,38 +61,51 @@ pub(crate) const PLUGINS: &[&str] = &[
     "regexp",
 ];
 
-pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
+pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "proposal-decorators",
     "transform-class-properties",
     "transform-classes",
     "transform-destructuring",
     "transform-modules-commonjs",
-    "transform-optional-chaining",
     "transform-parameters",
     "transform-private-methods",
     "transform-property-literals",
     "transform-react-constant-elements",
 ];
 
-pub(crate) const SKIP_TESTS: &[&str] = &[
+pub const SKIP_TESTS: &[&str] = &[
     // Shouldn't report in transformer
-    "typescript/test/fixtures/node-extensions/type-assertion-in-cts/input.cts",
-    "typescript/test/fixtures/node-extensions/type-assertion-in-mts/input.mts",
-    "typescript/test/fixtures/node-extensions/type-param-arrow-in-cts/input.mts",
-    "typescript/test/fixtures/node-extensions/type-param-arrow-in-mts/input.mts",
-    "typescript/test/fixtures/node-extensions/with-in-mts/input.mts",
+    "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-cts",
+    "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-mts",
+    "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-param-arrow-in-cts",
+    "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-param-arrow-in-mts",
+    "babel-plugin-transform-typescript/test/fixtures/node-extensions/with-in-mts",
     // Report error for deprecate option or oxc doesn’t follow error message
-    "typescript/test/fixtures/opts/allowDeclareFields/input.ts",
-    "react-jsx/test/fixtures/react-automatic/should-throw-when-filter-is-specified/input.js",
-    // Not standard JavaScript or TypeScript syntax
-    "typescript/test/fixtures/exports/export-type-star-from/input.ts",
+    "babel-plugin-transform-typescript/test/fixtures/opts/allowDeclareFields",
+    "babel-plugin-transform-react-jsx/test/fixtures/react-automatic/should-throw-when-filter-is-specified",
+    // Not standard JavaScript or typescript syntax
+    "babel-plugin-transform-typescript/test/fixtures/exports/export-type-star-from",
     // The output is valid and semantically correct
     // but does not match Babel's expected output
-    "typescript/test/fixtures/namespace/canonical/input.ts",
-    "typescript/test/fixtures/namespace/nested-shorthand-export/input.ts",
-    "react-jsx-development/test/fixtures/cross-platform/self-inside-arrow/input.mjs",
+    "babel-plugin-transform-typescript/test/fixtures/namespace/canonical",
+    "babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand-export",
+    "babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/self-inside-arrow",
     // Babel outputs is not correct
-    "typescript/test/fixtures/namespace/clobber-import/input.ts",
-    "typescript/test/fixtures/namespace/namespace-nested-module/input.ts",
-    "typescript/test/fixtures/namespace/nested-destructuring/input.ts",
+    "babel-plugin-transform-typescript/test/fixtures/namespace/clobber-import",
+    "babel-plugin-transform-typescript/test/fixtures/namespace/namespace-nested-module",
+    "babel-plugin-transform-typescript/test/fixtures/namespace/nested-destructuring",
+    // Ignore these edge cases
+    "babel-preset-env/test/fixtures/bugfixes",
+    "babel-preset-env/test/fixtures/corejs2",
+    "babel-preset-env/test/fixtures/corejs3",
+    "babel-preset-env/test/fixtures/debug",
+    "babel-preset-env/test/fixtures/debug-babel-7",
+    // Assumptions are not implemented yet.
+    "babel-plugin-transform-object-rest-spread/test/fixtures/assumption",
+    "babel-plugin-transform-object-rest-spread/test/fixtures/object-spread-loose",
+    "babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/remove-unused-excluded-keys-loose",
+    "babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/regression/gh-8323"
 ];
+
+pub const SNAPSHOT_TESTS: &[&str] =
+    &["babel-plugin-transform-object-rest-spread", "babel-plugin-transform-optional-chaining"];

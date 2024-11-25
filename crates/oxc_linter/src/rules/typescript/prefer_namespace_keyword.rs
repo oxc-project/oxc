@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -38,19 +38,8 @@ declare_oxc_lint!(
     fix
 );
 
-fn is_nest_module(node: &AstNode, ctx: &LintContext<'_>) -> bool {
-    ctx.nodes()
-        .parent_node(node.id())
-        .map_or(false, |parent_node| is_valid_module_node(parent_node))
-}
-
-fn is_valid_module_node(node: &AstNode) -> bool {
-    matches!(node.kind(), AstKind::TSModuleDeclaration(module) if is_valid_module(module))
-}
-
 fn is_valid_module(module: &TSModuleDeclaration) -> bool {
-    !module.id.is_string_literal()
-        && matches!(module.id, TSModuleDeclarationName::Identifier(_))
+    matches!(module.id, TSModuleDeclarationName::Identifier(_))
         && module.kind == TSModuleDeclarationKind::Module
 }
 
@@ -58,18 +47,18 @@ impl Rule for PreferNamespaceKeyword {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSModuleDeclaration(module) = node.kind() else { return };
 
-        if !is_valid_module(module) || is_nest_module(node, ctx) {
+        if !is_valid_module(module) {
             return;
         }
 
+        let token = ctx.source_range(Span::new(module.span.start, module.id.span().start));
+        let Some(offset) = token.find("module") else {
+            return;
+        };
+
         ctx.diagnostic_with_fix(prefer_namespace_keyword_diagnostic(module.span), |fixer| {
-            let span_size = u32::try_from("module".len()).unwrap_or(6);
-            let span_start = if module.declare {
-                module.span.start + u32::try_from("declare ".len()).unwrap_or(8)
-            } else {
-                module.span.start
-            };
-            fixer.replace(Span::sized(span_start, span_size), "namespace")
+            let span_start = module.span.start + u32::try_from(offset).unwrap();
+            fixer.replace(Span::sized(span_start, 6), "namespace")
         });
     }
 
@@ -88,6 +77,7 @@ fn test() {
         "namespace foo {}",
         "declare namespace foo {}",
         "declare global {}",
+        "module''.s",
     ];
 
     let fail = vec![
@@ -104,6 +94,7 @@ fn test() {
             module foo {}
         }
         ",
+        "module foo.'a'",
     ];
 
     let fix = vec![
@@ -136,6 +127,8 @@ fn test() {
             ",
             None,
         ),
+        ("module foo.'a'", "namespace foo.'a'", None),
     ];
+
     Tester::new(PreferNamespaceKeyword::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

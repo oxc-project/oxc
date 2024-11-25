@@ -1,4 +1,4 @@
-ts compatibility: 185/526 (35.17%)
+ts compatibility: 184/526 (34.98%)
 
 # Failed
 
@@ -312,6 +312,7 @@ ts compatibility: 185/526 (35.17%)
 * end-of-line/multiline.ts
 
 ### enum
+* enum/computed-members.ts
 * enum/enum.ts
 
 ### error-recovery

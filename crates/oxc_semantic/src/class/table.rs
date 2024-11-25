@@ -102,8 +102,8 @@ impl ClassTable {
         self.elements[class_id].iter().any(|p| p.is_private && p.name == name)
     }
 
-    pub fn declare_class(&mut self, parent_id: Option<ClassId>, ast_node_id: NodeId) -> ClassId {
-        let class_id = self.declarations.push(ast_node_id);
+    pub fn declare_class(&mut self, parent_id: Option<ClassId>, node_id: NodeId) -> ClassId {
+        let class_id = self.declarations.push(node_id);
         if let Some(parent_id) = parent_id {
             self.parent_ids.insert(class_id, parent_id);
         };

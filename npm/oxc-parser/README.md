@@ -1,29 +1,21 @@
 # The JavaScript Oxidation Compiler
 
-See index.d.ts for `parseSync` and `parseAsync` API.
-
-## ESM
+See `index.d.ts` for `parseSync` and `parseAsync` API.
 
 ```javascript
 import assert from 'assert';
 import oxc from 'oxc-parser';
 
-function test(ret) {
-  const program = JSON.parse(ret.program);
-  assert(program.body.length == 1);
-  assert(ret.errors.length == 0);
-}
-
 const sourceText = "let foo: Foo = 'foo';";
-const options = {
-  sourceFilename: 'text.tsx', // the extension is used to determine which dialect to parse
-};
+// Filename extension is used to determine which
+// dialect to parse source as
+const options = { sourceFilename: 'text.tsx' };
 
 test(oxc.parseSync(sourceText, options));
+test(await oxc.parseAsync(sourceText, options));
 
-async function main() {
-  test(await oxc.parseAsync(sourceText, options));
+function test(ret) {
+  assert(ret.program.body.length == 1);
+  assert(ret.errors.length == 0);
 }
-
-main();
 ```

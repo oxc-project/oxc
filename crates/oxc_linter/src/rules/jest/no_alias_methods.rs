@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
+    utils::{parse_expect_jest_fn_call, PossibleJestNode},
 };
 
 fn no_alias_methods_diagnostic(x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// expect(a).toThrowError();
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-alias-methods.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-alias-methods.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json
@@ -59,10 +59,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAliasMethods {
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        run(jest_node, ctx);
     }
 }
 

@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -17,7 +17,7 @@ pub struct NoBitwise(Box<NoBitwiseConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoBitwiseConfig {
-    allow: Vec<String>,
+    allow: Vec<CompactStr>,
     int32_hint: bool,
 }
 
@@ -57,10 +57,7 @@ impl Rule for NoBitwise {
                 .and_then(|v| v.get("allow"))
                 .and_then(serde_json::Value::as_array)
                 .map(|v| {
-                    v.iter()
-                        .filter_map(serde_json::Value::as_str)
-                        .map(ToString::to_string)
-                        .collect()
+                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
                 })
                 .unwrap_or_default(),
             int32_hint: obj
@@ -107,7 +104,7 @@ impl Rule for NoBitwise {
     }
 }
 
-fn allowed_operator(allow: &[String], operator: &str) -> bool {
+fn allowed_operator(allow: &[CompactStr], operator: &str) -> bool {
     allow.iter().any(|s| s == operator)
 }
 

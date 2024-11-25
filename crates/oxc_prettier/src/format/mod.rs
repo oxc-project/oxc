@@ -1,7 +1,7 @@
 //! Formatting logic
 //!
 //! References:
-//! * <https://github.com/prettier/prettier/blob/main/src/language-js/print/estree.js>
+//! * <https://github.com/prettier/prettier/blob/3.3.3/src/language-js/print/estree.js>
 
 #![allow(unused_variables)]
 
@@ -1256,10 +1256,8 @@ impl<'a> Format<'a> for TSEnumMember<'a> {
 impl<'a> Format<'a> for TSEnumMemberName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            TSEnumMemberName::StaticIdentifier(identifier) => identifier.format(p),
-            TSEnumMemberName::StaticStringLiteral(string_literal) => string_literal.format(p),
-            TSEnumMemberName::StaticTemplateLiteral(template_literal) => template_literal.format(p),
-            name => array!(p, ss!("["), name.as_expression().unwrap().format(p), ss!("]")),
+            TSEnumMemberName::Identifier(identifier) => identifier.format(p),
+            TSEnumMemberName::String(string_literal) => string_literal.format(p),
         }
     }
 }
@@ -1791,7 +1789,7 @@ impl<'a> Format<'a> for NullLiteral {
 impl<'a> Format<'a> for NumericLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, NumericLiteral, {
-            // See https://github.com/prettier/prettier/blob/main/src/utils/print-number.js
+            // See https://github.com/prettier/prettier/blob/3.3.3/src/utils/print-number.js
             // Perf: the regexes from prettier code above are ported to manual search for performance reasons.
             let mut string = self.span.source_text(p.source_text).cow_to_ascii_lowercase();
 
@@ -2440,6 +2438,7 @@ impl<'a> Format<'a> for ChainElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             Self::CallExpression(expr) => expr.format(p),
+            Self::TSNonNullExpression(expr) => expr.format(p),
             match_member_expression!(Self) => self.to_member_expression().format(p),
         }
     }

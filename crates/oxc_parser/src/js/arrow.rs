@@ -79,7 +79,7 @@ impl<'a> ParserImpl<'a> {
                     Kind::RParen => {
                         let third = self.nth_kind(offset + 2);
                         return match third {
-                            Kind::Colon if self.ts_enabled() => Tristate::Maybe,
+                            Kind::Colon if self.is_ts => Tristate::Maybe,
                             Kind::Arrow | Kind::LCurly => Tristate::True,
                             _ => Tristate::False,
                         };
@@ -211,13 +211,13 @@ impl<'a> ParserImpl<'a> {
         let params = {
             let ident = match ident {
                 Expression::Identifier(ident) => {
-                    let name = ident.name.clone();
-                    BindingIdentifier::new(ident.span, name)
+                    let ident = ident.unbox();
+                    self.ast.alloc_binding_identifier(ident.span, ident.name)
                 }
                 _ => unreachable!(),
             };
             let params_span = self.end_span(ident.span);
-            let ident = self.ast.binding_pattern_kind_from_binding_identifier(ident);
+            let ident = BindingPatternKind::BindingIdentifier(ident);
             let pattern = self.ast.binding_pattern(ident, NONE, false);
             let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);
             self.ast.alloc_formal_parameters(

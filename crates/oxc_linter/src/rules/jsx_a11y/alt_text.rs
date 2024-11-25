@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 use crate::{
     context::LintContext,
@@ -71,10 +71,10 @@ pub struct AltText(Box<AltTextConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AltTextConfig {
-    img: Option<Vec<String>>,
-    object: Option<Vec<String>>,
-    area: Option<Vec<String>>,
-    input_type_image: Option<Vec<String>>,
+    img: Option<Vec<CompactStr>>,
+    object: Option<Vec<CompactStr>>,
+    area: Option<Vec<CompactStr>>,
+    input_type_image: Option<Vec<CompactStr>>,
 }
 
 impl std::ops::Deref for AltText {
@@ -160,9 +160,7 @@ impl Rule for AltText {
                 if let (Some(tags), Some(elements)) =
                     (tags, config.get(field).and_then(|v| v.as_array()))
                 {
-                    tags.extend(
-                        elements.iter().filter_map(|v| v.as_str().map(ToString::to_string)),
-                    );
+                    tags.extend(elements.iter().filter_map(|v| v.as_str().map(CompactStr::from)));
                 }
             }
         }
@@ -189,9 +187,7 @@ impl Rule for AltText {
         // <object>
         if let Some(custom_tags) = &self.object {
             if name == "object" || custom_tags.iter().any(|i| i == name) {
-                let maybe_parent =
-                    ctx.nodes().parent_node(node.id()).map(oxc_semantic::AstNode::kind);
-                if let Some(AstKind::JSXElement(parent)) = maybe_parent {
+                if let Some(AstKind::JSXElement(parent)) = ctx.nodes().parent_kind(node.id()) {
                     object_rule(jsx_el, parent, ctx);
                     return;
                 }

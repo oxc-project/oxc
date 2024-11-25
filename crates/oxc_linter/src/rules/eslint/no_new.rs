@@ -36,7 +36,7 @@ impl Rule for NoNew {
             return;
         };
 
-        let mut ancestors = ctx.nodes().ancestors(node.id()).skip(1);
+        let mut ancestors = ctx.nodes().ancestor_ids(node.id()).skip(1);
         let Some(node_id) = ancestors.next() else { return };
 
         let kind = ctx.nodes().kind(node_id);

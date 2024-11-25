@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+### Features
+
+- 39afb48 allocator: Introduce `Vec::from_array_in` (#7331) (overlookmotel)
+
+## [0.34.0] - 2024-10-26
+
+### Features
+
+- 419343b traverse: Implement `GetAddress` for `Ancestor` (#6877) (overlookmotel)
+
+### Refactor
+
+- adb5039 allocator: Add `impl GetAddress for Address` (#6891) (overlookmotel)
+
+## [0.33.0] - 2024-10-24
+
+- e1c2d30 allocator: [**BREAKING**] Make `Vec` non-drop (#6623) (overlookmotel)
+
+### Bug Fixes
+
+
+### Refactor
+
+- ab8aa2f allocator: Move `GetAddress` trait into `oxc_allocator` (#6738) (overlookmotel)
+
+## [0.32.0] - 2024-10-19
+
+### Features
+
+- 5ee1ef3 allocator: Add `Vec::into_boxed_slice` (#6195) (DonIsaac)
+
+### Documentation
+
+- 9f555d7 allocator: Clarify docs for `Box` (#6625) (overlookmotel)
+- 06e75b0 allocator: Enable lint warnings on missing docs, and add missing doc comments (#6613) (DonIsaac)
+
+## [0.31.0] - 2024-10-08
+
+### Performance
+
+- 5db9b30 allocator: Use lower bound of size hint when creating Vecs from an iterator (#6194) (DonIsaac)
+
+### Refactor
+
+- f7d1136 allocator: Remove unnecessary `Vec` impl (#6213) (overlookmotel)
+
 ## [0.30.2] - 2024-09-27
 
 ### Documentation

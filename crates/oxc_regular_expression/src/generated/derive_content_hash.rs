@@ -7,28 +7,7 @@ use std::{hash::Hasher, mem::discriminant};
 
 use oxc_span::hash::ContentHash;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
-
-impl<'a> ContentHash for RegularExpression<'a> {
-    fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.pattern, state);
-        ContentHash::content_hash(&self.flags, state);
-    }
-}
-
-impl ContentHash for Flags {
-    fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.global, state);
-        ContentHash::content_hash(&self.ignore_case, state);
-        ContentHash::content_hash(&self.multiline, state);
-        ContentHash::content_hash(&self.unicode, state);
-        ContentHash::content_hash(&self.sticky, state);
-        ContentHash::content_hash(&self.dot_all, state);
-        ContentHash::content_hash(&self.has_indices, state);
-        ContentHash::content_hash(&self.unicode_sets, state);
-    }
-}
 
 impl<'a> ContentHash for Pattern<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
@@ -199,17 +178,23 @@ impl<'a> ContentHash for CapturingGroup<'a> {
 
 impl<'a> ContentHash for IgnoreGroup<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.enabling_modifiers, state);
-        ContentHash::content_hash(&self.disabling_modifiers, state);
+        ContentHash::content_hash(&self.modifiers, state);
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl ContentHash for ModifierFlags {
+impl ContentHash for Modifiers {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.enabling, state);
+        ContentHash::content_hash(&self.disabling, state);
+    }
+}
+
+impl ContentHash for Modifier {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.ignore_case, state);
-        ContentHash::content_hash(&self.sticky, state);
         ContentHash::content_hash(&self.multiline, state);
+        ContentHash::content_hash(&self.sticky, state);
     }
 }
 

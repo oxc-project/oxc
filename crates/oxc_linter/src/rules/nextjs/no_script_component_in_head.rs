@@ -59,9 +59,7 @@ impl Rule for NoScriptComponentInHead {
             return;
         };
 
-        for reference in
-            ctx.semantic().symbol_references(default_import.local.symbol_id.get().unwrap())
-        {
+        for reference in ctx.semantic().symbol_references(default_import.local.symbol_id()) {
             let Some(node) = ctx.nodes().parent_node(reference.node_id()) else {
                 return;
             };

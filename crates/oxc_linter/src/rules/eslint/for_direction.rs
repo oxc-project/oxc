@@ -78,7 +78,7 @@ declare_oxc_lint!(
     /// ```
     ForDirection,
     correctness,
-    dangerous_fix
+    fix_dangerous
 );
 
 impl Rule for ForDirection {

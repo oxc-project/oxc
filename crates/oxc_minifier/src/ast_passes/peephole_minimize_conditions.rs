@@ -9,7 +9,7 @@ use crate::CompressorPass;
 /// Also rewrites conditional statements as expressions by replacing them
 /// with `? :` and short-circuit binary operators.
 ///
-/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
+/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 pub struct PeepholeMinimizeConditions {
     changed: bool,
 }
@@ -28,7 +28,7 @@ impl<'a> CompressorPass<'a> for PeepholeMinimizeConditions {
 impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
-            Expression::UnaryExpression(e) if e.operator.is_not() => self.try_minimize_not(e, ctx),
+            Expression::UnaryExpression(e) if e.operator.is_not() => Self::try_minimize_not(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -44,7 +44,6 @@ impl<'a> PeepholeMinimizeConditions {
 
     /// Try to minimize NOT nodes such as `!(x==y)`.
     fn try_minimize_not(
-        &self,
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -59,7 +58,7 @@ impl<'a> PeepholeMinimizeConditions {
     }
 }
 
-/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeMinimizeConditionsTest.java>
+/// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeMinimizeConditionsTest.java>
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
@@ -104,7 +103,7 @@ mod test {
         fold("function f(){if(x){foo()}else{bar()}}", "function f(){x?foo():bar()}");
 
         // Try it out with properties and methods
-        fold("function f(){if(x){a.b=1}}", "function f(){if(x)a.b=1}");
+        fold("function f(){if(x){a.b=1}}", "function f(){x&&(a.b=1)}");
         fold("function f(){if(x){a.b*=1}}", "function f(){x&&(a.b*=1)}");
         fold("function f(){if(x){a.b+=1}}", "function f(){x&&(a.b+=1)}");
         fold("function f(){if(x){++a.b}}", "function f(){x&&++a.b}");
@@ -153,12 +152,9 @@ mod test {
             "if(a)if(b){f1();f2()}else c&&f3();else d&&f4()",
         );
 
-        fold("function f(){foo()}", "function f(){foo()}");
-        fold("switch(x){case y: foo()}", "switch(x){case y:foo()}");
-        fold(
-            "try{foo()}catch(ex){bar()}finally{baz()}",
-            "try{foo()}catch(ex){bar()}finally{baz()}",
-        );
+        fold_same("function f(){foo()}");
+        fold_same("switch(x){case y: foo()}");
+        fold_same("try{foo()}catch(ex){bar()}finally{baz()}");
     }
 
     /** Try to minimize returns */
@@ -247,31 +243,40 @@ mod test {
         // TODO(bradfordcsmith): Stop normalizing the expected output or document why it is necessary.
         // enableNormalizeExpectedOutput();
         fold("if (a) { x = 1; x++ } else { x = 2; x++ }", "x=(a) ? 1 : 2; x++");
-        // fold(
-        // "if (a) { x = 1; x++; y += 1; z = pi; }" + " else  { x = 2; x++; y += 1; z = pi; }",
-        // "x=(a) ? 1 : 2; x++; y += 1; z = pi;",
-        // );
-        // fold(
-        // "function z() {" + "if (a) { foo(); return !0 } else { goo(); return !0 }" + "}",
-        // "function z() {(a) ? foo() : goo(); return !0}",
-        // );
-        // fold(
-        // "function z() {if (a) { foo(); x = true; return true "
-        // + "} else { goo(); x = true; return true }}",
-        // "function z() {(a) ? foo() : goo(); x = true; return true}",
-        // );
+        fold(
+            concat!(
+                "if (a) { x = 1; x++; y += 1; z = pi; }",
+                " else  { x = 2; x++; y += 1; z = pi; }"
+            ),
+            "x=(a) ? 1 : 2; x++; y += 1; z = pi;",
+        );
+        fold(
+            concat!("function z() {", "if (a) { foo(); return !0 } else { goo(); return !0 }", "}"),
+            "function z() {(a) ? foo() : goo(); return !0}",
+        );
+        fold(
+            concat!(
+                "function z() {if (a) { foo(); x = true; return true ",
+                "} else { goo(); x = true; return true }}"
+            ),
+            "function z() {(a) ? foo() : goo(); x = true; return true}",
+        );
 
-        // fold(
-        // "function z() {"
-        // + "  if (a) { bar(); foo(); return true }"
-        // + "    else { bar(); goo(); return true }"
-        // + "}",
-        // "function z() {"
-        // + "  if (a) { bar(); foo(); }"
-        // + "    else { bar(); goo(); }"
-        // + "  return true;"
-        // + "}",
-        // );
+        fold(
+            concat!(
+                "function z() {",
+                "  if (a) { bar(); foo(); return true }",
+                "    else { bar(); goo(); return true }",
+                "}"
+            ),
+            concat!(
+                "function z() {",
+                "  if (a) { bar(); foo(); }",
+                "    else { bar(); goo(); }",
+                "  return true;",
+                "}"
+            ),
+        );
     }
 
     #[test]
@@ -648,28 +653,43 @@ mod test {
 
         fold_same("function f() { while(1) { return 7}  return 5}");
 
-        // fold_same("function f() {" + "  try { while(x) {return f()}} catch (e) { } return f()}");
+        fold_same(concat!(
+            "function f() {",
+            "  try { while(x) {return f()}} catch (e) { } return f()}"
+        ));
 
-        // fold_same("function f() {" + "  try { while(x) {return f()}} finally {alert(1)} return f()}");
+        fold_same(concat!(
+            "function f() {",
+            "  try { while(x) {return f()}} finally {alert(1)} return f()}"
+        ));
 
         // Both returns has the same handler
-        // fold(
-        // "function f() {" + "  try { while(x) { return f() } return f() } catch (e) { } }",
-        // "function f() {" + "  try { while(x) { break } return f() } catch (e) { } }",
-        // );
+        fold(
+            concat!(
+                "function f() {",
+                "  try { while(x) { return f() } return f() } catch (e) { } }"
+            ),
+            concat!("function f() {", "  try { while(x) { break } return f() } catch (e) { } }"),
+        );
 
         // We can't fold this because it'll change the order of when foo is called.
-        // fold_same(
-        // "function f() {"
-        // + "  try { while(x) { return foo() } } finally { alert(1) } "
-        // + "  return foo()}",
-        // );
+        fold_same(concat!(
+            "function f() {",
+            "  try { while(x) { return foo() } } finally { alert(1) } ",
+            "  return foo()}"
+        ));
 
         // This is fine, we have no side effect in the return value.
-        // fold(
-        // "function f() {" + "  try { while(x) { return 1 } } finally { alert(1) } return 1}",
-        // "function f() {" + "  try { while(x) { break    } } finally { alert(1) } return 1}",
-        // );
+        fold(
+            concat!(
+                "function f() {",
+                "  try { while(x) { return 1 } } finally { alert(1) } return 1}"
+            ),
+            concat!(
+                "function f() {",
+                "  try { while(x) { break    } } finally { alert(1) } return 1}"
+            ),
+        );
 
         fold_same("function f() { try{ return a } finally { a = 2 } return a; }");
 
@@ -739,28 +759,40 @@ mod test {
 
         fold_same("function f() { while(1) { throw 7}  throw 5}");
 
-        // fold_same("function f() {" + "  try { while(x) {throw f()}} catch (e) { } throw f()}");
+        fold_same(concat!(
+            "function f() {",
+            "  try { while(x) {throw f()}} catch (e) { } throw f()}"
+        ));
 
-        // fold_same("function f() {" + "  try { while(x) {throw f()}} finally {alert(1)} throw f()}");
+        fold_same(concat!(
+            "function f() {",
+            "  try { while(x) {throw f()}} finally {alert(1)} throw f()}"
+        ));
 
         // Both throws has the same handler
-        // fold(
-        // "function f() {" + "  try { while(x) { throw f() } throw f() } catch (e) { } }",
-        // "function f() {" + "  try { while(x) { break } throw f() } catch (e) { } }",
-        // );
+        fold(
+            concat!("function f() {", "  try { while(x) { throw f() } throw f() } catch (e) { } }"),
+            concat!("function f() {", "  try { while(x) { break } throw f() } catch (e) { } }"),
+        );
 
         // We can't fold this because it'll change the order of when foo is called.
-        // fold_same(
-        // "function f() {"
-        // + "  try { while(x) { throw foo() } } finally { alert(1) } "
-        // + "  throw foo()}",
-        // );
+        fold_same(concat!(
+            "function f() {",
+            "  try { while(x) { throw foo() } } finally { alert(1) } ",
+            "  throw foo()}"
+        ));
 
         // This is fine, we have no side effect in the throw value.
-        // fold(
-        // "function f() {" + "  try { while(x) { throw 1 } } finally { alert(1) } throw 1}",
-        // "function f() {" + "  try { while(x) { break    } } finally { alert(1) } throw 1}",
-        // );
+        fold(
+            concat!(
+                "function f() {",
+                "  try { while(x) { throw 1 } } finally { alert(1) } throw 1}"
+            ),
+            concat!(
+                "function f() {",
+                "  try { while(x) { break    } } finally { alert(1) } throw 1}"
+            ),
+        );
 
         fold_same("function f() { try{ throw a } finally { a = 2 } throw a; }");
 
@@ -799,10 +831,13 @@ mod test {
             "function f() { switch(a){ case 1: } return a; }",
         );
 
-        // fold(
-        // "function f() { switch(a){ " + "  case 1: return a; case 2: return a; } return a; }",
-        // "function f() { switch(a){ " + "  case 1: break; case 2: } return a; }",
-        // );
+        fold(
+            concat!(
+                "function f() { switch(a){ ",
+                "  case 1: return a; case 2: return a; } return a; }"
+            ),
+            concat!("function f() { switch(a){ ", "  case 1: break; case 2: } return a; }"),
+        );
     }
 
     #[test]
@@ -836,10 +871,10 @@ mod test {
             "function f() { switch(a){ case 1: } throw a; }",
         );
 
-        // fold(
-        // "function f() { switch(a){ " + "case 1: throw a; case 2: throw a; } throw a; }",
-        // "function f() { switch(a){ case 1: break; case 2: } throw a; }",
-        // );
+        fold(
+            concat!("function f() { switch(a){ ", "case 1: throw a; case 2: throw a; } throw a; }"),
+            concat!("function f() { switch(a){ case 1: break; case 2: } throw a; }"),
+        );
     }
 
     #[test]
@@ -872,29 +907,21 @@ mod test {
 
     #[test]
     #[ignore]
-    fn test_object_literal() {
-        test("({})", "1");
-        test("({a:1})", "1");
-        test_same("({a:foo()})");
-        test_same("({'a':foo()})");
-    }
-
-    #[test]
-    #[ignore]
-    fn test_array_literal() {
-        test("([])", "1");
-        test("([1])", "1");
-        test("([a])", "1");
-        test_same("([foo()])");
-    }
-
-    #[test]
-    #[ignore]
     fn test_remove_else_cause() {
-        // test(
-        // "function f() {" + " if(x) return 1;" + " else if(x) return 2;" + " else if(x) return 3 }",
-        // "function f() {" + " if(x) return 1;" + "{ if(x) return 2;" + "{ if(x) return 3 } } }",
-        // );
+        test(
+            concat!(
+                "function f() {",
+                " if(x) return 1;",
+                " else if(x) return 2;",
+                " else if(x) return 3 }"
+            ),
+            concat!(
+                "function f() {",
+                " if(x) return 1;",
+                "{ if(x) return 2;",
+                "{ if(x) return 3 } } }"
+            ),
+        );
     }
 
     #[test]
@@ -935,26 +962,32 @@ mod test {
     #[test]
     #[ignore]
     fn test_issue925() {
-        // test(
-        // "if (x[--y] === 1) {\n" + "    x[y] = 0;\n" + "} else {\n" + "    x[y] = 1;\n" + "}",
-        // "(x[--y] === 1) ? x[y] = 0 : x[y] = 1;",
-        // );
+        test(
+            concat!(
+                "if (x[--y] === 1) {\n",
+                "    x[y] = 0;\n",
+                "} else {\n",
+                "    x[y] = 1;\n",
+                "}"
+            ),
+            "(x[--y] === 1) ? x[y] = 0 : x[y] = 1;",
+        );
 
-        // test(
-        // "if (x[--y]) {\n" + "    a = 0;\n" + "} else {\n" + "    a = 1;\n" + "}",
-        // "a = (x[--y]) ? 0 : 1;",
-        // );
+        test(
+            concat!("if (x[--y]) {\n", "    a = 0;\n", "} else {\n", "    a = 1;\n", "}"),
+            "a = (x[--y]) ? 0 : 1;",
+        );
 
-        // test(
-        // lines(
-        // "if (x?.[--y]) {", //
-        // "    a = 0;",
-        // "} else {",
-        // "    a = 1;",
-        // "}",
-        // ),
-        // "a = (x?.[--y]) ? 0 : 1;",
-        // );
+        test(
+            concat!(
+                "if (x?.[--y]) {", //
+                "    a = 0;",
+                "} else {",
+                "    a = 1;",
+                "}",
+            ),
+            "a = (x?.[--y]) ? 0 : 1;",
+        );
 
         test("if (x++) { x += 2 } else { x += 3 }", "x++ ? x += 2 : x += 3");
 
@@ -1033,8 +1066,8 @@ mod test {
     #[ignore]
     fn test_coercion_substitution_hook() {
         // enableTypeCheck();
-        // test_same(lines("var x = {};", "var y = x != null ? 1 : 2;"));
-        // test_same(lines("var x = 1;", "var y = x != 0 ? 1 : 2;"));
+        test_same(concat!("var x = {};", "var y = x != null ? 1 : 2;"));
+        test_same(concat!("var x = 1;", "var y = x != 0 ? 1 : 2;"));
     }
 
     #[test]
@@ -1110,17 +1143,17 @@ mod test {
     #[ignore]
     fn test_minimize_if_with_new_target_condition() {
         // Related to https://github.com/google/closure-compiler/issues/3097
-        // test(
-        // lines(
-        // "function x() {",
-        // "  if (new.target) {",
-        // "    return 1;",
-        // "  } else {",
-        // "    return 2;",
-        // "  }",
-        // "}",
-        // ),
-        // lines("function x() {", "  return new.target ? 1 : 2;", "}"),
-        // );
+        test(
+            concat!(
+                "function x() {",
+                "  if (new.target) {",
+                "    return 1;",
+                "  } else {",
+                "    return 2;",
+                "  }",
+                "}",
+            ),
+            concat!("function x() {", "  return new.target ? 1 : 2;", "}"),
+        );
     }
 }

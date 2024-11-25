@@ -235,23 +235,22 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
             lit.quasi().and_then(|quasi| if quasi == "then" { Some(lit.span) } else { None })
         }
         Expression::Identifier(ident) => {
-            let tab = ctx.semantic().symbols();
-            ident.reference_id.get().and_then(|ref_id| {
-                tab.get_reference(ref_id).symbol_id().and_then(|symbol_id| {
-                    let decl = ctx.semantic().nodes().get_node(tab.get_declaration(symbol_id));
-                    let var_decl = decl.kind().as_variable_declarator()?;
+            let symbols = ctx.semantic().symbols();
+            let reference_id = ident.reference_id();
+            symbols.get_reference(reference_id).symbol_id().and_then(|symbol_id| {
+                let decl = ctx.semantic().nodes().get_node(symbols.get_declaration(symbol_id));
+                let var_decl = decl.kind().as_variable_declarator()?;
 
-                    match var_decl.init {
-                        Some(Expression::StringLiteral(ref lit)) => {
-                            if lit.value == "then" {
-                                Some(lit.span)
-                            } else {
-                                None
-                            }
+                match var_decl.init {
+                    Some(Expression::StringLiteral(ref lit)) => {
+                        if lit.value == "then" {
+                            Some(lit.span)
+                        } else {
+                            None
                         }
-                        _ => None,
                     }
-                })
+                    _ => None,
+                }
             })
         }
         _ => None,

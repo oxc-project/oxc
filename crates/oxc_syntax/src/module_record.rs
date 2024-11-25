@@ -1,4 +1,5 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
+#![allow(missing_docs)] // fixme
 
 use std::{fmt, hash::BuildHasherDefault, path::PathBuf, sync::Arc};
 
@@ -302,14 +303,17 @@ pub enum ExportExportName {
 }
 
 impl ExportExportName {
+    /// Returns `true` if this is [`ExportExportName::Default`].
     pub fn is_default(&self) -> bool {
         matches!(self, Self::Default(_))
     }
 
+    /// Returns `true` if this is [`ExportExportName::Null`].
     pub fn is_null(&self) -> bool {
         matches!(self, Self::Null)
     }
 
+    /// Attempt to get the [`Span`] of this export name.
     pub fn span(&self) -> Option<Span> {
         match self {
             Self::Name(name) => Some(name.span()),
@@ -330,14 +334,17 @@ pub enum ExportLocalName {
 }
 
 impl ExportLocalName {
+    /// `true` if this is a [`ExportLocalName::Default`].
     pub fn is_default(&self) -> bool {
         matches!(self, Self::Default(_))
     }
 
+    /// `true` if this is a [`ExportLocalName::Null`].
     pub fn is_null(&self) -> bool {
         matches!(self, Self::Null)
     }
 
+    /// Get the bound name of this export. [`None`] for [`ExportLocalName::Null`].
     pub const fn name(&self) -> Option<&CompactStr> {
         match self {
             Self::Name(name) | Self::Default(name) => Some(name.name()),
@@ -367,10 +374,19 @@ impl RequestedModule {
         self.span
     }
 
+    /// `true` if a `type` modifier was used in the import statement.
+    ///
+    /// ## Examples
+    /// ```ts
+    /// import type { foo } from "foo"; // true, `type` is on module request
+    /// import { type bar } from "bar"; // false, `type` is on specifier
+    /// import { baz } from "baz";      // false, no `type` modifier
+    /// ```
     pub fn is_type(&self) -> bool {
         self.is_type
     }
 
+    /// `true` if the module is requested by an import statement.
     pub fn is_import(&self) -> bool {
         self.is_import
     }

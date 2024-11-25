@@ -2,12 +2,15 @@
 //!
 //! # Example
 //! ```rust
-#![doc = include_str!("../examples/simple.rs")]
+#![doc = include_str!("../examples/semantic.rs")]
 //! ```
 
+use std::ops::RangeBounds;
 use std::sync::Arc;
 
-use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
+use oxc_ast::{
+    ast::IdentifierReference, comments_range, has_comments_between, AstKind, Comment, CommentsRange,
+};
 use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
 pub use oxc_syntax::{
@@ -17,7 +20,6 @@ pub use oxc_syntax::{
 };
 
 pub mod dot;
-pub mod post_transform_checker;
 
 mod binder;
 mod builder;
@@ -77,7 +79,8 @@ pub struct Semantic<'a> {
     classes: ClassTable,
 
     /// Parsed comments.
-    trivias: Trivias,
+    comments: &'a oxc_allocator::Vec<'a, Comment>,
+    irregular_whitespaces: Box<[Span]>,
 
     module_record: Arc<ModuleRecord>,
 
@@ -128,9 +131,28 @@ impl<'a> Semantic<'a> {
         &mut self.scopes
     }
 
+    pub fn set_irregular_whitespaces(&mut self, irregular_whitespaces: Box<[Span]>) {
+        self.irregular_whitespaces = irregular_whitespaces;
+    }
+
     /// Trivias (comments) found while parsing
-    pub fn trivias(&self) -> &Trivias {
-        &self.trivias
+    pub fn comments(&self) -> &[Comment] {
+        self.comments
+    }
+
+    pub fn comments_range<R>(&self, range: R) -> CommentsRange<'_>
+    where
+        R: RangeBounds<u32>,
+    {
+        comments_range(self.comments, range)
+    }
+
+    pub fn has_comments_between(&self, span: Span) -> bool {
+        has_comments_between(self.comments, span)
+    }
+
+    pub fn irregular_whitespaces(&self) -> &[Span] {
+        &self.irregular_whitespaces
     }
 
     /// Parsed [`JSDoc`] comments.
@@ -230,8 +252,7 @@ mod tests {
     ) -> Semantic<'s> {
         let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
         assert!(parse.errors.is_empty());
-        let program = allocator.alloc(parse.program);
-        let semantic = SemanticBuilder::new(source).build(program);
+        let semantic = SemanticBuilder::new().build(&parse.program);
         assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
         semantic.semantic
     }
@@ -344,9 +365,8 @@ mod tests {
             // assignment expressions count as read-write
             (SourceType::default(), "let a = 1, b; b = a += 5", ReferenceFlags::read_write()),
             (SourceType::default(), "let a = 1; a += 5", ReferenceFlags::read_write()),
-            // note: we consider a to be written, and the read of `1` propagates upwards
-            (SourceType::default(), "let a, b; b = a = 1", ReferenceFlags::read_write()),
-            (SourceType::default(), "let a, b; b = (a = 1)", ReferenceFlags::read_write()),
+            (SourceType::default(), "let a, b; b = a = 1", ReferenceFlags::write()),
+            (SourceType::default(), "let a, b; b = (a = 1)", ReferenceFlags::write()),
             (SourceType::default(), "let a, b, c; b = c = a", ReferenceFlags::read()),
             // sequences return last read_write in sequence
             (SourceType::default(), "let a, b; b = (0, a++)", ReferenceFlags::read_write()),
@@ -383,12 +403,11 @@ mod tests {
             // least, or now)
             (SourceType::default(), "let a, b; b = (a, 0)", ReferenceFlags::read()),
             (SourceType::default(), "let a, b; b = (--a, 0)", ReferenceFlags::read_write()),
-            // other reads after a is written
-            // a = 1 writes, but the CallExpression reads the rhs (1) so a isn't read
             (
                 SourceType::default(),
                 "let a; function foo(a) { return a }; foo(a = 1)",
-                ReferenceFlags::read_write(),
+                //                                        ^ write
+                ReferenceFlags::write(),
             ),
             // member expression
             (SourceType::default(), "let a; a.b = 1", ReferenceFlags::read()),
@@ -396,14 +415,16 @@ mod tests {
             (
                 SourceType::default(),
                 "let a; let b; let c; b[c[a = c['a']] = 'c'] = 'b'",
-                ReferenceFlags::read_write(),
+                //                        ^ write
+                ReferenceFlags::write(),
             ),
             (
                 SourceType::default(),
                 "let a; let b; let c; a[c[b = c['a']] = 'c'] = 'b'",
                 ReferenceFlags::read(),
             ),
-            (SourceType::default(), "console.log;let a=0;a++", ReferenceFlags::write()),
+            (SourceType::default(), "console.log;let a=0;a++", ReferenceFlags::read_write()),
+            //                                           ^^^ UpdateExpression is always a read | write
             // typescript
             (typescript, "let a: number = 1; (a as any) = true", ReferenceFlags::write()),
             (typescript, "let a: number = 1; a = true as any", ReferenceFlags::write()),

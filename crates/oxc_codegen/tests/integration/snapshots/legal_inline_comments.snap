@@ -1,0 +1,115 @@
+---
+source: crates/oxc_codegen/tests/integration/main.rs
+snapshot_kind: text
+---
+########## 0
+/* @license */
+/* @license */
+foo;bar;
+----------
+/* @license */
+/* @license */
+foo;
+bar;
+
+########## 1
+/* @license */
+/* @preserve */
+foo;bar;
+----------
+/* @license */
+/* @preserve */
+foo;
+bar;
+
+########## 2
+/* @license */
+//! KEEP
+foo;bar;
+----------
+/* @license */
+//! KEEP
+foo;
+bar;
+
+########## 3
+/* @license */
+/*! KEEP */
+foo;bar;
+----------
+/* @license */
+/*! KEEP */
+foo;
+bar;
+
+########## 4
+/* @license *//*! KEEP */
+foo;bar;
+----------
+/* @license */
+/*! KEEP */
+foo;
+bar;
+
+########## 5
+function () {
+    /*
+    * @license
+    * Copyright notice 2
+    */
+    bar;
+}
+----------
+function() {
+	/*
+	* @license
+	* Copyright notice 2
+	*/
+	bar;
+}
+
+########## 6
+function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function () { } }
+----------
+function bar() {
+	var foo;
+	/*! #__NO_SIDE_EFFECTS__ */ function() {}
+}
+
+########## 7
+function foo() {
+	(() => {
+		/**
+		 * @preserve
+		 */
+	})();
+	/**
+	 * @preserve
+	 */
+}
+/**
+ * @preserve
+ */
+----------
+function foo() {
+	(() => {
+		/**
+		* @preserve
+		*/
+	})();
+	/**
+	* @preserve
+	*/
+}
+/**
+* @preserve
+*/
+########## 8
+/**
+* @preserve
+*/
+
+----------
+/**
+* @preserve
+*/

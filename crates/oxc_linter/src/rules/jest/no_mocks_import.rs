@@ -13,7 +13,7 @@ fn no_mocks_import_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-mocks-import.md>
+/// <https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/docs/rules/no-mocks-import.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoMocksImport;
 
@@ -48,8 +48,8 @@ impl Rule for NoMocksImport {
             return;
         };
 
-        for reference_id in require_reference_ids {
-            let reference = ctx.symbols().get_reference(*reference_id);
+        for &reference_id in require_reference_ids {
+            let reference = ctx.symbols().get_reference(reference_id);
             let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else {
                 return;
             };

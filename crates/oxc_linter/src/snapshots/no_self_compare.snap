@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-self-compare): Both sides of this comparison are exactly the same
    ╭─[no_self_compare.tsx:1:5]

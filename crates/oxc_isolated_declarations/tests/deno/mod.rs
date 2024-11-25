@@ -1,4 +1,4 @@
-//! Copy from <https://github.com/denoland/deno_graph/blob/main/src/fast_check/transform_dts.rs#L932-#L1532>
+//! Copy from <https://github.com/denoland/deno_graph/blob/0.84.0/src/fast_check/transform_dts.rs#L932-#L1532>
 //! Make some changes to conform to the Isolated Declarations output
 
 #[cfg(test)]
@@ -15,14 +15,12 @@ mod tests {
         let ret = Parser::new(&allocator, source, source_type).parse();
         let ret = IsolatedDeclarations::new(
             &allocator,
-            source,
-            &ret.trivias,
             IsolatedDeclarationsOptions { strip_internal: true },
         )
         .build(&ret.program);
-        let actual = CodeGenerator::new().build(&ret.program).source_text;
+        let actual = CodeGenerator::new().build(&ret.program).code;
         let expected_program = Parser::new(&allocator, expected, source_type).parse().program;
-        let expected = CodeGenerator::new().build(&expected_program).source_text;
+        let expected = CodeGenerator::new().build(&expected_program).code;
         assert_eq!(actual.trim(), expected.trim());
     }
 

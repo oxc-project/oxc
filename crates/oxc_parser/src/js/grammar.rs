@@ -15,13 +15,11 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTarget<'a> {
         match expr {
             Expression::ArrayExpression(array_expr) => {
                 ArrayAssignmentTarget::cover(array_expr.unbox(), p)
-                    .map(|pat| p.ast.alloc(pat))
-                    .map(AssignmentTarget::ArrayAssignmentTarget)
+                    .map(|pat| AssignmentTarget::ArrayAssignmentTarget(p.alloc(pat)))
             }
             Expression::ObjectExpression(object_expr) => {
                 ObjectAssignmentTarget::cover(object_expr.unbox(), p)
-                    .map(|pat| p.ast.alloc(pat))
-                    .map(AssignmentTarget::ObjectAssignmentTarget)
+                    .map(|pat| AssignmentTarget::ObjectAssignmentTarget(p.alloc(pat)))
             }
             _ => SimpleAssignmentTarget::cover(expr, p).map(AssignmentTarget::from),
         }
@@ -103,7 +101,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTargetMaybeDefault<'a> {
         match expr {
             Expression::AssignmentExpression(assignment_expr) => {
                 let target = AssignmentTargetWithDefault::cover(assignment_expr.unbox(), p)?;
-                Ok(AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(p.ast.alloc(target)))
+                Ok(AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(p.alloc(target)))
             }
             expr => {
                 let target = AssignmentTarget::cover(expr, p)?;
@@ -154,17 +152,12 @@ impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
             let binding = match property.key {
                 PropertyKey::StaticIdentifier(ident) => {
                     let ident = ident.unbox();
-                    IdentifierReference::new(ident.span, ident.name)
+                    p.ast.identifier_reference(ident.span, ident.name)
                 }
                 _ => return Err(p.unexpected()),
             };
             // convert `CoverInitializedName`
-            let init = match property.init {
-                Some(Expression::AssignmentExpression(assignment_expr)) => {
-                    Some(assignment_expr.unbox().right)
-                }
-                _ => None,
-            };
+            let init = p.state.cover_initialized_name.remove(&property.span.start).map(|e| e.right);
             Ok(p.ast.assignment_target_property_assignment_target_property_identifier(
                 property.span,
                 binding,

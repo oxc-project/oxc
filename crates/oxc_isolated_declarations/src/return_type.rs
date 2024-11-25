@@ -1,5 +1,6 @@
 use std::cell::Cell;
 
+use oxc_allocator::CloneIn;
 use oxc_ast::{
     ast::{
         ArrowFunctionExpression, BindingIdentifier, Expression, Function, FunctionBody,
@@ -113,7 +114,7 @@ impl<'a> FunctionReturnType<'a> {
 
             let types = transformer
                 .ast
-                .vec_from_iter([expr_type, transformer.ast.ts_type_undefined_keyword(SPAN)]);
+                .vec_from_array([expr_type, transformer.ast.ts_type_undefined_keyword(SPAN)]);
             expr_type = transformer.ast.ts_type_union_type(SPAN, types);
         }
         Some(expr_type)
@@ -162,7 +163,7 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
                 return;
             }
         }
-        // SAFETY: `ast.copy` is unsound! We need to fix.
-        self.return_expression = Some(unsafe { self.ast.copy(&stmt.argument) });
+
+        self.return_expression = Some(stmt.argument.clone_in(self.ast.allocator));
     }
 }

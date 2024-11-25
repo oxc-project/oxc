@@ -1,11 +1,8 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expression/self-reference-super.ts
+snapshot_kind: text
 ---
-================================================================================
-SCOPES
-================================================================================
-
 [
   {
     "children": [
@@ -25,7 +22,7 @@ SCOPES
                 "flags": "ReferenceFlags(Read)",
                 "id": 0,
                 "name": "A",
-                "node_id": 7
+                "node_id": 6
               }
             ]
           }
@@ -46,9 +43,3 @@ SCOPES
     ]
   }
 ]
-
-================================================================================
-CONFORMANCE
-================================================================================
-
-All tests passed.

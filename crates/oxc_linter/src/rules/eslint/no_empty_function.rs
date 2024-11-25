@@ -65,7 +65,7 @@ impl Rule for NoEmptyFunction {
         let AstKind::FunctionBody(fb) = node.kind() else {
             return;
         };
-        if fb.is_empty() && !ctx.semantic().trivias().has_comments_between(fb.span) {
+        if fb.is_empty() && !ctx.semantic().has_comments_between(fb.span) {
             let (kind, fn_name) = get_function_name_and_kind(node, ctx);
             ctx.diagnostic(no_empty_function_diagnostic(fb.span, kind, fn_name));
         }
@@ -76,7 +76,7 @@ fn get_function_name_and_kind<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) -> (&'static str, Option<Cow<'a, str>>) {
-    for parent in ctx.nodes().iter_parents(node.id()).skip(1).map(AstNode::kind) {
+    for parent in ctx.nodes().ancestor_kinds(node.id()).skip(1) {
         match parent {
             AstKind::Function(f) => {
                 if let Some(name) = f.name() {

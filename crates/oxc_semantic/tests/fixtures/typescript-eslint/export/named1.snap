@@ -2,10 +2,6 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/named1.ts
 ---
-================================================================================
-SCOPES
-================================================================================
-
 [
   {
     "children": [],
@@ -14,7 +10,7 @@ SCOPES
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | Export)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "x",
         "node": "VariableDeclarator(x)",
@@ -23,9 +19,3 @@ SCOPES
     ]
   }
 ]
-
-================================================================================
-CONFORMANCE
-================================================================================
-
-All tests passed.

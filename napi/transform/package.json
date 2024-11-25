@@ -3,10 +3,7 @@
   "private": true,
   "scripts": {
     "build": "napi build --platform --release",
-    "test": "node test.mjs"
-  },
-  "engines": {
-    "node": ">=14.*"
+    "test": "vitest --typecheck run ./test"
   },
   "napi": {
     "binaryName": "transform",

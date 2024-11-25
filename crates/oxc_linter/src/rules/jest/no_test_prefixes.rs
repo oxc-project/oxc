@@ -7,8 +7,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call, JestGeneralFnKind,
-        KnownMemberExpressionProperty, ParsedGeneralJestFnCall, PossibleJestNode,
+        parse_general_jest_fn_call, JestGeneralFnKind, KnownMemberExpressionProperty,
+        ParsedGeneralJestFnCall, PossibleJestNode,
     },
 };
 
@@ -42,7 +42,7 @@ declare_oxc_lint!(
     /// xdescribe('foo'); // invalid
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-test-prefixes.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-test-prefixes.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json
@@ -58,10 +58,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoTestPrefixes {
-    fn run_once(&self, ctx: &LintContext) {
-        for node in &collect_possible_jest_call_node(ctx) {
-            run(node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        run(jest_node, ctx);
     }
 }
 
@@ -204,8 +206,19 @@ fn test() {
     pass.extend(pass_vitest);
     fail.extend(fail_vitest);
 
+    let fix = vec![
+        ("xdescribe('foo', () => {})", "describe.skip('foo', () => {})"),
+        ("fdescribe('foo', () => {})", "describe.only('foo', () => {})"),
+        ("xtest('foo', () => {})", "test.skip('foo', () => {})"),
+        // NOTE(@DonIsaac): is this intentional?
+        // ("ftest('foo', () => {})", "test.only('foo', () => {})"),
+        ("xit('foo', () => {})", "it.skip('foo', () => {})"),
+        ("fit('foo', () => {})", "it.only('foo', () => {})"),
+    ];
+
     Tester::new(NoTestPrefixes::NAME, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

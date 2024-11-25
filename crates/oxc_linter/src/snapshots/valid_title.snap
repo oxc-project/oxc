@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-jest(valid-title): "correct is not allowed in test title"
    ╭─[valid_title.tsx:1:6]

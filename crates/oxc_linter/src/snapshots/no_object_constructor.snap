@@ -1,0 +1,330 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:1]
+ 1 │ new Object
+   · ──────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:1]
+ 1 │ Object()
+   · ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:18]
+ 1 │ const fn = () => Object();
+   ·                  ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:1]
+ 1 │ Object() instanceof Object;
+   · ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:13]
+ 1 │ const obj = Object?.();
+   ·             ──────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:2]
+ 1 │ (new Object() instanceof Object);
+   ·  ────────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:1]
+ 1 │ Object()
+   · ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ foo()
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ var yield = bar.yield
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ var foo = { bar: baz }
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ <foo />
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ <foo></foo>
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:1]
+ 1 │ Object()
+   · ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ {}
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ function foo() {}
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ class Foo {}
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:6]
+ 1 │ foo: Object();
+   ·      ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:7]
+ 1 │ foo();Object();
+   ·       ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:3]
+ 1 │ { Object(); }
+   ·   ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:8]
+ 1 │ if (a) Object();
+   ·        ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:14]
+ 1 │ if (a); else Object();
+   ·              ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:11]
+ 1 │ while (a) Object();
+   ·           ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:4]
+ 1 │ do Object(); while (a);
+   ·    ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:30]
+ 1 │ for (let i = 0; i < 10; i++) Object();
+   ·                              ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:25]
+ 1 │ for (const prop in obj) Object();
+   ·                         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:33]
+ 1 │ for (const element of iterable) Object();
+   ·                                 ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:12]
+ 1 │ with (obj) Object();
+   ·            ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ const foo = () => {}
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ a++
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ a--
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:3:13]
+ 2 │             return
+ 3 │             Object();
+   ·             ────────
+ 4 │         }
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:3:13]
+ 2 │             yield
+ 3 │             Object();
+   ·             ────────
+ 4 │         }
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:1:17]
+ 1 │ do {} while (a) Object()
+   ·                 ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ debugger
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:3:13]
+ 2 │             break
+ 3 │             Object()
+   ·             ────────
+ 4 │         }
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:3:13]
+ 2 │             continue
+ 3 │             Object()
+   ·             ────────
+ 4 │         }
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ foo: break foo
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ foo: while (true) continue foo
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:3:9]
+ 2 │         export { foo }
+ 3 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ export { foo } from 'bar'
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:9]
+ 1 │ export * as foo from 'bar'
+ 2 │         Object()
+   ·         ────────
+   ╰────
+  help: Use object literal notation {} instead
+
+  × Unterminated string
+   ╭─[no_object_constructor.tsx:1:17]
+ 1 │ import foo from 'bar
+   ·                 ─────
+ 2 │          Object()
+   ╰────
+
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:5:13]
+ 4 │                 break yield
+ 5 │             new Object();
+   ·             ────────────
+ 6 │         }
+   ╰────
+  help: Use object literal notation {} instead

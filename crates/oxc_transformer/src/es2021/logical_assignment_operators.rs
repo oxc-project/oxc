@@ -1,6 +1,7 @@
 //! ES2021: Logical Assignment Operators
 //!
-//! This plugin transform logical assignment operators `&&=`, `||=`, and `??=` to a series of logical expressions.
+//! This plugin transforms logical assignment operators (`&&=`, `||=`, `??=`)
+//! to a series of logical expressions.
 //!
 //! > This plugin is included in `preset-env`, in ES2021
 //!
@@ -50,7 +51,7 @@
 //! Implementation based on [@babel/plugin-transform-logical-assignment-operators](https://babel.dev/docs/babel-plugin-transform-logical-assignment-operators).
 //!
 //! ## References:
-//! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-logical-assignment-operators>
+//! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-plugin-transform-logical-assignment-operators>
 //! * Logical Assignment TC39 proposal: <https://github.com/tc39/proposal-logical-assignment>
 
 use oxc_allocator::CloneIn;
@@ -58,7 +59,7 @@ use oxc_ast::ast::*;
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
@@ -128,14 +129,14 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         ident: &IdentifierReference<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, AssignmentTarget<'a>) {
-        let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
+        let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id());
         *reference.flags_mut() = ReferenceFlags::Read;
-        let left_expr = ctx.ast.expression_from_identifier_reference(ident.clone());
+        let symbol_id = reference.symbol_id();
+        let left_expr = Expression::Identifier(ctx.alloc(ident.clone()));
 
-        let assign_target =
-            AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                ctx.clone_identifier_reference(ident, ReferenceFlags::read_write()),
-            ));
+        let ident =
+            ctx.create_ident_reference(SPAN, ident.name.clone(), symbol_id, ReferenceFlags::Write);
+        let assign_target = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident));
         (left_expr, assign_target)
     }
 
@@ -147,10 +148,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         if let Some(ident) = self.maybe_generate_memoised(&static_expr.object, ctx) {
             // (_o = o).a
             let right = ctx.ast.move_expression(&mut static_expr.object);
-            let target =
-                AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                    ctx.clone_identifier_reference(&ident, ReferenceFlags::read_write()),
-                ));
+            let target = ident.create_write_target(ctx);
             let object =
                 ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, right);
             let left_expr = Expression::from(ctx.ast.member_expression_static(
@@ -161,18 +159,13 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             ));
 
             // (_o.a = 1)
-            let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
-            *reference.flags_mut() = ReferenceFlags::Read;
-
             let assign_expr = ctx.ast.member_expression_static(
                 SPAN,
-                ctx.ast.expression_from_identifier_reference(ident),
+                ident.create_read_expression(ctx),
                 static_expr.property.clone_in(ctx.ast.allocator),
                 false,
             );
-            let assign_target = AssignmentTarget::from(
-                ctx.ast.simple_assignment_target_member_expression(assign_expr),
-            );
+            let assign_target = AssignmentTarget::from(assign_expr);
 
             (left_expr, assign_target)
         } else {
@@ -181,16 +174,13 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
 
             // TODO: We should use static_expr.clone_in instead of cloning the properties,
             // but currently clone_in will get rid of IdentifierReference's reference_id
-            let static_expr_cloned = ctx.ast.static_member_expression(
+            let static_expr_cloned = ctx.ast.alloc_static_member_expression(
                 static_expr.span,
                 Self::clone_expression(&object, ctx),
                 static_expr.property.clone_in(ctx.ast.allocator),
                 static_expr.optional,
             );
-
-            let left_expr = ctx
-                .ast
-                .expression_member(ctx.ast.member_expression_from_static(static_expr_cloned));
+            let left_expr = Expression::StaticMemberExpression(static_expr_cloned);
 
             let member_expr_moved = ctx.ast.member_expression_static(
                 static_expr.span,
@@ -199,9 +189,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
                 static_expr.optional,
             );
 
-            let assign_target = AssignmentTarget::from(
-                ctx.ast.simple_assignment_target_member_expression(member_expr_moved),
-            );
+            let assign_target = AssignmentTarget::from(member_expr_moved);
 
             (left_expr, assign_target)
         }
@@ -215,10 +203,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         if let Some(ident) = self.maybe_generate_memoised(&computed_expr.object, ctx) {
             // (_o = object)
             let right = ctx.ast.move_expression(&mut computed_expr.object);
-            let target =
-                AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                    ctx.clone_identifier_reference(&ident, ReferenceFlags::read_write()),
-                ));
+            let target = ident.create_write_target(ctx);
             let object =
                 ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, right);
 
@@ -227,16 +212,11 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             // _b = expression
             let property = self.maybe_generate_memoised(&expression, ctx);
 
-            if let Some(ref property) = property {
-                let left = AssignmentTarget::from(
-                    ctx.ast.simple_assignment_target_from_identifier_reference(
-                        ctx.clone_identifier_reference(property, ReferenceFlags::read_write()),
-                    ),
-                );
+            if let Some(property) = &property {
                 expression = ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    left,
+                    property.create_write_target(ctx),
                     expression,
                 );
             }
@@ -244,17 +224,10 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
             // _o[_b]
             let assign_target = AssignmentTarget::from(ctx.ast.member_expression_computed(
                 SPAN,
-                ctx.ast.expression_from_identifier_reference(
-                    ctx.clone_identifier_reference(&ident, ReferenceFlags::Read),
-                ),
+                ident.create_read_expression(ctx),
                 property.map_or_else(
                     || expression.clone_in(ctx.ast.allocator),
-                    |ident| {
-                        let reference =
-                            ctx.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
-                        *reference.flags_mut() = ReferenceFlags::Read;
-                        ctx.ast.expression_from_identifier_reference(ident)
-                    },
+                    |ident| ident.create_read_expression(ctx),
                 ),
                 false,
             ));
@@ -273,24 +246,16 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
 
             // TODO: ideally we should use computed_expr.clone_in instead of cloning the properties,
             // but currently clone_in will get rid of IdentifierReference's reference_id
-            let new_compute_expr = ctx.ast.computed_member_expression(
+            let new_compute_expr = ctx.ast.alloc_computed_member_expression(
                 computed_expr.span,
                 Self::clone_expression(&object, ctx),
                 {
                     // _key = ++key
                     if let Some(property_ident) = &property_ident {
-                        let left = AssignmentTarget::from(
-                            ctx.ast.simple_assignment_target_from_identifier_reference(
-                                ctx.clone_identifier_reference(
-                                    property_ident,
-                                    ReferenceFlags::read_write(),
-                                ),
-                            ),
-                        );
                         ctx.ast.expression_assignment(
                             SPAN,
                             AssignmentOperator::Assign,
-                            left,
+                            property_ident.create_write_target(ctx),
                             ctx.ast.move_expression(&mut expression),
                         )
                     } else {
@@ -300,21 +265,15 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
                 computed_expr.optional,
             );
 
-            let left_expr = ctx
-                .ast
-                .expression_member(ctx.ast.member_expression_from_computed(new_compute_expr));
+            let left_expr = Expression::ComputedMemberExpression(new_compute_expr);
 
             // obj[_key] = 1
-            let new_compute_expr = ctx.ast.computed_member_expression(
+            let new_compute_expr = ctx.ast.alloc_computed_member_expression(
                 computed_expr.span,
                 object,
                 {
                     if let Some(property_ident) = property_ident {
-                        let reference = ctx
-                            .symbols_mut()
-                            .get_reference_mut(property_ident.reference_id().unwrap());
-                        *reference.flags_mut() = ReferenceFlags::Read;
-                        ctx.ast.expression_from_identifier_reference(property_ident)
+                        property_ident.create_read_expression(ctx)
                     } else {
                         expression
                     }
@@ -322,10 +281,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
                 computed_expr.optional,
             );
 
-            let assign_target =
-                AssignmentTarget::from(ctx.ast.simple_assignment_target_member_expression(
-                    ctx.ast.member_expression_from_computed(new_compute_expr),
-                ));
+            let assign_target = AssignmentTarget::ComputedMemberExpression(new_compute_expr);
 
             (left_expr, assign_target)
         }
@@ -333,14 +289,15 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
 
     /// Clone an expression
     ///
-    /// If it is an identifier, clone the identifier by [TraverseCtx::clone_identifier_reference], otherwise, use [CloneIn].
+    /// If it is an identifier, clone the identifier via [MaybeBoundIdentifier], otherwise, use [CloneIn].
     ///
     /// TODO: remove this once <https://github.com/oxc-project/oxc/issues/4804> is resolved.
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
-            Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
-                ctx.clone_identifier_reference(ident, ReferenceFlags::Read),
-            ),
+            Expression::Identifier(ident) => {
+                let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
+                binding.create_spanned_read_expression(ident.span, ctx)
+            }
             _ => expr.clone_in(ctx.ast.allocator),
         }
     }
@@ -349,19 +306,16 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         &mut self,
         expr: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<IdentifierReference<'a>> {
+    ) -> Option<BoundIdentifier<'a>> {
         if ctx.is_static(expr) {
             return None;
         }
 
-        let symbol_id = ctx
-            .generate_uid_in_current_scope_based_on_node(expr, SymbolFlags::FunctionScopedVariable);
-        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-
         // var _name;
-        self.ctx.var_declarations.insert(symbol_name.clone(), symbol_id, None, ctx);
+        let binding = ctx
+            .generate_uid_in_current_scope_based_on_node(expr, SymbolFlags::FunctionScopedVariable);
+        self.ctx.var_declarations.insert_var(&binding, None, ctx);
 
-        // _name = name
-        Some(ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Write))
+        Some(binding)
     }
 }

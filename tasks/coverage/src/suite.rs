@@ -10,7 +10,6 @@ use std::{
 use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
-use futures::future::join_all;
 use oxc::{
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
     span::SourceType,
@@ -57,26 +56,19 @@ pub trait Suite<T: Case> {
         self.run_coverage(name, args);
     }
 
-    fn run_async(&mut self, name: &str, args: &AppArgs) {
-        let rt = Runtime::new().unwrap();
-        self.read_test_cases(name, args);
-
-        let cases = self.get_test_cases_mut();
-
-        rt.block_on(async {
-            join_all(cases.iter_mut().map(T::run_async)).await;
-        });
-
-        self.run_coverage(name, args);
+    fn run_async(&mut self, args: &AppArgs) {
+        use futures::{stream, StreamExt};
+        self.read_test_cases("runtime", args);
+        let cases = self.get_test_cases_mut().iter_mut().map(T::run_async);
+        Runtime::new().unwrap().block_on(stream::iter(cases).buffer_unordered(100).count());
+        self.run_coverage("runtime", args);
+        let _ = oxc_tasks_common::agent().delete("http://localhost:32055").call();
     }
 
     fn run_coverage(&self, name: &str, args: &AppArgs) {
         let report = self.coverage_report();
-
         let mut out = stdout();
-
         self.print_coverage(name, args, &report, &mut out).unwrap();
-
         if args.filter.is_none() {
             self.snapshot_errors(name, &report).unwrap();
         }
@@ -293,7 +285,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
     /// Mark strict mode as always strict
     ///
-    /// See <https://github.com/tc39/test262/blob/main/INTERPRETING.md#strict-mode>
+    /// See <https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/INTERPRETING.md#strict-mode>
     fn always_strict(&self) -> bool {
         false
     }

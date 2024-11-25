@@ -239,3 +239,25 @@ fn get_child_ids() {
     let child_scope_ids = scopes.get_child_ids(child_scope_ids[0]);
     assert!(child_scope_ids.is_empty());
 }
+
+#[test]
+fn test_ts_conditional_types() {
+    SemanticTester::ts("type A<T> = T extends string ? T : false;")
+        .has_some_symbol("T")
+        .has_number_of_references(2)
+        .test();
+
+    // Conditional types create a new scope after check_type.
+    SemanticTester::ts(
+        "type S<A> = A extends (infer B extends number ? string : never) ? B : false;",
+    )
+    .has_some_symbol("B")
+    .has_number_of_references(1)
+    .test();
+
+    // Inferred type parameter is only available within true branch
+    SemanticTester::ts("type S<A> = A extends infer R ? never : R")
+        .has_some_symbol("R")
+        .has_number_of_references(0)
+        .test();
+}

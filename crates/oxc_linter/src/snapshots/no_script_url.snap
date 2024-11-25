@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-script-url): Unexpected `javascript:` url
    ╭─[no_script_url.tsx:1:9]

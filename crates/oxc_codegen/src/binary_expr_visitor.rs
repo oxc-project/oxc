@@ -46,6 +46,12 @@ pub enum BinaryishOperator {
     Logical(LogicalOperator),
 }
 
+impl BinaryishOperator {
+    fn is_binary(self) -> bool {
+        matches!(self, Self::Binary(_))
+    }
+}
+
 fn print_binary_operator(op: BinaryOperator, p: &mut Codegen) {
     let operator = op.as_str();
     if op.is_keyword() {
@@ -148,14 +154,20 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
     pub fn check_and_prepare(&mut self, p: &mut Codegen) -> bool {
         let e = self.e;
-        self.operator = e.operator();
 
-        self.wrap = self.precedence >= self.operator.precedence()
+        // We don't need to print parentheses if both sides use the same logical operator
+        // For example: `(a     &&     b)         && c` should be printed as `a && b && c`
+        //                      ^^  e.operator()  ^^ self.operator
+        let precedence_check = self.precedence >= e.operator().precedence()
+            && (self.operator.is_binary() || self.precedence != self.operator.precedence());
+
+        self.operator = e.operator();
+        self.wrap = precedence_check
             || (self.operator == BinaryishOperator::Binary(BinaryOperator::In)
                 && self.ctx.intersects(Context::FORBID_IN));
 
         if self.wrap {
-            p.print_char(b'(');
+            p.print_ascii_byte(b'(');
             self.ctx &= Context::FORBID_IN.not();
         }
 
@@ -184,11 +196,22 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 }
             }
             BinaryishOperator::Binary(BinaryOperator::Exponential) => {
-                if matches!(e.left(), Expression::UnaryExpression(_)) {
+                // Negative numbers are printed using a unary operator
+                if matches!(
+                    e.left(),
+                    Expression::UnaryExpression(_) | Expression::NumericLiteral(_)
+                ) {
                     self.left_precedence = Precedence::Call;
                 }
             }
+
             _ => {}
+        }
+
+        if let Expression::PrivateInExpression(e) = self.e.left() {
+            e.gen_expr(p, Precedence::Lowest, Context::empty());
+            self.visit_right_and_finish(p);
+            return false;
         }
 
         true
@@ -200,7 +223,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
         p.print_soft_space();
         self.e.right().gen_expr(p, self.right_precedence, self.ctx & Context::FORBID_IN);
         if self.wrap {
-            p.print_char(b')');
+            p.print_ascii_byte(b')');
         }
     }
 }

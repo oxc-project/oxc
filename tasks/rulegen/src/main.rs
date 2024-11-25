@@ -23,6 +23,7 @@ use ureq::Response;
 
 mod json;
 mod template;
+mod util;
 
 const ESLINT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint/eslint/main/tests/lib/rules";
@@ -34,6 +35,9 @@ const TYPESCRIPT_ESLINT_TEST_PATH: &str = "https://raw.githubusercontent.com/typ
 
 const UNICORN_TEST_PATH: &str =
     "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/test";
+
+const IMPORT_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/import-js/eslint-plugin-import/main/tests/src/rules";
 
 const REACT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-react/master/tests/lib/rules";
@@ -52,9 +56,6 @@ const REACT_PERF_TEST_PATH: &str =
 
 const NODE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint-community/eslint-plugin-n/master/tests/lib/rules";
-
-const TREE_SHAKING_PATH: &str =
-    "https://raw.githubusercontent.com/lukastaegert/eslint-plugin-tree-shaking/master/src/rules";
 
 const PROMISE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint-community/eslint-plugin-promise/main/__tests__";
@@ -172,6 +173,17 @@ fn format_code_snippet(code: &str) -> String {
     format!("r#\"{}\"#", code.replace("\\\"", "\""))
 }
 
+// TODO: handle `noFormat`(in typescript-eslint)
+fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Option<String> {
+    if tag_expr.tag.is_specific_member_access("String", "raw") {
+        tag_expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
+    } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
+        tag_expr.quasi.quasis.first().map(|quasi| util::dedent(&quasi.value.raw).to_string())
+    } else {
+        tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
+    }
+}
+
 impl<'a> Visit<'a> for TestCase {
     fn visit_expression(&mut self, expr: &Expression<'a>) {
         match expr {
@@ -212,19 +224,7 @@ impl<'a> Visit<'a> for TestCase {
                         self.code = match &prop.value {
                             Expression::StringLiteral(s) => Some(s.value.to_string()),
                             Expression::TaggedTemplateExpression(tag_expr) => {
-                                // If it is a raw string like String.raw`something`, then we import that as a Rust raw string literal
-                                if tag_expr.tag.is_specific_member_access("String", "raw") {
-                                    tag_expr
-                                        .quasi
-                                        .quasis
-                                        .first()
-                                        .map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
-                                } else {
-                                    // There are `dedent`(in eslint-plugin-jest), `outdent`(in eslint-plugin-unicorn) and `noFormat`(in typescript-eslint)
-                                    // are known to be used to format test cases for their own purposes.
-                                    // We read the quasi of tagged template directly also for the future usage.
-                                    tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
-                                }
+                                format_tagged_template_expression(tag_expr)
                             }
                             Expression::TemplateLiteral(tag_expr) => {
                                 tag_expr.quasi().map(|quasi| quasi.to_string())
@@ -265,7 +265,7 @@ impl<'a> Visit<'a> for TestCase {
                         self.output = match &prop.value {
                             Expression::StringLiteral(s) => Some(s.value.to_string()),
                             Expression::TaggedTemplateExpression(tag_expr) => {
-                                tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
+                                format_tagged_template_expression(tag_expr)
                             }
                             Expression::TemplateLiteral(tag_expr) => {
                                 tag_expr.quasi().map(|quasi| quasi.to_string())
@@ -313,16 +313,7 @@ impl<'a> Visit<'a> for TestCase {
     }
 
     fn visit_tagged_template_expression(&mut self, expr: &TaggedTemplateExpression<'a>) {
-        if expr.tag.is_specific_id("dedent") || expr.tag.is_specific_id("outdent") {
-            return;
-        }
-
-        // If it is a raw string like String.raw`something`, then we import that as a Rust raw string literal
-        self.code = if expr.tag.is_specific_member_access("String", "raw") {
-            expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
-        } else {
-            expr.quasi.quasi().map(|quasi| quasi.to_string())
-        };
+        self.code = format_tagged_template_expression(expr);
         self.config = None;
     }
 }
@@ -596,6 +587,7 @@ pub enum RuleKind {
     Jest,
     Typescript,
     Unicorn,
+    Import,
     React,
     ReactPerf,
     JSXA11y,
@@ -603,7 +595,6 @@ pub enum RuleKind {
     NextJS,
     JSDoc,
     Node,
-    TreeShaking,
     Promise,
     Vitest,
     Security,
@@ -615,6 +606,7 @@ impl RuleKind {
             "jest" => Self::Jest,
             "typescript" => Self::Typescript,
             "unicorn" => Self::Unicorn,
+            "import" => Self::Import,
             "react" => Self::React,
             "react-perf" => Self::ReactPerf,
             "jsx-a11y" => Self::JSXA11y,
@@ -622,7 +614,6 @@ impl RuleKind {
             "nextjs" => Self::NextJS,
             "jsdoc" => Self::JSDoc,
             "n" => Self::Node,
-            "tree-shaking" => Self::TreeShaking,
             "promise" => Self::Promise,
             "vitest" => Self::Vitest,
             "security" => Self::Security,
@@ -638,6 +629,7 @@ impl Display for RuleKind {
             Self::Typescript => write!(f, "typescript-eslint"),
             Self::Jest => write!(f, "eslint-plugin-jest"),
             Self::Unicorn => write!(f, "eslint-plugin-unicorn"),
+            Self::Import => write!(f, "eslint-plugin-import"),
             Self::React => write!(f, "eslint-plugin-react"),
             Self::ReactPerf => write!(f, "eslint-plugin-react-perf"),
             Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
@@ -645,7 +637,6 @@ impl Display for RuleKind {
             Self::NextJS => write!(f, "eslint-plugin-next"),
             Self::JSDoc => write!(f, "eslint-plugin-jsdoc"),
             Self::Node => write!(f, "eslint-plugin-n"),
-            Self::TreeShaking => write!(f, "eslint-plugin-tree-shaking"),
             Self::Promise => write!(f, "eslint-plugin-promise"),
             Self::Vitest => write!(f, "eslint-plugin-vitest"),
             Self::Security => write!(f, "security"),
@@ -668,13 +659,13 @@ fn main() {
         RuleKind::Jest => format!("{JEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Typescript => format!("{TYPESCRIPT_ESLINT_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Unicorn => format!("{UNICORN_TEST_PATH}/{kebab_rule_name}.mjs"),
+        RuleKind::Import => format!("{IMPORT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::React => format!("{REACT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::ReactPerf => format!("{REACT_PERF_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::JSXA11y => format!("{JSX_A11Y_TEST_PATH}/{kebab_rule_name}-test.js"),
         RuleKind::NextJS => format!("{NEXT_JS_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{camel_rule_name}.js"),
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
-        RuleKind::TreeShaking => format!("{TREE_SHAKING_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Oxc | RuleKind::Security => String::new(),
@@ -682,7 +673,7 @@ fn main() {
     let language = match rule_kind {
         RuleKind::Typescript | RuleKind::Oxc => "ts",
         RuleKind::NextJS => "tsx",
-        RuleKind::React | RuleKind::ReactPerf | RuleKind::JSXA11y | RuleKind::TreeShaking => "jsx",
+        RuleKind::React | RuleKind::ReactPerf | RuleKind::JSXA11y => "jsx",
         _ => "js",
     };
 
@@ -695,10 +686,8 @@ fn main() {
             let source_type = SourceType::from_path(rule_test_path).expect("incorrect {path:?}");
             let ret = Parser::new(&allocator, &body, source_type).parse();
 
-            let program = allocator.alloc(ret.program);
-
             let mut state = State::new(&body);
-            state.visit_program(program);
+            state.visit_program(&ret.program);
 
             let pass_cases = state.pass_cases();
             let fail_cases = state.fail_cases();
@@ -775,4 +764,92 @@ fn main() {
     if let Err(err) = template.render(rule_kind) {
         eprintln!("failed to render {rule_name} rule template: {err}");
     }
+
+    if let Err(err) = add_rules_entry(&context, rule_kind) {
+        eprintln!("failed to add {rule_name} to rules file: {err}");
+    }
+}
+
+/// Adds a module definition for the given rule to the `rules.rs` file, and adds the rule to the
+/// `declare_all_lint_rules!` macro block.
+fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std::error::Error>> {
+    let rules_path = "crates/oxc_linter/src/rules.rs";
+    let mut rules = std::fs::read_to_string(rules_path)?;
+
+    let mod_name = match rule_kind {
+        RuleKind::ESLint => "eslint",
+        RuleKind::Import => "import",
+        RuleKind::Typescript => "typescript",
+        RuleKind::Jest => "jest",
+        RuleKind::React => "react",
+        RuleKind::ReactPerf => "react_perf",
+        RuleKind::Unicorn => "unicorn",
+        RuleKind::JSDoc => "jsdoc",
+        RuleKind::JSXA11y => "jsx_a11y",
+        RuleKind::Oxc => "oxc",
+        RuleKind::NextJS => "nextjs",
+        RuleKind::Promise => "promise",
+        RuleKind::Vitest => "vitest",
+        RuleKind::Node => "node",
+        RuleKind::Security => "security",
+    };
+    let mod_def = format!("mod {mod_name}");
+    let Some(mod_start) = rules.find(&mod_def) else {
+        return Err(format!("failed to find '{mod_def}' in {rules_path}").into());
+    };
+    let mod_end = &rules[mod_start..]
+        .find("}\n")
+        .ok_or(format!("failed to find end of '{mod_def}' module in {rules_path}"))?;
+    let mod_rules = &rules[mod_start..(*mod_end + mod_start)];
+
+    // find the rule name (`pub mod xyz;`) that comes alphabetically before the new rule mod def,
+    // otherwise just append it to the mod.
+    let rule_mod_def = format!("pub mod {};", ctx.kebab_rule_name);
+    let rule_mod_def_start = mod_rules
+        .lines()
+        .filter_map(|line| line.split_once("pub mod ").map(|(_, rest)| rest))
+        .position(|rule_mod| rule_mod < &rule_mod_def)
+        .map(|i| i + 1)
+        .and_then(|i| rules[mod_start + i..].find("pub mod ").map(|j| i + j))
+        .ok_or(format!(
+            "failed to find where to insert the new rule mod def ({rule_mod_def}) in {rules_path}"
+        ))?;
+
+    rules.insert_str(
+        mod_start + rule_mod_def_start,
+        &format!("    pub mod {};\n", ctx.snake_rule_name),
+    );
+
+    // then, insert `{mod_name}::{rule_name};` in the `declare_all_lint_rules!` macro block
+    // in the correct position, alphabetically.
+    let declare_all_lint_rules_start = rules
+        .find("declare_all_lint_rules!")
+        .ok_or(format!("failed to find 'declare_all_lint_rules!' in {rules_path}"))?;
+    let rule_def = format!("{mod_name}::{};", ctx.snake_rule_name);
+    let rule_def_start = rules[declare_all_lint_rules_start..]
+        .lines()
+        .filter_map(|line| line.trim().split_once("::"))
+        .find_map(|(plugin, rule)| {
+            if plugin == mod_name && rule > &ctx.kebab_rule_name {
+                let def = format!("{plugin}::{rule}");
+                rules.find(&def)
+            } else {
+                None
+            }
+        })
+        .ok_or(format!(
+            "failed to find where to insert the new rule def ({rule_def}) in {rules_path}"
+        ))?;
+    rules.insert_str(
+        rule_def_start,
+        &format!(
+            "{mod_name}::{rule_name},\n    ",
+            mod_name = mod_name,
+            rule_name = ctx.snake_rule_name
+        ),
+    );
+
+    std::fs::write(rules_path, rules)?;
+
+    Ok(())
 }

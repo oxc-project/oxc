@@ -1,0 +1,1034 @@
+[
+  {
+    "name": "MemberExpressionLiterals",
+    "es": "ES5",
+    "babel": "transform-member-expression-literals",
+    "features": [
+      "Object/array literal extensions / Reserved words as property names"
+    ],
+    "targets": {
+      "chrome": "7",
+      "opera": "12",
+      "edge": "12",
+      "firefox": "2",
+      "safari": "5.1",
+      "node": "0.4",
+      "deno": "1",
+      "ie": "9",
+      "android": "4",
+      "ios": "6",
+      "samsung": "1",
+      "rhino": "1.7.13",
+      "opera_mobile": "12",
+      "electron": "0.20"
+    }
+  },
+  {
+    "name": "PropertyLiterals",
+    "es": "ES5",
+    "babel": "transform-property-literals",
+    "features": [
+      "Object/array literal extensions / Reserved words as property names"
+    ],
+    "targets": {
+      "chrome": "7",
+      "opera": "12",
+      "edge": "12",
+      "firefox": "2",
+      "safari": "5.1",
+      "node": "0.4",
+      "deno": "1",
+      "ie": "9",
+      "android": "4",
+      "ios": "6",
+      "samsung": "1",
+      "rhino": "1.7.13",
+      "opera_mobile": "12",
+      "electron": "0.20"
+    }
+  },
+  {
+    "name": "ReservedWords",
+    "es": "ES5",
+    "babel": "transform-reserved-words",
+    "features": [
+      "Miscellaneous / Unreserved words"
+    ],
+    "targets": {
+      "chrome": "13",
+      "opera": "10.50",
+      "edge": "12",
+      "firefox": "2",
+      "safari": "3.1",
+      "node": "0.6",
+      "deno": "1",
+      "ie": "9",
+      "android": "4.4",
+      "ios": "6",
+      "samsung": "1",
+      "rhino": "1.7.13",
+      "opera_mobile": "10.1",
+      "electron": "0.20"
+    }
+  },
+  {
+    "name": "Parameters",
+    "babel": "transform-parameters",
+    "features": [
+      "default function parameters",
+      "rest parameters",
+      "destructuring, parameters / aliased defaults, arrow function",
+      "destructuring, parameters / shorthand defaults, arrow function",
+      "destructuring, parameters / duplicate identifier"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "49",
+      "opera": "36",
+      "edge": "18",
+      "firefox": "53",
+      "safari": "16.3",
+      "node": "6",
+      "deno": "1",
+      "ios": "16.3",
+      "samsung": "5",
+      "opera_mobile": "36",
+      "electron": "0.37"
+    }
+  },
+  {
+    "name": "TemplateLiterals",
+    "babel": "transform-template-literals",
+    "features": [
+      "template literals"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "41",
+      "opera": "28",
+      "edge": "13",
+      "firefox": "34",
+      "safari": "13",
+      "node": "4",
+      "deno": "1",
+      "ios": "13",
+      "samsung": "3.4",
+      "opera_mobile": "28",
+      "electron": "0.21"
+    }
+  },
+  {
+    "name": "Literals",
+    "babel": "transform-literals",
+    "features": [
+      "Unicode code point escapes"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "44",
+      "opera": "31",
+      "edge": "12",
+      "firefox": "53",
+      "safari": "9",
+      "node": "4",
+      "deno": "1",
+      "ios": "9",
+      "samsung": "4",
+      "rhino": "1.7.15",
+      "opera_mobile": "32",
+      "electron": "0.30"
+    }
+  },
+  {
+    "name": "FunctionName",
+    "babel": "transform-function-name",
+    "features": [
+      "function \"name\" property"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "51",
+      "opera": "38",
+      "edge": "79",
+      "firefox": "53",
+      "safari": "10",
+      "node": "6.5",
+      "deno": "1",
+      "ios": "10",
+      "samsung": "5",
+      "opera_mobile": "41",
+      "electron": "1.2"
+    }
+  },
+  {
+    "name": "ArrowFunctions",
+    "babel": "transform-arrow-functions",
+    "features": [
+      "arrow functions / 0 parameters",
+      "arrow functions / 1 parameter, no brackets",
+      "arrow functions / multiple parameters",
+      "arrow functions / lexical \"this\" binding",
+      "arrow functions / \"this\" unchanged by call or apply",
+      "arrow functions / can't be bound, can be curried",
+      "arrow functions / lexical \"arguments\" binding",
+      "arrow functions / no line break between params and <code>=></code>",
+      "arrow functions / correct precedence",
+      "arrow functions / no \"prototype\" property"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "47",
+      "opera": "34",
+      "edge": "13",
+      "firefox": "43",
+      "safari": "10",
+      "node": "6",
+      "deno": "1",
+      "ios": "10",
+      "samsung": "5",
+      "rhino": "1.7.13",
+      "opera_mobile": "34",
+      "electron": "0.36"
+    }
+  },
+  {
+    "name": "BlockScopedFunctions",
+    "babel": "transform-block-scoped-functions",
+    "features": [
+      "block-level function declaration"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "41",
+      "opera": "28",
+      "edge": "12",
+      "firefox": "46",
+      "safari": "10",
+      "node": "4",
+      "deno": "1",
+      "ie": "11",
+      "ios": "10",
+      "samsung": "3.4",
+      "opera_mobile": "28",
+      "electron": "0.21"
+    }
+  },
+  {
+    "name": "Classes",
+    "babel": "transform-classes",
+    "features": [
+      "class",
+      "super",
+      "arrow functions / lexical \"super\" binding in constructors",
+      "arrow functions / lexical \"super\" binding in methods"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "46",
+      "opera": "33",
+      "edge": "13",
+      "firefox": "45",
+      "safari": "10",
+      "node": "5",
+      "deno": "1",
+      "ios": "10",
+      "samsung": "5",
+      "opera_mobile": "33",
+      "electron": "0.36"
+    }
+  },
+  {
+    "name": "ObjectSuper",
+    "babel": "transform-object-super",
+    "features": [
+      "super"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "46",
+      "opera": "33",
+      "edge": "13",
+      "firefox": "45",
+      "safari": "10",
+      "node": "5",
+      "deno": "1",
+      "ios": "10",
+      "samsung": "5",
+      "opera_mobile": "33",
+      "electron": "0.36"
+    }
+  },
+  {
+    "name": "ShorthandProperties",
+    "babel": "transform-shorthand-properties",
+    "features": [
+      "object literal extensions / shorthand properties"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "43",
+      "opera": "30",
+      "edge": "12",
+      "firefox": "33",
+      "safari": "9",
+      "node": "4",
+      "deno": "1",
+      "ios": "9",
+      "samsung": "4",
+      "rhino": "1.7.14",
+      "opera_mobile": "30",
+      "electron": "0.27"
+    }
+  },
+  {
+    "name": "DuplicateKeys",
+    "babel": "transform-duplicate-keys",
+    "features": [
+      "miscellaneous / duplicate property names in strict mode"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "42",
+      "opera": "29",
+      "edge": "12",
+      "firefox": "34",
+      "safari": "9",
+      "node": "4",
+      "deno": "1",
+      "ios": "9",
+      "samsung": "3.4",
+      "opera_mobile": "29",
+      "electron": "0.25"
+    }
+  },
+  {
+    "name": "ComputedProperties",
+    "babel": "transform-computed-properties",
+    "features": [
+      "object literal extensions / computed properties"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "44",
+      "opera": "31",
+      "edge": "12",
+      "firefox": "34",
+      "safari": "7.1",
+      "node": "4",
+      "deno": "1",
+      "ios": "8",
+      "samsung": "4",
+      "opera_mobile": "32",
+      "electron": "0.30"
+    }
+  },
+  {
+    "name": "ForOf",
+    "babel": "transform-for-of",
+    "features": [
+      "for..of loops"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "51",
+      "opera": "38",
+      "edge": "15",
+      "firefox": "53",
+      "safari": "10",
+      "node": "6.5",
+      "deno": "1",
+      "ios": "10",
+      "samsung": "5",
+      "opera_mobile": "41",
+      "electron": "1.2"
+    }
+  },
+  {
+    "name": "StickyRegex",
+    "babel": "transform-sticky-regex",
+    "features": [
+      "RegExp \"y\" and \"u\" flags / \"y\" flag, lastIndex",
+      "RegExp \"y\" and \"u\" flags / \"y\" flag"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "49",
+      "opera": "36",
+      "edge": "13",
+      "firefox": "3",
+      "safari": "10",
+      "node": "6",
+      "deno": "1",
+      "ios": "10",
+      "samsung": "5",
+      "rhino": "1.7.15",
+      "opera_mobile": "36",
+      "electron": "0.37"
+    }
+  },
+  {
+    "name": "UnicodeEscapes",
+    "babel": "transform-unicode-escapes",
+    "features": [
+      "Unicode code point escapes"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "44",
+      "opera": "31",
+      "edge": "12",
+      "firefox": "53",
+      "safari": "9",
+      "node": "4",
+      "deno": "1",
+      "ios": "9",
+      "samsung": "4",
+      "rhino": "1.7.15",
+      "opera_mobile": "32",
+      "electron": "0.30"
+    }
+  },
+  {
+    "name": "UnicodeRegex",
+    "babel": "transform-unicode-regex",
+    "features": [
+      "RegExp \"y\" and \"u\" flags / \"u\" flag, case folding",
+      "RegExp \"y\" and \"u\" flags / \"u\" flag, Unicode code point escapes",
+      "RegExp \"y\" and \"u\" flags / \"u\" flag, non-BMP Unicode characters",
+      "RegExp \"y\" and \"u\" flags / \"u\" flag"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "50",
+      "opera": "37",
+      "edge": "13",
+      "firefox": "46",
+      "safari": "12",
+      "node": "6",
+      "deno": "1",
+      "ios": "12",
+      "samsung": "5",
+      "opera_mobile": "37",
+      "electron": "1.1"
+    }
+  },
+  {
+    "name": "Spread",
+    "babel": "transform-spread",
+    "features": [
+      "spread syntax for iterable objects",
+      "class",
+      "super"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "46",
+      "opera": "33",
+      "edge": "13",
+      "firefox": "45",
+      "safari": "10",
+      "node": "5",
+      "deno": "1",
+      "ios": "10",
+      "samsung": "5",
+      "opera_mobile": "33",
+      "electron": "0.36"
+    }
+  },
+  {
+    "name": "Destructuring",
+    "babel": "transform-destructuring",
+    "features": [
+      "destructuring, assignment",
+      "destructuring, declarations"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "51",
+      "opera": "38",
+      "edge": "15",
+      "firefox": "53",
+      "safari": "10",
+      "node": "6.5",
+      "deno": "1",
+      "ios": "10",
+      "samsung": "5",
+      "opera_mobile": "41",
+      "electron": "1.2"
+    }
+  },
+  {
+    "name": "BlockScoping",
+    "babel": "transform-block-scoping",
+    "features": [
+      "const",
+      "let",
+      "generators"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "50",
+      "opera": "37",
+      "edge": "14",
+      "firefox": "53",
+      "safari": "11",
+      "node": "6",
+      "deno": "1",
+      "ios": "11",
+      "samsung": "5",
+      "opera_mobile": "37",
+      "electron": "1.1"
+    }
+  },
+  {
+    "name": "TypeofSymbol",
+    "babel": "transform-typeof-symbol",
+    "features": [
+      "Symbol / typeof support"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "38",
+      "opera": "25",
+      "edge": "12",
+      "firefox": "36",
+      "safari": "9",
+      "node": "0.12",
+      "deno": "1",
+      "ios": "9",
+      "samsung": "3",
+      "rhino": "1.7.13",
+      "opera_mobile": "25",
+      "electron": "0.20"
+    }
+  },
+  {
+    "name": "NewTarget",
+    "babel": "transform-new-target",
+    "features": [
+      "new.target",
+      "arrow functions / lexical \"new.target\" binding"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "46",
+      "opera": "33",
+      "edge": "14",
+      "firefox": "41",
+      "safari": "10",
+      "node": "5",
+      "deno": "1",
+      "ios": "10",
+      "samsung": "5",
+      "opera_mobile": "33",
+      "electron": "0.36"
+    }
+  },
+  {
+    "name": "Regenerator",
+    "babel": "transform-regenerator",
+    "features": [
+      "generators"
+    ],
+    "es": "ES2015",
+    "targets": {
+      "chrome": "50",
+      "opera": "37",
+      "edge": "13",
+      "firefox": "53",
+      "safari": "10",
+      "node": "6",
+      "deno": "1",
+      "ios": "10",
+      "samsung": "5",
+      "opera_mobile": "37",
+      "electron": "1.1"
+    }
+  },
+  {
+    "name": "ExponentiationOperator",
+    "babel": "transform-exponentiation-operator",
+    "features": [
+      "exponentiation (**) operator"
+    ],
+    "es": "ES2016",
+    "targets": {
+      "chrome": "52",
+      "opera": "39",
+      "edge": "14",
+      "firefox": "52",
+      "safari": "10.1",
+      "node": "7",
+      "deno": "1",
+      "ios": "10.3",
+      "samsung": "6",
+      "rhino": "1.7.14",
+      "opera_mobile": "41",
+      "electron": "1.3"
+    }
+  },
+  {
+    "name": "AsyncToGenerator",
+    "babel": "transform-async-to-generator",
+    "features": [
+      "async functions"
+    ],
+    "es": "ES2017",
+    "targets": {
+      "chrome": "55",
+      "opera": "42",
+      "edge": "15",
+      "firefox": "52",
+      "safari": "11",
+      "node": "7.6",
+      "deno": "1",
+      "ios": "11",
+      "samsung": "6",
+      "opera_mobile": "42",
+      "electron": "1.6"
+    }
+  },
+  {
+    "name": "AsyncGeneratorFunctions",
+    "babel": "transform-async-generator-functions",
+    "features": [
+      "Asynchronous Iterators"
+    ],
+    "es": "ES2018",
+    "targets": {
+      "chrome": "63",
+      "opera": "50",
+      "edge": "79",
+      "firefox": "57",
+      "safari": "12",
+      "node": "10",
+      "deno": "1",
+      "ios": "12",
+      "samsung": "8",
+      "opera_mobile": "46",
+      "electron": "3.0"
+    }
+  },
+  {
+    "name": "ObjectRestSpread",
+    "babel": "transform-object-rest-spread",
+    "features": [
+      "object rest/spread properties"
+    ],
+    "es": "ES2018",
+    "targets": {
+      "chrome": "60",
+      "opera": "47",
+      "edge": "79",
+      "firefox": "55",
+      "safari": "11.1",
+      "node": "8.3",
+      "deno": "1",
+      "ios": "11.3",
+      "samsung": "8",
+      "opera_mobile": "44",
+      "electron": "2.0"
+    }
+  },
+  {
+    "name": "DotallRegex",
+    "babel": "transform-dotall-regex",
+    "features": [
+      "s (dotAll) flag for regular expressions"
+    ],
+    "es": "ES2018",
+    "targets": {
+      "chrome": "62",
+      "opera": "49",
+      "edge": "79",
+      "firefox": "78",
+      "safari": "11.1",
+      "node": "8.10",
+      "deno": "1",
+      "ios": "11.3",
+      "samsung": "8",
+      "rhino": "1.7.15",
+      "opera_mobile": "46",
+      "electron": "3.0"
+    }
+  },
+  {
+    "name": "UnicodePropertyRegex",
+    "babel": "transform-unicode-property-regex",
+    "features": [
+      "RegExp Unicode Property Escapes / basic"
+    ],
+    "es": "ES2018",
+    "targets": {
+      "chrome": "64",
+      "opera": "51",
+      "edge": "79",
+      "firefox": "78",
+      "safari": "11.1",
+      "node": "10",
+      "deno": "1",
+      "ios": "11.3",
+      "samsung": "9",
+      "opera_mobile": "47",
+      "electron": "3.0"
+    }
+  },
+  {
+    "name": "NamedCapturingGroupsRegex",
+    "babel": "transform-named-capturing-groups-regex",
+    "features": [
+      "RegExp named capture groups"
+    ],
+    "es": "ES2018",
+    "targets": {
+      "chrome": "64",
+      "opera": "51",
+      "edge": "79",
+      "firefox": "78",
+      "safari": "11.1",
+      "node": "10",
+      "deno": "1",
+      "ios": "11.3",
+      "samsung": "9",
+      "opera_mobile": "47",
+      "electron": "3.0"
+    }
+  },
+  {
+    "name": "LookbehindRegex",
+    "babel": null,
+    "features": [
+      "RegExp Lookbehind Assertions"
+    ],
+    "es": "ES2018",
+    "targets": {
+      "chrome": "62",
+      "opera": "49",
+      "edge": "79",
+      "firefox": "78",
+      "safari": "16.4",
+      "node": "8.10",
+      "deno": "1",
+      "ios": "16.4",
+      "samsung": "8",
+      "opera_mobile": "46",
+      "electron": "3.0"
+    }
+  },
+  {
+    "name": "JsonStrings",
+    "babel": "transform-json-strings",
+    "features": [
+      "JSON superset"
+    ],
+    "es": "ES2019",
+    "targets": {
+      "chrome": "66",
+      "opera": "53",
+      "edge": "79",
+      "firefox": "62",
+      "safari": "12",
+      "node": "10",
+      "deno": "1",
+      "ios": "12",
+      "samsung": "9",
+      "rhino": "1.7.14",
+      "opera_mobile": "47",
+      "electron": "3.0"
+    }
+  },
+  {
+    "name": "OptionalCatchBinding",
+    "babel": "transform-optional-catch-binding",
+    "features": [
+      "optional catch binding"
+    ],
+    "es": "ES2019",
+    "targets": {
+      "chrome": "66",
+      "opera": "53",
+      "edge": "79",
+      "firefox": "58",
+      "safari": "11.1",
+      "node": "10",
+      "deno": "1",
+      "ios": "11.3",
+      "samsung": "9",
+      "opera_mobile": "47",
+      "electron": "3.0"
+    }
+  },
+  {
+    "name": "NullishCoalescingOperator",
+    "babel": "transform-nullish-coalescing-operator",
+    "features": [
+      "nullish coalescing operator (??)"
+    ],
+    "es": "ES2020",
+    "targets": {
+      "chrome": "80",
+      "opera": "67",
+      "edge": "80",
+      "firefox": "72",
+      "safari": "13.1",
+      "node": "14",
+      "deno": "1",
+      "ios": "13.4",
+      "samsung": "13",
+      "opera_mobile": "57",
+      "electron": "8.0"
+    }
+  },
+  {
+    "name": "OptionalChaining",
+    "babel": "transform-optional-chaining",
+    "features": [
+      "optional chaining operator (?.)"
+    ],
+    "es": "ES2020",
+    "targets": {
+      "chrome": "91",
+      "opera": "77",
+      "edge": "91",
+      "firefox": "74",
+      "safari": "13.1",
+      "node": "16.9",
+      "deno": "1.9",
+      "ios": "13.4",
+      "samsung": "16",
+      "opera_mobile": "64",
+      "electron": "13.0"
+    }
+  },
+  {
+    "name": "BigInt",
+    "babel": null,
+    "features": [
+      "BigInt / basic functionality"
+    ],
+    "es": "ES2020",
+    "targets": {
+      "chrome": "67",
+      "opera": "54",
+      "edge": "79",
+      "firefox": "68",
+      "safari": "14",
+      "node": "10.4",
+      "deno": "1",
+      "ios": "14",
+      "samsung": "9",
+      "rhino": "1.7.14",
+      "opera_mobile": "48",
+      "electron": "4.0"
+    }
+  },
+  {
+    "name": "NumericSeparator",
+    "babel": "transform-numeric-separator",
+    "features": [
+      "numeric separators"
+    ],
+    "es": "ES2021",
+    "targets": {
+      "chrome": "75",
+      "opera": "62",
+      "edge": "79",
+      "firefox": "70",
+      "safari": "13",
+      "node": "12.5",
+      "deno": "1",
+      "ios": "13",
+      "samsung": "11",
+      "rhino": "1.7.14",
+      "opera_mobile": "54",
+      "electron": "6.0"
+    }
+  },
+  {
+    "name": "LogicalAssignmentOperators",
+    "babel": "transform-logical-assignment-operators",
+    "features": [
+      "Logical Assignment"
+    ],
+    "es": "ES2021",
+    "targets": {
+      "chrome": "85",
+      "opera": "71",
+      "edge": "85",
+      "firefox": "79",
+      "safari": "14",
+      "node": "15",
+      "deno": "1.2",
+      "ios": "14",
+      "samsung": "14",
+      "opera_mobile": "60",
+      "electron": "10.0"
+    }
+  },
+  {
+    "name": "ClassStaticBlock",
+    "babel": "transform-class-static-block",
+    "features": [
+      "Class static initialization blocks"
+    ],
+    "es": "ES2022",
+    "targets": {
+      "chrome": "94",
+      "opera": "80",
+      "edge": "94",
+      "firefox": "93",
+      "safari": "16.4",
+      "node": "16.11",
+      "deno": "1.14",
+      "ios": "16.4",
+      "samsung": "17",
+      "opera_mobile": "66",
+      "electron": "15.0"
+    }
+  },
+  {
+    "name": "PrivatePropertyInObject",
+    "babel": "transform-private-property-in-object",
+    "features": [
+      "Ergonomic brand checks for private fields"
+    ],
+    "es": "ES2022",
+    "targets": {
+      "chrome": "91",
+      "opera": "77",
+      "edge": "91",
+      "firefox": "90",
+      "safari": "15",
+      "node": "16.9",
+      "deno": "1.9",
+      "ios": "15",
+      "samsung": "16",
+      "opera_mobile": "64",
+      "electron": "13.0"
+    }
+  },
+  {
+    "name": "ClassProperties",
+    "babel": "transform-class-properties",
+    "features": [
+      "static class fields",
+      "instance class fields / public instance class fields",
+      "instance class fields / private instance class fields basic support",
+      "instance class fields / computed instance class fields",
+      "instance class fields / resolving identifier in parent scope"
+    ],
+    "es": "ES2022",
+    "targets": {
+      "chrome": "98",
+      "opera": "84",
+      "edge": "98",
+      "firefox": "90",
+      "safari": "16",
+      "node": "12",
+      "deno": "1.18",
+      "ios": "16",
+      "samsung": "11",
+      "opera_mobile": "53",
+      "electron": "17.0"
+    }
+  },
+  {
+    "name": "PrivateMethods",
+    "babel": "transform-private-methods",
+    "features": [
+      "private class methods"
+    ],
+    "es": "ES2022",
+    "targets": {
+      "chrome": "84",
+      "opera": "70",
+      "edge": "84",
+      "firefox": "90",
+      "safari": "15",
+      "node": "14.6",
+      "deno": "1",
+      "ios": "15",
+      "samsung": "14",
+      "opera_mobile": "60",
+      "electron": "10.0"
+    }
+  },
+  {
+    "name": "MatchIndicesRegex",
+    "babel": null,
+    "features": [
+      "RegExp Match Indices (`hasIndices` / `d` flag) / constructor supports it"
+    ],
+    "es": "ES2022",
+    "targets": {
+      "chrome": "90",
+      "opera": "76",
+      "edge": "90",
+      "firefox": "91",
+      "safari": "15",
+      "node": "16",
+      "deno": "1.8",
+      "ios": "15",
+      "samsung": "15",
+      "opera_mobile": "64",
+      "electron": "13.0"
+    }
+  },
+  {
+    "name": "UnicodeSetsRegex",
+    "babel": "transform-unicode-sets-regex",
+    "features": [
+      "RegExp `v` flag / set notations",
+      "RegExp `v` flag / properties of Strings",
+      "RegExp `v` flag / constructor supports it",
+      "RegExp `v` flag / shows up in flags"
+    ],
+    "es": "ES2024",
+    "targets": {
+      "chrome": "112",
+      "opera": "98",
+      "edge": "112",
+      "firefox": "116",
+      "safari": "17",
+      "node": "20",
+      "deno": "1.32",
+      "ios": "17",
+      "opera_mobile": "75",
+      "electron": "24.0"
+    }
+  },
+  {
+    "name": "DuplicateNamedCapturingGroupsRegex",
+    "babel": "transform-duplicate-named-capturing-groups-regex",
+    "features": [
+      "Duplicate named capturing groups"
+    ],
+    "es": "ES2025",
+    "targets": {
+      "chrome": "126",
+      "opera": "112",
+      "edge": "126",
+      "firefox": "129",
+      "safari": "17.4",
+      "node": "23",
+      "ios": "17.4",
+      "electron": "31.0"
+    }
+  },
+  {
+    "name": "RegexpModifiers",
+    "babel": "transform-regexp-modifiers",
+    "features": [
+      "RegExp Pattern Modifiers"
+    ],
+    "es": "ES2025",
+    "targets": {
+      "chrome": "125",
+      "opera": "111",
+      "edge": "125",
+      "firefox": "132",
+      "node": "23",
+      "electron": "31.0"
+    }
+  }
+]

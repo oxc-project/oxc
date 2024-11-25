@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// const { bar } = obj?.foo;  // TypeError
     /// ```
     NoUnsafeOptionalChaining,
-    restriction // TypeScript checks optional chaining
+    correctness
 );
 
 impl Rule for NoUnsafeOptionalChaining {
@@ -261,6 +261,10 @@ fn test() {
                 "disallowArithmeticOperators": false
             }])),
         ),
+        ("x?.f<T>();", None),
+        ("x?.f?.<T>();", None),
+        ("f?.<Q>();", None),
+        ("a?.c?.b<c>", None),
     ];
 
     let fail = vec![

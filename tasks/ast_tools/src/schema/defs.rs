@@ -1,11 +1,16 @@
 use serde::Serialize;
+use syn::Ident;
 
-use super::{with_either, TypeName};
 use crate::{
-    markers::{DeriveAttributes, ScopeAttribute, ScopeMarkers, VisitMarkers},
+    markers::{
+        DeriveAttributes, ESTreeEnumAttribute, ESTreeStructAttribute, ScopeAttribute, ScopeMarkers,
+        VisitMarkers,
+    },
     util::{ToIdent, TypeAnalysis, TypeWrapper},
     TypeId,
 };
+
+use super::TypeName;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
@@ -15,20 +20,25 @@ pub enum TypeDef {
 }
 
 impl TypeDef {
-    pub fn id(&self) -> TypeId {
-        with_either!(self, it => it.id)
+    pub fn name(&self) -> &str {
+        match self {
+            TypeDef::Struct(def) => &def.name,
+            TypeDef::Enum(def) => &def.name,
+        }
     }
 
-    pub fn name(&self) -> &String {
-        with_either!(self, it => &it.name)
-    }
-
-    pub fn visitable(&self) -> bool {
-        with_either!(self, it => it.visitable)
+    pub fn is_visitable(&self) -> bool {
+        match self {
+            TypeDef::Struct(def) => def.is_visitable,
+            TypeDef::Enum(def) => def.is_visitable,
+        }
     }
 
     pub fn generated_derives(&self) -> &Vec<String> {
-        with_either!(self, it => &it.generated_derives)
+        match self {
+            TypeDef::Struct(def) => &def.generated_derives,
+            TypeDef::Enum(def) => &def.generated_derives,
+        }
     }
 
     pub fn generates_derive(&self, derive: &str) -> bool {
@@ -37,7 +47,10 @@ impl TypeDef {
     }
 
     pub fn module_path(&self) -> &str {
-        with_either!(self, it => &it.module_path)
+        match self {
+            TypeDef::Struct(def) => &def.module_path,
+            TypeDef::Enum(def) => &def.module_path,
+        }
     }
 }
 
@@ -47,7 +60,7 @@ pub struct StructDef {
     pub id: TypeId,
     pub name: String,
     #[serde(skip)]
-    pub visitable: bool,
+    pub is_visitable: bool,
     pub fields: Vec<FieldDef>,
     #[serde(skip)]
     pub has_lifetime: bool,
@@ -60,7 +73,7 @@ pub struct StructDef {
     #[serde(skip)]
     pub generated_derives: Vec<String>,
     #[serde(skip)]
-    pub markers: OuterMarkers,
+    pub markers: StructOuterMarkers,
     #[serde(skip)]
     pub module_path: String,
 }
@@ -70,7 +83,7 @@ pub struct StructDef {
 pub struct EnumDef {
     pub id: TypeId,
     pub name: String,
-    pub visitable: bool,
+    pub is_visitable: bool,
     pub variants: Vec<VariantDef>,
     /// For `@inherits` inherited enum variants
     pub inherits: Vec<InheritDef>,
@@ -84,6 +97,8 @@ pub struct EnumDef {
     pub generated_derives: Vec<String>,
     #[serde(skip)]
     pub module_path: String,
+    #[serde(skip)]
+    pub markers: EnumOuterMarkers,
 }
 
 impl EnumDef {
@@ -115,7 +130,7 @@ pub struct VariantDef {
 }
 
 impl VariantDef {
-    pub fn ident(&self) -> syn::Ident {
+    pub fn ident(&self) -> Ident {
         self.name.to_ident()
     }
 
@@ -171,7 +186,7 @@ impl From<&syn::Visibility> for Visibility {
 }
 
 impl FieldDef {
-    pub fn ident(&self) -> Option<syn::Ident> {
+    pub fn ident(&self) -> Option<Ident> {
         self.name.as_ref().map(ToIdent::to_ident)
     }
 }
@@ -226,8 +241,14 @@ impl TypeRef {
 }
 
 #[derive(Debug)]
-pub struct OuterMarkers {
+pub struct StructOuterMarkers {
     pub scope: Option<ScopeAttribute>,
+    pub estree: Option<ESTreeStructAttribute>,
+}
+
+#[derive(Debug)]
+pub struct EnumOuterMarkers {
+    pub estree: ESTreeEnumAttribute,
 }
 
 #[derive(Debug, Serialize)]

@@ -4,6 +4,388 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+- f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)
+
+- 41a0e60 ast: [**BREAKING**] Remove `impl GetAddress for Function` (#7343) (overlookmotel)
+
+- 1cbc624 traverse: [**BREAKING**] Rename `TraverseCtx` methods for creating `IdentifierReference`s (#7300) (overlookmotel)
+
+- e84ea2c traverse: [**BREAKING**] Remove `TraverseCtx::clone_identifier_reference` (#7266) (overlookmotel)
+
+- 44375a5 ast: [**BREAKING**] Rename `TSEnumMemberName` enum variants (#7250) (overlookmotel)
+
+### Features
+
+- 39afb48 allocator: Introduce `Vec::from_array_in` (#7331) (overlookmotel)
+- d608012 transform_conformance: Snapshot our transformed outputs (#7358) (Boshen)
+- 224775c transformer: Transform object rest spread (#7003) (Boshen)
+- 885e37f transformer: Optional Chaining (#6990) (Boshen)
+- 6a98ef1 transformer: Add `CompilerAssumptions` to `TransformContext` (#7369) (Boshen)
+- faf8dde traverse: Add methods for creating `Expression::Identifier`s (#7301) (overlookmotel)
+
+### Bug Fixes
+
+- b57d00d tasks/compat_data: Fix misplaced features (#7284) (Boshen)
+- c5f4ee7 transformer: Correct code comments (#7247) (overlookmotel)
+- 389b84e transformer/arrow-function: Handle unicode when capitalizing property name (#7311) (overlookmotel)
+- 7d75130 transformer/async-to-generator: `arguments` isn't correct after transformation (#7234) (Dunqing)
+- 5b5c8a9 transformer/nullish-coalescing: Correct span (#7269) (overlookmotel)
+
+### Performance
+
+- 510b95d transformer: Use `AstBuilder::vec_from_array` (#7333) (overlookmotel)
+- e09d2df transformer/arrow-function: Create super method binding names lazily (#7313) (overlookmotel)
+- 0a24703 transformer/arrow-function: Optimize `generate_super_binding_name` (#7312) (overlookmotel)
+- 44fd962 transformer/arrow-functions: Move arguments transform checks to aid inlining (#7322) (overlookmotel)
+- 26d3e96 transformer/arrow-functions: Store state of whether arguments needs transform (#7321) (overlookmotel)
+
+### Documentation
+
+- e219ae8 transformer/nullish-coalescing: Clarify doc comment (#7268) (overlookmotel)
+
+### Refactor
+
+- 4acf2db transformer: Helper loader methods take `Span` (#7304) (overlookmotel)
+- 871e19b transformer/arrow-function: Comments on possible improvement (#7320) (overlookmotel)
+- ea08c1f transformer/arrow-function: Reserve correct capacity for `Vec` (#7319) (overlookmotel)
+- 5cfe0b6 transformer/arrow-function: `generate_super_binding_name` take `&str` and `&TraverseCtx` (#7310) (overlookmotel)
+- 5d85386 transformer/arrow-functions: Use `IndexMap` for `super` getter/setters (#7317) (overlookmotel)
+- 9f5ae56 transformer/nullish-coalescing: Split main logic into separate function (#7273) (overlookmotel)
+- 345fbb9 transformer/nullish-coalescing: Avoid repeated symbol lookups (#7272) (overlookmotel)
+
+## [0.36.0] - 2024-11-09
+
+- b11ed2c ast: [**BREAKING**] Remove useless `ObjectProperty::init` field (#7220) (Boshen)
+
+- 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)
+
+- 846711c transformer: [**BREAKING**] Change API to take a `&TransformOptions` instead of `TransformOptions` (#7213) (Boshen)
+
+- d1d1874 ast: [**BREAKING**] Change `comment.span` to real position that contain `//` and `/*` (#7154) (Boshen)
+
+- 843bce4 ast: [**BREAKING**] `IdentifierReference::reference_id` return `ReferenceId` (#7126) (overlookmotel)
+
+### Features
+
+- ad3a2f5 tasks/compat_data: Generate our own compat table (#7176) (Boshen)
+- b4258ee transformer: Add defaulted `Module::Preserve` option (#7225) (Boshen)
+- 324c3fe transformer: Add `TransformOptions::module` option (#7188) (Boshen)
+- a166a4a transformer: Add esbuild comma separated target API `--target=es2020,chrome58` (#7210) (Boshen)
+- 3a20b90 transformer: Add es target to `engineTargets` (#7193) (Boshen)
+- 22898c8 transformer: Warn BigInt when targeting < ES2020 (#7184) (Boshen)
+- a579011 transformer: Add features `ES2018NamedCapturingGroupsRegex` and `ES2018LookbehindRegex` (#7182) (Boshen)
+- 8573f79 transformer: Turn on async_to_generator and async_generator_functions plugins in enable_all (#7135) (Dunqing)
+- df77241 transformer: Enable `ArrowFunctionConverter` in `async-to-generator` and `async-generator-functions` plugins (#7113) (Dunqing)
+- b6a5750 transformer/arrow-function-converter: Move scope to changed scope for `this_var` if scope have changed (#7125) (Dunqing)
+- 1910227 transformer/async-to-generator: Support inferring the function name from the ObjectPropertyValue's key (#7201) (Dunqing)
+- ffa8604 transformer/async-to-generator: Do not transform await expression if is not inside async function (#7138) (Dunqing)
+- e536d47 transformer/babel: Add support for trying to get the `Module` from `BabelPlugins` (#7218) (Dunqing)
+- 5cfdc05 transformer/typescript: Support transform `export =` and `import = require(...)` when module is commonjs (#7206) (Dunqing)
+
+### Bug Fixes
+
+- c82b273 transformer/async-generator-functions: Only transform object method in exit_function (#7200) (Dunqing)
+- b2a888d transformer/async-generator-functions: Incorrect transformation for `for await` if it's not placed in a block (#7148) (Dunqing)
+- 19892ed transformer/async-generator-functions: Transform incorrectly for `for await` if it's in LabeledStatement (#7147) (Dunqing)
+- ede10dc transformer/async-to-generator: Incorrect transform when super expression is inside async method (#7171) (Dunqing)
+- 293d072 transformer/async-to-generator: Only transform object method in exit_function (#7199) (Dunqing)
+- ae692d7 transformer/async_to_generator: Fix checking if function is class method (#7117) (overlookmotel)
+- eea4ab8 transformer/helper-loader: Incorrect `SymbolFlags` for default import when `SourceType` is script (#7226) (Dunqing)
+
+### Refactor
+
+- de56083 transformer: Add `impl TryFrom<EngineTargets> for EnvOptions` (#7191) (Boshen)
+- 0a43c64 transformer: Move `ESTarget` to its own file (#7189) (Boshen)
+- 0e1f12c transformer: Remove unimplemented `EnvOptions::bugfixes` (#7162) (Boshen)
+- a981caf transformer: Add `Engine` enum for `EngineTargets` (#7161) (Boshen)
+- 8340243 transformer: Rename `Query` to `BrowserslistQuery` (#7143) (Boshen)
+- 481f7e6 transformer: Change `Targets` to `EngineTargets` (#7142) (Boshen)
+- 55e6989 transformer: Deserialize engine target strings to specific keys (#7139) (Boshen)
+- fdfd9a4 transformer: Use `scope_id` etc methods (#7128) (overlookmotel)
+- ff8bd50 transformer: Move implementation of ArrowFunction to common/ArrowFunctionConverter (#7107) (Dunqing)
+- 4a515be transformer/arrow-function-coverter: Rename function name and add some comments to explain confusing parts. (#7203) (Dunqing)
+- c307e1b transformer/arrow-functions: Pass `ArenaBox` as function param (#7169) (overlookmotel)
+- 217d433 transformer/arrow-functions: Remove unused `&mut self` function param (#7165) (overlookmotel)
+- 426df71 transformer/arrow-functions: Use `scope_id` method (#7164) (overlookmotel)
+- 11c5e12 transformer/arrow-functions: Correct comments (#7163) (overlookmotel)
+- 1238506 transformer/async-generator-function: Remove inactive `#[allow(clippy::unused_self)]` attrs (#7167) (overlookmotel)
+- 84ee581 transformer/async-generator-functions: Simplify identifying whether within an async generator function (#7170) (overlookmotel)
+- 1b12328 transformer/async-generator-functions: Use `clone` not `clone_in` on `LabelIdentifier` (#7172) (overlookmotel)
+- cd1006f transformer/async-generator-functions: Do not transform yield expression where inside generator function (#7134) (Dunqing)
+- 2c5734d transformer/async-generator-functions: Do not transform await expression where inside ArrowFunctionExpression (#7132) (Dunqing)
+- 5ce83bd transformer/async-generator-functions: Remove dead code for handle await expression (#7131) (Dunqing)
+- e04ee97 transformer/async-generator-functions: Move handling of `MethodDefinition`'s value to `exit_function` (#7106) (Dunqing)
+- b57d5a5 transformer/async-to-generator: Remove unused `&self` function param (#7166) (overlookmotel)
+- f80085c transformer/async-to-generator: Move handling of `MethodDefinition`'s value to `exit_function` (#7105) (Dunqing)
+- e2241e6 transformer/jsx-self: Remove unused `&self` function params (#7159) (overlookmotel)
+- 1dfd241 transformer/optional-catch-binding: Remove inactive `#[allow(clippy::unused_self)]` attr (#7158) (overlookmotel)
+- fd9b44c transformer/typescript: Remove inactive `#[allow(clippy::unused_self)]` attr (#7160) (overlookmotel)
+
+### Styling
+
+- 38a6df6 transformer/arrow-functions: Semicolon after return statements (#7168) (overlookmotel)
+- 64b7e3a transformer/async-generator-functions: Import `oxc_allocator::Vec` as `ArenaVec` (#7173) (overlookmotel)
+
+## [0.35.0] - 2024-11-04
+
+- b8daab3 transformer: [**BREAKING**] API to `TryFrom<&EnvOptions> for TransformOptions` and `TryFrom<&BabelOptions> TransformOptions` (#7020) (Boshen)
+
+### Features
+
+- bfdbcf1 transformer: Add `EnvOptions::from_browerslist_query` API (#7098) (Boshen)
+- 21b8e49 transformer: Add `ESTarget` (#7091) (Boshen)
+- fcaba4a transformer: Add `TransformerOptions::env` with `EnvOptions` (#7037) (Boshen)
+- 1d906c6 transformer: Class properties transform skeleton (#7038) (overlookmotel)
+- 934cb5e transformer: Add `async_generator_functions` plugin (#6573) (Dunqing)
+
+### Bug Fixes
+
+- a2244ff transformer/async-to-generator: Output is incorrect when arrow function without params (#7052) (Dunqing)
+
+### Refactor
+
+- 7f1d1fe transform: Deserialize `BabelPreests::env` directly (#7051) (Boshen)
+- 76947e2 transform: Refactor Babel Targets (#7026) (Boshen)
+- d03e622 transformer: Do not use `AstBuilder::*_from_*` methods (#7070) (overlookmotel)
+- 9d384ad transformer: Use `identifier_reference_with_reference_id` builder method (#7056) (overlookmotel)
+- 4688a06 transformer: Use `*_with_scope_id` builder methods where possible (#7055) (overlookmotel)
+- 7122e00 transformer: Use `ctx.alloc` over `ctx.ast.alloc` where possible (#7066) (overlookmotel)
+- a3b68b4 transformer: Flatten dir structure of options/babel/env (#7049) (Boshen)
+- 6d92f36 transformer: Deserialize `BabelOptions::compiler_assumptions` (#7048) (Boshen)
+- f83a760 transformer: Deserialize `BabelOptions::presets` (#7047) (Boshen)
+- 52c20d6 transformer: Deserialize `BabelOptions::plugins` (#7045) (Boshen)
+- e921df6 transformer: Rename `EnvOptions` to `BabelEnvOptions` (#7036) (Boshen)
+- af5140f transformer: Isolate babel options logic (#7034) (Boshen)
+- 12aa910 transformer: Clean up `env/targets/query.rs` (#7033) (Boshen)
+- 3d174bb transformer: Clean up `BabelOptions` (#7029) (Boshen)
+- 6284f84 transformer: Use `Browserslist::Version` (#7028) (Boshen)
+- 5b11cdf transformer: Clean up TransformerOptions (#7005) (Boshen)
+- f0c87d4 transformer: Mark all EnvOptions as not implemented (#7004) (Boshen)
+- d9edef6 transformer: Combine ObjectRestSpread into a single file (#7002) (Boshen)
+- c945fe7 transformer: Import `oxc_allocator::Box` as `ArenaBox` (#6999) (overlookmotel)
+- fc1af2e transformer: Import `oxc_allocator::Vec` as `ArenaVec` (#6998) (overlookmotel)
+- 63e8bfe transformer: Rename `AString` to `ArenaString` (#6997) (overlookmotel)
+- 562bb9a transformer/async-to-generator: Move transform methods to `AsyncGeneratorExecutor` and make it public (#6992) (Dunqing)
+- e23f7e6 transformer/common: `VarDeclarations` insert either `var` or `let` statements (#7043) (overlookmotel)
+- e5ecbb9 transformer/jsx: Return `&mut T` not `&mut ArenaBox<T>` (#7001) (overlookmotel)
+- 9e66c29 transformer/react-refresh: Small refactor (#6973) (overlookmotel)
+- 1ca8cd2 transformer/react-refresh: Avoid panic for `init` of `VariableDeclarator` isn't a `BindingIdentifier` (#6937) (Dunqing)
+- 5f153ac transformer/react-refresh: Use `VarDeclarations` to insert declarators (#6884) (Dunqing)
+- df3b089 transformer/react-refresh: Use `StatementInjector` to insert statements (#6881) (Dunqing)
+- ae22671 transformer/typescript: Pass `&mut T` not `&mut ArenaBox<T>` (#7000) (overlookmotel)
+
+### Styling
+
+- 86ab091 transformer/common: Split up `StatementInjectorStore` methods into blocks (#7042) (overlookmotel)
+
+### Testing
+
+- 6133a50 transformer: Use a single integration test for faster compilation (#7099) (Boshen)
+
+## [0.34.0] - 2024-10-26
+
+- 4618aa2 transformer: [**BREAKING**] Rename `TransformerOptions::react` to `jsx` (#6888) (Boshen)
+
+### Features
+
+- 0d0bb17 transformer: Complete the async-to-generator plugin (#6658) (Dunqing)
+
+### Bug Fixes
+
+- 4dc5e51 transformer: Only run typescript plugin for typescript source (#6889) (Boshen)
+- 076f5c3 transformer/typescript: Retain ExportNamedDeclaration without specifiers and declaration (#6848) (Dunqing)
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+- 2d95009 transformer: Implement `Debug` on `StatementInjector` internal types (#6886) (overlookmotel)
+- c383c34 transformer: Make `StatementInjectorStore` methods generic over `GetAddress` (#6885) (overlookmotel)
+- 1f29523 transformer: Rename ReactJsx to Jsx (#6883) (Boshen)
+- 333b758 transformer: `StatementInjectorStore` methods take `&Statement` as target (#6858) (overlookmotel)
+- c19996c transformer: Add `StatementInjectorStore::insert_many_before` method (#6857) (overlookmotel)
+- 7339dde transformer: `StatementInjectorStore::insert_many_after` take an iterator (#6856) (overlookmotel)
+- 4348eae transformer/typescript: Re-order visitor methods (#6864) (overlookmotel)
+- 3a56d59 transformer/typescript: Insert assignments after super by `StatementInjector` (#6654) (Dunqing)
+- 60f487a traverse: `TraverseCtx::generate_binding` take an `Atom` (#6830) (overlookmotel)
+
+## [0.33.0] - 2024-10-24
+
+- 4d2d214 ast, transformer: [**BREAKING**] Remove `StringLiteral::new` method (#6788) (overlookmotel)
+
+- aeaa27a ast, parser, transformer, traverse: [**BREAKING**] Remove `BindingIdentifier::new` methods (#6786) (overlookmotel)
+
+- ecc9151 ast, parser, transformer, traverse: [**BREAKING**] Remove `IdentifierReference::new` methods (#6785) (overlookmotel)
+
+- c91ffbc ast, transformer: [**BREAKING**] Remove `IdentifierName::new` method (#6784) (overlookmotel)
+
+- 2bee4e2 ast, transformer: [**BREAKING**] Remove `BlockStatement::new` methods (#6783) (overlookmotel)
+
+- 8032813 regular_expression: [**BREAKING**] Migrate to new regexp parser API (#6741) (leaysgur)
+
+### Features
+
+- 10484cd transformer: Class static block transform (#6733) (overlookmotel)
+- 7fbca9d transformer: Introduce `StatementInjector` helper (#6653) (Dunqing)
+
+### Bug Fixes
+
+- 1107770 coverage: Inject babel helpers for transform (#6818) (Boshen)
+- b711ee1 transformer: After using StatementInjector, some statements disappeared (#6778) (Dunqing)
+
+### Documentation
+
+- ab03535 transformer: Correct typos and reformat doc comments (#6758) (overlookmotel)
+
+### Refactor
+
+- ab8aa2f allocator: Move `GetAddress` trait into `oxc_allocator` (#6738) (overlookmotel)
+- 0e9b695 ast: Change `plain_function` to accept `FunctionBody` as a required parameter (#6709) (Dunqing)
+- b8dfa19 transformer: Shorten code (#6809) (overlookmotel)
+- 759710a transformer: Methods only take `&TraverseCtx` where possible (#6812) (overlookmotel)
+- 06e06e3 transformer: Rename `OxcVec` to `AVec` (#6737) (overlookmotel)
+- e5f4b4a transformer/react-refresh: Dereference `ScopeId` as soon as possible (#6820) (overlookmotel)
+- 57685b2 transformer/react-refresh: Unwrap `BindingIdentifier::symbol_id` (#6817) (overlookmotel)
+- 4f6dc22 transformer/react-refresh: Avoid re-creating `Atom`s (#6816) (overlookmotel)
+- 8316069 transformer/react-refresh: Shorten code by using `BoundIdentifier` (#6815) (overlookmotel)
+- fdd69e4 transformer/typescript: Use `TraverseCtx::generate_binding` to create a symbol (#6806) (Dunqing)
+
+### Styling
+
+- 871b9f5 transformer/react-refresh: Fix whitespace (#6813) (overlookmotel)
+
+## [0.32.0] - 2024-10-19
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+### Features
+
+- a01a5df transformer: Pass TransformerCtx to async-to-generator plugin (#6633) (Dunqing)
+- a9260cf transformer: `async-to-generator` plugin. (#5590) (Ethan Goh)
+- 8fe1b0a transformer: Support helper loader (#6162) (Dunqing)
+- ab51c2a transformer: Support `DefaultImport` in `ModuleImports` (#6434) (Dunqing)
+- a3dea9c transformer/async-to-generator: Handle arrow-function correctly (#6640) (Dunqing)
+- 41c8675 transformer/object-rest-spread: Using helper loader (#6449) (Dunqing)
+
+### Bug Fixes
+
+- 1d3d256 transformer: Correctly trim JSX (#6639) (magic-akari)
+- c6f2b5f transformer: `HelperLoader` common transform: do not assume `babelHelpers` is global (#6569) (overlookmotel)
+- 85d93ed transformer: Arrow function transform: correctly resolve `this` in class accessor properties (#6386) (overlookmotel)
+
+### Performance
+
+- f70a413 transformer: Object spread transform: do not lookup `Object` binding if not needed (#6570) (overlookmotel)
+
+### Documentation
+
+- f3451d7 transformer/async-to-generator: Remove empty lines from doc comment (#6642) (overlookmotel)
+- 448388a transformer/module_imports: Update outdated comments (#6574) (Dunqing)
+
+### Refactor
+
+- 856cab5 ecmascript: Move ToInt32 from `oxc_syntax` to `oxc_ecmascript` (#6471) (Boshen)
+- 1ba2a24 ecmascript: Remove `HasProto` which is not part of the spec (#6470) (Boshen)
+- 435a89c oxc: Remove useless `allocator.alloc(program)` calls (#6571) (Boshen)
+- 9281234 transformer: Shorten imports (#6643) (overlookmotel)
+- 3af0840 transformer: `HelperLoader`: add import immediately (#6601) (overlookmotel)
+- f81aa7f transformer: `HelperLoader` common transform: comments (#6599) (overlookmotel)
+- 679cc68 transformer: `HelperLoader` common transform: construct string directly in arena (#6596) (overlookmotel)
+- c346ebb transformer: `HelperLoader` common transform: `Helper` enum (#6595) (overlookmotel)
+- 7a028b3 transformer: Remove unnecessary `#![warn]` attr (#6585) (overlookmotel)
+- 8c6afe0 transformer: Reorder imports (#6582) (overlookmotel)
+- 779ff46 transformer: `HelperLoader` common transform: `Helper` struct (#6568) (overlookmotel)
+- bc24a24 transformer: `HelperLoader` common transform: use hashmap `Entry` API (#6567) (overlookmotel)
+- 9f02fc7 transformer: `HelperLoader` common transform: re-order fields (#6565) (overlookmotel)
+- 50ecade transformer: `HelperLoader` common transform: remove `Rc`s (#6564) (overlookmotel)
+- 1c1e9fc transformer: `HelperLoader` common transform: reorder methods (#6563) (overlookmotel)
+- c9054c8 transformer: Rename `ImportKind` to `Import` (#6561) (overlookmotel)
+- 9542c4e transformer: Add more specific methods to `ModuleImportsStore` (#6560) (overlookmotel)
+- 7e57a1d transformer: `ImportKind` use `BoundIdentifier` (#6559) (overlookmotel)
+- 602df9d transformer: Re-order fields of `Common` and `TransformCtx` (#6562) (overlookmotel)
+- 390abca transformer/async-to-generator: Use `helper_call_expr` (#6634) (Dunqing)
+- 2ff917f transformer/async-to-generator: Move internal methods below entry points (#6632) (Dunqing)
+
+### Styling
+
+- 9d43a11 transformer: Re-order dependencies (#6659) (overlookmotel)
+
+## [0.31.0] - 2024-10-08
+
+- 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)
+
+- 020bb80 codegen: [**BREAKING**] Change to `CodegenReturn::code` and `CodegenReturn::map` (#6310) (Boshen)
+
+- 409dffc traverse: [**BREAKING**] `generate_uid` return a `BoundIdentifier` (#6294) (overlookmotel)
+
+- 5a73a66 regular_expression: [**BREAKING**] Simplify public APIs (#6262) (leaysgur)
+
+- 4f6bc79 transformer: [**BREAKING**] Remove `source_type` param from `Transformer::new` (#6251) (overlookmotel)
+
+- 82ab689 transformer,minifier: [**BREAKING**] Move define and inject plugin from minifier to transformer (#6199) (Boshen)
+
+### Features
+
+- c3c3447 data_structures: Add `oxc_data_structures` crate; add stack (#6206) (Boshen)
+- 51a78d5 napi/transform: Rename all mention of React to Jsx; remove mention of `Binding` (#6198) (Boshen)
+- 9e62396 syntax_operations: Add crate `oxc_ecmascript` (#6202) (Boshen)
+- cf20f3a transformer: Exponentiation transform: support private fields (#6345) (overlookmotel)
+
+### Bug Fixes
+
+- 9736aa0 oxc_transformer: Define `import.meta` and `import.meta.*` (#6277) (IWANABETHATGUY)
+- 2bcd12a transformer: Exponentiation transform: fix reference flags (#6330) (overlookmotel)
+- 28cbfa7 transformer: Exponentiation transform: fix temp var names (#6329) (overlookmotel)
+- 3a4bcc7 transformer: Exponentiation transform: fix temp var names (#6318) (overlookmotel)
+- ccb7bdc transformer: Exponentiation transform: do not replace object when private property (#6313) (overlookmotel)
+- 56d50cf transformer: Exponentiation transform: do not assume `Math` is not a local var (#6302) (overlookmotel)
+- bd81c51 transformer: Exponentiation transform: fix duplicate symbols (#6300) (overlookmotel)
+- 06797b6 transformer: Logical assignment operator transform: fix reference IDs (#6289) (overlookmotel)
+- 4b42047 transformer: Fix memory leak in `ReplaceGlobalDefines` (#6224) (overlookmotel)
+- a28926f transformer: Fix inserting `require` with `front` option (#6188) (overlookmotel)
+- b92fe84 transformer: `NonEmptyStack::push` write value before updating cursor (#6169) (overlookmotel)
+
+### Performance
+
+- 788e444 transformer: Parse options from comments only once (#6152) (overlookmotel)
+- da2b2a4 transformer: Look up `SymbolId` for `require` only once (#6192) (overlookmotel)
+- 40bd919 transformer: Faster parsing JSX pragmas from comments (#6151) (overlookmotel)
+
+### Documentation
+
+- eb1d0b8 transformer: Exponentiation transform: update doc comments (#6315) (overlookmotel)
+
+### Refactor
+
+- bd5fb5a transformer: Exponentiation transform: rename methods (#6344) (overlookmotel)
+- 4aa4e6b transformer: Exponentiation transform: do not wrap in `SequenceExpression` if not needed (#6343) (overlookmotel)
+- a15235a transformer: Exponentiation transform: no cloning (#6338) (overlookmotel)
+- 7d93b25 transformer: Exponentiation transform: split into 2 paths (#6316) (overlookmotel)
+- 15cc8af transformer: Exponentiation transform: break up into functions (#6301) (overlookmotel)
+- 7f5a94b transformer: Use `Option::get_or_insert_with` (#6299) (overlookmotel)
+- 0cea6e9 transformer: Exponentiation transform: reduce identifier cloning (#6297) (overlookmotel)
+- ac7a3ed transformer: Logical assignment transform: reduce identifier cloning (#6296) (overlookmotel)
+- 527f7c8 transformer: Nullish coalescing transform: no cloning identifier references (#6295) (overlookmotel)
+- 7b62966 transformer: Move `BoundIdentifier` into `oxc_traverse` crate (#6293) (overlookmotel)
+- c7fbf68 transformer: Logical assignment operator transform: no cloning identifier references (#6290) (overlookmotel)
+- f0a74ca transformer: Prefer `create_bound_reference_id` to `create_reference_id` (#6282) (overlookmotel)
+- ba3e85b transformer: Fix spelling (#6279) (overlookmotel)
+- bc757c8 transformer: Move functionality of common transforms into stores (#6243) (overlookmotel)
+- 1c31932 transformer: Rename var in `VarDeclarations` common transform (#6242) (overlookmotel)
+- 0400ff9 transformer: `VarDeclarations` common transform: check if at top level with `ctx.parent()` (#6231) (overlookmotel)
+- 235cdba transformer: Use AstBuilder instance from TraverseCtx (#6209) (overlookmotel)
+- a7ed29e transformer: Insert `import` statement or `require` depending on source type (#6191) (overlookmotel)
+- 4c63f0e transformer: Rename methods (#6190) (overlookmotel)
+- 900cb46 transformer: Convert `ModuleImports` into common transform (#6186) (overlookmotel)
+- 00e2802 transformer: Introduce `TopLevelStatements` common transform (#6185) (overlookmotel)
+- 70d4c56 transformer: Rename `VarDeclarationsStore` methods (#6184) (overlookmotel)
+- 81be545 transformer: Export `var_declarations` module from `common` module (#6183) (overlookmotel)
+- 02fedf5 transformer: Shorten import (#6180) (overlookmotel)
+- f2ac584 transformer: Use TraverseCtx's ast in ModuleImports (#6175) (Dunqing)
+- 21b08ba transformer: Shared `VarDeclarations` (#6170) (overlookmotel)
+- 0dd9a2e traverse: Add helper methods to `BoundIdentifier` (#6341) (overlookmotel)
+
 ## [0.30.5] - 2024-09-29
 
 ### Bug Fixes
@@ -678,7 +1060,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Features
 
-- f1ccbd4 syntax: Add `ToJsInt32` trait for f64 (#3132) (Boshen)
+- f1ccbd4 syntax: Add `ToInt32` trait for f64 (#3132) (Boshen)
 - 870d11f syntax: Add `ToJsString` trait for f64 (#3131) (Boshen)
 - 34dd53c transformer: Report ambient module cannot be nested error (#3253) (Dunqing)
 - 1b29e63 transformer: Do not elide jsx imports if a jsx element appears somewhere (#3237) (Dunqing)

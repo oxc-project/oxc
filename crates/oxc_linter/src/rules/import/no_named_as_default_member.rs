@@ -22,7 +22,7 @@ fn no_named_as_default_member_dignostic(
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-named-as-default-member.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-named-as-default-member.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoNamedAsDefaultMember;
 
@@ -64,13 +64,12 @@ declare_oxc_lint!(
     NoNamedAsDefaultMember,
     suspicious
 );
+
 fn get_symbol_id_from_ident(
     ctx: &LintContext<'_>,
     ident: &IdentifierReference,
 ) -> Option<SymbolId> {
-    let reference_id = ident.reference_id.get().unwrap();
-    let reference = &ctx.symbols().references[reference_id];
-    reference.symbol_id()
+    ctx.symbols().get_reference(ident.reference_id()).symbol_id()
 }
 
 impl Rule for NoNamedAsDefaultMember {
@@ -88,12 +87,20 @@ impl Rule for NoNamedAsDefaultMember {
                 continue;
             };
 
-            if !remote_module_record_ref.exported_bindings.is_empty() {
-                has_members_map.insert(
-                    ctx.symbols().get_symbol_id_from_span(import_entry.local_name.span()).unwrap(),
-                    (remote_module_record_ref, import_entry.module_request.name().clone()),
-                );
+            if remote_module_record_ref.exported_bindings.is_empty() {
+                continue;
             }
+
+            let Some(symbol_id) =
+                ctx.scopes().get_root_binding(import_entry.local_name.name().as_str())
+            else {
+                return;
+            };
+
+            has_members_map.insert(
+                symbol_id,
+                (remote_module_record_ref, import_entry.module_request.name().clone()),
+            );
         }
 
         if has_members_map.is_empty() {

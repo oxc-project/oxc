@@ -95,8 +95,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::LAngle)?;
         let name = self.parse_jsx_element_name()?;
         // <Component<TsType> for tsx
-        let type_parameters =
-            if self.ts_enabled() { self.try_parse_type_arguments()? } else { None };
+        let type_parameters = if self.is_ts { self.try_parse_type_arguments()? } else { None };
         let attributes = self.parse_jsx_attributes()?;
         let self_closing = self.eat(Kind::Slash);
         if !self_closing || in_jsx_child {
@@ -169,14 +168,12 @@ impl<'a> ParserImpl<'a> {
         };
 
         let element_name = if is_reference {
-            let identifier = self.ast.identifier_reference(identifier.span, identifier.name);
-            JSXElementName::IdentifierReference(self.ast.alloc(identifier))
+            let identifier = self.ast.alloc_identifier_reference(identifier.span, identifier.name);
+            JSXElementName::IdentifierReference(identifier)
         } else if name == "this" {
-            JSXElementName::ThisExpression(
-                self.ast.alloc(self.ast.this_expression(identifier.span)),
-            )
+            JSXElementName::ThisExpression(self.ast.alloc_this_expression(identifier.span))
         } else {
-            JSXElementName::Identifier(self.ast.alloc(identifier))
+            JSXElementName::Identifier(self.alloc(identifier))
         };
         Ok(element_name)
     }
@@ -190,11 +187,11 @@ impl<'a> ParserImpl<'a> {
         object: JSXIdentifier<'a>,
     ) -> Result<Box<'a, JSXMemberExpression<'a>>> {
         let mut object = if object.name == "this" {
-            let object = self.ast.this_expression(object.span);
-            JSXMemberExpressionObject::ThisExpression(self.ast.alloc(object))
+            let object = self.ast.alloc_this_expression(object.span);
+            JSXMemberExpressionObject::ThisExpression(object)
         } else {
-            let object = self.ast.identifier_reference(object.span, object.name);
-            JSXMemberExpressionObject::IdentifierReference(self.ast.alloc(object))
+            let object = self.ast.alloc_identifier_reference(object.span, object.name);
+            JSXMemberExpressionObject::IdentifierReference(object)
         };
 
         let mut span = span;
@@ -382,14 +379,14 @@ impl<'a> ParserImpl<'a> {
             ));
         }
 
-        Ok(JSXAttributeName::Identifier(self.ast.alloc(identifier)))
+        Ok(JSXAttributeName::Identifier(self.alloc(identifier)))
     }
 
     fn parse_jsx_attribute_value(&mut self) -> Result<JSXAttributeValue<'a>> {
         match self.cur_kind() {
             Kind::Str => self
                 .parse_literal_string()
-                .map(|str_lit| JSXAttributeValue::StringLiteral(self.ast.alloc(str_lit))),
+                .map(|str_lit| JSXAttributeValue::StringLiteral(self.alloc(str_lit))),
             Kind::LCurly => {
                 let expr = self.parse_jsx_expression_container(/* is_jsx_child */ false)?;
                 Ok(JSXAttributeValue::ExpressionContainer(expr))

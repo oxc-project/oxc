@@ -3,21 +3,27 @@ use oxc_ast::{
     ast::{Expression, IdentifierReference, Statement},
     AstBuilder,
 };
-use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_semantic::{NodeId, ScopeTree, SymbolTable};
+use oxc_span::{Atom, CompactStr, Span, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
 
-use crate::ancestor::{Ancestor, AncestorType};
+use crate::{
+    ancestor::{Ancestor, AncestorType},
+    ast_operations::{get_var_name_from_node, GatherNodeParts},
+};
+
 mod ancestry;
-mod ast_operations;
+mod bound_identifier;
+mod maybe_bound_identifier;
+mod scoping;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
-mod identifier;
-mod scoping;
+pub use bound_identifier::BoundIdentifier;
+pub use maybe_bound_identifier::MaybeBoundIdentifier;
 pub use scoping::TraverseScoping;
 
 /// Traverse context.
@@ -280,6 +286,50 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.insert_scope_below_expression(expr, flags)
     }
 
+    /// Remove scope for an expression from the scope chain.
+    ///
+    /// Delete the scope and set parent of its child scopes to its parent scope.
+    /// e.g.:
+    /// * Starting scopes parentage `A -> B`, `B -> C`, `B -> D`.
+    /// * Remove scope `B` from chain.
+    /// * End result: scopes `A -> C`, `A -> D`.
+    ///
+    /// Use this when removing an expression which owns a scope, without removing its children.
+    /// For example when unwrapping `(() => foo)()` to just `foo`.
+    /// `foo` here could be an expression which itself contains scopes.
+    ///
+    /// This is a shortcut for `ctx.scoping.remove_scope_for_expression`.
+    pub fn remove_scope_for_expression(&mut self, scope_id: ScopeId, expr: &Expression) {
+        self.scoping.remove_scope_for_expression(scope_id, expr);
+    }
+
+    /// Generate binding.
+    ///
+    /// Creates a symbol with the provided name and flags and adds it to the specified scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_binding`.
+    pub fn generate_binding(
+        &mut self,
+        name: Atom<'a>,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.scoping.generate_binding(name, scope_id, flags)
+    }
+
+    /// Generate binding in current scope.
+    ///
+    /// Creates a symbol with the provided name and flags and adds it to the current scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_binding_in_current_scope`.
+    pub fn generate_binding_in_current_scope(
+        &mut self,
+        name: Atom<'a>,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.scoping.generate_binding_in_current_scope(name, flags)
+    }
+
     /// Generate UID var name.
     ///
     /// Finds a unique variable name which does clash with any other variables used in the program.
@@ -296,64 +346,79 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
     /// on how UIDs are generated. There are some potential "gotchas".
-    ///
-    /// This is a shortcut for `ctx.scoping.generate_uid`.
     #[inline]
-    pub fn generate_uid(&mut self, name: &str, scope_id: ScopeId, flags: SymbolFlags) -> SymbolId {
-        self.scoping.generate_uid(name, scope_id, flags)
+    pub fn generate_uid(
+        &mut self,
+        name: &str,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        // Get name for UID
+        let name = self.generate_uid_name(name);
+        let name_atom = self.ast.atom(&name);
+
+        // Add binding to scope
+        let symbol_id =
+            self.symbols_mut().create_symbol(SPAN, name.clone(), flags, scope_id, NodeId::DUMMY);
+        self.scopes_mut().add_binding(scope_id, name, symbol_id);
+
+        BoundIdentifier::new(name_atom, symbol_id)
     }
 
     /// Generate UID in current scope.
     ///
     /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
     /// on how UIDs are generated. There are some potential "gotchas".
-    ///
-    /// This is a shortcut for `ctx.scoping.generate_uid_in_current_scope`.
     #[inline]
-    pub fn generate_uid_in_current_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
-        self.scoping.generate_uid_in_current_scope(name, flags)
+    pub fn generate_uid_in_current_scope(
+        &mut self,
+        name: &str,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.generate_uid(name, self.current_scope_id(), flags)
     }
 
     /// Generate UID in root scope.
     ///
     /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
     /// on how UIDs are generated. There are some potential "gotchas".
-    ///
-    /// This is a shortcut for `ctx.scoping.generate_uid_in_root_scope`.
     #[inline]
-    pub fn generate_uid_in_root_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
-        self.scoping.generate_uid_in_root_scope(name, flags)
+    pub fn generate_uid_in_root_scope(
+        &mut self,
+        name: &str,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.generate_uid(name, self.scopes().root_scope_id(), flags)
     }
 
     /// Generate UID based on node.
     ///
-    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
-    /// on how UIDs are generated. There are some potential "gotchas".
+    /// Recursively gathers the identifying names of a node, and joins them with `$`.
     ///
-    /// This is a shortcut for `ctx.scoping.generate_uid_based_on_node`.
+    /// Based on Babel's `scope.generateUidBasedOnNode` logic.
+    /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
     #[inline]
-    pub fn generate_uid_based_on_node(
+    pub fn generate_uid_based_on_node<N: GatherNodeParts<'a>>(
         &mut self,
-        node: &Expression<'a>,
+        node: &N,
         scope_id: ScopeId,
         flags: SymbolFlags,
-    ) -> SymbolId {
-        self.scoping.generate_uid_based_on_node(node, scope_id, flags)
+    ) -> BoundIdentifier<'a> {
+        let name = get_var_name_from_node(node);
+        self.generate_uid(&name, scope_id, flags)
     }
 
     /// Generate UID in current scope based on node.
     ///
     /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
     /// on how UIDs are generated. There are some potential "gotchas".
-    ///
-    /// This is a shortcut for `ctx.scoping.generate_uid_in_current_scope_based_on_node`.
     #[inline]
-    pub fn generate_uid_in_current_scope_based_on_node(
+    pub fn generate_uid_in_current_scope_based_on_node<N: GatherNodeParts<'a>>(
         &mut self,
-        node: &Expression<'a>,
+        node: &N,
         flags: SymbolFlags,
-    ) -> SymbolId {
-        self.scoping.generate_uid_in_current_scope_based_on_node(node, flags)
+    ) -> BoundIdentifier<'a> {
+        self.generate_uid_based_on_node(node, self.current_scope_id(), flags)
     }
 
     /// Create a reference bound to a `SymbolId`.
@@ -369,17 +434,27 @@ impl<'a> TraverseCtx<'a> {
     }
 
     /// Create an `IdentifierReference` bound to a `SymbolId`.
-    ///
-    /// This is a shortcut for `ctx.scoping.create_bound_reference_id`.
-    #[inline]
-    pub fn create_bound_reference_id(
+    pub fn create_bound_ident_reference(
         &mut self,
         span: Span,
         name: Atom<'a>,
         symbol_id: SymbolId,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_bound_reference_id(span, name, symbol_id, flags)
+        let reference_id = self.create_bound_reference(symbol_id, flags);
+        self.ast.identifier_reference_with_reference_id(span, name, reference_id)
+    }
+
+    /// Create an `Expression::Identifier` bound to a `SymbolId`.
+    pub fn create_bound_ident_expr(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        symbol_id: SymbolId,
+        flags: ReferenceFlags,
+    ) -> Expression<'a> {
+        let ident = self.create_bound_ident_reference(span, name, symbol_id, flags);
+        Expression::Identifier(self.ast.alloc(ident))
     }
 
     /// Create an unbound reference.
@@ -395,16 +470,25 @@ impl<'a> TraverseCtx<'a> {
     }
 
     /// Create an unbound `IdentifierReference`.
-    ///
-    /// This is a shortcut for `ctx.scoping.create_unbound_reference_id`.
-    #[inline]
-    pub fn create_unbound_reference_id(
+    pub fn create_unbound_ident_reference(
         &mut self,
         span: Span,
         name: Atom<'a>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_unbound_reference_id(span, name, flags)
+        let reference_id = self.create_unbound_reference(name.to_compact_str(), flags);
+        self.ast.identifier_reference_with_reference_id(span, name, reference_id)
+    }
+
+    /// Create an unbound `Expression::Identifier`.
+    pub fn create_unbound_ident_expr(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        flags: ReferenceFlags,
+    ) -> Expression<'a> {
+        let ident = self.create_unbound_ident_reference(span, name, flags);
+        Expression::Identifier(self.ast.alloc(ident))
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -425,19 +509,38 @@ impl<'a> TraverseCtx<'a> {
 
     /// Create an `IdentifierReference` optionally bound to a `SymbolId`.
     ///
-    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_reference_id`
-    /// or `TraverseCtx::create_unbound_reference_id`.
-    ///
-    /// This is a shortcut for `ctx.scoping.create_reference_id`.
-    #[inline]
-    pub fn create_reference_id(
+    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_ident_reference`
+    /// or `TraverseCtx::create_unbound_ident_reference`.
+    pub fn create_ident_reference(
         &mut self,
         span: Span,
         name: Atom<'a>,
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_reference_id(span, name, symbol_id, flags)
+        if let Some(symbol_id) = symbol_id {
+            self.create_bound_ident_reference(span, name, symbol_id, flags)
+        } else {
+            self.create_unbound_ident_reference(span, name, flags)
+        }
+    }
+
+    /// Create an `Expression::Identifier` optionally bound to a `SymbolId`.
+    ///
+    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_ident_expr`
+    /// or `TraverseCtx::create_unbound_ident_expr`.
+    pub fn create_ident_expr(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        symbol_id: Option<SymbolId>,
+        flags: ReferenceFlags,
+    ) -> Expression<'a> {
+        if let Some(symbol_id) = symbol_id {
+            self.create_bound_ident_expr(span, name, symbol_id, flags)
+        } else {
+            self.create_unbound_ident_expr(span, name, flags)
+        }
     }
 
     /// Create reference in current scope, looking up binding for `name`,
@@ -468,30 +571,14 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.delete_reference_for_identifier(ident);
     }
 
-    /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
-    ///
-    /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple
-    /// `IdentifierReference`s for the same binding, it is better to look up the `SymbolId` only once,
-    /// and generate `IdentifierReference`s with `TraverseCtx::create_reference_id`.
-    ///
-    /// This is a shortcut for `ctx.scoping.clone_identifier_reference`.
-    #[inline]
-    pub fn clone_identifier_reference(
-        &mut self,
-        ident: &IdentifierReference<'a>,
-        flags: ReferenceFlags,
-    ) -> IdentifierReference<'a> {
-        self.scoping.clone_identifier_reference(ident, flags)
-    }
-
     /// Determine whether evaluating the specific input `node` is a consequenceless reference.
     ///
-    /// I.E evaluating it won't result in potentially arbitrary code from being ran. The following are
-    /// allowed and determined not to cause side effects:
+    /// i.e. evaluating it won't result in potentially arbitrary code from being run.
+    /// The following are allowed and determined not to cause side effects:
     ///
     /// - `this` expressions
     /// - `super` expressions
-    /// - Bound identifiers
+    /// - Bound identifiers which are not mutated
     ///
     /// This is a shortcut for `ctx.scoping.is_static`.
     #[inline]

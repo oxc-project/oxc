@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
     ast::{Character, Pattern},
     visit::{RegExpAstKind, Visit},
-    Parser, ParserOptions,
+    ConstructorParser, Options,
 };
 use oxc_span::Span;
 
@@ -63,13 +63,13 @@ impl Rule for NoRegexSpaces {
             }
 
             AstKind::CallExpression(expr) if Self::is_regexp_call_expression(expr) => {
-                if let Some(span) = Self::find_expr_to_report(&expr.arguments) {
+                if let Some(span) = Self::find_expr_to_report(&expr.arguments, ctx) {
                     ctx.diagnostic(no_regex_spaces_diagnostic(span)); // RegExp('a  b')
                 }
             }
 
             AstKind::NewExpression(expr) if Self::is_regexp_new_expression(expr) => {
-                if let Some(span) = Self::find_expr_to_report(&expr.arguments) {
+                if let Some(span) = Self::find_expr_to_report(&expr.arguments, ctx) {
                     ctx.diagnostic(no_regex_spaces_diagnostic(span)); // new RegExp('a  b')
                 }
             }
@@ -90,7 +90,7 @@ impl NoRegexSpaces {
         find_consecutive_spaces(pattern)
     }
 
-    fn find_expr_to_report(args: &Vec<'_, Argument<'_>>) -> Option<Span> {
+    fn find_expr_to_report(args: &Vec<'_, Argument<'_>>, ctx: &LintContext) -> Option<Span> {
         if let Some(expr) = args.get(1).and_then(Argument::as_expression) {
             if !expr.is_string_literal() {
                 return None; // skip on indeterminate flag, e.g. RegExp('a  b', flags)
@@ -105,12 +105,15 @@ impl NoRegexSpaces {
         }
 
         let alloc = Allocator::default();
-        let pattern_with_slashes = format!("/{}/", &pattern.value);
-        let parser = Parser::new(&alloc, pattern_with_slashes.as_str(), ParserOptions::default());
-        let regex = parser.parse().ok()?;
+        let parser = ConstructorParser::new(
+            &alloc,
+            pattern.span.source_text(ctx.source_text()),
+            None,
+            Options { pattern_span_offset: pattern.span.start, ..Options::default() },
+        );
+        let parsed_pattern = parser.parse().ok()?;
 
-        find_consecutive_spaces(&regex.pattern)
-            .map(|span| Span::new(span.start + pattern.span.start, span.end + pattern.span.start))
+        find_consecutive_spaces(&parsed_pattern)
     }
 
     fn is_regexp_new_expression(expr: &NewExpression<'_>) -> bool {

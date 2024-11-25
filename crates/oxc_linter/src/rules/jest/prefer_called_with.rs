@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
+    utils::{parse_expect_jest_fn_call, PossibleJestNode},
 };
 
 fn use_to_be_called_with(span: Span) -> OxcDiagnostic {
@@ -48,10 +48,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferCalledWith {
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            Self::run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        Self::run(jest_node, ctx);
     }
 }
 

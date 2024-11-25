@@ -1,0 +1,24 @@
+[package]
+name = "oxc_compat_data"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+oxc_tasks_common = { workspace = true }
+oxc_transformer = { workspace = true }
+
+prettyplease = { workspace = true }
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+syn = { workspace = true, features = ["parsing"] }

@@ -162,9 +162,7 @@ impl<'a> Visit<'a> for Counter {
 
     #[inline]
     fn visit_ts_enum_member_name(&mut self, it: &TSEnumMemberName<'a>) {
-        if !it.is_expression() {
-            self.stats.symbols += 1;
-        }
+        self.stats.symbols += 1;
         walk_ts_enum_member_name(self, it);
     }
 

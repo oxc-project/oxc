@@ -15,7 +15,7 @@ pub(super) unsafe fn handle_byte(byte: u8, lexer: &mut Lexer) -> Kind {
 type ByteHandler = unsafe fn(&mut Lexer<'_>) -> Kind;
 
 /// Lookup table mapping any incoming byte to a handler function defined below.
-/// <https://github.com/ratel-rust/ratel-core/blob/master/ratel/src/lexer/mod.rs>
+/// <https://github.com/ratel-rust/ratel-core/blob/v0.7.0/ratel/src/lexer/mod.rs>
 #[rustfmt::skip]
 static BYTE_HANDLERS: [ByteHandler; 256] = [
 //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //

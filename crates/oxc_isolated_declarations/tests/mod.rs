@@ -3,7 +3,7 @@ mod deno;
 use std::{fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CommentOptions};
+use oxc_codegen::CodeGenerator;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -13,21 +13,10 @@ fn transform(path: &Path, source_text: &str) -> String {
     let source_type = SourceType::from_path(path).unwrap();
     let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
 
-    let id_ret = IsolatedDeclarations::new(
-        &allocator,
-        source_text,
-        &parser_ret.trivias,
-        IsolatedDeclarationsOptions { strip_internal: true },
-    )
-    .build(&parser_ret.program);
-    let code = CodeGenerator::new()
-        .enable_comment(
-            source_text,
-            parser_ret.trivias,
-            CommentOptions { preserve_annotate_comments: false },
-        )
-        .build(&id_ret.program)
-        .source_text;
+    let id_ret =
+        IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
+            .build(&parser_ret.program);
+    let code = CodeGenerator::new().build(&id_ret.program).code;
 
     let mut snapshot =
         format!("```\n==================== .D.TS ====================\n\n{code}\n\n");
@@ -37,12 +26,10 @@ fn transform(path: &Path, source_text: &str) -> String {
             .errors
             .iter()
             .map(|d| d.clone().with_source_code(Arc::clone(&source)))
-            .map(|error| format!("{error:?}"))
-            .collect::<Vec<_>>()
-            .join("\n");
+            .fold(String::new(), |s, error| s + &format!("{error:?}"));
 
         snapshot.push_str(&format!(
-            "==================== Errors ====================\n\n{error_messages}\n\n```"
+            "==================== Errors ====================\n{error_messages}\n\n```"
         ));
     }
 

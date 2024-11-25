@@ -4,6 +4,126 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+- f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)
+
+- 878189c parser,linter: [**BREAKING**] Add `ParserReturn::is_flow_language`; linter ignore flow error (#7373) (Boshen)
+
+- 44375a5 ast: [**BREAKING**] Rename `TSEnumMemberName` enum variants (#7250) (overlookmotel)
+
+### Features
+
+- e6922df parser: Fix incorrect AST for `x?.f<T>()` (#7387) (Boshen)
+
+### Bug Fixes
+
+- 666b6c1 parser: Add missing `ChainExpression` in optional `TSInstantiationExpression` (#7371) (Boshen)
+
+### Refactor
+
+
+## [0.36.0] - 2024-11-09
+
+- b11ed2c ast: [**BREAKING**] Remove useless `ObjectProperty::init` field (#7220) (Boshen)
+
+- 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)
+
+- d1d1874 ast: [**BREAKING**] Change `comment.span` to real position that contain `//` and `/*` (#7154) (Boshen)
+
+### Features
+
+- 9d6cc9d estree: ESTree compatibility for all literals (#7152) (ottomated)
+
+### Refactor
+
+
+## [0.35.0] - 2024-11-04
+
+### Bug Fixes
+
+- caaf00e parser: Fix incorrect parsed `TSIndexSignature` (#7016) (Boshen)
+
+### Performance
+
+- fa9a4ec parser: Check `.` before `[` in `parse_member_expression_rest` (#6979) (Boshen)
+
+### Refactor
+
+- 953b051 parser: Remove `oxc_ecmascript` crate (#7109) (Boshen)
+- fdd480d parser: Do not use `AstBuilder::*_from_*` methods (#7068) (overlookmotel)
+- 9e85b10 parser: Add `ParserImpl::alloc` method (#7063) (overlookmotel)
+- 17a938e parser: Use function `parse_type_member_semicolon` (#7018) (Boshen)
+- aa1b29c parser: Remove `parse_ts_index_signature_member` function (#7017) (Boshen)
+
+## [0.34.0] - 2024-10-26
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
+## [0.33.0] - 2024-10-24
+
+- a1ca964 ast, parser: [**BREAKING**] Remove `NumericLiteral::new` method (#6787) (overlookmotel)
+
+- aeaa27a ast, parser, transformer, traverse: [**BREAKING**] Remove `BindingIdentifier::new` methods (#6786) (overlookmotel)
+
+- ecc9151 ast, parser, transformer, traverse: [**BREAKING**] Remove `IdentifierReference::new` methods (#6785) (overlookmotel)
+
+- 8032813 regular_expression: [**BREAKING**] Migrate to new regexp parser API (#6741) (leaysgur)
+
+### Bug Fixes
+
+
+### Refactor
+
+
+## [0.32.0] - 2024-10-19
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+- 2808973 ast: [**BREAKING**] Add `Program::comments` (#6445) (Boshen)
+
+### Features
+
+- 58467a5 parser: Better handling of invalid modifiers (#6482) (DonIsaac)
+- 8ea6b72 parser: Better errors for reserved words used as identifier names (#6478) (DonIsaac)
+
+### Bug Fixes
+
+- 721cf0f parser: Should be treated comments where after `(` as leading comments of next token (#6588) (Dunqing)
+- b1bf12c parser: Do not parse `as` and `satisfies` expression in javascript (#6442) (Boshen)
+
+### Performance
+
+- 4d8bc8c parser: Precompute `is_typescript` (#6443) (Boshen)
+
+### Refactor
+
+- 073b02a ast: Type params field before params in TS function declaration types (#6391) (overlookmotel)
+- c45723b parser: Fix typo in var name (#6500) (overlookmotel)
+
+## [0.31.0] - 2024-10-08
+
+- 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)
+
+- 5a73a66 regular_expression: [**BREAKING**] Simplify public APIs (#6262) (leaysgur)
+
+- 32d972e parser: [**BREAKING**] Treat unambiguous files containing TS export assignments as modules (#6253) (overlookmotel)
+
+### Features
+
+- 9e62396 syntax_operations: Add crate `oxc_ecmascript` (#6202) (Boshen)
+
+### Bug Fixes
+
+- 6159560 parser: String `ImportSpecifier`s for type imports (#6352) (DonIsaac)
+- 1380d8b parser: Should regard comments where after `=` as leading comments of next token (#6355) (Dunqing)
+
+### Refactor
+
+- 3b53dd4 parser: Provide better error messages for `const` modifiers on class elements (#6353) (DonIsaac)
+
 ## [0.30.4] - 2024-09-28
 
 ### Bug Fixes

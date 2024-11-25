@@ -1,11 +1,38 @@
+use std::borrow::Cow;
+
 use itertools::Itertools;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
 use oxc_syntax::module_record::{ImportImportName, RequestedModule};
+use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule};
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-duplicates.md>
+fn no_duplicates_diagnostic<I>(
+    module_name: &str,
+    first_import: Span,
+    other_imports: I,
+) -> OxcDiagnostic
+where
+    I: IntoIterator<Item = Span>,
+{
+    const MAX_MODULE_LEN: usize = 16;
+
+    let message = if module_name.len() > MAX_MODULE_LEN {
+        Cow::Borrowed("Modules should not be imported multiple times in the same file")
+    } else {
+        Cow::Owned(format!("Module '{module_name}' is imported more than once in this file"))
+    };
+    let labels = std::iter::once(first_import.primary_label("It is first imported here"))
+        .chain(other_imports.into_iter().map(LabeledSpan::underline));
+
+    OxcDiagnostic::warn(message)
+        .with_labels(labels)
+        .with_help("Merge these imports into a single import statement")
+}
+
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-duplicates.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoDuplicates {
     prefer_inline: bool,
@@ -29,11 +56,20 @@ declare_oxc_lint!(
     /// ```javascript
     /// import { foo } from './module';
     /// import { bar } from './module';
+    ///
+    /// import a from './module';
+    /// import { b } from './module';
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```javascript
+    /// ```typescript
     /// import { foo, bar } from './module';
+    ///
+    /// import * as a from 'foo'; // separate statements for namespace imports
+    /// import { b } from 'foo';
+    ///
+    /// import { c } from 'foo';      // separate type imports, unless
+    /// import type { d } from 'foo'; // `preferInline` is true
     /// ```
     NoDuplicates,
     suspicious
@@ -64,55 +100,61 @@ impl Rule for NoDuplicates {
             })
             .chunk_by(|r| r.0.clone());
 
-        let check_duplicates = |requested_modules: Option<&Vec<&RequestedModule>>| {
-            if let Some(requested_modules) = requested_modules {
-                if requested_modules.len() > 1 {
-                    let labels = requested_modules
-                        .iter()
-                        .map(|requested_module| LabeledSpan::underline(requested_module.span()))
-                        .collect::<Vec<_>>();
-                    ctx.diagnostic(
-                        OxcDiagnostic::warn(
-                            "Forbid repeated import of the same module in multiple places",
-                        )
-                        .with_labels(labels),
-                    );
-                }
-            }
-        };
-
         for (_path, group) in &groups {
-            let has_type_import = module_record.import_entries.iter().any(|entry| entry.is_type);
-            // When prefer_inline is false, 0 is value, 1 is type named, 2 is type default or type namespace
-            // When prefer_inline is true, 0 is value and type named, 2 is type default or type namespace
-            let import_entries_maps = group
+            let requested_modules = group
                 .into_iter()
                 .flat_map(|(_path, requested_modules)| requested_modules)
-                .filter(|requested_module| requested_module.is_import())
-                .into_group_map_by(|requested_module| {
-                    // We should early return if there is no type import
-                    if !has_type_import {
-                        return 0;
+                .filter(|requested_module| requested_module.is_import());
+            // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
+            // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
+            let mut import_entries_maps: FxHashMap<u8, Vec<&RequestedModule>> =
+                FxHashMap::default();
+            for requested_module in requested_modules {
+                let imports = module_record
+                    .import_entries
+                    .iter()
+                    .filter(|entry| entry.module_request.span() == requested_module.span())
+                    .collect::<Vec<_>>();
+                if imports.is_empty() {
+                    import_entries_maps.entry(0).or_default().push(requested_module);
+                    continue;
+                }
+                let mut flags = [true; 4];
+                for imports in imports {
+                    let key = if imports.is_type {
+                        match imports.import_name {
+                            ImportImportName::Name(_) => u8::from(!self.prefer_inline),
+                            ImportImportName::NamespaceObject => 2,
+                            ImportImportName::Default(_) => 3,
+                        }
+                    } else {
+                        match imports.import_name {
+                            ImportImportName::NamespaceObject => 2,
+                            _ => 0,
+                        }
                     };
-                    for entry in &module_record.import_entries {
-                        if entry.module_request.span() != requested_module.span() {
-                            continue;
-                        }
 
-                        if entry.is_type {
-                            return match entry.import_name {
-                                ImportImportName::Name(_) => i8::from(!self.prefer_inline),
-                                ImportImportName::NamespaceObject
-                                | ImportImportName::Default(_) => 2,
-                            };
-                        }
+                    if flags[key as usize] {
+                        flags[key as usize] = false;
+                        import_entries_maps.entry(key).or_default().push(requested_module);
                     }
-                    0
-                });
+                }
+            }
 
-            check_duplicates(import_entries_maps.get(&0));
-            check_duplicates(import_entries_maps.get(&1));
-            check_duplicates(import_entries_maps.get(&2));
+            for i in 0..4 {
+                check_duplicates(ctx, import_entries_maps.get(&i));
+            }
+        }
+    }
+}
+
+fn check_duplicates(ctx: &LintContext, requested_modules: Option<&Vec<&RequestedModule>>) {
+    if let Some(requested_modules) = requested_modules {
+        if requested_modules.len() > 1 {
+            let mut labels = requested_modules.iter().map(|m| m.span());
+            let first = labels.next().unwrap(); // we know there is at least one
+            let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
+            ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
         }
     }
 }
@@ -127,13 +169,13 @@ fn test() {
         (r#"import "./malformed.js""#, None),
         (r"import { x } from './foo'; import { y } from './bar'", None),
         (r#"import foo from "234artaf"; import { shoop } from "234q25ad""#, None),
-        // r#"import { x } from './foo'; import type { y } from './foo'"#,
+        (r"import { x } from './foo'; import type { y } from './foo'", None),
         // TODO: considerQueryString
         // r#"import x from './bar?optionX'; import y from './bar?optionY';"#,
         (r"import x from './foo'; import y from './bar';", None),
         // TODO: separate namespace
-        // r#"import * as ns from './foo'; import {y} from './foo'"#,
-        // r#"import {y} from './foo'; import * as ns from './foo'"#,
+        (r"import * as ns from './foo'; import { y } from './foo'", None),
+        (r"import { y } from './foo'; import * as ns from './foo'", None),
         // TypeScript
         (r"import type { x } from './foo'; import y from './foo'", None),
         (r"import type x from './foo'; import type y from './bar'", None),
@@ -160,6 +202,17 @@ fn test() {
         (r"import { type x } from './foo'; import { y } from './foo'", None),
         (r"import { type x } from './foo'; import type y from 'foo'", None),
         (r"import { x } from './foo'; export { x } from './foo'", None),
+        // for cases in https://github.com/import-js/eslint-plugin-import/issues/2750
+        (r"import type * as something from './foo'; import type y from './foo';", None),
+        (r"import type * as something from './foo'; import type { y } from './foo';", None),
+        (r"import type y from './foo'; import type * as something from './foo';", None),
+        (r"import type { y } from './foo'; import type * as something from './foo';", None),
+        // type + import
+        (r"import type * as something from './foo'; import y from './foo';", None),
+        (r"import type * as something from './foo'; import { y } from './foo';", None),
+        (r"import y from './foo'; import type * as something from './foo';", None),
+        (r"import { y } from './foo'; import type * as something from './foo';", None),
+        (r"import { RouterModule, Routes } from '@angular/router';", None),
     ];
 
     let fail = vec![

@@ -47,7 +47,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<(Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>)> {
         let span = self.start_span();
         self.expect(Kind::LParen)?;
-        let this_param = if self.ts_enabled() && self.at(Kind::This) {
+        let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter()?;
             if !self.at(Kind::RParen) {
                 self.expect(Kind::Comma)?;
@@ -135,7 +135,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx =
             self.ctx.and_in(ctx.has_in()).and_await(ctx.has_await()).and_yield(ctx.has_yield());
 
-        if !self.ts_enabled() && body.is_none() {
+        if !self.is_ts && body.is_none() {
             return Err(self.unexpected());
         }
 
@@ -250,8 +250,7 @@ impl<'a> ParserImpl<'a> {
         let id = self.parse_function_id(func_kind, r#async, generator)?;
         let function =
             self.parse_function(span, id, r#async, generator, func_kind, &Modifiers::empty())?;
-
-        Ok(self.ast.expression_from_function(function))
+        Ok(Expression::FunctionExpression(function))
     }
 
     /// Section 15.4 Method Definitions

@@ -1,41 +1,15 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/conditional-nested.ts
+snapshot_kind: text
 ---
-================================================================================
-SCOPES
-================================================================================
-
 [
   {
     "children": [
       {
         "children": [
           {
-            "children": [
-              {
-                "children": [],
-                "flags": "ScopeFlags(StrictMode)",
-                "id": 3,
-                "node": "TSConditionalType",
-                "symbols": [
-                  {
-                    "flags": "SymbolFlags(TypeParameter)",
-                    "id": 3,
-                    "name": "U",
-                    "node": "TSTypeParameter(U)",
-                    "references": [
-                      {
-                        "flags": "ReferenceFlags(Type)",
-                        "id": 5,
-                        "name": "U",
-                        "node_id": 33
-                      }
-                    ]
-                  }
-                ]
-              }
-            ],
+            "children": [],
             "flags": "ScopeFlags(StrictMode)",
             "id": 2,
             "node": "TSConditionalType",
@@ -51,6 +25,28 @@ SCOPES
                     "id": 2,
                     "name": "U",
                     "node_id": 19
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "TSConditionalType",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 3,
+                "name": "U",
+                "node": "TSTypeParameter(U)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 5,
+                    "name": "U",
+                    "node_id": 33
                   }
                 ]
               }
@@ -98,9 +94,3 @@ SCOPES
     ]
   }
 ]
-
-================================================================================
-CONFORMANCE
-================================================================================
-
-All tests passed.

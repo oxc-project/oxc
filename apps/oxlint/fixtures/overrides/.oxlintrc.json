@@ -1,0 +1,26 @@
+{
+  "rules": {
+    "no-var": "error",
+    "no-console": "error"
+  },
+  "overrides": [
+    {
+      "files": ["*.js"],
+      "rules": {
+        "no-console": "warn"
+      }
+    },
+    {
+      "files": ["*.{js,jsx}"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["*.ts"],
+      "rules": {
+        "no-console": "warn"
+      }
+    }
+  ]
+}

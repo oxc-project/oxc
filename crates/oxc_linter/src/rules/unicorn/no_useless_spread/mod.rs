@@ -143,7 +143,7 @@ declare_oxc_lint!(
     /// ```
     NoUselessSpread,
     correctness,
-    conditional_fix
+    fix_dangerous
 );
 
 impl Rule for NoUselessSpread {
@@ -268,18 +268,18 @@ fn diagnose_array_in_array_spread<'a>(
             // [ ...[a, b, c], ...[d, e, f] ] -> [a, b, c, d, e, f]
             ctx.diagnostic_with_fix(diagnostic, |fixer| {
                 let mut codegen = fixer.codegen();
-                codegen.print_char(b'[');
+                codegen.print_ascii_byte(b'[');
                 let elements =
                     spreads.iter().flat_map(|arr| arr.elements.iter()).collect::<Vec<_>>();
                 let n = elements.len();
                 for (i, el) in elements.into_iter().enumerate() {
                     codegen.print_expression(el.to_expression());
                     if i < n - 1 {
-                        codegen.print_char(b',');
-                        codegen.print_char(b' ');
+                        codegen.print_ascii_byte(b',');
+                        codegen.print_ascii_byte(b' ');
                     }
                 }
-                codegen.print_char(b']');
+                codegen.print_ascii_byte(b']');
                 fixer.replace(outer_array.span, codegen)
             });
         }
@@ -380,13 +380,13 @@ fn check_useless_clone<'a>(
     is_array: bool,
     spread_elem: &SpreadElement<'a>,
     ctx: &LintContext<'a>,
-) -> bool {
+) {
     let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
     let target = spread_elem.argument.get_inner_expression();
 
     // already diagnosed by first check
     if matches!(target, Expression::ArrayExpression(_) | Expression::ObjectExpression(_)) {
-        return false;
+        return;
     }
 
     let hint = target.const_eval();
@@ -394,17 +394,34 @@ fn check_useless_clone<'a>(
     if hint_matches_expr {
         let name = diagnostic_name(ctx, target);
 
+        // `[...new Array(1)]` -> `new Array(1).fill()`
+        if let Expression::NewExpression(new_expr) = target {
+            let is_array_constructor = new_expr
+                .callee
+                .without_parentheses()
+                .get_identifier_reference()
+                .is_some_and(|id| id.name == "Array");
+
+            if is_array_constructor && new_expr.arguments.len() == 1 {
+                ctx.diagnostic_with_fix(clone(span, is_array, name), |fixer| {
+                    fixer.replace(
+                        array_or_obj_span,
+                        format!("{}.fill()", fixer.source_range(spread_elem.argument.span())),
+                    )
+                });
+                return;
+            }
+        }
+
         ctx.diagnostic_with_fix(clone(span, is_array, name), |fixer| {
             fix_by_removing_array_spread(fixer, &array_or_obj_span, spread_elem)
         });
-        return true;
     }
-    false
 }
 
 fn diagnostic_name<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> Option<&'a str> {
     fn pretty_snippet(snippet: &str) -> Option<&str> {
-        // unweildy snippets don't get included in diagnostic messages
+        // unwieldy snippets don't get included in diagnostic messages
         if snippet.len() > 50 || snippet.contains('\n') {
             None
         } else {
@@ -725,6 +742,7 @@ fn test() {
         // useless clones - simple arrays
         ("[...foo.map(x => !!x)]", "foo.map(x => !!x)"),
         ("[...new Array()]", "new Array()"),
+        ("[...new Array(3)]", "new Array(3).fill()"),
         ("[...new Array(1, 2, 3)]", "new Array(1, 2, 3)"),
         // useless clones - complex
         (r"[...await Promise.all(foo)]", r"await Promise.all(foo)"),

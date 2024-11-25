@@ -7,6 +7,7 @@ use oxc_ast::{
     },
     match_member_expression, AstKind,
 };
+use oxc_ecmascript::ToBoolean;
 use oxc_semantic::AstNode;
 
 use crate::{LintContext, OxlintSettings};
@@ -59,7 +60,7 @@ pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Opti
     get_prop_value(item).and_then(JSXAttributeValue::as_string_literal).map(|s| s.value.as_str())
 }
 
-// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/isHiddenFromScreenReader.js
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/isHiddenFromScreenReader.js
 pub fn is_hidden_from_screen_reader<'a>(
     ctx: &LintContext<'a>,
     node: &JSXOpeningElement<'a>,
@@ -90,7 +91,7 @@ pub fn is_hidden_from_screen_reader<'a>(
     })
 }
 
-// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/hasAccessibleChild.js
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/hasAccessibleChild.js
 pub fn object_has_accessible_child<'a>(ctx: &LintContext<'a>, node: &JSXElement<'a>) -> bool {
     node.children.iter().any(|child| match child {
         JSXChild::Text(text) => !text.value.is_empty(),
@@ -194,7 +195,7 @@ pub fn get_parent_component<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    for node_id in ctx.nodes().ancestors(node.id()) {
+    for node_id in ctx.nodes().ancestor_ids(node.id()) {
         let node = ctx.nodes().get_node(node_id);
         if is_es5_component(node) || is_es6_component(node) {
             return Some(node);
@@ -205,7 +206,7 @@ pub fn get_parent_component<'a, 'b>(
 
 /// Resolve element type(name) using jsx-a11y settings
 /// ref:
-/// <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/getElementType.js>
+/// <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/getElementType.js>
 pub fn get_element_type<'c, 'a>(
     context: &'c LintContext<'a>,
     element: &JSXOpeningElement<'a>,

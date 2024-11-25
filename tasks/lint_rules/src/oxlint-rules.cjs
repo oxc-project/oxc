@@ -26,13 +26,16 @@ const readAllImplementedRuleNames = async () => {
     }
 
     if (found) {
-      const prefixedName = line
+      let prefixedName = line
         .replaceAll(',', '')
         .replaceAll('::', '/')
         .replaceAll('_', '-');
 
       // Ignore no reference rules
       if (prefixedName.startsWith('oxc/')) continue;
+      if (prefixedName.startsWith('node/')) {
+        prefixedName = prefixedName.replace(/^node/, 'n');
+      }
 
       rules.add(prefixedName);
     }
@@ -46,6 +49,7 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   'eslint/no-octal', // superseded by strict mode
   'eslint/no-with', // superseded by strict mode
   'eslint/no-new-symbol', // Deprecated as of ESLint v9, but for a while disable manually
+  'eslint/no-undef-init', // #6456 unicorn/no-useless-undefined covers this case
   'import/no-unresolved', // Will always contain false positives due to module resolution complexity
 ]);
 
@@ -125,5 +129,57 @@ exports.overrideTypeScriptPluginStatusWithEslintPluginStatus = (
 
     rule.isImplemented = eslintRule.isImplemented;
     rule.isNotSupported = eslintRule.isNotSupported;
+  }
+};
+
+/**
+ * Some Jest rules are written to be compatible with Vitest, so we should
+ * override the status of the Vitest rules to match the Jest rules.
+ * @param {RuleEntries} ruleEntries
+ */
+exports.syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
+  const vitestCompatibleRulesFile = await readFile(
+    'crates/oxc_linter/src/utils/mod.rs',
+    'utf8',
+  );
+
+  // Find the start of the list of vitest-compatible rules
+  // ```
+  // const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
+  //   "consistent-test-it",
+  //   "expect-expect",
+  //   ...
+  // };
+  // ```
+  const vitestCompatibleRules = vitestCompatibleRulesFile.match(
+    /const VITEST_COMPATIBLE_JEST_RULES.+phf_set! {([^}]+)/s,
+  )?.[1];
+  if (!vitestCompatibleRules) {
+    throw new Error('Failed to find the list of vitest-compatible rules');
+  }
+
+  const rules = new Set(
+    vitestCompatibleRules
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('//'))
+      .map((line) =>
+        line
+          .replace(/"/g, '')
+          .split(',')
+          .filter((s) => s !== '')
+      )
+      .flat(),
+  );
+
+  for (const rule of rules) {
+    const vitestRuleEntry = ruleEntries.get(`vitest/${rule}`);
+    const jestRuleEntry = ruleEntries.get(`jest/${rule}`);
+    if (vitestRuleEntry && jestRuleEntry) {
+      ruleEntries.set(`vitest/${rule}`, {
+        ...vitestRuleEntry,
+        isImplemented: jestRuleEntry.isImplemented,
+      });
+    }
   }
 };

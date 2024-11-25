@@ -1,3 +1,4 @@
+#![allow(missing_docs)] // FIXME
 use oxc_span::Atom;
 use oxc_syntax::scope::ScopeId;
 
@@ -99,25 +100,25 @@ impl<'a> AstKind<'a> {
     /// Will always be none if semantic analysis has not been run.
     pub fn get_container_scope_id(self) -> Option<ScopeId> {
         match self {
-            Self::Program(p) => p.scope_id.get(),
-            Self::BlockStatement(b) => b.scope_id.get(),
-            Self::ForStatement(f) => f.scope_id.get(),
-            Self::ForInStatement(f) => f.scope_id.get(),
-            Self::ForOfStatement(f) => f.scope_id.get(),
-            Self::SwitchStatement(switch) => switch.scope_id.get(),
-            Self::CatchClause(catch) => catch.scope_id.get(),
-            Self::Function(f) => f.scope_id.get(),
-            Self::ArrowFunctionExpression(f) => f.scope_id.get(),
-            Self::Class(class) => class.scope_id.get(),
-            Self::StaticBlock(b) => b.scope_id.get(),
-            Self::TSEnumDeclaration(e) => e.scope_id.get(),
-            Self::TSConditionalType(e) => e.scope_id.get(),
-            Self::TSTypeAliasDeclaration(e) => e.scope_id.get(),
-            Self::TSInterfaceDeclaration(e) => e.scope_id.get(),
-            Self::TSMethodSignature(e) => e.scope_id.get(),
-            Self::TSConstructSignatureDeclaration(e) => e.scope_id.get(),
-            Self::TSModuleDeclaration(e) => e.scope_id.get(),
-            Self::TSMappedType(e) => e.scope_id.get(),
+            Self::Program(p) => Some(p.scope_id()),
+            Self::BlockStatement(b) => Some(b.scope_id()),
+            Self::ForStatement(f) => Some(f.scope_id()),
+            Self::ForInStatement(f) => Some(f.scope_id()),
+            Self::ForOfStatement(f) => Some(f.scope_id()),
+            Self::SwitchStatement(switch) => Some(switch.scope_id()),
+            Self::CatchClause(catch) => Some(catch.scope_id()),
+            Self::Function(f) => Some(f.scope_id()),
+            Self::ArrowFunctionExpression(f) => Some(f.scope_id()),
+            Self::Class(class) => Some(class.scope_id()),
+            Self::StaticBlock(b) => Some(b.scope_id()),
+            Self::TSEnumDeclaration(e) => Some(e.scope_id()),
+            Self::TSConditionalType(e) => Some(e.scope_id()),
+            Self::TSTypeAliasDeclaration(e) => Some(e.scope_id()),
+            Self::TSInterfaceDeclaration(e) => Some(e.scope_id()),
+            Self::TSMethodSignature(e) => Some(e.scope_id()),
+            Self::TSConstructSignatureDeclaration(e) => Some(e.scope_id()),
+            Self::TSModuleDeclaration(e) => Some(e.scope_id()),
+            Self::TSMappedType(e) => Some(e.scope_id()),
             _ => None,
         }
     }
@@ -217,7 +218,6 @@ impl<'a> AstKind<'a> {
 
             Self::SwitchCase(_) => "SwitchCase".into(),
             Self::CatchClause(_) => "CatchClause".into(),
-            Self::FinallyClause(_) => "FinallyClause".into(),
 
             Self::VariableDeclaration(_) => "VariableDeclaration".into(),
             Self::VariableDeclarator(v) => format!(
@@ -298,7 +298,6 @@ impl<'a> AstKind<'a> {
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
             Self::SpreadElement(_) => "SpreadElement".into(),
             Self::Elision(_) => "Elision".into(),
-            Self::ExpressionArrayElement(_) => "ExpressionArrayElement".into(),
             Self::BindingRestElement(_) => "BindingRestElement".into(),
 
             Self::Function(x) => format!("Function({})", or_anonymous(x.id.as_ref())).into(),
@@ -314,7 +313,6 @@ impl<'a> AstKind<'a> {
             Self::Class(c) => format!("Class({})", or_anonymous(c.id.as_ref())).into(),
             Self::TSClassImplements(_) => "TSClassImplements".into(),
             Self::ClassBody(_) => "ClassBody".into(),
-            Self::ClassHeritage(_) => "ClassHeritage".into(),
             Self::StaticBlock(_) => "StaticBlock".into(),
             Self::PropertyDefinition(_) => "PropertyDefinition".into(),
             Self::MethodDefinition(_) => "MethodDefinition".into(),

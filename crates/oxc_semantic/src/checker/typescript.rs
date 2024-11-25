@@ -2,13 +2,9 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
 
-#[allow(clippy::wildcard_imports)]
-use oxc_ast::{
-    ast::*,
-    syntax_directed_operations::{BoundNames, PropName},
-    AstKind,
-};
+use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::{BoundNames, PropName};
 use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
@@ -259,7 +255,7 @@ fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
 
 pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     // skip current node
-    for node in ctx.nodes.iter_parents(ctx.current_node_id).skip(1) {
+    for node in ctx.nodes.ancestors(ctx.current_node_id).skip(1) {
         match node.kind() {
             AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::TSModuleDeclaration(_) => {
                 break;
@@ -408,8 +404,8 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     let is_declare = ctx.class_table_builder.current_class_id.map_or(
         ctx.source_type.is_typescript_definition(),
         |id| {
-            let ast_node_id = ctx.class_table_builder.classes.declarations[id];
-            let AstKind::Class(class) = ctx.nodes.get_node(ast_node_id).kind() else {
+            let node_id = ctx.class_table_builder.classes.declarations[id];
+            let AstKind::Class(class) = ctx.nodes.get_node(node_id).kind() else {
                 #[cfg(debug_assertions)]
                 panic!("current_class_id is set, but does not point to a Class node.");
                 #[cfg(not(debug_assertions))]

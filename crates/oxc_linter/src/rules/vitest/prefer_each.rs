@@ -19,7 +19,7 @@ fn use_prefer_each(span: Span, fn_name: &str) -> OxcDiagnostic {
 
 #[inline]
 fn is_in_test(ctx: &LintContext<'_>, id: NodeId) -> bool {
-    ctx.nodes().iter_parents(id).any(|node| {
+    ctx.nodes().ancestors(id).any(|node| {
         let AstKind::CallExpression(ancestor_call_expr) = node.kind() else { return false };
         let Some(ancestor_member_expr) = ancestor_call_expr.callee.as_member_expression() else {
             return false;
@@ -97,7 +97,7 @@ impl PreferEach {
             return;
         }
 
-        for parent_node in ctx.nodes().iter_parents(node.id()).skip(1) {
+        for parent_node in ctx.nodes().ancestors(node.id()).skip(1) {
             match parent_node.kind() {
                 AstKind::CallExpression(_) => {
                     return;

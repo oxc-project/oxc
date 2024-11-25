@@ -1,0 +1,32 @@
+import A from "./A";
+import Store from "./Store";
+Store.subscribe();
+const Header = styled.div`color: red`;
+_c = Header;
+const StyledFactory1 = styled("div")`color: hotpink`;
+_c2 = StyledFactory1;
+const StyledFactory2 = styled("div")({ color: "hotpink" });
+_c3 = StyledFactory2;
+const StyledFactory3 = styled(A)({ color: "hotpink" });
+_c4 = StyledFactory3;
+const FunnyFactory = funny.factory``;
+let Alias1 = A;
+let Alias2 = A.Foo;
+const Dict = {};
+function Foo() {
+  return [React.createElement(A), React.createElement(B), React.createElement(StyledFactory1), React.createElement(StyledFactory2), React.createElement(StyledFactory3), React.createElement(Alias1), React.createElement(Alias2), jsx(Header), React.createElement(Dict.X)];
+}
+_c5 = Foo;
+React.createContext(Store);
+const B = hoc(A);
+_c6 = B;
+const NotAComponent = wow(A);
+_c7 = NotAComponent;
+var _c, _c2, _c3, _c4, _c5, _c6, _c7;
+$RefreshReg$(_c, "Header");
+$RefreshReg$(_c2, "StyledFactory1");
+$RefreshReg$(_c3, "StyledFactory2");
+$RefreshReg$(_c4, "StyledFactory3");
+$RefreshReg$(_c5, "Foo");
+$RefreshReg$(_c6, "B");
+$RefreshReg$(_c7, "NotAComponent");

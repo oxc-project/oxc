@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint-plugin-import(import-no-namespace): Usage of namespaced aka wildcard "*" imports prohibited
+   ╭─[index.js:1:13]
+ 1 │ import * as foo from 'foo';
+   ·             ───
+   ╰────
+  help: Use named or default imports
+
+  ⚠ eslint-plugin-import(import-no-namespace): Usage of namespaced aka wildcard "*" imports prohibited
+   ╭─[index.js:1:28]
+ 1 │ import defaultExport, * as foo from 'foo';
+   ·                            ───
+   ╰────
+  help: Use named or default imports
+
+  ⚠ eslint-plugin-import(import-no-namespace): Usage of namespaced aka wildcard "*" imports prohibited
+   ╭─[index.js:1:13]
+ 1 │ import * as foo from './foo';
+   ·             ───
+   ╰────
+  help: Use named or default imports

@@ -75,7 +75,7 @@ impl<'a> SymbolTester<'a> {
             0 => Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
             1 => Ok(symbols_with_target_name
                 .iter()
-                .map(|(_, symbol_id, _)| *symbol_id)
+                .map(|&(_, symbol_id, _)| symbol_id)
                 .next()
                 .unwrap()),
             n if n > 1 => Err(OxcDiagnostic::error(format!(
@@ -183,11 +183,9 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let refs = {
-                    self.semantic
-                        .symbols()
-                        .get_resolved_reference_ids(symbol_id)
-                        .iter()
-                        .map(|r_id| self.semantic.symbols().get_reference(*r_id).clone())
+                    self.semantic.symbols().get_resolved_reference_ids(symbol_id).iter().map(
+                        |&reference_id| self.semantic.symbols().get_reference(reference_id).clone(),
+                    )
                 };
                 let num_accepted = refs.filter(filter).count();
                 if num_accepted == ref_count {
@@ -196,54 +194,6 @@ impl<'a> SymbolTester<'a> {
                     Err(OxcDiagnostic::error(format!(
                         "Expected to find {ref_count} acceptable references, but only found {num_accepted}"
                     )))
-                }
-            }
-            e => e,
-        };
-        self
-    }
-
-    /// Check that this symbol is exported.
-    ///
-    /// Export status is checked using the symbol's [`SymbolFlags`], not by
-    /// checking the [`oxc_semantic::ModuleRecord`].
-    ///
-    /// For the inverse of this assertion, use [`SymbolTester::is_not_exported`].
-    #[allow(clippy::wrong_self_convention)]
-    pub fn is_exported(mut self) -> Self {
-        self.test_result = match self.test_result {
-            Ok(symbol_id) => {
-                let binding = self.target_symbol_name.clone();
-                if self.semantic.symbols().get_flags(symbol_id).is_export() {
-                    Ok(symbol_id)
-                } else {
-                    Err(OxcDiagnostic::error(format!(
-                        "Expected {binding} to be exported with SymbolFlags::Export"
-                    )))
-                }
-            }
-            e => e,
-        };
-        self
-    }
-
-    /// Check that this symbol is not exported.
-    ///
-    /// Export status is checked using the symbol's [`SymbolFlags`], not by
-    /// checking the [`oxc_semantic::ModuleRecord`].
-    ///
-    /// For the inverse of this assertion, use [`SymbolTester::is_exported`].
-    #[allow(clippy::wrong_self_convention)]
-    pub fn is_not_exported(mut self) -> Self {
-        self.test_result = match self.test_result {
-            Ok(symbol_id) => {
-                let binding = self.target_symbol_name.clone();
-                if self.semantic.symbols().get_flags(symbol_id).contains(SymbolFlags::Export) {
-                    Err(OxcDiagnostic::error(format!(
-                        "Expected {binding} to not be exported. Symbol has export flag."
-                    )))
-                } else {
-                    Ok(symbol_id)
                 }
             }
             e => e,

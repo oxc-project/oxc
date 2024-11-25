@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
    ╭─[prefer_ts_expect_error.tsx:1:1]

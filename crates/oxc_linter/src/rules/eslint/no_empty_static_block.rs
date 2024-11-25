@@ -48,17 +48,20 @@ declare_oxc_lint!(
     /// ```
     NoEmptyStaticBlock,
     correctness,
-    pending // TODO: add a safe suggestion
+    suggestion,
 );
 
 impl Rule for NoEmptyStaticBlock {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::StaticBlock(static_block) = node.kind() {
             if static_block.body.is_empty() {
-                if ctx.semantic().trivias().has_comments_between(static_block.span) {
+                if ctx.semantic().has_comments_between(static_block.span) {
                     return;
                 }
-                ctx.diagnostic(no_empty_static_block_diagnostic(static_block.span));
+                ctx.diagnostic_with_suggestion(
+                    no_empty_static_block_diagnostic(static_block.span),
+                    |fixer| fixer.delete(&static_block.span),
+                );
             }
         }
     }
@@ -86,5 +89,17 @@ fn test() {
         "class Foo { static { bar(); } static {} }",
     ];
 
-    Tester::new(NoEmptyStaticBlock::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("class Foo { static {} }", "class Foo {  }"),
+        ("class Foo { static { } }", "class Foo {  }"),
+        (
+            "class Foo { static {
+
+			 } }",
+            "class Foo {  }",
+        ),
+        ("class Foo { static { bar(); } static {} }", "class Foo { static { bar(); }  }"),
+    ];
+
+    Tester::new(NoEmptyStaticBlock::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

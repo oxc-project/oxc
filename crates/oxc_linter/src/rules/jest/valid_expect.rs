@@ -11,9 +11,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{
-        collect_possible_jest_call_node, parse_expect_jest_fn_call, ExpectError, PossibleJestNode,
-    },
+    utils::{parse_expect_jest_fn_call, ExpectError, PossibleJestNode},
     AstNode,
 };
 
@@ -70,7 +68,7 @@ declare_oxc_lint!(
     /// expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/valid-expect.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/valid-expect.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json
@@ -115,10 +113,12 @@ impl Rule for ValidExpect {
         Self(Box::new(ValidExpectConfig { async_matchers, min_args, max_args, always_await }))
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            self.run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'b>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'b>,
+        ctx: &'b LintContext<'a>,
+    ) {
+        self.run(jest_node, ctx);
     }
 }
 
@@ -159,21 +159,21 @@ impl ValidExpect {
             return;
         };
 
-        if call_expr.arguments.len() < self.min_args {
+        if call_expr.arguments.len() > self.max_args {
             let error = format!(
                 "Expect takes at most {} argument{} ",
-                self.min_args,
-                if self.min_args > 1 { "s" } else { "" }
+                self.max_args,
+                if self.max_args > 1 { "s" } else { "" }
             );
             let help = "Remove the extra arguments.";
             ctx.diagnostic(valid_expect_diagnostic(error, help, call_expr.span));
             return;
         }
-        if call_expr.arguments.len() > self.max_args {
+        if call_expr.arguments.len() < self.min_args {
             let error = format!(
                 "Expect requires at least {} argument{} ",
-                self.max_args,
-                if self.max_args > 1 { "s" } else { "" }
+                self.min_args,
+                if self.min_args > 1 { "s" } else { "" }
             );
             let help = "Add the missing arguments.";
             ctx.diagnostic(valid_expect_diagnostic(error, help, call_expr.span));
@@ -293,12 +293,7 @@ fn get_parent_with_ignore<'a, 'b>(
     let mut node = node;
     loop {
         let parent = ctx.nodes().parent_node(node.id())?;
-        if !matches!(
-            parent.kind(),
-            AstKind::Argument(_)
-                | AstKind::ExpressionArrayElement(_)
-                | AstKind::ArrayExpressionElement(_)
-        ) {
+        if !matches!(parent.kind(), AstKind::Argument(_) | AstKind::ArrayExpressionElement(_)) {
             // we don't want to report `Promise.all([invalidExpectCall_1, invalidExpectCall_2])` twice.
             // so we need mark whether the node is the first item of an array.
             // if it not the first item, we ignore it in `find_promise_call_expression_node`.

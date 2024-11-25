@@ -3,7 +3,7 @@
 use oxc_allocator::Allocator;
 use oxc_regular_expression::{
     visit::{RegExpAstKind, Visit},
-    Parser, ParserOptions,
+    LiteralParser, Options,
 };
 use oxc_span::GetSpan;
 
@@ -20,10 +20,12 @@ impl Visit<'_> for TestVisitor {
 }
 
 fn main() {
-    let source_text = r"/(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s\:\;\-\(\=])/";
+    let source_text = r"(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+))|(([^\s]+)\/([^\s]+))?#([1-9][0-9]*)($|[\s\:\;\-\(\=])";
+
     let allocator = Allocator::default();
-    let parser = Parser::new(&allocator, source_text, ParserOptions::default());
-    let pattern = parser.parse().unwrap().pattern;
+    let parser = LiteralParser::new(&allocator, source_text, None, Options::default());
+    let pattern = parser.parse().unwrap();
+
     let mut visitor = TestVisitor;
     visitor.visit_pattern(&pattern);
 }

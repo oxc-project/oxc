@@ -1,0 +1,10 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/ts-export-assignment.ts
+---
+```
+==================== .D.TS ====================
+
+declare const Res = 0;
+declare const _default: () => typeof Res;
+export = _default;

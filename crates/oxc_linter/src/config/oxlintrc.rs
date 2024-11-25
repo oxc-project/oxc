@@ -1,12 +1,15 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use oxc_diagnostics::OxcDiagnostic;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{env::OxlintEnv, globals::OxlintGlobals, rules::OxlintRules, settings::OxlintSettings};
+use super::{
+    categories::OxlintCategories, env::OxlintEnv, globals::OxlintGlobals,
+    overrides::OxlintOverrides, plugins::LintPlugins, rules::OxlintRules, settings::OxlintSettings,
+};
 
-use crate::{options::LintPlugins, utils::read_to_string};
+use crate::utils::read_to_string;
 
 /// Oxlint Configuration File
 ///
@@ -26,6 +29,8 @@ use crate::{options::LintPlugins, utils::read_to_string};
 ///
 /// ```json
 /// {
+///   "$schema": "./node_modules/oxlint/configuration_schema.json",
+///   "plugins": ["import", "typescript", "unicorn"],
 ///   "env": {
 ///     "browser": true
 ///   },
@@ -37,21 +42,52 @@ use crate::{options::LintPlugins, utils::read_to_string};
 ///   "rules": {
 ///     "eqeqeq": "warn",
 ///     "import/no-cycle": "error"
-///   }
+///   },
+///   "overrides": [
+///     {
+///       "files": ["*.test.ts", "*.spec.ts"],
+///       "rules": {
+///         "@typescript-eslint/no-explicit-any": "off"
+///       }
+///     }
+///   ]
 ///  }
 /// ```
-#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(default)]
 #[non_exhaustive]
 pub struct Oxlintrc {
     pub plugins: LintPlugins,
-    /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).
+    pub categories: OxlintCategories,
+    /// Example
+    ///
+    /// `.oxlintrc.json`
+    ///
+    /// ```json
+    /// {
+    ///   "$schema": "./node_modules/oxlint/configuration_schema.json",
+    ///   "rules": {
+    ///     "eqeqeq": "warn",
+    ///     "import/no-cycle": "error",
+    ///     "prefer-const": ["error", { "ignoreReadBeforeAssign": true }]
+    ///   }
+    ///  }
+    /// ```
+    ///
+    /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html) for the list of
+    /// rules.
     pub rules: OxlintRules,
     pub settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
     pub env: OxlintEnv,
     /// Enabled or disabled specific global variables.
     pub globals: OxlintGlobals,
+    /// Add, remove, or otherwise reconfigure rules for specific files or groups of files.
+    #[serde(skip_serializing_if = "OxlintOverrides::is_empty")]
+    pub overrides: OxlintOverrides,
+    /// Absolute path to the configuration file.
+    #[serde(skip)]
+    pub path: PathBuf,
 }
 
 impl Oxlintrc {
@@ -83,10 +119,60 @@ impl Oxlintrc {
             OxcDiagnostic::error(format!("Failed to parse eslint config {path:?}.\n{err}"))
         })?;
 
-        let config = Self::deserialize(&json).map_err(|err| {
+        let mut config = Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
 
+        // Get absolute path from `path`
+        let absolute_path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+
+        config.path = absolute_path;
+
         Ok(config)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_oxlintrc_de_empty() {
+        let config: Oxlintrc = serde_json::from_value(json!({})).unwrap();
+        assert_eq!(config.plugins, LintPlugins::default());
+        assert_eq!(config.rules, OxlintRules::default());
+        assert!(config.rules.is_empty());
+        assert_eq!(config.settings, OxlintSettings::default());
+        assert_eq!(config.env, OxlintEnv::default());
+        assert_eq!(config.path, PathBuf::default());
+    }
+
+    #[test]
+    fn test_oxlintrc_de_plugins_empty_array() {
+        let config: Oxlintrc = serde_json::from_value(json!({ "plugins": [] })).unwrap();
+        assert_eq!(config.plugins, LintPlugins::empty());
+    }
+
+    #[test]
+    fn test_oxlintrc_empty_config_plugins() {
+        let config: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        assert_eq!(config.plugins, LintPlugins::default());
+    }
+
+    #[test]
+    fn test_oxlintrc_specifying_plugins_will_override() {
+        let config: Oxlintrc = serde_json::from_str(r#"{ "plugins": ["react", "oxc"] }"#).unwrap();
+        assert_eq!(config.plugins, LintPlugins::REACT.union(LintPlugins::OXC));
+        let config: Oxlintrc =
+            serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn"] }"#).unwrap();
+        assert_eq!(config.plugins, LintPlugins::TYPESCRIPT.union(LintPlugins::UNICORN));
+        let config: Oxlintrc =
+            serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn", "react", "oxc", "import", "jsdoc", "jest", "vitest", "jsx-a11y", "nextjs", "react-perf", "promise", "node", "security"] }"#).unwrap();
+        assert_eq!(config.plugins, LintPlugins::all());
+
+        let config: Oxlintrc =
+            serde_json::from_str(r#"{ "plugins": ["typescript", "@typescript-eslint"] }"#).unwrap();
+        assert_eq!(config.plugins, LintPlugins::TYPESCRIPT);
     }
 }

@@ -1,10 +1,18 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
  1 │ array.flatMap(x => x)
    · ─────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:1:1]
+ 1 │ (array?.flatMap)?.(x => x)
+   · ──────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
 

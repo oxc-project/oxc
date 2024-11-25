@@ -94,9 +94,7 @@ where
         let Expression::Identifier(ident) = expr else {
             return;
         };
-        let Some(symbol_id) =
-            ident.reference_id().and_then(|id| ctx.symbols().get_reference(id).symbol_id())
-        else {
+        let Some(symbol_id) = ctx.symbols().get_reference(ident.reference_id()).symbol_id() else {
             return;
         };
         // Symbols declared at the root scope won't (or, at least, shouldn't) be
@@ -140,7 +138,7 @@ pub fn find_initialized_binding<'a, 'b>(
             match &assignment.left.kind {
                 BindingPatternKind::BindingIdentifier(id) => {
                     // look for `x = {}`, or recurse if lhs is a binding pattern
-                    if id.symbol_id.get().is_some_and(|binding_id| binding_id == symbol_id) {
+                    if id.symbol_id() == symbol_id {
                         return Some((id.as_ref(), &assignment.right));
                     }
                     None

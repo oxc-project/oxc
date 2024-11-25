@@ -5,7 +5,7 @@
 //!
 //! See:
 //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)
-//! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)
+//! * [rustc visitor](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_ast/src/visit.rs)
 
 #![allow(
     unused_variables,
@@ -21,7 +21,6 @@ use std::cell::Cell;
 use oxc_allocator::Vec;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 use crate::ast_kind::AstKind;
 
@@ -205,11 +204,6 @@ pub trait Visit<'a>: Sized {
     #[inline]
     fn visit_elision(&mut self, it: &Elision) {
         walk_elision(self, it);
-    }
-
-    #[inline]
-    fn visit_expression_array_element(&mut self, it: &Expression<'a>) {
-        walk_expression_array_element(self, it);
     }
 
     #[inline]
@@ -802,11 +796,6 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_class_heritage(&mut self, it: &Expression<'a>) {
-        walk_class_heritage(self, it);
-    }
-
-    #[inline]
     fn visit_ts_class_implementses(&mut self, it: &Vec<'a, TSClassImplements<'a>>) {
         walk_ts_class_implementses(self, it);
     }
@@ -1139,11 +1128,6 @@ pub trait Visit<'a>: Sized {
     #[inline]
     fn visit_catch_parameter(&mut self, it: &CatchParameter<'a>) {
         walk_catch_parameter(self, it);
-    }
-
-    #[inline]
-    fn visit_finally_clause(&mut self, it: &BlockStatement<'a>) {
-        walk_finally_clause(self, it);
     }
 
     #[inline]
@@ -1670,7 +1654,7 @@ pub mod walk {
             ArrayExpressionElement::SpreadElement(it) => visitor.visit_spread_element(it),
             ArrayExpressionElement::Elision(it) => visitor.visit_elision(it),
             match_expression!(ArrayExpressionElement) => {
-                visitor.visit_expression_array_element(it.to_expression())
+                visitor.visit_expression(it.to_expression())
             }
         }
         visitor.leave_node(kind);
@@ -1688,13 +1672,6 @@ pub mod walk {
     pub fn walk_elision<'a, V: Visit<'a>>(visitor: &mut V, it: &Elision) {
         let kind = AstKind::Elision(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.leave_node(kind);
-    }
-
-    pub fn walk_expression_array_element<'a, V: Visit<'a>>(visitor: &mut V, it: &Expression<'a>) {
-        let kind = AstKind::ExpressionArrayElement(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_expression(it);
         visitor.leave_node(kind);
     }
 
@@ -1913,23 +1890,23 @@ pub mod walk {
     pub fn walk_ts_conditional_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSConditionalType<'a>) {
         let kind = AstKind::TSConditionalType(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_ts_type(&it.check_type);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_ts_type(&it.extends_type);
         visitor.visit_ts_type(&it.true_type);
-        visitor.visit_ts_type(&it.false_type);
         visitor.leave_scope();
+        visitor.visit_ts_type(&it.false_type);
         visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_ts_constructor_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSConstructorType<'a>) {
         // NOTE: AstKind doesn't exists!
-        visitor.visit_formal_parameters(&it.params);
-        visitor.visit_ts_type_annotation(&it.return_type);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.visit_formal_parameters(&it.params);
+        visitor.visit_ts_type_annotation(&it.return_type);
     }
 
     #[inline]
@@ -2090,14 +2067,14 @@ pub mod walk {
     #[inline]
     pub fn walk_ts_function_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSFunctionType<'a>) {
         // NOTE: AstKind doesn't exists!
+        if let Some(type_parameters) = &it.type_parameters {
+            visitor.visit_ts_type_parameter_declaration(type_parameters);
+        }
         if let Some(this_param) = &it.this_param {
             visitor.visit_ts_this_parameter(this_param);
         }
         visitor.visit_formal_parameters(&it.params);
         visitor.visit_ts_type_annotation(&it.return_type);
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_declaration(type_parameters);
-        }
     }
 
     #[inline]
@@ -2423,15 +2400,15 @@ pub mod walk {
         it: &TSCallSignatureDeclaration<'a>,
     ) {
         // NOTE: AstKind doesn't exists!
+        if let Some(type_parameters) = &it.type_parameters {
+            visitor.visit_ts_type_parameter_declaration(type_parameters);
+        }
         if let Some(this_param) = &it.this_param {
             visitor.visit_ts_this_parameter(this_param);
         }
         visitor.visit_formal_parameters(&it.params);
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
-        }
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
     }
 
@@ -2443,12 +2420,12 @@ pub mod walk {
         let kind = AstKind::TSConstructSignatureDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        if let Some(type_parameters) = &it.type_parameters {
+            visitor.visit_ts_type_parameter_declaration(type_parameters);
+        }
         visitor.visit_formal_parameters(&it.params);
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
-        }
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.leave_scope();
         visitor.leave_node(kind);
@@ -2460,15 +2437,15 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_property_key(&it.key);
+        if let Some(type_parameters) = &it.type_parameters {
+            visitor.visit_ts_type_parameter_declaration(type_parameters);
+        }
         if let Some(this_param) = &it.this_param {
             visitor.visit_ts_this_parameter(this_param);
         }
         visitor.visit_formal_parameters(&it.params);
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
-        }
-        if let Some(type_parameters) = &it.type_parameters {
-            visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.leave_scope();
         visitor.leave_node(kind);
@@ -2932,6 +2909,7 @@ pub mod walk {
     pub fn walk_chain_element<'a, V: Visit<'a>>(visitor: &mut V, it: &ChainElement<'a>) {
         match it {
             ChainElement::CallExpression(it) => visitor.visit_call_expression(it),
+            ChainElement::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
             match_member_expression!(ChainElement) => {
                 visitor.visit_member_expression(it.to_member_expression())
             }
@@ -2950,7 +2928,7 @@ pub mod walk {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         if let Some(super_class) = &it.super_class {
-            visitor.visit_class_heritage(super_class);
+            visitor.visit_expression(super_class);
         }
         if let Some(super_type_parameters) = &it.super_type_parameters {
             visitor.visit_ts_type_parameter_instantiation(super_type_parameters);
@@ -2960,13 +2938,6 @@ pub mod walk {
         }
         visitor.visit_class_body(&it.body);
         visitor.leave_scope();
-        visitor.leave_node(kind);
-    }
-
-    pub fn walk_class_heritage<'a, V: Visit<'a>>(visitor: &mut V, it: &Expression<'a>) {
-        let kind = AstKind::ClassHeritage(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_expression(it);
         visitor.leave_node(kind);
     }
 
@@ -3187,9 +3158,6 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_property_key(&it.key);
         visitor.visit_expression(&it.value);
-        if let Some(init) = &it.init {
-            visitor.visit_expression(init);
-        }
         visitor.leave_node(kind);
     }
 
@@ -3678,7 +3646,7 @@ pub mod walk {
             visitor.visit_catch_clause(handler);
         }
         if let Some(finalizer) = &it.finalizer {
-            visitor.visit_finally_clause(finalizer);
+            visitor.visit_block_statement(finalizer);
         }
         visitor.leave_node(kind);
     }
@@ -3701,16 +3669,6 @@ pub mod walk {
         let kind = AstKind::CatchParameter(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_binding_pattern(&it.pattern);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_finally_clause<'a, V: Visit<'a>>(visitor: &mut V, it: &BlockStatement<'a>) {
-        let kind = AstKind::FinallyClause(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        visitor.visit_statements(&it.body);
-        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3849,11 +3807,8 @@ pub mod walk {
     #[inline]
     pub fn walk_ts_enum_member_name<'a, V: Visit<'a>>(visitor: &mut V, it: &TSEnumMemberName<'a>) {
         match it {
-            TSEnumMemberName::StaticIdentifier(it) => visitor.visit_identifier_name(it),
-            TSEnumMemberName::StaticStringLiteral(it) => visitor.visit_string_literal(it),
-            TSEnumMemberName::StaticTemplateLiteral(it) => visitor.visit_template_literal(it),
-            TSEnumMemberName::StaticNumericLiteral(it) => visitor.visit_numeric_literal(it),
-            match_expression!(TSEnumMemberName) => visitor.visit_expression(it.to_expression()),
+            TSEnumMemberName::Identifier(it) => visitor.visit_identifier_name(it),
+            TSEnumMemberName::String(it) => visitor.visit_string_literal(it),
         }
     }
 
@@ -3888,7 +3843,7 @@ pub mod walk {
         it: &TSModuleDeclarationName<'a>,
     ) {
         match it {
-            TSModuleDeclarationName::Identifier(it) => visitor.visit_identifier_name(it),
+            TSModuleDeclarationName::Identifier(it) => visitor.visit_binding_identifier(it),
             TSModuleDeclarationName::StringLiteral(it) => visitor.visit_string_literal(it),
         }
     }

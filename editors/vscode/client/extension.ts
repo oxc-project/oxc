@@ -1,29 +1,23 @@
-import {
-  commands,
-  ConfigurationTarget,
-  ExtensionContext,
-  StatusBarAlignment,
-  StatusBarItem,
-  ThemeColor,
-  window,
-  workspace,
-} from 'vscode';
+import { promises as fsPromises } from 'node:fs';
+
+import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
+
+import { MessageType, ShowMessageNotification } from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
+import { ConfigService } from './ConfigService';
 
-const languageClientId = 'oxc-vscode';
 const languageClientName = 'oxc';
-const outputChannelName = 'oxc_language_server';
-const traceOutputChannelName = 'oxc_language_server.trace';
+const outputChannelName = 'Oxc';
+const commandPrefix = 'oxc';
 
 const enum OxcCommands {
-  RestartServer = 'oxc.restartServer',
-  ApplyAllFixes = 'oxc.applyAllFixes',
-  ShowOutputChannel = 'oxc.showOutputChannel',
-  ShowTraceOutputChannel = 'oxc.showTraceOutputChannel',
-  ToggleEnable = 'oxc.toggleEnable',
+  RestartServer = `${commandPrefix}.restartServer`,
+  ApplyAllFixes = `${commandPrefix}.applyAllFixes`,
+  ShowOutputChannel = `${commandPrefix}.showOutputChannel`,
+  ToggleEnable = `${commandPrefix}.toggleEnable`,
 }
 
 let client: LanguageClient;
@@ -31,6 +25,7 @@ let client: LanguageClient;
 let myStatusBarItem: StatusBarItem;
 
 export async function activate(context: ExtensionContext) {
+  const configService = new ConfigService();
   const restartCommand = commands.registerCommand(
     OxcCommands.RestartServer,
     async () => {
@@ -60,40 +55,61 @@ export async function activate(context: ExtensionContext) {
     },
   );
 
-  const showTraceOutputCommand = commands.registerCommand(
-    OxcCommands.ShowTraceOutputChannel,
-    () => {
-      client?.traceOutputChannel?.show();
-    },
-  );
-
   const toggleEnable = commands.registerCommand(
     OxcCommands.ToggleEnable,
     () => {
-      let enabled = workspace
-        .getConfiguration('oxc_language_server')
-        .get('enable');
-      let nextState = !enabled;
-      workspace
-        .getConfiguration('oxc_language_server')
-        .update('enable', nextState, ConfigurationTarget.Global);
+      configService.config.updateEnable(!configService.config.enable);
     },
   );
 
   context.subscriptions.push(
     restartCommand,
     showOutputCommand,
-    showTraceOutputCommand,
     toggleEnable,
+    configService,
   );
 
-  const outputChannel = window.createOutputChannel(outputChannelName);
-  const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
+  const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
 
-  const ext = process.platform === 'win32' ? '.exe' : '';
-  // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
-  const command = process.env.SERVER_PATH_DEV ??
-    join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
+  async function findBinary(): Promise<string> {
+    let bin = configService.config.binPath;
+    if (bin) {
+      try {
+        await fsPromises.access(bin);
+        return bin;
+      } catch {}
+    }
+
+    const workspaceFolders = workspace.workspaceFolders;
+    const isWindows = process.platform === 'win32';
+
+    if (workspaceFolders?.length && !isWindows) {
+      try {
+        return await Promise.any(
+          workspaceFolders.map(async (folder) => {
+            const binPath = join(
+              folder.uri.fsPath,
+              'node_modules',
+              '.bin',
+              'oxc_language_server',
+            );
+
+            await fsPromises.access(binPath);
+            return binPath;
+          }),
+        );
+      } catch {}
+    }
+
+    const ext = isWindows ? '.exe' : '';
+    // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
+    return (
+      process.env.SERVER_PATH_DEV ??
+        join(context.extensionPath, `./target/release/oxc_language_server${ext}`)
+    );
+  }
+
+  const command = await findBinary();
   const run: Executable = {
     command: command!,
     options: {
@@ -110,9 +126,6 @@ export async function activate(context: ExtensionContext) {
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   // Options to control the language client
-  let clientConfig: any = JSON.parse(
-    JSON.stringify(workspace.getConfiguration('oxc_language_server')),
-  );
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
     documentSelector: [
@@ -127,34 +140,58 @@ export async function activate(context: ExtensionContext) {
       scheme: 'file',
     })),
     synchronize: {
-      // Notify the server about file changes to '.clientrc files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
+      // Notify the server about file config changes in the workspace
+      fileEvents: [
+        workspace.createFileSystemWatcher('**/.oxlint{.json,rc.json}'),
+        workspace.createFileSystemWatcher('**/oxlint{.json,rc.json}'),
+      ],
     },
     initializationOptions: {
-      settings: clientConfig,
+      settings: configService.config.toLanguageServerConfig(),
     },
     outputChannel,
-    traceOutputChannel,
+    traceOutputChannel: outputChannel,
   };
 
   // Create the language client and start the client.
   client = new LanguageClient(
-    languageClientId,
     languageClientName,
     serverOptions,
     clientOptions,
   );
-  workspace.onDidChangeConfiguration((e) => {
-    let isAffected = e.affectsConfiguration('oxc_language_server');
-    if (!isAffected) {
-      return;
+  client.onNotification(ShowMessageNotification.type, (params) => {
+    switch (params.type) {
+      case MessageType.Debug:
+        outputChannel.debug(params.message);
+        break;
+      case MessageType.Log:
+        outputChannel.info(params.message);
+        break;
+      case MessageType.Info:
+        window.showInformationMessage(params.message);
+        break;
+      case MessageType.Warning:
+        window.showWarningMessage(params.message);
+        break;
+      case MessageType.Error:
+        window.showErrorMessage(params.message);
+        break;
+      default:
+        outputChannel.info(params.message);
     }
-    let settings: any = JSON.parse(
-      JSON.stringify(workspace.getConfiguration('oxc_language_server')),
-    );
+  });
+
+  workspace.onDidDeleteFiles((event) => {
+    event.files.forEach((fileUri) => {
+      client.diagnostics?.delete(fileUri);
+    });
+  });
+
+  configService.onConfigChange = function onConfigChange() {
+    let settings = this.config.toLanguageServerConfig();
     updateStatsBar(settings.enable);
     client.sendNotification('workspace/didChangeConfiguration', { settings });
-  });
+  };
 
   function updateStatsBar(enable: boolean) {
     if (!myStatusBarItem) {
@@ -175,7 +212,7 @@ export async function activate(context: ExtensionContext) {
 
     myStatusBarItem.backgroundColor = bgColor;
   }
-  updateStatsBar(clientConfig.enable);
+  updateStatsBar(configService.config.enable);
   client.start();
 }
 

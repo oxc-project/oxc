@@ -1,6 +1,6 @@
 [package]
 name = "oxc_codegen"
-version = "0.30.5"
+version = "0.37.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -20,7 +20,6 @@ workspace = true
 doctest = false
 
 [dependencies]
-cow-utils = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_index = { workspace = true }
@@ -29,10 +28,10 @@ oxc_sourcemap = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
+assert-unchecked = { workspace = true }
 bitflags = { workspace = true }
-daachorse = { workspace = true }
+cow-utils = { workspace = true }
 nonmax = { workspace = true }
-once_cell = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev-dependencies]

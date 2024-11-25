@@ -58,6 +58,7 @@ use oxc_traverse::{Traverse, TraverseCtx};
 use crate::TransformCtx;
 
 mod options;
+
 pub use options::RegExpOptions;
 
 pub struct RegExp<'a, 'ctx> {
@@ -131,11 +132,23 @@ impl<'a, 'ctx> Traverse<'a> for RegExp<'a, 'ctx> {
                 return;
             }
 
-            let span = regexp.span;
+            let literal_span = regexp.span;
             let pattern = match &mut regexp.regex.pattern {
                 RegExpPattern::Raw(raw) => {
+                    #[expect(clippy::cast_possible_truncation)]
+                    let pattern_len = raw.len() as u32;
+                    let pattern_span_start = literal_span.start + 1; // +1 to skip the opening `/`
+                    let flags_span_start = pattern_span_start + pattern_len + 1; // +1 to skip the closing `/`
+                    let flags_text = Span::new(flags_span_start, literal_span.end)
+                        .source_text(self.ctx.source_text);
                     // Try to parse pattern
-                    match try_parse_pattern(raw, span, flags, ctx) {
+                    match try_parse_pattern(
+                        raw,
+                        pattern_span_start,
+                        flags_text,
+                        flags_span_start,
+                        ctx,
+                    ) {
                         Ok(pattern) => {
                             regexp.regex.pattern = RegExpPattern::Pattern(ctx.alloc(pattern));
                             let RegExpPattern::Pattern(pattern) = &regexp.regex.pattern else {
@@ -167,24 +180,13 @@ impl<'a, 'ctx> Traverse<'a> for RegExp<'a, 'ctx> {
 
         let callee = {
             let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "RegExp");
-            let ident = ctx.create_reference_id(
-                SPAN,
-                Atom::from("RegExp"),
-                symbol_id,
-                ReferenceFlags::read(),
-            );
-            ctx.ast.expression_from_identifier_reference(ident)
+            ctx.create_ident_expr(SPAN, Atom::from("RegExp"), symbol_id, ReferenceFlags::read())
         };
 
-        let mut arguments = ctx.ast.vec_with_capacity(2);
-        arguments.push(
-            ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, pattern_source)),
-        );
-
-        let flags_str = flags.to_string();
-        let flags_str =
-            ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, flags_str));
-        arguments.push(flags_str);
+        let arguments = ctx.ast.vec_from_array([
+            Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_source)),
+            Argument::from(ctx.ast.expression_string_literal(SPAN, flags.to_string())),
+        ]);
 
         *expr = ctx.ast.expression_new(regexp.span, callee, arguments, NONE);
     }
@@ -237,16 +239,13 @@ fn character_class_has_unicode_property_escape(character_class: &CharacterClass)
 
 fn try_parse_pattern<'a>(
     raw: &'a str,
-    span: Span,
-    flags: RegExpFlags,
+    pattern_span_offset: u32,
+    flags_text: &'a str,
+    flags_span_offset: u32,
     ctx: &mut TraverseCtx<'a>,
 ) -> Result<Pattern<'a>> {
-    use oxc_regular_expression::{ParserOptions, PatternParser};
+    use oxc_regular_expression::{LiteralParser, Options};
 
-    let options = ParserOptions {
-        span_offset: span.start + 1, // exclude `/`
-        unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
-        unicode_sets_mode: flags.contains(RegExpFlags::V),
-    };
-    PatternParser::new(ctx.ast.allocator, raw, options).parse()
+    let options = Options { pattern_span_offset, flags_span_offset };
+    LiteralParser::new(ctx.ast.allocator, raw, Some(flags_text), options).parse()
 }

@@ -1,0 +1,102 @@
+---
+source: crates/oxc_codegen/tests/integration/main.rs
+snapshot_kind: text
+---
+########## 0
+/* @license */
+/* @license */
+foo;bar;
+----------
+foo;
+bar;
+/*! For license information please see test.js */
+########## 1
+/* @license */
+/* @preserve */
+foo;bar;
+----------
+foo;
+bar;
+/*! For license information please see test.js */
+########## 2
+/* @license */
+//! KEEP
+foo;bar;
+----------
+foo;
+bar;
+/*! For license information please see test.js */
+########## 3
+/* @license */
+/*! KEEP */
+foo;bar;
+----------
+foo;
+bar;
+/*! For license information please see test.js */
+########## 4
+/* @license *//*! KEEP */
+foo;bar;
+----------
+foo;
+bar;
+/*! For license information please see test.js */
+########## 5
+function () {
+    /*
+    * @license
+    * Copyright notice 2
+    */
+    bar;
+}
+----------
+function() {
+	bar;
+}
+/*! For license information please see test.js */
+########## 6
+function bar() { var foo; /*! #__NO_SIDE_EFFECTS__ */ function () { } }
+----------
+function bar() {
+	var foo;
+	function() {}
+}
+/*! For license information please see test.js */
+########## 7
+function foo() {
+	(() => {
+		/**
+		 * @preserve
+		 */
+	})();
+	/**
+	 * @preserve
+	 */
+}
+/**
+ * @preserve
+ */
+----------
+function foo() {
+	(() => {
+		/**
+		* @preserve
+		*/
+	})();
+	/**
+	* @preserve
+	*/
+}
+/**
+* @preserve
+*//*! For license information please see test.js */
+########## 8
+/**
+* @preserve
+*/
+
+----------
+/**
+* @preserve
+*/
+/*! For license information please see test.js */

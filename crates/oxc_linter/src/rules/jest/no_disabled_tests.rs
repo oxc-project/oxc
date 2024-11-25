@@ -7,8 +7,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        ParsedGeneralJestFnCall, PossibleJestNode,
+        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall,
+        PossibleJestNode,
     },
 };
 
@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-disabled-tests.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-disabled-tests.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json
@@ -90,10 +90,12 @@ impl Message {
 }
 
 impl Rule for NoDisabledTests {
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        run(jest_node, ctx);
     }
 }
 

@@ -42,7 +42,7 @@ fn assignment(span: Span, namespace_name: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/namespace.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/namespace.md>
 #[derive(Debug, Default, Clone)]
 pub struct Namespace {
     allow_computed: bool,
@@ -152,8 +152,7 @@ impl Rule for Namespace {
                 return;
             }
 
-            let Some(symbol_id) =
-                ctx.semantic().symbols().get_symbol_id_from_span(entry.local_name.span())
+            let Some(symbol_id) = ctx.scopes().get_root_binding(entry.local_name.name().as_str())
             else {
                 return;
             };

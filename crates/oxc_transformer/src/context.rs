@@ -4,22 +4,20 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc_ast::Trivias;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
 
 use crate::{
     common::{
-        module_imports::ModuleImportsStore, top_level_statements::TopLevelStatementsStore,
+        helper_loader::HelperLoaderStore, module_imports::ModuleImportsStore,
+        statement_injector::StatementInjectorStore, top_level_statements::TopLevelStatementsStore,
         var_declarations::VarDeclarationsStore,
     },
-    TransformOptions,
+    CompilerAssumptions, Module, TransformOptions,
 };
 
 pub struct TransformCtx<'a> {
     errors: RefCell<Vec<OxcDiagnostic>>,
-
-    pub trivias: Trivias,
 
     /// <https://babeljs.io/docs/options#filename>
     pub filename: String,
@@ -31,23 +29,25 @@ pub struct TransformCtx<'a> {
 
     pub source_text: &'a str,
 
+    pub module: Module,
+
+    pub assumptions: CompilerAssumptions,
+
     // Helpers
+    /// Manage helper loading
+    pub helper_loader: HelperLoaderStore<'a>,
     /// Manage import statement globally
     pub module_imports: ModuleImportsStore<'a>,
     /// Manage inserting `var` statements globally
     pub var_declarations: VarDeclarationsStore<'a>,
+    /// Manage inserting statements immediately before or after the target statement
+    pub statement_injector: StatementInjectorStore<'a>,
     /// Manage inserting statements at top of program globally
     pub top_level_statements: TopLevelStatementsStore<'a>,
 }
 
 impl<'a> TransformCtx<'a> {
-    pub fn new(
-        source_path: &Path,
-        source_type: SourceType,
-        source_text: &'a str,
-        trivias: Trivias,
-        options: &TransformOptions,
-    ) -> Self {
+    pub fn new(source_path: &Path, options: &TransformOptions) -> Self {
         let filename = source_path
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
@@ -60,11 +60,14 @@ impl<'a> TransformCtx<'a> {
             errors: RefCell::new(vec![]),
             filename,
             source_path,
-            source_type,
-            source_text,
-            trivias,
+            source_type: SourceType::default(),
+            source_text: "",
+            module: options.env.module,
+            assumptions: options.assumptions,
+            helper_loader: HelperLoaderStore::new(&options.helper_loader),
             module_imports: ModuleImportsStore::new(),
             var_declarations: VarDeclarationsStore::new(),
+            statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
         }
     }

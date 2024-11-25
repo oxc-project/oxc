@@ -4,6 +4,212 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+- f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)
+
+- 41a0e60 ast: [**BREAKING**] Remove `impl GetAddress for Function` (#7343) (overlookmotel)
+
+- 44375a5 ast: [**BREAKING**] Rename `TSEnumMemberName` enum variants (#7250) (overlookmotel)
+
+### Features
+
+- 39afb48 allocator: Introduce `Vec::from_array_in` (#7331) (overlookmotel)
+- 897d3b1 ast: Serialize StringLiterals to ESTree without `raw` (#7263) (ottomated)
+- 224775c transformer: Transform object rest spread (#7003) (Boshen)
+- 885e37f transformer: Optional Chaining (#6990) (Boshen)
+
+### Bug Fixes
+
+
+### Performance
+
+- c84e892 ast: `AstBuilder::vec1` use `Vec::from_array_in` (#7334) (overlookmotel)
+
+### Documentation
+
+- f0affa2 ast: Improve docs examples for `PropertyDefinition` (#7287) (overlookmotel)
+- 740ba4b ast: Correct doc comment for `StringLiteral` (#7255) (overlookmotel)
+
+### Refactor
+
+- de472ca ast: Move `StringLiteral` definition higher up (#7270) (overlookmotel)
+- d3d58f8 ast: Remove `inherit_variants!` from `TSEnumMemberName` (#7248) (overlookmotel)
+
+### Styling
+
+- 10cdce9 ast: Add line break (#7271) (overlookmotel)
+
+## [0.36.0] - 2024-11-09
+
+- b11ed2c ast: [**BREAKING**] Remove useless `ObjectProperty::init` field (#7220) (Boshen)
+
+- 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)
+
+- 092de67 types: [**BREAKING**] Append `rest` field into `elements` for objects and arrays to align with estree (#7212) (ottomated)
+
+- d1d1874 ast: [**BREAKING**] Change `comment.span` to real position that contain `//` and `/*` (#7154) (Boshen)
+
+- 843bce4 ast: [**BREAKING**] `IdentifierReference::reference_id` return `ReferenceId` (#7126) (overlookmotel)
+
+### Features
+
+- cc8a191 ast: Methods on AST nodes to get `scope_id` etc (#7127) (overlookmotel)
+- dc0215c ast_tools: Add #[estree(append_to)], remove some custom serialization code (#7149) (ottomated)
+- 9d6cc9d estree: ESTree compatibility for all literals (#7152) (ottomated)
+
+### Bug Fixes
+
+
+### Refactor
+
+- d27e14f ast: `AstKind::as_*` methods take `self` (#5546) (overlookmotel)
+- fac5042 ast: Use `scope_id` etc methods (#7130) (overlookmotel)
+
+## [0.35.0] - 2024-11-04
+
+- f543a8d ast: [**BREAKING**] Remove `AstBuilder::*_from_*` methods (#7073) (overlookmotel)
+
+### Features
+
+- 854870e ast: Label AST fields with #[ts] (#6987) (ottomated)
+- ce5b609 ast: Remove explicit untagged marker on enums (#6915) (ottomated)
+- 9725e3c ast_tools: Add #[estree(always_flatten)] to Span (#6935) (ottomated)
+- fbc297e ast_tools: Move tsify custom types to estree attribute macro (#6934) (ottomated)
+- 169fa22 ast_tools: Default enums to rename_all = "camelCase" (#6933) (ottomated)
+- 6516f9e codegen: Print inline legal comments (#7054) (Boshen)
+- 1e2f012 linter: Add `oxc/no-map-spread` (#6751) (DonIsaac)
+
+### Bug Fixes
+
+- 0601271 ast: Fix `StaticMemberExpression.get_first_object` (#6969) (tomoya yanagibashi)
+- f5a7134 linter/no-unused-vars: False positive for discarded reads within sequences (#6907) (DonIsaac)
+- caaf00e parser: Fix incorrect parsed `TSIndexSignature` (#7016) (Boshen)
+
+### Performance
+
+- 6ca01b9 ast: Reduce size of `Comment` (#6921) (overlookmotel)
+
+### Refactor
+
+- b0211a1 ast: `StaticMemberExpression::get_first_object` use loop instead of recursion (#7065) (overlookmotel)
+- fc07458 ast: Move custom types `.d.ts` file (#6931) (overlookmotel)
+- c41c013 ast: Rename lifetime (#6922) (overlookmotel)
+- 4cf0085 ast_tools: Reorder imports in generated code (#6926) (overlookmotel)
+- 4688a06 transformer: Use `*_with_scope_id` builder methods where possible (#7055) (overlookmotel)
+- df3b089 transformer/react-refresh: Use `StatementInjector` to insert statements (#6881) (Dunqing)
+
+## [0.34.0] - 2024-10-26
+
+### Features
+
+- 1145341 ast_tools: Output typescript to a separate package (#6755) (ottomated)
+- 0d0bb17 transformer: Complete the async-to-generator plugin (#6658) (Dunqing)
+
+### Bug Fixes
+
+- a47c70e minifier: Fix remaining runtime bugs (#6855) (Boshen)
+
+### Documentation
+
+- 6eeb0e6 ast: Mention typescript-eslint, field ordering and shape (#6863) (Boshen)
+
+### Refactor
+
+- 3e7507f ast_tools: Reduce macro usage (#6895) (overlookmotel)
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
+### Styling
+
+- 262b2ed ast: Move crate doc comment to top of file (#6890) (overlookmotel)
+
+## [0.33.0] - 2024-10-24
+
+- 718ccde ast: [**BREAKING**] Remove unused `new` methods (#6789) (overlookmotel)
+
+- 4d2d214 ast, transformer: [**BREAKING**] Remove `StringLiteral::new` method (#6788) (overlookmotel)
+
+- a1ca964 ast, parser: [**BREAKING**] Remove `NumericLiteral::new` method (#6787) (overlookmotel)
+
+- aeaa27a ast, parser, transformer, traverse: [**BREAKING**] Remove `BindingIdentifier::new` methods (#6786) (overlookmotel)
+
+- ecc9151 ast, parser, transformer, traverse: [**BREAKING**] Remove `IdentifierReference::new` methods (#6785) (overlookmotel)
+
+- c91ffbc ast, transformer: [**BREAKING**] Remove `IdentifierName::new` method (#6784) (overlookmotel)
+
+- 2bee4e2 ast, transformer: [**BREAKING**] Remove `BlockStatement::new` methods (#6783) (overlookmotel)
+
+- 1248557 ast: [**BREAKING**] Remove `AstKind::FinallyClause` (#6744) (Boshen)
+
+- 202c7f6 ast: [**BREAKING**] Remove `AstKind::ExpressionArrayElement` and `AstKind::ClassHeritage` (#6740) (Boshen)
+
+### Features
+
+- 78fee6e ast: Add `AstBuilder::*_with_scope_id` etc methods (#6760) (overlookmotel)
+- b2f3040 ast: Add `GetAddress` trait (#6652) (Dunqing)
+
+### Bug Fixes
+
+- 53049fe wasm: Remove type defs for `ArrayExpressionElement` and `Elision` (#6683) (overlookmotel)
+
+### Documentation
+
+- 63ce9be ast: Enable crate-wide warnings on missing doc comments (#6716) (DonIsaac)
+- 91651e0 ast: Fix comment for `ClassElement::r#static` (#6771) (overlookmotel)
+- c916505 ast: Fix comment of `ClassElement::r#static` (#6731) (_Kerman)
+- 46720be ast: Improve formatting of `AstBuilder` doc comments (#6756) (overlookmotel)
+- a7dd5aa ast: Enforce doc comments on AST node methods (#6714) (DonIsaac)
+- 8d27e2d ast: Enforce doc comments on generated ASTBuilder methods (#6713) (DonIsaac)
+- bad8770 ast: Enforce doc comments on JSX nodes, literal nodes, and comments (#6712) (DonIsaac)
+
+### Refactor
+
+- ab8aa2f allocator: Move `GetAddress` trait into `oxc_allocator` (#6738) (overlookmotel)
+- b66ae2e ast: Move `impl GetAddress for Statement` (#6742) (overlookmotel)
+- 0e9b695 ast: Change `plain_function` to accept `FunctionBody` as a required parameter (#6709) (Dunqing)
+- 85e69a1 ast_tools: Add line breaks to generated code for `ESTree` derive (#6680) (overlookmotel)
+- ad8e293 ast_tools: Shorten generated code for `impl Serialize` (#6684) (overlookmotel)
+- 9ba2b0e ast_tools: Move `#[allow]` attrs to top of generated files (#6679) (overlookmotel)
+- 11458a5 ast_tools: Shorten generated code by avoiding `ref` in matches (#6675) (overlookmotel)
+
+## [0.32.0] - 2024-10-19
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+- 2808973 ast: [**BREAKING**] Add `Program::comments` (#6445) (Boshen)
+
+### Features
+
+- 6f22538 ecmascript: Add `ToBoolean`, `ToNumber`, `ToString` (#6502) (Boshen)
+- 590925a minifier: Finish implementing folding array expressions (#6575) (camc314)
+- e310e52 parser: Generate `Serialize` impls in ast_tools (#6404) (ottomated)
+- b5b0af9 regular_expression: Support RegExp Modifiers (#6410) (leaysgur)
+
+### Bug Fixes
+
+- 02bfbfe codegen: Preserve parenthesis for `ChainExpression` (#6430) (Dunqing)
+- a71e8a0 minifier: Preserve init variable declarations when removing `for` statements during DCE (#6551) (magic-akari)
+- 834ee2a semantic: `TSConditionalType` scope enter/exit locations (#6351) (DonIsaac)
+
+### Refactor
+
+- 073b02a ast: Type params field before params in TS function declaration types (#6391) (overlookmotel)
+- 458f8f3 ast_tools: Consistent comments on `AstBuilder` methods (#6664) (overlookmotel)
+
+## [0.31.0] - 2024-10-08
+
+- 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)
+
+- 5a73a66 regular_expression: [**BREAKING**] Simplify public APIs (#6262) (leaysgur)
+
+### Features
+
+- 9e62396 syntax_operations: Add crate `oxc_ecmascript` (#6202) (Boshen)
+
+### Refactor
+
+- acab777 regular_expression: Misc fixes (#6234) (leaysgur)
+
 ## [0.30.2] - 2024-09-27
 
 ### Features

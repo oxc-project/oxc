@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.30.5",
+  "version": "0.37.0",
   "description": "Oxc Parser Node API",
   "keywords": [
     "Parser"
@@ -20,6 +20,10 @@
   "main": "index.js",
   "files": [
     "index.d.ts",
-    "index.js"
-  ]
+    "index.js",
+    "bindings.js"
+  ],
+  "dependencies": {
+    "@oxc-project/types": "workspace:^"
+  }
 }

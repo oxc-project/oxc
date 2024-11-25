@@ -34,11 +34,8 @@ impl Default for RuleTable {
 
 impl RuleTable {
     pub fn new() -> Self {
-        let default_rules = Linter::default()
-            .rules
-            .into_iter()
-            .map(|rule| rule.name())
-            .collect::<FxHashSet<&str>>();
+        let default_rules =
+            Linter::default().rules().iter().map(|rule| rule.name()).collect::<FxHashSet<&str>>();
 
         let mut rows = RULES
             .iter()

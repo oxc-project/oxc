@@ -1,3 +1,6 @@
+/**
+ * @param {string} name
+ */
 export function typeAndWrappers(name) {
   const wrappers = [];
   while (true) {
@@ -9,6 +12,9 @@ export function typeAndWrappers(name) {
   return { name, wrappers };
 }
 
+/**
+ * @param {string} name
+ */
 export function camelToSnake(name) {
   let prefixLen = 1;
   for (const prefix of ['TS', 'JSX', 'JS']) {
@@ -21,6 +27,9 @@ export function camelToSnake(name) {
     name.slice(prefixLen).replace(/[A-Z]/g, c => `_${c.toLowerCase()}`);
 }
 
+/**
+ * @param {string} name
+ */
 export function snakeToCamel(name) {
   let prefixLen = 0;
   for (const prefix of ['TS', 'JSX', 'JS']) {

@@ -1,11 +1,8 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/signatures/construct-generics.ts
+snapshot_kind: text
 ---
-================================================================================
-SCOPES
-================================================================================
-
 [
   {
     "children": [
@@ -34,7 +31,7 @@ SCOPES
                     "flags": "ReferenceFlags(Type)",
                     "id": 0,
                     "name": "U",
-                    "node_id": 15
+                    "node_id": 18
                   }
                 ]
               }
@@ -61,7 +58,7 @@ SCOPES
             "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "T",
-            "node_id": 19
+            "node_id": 22
           }
         ]
       },
@@ -75,9 +72,3 @@ SCOPES
     ]
   }
 ]
-
-================================================================================
-CONFORMANCE
-================================================================================
-
-All tests passed.

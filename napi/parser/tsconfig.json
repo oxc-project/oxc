@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "target": "ESNext"
+  }
+}

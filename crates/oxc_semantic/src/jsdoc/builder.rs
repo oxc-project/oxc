@@ -1,21 +1,22 @@
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{AstKind, Comment, Trivias};
+use oxc_ast::{ast::Comment, AstKind};
 use oxc_span::{GetSpan, Span};
 
 use crate::jsdoc::JSDocFinder;
 
 use super::parser::JSDoc;
 
+#[derive(Default)]
 pub struct JSDocBuilder<'a> {
     not_attached_docs: FxHashMap<u32, Vec<JSDoc<'a>>>,
     attached_docs: FxHashMap<u32, Vec<JSDoc<'a>>>,
 }
 
 impl<'a> JSDocBuilder<'a> {
-    pub fn new(source_text: &'a str, trivias: &Trivias) -> Self {
+    pub fn new(source_text: &'a str, comments: &[Comment]) -> Self {
         let mut not_attached_docs: FxHashMap<u32, Vec<_>> = FxHashMap::default();
-        for comment in trivias.comments().filter(|comment| comment.is_jsdoc(source_text)) {
+        for comment in comments.iter().filter(|comment| comment.is_jsdoc(source_text)) {
             not_attached_docs
                 .entry(comment.attached_to)
                 .or_default()
@@ -118,8 +119,9 @@ impl<'a> JSDocBuilder<'a> {
     }
 
     fn parse_jsdoc_comment(comment: &Comment, source_text: &'a str) -> JSDoc<'a> {
+        let span = comment.content_span();
         // Remove the very first `*`
-        let jsdoc_span = Span::new(comment.span.start + 1, comment.span.end);
+        let jsdoc_span = Span::new(span.start + 1, span.end);
         let comment_content = jsdoc_span.source_text(source_text);
         JSDoc::new(comment_content, jsdoc_span)
     }
@@ -157,7 +159,6 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
 
         | AstKind::SwitchCase(_)
         | AstKind::CatchClause(_)
-        | AstKind::FinallyClause(_)
 
         | AstKind::VariableDeclaration(_)
         | AstKind::VariableDeclarator(_)
@@ -206,13 +207,7 @@ mod test {
     ) -> Semantic<'a> {
         let source_type = source_type.unwrap_or_default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
-        let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new(source_text)
-            .with_trivias(ret.trivias)
-            .with_build_jsdoc(true)
-            .build(program)
-            .semantic;
-        semantic
+        SemanticBuilder::new().with_build_jsdoc(true).build(&ret.program).semantic
     }
 
     fn get_jsdocs<'a>(

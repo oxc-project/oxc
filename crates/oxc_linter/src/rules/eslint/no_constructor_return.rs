@@ -67,7 +67,7 @@ fn is_constructor(node: &AstNode<'_>) -> bool {
 
 fn is_definitely_in_constructor(ctx: &LintContext, node_id: NodeId) -> bool {
     ctx.nodes()
-        .ancestors(node_id)
+        .ancestor_ids(node_id)
         .map(|id| ctx.nodes().get_node(id))
         .skip_while(|node| !node.kind().is_function_like())
         .nth(1)

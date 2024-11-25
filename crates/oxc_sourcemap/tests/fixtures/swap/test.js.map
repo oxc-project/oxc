@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "names": ["z", "y", "x"],
+  "sources": ["test.js"],
+  "sourcesContent": ["x;\ny;\nz;\n"],
+  "mappings": "AAEAA,CAAC;AADDC,CAAC;AADDC,CAAC",
+  "ignoreList": []
+}

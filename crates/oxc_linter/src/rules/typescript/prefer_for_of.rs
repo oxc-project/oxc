@@ -132,7 +132,7 @@ impl Rule for PreferForOf {
 
         let decl = &for_stmt_init.declarations[0];
         let (var_name, var_symbol_id) = match &decl.id.kind {
-            BindingPatternKind::BindingIdentifier(id) => (&id.name, id.symbol_id.get()),
+            BindingPatternKind::BindingIdentifier(id) => (&id.name, id.symbol_id()),
             _ => return,
         };
 
@@ -183,9 +183,6 @@ impl Rule for PreferForOf {
         let nodes = ctx.nodes();
         let body_span = for_stmt.body.span();
 
-        let Some(var_symbol_id) = var_symbol_id else {
-            return;
-        };
         if ctx.semantic().symbol_references(var_symbol_id).any(|reference| {
             let ref_id = reference.node_id();
 

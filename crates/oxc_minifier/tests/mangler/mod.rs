@@ -12,7 +12,7 @@ fn mangle(source_text: &str) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = ret.program;
     let mangler = Mangler::new().build(&program);
-    CodeGenerator::new().with_mangler(Some(mangler)).build(&program).source_text
+    CodeGenerator::new().with_mangler(Some(mangler)).build(&program).code
 }
 
 #[test]

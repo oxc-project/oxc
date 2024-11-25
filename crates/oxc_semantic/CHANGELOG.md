@@ -4,6 +4,125 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+### Features
+
+- 3dcac1a linter: React/exhaustive-deps (#7151) (camc314)
+- 8cfea3c oxc_cfg: Add implicit return instruction (#5568) (IWANABETHATGUY)
+
+### Bug Fixes
+
+- 7d75130 transformer/async-to-generator: `arguments` isn't correct after transformation (#7234) (Dunqing)
+
+### Refactor
+
+- 84038ee semantic: Shorten code (#7277) (overlookmotel)
+- 9e85cc1 semantic: Remove duplicated code (#7276) (overlookmotel)
+
+### Testing
+
+- 080a67b semantic: Semantic checker store conformance pass/fail info in a separate file (#7235) (Boshen)
+
+## [0.36.0] - 2024-11-09
+
+- b11ed2c ast: [**BREAKING**] Remove useless `ObjectProperty::init` field (#7220) (Boshen)
+
+- 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)
+
+- d1d1874 ast: [**BREAKING**] Change `comment.span` to real position that contain `//` and `/*` (#7154) (Boshen)
+
+- 843bce4 ast: [**BREAKING**] `IdentifierReference::reference_id` return `ReferenceId` (#7126) (overlookmotel)
+
+### Features
+
+
+### Refactor
+
+- c5485ae semantic: Add `ancestor_kinds` iterator function (#7217) (camchenry)
+- abf1602 semantic: Rename `iter_parents` to `ancestors` (#7216) (camchenry)
+- 42171eb semantic: Rename `ancestors` to `ancestor_ids` (#7215) (camchenry)
+
+## [0.35.0] - 2024-11-04
+
+- 9a6a2f9 semantic: [**BREAKING**] Remove `SymbolTable::get_symbol_id_from_span` API (#6955) (Boshen)
+
+### Bug Fixes
+
+- da199c7 ecmascript: Allow getting PropName for object methods (#6967) (camchenry)
+
+### Refactor
+
+
+## [0.34.0] - 2024-10-26
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
+## [0.33.0] - 2024-10-24
+
+- 1248557 ast: [**BREAKING**] Remove `AstKind::FinallyClause` (#6744) (Boshen)
+
+- 202c7f6 ast: [**BREAKING**] Remove `AstKind::ExpressionArrayElement` and `AstKind::ClassHeritage` (#6740) (Boshen)
+
+### Features
+
+- 5928f04 semantic: Add `move_binding` API in ` ScopeTree` (#6808) (Dunqing)
+- e7e60da semantic: Add `change_parent_id` API in ScopeTree (#6807) (Dunqing)
+- 10484cd transformer: Class static block transform (#6733) (overlookmotel)
+
+### Bug Fixes
+
+
+### Refactor
+
+
+## [0.32.0] - 2024-10-19
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+- 2808973 ast: [**BREAKING**] Add `Program::comments` (#6445) (Boshen)
+
+### Features
+
+- e310e52 parser: Generate `Serialize` impls in ast_tools (#6404) (ottomated)
+
+### Bug Fixes
+
+- 834ee2a semantic: `TSConditionalType` scope enter/exit locations (#6351) (DonIsaac)
+
+### Refactor
+
+- 073b02a ast: Type params field before params in TS function declaration types (#6391) (overlookmotel)
+- 435a89c oxc: Remove useless `allocator.alloc(program)` calls (#6571) (Boshen)
+
+## [0.31.0] - 2024-10-08
+
+- 01b878e parser: [**BREAKING**] Use `BindingIdentifier` for `namespace` declaration names (#6003) (DonIsaac)
+
+- 95ca01c cfg: [**BREAKING**] Make BasicBlock::unreachable private (#6321) (DonIsaac)
+
+### Features
+
+- 14275b1 cfg: Color-code edges in CFG dot diagrams (#6314) (DonIsaac)
+- 9e62396 syntax_operations: Add crate `oxc_ecmascript` (#6202) (Boshen)
+
+### Bug Fixes
+
+- 6159560 parser: String `ImportSpecifier`s for type imports (#6352) (DonIsaac)
+
+### Refactor
+
+- 40932f7 cfg: Use IndexVec for storing basic blocks (#6323) (DonIsaac)
+- bdd9e92 semantic: Rename vars from `ast_node_id` to `node_id` (#6304) (overlookmotel)
+- d110700 semantic: Dereference IDs as quickly as possible (#6303) (overlookmotel)
+
+### Testing
+
+- d4f2ee9 transformer: Tidy up transform checker (#6287) (overlookmotel)
+- 0f5afd7 transformer: Transform checker output symbol name for mismatches (#6286) (overlookmotel)
+
 ## [0.30.4] - 2024-09-28
 
 ### Refactor

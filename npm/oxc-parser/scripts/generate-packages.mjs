@@ -1,4 +1,4 @@
-// Code copied from [Rome](https://github.com/rome/tools/blob/main/npm/rome/scripts/generate-packages.mjs)
+// Code copied from [Rome](https://github.com/rome/tools/blob/lsp/v0.28.0/npm/rome/scripts/generate-packages.mjs)
 
 import * as fs from 'node:fs';
 import { resolve } from 'node:path';
@@ -95,7 +95,7 @@ function writeManifest() {
   const content = JSON.stringify(manifestData, null, 2);
   fs.writeFileSync(manifestPath, content);
 
-  let files = ['index.js', 'index.d.ts'];
+  let files = ['bindings.js', 'index.js', 'index.d.ts'];
   for (const file of files) {
     fs.copyFileSync(resolve(BINARY_ROOT, file), resolve(packageRoot, file));
   }

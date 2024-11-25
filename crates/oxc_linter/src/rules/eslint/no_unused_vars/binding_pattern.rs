@@ -1,4 +1,3 @@
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_semantic::{Semantic, SymbolId};
 
@@ -45,7 +44,7 @@ impl<'a> HasAnyUsedBinding<'a> for BindingPatternKind<'a> {
 
 impl<'a> HasAnyUsedBinding<'a> for BindingIdentifier<'a> {
     fn has_any_used_binding(&self, ctx: BindingContext<'_, 'a>) -> bool {
-        self.symbol_id.get().is_some_and(|symbol_id| ctx.has_usages(symbol_id))
+        ctx.has_usages(self.symbol_id())
     }
 }
 impl<'a> HasAnyUsedBinding<'a> for ObjectPattern<'a> {

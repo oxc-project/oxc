@@ -1,20 +1,19 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use quote::{format_ident, quote};
-use syn::{parse_quote, Arm, Ident, ImplItemFn, Type, Variant};
+use syn::{parse_quote, Arm, ImplItemFn, Variant};
 
-use super::define_generator;
 use crate::{
-    codegen::{generated_header, LateCtx},
-    output,
-    schema::{GetIdent, ToType, TypeDef},
-    util::ToIdent,
-    Generator, GeneratorOutput,
+    output::{output_path, Output},
+    schema::{GetIdent, Schema, ToType},
+    Generator,
 };
 
-define_generator! {
-    pub struct AstKindGenerator;
-}
+use super::define_generator;
+
+pub struct AstKindGenerator;
+
+define_generator!(AstKindGenerator);
 
 pub const BLACK_LIST: [&str; 61] = [
     "Expression",
@@ -80,71 +79,24 @@ pub const BLACK_LIST: [&str; 61] = [
     "JSXSpreadChild",
 ];
 
-pub fn blacklist((ident, _): &(Ident, Type)) -> bool {
-    !BLACK_LIST.contains(&ident.to_string().as_str())
-}
-
-pub fn aliased_nodes() -> [(Ident, Type); 1] {
-    use syn::parse_quote as pq;
-    [(pq!(ExpressionArrayElement), pq!(Expression<'a>))]
-}
-
-pub fn process_types(def: &TypeDef, _: &LateCtx) -> Vec<(Ident, Type)> {
-    let aliases = match def {
-        TypeDef::Enum(enum_) => enum_
-            .variants
-            .iter()
-            .filter(|it| it.markers.visit.visit_as.is_some())
-            .map(|var| {
-                let field = var.fields.first().unwrap();
-                let type_name = field.typ.name().inner_name();
-                (
-                    var.markers.visit.visit_as.clone().expect("Already checked"),
-                    parse_quote!(#type_name<'a>),
-                )
-            })
-            .collect_vec(),
-        TypeDef::Struct(struct_) => struct_
-            .fields
-            .iter()
-            .filter(|it| it.markers.visit.visit_as.is_some())
-            .map(|field| {
-                let type_name = field.typ.name().inner_name().to_ident();
-                (
-                    field.markers.visit.visit_as.clone().expect("Already checked"),
-                    parse_quote!(#type_name<'a>),
-                )
-            })
-            .collect_vec(),
-    };
-
-    Some(def)
-        .into_iter()
-        .map(|def| {
-            let ident = def.ident();
-            let typ = def.to_type();
-            (ident, typ)
-        })
-        .chain(aliases)
-        .collect()
-}
-
 impl Generator for AstKindGenerator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        let have_kinds: Vec<(Ident, Type)> = ctx
-            .schema()
-            .into_iter()
-            .filter(|it| it.visitable())
-            .filter(
-                |maybe_kind| matches!(maybe_kind, kind @ (TypeDef::Enum(_) | TypeDef::Struct(_)) if kind.visitable())
-            )
-            .flat_map(|it| process_types(it, ctx))
-            .filter(blacklist)
-            .chain(aliased_nodes())
-            .collect();
+    fn generate(&mut self, schema: &Schema) -> Output {
+        let have_kinds = schema
+            .defs
+            .iter()
+            .filter(|def| {
+                let is_visitable = def.is_visitable();
+                let is_blacklisted = BLACK_LIST.contains(&def.name());
+                is_visitable && !is_blacklisted
+            })
+            .map(|def| {
+                let ident = def.ident();
+                let typ = def.to_type();
+                (ident, typ)
+            })
+            .collect_vec();
 
-        let types: Vec<Variant> =
-            have_kinds.iter().map(|(ident, _)| parse_quote!(#ident)).collect_vec();
+        let types = have_kinds.iter().map(|(ident, _)| ident).collect_vec();
 
         let kinds: Vec<Variant> =
             have_kinds.iter().map(|(ident, typ)| parse_quote!(#ident(&'a #typ))).collect_vec();
@@ -162,9 +114,9 @@ impl Generator for AstKindGenerator {
                 parse_quote!(
                     ///@@line_break
                     #[inline]
-                    pub fn #snake_case_name(&self) -> Option<&'a #typ> {
+                    pub fn #snake_case_name(self) -> Option<&'a #typ> {
                         if let Self::#ident(v) = self {
-                            Some(*v)
+                            Some(v)
                         } else {
                             None
                         }
@@ -173,17 +125,15 @@ impl Generator for AstKindGenerator {
             })
             .collect_vec();
 
-        let header = generated_header!();
+        Output::Rust {
+            path: output_path(crate::AST_CRATE, "ast_kind.rs"),
+            tokens: quote! {
+                #![allow(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
 
-        GeneratorOutput(
-            output(crate::AST_CRATE, "ast_kind.rs"),
-            quote! {
-                #header
-
+                ///@@line_break
                 use oxc_span::{GetSpan, Span};
 
                 ///@@line_break
-                #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
 
                 ///@@line_break
@@ -214,6 +164,6 @@ impl Generator for AstKindGenerator {
                     #(#as_ast_kind_impls)*
                 }
             },
-        )
+        }
     }
 }

@@ -81,7 +81,7 @@ ${
     .join('\n')
 }
 
-✨ = Implemented, 🚫 = Not supported
+✨ = Implemented, 🚫 = No need to implement
 
 </details>
 `;
@@ -129,7 +129,7 @@ exports.renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
     viewsRef.push({ name, ...entry });
 
     if (entry.isImplemented) counterRef.isImplemented++;
-    if (entry.isNotSupported) counterRef.isNotSupported++;
+    else if (entry.isNotSupported) counterRef.isNotSupported++;
     counterRef.total++;
   }
 

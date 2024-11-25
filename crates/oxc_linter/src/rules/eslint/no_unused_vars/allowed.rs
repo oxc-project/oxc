@@ -1,74 +1,36 @@
 //! This module checks if an unused variable is allowed. Note that this does not
 //! consider variables ignored by name pattern, but by where they are declared.
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
-use oxc_semantic::{AstNode, NodeId, Semantic};
-use oxc_span::GetSpan;
+use oxc_semantic::{NodeId, Semantic};
 
 use super::{options::ArgsOption, NoUnusedVars, Symbol};
 use crate::rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding};
 
 impl<'s, 'a> Symbol<'s, 'a> {
-    /// Returns `true` if this function is use.
+    /// Check if the declaration of this [`Symbol`] is use.
     ///
-    /// Checks for these cases
-    /// 1. passed as a callback to another [`CallExpression`] or [`NewExpression`]
-    /// 2. invoked as an IIFE
-    /// 3. Returned from another function
-    /// 4. Used as an attribute in a JSX element
+    /// If it's an expression, then it's always passed in as an argument
+    /// or assigned to a variable, so it's always used.
+    ///
+    /// ```js
+    /// // True:
+    /// const a = class Name{}
+    /// export default (function Name() {})
+    /// console.log(function Name() {})
+    ///
+    /// // False
+    /// function foo() {}
+    /// {
+    ///    class Foo {}
+    /// }
+    /// ```
     #[inline]
-    pub fn is_function_or_class_declaration_used(&self) -> bool {
-        #[cfg(debug_assertions)]
-        {
-            let kind = self.declaration().kind();
-            assert!(kind.is_function_like() || matches!(kind, AstKind::Class(_)));
+    pub(crate) fn is_function_or_class_declaration_used(&self) -> bool {
+        match self.declaration().kind() {
+            AstKind::Class(class) => class.is_expression(),
+            AstKind::Function(func) => func.is_expression(),
+            _ => false,
         }
-
-        for parent in self.iter_parents() {
-            match parent.kind() {
-                AstKind::MemberExpression(_) | AstKind::ParenthesizedExpression(_) => {
-                    continue;
-                }
-                // Returned from another function. Definitely won't be the same
-                // function because we're walking up from its declaration
-                AstKind::ReturnStatement(_)
-                // <Component onClick={function onClick(e) { }} />
-                | AstKind::JSXExpressionContainer(_)
-                // Function declaration is passed as an argument to another function.
-                | AstKind::CallExpression(_) | AstKind::Argument(_)
-                // e.g. `const x = { foo: function foo() {} }`
-                | AstKind::ObjectProperty(_)
-                // e.g. var foo = function bar() { }
-                // we don't want to check for violations on `bar`, just `foo`
-                | AstKind::VariableDeclarator(_)
-                // new (class CustomRenderer{})
-                // new (function() {})
-                | AstKind::NewExpression(_)
-                => {
-                    return true;
-                }
-                // !function() {}; is an IIFE
-                AstKind::UnaryExpression(expr) => return expr.operator.is_not(),
-                // function is used as a value for an assignment
-                // e.g. Array.prototype.sort ||= function sort(a, b) { }
-                AstKind::AssignmentExpression(assignment) if assignment.right.span().contains_inclusive(self.span()) => {
-                    return self != &assignment.left;
-                }
-                AstKind::ExpressionStatement(_) => {
-                    // implicit return in arrow function expression
-                    let Some(AstKind::FunctionBody(body)) = self.nodes().parent_kind(parent.id()) else {
-                        return false;
-                    };
-                    return body.span.contains_inclusive(self.span()) && body.statements.len() == 1 && !self.get_snippet(body.span).starts_with('{')
-                }
-                _ => {
-                    parent.kind().debug_name();
-                    return false;
-                }
-            }
-        }
-
-        false
     }
 
     fn is_declared_in_for_of_loop(&self) -> bool {
@@ -113,12 +75,6 @@ fn is_ambient_namespace(namespace: &TSModuleDeclaration) -> bool {
 }
 
 impl NoUnusedVars {
-    #[allow(clippy::unused_self)]
-    pub(super) fn is_allowed_class_or_function(&self, symbol: &Symbol<'_, '_>) -> bool {
-        symbol.is_function_or_class_declaration_used()
-        // || symbol.is_function_or_class_assigned_to_same_name_variable()
-    }
-
     #[allow(clippy::unused_self)]
     pub(super) fn is_allowed_ts_namespace<'a>(
         &self,
@@ -244,7 +200,7 @@ impl NoUnusedVars {
         param: &FormalParameter<'a>,
         params_id: NodeId,
     ) -> bool {
-        let mut parents_iter = semantic.nodes().iter_parents(params_id).skip(1).map(AstNode::kind);
+        let mut parents_iter = semantic.nodes().ancestor_kinds(params_id).skip(1);
 
         // in function declarations, the parent immediately before the
         // FormalParameters is a TSDeclareBlock

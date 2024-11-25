@@ -1,9 +1,8 @@
 {
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
-  "packageManager": "pnpm@9.10.0",
   "license": "MIT",
-  "version": "0.9.9",
+  "version": "0.13.1",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -23,7 +22,7 @@
     "oxc"
   ],
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.95.0"
   },
   "sponsor": {
     "url": "https://github.com/sponsors/boshen"
@@ -53,18 +52,13 @@
         "command": "oxc.showOutputChannel",
         "title": "Show Output Channel",
         "category": "Oxc"
-      },
-      {
-        "command": "oxc.showTraceOutputChannel",
-        "title": "Show Trace Output Channel",
-        "category": "Oxc"
       }
     ],
     "configuration": {
       "type": "object",
       "title": "oxc",
       "properties": {
-        "oxc_language_server.run": {
+        "oxc.lint.run": {
           "scope": "resource",
           "type": "string",
           "enum": [
@@ -74,12 +68,12 @@
           "default": "onType",
           "description": "Run the linter on save (onSave) or on type (onType)"
         },
-        "oxc_language_server.enable": {
+        "oxc.enable": {
           "type": "boolean",
           "default": true,
           "description": "enable oxc language server"
         },
-        "oxc_language_server.trace.server": {
+        "oxc.trace.server": {
           "type": "string",
           "scope": "window",
           "enum": [
@@ -95,11 +89,16 @@
           "default": "off",
           "description": "Traces the communication between VS Code and the language server."
         },
-        "oxc_language_server.configPath": {
+        "oxc.configPath": {
           "type": "string",
           "scope": "window",
-          "default": ".eslintrc",
+          "default": ".oxlintrc.json",
           "description": "Path to ESlint configuration."
+        },
+        "oxc.path.server": {
+          "type": "string",
+          "scope": "window",
+          "description": "Path to Oxc language server binary."
         }
       }
     },
@@ -109,8 +108,7 @@
           "oxlintrc.json",
           "oxlint.json",
           ".oxlintrc.json",
-          ".oxlint.json",
-          ".oxlintrc"
+          ".oxlint.json"
         ],
         "url": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json"
       }
@@ -122,8 +120,7 @@
           "oxlintrc.json",
           "oxlint.json",
           ".oxlintrc.json",
-          ".oxlint.json",
-          ".oxlintrc"
+          ".oxlint.json"
         ]
       }
     ]
@@ -137,16 +134,21 @@
     "install-extension": "code --install-extension oxc_language_server.vsix --force",
     "server:build:debug": "cargo build -p oxc_language_server",
     "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
-    "fmt:js": "prettier --write ./**/*.{js,ts,json}"
+    "lint": "npx oxlint --config=oxlint.json --tsconfig=tsconfig.json",
+    "test": "esbuild client/config.spec.ts --bundle --outfile=out/config.spec.js --external:vscode --format=cjs --platform=node --target=node16 --minify --sourcemap && vscode-test",
+    "type-check": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.9",
     "@types/node": "^22.0.0",
-    "@types/vscode": "1.80.0",
+    "@types/vscode": "1.95.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.23.0",
-    "ovsx": "^0.9.1",
-    "prettier": "^3.3.1",
+    "esbuild": "^0.24.0",
+    "ovsx": "^0.10.0",
+    "oxlint": "^0.11.1",
     "typescript": "^5.4.5"
   },
   "dependencies": {

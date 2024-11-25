@@ -4,6 +4,90 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.1] - 2024-11-23
+
+### Features
+
+- 9558087 oxlint: Auto detect config file in CLI (#7348) (Alexander S.)
+
+### Bug Fixes
+
+- 8507464 linter: Hanging when source has syntax/is flow (#7432) (Cameron)
+- e88cf1b linter: Make `overrides` globs relative to config path (#7407) (camchenry)
+
+## [0.13.0] - 2024-11-21
+
+- 878189c parser,linter: [**BREAKING**] Add `ParserReturn::is_flow_language`; linter ignore flow error (#7373) (Boshen)
+
+### Features
+
+
+## [0.12.0] - 2024-11-20
+
+### Features
+
+- 2268a0e linter: Support `overrides` config field (#6974) (DonIsaac)
+- d3a0119 oxlint: Add `cwd` property to `LintRunner` (#7352) (Alexander S.)
+
+### Bug Fixes
+
+- df5c535 linter: Revert unmatched rule error (#7257) (Cameron A McHenry)
+
+## [0.11.0] - 2024-11-03
+
+- 1f2a6c6 linter: [**BREAKING**] Report unmatched rules with error exit code (#7027) (camchenry)
+
+### Features
+
+- 2184588 linter: Do not bail for unmatched rules yet (#7093) (Boshen)
+
+### Bug Fixes
+
+- 38d1f78 linter: Remove confusing help text for now (#7081) (Cam McHenry)
+
+### Refactor
+
+- a8dc75d linter: Remove unused CLI result types (#7088) (camchenry)
+
+## [0.10.3] - 2024-10-26
+
+### Features
+
+- 0acca58 linter: Support `--print-config all` to print config file for project (#6579) (mysteryven)
+
+## [0.10.2] - 2024-10-22
+
+### Refactor
+
+- 6ffdcc0 oxlint: Lint/mod.rs -> lint.rs (#6746) (Boshen)
+
+### Testing
+
+- b03cec6 oxlint: Add `--fix` test case (#6747) (Boshen)
+
+## [0.10.1] - 2024-10-21
+
+### Refactor
+
+- d6609e9 linter: Use `run_on_jest_node` for existing lint rules (#6722) (camchenry)
+
+## [0.10.0] - 2024-10-18
+
+- 80266d8 linter: [**BREAKING**] Support plugins in oxlint config files (#6088) (DonIsaac)
+
+### Features
+
+
+## [0.9.10] - 2024-10-07
+
+### Bug Fixes
+
+- 9e9808b linter: Fix regression when parsing ts in vue files (#6336) (Boshen)
+
+### Refactor
+
+- ea908f7 linter: Consolidate file loading logic (#6130) (DonIsaac)
+
 ## [0.9.7] - 2024-09-23
 
 ### Features

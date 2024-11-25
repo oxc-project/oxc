@@ -105,13 +105,6 @@ impl Case for Test262Case {
 
     fn skip_test_case(&self) -> bool {
         [
-            // ES2025 https://github.com/tc39/proposal-duplicate-named-capturing-groups
-            "regexp-duplicate-named-groups",
-            // stage 3 https://github.com/tc39/proposal-regexp-modifiers
-            "regexp-modifiers",
-            // stage 3 https://github.com/tc39/proposal-json-modules
-            // ignored due to https://github.com/tc39/proposal-json-modules/issues/27
-            "json-modules",
             // stage 3 https://github.com/tc39/proposal-source-phase-imports
             "source-phase-imports",
         ]
@@ -123,10 +116,10 @@ impl Case for Test262Case {
     // each test must be executed twice: once in ECMAScript's non-strict mode, and again in ECMAScript's strict mode.
     // To run in strict mode, the test contents must be modified prior to execution--
     // a "use strict" directive must be inserted as the initial character sequence of the file
-    // https://github.com/tc39/test262/blob/main/INTERPRETING.md#strict-mode
+    // https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/INTERPRETING.md#strict-mode
     fn run(&mut self) {
         let flags = &self.meta.flags;
-        let source_type = SourceType::default().with_script(true);
+        let source_type = SourceType::cjs();
 
         self.result = if flags.contains(&TestFlag::OnlyStrict) {
             self.always_strict = true;

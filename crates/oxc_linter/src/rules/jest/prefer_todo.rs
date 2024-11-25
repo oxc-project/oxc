@@ -10,10 +10,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    utils::{
-        collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        PossibleJestNode,
-    },
+    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
 };
 
 fn empty_test(span: Span) -> OxcDiagnostic {
@@ -51,10 +48,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferTodo {
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        run(jest_node, ctx);
     }
 }
 
@@ -163,17 +162,17 @@ fn build_code<'a>(fixer: RuleFixer<'_, 'a>, expr: &CallExpression<'a>) -> RuleFi
 
     if let Argument::StringLiteral(ident) = &expr.arguments[0] {
         // Todo: this punctuation should read from the config
-        formatter.print_char(b'\'');
+        formatter.print_ascii_byte(b'\'');
         formatter.print_str(ident.value.as_str());
-        formatter.print_char(b'\'');
-        formatter.print_char(b')');
+        formatter.print_ascii_byte(b'\'');
+        formatter.print_ascii_byte(b')');
     } else if let Argument::TemplateLiteral(temp) = &expr.arguments[0] {
-        formatter.print_char(b'`');
+        formatter.print_ascii_byte(b'`');
         for q in &temp.quasis {
             formatter.print_str(q.value.raw.as_str());
         }
-        formatter.print_char(b'`');
-        formatter.print_char(b')');
+        formatter.print_ascii_byte(b'`');
+        formatter.print_ascii_byte(b')');
     }
 
     fixer.replace(expr.span, formatter)

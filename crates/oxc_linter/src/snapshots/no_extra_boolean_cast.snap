@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]

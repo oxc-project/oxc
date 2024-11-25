@@ -1,6 +1,6 @@
 //! Arena Box.
 //!
-//! Originally based on [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/ast/src/arena.rs)
+//! Originally based on [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/24004745a8ed4939fc0dc7332bfd1268ac52285f/crates/ast/src/arena.rs)
 
 use std::{
     self,
@@ -16,10 +16,16 @@ use serde::{Serialize, Serializer};
 
 use crate::Allocator;
 
-/// A Box without [`Drop`].
+/// A `Box` without [`Drop`], which stores its data in the arena allocator.
 ///
-/// This is used for over coming self-referential structs.
-/// It is a memory leak if the boxed value has a [`Drop`] implementation.
+/// Should only be used for storing AST types.
+///
+/// Must NOT be used to store types which have a [`Drop`] implementation.
+/// `T::drop` will NOT be called on the `Box`'s contents when the `Box` is dropped.
+/// If `T` owns memory outside of the arena, this will be a memory leak.
+///
+/// Note: This is not a soundness issue, as Rust does not support relying on `drop`
+/// being called to guarantee soundness.
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 impl<'alloc, T> Box<'alloc, T> {
@@ -73,6 +79,32 @@ impl<'alloc, T> Box<'alloc, T> {
     #[allow(unsafe_code, clippy::missing_safety_doc)]
     pub const unsafe fn dangling() -> Self {
         Self(NonNull::dangling(), PhantomData)
+    }
+}
+
+impl<'alloc, T: ?Sized> Box<'alloc, T> {
+    /// Create a [`Box`] from a raw pointer to a value.
+    ///
+    /// The [`Box`] takes ownership of the data pointed to by `ptr`.
+    ///
+    /// # SAFETY
+    /// Data pointed to by `ptr` must live as long as `'alloc`.
+    /// This requirement is met if the pointer was obtained from other data in the arena.
+    ///
+    /// Data pointed to by `ptr` must *only* be used for this `Box`. i.e. it must be unique,
+    /// with no other aliases. You must not, for example, create 2 `Box`es from the same pointer.
+    ///
+    /// `ptr` must have been created from a `*mut T` or `&mut T` (not a `*const T` / `&T`).
+    #[inline]
+    pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
+        Self(ptr, PhantomData)
+    }
+
+    /// Consume a [`Box`] and return a [`NonNull`] pointer to its contents.
+    #[inline]
+    #[expect(clippy::needless_pass_by_value)]
+    pub fn into_non_null(boxed: Self) -> NonNull<T> {
+        boxed.0
     }
 }
 
@@ -136,21 +168,6 @@ where
 impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.deref().hash(state);
-    }
-}
-
-/// Memory address of an AST node in arena.
-///
-/// `Address` is generated from a `Box<T>`.
-/// AST nodes in a `Box` in an arena are guaranteed to never move in memory,
-/// so this address acts as a unique identifier for the duration of the arena's existence.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Address(usize);
-
-impl<'a, T> Box<'a, T> {
-    #[inline]
-    pub fn address(&self) -> Address {
-        Address(ptr::addr_of!(**self) as usize)
     }
 }
 

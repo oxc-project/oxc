@@ -127,7 +127,7 @@ impl NoExplicitAny {
     fn is_in_rest<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         debug_assert!(matches!(node.kind(), AstKind::TSAnyKeyword(_)));
         ctx.nodes()
-            .iter_parents(node.id())
+            .ancestors(node.id())
             .any(|parent| matches!(parent.kind(), AstKind::BindingRestElement(_)))
     }
 }
@@ -143,7 +143,11 @@ mod tests {
     fn test_simple() {
         let pass = vec!["let x: number = 1"];
         let fail = vec!["let x: any = 1"];
-        Tester::new(NoExplicitAny::NAME, pass, fail).test();
+        let fix = vec![
+            ("let x: any = 1", "let x: unknown = 1", Some(json!([{ "fixToUnknown": true }]))),
+            ("let x: any = 1", "let x: any = 1", None),
+        ];
+        Tester::new(NoExplicitAny::NAME, pass, fail).expect_fix(fix).test();
     }
 
     #[test]

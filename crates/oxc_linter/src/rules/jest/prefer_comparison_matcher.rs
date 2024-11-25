@@ -12,8 +12,8 @@ use crate::{
     fixer::RuleFixer,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, is_equality_matcher, parse_expect_jest_fn_call,
-        KnownMemberExpressionProperty, PossibleJestNode,
+        is_equality_matcher, parse_expect_jest_fn_call, KnownMemberExpressionProperty,
+        PossibleJestNode,
     },
 };
 
@@ -60,10 +60,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferComparisonMatcher {
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            Self::run(possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        Self::run(jest_node, ctx);
     }
 }
 
@@ -183,10 +185,10 @@ impl PreferComparisonMatcher {
     ) -> String {
         let mut content = fixer.codegen();
         content.print_str(local_name);
-        content.print_char(b'(');
+        content.print_ascii_byte(b'(');
         content.print_expression(&binary_expr.left);
         content.print_str(call_span_end);
-        content.print_char(b'.');
+        content.print_ascii_byte(b'.');
         for modifier in modifiers {
             let Some(modifier_name) = modifier.name() else {
                 continue;
@@ -194,11 +196,11 @@ impl PreferComparisonMatcher {
 
             if !modifier_name.eq("not") {
                 content.print_str(&modifier_name);
-                content.print_char(b'.');
+                content.print_ascii_byte(b'.');
             }
         }
         content.print_str(prefer_matcher_name);
-        content.print_char(b'(');
+        content.print_ascii_byte(b'(');
         content.print_expression(&binary_expr.right);
         content.print_str(arg_span_end);
         content.into_source_text()

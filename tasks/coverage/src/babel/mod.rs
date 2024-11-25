@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 
 use oxc::{span::SourceType, transformer::BabelOptions};
 use serde::{de::DeserializeOwned, Deserialize};
-use serde_json::Value;
 
 use crate::{
     suite::{Case, Suite, TestResult},
@@ -36,7 +35,6 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
     fn skip_test_path(&self, path: &Path) -> bool {
         let not_supported_directory = [
             "experimental",
-            "es2022",
             "record-and-tuple",
             "es-record",
             "es-tuple",
@@ -170,9 +168,9 @@ impl Case for BabelCase {
         let has_not_supported_plugins = self
             .options
             .plugins
+            .unsupported
             .iter()
-            .filter_map(Value::as_str)
-            .any(|p| not_supported_plugins.contains(&p));
+            .any(|p| not_supported_plugins.iter().any(|plugin| plugin == p));
         has_not_supported_plugins
             || self.options.allow_await_outside_function
             || self.options.allow_undeclared_exports

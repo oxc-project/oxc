@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
    ╭─[no_danger_with_children.tsx:2:9]

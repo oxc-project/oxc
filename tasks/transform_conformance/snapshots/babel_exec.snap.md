@@ -1,81 +1,107 @@
-commit: 3bcfee23
+commit: 54a8389f
 
-Passed: 33/54
+node: v22.11.0
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
 
-# All Passed:
-* babel-plugin-transform-logical-assignment-operators
-* babel-plugin-transform-nullish-coalescing-operator
-* babel-plugin-transform-optional-catch-binding
-* babel-plugin-transform-exponentiation-operator
-* babel-plugin-transform-arrow-functions
+ FAIL  fixtures/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js [ fixtures/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js ]
+Error: 'eval' and 'arguments' cannot be used as a binding identifier in strict mode
+ ❯ getRollupError ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:396:41
+ ❯ convertProgram ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:1084:26
+ ❯ parseAstAsync ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:2070:106
+ ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52381:11
+ ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:51979:72
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
 
-# babel-preset-env (8/11)
-* plugins-integration/class-arrow-super-tagged-expr/exec.js
-exec failed
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
 
-* plugins-integration/issue-15170/exec.js
-exec failed
+ FAIL  fixtures/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js > exec
+TypeError: Cannot read properties of undefined (reading 'x')
+ ❯ m fixtures/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js:10:16
+      8|   }
+      9|   m() {
+     10|    return this.x;
+       |                ^
+     11|   }
+     12|   getSelf() {
+ ❯ Foo.test fixtures/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js:25:63
+ ❯ fixtures/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js:68:12
 
-* sanity/check-es2015-constants/exec.js
-exec failed
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
 
+ FAIL  fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js > exec
+TypeError: Cannot read properties of undefined (reading 'x')
+ ❯ m fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js:10:16
+      8|   }
+      9|   m() {
+     10|    return this.x;
+       |                ^
+     11|   }
+     12|   getSelf() {
+ ❯ Foo.test fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js:25:63
+ ❯ fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js:68:12
 
-# babel-plugin-transform-object-rest-spread (15/31)
-* assumption-objectRestNoSymbols/rest-ignore-symbols/exec.js
-exec failed
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
 
-* assumption-pureGetters/rest-remove-unused-excluded-keys/exec.js
-exec failed
+ FAIL  fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js > exec
+TypeError: Cannot read properties of undefined (reading 'x')
+ ❯ m fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:10:16
+      8|   }
+      9|   m() {
+     10|    return this.x;
+       |                ^
+     11|   }
+     12|   getSelf() {
+ ❯ Foo.test fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:25:63
+ ❯ fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:68:12
 
-* assumption-pureGetters/spread-single-call/exec.js
-exec failed
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
 
-* assumption-setSpreadProperties/expression/exec.js
-exec failed
+ FAIL  fixtures/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js > exec
+AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
 
-* assumption-setSpreadProperties/no-getOwnPropertyDescriptors/exec.js
-exec failed
+- Expected: 
+undefined
 
-* assumption-setSpreadProperties/no-object-assign-exec/exec.js
-exec failed
++ Received: 
+"ReferenceError: x is not defined"
 
-* assumption-setSpreadProperties-with-useBuiltIns/expression/exec.js
-exec failed
+ ❯ fixtures/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js:6:9
+      4|  expect(() => {
+      5|   x = async (x) => 0;
+      6|  }).not.toThrow();
+       |         ^
+      7| })
 
-* assumption-setSpreadProperties-with-useBuiltIns/no-getOwnPropertyDescriptors/exec.js
-exec failed
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
 
-* assumption-setSpreadProperties-with-useBuiltIns/no-object-assign-exec/exec.js
-exec failed
+ FAIL  fixtures/babel-preset-env-test-fixtures-sanity-check-es2015-constants-exec.test.js > exec
+TypeError: Assignment to constant variable.
+ ❯ fixtures/babel-preset-env-test-fixtures-sanity-check-es2015-constants-exec.test.js:5:6
+      3| test("exec", () => {
+      4|  const one = 123;
+      5|  one = 432;
+       |      ^
+      6| })
 
-* object-rest/null-destructuring/exec.js
-exec failed
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
 
-* object-spread/expression/exec.js
-exec failed
+ FAIL  fixtures/babel-preset-env-test-fixtures-sanity-regex-dot-all-exec.test.js > exec
+AssertionError: expected false to be true // Object.is equality
 
-* object-spread/no-getOwnPropertyDescriptors/exec.js
-exec failed
+- Expected
++ Received
 
-* object-spread/no-object-assign-exec/exec.js
-exec failed
+- true
++ false
 
-* object-spread/side-effect/exec.js
-exec failed
+ ❯ fixtures/babel-preset-env-test-fixtures-sanity-regex-dot-all-exec.test.js:10:37
+      8|  expect(/hello.world/.test(input)).toBe(false);
+      9|  expect(/hello.world/u.test(input)).toBe(false);
+     10|  expect(/hello.world/s.test(input)).toBe(true);
+       |                                     ^
+     11|  expect(/hello.world/su.test(input)).toBe(true);
+     12| })
 
-* object-spread-loose/side-effect/exec.js
-exec failed
-
-* object-spread-loose-builtins/side-effect/exec.js
-exec failed
-
-
-# babel-plugin-transform-react-jsx-source (0/2)
-* react-source/basic-sample/exec.js
-exec failed
-
-* react-source/with-source/exec.js
-exec failed
-
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
 

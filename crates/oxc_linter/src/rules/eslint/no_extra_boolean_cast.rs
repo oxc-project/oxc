@@ -188,7 +188,7 @@ fn is_unary_negation(node: &AstNode) -> bool {
 
 fn get_real_parent<'a, 'b>(node: &AstNode, ctx: &'a LintContext<'b>) -> Option<&'a AstNode<'b>> {
     for (_, parent) in
-        ctx.nodes().iter_parents(node.id()).tuple_windows::<(&AstNode<'b>, &AstNode<'b>)>()
+        ctx.nodes().ancestors(node.id()).tuple_windows::<(&AstNode<'b>, &AstNode<'b>)>()
     {
         if let AstKind::Argument(_)
         | AstKind::ParenthesizedExpression(_)

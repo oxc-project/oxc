@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-vitest(no-conditional-tests): Avoid having conditionals in tests
    ╭─[no_conditional_tests.tsx:2:8]

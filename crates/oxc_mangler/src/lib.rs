@@ -14,7 +14,7 @@ pub struct MangleOptions {
 /// # Name Mangler / Symbol Minification
 ///
 /// See:
-///   * [esbuild](https://github.com/evanw/esbuild/blob/main/docs/architecture.md#symbol-minification)
+///   * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/docs/architecture.md#symbol-minification)
 ///
 /// This algorithm is targeted for better gzip compression.
 ///
@@ -82,7 +82,7 @@ impl Mangler {
 
     #[must_use]
     pub fn build<'a>(mut self, program: &'a Program<'a>) -> Mangler {
-        let semantic = SemanticBuilder::new("").build(program).semantic;
+        let semantic = SemanticBuilder::new().build(program).semantic;
 
         // Mangle the symbol table by computing slots from the scope tree.
         // A slot is the occurrence index of a binding identifier inside a scope.
@@ -190,8 +190,8 @@ impl Mangler {
 
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
-                for symbol_id in &symbol_to_rename.symbol_ids {
-                    symbol_table.set_name(*symbol_id, new_name.clone());
+                for &symbol_id in &symbol_to_rename.symbol_ids {
+                    symbol_table.set_name(symbol_id, new_name.clone());
                 }
             }
         }

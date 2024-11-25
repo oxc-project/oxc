@@ -1,11 +1,13 @@
-#[allow(clippy::wildcard_imports)]
+use rustc_hash::FxHashMap;
+
+use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
+use oxc_ecmascript::ToInt32;
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::{
-    number::{NumberBase, ToJsInt32, ToJsString},
+    number::{NumberBase, ToJsString},
     operator::{BinaryOperator, UnaryOperator},
 };
-use rustc_hash::FxHashMap;
 
 use crate::{diagnostics::enum_member_initializers, IsolatedDeclarations};
 
@@ -16,8 +18,6 @@ enum ConstantValue {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    /// # Panics
-    /// if the enum member is a template literal with substitutions.
     pub fn transform_ts_enum_declaration(
         &mut self,
         decl: &TSEnumDeclaration<'a>,
@@ -45,24 +45,15 @@ impl<'a> IsolatedDeclarations<'a> {
 
             if let Some(value) = &value {
                 let member_name = match &member.id {
-                    TSEnumMemberName::StaticIdentifier(id) => &id.name,
-                    TSEnumMemberName::StaticStringLiteral(str) => &str.value,
-                    TSEnumMemberName::StaticTemplateLiteral(template) => {
-                        &template.quasi().expect("Template enum members cannot have substitutions.")
-                    }
-                    #[allow(clippy::unnested_or_patterns)] // Clippy is wrong
-                    TSEnumMemberName::StaticNumericLiteral(_)
-                    | match_expression!(TSEnumMemberName) => {
-                        unreachable!()
-                    }
+                    TSEnumMemberName::Identifier(id) => &id.name,
+                    TSEnumMemberName::String(str) => &str.value,
                 };
                 prev_members.insert(member_name.clone(), value.clone());
             }
 
             let member = self.ast.ts_enum_member(
                 member.span,
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                unsafe { self.ast.copy(&member.id) },
+                member.id.clone_in(self.ast.allocator),
                 value.map(|v| match v {
                     ConstantValue::Number(v) => {
                         let is_negative = v < 0.0;
@@ -95,8 +86,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         Some(self.ast.declaration_ts_enum(
             decl.span,
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { self.ast.copy(&decl.id) },
+            decl.id.clone_in(self.ast.allocator),
             members,
             decl.r#const,
             self.is_declare(),
@@ -223,22 +213,22 @@ impl<'a> IsolatedDeclarations<'a> {
 
         match expr.operator {
             BinaryOperator::ShiftRight => Some(ConstantValue::Number(f64::from(
-                left.to_js_int_32().wrapping_shr(right.to_js_int_32() as u32),
+                left.to_int_32().wrapping_shr(right.to_int_32() as u32),
             ))),
             BinaryOperator::ShiftRightZeroFill => Some(ConstantValue::Number(f64::from(
-                (left.to_js_int_32() as u32).wrapping_shr(right.to_js_int_32() as u32),
+                (left.to_int_32() as u32).wrapping_shr(right.to_int_32() as u32),
             ))),
             BinaryOperator::ShiftLeft => Some(ConstantValue::Number(f64::from(
-                left.to_js_int_32().wrapping_shl(right.to_js_int_32() as u32),
+                left.to_int_32().wrapping_shl(right.to_int_32() as u32),
             ))),
             BinaryOperator::BitwiseXOR => {
-                Some(ConstantValue::Number(f64::from(left.to_js_int_32() ^ right.to_js_int_32())))
+                Some(ConstantValue::Number(f64::from(left.to_int_32() ^ right.to_int_32())))
             }
             BinaryOperator::BitwiseOR => {
-                Some(ConstantValue::Number(f64::from(left.to_js_int_32() | right.to_js_int_32())))
+                Some(ConstantValue::Number(f64::from(left.to_int_32() | right.to_int_32())))
             }
             BinaryOperator::BitwiseAnd => {
-                Some(ConstantValue::Number(f64::from(left.to_js_int_32() & right.to_js_int_32())))
+                Some(ConstantValue::Number(f64::from(left.to_int_32() & right.to_int_32())))
             }
             BinaryOperator::Multiplication => Some(ConstantValue::Number(left * right)),
             BinaryOperator::Division => Some(ConstantValue::Number(left / right)),
@@ -276,9 +266,7 @@ impl<'a> IsolatedDeclarations<'a> {
         match expr.operator {
             UnaryOperator::UnaryPlus => Some(ConstantValue::Number(value)),
             UnaryOperator::UnaryNegation => Some(ConstantValue::Number(-value)),
-            UnaryOperator::BitwiseNot => {
-                Some(ConstantValue::Number(f64::from(!value.to_js_int_32())))
-            }
+            UnaryOperator::BitwiseNot => Some(ConstantValue::Number(f64::from(!value.to_int_32()))),
             _ => None,
         }
     }

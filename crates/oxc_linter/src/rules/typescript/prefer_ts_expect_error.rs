@@ -48,17 +48,17 @@ declare_oxc_lint!(
 
 impl Rule for PreferTsExpectError {
     fn run_once(&self, ctx: &LintContext) {
-        let comments = ctx.semantic().trivias().comments();
+        let comments = ctx.semantic().comments();
 
         for comment in comments {
-            let raw = comment.span.source_text(ctx.semantic().source_text());
+            let raw = ctx.source_range(comment.content_span());
 
             if !is_valid_ts_ignore_present(*comment, raw) {
                 continue;
             }
 
             if comment.is_line() {
-                let comment_span = Span::new(comment.span.start - 2, comment.span.end);
+                let comment_span = comment.span;
                 ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
                     fixer.replace(
                         comment_span,
@@ -66,7 +66,7 @@ impl Rule for PreferTsExpectError {
                     )
                 });
             } else {
-                let comment_span = Span::new(comment.span.start - 2, comment.span.end + 2);
+                let comment_span = comment.span;
                 ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
                     fixer.replace(
                         comment_span,

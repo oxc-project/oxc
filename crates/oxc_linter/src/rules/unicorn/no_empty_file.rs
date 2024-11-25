@@ -69,11 +69,11 @@ impl Rule for NoEmptyFile {
 }
 
 fn has_triple_slash_directive(ctx: &LintContext<'_>) -> bool {
-    for comment in ctx.semantic().trivias().comments() {
+    for comment in ctx.semantic().comments() {
         if !comment.is_line() {
             continue;
         }
-        let text = comment.span.source_text(ctx.source_text());
+        let text = ctx.source_range(comment.content_span());
         if text.starts_with("///") {
             return true;
         }

@@ -35,7 +35,38 @@ impl<'a, 'ctx> TopLevelStatements<'a, 'ctx> {
 
 impl<'a, 'ctx> Traverse<'a> for TopLevelStatements<'a, 'ctx> {
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        let mut stmts = self.ctx.top_level_statements.stmts.borrow_mut();
+        self.ctx.top_level_statements.insert_into_program(program);
+    }
+}
+
+/// Store for statements to be added at top of program
+pub struct TopLevelStatementsStore<'a> {
+    stmts: RefCell<Vec<Statement<'a>>>,
+}
+
+// Public methods
+impl<'a> TopLevelStatementsStore<'a> {
+    /// Create new `TopLevelStatementsStore`.
+    pub fn new() -> Self {
+        Self { stmts: RefCell::new(vec![]) }
+    }
+
+    /// Add a statement to be inserted at top of program.
+    pub fn insert_statement(&self, stmt: Statement<'a>) {
+        self.stmts.borrow_mut().push(stmt);
+    }
+
+    /// Add statements to be inserted at top of program.
+    pub fn insert_statements<I: IntoIterator<Item = Statement<'a>>>(&self, stmts: I) {
+        self.stmts.borrow_mut().extend(stmts);
+    }
+}
+
+// Internal methods
+impl<'a> TopLevelStatementsStore<'a> {
+    /// Insert statements at top of program.
+    fn insert_into_program(&self, program: &mut Program<'a>) {
+        let mut stmts = self.stmts.borrow_mut();
         if stmts.is_empty() {
             return;
         }
@@ -48,28 +79,5 @@ impl<'a, 'ctx> Traverse<'a> for TopLevelStatements<'a, 'ctx> {
             .map_or(0, |i| i + 1);
 
         program.body.splice(index..index, stmts.drain(..));
-    }
-}
-
-/// Store for statements to be added at top of program
-pub struct TopLevelStatementsStore<'a> {
-    stmts: RefCell<Vec<Statement<'a>>>,
-}
-
-impl<'a> TopLevelStatementsStore<'a> {
-    pub fn new() -> Self {
-        Self { stmts: RefCell::new(vec![]) }
-    }
-}
-
-impl<'a> TopLevelStatementsStore<'a> {
-    /// Add a statement to be inserted at top of program.
-    pub fn insert_statement(&self, stmt: Statement<'a>) {
-        self.stmts.borrow_mut().push(stmt);
-    }
-
-    /// Add statements to be inserted at top of program.
-    pub fn insert_statements<I: IntoIterator<Item = Statement<'a>>>(&self, stmts: I) {
-        self.stmts.borrow_mut().extend(stmts);
     }
 }

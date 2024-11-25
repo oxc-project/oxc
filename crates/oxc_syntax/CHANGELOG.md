@@ -4,6 +4,80 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+### Features
+
+- 2534cde syntax: Add `AssignmentOperator::to_logical_operator` and `to_binary_operator` methods (#7350) (overlookmotel)
+
+### Performance
+
+- c335f92 syntax: Reorder operator enum variants (#7351) (overlookmotel)
+
+### Documentation
+
+- 9b9d020 semantic: Document the meaning of `ReferenceFlags::Read` and `Write` (#7368) (Boshen)
+- b3d5802 syntax: More comments for `ReferenceFlags` (#7392) (overlookmotel)
+
+### Styling
+
+- b5a2027 syntax: Improve formatting (#7349) (overlookmotel)
+
+## [0.36.0] - 2024-11-09
+
+### Features
+
+- dc0215c ast_tools: Add #[estree(append_to)], remove some custom serialization code (#7149) (ottomated)
+
+## [0.35.0] - 2024-11-04
+
+### Features
+
+- 169fa22 ast_tools: Default enums to rename_all = "camelCase" (#6933) (ottomated)
+
+## [0.34.0] - 2024-10-26
+
+### Features
+
+- 1145341 ast_tools: Output typescript to a separate package (#6755) (ottomated)
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
+## [0.33.0] - 2024-10-24
+
+### Refactor
+
+- 85e69a1 ast_tools: Add line breaks to generated code for `ESTree` derive (#6680) (overlookmotel)
+- ad8e293 ast_tools: Shorten generated code for `impl Serialize` (#6684) (overlookmotel)
+- 9ba2b0e ast_tools: Move `#[allow]` attrs to top of generated files (#6679) (overlookmotel)
+
+## [0.32.0] - 2024-10-19
+
+### Features
+
+- e310e52 parser: Generate `Serialize` impls in ast_tools (#6404) (ottomated)
+
+### Bug Fixes
+
+- 2ce3e5f identifier: Add `ZWSP` to `is_irregular_whitespace` (#6662) (Boshen)
+- 1d3d256 transformer: Correctly trim JSX (#6639) (magic-akari)
+
+### Documentation
+
+- 335b7f2 syntax: Enable lint warnings on missing docs, and add a lot of documentation (#6611) (DonIsaac)
+
+### Refactor
+
+- 856cab5 ecmascript: Move ToInt32 from `oxc_syntax` to `oxc_ecmascript` (#6471) (Boshen)
+
+## [0.31.0] - 2024-10-08
+
+### Refactor
+
+- 03bc041 syntax: Remove some unsafe code creating IDs (#6324) (overlookmotel)
+
 ## [0.30.3] - 2024-09-27
 
 ### Bug Fixes
@@ -187,7 +261,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Features
 
-- f1ccbd4 syntax: Add `ToJsInt32` trait for f64 (#3132) (Boshen)
+- f1ccbd4 syntax: Add `ToInt32` trait for f64 (#3132) (Boshen)
 - 870d11f syntax: Add `ToJsString` trait for f64 (#3131) (Boshen)
 - 46c02ae traverse: Add scope flags to `TraverseCtx` (#3229) (overlookmotel)
 

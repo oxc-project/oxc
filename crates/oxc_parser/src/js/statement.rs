@@ -48,7 +48,7 @@ impl<'a> ParserImpl<'a> {
 
             // Section 11.2.1 Directive Prologue
             // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
-            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/main/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
+            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
             if expecting_directives {
                 if let Statement::ExpressionStatement(expr) = &stmt {
                     if let Expression::StringLiteral(string) = &expr.expression {
@@ -105,7 +105,7 @@ impl<'a> ParserImpl<'a> {
             // [+Return] ReturnStatement[?Yield, ?Await]
             Kind::Return => self.parse_return_statement(),
             Kind::Var => self.parse_variable_statement(stmt_ctx),
-            Kind::Const if !(self.ts_enabled() && self.is_at_enum_declaration()) => {
+            Kind::Const if !(self.is_ts && self.is_at_enum_declaration()) => {
                 self.parse_variable_statement(stmt_ctx)
             }
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
@@ -116,7 +116,7 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::Using if self.peek_kind().is_binding_identifier() => self.parse_using(),
             _ if self.at_function_with_async() => self.parse_function_declaration(stmt_ctx),
-            _ if self.ts_enabled() && self.at_start_of_ts_declaration() => {
+            _ if self.is_ts && self.at_start_of_ts_declaration() => {
                 self.parse_ts_declaration_statement(start_span)
             }
             _ => self.parse_expression_or_labeled_statement(),
@@ -325,11 +325,11 @@ impl<'a> ParserImpl<'a> {
         }
 
         if matches!(self.cur_kind(), Kind::In | Kind::Of) {
-            let init = ForStatementLeft::VariableDeclaration(self.ast.alloc(using_decl));
+            let init = ForStatementLeft::VariableDeclaration(self.alloc(using_decl));
             return self.parse_for_in_or_of_loop(span, r#await, init);
         }
 
-        let init = Some(ForStatementInit::VariableDeclaration(self.ast.alloc(using_decl)));
+        let init = Some(ForStatementInit::VariableDeclaration(self.alloc(using_decl)));
         self.parse_for_loop(span, init, r#await)
     }
 

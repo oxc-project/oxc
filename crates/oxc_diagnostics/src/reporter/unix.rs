@@ -37,7 +37,7 @@ impl DiagnosticReporter for UnixReporter {
     }
 }
 
-/// <https://github.com/fregante/eslint-formatters/tree/main/packages/eslint-formatter-unix>
+/// <https://github.com/fregante/eslint-formatters/tree/ae1fd9748596447d1fd09625c33d9e7ba9a3d06d/packages/eslint-formatter-unix>
 fn format_unix(diagnostic: &Error) -> String {
     let Info { line, column, filename, message, severity, rule_id } = Info::new(diagnostic);
     let severity = match severity {

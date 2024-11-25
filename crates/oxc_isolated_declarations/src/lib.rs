@@ -3,7 +3,7 @@
 //! References:
 //! * <https://devblogs.microsoft.com/typescript/announcing-typescript-5-5-rc/#isolated-declarations>
 //! * <https://www.typescriptlang.org/tsconfig#isolatedDeclarations>
-//! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformers/declarations.ts>
+//! * <https://github.com/microsoft/TypeScript/blob/v5.6.3/src/compiler/transformers/declarations.ts>
 
 mod class;
 mod declaration;
@@ -21,24 +21,29 @@ mod types;
 
 use std::{cell::RefCell, mem};
 
-use diagnostics::function_with_assigning_properties;
 use oxc_allocator::{Allocator, CloneIn};
-#[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstBuilder, Trivias, Visit, NONE};
+use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, SourceType, SPAN};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::scope::ScopeTree;
+use diagnostics::function_with_assigning_properties;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct IsolatedDeclarationsOptions {
-    /// Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
-    /// This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
-    /// <https://www.typescriptlang.org/tsconfig/#stripInternal>
+    /// Do not emit declarations for code that has an `@internal` annotation in its JSDoc comment.
+    /// This is an internal compiler option; use at your own risk, because the compiler does not
+    /// check that the result is valid.
+    ///
+    /// Default: `false`
+    ///
+    /// ## References
+    /// [TSConfig - `stripInternal`](https://www.typescriptlang.org/tsconfig/#stripInternal)
     pub strip_internal: bool,
 }
 
+#[non_exhaustive]
 pub struct IsolatedDeclarationsReturn<'a> {
     pub program: Program<'a>,
     pub errors: Vec<OxcDiagnostic>,
@@ -59,22 +64,13 @@ pub struct IsolatedDeclarations<'a> {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn new(
-        allocator: &'a Allocator,
-        source_text: &str,
-        trivias: &Trivias,
-        options: IsolatedDeclarationsOptions,
-    ) -> Self {
+    pub fn new(allocator: &'a Allocator, options: IsolatedDeclarationsOptions) -> Self {
         let strip_internal = options.strip_internal;
-        let is_internal_set = strip_internal
-            .then(|| Self::build_internal_annotations(source_text, trivias))
-            .unwrap_or_default();
-
         Self {
             ast: AstBuilder::new(allocator),
             strip_internal,
-            internal_annotations: is_internal_set,
-            scope: ScopeTree::new(allocator),
+            internal_annotations: FxHashSet::default(),
+            scope: ScopeTree::new(),
             errors: RefCell::new(vec![]),
         }
     }
@@ -83,10 +79,22 @@ impl<'a> IsolatedDeclarations<'a> {
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
+        self.internal_annotations = self
+            .strip_internal
+            .then(|| Self::build_internal_annotations(program))
+            .unwrap_or_default();
         let source_type = SourceType::d_ts();
         let directives = self.ast.vec();
         let stmts = self.transform_program(program);
-        let program = self.ast.program(SPAN, source_type, None, directives, stmts);
+        let program = self.ast.program(
+            SPAN,
+            source_type,
+            program.source_text,
+            self.ast.vec_from_iter(program.comments.iter().copied()),
+            None,
+            directives,
+            stmts,
+        );
         IsolatedDeclarationsReturn { program, errors: self.take_errors() }
     }
 
@@ -100,10 +108,11 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     /// Build the lookup table for jsdoc `@internal`.
-    fn build_internal_annotations(source_text: &str, trivias: &Trivias) -> FxHashSet<u32> {
+    fn build_internal_annotations(program: &Program<'a>) -> FxHashSet<u32> {
         let mut set = FxHashSet::default();
-        for comment in trivias.comments() {
-            let has_internal = comment.span.source_text(source_text).contains("@internal");
+        for comment in &program.comments {
+            let has_internal =
+                comment.content_span().source_text(program.source_text).contains("@internal");
             // Use the first jsdoc comment if there are multiple jsdoc comments for the same node.
             if has_internal && !set.contains(&comment.attached_to) {
                 set.insert(comment.attached_to);
@@ -122,19 +131,11 @@ impl<'a> IsolatedDeclarations<'a> {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn transform_program(
+    fn transform_program(
         &mut self,
         program: &Program<'a>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
-        let has_import_or_export = program.body.iter().any(|stmt| {
-            matches!(
-                stmt,
-                Statement::ImportDeclaration(_)
-                    | Statement::ExportAllDeclaration(_)
-                    | Statement::ExportDefaultDeclaration(_)
-                    | Statement::ExportNamedDeclaration(_)
-            )
-        });
+        let has_import_or_export = program.body.iter().any(Statement::is_module_declaration);
 
         if has_import_or_export {
             self.transform_statements_on_demand(&program.body)
@@ -143,7 +144,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub fn transform_program_without_module_declaration(
+    fn transform_program_without_module_declaration(
         &mut self,
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
@@ -166,7 +167,7 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     #[allow(clippy::missing_panics_doc)]
-    pub fn transform_statements_on_demand(
+    fn transform_statements_on_demand(
         &mut self,
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
@@ -186,7 +187,9 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut transformed_stmts: FxHashMap<Span, Statement<'a>> = FxHashMap::default();
         let mut transformed_variable_declarator: FxHashMap<Span, VariableDeclarator<'a>> =
             FxHashMap::default();
-        let mut export_default_var = None;
+        // When transforming `export default` with expression or `export = expression`,
+        // we will emit an extra variable declaration to store the inferred type of expression
+        let mut extra_export_var_statement = None;
 
         // 1. Collect all declarations, module declarations
         // 2. Transform export declarations
@@ -224,25 +227,35 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 match_module_declaration!(Statement) => {
                     match stmt.to_module_declaration() {
+                        ModuleDeclaration::TSExportAssignment(decl) => {
+                            transformed_spans.insert(decl.span);
+                            if let Some((var_decl, new_decl)) =
+                                self.transform_ts_export_assignment(decl)
+                            {
+                                if let Some(var_decl) = var_decl {
+                                    self.scope.visit_statement(&var_decl);
+                                    extra_export_var_statement = Some(var_decl);
+                                }
+
+                                self.scope.visit_statement(&new_decl);
+                                transformed_stmts.insert(decl.span, new_decl);
+                            } else {
+                                self.scope.visit_ts_export_assignment(decl);
+                            }
+                            need_empty_export_marker = false;
+                        }
                         ModuleDeclaration::ExportDefaultDeclaration(decl) => {
                             transformed_spans.insert(decl.span);
                             if let Some((var_decl, new_decl)) =
                                 self.transform_export_default_declaration(decl)
                             {
                                 if let Some(var_decl) = var_decl {
-                                    self.scope.visit_variable_declaration(&var_decl);
-                                    export_default_var = Some(Statement::VariableDeclaration(
-                                        self.ast.alloc(var_decl),
-                                    ));
+                                    self.scope.visit_statement(&var_decl);
+                                    extra_export_var_statement = Some(var_decl);
                                 }
 
-                                self.scope.visit_export_default_declaration(&new_decl);
-                                transformed_stmts.insert(
-                                    decl.span,
-                                    Statement::from(ModuleDeclaration::ExportDefaultDeclaration(
-                                        self.ast.alloc(new_decl),
-                                    )),
-                                );
+                                self.scope.visit_statement(&new_decl);
+                                transformed_stmts.insert(decl.span, new_decl);
                             } else {
                                 self.scope.visit_export_default_declaration(decl);
                             }
@@ -324,7 +337,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         );
                         transformed_stmts.insert(
                             declaration.span,
-                            Statement::from(self.ast.declaration_from_variable(decl)),
+                            Statement::VariableDeclaration(self.ast.alloc(decl)),
                         );
                         transformed_spans.insert(declaration.span);
                     }
@@ -349,16 +362,20 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         // 6. Transform variable/using declarations, import statements, remove unused imports
-        let mut new_stm =
-            self.ast.vec_with_capacity(stmts.len() + usize::from(export_default_var.is_some()));
+        let mut new_stm = self
+            .ast
+            .vec_with_capacity(stmts.len() + usize::from(extra_export_var_statement.is_some()));
         stmts.iter().for_each(|stmt| {
             if transformed_spans.contains(&stmt.span()) {
                 let new_stmt = transformed_stmts
                     .remove(&stmt.span())
                     .unwrap_or_else(|| stmt.clone_in(self.ast.allocator));
-                if matches!(new_stmt, Statement::ExportDefaultDeclaration(_)) {
-                    if let Some(export_default_var) = export_default_var.take() {
-                        new_stm.push(export_default_var);
+                if matches!(
+                    new_stmt,
+                    Statement::ExportDefaultDeclaration(_) | Statement::TSExportAssignment(_)
+                ) {
+                    if let Some(export_external_var_statement) = extra_export_var_statement.take() {
+                        new_stm.push(export_external_var_statement);
                     }
                 }
                 new_stm.push(new_stmt);
@@ -370,9 +387,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     if decl.specifiers.is_none() {
                         new_stm.push(stmt.clone_in(self.ast.allocator));
                     } else if let Some(new_decl) = self.transform_import_declaration(decl) {
-                        new_stm.push(Statement::from(
-                            self.ast.module_declaration_from_import_declaration(new_decl),
-                        ));
+                        new_stm.push(Statement::ImportDeclaration(new_decl));
                     }
                 }
                 Statement::VariableDeclaration(decl) => {
@@ -383,14 +398,14 @@ impl<'a> IsolatedDeclarations<'a> {
                                 transformed_variable_declarator.remove(&declarator.span)
                             }),
                         );
-                        new_stm.push(Statement::from(self.ast.declaration_from_variable(
-                            self.ast.variable_declaration(
+                        new_stm.push(Statement::VariableDeclaration(
+                            self.ast.alloc_variable_declaration(
                                 decl.span,
                                 decl.kind,
                                 declarations,
                                 self.is_declare(),
                             ),
-                        )));
+                        ));
                     }
                 }
                 _ => {}
@@ -412,7 +427,7 @@ impl<'a> IsolatedDeclarations<'a> {
         new_stm
     }
 
-    pub fn remove_function_overloads_implementation(
+    fn remove_function_overloads_implementation(
         stmts: &mut oxc_allocator::Vec<'a, &Statement<'a>>,
     ) {
         let mut last_function_name: Option<Atom<'a>> = None;
@@ -547,7 +562,7 @@ impl<'a> IsolatedDeclarations<'a> {
         assignable_properties_for_namespace
     }
 
-    pub fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
+    fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
         let assignable_properties_for_namespace =
             IsolatedDeclarations::get_assignable_properties_for_namespaces(stmts);
 
@@ -635,7 +650,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub fn is_declare(&self) -> bool {
+    fn is_declare(&self) -> bool {
         // If we are in a module block, we don't need to add declare
         !self.scope.is_ts_module_block()
     }

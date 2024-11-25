@@ -1,6 +1,7 @@
 use crate::RuleCategory;
 
-use super::{plugins::LintPlugins, AllowWarnDeny};
+use super::AllowWarnDeny;
+use crate::LintPlugins;
 use std::{borrow::Cow, fmt};
 
 /// Enables, disables, and sets the severity of lint rules.

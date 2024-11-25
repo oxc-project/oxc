@@ -9,8 +9,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, is_type_of_jest_fn_call, parse_expect_jest_fn_call,
-        JestFnKind, JestGeneralFnKind, PossibleJestNode,
+        is_type_of_jest_fn_call, parse_expect_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
     },
 };
 
@@ -51,7 +51,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-expect.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-conditional-expect.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json
@@ -70,10 +70,12 @@ declare_oxc_lint!(
 struct InConditional(bool);
 
 impl Rule for NoConditionalExpect {
-    fn run_once(&self, ctx: &LintContext) {
-        for node in &collect_possible_jest_call_node(ctx) {
-            run(node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        run(jest_node, ctx);
     }
 }
 
@@ -143,9 +145,7 @@ fn check_parents<'a>(
                 return InConditional(false);
             };
             let symbol_table = ctx.semantic().symbols();
-            let Some(symbol_id) = ident.symbol_id.get() else {
-                return InConditional(false);
-            };
+            let symbol_id = ident.symbol_id();
 
             // Consider cases like:
             // ```javascript

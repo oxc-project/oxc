@@ -4,6 +4,88 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.37.0] - 2024-11-21
+
+- 44375a5 ast: [**BREAKING**] Rename `TSEnumMemberName` enum variants (#7250) (overlookmotel)
+
+### Features
+
+- 39afb48 allocator: Introduce `Vec::from_array_in` (#7331) (overlookmotel)
+- 82773cb codegen: Remove underscore from bigint (#7367) (Boshen)
+
+### Refactor
+
+- 1938a1d isolated_declarations: Do not copy `Vec` unnecessarily (#7332) (overlookmotel)
+
+## [0.36.0] - 2024-11-09
+
+- 0e4adc1 ast: [**BREAKING**] Remove invalid expressions from `TSEnumMemberName` (#7219) (Boshen)
+
+- d1d1874 ast: [**BREAKING**] Change `comment.span` to real position that contain `//` and `/*` (#7154) (Boshen)
+
+### Features
+
+- b74686c isolated-declarations: Support transform TSExportAssignment declaration (#7204) (Dunqing)
+
+## [0.35.0] - 2024-11-04
+
+### Features
+
+- 6d97af4 rust: Use `oxc-miette` (#6938) (Boshen)
+
+### Refactor
+
+- cea0e6b isolated_declarations: Do not use `AstBuilder::*_from_*` methods (#7071) (overlookmotel)
+
+## [0.34.0] - 2024-10-26
+
+### Refactor
+
+- 423d54c rust: Remove the annoying `clippy::wildcard_imports` (#6860) (Boshen)
+
+## [0.33.0] - 2024-10-24
+
+### Refactor
+
+- 2e2b748 isolated-declarations: Protect internal transform methods (#6723) (DonIsaac)
+
+## [0.32.0] - 2024-10-19
+
+- 7645e5c codegen: [**BREAKING**] Remove CommentOptions API (#6451) (Boshen)
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+- 2808973 ast: [**BREAKING**] Add `Program::comments` (#6445) (Boshen)
+
+### Features
+
+- 15dfc1d isolated-declarations: Impl `Default` for options (#6372) (DonIsaac)
+
+### Bug Fixes
+
+- 2673397 isolated_declarations: Fix potential memory leak (#6622) (overlookmotel)
+
+### Refactor
+
+- 073b02a ast: Type params field before params in TS function declaration types (#6391) (overlookmotel)
+- 856cab5 ecmascript: Move ToInt32 from `oxc_syntax` to `oxc_ecmascript` (#6471) (Boshen)
+- a504f96 isolated-declarations: Mark return struct as non exhaustive (#6374) (DonIsaac)
+
+## [0.31.0] - 2024-10-08
+
+- 020bb80 codegen: [**BREAKING**] Change to `CodegenReturn::code` and `CodegenReturn::map` (#6310) (Boshen)
+
+### Features
+
+- 9e62396 syntax_operations: Add crate `oxc_ecmascript` (#6202) (Boshen)
+
+### Bug Fixes
+
+- e9eeae0 isolated-declarations: False positive for function with a type asserted parameters (#6181) (Dunqing)
+
+### Refactor
+
+
 ## [0.30.3] - 2024-09-27
 
 ### Bug Fixes

@@ -53,7 +53,7 @@ impl Rule for PreferAwaitToThen {
         // Already inside a yield or await
         if ctx
             .nodes()
-            .ancestors(node.id())
+            .ancestor_ids(node.id())
             .any(|node_id| is_inside_yield_or_await(ctx.nodes().get_node(node_id)))
         {
             return;

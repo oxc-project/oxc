@@ -1,3 +1,4 @@
+#![allow(missing_docs)] // fixme
 pub trait GetPrecedence {
     fn precedence(&self) -> Precedence;
 }

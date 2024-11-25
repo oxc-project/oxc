@@ -3,7 +3,6 @@
 // To alter this generated file you have to edit the codegen.
 
 use oxc_allocator::Vec;
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
 use crate::TraverseCtx;
@@ -1496,6 +1495,11 @@ pub trait Traverse<'a> {
     fn exit_numeric_literal(&mut self, node: &mut NumericLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
+    fn enter_string_literal(&mut self, node: &mut StringLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_string_literal(&mut self, node: &mut StringLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
     fn enter_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
@@ -1504,11 +1508,6 @@ pub trait Traverse<'a> {
     fn enter_reg_exp_literal(&mut self, node: &mut RegExpLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_reg_exp_literal(&mut self, node: &mut RegExpLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
-
-    #[inline]
-    fn enter_string_literal(&mut self, node: &mut StringLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
-    #[inline]
-    fn exit_string_literal(&mut self, node: &mut StringLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
     fn enter_ts_this_parameter(

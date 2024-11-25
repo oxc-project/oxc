@@ -10,7 +10,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    fixer::FixKind, options::LintPlugins, rules::RULES, AllowWarnDeny, Fixer, LintService,
+    fixer::FixKind, rules::RULES, AllowWarnDeny, Fixer, LintPlugins, LintService,
     LintServiceOptions, LinterBuilder, Oxlintrc, RuleEnum, RuleWithSeverity,
 };
 
@@ -164,7 +164,13 @@ pub struct Tester {
     rule_path: PathBuf,
     expect_pass: Vec<TestCase>,
     expect_fail: Vec<TestCase>,
-    expect_fix: Vec<ExpectFix>,
+    /// Intentionally not an empty array when no fix test cases are provided.
+    /// We check that rules that report a fix capability have fix test cases.
+    /// Providing `Some(vec![])` allows for intentional disabling of this behavior.
+    ///
+    /// Note that disabling this check should be done as little as possible, and
+    /// never in bad faith (e.g. no `#[test]` functions have fixer cases at all).
+    expect_fix: Option<Vec<ExpectFix>>,
     snapshot: String,
     /// Suffix added to end of snapshot name.
     ///
@@ -191,7 +197,7 @@ impl Tester {
             rule_path,
             expect_pass,
             expect_fail,
-            expect_fix: vec![],
+            expect_fix: None,
             snapshot: String::new(),
             snapshot_suffix: None,
             current_working_directory,
@@ -205,7 +211,30 @@ impl Tester {
         self
     }
 
-    /// Change the extension of the path
+    /// Change the extension of the path. Do not include the dot.
+    ///
+    /// By default, the extension is `tsx`.
+    ///
+    /// ## Example
+    /// ```ignore
+    /// use crate::tester::Tester;
+    /// use oxc_macros::declare_oxc_lint;
+    ///
+    /// declare_oxc_lint! (
+    ///     /// docs
+    ///     MyRule,
+    ///     correctness,
+    /// );
+    ///
+    /// #[test]
+    /// fn test() {
+    ///     let pass = vec!["let x = 1;"];
+    ///     let fail = vec![];
+    ///     Tester::new(MyRule::NAME, pass, fail)
+    ///         .change_rule_path_extension("ts")
+    ///         .test_and_snapshot();
+    /// }
+    /// ```
     pub fn change_rule_path_extension(mut self, ext: &str) -> Self {
         self.rule_path = self.rule_path.with_extension(ext);
         self
@@ -256,6 +285,9 @@ impl Tester {
     /// These cases will fail if no fixes are produced or if the fixed source
     /// code does not match the expected result.
     ///
+    /// Additionally, if your rule reports a fix capability but no fix cases are
+    /// provided, the test will fail.
+    ///
     /// ```
     /// use oxc_linter::tester::Tester;
     ///
@@ -273,8 +305,26 @@ impl Tester {
     /// // the first argument is normally `MyRuleStruct::NAME`.
     /// Tester::new("no-undef", pass, fail).expect_fix(fix).test();
     /// ```
+    #[must_use]
     pub fn expect_fix<F: Into<ExpectFix>>(mut self, expect_fix: Vec<F>) -> Self {
-        self.expect_fix = expect_fix.into_iter().map(std::convert::Into::into).collect::<Vec<_>>();
+        // prevent `expect_fix` abuse
+        assert!(
+            !expect_fix.is_empty(),
+            "You must provide at least one fixer test case to `expect_fix`"
+        );
+
+        self.expect_fix =
+            Some(expect_fix.into_iter().map(std::convert::Into::into).collect::<Vec<_>>());
+        self
+    }
+
+    /// Intentionally allow testing to pass if no fix test cases are provided.
+    ///
+    /// This should only be used when testing is broken up into multiple
+    /// test functions, and only some of them are testing fixes.
+    #[must_use]
+    pub fn intentionally_allow_no_fix_tests(mut self) -> Self {
+        self.expect_fix = Some(vec![]);
         self
     }
 
@@ -306,22 +356,56 @@ impl Tester {
 
     fn test_pass(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_pass.clone() {
-            let result = self.run(&source, rule_config, &eslint_config, path, ExpectFixKind::None);
+            let result =
+                self.run(&source, rule_config.clone(), &eslint_config, path, ExpectFixKind::None);
             let passed = result == TestResult::Passed;
-            assert!(passed, "expect test to pass: {source} {}", self.snapshot);
+            let config = rule_config.map_or_else(
+                || "\n\n------------------------\n".to_string(),
+                |v| {
+                    format!(
+                        "\n-------- rule config --------\n{}",
+                        serde_json::to_string_pretty(&v).unwrap()
+                    )
+                },
+            );
+            assert!(
+                passed,
+                "expected test to pass, but it failed:\n\n-------- source --------\n\n{source}\n\n-------- error --------\n{}{config}\n",
+                self.snapshot
+            );
         }
     }
 
     fn test_fail(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_fail.clone() {
-            let result = self.run(&source, rule_config, &eslint_config, path, ExpectFixKind::None);
+            let result =
+                self.run(&source, rule_config.clone(), &eslint_config, path, ExpectFixKind::None);
             let failed = result == TestResult::Failed;
-            assert!(failed, "expect test to fail: {source}");
+            let config = rule_config.map_or_else(
+                || "\n\n------------------------".to_string(),
+                |v| {
+                    format!(
+                        "\n-------- rule config --------\n{}",
+                        serde_json::to_string_pretty(&v).unwrap()
+                    )
+                },
+            );
+            assert!(
+                failed,
+                "expected test to fail, but it passed:\n\n-------- source --------\n\n{source}{config}\n",
+            );
         }
     }
 
     fn test_fix(&mut self) {
-        for fix in self.expect_fix.clone() {
+        // If auto-fixes are reported, make sure some fix test cases are provided
+        let rule = self.find_rule();
+        let Some(fix_test_cases) = self.expect_fix.clone() else {
+            assert!(!rule.fix().has_fix(), "'{}/{}' reports that it can auto-fix violations, but no fix cases were provided. Please add fixer test cases with `tester.expect_fix()`", rule.plugin_name(), rule.name());
+            return;
+        };
+
+        for fix in fix_test_cases {
             let ExpectFix { source, expected, kind, rule_config: config } = fix;
             let result = self.run(&source, config, &None, None, kind);
             match result {
@@ -360,7 +444,7 @@ impl Tester {
             self.current_working_directory.join(&self.rule_path)
         } else if let Some(path) = path {
             self.current_working_directory.join(path)
-        } else if self.plugins.has_jest() {
+        } else if self.plugins.has_test() {
             self.rule_path.with_extension("test.tsx")
         } else {
             self.rule_path.clone()

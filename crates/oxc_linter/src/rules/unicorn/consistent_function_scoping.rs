@@ -166,15 +166,14 @@ impl Rule for ConsistentFunctionScoping {
                         return;
                     }
 
-                    if let Some(func_scope_id) = function.scope_id.get() {
-                        if let Some(parent_scope_id) = ctx.scopes().get_parent_id(func_scope_id) {
-                            // Example: const foo = function bar() {};
-                            // The bar function scope id is 1. In order to ignore this rule,
-                            // its parent's scope id (in this case `foo`'s scope id is 0 and is equal to root scope id)
-                            // should be considered.
-                            if parent_scope_id == ctx.scopes().root_scope_id() {
-                                return;
-                            }
+                    let func_scope_id = function.scope_id();
+                    if let Some(parent_scope_id) = ctx.scopes().get_parent_id(func_scope_id) {
+                        // Example: const foo = function bar() {};
+                        // The bar function scope id is 1. In order to ignore this rule,
+                        // its parent's scope id (in this case `foo`'s scope id is 0 and is equal to root scope id)
+                        // should be considered.
+                        if parent_scope_id == ctx.scopes().root_scope_id() {
+                            return;
                         }
                     }
 
@@ -184,7 +183,7 @@ impl Rule for ConsistentFunctionScoping {
 
                     if let Some(binding_ident) = get_function_like_declaration(node, ctx) {
                         (
-                            binding_ident.symbol_id.get().unwrap(),
+                            binding_ident.symbol_id(),
                             function_body,
                             function.id.as_ref().map_or(
                                 Span::sized(function.span.start, 8),
@@ -192,10 +191,7 @@ impl Rule for ConsistentFunctionScoping {
                             ),
                         )
                     } else if let Some(function_id) = &function.id {
-                        let Some(symbol_id) = function_id.symbol_id.get() else {
-                            return;
-                        };
-                        (symbol_id, function_body, function_id.span())
+                        (function_id.symbol_id(), function_body, function_id.span())
                     } else {
                         return;
                     }
@@ -204,11 +200,8 @@ impl Rule for ConsistentFunctionScoping {
                     let Some(binding_ident) = get_function_like_declaration(node, ctx) else {
                         return;
                     };
-                    let Some(symbol_id) = binding_ident.symbol_id.get() else {
-                        return;
-                    };
 
-                    (symbol_id, &arrow_function.body, binding_ident.span())
+                    (binding_ident.symbol_id(), &arrow_function.body, binding_ident.span())
                 }
                 _ => return,
             };
@@ -275,7 +268,7 @@ struct ReferencesFinder {
 
 impl<'a> Visit<'a> for ReferencesFinder {
     fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
-        self.references.push(it.reference_id().unwrap());
+        self.references.push(it.reference_id());
     }
 
     fn visit_jsx_element_name(&mut self, _it: &oxc_ast::ast::JSXElementName<'a>) {

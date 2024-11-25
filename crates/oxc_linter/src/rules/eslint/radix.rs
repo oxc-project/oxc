@@ -31,9 +31,9 @@ pub struct Radix {
     radix_type: RadixType,
 }
 
-// doc: https://github.com/eslint/eslint/blob/main/docs/src/rules/radix.md
-// code: https://github.com/eslint/eslint/blob/main/lib/rules/radix.js
-// test: https://github.com/eslint/eslint/blob/main/tests/lib/rules/radix.js
+// doc: https://github.com/eslint/eslint/blob/v9.9.1/docs/src/rules/radix.md
+// code: https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/radix.js
+// test: https://github.com/eslint/eslint/blob/v9.9.1/tests/lib/rules/radix.js
 
 declare_oxc_lint!(
     /// ### What it does

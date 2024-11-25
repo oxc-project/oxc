@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 209
-expression: prefer_jest_mocked
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]

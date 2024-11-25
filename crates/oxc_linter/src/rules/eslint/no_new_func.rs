@@ -62,16 +62,15 @@ impl Rule for NoNewFunc {
                 Some((obj_id, call_expr.span))
             }
             AstKind::MemberExpression(mem_expr) => {
-                let parent: Option<&AstNode<'a>> =
-                    ctx.nodes().iter_parents(node.id()).skip(1).find(|node| {
+                let parent: Option<AstKind<'a>> =
+                    ctx.nodes().ancestor_kinds(node.id()).skip(1).find(|node| {
                         !matches!(
-                            node.kind(),
+                            node,
                             AstKind::ChainExpression(_) | AstKind::ParenthesizedExpression(_)
                         )
                     });
 
-                let Some(AstKind::CallExpression(parent_call_expr)) = parent.map(AstNode::kind)
-                else {
+                let Some(AstKind::CallExpression(parent_call_expr)) = parent else {
                     return;
                 };
 

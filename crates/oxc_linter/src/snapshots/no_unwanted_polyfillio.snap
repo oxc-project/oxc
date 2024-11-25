@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. WeakSet, Promise, Promise.prototype.finally, es2015, es5, es6 are already shipped with Next.js.
    ╭─[no_unwanted_polyfillio.tsx:8:35]

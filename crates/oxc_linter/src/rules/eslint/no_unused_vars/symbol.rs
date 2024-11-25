@@ -45,7 +45,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     #[inline]
-    pub const fn flags(&self) -> SymbolFlags {
+    pub fn flags(&self) -> SymbolFlags {
         self.flags
     }
 
@@ -102,14 +102,14 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     pub fn iter_self_and_parents(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
-        self.nodes().iter_parents(self.declaration_id())
+        self.nodes().ancestors(self.declaration_id())
     }
 
-    pub fn iter_relevant_parents(
+    pub fn iter_relevant_parents_of(
         &self,
         node_id: NodeId,
     ) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
-        self.nodes().iter_parents(node_id).skip(1).filter(|n| Self::is_relevant_kind(n.kind()))
+        self.nodes().ancestors(node_id).skip(1).filter(|n| Self::is_relevant_kind(n.kind()))
     }
 
     pub fn iter_relevant_parent_and_grandparent_kinds(
@@ -119,8 +119,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     {
         let parents_iter = self
             .nodes()
-            .iter_parents(node_id)
-            .map(AstNode::kind)
+            .ancestor_kinds(node_id)
             // no skip
             .filter(|kind| Self::is_relevant_kind(*kind));
 
@@ -131,7 +130,15 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     #[inline]
     const fn is_relevant_kind(kind: AstKind<'a>) -> bool {
-        !matches!(kind, AstKind::ParenthesizedExpression(_))
+        !matches!(
+            kind,
+            AstKind::ParenthesizedExpression(_)
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_)
+                | AstKind::TSInstantiationExpression(_)
+                | AstKind::TSNonNullExpression(_)
+                | AstKind::TSTypeAssertion(_)
+        )
     }
 
     /// <https://github.com/oxc-project/oxc/issues/4739>
@@ -164,10 +171,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// NOTE: does not support CJS right now.
     pub fn is_exported(&self) -> bool {
         let is_in_exportable_scope = self.is_root() || self.is_in_ts_namespace();
-        (is_in_exportable_scope
-            && (self.flags.contains(SymbolFlags::Export)
-                || self.semantic.module_record().exported_bindings.contains_key(self.name())))
-            || self.in_export_node()
+        is_in_exportable_scope
+            && (self.semantic.module_record().exported_bindings.contains_key(self.name())
+                || self.in_export_node())
     }
 
     #[inline]
@@ -177,12 +183,20 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     /// We need to do this due to limitations of [`Semantic`].
     fn in_export_node(&self) -> bool {
-        for parent in self.nodes().iter_parents(self.declaration_id()).skip(1) {
+        for parent in self.nodes().ancestors(self.declaration_id()).skip(1) {
             match parent.kind() {
                 AstKind::ModuleDeclaration(module) => {
                     return module.is_export();
                 }
-                AstKind::VariableDeclaration(_) => {
+                AstKind::ExportNamedDeclaration(_) | AstKind::ExportDefaultDeclaration(_) => {
+                    return true;
+                }
+                AstKind::VariableDeclaration(_)
+                | AstKind::ArrayExpressionElement(_)
+                | AstKind::ArrayExpression(_)
+                | AstKind::ParenthesizedExpression(_)
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_) => {
                     continue;
                 }
                 _ => {
@@ -224,17 +238,14 @@ impl GetSpan for Symbol<'_, '_> {
 impl<'a> PartialEq<IdentifierReference<'a>> for Symbol<'_, 'a> {
     fn eq(&self, other: &IdentifierReference<'a>) -> bool {
         // cheap: no resolved reference means its a global reference
-        let Some(reference_id) = other.reference_id.get() else {
-            return false;
-        };
-        let reference = self.symbols().get_reference(reference_id);
+        let reference = self.symbols().get_reference(other.reference_id());
         reference.symbol_id().is_some_and(|symbol_id| self.id == symbol_id)
     }
 }
 
 impl<'a> PartialEq<BindingIdentifier<'a>> for Symbol<'_, 'a> {
     fn eq(&self, id: &BindingIdentifier<'a>) -> bool {
-        id.symbol_id.get().is_some_and(|id| self.id == id)
+        self.id == id.symbol_id()
     }
 }
 

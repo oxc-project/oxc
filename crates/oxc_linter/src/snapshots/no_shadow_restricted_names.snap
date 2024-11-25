@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.
    ╭─[no_shadow_restricted_names.tsx:1:10]

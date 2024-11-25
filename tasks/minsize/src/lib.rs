@@ -95,27 +95,23 @@ pub fn run() -> Result<(), io::Error> {
 
 fn minify_twice(file: &TestFile) -> String {
     let source_type = SourceType::from_path(&file.file_name).unwrap();
-    let options = MinifierOptions {
-        mangle: true,
-        compress: CompressOptions { evaluate: false, ..CompressOptions::default() },
-    };
-    // let source_text1 = minify(&file.source_text, source_type, options);
-    // let source_text2 = minify(&source_text1, source_type, options);
-    // assert!(source_text1 == source_text2, "Minification failed for {}", &file.file_name);
-    // source_text2
-    minify(&file.source_text, source_type, options)
+    let options = MinifierOptions { mangle: true, compress: CompressOptions::default() };
+    let source_text1 = minify(&file.source_text, source_type, options);
+    let source_text2 = minify(&source_text1, source_type, options);
+    assert!(source_text1 == source_text2, "Minification failed for {}", &file.file_name);
+    source_text2
 }
 
 fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let program = allocator.alloc(ret.program);
-    let ret = Minifier::new(options).build(&allocator, program);
+    let mut program = ret.program;
+    let ret = Minifier::new(options).build(&allocator, &mut program);
     CodeGenerator::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
         .with_mangler(ret.mangler)
-        .build(program)
-        .source_text
+        .build(&program)
+        .code
 }
 
 fn gzip_size(s: &str) -> usize {

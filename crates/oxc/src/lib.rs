@@ -3,6 +3,9 @@
 #[cfg(feature = "full")]
 mod compiler;
 
+#[cfg(feature = "napi")]
+pub mod napi;
+
 #[cfg(feature = "full")]
 pub use compiler::{Compiler, CompilerInterface};
 
@@ -25,14 +28,6 @@ pub mod diagnostics {
     //! See the [`oxc_diagnostics` module-level documentation](oxc_diagnostics) for more information.
     #[doc(inline)]
     pub use oxc_diagnostics::*;
-}
-
-pub mod index {
-    //! A Vec with newtype indexing.
-    //!
-    //! See the [`oxc_index` module-level documentation](oxc_index) for more information.
-    #[doc(inline)]
-    pub use oxc_index::*;
 }
 
 pub mod parser {

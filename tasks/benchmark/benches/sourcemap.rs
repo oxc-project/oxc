@@ -1,6 +1,8 @@
+use std::path::PathBuf;
+
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_codegen::{CodeGenerator, CodegenReturn};
+use oxc_codegen::{CodeGenerator, CodegenOptions, CodegenReturn};
 use oxc_parser::Parser;
 use oxc_sourcemap::ConcatSourceMapBuilder;
 use oxc_span::SourceType;
@@ -17,16 +19,22 @@ fn bench_sourcemap(criterion: &mut Criterion) {
             let allocator = Allocator::default();
             let ret = Parser::new(&allocator, source_text, source_type).parse();
 
-            let CodegenReturn { source_text: output_txt, .. } = CodeGenerator::new()
-                .enable_source_map(file.file_name.as_str(), source_text)
+            let CodegenReturn { code: output_txt, .. } = CodeGenerator::new()
+                .with_options(CodegenOptions {
+                    source_map_path: Some(PathBuf::from(&file.file_name)),
+                    ..CodegenOptions::default()
+                })
                 .build(&ret.program);
             let lines = output_txt.matches('\n').count() as u32;
 
             b.iter(|| {
-                let CodegenReturn { source_map, .. } = CodeGenerator::new()
-                    .enable_source_map(file.file_name.as_str(), source_text)
+                let CodegenReturn { map, .. } = CodeGenerator::new()
+                    .with_options(CodegenOptions {
+                        source_map_path: Some(PathBuf::from(&file.file_name)),
+                        ..CodegenOptions::default()
+                    })
                     .build(&ret.program);
-                if let Some(sourcemap) = source_map {
+                if let Some(sourcemap) = map {
                     let concat_sourcemap_builder = ConcatSourceMapBuilder::from_sourcemaps(&[
                         (&sourcemap, 0),
                         (&sourcemap, lines),

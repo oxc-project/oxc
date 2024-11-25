@@ -14,8 +14,7 @@ use std::{cell::Cell, marker::PhantomData};
 
 use memoffset::offset_of;
 
-use oxc_allocator::{Box, Vec};
-#[allow(clippy::wildcard_imports)]
+use oxc_allocator::{Address, Box, GetAddress, Vec};
 use oxc_ast::ast::*;
 use oxc_syntax::scope::ScopeId;
 
@@ -33,293 +32,292 @@ pub(crate) enum AncestorType {
     ObjectExpressionProperties = 5,
     ObjectPropertyKey = 6,
     ObjectPropertyValue = 7,
-    ObjectPropertyInit = 8,
-    TemplateLiteralQuasis = 9,
-    TemplateLiteralExpressions = 10,
-    TaggedTemplateExpressionTag = 11,
-    TaggedTemplateExpressionQuasi = 12,
-    TaggedTemplateExpressionTypeParameters = 13,
-    ComputedMemberExpressionObject = 14,
-    ComputedMemberExpressionExpression = 15,
-    StaticMemberExpressionObject = 16,
-    StaticMemberExpressionProperty = 17,
-    PrivateFieldExpressionObject = 18,
-    PrivateFieldExpressionField = 19,
-    CallExpressionCallee = 20,
-    CallExpressionTypeParameters = 21,
-    CallExpressionArguments = 22,
-    NewExpressionCallee = 23,
-    NewExpressionArguments = 24,
-    NewExpressionTypeParameters = 25,
-    MetaPropertyMeta = 26,
-    MetaPropertyProperty = 27,
-    SpreadElementArgument = 28,
-    UpdateExpressionArgument = 29,
-    UnaryExpressionArgument = 30,
-    BinaryExpressionLeft = 31,
-    BinaryExpressionRight = 32,
-    PrivateInExpressionLeft = 33,
-    PrivateInExpressionRight = 34,
-    LogicalExpressionLeft = 35,
-    LogicalExpressionRight = 36,
-    ConditionalExpressionTest = 37,
-    ConditionalExpressionConsequent = 38,
-    ConditionalExpressionAlternate = 39,
-    AssignmentExpressionLeft = 40,
-    AssignmentExpressionRight = 41,
-    ArrayAssignmentTargetElements = 42,
-    ArrayAssignmentTargetRest = 43,
-    ObjectAssignmentTargetProperties = 44,
-    ObjectAssignmentTargetRest = 45,
-    AssignmentTargetRestTarget = 46,
-    AssignmentTargetWithDefaultBinding = 47,
-    AssignmentTargetWithDefaultInit = 48,
-    AssignmentTargetPropertyIdentifierBinding = 49,
-    AssignmentTargetPropertyIdentifierInit = 50,
-    AssignmentTargetPropertyPropertyName = 51,
-    AssignmentTargetPropertyPropertyBinding = 52,
-    SequenceExpressionExpressions = 53,
-    AwaitExpressionArgument = 54,
-    ChainExpressionExpression = 55,
-    ParenthesizedExpressionExpression = 56,
-    DirectiveExpression = 57,
-    BlockStatementBody = 58,
-    VariableDeclarationDeclarations = 59,
-    VariableDeclaratorId = 60,
-    VariableDeclaratorInit = 61,
-    ExpressionStatementExpression = 62,
-    IfStatementTest = 63,
-    IfStatementConsequent = 64,
-    IfStatementAlternate = 65,
-    DoWhileStatementBody = 66,
-    DoWhileStatementTest = 67,
-    WhileStatementTest = 68,
-    WhileStatementBody = 69,
-    ForStatementInit = 70,
-    ForStatementTest = 71,
-    ForStatementUpdate = 72,
-    ForStatementBody = 73,
-    ForInStatementLeft = 74,
-    ForInStatementRight = 75,
-    ForInStatementBody = 76,
-    ForOfStatementLeft = 77,
-    ForOfStatementRight = 78,
-    ForOfStatementBody = 79,
-    ContinueStatementLabel = 80,
-    BreakStatementLabel = 81,
-    ReturnStatementArgument = 82,
-    WithStatementObject = 83,
-    WithStatementBody = 84,
-    SwitchStatementDiscriminant = 85,
-    SwitchStatementCases = 86,
-    SwitchCaseTest = 87,
-    SwitchCaseConsequent = 88,
-    LabeledStatementLabel = 89,
-    LabeledStatementBody = 90,
-    ThrowStatementArgument = 91,
-    TryStatementBlock = 92,
-    TryStatementHandler = 93,
-    TryStatementFinalizer = 94,
-    CatchClauseParam = 95,
-    CatchClauseBody = 96,
-    CatchParameterPattern = 97,
-    BindingPatternKind = 98,
-    BindingPatternTypeAnnotation = 99,
-    AssignmentPatternLeft = 100,
-    AssignmentPatternRight = 101,
-    ObjectPatternProperties = 102,
-    ObjectPatternRest = 103,
-    BindingPropertyKey = 104,
-    BindingPropertyValue = 105,
-    ArrayPatternElements = 106,
-    ArrayPatternRest = 107,
-    BindingRestElementArgument = 108,
-    FunctionId = 109,
-    FunctionTypeParameters = 110,
-    FunctionThisParam = 111,
-    FunctionParams = 112,
-    FunctionReturnType = 113,
-    FunctionBody = 114,
-    FormalParametersItems = 115,
-    FormalParametersRest = 116,
-    FormalParameterDecorators = 117,
-    FormalParameterPattern = 118,
-    FunctionBodyDirectives = 119,
-    FunctionBodyStatements = 120,
-    ArrowFunctionExpressionTypeParameters = 121,
-    ArrowFunctionExpressionParams = 122,
-    ArrowFunctionExpressionReturnType = 123,
-    ArrowFunctionExpressionBody = 124,
-    YieldExpressionArgument = 125,
-    ClassDecorators = 126,
-    ClassId = 127,
-    ClassTypeParameters = 128,
-    ClassSuperClass = 129,
-    ClassSuperTypeParameters = 130,
-    ClassImplements = 131,
-    ClassBody = 132,
-    ClassBodyBody = 133,
-    MethodDefinitionDecorators = 134,
-    MethodDefinitionKey = 135,
-    MethodDefinitionValue = 136,
-    PropertyDefinitionDecorators = 137,
-    PropertyDefinitionKey = 138,
-    PropertyDefinitionValue = 139,
-    PropertyDefinitionTypeAnnotation = 140,
-    StaticBlockBody = 141,
-    AccessorPropertyDecorators = 142,
-    AccessorPropertyKey = 143,
-    AccessorPropertyValue = 144,
-    AccessorPropertyTypeAnnotation = 145,
-    ImportExpressionSource = 146,
-    ImportExpressionArguments = 147,
-    ImportDeclarationSpecifiers = 148,
-    ImportDeclarationSource = 149,
-    ImportDeclarationWithClause = 150,
-    ImportSpecifierImported = 151,
-    ImportSpecifierLocal = 152,
-    ImportDefaultSpecifierLocal = 153,
-    ImportNamespaceSpecifierLocal = 154,
-    WithClauseAttributesKeyword = 155,
-    WithClauseWithEntries = 156,
-    ImportAttributeKey = 157,
-    ImportAttributeValue = 158,
-    ExportNamedDeclarationDeclaration = 159,
-    ExportNamedDeclarationSpecifiers = 160,
-    ExportNamedDeclarationSource = 161,
-    ExportNamedDeclarationWithClause = 162,
-    ExportDefaultDeclarationDeclaration = 163,
-    ExportDefaultDeclarationExported = 164,
-    ExportAllDeclarationExported = 165,
-    ExportAllDeclarationSource = 166,
-    ExportAllDeclarationWithClause = 167,
-    ExportSpecifierLocal = 168,
-    ExportSpecifierExported = 169,
-    JSXElementOpeningElement = 170,
-    JSXElementClosingElement = 171,
-    JSXElementChildren = 172,
-    JSXOpeningElementName = 173,
-    JSXOpeningElementAttributes = 174,
-    JSXOpeningElementTypeParameters = 175,
-    JSXClosingElementName = 176,
-    JSXFragmentChildren = 177,
-    JSXNamespacedNameNamespace = 178,
-    JSXNamespacedNameProperty = 179,
-    JSXMemberExpressionObject = 180,
-    JSXMemberExpressionProperty = 181,
-    JSXExpressionContainerExpression = 182,
-    JSXAttributeName = 183,
-    JSXAttributeValue = 184,
-    JSXSpreadAttributeArgument = 185,
-    JSXSpreadChildExpression = 186,
-    TSThisParameterTypeAnnotation = 187,
-    TSEnumDeclarationId = 188,
-    TSEnumDeclarationMembers = 189,
-    TSEnumMemberId = 190,
-    TSEnumMemberInitializer = 191,
-    TSTypeAnnotationTypeAnnotation = 192,
-    TSLiteralTypeLiteral = 193,
-    TSConditionalTypeCheckType = 194,
-    TSConditionalTypeExtendsType = 195,
-    TSConditionalTypeTrueType = 196,
-    TSConditionalTypeFalseType = 197,
-    TSUnionTypeTypes = 198,
-    TSIntersectionTypeTypes = 199,
-    TSParenthesizedTypeTypeAnnotation = 200,
-    TSTypeOperatorTypeAnnotation = 201,
-    TSArrayTypeElementType = 202,
-    TSIndexedAccessTypeObjectType = 203,
-    TSIndexedAccessTypeIndexType = 204,
-    TSTupleTypeElementTypes = 205,
-    TSNamedTupleMemberElementType = 206,
-    TSNamedTupleMemberLabel = 207,
-    TSOptionalTypeTypeAnnotation = 208,
-    TSRestTypeTypeAnnotation = 209,
-    TSTypeReferenceTypeName = 210,
-    TSTypeReferenceTypeParameters = 211,
-    TSQualifiedNameLeft = 212,
-    TSQualifiedNameRight = 213,
-    TSTypeParameterInstantiationParams = 214,
-    TSTypeParameterName = 215,
-    TSTypeParameterConstraint = 216,
-    TSTypeParameterDefault = 217,
-    TSTypeParameterDeclarationParams = 218,
-    TSTypeAliasDeclarationId = 219,
-    TSTypeAliasDeclarationTypeParameters = 220,
-    TSTypeAliasDeclarationTypeAnnotation = 221,
-    TSClassImplementsExpression = 222,
-    TSClassImplementsTypeParameters = 223,
-    TSInterfaceDeclarationId = 224,
-    TSInterfaceDeclarationExtends = 225,
-    TSInterfaceDeclarationTypeParameters = 226,
-    TSInterfaceDeclarationBody = 227,
-    TSInterfaceBodyBody = 228,
-    TSPropertySignatureKey = 229,
-    TSPropertySignatureTypeAnnotation = 230,
-    TSIndexSignatureParameters = 231,
-    TSIndexSignatureTypeAnnotation = 232,
+    TemplateLiteralQuasis = 8,
+    TemplateLiteralExpressions = 9,
+    TaggedTemplateExpressionTag = 10,
+    TaggedTemplateExpressionQuasi = 11,
+    TaggedTemplateExpressionTypeParameters = 12,
+    ComputedMemberExpressionObject = 13,
+    ComputedMemberExpressionExpression = 14,
+    StaticMemberExpressionObject = 15,
+    StaticMemberExpressionProperty = 16,
+    PrivateFieldExpressionObject = 17,
+    PrivateFieldExpressionField = 18,
+    CallExpressionCallee = 19,
+    CallExpressionTypeParameters = 20,
+    CallExpressionArguments = 21,
+    NewExpressionCallee = 22,
+    NewExpressionArguments = 23,
+    NewExpressionTypeParameters = 24,
+    MetaPropertyMeta = 25,
+    MetaPropertyProperty = 26,
+    SpreadElementArgument = 27,
+    UpdateExpressionArgument = 28,
+    UnaryExpressionArgument = 29,
+    BinaryExpressionLeft = 30,
+    BinaryExpressionRight = 31,
+    PrivateInExpressionLeft = 32,
+    PrivateInExpressionRight = 33,
+    LogicalExpressionLeft = 34,
+    LogicalExpressionRight = 35,
+    ConditionalExpressionTest = 36,
+    ConditionalExpressionConsequent = 37,
+    ConditionalExpressionAlternate = 38,
+    AssignmentExpressionLeft = 39,
+    AssignmentExpressionRight = 40,
+    ArrayAssignmentTargetElements = 41,
+    ArrayAssignmentTargetRest = 42,
+    ObjectAssignmentTargetProperties = 43,
+    ObjectAssignmentTargetRest = 44,
+    AssignmentTargetRestTarget = 45,
+    AssignmentTargetWithDefaultBinding = 46,
+    AssignmentTargetWithDefaultInit = 47,
+    AssignmentTargetPropertyIdentifierBinding = 48,
+    AssignmentTargetPropertyIdentifierInit = 49,
+    AssignmentTargetPropertyPropertyName = 50,
+    AssignmentTargetPropertyPropertyBinding = 51,
+    SequenceExpressionExpressions = 52,
+    AwaitExpressionArgument = 53,
+    ChainExpressionExpression = 54,
+    ParenthesizedExpressionExpression = 55,
+    DirectiveExpression = 56,
+    BlockStatementBody = 57,
+    VariableDeclarationDeclarations = 58,
+    VariableDeclaratorId = 59,
+    VariableDeclaratorInit = 60,
+    ExpressionStatementExpression = 61,
+    IfStatementTest = 62,
+    IfStatementConsequent = 63,
+    IfStatementAlternate = 64,
+    DoWhileStatementBody = 65,
+    DoWhileStatementTest = 66,
+    WhileStatementTest = 67,
+    WhileStatementBody = 68,
+    ForStatementInit = 69,
+    ForStatementTest = 70,
+    ForStatementUpdate = 71,
+    ForStatementBody = 72,
+    ForInStatementLeft = 73,
+    ForInStatementRight = 74,
+    ForInStatementBody = 75,
+    ForOfStatementLeft = 76,
+    ForOfStatementRight = 77,
+    ForOfStatementBody = 78,
+    ContinueStatementLabel = 79,
+    BreakStatementLabel = 80,
+    ReturnStatementArgument = 81,
+    WithStatementObject = 82,
+    WithStatementBody = 83,
+    SwitchStatementDiscriminant = 84,
+    SwitchStatementCases = 85,
+    SwitchCaseTest = 86,
+    SwitchCaseConsequent = 87,
+    LabeledStatementLabel = 88,
+    LabeledStatementBody = 89,
+    ThrowStatementArgument = 90,
+    TryStatementBlock = 91,
+    TryStatementHandler = 92,
+    TryStatementFinalizer = 93,
+    CatchClauseParam = 94,
+    CatchClauseBody = 95,
+    CatchParameterPattern = 96,
+    BindingPatternKind = 97,
+    BindingPatternTypeAnnotation = 98,
+    AssignmentPatternLeft = 99,
+    AssignmentPatternRight = 100,
+    ObjectPatternProperties = 101,
+    ObjectPatternRest = 102,
+    BindingPropertyKey = 103,
+    BindingPropertyValue = 104,
+    ArrayPatternElements = 105,
+    ArrayPatternRest = 106,
+    BindingRestElementArgument = 107,
+    FunctionId = 108,
+    FunctionTypeParameters = 109,
+    FunctionThisParam = 110,
+    FunctionParams = 111,
+    FunctionReturnType = 112,
+    FunctionBody = 113,
+    FormalParametersItems = 114,
+    FormalParametersRest = 115,
+    FormalParameterDecorators = 116,
+    FormalParameterPattern = 117,
+    FunctionBodyDirectives = 118,
+    FunctionBodyStatements = 119,
+    ArrowFunctionExpressionTypeParameters = 120,
+    ArrowFunctionExpressionParams = 121,
+    ArrowFunctionExpressionReturnType = 122,
+    ArrowFunctionExpressionBody = 123,
+    YieldExpressionArgument = 124,
+    ClassDecorators = 125,
+    ClassId = 126,
+    ClassTypeParameters = 127,
+    ClassSuperClass = 128,
+    ClassSuperTypeParameters = 129,
+    ClassImplements = 130,
+    ClassBody = 131,
+    ClassBodyBody = 132,
+    MethodDefinitionDecorators = 133,
+    MethodDefinitionKey = 134,
+    MethodDefinitionValue = 135,
+    PropertyDefinitionDecorators = 136,
+    PropertyDefinitionKey = 137,
+    PropertyDefinitionValue = 138,
+    PropertyDefinitionTypeAnnotation = 139,
+    StaticBlockBody = 140,
+    AccessorPropertyDecorators = 141,
+    AccessorPropertyKey = 142,
+    AccessorPropertyValue = 143,
+    AccessorPropertyTypeAnnotation = 144,
+    ImportExpressionSource = 145,
+    ImportExpressionArguments = 146,
+    ImportDeclarationSpecifiers = 147,
+    ImportDeclarationSource = 148,
+    ImportDeclarationWithClause = 149,
+    ImportSpecifierImported = 150,
+    ImportSpecifierLocal = 151,
+    ImportDefaultSpecifierLocal = 152,
+    ImportNamespaceSpecifierLocal = 153,
+    WithClauseAttributesKeyword = 154,
+    WithClauseWithEntries = 155,
+    ImportAttributeKey = 156,
+    ImportAttributeValue = 157,
+    ExportNamedDeclarationDeclaration = 158,
+    ExportNamedDeclarationSpecifiers = 159,
+    ExportNamedDeclarationSource = 160,
+    ExportNamedDeclarationWithClause = 161,
+    ExportDefaultDeclarationDeclaration = 162,
+    ExportDefaultDeclarationExported = 163,
+    ExportAllDeclarationExported = 164,
+    ExportAllDeclarationSource = 165,
+    ExportAllDeclarationWithClause = 166,
+    ExportSpecifierLocal = 167,
+    ExportSpecifierExported = 168,
+    JSXElementOpeningElement = 169,
+    JSXElementClosingElement = 170,
+    JSXElementChildren = 171,
+    JSXOpeningElementName = 172,
+    JSXOpeningElementAttributes = 173,
+    JSXOpeningElementTypeParameters = 174,
+    JSXClosingElementName = 175,
+    JSXFragmentChildren = 176,
+    JSXNamespacedNameNamespace = 177,
+    JSXNamespacedNameProperty = 178,
+    JSXMemberExpressionObject = 179,
+    JSXMemberExpressionProperty = 180,
+    JSXExpressionContainerExpression = 181,
+    JSXAttributeName = 182,
+    JSXAttributeValue = 183,
+    JSXSpreadAttributeArgument = 184,
+    JSXSpreadChildExpression = 185,
+    TSThisParameterTypeAnnotation = 186,
+    TSEnumDeclarationId = 187,
+    TSEnumDeclarationMembers = 188,
+    TSEnumMemberId = 189,
+    TSEnumMemberInitializer = 190,
+    TSTypeAnnotationTypeAnnotation = 191,
+    TSLiteralTypeLiteral = 192,
+    TSConditionalTypeCheckType = 193,
+    TSConditionalTypeExtendsType = 194,
+    TSConditionalTypeTrueType = 195,
+    TSConditionalTypeFalseType = 196,
+    TSUnionTypeTypes = 197,
+    TSIntersectionTypeTypes = 198,
+    TSParenthesizedTypeTypeAnnotation = 199,
+    TSTypeOperatorTypeAnnotation = 200,
+    TSArrayTypeElementType = 201,
+    TSIndexedAccessTypeObjectType = 202,
+    TSIndexedAccessTypeIndexType = 203,
+    TSTupleTypeElementTypes = 204,
+    TSNamedTupleMemberElementType = 205,
+    TSNamedTupleMemberLabel = 206,
+    TSOptionalTypeTypeAnnotation = 207,
+    TSRestTypeTypeAnnotation = 208,
+    TSTypeReferenceTypeName = 209,
+    TSTypeReferenceTypeParameters = 210,
+    TSQualifiedNameLeft = 211,
+    TSQualifiedNameRight = 212,
+    TSTypeParameterInstantiationParams = 213,
+    TSTypeParameterName = 214,
+    TSTypeParameterConstraint = 215,
+    TSTypeParameterDefault = 216,
+    TSTypeParameterDeclarationParams = 217,
+    TSTypeAliasDeclarationId = 218,
+    TSTypeAliasDeclarationTypeParameters = 219,
+    TSTypeAliasDeclarationTypeAnnotation = 220,
+    TSClassImplementsExpression = 221,
+    TSClassImplementsTypeParameters = 222,
+    TSInterfaceDeclarationId = 223,
+    TSInterfaceDeclarationExtends = 224,
+    TSInterfaceDeclarationTypeParameters = 225,
+    TSInterfaceDeclarationBody = 226,
+    TSInterfaceBodyBody = 227,
+    TSPropertySignatureKey = 228,
+    TSPropertySignatureTypeAnnotation = 229,
+    TSIndexSignatureParameters = 230,
+    TSIndexSignatureTypeAnnotation = 231,
+    TSCallSignatureDeclarationTypeParameters = 232,
     TSCallSignatureDeclarationThisParam = 233,
     TSCallSignatureDeclarationParams = 234,
     TSCallSignatureDeclarationReturnType = 235,
-    TSCallSignatureDeclarationTypeParameters = 236,
-    TSMethodSignatureKey = 237,
+    TSMethodSignatureKey = 236,
+    TSMethodSignatureTypeParameters = 237,
     TSMethodSignatureThisParam = 238,
     TSMethodSignatureParams = 239,
     TSMethodSignatureReturnType = 240,
-    TSMethodSignatureTypeParameters = 241,
+    TSConstructSignatureDeclarationTypeParameters = 241,
     TSConstructSignatureDeclarationParams = 242,
     TSConstructSignatureDeclarationReturnType = 243,
-    TSConstructSignatureDeclarationTypeParameters = 244,
-    TSIndexSignatureNameTypeAnnotation = 245,
-    TSInterfaceHeritageExpression = 246,
-    TSInterfaceHeritageTypeParameters = 247,
-    TSTypePredicateParameterName = 248,
-    TSTypePredicateTypeAnnotation = 249,
-    TSModuleDeclarationId = 250,
-    TSModuleDeclarationBody = 251,
-    TSModuleBlockDirectives = 252,
-    TSModuleBlockBody = 253,
-    TSTypeLiteralMembers = 254,
-    TSInferTypeTypeParameter = 255,
-    TSTypeQueryExprName = 256,
-    TSTypeQueryTypeParameters = 257,
-    TSImportTypeParameter = 258,
-    TSImportTypeQualifier = 259,
-    TSImportTypeAttributes = 260,
-    TSImportTypeTypeParameters = 261,
-    TSImportAttributesAttributesKeyword = 262,
-    TSImportAttributesElements = 263,
-    TSImportAttributeName = 264,
-    TSImportAttributeValue = 265,
+    TSIndexSignatureNameTypeAnnotation = 244,
+    TSInterfaceHeritageExpression = 245,
+    TSInterfaceHeritageTypeParameters = 246,
+    TSTypePredicateParameterName = 247,
+    TSTypePredicateTypeAnnotation = 248,
+    TSModuleDeclarationId = 249,
+    TSModuleDeclarationBody = 250,
+    TSModuleBlockDirectives = 251,
+    TSModuleBlockBody = 252,
+    TSTypeLiteralMembers = 253,
+    TSInferTypeTypeParameter = 254,
+    TSTypeQueryExprName = 255,
+    TSTypeQueryTypeParameters = 256,
+    TSImportTypeParameter = 257,
+    TSImportTypeQualifier = 258,
+    TSImportTypeAttributes = 259,
+    TSImportTypeTypeParameters = 260,
+    TSImportAttributesAttributesKeyword = 261,
+    TSImportAttributesElements = 262,
+    TSImportAttributeName = 263,
+    TSImportAttributeValue = 264,
+    TSFunctionTypeTypeParameters = 265,
     TSFunctionTypeThisParam = 266,
     TSFunctionTypeParams = 267,
     TSFunctionTypeReturnType = 268,
-    TSFunctionTypeTypeParameters = 269,
+    TSConstructorTypeTypeParameters = 269,
     TSConstructorTypeParams = 270,
     TSConstructorTypeReturnType = 271,
-    TSConstructorTypeTypeParameters = 272,
-    TSMappedTypeTypeParameter = 273,
-    TSMappedTypeNameType = 274,
-    TSMappedTypeTypeAnnotation = 275,
-    TSTemplateLiteralTypeQuasis = 276,
-    TSTemplateLiteralTypeTypes = 277,
-    TSAsExpressionExpression = 278,
-    TSAsExpressionTypeAnnotation = 279,
-    TSSatisfiesExpressionExpression = 280,
-    TSSatisfiesExpressionTypeAnnotation = 281,
-    TSTypeAssertionExpression = 282,
-    TSTypeAssertionTypeAnnotation = 283,
-    TSImportEqualsDeclarationId = 284,
-    TSImportEqualsDeclarationModuleReference = 285,
-    TSExternalModuleReferenceExpression = 286,
-    TSNonNullExpressionExpression = 287,
-    DecoratorExpression = 288,
-    TSExportAssignmentExpression = 289,
-    TSNamespaceExportDeclarationId = 290,
-    TSInstantiationExpressionExpression = 291,
-    TSInstantiationExpressionTypeParameters = 292,
-    JSDocNullableTypeTypeAnnotation = 293,
-    JSDocNonNullableTypeTypeAnnotation = 294,
+    TSMappedTypeTypeParameter = 272,
+    TSMappedTypeNameType = 273,
+    TSMappedTypeTypeAnnotation = 274,
+    TSTemplateLiteralTypeQuasis = 275,
+    TSTemplateLiteralTypeTypes = 276,
+    TSAsExpressionExpression = 277,
+    TSAsExpressionTypeAnnotation = 278,
+    TSSatisfiesExpressionExpression = 279,
+    TSSatisfiesExpressionTypeAnnotation = 280,
+    TSTypeAssertionExpression = 281,
+    TSTypeAssertionTypeAnnotation = 282,
+    TSImportEqualsDeclarationId = 283,
+    TSImportEqualsDeclarationModuleReference = 284,
+    TSExternalModuleReferenceExpression = 285,
+    TSNonNullExpressionExpression = 286,
+    DecoratorExpression = 287,
+    TSExportAssignmentExpression = 288,
+    TSNamespaceExportDeclarationId = 289,
+    TSInstantiationExpressionExpression = 290,
+    TSInstantiationExpressionTypeParameters = 291,
+    JSDocNullableTypeTypeAnnotation = 292,
+    JSDocNonNullableTypeTypeAnnotation = 293,
 }
 
 /// Ancestor type used in AST traversal.
@@ -354,7 +352,6 @@ pub enum Ancestor<'a, 't> {
     ObjectPropertyKey(ObjectPropertyWithoutKey<'a, 't>) = AncestorType::ObjectPropertyKey as u16,
     ObjectPropertyValue(ObjectPropertyWithoutValue<'a, 't>) =
         AncestorType::ObjectPropertyValue as u16,
-    ObjectPropertyInit(ObjectPropertyWithoutInit<'a, 't>) = AncestorType::ObjectPropertyInit as u16,
     TemplateLiteralQuasis(TemplateLiteralWithoutQuasis<'a, 't>) =
         AncestorType::TemplateLiteralQuasis as u16,
     TemplateLiteralExpressions(TemplateLiteralWithoutExpressions<'a, 't>) =
@@ -764,33 +761,33 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSIndexSignatureParameters as u16,
     TSIndexSignatureTypeAnnotation(TSIndexSignatureWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSIndexSignatureTypeAnnotation as u16,
+    TSCallSignatureDeclarationTypeParameters(
+        TSCallSignatureDeclarationWithoutTypeParameters<'a, 't>,
+    ) = AncestorType::TSCallSignatureDeclarationTypeParameters as u16,
     TSCallSignatureDeclarationThisParam(TSCallSignatureDeclarationWithoutThisParam<'a, 't>) =
         AncestorType::TSCallSignatureDeclarationThisParam as u16,
     TSCallSignatureDeclarationParams(TSCallSignatureDeclarationWithoutParams<'a, 't>) =
         AncestorType::TSCallSignatureDeclarationParams as u16,
     TSCallSignatureDeclarationReturnType(TSCallSignatureDeclarationWithoutReturnType<'a, 't>) =
         AncestorType::TSCallSignatureDeclarationReturnType as u16,
-    TSCallSignatureDeclarationTypeParameters(
-        TSCallSignatureDeclarationWithoutTypeParameters<'a, 't>,
-    ) = AncestorType::TSCallSignatureDeclarationTypeParameters as u16,
     TSMethodSignatureKey(TSMethodSignatureWithoutKey<'a, 't>) =
         AncestorType::TSMethodSignatureKey as u16,
+    TSMethodSignatureTypeParameters(TSMethodSignatureWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSMethodSignatureTypeParameters as u16,
     TSMethodSignatureThisParam(TSMethodSignatureWithoutThisParam<'a, 't>) =
         AncestorType::TSMethodSignatureThisParam as u16,
     TSMethodSignatureParams(TSMethodSignatureWithoutParams<'a, 't>) =
         AncestorType::TSMethodSignatureParams as u16,
     TSMethodSignatureReturnType(TSMethodSignatureWithoutReturnType<'a, 't>) =
         AncestorType::TSMethodSignatureReturnType as u16,
-    TSMethodSignatureTypeParameters(TSMethodSignatureWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSMethodSignatureTypeParameters as u16,
+    TSConstructSignatureDeclarationTypeParameters(
+        TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't>,
+    ) = AncestorType::TSConstructSignatureDeclarationTypeParameters as u16,
     TSConstructSignatureDeclarationParams(TSConstructSignatureDeclarationWithoutParams<'a, 't>) =
         AncestorType::TSConstructSignatureDeclarationParams as u16,
     TSConstructSignatureDeclarationReturnType(
         TSConstructSignatureDeclarationWithoutReturnType<'a, 't>,
     ) = AncestorType::TSConstructSignatureDeclarationReturnType as u16,
-    TSConstructSignatureDeclarationTypeParameters(
-        TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't>,
-    ) = AncestorType::TSConstructSignatureDeclarationTypeParameters as u16,
     TSIndexSignatureNameTypeAnnotation(TSIndexSignatureNameWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSIndexSignatureNameTypeAnnotation as u16,
     TSInterfaceHeritageExpression(TSInterfaceHeritageWithoutExpression<'a, 't>) =
@@ -832,20 +829,20 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSImportAttributeName as u16,
     TSImportAttributeValue(TSImportAttributeWithoutValue<'a, 't>) =
         AncestorType::TSImportAttributeValue as u16,
+    TSFunctionTypeTypeParameters(TSFunctionTypeWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSFunctionTypeTypeParameters as u16,
     TSFunctionTypeThisParam(TSFunctionTypeWithoutThisParam<'a, 't>) =
         AncestorType::TSFunctionTypeThisParam as u16,
     TSFunctionTypeParams(TSFunctionTypeWithoutParams<'a, 't>) =
         AncestorType::TSFunctionTypeParams as u16,
     TSFunctionTypeReturnType(TSFunctionTypeWithoutReturnType<'a, 't>) =
         AncestorType::TSFunctionTypeReturnType as u16,
-    TSFunctionTypeTypeParameters(TSFunctionTypeWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSFunctionTypeTypeParameters as u16,
+    TSConstructorTypeTypeParameters(TSConstructorTypeWithoutTypeParameters<'a, 't>) =
+        AncestorType::TSConstructorTypeTypeParameters as u16,
     TSConstructorTypeParams(TSConstructorTypeWithoutParams<'a, 't>) =
         AncestorType::TSConstructorTypeParams as u16,
     TSConstructorTypeReturnType(TSConstructorTypeWithoutReturnType<'a, 't>) =
         AncestorType::TSConstructorTypeReturnType as u16,
-    TSConstructorTypeTypeParameters(TSConstructorTypeWithoutTypeParameters<'a, 't>) =
-        AncestorType::TSConstructorTypeTypeParameters as u16,
     TSMappedTypeTypeParameter(TSMappedTypeWithoutTypeParameter<'a, 't>) =
         AncestorType::TSMappedTypeTypeParameter as u16,
     TSMappedTypeNameType(TSMappedTypeWithoutNameType<'a, 't>) =
@@ -911,10 +908,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_object_property(self) -> bool {
-        matches!(
-            self,
-            Self::ObjectPropertyKey(_) | Self::ObjectPropertyValue(_) | Self::ObjectPropertyInit(_)
-        )
+        matches!(self, Self::ObjectPropertyKey(_) | Self::ObjectPropertyValue(_))
     }
 
     #[inline]
@@ -1658,10 +1652,10 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_call_signature_declaration(self) -> bool {
         matches!(
             self,
-            Self::TSCallSignatureDeclarationThisParam(_)
+            Self::TSCallSignatureDeclarationTypeParameters(_)
+                | Self::TSCallSignatureDeclarationThisParam(_)
                 | Self::TSCallSignatureDeclarationParams(_)
                 | Self::TSCallSignatureDeclarationReturnType(_)
-                | Self::TSCallSignatureDeclarationTypeParameters(_)
         )
     }
 
@@ -1670,10 +1664,10 @@ impl<'a, 't> Ancestor<'a, 't> {
         matches!(
             self,
             Self::TSMethodSignatureKey(_)
+                | Self::TSMethodSignatureTypeParameters(_)
                 | Self::TSMethodSignatureThisParam(_)
                 | Self::TSMethodSignatureParams(_)
                 | Self::TSMethodSignatureReturnType(_)
-                | Self::TSMethodSignatureTypeParameters(_)
         )
     }
 
@@ -1681,9 +1675,9 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_construct_signature_declaration(self) -> bool {
         matches!(
             self,
-            Self::TSConstructSignatureDeclarationParams(_)
+            Self::TSConstructSignatureDeclarationTypeParameters(_)
+                | Self::TSConstructSignatureDeclarationParams(_)
                 | Self::TSConstructSignatureDeclarationReturnType(_)
-                | Self::TSConstructSignatureDeclarationTypeParameters(_)
         )
     }
 
@@ -1761,10 +1755,10 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_function_type(self) -> bool {
         matches!(
             self,
-            Self::TSFunctionTypeThisParam(_)
+            Self::TSFunctionTypeTypeParameters(_)
+                | Self::TSFunctionTypeThisParam(_)
                 | Self::TSFunctionTypeParams(_)
                 | Self::TSFunctionTypeReturnType(_)
-                | Self::TSFunctionTypeTypeParameters(_)
         )
     }
 
@@ -1772,9 +1766,9 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_constructor_type(self) -> bool {
         matches!(
             self,
-            Self::TSConstructorTypeParams(_)
+            Self::TSConstructorTypeTypeParameters(_)
+                | Self::TSConstructorTypeParams(_)
                 | Self::TSConstructorTypeReturnType(_)
-                | Self::TSConstructorTypeTypeParameters(_)
         )
     }
 
@@ -1916,7 +1910,6 @@ impl<'a, 't> Ancestor<'a, 't> {
         matches!(
             self,
             Self::ObjectPropertyValue(_)
-                | Self::ObjectPropertyInit(_)
                 | Self::TemplateLiteralExpressions(_)
                 | Self::TaggedTemplateExpressionTag(_)
                 | Self::ComputedMemberExpressionObject(_)
@@ -2199,8 +2192,314 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for Ancestor<'a, 't> {
+    /// Get memory address of node represented by `Ancestor` in the arena.
+    // Compiler should reduce this down to only a couple of assembly operations.
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::None => Address::DUMMY,
+            Self::ProgramHashbang(a) => a.address(),
+            Self::ProgramDirectives(a) => a.address(),
+            Self::ProgramBody(a) => a.address(),
+            Self::ArrayExpressionElements(a) => a.address(),
+            Self::ObjectExpressionProperties(a) => a.address(),
+            Self::ObjectPropertyKey(a) => a.address(),
+            Self::ObjectPropertyValue(a) => a.address(),
+            Self::TemplateLiteralQuasis(a) => a.address(),
+            Self::TemplateLiteralExpressions(a) => a.address(),
+            Self::TaggedTemplateExpressionTag(a) => a.address(),
+            Self::TaggedTemplateExpressionQuasi(a) => a.address(),
+            Self::TaggedTemplateExpressionTypeParameters(a) => a.address(),
+            Self::ComputedMemberExpressionObject(a) => a.address(),
+            Self::ComputedMemberExpressionExpression(a) => a.address(),
+            Self::StaticMemberExpressionObject(a) => a.address(),
+            Self::StaticMemberExpressionProperty(a) => a.address(),
+            Self::PrivateFieldExpressionObject(a) => a.address(),
+            Self::PrivateFieldExpressionField(a) => a.address(),
+            Self::CallExpressionCallee(a) => a.address(),
+            Self::CallExpressionTypeParameters(a) => a.address(),
+            Self::CallExpressionArguments(a) => a.address(),
+            Self::NewExpressionCallee(a) => a.address(),
+            Self::NewExpressionArguments(a) => a.address(),
+            Self::NewExpressionTypeParameters(a) => a.address(),
+            Self::MetaPropertyMeta(a) => a.address(),
+            Self::MetaPropertyProperty(a) => a.address(),
+            Self::SpreadElementArgument(a) => a.address(),
+            Self::UpdateExpressionArgument(a) => a.address(),
+            Self::UnaryExpressionArgument(a) => a.address(),
+            Self::BinaryExpressionLeft(a) => a.address(),
+            Self::BinaryExpressionRight(a) => a.address(),
+            Self::PrivateInExpressionLeft(a) => a.address(),
+            Self::PrivateInExpressionRight(a) => a.address(),
+            Self::LogicalExpressionLeft(a) => a.address(),
+            Self::LogicalExpressionRight(a) => a.address(),
+            Self::ConditionalExpressionTest(a) => a.address(),
+            Self::ConditionalExpressionConsequent(a) => a.address(),
+            Self::ConditionalExpressionAlternate(a) => a.address(),
+            Self::AssignmentExpressionLeft(a) => a.address(),
+            Self::AssignmentExpressionRight(a) => a.address(),
+            Self::ArrayAssignmentTargetElements(a) => a.address(),
+            Self::ArrayAssignmentTargetRest(a) => a.address(),
+            Self::ObjectAssignmentTargetProperties(a) => a.address(),
+            Self::ObjectAssignmentTargetRest(a) => a.address(),
+            Self::AssignmentTargetRestTarget(a) => a.address(),
+            Self::AssignmentTargetWithDefaultBinding(a) => a.address(),
+            Self::AssignmentTargetWithDefaultInit(a) => a.address(),
+            Self::AssignmentTargetPropertyIdentifierBinding(a) => a.address(),
+            Self::AssignmentTargetPropertyIdentifierInit(a) => a.address(),
+            Self::AssignmentTargetPropertyPropertyName(a) => a.address(),
+            Self::AssignmentTargetPropertyPropertyBinding(a) => a.address(),
+            Self::SequenceExpressionExpressions(a) => a.address(),
+            Self::AwaitExpressionArgument(a) => a.address(),
+            Self::ChainExpressionExpression(a) => a.address(),
+            Self::ParenthesizedExpressionExpression(a) => a.address(),
+            Self::DirectiveExpression(a) => a.address(),
+            Self::BlockStatementBody(a) => a.address(),
+            Self::VariableDeclarationDeclarations(a) => a.address(),
+            Self::VariableDeclaratorId(a) => a.address(),
+            Self::VariableDeclaratorInit(a) => a.address(),
+            Self::ExpressionStatementExpression(a) => a.address(),
+            Self::IfStatementTest(a) => a.address(),
+            Self::IfStatementConsequent(a) => a.address(),
+            Self::IfStatementAlternate(a) => a.address(),
+            Self::DoWhileStatementBody(a) => a.address(),
+            Self::DoWhileStatementTest(a) => a.address(),
+            Self::WhileStatementTest(a) => a.address(),
+            Self::WhileStatementBody(a) => a.address(),
+            Self::ForStatementInit(a) => a.address(),
+            Self::ForStatementTest(a) => a.address(),
+            Self::ForStatementUpdate(a) => a.address(),
+            Self::ForStatementBody(a) => a.address(),
+            Self::ForInStatementLeft(a) => a.address(),
+            Self::ForInStatementRight(a) => a.address(),
+            Self::ForInStatementBody(a) => a.address(),
+            Self::ForOfStatementLeft(a) => a.address(),
+            Self::ForOfStatementRight(a) => a.address(),
+            Self::ForOfStatementBody(a) => a.address(),
+            Self::ContinueStatementLabel(a) => a.address(),
+            Self::BreakStatementLabel(a) => a.address(),
+            Self::ReturnStatementArgument(a) => a.address(),
+            Self::WithStatementObject(a) => a.address(),
+            Self::WithStatementBody(a) => a.address(),
+            Self::SwitchStatementDiscriminant(a) => a.address(),
+            Self::SwitchStatementCases(a) => a.address(),
+            Self::SwitchCaseTest(a) => a.address(),
+            Self::SwitchCaseConsequent(a) => a.address(),
+            Self::LabeledStatementLabel(a) => a.address(),
+            Self::LabeledStatementBody(a) => a.address(),
+            Self::ThrowStatementArgument(a) => a.address(),
+            Self::TryStatementBlock(a) => a.address(),
+            Self::TryStatementHandler(a) => a.address(),
+            Self::TryStatementFinalizer(a) => a.address(),
+            Self::CatchClauseParam(a) => a.address(),
+            Self::CatchClauseBody(a) => a.address(),
+            Self::CatchParameterPattern(a) => a.address(),
+            Self::BindingPatternKind(a) => a.address(),
+            Self::BindingPatternTypeAnnotation(a) => a.address(),
+            Self::AssignmentPatternLeft(a) => a.address(),
+            Self::AssignmentPatternRight(a) => a.address(),
+            Self::ObjectPatternProperties(a) => a.address(),
+            Self::ObjectPatternRest(a) => a.address(),
+            Self::BindingPropertyKey(a) => a.address(),
+            Self::BindingPropertyValue(a) => a.address(),
+            Self::ArrayPatternElements(a) => a.address(),
+            Self::ArrayPatternRest(a) => a.address(),
+            Self::BindingRestElementArgument(a) => a.address(),
+            Self::FunctionId(a) => a.address(),
+            Self::FunctionTypeParameters(a) => a.address(),
+            Self::FunctionThisParam(a) => a.address(),
+            Self::FunctionParams(a) => a.address(),
+            Self::FunctionReturnType(a) => a.address(),
+            Self::FunctionBody(a) => a.address(),
+            Self::FormalParametersItems(a) => a.address(),
+            Self::FormalParametersRest(a) => a.address(),
+            Self::FormalParameterDecorators(a) => a.address(),
+            Self::FormalParameterPattern(a) => a.address(),
+            Self::FunctionBodyDirectives(a) => a.address(),
+            Self::FunctionBodyStatements(a) => a.address(),
+            Self::ArrowFunctionExpressionTypeParameters(a) => a.address(),
+            Self::ArrowFunctionExpressionParams(a) => a.address(),
+            Self::ArrowFunctionExpressionReturnType(a) => a.address(),
+            Self::ArrowFunctionExpressionBody(a) => a.address(),
+            Self::YieldExpressionArgument(a) => a.address(),
+            Self::ClassDecorators(a) => a.address(),
+            Self::ClassId(a) => a.address(),
+            Self::ClassTypeParameters(a) => a.address(),
+            Self::ClassSuperClass(a) => a.address(),
+            Self::ClassSuperTypeParameters(a) => a.address(),
+            Self::ClassImplements(a) => a.address(),
+            Self::ClassBody(a) => a.address(),
+            Self::ClassBodyBody(a) => a.address(),
+            Self::MethodDefinitionDecorators(a) => a.address(),
+            Self::MethodDefinitionKey(a) => a.address(),
+            Self::MethodDefinitionValue(a) => a.address(),
+            Self::PropertyDefinitionDecorators(a) => a.address(),
+            Self::PropertyDefinitionKey(a) => a.address(),
+            Self::PropertyDefinitionValue(a) => a.address(),
+            Self::PropertyDefinitionTypeAnnotation(a) => a.address(),
+            Self::StaticBlockBody(a) => a.address(),
+            Self::AccessorPropertyDecorators(a) => a.address(),
+            Self::AccessorPropertyKey(a) => a.address(),
+            Self::AccessorPropertyValue(a) => a.address(),
+            Self::AccessorPropertyTypeAnnotation(a) => a.address(),
+            Self::ImportExpressionSource(a) => a.address(),
+            Self::ImportExpressionArguments(a) => a.address(),
+            Self::ImportDeclarationSpecifiers(a) => a.address(),
+            Self::ImportDeclarationSource(a) => a.address(),
+            Self::ImportDeclarationWithClause(a) => a.address(),
+            Self::ImportSpecifierImported(a) => a.address(),
+            Self::ImportSpecifierLocal(a) => a.address(),
+            Self::ImportDefaultSpecifierLocal(a) => a.address(),
+            Self::ImportNamespaceSpecifierLocal(a) => a.address(),
+            Self::WithClauseAttributesKeyword(a) => a.address(),
+            Self::WithClauseWithEntries(a) => a.address(),
+            Self::ImportAttributeKey(a) => a.address(),
+            Self::ImportAttributeValue(a) => a.address(),
+            Self::ExportNamedDeclarationDeclaration(a) => a.address(),
+            Self::ExportNamedDeclarationSpecifiers(a) => a.address(),
+            Self::ExportNamedDeclarationSource(a) => a.address(),
+            Self::ExportNamedDeclarationWithClause(a) => a.address(),
+            Self::ExportDefaultDeclarationDeclaration(a) => a.address(),
+            Self::ExportDefaultDeclarationExported(a) => a.address(),
+            Self::ExportAllDeclarationExported(a) => a.address(),
+            Self::ExportAllDeclarationSource(a) => a.address(),
+            Self::ExportAllDeclarationWithClause(a) => a.address(),
+            Self::ExportSpecifierLocal(a) => a.address(),
+            Self::ExportSpecifierExported(a) => a.address(),
+            Self::JSXElementOpeningElement(a) => a.address(),
+            Self::JSXElementClosingElement(a) => a.address(),
+            Self::JSXElementChildren(a) => a.address(),
+            Self::JSXOpeningElementName(a) => a.address(),
+            Self::JSXOpeningElementAttributes(a) => a.address(),
+            Self::JSXOpeningElementTypeParameters(a) => a.address(),
+            Self::JSXClosingElementName(a) => a.address(),
+            Self::JSXFragmentChildren(a) => a.address(),
+            Self::JSXNamespacedNameNamespace(a) => a.address(),
+            Self::JSXNamespacedNameProperty(a) => a.address(),
+            Self::JSXMemberExpressionObject(a) => a.address(),
+            Self::JSXMemberExpressionProperty(a) => a.address(),
+            Self::JSXExpressionContainerExpression(a) => a.address(),
+            Self::JSXAttributeName(a) => a.address(),
+            Self::JSXAttributeValue(a) => a.address(),
+            Self::JSXSpreadAttributeArgument(a) => a.address(),
+            Self::JSXSpreadChildExpression(a) => a.address(),
+            Self::TSThisParameterTypeAnnotation(a) => a.address(),
+            Self::TSEnumDeclarationId(a) => a.address(),
+            Self::TSEnumDeclarationMembers(a) => a.address(),
+            Self::TSEnumMemberId(a) => a.address(),
+            Self::TSEnumMemberInitializer(a) => a.address(),
+            Self::TSTypeAnnotationTypeAnnotation(a) => a.address(),
+            Self::TSLiteralTypeLiteral(a) => a.address(),
+            Self::TSConditionalTypeCheckType(a) => a.address(),
+            Self::TSConditionalTypeExtendsType(a) => a.address(),
+            Self::TSConditionalTypeTrueType(a) => a.address(),
+            Self::TSConditionalTypeFalseType(a) => a.address(),
+            Self::TSUnionTypeTypes(a) => a.address(),
+            Self::TSIntersectionTypeTypes(a) => a.address(),
+            Self::TSParenthesizedTypeTypeAnnotation(a) => a.address(),
+            Self::TSTypeOperatorTypeAnnotation(a) => a.address(),
+            Self::TSArrayTypeElementType(a) => a.address(),
+            Self::TSIndexedAccessTypeObjectType(a) => a.address(),
+            Self::TSIndexedAccessTypeIndexType(a) => a.address(),
+            Self::TSTupleTypeElementTypes(a) => a.address(),
+            Self::TSNamedTupleMemberElementType(a) => a.address(),
+            Self::TSNamedTupleMemberLabel(a) => a.address(),
+            Self::TSOptionalTypeTypeAnnotation(a) => a.address(),
+            Self::TSRestTypeTypeAnnotation(a) => a.address(),
+            Self::TSTypeReferenceTypeName(a) => a.address(),
+            Self::TSTypeReferenceTypeParameters(a) => a.address(),
+            Self::TSQualifiedNameLeft(a) => a.address(),
+            Self::TSQualifiedNameRight(a) => a.address(),
+            Self::TSTypeParameterInstantiationParams(a) => a.address(),
+            Self::TSTypeParameterName(a) => a.address(),
+            Self::TSTypeParameterConstraint(a) => a.address(),
+            Self::TSTypeParameterDefault(a) => a.address(),
+            Self::TSTypeParameterDeclarationParams(a) => a.address(),
+            Self::TSTypeAliasDeclarationId(a) => a.address(),
+            Self::TSTypeAliasDeclarationTypeParameters(a) => a.address(),
+            Self::TSTypeAliasDeclarationTypeAnnotation(a) => a.address(),
+            Self::TSClassImplementsExpression(a) => a.address(),
+            Self::TSClassImplementsTypeParameters(a) => a.address(),
+            Self::TSInterfaceDeclarationId(a) => a.address(),
+            Self::TSInterfaceDeclarationExtends(a) => a.address(),
+            Self::TSInterfaceDeclarationTypeParameters(a) => a.address(),
+            Self::TSInterfaceDeclarationBody(a) => a.address(),
+            Self::TSInterfaceBodyBody(a) => a.address(),
+            Self::TSPropertySignatureKey(a) => a.address(),
+            Self::TSPropertySignatureTypeAnnotation(a) => a.address(),
+            Self::TSIndexSignatureParameters(a) => a.address(),
+            Self::TSIndexSignatureTypeAnnotation(a) => a.address(),
+            Self::TSCallSignatureDeclarationTypeParameters(a) => a.address(),
+            Self::TSCallSignatureDeclarationThisParam(a) => a.address(),
+            Self::TSCallSignatureDeclarationParams(a) => a.address(),
+            Self::TSCallSignatureDeclarationReturnType(a) => a.address(),
+            Self::TSMethodSignatureKey(a) => a.address(),
+            Self::TSMethodSignatureTypeParameters(a) => a.address(),
+            Self::TSMethodSignatureThisParam(a) => a.address(),
+            Self::TSMethodSignatureParams(a) => a.address(),
+            Self::TSMethodSignatureReturnType(a) => a.address(),
+            Self::TSConstructSignatureDeclarationTypeParameters(a) => a.address(),
+            Self::TSConstructSignatureDeclarationParams(a) => a.address(),
+            Self::TSConstructSignatureDeclarationReturnType(a) => a.address(),
+            Self::TSIndexSignatureNameTypeAnnotation(a) => a.address(),
+            Self::TSInterfaceHeritageExpression(a) => a.address(),
+            Self::TSInterfaceHeritageTypeParameters(a) => a.address(),
+            Self::TSTypePredicateParameterName(a) => a.address(),
+            Self::TSTypePredicateTypeAnnotation(a) => a.address(),
+            Self::TSModuleDeclarationId(a) => a.address(),
+            Self::TSModuleDeclarationBody(a) => a.address(),
+            Self::TSModuleBlockDirectives(a) => a.address(),
+            Self::TSModuleBlockBody(a) => a.address(),
+            Self::TSTypeLiteralMembers(a) => a.address(),
+            Self::TSInferTypeTypeParameter(a) => a.address(),
+            Self::TSTypeQueryExprName(a) => a.address(),
+            Self::TSTypeQueryTypeParameters(a) => a.address(),
+            Self::TSImportTypeParameter(a) => a.address(),
+            Self::TSImportTypeQualifier(a) => a.address(),
+            Self::TSImportTypeAttributes(a) => a.address(),
+            Self::TSImportTypeTypeParameters(a) => a.address(),
+            Self::TSImportAttributesAttributesKeyword(a) => a.address(),
+            Self::TSImportAttributesElements(a) => a.address(),
+            Self::TSImportAttributeName(a) => a.address(),
+            Self::TSImportAttributeValue(a) => a.address(),
+            Self::TSFunctionTypeTypeParameters(a) => a.address(),
+            Self::TSFunctionTypeThisParam(a) => a.address(),
+            Self::TSFunctionTypeParams(a) => a.address(),
+            Self::TSFunctionTypeReturnType(a) => a.address(),
+            Self::TSConstructorTypeTypeParameters(a) => a.address(),
+            Self::TSConstructorTypeParams(a) => a.address(),
+            Self::TSConstructorTypeReturnType(a) => a.address(),
+            Self::TSMappedTypeTypeParameter(a) => a.address(),
+            Self::TSMappedTypeNameType(a) => a.address(),
+            Self::TSMappedTypeTypeAnnotation(a) => a.address(),
+            Self::TSTemplateLiteralTypeQuasis(a) => a.address(),
+            Self::TSTemplateLiteralTypeTypes(a) => a.address(),
+            Self::TSAsExpressionExpression(a) => a.address(),
+            Self::TSAsExpressionTypeAnnotation(a) => a.address(),
+            Self::TSSatisfiesExpressionExpression(a) => a.address(),
+            Self::TSSatisfiesExpressionTypeAnnotation(a) => a.address(),
+            Self::TSTypeAssertionExpression(a) => a.address(),
+            Self::TSTypeAssertionTypeAnnotation(a) => a.address(),
+            Self::TSImportEqualsDeclarationId(a) => a.address(),
+            Self::TSImportEqualsDeclarationModuleReference(a) => a.address(),
+            Self::TSExternalModuleReferenceExpression(a) => a.address(),
+            Self::TSNonNullExpressionExpression(a) => a.address(),
+            Self::DecoratorExpression(a) => a.address(),
+            Self::TSExportAssignmentExpression(a) => a.address(),
+            Self::TSNamespaceExportDeclarationId(a) => a.address(),
+            Self::TSInstantiationExpressionExpression(a) => a.address(),
+            Self::TSInstantiationExpressionTypeParameters(a) => a.address(),
+            Self::JSDocNullableTypeTypeAnnotation(a) => a.address(),
+            Self::JSDocNonNullableTypeTypeAnnotation(a) => a.address(),
+        }
+    }
+}
+
 pub(crate) const OFFSET_PROGRAM_SPAN: usize = offset_of!(Program, span);
 pub(crate) const OFFSET_PROGRAM_SOURCE_TYPE: usize = offset_of!(Program, source_type);
+pub(crate) const OFFSET_PROGRAM_SOURCE_TEXT: usize = offset_of!(Program, source_text);
+pub(crate) const OFFSET_PROGRAM_COMMENTS: usize = offset_of!(Program, comments);
 pub(crate) const OFFSET_PROGRAM_HASHBANG: usize = offset_of!(Program, hashbang);
 pub(crate) const OFFSET_PROGRAM_DIRECTIVES: usize = offset_of!(Program, directives);
 pub(crate) const OFFSET_PROGRAM_BODY: usize = offset_of!(Program, body);
@@ -2225,6 +2524,16 @@ impl<'a, 't> ProgramWithoutHashbang<'a, 't> {
     }
 
     #[inline]
+    pub fn source_text(self) -> &'t &'a str {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TEXT) as *const &'a str) }
+    }
+
+    #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
+    }
+
+    #[inline]
     pub fn directives(self) -> &'t Vec<'a, Directive<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_DIRECTIVES)
@@ -2244,6 +2553,13 @@ impl<'a, 't> ProgramWithoutHashbang<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ProgramWithoutHashbang<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -2266,6 +2582,16 @@ impl<'a, 't> ProgramWithoutDirectives<'a, 't> {
     }
 
     #[inline]
+    pub fn source_text(self) -> &'t &'a str {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TEXT) as *const &'a str) }
+    }
+
+    #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
+    }
+
+    #[inline]
     pub fn hashbang(self) -> &'t Option<Hashbang<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
@@ -2284,6 +2610,13 @@ impl<'a, 't> ProgramWithoutDirectives<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ProgramWithoutDirectives<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -2306,6 +2639,16 @@ impl<'a, 't> ProgramWithoutBody<'a, 't> {
     }
 
     #[inline]
+    pub fn source_text(self) -> &'t &'a str {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TEXT) as *const &'a str) }
+    }
+
+    #[inline]
+    pub fn comments(self) -> &'t Vec<'a, Comment> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_COMMENTS) as *const Vec<'a, Comment>) }
+    }
+
+    #[inline]
     pub fn hashbang(self) -> &'t Option<Hashbang<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
@@ -2325,6 +2668,13 @@ impl<'a, 't> ProgramWithoutBody<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ProgramWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -2352,6 +2702,13 @@ impl<'a, 't> ArrayExpressionWithoutElements<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ARRAY_EXPRESSION_TRAILING_COMMA)
                 as *const Option<Span>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrayExpressionWithoutElements<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -2383,11 +2740,17 @@ impl<'a, 't> ObjectExpressionWithoutProperties<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ObjectExpressionWithoutProperties<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_OBJECT_PROPERTY_SPAN: usize = offset_of!(ObjectProperty, span);
 pub(crate) const OFFSET_OBJECT_PROPERTY_KIND: usize = offset_of!(ObjectProperty, kind);
 pub(crate) const OFFSET_OBJECT_PROPERTY_KEY: usize = offset_of!(ObjectProperty, key);
 pub(crate) const OFFSET_OBJECT_PROPERTY_VALUE: usize = offset_of!(ObjectProperty, value);
-pub(crate) const OFFSET_OBJECT_PROPERTY_INIT: usize = offset_of!(ObjectProperty, init);
 pub(crate) const OFFSET_OBJECT_PROPERTY_METHOD: usize = offset_of!(ObjectProperty, method);
 pub(crate) const OFFSET_OBJECT_PROPERTY_SHORTHAND: usize = offset_of!(ObjectProperty, shorthand);
 pub(crate) const OFFSET_OBJECT_PROPERTY_COMPUTED: usize = offset_of!(ObjectProperty, computed);
@@ -2418,14 +2781,6 @@ impl<'a, 't> ObjectPropertyWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn init(self) -> &'t Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_INIT)
-                as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
     pub fn method(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_METHOD) as *const bool) }
     }
@@ -2438,6 +2793,13 @@ impl<'a, 't> ObjectPropertyWithoutKey<'a, 't> {
     #[inline]
     pub fn computed(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_COMPUTED) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectPropertyWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -2467,14 +2829,6 @@ impl<'a, 't> ObjectPropertyWithoutValue<'a, 't> {
     }
 
     #[inline]
-    pub fn init(self) -> &'t Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_INIT)
-                as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
     pub fn method(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_METHOD) as *const bool) }
     }
@@ -2490,51 +2844,10 @@ impl<'a, 't> ObjectPropertyWithoutValue<'a, 't> {
     }
 }
 
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct ObjectPropertyWithoutInit<'a, 't>(
-    pub(crate) *const ObjectProperty<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> ObjectPropertyWithoutInit<'a, 't> {
+impl<'a, 't> GetAddress for ObjectPropertyWithoutValue<'a, 't> {
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t PropertyKind {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_KIND) as *const PropertyKind) }
-    }
-
-    #[inline]
-    pub fn key(self) -> &'t PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn value(self) -> &'t Expression<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_VALUE) as *const Expression<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn method(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_METHOD) as *const bool) }
-    }
-
-    #[inline]
-    pub fn shorthand(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_SHORTHAND) as *const bool) }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_OBJECT_PROPERTY_COMPUTED) as *const bool) }
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -2565,6 +2878,13 @@ impl<'a, 't> TemplateLiteralWithoutQuasis<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TemplateLiteralWithoutQuasis<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TemplateLiteralWithoutExpressions<'a, 't>(
@@ -2584,6 +2904,13 @@ impl<'a, 't> TemplateLiteralWithoutExpressions<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TEMPLATE_LITERAL_QUASIS)
                 as *const Vec<'a, TemplateElement<'a>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TemplateLiteralWithoutExpressions<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -2628,6 +2955,13 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTag<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTag<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TaggedTemplateExpressionWithoutQuasi<'a, 't>(
@@ -2660,6 +2994,13 @@ impl<'a, 't> TaggedTemplateExpressionWithoutQuasi<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutQuasi<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TaggedTemplateExpressionWithoutTypeParameters<'a, 't>(
@@ -2689,6 +3030,13 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
                 as *const TemplateLiteral<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TaggedTemplateExpressionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -2732,6 +3080,13 @@ impl<'a, 't> ComputedMemberExpressionWithoutObject<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ComputedMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ComputedMemberExpressionWithoutExpression<'a, 't>(
@@ -2760,6 +3115,13 @@ impl<'a, 't> ComputedMemberExpressionWithoutExpression<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_COMPUTED_MEMBER_EXPRESSION_OPTIONAL) as *const bool)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ComputedMemberExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -2803,6 +3165,13 @@ impl<'a, 't> StaticMemberExpressionWithoutObject<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for StaticMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct StaticMemberExpressionWithoutProperty<'a, 't>(
@@ -2831,6 +3200,13 @@ impl<'a, 't> StaticMemberExpressionWithoutProperty<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_STATIC_MEMBER_EXPRESSION_OPTIONAL) as *const bool)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for StaticMemberExpressionWithoutProperty<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -2874,6 +3250,13 @@ impl<'a, 't> PrivateFieldExpressionWithoutObject<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for PrivateFieldExpressionWithoutObject<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PrivateFieldExpressionWithoutField<'a, 't>(
@@ -2902,6 +3285,13 @@ impl<'a, 't> PrivateFieldExpressionWithoutField<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PRIVATE_FIELD_EXPRESSION_OPTIONAL) as *const bool)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for PrivateFieldExpressionWithoutField<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -2947,6 +3337,13 @@ impl<'a, 't> CallExpressionWithoutCallee<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for CallExpressionWithoutCallee<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct CallExpressionWithoutTypeParameters<'a, 't>(
@@ -2981,6 +3378,13 @@ impl<'a, 't> CallExpressionWithoutTypeParameters<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for CallExpressionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct CallExpressionWithoutArguments<'a, 't>(
@@ -3012,6 +3416,13 @@ impl<'a, 't> CallExpressionWithoutArguments<'a, 't> {
     #[inline]
     pub fn optional(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for CallExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3051,6 +3462,13 @@ impl<'a, 't> NewExpressionWithoutCallee<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for NewExpressionWithoutCallee<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct NewExpressionWithoutArguments<'a, 't>(
@@ -3077,6 +3495,13 @@ impl<'a, 't> NewExpressionWithoutArguments<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_NEW_EXPRESSION_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for NewExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3109,6 +3534,13 @@ impl<'a, 't> NewExpressionWithoutTypeParameters<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for NewExpressionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_META_PROPERTY_SPAN: usize = offset_of!(MetaProperty, span);
 pub(crate) const OFFSET_META_PROPERTY_META: usize = offset_of!(MetaProperty, meta);
 pub(crate) const OFFSET_META_PROPERTY_PROPERTY: usize = offset_of!(MetaProperty, property);
@@ -3135,6 +3567,13 @@ impl<'a, 't> MetaPropertyWithoutMeta<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for MetaPropertyWithoutMeta<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct MetaPropertyWithoutProperty<'a, 't>(
@@ -3156,6 +3595,13 @@ impl<'a, 't> MetaPropertyWithoutProperty<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for MetaPropertyWithoutProperty<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_SPREAD_ELEMENT_SPAN: usize = offset_of!(SpreadElement, span);
 pub(crate) const OFFSET_SPREAD_ELEMENT_ARGUMENT: usize = offset_of!(SpreadElement, argument);
 
@@ -3170,6 +3616,13 @@ impl<'a, 't> SpreadElementWithoutArgument<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_SPREAD_ELEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for SpreadElementWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3205,6 +3658,13 @@ impl<'a, 't> UpdateExpressionWithoutArgument<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for UpdateExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_UNARY_EXPRESSION_SPAN: usize = offset_of!(UnaryExpression, span);
 pub(crate) const OFFSET_UNARY_EXPRESSION_OPERATOR: usize = offset_of!(UnaryExpression, operator);
 pub(crate) const OFFSET_UNARY_EXPRESSION_ARGUMENT: usize = offset_of!(UnaryExpression, argument);
@@ -3227,6 +3687,13 @@ impl<'a, 't> UnaryExpressionWithoutArgument<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_UNARY_EXPRESSION_OPERATOR) as *const UnaryOperator)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for UnaryExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3264,6 +3731,13 @@ impl<'a, 't> BinaryExpressionWithoutLeft<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for BinaryExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BinaryExpressionWithoutRight<'a, 't>(
@@ -3290,6 +3764,13 @@ impl<'a, 't> BinaryExpressionWithoutRight<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_OPERATOR)
                 as *const BinaryOperator)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for BinaryExpressionWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3329,6 +3810,13 @@ impl<'a, 't> PrivateInExpressionWithoutLeft<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for PrivateInExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PrivateInExpressionWithoutRight<'a, 't>(
@@ -3356,6 +3844,13 @@ impl<'a, 't> PrivateInExpressionWithoutRight<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_OPERATOR)
                 as *const BinaryOperator)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for PrivateInExpressionWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3394,6 +3889,13 @@ impl<'a, 't> LogicalExpressionWithoutLeft<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for LogicalExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct LogicalExpressionWithoutRight<'a, 't>(
@@ -3420,6 +3922,13 @@ impl<'a, 't> LogicalExpressionWithoutRight<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_OPERATOR)
                 as *const LogicalOperator)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for LogicalExpressionWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3462,6 +3971,13 @@ impl<'a, 't> ConditionalExpressionWithoutTest<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ConditionalExpressionWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ConditionalExpressionWithoutConsequent<'a, 't>(
@@ -3492,6 +4008,13 @@ impl<'a, 't> ConditionalExpressionWithoutConsequent<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ConditionalExpressionWithoutConsequent<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ConditionalExpressionWithoutAlternate<'a, 't>(
@@ -3519,6 +4042,13 @@ impl<'a, 't> ConditionalExpressionWithoutAlternate<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_CONSEQUENT)
                 as *const Expression<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ConditionalExpressionWithoutAlternate<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3559,6 +4089,13 @@ impl<'a, 't> AssignmentExpressionWithoutLeft<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for AssignmentExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentExpressionWithoutRight<'a, 't>(
@@ -3586,6 +4123,13 @@ impl<'a, 't> AssignmentExpressionWithoutRight<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_LEFT)
                 as *const AssignmentTarget<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentExpressionWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3628,6 +4172,13 @@ impl<'a, 't> ArrayAssignmentTargetWithoutElements<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ArrayAssignmentTargetWithoutElements<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrayAssignmentTargetWithoutRest<'a, 't>(
@@ -3655,6 +4206,13 @@ impl<'a, 't> ArrayAssignmentTargetWithoutRest<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ARRAY_ASSIGNMENT_TARGET_TRAILING_COMMA)
                 as *const Option<Span>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrayAssignmentTargetWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3689,6 +4247,13 @@ impl<'a, 't> ObjectAssignmentTargetWithoutProperties<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ObjectAssignmentTargetWithoutProperties<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ObjectAssignmentTargetWithoutRest<'a, 't>(
@@ -3713,6 +4278,13 @@ impl<'a, 't> ObjectAssignmentTargetWithoutRest<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ObjectAssignmentTargetWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_ASSIGNMENT_TARGET_REST_SPAN: usize = offset_of!(AssignmentTargetRest, span);
 pub(crate) const OFFSET_ASSIGNMENT_TARGET_REST_TARGET: usize =
     offset_of!(AssignmentTargetRest, target);
@@ -3728,6 +4300,13 @@ impl<'a, 't> AssignmentTargetRestWithoutTarget<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_REST_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentTargetRestWithoutTarget<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3762,6 +4341,13 @@ impl<'a, 't> AssignmentTargetWithDefaultWithoutBinding<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for AssignmentTargetWithDefaultWithoutBinding<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentTargetWithDefaultWithoutInit<'a, 't>(
@@ -3783,6 +4369,13 @@ impl<'a, 't> AssignmentTargetWithDefaultWithoutInit<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_BINDING)
                 as *const AssignmentTarget<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentTargetWithDefaultWithoutInit<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3818,6 +4411,13 @@ impl<'a, 't> AssignmentTargetPropertyIdentifierWithoutBinding<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for AssignmentTargetPropertyIdentifierWithoutBinding<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentTargetPropertyIdentifierWithoutInit<'a, 't>(
@@ -3840,6 +4440,13 @@ impl<'a, 't> AssignmentTargetPropertyIdentifierWithoutInit<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_BINDING)
                 as *const IdentifierReference<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentTargetPropertyIdentifierWithoutInit<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3875,6 +4482,13 @@ impl<'a, 't> AssignmentTargetPropertyPropertyWithoutName<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for AssignmentTargetPropertyPropertyWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentTargetPropertyPropertyWithoutBinding<'a, 't>(
@@ -3900,6 +4514,13 @@ impl<'a, 't> AssignmentTargetPropertyPropertyWithoutBinding<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for AssignmentTargetPropertyPropertyWithoutBinding<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_SEQUENCE_EXPRESSION_SPAN: usize = offset_of!(SequenceExpression, span);
 pub(crate) const OFFSET_SEQUENCE_EXPRESSION_EXPRESSIONS: usize =
     offset_of!(SequenceExpression, expressions);
@@ -3918,6 +4539,13 @@ impl<'a, 't> SequenceExpressionWithoutExpressions<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for SequenceExpressionWithoutExpressions<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_AWAIT_EXPRESSION_SPAN: usize = offset_of!(AwaitExpression, span);
 pub(crate) const OFFSET_AWAIT_EXPRESSION_ARGUMENT: usize = offset_of!(AwaitExpression, argument);
 
@@ -3932,6 +4560,13 @@ impl<'a, 't> AwaitExpressionWithoutArgument<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_AWAIT_EXPRESSION_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for AwaitExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3953,6 +4588,13 @@ impl<'a, 't> ChainExpressionWithoutExpression<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ChainExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_PARENTHESIZED_EXPRESSION_SPAN: usize =
     offset_of!(ParenthesizedExpression, span);
 pub(crate) const OFFSET_PARENTHESIZED_EXPRESSION_EXPRESSION: usize =
@@ -3971,6 +4613,13 @@ impl<'a, 't> ParenthesizedExpressionWithoutExpression<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PARENTHESIZED_EXPRESSION_SPAN) as *const Span)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ParenthesizedExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -3997,6 +4646,13 @@ impl<'a, 't> DirectiveWithoutExpression<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for DirectiveWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_BLOCK_STATEMENT_SPAN: usize = offset_of!(BlockStatement, span);
 pub(crate) const OFFSET_BLOCK_STATEMENT_BODY: usize = offset_of!(BlockStatement, body);
 pub(crate) const OFFSET_BLOCK_STATEMENT_SCOPE_ID: usize = offset_of!(BlockStatement, scope_id);
@@ -4020,6 +4676,13 @@ impl<'a, 't> BlockStatementWithoutBody<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_BLOCK_STATEMENT_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for BlockStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4054,6 +4717,13 @@ impl<'a, 't> VariableDeclarationWithoutDeclarations<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_DECLARE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for VariableDeclarationWithoutDeclarations<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4099,6 +4769,13 @@ impl<'a, 't> VariableDeclaratorWithoutId<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for VariableDeclaratorWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct VariableDeclaratorWithoutInit<'a, 't>(
@@ -4134,6 +4811,13 @@ impl<'a, 't> VariableDeclaratorWithoutInit<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for VariableDeclaratorWithoutInit<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_EXPRESSION_STATEMENT_SPAN: usize = offset_of!(ExpressionStatement, span);
 pub(crate) const OFFSET_EXPRESSION_STATEMENT_EXPRESSION: usize =
     offset_of!(ExpressionStatement, expression);
@@ -4149,6 +4833,13 @@ impl<'a, 't> ExpressionStatementWithoutExpression<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_EXPRESSION_STATEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ExpressionStatementWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4186,6 +4877,13 @@ impl<'a, 't> IfStatementWithoutTest<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for IfStatementWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct IfStatementWithoutConsequent<'a, 't>(
@@ -4210,6 +4908,13 @@ impl<'a, 't> IfStatementWithoutConsequent<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_ALTERNATE)
                 as *const Option<Statement<'a>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for IfStatementWithoutConsequent<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4239,6 +4944,13 @@ impl<'a, 't> IfStatementWithoutAlternate<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for IfStatementWithoutAlternate<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_DO_WHILE_STATEMENT_SPAN: usize = offset_of!(DoWhileStatement, span);
 pub(crate) const OFFSET_DO_WHILE_STATEMENT_BODY: usize = offset_of!(DoWhileStatement, body);
 pub(crate) const OFFSET_DO_WHILE_STATEMENT_TEST: usize = offset_of!(DoWhileStatement, test);
@@ -4264,6 +4976,13 @@ impl<'a, 't> DoWhileStatementWithoutBody<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for DoWhileStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct DoWhileStatementWithoutTest<'a, 't>(
@@ -4282,6 +5001,13 @@ impl<'a, 't> DoWhileStatementWithoutTest<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_BODY) as *const Statement<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for DoWhileStatementWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4310,6 +5036,13 @@ impl<'a, 't> WhileStatementWithoutTest<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for WhileStatementWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct WhileStatementWithoutBody<'a, 't>(
@@ -4328,6 +5061,13 @@ impl<'a, 't> WhileStatementWithoutBody<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_WHILE_STATEMENT_TEST) as *const Expression<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for WhileStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4381,6 +5121,13 @@ impl<'a, 't> ForStatementWithoutInit<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ForStatementWithoutInit<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForStatementWithoutTest<'a, 't>(
@@ -4424,6 +5171,13 @@ impl<'a, 't> ForStatementWithoutTest<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ForStatementWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForStatementWithoutUpdate<'a, 't>(
@@ -4464,6 +5218,13 @@ impl<'a, 't> ForStatementWithoutUpdate<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FOR_STATEMENT_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ForStatementWithoutUpdate<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4513,6 +5274,13 @@ impl<'a, 't> ForStatementWithoutBody<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ForStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_FOR_IN_STATEMENT_SPAN: usize = offset_of!(ForInStatement, span);
 pub(crate) const OFFSET_FOR_IN_STATEMENT_LEFT: usize = offset_of!(ForInStatement, left);
 pub(crate) const OFFSET_FOR_IN_STATEMENT_RIGHT: usize = offset_of!(ForInStatement, right);
@@ -4555,6 +5323,13 @@ impl<'a, 't> ForInStatementWithoutLeft<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ForInStatementWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForInStatementWithoutRight<'a, 't>(
@@ -4592,6 +5367,13 @@ impl<'a, 't> ForInStatementWithoutRight<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ForInStatementWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForInStatementWithoutBody<'a, 't>(
@@ -4626,6 +5408,13 @@ impl<'a, 't> ForInStatementWithoutBody<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ForInStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4677,6 +5466,13 @@ impl<'a, 't> ForOfStatementWithoutLeft<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ForOfStatementWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ForOfStatementWithoutRight<'a, 't>(
@@ -4716,6 +5512,13 @@ impl<'a, 't> ForOfStatementWithoutRight<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ForOfStatementWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4761,6 +5564,13 @@ impl<'a, 't> ForOfStatementWithoutBody<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ForOfStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_CONTINUE_STATEMENT_SPAN: usize = offset_of!(ContinueStatement, span);
 pub(crate) const OFFSET_CONTINUE_STATEMENT_LABEL: usize = offset_of!(ContinueStatement, label);
 
@@ -4775,6 +5585,13 @@ impl<'a, 't> ContinueStatementWithoutLabel<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CONTINUE_STATEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ContinueStatementWithoutLabel<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4795,6 +5612,13 @@ impl<'a, 't> BreakStatementWithoutLabel<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for BreakStatementWithoutLabel<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_RETURN_STATEMENT_SPAN: usize = offset_of!(ReturnStatement, span);
 pub(crate) const OFFSET_RETURN_STATEMENT_ARGUMENT: usize = offset_of!(ReturnStatement, argument);
 
@@ -4809,6 +5633,13 @@ impl<'a, 't> ReturnStatementWithoutArgument<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_RETURN_STATEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ReturnStatementWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4835,6 +5666,13 @@ impl<'a, 't> WithStatementWithoutObject<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for WithStatementWithoutObject<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct WithStatementWithoutBody<'a, 't>(
@@ -4853,6 +5691,13 @@ impl<'a, 't> WithStatementWithoutBody<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_OBJECT) as *const Expression<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for WithStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4892,6 +5737,13 @@ impl<'a, 't> SwitchStatementWithoutDiscriminant<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for SwitchStatementWithoutDiscriminant<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct SwitchStatementWithoutCases<'a, 't>(
@@ -4922,6 +5774,13 @@ impl<'a, 't> SwitchStatementWithoutCases<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for SwitchStatementWithoutCases<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_SWITCH_CASE_SPAN: usize = offset_of!(SwitchCase, span);
 pub(crate) const OFFSET_SWITCH_CASE_TEST: usize = offset_of!(SwitchCase, test);
 pub(crate) const OFFSET_SWITCH_CASE_CONSEQUENT: usize = offset_of!(SwitchCase, consequent);
@@ -4948,6 +5807,13 @@ impl<'a, 't> SwitchCaseWithoutTest<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for SwitchCaseWithoutTest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct SwitchCaseWithoutConsequent<'a, 't>(
@@ -4966,6 +5832,13 @@ impl<'a, 't> SwitchCaseWithoutConsequent<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_TEST) as *const Option<Expression<'a>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for SwitchCaseWithoutConsequent<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -4994,6 +5867,13 @@ impl<'a, 't> LabeledStatementWithoutLabel<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for LabeledStatementWithoutLabel<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct LabeledStatementWithoutBody<'a, 't>(
@@ -5016,6 +5896,13 @@ impl<'a, 't> LabeledStatementWithoutBody<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for LabeledStatementWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_THROW_STATEMENT_SPAN: usize = offset_of!(ThrowStatement, span);
 pub(crate) const OFFSET_THROW_STATEMENT_ARGUMENT: usize = offset_of!(ThrowStatement, argument);
 
@@ -5030,6 +5917,13 @@ impl<'a, 't> ThrowStatementWithoutArgument<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_THROW_STATEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ThrowStatementWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -5068,6 +5962,13 @@ impl<'a, 't> TryStatementWithoutBlock<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TryStatementWithoutBlock<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TryStatementWithoutHandler<'a, 't>(
@@ -5098,6 +5999,13 @@ impl<'a, 't> TryStatementWithoutHandler<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TryStatementWithoutHandler<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TryStatementWithoutFinalizer<'a, 't>(
@@ -5125,6 +6033,13 @@ impl<'a, 't> TryStatementWithoutFinalizer<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_HANDLER)
                 as *const Option<Box<'a, CatchClause<'a>>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TryStatementWithoutFinalizer<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -5163,6 +6078,13 @@ impl<'a, 't> CatchClauseWithoutParam<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for CatchClauseWithoutParam<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct CatchClauseWithoutBody<'a, 't>(
@@ -5193,6 +6115,13 @@ impl<'a, 't> CatchClauseWithoutBody<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for CatchClauseWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_CATCH_PARAMETER_SPAN: usize = offset_of!(CatchParameter, span);
 pub(crate) const OFFSET_CATCH_PARAMETER_PATTERN: usize = offset_of!(CatchParameter, pattern);
 
@@ -5207,6 +6136,13 @@ impl<'a, 't> CatchParameterWithoutPattern<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CATCH_PARAMETER_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for CatchParameterWithoutPattern<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -5237,6 +6173,13 @@ impl<'a, 't> BindingPatternWithoutKind<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for BindingPatternWithoutKind<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BindingPatternWithoutTypeAnnotation<'a, 't>(
@@ -5256,6 +6199,13 @@ impl<'a, 't> BindingPatternWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn optional(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PATTERN_OPTIONAL) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for BindingPatternWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -5284,6 +6234,13 @@ impl<'a, 't> AssignmentPatternWithoutLeft<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for AssignmentPatternWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AssignmentPatternWithoutRight<'a, 't>(
@@ -5303,6 +6260,13 @@ impl<'a, 't> AssignmentPatternWithoutRight<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_PATTERN_LEFT)
                 as *const BindingPattern<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for AssignmentPatternWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -5332,6 +6296,13 @@ impl<'a, 't> ObjectPatternWithoutProperties<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ObjectPatternWithoutProperties<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ObjectPatternWithoutRest<'a, 't>(
@@ -5351,6 +6322,13 @@ impl<'a, 't> ObjectPatternWithoutRest<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_OBJECT_PATTERN_PROPERTIES)
                 as *const Vec<'a, BindingProperty<'a>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ObjectPatternWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -5392,6 +6370,13 @@ impl<'a, 't> BindingPropertyWithoutKey<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for BindingPropertyWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct BindingPropertyWithoutValue<'a, 't>(
@@ -5423,6 +6408,13 @@ impl<'a, 't> BindingPropertyWithoutValue<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for BindingPropertyWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_ARRAY_PATTERN_SPAN: usize = offset_of!(ArrayPattern, span);
 pub(crate) const OFFSET_ARRAY_PATTERN_ELEMENTS: usize = offset_of!(ArrayPattern, elements);
 pub(crate) const OFFSET_ARRAY_PATTERN_REST: usize = offset_of!(ArrayPattern, rest);
@@ -5449,6 +6441,13 @@ impl<'a, 't> ArrayPatternWithoutElements<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ArrayPatternWithoutElements<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrayPatternWithoutRest<'a, 't>(
@@ -5471,6 +6470,13 @@ impl<'a, 't> ArrayPatternWithoutRest<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ArrayPatternWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_BINDING_REST_ELEMENT_SPAN: usize = offset_of!(BindingRestElement, span);
 pub(crate) const OFFSET_BINDING_REST_ELEMENT_ARGUMENT: usize =
     offset_of!(BindingRestElement, argument);
@@ -5486,6 +6492,13 @@ impl<'a, 't> BindingRestElementWithoutArgument<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_REST_ELEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for BindingRestElementWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -5583,6 +6596,13 @@ impl<'a, 't> FunctionWithoutId<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for FunctionWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FunctionWithoutTypeParameters<'a, 't>(
@@ -5661,6 +6681,13 @@ impl<'a, 't> FunctionWithoutTypeParameters<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for FunctionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -5745,6 +6772,13 @@ impl<'a, 't> FunctionWithoutThisParam<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for FunctionWithoutThisParam<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FunctionWithoutParams<'a, 't>(
@@ -5823,6 +6857,13 @@ impl<'a, 't> FunctionWithoutParams<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for FunctionWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -5907,6 +6948,13 @@ impl<'a, 't> FunctionWithoutReturnType<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for FunctionWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FunctionWithoutBody<'a, 't>(
@@ -5988,6 +7036,13 @@ impl<'a, 't> FunctionWithoutBody<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for FunctionWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_FORMAL_PARAMETERS_SPAN: usize = offset_of!(FormalParameters, span);
 pub(crate) const OFFSET_FORMAL_PARAMETERS_KIND: usize = offset_of!(FormalParameters, kind);
 pub(crate) const OFFSET_FORMAL_PARAMETERS_ITEMS: usize = offset_of!(FormalParameters, items);
@@ -6023,6 +7078,13 @@ impl<'a, 't> FormalParametersWithoutItems<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for FormalParametersWithoutItems<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FormalParametersWithoutRest<'a, 't>(
@@ -6050,6 +7112,13 @@ impl<'a, 't> FormalParametersWithoutRest<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETERS_ITEMS)
                 as *const Vec<'a, FormalParameter<'a>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for FormalParametersWithoutRest<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -6102,6 +7171,13 @@ impl<'a, 't> FormalParameterWithoutDecorators<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for FormalParameterWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FormalParameterWithoutPattern<'a, 't>(
@@ -6142,6 +7218,13 @@ impl<'a, 't> FormalParameterWithoutPattern<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for FormalParameterWithoutPattern<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_FUNCTION_BODY_SPAN: usize = offset_of!(FunctionBody, span);
 pub(crate) const OFFSET_FUNCTION_BODY_DIRECTIVES: usize = offset_of!(FunctionBody, directives);
 pub(crate) const OFFSET_FUNCTION_BODY_STATEMENTS: usize = offset_of!(FunctionBody, statements);
@@ -6168,6 +7251,13 @@ impl<'a, 't> FunctionBodyWithoutDirectives<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for FunctionBodyWithoutDirectives<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct FunctionBodyWithoutStatements<'a, 't>(
@@ -6187,6 +7277,13 @@ impl<'a, 't> FunctionBodyWithoutStatements<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_DIRECTIVES)
                 as *const Vec<'a, Directive<'a>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for FunctionBodyWithoutStatements<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -6270,6 +7367,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrowFunctionExpressionWithoutParams<'a, 't>(
@@ -6330,6 +7434,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutParams<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -6396,6 +7507,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutReturnType<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ArrowFunctionExpressionWithoutBody<'a, 't>(
@@ -6459,6 +7577,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutBody<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ArrowFunctionExpressionWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_YIELD_EXPRESSION_SPAN: usize = offset_of!(YieldExpression, span);
 pub(crate) const OFFSET_YIELD_EXPRESSION_DELEGATE: usize = offset_of!(YieldExpression, delegate);
 pub(crate) const OFFSET_YIELD_EXPRESSION_ARGUMENT: usize = offset_of!(YieldExpression, argument);
@@ -6479,6 +7604,13 @@ impl<'a, 't> YieldExpressionWithoutArgument<'a, 't> {
     #[inline]
     pub fn delegate(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_YIELD_EXPRESSION_DELEGATE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for YieldExpressionWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -6575,6 +7707,13 @@ impl<'a, 't> ClassWithoutDecorators<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ClassWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ClassWithoutId<'a, 't>(pub(crate) *const Class<'a>, pub(crate) PhantomData<&'t ()>);
@@ -6648,6 +7787,13 @@ impl<'a, 't> ClassWithoutId<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -6726,6 +7872,13 @@ impl<'a, 't> ClassWithoutTypeParameters<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -6808,6 +7961,13 @@ impl<'a, 't> ClassWithoutSuperClass<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ClassWithoutSuperClass<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ClassWithoutSuperTypeParameters<'a, 't>(
@@ -6883,6 +8043,13 @@ impl<'a, 't> ClassWithoutSuperTypeParameters<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassWithoutSuperTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -6964,6 +8131,13 @@ impl<'a, 't> ClassWithoutImplements<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ClassWithoutImplements<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ClassWithoutBody<'a, 't>(pub(crate) *const Class<'a>, pub(crate) PhantomData<&'t ()>);
@@ -7042,6 +8216,13 @@ impl<'a, 't> ClassWithoutBody<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ClassWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_CLASS_BODY_SPAN: usize = offset_of!(ClassBody, span);
 pub(crate) const OFFSET_CLASS_BODY_BODY: usize = offset_of!(ClassBody, body);
 
@@ -7056,6 +8237,13 @@ impl<'a, 't> ClassBodyWithoutBody<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ClassBodyWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -7147,6 +8335,13 @@ impl<'a, 't> MethodDefinitionWithoutDecorators<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for MethodDefinitionWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct MethodDefinitionWithoutKey<'a, 't>(
@@ -7221,6 +8416,13 @@ impl<'a, 't> MethodDefinitionWithoutKey<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for MethodDefinitionWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct MethodDefinitionWithoutValue<'a, 't>(
@@ -7291,6 +8493,13 @@ impl<'a, 't> MethodDefinitionWithoutValue<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_ACCESSIBILITY)
                 as *const Option<TSAccessibility>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for MethodDefinitionWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -7407,6 +8616,13 @@ impl<'a, 't> PropertyDefinitionWithoutDecorators<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for PropertyDefinitionWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PropertyDefinitionWithoutKey<'a, 't>(
@@ -7493,6 +8709,13 @@ impl<'a, 't> PropertyDefinitionWithoutKey<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
                 as *const Option<TSAccessibility>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for PropertyDefinitionWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -7584,6 +8807,13 @@ impl<'a, 't> PropertyDefinitionWithoutValue<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for PropertyDefinitionWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct PropertyDefinitionWithoutTypeAnnotation<'a, 't>(
@@ -7672,6 +8902,13 @@ impl<'a, 't> PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_STATIC_BLOCK_SPAN: usize = offset_of!(StaticBlock, span);
 pub(crate) const OFFSET_STATIC_BLOCK_BODY: usize = offset_of!(StaticBlock, body);
 pub(crate) const OFFSET_STATIC_BLOCK_SCOPE_ID: usize = offset_of!(StaticBlock, scope_id);
@@ -7695,6 +8932,13 @@ impl<'a, 't> StaticBlockWithoutBody<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_STATIC_BLOCK_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for StaticBlockWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -7780,6 +9024,13 @@ impl<'a, 't> AccessorPropertyWithoutDecorators<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for AccessorPropertyWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AccessorPropertyWithoutKey<'a, 't>(
@@ -7846,6 +9097,13 @@ impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
                 as *const Option<TSAccessibility>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for AccessorPropertyWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -7917,6 +9175,13 @@ impl<'a, 't> AccessorPropertyWithoutValue<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for AccessorPropertyWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct AccessorPropertyWithoutTypeAnnotation<'a, 't>(
@@ -7985,6 +9250,13 @@ impl<'a, 't> AccessorPropertyWithoutTypeAnnotation<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for AccessorPropertyWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_IMPORT_EXPRESSION_SPAN: usize = offset_of!(ImportExpression, span);
 pub(crate) const OFFSET_IMPORT_EXPRESSION_SOURCE: usize = offset_of!(ImportExpression, source);
 pub(crate) const OFFSET_IMPORT_EXPRESSION_ARGUMENTS: usize =
@@ -8012,6 +9284,13 @@ impl<'a, 't> ImportExpressionWithoutSource<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ImportExpressionWithoutSource<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportExpressionWithoutArguments<'a, 't>(
@@ -8030,6 +9309,13 @@ impl<'a, 't> ImportExpressionWithoutArguments<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_SOURCE) as *const Expression<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -8080,6 +9366,13 @@ impl<'a, 't> ImportDeclarationWithoutSpecifiers<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ImportDeclarationWithoutSpecifiers<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportDeclarationWithoutSource<'a, 't>(
@@ -8115,6 +9408,13 @@ impl<'a, 't> ImportDeclarationWithoutSource<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_IMPORT_KIND)
                 as *const ImportOrExportKind)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -8156,6 +9456,13 @@ impl<'a, 't> ImportDeclarationWithoutWithClause<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ImportDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_IMPORT_SPECIFIER_SPAN: usize = offset_of!(ImportSpecifier, span);
 pub(crate) const OFFSET_IMPORT_SPECIFIER_IMPORTED: usize = offset_of!(ImportSpecifier, imported);
 pub(crate) const OFFSET_IMPORT_SPECIFIER_LOCAL: usize = offset_of!(ImportSpecifier, local);
@@ -8192,6 +9499,13 @@ impl<'a, 't> ImportSpecifierWithoutImported<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ImportSpecifierWithoutImported<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportSpecifierWithoutLocal<'a, 't>(
@@ -8222,6 +9536,13 @@ impl<'a, 't> ImportSpecifierWithoutLocal<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ImportSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_IMPORT_DEFAULT_SPECIFIER_SPAN: usize =
     offset_of!(ImportDefaultSpecifier, span);
 pub(crate) const OFFSET_IMPORT_DEFAULT_SPECIFIER_LOCAL: usize =
@@ -8243,6 +9564,13 @@ impl<'a, 't> ImportDefaultSpecifierWithoutLocal<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ImportDefaultSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_IMPORT_NAMESPACE_SPECIFIER_SPAN: usize =
     offset_of!(ImportNamespaceSpecifier, span);
 pub(crate) const OFFSET_IMPORT_NAMESPACE_SPECIFIER_LOCAL: usize =
@@ -8261,6 +9589,13 @@ impl<'a, 't> ImportNamespaceSpecifierWithoutLocal<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_NAMESPACE_SPECIFIER_SPAN) as *const Span)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportNamespaceSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -8291,6 +9626,13 @@ impl<'a, 't> WithClauseWithoutAttributesKeyword<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for WithClauseWithoutAttributesKeyword<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct WithClauseWithoutWithEntries<'a, 't>(
@@ -8310,6 +9652,13 @@ impl<'a, 't> WithClauseWithoutWithEntries<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_WITH_CLAUSE_ATTRIBUTES_KEYWORD)
                 as *const IdentifierName<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for WithClauseWithoutWithEntries<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -8338,6 +9687,13 @@ impl<'a, 't> ImportAttributeWithoutKey<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ImportAttributeWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ImportAttributeWithoutValue<'a, 't>(
@@ -8357,6 +9713,13 @@ impl<'a, 't> ImportAttributeWithoutValue<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_ATTRIBUTE_KEY)
                 as *const ImportAttributeKey<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ImportAttributeWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -8421,6 +9784,13 @@ impl<'a, 't> ExportNamedDeclarationWithoutDeclaration<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutDeclaration<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportNamedDeclarationWithoutSpecifiers<'a, 't>(
@@ -8466,6 +9836,13 @@ impl<'a, 't> ExportNamedDeclarationWithoutSpecifiers<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
                 as *const Option<Box<'a, WithClause<'a>>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutSpecifiers<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -8517,6 +9894,13 @@ impl<'a, 't> ExportNamedDeclarationWithoutSource<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportNamedDeclarationWithoutWithClause<'a, 't>(
@@ -8565,6 +9949,13 @@ impl<'a, 't> ExportNamedDeclarationWithoutWithClause<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_SPAN: usize =
     offset_of!(ExportDefaultDeclaration, span);
 pub(crate) const OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION: usize =
@@ -8596,6 +9987,13 @@ impl<'a, 't> ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutDeclaration<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportDefaultDeclarationWithoutExported<'a, 't>(
@@ -8617,6 +10015,13 @@ impl<'a, 't> ExportDefaultDeclarationWithoutExported<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION)
                 as *const ExportDefaultDeclarationKind<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportDefaultDeclarationWithoutExported<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -8668,6 +10073,13 @@ impl<'a, 't> ExportAllDeclarationWithoutExported<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ExportAllDeclarationWithoutExported<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportAllDeclarationWithoutSource<'a, 't>(
@@ -8703,6 +10115,13 @@ impl<'a, 't> ExportAllDeclarationWithoutSource<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_EXPORT_KIND)
                 as *const ImportOrExportKind)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportAllDeclarationWithoutSource<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -8744,6 +10163,13 @@ impl<'a, 't> ExportAllDeclarationWithoutWithClause<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ExportAllDeclarationWithoutWithClause<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_EXPORT_SPECIFIER_SPAN: usize = offset_of!(ExportSpecifier, span);
 pub(crate) const OFFSET_EXPORT_SPECIFIER_LOCAL: usize = offset_of!(ExportSpecifier, local);
 pub(crate) const OFFSET_EXPORT_SPECIFIER_EXPORTED: usize = offset_of!(ExportSpecifier, exported);
@@ -8780,6 +10206,13 @@ impl<'a, 't> ExportSpecifierWithoutLocal<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for ExportSpecifierWithoutLocal<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct ExportSpecifierWithoutExported<'a, 't>(
@@ -8807,6 +10240,13 @@ impl<'a, 't> ExportSpecifierWithoutExported<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_SPECIFIER_EXPORT_KIND)
                 as *const ImportOrExportKind)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for ExportSpecifierWithoutExported<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -8847,6 +10287,13 @@ impl<'a, 't> JSXElementWithoutOpeningElement<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for JSXElementWithoutOpeningElement<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXElementWithoutClosingElement<'a, 't>(
@@ -8877,6 +10324,13 @@ impl<'a, 't> JSXElementWithoutClosingElement<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for JSXElementWithoutClosingElement<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXElementWithoutChildren<'a, 't>(
@@ -8904,6 +10358,13 @@ impl<'a, 't> JSXElementWithoutChildren<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
                 as *const Option<Box<'a, JSXClosingElement<'a>>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXElementWithoutChildren<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -8953,6 +10414,13 @@ impl<'a, 't> JSXOpeningElementWithoutName<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for JSXOpeningElementWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXOpeningElementWithoutAttributes<'a, 't>(
@@ -8987,6 +10455,13 @@ impl<'a, 't> JSXOpeningElementWithoutAttributes<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXOpeningElementWithoutAttributes<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9027,6 +10502,13 @@ impl<'a, 't> JSXOpeningElementWithoutTypeParameters<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for JSXOpeningElementWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_JSX_CLOSING_ELEMENT_SPAN: usize = offset_of!(JSXClosingElement, span);
 pub(crate) const OFFSET_JSX_CLOSING_ELEMENT_NAME: usize = offset_of!(JSXClosingElement, name);
 
@@ -9041,6 +10523,13 @@ impl<'a, 't> JSXClosingElementWithoutName<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_CLOSING_ELEMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXClosingElementWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9081,6 +10570,13 @@ impl<'a, 't> JSXFragmentWithoutChildren<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for JSXFragmentWithoutChildren<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_JSX_NAMESPACED_NAME_SPAN: usize = offset_of!(JSXNamespacedName, span);
 pub(crate) const OFFSET_JSX_NAMESPACED_NAME_NAMESPACE: usize =
     offset_of!(JSXNamespacedName, namespace);
@@ -9109,6 +10605,13 @@ impl<'a, 't> JSXNamespacedNameWithoutNamespace<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for JSXNamespacedNameWithoutNamespace<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXNamespacedNameWithoutProperty<'a, 't>(
@@ -9128,6 +10631,13 @@ impl<'a, 't> JSXNamespacedNameWithoutProperty<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_JSX_NAMESPACED_NAME_NAMESPACE)
                 as *const JSXIdentifier<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXNamespacedNameWithoutProperty<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9159,6 +10669,13 @@ impl<'a, 't> JSXMemberExpressionWithoutObject<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for JSXMemberExpressionWithoutObject<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXMemberExpressionWithoutProperty<'a, 't>(
@@ -9181,6 +10698,13 @@ impl<'a, 't> JSXMemberExpressionWithoutProperty<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for JSXMemberExpressionWithoutProperty<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_JSX_EXPRESSION_CONTAINER_SPAN: usize =
     offset_of!(JSXExpressionContainer, span);
 pub(crate) const OFFSET_JSX_EXPRESSION_CONTAINER_EXPRESSION: usize =
@@ -9199,6 +10723,13 @@ impl<'a, 't> JSXExpressionContainerWithoutExpression<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_JSX_EXPRESSION_CONTAINER_SPAN) as *const Span)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXExpressionContainerWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9228,6 +10759,13 @@ impl<'a, 't> JSXAttributeWithoutName<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for JSXAttributeWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct JSXAttributeWithoutValue<'a, 't>(
@@ -9249,6 +10787,13 @@ impl<'a, 't> JSXAttributeWithoutValue<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for JSXAttributeWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_JSX_SPREAD_ATTRIBUTE_SPAN: usize = offset_of!(JSXSpreadAttribute, span);
 pub(crate) const OFFSET_JSX_SPREAD_ATTRIBUTE_ARGUMENT: usize =
     offset_of!(JSXSpreadAttribute, argument);
@@ -9267,6 +10812,13 @@ impl<'a, 't> JSXSpreadAttributeWithoutArgument<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for JSXSpreadAttributeWithoutArgument<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_JSX_SPREAD_CHILD_SPAN: usize = offset_of!(JSXSpreadChild, span);
 pub(crate) const OFFSET_JSX_SPREAD_CHILD_EXPRESSION: usize = offset_of!(JSXSpreadChild, expression);
 
@@ -9281,6 +10833,13 @@ impl<'a, 't> JSXSpreadChildWithoutExpression<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JSX_SPREAD_CHILD_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for JSXSpreadChildWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9305,6 +10864,13 @@ impl<'a, 't> TSThisParameterWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn this_span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_THIS_PARAMETER_THIS_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSThisParameterWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9356,6 +10922,13 @@ impl<'a, 't> TSEnumDeclarationWithoutId<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSEnumDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSEnumDeclarationWithoutMembers<'a, 't>(
@@ -9396,6 +10969,13 @@ impl<'a, 't> TSEnumDeclarationWithoutMembers<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSEnumDeclarationWithoutMembers<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_ENUM_MEMBER_SPAN: usize = offset_of!(TSEnumMember, span);
 pub(crate) const OFFSET_TS_ENUM_MEMBER_ID: usize = offset_of!(TSEnumMember, id);
 pub(crate) const OFFSET_TS_ENUM_MEMBER_INITIALIZER: usize = offset_of!(TSEnumMember, initializer);
@@ -9422,6 +11002,13 @@ impl<'a, 't> TSEnumMemberWithoutId<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSEnumMemberWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSEnumMemberWithoutInitializer<'a, 't>(
@@ -9443,6 +11030,13 @@ impl<'a, 't> TSEnumMemberWithoutInitializer<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSEnumMemberWithoutInitializer<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_TYPE_ANNOTATION_SPAN: usize = offset_of!(TSTypeAnnotation, span);
 pub(crate) const OFFSET_TS_TYPE_ANNOTATION_TYPE_ANNOTATION: usize =
     offset_of!(TSTypeAnnotation, type_annotation);
@@ -9461,6 +11055,13 @@ impl<'a, 't> TSTypeAnnotationWithoutTypeAnnotation<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSTypeAnnotationWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_LITERAL_TYPE_SPAN: usize = offset_of!(TSLiteralType, span);
 pub(crate) const OFFSET_TS_LITERAL_TYPE_LITERAL: usize = offset_of!(TSLiteralType, literal);
 
@@ -9475,6 +11076,13 @@ impl<'a, 't> TSLiteralTypeWithoutLiteral<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_LITERAL_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSLiteralTypeWithoutLiteral<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9535,6 +11143,13 @@ impl<'a, 't> TSConditionalTypeWithoutCheckType<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSConditionalTypeWithoutCheckType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConditionalTypeWithoutExtendsType<'a, 't>(
@@ -9577,6 +11192,13 @@ impl<'a, 't> TSConditionalTypeWithoutExtendsType<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConditionalTypeWithoutExtendsType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9626,6 +11248,13 @@ impl<'a, 't> TSConditionalTypeWithoutTrueType<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSConditionalTypeWithoutTrueType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSConditionalTypeWithoutFalseType<'a, 't>(
@@ -9671,6 +11300,13 @@ impl<'a, 't> TSConditionalTypeWithoutFalseType<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSConditionalTypeWithoutFalseType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_UNION_TYPE_SPAN: usize = offset_of!(TSUnionType, span);
 pub(crate) const OFFSET_TS_UNION_TYPE_TYPES: usize = offset_of!(TSUnionType, types);
 
@@ -9685,6 +11321,13 @@ impl<'a, 't> TSUnionTypeWithoutTypes<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_UNION_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSUnionTypeWithoutTypes<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9705,6 +11348,13 @@ impl<'a, 't> TSIntersectionTypeWithoutTypes<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSIntersectionTypeWithoutTypes<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_PARENTHESIZED_TYPE_SPAN: usize = offset_of!(TSParenthesizedType, span);
 pub(crate) const OFFSET_TS_PARENTHESIZED_TYPE_TYPE_ANNOTATION: usize =
     offset_of!(TSParenthesizedType, type_annotation);
@@ -9720,6 +11370,13 @@ impl<'a, 't> TSParenthesizedTypeWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_PARENTHESIZED_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSParenthesizedTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9750,6 +11407,13 @@ impl<'a, 't> TSTypeOperatorWithoutTypeAnnotation<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSTypeOperatorWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_ARRAY_TYPE_SPAN: usize = offset_of!(TSArrayType, span);
 pub(crate) const OFFSET_TS_ARRAY_TYPE_ELEMENT_TYPE: usize = offset_of!(TSArrayType, element_type);
 
@@ -9764,6 +11428,13 @@ impl<'a, 't> TSArrayTypeWithoutElementType<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ARRAY_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSArrayTypeWithoutElementType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9795,6 +11466,13 @@ impl<'a, 't> TSIndexedAccessTypeWithoutObjectType<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSIndexedAccessTypeWithoutObjectType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSIndexedAccessTypeWithoutIndexType<'a, 't>(
@@ -9817,6 +11495,13 @@ impl<'a, 't> TSIndexedAccessTypeWithoutIndexType<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSIndexedAccessTypeWithoutIndexType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_TUPLE_TYPE_SPAN: usize = offset_of!(TSTupleType, span);
 pub(crate) const OFFSET_TS_TUPLE_TYPE_ELEMENT_TYPES: usize = offset_of!(TSTupleType, element_types);
 
@@ -9831,6 +11516,13 @@ impl<'a, 't> TSTupleTypeWithoutElementTypes<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TUPLE_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTupleTypeWithoutElementTypes<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9870,6 +11562,13 @@ impl<'a, 't> TSNamedTupleMemberWithoutElementType<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSNamedTupleMemberWithoutElementType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSNamedTupleMemberWithoutLabel<'a, 't>(
@@ -9899,6 +11598,13 @@ impl<'a, 't> TSNamedTupleMemberWithoutLabel<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSNamedTupleMemberWithoutLabel<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_OPTIONAL_TYPE_SPAN: usize = offset_of!(TSOptionalType, span);
 pub(crate) const OFFSET_TS_OPTIONAL_TYPE_TYPE_ANNOTATION: usize =
     offset_of!(TSOptionalType, type_annotation);
@@ -9917,6 +11623,13 @@ impl<'a, 't> TSOptionalTypeWithoutTypeAnnotation<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSOptionalTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_REST_TYPE_SPAN: usize = offset_of!(TSRestType, span);
 pub(crate) const OFFSET_TS_REST_TYPE_TYPE_ANNOTATION: usize =
     offset_of!(TSRestType, type_annotation);
@@ -9932,6 +11645,13 @@ impl<'a, 't> TSRestTypeWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_REST_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSRestTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -9962,6 +11682,13 @@ impl<'a, 't> TSTypeReferenceWithoutTypeName<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSTypeReferenceWithoutTypeName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeReferenceWithoutTypeParameters<'a, 't>(
@@ -9981,6 +11708,13 @@ impl<'a, 't> TSTypeReferenceWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_REFERENCE_TYPE_NAME)
                 as *const TSTypeName<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeReferenceWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -10010,6 +11744,13 @@ impl<'a, 't> TSQualifiedNameWithoutLeft<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSQualifiedNameWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSQualifiedNameWithoutRight<'a, 't>(
@@ -10028,6 +11769,13 @@ impl<'a, 't> TSQualifiedNameWithoutRight<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_QUALIFIED_NAME_LEFT) as *const TSTypeName<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSQualifiedNameWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -10050,6 +11798,13 @@ impl<'a, 't> TSTypeParameterInstantiationWithoutParams<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_INSTANTIATION_SPAN)
                 as *const Span)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeParameterInstantiationWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -10107,6 +11862,13 @@ impl<'a, 't> TSTypeParameterWithoutName<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSTypeParameterWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeParameterWithoutConstraint<'a, 't>(
@@ -10149,6 +11911,13 @@ impl<'a, 't> TSTypeParameterWithoutConstraint<'a, 't> {
     #[inline]
     pub fn r#const(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeParameterWithoutConstraint<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -10197,6 +11966,13 @@ impl<'a, 't> TSTypeParameterWithoutDefault<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSTypeParameterWithoutDefault<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_DECLARATION_SPAN: usize =
     offset_of!(TSTypeParameterDeclaration, span);
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_DECLARATION_PARAMS: usize =
@@ -10215,6 +11991,13 @@ impl<'a, 't> TSTypeParameterDeclarationWithoutParams<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_DECLARATION_SPAN) as *const Span)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeParameterDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -10278,6 +12061,13 @@ impl<'a, 't> TSTypeAliasDeclarationWithoutId<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeAliasDeclarationWithoutTypeParameters<'a, 't>(
@@ -10322,6 +12112,13 @@ impl<'a, 't> TSTypeAliasDeclarationWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -10372,6 +12169,13 @@ impl<'a, 't> TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_SPAN: usize = offset_of!(TSClassImplements, span);
 pub(crate) const OFFSET_TS_CLASS_IMPLEMENTS_EXPRESSION: usize =
     offset_of!(TSClassImplements, expression);
@@ -10400,6 +12204,13 @@ impl<'a, 't> TSClassImplementsWithoutExpression<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSClassImplementsWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSClassImplementsWithoutTypeParameters<'a, 't>(
@@ -10419,6 +12230,13 @@ impl<'a, 't> TSClassImplementsWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_CLASS_IMPLEMENTS_EXPRESSION)
                 as *const TSTypeName<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSClassImplementsWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -10491,6 +12309,13 @@ impl<'a, 't> TSInterfaceDeclarationWithoutId<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInterfaceDeclarationWithoutExtends<'a, 't>(
@@ -10543,6 +12368,13 @@ impl<'a, 't> TSInterfaceDeclarationWithoutExtends<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutExtends<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -10601,6 +12433,13 @@ impl<'a, 't> TSInterfaceDeclarationWithoutTypeParameters<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInterfaceDeclarationWithoutBody<'a, 't>(
@@ -10656,6 +12495,13 @@ impl<'a, 't> TSInterfaceDeclarationWithoutBody<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_INTERFACE_BODY_SPAN: usize = offset_of!(TSInterfaceBody, span);
 pub(crate) const OFFSET_TS_INTERFACE_BODY_BODY: usize = offset_of!(TSInterfaceBody, body);
 
@@ -10670,6 +12516,13 @@ impl<'a, 't> TSInterfaceBodyWithoutBody<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_BODY_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceBodyWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -10727,6 +12580,13 @@ impl<'a, 't> TSPropertySignatureWithoutKey<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSPropertySignatureWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSPropertySignatureWithoutTypeAnnotation<'a, 't>(
@@ -10770,12 +12630,20 @@ impl<'a, 't> TSPropertySignatureWithoutTypeAnnotation<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSPropertySignatureWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_SPAN: usize = offset_of!(TSIndexSignature, span);
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_PARAMETERS: usize =
     offset_of!(TSIndexSignature, parameters);
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_TYPE_ANNOTATION: usize =
     offset_of!(TSIndexSignature, type_annotation);
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_READONLY: usize = offset_of!(TSIndexSignature, readonly);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_STATIC: usize = offset_of!(TSIndexSignature, r#static);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -10801,6 +12669,18 @@ impl<'a, 't> TSIndexSignatureWithoutParameters<'a, 't> {
     #[inline]
     pub fn readonly(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_STATIC) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSIndexSignatureWithoutParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -10829,138 +12709,30 @@ impl<'a, 't> TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
     pub fn readonly(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_READONLY) as *const bool) }
     }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_STATIC) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
 }
 
 pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN: usize =
     offset_of!(TSCallSignatureDeclaration, span);
+pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS: usize =
+    offset_of!(TSCallSignatureDeclaration, type_parameters);
 pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM: usize =
     offset_of!(TSCallSignatureDeclaration, this_param);
 pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS: usize =
     offset_of!(TSCallSignatureDeclaration, params);
 pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE: usize =
     offset_of!(TSCallSignatureDeclaration, return_type);
-pub(crate) const OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS: usize =
-    offset_of!(TSCallSignatureDeclaration, type_parameters);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSCallSignatureDeclarationWithoutThisParam<'a, 't>(
-    pub(crate) *const TSCallSignatureDeclaration<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSCallSignatureDeclarationWithoutThisParam<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSCallSignatureDeclarationWithoutParams<'a, 't>(
-    pub(crate) *const TSCallSignatureDeclaration<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSCallSignatureDeclarationWithoutParams<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSCallSignatureDeclarationWithoutReturnType<'a, 't>(
-    pub(crate) *const TSCallSignatureDeclaration<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSCallSignatureDeclarationWithoutReturnType<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -11002,6 +12774,154 @@ impl<'a, 't> TSCallSignatureDeclarationWithoutTypeParameters<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSCallSignatureDeclarationWithoutThisParam<'a, 't>(
+    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSCallSignatureDeclarationWithoutThisParam<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutThisParam<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSCallSignatureDeclarationWithoutParams<'a, 't>(
+    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSCallSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
+                as *const Option<TSThisParameter<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSCallSignatureDeclarationWithoutReturnType<'a, 't>(
+    pub(crate) *const TSCallSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSCallSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
+                as *const Option<TSThisParameter<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CALL_SIGNATURE_DECLARATION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSCallSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_SPAN: usize = offset_of!(TSMethodSignature, span);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_KEY: usize = offset_of!(TSMethodSignature, key);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_COMPUTED: usize =
@@ -11009,13 +12929,13 @@ pub(crate) const OFFSET_TS_METHOD_SIGNATURE_COMPUTED: usize =
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_OPTIONAL: usize =
     offset_of!(TSMethodSignature, optional);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_KIND: usize = offset_of!(TSMethodSignature, kind);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS: usize =
+    offset_of!(TSMethodSignature, type_parameters);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM: usize =
     offset_of!(TSMethodSignature, this_param);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_PARAMS: usize = offset_of!(TSMethodSignature, params);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE: usize =
     offset_of!(TSMethodSignature, return_type);
-pub(crate) const OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS: usize =
-    offset_of!(TSMethodSignature, type_parameters);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID: usize =
     offset_of!(TSMethodSignature, scope_id);
 
@@ -11051,6 +12971,14 @@ impl<'a, 't> TSMethodSignatureWithoutKey<'a, 't> {
     }
 
     #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
@@ -11075,14 +13003,6 @@ impl<'a, 't> TSMethodSignatureWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
     pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
@@ -11091,216 +13011,10 @@ impl<'a, 't> TSMethodSignatureWithoutKey<'a, 't> {
     }
 }
 
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSMethodSignatureWithoutThisParam<'a, 't>(
-    pub(crate) *const TSMethodSignature<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSMethodSignatureWithoutThisParam<'a, 't> {
+impl<'a, 't> GetAddress for TSMethodSignatureWithoutKey<'a, 't> {
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn key(self) -> &'t PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t TSMethodSignatureKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
-                as *const TSMethodSignatureKind)
-        }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSMethodSignatureWithoutParams<'a, 't>(
-    pub(crate) *const TSMethodSignature<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSMethodSignatureWithoutParams<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn key(self) -> &'t PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t TSMethodSignatureKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
-                as *const TSMethodSignatureKind)
-        }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
-                as *const Option<Box<'a, TSThisParameter<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSMethodSignatureWithoutReturnType<'a, 't>(
-    pub(crate) *const TSMethodSignature<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSMethodSignatureWithoutReturnType<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn key(self) -> &'t PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t TSMethodSignatureKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
-                as *const TSMethodSignatureKind)
-        }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
-                as *const Option<Box<'a, TSThisParameter<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -11375,98 +13089,257 @@ impl<'a, 't> TSMethodSignatureWithoutTypeParameters<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN: usize =
-    offset_of!(TSConstructSignatureDeclaration, span);
-pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS: usize =
-    offset_of!(TSConstructSignatureDeclaration, params);
-pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE: usize =
-    offset_of!(TSConstructSignatureDeclaration, return_type);
-pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS: usize =
-    offset_of!(TSConstructSignatureDeclaration, type_parameters);
-pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID: usize =
-    offset_of!(TSConstructSignatureDeclaration, scope_id);
+impl<'a, 't> GetAddress for TSMethodSignatureWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSConstructSignatureDeclarationWithoutParams<'a, 't>(
-    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+pub struct TSMethodSignatureWithoutThisParam<'a, 't>(
+    pub(crate) *const TSMethodSignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSConstructSignatureDeclarationWithoutParams<'a, 't> {
+impl<'a, 't> TSMethodSignatureWithoutThisParam<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN)
-                as *const Span)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
         }
     }
 
     #[inline]
-    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSMethodSignatureKind {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
+                as *const TSMethodSignatureKind)
         }
     }
 
     #[inline]
     pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSConstructSignatureDeclarationWithoutReturnType<'a, 't>(
-    pub(crate) *const TSConstructSignatureDeclaration<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSConstructSignatureDeclarationWithoutReturnType<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN)
-                as *const Span)
         }
     }
 
     #[inline]
     pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
                 as *const Box<'a, FormalParameters<'a>>)
         }
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
 
     #[inline]
     pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
     }
 }
+
+impl<'a, 't> GetAddress for TSMethodSignatureWithoutThisParam<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMethodSignatureWithoutParams<'a, 't>(
+    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMethodSignatureWithoutParams<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSMethodSignatureKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
+                as *const TSMethodSignatureKind)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMethodSignatureWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMethodSignatureWithoutReturnType<'a, 't>(
+    pub(crate) *const TSMethodSignature<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMethodSignatureWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t TSMethodSignatureKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_KIND)
+                as *const TSMethodSignatureKind)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMethodSignatureWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN: usize =
+    offset_of!(TSConstructSignatureDeclaration, span);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS: usize =
+    offset_of!(TSConstructSignatureDeclaration, type_parameters);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS: usize =
+    offset_of!(TSConstructSignatureDeclaration, params);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE: usize =
+    offset_of!(TSConstructSignatureDeclaration, return_type);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSConstructSignatureDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -11509,6 +13382,109 @@ impl<'a, 't> TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSConstructSignatureDeclarationWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructSignatureDeclarationWithoutParams<'a, 't>(
+    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConstructSignatureDeclarationWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructSignatureDeclarationWithoutReturnType<'a, 't>(
+    pub(crate) *const TSConstructSignatureDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConstructSignatureDeclarationWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_NAME_SPAN: usize =
     offset_of!(TSIndexSignatureName, span);
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_NAME_NAME: usize =
@@ -11534,6 +13510,13 @@ impl<'a, 't> TSIndexSignatureNameWithoutTypeAnnotation<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_NAME_NAME) as *const Atom<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSIndexSignatureNameWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -11565,6 +13548,13 @@ impl<'a, 't> TSInterfaceHeritageWithoutExpression<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInterfaceHeritageWithoutTypeParameters<'a, 't>(
@@ -11584,6 +13574,13 @@ impl<'a, 't> TSInterfaceHeritageWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_HERITAGE_EXPRESSION)
                 as *const Expression<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceHeritageWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -11621,6 +13618,13 @@ impl<'a, 't> TSTypePredicateWithoutParameterName<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSTypePredicateWithoutParameterName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypePredicateWithoutTypeAnnotation<'a, 't>(
@@ -11645,6 +13649,13 @@ impl<'a, 't> TSTypePredicateWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn asserts(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PREDICATE_ASSERTS) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypePredicateWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -11702,6 +13713,13 @@ impl<'a, 't> TSModuleDeclarationWithoutId<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSModuleDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSModuleDeclarationWithoutBody<'a, 't>(
@@ -11747,6 +13765,13 @@ impl<'a, 't> TSModuleDeclarationWithoutBody<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSModuleDeclarationWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_MODULE_BLOCK_SPAN: usize = offset_of!(TSModuleBlock, span);
 pub(crate) const OFFSET_TS_MODULE_BLOCK_DIRECTIVES: usize = offset_of!(TSModuleBlock, directives);
 pub(crate) const OFFSET_TS_MODULE_BLOCK_BODY: usize = offset_of!(TSModuleBlock, body);
@@ -11773,6 +13798,13 @@ impl<'a, 't> TSModuleBlockWithoutDirectives<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSModuleBlockWithoutDirectives<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSModuleBlockWithoutBody<'a, 't>(
@@ -11795,6 +13827,13 @@ impl<'a, 't> TSModuleBlockWithoutBody<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSModuleBlockWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_TYPE_LITERAL_SPAN: usize = offset_of!(TSTypeLiteral, span);
 pub(crate) const OFFSET_TS_TYPE_LITERAL_MEMBERS: usize = offset_of!(TSTypeLiteral, members);
 
@@ -11809,6 +13848,13 @@ impl<'a, 't> TSTypeLiteralWithoutMembers<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_LITERAL_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeLiteralWithoutMembers<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -11827,6 +13873,13 @@ impl<'a, 't> TSInferTypeWithoutTypeParameter<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INFER_TYPE_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInferTypeWithoutTypeParameter<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -11857,6 +13910,13 @@ impl<'a, 't> TSTypeQueryWithoutExprName<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSTypeQueryWithoutExprName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeQueryWithoutTypeParameters<'a, 't>(
@@ -11876,6 +13936,13 @@ impl<'a, 't> TSTypeQueryWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_QUERY_EXPR_NAME)
                 as *const TSTypeQueryExprName<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeQueryWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -11930,6 +13997,13 @@ impl<'a, 't> TSImportTypeWithoutParameter<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSImportTypeWithoutParameter<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSImportTypeWithoutQualifier<'a, 't>(
@@ -11969,6 +14043,13 @@ impl<'a, 't> TSImportTypeWithoutQualifier<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportTypeWithoutQualifier<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -12014,6 +14095,13 @@ impl<'a, 't> TSImportTypeWithoutAttributes<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSImportTypeWithoutAttributes<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSImportTypeWithoutTypeParameters<'a, 't>(
@@ -12056,6 +14144,13 @@ impl<'a, 't> TSImportTypeWithoutTypeParameters<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSImportTypeWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_IMPORT_ATTRIBUTES_SPAN: usize = offset_of!(TSImportAttributes, span);
 pub(crate) const OFFSET_TS_IMPORT_ATTRIBUTES_ATTRIBUTES_KEYWORD: usize =
     offset_of!(TSImportAttributes, attributes_keyword);
@@ -12084,6 +14179,13 @@ impl<'a, 't> TSImportAttributesWithoutAttributesKeyword<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSImportAttributesWithoutAttributesKeyword<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSImportAttributesWithoutElements<'a, 't>(
@@ -12103,6 +14205,13 @@ impl<'a, 't> TSImportAttributesWithoutElements<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTES_ATTRIBUTES_KEYWORD)
                 as *const IdentifierName<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSImportAttributesWithoutElements<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -12131,6 +14240,13 @@ impl<'a, 't> TSImportAttributeWithoutName<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSImportAttributeWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSImportAttributeWithoutValue<'a, 't>(
@@ -12153,127 +14269,20 @@ impl<'a, 't> TSImportAttributeWithoutValue<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSImportAttributeWithoutValue<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_FUNCTION_TYPE_SPAN: usize = offset_of!(TSFunctionType, span);
+pub(crate) const OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS: usize =
+    offset_of!(TSFunctionType, type_parameters);
 pub(crate) const OFFSET_TS_FUNCTION_TYPE_THIS_PARAM: usize = offset_of!(TSFunctionType, this_param);
 pub(crate) const OFFSET_TS_FUNCTION_TYPE_PARAMS: usize = offset_of!(TSFunctionType, params);
 pub(crate) const OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE: usize =
     offset_of!(TSFunctionType, return_type);
-pub(crate) const OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS: usize =
-    offset_of!(TSFunctionType, type_parameters);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSFunctionTypeWithoutThisParam<'a, 't>(
-    pub(crate) *const TSFunctionType<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSFunctionTypeWithoutThisParam<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
-                as *const Box<'a, TSTypeAnnotation<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSFunctionTypeWithoutParams<'a, 't>(
-    pub(crate) *const TSFunctionType<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSFunctionTypeWithoutParams<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
-                as *const Option<Box<'a, TSThisParameter<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
-                as *const Box<'a, TSTypeAnnotation<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSFunctionTypeWithoutReturnType<'a, 't>(
-    pub(crate) *const TSFunctionType<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSFunctionTypeWithoutReturnType<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
-                as *const Option<Box<'a, TSThisParameter<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -12313,84 +14322,156 @@ impl<'a, 't> TSFunctionTypeWithoutTypeParameters<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_SPAN: usize = offset_of!(TSConstructorType, span);
-pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT: usize =
-    offset_of!(TSConstructorType, r#abstract);
-pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS: usize = offset_of!(TSConstructorType, params);
-pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE: usize =
-    offset_of!(TSConstructorType, return_type);
-pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS: usize =
-    offset_of!(TSConstructorType, type_parameters);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSConstructorTypeWithoutParams<'a, 't>(
-    pub(crate) *const TSConstructorType<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSConstructorTypeWithoutParams<'a, 't> {
+impl<'a, 't> GetAddress for TSFunctionTypeWithoutTypeParameters<'a, 't> {
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn r#abstract(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT) as *const bool) }
-    }
-
-    #[inline]
-    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE)
-                as *const Box<'a, TSTypeAnnotation<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSConstructorTypeWithoutReturnType<'a, 't>(
-    pub(crate) *const TSConstructorType<'a>,
+pub struct TSFunctionTypeWithoutThisParam<'a, 't>(
+    pub(crate) *const TSFunctionType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSConstructorTypeWithoutReturnType<'a, 't> {
+impl<'a, 't> TSFunctionTypeWithoutThisParam<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn r#abstract(self) -> &'t bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT) as *const bool) }
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
     }
 
     #[inline]
     pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS)
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
                 as *const Box<'a, FormalParameters<'a>>)
         }
     }
 
     #[inline]
-    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
         }
     }
 }
+
+impl<'a, 't> GetAddress for TSFunctionTypeWithoutThisParam<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSFunctionTypeWithoutParams<'a, 't>(
+    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSFunctionTypeWithoutParams<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_RETURN_TYPE)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSFunctionTypeWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSFunctionTypeWithoutReturnType<'a, 't>(
+    pub(crate) *const TSFunctionType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSFunctionTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSFunctionTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_SPAN: usize = offset_of!(TSConstructorType, span);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT: usize =
+    offset_of!(TSConstructorType, r#abstract);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS: usize =
+    offset_of!(TSConstructorType, type_parameters);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS: usize = offset_of!(TSConstructorType, params);
+pub(crate) const OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE: usize =
+    offset_of!(TSConstructorType, return_type);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -12424,6 +14505,97 @@ impl<'a, 't> TSConstructorTypeWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE)
                 as *const Box<'a, TSTypeAnnotation<'a>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConstructorTypeWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructorTypeWithoutParams<'a, 't>(
+    pub(crate) *const TSConstructorType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructorTypeWithoutParams<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(self) -> &'t Box<'a, TSTypeAnnotation<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_RETURN_TYPE)
+                as *const Box<'a, TSTypeAnnotation<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConstructorTypeWithoutParams<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSConstructorTypeWithoutReturnType<'a, 't>(
+    pub(crate) *const TSConstructorType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSConstructorTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(self) -> &'t Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSConstructorTypeWithoutReturnType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -12491,6 +14663,13 @@ impl<'a, 't> TSMappedTypeWithoutTypeParameter<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSMappedTypeWithoutTypeParameter<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSMappedTypeWithoutNameType<'a, 't>(
@@ -12542,6 +14721,13 @@ impl<'a, 't> TSMappedTypeWithoutNameType<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMappedTypeWithoutNameType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -12599,6 +14785,13 @@ impl<'a, 't> TSMappedTypeWithoutTypeAnnotation<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSMappedTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_TEMPLATE_LITERAL_TYPE_SPAN: usize =
     offset_of!(TSTemplateLiteralType, span);
 pub(crate) const OFFSET_TS_TEMPLATE_LITERAL_TYPE_QUASIS: usize =
@@ -12630,6 +14823,13 @@ impl<'a, 't> TSTemplateLiteralTypeWithoutQuasis<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSTemplateLiteralTypeWithoutQuasis<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTemplateLiteralTypeWithoutTypes<'a, 't>(
@@ -12651,6 +14851,13 @@ impl<'a, 't> TSTemplateLiteralTypeWithoutTypes<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_TEMPLATE_LITERAL_TYPE_QUASIS)
                 as *const Vec<'a, TemplateElement<'a>>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTemplateLiteralTypeWithoutTypes<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -12681,6 +14888,13 @@ impl<'a, 't> TSAsExpressionWithoutExpression<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSAsExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSAsExpressionWithoutTypeAnnotation<'a, 't>(
@@ -12700,6 +14914,13 @@ impl<'a, 't> TSAsExpressionWithoutTypeAnnotation<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_EXPRESSION)
                 as *const Expression<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSAsExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -12732,6 +14953,13 @@ impl<'a, 't> TSSatisfiesExpressionWithoutExpression<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSSatisfiesExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't>(
@@ -12751,6 +14979,13 @@ impl<'a, 't> TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_EXPRESSION)
                 as *const Expression<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -12782,6 +15017,13 @@ impl<'a, 't> TSTypeAssertionWithoutExpression<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSTypeAssertionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSTypeAssertionWithoutTypeAnnotation<'a, 't>(
@@ -12801,6 +15043,13 @@ impl<'a, 't> TSTypeAssertionWithoutTypeAnnotation<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ASSERTION_EXPRESSION)
                 as *const Expression<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeAssertionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -12845,6 +15094,13 @@ impl<'a, 't> TSImportEqualsDeclarationWithoutId<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSImportEqualsDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSImportEqualsDeclarationWithoutModuleReference<'a, 't>(
@@ -12877,6 +15133,13 @@ impl<'a, 't> TSImportEqualsDeclarationWithoutModuleReference<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSImportEqualsDeclarationWithoutModuleReference<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_EXTERNAL_MODULE_REFERENCE_SPAN: usize =
     offset_of!(TSExternalModuleReference, span);
 pub(crate) const OFFSET_TS_EXTERNAL_MODULE_REFERENCE_EXPRESSION: usize =
@@ -12898,6 +15161,13 @@ impl<'a, 't> TSExternalModuleReferenceWithoutExpression<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSExternalModuleReferenceWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_NON_NULL_EXPRESSION_SPAN: usize = offset_of!(TSNonNullExpression, span);
 pub(crate) const OFFSET_TS_NON_NULL_EXPRESSION_EXPRESSION: usize =
     offset_of!(TSNonNullExpression, expression);
@@ -12913,6 +15183,13 @@ impl<'a, 't> TSNonNullExpressionWithoutExpression<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_NON_NULL_EXPRESSION_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSNonNullExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -12933,6 +15210,13 @@ impl<'a, 't> DecoratorWithoutExpression<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for DecoratorWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 pub(crate) const OFFSET_TS_EXPORT_ASSIGNMENT_SPAN: usize = offset_of!(TSExportAssignment, span);
 pub(crate) const OFFSET_TS_EXPORT_ASSIGNMENT_EXPRESSION: usize =
     offset_of!(TSExportAssignment, expression);
@@ -12948,6 +15232,13 @@ impl<'a, 't> TSExportAssignmentWithoutExpression<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_EXPORT_ASSIGNMENT_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSExportAssignmentWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -12970,6 +15261,13 @@ impl<'a, 't> TSNamespaceExportDeclarationWithoutId<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_NAMESPACE_EXPORT_DECLARATION_SPAN)
                 as *const Span)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSNamespaceExportDeclarationWithoutId<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -13004,6 +15302,13 @@ impl<'a, 't> TSInstantiationExpressionWithoutExpression<'a, 't> {
     }
 }
 
+impl<'a, 't> GetAddress for TSInstantiationExpressionWithoutExpression<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
 pub struct TSInstantiationExpressionWithoutTypeParameters<'a, 't>(
@@ -13025,6 +15330,13 @@ impl<'a, 't> TSInstantiationExpressionWithoutTypeParameters<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_INSTANTIATION_EXPRESSION_EXPRESSION)
                 as *const Expression<'a>)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInstantiationExpressionWithoutTypeParameters<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -13050,6 +15362,13 @@ impl<'a, 't> JSDocNullableTypeWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn postfix(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JS_DOC_NULLABLE_TYPE_POSTFIX) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for JSDocNullableTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }
 
@@ -13080,5 +15399,12 @@ impl<'a, 't> JSDocNonNullableTypeWithoutTypeAnnotation<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_JS_DOC_NON_NULLABLE_TYPE_POSTFIX) as *const bool)
         }
+    }
+}
+
+impl<'a, 't> GetAddress for JSDocNonNullableTypeWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        Address::from_ptr(self.0)
     }
 }

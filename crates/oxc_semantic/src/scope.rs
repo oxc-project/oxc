@@ -1,4 +1,4 @@
-use std::hash::BuildHasherDefault;
+use std::{hash::BuildHasherDefault, mem};
 
 use indexmap::IndexMap;
 use rustc_hash::{FxHashMap, FxHasher};
@@ -73,7 +73,7 @@ impl ScopeTree {
     /// The first element of this iterator will be the scope itself. This
     /// guarantees the iterator will have at least 1 element.
     pub fn ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
-        std::iter::successors(Some(scope_id), |scope_id| self.parent_ids[*scope_id])
+        std::iter::successors(Some(scope_id), |&scope_id| self.parent_ids[scope_id])
     }
 
     pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
@@ -173,6 +173,34 @@ impl ScopeTree {
         }
     }
 
+    /// Change the parent scope of a scope.
+    ///
+    /// This will also remove the scope from the child list of the old parent and add it to the new parent.
+    pub fn change_parent_id(&mut self, scope_id: ScopeId, new_parent_id: Option<ScopeId>) {
+        let old_parent_id = mem::replace(&mut self.parent_ids[scope_id], new_parent_id);
+        if self.build_child_ids {
+            // Remove this scope from old parent scope
+            if let Some(old_parent_id) = old_parent_id {
+                self.child_ids[old_parent_id].retain(|&child_id| child_id != scope_id);
+            }
+            // And add it to new parent scope
+            if let Some(parent_id) = new_parent_id {
+                self.child_ids[parent_id].push(scope_id);
+            }
+        }
+    }
+
+    /// Delete a scope.
+    pub fn delete_scope(&mut self, scope_id: ScopeId) {
+        if self.build_child_ids {
+            self.child_ids[scope_id].clear();
+            let parent_id = self.parent_ids[scope_id];
+            if let Some(parent_id) = parent_id {
+                self.child_ids[parent_id].retain(|&child_id| child_id != scope_id);
+            }
+        }
+    }
+
     /// Get a variable binding by name that was declared in the top-level scope
     #[inline]
     pub fn get_root_binding(&self, name: &str) -> Option<SymbolId> {
@@ -206,8 +234,8 @@ impl ScopeTree {
     /// found. If no binding is found, [`None`] is returned.
     pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
         for scope_id in self.ancestors(scope_id) {
-            if let Some(symbol_id) = self.bindings[scope_id].get(name) {
-                return Some(*symbol_id);
+            if let Some(&symbol_id) = self.bindings[scope_id].get(name) {
+                return Some(symbol_id);
             }
         }
         None
@@ -234,7 +262,7 @@ impl ScopeTree {
     /// [`iter_bindings_in`]: ScopeTree::iter_bindings_in
     pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, &'_ CompactStr)> + '_ {
         self.bindings.iter_enumerated().flat_map(|(scope_id, bindings)| {
-            bindings.iter().map(move |(name, symbol_id)| (scope_id, *symbol_id, name))
+            bindings.iter().map(move |(name, &symbol_id)| (scope_id, symbol_id, name))
         })
     }
 
@@ -259,6 +287,21 @@ impl ScopeTree {
     #[inline]
     pub fn get_child_ids(&self, scope_id: ScopeId) -> &[ScopeId] {
         &self.child_ids[scope_id]
+    }
+
+    pub fn iter_all_child_ids(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
+        let mut stack = self.child_ids[scope_id].clone();
+        let child_ids: &IndexVec<ScopeId, Vec<ScopeId>> = &self.child_ids;
+        std::iter::from_fn(move || {
+            if let Some(scope_id) = stack.pop() {
+                if let Some(children) = child_ids.get(scope_id) {
+                    stack.extend(children.iter().copied());
+                }
+                Some(scope_id)
+            } else {
+                None
+            }
+        })
     }
 
     /// Get a mutable reference to a scope's children
@@ -298,6 +341,21 @@ impl ScopeTree {
     /// Remove an existing binding from a scope.
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
         self.bindings[scope_id].shift_remove(name);
+    }
+
+    /// Move a binding from one scope to another.
+    pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: &str) {
+        let from_map = &mut self.bindings[from];
+        if let Some((name, symbol_id)) = from_map.swap_remove_entry(name) {
+            self.bindings[to].insert(name, symbol_id);
+        }
+    }
+
+    /// Rename a binding to a new name.
+    pub fn rename_binding(&mut self, scope_id: ScopeId, old_name: &str, new_name: CompactStr) {
+        if let Some(symbol_id) = self.bindings[scope_id].shift_remove(old_name) {
+            self.bindings[scope_id].insert(new_name, symbol_id);
+        }
     }
 
     /// Reserve memory for an `additional` number of scopes.

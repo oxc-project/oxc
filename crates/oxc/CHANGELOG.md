@@ -4,6 +4,69 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.36.0] - 2024-11-09
+
+- 846711c transformer: [**BREAKING**] Change API to take a `&TransformOptions` instead of `TransformOptions` (#7213) (Boshen)
+
+### Features
+
+
+## [0.35.0] - 2024-11-04
+
+### Features
+
+- fcaba4a transformer: Add `TransformerOptions::env` with `EnvOptions` (#7037) (Boshen)
+
+### Bug Fixes
+
+- d15e408 napi/transform: Fix 'typescript.declaration' option not working (#7012) (Boshen)
+- b188b4a transformer: Fix typescript globals being recognized as globals (#7100) (Boshen)
+
+## [0.34.0] - 2024-10-26
+
+- 4618aa2 transformer: [**BREAKING**] Rename `TransformerOptions::react` to `jsx` (#6888) (Boshen)
+
+- 67a7bde napi/parser: [**BREAKING**] Add typings to napi/parser (#6796) (ottomated)
+
+### Features
+
+
+### Bug Fixes
+
+- 4dc5e51 transformer: Only run typescript plugin for typescript source (#6889) (Boshen)
+- b075982 types: Change @oxc/types package name (#6874) (ottomated)
+
+### Refactor
+
+
+## [0.32.0] - 2024-10-19
+
+- 91c87dd codegen: [**BREAKING**] Remove `Codegen::enableSourceMap` API (#6452) (Boshen)
+
+- 7645e5c codegen: [**BREAKING**] Remove CommentOptions API (#6451) (Boshen)
+
+- 5200960 oxc: [**BREAKING**] Remove passing `Trivias` around (#6446) (Boshen)
+
+### Refactor
+
+
+## [0.31.0] - 2024-10-08
+
+- 020bb80 codegen: [**BREAKING**] Change to `CodegenReturn::code` and `CodegenReturn::map` (#6310) (Boshen)
+
+- 4f6bc79 transformer: [**BREAKING**] Remove `source_type` param from `Transformer::new` (#6251) (overlookmotel)
+
+### Features
+
+- abd3a9f napi/transform: Perform dce after define plugin (#6312) (Boshen)
+- a0ccc26 napi/transform: Add `lang` option to change source type (#6309) (Boshen)
+- 2f888ed oxc: Add napi transform options (#6268) (Boshen)
+- 8729755 oxc,napi/transform: Napi/transform use oxc compiler pipeline (#6298) (Boshen)
+
+### Refactor
+
+- aa0dbb6 oxc: Add `napi` feature, change napi parser to use `oxc` crate (#6265) (Boshen)
+
 ## [0.30.2] - 2024-09-27
 
 ### Documentation

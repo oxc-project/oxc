@@ -22,6 +22,7 @@ use crate::{
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type IndexVec<I, T> = Array<T>;
+export type CompactStr = string;
 "#;
 
 /// Symbol Table
@@ -77,20 +78,14 @@ impl SymbolTable {
     /// let classes = semantic
     ///     .scopes()
     ///     .symbol_ids()
-    ///     .filter(|symbol_id| {
-    ///         let flags = semantic.symbols().get_flags(*symbol_id);
+    ///     .filter(|&symbol_id| {
+    ///         let flags = semantic.symbols().get_flags(symbol_id);
     ///         flags.is_class()
     ///      })
     ///      .collect::<Vec<_>>();
     /// ```
     pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
         self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
-    }
-
-    pub fn get_symbol_id_from_span(&self, span: Span) -> Option<SymbolId> {
-        self.spans
-            .iter_enumerated()
-            .find_map(|(symbol, &inner_span)| if inner_span == span { Some(symbol) } else { None })
     }
 
     /// Get the [`Span`] of the [`AstNode`] declaring a symbol.
@@ -105,6 +100,12 @@ impl SymbolTable {
     #[inline]
     pub fn get_name(&self, symbol_id: SymbolId) -> &str {
         &self.names[symbol_id]
+    }
+
+    /// Rename a symbol.
+    #[inline]
+    pub fn rename(&mut self, symbol_id: SymbolId, new_name: CompactStr) {
+        self.names[symbol_id] = new_name;
     }
 
     #[inline]
@@ -149,10 +150,6 @@ impl SymbolTable {
     #[inline]
     pub fn get_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
         self.scope_ids[symbol_id]
-    }
-
-    pub fn get_scope_id_from_span(&self, span: Span) -> Option<ScopeId> {
-        self.get_symbol_id_from_span(span).map(|symbol_id| self.get_scope_id(symbol_id))
     }
 
     /// Get the ID of the AST node declaring a symbol.
@@ -238,7 +235,7 @@ impl SymbolTable {
     ) -> impl DoubleEndedIterator<Item = &Reference> + '_ {
         self.resolved_references[symbol_id]
             .iter()
-            .map(|reference_id| &self.references[*reference_id])
+            .map(|&reference_id| &self.references[reference_id])
     }
 
     /// Delete a reference to a symbol.

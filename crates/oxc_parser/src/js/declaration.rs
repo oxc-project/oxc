@@ -39,7 +39,7 @@ impl<'a> ParserImpl<'a> {
 
         self.asi()?;
 
-        Ok(Statement::VariableDeclaration(self.ast.alloc(using_decl)))
+        Ok(Statement::VariableDeclaration(self.alloc(using_decl)))
     }
 
     pub(crate) fn parse_variable_declaration(
@@ -95,7 +95,7 @@ impl<'a> ParserImpl<'a> {
 
         let mut binding_kind = self.parse_binding_pattern_kind()?;
 
-        let (id, definite) = if self.ts_enabled() {
+        let (id, definite) = if self.is_ts {
             // const x!: number = 1
             //        ^ definite
             let mut definite = false;

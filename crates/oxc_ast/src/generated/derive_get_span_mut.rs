@@ -5,16 +5,12 @@
 
 use oxc_span::{GetSpanMut, Span};
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::js::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::jsx::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::literal::*;
 
-#[allow(clippy::wildcard_imports)]
 use crate::ast::ts::*;
 
 impl GetSpanMut for BooleanLiteral {
@@ -38,6 +34,13 @@ impl<'a> GetSpanMut for NumericLiteral<'a> {
     }
 }
 
+impl<'a> GetSpanMut for StringLiteral<'a> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl<'a> GetSpanMut for BigIntLiteral<'a> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
@@ -46,13 +49,6 @@ impl<'a> GetSpanMut for BigIntLiteral<'a> {
 }
 
 impl<'a> GetSpanMut for RegExpLiteral<'a> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl<'a> GetSpanMut for StringLiteral<'a> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -613,6 +609,7 @@ impl<'a> GetSpanMut for ChainElement<'a> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -1276,52 +1273,8 @@ impl<'a> GetSpanMut for TSEnumMember<'a> {
 impl<'a> GetSpanMut for TSEnumMemberName<'a> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::StaticIdentifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticStringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticTemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticNumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NullLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NumericLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetSpanMut::span_mut(&mut **it),
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
-            Self::MetaProperty(it) => GetSpanMut::span_mut(&mut **it),
-            Self::Super(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrayExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::AwaitExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::BinaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ChainExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ClassExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::FunctionExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ImportExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::LogicalExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::NewExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ObjectExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::SequenceExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UnaryExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::UpdateExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::YieldExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXElement(it) => GetSpanMut::span_mut(&mut **it),
-            Self::JSXFragment(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSAsExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::String(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }

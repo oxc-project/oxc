@@ -1,14 +1,9 @@
 {
   "name": "@oxc-parser/binding",
-  "packageManager": "pnpm@9.9.0",
   "private": true,
   "scripts": {
-    "build": "napi build --platform --release",
-    "test": "node test.mjs",
-    "bench": "node parse.bench.mjs"
-  },
-  "engines": {
-    "node": ">=14.*"
+    "build": "napi build --platform --release --js bindings.js",
+    "test": "vitest --typecheck run ./test"
   },
   "napi": {
     "binaryName": "parser",
@@ -21,11 +16,10 @@
       "aarch64-unknown-linux-musl",
       "x86_64-apple-darwin",
       "aarch64-apple-darwin"
-    ]
+    ],
+    "dtsHeaderFile": "header.js"
   },
-  "devDependencies": {
-    "@napi-rs/cli": "catalog:",
-    "es-module-lexer": "^1.4.1",
-    "tinybench": "^2.6.0"
+  "dependencies": {
+    "@oxc-project/types": "workspace:^"
   }
 }

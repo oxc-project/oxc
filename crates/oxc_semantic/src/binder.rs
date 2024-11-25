@@ -1,13 +1,9 @@
 //! Declare symbol for `BindingIdentifier`s
 
-use std::{borrow::Cow, ptr};
+use std::ptr;
 
-#[allow(clippy::wildcard_imports)]
-use oxc_ast::{
-    ast::*,
-    syntax_directed_operations::{BoundNames, IsSimpleParameterList},
-    AstKind,
-};
+use oxc_ast::{ast::*, AstKind};
+use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_span::{GetSpan, SourceType};
 
 use crate::{
@@ -65,9 +61,9 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             let name = &ident.name;
             let mut declared_symbol_id = None;
 
-            for scope_id in &var_scope_ids {
+            for &scope_id in &var_scope_ids {
                 if let Some(symbol_id) =
-                    builder.check_redeclaration(*scope_id, span, name, excludes, true)
+                    builder.check_redeclaration(scope_id, span, name, excludes, true)
                 {
                     builder.add_redeclare_variable(symbol_id, span);
                     declared_symbol_id = Some(symbol_id);
@@ -75,7 +71,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     let name = name.to_compact_str();
                     // remove current scope binding and add to target scope
                     // avoid same symbols appear in multi-scopes
-                    builder.scope.remove_binding(*scope_id, &name);
+                    builder.scope.remove_binding(scope_id, &name);
                     builder.scope.add_binding(target_scope_id, name, symbol_id);
                     builder.symbols.scope_ids[symbol_id] = target_scope_id;
                     break;
@@ -92,10 +88,10 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
             // Finally, add the variable to all hoisted scopes
             // to support redeclaration checks when declaring variables with the same name later.
-            for scope_id in &var_scope_ids {
+            for &scope_id in &var_scope_ids {
                 builder
                     .hoisting_variables
-                    .entry(*scope_id)
+                    .entry(scope_id)
                     .or_default()
                     .insert(name.clone(), symbol_id);
             }
@@ -387,22 +383,9 @@ impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
 
 impl<'a> Binder<'a> for TSEnumMember<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        // TODO: Perf
-        if self.id.is_expression() {
-            return;
-        }
-        let name = match &self.id {
-            TSEnumMemberName::StaticIdentifier(id) => Cow::Borrowed(id.name.as_str()),
-            TSEnumMemberName::StaticStringLiteral(s) => Cow::Borrowed(s.value.as_str()),
-            TSEnumMemberName::StaticTemplateLiteral(s) => Cow::Borrowed(
-                s.quasi().expect("Template enum members must have no substitutions.").as_str(),
-            ),
-            TSEnumMemberName::StaticNumericLiteral(n) => Cow::Owned(n.value.to_string()),
-            match_expression!(TSEnumMemberName) => panic!("TODO: implement"),
-        };
         builder.declare_symbol(
             self.span,
-            &name,
+            self.id.static_name().as_str(),
             SymbolFlags::EnumMember,
             SymbolFlags::EnumMemberExcludes,
         );
@@ -412,20 +395,23 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
 impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         // do not bind `global` for `declare global { ... }`
-        if matches!(self.kind, TSModuleDeclarationKind::Global) {
+        if self.kind == TSModuleDeclarationKind::Global {
             return;
         }
 
         // At declaration time a module has no value declaration it is only when a value declaration
         // is made inside a the scope of a module that the symbol is modified
         let ambient = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::None };
-        // FIXME: insert symbol_id into TSModuleDeclarationName AST node
-        let _symbol_id = builder.declare_symbol(
+        let symbol_id = builder.declare_symbol(
             self.id.span(),
             self.id.name().as_str(),
             SymbolFlags::NameSpaceModule | ambient,
             SymbolFlags::None,
         );
+
+        if let TSModuleDeclarationName::Identifier(id) = &self.id {
+            id.symbol_id.set(Some(symbol_id));
+        }
     }
 }
 

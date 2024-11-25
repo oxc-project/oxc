@@ -76,11 +76,10 @@ impl Rule for DefaultCase {
 
             let has_default_comment = ctx
                 .semantic()
-                .trivias()
                 .comments_range(last_case.span.start..switch.span.end)
                 .last()
                 .is_some_and(|comment| {
-                    let raw = comment.span.source_text(ctx.semantic().source_text()).trim();
+                    let raw = ctx.source_range(comment.content_span()).trim();
                     match &self.comment_pattern {
                         Some(comment_pattern) => comment_pattern.is_match(raw),
                         None => raw.eq_ignore_ascii_case("no default"),

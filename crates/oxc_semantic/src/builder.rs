@@ -8,15 +8,14 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-#[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstKind, Trivias, Visit};
+use oxc_ast::{ast::*, AstKind, Visit};
 use oxc_cfg::{
-    ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
+    ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
-use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
+use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
     binder::Binder,
@@ -55,7 +54,7 @@ macro_rules! control_flow {
 /// # Example
 ///
 /// ```rust
-#[doc = include_str!("../examples/simple.rs")]
+#[doc = include_str!("../examples/semantic.rs")]
 /// ```
 ///
 /// [`build`]: SemanticBuilder::build
@@ -65,8 +64,6 @@ pub struct SemanticBuilder<'a> {
 
     /// source type of the parsed program
     pub(crate) source_type: SourceType,
-
-    trivias: Trivias,
 
     /// Semantic early errors such as redeclaration errors.
     errors: RefCell<Vec<OxcDiagnostic>>,
@@ -119,16 +116,20 @@ pub struct SemanticBuilderReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
 }
 
+impl<'a> Default for SemanticBuilder<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> SemanticBuilder<'a> {
-    pub fn new(source_text: &'a str) -> Self {
+    pub fn new() -> Self {
         let scope = ScopeTree::default();
         let current_scope_id = scope.root_scope_id();
 
-        let trivias = Trivias::default();
         Self {
-            source_text,
+            source_text: "",
             source_type: SourceType::default(),
-            trivias: trivias.clone(),
             errors: RefCell::new(vec![]),
             current_node_id: NodeId::new(0),
             current_node_flags: NodeFlags::empty(),
@@ -145,7 +146,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::new(ModuleRecord::default()),
             unused_labels: UnusedLabels::default(),
             build_jsdoc: false,
-            jsdoc: JSDocBuilder::new(source_text, &trivias),
+            jsdoc: JSDocBuilder::default(),
             stats: None,
             excess_capacity: 0.0,
             check_syntax_error: false,
@@ -153,12 +154,6 @@ impl<'a> SemanticBuilder<'a> {
             class_table_builder: ClassTableBuilder::new(),
             ast_node_records: Vec::new(),
         }
-    }
-
-    #[must_use]
-    pub fn with_trivias(mut self, trivias: Trivias) -> Self {
-        self.trivias = trivias;
-        self
     }
 
     /// Enable/disable additional syntax checks.
@@ -175,10 +170,8 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Enable/disable JSDoc parsing.
-    /// `with_trivias` must be called prior to this call.
     #[must_use]
     pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
-        self.jsdoc = JSDocBuilder::new(self.source_text, &self.trivias);
         self.build_jsdoc = yes;
         self
     }
@@ -252,7 +245,11 @@ impl<'a> SemanticBuilder<'a> {
     ///
     /// # Panics
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
+        self.source_text = program.source_text;
         self.source_type = program.source_type;
+        if self.build_jsdoc {
+            self.jsdoc = JSDocBuilder::new(self.source_text, &program.comments);
+        }
         if self.source_type.is_typescript_definition() {
             let scope_id = self.scope.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
@@ -302,6 +299,8 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
 
+        let comments = self.alloc(&program.comments);
+
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
         self.scope.root_unresolved_references = self
             .unresolved_references
@@ -315,7 +314,8 @@ impl<'a> SemanticBuilder<'a> {
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
-            trivias: self.trivias,
+            comments,
+            irregular_whitespaces: [].into(),
             nodes: self.nodes,
             scopes: self.scope,
             symbols: self.symbols,
@@ -564,32 +564,6 @@ impl<'a> SemanticBuilder<'a> {
     pub(crate) fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
         self.symbols.add_redeclaration(symbol_id, span);
     }
-
-    fn add_export_flag_to_export_identifiers(&mut self, program: &Program<'a>) {
-        for stmt in &program.body {
-            if let Statement::ExportDefaultDeclaration(decl) = stmt {
-                if let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration {
-                    self.add_export_flag_to_identifier(ident.name.as_str());
-                }
-            }
-            if let Statement::ExportNamedDeclaration(decl) = stmt {
-                for specifier in &decl.specifiers {
-                    if specifier.export_kind.is_value() {
-                        if let Some(name) = specifier.local.identifier_name() {
-                            self.add_export_flag_to_identifier(name.as_str());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /// Flag the symbol bound to an identifier in the current scope as exported.
-    fn add_export_flag_to_identifier(&mut self, name: &str) {
-        if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, name) {
-            self.symbols.union_flag(symbol_id, SymbolFlags::Export);
-        }
-    }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
@@ -733,7 +707,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
         if let Some(super_class) = &class.super_class {
-            self.visit_class_heritage(super_class);
+            self.visit_expression(super_class);
         }
         if let Some(super_type_parameters) = &class.super_type_parameters {
             self.visit_ts_type_parameter_instantiation(super_type_parameters);
@@ -890,7 +864,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let kind = AstKind::AssignmentExpression(self.alloc(expr));
         self.enter_node(kind);
+
+        if !expr.operator.is_assign() {
+            // Only when the operator is not an `=` operator, the left-hand side is both read and write.
+            // <https://tc39.es/ecma262/#sec-assignment-operators-runtime-semantics-evaluation>
+            self.current_reference_flags = ReferenceFlags::read_write();
+        }
+
         self.visit_assignment_target(&expr.left);
+
+        self.current_reference_flags = ReferenceFlags::empty();
 
         /* cfg  */
         let cfg_ixs = control_flow!(self, |cfg| {
@@ -1286,7 +1269,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         control_flow!(self, |cfg| {
-            cfg.push_return(ret_kind, node_id);
+            cfg.push_return(ret_kind, Some(node_id));
             cfg.append_unreachable();
         });
         /* cfg */
@@ -1480,7 +1463,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             });
             /* cfg */
 
-            self.visit_finally_clause(finalizer);
+            self.visit_block_statement(finalizer);
 
             /* cfg */
             control_flow!(self, |cfg| {
@@ -1528,7 +1511,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                     cfg.add_edge(
                         finally_block_end_ix,
                         after_try_statement_block_ix,
-                        if cfg.basic_block(after_try_block_graph_ix).unreachable {
+                        if cfg.basic_block(after_try_block_graph_ix).is_unreachable() {
                             EdgeType::Unreachable
                         } else {
                             EdgeType::Join
@@ -1678,6 +1661,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         control_flow!(self, |cfg| {
+            let c = cfg.current_basic_block();
+            // If the last is an unreachable instruction, it means there is already a explicit
+            // return or throw statement at the end of function body, we don't need to
+            // insert an implicit return.
+            if !matches!(
+                c.instructions().last().map(|inst| &inst.kind),
+                Some(InstructionKind::Unreachable)
+            ) {
+                cfg.push_implicit_return();
+            }
             cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
             cfg.release_error_harness(error_harness);
             cfg.pop_finalization_stack();
@@ -1730,6 +1723,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         control_flow!(self, |cfg| {
+            let c = cfg.current_basic_block();
+            // If the last is an unreachable instruction, it means there is already a explicit
+            // return or throw statement at the end of function body, we don't need to
+            // insert an implicit return.
+            if !matches!(
+                c.instructions().last().map(|inst| &inst.kind),
+                Some(InstructionKind::Unreachable)
+            ) {
+                cfg.push_implicit_return();
+            }
             cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
             cfg.release_error_harness(error_harness);
             cfg.pop_finalization_stack();
@@ -1739,6 +1742,86 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_node(kind);
         self.leave_scope();
+    }
+
+    fn visit_update_expression(&mut self, it: &UpdateExpression<'a>) {
+        let kind = AstKind::UpdateExpression(self.alloc(it));
+        self.enter_node(kind);
+        // `++a` or `a--`
+        //    ^      ^ We always treat `a` as Read and Write reference,
+        self.current_reference_flags = ReferenceFlags::read_write();
+        self.visit_simple_assignment_target(&it.argument);
+        self.current_reference_flags = ReferenceFlags::empty();
+        self.leave_node(kind);
+    }
+
+    fn visit_member_expression(&mut self, it: &MemberExpression<'a>) {
+        let kind = AstKind::MemberExpression(self.alloc(it));
+        self.enter_node(kind);
+
+        // A.B = 1;
+        // ^^^ Can't treat A as a Write reference since it's A's property(B) that changes.
+        self.current_reference_flags -= ReferenceFlags::Write;
+
+        match it {
+            MemberExpression::ComputedMemberExpression(it) => {
+                self.visit_computed_member_expression(it);
+            }
+            MemberExpression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
+            MemberExpression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
+        let kind = AstKind::SimpleAssignmentTarget(self.alloc(it));
+        self.enter_node(kind);
+        let prev_reference_flags = self.current_reference_flags;
+        // Except that the read-write flags has been set in visit_assignment_expression
+        // and visit_update_expression, this is always a write-only reference here.
+        if !self.current_reference_flags.is_write() {
+            self.current_reference_flags = ReferenceFlags::Write;
+        }
+
+        match it {
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(it) => {
+                self.visit_identifier_reference(it);
+            }
+            SimpleAssignmentTarget::TSAsExpression(it) => {
+                self.visit_ts_as_expression(it);
+            }
+            SimpleAssignmentTarget::TSSatisfiesExpression(it) => {
+                self.visit_ts_satisfies_expression(it);
+            }
+            SimpleAssignmentTarget::TSNonNullExpression(it) => {
+                self.visit_ts_non_null_expression(it);
+            }
+            SimpleAssignmentTarget::TSTypeAssertion(it) => {
+                self.visit_ts_type_assertion(it);
+            }
+            SimpleAssignmentTarget::TSInstantiationExpression(it) => {
+                self.visit_ts_instantiation_expression(it);
+            }
+            match_member_expression!(SimpleAssignmentTarget) => {
+                self.visit_member_expression(it.to_member_expression());
+            }
+        }
+        self.current_reference_flags = prev_reference_flags;
+        self.leave_node(kind);
+    }
+
+    fn visit_assignment_target_property_identifier(
+        &mut self,
+        it: &AssignmentTargetPropertyIdentifier<'a>,
+    ) {
+        // NOTE: AstKind doesn't exists!
+        let prev_reference_flags = self.current_reference_flags;
+        self.current_reference_flags = ReferenceFlags::Write;
+        self.visit_identifier_reference(&it.binding);
+        self.current_reference_flags = prev_reference_flags;
+        if let Some(init) = &it.init {
+            self.visit_expression(init);
+        }
     }
 }
 
@@ -1761,19 +1844,7 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::ExportDefaultDeclaration(decl) => {
-                // Only if the declaration has an ID, we mark it as an export
-                if match &decl.declaration {
-                    ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.id.is_some(),
-                    ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.is_some(),
-                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => true,
-                    _ => false,
-                } {
-                    self.current_symbol_flags |= SymbolFlags::Export;
-                }
-            }
             AstKind::ExportNamedDeclaration(decl) => {
-                self.current_symbol_flags |= SymbolFlags::Export;
                 if decl.export_kind.is_type() {
                     self.current_reference_flags = ReferenceFlags::Type;
                 }
@@ -1850,7 +1921,6 @@ impl<'a> SemanticBuilder<'a> {
                     .get(module_declaration.id.name().as_str())
                     .copied();
                 self.namespace_stack.push(symbol_id);
-                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
@@ -1920,29 +1990,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
-            AstKind::UpdateExpression(_) => {
-                if !self.current_reference_flags.is_type()
-                    && self.is_not_expression_statement_parent()
-                {
-                    self.current_reference_flags |= ReferenceFlags::Read;
-                }
-                self.current_reference_flags |= ReferenceFlags::Write;
-            }
-            AstKind::AssignmentExpression(expr) => {
-                if expr.operator != AssignmentOperator::Assign
-                    || self.is_not_expression_statement_parent()
-                {
-                    self.current_reference_flags |= ReferenceFlags::Read;
-                }
-            }
-            AstKind::MemberExpression(_) => {
-                // A.B = 1;
-                // ^^^ we can't treat A as Write reference, because it's the property(B) of A that change
-                self.current_reference_flags -= ReferenceFlags::Write;
-            }
-            AstKind::AssignmentTarget(_) => {
-                self.current_reference_flags |= ReferenceFlags::Write;
-            }
             AstKind::LabeledStatement(stmt) => {
                 self.unused_labels.add(stmt.label.name.as_str());
             }
@@ -1962,15 +2009,9 @@ impl<'a> SemanticBuilder<'a> {
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::Program(program) => {
-                self.add_export_flag_to_export_identifiers(program);
-            }
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
-            }
-            AstKind::BindingIdentifier(_) => {
-                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::ExportSpecifier(_) => {
                 if !self.current_reference_flags.is_type_only() {
@@ -1998,35 +2039,20 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeName(_) => {
                 self.current_reference_flags -= ReferenceFlags::Type;
             }
-            AstKind::UpdateExpression(_) => {
-                if self.is_not_expression_statement_parent() {
-                    self.current_reference_flags -= ReferenceFlags::Read;
-                }
-                self.current_reference_flags -= ReferenceFlags::Write;
-            }
-            AstKind::AssignmentExpression(_) | AstKind::ExportNamedDeclaration(_)
+            AstKind::ExportNamedDeclaration(_)
             | AstKind::TSTypeQuery(_)
             // Clear the reference flags that are set in AstKind::PropertySignature
             | AstKind::PropertyKey(_) => {
                 self.current_reference_flags = ReferenceFlags::empty();
             }
-            AstKind::AssignmentTarget(_) =>{
-                // Handle nested assignment targets like `({a: b} = obj)`
-                if !matches!(
-                    self.nodes.parent_kind(self.current_node_id),
-                    Some(AstKind::ObjectAssignmentTarget(_) | AstKind::ArrayAssignmentTarget(_))
-                ) {
-                    self.current_reference_flags -= ReferenceFlags::Write;
-                }
-            },
             AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
             _ => {}
         }
     }
 
     fn make_all_namespaces_valuelike(&mut self) {
-        for symbol_id in &self.namespace_stack {
-            let Some(symbol_id) = *symbol_id else {
+        for &symbol_id in &self.namespace_stack {
+            let Some(symbol_id) = symbol_id else {
                 continue;
             };
 
@@ -2046,34 +2072,12 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Resolve reference flags for the current ast node.
+    #[inline]
     fn resolve_reference_usages(&self) -> ReferenceFlags {
         if self.current_reference_flags.is_empty() {
             ReferenceFlags::Read
         } else {
             self.current_reference_flags
         }
-    }
-
-    fn is_not_expression_statement_parent(&self) -> bool {
-        for node in self.nodes.iter_parents(self.current_node_id).skip(1) {
-            return match node.kind() {
-                AstKind::ParenthesizedExpression(_) => continue,
-                AstKind::ExpressionStatement(_) => {
-                    if self.current_scope_flags().is_arrow() {
-                        if let Some(node) = self.nodes.iter_parents(node.id()).nth(2) {
-                            // (x) => x++
-                            //        ^^^ implicit return, we need to treat `x` as a read reference
-                            if matches!(node.kind(), AstKind::ArrowFunctionExpression(arrow) if arrow.expression)
-                            {
-                                return true;
-                            }
-                        }
-                    }
-                    false
-                }
-                _ => true,
-            };
-        }
-        false
     }
 }

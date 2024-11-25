@@ -1,17 +1,125 @@
+use cow_utils::CowUtils;
+use num_bigint::BigInt;
+use num_traits::Num;
 use oxc_allocator::Box;
 use oxc_span::Span;
+use oxc_syntax::number::BigintBase;
 use serde::{
     ser::{SerializeSeq, Serializer},
     Serialize,
 };
 
 use crate::ast::{
-    ArrayAssignmentTarget, ArrayPattern, AssignmentTargetMaybeDefault, AssignmentTargetProperty,
-    AssignmentTargetRest, BindingPattern, BindingPatternKind, BindingProperty, BindingRestElement,
-    Directive, Elision, FormalParameter, FormalParameterKind, FormalParameters, JSXElementName,
-    JSXIdentifier, JSXMemberExpressionObject, ObjectAssignmentTarget, ObjectPattern, Program,
-    RegExpFlags, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
+    BigIntLiteral, BindingPatternKind, BooleanLiteral, Directive, Elision, FormalParameter,
+    FormalParameterKind, FormalParameters, JSXElementName, JSXIdentifier,
+    JSXMemberExpressionObject, NullLiteral, NumericLiteral, Program, RegExpFlags, RegExpLiteral,
+    RegExpPattern, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
 };
+
+#[derive(Serialize)]
+#[serde(tag = "type", rename = "Literal")]
+pub struct ESTreeLiteral<'a, T> {
+    #[serde(flatten)]
+    span: Span,
+    value: T,
+    raw: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    bigint: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    regex: Option<SerRegExpValue>,
+}
+
+impl<'a> From<&BooleanLiteral> for ESTreeLiteral<'a, bool> {
+    fn from(value: &BooleanLiteral) -> Self {
+        Self {
+            span: value.span,
+            value: value.value,
+            raw: Some(if value.value { "true" } else { "false" }),
+            bigint: None,
+            regex: None,
+        }
+    }
+}
+
+impl<'a> From<&NullLiteral> for ESTreeLiteral<'a, ()> {
+    fn from(value: &NullLiteral) -> Self {
+        Self { span: value.span, value: (), raw: Some("null"), bigint: None, regex: None }
+    }
+}
+
+impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
+    fn from(value: &'a NumericLiteral) -> Self {
+        Self {
+            span: value.span,
+            value: value.value,
+            raw: Some(value.raw),
+            bigint: None,
+            regex: None,
+        }
+    }
+}
+
+impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
+    fn from(value: &'a StringLiteral) -> Self {
+        Self { span: value.span, value: &value.value, raw: None, bigint: None, regex: None }
+    }
+}
+
+impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
+    fn from(value: &'a BigIntLiteral) -> Self {
+        let src = &value.raw.strip_suffix('n').unwrap().cow_replace('_', "");
+
+        let src = match value.base {
+            BigintBase::Decimal => src,
+            BigintBase::Binary | BigintBase::Octal | BigintBase::Hex => &src[2..],
+        };
+        let radix = match value.base {
+            BigintBase::Decimal => 10,
+            BigintBase::Binary => 2,
+            BigintBase::Octal => 8,
+            BigintBase::Hex => 16,
+        };
+        let bigint = BigInt::from_str_radix(src, radix).unwrap();
+
+        Self {
+            span: value.span,
+            // BigInts can't be serialized to JSON
+            value: (),
+            raw: Some(value.raw.as_str()),
+            bigint: Some(bigint.to_string()),
+            regex: None,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct SerRegExpValue {
+    pattern: String,
+    flags: String,
+}
+
+/// A placeholder for regexp literals that can't be serialized to JSON
+#[derive(Serialize)]
+#[allow(clippy::empty_structs_with_brackets)]
+pub struct EmptyObject {}
+
+impl<'a> From<&'a RegExpLiteral<'a>> for ESTreeLiteral<'a, Option<EmptyObject>> {
+    fn from(value: &'a RegExpLiteral) -> Self {
+        Self {
+            span: value.span,
+            raw: Some(value.raw),
+            value: match &value.regex.pattern {
+                RegExpPattern::Pattern(_) => Some(EmptyObject {}),
+                _ => None,
+            },
+            bigint: None,
+            regex: Some(SerRegExpValue {
+                pattern: value.regex.pattern.to_string(),
+                flags: value.regex.flags.to_string(),
+            }),
+        }
+    }
+}
 
 pub struct EcmaFormatter;
 
@@ -59,82 +167,6 @@ impl Serialize for Elision {
     {
         serializer.serialize_none()
     }
-}
-
-/// Serialize `ArrayAssignmentTarget`, `ObjectAssignmentTarget`, `ObjectPattern`, `ArrayPattern`
-/// to be estree compatible, with `elements`/`properties` and `rest` fields combined.
-
-impl<'a> Serialize for ArrayAssignmentTarget<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted = SerArrayAssignmentTarget {
-            span: self.span,
-            elements: ElementsAndRest::new(&self.elements, &self.rest),
-        };
-        converted.serialize(serializer)
-    }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "ArrayAssignmentTarget", rename_all = "camelCase")]
-struct SerArrayAssignmentTarget<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    elements:
-        ElementsAndRest<'b, Option<AssignmentTargetMaybeDefault<'a>>, AssignmentTargetRest<'a>>,
-}
-
-impl<'a> Serialize for ObjectAssignmentTarget<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted = SerObjectAssignmentTarget {
-            span: self.span,
-            properties: ElementsAndRest::new(&self.properties, &self.rest),
-        };
-        converted.serialize(serializer)
-    }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "ObjectAssignmentTarget")]
-struct SerObjectAssignmentTarget<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    properties: ElementsAndRest<'b, AssignmentTargetProperty<'a>, AssignmentTargetRest<'a>>,
-}
-
-impl<'a> Serialize for ObjectPattern<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted = SerObjectPattern {
-            span: self.span,
-            properties: ElementsAndRest::new(&self.properties, &self.rest),
-        };
-        converted.serialize(serializer)
-    }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "ObjectPattern")]
-struct SerObjectPattern<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    properties: ElementsAndRest<'b, BindingProperty<'a>, Box<'a, BindingRestElement<'a>>>,
-}
-
-impl<'a> Serialize for ArrayPattern<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let converted = SerArrayPattern {
-            span: self.span,
-            elements: ElementsAndRest::new(&self.elements, &self.rest),
-        };
-        converted.serialize(serializer)
-    }
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", rename = "ArrayPattern")]
-struct SerArrayPattern<'a, 'b> {
-    #[serde(flatten)]
-    span: Span,
-    elements: ElementsAndRest<'b, Option<BindingPattern<'a>>, Box<'a, BindingRestElement<'a>>>,
 }
 
 /// Serialize `FormalParameters`, to be estree compatible, with `items` and `rest` fields combined

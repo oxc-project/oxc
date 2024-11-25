@@ -1,13 +1,12 @@
 #![allow(rustdoc::private_intra_doc_links)] // useful for intellisense
 mod host;
 
-use std::{path::Path, rc::Rc};
+use std::{ops::Deref, path::Path, rc::Rc};
 
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
-use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
-use oxc_span::{GetSpan, SourceType, Span};
-use oxc_syntax::module_record::ModuleRecord;
+use oxc_semantic::Semantic;
+use oxc_span::{GetSpan, Span};
 
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
@@ -22,17 +21,28 @@ pub(crate) use host::ContextHost;
 
 #[derive(Clone)]
 #[must_use]
+/// Contains all of the state and context specific to this lint rule. Includes information
+/// like the rule name, plugin name, and severity of the rule. It also has a reference to
+/// the shared linting data [`ContextHost`], which is the same for all rules.
 pub struct LintContext<'a> {
     /// Shared context independent of the rule being linted.
     parent: Rc<ContextHost<'a>>,
-
-    // states
+    /// Name of the plugin this rule belongs to. Example: `eslint`, `unicorn`, `react`
     current_plugin_name: &'static str,
+    /// Prefixed version of the plugin name. Examples:
+    /// - `eslint-plugin-react`, for `react` plugin,
+    /// - `typescript-eslint`, for `typescript` plugin,
+    /// - `eslint-plugin-import`, for `import` plugin.
     current_plugin_prefix: &'static str,
+    /// Kebab-cased name of the current rule being linted. Example: `no-unused-vars`, `no-undef`.
     current_rule_name: &'static str,
+    /// Capabilities of the current rule to fix issues. Indicates whether:
+    /// - Rule cannot be auto-fixed [`RuleFixMeta::None`]
+    /// - Rule needs an auto-fix to be written still [`RuleFixMeta::FixPending`]
+    /// - Rule can be fixed in some cases [`RuleFixMeta::Conditional`]
+    /// - Rule is fully auto-fixable [`RuleFixMeta::Fixable`]
     #[cfg(debug_assertions)]
     current_rule_fix_capabilities: RuleFixMeta,
-
     /// Current rule severity. Allows for user severity overrides, e.g.
     /// ```json
     /// // .oxlintrc.json
@@ -45,20 +55,33 @@ pub struct LintContext<'a> {
     severity: Severity,
 }
 
+impl<'a> Deref for LintContext<'a> {
+    type Target = Semantic<'a>;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        self.parent.semantic()
+    }
+}
+
 impl<'a> LintContext<'a> {
+    /// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
     const WEBSITE_BASE_URL: &'static str = "https://oxc.rs/docs/guide/usage/linter/rules";
 
+    /// Set the plugin name for the current rule.
     pub fn with_plugin_name(mut self, plugin: &'static str) -> Self {
         self.current_plugin_name = plugin;
         self.current_plugin_prefix = plugin_name_to_prefix(plugin);
         self
     }
 
+    /// Set the current rule name. Name should be kebab-cased like: `no-unused-vars` or `no-undef`.
     pub fn with_rule_name(mut self, name: &'static str) -> Self {
         self.current_rule_name = name;
         self
     }
 
+    /// Set the current rule fix capabilities. See [`RuleFixMeta`] for more information.
     #[cfg(debug_assertions)]
     pub fn with_rule_fix_capabilities(mut self, capabilities: RuleFixMeta) -> Self {
         self.current_rule_fix_capabilities = capabilities;
@@ -82,6 +105,7 @@ impl<'a> LintContext<'a> {
         &self.parent.semantic
     }
 
+    /// Get the control flow graph for the current program.
     #[inline]
     pub fn cfg(&self) -> &ControlFlowGraph {
         // SAFETY: `LintContext::new` is the only way to construct a `LintContext` and we always
@@ -89,27 +113,16 @@ impl<'a> LintContext<'a> {
         unsafe { self.semantic().cfg().unwrap_unchecked() }
     }
 
+    /// List of all disable directives in the file being linted.
     #[inline]
     pub fn disable_directives(&self) -> &DisableDirectives<'a> {
         &self.parent.disable_directives
-    }
-
-    /// Source code of the file being linted.
-    #[inline]
-    pub fn source_text(&self) -> &'a str {
-        self.semantic().source_text()
     }
 
     /// Get a snippet of source text covered by the given [`Span`]. For details,
     /// see [`Span::source_text`].
     pub fn source_range(&self, span: Span) -> &'a str {
         span.source_text(self.semantic().source_text())
-    }
-
-    /// [`SourceType`] of the file currently being linted.
-    #[inline]
-    pub fn source_type(&self) -> &SourceType {
-        self.semantic().source_type()
     }
 
     /// Path to the file currently being linted.
@@ -124,6 +137,7 @@ impl<'a> LintContext<'a> {
         &self.parent.config.settings
     }
 
+    /// Sets of global variables that have been enabled or disabled.
     #[inline]
     pub fn globals(&self) -> &OxlintGlobals {
         &self.parent.config.globals
@@ -137,6 +151,12 @@ impl<'a> LintContext<'a> {
         &self.parent.config.env
     }
 
+    /// Checks if a given variable named is defined as a global variable in the current environment.
+    ///
+    /// Example:
+    /// - `env_contains_var("Date")` returns `true` because it is a global builtin in all environments.
+    /// - `env_contains_var("HTMLElement")` returns `true` only if the `browser` environment is enabled.
+    /// - `env_contains_var("globalThis")` returns `true` only if the `es2020` environment or higher is enabled.
     pub fn env_contains_var(&self, var: &str) -> bool {
         if GLOBALS["builtin"].contains_key(var) {
             return true;
@@ -153,6 +173,8 @@ impl<'a> LintContext<'a> {
 
     /* Diagnostics */
 
+    /// Add a diagnostic message to the list of diagnostics. Outputs a diagnostic with the current rule
+    /// name, severity, and a link to the rule's documentation URL.
     fn add_diagnostic(&self, mut message: Message<'a>) {
         if self.parent.disable_directives.contains(self.current_rule_name, message.span()) {
             return;
@@ -251,6 +273,12 @@ impl<'a> LintContext<'a> {
         self.diagnostic_with_fix_of_kind(diagnostic, FixKind::DangerousFix, fix);
     }
 
+    /// Report a lint rule violation and provide an automatic fix of a specific kind.
+    ///
+    /// The second argument is a [closure] that takes a [`RuleFixer`] and
+    /// returns something that can turn into a [`RuleFix`].
+    ///
+    /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
     #[allow(clippy::missing_panics_doc)] // only panics in debug mode
     pub fn diagnostic_with_fix_of_kind<C, F>(
         &self,
@@ -285,51 +313,25 @@ impl<'a> LintContext<'a> {
         }
     }
 
+    /// Framework flags, indicating front-end frameworks that might be in use.
     pub fn frameworks(&self) -> FrameworkFlags {
         self.parent.frameworks
     }
-
-    /// AST nodes
-    ///
-    /// Shorthand for `self.semantic().nodes()`.
-    pub fn nodes(&self) -> &AstNodes<'a> {
-        self.semantic().nodes()
-    }
-
-    /// Scope tree
-    ///
-    /// Shorthand for `ctx.semantic().scopes()`.
-    pub fn scopes(&self) -> &ScopeTree {
-        self.semantic().scopes()
-    }
-
-    /// Symbol table
-    ///
-    /// Shorthand for `ctx.semantic().symbols()`.
-    pub fn symbols(&self) -> &SymbolTable {
-        self.semantic().symbols()
-    }
-
-    /// Imported modules and exported symbols
-    ///
-    /// Shorthand for `ctx.semantic().module_record()`.
-    pub fn module_record(&self) -> &ModuleRecord {
-        self.semantic().module_record()
-    }
-
-    /// JSDoc comments
-    ///
-    /// Shorthand for `ctx.semantic().jsdoc()`.
-    pub fn jsdoc(&self) -> &JSDocFinder<'a> {
-        self.semantic().jsdoc()
-    }
 }
 
+/// Gets the prefixed plugin name, given the short plugin name.
+///
+/// Example:
+///
+/// ```rust
+/// assert_eq!(plugin_name_to_prefix("react"), "eslint-plugin-react");
+/// ```
 #[inline]
 fn plugin_name_to_prefix(plugin_name: &'static str) -> &'static str {
     PLUGIN_PREFIXES.get(plugin_name).copied().unwrap_or(plugin_name)
 }
 
+/// Map of plugin names to their prefixed versions.
 const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "import" => "eslint-plugin-import",
     "jest" => "eslint-plugin-jest",
@@ -339,7 +341,6 @@ const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "promise" => "eslint-plugin-promise",
     "react_perf" => "eslint-plugin-react-perf",
     "react" => "eslint-plugin-react",
-    "tree_shaking" => "eslint-plugin-tree-shaking",
     "typescript" => "typescript-eslint",
     "unicorn" => "eslint-plugin-unicorn",
     "vitest" => "eslint-plugin-vitest",

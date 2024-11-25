@@ -2,10 +2,6 @@
 source: crates/oxc_semantic/tests/main.rs
 input_file: crates/oxc_semantic/tests/fixtures/oxc/assignment/nested-assignment.ts
 ---
-================================================================================
-SCOPES
-================================================================================
-
 [
   {
     "children": [],
@@ -35,16 +31,16 @@ SCOPES
             "flags": "ReferenceFlags(Write)",
             "id": 2,
             "name": "y",
-            "node_id": 40
+            "node_id": 41
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 4,
+            "name": "y",
+            "node_id": 51
           }
         ]
       }
     ]
   }
 ]
-
-================================================================================
-CONFORMANCE
-================================================================================
-
-All tests passed.

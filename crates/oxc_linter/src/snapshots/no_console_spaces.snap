@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:14]

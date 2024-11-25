@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:1]
@@ -155,4 +156,16 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_undef.tsx:1:31]
  1 │ class C { static { var a; } } a;
    ·                               ─
+   ╰────
+
+  ⚠ eslint(no-undef): 'toString' is not defined.
+   ╭─[no_undef.tsx:1:1]
+ 1 │ toString()
+   · ────────
+   ╰────
+
+  ⚠ eslint(no-undef): 'hasOwnProperty' is not defined.
+   ╭─[no_undef.tsx:1:1]
+ 1 │ hasOwnProperty()
+   · ──────────────
    ╰────

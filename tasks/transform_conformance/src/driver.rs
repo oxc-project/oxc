@@ -2,15 +2,13 @@ use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc::{
     ast::ast::Program,
-    ast::Trivias,
-    codegen::{CodeGenerator, CodegenOptions},
+    codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
-    mangler::Mangler,
-    semantic::post_transform_checker::check_semantic_after_transform,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
 };
+use oxc_tasks_transform_checker::check_semantic_after_transform;
 
 pub struct Driver {
     check_semantic: bool,
@@ -20,8 +18,12 @@ pub struct Driver {
 }
 
 impl CompilerInterface for Driver {
-    fn transform_options(&self) -> Option<TransformOptions> {
-        Some(self.options.clone())
+    fn transform_options(&self) -> Option<&TransformOptions> {
+        Some(&self.options)
+    }
+
+    fn codegen_options(&self) -> Option<CodegenOptions> {
+        Some(CodegenOptions { comments: false, ..CodegenOptions::default() })
     }
 
     fn check_semantic_error(&self) -> bool {
@@ -36,8 +38,8 @@ impl CompilerInterface for Driver {
         self.errors.extend(errors);
     }
 
-    fn after_codegen(&mut self, printed: String) {
-        self.printed = printed;
+    fn after_codegen(&mut self, ret: CodegenReturn) {
+        self.printed = ret.code;
     }
 
     fn after_transform(
@@ -55,18 +57,6 @@ impl CompilerInterface for Driver {
             }
         }
         ControlFlow::Continue(())
-    }
-
-    // Disable comments
-    fn codegen<'a>(
-        &self,
-        program: &Program<'a>,
-        _source_text: &'a str,
-        _trivias: &Trivias,
-        mangler: Option<Mangler>,
-        options: CodegenOptions,
-    ) -> String {
-        CodeGenerator::new().with_options(options).with_mangler(mangler).build(program).source_text
     }
 }
 

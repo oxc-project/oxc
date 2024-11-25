@@ -1,9 +1,12 @@
 {
   "presets": [
-    ["env", {
-      "targets": {
-        "chrome": "40"
+    [
+      "env",
+      {
+        "targets": {
+          "chrome": "40"
+        }
       }
-    }]
+    ]
   ]
 }

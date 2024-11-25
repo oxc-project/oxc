@@ -21,21 +21,22 @@ mod utils;
 pub mod loader;
 pub mod table;
 
+use crate::config::ResolvedLinterState;
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 
-use config::LintConfig;
+use config::{ConfigStore, LintConfig};
 use context::ContextHost;
 use options::LintOptions;
-use oxc_diagnostics::Error;
 use oxc_semantic::{AstNode, Semantic};
+use utils::iter_possible_jest_call_node;
 
 pub use crate::{
-    builder::LinterBuilder,
-    config::Oxlintrc,
+    builder::{LinterBuilder, LinterBuilderError},
+    config::{ESLintRule, LintPlugins, Oxlintrc},
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
-    options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind, OxlintOptions},
+    options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
@@ -57,38 +58,27 @@ fn size_asserts() {
 
 #[derive(Debug)]
 pub struct Linter {
-    rules: Vec<RuleWithSeverity>,
+    // rules: Vec<RuleWithSeverity>,
     options: LintOptions,
-    config: Arc<LintConfig>,
+    // config: Arc<LintConfig>,
+    config: ConfigStore,
 }
 
 impl Default for Linter {
     fn default() -> Self {
-        Self::from_options(OxlintOptions::default()).unwrap()
+        LinterBuilder::default().build()
     }
 }
 
 impl Linter {
-    pub(crate) fn new(
-        rules: Vec<RuleWithSeverity>,
-        options: LintOptions,
-        config: LintConfig,
-    ) -> Self {
-        Self { rules, options, config: Arc::new(config) }
-    }
-
-    /// # Errors
-    ///
-    /// Returns `Err` if there are any errors parsing the configuration file.
-    pub fn from_options(options: OxlintOptions) -> Result<Self, Error> {
-        let (rules, config) = options.derive_rules_and_config()?;
-        Ok(Self { rules, options: options.into(), config: Arc::new(config) })
+    pub(crate) fn new(options: LintOptions, config: ConfigStore) -> Self {
+        Self { options, config }
     }
 
     #[cfg(test)]
     #[must_use]
     pub fn with_rules(mut self, rules: Vec<RuleWithSeverity>) -> Self {
-        self.rules = rules;
+        self.config.set_rules(rules);
         self
     }
 
@@ -113,39 +103,90 @@ impl Linter {
     }
 
     pub fn number_of_rules(&self) -> usize {
-        self.rules.len()
+        self.config.number_of_rules()
     }
 
-    #[cfg(test)]
-    pub(crate) fn rules(&self) -> &Vec<RuleWithSeverity> {
-        &self.rules
+    pub(crate) fn rules(&self) -> &Arc<[RuleWithSeverity]> {
+        self.config.rules()
     }
 
     pub fn run<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> Vec<Message<'a>> {
-        let ctx_host =
-            Rc::new(ContextHost::new(path, semantic, self.options).with_config(&self.config));
+        // Get config + rules for this file. Takes base rules and applies glob-based overrides.
+        let ResolvedLinterState { rules, config } = self.config.resolve(path);
+        let ctx_host = Rc::new(ContextHost::new(path, semantic, self.options, config));
 
-        let rules = self
-            .rules
+        let rules = rules
             .iter()
             .filter(|rule| rule.should_run(&ctx_host))
-            .map(|rule| (rule, Rc::clone(&ctx_host).spawn(rule)))
-            .collect::<Vec<_>>();
-
-        for (rule, ctx) in &rules {
-            rule.run_once(ctx);
-        }
+            .map(|rule| (rule, Rc::clone(&ctx_host).spawn(rule)));
 
         let semantic = ctx_host.semantic();
-        for symbol in semantic.symbols().symbol_ids() {
-            for (rule, ctx) in &rules {
-                rule.run_on_symbol(symbol, ctx);
-            }
-        }
 
-        for node in semantic.nodes() {
+        let should_run_on_jest_node =
+            ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
+
+        // IMPORTANT: We have two branches here for performance reasons:
+        //
+        // 1) Branch where we iterate over each node, then each rule
+        // 2) Branch where we iterate over each rule, then each node
+        //
+        // When the number of nodes is relatively small, most of them can fit
+        // in the cache and we can save iterating over the rules multiple times.
+        // But for large files, the number of nodes can be so large that it
+        // starts to not fit into the cache and pushes out other data, like the rules.
+        // So we end up thrashing the cache with each rule iteration. In this case,
+        // it's better to put rules in the inner loop, as the rules data is smaller
+        // and is more likely to fit in the cache.
+        //
+        // The threshold here is chosen to balance between performance improvement
+        // from not iterating over rules multiple times, but also ensuring that we
+        // don't thrash the cache too much. Feel free to tweak based on benchmarking.
+        //
+        // See https://github.com/oxc-project/oxc/pull/6600 for more context.
+        if semantic.stats().nodes > 200_000 {
+            // Collect rules into a Vec so that we can iterate over the rules multiple times
+            let rules = rules.collect::<Vec<_>>();
+
             for (rule, ctx) in &rules {
-                rule.run(node, ctx);
+                rule.run_once(ctx);
+            }
+
+            for symbol in semantic.symbols().symbol_ids() {
+                for (rule, ctx) in &rules {
+                    rule.run_on_symbol(symbol, ctx);
+                }
+            }
+
+            for node in semantic.nodes() {
+                for (rule, ctx) in &rules {
+                    rule.run(node, ctx);
+                }
+            }
+
+            if should_run_on_jest_node {
+                for jest_node in iter_possible_jest_call_node(semantic) {
+                    for (rule, ctx) in &rules {
+                        rule.run_on_jest_node(&jest_node, ctx);
+                    }
+                }
+            }
+        } else {
+            for (rule, ref ctx) in rules {
+                rule.run_once(ctx);
+
+                for symbol in semantic.symbols().symbol_ids() {
+                    rule.run_on_symbol(symbol, ctx);
+                }
+
+                for node in semantic.nodes() {
+                    rule.run(node, ctx);
+                }
+
+                if should_run_on_jest_node {
+                    for jest_node in iter_possible_jest_call_node(semantic) {
+                        rule.run_on_jest_node(&jest_node, ctx);
+                    }
+                }
             }
         }
 

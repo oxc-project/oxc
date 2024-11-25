@@ -1,4 +1,4 @@
-// Code copied from [Rome](https://github.com/rome/tools/blob/main/npm/rome/scripts/generate-packages.mjs)
+// Code copied from [Rome](https://github.com/rome/tools/blob/lsp/v0.28.0/npm/rome/scripts/generate-packages.mjs)
 
 import * as fs from 'node:fs';
 import { resolve } from 'node:path';

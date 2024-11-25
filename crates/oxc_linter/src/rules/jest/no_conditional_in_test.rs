@@ -100,7 +100,7 @@ impl Rule for NoConditionalInTest {
                 | AstKind::ConditionalExpression(_)
                 | AstKind::LogicalExpression(_)
         ) {
-            let is_if_statement_in_test = ctx.nodes().iter_parents(node.id()).any(|node| {
+            let is_if_statement_in_test = ctx.nodes().ancestors(node.id()).any(|node| {
                 let AstKind::CallExpression(call_expr) = node.kind() else { return false };
                 let vitest_node = PossibleJestNode { node, original: None };
 

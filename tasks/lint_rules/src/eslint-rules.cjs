@@ -9,59 +9,59 @@ const { Linter } = require('eslint');
 // - rule.meta.docs.recommended
 // Some plugins have the recommended flag in rule itself, but some plugins have it in config.
 
-// https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/index.ts
+// https://github.com/typescript-eslint/typescript-eslint/blob/v8.9.0/packages/eslint-plugin/src/index.ts
 const {
   rules: pluginTypeScriptAllRules,
   configs: pluginTypeScriptConfigs,
 } = require('@typescript-eslint/eslint-plugin');
-// https://github.com/eslint-community/eslint-plugin-n/blob/master/lib/index.js
+// https://github.com/eslint-community/eslint-plugin-n/blob/v17.13.2/lib/index.js
 const { rules: pluginNAllRules } = require('eslint-plugin-n');
-// https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/index.js
+// https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v56.0.0/index.js
 const {
   rules: pluginUnicornAllRules,
   configs: pluginUnicornConfigs,
 } = require('eslint-plugin-unicorn');
-// https://github.com/gajus/eslint-plugin-jsdoc/blob/main/src/index.js
+// https://github.com/gajus/eslint-plugin-jsdoc/blob/v50.5.0/src/index.js
 const {
   // @ts-expect-error: Module has no exported member
   rules: pluginJSDocAllRules,
   // @ts-expect-error: Module has no exported member
   configs: pluginJSDocConfigs,
 } = require('eslint-plugin-jsdoc');
-// https://github.com/import-js/eslint-plugin-import/blob/main/src/index.js
+// https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/src/index.js
 const {
   rules: pluginImportAllRules,
   configs: pluginImportConfigs,
 } = require('eslint-plugin-import');
-// https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/index.js
+// https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/index.js
 const {
   rules: pluginJSXA11yAllRules,
   configs: pluginJSXA11yConfigs,
 } = require('eslint-plugin-jsx-a11y');
-// https://github.com/jest-community/eslint-plugin-jest/blob/main/src/index.ts
+// https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/src/index.ts
 const {
   rules: pluginJestAllRules,
   configs: pluginJestConfigs,
 } = require('eslint-plugin-jest');
-// https://github.com/jsx-eslint/eslint-plugin-react/blob/master/index.js
+// https://github.com/jsx-eslint/eslint-plugin-react/blob/v7.37.2/index.js
 const { rules: pluginReactAllRules } = require('eslint-plugin-react');
-// https://github.com/facebook/react/blob/main/packages/eslint-plugin-react-hooks/src/index.js
+// https://github.com/facebook/react/blob/v18.3.1/packages/eslint-plugin-react-hooks/src/index.js
 const {
   rules: pluginReactHooksAllRules,
 } = require('eslint-plugin-react-hooks');
-// https://github.com/cvazac/eslint-plugin-react-perf/blob/master/index.js
+// https://github.com/cvazac/eslint-plugin-react-perf/blob/9bfa930661a23218f5460ebd39d35d76ccdb5724/index.js
 const {
   rules: pluginReactPerfAllRules,
   configs: pluginReactPerfConfigs,
 } = require('eslint-plugin-react-perf');
 // https://github.com/vercel/next.js/blob/canary/packages/eslint-plugin-next/src/index.ts
 const { rules: pluginNextAllRules } = require('@next/eslint-plugin-next');
-// https://github.com/eslint-community/eslint-plugin-promise/blob/main/index.js
+// https://github.com/eslint-community/eslint-plugin-promise/blob/v7.1.0/index.js
 const {
   rules: pluginPromiseRules,
   configs: pluginPromiseConfigs,
 } = require('eslint-plugin-promise');
-// https://github.com/veritem/eslint-plugin-vitest/blob/main/src/index.ts
+// https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/src/index.ts
 const {
   rules: pluginVitestRules,
   configs: pluginVitestConfigs,

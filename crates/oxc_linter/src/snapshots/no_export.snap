@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-jest(no-export): Do not export from a test file.
    ╭─[no_export.tsx:1:14]

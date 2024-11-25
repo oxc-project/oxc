@@ -3,12 +3,14 @@ use std::{
     fmt,
 };
 
+use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    options::LintPlugins, rules::RULES, AllowWarnDeny, FixKind, FrameworkFlags, LintConfig,
-    LintFilter, LintFilterKind, LintOptions, Linter, Oxlintrc, RuleCategory, RuleEnum,
-    RuleWithSeverity,
+    config::{ConfigStore, ESLintRule, LintPlugins, OxlintOverrides, OxlintRules},
+    rules::RULES,
+    AllowWarnDeny, FixKind, FrameworkFlags, LintConfig, LintFilter, LintFilterKind, LintOptions,
+    Linter, Oxlintrc, RuleCategory, RuleEnum, RuleWithSeverity,
 };
 
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
@@ -16,6 +18,7 @@ pub struct LinterBuilder {
     pub(super) rules: FxHashSet<RuleWithSeverity>,
     options: LintOptions,
     config: LintConfig,
+    overrides: OxlintOverrides,
     cache: RulesCache,
 }
 
@@ -32,8 +35,12 @@ impl LinterBuilder {
     /// You can think of this as `oxlint -A all`.
     pub fn empty() -> Self {
         let options = LintOptions::default();
-        let cache = RulesCache::new(options.plugins);
-        Self { rules: FxHashSet::default(), options, config: LintConfig::default(), cache }
+        let config = LintConfig::default();
+        let rules = FxHashSet::default();
+        let overrides = OxlintOverrides::default();
+        let cache = RulesCache::new(config.plugins);
+
+        Self { rules, options, config, overrides, cache }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -41,15 +48,18 @@ impl LinterBuilder {
     ///
     /// You can think of this as `oxlint -W all -W nursery`.
     pub fn all() -> Self {
-        let options = LintOptions { plugins: LintPlugins::all(), ..LintOptions::default() };
-        let cache = RulesCache::new(options.plugins);
+        let options = LintOptions::default();
+        let config = LintConfig { plugins: LintPlugins::all(), ..LintConfig::default() };
+        let overrides = OxlintOverrides::default();
+        let cache = RulesCache::new(config.plugins);
         Self {
             rules: RULES
                 .iter()
                 .map(|rule| RuleWithSeverity { rule: rule.clone(), severity: AllowWarnDeny::Warn })
                 .collect(),
             options,
-            config: LintConfig::default(),
+            config,
+            overrides,
             cache,
         }
     }
@@ -68,16 +78,35 @@ impl LinterBuilder {
     /// // you can use `From` as a shorthand for `from_oxlintrc(false, oxlintrc)`
     /// let linter = LinterBuilder::from(oxlintrc).build();
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`LinterBuilderError::UnknownRules`] if there are unknown rules in the
+    /// config. This can happen if the plugin for a rule is not enabled, or the rule name doesn't
+    /// match any recognized rules.
     pub fn from_oxlintrc(start_empty: bool, oxlintrc: Oxlintrc) -> Self {
         // TODO: monorepo config merging, plugin-based extends, etc.
-        let Oxlintrc { plugins, settings, env, globals, rules: oxlintrc_rules } = oxlintrc;
+        let Oxlintrc {
+            plugins,
+            settings,
+            env,
+            globals,
+            categories,
+            rules: oxlintrc_rules,
+            overrides,
+            path,
+        } = oxlintrc;
 
-        let config = LintConfig { settings, env, globals };
-        let options = LintOptions { plugins, ..Default::default() };
+        let config = LintConfig { plugins, settings, env, globals, path: Some(path) };
+        let options = LintOptions::default();
         let rules =
             if start_empty { FxHashSet::default() } else { Self::warn_correctness(plugins) };
-        let cache = RulesCache::new(options.plugins);
-        let mut builder = Self { rules, options, config, cache };
+        let cache = RulesCache::new(config.plugins);
+        let mut builder = Self { rules, options, config, overrides, cache };
+
+        if !categories.is_empty() {
+            builder = builder.with_filters(categories.filters());
+        }
 
         {
             let all_rules = builder.cache.borrow();
@@ -120,7 +149,7 @@ impl LinterBuilder {
     /// [`and_plugins`]: LinterBuilder::and_plugins
     #[inline]
     pub fn with_plugins(mut self, plugins: LintPlugins) -> Self {
-        self.options.plugins = plugins;
+        self.config.plugins = plugins;
         self.cache.set_plugins(plugins);
         self
     }
@@ -131,14 +160,14 @@ impl LinterBuilder {
     /// rules.
     #[inline]
     pub fn and_plugins(mut self, plugins: LintPlugins, enabled: bool) -> Self {
-        self.options.plugins.set(plugins, enabled);
-        self.cache.set_plugins(self.options.plugins);
+        self.config.plugins.set(plugins, enabled);
+        self.cache.set_plugins(self.config.plugins);
         self
     }
 
     #[inline]
     pub fn plugins(&self) -> LintPlugins {
-        self.options.plugins
+        self.config.plugins
     }
 
     #[cfg(test)]
@@ -223,7 +252,8 @@ impl LinterBuilder {
             self.rules.into_iter().collect::<Vec<_>>()
         };
         rules.sort_unstable_by_key(|r| r.id());
-        Linter::new(rules, self.options, self.config)
+        let config = ConfigStore::new(rules, self.config, self.overrides);
+        Linter::new(self.options, config)
     }
 
     /// Warn for all correctness rules in the given set of plugins.
@@ -239,12 +269,53 @@ impl LinterBuilder {
             .map(|rule| RuleWithSeverity { rule: rule.clone(), severity: AllowWarnDeny::Warn })
             .collect()
     }
+
+    /// # Panics
+    /// This function will panic if the `oxlintrc` is not valid JSON.
+    pub fn resolve_final_config_file(&self, oxlintrc: Oxlintrc) -> String {
+        let mut oxlintrc = oxlintrc;
+        let previous_rules = std::mem::take(&mut oxlintrc.rules);
+
+        let rule_name_to_rule = previous_rules
+            .rules
+            .into_iter()
+            .map(|r| (get_name(&r.plugin_name, &r.rule_name), r))
+            .collect::<rustc_hash::FxHashMap<_, _>>();
+
+        let new_rules = self
+            .rules
+            .iter()
+            .map(|r: &RuleWithSeverity| {
+                return ESLintRule {
+                    plugin_name: r.plugin_name().to_string(),
+                    rule_name: r.rule.name().to_string(),
+                    severity: r.severity,
+                    config: rule_name_to_rule
+                        .get(&get_name(r.plugin_name(), r.rule.name()))
+                        .and_then(|r| r.config.clone()),
+                };
+            })
+            .collect();
+
+        oxlintrc.rules = OxlintRules::new(new_rules);
+        serde_json::to_string_pretty(&oxlintrc).unwrap()
+    }
 }
 
-impl From<Oxlintrc> for LinterBuilder {
+fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
+    if plugin_name == "eslint" {
+        CompactStr::from(rule_name)
+    } else {
+        CompactStr::from(format!("{plugin_name}/{rule_name}"))
+    }
+}
+
+impl TryFrom<Oxlintrc> for LinterBuilder {
+    type Error = LinterBuilderError;
+
     #[inline]
-    fn from(oxlintrc: Oxlintrc) -> Self {
-        Self::from_oxlintrc(false, oxlintrc)
+    fn try_from(oxlintrc: Oxlintrc) -> Result<Self, Self::Error> {
+        Ok(Self::from_oxlintrc(false, oxlintrc))
     }
 }
 
@@ -257,6 +328,29 @@ impl fmt::Debug for LinterBuilder {
             .finish_non_exhaustive()
     }
 }
+
+/// An error that can occur while building a [`Linter`] from an [`Oxlintrc`].
+#[derive(Debug, Clone)]
+pub enum LinterBuilderError {
+    /// There were unknown rules that could not be matched to any known plugins/rules.
+    UnknownRules { rules: Vec<ESLintRule> },
+}
+
+impl std::fmt::Display for LinterBuilderError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LinterBuilderError::UnknownRules { rules } => {
+                write!(f, "unknown rules: ")?;
+                for rule in rules {
+                    write!(f, "{}", rule.full_name())?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
+impl std::error::Error for LinterBuilderError {}
 
 struct RulesCache {
     all_rules: RefCell<Option<Vec<RuleEnum>>>,
@@ -483,7 +577,7 @@ mod test {
         desired_plugins.set(LintPlugins::TYPESCRIPT, false);
 
         let linter = LinterBuilder::default().with_plugins(desired_plugins).build();
-        for rule in linter.rules() {
+        for rule in linter.rules().iter() {
             let name = rule.name();
             let plugin = rule.plugin_name();
             assert_ne!(
@@ -535,5 +629,56 @@ mod test {
             LintPlugins::ESLINT.union(LintPlugins::TYPESCRIPT).union(LintPlugins::NEXTJS);
         let builder = builder.with_plugins(expected_plugins);
         assert_eq!(expected_plugins, builder.plugins());
+    }
+
+    #[test]
+    fn test_categories() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+        {
+            "categories": {
+                "correctness": "warn",
+                "suspicious": "deny"
+            },
+            "rules": {
+                "no-const-assign": "error"
+            }
+        }
+        "#,
+        )
+        .unwrap();
+        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc);
+        for rule in &builder.rules {
+            let name = rule.name();
+            let plugin = rule.plugin_name();
+            let category = rule.category();
+            match category {
+                RuleCategory::Correctness => {
+                    if name == "no-const-assign" {
+                        assert_eq!(
+                            rule.severity,
+                            AllowWarnDeny::Deny,
+                            "no-const-assign should be denied",
+                        );
+                    } else {
+                        assert_eq!(
+                            rule.severity,
+                            AllowWarnDeny::Warn,
+                            "{plugin}/{name} should be a warning"
+                        );
+                    }
+                }
+                RuleCategory::Suspicious => {
+                    assert_eq!(
+                        rule.severity,
+                        AllowWarnDeny::Deny,
+                        "{plugin}/{name} should be denied"
+                    );
+                }
+                invalid => {
+                    panic!("Found rule {plugin}/{name} with an unexpected category {invalid:?}");
+                }
+            }
+        }
     }
 }

@@ -11,7 +11,7 @@ fn default_diagnostic(imported_name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/default.md>
+/// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/default.md>
 #[derive(Debug, Default, Clone)]
 pub struct Default;
 

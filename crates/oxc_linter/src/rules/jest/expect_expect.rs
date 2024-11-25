@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use regex::Regex;
 use rustc_hash::FxHashSet;
 
@@ -14,8 +14,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_node_name, is_type_of_jest_fn_call, JestFnKind,
-        JestGeneralFnKind, PossibleJestNode,
+        get_node_name, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode,
     },
 };
 
@@ -30,8 +29,8 @@ pub struct ExpectExpect(Box<ExpectExpectConfig>);
 
 #[derive(Debug, Clone)]
 pub struct ExpectExpectConfig {
-    assert_function_names: Vec<String>,
-    additional_test_block_functions: Vec<String>,
+    assert_function_names: Vec<CompactStr>,
+    additional_test_block_functions: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for ExpectExpect {
@@ -45,7 +44,7 @@ impl std::ops::Deref for ExpectExpect {
 impl Default for ExpectExpectConfig {
     fn default() -> Self {
         Self {
-            assert_function_names: vec![String::from("expect")],
+            assert_function_names: vec!["expect".into()],
             additional_test_block_functions: vec![],
         }
     }
@@ -69,7 +68,7 @@ declare_oxc_lint!(
     /// test('should assert something', () => {});
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/expect-expect.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/expect-expect.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json
@@ -85,7 +84,7 @@ declare_oxc_lint!(
 
 impl Rule for ExpectExpect {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let default_assert_function_names = vec![String::from("expect")];
+        let default_assert_function_names = vec!["expect".into()];
         let config = value.get(0);
 
         let assert_function_names = config
@@ -98,9 +97,7 @@ impl Rule for ExpectExpect {
         let additional_test_block_functions = config
             .and_then(|config| config.get("additionalTestBlockFunctions"))
             .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
         Self(Box::new(ExpectExpectConfig {
@@ -109,10 +106,12 @@ impl Rule for ExpectExpect {
         }))
     }
 
-    fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            run(self, possible_jest_node, ctx);
-        }
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        jest_node: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        run(self, jest_node, ctx);
     }
 }
 
@@ -158,7 +157,7 @@ fn run<'a>(
 
 fn check_arguments<'a>(
     call_expr: &'a CallExpression<'a>,
-    assert_function_names: &[String],
+    assert_function_names: &[CompactStr],
     visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
@@ -174,7 +173,7 @@ fn check_arguments<'a>(
 
 fn check_assert_function_used<'a>(
     expr: &'a Expression<'a>,
-    assert_function_names: &[String],
+    assert_function_names: &[CompactStr],
     visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
@@ -245,29 +244,34 @@ fn check_assert_function_used<'a>(
 
 fn check_statements<'a>(
     statements: &'a oxc_allocator::Vec<Statement<'a>>,
-    assert_function_names: &[String],
+    assert_function_names: &[CompactStr],
     visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    statements.iter().any(|statement| {
-        if let Statement::ExpressionStatement(expr_stmt) = statement {
-            return check_assert_function_used(
-                &expr_stmt.expression,
-                assert_function_names,
-                visited,
-                ctx,
-            );
+    statements.iter().any(|statement| match statement {
+        Statement::ExpressionStatement(expr_stmt) => {
+            check_assert_function_used(&expr_stmt.expression, assert_function_names, visited, ctx)
         }
-        false
+        Statement::BlockStatement(block_stmt) => {
+            check_statements(&block_stmt.body, assert_function_names, visited, ctx)
+        }
+        Statement::IfStatement(if_stmt) => {
+            if let Statement::BlockStatement(block_stmt) = &if_stmt.consequent {
+                check_statements(&block_stmt.body, assert_function_names, visited, ctx)
+            } else {
+                false
+            }
+        }
+        _ => false,
     })
 }
 
 /// Checks if node names returned by getNodeName matches any of the given star patterns
-fn matches_assert_function_name(name: &str, patterns: &[String]) -> bool {
+fn matches_assert_function_name(name: &str, patterns: &[CompactStr]) -> bool {
     patterns.iter().any(|pattern| Regex::new(pattern).unwrap().is_match(name))
 }
 
-fn convert_pattern(pattern: &str) -> String {
+fn convert_pattern(pattern: &str) -> CompactStr {
     // Pre-process pattern, e.g.
     // request.*.expect -> request.[a-z\\d]*.expect
     // request.**.expect -> request.[a-z\\d\\.]*.expect
@@ -276,44 +280,18 @@ fn convert_pattern(pattern: &str) -> String {
         .split('.')
         .map(|p| {
             if p == "**" {
-                String::from("[a-z\\d\\.]*")
+                CompactStr::from("[a-z\\d\\.]*")
             } else {
-                p.cow_replace('*', "[a-z\\d]*").into_owned()
+                p.cow_replace('*', "[a-z\\d]*").into()
             }
         })
         .collect::<Vec<_>>()
         .join("\\.");
 
     // 'a.b.c' -> /^a\.b\.c(\.|$)/iu
-    format!("(?ui)^{pattern}(\\.|$)")
+    format!("(?ui)^{pattern}(\\.|$)").into()
 }
 
-#[test]
-fn debug() {
-    use crate::tester::Tester;
-
-    let mut pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
-
-    let mut fail = vec![];
-
-    let pass_vitest = vec![(
-        "
-                import { test } from 'vitest';
-                test.skip(\"skipped test\", () => {})
-            ",
-        None,
-    )];
-
-    let fail_vitest = vec![];
-
-    pass.extend(pass_vitest);
-    fail.extend(fail_vitest);
-
-    Tester::new(ExpectExpect::NAME, pass, fail)
-        .with_jest_plugin(true)
-        .with_vitest_plugin(true)
-        .test();
-}
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -435,6 +413,32 @@ fn test() {
                     throw new Error('nope')
                 };
                 await expect(asyncFunction()).rejects.toThrow();
+            });
+            "#,
+            None,
+        ),
+        (
+            r#"
+            it("should not warn on await expect", async () => {
+                if(true) {
+                    const asyncFunction = async () => {
+                        throw new Error('nope')
+                    };
+                    await expect(asyncFunction()).rejects.toThrow();
+                }
+            });
+            "#,
+            None,
+        ),
+        (
+            r#"
+            it("should not warn on await expect", async () => {
+                {
+                    const asyncFunction = async () => {
+                        throw new Error('nope')
+                    };
+                    await expect(asyncFunction()).rejects.toThrow();
+                }
             });
             "#,
             None,

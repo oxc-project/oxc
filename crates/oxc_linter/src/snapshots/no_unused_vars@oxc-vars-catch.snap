@@ -1,10 +1,35 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
-  ⚠ eslint(no-unused-vars): Variable 'e' is caught but never used.
+  ⚠ eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
    ╭─[no_unused_vars.tsx:1:15]
  1 │ try {} catch (e) { }
    ·               ┬
    ·               ╰── 'e' is declared here
+   ╰────
+  help: Consider handling this error.
+
+  ⚠ eslint(no-unused-vars): Catch parameter '_' is caught but never used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ try {} catch(_) { }
+   ·              ┬
+   ·              ╰── '_' is declared here
+   ╰────
+  help: Consider handling this error.
+
+  ⚠ eslint(no-unused-vars): Catch parameter '_' is caught but never used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ try {} catch(_) { }
+   ·              ┬
+   ·              ╰── '_' is declared here
+   ╰────
+  help: Consider handling this error.
+
+  ⚠ eslint(no-unused-vars): Catch parameter 'foo' is caught but never used. Unused caught errors should match /^ignored/.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ try {} catch(foo) { }
+   ·              ─┬─
+   ·               ╰── 'foo' is declared here
    ╰────
   help: Consider handling this error.

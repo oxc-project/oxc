@@ -1,56 +1,28 @@
-use std::{borrow::Cow, cell::Cell, fmt};
+// FIXME: lots of methods are missing docs. If you have time, it would be a huge help to add some :)
+#![warn(missing_docs)]
+use std::{borrow::Cow, fmt};
 
-use oxc_allocator::{Box, FromIn, Vec};
-use oxc_span::{Atom, GetSpan, SourceType, Span};
-use oxc_syntax::{
-    operator::UnaryOperator,
-    reference::ReferenceId,
-    scope::{ScopeFlags, ScopeId},
-    symbol::SymbolId,
-};
+use oxc_allocator::{Address, Box, FromIn, GetAddress, Vec};
+use oxc_span::{Atom, GetSpan, Span};
+use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;
 
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export interface BindingIdentifier extends Span { type: "Identifier", name: Atom }
-export interface IdentifierReference extends Span { type: "Identifier", name: Atom }
-export interface IdentifierName extends Span { type: "Identifier", name: Atom }
-export interface LabelIdentifier extends Span { type: "Identifier", name: Atom }
-export interface AssignmentTargetRest extends Span { type: "RestElement", argument: AssignmentTarget }
-export interface BindingRestElement extends Span { type: "RestElement", argument: BindingPattern }
-export interface FormalParameterRest extends Span {
-    type: "RestElement",
-    argument: BindingPatternKind,
-    typeAnnotation?: TSTypeAnnotation,
-    optional: boolean,
-}
-"#;
-
 impl<'a> Program<'a> {
-    pub fn new(
-        span: Span,
-        source_type: SourceType,
-        directives: Vec<'a, Directive<'a>>,
-        hashbang: Option<Hashbang<'a>>,
-        body: Vec<'a, Statement<'a>>,
-    ) -> Self {
-        Self { span, source_type, directives, hashbang, body, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Program<'a> {
+    /// Returns `true` if this program has no statements or directives.
     pub fn is_empty(&self) -> bool {
         self.body.is_empty() && self.directives.is_empty()
     }
 
+    /// Returns `true` if this program uses strict mode semantics. Both source
+    /// type and `"use strict"` directives are considered.
     pub fn is_strict(&self) -> bool {
         self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)
     }
 }
 
 impl<'a> Expression<'a> {
+    /// Returns `true` if this expression is TypeScript-specific syntax.
     pub fn is_typescript_syntax(&self) -> bool {
         matches!(
             self,
@@ -62,6 +34,7 @@ impl<'a> Expression<'a> {
         )
     }
 
+    /// Returns `true` if this is a [primary expression](https://tc39.es/ecma262/#sec-primary-expression).
     pub fn is_primary_expression(&self) -> bool {
         self.is_literal()
             || matches!(
@@ -95,18 +68,24 @@ impl<'a> Expression<'a> {
         )
     }
 
+    /// Returns `true` for [string](StringLiteral) and [template](TemplateLiteral) literals.
     pub fn is_string_literal(&self) -> bool {
         matches!(self, Self::StringLiteral(_) | Self::TemplateLiteral(_))
     }
 
+    /// Returns `true` for [numeric](NumericLiteral) and [big int](BigIntLiteral) literals.
     pub fn is_number_literal(&self) -> bool {
         matches!(self, Self::NumericLiteral(_) | Self::BigIntLiteral(_))
     }
 
+    /// Returns `true` for [bigint literals](BigIntLiteral).
     pub fn is_big_int_literal(&self) -> bool {
         matches!(self, Self::BigIntLiteral(_))
     }
 
+    /// Returns `true` for [string literals](StringLiteral) matching the
+    /// expected value. Note that [non-substitution template
+    /// literals](TemplateLiteral) are not considered.
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
         match self {
             Self::StringLiteral(s) => s.value == string,
@@ -139,6 +118,7 @@ impl<'a> Expression<'a> {
         }
     }
 
+    /// Returns `true` for [numeric literals](NumericLiteral)
     pub fn is_number(&self) -> bool {
         matches!(self, Self::NumericLiteral(_))
     }
@@ -148,6 +128,7 @@ impl<'a> Expression<'a> {
         matches!(self, Self::NumericLiteral(lit) if lit.value == 0.0)
     }
 
+    /// Determines whether the given expr is a specific [number](NumericLiteral) literal.
     pub fn is_number_value(&self, val: f64) -> bool {
         matches!(self, Self::NumericLiteral(lit) if (lit.value - val).abs() < f64::EPSILON)
     }
@@ -183,6 +164,7 @@ impl<'a> Expression<'a> {
         expr
     }
 
+    #[allow(missing_docs)]
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self.get_inner_expression() {
             Expression::Identifier(ident) => ident.name == name,
@@ -190,6 +172,7 @@ impl<'a> Expression<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_specific_member_access(&self, object: &str, property: &str) -> bool {
         match self.get_inner_expression() {
             expr if expr.is_member_expression() => {
@@ -205,6 +188,7 @@ impl<'a> Expression<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn get_inner_expression(&self) -> &Expression<'a> {
         let mut expr = self;
         loop {
@@ -221,6 +205,7 @@ impl<'a> Expression<'a> {
         expr
     }
 
+    #[allow(missing_docs)]
     pub fn get_inner_expression_mut(&mut self) -> &mut Expression<'a> {
         let mut expr = self;
         loop {
@@ -237,10 +222,12 @@ impl<'a> Expression<'a> {
         expr
     }
 
+    #[allow(missing_docs)]
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))
     }
 
+    #[allow(missing_docs)]
     pub fn get_identifier_reference(&self) -> Option<&IdentifierReference<'a>> {
         match self.get_inner_expression() {
             Expression::Identifier(ident) => Some(ident),
@@ -248,44 +235,33 @@ impl<'a> Expression<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_function(&self) -> bool {
         matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
     }
 
+    #[allow(missing_docs)]
     pub fn is_call_expression(&self) -> bool {
         matches!(self, Expression::CallExpression(_))
     }
 
+    #[allow(missing_docs)]
     pub fn is_super_call_expression(&self) -> bool {
         matches!(self, Expression::CallExpression(expr) if matches!(&expr.callee, Expression::Super(_)))
     }
 
+    #[allow(missing_docs)]
     pub fn is_call_like_expression(&self) -> bool {
         self.is_call_expression()
             && matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
     }
 
+    #[allow(missing_docs)]
     pub fn is_binaryish(&self) -> bool {
         matches!(self, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
     }
 
-    /// Returns literal's value converted to the Boolean type
-    /// returns `true` when node is truthy, `false` when node is falsy, `None` when it cannot be determined.
-    /// <https://tc39.es/ecma262/#sec-toboolean>
-    /// 1. If argument is a Boolean, return argument.
-    /// 2. If argument is one of undefined, null, +0𝔽, -0𝔽, NaN, 0ℤ, or the empty String, return false.
-    pub fn to_boolean(&self) -> Option<bool> {
-        match self {
-            Self::BooleanLiteral(lit) => Some(lit.value),
-            Self::NullLiteral(_) => Some(false),
-            Self::NumericLiteral(lit) => Some(lit.value != 0.0),
-            Self::BigIntLiteral(lit) => Some(!lit.is_zero()),
-            Self::RegExpLiteral(_) => Some(true),
-            Self::StringLiteral(lit) => Some(!lit.value.is_empty()),
-            _ => None,
-        }
-    }
-
+    #[allow(missing_docs)]
     pub fn get_member_expr(&self) -> Option<&MemberExpression<'a>> {
         match self.get_inner_expression() {
             Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
@@ -293,23 +269,7 @@ impl<'a> Expression<'a> {
         }
     }
 
-    pub fn is_immutable_value(&self) -> bool {
-        match self {
-            Self::BooleanLiteral(_)
-            | Self::NullLiteral(_)
-            | Self::NumericLiteral(_)
-            | Self::BigIntLiteral(_)
-            | Self::RegExpLiteral(_)
-            | Self::StringLiteral(_) => true,
-            Self::TemplateLiteral(lit) if lit.is_no_substitution_template() => true,
-            Self::UnaryExpression(unary_expr) => unary_expr.argument.is_immutable_value(),
-            Self::Identifier(ident) => {
-                matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
-            }
-            _ => false,
-        }
-    }
-
+    #[allow(missing_docs)]
     pub fn is_require_call(&self) -> bool {
         if let Self::CallExpression(call_expr) = self {
             call_expr.is_require_call()
@@ -317,11 +277,10 @@ impl<'a> Expression<'a> {
             false
         }
     }
-}
 
-impl<'a> IdentifierName<'a> {
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name }
+    /// Returns `true` if this is an [assignment expression](AssignmentExpression).
+    pub fn is_assignment(&self) -> bool {
+        matches!(self, Expression::AssignmentExpression(_))
     }
 }
 
@@ -332,40 +291,9 @@ impl<'a> fmt::Display for IdentifierName<'a> {
     }
 }
 
-impl<'a> IdentifierReference<'a> {
-    #[inline]
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, reference_id: Cell::default() }
-    }
-
-    #[inline]
-    pub fn new_with_reference_id(
-        span: Span,
-        name: Atom<'a>,
-        reference_id: Option<ReferenceId>,
-    ) -> Self {
-        Self { span, name, reference_id: Cell::new(reference_id) }
-    }
-
-    #[inline]
-    pub fn reference_id(&self) -> Option<ReferenceId> {
-        self.reference_id.get()
-    }
-}
-
 impl<'a> fmt::Display for IdentifierReference<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
-    }
-}
-
-impl<'a> BindingIdentifier<'a> {
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, symbol_id: Cell::default() }
-    }
-
-    pub fn new_with_symbol_id(span: Span, name: Atom<'a>, symbol_id: SymbolId) -> Self {
-        Self { span, name, symbol_id: Cell::new(Some(symbol_id)) }
     }
 }
 
@@ -377,20 +305,22 @@ impl<'a> fmt::Display for BindingIdentifier<'a> {
 }
 
 impl<'a> ArrayExpressionElement<'a> {
+    #[allow(missing_docs)]
     pub fn is_elision(&self) -> bool {
         matches!(self, Self::Elision(_))
     }
 }
 
-impl<'a> ObjectExpression<'a> {
-    /// Returns `true` if this object has a property named `__proto__`
-    pub fn has_proto(&self) -> bool {
-        use crate::syntax_directed_operations::PropName;
-        self.properties.iter().any(|p| p.prop_name().is_some_and(|name| name.0 == "__proto__"))
+impl<'a> ObjectPropertyKind<'a> {
+    /// Returns `true` if this object property is a [spread](SpreadElement).
+    #[inline]
+    pub fn is_spread(&self) -> bool {
+        matches!(self, Self::SpreadProperty(_))
     }
 }
 
 impl<'a> PropertyKey<'a> {
+    #[allow(missing_docs)]
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
@@ -406,18 +336,22 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_specific_static_name(&self, name: &str) -> bool {
         self.static_name().is_some_and(|n| n == name)
     }
 
+    #[allow(missing_docs)]
     pub fn is_identifier(&self) -> bool {
         matches!(self, Self::PrivateIdentifier(_) | Self::StaticIdentifier(_))
     }
 
+    #[allow(missing_docs)]
     pub fn is_private_identifier(&self) -> bool {
         matches!(self, Self::PrivateIdentifier(_))
     }
 
+    #[allow(missing_docs)]
     pub fn private_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::PrivateIdentifier(ident) => Some(ident.name.clone()),
@@ -425,6 +359,7 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn name(&self) -> Option<Cow<'a, str>> {
         if self.is_private_identifier() {
             self.private_name().map(|name| Cow::Borrowed(name.as_str()))
@@ -433,6 +368,7 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self {
             PropertyKey::StaticIdentifier(ident) => ident.name == name,
@@ -440,6 +376,7 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
         matches!(self, Self::StringLiteral(s) if s.value == string)
     }
@@ -455,6 +392,7 @@ impl PropertyKind {
 }
 
 impl<'a> TemplateLiteral<'a> {
+    #[allow(missing_docs)]
     pub fn is_no_substitution_template(&self) -> bool {
         self.expressions.is_empty() && self.quasis.len() == 1
     }
@@ -466,10 +404,12 @@ impl<'a> TemplateLiteral<'a> {
 }
 
 impl<'a> MemberExpression<'a> {
+    #[allow(missing_docs)]
     pub fn is_computed(&self) -> bool {
         matches!(self, MemberExpression::ComputedMemberExpression(_))
     }
 
+    #[allow(missing_docs)]
     pub fn optional(&self) -> bool {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => expr.optional,
@@ -478,6 +418,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn object(&self) -> &Expression<'a> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => &expr.object,
@@ -486,6 +427,16 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
+    #[allow(missing_docs)]
+    pub fn object_mut(&mut self) -> &mut Expression<'a> {
+        match self {
+            MemberExpression::ComputedMemberExpression(expr) => &mut expr.object,
+            MemberExpression::StaticMemberExpression(expr) => &mut expr.object,
+            MemberExpression::PrivateFieldExpression(expr) => &mut expr.object,
+        }
+    }
+
+    #[allow(missing_docs)]
     pub fn static_property_name(&self) -> Option<&'a str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => {
@@ -496,6 +447,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
@@ -516,12 +468,12 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
         let object_matches = match self.object().without_parentheses() {
-            Expression::ChainExpression(x) => match &x.expression {
-                ChainElement::CallExpression(_) => false,
-                match_member_expression!(ChainElement) => {
-                    let member_expr = x.expression.to_member_expression();
+            Expression::ChainExpression(x) => match x.expression.member_expression() {
+                None => false,
+                Some(member_expr) => {
                     member_expr.object().without_parentheses().is_specific_id(object)
                 }
             },
@@ -541,6 +493,7 @@ impl<'a> MemberExpression<'a> {
 }
 
 impl<'a> ComputedMemberExpression<'a> {
+    #[allow(missing_docs)]
     pub fn static_property_name(&self) -> Option<Atom<'a>> {
         match &self.expression {
             Expression::StringLiteral(lit) => Some(lit.value.clone()),
@@ -555,28 +508,44 @@ impl<'a> ComputedMemberExpression<'a> {
 }
 
 impl<'a> StaticMemberExpression<'a> {
+    #[allow(missing_docs)]
     pub fn get_first_object(&self) -> &Expression<'a> {
-        match &self.object {
-            Expression::StaticMemberExpression(member) => {
-                if let Expression::StaticMemberExpression(expr) = &member.object {
-                    expr.get_first_object()
-                } else {
-                    &self.object
+        let mut object = &self.object;
+        loop {
+            match object {
+                Expression::StaticMemberExpression(member) => {
+                    object = &member.object;
+                    continue;
                 }
-            }
-            Expression::ChainExpression(chain) => {
-                if let ChainElement::StaticMemberExpression(expr) = &chain.expression {
-                    expr.get_first_object()
-                } else {
-                    &self.object
+                Expression::ChainExpression(chain) => {
+                    if let ChainElement::StaticMemberExpression(member) = &chain.expression {
+                        object = &member.object;
+                        continue;
+                    }
                 }
+                _ => {}
             }
-            _ => &self.object,
+
+            return object;
+        }
+    }
+}
+
+impl<'a> ChainElement<'a> {
+    /// Returns the member expression.
+    pub fn member_expression(&self) -> Option<&MemberExpression<'a>> {
+        match self {
+            ChainElement::TSNonNullExpression(e) => match &e.expression {
+                match_member_expression!(Expression) => e.expression.as_member_expression(),
+                _ => None,
+            },
+            _ => self.as_member_expression(),
         }
     }
 }
 
 impl<'a> CallExpression<'a> {
+    #[allow(missing_docs)]
     pub fn callee_name(&self) -> Option<&str> {
         match &self.callee {
             Expression::Identifier(ident) => Some(ident.name.as_str()),
@@ -584,6 +553,7 @@ impl<'a> CallExpression<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_require_call(&self) -> bool {
         if self.arguments.len() != 1 {
             return false;
@@ -599,6 +569,7 @@ impl<'a> CallExpression<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_symbol_or_symbol_for_call(&self) -> bool {
         // TODO: is 'Symbol' reference to global object
         match &self.callee {
@@ -613,6 +584,7 @@ impl<'a> CallExpression<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn common_js_require(&self) -> Option<&StringLiteral> {
         if !(self.callee.is_specific_id("require") && self.arguments.len() == 1) {
             return None;
@@ -625,26 +597,31 @@ impl<'a> CallExpression<'a> {
 }
 
 impl Argument<'_> {
+    #[allow(missing_docs)]
     pub fn is_spread(&self) -> bool {
         matches!(self, Self::SpreadElement(_))
     }
 }
 
 impl<'a> AssignmentTarget<'a> {
+    #[allow(missing_docs)]
     pub fn get_identifier(&self) -> Option<&'a str> {
         self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_identifier)
     }
 
+    #[allow(missing_docs)]
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_expression)
     }
 
+    #[allow(missing_docs)]
     pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
         self.as_simple_assignment_target_mut().and_then(SimpleAssignmentTarget::get_expression_mut)
     }
 }
 
 impl<'a> SimpleAssignmentTarget<'a> {
+    #[allow(missing_docs)]
     pub fn get_identifier(&self) -> Option<&'a str> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
@@ -653,6 +630,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         match self {
             Self::TSAsExpression(expr) => Some(&expr.expression),
@@ -663,6 +641,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
         match self {
             Self::TSAsExpression(expr) => Some(&mut expr.expression),
@@ -676,6 +655,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
 }
 
 impl<'a> ArrayAssignmentTarget<'a> {
+    #[allow(missing_docs)]
     pub fn new_with_elements(
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
@@ -685,6 +665,7 @@ impl<'a> ArrayAssignmentTarget<'a> {
 }
 
 impl<'a> ObjectAssignmentTarget<'a> {
+    #[allow(missing_docs)]
     pub fn new_with_properties(
         span: Span,
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
@@ -692,16 +673,19 @@ impl<'a> ObjectAssignmentTarget<'a> {
         Self { span, properties, rest: None }
     }
 
+    #[allow(missing_docs)]
     pub fn is_empty(&self) -> bool {
         self.properties.is_empty() && self.rest.is_none()
     }
 
+    #[allow(missing_docs)]
     pub fn len(&self) -> usize {
         self.properties.len() + usize::from(self.rest.is_some())
     }
 }
 
 impl<'a> AssignmentTargetMaybeDefault<'a> {
+    #[allow(missing_docs)]
     pub fn name(&self) -> Option<Atom> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id.name.clone()),
@@ -718,6 +702,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
 }
 
 impl<'a> Statement<'a> {
+    #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
             match_declaration!(Self) => {
@@ -730,6 +715,7 @@ impl<'a> Statement<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_iteration_statement(&self) -> bool {
         matches!(
             self,
@@ -751,6 +737,47 @@ impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
     }
 }
 
+impl<'a> GetAddress for Statement<'a> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Statement::BlockStatement(s) => s.address(),
+            Statement::BreakStatement(s) => s.address(),
+            Statement::ContinueStatement(s) => s.address(),
+            Statement::DebuggerStatement(s) => s.address(),
+            Statement::DoWhileStatement(s) => s.address(),
+            Statement::EmptyStatement(s) => s.address(),
+            Statement::ExpressionStatement(s) => s.address(),
+            Statement::ForInStatement(s) => s.address(),
+            Statement::ForOfStatement(s) => s.address(),
+            Statement::ForStatement(s) => s.address(),
+            Statement::IfStatement(s) => s.address(),
+            Statement::LabeledStatement(s) => s.address(),
+            Statement::ReturnStatement(s) => s.address(),
+            Statement::SwitchStatement(s) => s.address(),
+            Statement::ThrowStatement(s) => s.address(),
+            Statement::TryStatement(s) => s.address(),
+            Statement::WhileStatement(s) => s.address(),
+            Statement::WithStatement(s) => s.address(),
+            Statement::VariableDeclaration(s) => s.address(),
+            Statement::FunctionDeclaration(s) => s.address(),
+            Statement::ClassDeclaration(s) => s.address(),
+            Statement::TSTypeAliasDeclaration(s) => s.address(),
+            Statement::TSInterfaceDeclaration(s) => s.address(),
+            Statement::TSEnumDeclaration(s) => s.address(),
+            Statement::TSModuleDeclaration(s) => s.address(),
+            Statement::TSImportEqualsDeclaration(s) => s.address(),
+            Statement::ImportDeclaration(s) => s.address(),
+            Statement::ExportAllDeclaration(s) => s.address(),
+            Statement::ExportDefaultDeclaration(s) => s.address(),
+            Statement::ExportNamedDeclaration(s) => s.address(),
+            Statement::TSExportAssignment(s) => s.address(),
+            Statement::TSNamespaceExportDeclaration(s) => s.address(),
+        }
+    }
+}
+
 impl<'a> Directive<'a> {
     /// A Use Strict Directive is an ExpressionStatement in a Directive Prologue whose StringLiteral is either of the exact code point sequences "use strict" or 'use strict'.
     /// A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
@@ -760,17 +787,8 @@ impl<'a> Directive<'a> {
     }
 }
 
-impl<'a> BlockStatement<'a> {
-    pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
-        Self { span, body, scope_id: Cell::default() }
-    }
-
-    pub fn new_with_scope_id(span: Span, body: Vec<'a, Statement<'a>>, scope_id: ScopeId) -> Self {
-        Self { span, body, scope_id: Cell::new(Some(scope_id)) }
-    }
-}
-
 impl<'a> Declaration<'a> {
+    #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
             Self::VariableDeclaration(decl) => decl.is_typescript_syntax(),
@@ -779,7 +797,14 @@ impl<'a> Declaration<'a> {
             _ => true,
         }
     }
-
+    /// Get the identifier bound by this declaration.
+    ///
+    /// ## Example
+    /// ```ts
+    /// const x = 1; // None. may change in the future.
+    /// class Foo {} // Some(IdentifierReference { name: "Foo", .. })
+    /// enum Bar {} // Some(IdentifierReference { name: "Bar", .. })
+    /// ```
     pub fn id(&self) -> Option<&BindingIdentifier<'a>> {
         match self {
             Declaration::FunctionDeclaration(decl) => decl.id.as_ref(),
@@ -792,6 +817,7 @@ impl<'a> Declaration<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn declare(&self) -> bool {
         match self {
             Declaration::VariableDeclaration(decl) => decl.declare,
@@ -807,32 +833,39 @@ impl<'a> Declaration<'a> {
 }
 
 impl<'a> VariableDeclaration<'a> {
+    #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         self.declare
     }
 
+    /// Returns `true` if any of this declaration's variables have an initializer.
     pub fn has_init(&self) -> bool {
         self.declarations.iter().any(|decl| decl.init.is_some())
     }
 }
 
 impl VariableDeclarationKind {
+    /// `var x`
     pub fn is_var(&self) -> bool {
         matches!(self, Self::Var)
     }
 
+    /// `const x`
     pub fn is_const(&self) -> bool {
         matches!(self, Self::Const)
     }
 
+    /// `let x` or `const x`
     pub fn is_lexical(&self) -> bool {
         matches!(self, Self::Const | Self::Let)
     }
 
+    /// `await using x`
     pub fn is_await(&self) -> bool {
         matches!(self, Self::AwaitUsing)
     }
 
+    #[allow(missing_docs)]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Var => "var",
@@ -851,46 +884,11 @@ impl fmt::Display for VariableDeclarationKind {
     }
 }
 
-impl<'a> ForStatement<'a> {
-    pub fn new(
-        span: Span,
-        init: Option<ForStatementInit<'a>>,
-        test: Option<Expression<'a>>,
-        update: Option<Expression<'a>>,
-        body: Statement<'a>,
-    ) -> Self {
-        Self { span, init, test, update, body, scope_id: Cell::default() }
-    }
-}
-
 impl<'a> ForStatementInit<'a> {
     /// LexicalDeclaration[In, Yield, Await] :
     ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
     pub fn is_lexical_declaration(&self) -> bool {
         matches!(self, Self::VariableDeclaration(decl) if decl.kind.is_lexical())
-    }
-}
-
-impl<'a> ForInStatement<'a> {
-    pub fn new(
-        span: Span,
-        left: ForStatementLeft<'a>,
-        right: Expression<'a>,
-        body: Statement<'a>,
-    ) -> Self {
-        Self { span, left, right, body, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> ForOfStatement<'a> {
-    pub fn new(
-        span: Span,
-        r#await: bool,
-        left: ForStatementLeft<'a>,
-        right: Expression<'a>,
-        body: Statement<'a>,
-    ) -> Self {
-        Self { span, r#await, left, right, body, scope_id: Cell::default() }
     }
 }
 
@@ -902,39 +900,27 @@ impl<'a> ForStatementLeft<'a> {
     }
 }
 
-impl<'a> SwitchStatement<'a> {
-    pub fn new(span: Span, discriminant: Expression<'a>, cases: Vec<'a, SwitchCase<'a>>) -> Self {
-        Self { span, discriminant, cases, scope_id: Cell::default() }
-    }
-}
-
 impl<'a> SwitchCase<'a> {
+    /// `true` for `default:` cases.
     pub fn is_default_case(&self) -> bool {
         self.test.is_none()
     }
 }
 
-impl<'a> CatchClause<'a> {
-    pub fn new(
-        span: Span,
-        param: Option<CatchParameter<'a>>,
-        body: Box<'a, BlockStatement<'a>>,
-    ) -> Self {
-        Self { span, param, body, scope_id: Cell::default() }
-    }
-}
-
 impl<'a> BindingPattern<'a> {
+    #[allow(missing_docs)]
     pub fn get_identifier(&self) -> Option<Atom<'a>> {
         self.kind.get_identifier()
     }
 
+    #[allow(missing_docs)]
     pub fn get_binding_identifier(&self) -> Option<&BindingIdentifier<'a>> {
         self.kind.get_binding_identifier()
     }
 }
 
 impl<'a> BindingPatternKind<'a> {
+    #[allow(missing_docs)]
     pub fn get_identifier(&self) -> Option<Atom<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident.name.clone()),
@@ -943,6 +929,7 @@ impl<'a> BindingPatternKind<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn get_binding_identifier(&self) -> Option<&BindingIdentifier<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident),
@@ -951,6 +938,7 @@ impl<'a> BindingPatternKind<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_destructuring_pattern(&self) -> bool {
         match self {
             Self::ObjectPattern(_) | Self::ArrayPattern(_) => true,
@@ -959,66 +947,52 @@ impl<'a> BindingPatternKind<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_binding_identifier(&self) -> bool {
         matches!(self, Self::BindingIdentifier(_))
     }
 
+    #[allow(missing_docs)]
+    pub fn is_object_pattern(&self) -> bool {
+        matches!(self, Self::ObjectPattern(_))
+    }
+
+    #[allow(missing_docs)]
+    pub fn is_array_pattern(&self) -> bool {
+        matches!(self, Self::ArrayPattern(_))
+    }
+
+    #[allow(missing_docs)]
     pub fn is_assignment_pattern(&self) -> bool {
         matches!(self, Self::AssignmentPattern(_))
     }
 }
 
 impl<'a> ObjectPattern<'a> {
+    /// `true` for empty object patterns (`{}`).
     pub fn is_empty(&self) -> bool {
         self.properties.is_empty() && self.rest.is_none()
     }
 
+    /// The number of properties, including rest properties, in this object pattern.
     pub fn len(&self) -> usize {
         self.properties.len() + usize::from(self.rest.is_some())
     }
 }
 
 impl<'a> ArrayPattern<'a> {
+    /// `true` for empty array patterns (`[]`).
     pub fn is_empty(&self) -> bool {
         self.elements.is_empty() && self.rest.is_none()
     }
 
+    /// The number of elements, including rest elements, in this array pattern.
     pub fn len(&self) -> usize {
         self.elements.len() + usize::from(self.rest.is_some())
     }
 }
 
 impl<'a> Function<'a> {
-    #![allow(clippy::too_many_arguments)]
-    pub fn new(
-        r#type: FunctionType,
-        span: Span,
-        id: Option<BindingIdentifier<'a>>,
-        generator: bool,
-        r#async: bool,
-        declare: bool,
-        this_param: Option<Box<'a, TSThisParameter<'a>>>,
-        params: Box<'a, FormalParameters<'a>>,
-        body: Option<Box<'a, FunctionBody<'a>>>,
-        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    ) -> Self {
-        Self {
-            r#type,
-            span,
-            id,
-            generator,
-            r#async,
-            declare,
-            this_param,
-            params,
-            body,
-            type_parameters,
-            return_type,
-            scope_id: Cell::default(),
-        }
-    }
-
     /// Returns this [`Function`]'s name, if it has one.
     #[inline]
     pub fn name(&self) -> Option<Atom<'a>> {
@@ -1027,12 +1001,13 @@ impl<'a> Function<'a> {
 
     /// Get the [`SymbolId`] this [`Function`] is bound to.
     ///
-    /// Returns [`None`] for anonymous functions, or if semantic analysis was skipped.
+    /// Returns [`None`] for anonymous functions.
     #[inline]
     pub fn symbol_id(&self) -> Option<SymbolId> {
-        self.id.as_ref().and_then(|id| id.symbol_id.get())
+        self.id.as_ref().map(BindingIdentifier::symbol_id)
     }
 
+    /// `true` for overload signatures and `declare function` statements.
     pub fn is_typescript_syntax(&self) -> bool {
         matches!(
             self.r#type,
@@ -1041,28 +1016,34 @@ impl<'a> Function<'a> {
             || self.declare
     }
 
+    /// `true` for function expressions
     pub fn is_expression(&self) -> bool {
         self.r#type == FunctionType::FunctionExpression
     }
 
+    /// `true` for function declarations
     pub fn is_function_declaration(&self) -> bool {
         matches!(self.r#type, FunctionType::FunctionDeclaration)
     }
 
+    /// `true` for `declare function` statements
     pub fn is_ts_declare_function(&self) -> bool {
         matches!(self.r#type, FunctionType::TSDeclareFunction)
     }
 
+    /// `true` for non-expression functions
     pub fn is_declaration(&self) -> bool {
         matches!(self.r#type, FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction)
     }
 
+    /// `true` if this function's body has a `"use strict"` directive.
     pub fn is_strict(&self) -> bool {
         self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())
     }
 }
 
 impl<'a> FormalParameters<'a> {
+    /// Number of parameters bound in this parameter list.
     pub fn parameters_count(&self) -> usize {
         self.items.len() + self.rest.as_ref().map_or(0, |_| 1)
     }
@@ -1077,10 +1058,36 @@ impl<'a> FormalParameters<'a> {
 }
 
 impl<'a> FormalParameter<'a> {
+    /// `true` if a `public` accessibility modifier is present. Use
+    /// [`has_modifier`](FormalParameter::has_modifier) if you want to check for
+    /// _any_ modifier, including `readonly` and `override`.
+    ///
+    /// ## Example
+    /// ```ts
+    /// class Foo {
+    ///     constructor(
+    ///         public x: number,  // <- true
+    ///         private y: string, // <- false
+    ///         z: string          // <- false
+    ///     ) {}
+    /// }
     pub fn is_public(&self) -> bool {
         matches!(self.accessibility, Some(TSAccessibility::Public))
     }
 
+    /// `true` if any modifier, accessibility or otherwise, is present.
+    ///
+    /// ## Example
+    /// ```ts
+    /// class Foo {
+    ///     constructor(
+    ///         public a: number,   // <- true
+    ///         readonly b: string, // <- true
+    ///         override c: string, // <- true
+    ///         d: string           // <- false
+    ///    ) {}
+    /// }
+    /// ```
     #[inline]
     pub fn has_modifier(&self) -> bool {
         self.accessibility.is_some() || self.readonly || self.r#override
@@ -1088,53 +1095,38 @@ impl<'a> FormalParameter<'a> {
 }
 
 impl FormalParameterKind {
+    /// `true` when part of a TypeScript method or function signature.
     pub fn is_signature(&self) -> bool {
         matches!(self, Self::Signature)
     }
 }
 
 impl<'a> FormalParameters<'a> {
+    /// `true` if no parameters are bound.
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
 
+    /// `true` if at least one parameter is bound, including [rest bindings](BindingRestElement).
     pub fn has_parameter(&self) -> bool {
         !self.is_empty() || self.rest.is_some()
     }
 }
 
 impl<'a> FunctionBody<'a> {
+    /// `true` if this function body contains no statements or directives.
     pub fn is_empty(&self) -> bool {
         self.directives.is_empty() && self.statements.is_empty()
     }
 
+    /// `true` if this function body contains a `"use strict"` directive.
+    #[allow(missing_docs)]
     pub fn has_use_strict_directive(&self) -> bool {
         self.directives.iter().any(Directive::is_use_strict)
     }
 }
 
 impl<'a> ArrowFunctionExpression<'a> {
-    pub fn new(
-        span: Span,
-        expression: bool,
-        r#async: bool,
-        params: Box<'a, FormalParameters<'a>>,
-        body: Box<'a, FunctionBody<'a>>,
-        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    ) -> Self {
-        Self {
-            span,
-            expression,
-            r#async,
-            params,
-            body,
-            type_parameters,
-            return_type,
-            scope_id: Cell::default(),
-        }
-    }
-
     /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         if self.expression {
@@ -1147,36 +1139,6 @@ impl<'a> ArrowFunctionExpression<'a> {
 }
 
 impl<'a> Class<'a> {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        r#type: ClassType,
-        span: Span,
-        decorators: Vec<'a, Decorator<'a>>,
-        id: Option<BindingIdentifier<'a>>,
-        super_class: Option<Expression<'a>>,
-        body: Box<'a, ClassBody<'a>>,
-        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-        implements: Option<Vec<'a, TSClassImplements<'a>>>,
-        r#abstract: bool,
-        declare: bool,
-    ) -> Self {
-        Self {
-            r#type,
-            span,
-            decorators,
-            id,
-            super_class,
-            body,
-            type_parameters,
-            super_type_parameters,
-            implements,
-            r#abstract,
-            declare,
-            scope_id: Cell::default(),
-        }
-    }
-
     /// `true` if this [`Class`] is an expression.
     ///
     /// For example,
@@ -1199,6 +1161,7 @@ impl<'a> Class<'a> {
         self.r#type == ClassType::ClassDeclaration
     }
 
+    #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         self.declare || self.r#abstract
     }
@@ -1210,8 +1173,22 @@ impl<'a> ClassElement<'a> {
         matches!(self, Self::StaticBlock(_))
     }
 
-    /// Returns `true` if this [`ClassElement`] is a static block or has a
-    /// static modifier.
+    /// Returns `true` if this [`ClassElement`] has a static modifier.
+    ///
+    /// Note: Class static blocks do not have a "modifier", as there is no non-static equivalent.
+    /// Therefore, returns `false` for static blocks.
+    ///
+    /// The following all return `true`:
+    /// ```ts
+    /// class {
+    ///   static prop = 1;
+    ///   static method() {}
+    ///   static #private = 2;
+    ///   static #privateMethod() {}
+    ///   static accessor accessorProp = 3;
+    ///   static accessor #privateAccessorProp = 4;
+    /// }
+    /// ```
     pub fn r#static(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
@@ -1221,6 +1198,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn computed(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
@@ -1230,6 +1208,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         match self {
             Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
@@ -1238,6 +1217,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn method_definition_kind(&self) -> Option<MethodDefinitionKind> {
         match self {
             Self::TSIndexSignature(_)
@@ -1248,6 +1228,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn property_key(&self) -> Option<&PropertyKey<'a>> {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
@@ -1257,6 +1238,8 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    /// Try to get the statically known name of this [`ClassElement`]. Handles
+    /// computed members that use literals.
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
@@ -1271,6 +1254,8 @@ impl<'a> ClassElement<'a> {
         matches!(self, Self::PropertyDefinition(_) | Self::AccessorProperty(_))
     }
 
+    /// `true` for overloads, declarations, index signatures, and abstract
+    /// methods, etc. That is, any non-concrete implementation.
     pub fn is_ts_empty_body_function(&self) -> bool {
         match self {
             Self::PropertyDefinition(_)
@@ -1281,6 +1266,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) => true,
@@ -1293,6 +1279,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    /// `true` for [decorated](Decorator) class elements.
     pub fn has_decorator(&self) -> bool {
         match self {
             Self::MethodDefinition(method) => !method.decorators.is_empty(),
@@ -1321,24 +1308,29 @@ impl<'a> ClassElement<'a> {
 }
 
 impl PropertyDefinitionType {
+    /// `true` for abstract properties and methods.
     pub fn is_abstract(&self) -> bool {
         matches!(self, Self::TSAbstractPropertyDefinition)
     }
 }
 
 impl MethodDefinitionKind {
+    /// `true` for constructors.
     pub fn is_constructor(&self) -> bool {
         matches!(self, Self::Constructor)
     }
 
+    /// `true` for regular methods.
     pub fn is_method(&self) -> bool {
         matches!(self, Self::Method)
     }
 
+    /// `true` for setter methods.
     pub fn is_set(&self) -> bool {
         matches!(self, Self::Set)
     }
 
+    /// `true` for getter methods.
     pub fn is_get(&self) -> bool {
         matches!(self, Self::Get)
     }
@@ -1350,6 +1342,7 @@ impl MethodDefinitionKind {
         matches!(self, Self::Get | Self::Set)
     }
 
+    #[allow(missing_docs)]
     pub fn scope_flags(self) -> ScopeFlags {
         match self {
             Self::Constructor => ScopeFlags::Constructor | ScopeFlags::Function,
@@ -1361,24 +1354,14 @@ impl MethodDefinitionKind {
 }
 
 impl MethodDefinitionType {
+    #[allow(missing_docs)]
     pub fn is_abstract(&self) -> bool {
         matches!(self, Self::TSAbstractMethodDefinition)
     }
 }
 
-impl<'a> PrivateIdentifier<'a> {
-    pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name }
-    }
-}
-
-impl<'a> StaticBlock<'a> {
-    pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
-        Self { span, body, scope_id: Cell::default() }
-    }
-}
-
 impl<'a> ModuleDeclaration<'a> {
+    #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
             ModuleDeclaration::ImportDeclaration(_) => false,
@@ -1390,10 +1373,12 @@ impl<'a> ModuleDeclaration<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn is_import(&self) -> bool {
         matches!(self, Self::ImportDeclaration(_))
     }
 
+    #[allow(missing_docs)]
     pub fn is_export(&self) -> bool {
         matches!(
             self,
@@ -1405,10 +1390,12 @@ impl<'a> ModuleDeclaration<'a> {
         )
     }
 
+    #[allow(missing_docs)]
     pub fn is_default_export(&self) -> bool {
         matches!(self, Self::ExportDefaultDeclaration(_))
     }
 
+    #[allow(missing_docs)]
     pub fn source(&self) -> Option<&StringLiteral<'a>> {
         match self {
             Self::ImportDeclaration(decl) => Some(&decl.source),
@@ -1420,6 +1407,7 @@ impl<'a> ModuleDeclaration<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn with_clause(&self) -> Option<&Box<'a, WithClause<'a>>> {
         match self {
             Self::ImportDeclaration(decl) => decl.with_clause.as_ref(),
@@ -1433,12 +1421,14 @@ impl<'a> ModuleDeclaration<'a> {
 }
 
 impl AccessorPropertyType {
+    #[allow(missing_docs)]
     pub fn is_abstract(&self) -> bool {
         matches!(self, Self::TSAbstractAccessorProperty)
     }
 }
 
 impl<'a> ImportDeclarationSpecifier<'a> {
+    #[allow(missing_docs)]
     pub fn local(&self) -> &BindingIdentifier<'a> {
         match self {
             ImportDeclarationSpecifier::ImportSpecifier(specifier) => &specifier.local,
@@ -1447,12 +1437,14 @@ impl<'a> ImportDeclarationSpecifier<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn name(&self) -> Cow<'a, str> {
         Cow::Borrowed(self.local().name.as_str())
     }
 }
 
 impl<'a> ImportAttributeKey<'a> {
+    #[allow(missing_docs)]
     pub fn as_atom(&self) -> Atom<'a> {
         match self {
             Self::Identifier(identifier) => identifier.name.clone(),
@@ -1462,6 +1454,7 @@ impl<'a> ImportAttributeKey<'a> {
 }
 
 impl<'a> ExportNamedDeclaration<'a> {
+    #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         self.export_kind == ImportOrExportKind::Type
             || self.declaration.as_ref().map_or(false, Declaration::is_typescript_syntax)
@@ -1469,24 +1462,21 @@ impl<'a> ExportNamedDeclaration<'a> {
 }
 
 impl<'a> ExportDefaultDeclaration<'a> {
+    #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         self.declaration.is_typescript_syntax()
     }
 }
 
 impl<'a> ExportAllDeclaration<'a> {
+    #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         self.export_kind.is_type()
     }
 }
 
-impl<'a> ExportSpecifier<'a> {
-    pub fn new(span: Span, local: ModuleExportName<'a>, exported: ModuleExportName<'a>) -> Self {
-        Self { span, local, exported, export_kind: ImportOrExportKind::Value }
-    }
-}
-
 impl<'a> ExportDefaultDeclarationKind<'a> {
+    #[allow(missing_docs)]
     #[inline]
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
@@ -1510,6 +1500,7 @@ impl<'a> fmt::Display for ModuleExportName<'a> {
 }
 
 impl<'a> ModuleExportName<'a> {
+    #[allow(missing_docs)]
     pub fn name(&self) -> Atom<'a> {
         match self {
             Self::IdentifierName(identifier) => identifier.name.clone(),
@@ -1518,6 +1509,7 @@ impl<'a> ModuleExportName<'a> {
         }
     }
 
+    #[allow(missing_docs)]
     pub fn identifier_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::IdentifierName(identifier) => Some(identifier.name.clone()),

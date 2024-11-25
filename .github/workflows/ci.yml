@@ -47,6 +47,7 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
+    if: false
     name: Test (windows-latest)
     runs-on: windows-latest
     steps:
@@ -103,7 +104,7 @@ jobs:
       RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
       CARGO_TARGET_WASM32_WASIP1_THREADS_RUNNER: "wasmtime run -W bulk-memory=y -W threads=y -S threads=y --dir=${{ github.workspace }}::${{ github.workspace }} --"
       # Insta is not able to run on wasmtime, omit the packages that depend on it
-      TEST_FLAGS: "-p oxc_sourcemap -p oxc_ast -p oxc_cfg -p oxc_index -p oxc_regular_expression -p oxc_module_lexer -- --nocapture"
+      TEST_FLAGS: "-p oxc_ast -p oxc_cfg -p oxc_regular_expression -p oxc_module_lexer -- --nocapture"
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: Boshen/setup-rust@main
@@ -124,25 +125,24 @@ jobs:
         with:
           cache-key: wasm
           save-cache: ${{ github.ref_name == 'main' }}
-          tools: wasm-pack
+          tools: wasm-pack,just
       - name: Check
         run: |
           rustup target add wasm32-unknown-unknown
           cargo check -p oxc_wasm --target wasm32-unknown-unknown
-      - name: Build
-        run: |
-          wasm-pack build --target web --dev ./crates/oxc_wasm
-          wasm-pack build --target web --dev ./wasm/parser
       - uses: ./.github/actions/pnpm
+      - run: just build-wasm debug
+      - working-directory: wasm/parser
+        run: pnpm run build
       - name: Check output types
-        run: npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
+        run: npx -y -p typescript tsc --lib es2020,dom npm/parser-wasm/node/oxc_parser_wasm.d.ts
 
   typos:
     name: Spell Check
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: crate-ci/typos@v1.25.0
+      - uses: crate-ci/typos@v1.27.3
         with:
           files: .
 
@@ -175,9 +175,19 @@ jobs:
       - uses: taiki-e/checkout-action@v1
       - uses: Boshen/setup-rust@main
         with:
-          cache-key: warm
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: clippy
           components: clippy
       - run: cargo lint -- -D warnings
+      - name: Check Char and Byte Offset
+        run: |
+          npm i @ast-grep/cli -g
+          output=$(sg -p '$A.chars().enumerate()' -r '$A.char_indices()' -l rs)
+          echo "Output: $output"
+          if [ -n "$output" ]; then
+            echo "Error: Unexpected output detected"
+            exit 1
+          fi
 
   doc:
     name: Doc
@@ -201,14 +211,20 @@ jobs:
         with:
           filters: |
             src:
+              - '!.github/**'
+              - '!.vscode/**'
+              - '!apps/**'
+              - '!editors/**'
+              - '!napi/**'
+              - '!npm/**'
+              - '!wasm/**'
               - '!crates/oxc_linter/**'
               - '!crates/oxc_wasm/**'
               - '!crates/oxc_language_server/**'
+              - '!tasks/**'
+              - 'tasks/conformance/**'
 
       - uses: ./.github/actions/clone-submodules
-        if: steps.filter.outputs.src == 'true'
-
-      - uses: oven-sh/setup-bun@v2
         if: steps.filter.outputs.src == 'true'
 
       - uses: ./.github/actions/pnpm
@@ -242,8 +258,16 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         with:
           components: rustfmt
+          tools: dprint
           cache-key: ast_changes
           save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Restore dprint plugin cache
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          key: dprint-autofix-ci-${{ runner.os }}-${{ hashFiles('dprint.json') }}
+          path: ~/.cache/dprint
 
       - name: Check AST Changes
         if: steps.filter.outputs.src == 'true'
@@ -251,6 +275,14 @@ jobs:
           cargo run -p oxc_ast_tools
           git diff --exit-code ||
           (echo 'AST changes caused the "generated" code to get outdated. Have you forgotten to run the `just ast` command and/or commit generated codes?' && exit 1)
+
+      - name: Save dprint plugin cache
+        if: ${{ github.ref_name == 'main' }}
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
+          path: ~/.cache/dprint
 
   napi:
     name: Test NAPI
@@ -262,24 +294,15 @@ jobs:
         with:
           filters: |
             src:
-              - 'pnpm-lock.yaml'
-              - 'napi/**'
+              - '!crates/oxc_linter/**'
       - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'
         with:
-          # warm cache factory for all other CI jobs
-          # cache `target` directory to avoid download crates
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - uses: ./.github/actions/pnpm
         if: steps.filter.outputs.src == 'true'
-      - name: Test napi/parser
-        run: pnpm build && pnpm test
+      - run: pnpm run build
         if: steps.filter.outputs.src == 'true'
-        working-directory: napi/parser
-      - name: Test napi/transform
-        if: steps.filter.outputs.src == 'true'
-        working-directory: napi/transform
-        run: pnpm build && pnpm test
-      - run: git diff --exit-code
+      - run: pnpm run test
         if: steps.filter.outputs.src == 'true'

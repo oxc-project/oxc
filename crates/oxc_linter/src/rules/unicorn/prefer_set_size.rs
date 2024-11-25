@@ -91,7 +91,7 @@ impl Rule for PreferSetSize {
     }
 }
 
-fn is_set(maybe_set: &Expression, ctx: &LintContext) -> bool {
+fn is_set<'a>(maybe_set: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
     if let Expression::NewExpression(new_expr) = maybe_set {
         if let Expression::Identifier(identifier) = &new_expr.callee {
             return identifier.name == "Set";

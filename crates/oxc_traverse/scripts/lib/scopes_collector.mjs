@@ -1,5 +1,8 @@
 import { camelToSnake } from './utils.mjs';
 
+/**
+ * @param {import('./parse.mjs').Types} types
+ */
 export default function generateScopesCollectorCode(types) {
   let methods = '';
   for (const type of Object.values(types)) {
@@ -17,7 +20,6 @@ export default function generateScopesCollectorCode(types) {
   return `
     use std::cell::Cell;
 
-    #[allow(clippy::wildcard_imports)]
     use oxc_ast::{ast::*, visit::Visit};
     use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
@@ -40,11 +42,6 @@ export default function generateScopesCollectorCode(types) {
 
     impl<'a> Visit<'a> for ChildScopeCollector {
       ${methods}
-
-      #[inline]
-      fn visit_finally_clause(&mut self, it: &BlockStatement<'a>) {
-        self.add_scope(&it.scope_id);
-      }
     }
   `;
 }

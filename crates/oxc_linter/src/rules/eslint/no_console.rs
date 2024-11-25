@@ -1,12 +1,19 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_console_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected console statement.").with_label(span)
+    OxcDiagnostic::warn("eslint(no-console): Unexpected console statement.")
+        .with_label(span)
+        .with_help("Delete this console statement.")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,7 +28,7 @@ pub struct NoConsoleConfig {
     /// console.log('foo'); // will error
     /// console.info('bar'); // will not error
     /// ```
-    pub allow: Vec<String>,
+    pub allow: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for NoConsole {
@@ -47,7 +54,8 @@ declare_oxc_lint!(
     /// console.log('here');
     /// ```
     NoConsole,
-    restriction
+    restriction,
+    suggestion
 );
 
 impl Rule for NoConsole {
@@ -58,10 +66,7 @@ impl Rule for NoConsole {
                 .and_then(|v| v.get("allow"))
                 .and_then(serde_json::Value::as_array)
                 .map(|v| {
-                    v.iter()
-                        .filter_map(serde_json::Value::as_str)
-                        .map(ToString::to_string)
-                        .collect()
+                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
                 })
                 .unwrap_or_default(),
         }))
@@ -82,11 +87,55 @@ impl Rule for NoConsole {
             && ident.name == "console"
             && !self.allow.iter().any(|s| mem.static_property_name().is_some_and(|f| f == s))
         {
-            if let Some(mem) = mem.static_property_info() {
-                ctx.diagnostic(no_console_diagnostic(mem.0));
+            if let Some((mem_span, _)) = mem.static_property_info() {
+                let diagnostic_span = ident.span().merge(&mem_span);
+                ctx.diagnostic_with_suggestion(no_console_diagnostic(diagnostic_span), |fixer| {
+                    remove_console(fixer, ctx, node)
+                });
             }
         }
     }
+}
+
+fn remove_console<'c, 'a: 'c>(
+    fixer: RuleFixer<'c, 'a>,
+    ctx: &'c LintContext<'a>,
+    node: &AstNode<'a>,
+) -> RuleFix<'a> {
+    let mut node_to_delete = node;
+    for parent in ctx.nodes().ancestors(node.id()).skip(1) {
+        match parent.kind() {
+            AstKind::ParenthesizedExpression(_)
+            | AstKind::ExpressionStatement(_)
+            => node_to_delete = parent,
+            AstKind::IfStatement(_)
+            | AstKind::WhileStatement(_)
+            | AstKind::ForStatement(_)
+            | AstKind::ForInStatement(_)
+            | AstKind::ForOfStatement(_)
+            | AstKind::ArrowFunctionExpression(_) => {
+                return fixer.replace(node_to_delete.span(), "{}")
+            }
+            // Arrow function AST nodes do not say whether they have brackets or
+            // not, so we need to check manually.
+            // e.g: const x = () => { console.log(foo) }
+            // vs:  const x = () => console.log(foo)
+            | AstKind::FunctionBody(body) if !fixer.source_range(body.span).starts_with('{') => {
+                return fixer.replace(node_to_delete.span(), "{}")
+            }
+            // Marked as dangerous until we're sure this is safe
+            AstKind::ConditionalExpression(_)
+            // from: const x = (console.log("foo"), 5);
+            // to:   const x = (undefined, 5);
+            | AstKind::SequenceExpression(_)
+            | AstKind::ObjectProperty(_)
+            => {
+                return fixer.replace(node_to_delete.span(), "undefined").dangerously()
+            }
+            _ => break,
+        }
+    }
+    fixer.delete(node_to_delete)
 }
 
 #[test]
@@ -123,5 +172,20 @@ fn test() {
         ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["info", "log"] }]))),
     ];
 
-    Tester::new(NoConsole::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("function foo() { console.log(bar); }", "function foo() {  }", None),
+        ("function foo() { console.log(bar) }", "function foo() {  }", None),
+        ("const x = () => console.log(foo)", "const x = () => {}", None),
+        ("const x = () => { console.log(foo) }", "const x = () => {  }", None),
+        ("const x = () => { console.log(foo); }", "const x = () => {  }", None),
+        ("const x = () => { ((console.log(foo))); }", "const x = () => {  }", None),
+        ("const x = () => { console.log(foo); return 5 }", "const x = () => {  return 5 }", None),
+        ("if (foo) { console.log(foo) }", "if (foo) {  }", None),
+        ("foo ? console.log(foo) : 5", "foo ? undefined : 5", None),
+        ("(console.log(foo), 5)", "(undefined, 5)", None),
+        ("(5, console.log(foo))", "(5, undefined)", None),
+        ("const x = { foo: console.log(bar) }", "const x = { foo: undefined }", None),
+    ];
+
+    Tester::new(NoConsole::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

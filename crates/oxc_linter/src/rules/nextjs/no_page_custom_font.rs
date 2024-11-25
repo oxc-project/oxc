@@ -78,7 +78,7 @@ impl Rule for NoPageCustomFont {
 
 fn is_inside_export_default(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     let mut is_inside_export_default = false;
-    for parent_node in ctx.nodes().iter_parents(node.id()) {
+    for parent_node in ctx.nodes().ancestors(node.id()) {
         // export default function/class
         let kind = parent_node.kind();
         if matches!(kind, AstKind::ExportDefaultDeclaration(_)) {

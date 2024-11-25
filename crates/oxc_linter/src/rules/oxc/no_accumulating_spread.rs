@@ -135,10 +135,7 @@ impl Rule for NoAccumulatingSpread {
         let symbols = ctx.semantic().symbols();
 
         // get the AST node + symbol id of the declaration of the identifier
-        let Some(reference_id) = ident.reference_id.get() else {
-            return;
-        };
-        let reference = symbols.get_reference(reference_id);
+        let reference = symbols.get_reference(ident.reference_id());
         let Some(referenced_symbol_id) = reference.symbol_id() else {
             return;
         };
@@ -184,7 +181,7 @@ fn check_reduce_usage<'a>(
     }
 
     // Check if the declaration resides within a call to reduce()
-    for parent in ctx.nodes().iter_parents(declaration.id()) {
+    for parent in ctx.nodes().ancestors(declaration.id()) {
         if let AstKind::CallExpression(call_expr) = parent.kind() {
             if is_method_call(call_expr, None, Some(&["reduce", "reduceRight"]), Some(1), Some(2)) {
                 ctx.diagnostic(get_reduce_diagnostic(call_expr, spread_span));
@@ -245,7 +242,7 @@ fn check_loop_usage<'a>(
         _ => return,
     }
 
-    for parent in ctx.nodes().iter_parents(spread_node_id) {
+    for parent in ctx.nodes().ancestors(spread_node_id) {
         if let Some(loop_span) = get_loop_span(parent.kind()) {
             if !parent.kind().span().contains_inclusive(declaration.span)
                 && parent.kind().span().contains_inclusive(spread_span)
@@ -305,7 +302,7 @@ fn get_reduce_diagnostic<'a>(
 
 fn get_identifier_symbol_id(ident: &BindingPatternKind<'_>) -> Option<SymbolId> {
     match ident {
-        BindingPatternKind::BindingIdentifier(ident) => ident.symbol_id.get(),
+        BindingPatternKind::BindingIdentifier(ident) => Some(ident.symbol_id()),
         BindingPatternKind::AssignmentPattern(ident) => get_identifier_symbol_id(&ident.left.kind),
         _ => None,
     }
@@ -365,7 +362,7 @@ fn test() {
             }
         }
         ",
-        // source: https://github.com/biomejs/biome/blob/main/crates/biome_js_analyze/tests/specs/performance/noAccumulatingSpread/valid.jsonc#L3C1-L23C52
+        // source: https://github.com/biomejs/biome/blob/cli/v1.9.4/crates/biome_js_analyze/tests/specs/performance/noAccumulatingSpread/valid.jsonc#L3C1-L23C52
         "foo.reduce((acc, bar) => {acc.push(bar); return acc;}, [])",
         "foo.reduceRight((acc, bar) => {acc.push(bar); return acc;}, [])",
         // Array - Allow spreading the item into the accumulator
@@ -420,7 +417,7 @@ fn test() {
             let temp = { ...acc, x }
             return temp
         }, {})",
-        // source https://github.com/biomejs/biome/blob/main/crates/biome_js_analyze/tests/specs/performance/noAccumulatingSpread/invalid.jsonc#L2-L32
+        // source https://github.com/biomejs/biome/blob/cli/v1.9.4/crates/biome_js_analyze/tests/specs/performance/noAccumulatingSpread/invalid.jsonc#L2-L32
         // Array - Arrow return
         "foo.reduce((acc, bar) => [...acc, bar], [])",
         "foo.reduceRight((acc, bar) => [...acc, bar], [])",

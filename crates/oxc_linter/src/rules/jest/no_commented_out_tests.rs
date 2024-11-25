@@ -38,7 +38,7 @@ declare_oxc_lint!(
     /// // test.skip('foo', () => {});
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-commented-out-tests.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-commented-out-tests.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json
@@ -59,17 +59,15 @@ impl Rule for NoCommentedOutTests {
             static ref RE: Regex =
             Regex::new(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#).unwrap();
         }
-        let comments = ctx.semantic().trivias().comments();
-        let source_text = ctx.semantic().source_text();
-        let commented_tests = comments.filter_map(|comment| {
-            let text = comment.span.source_text(source_text);
+        let comments = ctx.semantic().comments();
+        let commented_tests = comments.iter().filter_map(|comment| {
+            let text = ctx.source_range(comment.content_span());
             if RE.is_match(text) {
-                Some(comment.span)
+                Some(comment.content_span())
             } else {
                 None
             }
         });
-
         for span in commented_tests {
             ctx.diagnostic(no_commented_out_tests_diagnostic(span));
         }

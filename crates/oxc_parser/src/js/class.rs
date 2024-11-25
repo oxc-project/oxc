@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, syntax_directed_operations::PropName};
+use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
@@ -14,6 +14,15 @@ type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
 
 type Implements<'a> = Vec<'a, TSClassImplements<'a>>;
+
+fn prop_name<'a>(key: &'a PropertyKey<'a>) -> Option<(&'a str, Span)> {
+    match key {
+        PropertyKey::StaticIdentifier(ident) => Some((&ident.name, ident.span)),
+        PropertyKey::Identifier(ident) => Some((&ident.name, ident.span)),
+        PropertyKey::StringLiteral(lit) => Some((&lit.value, lit.span)),
+        _ => None,
+    }
+}
 
 /// Section 15.7 Class Definitions
 impl<'a> ParserImpl<'a> {
@@ -54,7 +63,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_class_expression(&mut self) -> Result<Expression<'a>> {
         let class =
             self.parse_class(self.start_span(), ClassType::ClassExpression, &Modifiers::empty())?;
-        Ok(self.ast.expression_from_class(class))
+        Ok(Expression::ClassExpression(class))
     }
 
     fn parse_class(
@@ -74,8 +83,7 @@ impl<'a> ParserImpl<'a> {
             None
         };
 
-        let type_parameters =
-            if self.ts_enabled() { self.parse_ts_type_parameters()? } else { None };
+        let type_parameters = if self.is_ts { self.parse_ts_type_parameters()? } else { None };
         let (extends, implements) = self.parse_heritage_clause()?;
         let mut super_class = None;
         let mut super_type_parameters = None;
@@ -184,7 +192,7 @@ impl<'a> ParserImpl<'a> {
 
         let span = self.start_span();
 
-        let modifiers = self.parse_modifiers(true, false, true);
+        let modifiers = self.parse_modifiers(true, true, true);
 
         let mut kind = MethodDefinitionKind::Method;
         let mut generator = false;
@@ -229,9 +237,9 @@ impl<'a> ParserImpl<'a> {
         }
 
         if self.is_at_ts_index_signature_member() {
-            if let TSSignature::TSIndexSignature(sig) = self.parse_ts_index_signature_member()? {
-                return Ok(Some(ClassElement::TSIndexSignature(sig)));
-            }
+            return self
+                .parse_index_signature_declaration(span, &modifiers)
+                .map(|sig| Some(ClassElement::TSIndexSignature(self.alloc(sig))));
         }
 
         // * ...
@@ -276,9 +284,13 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
         }
 
+        if modifiers.contains(ModifierKind::Const) {
+            self.error(diagnostics::const_class_member(key.span()));
+        }
+
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
             // `private #foo`, etc. is illegal
-            if self.ts_enabled() {
+            if self.is_ts {
                 self.verify_modifiers(
                     &modifiers,
                     ModifierFlags::all() - ModifierFlags::ACCESSIBILITY,
@@ -305,6 +317,24 @@ impl<'a> ParserImpl<'a> {
             )
             .map(Some)
         } else if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
+            if !computed {
+                if let Some((name, span)) = prop_name(&key) {
+                    if r#static && name == "prototype" && !self.ctx.has_ambient() {
+                        self.error(diagnostics::static_prototype(span));
+                    }
+                    if !r#static && name == "constructor" {
+                        if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
+                            self.error(diagnostics::constructor_getter_setter(span));
+                        }
+                        if r#async {
+                            self.error(diagnostics::constructor_async(span));
+                        }
+                        if generator {
+                            self.error(diagnostics::constructor_generator(span));
+                        }
+                    }
+                }
+            }
             // LAngle for start of type parameters `foo<T>`
             //                                         ^
             let definition = self.parse_class_method_definition(
@@ -320,27 +350,21 @@ impl<'a> ParserImpl<'a> {
                 accessibility,
                 optional,
             )?;
-            if let Some((name, span)) = definition.prop_name() {
-                if r#static && name == "prototype" && !self.ctx.has_ambient() {
-                    self.error(diagnostics::static_prototype(span));
-                }
-                if !r#static && name == "constructor" {
-                    if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
-                        self.error(diagnostics::constructor_getter_setter(span));
-                    }
-                    if r#async {
-                        self.error(diagnostics::constructor_async(span));
-                    }
-                    if generator {
-                        self.error(diagnostics::constructor_generator(span));
-                    }
-                }
-            }
             Ok(Some(definition))
         } else {
             // getter and setter has no ts type annotation
             if !kind.is_method() {
                 return Err(self.unexpected());
+            }
+            if !computed {
+                if let Some((name, span)) = prop_name(&key) {
+                    if name == "constructor" {
+                        self.error(diagnostics::field_constructor(span));
+                    }
+                    if r#static && name == "prototype" && !self.ctx.has_ambient() {
+                        self.error(diagnostics::static_prototype(span));
+                    }
+                }
             }
             let definition = self.parse_class_property_definition(
                 span,
@@ -355,14 +379,6 @@ impl<'a> ParserImpl<'a> {
                 optional,
                 definite,
             )?;
-            if let Some((name, span)) = definition.prop_name() {
-                if name == "constructor" {
-                    self.error(diagnostics::field_constructor(span));
-                }
-                if r#static && name == "prototype" && !self.ctx.has_ambient() {
-                    self.error(diagnostics::static_prototype(span));
-                }
-            }
             Ok(Some(definition))
         }
     }
@@ -371,7 +387,7 @@ impl<'a> ParserImpl<'a> {
         match self.cur_kind() {
             Kind::PrivateIdentifier => {
                 let private_ident = self.parse_private_identifier();
-                Ok((PropertyKey::PrivateIdentifier(self.ast.alloc(private_ident)), false))
+                Ok((PropertyKey::PrivateIdentifier(self.alloc(private_ident)), false))
             }
             _ => self.parse_property_name(),
         }
@@ -394,7 +410,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<ClassElement<'a>> {
         let kind = if !r#static
             && !computed
-            && key.prop_name().map_or(false, |(name, _)| name == "constructor")
+            && prop_name(&key).map_or(false, |(name, _)| name == "constructor")
         {
             MethodDefinitionKind::Constructor
         } else {
@@ -452,8 +468,7 @@ impl<'a> ParserImpl<'a> {
         optional: bool,
         definite: bool,
     ) -> Result<ClassElement<'a>> {
-        let type_annotation =
-            if self.ts_enabled() { self.parse_ts_type_annotation()? } else { None };
+        let type_annotation = if self.is_ts { self.parse_ts_type_annotation()? } else { None };
         let decorators = self.consume_decorators();
         let value = if self.eat(Kind::Eq) { Some(self.parse_expr()?) } else { None };
         self.asi()?;
@@ -501,8 +516,7 @@ impl<'a> ParserImpl<'a> {
         definite: bool,
         accessibility: Option<TSAccessibility>,
     ) -> Result<ClassElement<'a>> {
-        let type_annotation =
-            if self.ts_enabled() { self.parse_ts_type_annotation()? } else { None };
+        let type_annotation = if self.is_ts { self.parse_ts_type_annotation()? } else { None };
         let value =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
         let r#type = if r#abstract {
