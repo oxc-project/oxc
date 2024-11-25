@@ -18,8 +18,6 @@ enum ConstantValue {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    /// # Panics
-    /// if the enum member is a template literal with substitutions.
     pub fn transform_ts_enum_declaration(
         &mut self,
         decl: &TSEnumDeclaration<'a>,
