@@ -444,9 +444,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // Get value
+        // Get value, and transform it to replace `this` with reference to class name
         let value = match &mut prop.value {
-            Some(value) => ctx.ast.move_expression(value),
+            Some(value) => {
+                self.transform_static_initializer(value, ctx);
+                ctx.ast.move_expression(value)
+            }
             None => ctx.ast.void_0(SPAN),
         };
 

@@ -155,6 +155,7 @@ use crate::TransformCtx;
 mod class;
 mod constructor;
 mod private;
+mod static_prop;
 mod utils;
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;

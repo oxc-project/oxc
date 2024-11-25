@@ -291,165 +291,20 @@ Received: "_Class"
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/98]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-setPublicClassFields-static-this-exec.test.js > exec
-AssertionError: expected { Object: [Function Object], …(133), …(6) } to be [Function A] // Object.is equality
+AssertionError: expected null to be [Function A] // Object.is equality
 
 - Expected: 
 [Function A]
 
 + Received: 
-Object {
-  "__vitest_environment__": "node",
-  "__vitest_required__": Object {
-    "timers": Object {
-      "_unrefActive": [Function deprecated],
-      "active": [Function deprecated],
-      "clearImmediate": [Function clearImmediate],
-      "clearInterval": [Function clearInterval],
-      "clearTimeout": [Function clearTimeout],
-      "enroll": [Function deprecated],
-      "promises": Object {
-        "scheduler": Scheduler {
-          Symbol(kScheduler): true,
-        },
-        "setImmediate": [Function setImmediate],
-        "setInterval": [Function setInterval],
-        "setTimeout": [Function setTimeout],
-      },
-      "setImmediate": [Function setImmediate],
-      "setInterval": [Function setInterval],
-      "setTimeout": [Function setTimeout],
-      "unenroll": [Function deprecated],
-    },
-    "util": Object {
-      "MIMEParams": [Function MIMEParams],
-      "MIMEType": [Function MIMEType],
-      "TextDecoder": [Function TextDecoder],
-      "TextEncoder": [Function TextEncoder],
-      "_errnoException": [Function _errnoException],
-      "_exceptionWithHostPort": [Function _exceptionWithHostPort],
-      "_extend": [Function deprecated],
-      "aborted": [Function aborted],
-      "callbackify": [Function callbackify],
-      "debug": [Function debuglog],
-      "debuglog": [Function debuglog],
-      "deprecate": [Function deprecate],
-      "format": [Function format],
-      "formatWithOptions": [Function formatWithOptions],
-      "getCallSite": [Function getCallSite],
-      "getSystemErrorMap": [Function getSystemErrorMap],
-      "getSystemErrorName": [Function getSystemErrorName],
-      "inherits": [Function inherits],
-      "inspect": [Function inspect],
-      "isArray": [Function deprecated],
-      "isBoolean": [Function deprecated],
-      "isBuffer": [Function deprecated],
-      "isDate": [Function deprecated],
-      "isDeepStrictEqual": [Function isDeepStrictEqual],
-      "isError": [Function deprecated],
-      "isFunction": [Function deprecated],
-      "isNull": [Function deprecated],
-      "isNullOrUndefined": [Function deprecated],
-      "isNumber": [Function deprecated],
-      "isObject": [Function deprecated],
-      "isPrimitive": [Function deprecated],
-      "isRegExp": [Function deprecated],
-      "isString": [Function deprecated],
-      "isSymbol": [Function deprecated],
-      "isUndefined": [Function deprecated],
-      "log": [Function deprecated],
-      "parseArgs": [Function parseArgs],
-      "parseEnv": [Function parseEnv],
-      "promisify": [Function promisify],
-      "stripVTControlCharacters": [Function stripVTControlCharacters],
-      "styleText": [Function styleText],
-      "toUSVString": [Function toUSVString],
-      "transferableAbortController": [Function transferableAbortController],
-      "transferableAbortSignal": [Function transferableAbortSignal],
-      "types": Object {
-        "isAnyArrayBuffer": [Function isAnyArrayBuffer],
-        "isArgumentsObject": [Function isArgumentsObject],
-        "isArrayBuffer": [Function isArrayBuffer],
-        "isArrayBufferView": [Function isView],
-        "isAsyncFunction": [Function isAsyncFunction],
-        "isBigInt64Array": [Function isBigInt64Array],
-        "isBigIntObject": [Function isBigIntObject],
-        "isBigUint64Array": [Function isBigUint64Array],
-        "isBooleanObject": [Function isBooleanObject],
-        "isBoxedPrimitive": [Function isBoxedPrimitive],
-        "isCryptoKey": [Function value],
-        "isDataView": [Function isDataView],
-        "isDate": [Function isDate],
-        "isExternal": [Function isExternal],
-        "isFloat32Array": [Function isFloat32Array],
-        "isFloat64Array": [Function isFloat64Array],
-        "isGeneratorFunction": [Function isGeneratorFunction],
-        "isGeneratorObject": [Function isGeneratorObject],
-        "isInt16Array": [Function isInt16Array],
-        "isInt32Array": [Function isInt32Array],
-        "isInt8Array": [Function isInt8Array],
-        "isKeyObject": [Function value],
-        "isMap": [Function isMap],
-        "isMapIterator": [Function isMapIterator],
-        "isModuleNamespaceObject": [Function isModuleNamespaceObject],
-        "isNativeError": [Function isNativeError],
-        "isNumberObject": [Function isNumberObject],
-        "isPromise": [Function isPromise],
-        "isProxy": [Function isProxy],
-        "isRegExp": [Function isRegExp],
-        "isSet": [Function isSet],
-        "isSetIterator": [Function isSetIterator],
-        "isSharedArrayBuffer": [Function isSharedArrayBuffer],
-        "isStringObject": [Function isStringObject],
-        "isSymbolObject": [Function isSymbolObject],
-        "isTypedArray": [Function isTypedArray],
-        "isUint16Array": [Function isUint16Array],
-        "isUint32Array": [Function isUint32Array],
-        "isUint8Array": [Function isUint8Array],
-        "isUint8ClampedArray": [Function isUint8ClampedArray],
-        "isWeakMap": [Function isWeakMap],
-        "isWeakSet": [Function isWeakSet],
-      },
-    },
-  },
-  "atob": [Function atob],
-  "btoa": [Function btoa],
-  "clearImmediate": [Function clearImmediate],
-  "clearInterval": [Function clearInterval],
-  "clearTimeout": [Function clearTimeout],
-  "crypto": Crypto {},
-  "fetch": [Function fetch],
-  "global": [Circular],
-  "navigator": Navigator {},
-  "performance": Performance {
-    Symbol(kEvents): Map {},
-    Symbol(events.maxEventTargetListeners): 10,
-    Symbol(events.maxEventTargetListenersWarned): false,
-    Symbol(kHandlers): Map {},
-    Symbol(performance): true,
-  },
-  "queueMicrotask": [Function queueMicrotask],
-  "setImmediate": [Function setImmediate],
-  "setInterval": [Function setInterval],
-  "setTimeout": [Function setTimeout],
-  "structuredClone": [Function structuredClone],
-  Symbol(vitest:SAFE_TIMERS): Object {
-    "clearImmediate": [Function clearImmediate],
-    "clearInterval": [Function clearInterval],
-    "clearTimeout": [Function clearTimeout],
-    "nextTick": [Function nextTick],
-    "setImmediate": [Function setImmediate],
-    "setInterval": [Function setInterval],
-    "setTimeout": [Function setTimeout],
-  },
-}
+null
 
- ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-setPublicClassFields-static-this-exec.test.js:8:15
-      6|  A.getA = () => this;
-      7|  const { self, getA } = A;
-      8|  expect(self).toBe(A);
-       |               ^
-      9|  expect(getA()).toBe(A);
-     10|  const oldA = A;
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-setPublicClassFields-static-this-exec.test.js:13:22
+     11|  A = null;
+     12|  expect(oldA.self).toBe(oldA);
+     13|  expect(oldA.getA()).toBe(oldA);
+       |                      ^
+     14| })
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/98]⎯
 
@@ -634,165 +489,20 @@ TypeError: e.has is not a function
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/98]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-static-this-exec.test.js > exec
-AssertionError: expected { Object: [Function Object], …(133), …(6) } to be [Function A] // Object.is equality
+AssertionError: expected null to be [Function A] // Object.is equality
 
 - Expected: 
 [Function A]
 
 + Received: 
-Object {
-  "__vitest_environment__": "node",
-  "__vitest_required__": Object {
-    "timers": Object {
-      "_unrefActive": [Function deprecated],
-      "active": [Function deprecated],
-      "clearImmediate": [Function clearImmediate],
-      "clearInterval": [Function clearInterval],
-      "clearTimeout": [Function clearTimeout],
-      "enroll": [Function deprecated],
-      "promises": Object {
-        "scheduler": Scheduler {
-          Symbol(kScheduler): true,
-        },
-        "setImmediate": [Function setImmediate],
-        "setInterval": [Function setInterval],
-        "setTimeout": [Function setTimeout],
-      },
-      "setImmediate": [Function setImmediate],
-      "setInterval": [Function setInterval],
-      "setTimeout": [Function setTimeout],
-      "unenroll": [Function deprecated],
-    },
-    "util": Object {
-      "MIMEParams": [Function MIMEParams],
-      "MIMEType": [Function MIMEType],
-      "TextDecoder": [Function TextDecoder],
-      "TextEncoder": [Function TextEncoder],
-      "_errnoException": [Function _errnoException],
-      "_exceptionWithHostPort": [Function _exceptionWithHostPort],
-      "_extend": [Function deprecated],
-      "aborted": [Function aborted],
-      "callbackify": [Function callbackify],
-      "debug": [Function debuglog],
-      "debuglog": [Function debuglog],
-      "deprecate": [Function deprecate],
-      "format": [Function format],
-      "formatWithOptions": [Function formatWithOptions],
-      "getCallSite": [Function getCallSite],
-      "getSystemErrorMap": [Function getSystemErrorMap],
-      "getSystemErrorName": [Function getSystemErrorName],
-      "inherits": [Function inherits],
-      "inspect": [Function inspect],
-      "isArray": [Function deprecated],
-      "isBoolean": [Function deprecated],
-      "isBuffer": [Function deprecated],
-      "isDate": [Function deprecated],
-      "isDeepStrictEqual": [Function isDeepStrictEqual],
-      "isError": [Function deprecated],
-      "isFunction": [Function deprecated],
-      "isNull": [Function deprecated],
-      "isNullOrUndefined": [Function deprecated],
-      "isNumber": [Function deprecated],
-      "isObject": [Function deprecated],
-      "isPrimitive": [Function deprecated],
-      "isRegExp": [Function deprecated],
-      "isString": [Function deprecated],
-      "isSymbol": [Function deprecated],
-      "isUndefined": [Function deprecated],
-      "log": [Function deprecated],
-      "parseArgs": [Function parseArgs],
-      "parseEnv": [Function parseEnv],
-      "promisify": [Function promisify],
-      "stripVTControlCharacters": [Function stripVTControlCharacters],
-      "styleText": [Function styleText],
-      "toUSVString": [Function toUSVString],
-      "transferableAbortController": [Function transferableAbortController],
-      "transferableAbortSignal": [Function transferableAbortSignal],
-      "types": Object {
-        "isAnyArrayBuffer": [Function isAnyArrayBuffer],
-        "isArgumentsObject": [Function isArgumentsObject],
-        "isArrayBuffer": [Function isArrayBuffer],
-        "isArrayBufferView": [Function isView],
-        "isAsyncFunction": [Function isAsyncFunction],
-        "isBigInt64Array": [Function isBigInt64Array],
-        "isBigIntObject": [Function isBigIntObject],
-        "isBigUint64Array": [Function isBigUint64Array],
-        "isBooleanObject": [Function isBooleanObject],
-        "isBoxedPrimitive": [Function isBoxedPrimitive],
-        "isCryptoKey": [Function value],
-        "isDataView": [Function isDataView],
-        "isDate": [Function isDate],
-        "isExternal": [Function isExternal],
-        "isFloat32Array": [Function isFloat32Array],
-        "isFloat64Array": [Function isFloat64Array],
-        "isGeneratorFunction": [Function isGeneratorFunction],
-        "isGeneratorObject": [Function isGeneratorObject],
-        "isInt16Array": [Function isInt16Array],
-        "isInt32Array": [Function isInt32Array],
-        "isInt8Array": [Function isInt8Array],
-        "isKeyObject": [Function value],
-        "isMap": [Function isMap],
-        "isMapIterator": [Function isMapIterator],
-        "isModuleNamespaceObject": [Function isModuleNamespaceObject],
-        "isNativeError": [Function isNativeError],
-        "isNumberObject": [Function isNumberObject],
-        "isPromise": [Function isPromise],
-        "isProxy": [Function isProxy],
-        "isRegExp": [Function isRegExp],
-        "isSet": [Function isSet],
-        "isSetIterator": [Function isSetIterator],
-        "isSharedArrayBuffer": [Function isSharedArrayBuffer],
-        "isStringObject": [Function isStringObject],
-        "isSymbolObject": [Function isSymbolObject],
-        "isTypedArray": [Function isTypedArray],
-        "isUint16Array": [Function isUint16Array],
-        "isUint32Array": [Function isUint32Array],
-        "isUint8Array": [Function isUint8Array],
-        "isUint8ClampedArray": [Function isUint8ClampedArray],
-        "isWeakMap": [Function isWeakMap],
-        "isWeakSet": [Function isWeakSet],
-      },
-    },
-  },
-  "atob": [Function atob],
-  "btoa": [Function btoa],
-  "clearImmediate": [Function clearImmediate],
-  "clearInterval": [Function clearInterval],
-  "clearTimeout": [Function clearTimeout],
-  "crypto": Crypto {},
-  "fetch": [Function fetch],
-  "global": [Circular],
-  "navigator": Navigator {},
-  "performance": Performance {
-    Symbol(kEvents): Map {},
-    Symbol(events.maxEventTargetListeners): 10,
-    Symbol(events.maxEventTargetListenersWarned): false,
-    Symbol(kHandlers): Map {},
-    Symbol(performance): true,
-  },
-  "queueMicrotask": [Function queueMicrotask],
-  "setImmediate": [Function setImmediate],
-  "setInterval": [Function setInterval],
-  "setTimeout": [Function setTimeout],
-  "structuredClone": [Function structuredClone],
-  Symbol(vitest:SAFE_TIMERS): Object {
-    "clearImmediate": [Function clearImmediate],
-    "clearInterval": [Function clearInterval],
-    "clearTimeout": [Function clearTimeout],
-    "nextTick": [Function nextTick],
-    "setImmediate": [Function setImmediate],
-    "setInterval": [Function setInterval],
-    "setTimeout": [Function setTimeout],
-  },
-}
+null
 
- ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-static-this-exec.test.js:15:15
-     13|  var _getA = { _: () => this };
-     14|  const { self, getA } = A.extract();
-     15|  expect(self).toBe(A);
-       |               ^
-     16|  expect(getA()).toBe(A);
-     17|  const oldA = A;
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-static-this-exec.test.js:20:32
+     18|  A = null;
+     19|  expect(oldA.extract().self).toBe(oldA);
+     20|  expect(oldA.extract().getA()).toBe(oldA);
+       |                                ^
+     21| })
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/98]⎯
 
@@ -915,165 +625,20 @@ TypeError: e.has is not a function
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[80/98]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-static-this-exec.test.js > exec
-AssertionError: expected { Object: [Function Object], …(133), …(6) } to be [Function A] // Object.is equality
+AssertionError: expected null to be [Function A] // Object.is equality
 
 - Expected: 
 [Function A]
 
 + Received: 
-Object {
-  "__vitest_environment__": "node",
-  "__vitest_required__": Object {
-    "timers": Object {
-      "_unrefActive": [Function deprecated],
-      "active": [Function deprecated],
-      "clearImmediate": [Function clearImmediate],
-      "clearInterval": [Function clearInterval],
-      "clearTimeout": [Function clearTimeout],
-      "enroll": [Function deprecated],
-      "promises": Object {
-        "scheduler": Scheduler {
-          Symbol(kScheduler): true,
-        },
-        "setImmediate": [Function setImmediate],
-        "setInterval": [Function setInterval],
-        "setTimeout": [Function setTimeout],
-      },
-      "setImmediate": [Function setImmediate],
-      "setInterval": [Function setInterval],
-      "setTimeout": [Function setTimeout],
-      "unenroll": [Function deprecated],
-    },
-    "util": Object {
-      "MIMEParams": [Function MIMEParams],
-      "MIMEType": [Function MIMEType],
-      "TextDecoder": [Function TextDecoder],
-      "TextEncoder": [Function TextEncoder],
-      "_errnoException": [Function _errnoException],
-      "_exceptionWithHostPort": [Function _exceptionWithHostPort],
-      "_extend": [Function deprecated],
-      "aborted": [Function aborted],
-      "callbackify": [Function callbackify],
-      "debug": [Function debuglog],
-      "debuglog": [Function debuglog],
-      "deprecate": [Function deprecate],
-      "format": [Function format],
-      "formatWithOptions": [Function formatWithOptions],
-      "getCallSite": [Function getCallSite],
-      "getSystemErrorMap": [Function getSystemErrorMap],
-      "getSystemErrorName": [Function getSystemErrorName],
-      "inherits": [Function inherits],
-      "inspect": [Function inspect],
-      "isArray": [Function deprecated],
-      "isBoolean": [Function deprecated],
-      "isBuffer": [Function deprecated],
-      "isDate": [Function deprecated],
-      "isDeepStrictEqual": [Function isDeepStrictEqual],
-      "isError": [Function deprecated],
-      "isFunction": [Function deprecated],
-      "isNull": [Function deprecated],
-      "isNullOrUndefined": [Function deprecated],
-      "isNumber": [Function deprecated],
-      "isObject": [Function deprecated],
-      "isPrimitive": [Function deprecated],
-      "isRegExp": [Function deprecated],
-      "isString": [Function deprecated],
-      "isSymbol": [Function deprecated],
-      "isUndefined": [Function deprecated],
-      "log": [Function deprecated],
-      "parseArgs": [Function parseArgs],
-      "parseEnv": [Function parseEnv],
-      "promisify": [Function promisify],
-      "stripVTControlCharacters": [Function stripVTControlCharacters],
-      "styleText": [Function styleText],
-      "toUSVString": [Function toUSVString],
-      "transferableAbortController": [Function transferableAbortController],
-      "transferableAbortSignal": [Function transferableAbortSignal],
-      "types": Object {
-        "isAnyArrayBuffer": [Function isAnyArrayBuffer],
-        "isArgumentsObject": [Function isArgumentsObject],
-        "isArrayBuffer": [Function isArrayBuffer],
-        "isArrayBufferView": [Function isView],
-        "isAsyncFunction": [Function isAsyncFunction],
-        "isBigInt64Array": [Function isBigInt64Array],
-        "isBigIntObject": [Function isBigIntObject],
-        "isBigUint64Array": [Function isBigUint64Array],
-        "isBooleanObject": [Function isBooleanObject],
-        "isBoxedPrimitive": [Function isBoxedPrimitive],
-        "isCryptoKey": [Function value],
-        "isDataView": [Function isDataView],
-        "isDate": [Function isDate],
-        "isExternal": [Function isExternal],
-        "isFloat32Array": [Function isFloat32Array],
-        "isFloat64Array": [Function isFloat64Array],
-        "isGeneratorFunction": [Function isGeneratorFunction],
-        "isGeneratorObject": [Function isGeneratorObject],
-        "isInt16Array": [Function isInt16Array],
-        "isInt32Array": [Function isInt32Array],
-        "isInt8Array": [Function isInt8Array],
-        "isKeyObject": [Function value],
-        "isMap": [Function isMap],
-        "isMapIterator": [Function isMapIterator],
-        "isModuleNamespaceObject": [Function isModuleNamespaceObject],
-        "isNativeError": [Function isNativeError],
-        "isNumberObject": [Function isNumberObject],
-        "isPromise": [Function isPromise],
-        "isProxy": [Function isProxy],
-        "isRegExp": [Function isRegExp],
-        "isSet": [Function isSet],
-        "isSetIterator": [Function isSetIterator],
-        "isSharedArrayBuffer": [Function isSharedArrayBuffer],
-        "isStringObject": [Function isStringObject],
-        "isSymbolObject": [Function isSymbolObject],
-        "isTypedArray": [Function isTypedArray],
-        "isUint16Array": [Function isUint16Array],
-        "isUint32Array": [Function isUint32Array],
-        "isUint8Array": [Function isUint8Array],
-        "isUint8ClampedArray": [Function isUint8ClampedArray],
-        "isWeakMap": [Function isWeakMap],
-        "isWeakSet": [Function isWeakSet],
-      },
-    },
-  },
-  "atob": [Function atob],
-  "btoa": [Function btoa],
-  "clearImmediate": [Function clearImmediate],
-  "clearInterval": [Function clearInterval],
-  "clearTimeout": [Function clearTimeout],
-  "crypto": Crypto {},
-  "fetch": [Function fetch],
-  "global": [Circular],
-  "navigator": Navigator {},
-  "performance": Performance {
-    Symbol(kEvents): Map {},
-    Symbol(events.maxEventTargetListeners): 10,
-    Symbol(events.maxEventTargetListenersWarned): false,
-    Symbol(kHandlers): Map {},
-    Symbol(performance): true,
-  },
-  "queueMicrotask": [Function queueMicrotask],
-  "setImmediate": [Function setImmediate],
-  "setInterval": [Function setInterval],
-  "setTimeout": [Function setTimeout],
-  "structuredClone": [Function structuredClone],
-  Symbol(vitest:SAFE_TIMERS): Object {
-    "clearImmediate": [Function clearImmediate],
-    "clearInterval": [Function clearInterval],
-    "clearTimeout": [Function clearTimeout],
-    "nextTick": [Function nextTick],
-    "setImmediate": [Function setImmediate],
-    "setInterval": [Function setInterval],
-    "setTimeout": [Function setTimeout],
-  },
-}
+null
 
- ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-static-this-exec.test.js:15:15
-     13|  var _getA = { _: () => this };
-     14|  const { self, getA } = A.extract();
-     15|  expect(self).toBe(A);
-       |               ^
-     16|  expect(getA()).toBe(A);
-     17|  const oldA = A;
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-static-this-exec.test.js:20:32
+     18|  A = null;
+     19|  expect(oldA.extract().self).toBe(oldA);
+     20|  expect(oldA.extract().getA()).toBe(oldA);
+       |                                ^
+     21| })
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[81/98]⎯
 
@@ -1147,165 +712,20 @@ Received: "_Class"
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[85/98]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-this-exec.test.js > exec
-AssertionError: expected { Object: [Function Object], …(133), …(6) } to be [Function A] // Object.is equality
+AssertionError: expected null to be [Function A] // Object.is equality
 
 - Expected: 
 [Function A]
 
 + Received: 
-Object {
-  "__vitest_environment__": "node",
-  "__vitest_required__": Object {
-    "timers": Object {
-      "_unrefActive": [Function deprecated],
-      "active": [Function deprecated],
-      "clearImmediate": [Function clearImmediate],
-      "clearInterval": [Function clearInterval],
-      "clearTimeout": [Function clearTimeout],
-      "enroll": [Function deprecated],
-      "promises": Object {
-        "scheduler": Scheduler {
-          Symbol(kScheduler): true,
-        },
-        "setImmediate": [Function setImmediate],
-        "setInterval": [Function setInterval],
-        "setTimeout": [Function setTimeout],
-      },
-      "setImmediate": [Function setImmediate],
-      "setInterval": [Function setInterval],
-      "setTimeout": [Function setTimeout],
-      "unenroll": [Function deprecated],
-    },
-    "util": Object {
-      "MIMEParams": [Function MIMEParams],
-      "MIMEType": [Function MIMEType],
-      "TextDecoder": [Function TextDecoder],
-      "TextEncoder": [Function TextEncoder],
-      "_errnoException": [Function _errnoException],
-      "_exceptionWithHostPort": [Function _exceptionWithHostPort],
-      "_extend": [Function deprecated],
-      "aborted": [Function aborted],
-      "callbackify": [Function callbackify],
-      "debug": [Function debuglog],
-      "debuglog": [Function debuglog],
-      "deprecate": [Function deprecate],
-      "format": [Function format],
-      "formatWithOptions": [Function formatWithOptions],
-      "getCallSite": [Function getCallSite],
-      "getSystemErrorMap": [Function getSystemErrorMap],
-      "getSystemErrorName": [Function getSystemErrorName],
-      "inherits": [Function inherits],
-      "inspect": [Function inspect],
-      "isArray": [Function deprecated],
-      "isBoolean": [Function deprecated],
-      "isBuffer": [Function deprecated],
-      "isDate": [Function deprecated],
-      "isDeepStrictEqual": [Function isDeepStrictEqual],
-      "isError": [Function deprecated],
-      "isFunction": [Function deprecated],
-      "isNull": [Function deprecated],
-      "isNullOrUndefined": [Function deprecated],
-      "isNumber": [Function deprecated],
-      "isObject": [Function deprecated],
-      "isPrimitive": [Function deprecated],
-      "isRegExp": [Function deprecated],
-      "isString": [Function deprecated],
-      "isSymbol": [Function deprecated],
-      "isUndefined": [Function deprecated],
-      "log": [Function deprecated],
-      "parseArgs": [Function parseArgs],
-      "parseEnv": [Function parseEnv],
-      "promisify": [Function promisify],
-      "stripVTControlCharacters": [Function stripVTControlCharacters],
-      "styleText": [Function styleText],
-      "toUSVString": [Function toUSVString],
-      "transferableAbortController": [Function transferableAbortController],
-      "transferableAbortSignal": [Function transferableAbortSignal],
-      "types": Object {
-        "isAnyArrayBuffer": [Function isAnyArrayBuffer],
-        "isArgumentsObject": [Function isArgumentsObject],
-        "isArrayBuffer": [Function isArrayBuffer],
-        "isArrayBufferView": [Function isView],
-        "isAsyncFunction": [Function isAsyncFunction],
-        "isBigInt64Array": [Function isBigInt64Array],
-        "isBigIntObject": [Function isBigIntObject],
-        "isBigUint64Array": [Function isBigUint64Array],
-        "isBooleanObject": [Function isBooleanObject],
-        "isBoxedPrimitive": [Function isBoxedPrimitive],
-        "isCryptoKey": [Function value],
-        "isDataView": [Function isDataView],
-        "isDate": [Function isDate],
-        "isExternal": [Function isExternal],
-        "isFloat32Array": [Function isFloat32Array],
-        "isFloat64Array": [Function isFloat64Array],
-        "isGeneratorFunction": [Function isGeneratorFunction],
-        "isGeneratorObject": [Function isGeneratorObject],
-        "isInt16Array": [Function isInt16Array],
-        "isInt32Array": [Function isInt32Array],
-        "isInt8Array": [Function isInt8Array],
-        "isKeyObject": [Function value],
-        "isMap": [Function isMap],
-        "isMapIterator": [Function isMapIterator],
-        "isModuleNamespaceObject": [Function isModuleNamespaceObject],
-        "isNativeError": [Function isNativeError],
-        "isNumberObject": [Function isNumberObject],
-        "isPromise": [Function isPromise],
-        "isProxy": [Function isProxy],
-        "isRegExp": [Function isRegExp],
-        "isSet": [Function isSet],
-        "isSetIterator": [Function isSetIterator],
-        "isSharedArrayBuffer": [Function isSharedArrayBuffer],
-        "isStringObject": [Function isStringObject],
-        "isSymbolObject": [Function isSymbolObject],
-        "isTypedArray": [Function isTypedArray],
-        "isUint16Array": [Function isUint16Array],
-        "isUint32Array": [Function isUint32Array],
-        "isUint8Array": [Function isUint8Array],
-        "isUint8ClampedArray": [Function isUint8ClampedArray],
-        "isWeakMap": [Function isWeakMap],
-        "isWeakSet": [Function isWeakSet],
-      },
-    },
-  },
-  "atob": [Function atob],
-  "btoa": [Function btoa],
-  "clearImmediate": [Function clearImmediate],
-  "clearInterval": [Function clearInterval],
-  "clearTimeout": [Function clearTimeout],
-  "crypto": Crypto {},
-  "fetch": [Function fetch],
-  "global": [Circular],
-  "navigator": Navigator {},
-  "performance": Performance {
-    Symbol(kEvents): Map {},
-    Symbol(events.maxEventTargetListeners): 10,
-    Symbol(events.maxEventTargetListenersWarned): false,
-    Symbol(kHandlers): Map {},
-    Symbol(performance): true,
-  },
-  "queueMicrotask": [Function queueMicrotask],
-  "setImmediate": [Function setImmediate],
-  "setInterval": [Function setInterval],
-  "setTimeout": [Function setTimeout],
-  "structuredClone": [Function structuredClone],
-  Symbol(vitest:SAFE_TIMERS): Object {
-    "clearImmediate": [Function clearImmediate],
-    "clearInterval": [Function clearInterval],
-    "clearTimeout": [Function clearTimeout],
-    "nextTick": [Function nextTick],
-    "setImmediate": [Function setImmediate],
-    "setInterval": [Function setInterval],
-    "setTimeout": [Function setTimeout],
-  },
-}
+null
 
- ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-this-exec.test.js:8:15
-      6|  A.getA = () => this;
-      7|  const { self, getA } = A;
-      8|  expect(self).toBe(A);
-       |               ^
-      9|  expect(getA()).toBe(A);
-     10|  const oldA = A;
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-this-exec.test.js:13:22
+     11|  A = null;
+     12|  expect(oldA.self).toBe(oldA);
+     13|  expect(oldA.getA()).toBe(oldA);
+       |                      ^
+     14| })
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[86/98]⎯
 
@@ -1343,165 +763,20 @@ Received: "_Class"
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[88/98]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-public-static-this-exec.test.js > exec
-AssertionError: expected { Object: [Function Object], …(133), …(6) } to be [Function A] // Object.is equality
+AssertionError: expected null to be [Function A] // Object.is equality
 
 - Expected: 
 [Function A]
 
 + Received: 
-Object {
-  "__vitest_environment__": "node",
-  "__vitest_required__": Object {
-    "timers": Object {
-      "_unrefActive": [Function deprecated],
-      "active": [Function deprecated],
-      "clearImmediate": [Function clearImmediate],
-      "clearInterval": [Function clearInterval],
-      "clearTimeout": [Function clearTimeout],
-      "enroll": [Function deprecated],
-      "promises": Object {
-        "scheduler": Scheduler {
-          Symbol(kScheduler): true,
-        },
-        "setImmediate": [Function setImmediate],
-        "setInterval": [Function setInterval],
-        "setTimeout": [Function setTimeout],
-      },
-      "setImmediate": [Function setImmediate],
-      "setInterval": [Function setInterval],
-      "setTimeout": [Function setTimeout],
-      "unenroll": [Function deprecated],
-    },
-    "util": Object {
-      "MIMEParams": [Function MIMEParams],
-      "MIMEType": [Function MIMEType],
-      "TextDecoder": [Function TextDecoder],
-      "TextEncoder": [Function TextEncoder],
-      "_errnoException": [Function _errnoException],
-      "_exceptionWithHostPort": [Function _exceptionWithHostPort],
-      "_extend": [Function deprecated],
-      "aborted": [Function aborted],
-      "callbackify": [Function callbackify],
-      "debug": [Function debuglog],
-      "debuglog": [Function debuglog],
-      "deprecate": [Function deprecate],
-      "format": [Function format],
-      "formatWithOptions": [Function formatWithOptions],
-      "getCallSite": [Function getCallSite],
-      "getSystemErrorMap": [Function getSystemErrorMap],
-      "getSystemErrorName": [Function getSystemErrorName],
-      "inherits": [Function inherits],
-      "inspect": [Function inspect],
-      "isArray": [Function deprecated],
-      "isBoolean": [Function deprecated],
-      "isBuffer": [Function deprecated],
-      "isDate": [Function deprecated],
-      "isDeepStrictEqual": [Function isDeepStrictEqual],
-      "isError": [Function deprecated],
-      "isFunction": [Function deprecated],
-      "isNull": [Function deprecated],
-      "isNullOrUndefined": [Function deprecated],
-      "isNumber": [Function deprecated],
-      "isObject": [Function deprecated],
-      "isPrimitive": [Function deprecated],
-      "isRegExp": [Function deprecated],
-      "isString": [Function deprecated],
-      "isSymbol": [Function deprecated],
-      "isUndefined": [Function deprecated],
-      "log": [Function deprecated],
-      "parseArgs": [Function parseArgs],
-      "parseEnv": [Function parseEnv],
-      "promisify": [Function promisify],
-      "stripVTControlCharacters": [Function stripVTControlCharacters],
-      "styleText": [Function styleText],
-      "toUSVString": [Function toUSVString],
-      "transferableAbortController": [Function transferableAbortController],
-      "transferableAbortSignal": [Function transferableAbortSignal],
-      "types": Object {
-        "isAnyArrayBuffer": [Function isAnyArrayBuffer],
-        "isArgumentsObject": [Function isArgumentsObject],
-        "isArrayBuffer": [Function isArrayBuffer],
-        "isArrayBufferView": [Function isView],
-        "isAsyncFunction": [Function isAsyncFunction],
-        "isBigInt64Array": [Function isBigInt64Array],
-        "isBigIntObject": [Function isBigIntObject],
-        "isBigUint64Array": [Function isBigUint64Array],
-        "isBooleanObject": [Function isBooleanObject],
-        "isBoxedPrimitive": [Function isBoxedPrimitive],
-        "isCryptoKey": [Function value],
-        "isDataView": [Function isDataView],
-        "isDate": [Function isDate],
-        "isExternal": [Function isExternal],
-        "isFloat32Array": [Function isFloat32Array],
-        "isFloat64Array": [Function isFloat64Array],
-        "isGeneratorFunction": [Function isGeneratorFunction],
-        "isGeneratorObject": [Function isGeneratorObject],
-        "isInt16Array": [Function isInt16Array],
-        "isInt32Array": [Function isInt32Array],
-        "isInt8Array": [Function isInt8Array],
-        "isKeyObject": [Function value],
-        "isMap": [Function isMap],
-        "isMapIterator": [Function isMapIterator],
-        "isModuleNamespaceObject": [Function isModuleNamespaceObject],
-        "isNativeError": [Function isNativeError],
-        "isNumberObject": [Function isNumberObject],
-        "isPromise": [Function isPromise],
-        "isProxy": [Function isProxy],
-        "isRegExp": [Function isRegExp],
-        "isSet": [Function isSet],
-        "isSetIterator": [Function isSetIterator],
-        "isSharedArrayBuffer": [Function isSharedArrayBuffer],
-        "isStringObject": [Function isStringObject],
-        "isSymbolObject": [Function isSymbolObject],
-        "isTypedArray": [Function isTypedArray],
-        "isUint16Array": [Function isUint16Array],
-        "isUint32Array": [Function isUint32Array],
-        "isUint8Array": [Function isUint8Array],
-        "isUint8ClampedArray": [Function isUint8ClampedArray],
-        "isWeakMap": [Function isWeakMap],
-        "isWeakSet": [Function isWeakSet],
-      },
-    },
-  },
-  "atob": [Function atob],
-  "btoa": [Function btoa],
-  "clearImmediate": [Function clearImmediate],
-  "clearInterval": [Function clearInterval],
-  "clearTimeout": [Function clearTimeout],
-  "crypto": Crypto {},
-  "fetch": [Function fetch],
-  "global": [Circular],
-  "navigator": Navigator {},
-  "performance": Performance {
-    Symbol(kEvents): Map {},
-    Symbol(events.maxEventTargetListeners): 10,
-    Symbol(events.maxEventTargetListenersWarned): false,
-    Symbol(kHandlers): Map {},
-    Symbol(performance): true,
-  },
-  "queueMicrotask": [Function queueMicrotask],
-  "setImmediate": [Function setImmediate],
-  "setInterval": [Function setInterval],
-  "setTimeout": [Function setTimeout],
-  "structuredClone": [Function structuredClone],
-  Symbol(vitest:SAFE_TIMERS): Object {
-    "clearImmediate": [Function clearImmediate],
-    "clearInterval": [Function clearInterval],
-    "clearTimeout": [Function clearTimeout],
-    "nextTick": [Function nextTick],
-    "setImmediate": [Function setImmediate],
-    "setInterval": [Function setInterval],
-    "setTimeout": [Function setTimeout],
-  },
-}
+null
 
- ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-public-static-this-exec.test.js:9:15
-      7|  _defineProperty(A, "getA", () => this);
-      8|  const { self, getA } = A;
-      9|  expect(self).toBe(A);
-       |               ^
-     10|  expect(getA()).toBe(A);
-     11|  const oldA = A;
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-public-static-this-exec.test.js:14:22
+     12|  A = null;
+     13|  expect(oldA.self).toBe(oldA);
+     14|  expect(oldA.getA()).toBe(oldA);
+       |                      ^
+     15| })
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[89/98]⎯
 
