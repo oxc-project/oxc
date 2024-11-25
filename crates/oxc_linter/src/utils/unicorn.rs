@@ -1,7 +1,8 @@
 mod boolean;
 use oxc_ast::{
     ast::{
-        Argument, ArrayExpression, ArrayExpressionElement, BindingPatternKind, CallExpression, Expression, FormalParameters, FunctionBody, LogicalExpression, MemberExpression, Statement
+        Argument, ArrayExpression, ArrayExpressionElement, BindingPatternKind, CallExpression,
+        Expression, FormalParameters, FunctionBody, LogicalExpression, MemberExpression, Statement,
     },
     AstKind,
 };
@@ -233,14 +234,14 @@ fn is_same_expression_elements<T>(
         match (as_expression(left), as_expression(right)) {
             (Some(left), Some(right)) => {
                 if !is_same_reference(left, right, ctx) {
-                    return false
+                    return false;
                 }
-            },
+            }
             _ => return false,
         }
     }
 
-    return  true;
+    return true;
 }
 
 fn is_same_array_expression(
@@ -248,12 +249,10 @@ fn is_same_array_expression(
     right: &ArrayExpression,
     ctx: &LintContext,
 ) -> bool {
-    return is_same_expression_elements(&left.elements, &right.elements, ctx, |el| {
-        match el {
-            ArrayExpressionElement::SpreadElement(expr) => Some(&expr.argument),
-            expr => expr.as_expression(),
-        }
-    })
+    return is_same_expression_elements(&left.elements, &right.elements, ctx, |el| match el {
+        ArrayExpressionElement::SpreadElement(expr) => Some(&expr.argument),
+        expr => expr.as_expression(),
+    });
 }
 
 pub fn is_same_call_expression(
@@ -269,11 +268,9 @@ pub fn is_same_call_expression(
         return false;
     }
 
-    is_same_expression_elements(&left.arguments, &right.arguments, ctx, |el| {
-        match el {
-            Argument::SpreadElement(expr) => Some(&expr.argument),
-            expr => expr.as_expression(),
-        }
+    is_same_expression_elements(&left.arguments, &right.arguments, ctx, |el| match el {
+        Argument::SpreadElement(expr) => Some(&expr.argument),
+        expr => expr.as_expression(),
     })
 }
 
