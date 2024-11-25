@@ -333,6 +333,9 @@ impl<'a, 'c> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, 'c> {
     fn visit_static_block(&mut self, _block: &mut StaticBlock) {}
 
     #[inline]
+    fn visit_ts_module_block(&mut self, _block: &mut TSModuleBlock<'a>) {}
+
+    #[inline]
     fn visit_property_definition(&mut self, prop: &mut PropertyDefinition<'a>) {
         // `super()` in computed key of property or method refers to super binding of parent class.
         // So visit computed `key`, but not `value`.
@@ -585,6 +588,9 @@ impl<'a, 'c> VisitMut<'a> for ConstructorBodyInitsInserter<'a, 'c> {
 
     #[inline]
     fn visit_static_block(&mut self, _block: &mut StaticBlock) {}
+
+    #[inline]
+    fn visit_ts_module_block(&mut self, _block: &mut TSModuleBlock<'a>) {}
 
     #[inline]
     fn visit_property_definition(&mut self, prop: &mut PropertyDefinition<'a>) {
