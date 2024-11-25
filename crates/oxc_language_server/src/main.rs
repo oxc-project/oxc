@@ -151,8 +151,20 @@ impl LanguageServer for Backend {
                 options
             };
 
-        debug!("{:?}", &changed_options.get_lint_level());
-        if changed_options.get_lint_level() == SyntheticRunLevel::Disable {
+        let current_option = &self.options.lock().await.clone();
+
+        debug!(
+            "
+        configuration changed:
+        incoming: {changed_options:?}
+        current: {current_option:?}
+        "
+        );
+
+        if current_option.get_lint_level() != changed_options.get_lint_level()
+            && changed_options.get_lint_level() == SyntheticRunLevel::Disable
+        {
+            debug!("lint level change detected {:?}", &changed_options.get_lint_level());
             // clear all exists diagnostics when linter is disabled
             let opened_files = self.diagnostics_report_map.iter().map(|k| k.key().to_string());
             let cleared_diagnostics = opened_files
@@ -170,7 +182,19 @@ impl LanguageServer for Backend {
                 .collect::<Vec<_>>();
             self.publish_all_diagnostics(&cleared_diagnostics).await;
         }
-        *self.options.lock().await = changed_options;
+
+        *self.options.lock().await = changed_options.clone();
+
+        // revalidate the config and all open files, when lint level is not disabled and the config path is changed
+        if changed_options.get_lint_level() != SyntheticRunLevel::Disable
+            && changed_options
+                .get_config_path()
+                .is_some_and(|path| path.to_str().unwrap() != current_option.config_path)
+        {
+            info!("config path change detected {:?}", &changed_options.get_config_path());
+            self.init_linter_config().await;
+            self.revalidate_open_files().await;
+        }
     }
 
     async fn did_change_watched_files(&self, _params: DidChangeWatchedFilesParams) {
