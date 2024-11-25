@@ -30,14 +30,6 @@ pub mod diagnostics {
     pub use oxc_diagnostics::*;
 }
 
-pub mod index {
-    //! A Vec with newtype indexing.
-    //!
-    //! See the [`oxc_index` module-level documentation](oxc_index) for more information.
-    #[doc(inline)]
-    pub use oxc_index::*;
-}
-
 pub mod parser {
     //! JavaScript/TypeScript parser.
     //!

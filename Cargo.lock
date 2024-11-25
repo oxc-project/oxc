@@ -1406,7 +1406,6 @@ dependencies = [
  "oxc_cfg",
  "oxc_codegen",
  "oxc_diagnostics",
- "oxc_index",
  "oxc_isolated_declarations",
  "oxc_mangler",
  "oxc_minifier",
@@ -1650,9 +1649,10 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
-version = "0.37.0"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fe15d5f5b96fa820c5ba2709eceabf395c4a93a578c792bdd65da6e88a77e14"
 dependencies = [
- "rayon",
  "serde",
 ]
 
