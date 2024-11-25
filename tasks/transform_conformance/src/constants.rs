@@ -3,7 +3,7 @@ pub const PLUGINS: &[&str] = &[
     // // ES2024
     // "babel-plugin-transform-unicode-sets-regex",
     // // ES2022
-    // "babel-plugin-transform-class-properties",
+    "babel-plugin-transform-class-properties",
     "babel-plugin-transform-class-static-block",
     // "babel-plugin-transform-private-methods",
     // "babel-plugin-transform-private-property-in-object",
@@ -63,7 +63,6 @@ pub const PLUGINS: &[&str] = &[
 
 pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "proposal-decorators",
-    "transform-class-properties",
     "transform-classes",
     "transform-destructuring",
     "transform-modules-commonjs",

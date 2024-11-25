@@ -81,7 +81,6 @@ pub struct CompilerAssumptions {
     pub set_computed_properties: bool,
 
     #[serde(default)]
-    #[deprecated = "Not Implemented"]
     pub set_public_class_fields: bool,
 
     #[serde(default)]

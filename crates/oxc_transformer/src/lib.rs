@@ -241,6 +241,10 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         }
     }
 
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2022.exit_class(class, ctx);
+    }
+
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_class_body(body, ctx);
@@ -271,6 +275,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_expression(expr, ctx);
         }
+        self.x2_es2022.enter_expression(expr, ctx);
         self.x2_es2021.enter_expression(expr, ctx);
         self.x2_es2020.enter_expression(expr, ctx);
         self.x2_es2018.enter_expression(expr, ctx);
@@ -504,6 +509,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statement(stmt, ctx);
         }
+        self.x2_es2022.enter_statement(stmt, ctx);
         self.x2_es2018.enter_statement(stmt, ctx);
     }
 

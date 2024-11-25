@@ -130,7 +130,10 @@ impl ClassStaticBlock {
     /// Convert static block to expression which will be value of private field.
     /// `static { foo }` -> `foo`
     /// `static { foo; bar; }` -> `(() => { foo; bar; })()`
-    fn convert_block_to_expression<'a>(
+    ///
+    /// This function also used by `ClassProperties` transform.
+    /// TODO: Make this function non-pub if no longer use it for `ClassProperties`.
+    pub fn convert_block_to_expression<'a>(
         block: &mut StaticBlock<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {

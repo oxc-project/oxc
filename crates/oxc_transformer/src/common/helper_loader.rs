@@ -147,6 +147,11 @@ pub enum Helper {
     ObjectDestructuringEmpty,
     ObjectWithoutProperties,
     ToPropertyKey,
+    DefineProperty,
+    ClassPrivateFieldInitSpec,
+    ClassPrivateFieldGet2,
+    ClassPrivateFieldSet2,
+    AssertClassBrand,
 }
 
 impl Helper {
@@ -162,6 +167,11 @@ impl Helper {
             Self::ObjectDestructuringEmpty => "objectDestructuringEmpty",
             Self::ObjectWithoutProperties => "objectWithoutProperties",
             Self::ToPropertyKey => "toPropertyKey",
+            Self::DefineProperty => "defineProperty",
+            Self::ClassPrivateFieldInitSpec => "classPrivateFieldInitSpec",
+            Self::ClassPrivateFieldGet2 => "classPrivateFieldGet2",
+            Self::ClassPrivateFieldSet2 => "classPrivateFieldSet2",
+            Self::AssertClassBrand => "assertClassBrand",
         }
     }
 }

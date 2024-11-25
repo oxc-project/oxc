@@ -98,7 +98,6 @@ impl<'a> VarDeclarationsStore<'a> {
 
     /// Add a `let` declaration to be inserted at top of current enclosing statement block,
     /// given a `BoundIdentifier`.
-    #[expect(dead_code)]
     pub fn insert_let(
         &self,
         binding: &BoundIdentifier<'a>,
