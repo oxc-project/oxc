@@ -90,32 +90,18 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for OptionalChaining<'a, 'ctx> {
+    // `#[inline]` because this is a hot path
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        *expr = match expr {
-            Expression::ChainExpression(_) => {
-                if self.is_inside_function_parameter {
-                    // To insert the temp binding in the correct scope, we wrap the expression with
-                    // an arrow function. During the chain expression transformation, the temp binding
-                    // will be inserted into the arrow function's body.
-                    Self::wrap_arrow_function(expr, ctx)
-                } else {
-                    self.transform_chain_expression(false, expr, ctx)
-                }
-            }
+        match expr {
+            Expression::ChainExpression(_) => self.transform_chain_expression(expr, ctx),
             Expression::UnaryExpression(unary_expr)
-                if unary_expr.operator == UnaryOperator::Delete =>
+                if unary_expr.operator == UnaryOperator::Delete
+                    && matches!(unary_expr.argument, Expression::ChainExpression(_)) =>
             {
-                let Expression::ChainExpression(_) = unary_expr.argument else {
-                    return;
-                };
-                if self.is_inside_function_parameter {
-                    // Same as the above explanation
-                    Self::wrap_arrow_function(expr, ctx)
-                } else {
-                    self.transform_chain_expression(true, &mut unary_expr.argument, ctx)
-                }
+                self.transform_update_expression(expr, ctx);
             }
-            _ => return,
+            _ => (),
         };
     }
 
@@ -331,12 +317,41 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right)
     }
 
+    /// Transform chain expression
+    fn transform_chain_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        *expr = if self.is_inside_function_parameter {
+            // To insert the temp binding in the correct scope, we wrap the expression with
+            // an arrow function. During the chain expression transformation, the temp binding
+            // will be inserted into the arrow function's body.
+            Self::wrap_arrow_function(expr, ctx)
+        } else {
+            self.transform_chain_expression_impl(false, expr, ctx)
+        }
+    }
+
+    /// Transform update expression
+    fn transform_update_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        *expr = if self.is_inside_function_parameter {
+            // Same as the above `transform_chain_expression` explanation
+            Self::wrap_arrow_function(expr, ctx)
+        } else {
+            // Unfortunately no way to get compiler to see that this branch is provably unreachable.
+            // We don't want to inline this function, to keep `enter_expression` as small as possible.
+            let Expression::UnaryExpression(unary_expr) = expr else { unreachable!() };
+            self.transform_chain_expression_impl(true, &mut unary_expr.argument, ctx)
+        }
+    }
+
     /// Transform chain expression to conditional expression which contains a lot of checks
     ///
     /// This is the root transform function for chain expressions. It calls
     /// [`Self::transform_chain_element_recursion`] to transform the chain expression elements,
     /// and then joins the transformed elements with the conditional expression.
-    fn transform_chain_expression(
+    fn transform_chain_expression_impl(
         &mut self,
         is_delete: bool,
         chain_expr: &mut Expression<'a>,
