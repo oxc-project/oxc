@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.38.0] - 2024-11-26
+
+### Bug Fixes
+
+- d5df615 oxc_codegen: Don't emit empty span mapping (#7448) (Hiroshi Ogawa)
+
 ## [0.37.0] - 2024-11-21
 
 - f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)

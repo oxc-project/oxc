@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.38.0] - 2024-11-26
+
+- 5d65656 oxc_index: [**BREAKING**] Move to own repo github.com/oxc-project/oxc-index-vec (#7464) (Boshen)
+
+- bb2c0c2 transformer: [**BREAKING**] Return `String` as error instead of OxcDiagnostic (#7424) (Boshen)
+
+### Features
+
+- 59e7e46 napi/transform: Add `TransformOptions::target` API (#7426) (Boshen)
+
+### Refactor
+
+
 ## [0.36.0] - 2024-11-09
 
 - 846711c transformer: [**BREAKING**] Change API to take a `&TransformOptions` instead of `TransformOptions` (#7213) (Boshen)
