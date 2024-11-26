@@ -91,36 +91,58 @@ impl<'a> PeepholeMinimizeConditions {
     ) -> Option<Statement<'a>> {
         if let Statement::ExpressionStatement(expr) = &mut if_stmt.consequent {
             // The rest of things for known boolean are tasks for dce instead of here.
-            (if_stmt.alternate.is_none() && if_stmt.test.to_boolean().is_none()).then(|| {
-                // Make if (x) y; => x && y;
-                let (operator, mut test) = match &mut if_stmt.test {
-                    Expression::UnaryExpression(unary) if unary.operator.is_not() => {
-                        let arg = ctx.ast.move_expression(&mut unary.argument);
-                        (LogicalOperator::Or, arg)
+            if_stmt
+                .test
+                .to_boolean()
+                .is_none()
+                .then(|| {
+                    if !matches!(if_stmt.alternate, None | Some(Statement::ExpressionStatement(_)))
+                    {
+                        return None;
                     }
-                    _ => (LogicalOperator::And, ctx.ast.move_expression(&mut if_stmt.test)),
-                };
-                match &mut test {
-                    Expression::BinaryExpression(bin) if bin.operator.is_equality() => {
-                        if !bin.left.is_literal() && bin.right.is_literal() {
-                            test = ctx.ast.expression_binary(
-                                SPAN,
-                                ctx.ast.move_expression(&mut bin.right),
-                                bin.operator,
-                                ctx.ast.move_expression(&mut bin.left),
-                            );
+                    // Make if (x) y; => x && y;
+                    let (reverse, mut test) = match &mut if_stmt.test {
+                        Expression::UnaryExpression(unary) if unary.operator.is_not() => {
+                            let arg = ctx.ast.move_expression(&mut unary.argument);
+                            (true, arg)
                         }
+                        _ => (false, ctx.ast.move_expression(&mut if_stmt.test)),
+                    };
+                    match &mut test {
+                        Expression::BinaryExpression(bin) if bin.operator.is_equality() => {
+                            if !bin.left.is_literal() && bin.right.is_literal() {
+                                test = ctx.ast.expression_binary(
+                                    SPAN,
+                                    ctx.ast.move_expression(&mut bin.right),
+                                    bin.operator,
+                                    ctx.ast.move_expression(&mut bin.left),
+                                );
+                            }
+                        }
+                        _ => {}
                     }
-                    _ => {}
-                }
-                let new_expr = ctx.ast.expression_logical(
-                    SPAN,
-                    test,
-                    operator,
-                    ctx.ast.move_expression(&mut expr.expression),
-                );
-                ctx.ast.statement_expression(SPAN, new_expr)
-            })
+                    if let Some(Statement::ExpressionStatement(alt)) = &mut if_stmt.alternate {
+                        let left = ctx.ast.move_expression(&mut expr.expression);
+                        let right = ctx.ast.move_expression(&mut alt.expression);
+                        let cond = if reverse {
+                            ctx.ast.expression_conditional(SPAN, test, right, left)
+                        } else {
+                            ctx.ast.expression_conditional(SPAN, test, left, right)
+                        };
+                        Some(ctx.ast.statement_expression(SPAN, cond))
+                    } else if if_stmt.alternate.is_none() {
+                        let new_expr = ctx.ast.expression_logical(
+                            SPAN,
+                            test,
+                            if reverse { LogicalOperator::Or } else { LogicalOperator::And },
+                            ctx.ast.move_expression(&mut expr.expression),
+                        );
+                        Some(ctx.ast.statement_expression(SPAN, new_expr))
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or(None)
         } else {
             None
         }
@@ -168,7 +190,7 @@ mod test {
 
         // Try it out with functions
         fold("function f(){if(x){foo()}}", "function f(){x&&foo()}");
-        // fold("function f(){if(x){foo()}else{bar()}}", "function f(){x?foo():bar()}");
+        fold("function f(){if(x){foo()}else{bar()}}", "function f(){x?foo():bar()}");
 
         // Try it out with properties and methods
         fold("function f(){if(x){a.b=1}}", "function f(){x&&(a.b=1)}");
@@ -191,12 +213,12 @@ mod test {
 
         // Play with nested IFs
         fold("function f(){if(x){if(y)foo()}}", "function f(){x && (y && foo())}");
-        // fold("function f(){if(x){if(y)foo();else bar()}}", "function f(){x&&(y?foo():bar())}");
-        // fold("function f(){if(x){if(y)foo()}else bar()}", "function f(){x?y&&foo():bar()}");
-        // fold(
-        //     "function f(){if(x){if(y)foo();else bar()}else{baz()}}",
-        //     "function f(){x?y?foo():bar():baz()}",
-        // );
+        fold("function f(){if(x){if(y)foo();else bar()}}", "function f(){x&&(y?foo():bar())}");
+        fold("function f(){if(x){if(y)foo()}else bar()}", "function f(){x?y&&foo():bar()}");
+        fold(
+            "function f(){if(x){if(y)foo();else bar()}else{baz()}}",
+            "function f(){x?y?foo():bar():baz()}",
+        );
 
         // fold("if(e1){while(e2){if(e3){foo()}}}else{bar()}", "if(e1)while(e2)e3&&foo();else bar()");
 
@@ -371,11 +393,10 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_not_cond() {
         fold("function f(){if(!x)foo()}", "function f(){x||foo()}");
         fold("function f(){if(!x)b=1}", "function f(){x||(b=1)}");
-        fold("if(!x)z=1;else if(y)z=2", "if(x){y&&(z=2);}else{z=1;}");
+        fold("if(!x)z=1;else if(y)z=2", "x ? y&&(z=2) : z=1;");
         fold("if(x)y&&(z=2);else z=1;", "x ? y&&(z=2) : z=1");
         fold("function f(){if(!(x=1))a.b=1}", "function f(){(x=1)||(a.b=1)}");
     }
