@@ -52,6 +52,13 @@ fn es_target() {
 }
 
 #[test]
+fn no_class_properties() {
+    let code = "class Foo { #a; }";
+    let options = TransformOptions::from(ESTarget::from_str("es2015").unwrap());
+    assert_eq!(test(code, &options), Ok(codegen(code, SourceType::mjs())));
+}
+
+#[test]
 fn target_list_pass() {
     // https://vite.dev/config/build-options.html#build-target
     let target = "es2020,edge88,firefox78,chrome87,safari14";

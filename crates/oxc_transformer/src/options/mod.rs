@@ -122,7 +122,9 @@ impl From<ESTarget> for TransformOptions {
     fn from(target: ESTarget) -> Self {
         let mut engine_targets = EngineTargets::default();
         engine_targets.insert(Engine::Es, target.version());
-        Self { env: EnvOptions::from(engine_targets), ..Self::default() }
+        let mut env = EnvOptions::from(engine_targets);
+        env.es2022.class_properties = None;
+        Self { env, ..Self::default() }
     }
 }
 
