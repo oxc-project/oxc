@@ -3,8 +3,8 @@ use oxc_ast::{
     ast::{Expression, IdentifierReference, Statement},
     AstBuilder,
 };
-use oxc_semantic::{NodeId, ScopeTree, SymbolTable};
-use oxc_span::{Atom, CompactStr, Span, SPAN};
+use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -186,6 +186,14 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.current_scope_id()
     }
 
+    /// Get current var hoisting scope ID.
+    ///
+    /// Shortcut for `ctx.scoping.current_hoist_scope_id`.
+    #[inline]
+    pub fn current_hoist_scope_id(&self) -> ScopeId {
+        self.scoping.current_hoist_scope_id()
+    }
+
     /// Get current scope flags.
     ///
     /// Shortcut for `ctx.scoping.current_scope_flags`.
@@ -356,12 +364,7 @@ impl<'a> TraverseCtx<'a> {
         // Get name for UID
         let name = self.generate_uid_name(name);
         let name_atom = self.ast.atom(&name);
-
-        // Add binding to scope
-        let symbol_id =
-            self.symbols_mut().create_symbol(SPAN, name.clone(), flags, scope_id, NodeId::DUMMY);
-        self.scopes_mut().add_binding(scope_id, name, symbol_id);
-
+        let symbol_id = self.scoping.add_binding(name, scope_id, flags);
         BoundIdentifier::new(name_atom, symbol_id)
     }
 
@@ -419,6 +422,15 @@ impl<'a> TraverseCtx<'a> {
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
         self.generate_uid_based_on_node(node, self.current_scope_id(), flags)
+    }
+
+    /// Generate UID in current hoist scope.
+    ///
+    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
+    /// on how UIDs are generated. There are some potential "gotchas".
+    #[inline]
+    pub fn generate_uid_in_current_hoist_scope(&mut self, name: &str) -> BoundIdentifier<'a> {
+        self.generate_uid(name, self.current_hoist_scope_id(), SymbolFlags::FunctionScopedVariable)
     }
 
     /// Create a reference bound to a `SymbolId`.
@@ -622,5 +634,11 @@ impl<'a> TraverseCtx<'a> {
     #[inline]
     pub(crate) fn set_current_scope_id(&mut self, scope_id: ScopeId) {
         self.scoping.set_current_scope_id(scope_id);
+    }
+
+    /// Shortcut for `ctx.scoping.set_current_hoist_scope_id`, to make `walk_*` methods less verbose.
+    #[inline]
+    pub(crate) fn set_current_hoist_scope_id(&mut self, scope_id: ScopeId) {
+        self.scoping.set_current_hoist_scope_id(scope_id);
     }
 }

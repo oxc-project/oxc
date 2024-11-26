@@ -109,11 +109,26 @@ function generateWalkForStruct(type, types) {
     // but we don't take that into account.
     // Visitor should not do that though, so maybe it's OK.
     // In final version, we should not make `scope_id` fields `Cell`s to prevent this.
+
     enterScopeCode = `
       let previous_scope_id = ctx.current_scope_id();
-      ctx.set_current_scope_id((*(${makeFieldCode(scopeIdField)})).get().unwrap());
+      let current_scope_id = (*(${makeFieldCode(scopeIdField)})).get().unwrap();
+      ctx.set_current_scope_id(current_scope_id);
     `;
-    exitScopeCode = `ctx.set_current_scope_id(previous_scope_id);`;
+
+    exitScopeCode = 'ctx.set_current_scope_id(previous_scope_id);';
+
+    // const Var = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
+    // `Function` type is a special case as its flags are set dynamically depending on the parent.
+    let isVarHoistingScope = type.name == 'Function' ||
+      ['Top', 'Function', 'ClassStaticBlock', 'TsModuleBlock'].some(flag => scopeArgs.flags.includes(flag));
+    if (isVarHoistingScope) {
+      enterScopeCode += `
+        let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+        ctx.set_current_hoist_scope_id(current_scope_id);
+      `;
+      exitScopeCode += 'ctx.set_current_hoist_scope_id(previous_hoist_scope_id);';
+    }
   }
 
   const fieldsCodes = visitedFields.map((field, index) => {

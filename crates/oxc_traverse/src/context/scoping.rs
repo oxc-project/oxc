@@ -26,6 +26,7 @@ pub struct TraverseScoping {
     symbols: SymbolTable,
     uid_names: Option<FxHashSet<CompactStr>>,
     current_scope_id: ScopeId,
+    current_hoist_scope_id: ScopeId,
 }
 
 // Public methods
@@ -38,6 +39,12 @@ impl TraverseScoping {
     #[inline]
     pub fn current_scope_id(&self) -> ScopeId {
         self.current_scope_id
+    }
+
+    /// Get current var hoisting scope ID
+    #[inline]
+    pub(crate) fn current_hoist_scope_id(&self) -> ScopeId {
+        self.current_hoist_scope_id
     }
 
     /// Get current scope flags
@@ -164,6 +171,21 @@ impl TraverseScoping {
         self.scopes.delete_scope(scope_id);
     }
 
+    /// Add binding to [`ScopeTree`] and [`SymbolTable`].
+    #[inline]
+    pub(crate) fn add_binding(
+        &mut self,
+        name: CompactStr,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> SymbolId {
+        let symbol_id =
+            self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id, NodeId::DUMMY);
+        self.scopes.add_binding(scope_id, name, symbol_id);
+
+        symbol_id
+    }
+
     /// Generate binding.
     ///
     /// Creates a symbol with the provided name and flags and adds it to the specified scope.
@@ -173,13 +195,7 @@ impl TraverseScoping {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        let owned_name = name.to_compact_str();
-
-        // Add binding to scope
-        let symbol_id =
-            self.symbols.create_symbol(SPAN, owned_name.clone(), flags, scope_id, NodeId::DUMMY);
-        self.scopes.add_binding(scope_id, owned_name, symbol_id);
-
+        let symbol_id = self.add_binding(name.to_compact_str(), scope_id, flags);
         BoundIdentifier::new(name, symbol_id)
     }
 
@@ -386,8 +402,9 @@ impl TraverseScoping {
             scopes,
             symbols,
             uid_names: None,
-            // Dummy value. Immediately overwritten in `walk_program`.
+            // Dummy values. Both immediately overwritten in `walk_program`.
             current_scope_id: ScopeId::new(0),
+            current_hoist_scope_id: ScopeId::new(0),
         }
     }
 
@@ -395,6 +412,12 @@ impl TraverseScoping {
     #[inline]
     pub(crate) fn set_current_scope_id(&mut self, scope_id: ScopeId) {
         self.current_scope_id = scope_id;
+    }
+
+    /// Set current hoist scope ID
+    #[inline]
+    pub(crate) fn set_current_hoist_scope_id(&mut self, scope_id: ScopeId) {
+        self.current_hoist_scope_id = scope_id;
     }
 
     /// Get `uid_names`.

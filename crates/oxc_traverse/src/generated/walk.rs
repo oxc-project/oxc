@@ -32,11 +32,13 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_program(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_PROGRAM_SCOPE_ID) as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_PROGRAM_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
     let pop_token = ctx
         .push_stack(Ancestor::ProgramHashbang(ancestor::ProgramWithoutHashbang(node, PhantomData)));
     if let Some(field) =
@@ -59,6 +61,7 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
     );
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
     traverser.exit_program(&mut *node, ctx);
 }
 
@@ -1417,12 +1420,11 @@ pub(crate) unsafe fn walk_block_statement<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_block_statement(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_BLOCK_STATEMENT_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_BLOCK_STATEMENT_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::BlockStatementBody(
         ancestor::BlockStatementWithoutBody(node, PhantomData),
     ));
@@ -1623,12 +1625,11 @@ pub(crate) unsafe fn walk_for_statement<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_for_statement(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::ForStatementInit(ancestor::ForStatementWithoutInit(
         node,
         PhantomData,
@@ -1726,12 +1727,11 @@ pub(crate) unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_for_in_statement(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::ForInStatementLeft(
         ancestor::ForInStatementWithoutLeft(node, PhantomData),
     ));
@@ -1791,12 +1791,11 @@ pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_for_of_statement(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::ForOfStatementLeft(
         ancestor::ForOfStatementWithoutLeft(node, PhantomData),
     ));
@@ -1915,12 +1914,11 @@ pub(crate) unsafe fn walk_switch_statement<'a, Tr: Traverse<'a>>(
         ctx,
     );
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_SWITCH_STATEMENT_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_SWITCH_STATEMENT_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     ctx.retag_stack(AncestorType::SwitchStatementCases);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_SWITCH_STATEMENT_CASES)
         as *mut Vec<SwitchCase>))
@@ -2036,12 +2034,11 @@ pub(crate) unsafe fn walk_catch_clause<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_catch_clause(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::CatchClauseParam(ancestor::CatchClauseWithoutParam(
         node,
         PhantomData,
@@ -2263,12 +2260,13 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_function(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_FUNCTION_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_FUNCTION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
     let pop_token =
         ctx.push_stack(Ancestor::FunctionId(ancestor::FunctionWithoutId(node, PhantomData)));
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_ID)
@@ -2309,6 +2307,7 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
     }
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
     traverser.exit_function(&mut *node, ctx);
 }
 
@@ -2394,12 +2393,14 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_arrow_function_expression(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::ArrowFunctionExpressionTypeParameters(
         ancestor::ArrowFunctionExpressionWithoutTypeParameters(node, PhantomData),
     ));
@@ -2432,6 +2433,7 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
     );
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
     traverser.exit_arrow_function_expression(&mut *node, ctx);
 }
 
@@ -2473,11 +2475,11 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
         walk_binding_identifier(traverser, field as *mut _, ctx);
     }
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_CLASS_SCOPE_ID) as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_CLASS_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_TYPE_PARAMETERS)
         as *mut Option<Box<TSTypeParameterDeclaration>>)
     {
@@ -2646,12 +2648,13 @@ pub(crate) unsafe fn walk_static_block<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_static_block(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_STATIC_BLOCK_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_STATIC_BLOCK_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
     let pop_token = ctx
         .push_stack(Ancestor::StaticBlockBody(ancestor::StaticBlockWithoutBody(node, PhantomData)));
     walk_statements(
@@ -2661,6 +2664,7 @@ pub(crate) unsafe fn walk_static_block<'a, Tr: Traverse<'a>>(
     );
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
     traverser.exit_static_block(&mut *node, ctx);
 }
 
@@ -3670,12 +3674,11 @@ pub(crate) unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
         ctx,
     );
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     ctx.retag_stack(AncestorType::TSEnumDeclarationMembers);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_MEMBERS)
         as *mut Vec<TSEnumMember>))
@@ -3919,12 +3922,11 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
         ctx,
     );
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     ctx.retag_stack(AncestorType::TSConditionalTypeExtendsType);
     walk_ts_type(
         traverser,
@@ -4476,12 +4478,12 @@ pub(crate) unsafe fn walk_ts_type_alias_declaration<'a, Tr: Traverse<'a>>(
         ctx,
     );
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS)
         as *mut Option<Box<TSTypeParameterDeclaration>>)
@@ -4542,12 +4544,12 @@ pub(crate) unsafe fn walk_ts_interface_declaration<'a, Tr: Traverse<'a>>(
         ctx,
     );
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
         as *mut Option<Vec<TSInterfaceHeritage>>)
@@ -4719,12 +4721,11 @@ pub(crate) unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_ts_method_signature(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::TSMethodSignatureKey(
         ancestor::TSMethodSignatureWithoutKey(node, PhantomData),
     ));
@@ -4773,12 +4774,12 @@ pub(crate) unsafe fn walk_ts_construct_signature_declaration<'a, Tr: Traverse<'a
 ) {
     traverser.enter_ts_construct_signature_declaration(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::TSConstructSignatureDeclarationTypeParameters(
         ancestor::TSConstructSignatureDeclarationWithoutTypeParameters(node, PhantomData),
     ));
@@ -4908,12 +4909,14 @@ pub(crate) unsafe fn walk_ts_module_declaration<'a, Tr: Traverse<'a>>(
         ctx,
     );
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
+    let current_scope_id =
         (*((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_SCOPE_ID)
             as *mut Cell<Option<ScopeId>>))
             .get()
-            .unwrap(),
-    );
+            .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_BODY)
         as *mut Option<TSModuleDeclarationBody>)
     {
@@ -4922,6 +4925,7 @@ pub(crate) unsafe fn walk_ts_module_declaration<'a, Tr: Traverse<'a>>(
     }
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
     traverser.exit_ts_module_declaration(&mut *node, ctx);
 }
 
@@ -5248,12 +5252,11 @@ pub(crate) unsafe fn walk_ts_mapped_type<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_ts_mapped_type(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
-    ctx.set_current_scope_id(
-        (*((node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap(),
-    );
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::TSMappedTypeTypeParameter(
         ancestor::TSMappedTypeWithoutTypeParameter(node, PhantomData),
     ));
