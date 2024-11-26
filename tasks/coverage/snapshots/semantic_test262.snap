@@ -6733,45 +6733,27 @@ rebuilt        : SymbolId(7): ScopeId(0)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-rest-getter.js
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "count", "iterCount", "x"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "count", "iterCount", "x"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "count", "iterCount"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref"]
-rebuilt        : ScopeId(1): []
 Bindings mismatch:
 after transform: ScopeId(3): []
 rebuilt        : ScopeId(3): ["x"]
-Symbol scope ID mismatch for "_ref":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(0)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-rest-skip-non-enumerable.js
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "iterCount", "o", "rest"]
+after transform: ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "iterCount", "o", "rest"]
 rebuilt        : ScopeId(0): ["_extends", "_objectDestructuringEmpty", "_ref", "iterCount", "o"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref"]
-rebuilt        : ScopeId(1): []
 Bindings mismatch:
 after transform: ScopeId(2): []
 rebuilt        : ScopeId(2): ["rest"]
-Symbol scope ID mismatch for "_ref":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(0)
 
 tasks/coverage/test262/test/language/statements/for-of/dstr/var-obj-ptrn-rest-val-obj.js
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["_excluded", "_objectWithoutProperties", "a", "b", "iterCount", "rest"]
+after transform: ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref", "a", "b", "iterCount", "rest"]
 rebuilt        : ScopeId(0): ["_excluded", "_objectWithoutProperties", "_ref", "iterCount"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref"]
-rebuilt        : ScopeId(1): []
 Bindings mismatch:
 after transform: ScopeId(2): []
 rebuilt        : ScopeId(2): ["a", "b", "rest"]
-Symbol scope ID mismatch for "_ref":
-after transform: SymbolId(4): ScopeId(1)
-rebuilt        : SymbolId(3): ScopeId(0)
 
 tasks/coverage/test262/test/language/statements/switch/scope-lex-async-function.js
 semantic error: Symbol flags mismatch for "x":
