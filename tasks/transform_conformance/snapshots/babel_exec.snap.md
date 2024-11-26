@@ -1,7 +1,7 @@
 commit: 54a8389f
 
 node: v22.11.0
-⎯⎯⎯⎯⎯⎯ Failed Suites 57 ⎯⎯⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯ Failed Suites 38 ⎯⎯⎯⎯⎯⎯
 
  FAIL  fixtures/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js [ fixtures/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js ]
 Error: 'eval' and 'arguments' cannot be used as a binding identifier in strict mode
@@ -11,15 +11,11 @@ Error: 'eval' and 'arguments' cannot be used as a binding identifier in strict m
  ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52381:11
  ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:51979:72
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-noDocumentAll-optional-chain-before-member-call-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-noDocumentAll-optional-chain-before-member-call-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-noUninitializedPrivateFieldAccess-static-private-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-noUninitializedPrivateFieldAccess-static-private-exec.test.js ]
 SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-setPublicClassFields-static-super-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-setPublicClassFields-static-super-exec.test.js ]
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-public-delete-super-property-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-public-delete-super-property-exec.test.js ]
@@ -32,7 +28,7 @@ Error: Invalid access to super
  ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52381:11
  ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:51979:72
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js ]
 Error: Unexpected token `[`. Expected * for generator, private key, identifier or async
@@ -42,205 +38,148 @@ Error: Unexpected token `[`. Expected * for generator, private key, identifier o
  ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52381:11
  ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:51979:72
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-access-before-declaration-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-access-before-declaration-exec.test.js ]
 SyntaxError: Private field '#p' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-array-pattern-1-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-array-pattern-1-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-array-pattern-2-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-array-pattern-2-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-array-pattern-3-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-array-pattern-3-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-array-pattern-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-array-pattern-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-array-pattern-static-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-array-pattern-static-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-object-pattern-1-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-object-pattern-1-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-object-pattern-2-exec-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-object-pattern-2-exec-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-object-pattern-3-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-object-pattern-3-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-object-pattern-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-object-pattern-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-object-pattern-static-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-destructuring-object-pattern-static-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-access-before-declaration-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-access-before-declaration-exec.test.js ]
 SyntaxError: Private field '#p' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-array-pattern-1-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-array-pattern-1-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-array-pattern-2-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-array-pattern-2-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-array-pattern-3-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-array-pattern-3-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-array-pattern-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-array-pattern-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-array-pattern-static-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-array-pattern-static-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-object-pattern-1-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-object-pattern-1-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-object-pattern-2-exec-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-object-pattern-2-exec-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-object-pattern-3-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-object-pattern-3-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-object-pattern-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-object-pattern-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-object-pattern-static-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-destructuring-object-pattern-static-exec.test.js ]
 SyntaxError: Private field '#client' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-nested-class-computed-redeclared-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-nested-class-computed-redeclared-exec.test.js ]
 SyntaxError: Private field '#foo' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-with-transform-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-with-transform-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-property-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-property-exec.test.js ]
 SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-with-transform-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-with-transform-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-with-transform-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-with-transform-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-member-call-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-member-call-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-member-call-with-transform-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-member-call-with-transform-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-property-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-property-exec.test.js ]
 SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-parenthesized-optional-member-call-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-parenthesized-optional-member-call-exec.test.js ]
 SyntaxError: Private field '#m' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-parenthesized-optional-member-call-with-transform-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-parenthesized-optional-member-call-with-transform-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-nested-class-computed-redeclared-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-nested-class-computed-redeclared-exec.test.js ]
 SyntaxError: Private field '#foo' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-member-call-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-member-call-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-member-call-with-transform-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-member-call-with-transform-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-property-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-property-exec.test.js ]
 SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-with-transform-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-with-transform-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-with-transform-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-with-transform-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-member-call-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-member-call-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-member-call-with-transform-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-member-call-with-transform-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-property-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-property-exec.test.js ]
 SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-parenthesized-optional-member-call-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-parenthesized-optional-member-call-exec.test.js ]
 SyntaxError: Private field '#m' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/98]⎯
-
- FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-parenthesized-optional-member-call-with-transform-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-parenthesized-optional-member-call-with-transform-exec.test.js ]
-SyntaxError: Private field '#x' must be declared in an enclosing class
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-regression-7371-exec.test.js [ fixtures/babel-plugin-transform-class-properties-test-fixtures-regression-7371-exec.test.js ]
 SyntaxError: 'super' keyword unexpected here
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/96]⎯
 
-⎯⎯⎯⎯⎯⎯ Failed Tests 41 ⎯⎯⎯⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯ Failed Tests 58 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-noDocumentAll-optional-chain-before-member-call-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Object._ fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-noDocumentAll-optional-chain-before-member-call-exec.test.js:110:10
+    108|  var _x = { _: 1 };
+    109|  var _m = { _: function() {
+    110|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+    111|  } };
+    112|  var _self = { _: Foo };
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-noDocumentAll-optional-chain-before-member-call-exec.test.js:20:46
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-noDocumentAll-optional-chain-before-member-call-exec.test.js:114:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-noDocumentAll-optional-chain-cast-to-boolean-exec.test.js > exec
 TypeError: Private element is not present on this object
@@ -255,7 +194,7 @@ TypeError: Private element is not present on this object
  ❯ Function.testNullish fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-noDocumentAll-optional-chain-cast-to-boolean-exec.test.js:89:14
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-noDocumentAll-optional-chain-cast-to-boolean-exec.test.js:105:4
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-setPublicClassFields-static-class-binding-exec.test.js > exec
 AssertionError: expected null to be [Function A] // Object.is equality
@@ -273,7 +212,7 @@ null
        |                      ^
      11| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-setPublicClassFields-static-infer-name-exec.test.js > exec
 AssertionError: expected '_Class' to be 'Foo' // Object.is equality
@@ -288,7 +227,7 @@ Received: "_Class"
        |                   ^
       9| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-assumption-setPublicClassFields-static-this-exec.test.js > exec
 AssertionError: expected null to be [Function A] // Object.is equality
@@ -306,7 +245,7 @@ null
        |                      ^
      14| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-call-in-decorator-exec.test.js > exec
 AssertionError: expected undefined to be 'hello' // Object.is equality
@@ -324,7 +263,7 @@ undefined
        |                            ^
      22| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js > exec
 AssertionError: expected undefined to be 'hello' // Object.is equality
@@ -342,7 +281,7 @@ undefined
        |                            ^
      23| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-constructor-collision-exec.test.js > exec
 AssertionError: expected undefined to be 'bar' // Object.is equality
@@ -361,7 +300,7 @@ undefined
      19|  expect("bar" in f).toBe(false);
      20| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-constructor-collision-exec.test.js > exec
 AssertionError: expected undefined to be 'bar' // Object.is equality
@@ -380,7 +319,7 @@ undefined
      19|  expect("bar" in f).toBe(false);
      20| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-nested-class-extends-computed-exec.test.js > exec
 AssertionError: expected [Function] to not throw an error but 'TypeError: Private element is not pre…' was thrown
@@ -398,7 +337,31 @@ undefined
        |         ^
      31| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Object._ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-exec.test.js:109:10
+    107|  var _x = { _: 1 };
+    108|  var _m = { _: function() {
+    109|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+    110|  } };
+    111|  var _self = { _: Foo };
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-exec.test.js:19:46
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-exec.test.js:113:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-with-transform-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-with-transform-exec.test.js:31:168
+
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-member-call-with-transform-exec.test.js:113:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-property-with-transform-exec.test.js > exec
 TypeError: Private element is not present on this object
@@ -407,7 +370,7 @@ TypeError: Private element is not present on this object
 
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-before-property-with-transform-exec.test.js:110:6
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-cast-to-boolean-exec.test.js > exec
 TypeError: Private element is not present on this object
@@ -422,7 +385,7 @@ TypeError: Private element is not present on this object
  ❯ Function.testNullish fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-cast-to-boolean-exec.test.js:89:14
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-cast-to-boolean-exec.test.js:105:4
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-delete-property-exec.test.js > exec
 TypeError: Private element is not present on this object
@@ -436,7 +399,7 @@ TypeError: Private element is not present on this object
      58|    expect(delete _assertClassBrand(Foo, o?.Foo, _self)._.self.unicorn)…
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-delete-property-exec.test.js:92:6
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-delete-property-with-transform-exec.test.js > exec
 AssertionError: expected function to throw an error, but it didn't
@@ -444,7 +407,94 @@ AssertionError: expected function to throw an error, but it didn't
 
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-delete-property-with-transform-exec.test.js:158:6
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Object._ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-exec.test.js:42:10
+     40|  var _x = { _: 1 };
+     41|  var _m = { _: function() {
+     42|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+     43|  } };
+     44|  var _self = { _: Foo };
+ ❯ f fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-exec.test.js:18:57
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-exec.test.js:33:11
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-exec.test.js:46:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-with-transform-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ _ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-with-transform-exec.test.js:57:10
+     55|  var _x = { _: 1 };
+     56|  var _m = { _: function() {
+     57|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+     58|  } };
+     59|  var _self = { _: Foo };
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-with-transform-exec.test.js:44:181
+ ❯ j fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-with-transform-exec.test.js:45:6
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-with-transform-exec.test.js:52:11
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-in-function-param-with-transform-exec.test.js:61:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Object._ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-exec.test.js:112:10
+    110|  var _x = { _: 1 };
+    111|  var _m = { _: function() {
+    112|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+    113|  } };
+    114|  var _self = { _: Foo };
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-exec.test.js:19:17
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-exec.test.js:116:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-with-transform-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Object._ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-with-transform-exec.test.js:112:10
+    110|  var _x = { _: 1 };
+    111|  var _m = { _: function() {
+    112|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+    113|  } };
+    114|  var _self = { _: Foo };
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-with-transform-exec.test.js:22:142
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-member-optional-call-with-transform-exec.test.js:116:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-member-call-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Object._ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-member-call-exec.test.js:112:10
+    110|  var _x = { _: 1 };
+    111|  var _m = { _: function() {
+    112|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+    113|  } };
+    114|  var _self = { _: Foo };
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-member-call-exec.test.js:19:14
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-member-call-exec.test.js:116:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-member-call-with-transform-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-member-call-with-transform-exec.test.js:34:269
+
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-member-call-with-transform-exec.test.js:116:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-property-with-transform-exec.test.js > exec
 TypeError: Private element is not present on this object
@@ -453,7 +503,7 @@ TypeError: Private element is not present on this object
 
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-optional-chain-optional-property-with-transform-exec.test.js:113:6
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-static-class-binding-exec.test.js > exec
 AssertionError: expected null to be [Function A] // Object.is equality
@@ -471,7 +521,7 @@ null
        |                                ^
      18| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-static-shadow-exec.test.js > exec
 TypeError: e.has is not a function
@@ -486,7 +536,7 @@ TypeError: e.has is not a function
  ❯ Function.method fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-static-shadow-exec.test.js:12:11
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-static-shadow-exec.test.js:16:14
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-loose-static-this-exec.test.js > exec
 AssertionError: expected null to be [Function A] // Object.is equality
@@ -504,7 +554,7 @@ null
        |                                ^
      21| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-nested-class-extends-computed-exec.test.js > exec
 AssertionError: expected [Function] to not throw an error but 'TypeError: Private element is not pre…' was thrown
@@ -522,7 +572,31 @@ undefined
        |         ^
      32| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-member-call-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Object._ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-member-call-exec.test.js:110:10
+    108|  var _x = { _: 1 };
+    109|  var _m = { _: function() {
+    110|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+    111|  } };
+    112|  var _self = { _: Foo };
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-member-call-exec.test.js:20:46
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-member-call-exec.test.js:114:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-member-call-with-transform-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-member-call-with-transform-exec.test.js:32:168
+
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-member-call-with-transform-exec.test.js:114:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-property-with-transform-exec.test.js > exec
 TypeError: Private element is not present on this object
@@ -531,7 +605,7 @@ TypeError: Private element is not present on this object
 
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-before-property-with-transform-exec.test.js:111:6
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-cast-to-boolean-exec.test.js > exec
 TypeError: Private element is not present on this object
@@ -546,7 +620,7 @@ TypeError: Private element is not present on this object
  ❯ Function.testNullish fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-cast-to-boolean-exec.test.js:89:14
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-cast-to-boolean-exec.test.js:105:4
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-delete-property-exec.test.js > exec
 TypeError: Private element is not present on this object
@@ -560,7 +634,7 @@ TypeError: Private element is not present on this object
      59|    expect(delete _assertClassBrand(Foo, o?.Foo, _self)._.self.unicorn)…
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-delete-property-exec.test.js:93:6
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-delete-property-with-transform-exec.test.js > exec
 AssertionError: expected function to throw an error, but it didn't
@@ -568,7 +642,94 @@ AssertionError: expected function to throw an error, but it didn't
 
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-delete-property-with-transform-exec.test.js:158:6
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Object._ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-exec.test.js:43:10
+     41|  var _x = { _: 1 };
+     42|  var _m = { _: function() {
+     43|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+     44|  } };
+     45|  var _self = { _: Foo };
+ ❯ f fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-exec.test.js:19:57
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-exec.test.js:34:11
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-exec.test.js:47:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-with-transform-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ _ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-with-transform-exec.test.js:58:10
+     56|  var _x = { _: 1 };
+     57|  var _m = { _: function() {
+     58|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+     59|  } };
+     60|  var _self = { _: Foo };
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-with-transform-exec.test.js:45:181
+ ❯ j fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-with-transform-exec.test.js:46:6
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-with-transform-exec.test.js:53:11
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-in-function-param-with-transform-exec.test.js:62:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Object._ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-exec.test.js:113:10
+    111|  var _x = { _: 1 };
+    112|  var _m = { _: function() {
+    113|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+    114|  } };
+    115|  var _self = { _: Foo };
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-exec.test.js:20:17
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-exec.test.js:117:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-with-transform-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Object._ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-with-transform-exec.test.js:113:10
+    111|  var _x = { _: 1 };
+    112|  var _m = { _: function() {
+    113|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+    114|  } };
+    115|  var _self = { _: Foo };
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-with-transform-exec.test.js:23:142
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-member-optional-call-with-transform-exec.test.js:117:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-member-call-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Object._ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-member-call-exec.test.js:113:10
+    111|  var _x = { _: 1 };
+    112|  var _m = { _: function() {
+    113|   return _assertClassBrand(Foo, this, _x)._;
+       |          ^
+    114|  } };
+    115|  var _self = { _: Foo };
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-member-call-exec.test.js:20:14
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-member-call-exec.test.js:117:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/96]⎯
+
+ FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-member-call-with-transform-exec.test.js > exec
+TypeError: Private element is not present on this object
+ ❯ _assertClassBrand ../../node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9
+ ❯ Function.test fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-member-call-with-transform-exec.test.js:35:269
+
+ ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-member-call-with-transform-exec.test.js:117:6
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-property-with-transform-exec.test.js > exec
 TypeError: Private element is not present on this object
@@ -577,7 +738,7 @@ TypeError: Private element is not present on this object
 
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-optional-chain-optional-property-with-transform-exec.test.js:114:6
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[77/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-static-class-binding-exec.test.js > exec
 AssertionError: expected null to be [Function A] // Object.is equality
@@ -595,7 +756,7 @@ null
        |                                ^
      18| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[78/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-static-self-field-exec.test.js > exec
 ReferenceError: Foo is not defined
@@ -607,7 +768,7 @@ ReferenceError: Foo is not defined
      15|  const { x, y } = f.extract();
      16|  expect(x).toBe(f);
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[79/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[77/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js > exec
 TypeError: e.has is not a function
@@ -622,7 +783,7 @@ TypeError: e.has is not a function
  ❯ Function.method fixtures/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js:12:11
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js:16:14
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[80/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[78/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-static-this-exec.test.js > exec
 AssertionError: expected null to be [Function A] // Object.is equality
@@ -640,7 +801,7 @@ null
        |                                ^
      21| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[81/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[79/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-private-tagged-template-exec.test.js > exec
 AssertionError: expected undefined to be Foo{} // Object.is equality
@@ -660,7 +821,7 @@ undefined
      20|  }
  ❯ fixtures/babel-plugin-transform-class-properties-test-fixtures-private-tagged-template-exec.test.js:21:2
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[82/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[80/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js > exec
 AssertionError: expected [Function] to throw error including '@@toPrimitive must return a primitive…' but got 'Cannot convert object to primitive va…'
@@ -676,7 +837,7 @@ Received: "Cannot convert object to primitive value"
      38|  expect(() => class {
      39|   static get [arrayLike]() {
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[83/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[81/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-class-binding-exec.test.js > exec
 AssertionError: expected null to be [Function A] // Object.is equality
@@ -694,7 +855,7 @@ null
        |                      ^
      11| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[84/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[82/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-infer-name-exec.test.js > exec
 AssertionError: expected '_Class' to be 'Foo' // Object.is equality
@@ -709,7 +870,7 @@ Received: "_Class"
        |                   ^
       9| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[85/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[83/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-this-exec.test.js > exec
 AssertionError: expected null to be [Function A] // Object.is equality
@@ -727,7 +888,7 @@ null
        |                      ^
      14| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[86/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[84/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-public-static-class-binding-exec.test.js > exec
 AssertionError: expected null to be [Function A] // Object.is equality
@@ -745,7 +906,7 @@ null
        |                      ^
      12| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[87/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[85/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-public-static-infer-name-exec.test.js > exec
 AssertionError: expected '_Class' to be 'Foo' // Object.is equality
@@ -760,7 +921,7 @@ Received: "_Class"
        |                   ^
      10| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[88/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[86/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-class-properties-test-fixtures-public-static-this-exec.test.js > exec
 AssertionError: expected null to be [Function A] // Object.is equality
@@ -778,7 +939,7 @@ null
        |                      ^
      15| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[89/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[87/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js > exec
 TypeError: Cannot read properties of undefined (reading 'x')
@@ -792,7 +953,7 @@ TypeError: Cannot read properties of undefined (reading 'x')
  ❯ Foo.test fixtures/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js:25:63
  ❯ fixtures/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js:68:12
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[90/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[88/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js > exec
 TypeError: Cannot read properties of undefined (reading 'x')
@@ -806,7 +967,7 @@ TypeError: Cannot read properties of undefined (reading 'x')
  ❯ Foo.test fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js:25:63
  ❯ fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-exec.test.js:68:12
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[91/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[89/96]⎯
 
  FAIL  fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js > exec
 TypeError: Cannot read properties of undefined (reading 'x')
@@ -820,7 +981,7 @@ TypeError: Cannot read properties of undefined (reading 'x')
  ❯ Foo.test fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:25:63
  ❯ fixtures/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:68:12
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[92/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[90/96]⎯
 
  FAIL  fixtures/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js > exec
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
@@ -838,7 +999,7 @@ undefined
        |         ^
       7| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[93/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[91/96]⎯
 
  FAIL  fixtures/babel-preset-env-test-fixtures-sanity-check-es2015-constants-exec.test.js > exec
 TypeError: Assignment to constant variable.
@@ -849,7 +1010,7 @@ TypeError: Assignment to constant variable.
        |      ^
       6| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[94/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[92/96]⎯
 
  FAIL  fixtures/babel-preset-env-test-fixtures-sanity-regex-dot-all-exec.test.js > exec
 AssertionError: expected false to be true // Object.is equality
@@ -868,5 +1029,5 @@ AssertionError: expected false to be true // Object.is equality
      11|  expect(/hello.world/su.test(input)).toBe(true);
      12| })
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[95/98]⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[93/96]⎯
 

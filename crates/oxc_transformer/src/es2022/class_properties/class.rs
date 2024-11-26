@@ -446,7 +446,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // Get value, and transform it to replace `this` with reference to class name
+        // Get value, and transform it to replace `this` with reference to class name,
+        // and transform class property accesses (`object.#prop`)
         let value = match &mut prop.value {
             Some(value) => {
                 self.transform_static_initializer(value, ctx);
