@@ -269,6 +269,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
+    // `#[inline]` because this is a hot path
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // Note: `delete this.#prop` is an early syntax error, so no need to handle transforming it
         match expr {
@@ -306,6 +308,8 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
         }
     }
 
+    // `#[inline]` because this is a hot path
+    #[inline]
     fn enter_assignment_target(
         &mut self,
         target: &mut AssignmentTarget<'a>,
@@ -314,6 +318,8 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
         self.transform_assignment_target(target, ctx);
     }
 
+    // `#[inline]` because this is a hot path
+    #[inline]
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
             // `class C {}`
@@ -340,6 +346,8 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
         }
     }
 
+    // `#[inline]` because `transform_class_on_exit` is so small
+    #[inline]
     fn exit_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.transform_class_on_exit(class);
     }

@@ -403,6 +403,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 
     /// Pop from private props stack.
+    // `#[inline]` because this is function is so small
+    #[inline]
     pub(super) fn transform_class_on_exit(&mut self, class: &Class) {
         // Ignore TS class declarations
         // TODO: Is this correct?
