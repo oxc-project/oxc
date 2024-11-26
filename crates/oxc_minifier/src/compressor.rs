@@ -5,9 +5,8 @@ use oxc_traverse::TraverseCtx;
 
 use crate::{
     ast_passes::{
-        CollapseVariableDeclarations, ExploitAssigns, PeepholeFoldConstants,
-        PeepholeMinimizeConditions, PeepholeRemoveDeadCode, PeepholeReplaceKnownMethods,
-        PeepholeSubstituteAlternateSyntax, RemoveSyntax, StatementFusion,
+        EarlyPass, LatePass, PeepholeFoldConstants, PeepholeMinimizeConditions,
+        PeepholeRemoveDeadCode, RemoveSyntax,
     },
     CompressOptions, CompressorPass,
 };
@@ -42,25 +41,13 @@ impl<'a> Compressor<'a> {
             return;
         }
 
-        // See `latePeepholeOptimizations`
-        let mut passes: [&mut dyn CompressorPass; 6] = [
-            &mut StatementFusion::new(),
-            &mut PeepholeRemoveDeadCode::new(),
-            // TODO: MinimizeExitPoints
-            &mut PeepholeMinimizeConditions::new(),
-            &mut PeepholeSubstituteAlternateSyntax::new(/* in_fixed_loop */ true),
-            &mut PeepholeReplaceKnownMethods::new(),
-            &mut PeepholeFoldConstants::new(),
-        ];
-
         let mut i = 0;
         loop {
             let mut changed = false;
-            for pass in &mut passes {
-                pass.build(program, &mut ctx);
-                if pass.changed() {
-                    changed = true;
-                }
+            let mut pass = EarlyPass::new();
+            pass.build(program, &mut ctx);
+            if pass.changed() {
+                changed = true;
             }
             if !changed {
                 break;
@@ -72,12 +59,7 @@ impl<'a> Compressor<'a> {
             i += 1;
         }
 
-        // Passes listed in `getFinalization` in `DefaultPassConfig`
-        ExploitAssigns::new().build(program, &mut ctx);
-        CollapseVariableDeclarations::new().build(program, &mut ctx);
-
-        // Late latePeepholeOptimizations
-        PeepholeSubstituteAlternateSyntax::new(/* in_fixed_loop */ false).build(program, &mut ctx);
+        LatePass::new().build(program, &mut ctx);
     }
 
     fn dead_code_elimination(program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {

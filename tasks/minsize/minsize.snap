@@ -14,13 +14,13 @@ Original   | Minified   | esbuild    | Gzip       | esbuild
 
 1.01 MB    | 467.59 kB  | 458.89 kB  | 126.73 kB  | 126.71 kB  | bundle.min.js
 
-1.25 MB    | 662.86 kB  | 646.76 kB  | 164.00 kB  | 163.73 kB  | three.js  
+1.25 MB    | 662.83 kB  | 646.76 kB  | 164.00 kB  | 163.73 kB  | three.js  
 
 2.14 MB    | 741.55 kB  | 724.14 kB  | 181.45 kB  | 181.07 kB  | victory.js
 
-3.20 MB    | 1.02 MB    | 1.01 MB    | 332.01 kB  | 331.56 kB  | echarts.js
+3.20 MB    | 1.02 MB    | 1.01 MB    | 332.02 kB  | 331.56 kB  | echarts.js
 
-6.69 MB    | 2.39 MB    | 2.31 MB    | 496.10 kB  | 488.28 kB  | antd.js   
+6.69 MB    | 2.39 MB    | 2.31 MB    | 496.11 kB  | 488.28 kB  | antd.js   
 
-10.95 MB   | 3.56 MB    | 3.49 MB    | 911.24 kB  | 915.50 kB  | typescript.js
+10.95 MB   | 3.56 MB    | 3.49 MB    | 911.20 kB  | 915.50 kB  | typescript.js
 

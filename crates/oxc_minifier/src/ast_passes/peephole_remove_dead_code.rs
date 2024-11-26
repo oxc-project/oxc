@@ -56,7 +56,7 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
         self.dead_code_elimination(stmts, Ctx(ctx));
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
             Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
