@@ -40,6 +40,7 @@ xdescribe = "xdescribe"
 seeked = "seeked"
 labeledby = "labeledby"
 hashi = "hashi"
+inferrable = "inferrable"
 
 [default.extend-identifiers]
 IIFEs = "IIFEs"
