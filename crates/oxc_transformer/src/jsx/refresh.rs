@@ -582,14 +582,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             arguments.push(function);
         }
 
-        // TODO: Handle var hoisted in ctx API
-        let target_scope_id = ctx
-            .scopes()
-            .ancestors(ctx.current_scope_id())
-            .find(|&scope_id| ctx.scopes().get_flags(scope_id).is_var())
-            .unwrap_or_else(|| ctx.current_scope_id());
-
-        let binding = ctx.generate_uid("s", target_scope_id, SymbolFlags::FunctionScopedVariable);
+        let binding = ctx.generate_uid_in_current_hoist_scope("s");
 
         // _s();
         let call_expression = ctx.ast.statement_expression(
