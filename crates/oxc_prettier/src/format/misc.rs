@@ -1,7 +1,7 @@
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::Span;
 
-use crate::{array, doc::Doc, indent, line, space, ss, DocBuilder, Prettier};
+use crate::{array, indent, ir::Doc, line, space, text, DocBuilder, Prettier};
 
 pub(super) fn adjust_clause<'a>(
     p: &Prettier<'a>,
@@ -10,7 +10,7 @@ pub(super) fn adjust_clause<'a>(
     force_space: bool,
 ) -> Doc<'a> {
     if matches!(node, Statement::EmptyStatement(_)) {
-        return ss!(";");
+        return text!(";");
     }
 
     if matches!(node, Statement::BlockStatement(_)) || force_space {

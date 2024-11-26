@@ -10,9 +10,9 @@ use std::collections::VecDeque;
 use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 
-use self::command::{Command, Indent, Mode};
 use crate::{
-    doc::{Doc, DocBuilder, Fill, IfBreak, IndentIfBreak, Line},
+    ir::{Doc, DocBuilder, Fill, IfBreak, IndentIfBreak, Line},
+    printer::command::{Command, Indent, Mode},
     GroupId, PrettierOptions,
 };
 

@@ -5,8 +5,9 @@ use oxc_span::GetSpan;
 use crate::{
     binaryish::BinaryishOperator,
     comments::CommentFlags,
-    doc::{Doc, DocBuilder, Group},
-    group, line, space, ss, Format, Prettier,
+    group,
+    ir::{Doc, DocBuilder, Group},
+    line, space, text, Format, Prettier,
 };
 
 pub(super) fn print_binaryish_expression<'a>(
@@ -92,7 +93,7 @@ fn print_binaryish_expressions<'a>(
 
     let right = if should_inline {
         let mut parts = p.vec();
-        parts.push(ss!(operator.as_str()));
+        parts.push(text!(operator.as_str()));
         parts.push(space!());
         parts.push(right.format(p));
         parts
@@ -101,7 +102,7 @@ fn print_binaryish_expressions<'a>(
         if line_before_operator {
             parts.push(line!());
         }
-        parts.push(ss!(operator.as_str()));
+        parts.push(text!(operator.as_str()));
         parts.push(if line_before_operator { space!() } else { line!() });
         parts.push(right.format(p));
         parts

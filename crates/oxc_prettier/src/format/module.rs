@@ -4,8 +4,9 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    doc::{Doc, DocBuilder, Separator},
-    group, if_break, indent, line, softline, space, ss, Format, Prettier,
+    group, if_break, indent,
+    ir::{Doc, DocBuilder, Separator},
+    line, softline, space, text, Format, Prettier,
 };
 
 pub(super) fn print_export_declaration<'a>(
@@ -15,10 +16,10 @@ pub(super) fn print_export_declaration<'a>(
     debug_assert!(decl.is_export());
 
     let mut parts = p.vec();
-    parts.push(ss!("export"));
+    parts.push(text!("export"));
 
     if decl.is_default_export() {
-        parts.push(ss!(" default "));
+        parts.push(text!(" default "));
     }
 
     parts.push(match decl {
@@ -31,7 +32,7 @@ pub(super) fn print_export_declaration<'a>(
     });
 
     if let Some(source) = decl.source() {
-        parts.push(ss!(" from "));
+        parts.push(text!(" from "));
         parts.push(source.format(p));
     }
 
@@ -57,12 +58,12 @@ fn print_semicolon_after_export_declaration<'a>(
 
     match decl {
         ModuleDeclaration::ExportDefaultDeclaration(decl) => match decl.declaration {
-            match_expression!(ExportDefaultDeclarationKind) => Some(ss!(";")),
+            match_expression!(ExportDefaultDeclarationKind) => Some(text!(";")),
             _ => None,
         },
         ModuleDeclaration::ExportNamedDeclaration(decl) => {
             let Some(declaration) = &decl.declaration else {
-                return Some(ss!(";"));
+                return Some(text!(";"));
             };
 
             match declaration {
@@ -70,11 +71,11 @@ fn print_semicolon_after_export_declaration<'a>(
                 | Declaration::VariableDeclaration(_)
                 | Declaration::ClassDeclaration(_)
                 | Declaration::TSModuleDeclaration(_) => None,
-                _ => Some(ss!(";")),
+                _ => Some(text!(";")),
             }
         }
         ModuleDeclaration::ExportAllDeclaration(_) | ModuleDeclaration::TSExportAssignment(_) => {
-            Some(ss!(";"))
+            Some(text!(";"))
         }
         _ => None,
     }
@@ -88,7 +89,7 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
 ) -> Doc<'a> {
     let mut parts = p.vec();
     if specifiers.is_empty() {
-        parts.push(ss!(" {}"));
+        parts.push(text!(" {}"));
     } else {
         parts.push(space!());
 
@@ -96,14 +97,14 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
         if include_default {
             parts.push(specifiers_iter.pop_front().unwrap().format(p));
             if !specifiers_iter.is_empty() {
-                parts.push(p.str(", "));
+                parts.push(text!(", "));
             }
         }
 
         if include_namespace {
             parts.push(specifiers_iter.pop_front().unwrap().format(p));
             if !specifiers_iter.is_empty() {
-                parts.push(p.str(", "));
+                parts.push(text!(", "));
             }
         }
 
@@ -115,7 +116,7 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
                     specifiers_iter.iter().map(|s| s.format(p)).collect::<std::vec::Vec<_>>();
                 parts.push(group![
                     p,
-                    ss!("{"),
+                    text!("{"),
                     indent![
                         p,
                         if p.options.bracket_spacing { line!() } else { softline!() },
@@ -123,10 +124,10 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
                     ],
                     if_break!(p, if p.should_print_es5_comma() { "," } else { "" }, "", None),
                     if p.options.bracket_spacing { line!() } else { softline!() },
-                    ss!("}"),
+                    text!("}"),
                 ]);
             } else {
-                parts.push(ss!("{"));
+                parts.push(text!("{"));
                 if p.options.bracket_spacing {
                     parts.push(space!());
                 }
@@ -134,7 +135,7 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
                 if p.options.bracket_spacing {
                     parts.push(space!());
                 }
-                parts.push(ss!("}"));
+                parts.push(text!("}"));
             }
         }
     }

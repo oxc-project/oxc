@@ -1,8 +1,9 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    doc::{Doc, DocBuilder},
-    group, ss, Format, Prettier,
+    group,
+    ir::{Doc, DocBuilder},
+    text, Format, Prettier,
 };
 
 pub(super) fn print_arrow_function<'a>(
@@ -12,11 +13,11 @@ pub(super) fn print_arrow_function<'a>(
     let mut parts = p.vec();
 
     if !p.options.semi && p.options.arrow_parens.is_always() {
-        parts.push(ss!(";"));
+        parts.push(text!(";"));
     }
 
     if expr.r#async {
-        parts.push(ss!("async "));
+        parts.push(text!("async "));
     }
 
     if let Some(type_params) = &expr.type_parameters {
@@ -27,11 +28,11 @@ pub(super) fn print_arrow_function<'a>(
     parts.push(group!(p, parameters));
 
     if let Some(return_type) = &expr.return_type {
-        parts.push(ss!(": "));
+        parts.push(text!(": "));
         parts.push(return_type.type_annotation.format(p));
     }
 
-    parts.push(ss!(" => "));
+    parts.push(text!(" => "));
 
     if expr.expression {
         let stmt = &expr.body.statements[0];

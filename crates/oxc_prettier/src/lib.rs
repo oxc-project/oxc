@@ -5,8 +5,8 @@
 
 mod binaryish;
 mod comments;
-mod doc;
 mod format;
+mod ir;
 mod macros;
 mod needs_parens;
 mod options;
@@ -22,8 +22,8 @@ use oxc_syntax::identifier::is_line_terminator;
 
 pub use crate::options::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
 use crate::{
-    doc::{Doc, DocBuilder},
     format::Format,
+    ir::{Doc, DocBuilder},
     printer::Printer,
 };
 

@@ -2,8 +2,9 @@ use oxc_ast::{ast::*, AstKind};
 
 use super::{statement, Format};
 use crate::{
-    doc::{Doc, DocBuilder},
-    hardline, ss, Prettier,
+    hardline,
+    ir::{Doc, DocBuilder},
+    text, Prettier,
 };
 
 pub(super) fn print_block<'a>(
@@ -12,7 +13,7 @@ pub(super) fn print_block<'a>(
     directives: Option<&[Directive<'a>]>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    parts.push(ss!("{"));
+    parts.push(text!("{"));
     if let Some(doc) = print_block_body(p, stmts, directives, true, false) {
         parts.push({
             let mut parts = p.vec();
@@ -45,7 +46,7 @@ pub(super) fn print_block<'a>(
             parts.extend(hardline!());
         }
     }
-    parts.push(ss!("}"));
+    parts.push(text!("}"));
     Doc::Array(parts)
 }
 

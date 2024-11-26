@@ -1,4 +1,4 @@
-use crate::doc::Doc;
+use crate::ir::Doc;
 
 pub struct Command<'a> {
     pub indent: Indent,

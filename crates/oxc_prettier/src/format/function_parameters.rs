@@ -2,8 +2,9 @@ use oxc_ast::{ast::*, AstKind};
 
 use crate::{
     comments::CommentFlags,
-    doc::{Doc, DocBuilder, Group},
-    hardline, if_break, indent, line, softline, space, ss, Format, Prettier,
+    hardline, if_break, indent,
+    ir::{Doc, DocBuilder, Group},
+    line, softline, space, text, Format, Prettier,
 };
 
 pub(super) fn should_hug_the_only_function_parameter(
@@ -66,7 +67,7 @@ pub(super) fn print_function_parameters<'a>(
     let need_parens =
         !is_arrow_function || p.options.arrow_parens.is_always() || params.items.len() != 1;
     if need_parens {
-        parts.push(ss!("("));
+        parts.push(text!("("));
     }
 
     let should_hug_the_only_function_parameter = should_hug_the_only_function_parameter(p, params);
@@ -80,7 +81,7 @@ pub(super) fn print_function_parameters<'a>(
             parts.push(this_param.format(p));
 
             if params.items.len() > 0 {
-                printed.push(ss!(","));
+                printed.push(text!(","));
 
                 if should_hug_the_only_function_parameter {
                     printed.push(space!());
@@ -96,23 +97,23 @@ pub(super) fn print_function_parameters<'a>(
 
     for (i, param) in params.items.iter().enumerate() {
         if let Some(accessibility) = &param.accessibility {
-            printed.push(ss!(accessibility.as_str()));
+            printed.push(text!(accessibility.as_str()));
             printed.push(space!());
         }
 
         if param.r#override {
-            printed.push(ss!("override "));
+            printed.push(text!("override "));
         }
 
         if param.readonly {
-            printed.push(ss!("readonly "));
+            printed.push(text!("readonly "));
         }
 
         printed.push(param.format(p));
         if i == len - 1 && !has_rest {
             break;
         }
-        printed.push(ss!(","));
+        printed.push(text!(","));
         if should_hug_the_only_function_parameter {
             printed.push(space!());
         } else if p.is_next_line_empty(param.span) {
@@ -128,9 +129,9 @@ pub(super) fn print_function_parameters<'a>(
 
     if should_hug_the_only_function_parameter {
         let mut array = p.vec();
-        array.push(ss!("("));
+        array.push(text!("("));
         array.extend(printed);
-        array.push(ss!(")"));
+        array.push(text!(")"));
         return Doc::Array(array);
     }
 
@@ -144,7 +145,7 @@ pub(super) fn print_function_parameters<'a>(
     parts.push(if_break!(p, if skip_dangling_comma { "" } else { "," }));
     parts.push(softline!());
     if need_parens {
-        parts.push(ss!(")"));
+        parts.push(text!(")"));
     }
 
     if p.args.expand_first_arg {

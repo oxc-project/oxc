@@ -4,8 +4,9 @@ use oxc_span::GetSpan;
 
 use super::Format;
 use crate::{
-    doc::{Doc, DocBuilder},
-    hardline, Prettier,
+    hardline,
+    ir::{Doc, DocBuilder},
+    Prettier,
 };
 
 pub(super) fn print_statement_sequence<'a>(

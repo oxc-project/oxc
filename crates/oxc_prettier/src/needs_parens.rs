@@ -22,18 +22,10 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
-use crate::{array, binaryish::BinaryishOperator, doc::Doc, ss, DocBuilder, Prettier};
+use crate::{binaryish::BinaryishOperator, Prettier};
 
 impl<'a> Prettier<'a> {
-    pub(crate) fn wrap_parens(&mut self, doc: Doc<'a>, kind: AstKind<'a>) -> Doc<'a> {
-        if self.need_parens(kind) {
-            array![self, ss!("("), doc, ss!(")")]
-        } else {
-            doc
-        }
-    }
-
-    fn need_parens(&mut self, kind: AstKind<'a>) -> bool {
+    pub(crate) fn need_parens(&mut self, kind: AstKind<'a>) -> bool {
         if matches!(kind, AstKind::Program(_)) || kind.is_statement() || kind.is_declaration() {
             return false;
         }

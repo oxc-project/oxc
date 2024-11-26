@@ -2,7 +2,7 @@ use oxc_allocator::Vec;
 use oxc_span::Span;
 
 use crate::{
-    doc::{Doc, DocBuilder},
+    ir::{Doc, DocBuilder},
     Prettier,
 };
 

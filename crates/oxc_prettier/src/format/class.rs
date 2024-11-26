@@ -6,9 +6,10 @@ use oxc_span::GetSpan;
 use super::assignment::AssignmentLikeNode;
 use crate::{
     array,
-    doc::{Doc, DocBuilder, Group, IfBreak},
     format::{assignment, Separator},
-    group, hardline, indent, line, softline, space, ss, Format, Prettier,
+    group, hardline, indent,
+    ir::{Doc, DocBuilder, Group, IfBreak},
+    line, softline, space, text, Format, Prettier,
 };
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
@@ -25,7 +26,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     if let Some(super_class) = &class.super_class {
         let mut extend_parts = p.vec();
 
-        extend_parts.push(ss!("extends "));
+        extend_parts.push(text!("extends "));
         extend_parts.push(super_class.format(p));
 
         if let Some(super_type_parameters) = &class.super_type_parameters {
@@ -44,20 +45,20 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     heritage_clauses_parts.push(print_heritage_clauses_implements(p, class));
 
     for decorator in &class.decorators {
-        parts.push(ss!("@"));
+        parts.push(text!("@"));
         parts.push(decorator.expression.format(p));
         parts.extend(hardline!());
     }
 
     if class.declare {
-        parts.push(ss!("declare "));
+        parts.push(text!("declare "));
     }
 
     if class.r#abstract {
-        parts.push(ss!("abstract "));
+        parts.push(text!("abstract "));
     }
 
-    parts.push(ss!("class "));
+    parts.push(text!("class "));
 
     if let Some(id) = &class.id {
         group_parts.push(id.format(p));
@@ -101,7 +102,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
             && node.is_property()
             && should_print_semicolon_after_class_property(node, class_body.body.get(i + 1))
         {
-            parts_inner.push(ss!(";"));
+            parts_inner.push(text!(";"));
         }
 
         if i < class_body.body.len() - 1 {
@@ -116,7 +117,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
     // TODO: if there are any dangling comments, print them
 
     let mut parts = p.vec();
-    parts.push(ss!("{"));
+    parts.push(text!("{"));
     if !parts_inner.is_empty() {
         let indent = {
             let mut parts = p.vec();
@@ -128,7 +129,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
         parts.extend(hardline!());
     }
 
-    parts.push(ss!("}"));
+    parts.push(text!("}"));
 
     Doc::Array(parts)
 }
@@ -225,8 +226,8 @@ impl<'a, 'b> ClassMemberish<'a, 'b> {
 
     fn format_accessibility(&self, p: &mut Prettier<'a>) -> Option<Doc<'a>> {
         match self {
-            ClassMemberish::AccessorProperty(def) => def.accessibility.map(|v| ss!(v.as_str())),
-            ClassMemberish::PropertyDefinition(def) => def.accessibility.map(|v| ss!(v.as_str())),
+            ClassMemberish::AccessorProperty(def) => def.accessibility.map(|v| text!(v.as_str())),
+            ClassMemberish::PropertyDefinition(def) => def.accessibility.map(|v| text!(v.as_str())),
         }
     }
 
@@ -250,7 +251,7 @@ pub(super) fn print_class_property<'a>(
 
     if let Some(decarators) = node.decorators() {
         for decorator in decarators {
-            parts.push(ss!("@"));
+            parts.push(text!("@"));
             parts.push(decorator.expression.format(p));
             parts.extend(hardline!());
         }
@@ -262,35 +263,35 @@ pub(super) fn print_class_property<'a>(
     }
 
     if node.is_declare() {
-        parts.push(ss!("declare "));
+        parts.push(text!("declare "));
     }
 
     if node.is_static() {
-        parts.push(ss!("static "));
+        parts.push(text!("static "));
     }
 
     if node.is_abstract() {
-        parts.push(ss!("abstract "));
+        parts.push(text!("abstract "));
     }
 
     if node.is_override() {
-        parts.push(ss!("override "));
+        parts.push(text!("override "));
     }
 
     if node.is_readonly() {
-        parts.push(ss!("readonly "));
+        parts.push(text!("readonly "));
     }
 
     parts.push(node.format_key(p));
 
     if node.is_optional() {
-        parts.push(ss!("?"));
+        parts.push(text!("?"));
     } else if node.is_definite() {
-        parts.push(ss!("!"));
+        parts.push(text!("!"));
     }
 
     if let Some(type_annotation) = node.format_type_annotation(p) {
-        parts.push(ss!(": "));
+        parts.push(text!(": "));
         parts.push(type_annotation);
     }
 
@@ -300,12 +301,12 @@ pub(super) fn print_class_property<'a>(
         ClassMemberish::AccessorProperty(v) => AssignmentLikeNode::AccessorProperty(v),
     };
     let mut result =
-        assignment::print_assignment(p, node, Doc::Array(parts), Doc::Str(" ="), right_expr);
+        assignment::print_assignment(p, node, Doc::Array(parts), text!(" ="), right_expr);
 
     if p.options.semi {
         let mut parts = p.vec();
         parts.push(result);
-        parts.push(ss!(";"));
+        parts.push(text!(";"));
         result = Doc::Array(parts);
     }
     result
@@ -389,7 +390,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     if should_indent_only_heritage_clauses(class) {
         parts.push(Doc::IfBreak(IfBreak {
-            flat_content: p.boxed(ss!("")),
+            flat_content: p.boxed(text!("")),
             break_contents: p.boxed(line!()),
             group_id: None, // ToDo - how to attach group id
         }));
@@ -399,7 +400,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
         parts.push(softline!());
     }
 
-    parts.push(ss!("implements "));
+    parts.push(text!("implements "));
 
     let implements_docs = implements.iter().map(|v| v.format(p)).collect();
 

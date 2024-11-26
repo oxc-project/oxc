@@ -1,9 +1,11 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    doc::{Doc, DocBuilder},
+    dynamic_text,
     format::function_parameters::should_group_function_parameters,
-    group, if_break, indent, softline, space, ss, Format, Prettier,
+    group, if_break, indent,
+    ir::{Doc, DocBuilder},
+    softline, space, text, Format, Prettier,
 };
 
 pub(super) fn print_function<'a>(
@@ -14,26 +16,26 @@ pub(super) fn print_function<'a>(
     let mut parts = p.vec();
 
     if func.declare {
-        parts.push(ss!("declare "));
+        parts.push(text!("declare "));
     }
 
     if func.r#async {
-        parts.push(ss!("async "));
+        parts.push(text!("async "));
     }
 
     if let Some(name) = property_name {
-        parts.push(p.str(name));
+        parts.push(dynamic_text!(p, name));
     } else {
-        parts.push(ss!("function"));
+        parts.push(text!("function"));
         if func.generator {
-            parts.push(ss!("*"));
+            parts.push(text!("*"));
         }
 
-        parts.push(p.str(" "));
+        parts.push(text!(" "));
     }
 
     if let Some(id) = &func.id {
-        parts.push(p.str(id.name.as_str()));
+        parts.push(dynamic_text!(p, id.name.as_str()));
     }
 
     if let Some(type_params) = &func.type_parameters {
@@ -49,7 +51,7 @@ pub(super) fn print_function<'a>(
     }));
 
     if let Some(return_type) = &func.return_type {
-        parts.push(ss!(": "));
+        parts.push(text!(": "));
         parts.push(return_type.type_annotation.format(p));
     }
 
@@ -70,44 +72,44 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
     let mut parts = p.vec();
 
     if let Some(accessibility) = &method.accessibility {
-        parts.push(ss!(accessibility.as_str()));
+        parts.push(text!(accessibility.as_str()));
         parts.push(space!());
     }
 
     if method.r#static {
-        parts.push(ss!("static "));
+        parts.push(text!("static "));
     }
 
     if matches!(method.r#type, MethodDefinitionType::TSAbstractMethodDefinition) {
-        parts.push(ss!("abstract "));
+        parts.push(text!("abstract "));
     }
 
     if method.r#override {
-        parts.push(ss!("override "));
+        parts.push(text!("override "));
     }
 
     match method.kind {
         MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
         MethodDefinitionKind::Get => {
-            parts.push(ss!("get "));
+            parts.push(text!("get "));
         }
         MethodDefinitionKind::Set => {
-            parts.push(ss!("set "));
+            parts.push(text!("set "));
         }
     }
 
     if method.value.r#async {
-        parts.push(ss!("async "));
+        parts.push(text!("async "));
     }
 
     if method.value.generator {
-        parts.push(ss!("*"));
+        parts.push(text!("*"));
     }
 
     parts.push(method.key.format(p));
 
     if method.optional {
-        parts.push(ss!("?"));
+        parts.push(text!("?"));
     }
 
     parts.push(print_method_value(p, &method.value));
@@ -129,7 +131,7 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
     parts.push(group!(p, parameters_doc));
 
     if let Some(ret_typ) = &function.return_type {
-        parts.push(ss!(": "));
+        parts.push(text!(": "));
         parts.push(ret_typ.type_annotation.format(p));
     }
 
@@ -137,7 +139,7 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
         parts.push(space!());
         parts.push(body.format(p));
     } else if p.options.semi {
-        parts.push(ss!(";"));
+        parts.push(text!(";"));
     }
 
     Doc::Array(parts)
@@ -150,7 +152,7 @@ pub(super) fn print_return_or_throw_argument<'a>(
 ) -> Doc<'a> {
     let mut parts = p.vec();
 
-    parts.push(ss!(if is_return { "return" } else { "throw" }));
+    parts.push(text!(if is_return { "return" } else { "throw" }));
 
     if let Some(argument) = argument {
         parts.push(space!());

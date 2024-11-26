@@ -10,9 +10,9 @@ use oxc_ast::{
 
 use super::{binaryish::should_inline_logical_expression, class::ClassMemberish};
 use crate::{
-    array,
-    doc::{Doc, DocBuilder, Group, IndentIfBreak},
-    group, indent, line, space, Format, Prettier,
+    array, group, indent,
+    ir::{Doc, DocBuilder, Group, IndentIfBreak},
+    line, space, text, Format, Prettier,
 };
 
 pub(super) fn print_assignment_expression<'a>(
@@ -24,7 +24,7 @@ pub(super) fn print_assignment_expression<'a>(
         p,
         AssignmentLikeNode::AssignmentExpression(assignment_expr),
         left_doc,
-        array![p, space!(), Doc::Str(assignment_expr.operator.as_str())],
+        array![p, space!(), text!(assignment_expr.operator.as_str())],
         Some(&assignment_expr.right),
     )
 }
@@ -38,7 +38,7 @@ pub(super) fn print_variable_declarator<'a>(
         p,
         AssignmentLikeNode::VariableDeclarator(variable_declarator),
         left_doc,
-        Doc::Str(" ="),
+        text!(" ="),
         variable_declarator.init.as_ref(),
     )
 }

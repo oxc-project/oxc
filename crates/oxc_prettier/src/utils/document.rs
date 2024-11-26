@@ -1,4 +1,4 @@
-use crate::{doc::IndentIfBreak, Doc};
+use crate::ir::{Doc, IndentIfBreak};
 
 pub fn will_break(doc: &mut Doc<'_>) -> bool {
     let check_array =
