@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.38.0] - 2024-11-26
+
+- 27b2268 semantic: [**BREAKING**] Remove `SymbolFlags::Export` (#7414) (Dunqing)
+
+- 6f0fe38 semantic: [**BREAKING**] Correct all `ReferenceFlags::Write` according to the spec (#7388) (Dunqing)
+
+### Bug Fixes
+
+
+### Refactor
+
+
 ## [0.37.0] - 2024-11-21
 
 ### Features

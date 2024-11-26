@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.38.0] - 2024-11-26
+
+### Features
+
+- eb70219 ast: Derive `GetAddress` on all enum types (#7472) (overlookmotel)
+
+### Documentation
+
+- 63f4d6c ast_tools: Reformat docs for `#[ast]` proc macro (#7437) (overlookmotel)
+- bc0e8bc ast_tools: Update and reformat docs for `#[ast]` proc macro (#7436) (overlookmotel)
+
+### Refactor
+
+- cf0b3bc ast_tools: Remove `tsify` helper attr from `Ast` derive macro (#7435) (overlookmotel)
+
 ## [0.35.0] - 2024-11-04
 
 ### Features

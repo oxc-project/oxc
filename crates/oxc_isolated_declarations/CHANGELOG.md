@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.38.0] - 2024-11-26
+
+### Refactor
+
+- 0ff94fa isolated-declarations: Use `CloneIn` instead of `ast.copy` (#7459) (Dunqing)
+
 ## [0.37.0] - 2024-11-21
 
 - 44375a5 ast: [**BREAKING**] Rename `TSEnumMemberName` enum variants (#7250) (overlookmotel)

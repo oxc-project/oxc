@@ -4,6 +4,49 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.38.0] - 2024-11-26
+
+- bb2c0c2 transformer: [**BREAKING**] Return `String` as error instead of OxcDiagnostic (#7424) (Boshen)
+
+### Features
+
+- 59e7e46 napi/transform: Add `TransformOptions::target` API (#7426) (Boshen)
+- e9f9e82 oxc_transformer: Replace_global_define ThisExpression (#7443) (IWANABETHATGUY)
+- 8797849 oxc_transformer: Replace_global_define destructuring assignment optimization (#7449) (IWANABETHATGUY)
+- 4bb1dca oxc_transformer: ReplaceGlobalDefines for ChainExpr (#7433) (IWANABETHATGUY)
+- d8c0931 oxc_transformer: Use better diagnostic message for `ReplaceGlobalDefinesPlugin` (#7439) (dalaoshu)
+- 21614f2 oxc_transformer: ReplaceGlobalDefinesPlugin for ComputedMemberExpr (#7431) (IWANABETHATGUY)
+- 9778298 transformer: Class properties transform (#7011) (overlookmotel)
+
+### Bug Fixes
+
+- 7ff9f13 transformer: Correct all ReferenceFlags (#7410) (Dunqing)
+- 4d6bd07 transformer/async-generator-functions: Correct all binding scope id (#7425) (Dunqing)
+- 97de0b7 transformer/class-properties: Transform `this` in static prop initializers (#7481) (overlookmotel)
+- d2745df transformer/class-properties: Stop searching for `super()` in `TSModuleBlock`s (#7480) (overlookmotel)
+
+### Performance
+
+- e26916c transformer/optional-chaining: Mark `enter_expression` as inline (#7390) (Dunqing)
+
+### Documentation
+
+- 2a5954a transformer/class-properties: Document transform options (#7478) (overlookmotel)
+
+### Refactor
+
+- e5d49db transformer/class-properties: Placeholder method for transforming private field assignment patterns (#7482) (overlookmotel)
+- abb0e0e transformer/class-properties: Rename var (#7477) (overlookmotel)
+- 25823c8 transformer/class-properties: Safer use of `GetAddress` (#7474) (overlookmotel)
+- 3396b69 transformer/exponentiation-operator: Correct comment (#7476) (overlookmotel)
+- eb39a50 transformer/logic-assignment: Shorten code (#7419) (overlookmotel)
+- 6fd0fcb transformer/object-rest-spread: Avoid multiple symbol lookups (#7420) (overlookmotel)
+- 52784d2 transformer/optional-chaining: Avoid multiple symbol lookups (#7421) (overlookmotel)
+
+### Styling
+
+- 111d722 transformer/optional-chaining: Code style nit (#7468) (overlookmotel)
+
 ## [0.37.0] - 2024-11-21
 
 - f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)
