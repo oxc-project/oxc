@@ -46,9 +46,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// URLs starting with javascript: are a dangerous attack surface because it’s easy to accidentally include unsanitized output in a tag like <a href> and create a security hole.
-    /// In React 16.9 any URLs starting with javascript: scheme log a warning.
-    /// In a future major release, React will throw an error if it encounters a javascript: URL.
+    /// URLs starting with `javascript:` are a dangerous attack surface because it’s easy to accidentally include unsanitized output in a tag like `<a href>` and create a security hole.
+    /// In React 16.9 any URLs starting with `javascript:` scheme log a warning.
+    /// In a future major release, React will throw an error if it encounters a `javascript:` URL.
     ///
     /// ### Examples
     ///
