@@ -7,6 +7,7 @@ mod private_bound_identifiers;
 mod prop_name;
 
 // Abstract Operations
+mod array_join;
 mod string_char_at;
 mod string_char_code_at;
 mod string_index_of;
@@ -27,7 +28,8 @@ pub mod constant_evaluation;
 pub mod side_effects;
 
 pub use self::{
-    bound_names::BoundNames, is_simple_parameter_list::IsSimpleParameterList,
+    array_join::ArrayJoin, bound_names::BoundNames,
+    is_simple_parameter_list::IsSimpleParameterList,
     private_bound_identifiers::PrivateBoundIdentifiers, prop_name::PropName,
     string_char_at::StringCharAt, string_char_code_at::StringCharCodeAt,
     string_index_of::StringIndexOf, string_last_index_of::StringLastIndexOf,

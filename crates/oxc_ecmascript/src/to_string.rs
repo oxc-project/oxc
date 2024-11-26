@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
+use crate::array_join::ArrayJoin;
+use crate::ToBoolean;
 use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
-
-use crate::ToBoolean;
 
 /// `ToString`
 ///
@@ -26,6 +26,23 @@ impl<'a> ToJsString<'a> for Expression<'a> {
             Expression::ArrayExpression(e) => e.to_js_string(),
             Expression::ObjectExpression(e) => e.to_js_string(),
             _ => None,
+        }
+    }
+}
+
+impl<'a> ToJsString<'a> for ArrayExpressionElement<'a> {
+    fn to_js_string(&self) -> Option<Cow<'a, str>> {
+        match self {
+            ArrayExpressionElement::SpreadElement(_) => None,
+            ArrayExpressionElement::Elision(_) | ArrayExpressionElement::NullLiteral(_) => {
+                Some(Cow::Borrowed(""))
+            }
+            ArrayExpressionElement::Identifier(id) if id.name.as_str() == "undefined" => {
+                Some(Cow::Borrowed(""))
+            }
+            expr @ match_expression!(ArrayExpressionElement) => {
+                expr.as_expression().and_then(ToJsString::to_js_string)
+            }
         }
     }
 }
@@ -101,7 +118,7 @@ impl<'a> ToJsString<'a> for UnaryExpression<'a> {
 impl<'a> ToJsString<'a> for ArrayExpression<'a> {
     fn to_js_string(&self) -> Option<Cow<'a, str>> {
         // TODO: https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L302-L303
-        None
+        self.array_join(Some(",")).map(Cow::Owned)
     }
 }
 

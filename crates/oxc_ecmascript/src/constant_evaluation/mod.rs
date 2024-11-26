@@ -1,4 +1,4 @@
-mod is_litral_value;
+mod is_literal_value;
 mod value;
 mod value_type;
 
@@ -11,7 +11,7 @@ use oxc_ast::ast::*;
 
 use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber};
 
-pub use self::{is_litral_value::IsLiteralValue, value::ConstantValue, value_type::ValueType};
+pub use self::{is_literal_value::IsLiteralValue, value::ConstantValue, value_type::ValueType};
 
 pub trait ConstantEvaluation<'a> {
     fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
