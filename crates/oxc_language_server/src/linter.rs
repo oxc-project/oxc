@@ -360,12 +360,14 @@ impl IsolatedLintHandler {
 #[allow(clippy::cast_possible_truncation)]
 fn offset_to_position(offset: usize, source_text: &str) -> Option<Position> {
     let rope = Rope::from_str(source_text);
-    let line = rope.try_byte_to_line(offset).ok()?;
-    let first_char_of_line = rope.try_line_to_char(line).ok()?;
-    // Original offset is byte, but Rope uses char offset
-    let offset = rope.try_byte_to_char(offset).ok()?;
-    let column = offset - first_char_of_line;
-    Some(Position::new(line as u32, column as u32))
+    // Get line number and byte offset of start of line
+    let line_index = rope.try_byte_to_line(offset).ok()?;
+    let line_offset = rope.try_line_to_byte(line_index).ok()?;
+
+    // Get column number
+    let column_index = source_text[line_offset..offset].encode_utf16().count();
+
+    Some(Position::new(line_index as u32, column_index as u32))
 }
 
 pub struct ServerLinter {
