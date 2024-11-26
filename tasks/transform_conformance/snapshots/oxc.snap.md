@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 90/100
+Passed: 90/101
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -8,12 +8,16 @@ Passed: 90/100
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-async-generator-functions
 * babel-plugin-transform-object-rest-spread
-* babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
 * babel-plugin-transform-react-jsx-source
 * regexp
+
+
+# babel-plugin-transform-async-to-generator (14/15)
+* super/nested/input.js
+x Output mismatch
 
 
 # babel-plugin-transform-typescript (2/9)
