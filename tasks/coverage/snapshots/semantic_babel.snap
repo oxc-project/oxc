@@ -2,7 +2,7 @@ commit: 54a8389f
 
 semantic_babel Summary:
 AST Parsed     : 2218/2218 (100.00%)
-Positive Passed: 1846/2218 (83.23%)
+Positive Passed: 1849/2218 (83.36%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -25,24 +25,6 @@ semantic error: A 'return' statement can only be used within a function body.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/328/input.js
 semantic error: A 'return' statement can only be used within a function body.
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/385/input.js
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/25/input.js
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/export/input.js
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-Symbol flags mismatch for "_bar":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none

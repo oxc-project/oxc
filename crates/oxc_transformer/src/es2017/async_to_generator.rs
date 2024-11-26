@@ -284,7 +284,12 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             (scope_id, wrapper_scope_id)
         };
 
-        let bound_ident = Self::create_bound_identifier(id.as_ref(), wrapper_scope_id, ctx);
+        let bound_ident = Self::create_bound_identifier(
+            id.as_ref(),
+            wrapper_scope_id,
+            SymbolFlags::FunctionScopedVariable,
+            ctx,
+        );
 
         let caller_function = {
             let scope_id = ctx.create_child_scope(wrapper_scope_id, ScopeFlags::Function);
@@ -359,9 +364,18 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let params =
             Self::create_placeholder_params(&wrapper_function.params, wrapper_scope_id, ctx);
         let params = mem::replace(&mut wrapper_function.params, params);
+
+        // TODO: Needs a better way to handle the function SymbolFlags in different ModuleKind.
+        let flags = if self.ctx.source_type.is_module() && ctx.current_scope_flags().is_top() {
+            SymbolFlags::BlockScopedVariable | SymbolFlags::Function
+        } else {
+            SymbolFlags::FunctionScopedVariable
+        };
+
         let bound_ident = Self::create_bound_identifier(
             wrapper_function.id.as_ref(),
             ctx.current_scope_id(),
+            flags,
             ctx,
         );
 
@@ -442,7 +456,12 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         // to change the parent scope of the generator function to the wrapper function.
         ctx.scopes_mut().change_parent_id(generator_function_id, Some(wrapper_scope_id));
 
-        let bound_ident = Self::create_bound_identifier(None, wrapper_scope_id, ctx);
+        let bound_ident = Self::create_bound_identifier(
+            None,
+            wrapper_scope_id,
+            SymbolFlags::FunctionScopedVariable,
+            ctx,
+        );
 
         let caller_function = {
             let scope_id = ctx.create_child_scope(wrapper_scope_id, ScopeFlags::Function);
@@ -739,13 +758,10 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     fn create_bound_identifier(
         id: Option<&BindingIdentifier<'a>>,
         scope_id: ScopeId,
+        flags: SymbolFlags,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        ctx.generate_uid(
-            id.as_ref().map_or_else(|| "ref", |id| id.name.as_str()),
-            scope_id,
-            SymbolFlags::FunctionScopedVariable,
-        )
+        ctx.generate_uid(id.as_ref().map_or_else(|| "ref", |id| id.name.as_str()), scope_id, flags)
     }
 
     /// Check whether the given [`Ancestor`] is a class method-like node.

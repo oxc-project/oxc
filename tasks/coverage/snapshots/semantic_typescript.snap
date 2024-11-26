@@ -2,7 +2,7 @@ commit: d85767ab
 
 semantic_typescript Summary:
 AST Parsed     : 6503/6503 (100.00%)
-Positive Passed: 2665/6503 (40.98%)
+Positive Passed: 2699/6503 (41.50%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -9146,15 +9146,9 @@ rebuilt        : ScopeId(11): ["f"]
 Symbol reference IDs mismatch for "bluebird":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(31), ReferenceId(33), ReferenceId(35), ReferenceId(37), ReferenceId(39), ReferenceId(41)]
 rebuilt        : SymbolId(1): [ReferenceId(4), ReferenceId(21)]
-Symbol flags mismatch for "_runSampleWorks":
-after transform: SymbolId(41): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable | Function)
 Symbol reference IDs mismatch for "func":
 after transform: SymbolId(15): [ReferenceId(28), ReferenceId(29)]
 rebuilt        : SymbolId(16): [ReferenceId(13)]
-Symbol flags mismatch for "_runSampleBreaks":
-after transform: SymbolId(48): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(25): SymbolFlags(BlockScopedVariable | Function)
 Symbol reference IDs mismatch for "func":
 after transform: SymbolId(32): [ReferenceId(57), ReferenceId(58)]
 rebuilt        : SymbolId(33): [ReferenceId(30)]
@@ -11012,10 +11006,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), Sc
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(19), ScopeId(21)]
 
 tasks/coverage/typescript/tests/cases/compiler/dtsEmitTripleSlashAvoidUnnecessaryResolutionMode.ts
-semantic error: Symbol flags mismatch for "_drainStream":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["NodeJS", "Promise", "arguments"]
 rebuilt        : ["arguments"]
 
@@ -13584,11 +13575,6 @@ Unresolved references mismatch:
 after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "require", "x", "y"]
 
-tasks/coverage/typescript/tests/cases/compiler/es5-importHelpersAsyncFunctions.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/typescript/tests/cases/compiler/es5ExportDefaultClassDeclaration4.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["foo"]
@@ -14560,10 +14546,7 @@ after transform: ["Function", "Q", "_try"]
 rebuilt        : ["Q"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportDefaultAsyncFunction.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments"]
 rebuilt        : ["arguments"]
 
@@ -25197,9 +25180,6 @@ rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol reference IDs mismatch for "GatewayOpcode":
 after transform: SymbolId(14): [ReferenceId(6), ReferenceId(11), ReferenceId(13), ReferenceId(16), ReferenceId(27), ReferenceId(28)]
 rebuilt        : SymbolId(5): []
-Symbol flags mismatch for "_adaptSession":
-after transform: SymbolId(33): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/newArrays.ts
 semantic error: Missing SymbolId: "M"
@@ -35412,9 +35392,6 @@ tasks/coverage/typescript/tests/cases/compiler/transformNestedGeneratorsWithTry.
 semantic error: Symbol reference IDs mismatch for "Bluebird":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : SymbolId(0): [ReferenceId(5)]
-Symbol flags mismatch for "_a":
-after transform: SymbolId(8): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/transformsElideNullUndefinedType.ts
 semantic error: Scope children mismatch:
@@ -38865,11 +38842,6 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T"]
 rebuilt        : ScopeId(1): []
 
-tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncMultiFile_es5.ts
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncQualifiedReturnType_es5.ts
 semantic error: Missing SymbolId: "X"
 Missing SymbolId: "_X"
@@ -39290,11 +39262,6 @@ Unresolved references mismatch:
 after transform: ["Promise", "arguments", "require"]
 rebuilt        : ["arguments", "mp", "p", "require"]
 
-tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMultiFile_es6.ts
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncUseStrict_es6.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_func", "a", "func", "p"]
@@ -39625,9 +39592,6 @@ tasks/coverage/typescript/tests/cases/conformance/asyncGenerators/asyncGenerator
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T", "a"]
 rebuilt        : ScopeId(3): ["a"]
-Symbol flags mismatch for "_test":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
 Unresolved references mismatch:
 after transform: ["AsyncGenerator", "arguments"]
 rebuilt        : ["arguments"]
@@ -41549,11 +41513,6 @@ semantic error: Unresolved references mismatch:
 after transform: ["Promise"]
 rebuilt        : []
 
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression3ES2020.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpression4ES2020.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "_asyncToGenerator", "console"]
@@ -41570,51 +41529,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["arguments"]
 rebuilt        : ["arguments", "console"]
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES2020.ts
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES5AMD.ts
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES5CJS.ts
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES5System.ts
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES5UMD.ts
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES6AMD.ts
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES6CJS.ts
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES6System.ts
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionAsyncES6UMD.ts
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionDeclarationEmit1.ts
 semantic error: Bindings mismatch:
@@ -41652,11 +41566,6 @@ semantic error: Unresolved references mismatch:
 after transform: ["Promise"]
 rebuilt        : []
 
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInAMD3.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInAMD4.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "D", "_asyncToGenerator", "console"]
@@ -41684,10 +41593,7 @@ after transform: ["arguments"]
 rebuilt        : ["arguments", "console"]
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS2.ts
-semantic error: Symbol flags mismatch for "_compute":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Promise", "arguments"]
 rebuilt        : ["arguments"]
 
@@ -41695,11 +41601,6 @@ tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpres
 semantic error: Unresolved references mismatch:
 after transform: ["Promise"]
 rebuilt        : []
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS4.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS5.ts
 semantic error: Bindings mismatch:
@@ -41735,11 +41636,6 @@ semantic error: Unresolved references mismatch:
 after transform: ["Promise"]
 rebuilt        : []
 
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInSystem3.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInSystem4.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "D", "_asyncToGenerator", "console"]
@@ -41771,11 +41667,6 @@ semantic error: Unresolved references mismatch:
 after transform: ["Promise"]
 rebuilt        : []
 
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInUMD3.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInUMD4.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "D", "_asyncToGenerator", "console"]
@@ -41802,61 +41693,6 @@ Unresolved references mismatch:
 after transform: ["arguments"]
 rebuilt        : ["arguments", "console"]
 
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInUMD5.ts
-semantic error: Symbol flags mismatch for "_func":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedAMD.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedAMD2.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedCJS.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedCJS2.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedES2020.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedES20202.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedSystem.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedSystem2.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedUMD.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedUMD2.ts
-semantic error: Symbol flags mismatch for "_foo":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionReturnPromiseOfAny.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["defaultModule", "directory", "j", "loadModule", "moduleFile", "p1", "p11", "p2", "p3", "whatToLoad"]
@@ -41876,21 +41712,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Promise", "ValidSomeCondition", "getSpecifier"]
 rebuilt        : ["ValidSomeCondition", "directory", "getSpecifier", "moduleFile", "whatToLoad"]
-
-tasks/coverage/typescript/tests/cases/conformance/emitter/es2015/asyncGenerators/emitter.asyncGenerators.functionDeclarations.es2015.ts
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/emitter/es2018/asyncGenerators/emitter.asyncGenerators.functionDeclarations.es2018.ts
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/emitter/es5/asyncGenerators/emitter.asyncGenerators.functionDeclarations.es5.ts
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/enums/enumBasics.ts
 semantic error: Bindings mismatch:
@@ -49406,9 +49227,6 @@ tasks/coverage/typescript/tests/cases/conformance/importAttributes/importAttribu
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["_asyncToGenerator", "_f", "a", "f"]
 rebuilt        : ScopeId(0): ["_asyncToGenerator", "_f", "f"]
-Symbol flags mismatch for "_f":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/importAttributes/importAttributes8.ts
 semantic error: Bindings mismatch:
@@ -51062,9 +50880,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(6)]
 Bindings mismatch:
 after transform: ScopeId(3): ["TResult"]
 rebuilt        : ScopeId(1): []
-Symbol flags mismatch for "_load":
-after transform: SymbolId(9): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable | Function)
 Unresolved references mismatch:
 after transform: ["Exclude", "Promise", "arguments", "true"]
 rebuilt        : ["arguments"]
@@ -52556,16 +52371,6 @@ semantic error: Expected a semicolon or an implicit semicolon after a statement,
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_vsAmbient.ts
 semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
 
-tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsDynamicImport.ts
-semantic error: Symbol flags mismatch for "_main":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDynamicImport.ts
-semantic error: Symbol flags mismatch for "_main":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAssignments.ts
 semantic error: Missing SymbolId: "fs"
 Missing ReferenceId: "require"
@@ -53589,12 +53394,6 @@ rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)
 Binding symbols mismatch:
 after transform: ScopeId(37): [SymbolId(27), SymbolId(44)]
 rebuilt        : ScopeId(43): [SymbolId(32), SymbolId(33)]
-Symbol flags mismatch for "_af":
-after transform: SymbolId(45): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable | Function)
-Symbol flags mismatch for "_ag":
-after transform: SymbolId(48): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsDeclarationEmit.2.ts
 semantic error: Bindings mismatch:
@@ -53899,11 +53698,6 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["dec"]
 
-tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithObjectLiterals2.ts
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/validMultipleVariableDeclarations.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Point", "a", "declSpace", "fn", "p", "x"]
@@ -53922,9 +53716,27 @@ after transform: SymbolId(8): [ReferenceId(9)]
 rebuilt        : SymbolId(7): []
 
 tasks/coverage/typescript/tests/cases/conformance/statements/for-await-ofStatements/emitter.forAwait.ts
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(10): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
+semantic error: Bindings mismatch:
+after transform: ScopeId(1): ["y"]
+rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "y"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
+rebuilt        : ScopeId(5): []
+Symbol scope ID mismatch for "_iteratorAbruptCompletion":
+after transform: SymbolId(6): ScopeId(3)
+rebuilt        : SymbolId(6): ScopeId(3)
+Symbol scope ID mismatch for "_didIteratorError":
+after transform: SymbolId(5): ScopeId(3)
+rebuilt        : SymbolId(7): ScopeId(3)
+Symbol scope ID mismatch for "_iteratorError":
+after transform: SymbolId(7): ScopeId(3)
+rebuilt        : SymbolId(8): ScopeId(3)
+Symbol scope ID mismatch for "_iterator":
+after transform: SymbolId(8): ScopeId(3)
+rebuilt        : SymbolId(9): ScopeId(3)
+Symbol scope ID mismatch for "_step":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(10): ScopeId(3)
 
 tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsArray.ts
 semantic error: Unresolved references mismatch:
@@ -54232,21 +54044,6 @@ rebuilt        : ScopeId(0): ["_asyncToGenerator", "_copyExtensions", "_fn", "_f
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(36), ScopeId(37)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(8), ScopeId(9), ScopeId(11), ScopeId(12), ScopeId(15), ScopeId(20), ScopeId(21)]
-Symbol flags mismatch for "_fn":
-after transform: SymbolId(26): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-Symbol flags mismatch for "_fn2":
-after transform: SymbolId(28): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable | Function)
-Symbol flags mismatch for "_fn3":
-after transform: SymbolId(29): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable | Function)
-Symbol flags mismatch for "_fn4":
-after transform: SymbolId(30): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(9): SymbolFlags(BlockScopedVariable | Function)
-Symbol flags mismatch for "_copyExtensions":
-after transform: SymbolId(34): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(16): SymbolFlags(BlockScopedVariable | Function)
 Reference symbol mismatch for "test":
 after transform: SymbolId(11) "test"
 rebuilt        : <None>

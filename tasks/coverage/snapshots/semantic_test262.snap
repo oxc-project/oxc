@@ -2,7 +2,7 @@ commit: fd979d85
 
 semantic_test262 Summary:
 AST Parsed     : 44026/44026 (100.00%)
-Positive Passed: 43486/44026 (98.77%)
+Positive Passed: 43495/44026 (98.79%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(3): ScopeId(4294967294)
@@ -3220,41 +3220,6 @@ Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(7)
 rebuilt        : SymbolId(5): ScopeId(4)
 
-tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-await-eval-script-code-target.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-eval-script-code-target.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-function-return-await-eval-script-code-target.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-await-eval-script-code-target.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-async-gen-return-await-eval-script-code-target.js
-semantic error: Symbol flags mismatch for "_f":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/test262/test/language/expressions/dynamic-import/imported-self-update.js
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/test262/test/language/expressions/dynamic-import/namespace/await-ns-get-nested-namespace-dflt-indirect.js
-semantic error: Symbol flags mismatch for "_fn":
-after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
 tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-init.js
 semantic error: Scope children mismatch:
 after transform: ScopeId(5): [ScopeId(2)]
@@ -3811,16 +3776,6 @@ rebuilt        : SymbolId(0): ScopeId(0)
 Symbol scope ID mismatch for "_obj3$a":
 after transform: SymbolId(7): ScopeId(8)
 rebuilt        : SymbolId(1): ScopeId(0)
-
-tasks/coverage/test262/test/language/module-code/export-default-asyncfunction-declaration-binding.js
-semantic error: Symbol flags mismatch for "_A":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
-
-tasks/coverage/test262/test/language/module-code/export-default-asyncgenerator-declaration-binding.js
-semantic error: Symbol flags mismatch for "_AG":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/test262/test/language/module-code/top-level-await/syntax/for-await-await-expr-func-expression.js
 semantic error: Scope children mismatch:
