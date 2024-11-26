@@ -1,4 +1,6 @@
 use oxc_ast::ast::*;
+use oxc_ecmascript::ToBoolean;
+use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::CompressorPass;
@@ -35,6 +37,16 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
             self.changed = true;
         };
     }
+
+    fn exit_statement(&mut self, node: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Statement::IfStatement(if_stmt) = node {
+            self.try_fold_if_block_one(if_stmt, ctx);
+            if let Some(new_stmt) = Self::try_fold_if_one_child(if_stmt, ctx) {
+                *node = new_stmt;
+                self.changed = true;
+            }
+        }
+    }
 }
 
 impl<'a> PeepholeMinimizeConditions {
@@ -55,6 +67,63 @@ impl<'a> PeepholeMinimizeConditions {
             }
         }
         None
+    }
+
+    /// Duplicate logic to DCE part.
+    fn try_fold_if_block_one(&mut self, if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Statement::BlockStatement(block) = &mut if_stmt.consequent {
+            if block.body.len() == 1 {
+                self.changed = true;
+                if_stmt.consequent = ctx.ast.move_statement(block.body.first_mut().unwrap());
+            }
+        }
+        if let Some(Statement::BlockStatement(block)) = &mut if_stmt.alternate {
+            if block.body.len() == 1 {
+                self.changed = true;
+                if_stmt.alternate = Some(ctx.ast.move_statement(block.body.first_mut().unwrap()));
+            }
+        }
+    }
+
+    fn try_fold_if_one_child(
+        if_stmt: &mut IfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        if let Statement::ExpressionStatement(expr) = &mut if_stmt.consequent {
+            // The rest of things for known boolean are tasks for dce instead of here.
+            (if_stmt.alternate.is_none() && if_stmt.test.to_boolean().is_none()).then(|| {
+                // Make if (x) y; => x && y;
+                let (operator, mut test) = match &mut if_stmt.test {
+                    Expression::UnaryExpression(unary) if unary.operator.is_not() => {
+                        let arg = ctx.ast.move_expression(&mut unary.argument);
+                        (LogicalOperator::Or, arg)
+                    }
+                    _ => (LogicalOperator::And, ctx.ast.move_expression(&mut if_stmt.test)),
+                };
+                match &mut test {
+                    Expression::BinaryExpression(bin) if bin.operator.is_equality() => {
+                        if !bin.left.is_literal() && bin.right.is_literal() {
+                            test = ctx.ast.expression_binary(
+                                SPAN,
+                                ctx.ast.move_expression(&mut bin.right),
+                                bin.operator,
+                                ctx.ast.move_expression(&mut bin.left),
+                            );
+                        }
+                    }
+                    _ => {}
+                }
+                let new_expr = ctx.ast.expression_logical(
+                    SPAN,
+                    test,
+                    operator,
+                    ctx.ast.move_expression(&mut expr.expression),
+                );
+                ctx.ast.statement_expression(SPAN, new_expr)
+            })
+        } else {
+            None
+        }
     }
 }
 
@@ -85,7 +154,6 @@ mod test {
 
     /** Check that removing blocks with 1 child works */
     #[test]
-    #[ignore]
     fn test_fold_one_child_blocks() {
         // late = false;
         fold("function f(){if(x)a();x=3}", "function f(){x&&a();x=3}");
@@ -100,7 +168,7 @@ mod test {
 
         // Try it out with functions
         fold("function f(){if(x){foo()}}", "function f(){x&&foo()}");
-        fold("function f(){if(x){foo()}else{bar()}}", "function f(){x?foo():bar()}");
+        // fold("function f(){if(x){foo()}else{bar()}}", "function f(){x?foo():bar()}");
 
         // Try it out with properties and methods
         fold("function f(){if(x){a.b=1}}", "function f(){x&&(a.b=1)}");
@@ -117,22 +185,22 @@ mod test {
         fold_same("function f(){switch(x){case 1:break}}");
 
         // Do while loops stay in a block if that's where they started
-        fold_same("function f(){if(e1){do foo();while(e2)}else foo2()}");
+        // fold_same("function f(){if(e1){do foo();while(e2)}else foo2()}");
         // Test an obscure case with do and while
-        fold("if(x){do{foo()}while(y)}else bar()", "if(x){do foo();while(y)}else bar()");
+        // fold("if(x){do{foo()}while(y)}else bar()", "if(x){do foo();while(y)}else bar()");
 
         // Play with nested IFs
         fold("function f(){if(x){if(y)foo()}}", "function f(){x && (y && foo())}");
-        fold("function f(){if(x){if(y)foo();else bar()}}", "function f(){x&&(y?foo():bar())}");
-        fold("function f(){if(x){if(y)foo()}else bar()}", "function f(){x?y&&foo():bar()}");
-        fold(
-            "function f(){if(x){if(y)foo();else bar()}else{baz()}}",
-            "function f(){x?y?foo():bar():baz()}",
-        );
+        // fold("function f(){if(x){if(y)foo();else bar()}}", "function f(){x&&(y?foo():bar())}");
+        // fold("function f(){if(x){if(y)foo()}else bar()}", "function f(){x?y&&foo():bar()}");
+        // fold(
+        //     "function f(){if(x){if(y)foo();else bar()}else{baz()}}",
+        //     "function f(){x?y?foo():bar():baz()}",
+        // );
 
-        fold("if(e1){while(e2){if(e3){foo()}}}else{bar()}", "if(e1)while(e2)e3&&foo();else bar()");
+        // fold("if(e1){while(e2){if(e3){foo()}}}else{bar()}", "if(e1)while(e2)e3&&foo();else bar()");
 
-        fold("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
+        // fold("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
 
         fold("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
         fold("if(x){ if(y){var x;}else{var z;} }", "if(x)if(y)var x;else var z");
