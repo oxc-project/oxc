@@ -19,6 +19,7 @@ fn es_target() {
         ("es2020", "a ||= b"),
         ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
+        ("es2021", "class Foo { #a; }"), // Plugin not ready
     ];
 
     // Test no transformation for esnext.

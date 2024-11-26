@@ -74,5 +74,13 @@ a || (a = b);
 ########## 9 es2021
 class foo { static {} }
 ----------
-class foo {}
-(() => {})();
+class foo {
+	static #_ = (() => {})();
+}
+
+########## 10 es2021
+class Foo { #a; }
+----------
+class Foo {
+	#a;
+}

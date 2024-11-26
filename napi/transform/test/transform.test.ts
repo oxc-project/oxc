@@ -75,6 +75,14 @@ describe('target', () => {
     assert(ret.code);
     assert.equal(ret.code, code);
   });
+
+  it('should turn off class propertiers because plugin is not ready', () => {
+    const code = 'class Foo {\n\t#a;\n}\n';
+    const ret = transform('test.js', code, { target: 'es2015' });
+    assert(ret.errors.length == 0);
+    assert(ret.code);
+    assert.equal(ret.code, code);
+  });
 });
 
 describe('modules', () => {
