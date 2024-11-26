@@ -1,0 +1,102 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/return-type.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode | Function)",
+        "id": 2,
+        "node": "Function(Foo)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeAlias)",
+            "id": 2,
+            "name": "T",
+            "node": "TSTypeAliasDeclaration",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 5,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode | Function | Arrow)",
+        "id": 4,
+        "node": "ArrowFunctionExpression",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeAlias)",
+            "id": 4,
+            "name": "T",
+            "node": "TSTypeAliasDeclaration",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "T",
+        "node": "TSTypeAliasDeclaration",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "T",
+            "node_id": 12
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 1,
+            "name": "T",
+            "node_id": 27
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 1,
+        "name": "Foo",
+        "node": "Function(Foo)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 3,
+        "name": "Bar",
+        "node": "VariableDeclarator(Bar)",
+        "references": []
+      }
+    ]
+  }
+]
