@@ -303,7 +303,7 @@ impl LanguageServer for Backend {
                             changes: Some(std::collections::HashMap::from([(
                                 uri.clone(),
                                 vec![TextEdit {
-                                    range: fixed_content.range.clone(),
+                                    range: fixed_content.range,
                                     new_text: fixed_content.code.clone(),
                                 }],
                             )])),
