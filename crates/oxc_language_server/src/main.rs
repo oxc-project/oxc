@@ -277,10 +277,7 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
 
         if let Some(value) = self.diagnostics_report_map.get(&uri.to_string()) {
-            if let Some(report) = value
-                .iter()
-                .find(|r| r.diagnostic.range == params.range && r.fixed_content.is_some())
-            {
+            if let Some(report) = value.iter().find(|r| r.diagnostic.range == params.range) {
                 // TODO: Would be better if we had exact rule name from the diagnostic instead of having to parse it.
                 let mut rule_name: Option<String> = None;
                 if let Some(NumberOrString::String(code)) = report.clone().diagnostic.code {
@@ -292,10 +289,9 @@ impl LanguageServer for Backend {
                     }
                 }
 
-                let fixed_content = report.fixed_content.clone().unwrap();
-
-                return Ok(Some(vec![
-                    CodeActionOrCommand::CodeAction(CodeAction {
+                let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
+                if let Some(fixed_content) = &report.fixed_content {
+                    code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
                         title: report.diagnostic.message.split(':').next().map_or_else(
                             || "Fix this problem".into(),
                             |s| format!("Fix this {s} problem"),
@@ -307,8 +303,8 @@ impl LanguageServer for Backend {
                             changes: Some(std::collections::HashMap::from([(
                                 uri.clone(),
                                 vec![TextEdit {
-                                    range: fixed_content.range,
-                                    new_text: fixed_content.code,
+                                    range: fixed_content.range.clone(),
+                                    new_text: fixed_content.code.clone(),
                                 }],
                             )])),
                             ..WorkspaceEdit::default()
@@ -317,7 +313,10 @@ impl LanguageServer for Backend {
                         data: None,
                         diagnostics: None,
                         command: None,
-                    }),
+                    }));
+                }
+
+                code_actions_vec.push(
                     // TODO: This CodeAction doesn't support disabling multiple rules by name for a given line.
                     //  To do that, we need to read `report.diagnostic.range.start.line` and check if a disable comment already exists.
                     //  If it does, it needs to be appended to instead of a completely new line inserted.
@@ -358,36 +357,39 @@ impl LanguageServer for Backend {
                         diagnostics: None,
                         command: None,
                     }),
-                    CodeActionOrCommand::CodeAction(CodeAction {
-                        title: rule_name.clone().map_or_else(
-                            || "Disable oxlint for this file".into(),
-                            |s| format!("Disable {s} for this file"),
-                        ),
-                        kind: Some(CodeActionKind::QUICKFIX),
-                        is_preferred: Some(false),
-                        edit: Some(WorkspaceEdit {
-                            #[expect(clippy::disallowed_types)]
-                            changes: Some(std::collections::HashMap::from([(
-                                uri.clone(),
-                                vec![TextEdit {
-                                    range: Range {
-                                        start: Position { line: 0, character: 0 },
-                                        end: Position { line: 0, character: 0 },
-                                    },
-                                    new_text: rule_name.clone().map_or_else(
-                                        || "// eslint-disable\n".into(),
-                                        |s| format!("// eslint-disable {s}\n"),
-                                    ),
-                                }],
-                            )])),
-                            ..WorkspaceEdit::default()
-                        }),
-                        disabled: None,
-                        data: None,
-                        diagnostics: None,
-                        command: None,
+                );
+
+                code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
+                    title: rule_name.clone().map_or_else(
+                        || "Disable oxlint for this file".into(),
+                        |s| format!("Disable {s} for this file"),
+                    ),
+                    kind: Some(CodeActionKind::QUICKFIX),
+                    is_preferred: Some(false),
+                    edit: Some(WorkspaceEdit {
+                        #[expect(clippy::disallowed_types)]
+                        changes: Some(std::collections::HashMap::from([(
+                            uri.clone(),
+                            vec![TextEdit {
+                                range: Range {
+                                    start: Position { line: 0, character: 0 },
+                                    end: Position { line: 0, character: 0 },
+                                },
+                                new_text: rule_name.clone().map_or_else(
+                                    || "// eslint-disable\n".into(),
+                                    |s| format!("// eslint-disable {s}\n"),
+                                ),
+                            }],
+                        )])),
+                        ..WorkspaceEdit::default()
                     }),
-                ]));
+                    disabled: None,
+                    data: None,
+                    diagnostics: None,
+                    command: None,
+                }));
+
+                return Ok(Some(code_actions_vec));
             }
         }
 
