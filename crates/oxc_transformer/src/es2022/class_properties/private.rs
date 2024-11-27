@@ -128,21 +128,21 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) {
         let Expression::CallExpression(call_expr) = expr else { unreachable!() };
         if matches!(&call_expr.callee, Expression::PrivateFieldExpression(_)) {
-            self.transform_call_expression_impl(expr, ctx);
+            self.transform_call_expression_impl(call_expr, ctx);
         };
     }
 
     fn transform_call_expression_impl(
         &mut self,
-        expr: &mut Expression<'a>,
+        call_expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // Unfortunately no way to make compiler see that these branches are provably unreachable.
+        // Unfortunately no way to make compiler see that this branch is provably unreachable.
         // This function is much too large to inline.
-        let Expression::CallExpression(call_expr) = expr else { unreachable!() };
         let Expression::PrivateFieldExpression(field_expr) = &mut call_expr.callee else {
             unreachable!()
         };
+
         let prop_details = self.lookup_private_property(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
         let Some((prop, class_name_binding, is_declaration)) = prop_details else { return };
