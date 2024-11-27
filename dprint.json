@@ -22,6 +22,7 @@
     "napi/{parser,transform,minify}/index.d.ts",
     "npm/*/package.json",
     "npm/oxlint/configuration_schema.json",
+    "npm/oxc-wasm/**",
     ".github/.generated_ast_watch_list.yml"
   ],
   "plugins": [
