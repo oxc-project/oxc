@@ -1,0 +1,202 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:11]
+ 1 │ 
+ 2 │             if (0) 0;
+   ·                    ──
+ 3 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:4]
+ 1 │ 
+ 2 │             f(0), {};
+   ·             ─────────
+ 3 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:4]
+ 1 │ 
+ 2 │             a, b();
+   ·             ───────
+ 3 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:4]
+ 1 │     
+ 2 │ ╭─▶             a() &&
+ 3 │ │                 function namedFunctionInExpressionContext() {
+ 4 │ │                   f();
+ 5 │ ╰─▶               };
+ 6 │                       
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:4]
+ 1 │ 
+ 2 │             a?.b;
+   ·             ─────
+ 3 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:4]
+ 1 │ 
+ 2 │             (a?.b).c;
+   ·             ─────────
+ 3 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:4]
+ 1 │ 
+ 2 │             a?.['b'];
+   ·             ─────────
+ 3 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:4]
+ 1 │ 
+ 2 │             (a?.['b']).c;
+   ·             ─────────────
+ 3 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:4]
+ 1 │ 
+ 2 │             a?.b()?.c;
+   ·             ──────────
+ 3 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:4]
+ 1 │ 
+ 2 │             (a?.b()).c;
+   ·             ───────────
+ 3 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:4]
+ 1 │ 
+ 2 │             one[2]?.[3][4];
+   ·             ───────────────
+ 3 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:2:4]
+ 1 │ 
+ 2 │             one.two?.three.four;
+   ·             ────────────────────
+ 3 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:4:6]
+ 3 │               const foo = true;
+ 4 │               'use strict';
+   ·               ─────────────
+ 5 │             }
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:6:6]
+ 5 │             
+ 6 │               'use strict';
+   ·               ─────────────
+ 7 │             }
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:5:6]
+ 4 │             
+ 5 │               'use strict';
+   ·               ─────────────
+ 6 │             }
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:1:1]
+ 1 │ foo && foo?.bar;
+   · ────────────────
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:1:1]
+ 1 │ foo ? foo?.bar : bar.baz;
+   · ─────────────────────────
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:3:4]
+ 2 │             class Foo<T> {}
+ 3 │             Foo<string>;
+   ·             ────────────
+ 4 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:1:1]
+ 1 │ Map<string, string>;
+   · ────────────────────
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:3:4]
+ 2 │             declare const foo: number | undefined;
+ 3 │             foo;
+   ·             ────
+ 4 │                   
+   ╰────
+  help: Consider removing this expression
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:3:4]
+ 2 │             declare const foo: number | undefined;
+ 3 │             foo as any;
+   ·             ───────────
+ 4 │                   
+   ╰────
+  help: Consider removing this expression
+
+  × Expected `<` but found `EOF`
+   ╭─[no_unused_expressions.tsx:4:10]
+ 3 │             <any>foo;
+ 4 │                   
+   ╰────
+
+  ⚠ typescript-eslint(no-unused-expressions): Disallow unused expressions
+   ╭─[no_unused_expressions.tsx:3:4]
+ 2 │             declare const foo: number | undefined;
+ 3 │             foo!;
+   ·             ─────
+ 4 │                   
+   ╰────
+  help: Consider removing this expression

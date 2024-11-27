@@ -180,6 +180,7 @@ mod typescript {
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
     pub mod no_unsafe_function_type;
+    pub mod no_unused_expressions;
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
     pub mod no_wrapper_object_types;
@@ -854,6 +855,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::consistent_type_definitions,
     typescript::consistent_type_imports,
     typescript::explicit_function_return_type,
+    typescript::no_unused_expressions,
     typescript::no_inferrable_types,
     typescript::no_confusing_non_null_assertion,
     typescript::no_duplicate_enum_values,
