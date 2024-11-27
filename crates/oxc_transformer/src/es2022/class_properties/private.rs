@@ -138,8 +138,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Unfortunately no way to make compiler see that these branches are provably unreachable.
-        // This function is much too large inline, because `transform_static_assignment_expression`
-        // and `transform_instance_assignment_expression` are inlined into it.
+        // This function is much too large to inline.
         let Expression::CallExpression(call_expr) = expr else { unreachable!() };
         let Expression::PrivateFieldExpression(field_expr) = &mut call_expr.callee else {
             unreachable!()
@@ -229,7 +228,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Unfortunately no way to make compiler see that these branches are provably unreachable.
-        // This function is much too large inline, because `transform_static_assignment_expression`
+        // This function is much too large to inline, because `transform_static_assignment_expression`
         // and `transform_instance_assignment_expression` are inlined into it.
         let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
         let AssignmentTarget::PrivateFieldExpression(field_expr) = &mut assign_expr.left else {
@@ -578,8 +577,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Unfortunately no way to make compiler see that these branches are provably unreachable.
-        // This function is much too large inline, because `transform_static_assignment_expression`
-        // and `transform_instance_assignment_expression` are inlined into it.
+        // This function is much too large to inline.
         let Expression::UpdateExpression(update_expr) = expr else { unreachable!() };
         let field_expr = match &mut update_expr.argument {
             SimpleAssignmentTarget::PrivateFieldExpression(field_expr) => field_expr.as_mut(),
