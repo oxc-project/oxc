@@ -15,10 +15,7 @@ use oxc_tasks_common::project_root;
 use rustc_hash::FxHashSet;
 use walkdir::WalkDir;
 
-use crate::{
-    ignore_list::{JS_IGNORE_TESTS, TS_IGNORE_TESTS},
-    spec::SpecParser,
-};
+use crate::{ignore_list::IGNORE_TESTS, spec::SpecParser};
 
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
@@ -39,6 +36,19 @@ impl TestLanguage {
             Self::Ts => "ts",
         }
     }
+
+    /// Prettier's test fixtures roots for different languages.
+    fn fixtures_roots(&self) -> Vec<PathBuf> {
+        match self {
+            Self::Js => ["js", "jsx"],
+            // There is no `tsx` directory, just check it works with TS
+            // `SourceType`.`variant` is handled by spec file extension
+            Self::Ts => ["typescript", "jsx"],
+        }
+        .iter()
+        .map(|dir| fixtures_root().join(dir))
+        .collect::<Vec<_>>()
+    }
 }
 
 #[derive(Default, Clone)]
@@ -49,7 +59,7 @@ pub struct TestRunnerOptions {
 /// The test runner which walks the prettier repository and searches for formatting tests.
 pub struct TestRunner {
     language: TestLanguage,
-    fixtures_root: PathBuf,
+    fixtures_roots: Vec<PathBuf>,
     ignore_tests: &'static [&'static str],
     options: TestRunnerOptions,
     spec: SpecParser,
@@ -74,44 +84,49 @@ const CR: char = '\u{d}';
 
 impl TestRunner {
     pub fn new(language: TestLanguage, options: TestRunnerOptions) -> Self {
-        let fixtures_root = fixtures_root().join(match language {
-            TestLanguage::Js => "js",
-            TestLanguage::Ts => "typescript",
-        });
-        let ignore_tests = match language {
-            TestLanguage::Js => JS_IGNORE_TESTS,
-            TestLanguage::Ts => TS_IGNORE_TESTS,
-        };
-        Self { language, fixtures_root, ignore_tests, options, spec: SpecParser::default() }
+        let fixtures_roots = language.fixtures_roots();
+        Self {
+            language,
+            fixtures_roots,
+            ignore_tests: IGNORE_TESTS,
+            options,
+            spec: SpecParser::default(),
+        }
     }
 
     /// # Panics
     #[expect(clippy::cast_precision_loss)]
     pub fn run(mut self) {
-        let fixture_root = &self.fixtures_root;
+        let fixture_roots = &self.fixtures_roots;
         // Read the first level of directories that contain `__snapshots__`
-        let mut dirs = WalkDir::new(fixture_root)
-            .min_depth(1)
-            .into_iter()
-            .filter_map(Result::ok)
-            .filter(|e| {
-                self.options
-                    .filter
-                    .as_ref()
-                    .map_or(true, |name| e.path().to_string_lossy().contains(name))
-            })
-            .filter(|e| !self.ignore_tests.iter().any(|s| e.path().to_string_lossy().contains(s)))
-            .map(|e| {
-                let mut path = e.into_path();
-                if path.is_file() {
-                    if let Some(parent_path) = path.parent() {
-                        path = parent_path.into();
+        let mut dirs = vec![];
+        for fixture_root in fixture_roots {
+            let dir = WalkDir::new(fixture_root)
+                .min_depth(1)
+                .into_iter()
+                .filter_map(Result::ok)
+                .filter(|e| {
+                    self.options
+                        .filter
+                        .as_ref()
+                        .map_or(true, |name| e.path().to_string_lossy().contains(name))
+                })
+                .filter(|e| {
+                    !self.ignore_tests.iter().any(|s| e.path().to_string_lossy().contains(s))
+                })
+                .map(|e| {
+                    let mut path = e.into_path();
+                    if path.is_file() {
+                        if let Some(parent_path) = path.parent() {
+                            path = parent_path.into();
+                        }
                     }
-                }
-                path
-            })
-            .filter(|path| path.join("__snapshots__").exists())
-            .collect::<Vec<_>>();
+                    path
+                })
+                .filter(|path| path.join("__snapshots__").exists())
+                .collect::<Vec<_>>();
+            dirs.extend(dir);
+        }
 
         let dir_set: FxHashSet<_> = dirs.iter().cloned().collect();
         dirs = dir_set.into_iter().collect();
@@ -122,7 +137,7 @@ impl TestRunner {
         let mut failed = vec![];
 
         for dir in &dirs {
-            // Get jsfmt.spec.js
+            // Get `format.test.js`
             let mut spec_path = dir.join(SNAP_NAME);
             while !spec_path.exists() {
                 spec_path = dir.parent().unwrap().join(SNAP_NAME);
@@ -154,6 +169,7 @@ impl TestRunner {
                 })
                 .map(|e| e.path().to_path_buf())
                 .collect();
+            inputs.sort_unstable();
 
             self.spec.parse(&spec_path);
             debug_assert!(
@@ -161,15 +177,16 @@ impl TestRunner {
                 "There is no `runFormatTest()` in {}, please check if it is correct?",
                 spec_path.to_string_lossy()
             );
+
             total += inputs.len();
-            inputs.sort_unstable();
             self.test_snapshot(dir, &spec_path, &inputs, &mut failed);
         }
 
         let language = self.language.as_str();
         let passed = total - failed.len();
-        let percentage = (passed as f64 / total as f64) * 100.0;
+        let percentage = if passed == 0 { 0_f64 } else { (passed as f64 / total as f64) * 100.0 };
         let heading = format!("{language} compatibility: {passed}/{total} ({percentage:.2}%)");
+
         println!("{heading}");
 
         if self.options.filter.is_none() {
@@ -187,41 +204,35 @@ impl TestRunner {
         inputs: &[PathBuf],
         failed: &mut Vec<String>,
     ) {
+        let expected_file = spec_path.parent().unwrap().join(SNAP_RELATIVE_PATH);
+        let expected = fs::read_to_string(expected_file).unwrap();
+
         let mut write_dir_info = true;
         for path in inputs {
             let input = fs::read_to_string(path).unwrap();
 
             let result = self.spec.calls.iter().all(|spec| {
-                let expected_file = spec_path.parent().unwrap().join(SNAP_RELATIVE_PATH);
-                let expected = fs::read_to_string(expected_file).unwrap();
                 let snapshot = self.get_single_snapshot(path, &input, spec.0, &spec.1, &expected);
                 if snapshot.trim().is_empty() {
                     return false;
                 }
-
-                if inputs.is_empty() {
-                    return false;
-                }
-
                 expected.contains(&snapshot)
             });
 
-            if self.spec.calls.is_empty() || !result {
+            if !result {
                 let mut dir_info = String::new();
                 if write_dir_info {
-                    dir_info.push_str(
-                        format!(
-                            "\n### {}\n",
-                            dir.strip_prefix(&self.fixtures_root).unwrap().to_string_lossy()
-                        )
-                        .as_str(),
+                    dir_info = format!(
+                        "\n### {}\n",
+                        dir.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
                     );
                     write_dir_info = false;
                 }
 
+                // NOTE: `failed.len()` is used as failed count directly
                 failed.push(format!(
                     "{dir_info}* {}",
-                    path.strip_prefix(&self.fixtures_root).unwrap().to_string_lossy()
+                    path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
                 ));
             }
         }

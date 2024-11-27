@@ -1,587 +1,658 @@
-ts compatibility: 184/526 (34.98%)
+ts compatibility: 189/568 (33.27%)
 
 # Failed
 
-### ambient
-* ambient/ambient.ts
-
-### angular-component-examples
-* angular-component-examples/15934-computed.component.ts
-* angular-component-examples/15934.component.ts
-* angular-component-examples/15969-computed.component.ts
-* angular-component-examples/test.component.ts
-
-### argument-expansion
-* argument-expansion/argument_expansion.ts
-* argument-expansion/arrow-with-return-type.ts
-
-### array
-* array/comment.ts
-
-### arrow
-* arrow/arrow_regression.ts
-* arrow/comments.ts
-* arrow/issue-6107-curry.ts
-
-### arrows
-* arrows/arrow_function_expression.ts
-* arrows/type_params.ts
-
-### as
-* as/as-const-embedded.ts
-* as/as.ts
-* as/assignment2.ts
-* as/export_default_as.ts
-* as/expression-statement.ts
-* as/long-identifiers.ts
-* as/nested-await-and-as.ts
-* as/ternary.ts
-
-### assert
-* assert/comment.ts
-
-### assignment
-* assignment/issue-10846.ts
-* assignment/issue-10848.tsx
-* assignment/issue-10850.ts
-* assignment/issue-2482.ts
-* assignment/parenthesized.ts
-
-### call-signature
-* call-signature/call-signature.ts
-
-### cast
-* cast/as-const.ts
-* cast/assert-and-assign.ts
-* cast/generic-cast.ts
-* cast/hug-args.ts
-* cast/parenthesis.ts
-* cast/tuple-and-record.ts
-
-### chain-expression
-* chain-expression/test.ts
-
-### class
-* class/constructor.ts
-* class/empty-method-body.ts
-* class/extends_implements.ts
-* class/generics.ts
-* class/parameter-properties.ts
-* class/quoted-property.ts
-
-### class-comment
-* class-comment/class-implements.ts
-* class-comment/declare.ts
-* class-comment/generic.ts
-* class-comment/misc.ts
-
-### classes
-* classes/break-heritage.ts
-* classes/break.ts
-
-### comments
-* comments/15707.ts
-* comments/abstract_class.ts
-* comments/abstract_methods.ts
-* comments/after_jsx_generic.tsx
-* comments/declare_function.ts
-* comments/interface.ts
-* comments/issues.ts
-* comments/jsx.tsx
-* comments/location.ts
-* comments/mapped_types.ts
-* comments/method_types.ts
-* comments/methods.ts
-* comments/ts-parameter-proerty.ts
-* comments/type-parameters.ts
-* comments/type_literals.ts
-* comments/types.ts
-* comments/union.ts
-
-### comments-2
-* comments-2/dangling.ts
-* comments-2/issues.ts
-* comments-2/last-arg.ts
-
-### compiler
-* compiler/anyIsAssignableToObject.ts
-* compiler/castOfAwait.ts
-* compiler/castParentheses.ts
-* compiler/checkInfiniteExpansionTermination.ts
-* compiler/commentInNamespaceDeclarationWithIdentifierPathName.ts
-* compiler/commentsInterface.ts
-* compiler/contextualSignatureInstantiation2.ts
-* compiler/declareDottedModuleName.ts
-* compiler/es5ExportDefaultClassDeclaration4.ts
-* compiler/functionOverloadsOnGenericArity1.ts
-* compiler/indexSignatureWithInitializer.ts
-* compiler/mappedTypeWithCombinedTypeMappers.ts
-* compiler/privacyGloImport.ts
-
-### conditional-types
-* conditional-types/comments.ts
-* conditional-types/conditonal-types.ts
-* conditional-types/infer-type.ts
-* conditional-types/nested-in-condition.ts
-* conditional-types/new-ternary-spec.ts
-* conditional-types/parentheses.ts
-
-### conformance/classes
-* conformance/classes/mixinAccessModifiers.ts
-* conformance/classes/mixinClassesAnnotated.ts
-* conformance/classes/mixinClassesAnonymous.ts
-* conformance/classes/mixinClassesMembers.ts
-* conformance/classes/nestedClassDeclaration.ts
-
-### conformance/classes/classDeclarations/classAbstractKeyword
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
-
-### conformance/classes/classDeclarations/classHeritageSpecification
-* conformance/classes/classDeclarations/classHeritageSpecification/classExtendsItselfIndirectly.ts
-
-### conformance/classes/constructorDeclarations/constructorParameters
-* conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues2.ts
-* conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties.ts
-* conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties2.ts
-* conformance/classes/constructorDeclarations/constructorParameters/declarationEmitReadonly.ts
-* conformance/classes/constructorDeclarations/constructorParameters/readonlyConstructorAssignment.ts
-
-### conformance/comments
-* conformance/comments/comments.ts
-
-### conformance/declarationEmit/typePredicates
-* conformance/declarationEmit/typePredicates/declarationEmitThisPredicatesWithPrivateName01.ts
-
-### conformance/es6/Symbols
-* conformance/es6/Symbols/symbolProperty15.ts
-
-### conformance/es6/templates
-* conformance/es6/templates/templateStringWithEmbeddedTypeAssertionOnAdditionES6.ts
-
-### conformance/expressions/asOperator
-* conformance/expressions/asOperator/asOperatorContextualType.ts
-
-### conformance/expressions/functionCalls
-* conformance/expressions/functionCalls/callWithSpreadES6.ts
-
-### conformance/internalModules/importDeclarations
-* conformance/internalModules/importDeclarations/circularImportAlias.ts
-* conformance/internalModules/importDeclarations/exportImportAlias.ts
-* conformance/internalModules/importDeclarations/importAliasIdentifiers.ts
-* conformance/internalModules/importDeclarations/invalidImportAliasIdentifiers.ts
-* conformance/internalModules/importDeclarations/shadowedInternalModule.ts
-
-### conformance/parser/ecmascript5/Statements
-* conformance/parser/ecmascript5/Statements/parserES5ForOfStatement2.ts
-* conformance/parser/ecmascript5/Statements/parserES5ForOfStatement21.ts
-* conformance/parser/ecmascript5/Statements/parserForInStatement2.ts
-
-### conformance/types/any
-* conformance/types/any/anyAsConstructor.ts
-* conformance/types/any/anyAsFunctionCall.ts
-* conformance/types/any/anyAsGenericFunctionCall.ts
-
-### conformance/types/firstTypeNode
-* conformance/types/firstTypeNode/firstTypeNode.ts
-
-### conformance/types/functions
-* conformance/types/functions/functionImplementationErrors.ts
-* conformance/types/functions/functionImplementations.ts
-* conformance/types/functions/functionOverloadErrorsSyntax.ts
-* conformance/types/functions/parameterInitializersForwardReferencing.ts
-
-### conformance/types/mappedType
-* conformance/types/mappedType/mappedType.ts
-
-### conformance/types/moduleDeclaration
-* conformance/types/moduleDeclaration/kind-detection.ts
-
-### conformance/types/namespaceExportDeclaration
-* conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts
-
-### conformance/types/parameterProperty
-* conformance/types/parameterProperty/parameterProperty.ts
-
-### conformance/types/tuple
-* conformance/types/tuple/contextualTypeWithTuple.ts
-* conformance/types/tuple/indexerWithTuple.ts
-* conformance/types/tuple/typeInferenceWithTupleType.ts
-* conformance/types/tuple/wideningTuples1.ts
-* conformance/types/tuple/wideningTuples2.ts
-* conformance/types/tuple/wideningTuples3.ts
-* conformance/types/tuple/wideningTuples5.ts
-* conformance/types/tuple/wideningTuples7.ts
-
-### conformance/types/tuple/emptyTuples
-* conformance/types/tuple/emptyTuples/emptyTuplesTypeAssertion02.ts
-
-### conformance/types/typeOperator
-* conformance/types/typeOperator/typeOperator.ts
-
-### conformance/types/typeParameter
-* conformance/types/typeParameter/typeParameter.ts
-
-### conformance/types/typeParameters/typeParameterLists
-* conformance/types/typeParameters/typeParameterLists/innerTypeParameterShadowingOuterOne.ts
-* conformance/types/typeParameters/typeParameterLists/innerTypeParameterShadowingOuterOne2.ts
-* conformance/types/typeParameters/typeParameterLists/staticMembersUsingClassTypeParameter.ts
-
-### conformance/types/union
-* conformance/types/union/unionTypeCallSignatures.ts
-* conformance/types/union/unionTypeCallSignatures3.ts
-* conformance/types/union/unionTypeCallSignatures4.ts
-* conformance/types/union/unionTypeConstructSignatures.ts
-* conformance/types/union/unionTypeEquivalence.ts
-* conformance/types/union/unionTypeFromArrayLiteral.ts
-* conformance/types/union/unionTypeIndexSignature.ts
-
-### const
-* const/initializer-ambient-context.ts
-
-### cursor
-* cursor/array-pattern.ts
-* cursor/arrow-function-type.ts
-* cursor/class-property.ts
-* cursor/function-return-type.ts
-* cursor/identifier-1.ts
-* cursor/identifier-2.ts
-* cursor/identifier-3.ts
-* cursor/method-signature.ts
-* cursor/property-signature.ts
-* cursor/rest.ts
-
-### custom/computedProperties
-* custom/computedProperties/symbol.ts
-
-### custom/modifiers
-* custom/modifiers/minustoken.ts
-* custom/modifiers/question.ts
-* custom/modifiers/readonly.ts
-
-### custom/module
-* custom/module/global.ts
-* custom/module/nestedNamespace.ts
-
-### custom/new
-* custom/new/newKeyword.ts
-
-### custom/stability
-* custom/stability/moduleBlock.ts
-
-### custom/typeParameters
-* custom/typeParameters/callAndConstructSignatureLong.ts
-* custom/typeParameters/functionTypeLong.ts
-* custom/typeParameters/interfaceParamsLong.ts
-* custom/typeParameters/typeParametersLong.ts
-* custom/typeParameters/variables.ts
-
-### declare
-* declare/declare_var.ts
-* declare/object-type-in-declare-function.ts
-
-### decorator-auto-accessors
-* decorator-auto-accessors/decorator-auto-accessors-type-annotations.ts
-
-### decorators
-* decorators/abstract-method.ts
-* decorators/accessor.ts
-* decorators/argument-list-preserve-line.ts
-* decorators/comments.ts
-* decorators/decorator-type-assertion.ts
-* decorators/decorators-comments.ts
-* decorators/decorators.ts
-* decorators/inline-decorators.ts
-* decorators/legacy.ts
-* decorators/mobx.ts
-
-### decorators-ts
-* decorators-ts/accessor-decorator.ts
-* decorators-ts/angular.ts
-* decorators-ts/method-decorator.ts
-* decorators-ts/mobx.ts
-* decorators-ts/multiple.ts
-* decorators-ts/parameter-decorator.ts
-* decorators-ts/property-decorator.ts
-* decorators-ts/typeorm.ts
-
-### definite
-* definite/definite.ts
-* definite/without-annotation.ts
-
-### end-of-line
-* end-of-line/multiline.ts
-
-### enum
-* enum/computed-members.ts
-* enum/enum.ts
-
-### error-recovery
-* error-recovery/index-signature.ts
-* error-recovery/jsdoc_only_types.ts
-
-### export
-* export/comment.ts
-* export/export-type-star-from-2.ts
-* export/export-type-star-from.ts
-
-### export-default
-* export-default/function_as.ts
-
-### function-type
-* function-type/consistent.ts
-* function-type/type-annotation.ts
-
-### functional-composition
-* functional-composition/pipe-function-calls-with-comments.ts
-* functional-composition/pipe-function-calls.ts
-
-### generic
-* generic/arrow-return-type.ts
-* generic/issue-6899.ts
-* generic/ungrouped-parameters.ts
-
-### import-export
-* import-export/empty-import.ts
-* import-export/type-modifier.ts
-
-### import-require
-* import-require/type-imports.ts
-
-### import-type
-* import-type/import-type.ts
-
-### index-signature
-* index-signature/index-signature.ts
-* index-signature/static.ts
-
-### infer-extends
-* infer-extends/basic.ts
-
-### instantiation-expression
-* instantiation-expression/basic.ts
-* instantiation-expression/inferface-asi.ts
-* instantiation-expression/new.ts
-* instantiation-expression/property-access.ts
-
-### interface
-* interface/comments-generic.ts
-* interface/comments.ts
-* interface/generic.ts
-* interface/ignore.ts
-* interface/long-extends.ts
-
-### interface/long-type-parameters
-* interface/long-type-parameters/long-type-parameters.ts
-
-### interface2
-* interface2/comments-declare.ts
-* interface2/comments.ts
-
-### interface2/break
-* interface2/break/break.ts
-
-### intersection
-* intersection/type-arguments.ts
-
-### intersection/consistent-with-flow
-* intersection/consistent-with-flow/comment.ts
-* intersection/consistent-with-flow/intersection-parens.ts
-
-### key-remapping-in-mapped-types
-* key-remapping-in-mapped-types/key-remapping.ts
-
-### keyof
-* keyof/keyof.ts
-
-### keyword-types
-* keyword-types/conditional-types.ts
-* keyword-types/keyword-types-with-parens-comments.ts
-
-### keywords
-* keywords/keywords-2.ts
-* keywords/module.ts
-
-### last-argument-expansion
-* last-argument-expansion/break.ts
-* last-argument-expansion/decorated-function.tsx
-* last-argument-expansion/edge_case.ts
-* last-argument-expansion/forward-ref.tsx
-
-### mapped-type
-* mapped-type/intersection.ts
-* mapped-type/issue-11098.ts
-* mapped-type/mapped-type.ts
-
-### mapped-type/break-mode
-* mapped-type/break-mode/break-mode.ts
-
-### method
-* method/issue-10352-consistency.ts
-
-### method-chain
-* method-chain/comment.ts
-
-### module
-* module/empty.ts
-* module/global.ts
-* module/keyword.ts
-* module/module_nested.ts
-* module/namespace_nested.ts
-
-### multiparser-css
-* multiparser-css/issue-6259.ts
-
-### new
-* new/new-signature.ts
-
-### no-semi
-* no-semi/no-semi.ts
-* no-semi/non-null.ts
-
-### non-null
-* non-null/braces.ts
-* non-null/optional-chain.ts
-* non-null/parens.ts
-
-### nosemi
-* nosemi/type.ts
-
-### optional-method
-* optional-method/optional-method.ts
-
-### optional-type
-* optional-type/complex.ts
-
-### prettier-ignore
-* prettier-ignore/issue-14238.ts
-* prettier-ignore/mapped-types.ts
-* prettier-ignore/prettier-ignore-nested-unions.ts
-* prettier-ignore/prettier-ignore-parenthesized-type.ts
-
-### private-fields-in-in
-* private-fields-in-in/basic.ts
-
-### range
-* range/export-assignment.ts
-* range/issue-4926.ts
-* range/issue-7148.ts
-
-### rest-type
-* rest-type/complex.ts
-* rest-type/infer-type.ts
-
-### satisfies-operators
-* satisfies-operators/argument-expansion.ts
-* satisfies-operators/assignment.ts
-* satisfies-operators/basic.ts
-* satisfies-operators/comments-unstable.ts
-* satisfies-operators/comments.ts
-* satisfies-operators/export-default-as.ts
-* satisfies-operators/expression-statement.ts
-* satisfies-operators/gt-lt.ts
-* satisfies-operators/hug-args.ts
-* satisfies-operators/lhs.ts
-* satisfies-operators/nested-await-and-satisfies.ts
-* satisfies-operators/non-null.ts
-* satisfies-operators/satisfies.ts
-* satisfies-operators/template-literal.ts
-* satisfies-operators/ternary.ts
-* satisfies-operators/types-comments.ts
-
-### static-blocks
-* static-blocks/nested.ts
-
-### template-literals
-* template-literals/as-expression.ts
-* template-literals/expressions.ts
-
-### ternaries
-* ternaries/indent.ts
-
-### test-declarations
-* test-declarations/test_declarations.ts
-
-### trailing-comma
-* trailing-comma/arrow-functions.tsx
-* trailing-comma/trailing.ts
-* trailing-comma/type-arguments.ts
-* trailing-comma/type-parameters-vs-arguments.ts
-
-### tsx
-* tsx/member-expression.tsx
-* tsx/not-react.ts
-* tsx/react.tsx
-* tsx/type-parameters.tsx
-* tsx/url.tsx
-
-### tuple
-* tuple/dangling-comments.ts
-* tuple/trailing-comma-for-empty-tuples.ts
-* tuple/trailing-comma-trailing-rest.ts
-* tuple/trailing-comma.ts
-* tuple/tuple-labeled.ts
-* tuple/tuple-rest-not-last.ts
-* tuple/tuple.ts
-
-### type-alias
-* type-alias/conditional.ts
-* type-alias/issue-100857.ts
-* type-alias/issue-9874.ts
-
-### type-arguments-bit-shift-left-like
-* type-arguments-bit-shift-left-like/1.ts
-* type-arguments-bit-shift-left-like/3.ts
-* type-arguments-bit-shift-left-like/4.ts
-* type-arguments-bit-shift-left-like/5.tsx
-
-### type-member-get-set
-* type-member-get-set/type-member-get-set.ts
-
-### type-only-module-specifiers
-* type-only-module-specifiers/basic.ts
-
-### typeof
-* typeof/typeof.ts
-
-### typeof-this
-* typeof-this/decorators.ts
-* typeof-this/typeof-this.ts
-
-### typeparams
-* typeparams/class-method.ts
-* typeparams/const.ts
-* typeparams/line-breaking-after-extends-2.ts
-* typeparams/line-breaking-after-extends.ts
-* typeparams/long-function-arg.ts
-* typeparams/tagged-template-expression.ts
-
-### typeparams/empty-parameters-with-arrow-function
-* typeparams/empty-parameters-with-arrow-function/issue-13817.ts
-
-### typeparams/print-width-120
-* typeparams/print-width-120/issue-7542.tsx
-
-### typeparams/trailing-comma
-* typeparams/trailing-comma/type-paramters.ts
-
-### union
-* union/comments.ts
-* union/inlining.ts
-* union/union-parens.ts
-* union/with-type-params.ts
-
-### union/consistent-with-flow
-* union/consistent-with-flow/comment.ts
-* union/consistent-with-flow/comments.ts
-* union/consistent-with-flow/prettier-ignore.ts
-* union/consistent-with-flow/single-type.ts
-* union/consistent-with-flow/within-tuple.ts
-
-### union/single-type
-* union/single-type/single-type.ts
-
-### update-expression
-* update-expression/update-expressions.ts
-
-### webhost
-* webhost/webtsc.ts
+### jsx/attr-element
+* jsx/attr-element/attr-element.js
+
+### jsx/binary-expressions
+* jsx/binary-expressions/relational-operators.js
+
+### jsx/comments
+* jsx/comments/eslint-disable.js
+* jsx/comments/in-attributes.js
+* jsx/comments/in-end-tag.js
+* jsx/comments/in-tags.js
+* jsx/comments/jsx-tag-comment-after-prop.js
+* jsx/comments/like-a-comment-in-jsx-text.js
+
+### jsx/deprecated-jsx-bracket-same-line-option
+* jsx/deprecated-jsx-bracket-same-line-option/jsx.js
+
+### jsx/embed
+* jsx/embed/css-embed.js
+
+### jsx/escape
+* jsx/escape/nbsp.js
+
+### jsx/expression-with-types
+* jsx/expression-with-types/expression.js
+
+### jsx/fbt
+* jsx/fbt/test.js
+
+### jsx/fragment
+* jsx/fragment/fragment.js
+
+### jsx/ignore
+* jsx/ignore/jsx_ignore.js
+
+### jsx/jsx
+* jsx/jsx/array-iter.js
+* jsx/jsx/arrow.js
+* jsx/jsx/attr-comments.js
+* jsx/jsx/await.js
+* jsx/jsx/conditional-expression.js
+* jsx/jsx/expression.js
+* jsx/jsx/flow_fix_me.js
+* jsx/jsx/html_escape.js
+* jsx/jsx/hug.js
+* jsx/jsx/logical-expression.js
+* jsx/jsx/object-property.js
+* jsx/jsx/open-break.js
+* jsx/jsx/parens.js
+* jsx/jsx/quotes.js
+* jsx/jsx/regex.js
+* jsx/jsx/return-statement.js
+* jsx/jsx/self-closing.js
+* jsx/jsx/spacing.js
+* jsx/jsx/template-literal-in-attr.js
+* jsx/jsx/ternary.js
+
+### jsx/last-line
+* jsx/last-line/last_line.js
+* jsx/last-line/single_prop_multiline_string.js
+
+### jsx/multiline-assign
+* jsx/multiline-assign/test.js
+
+### jsx/newlines
+* jsx/newlines/test.js
+* jsx/newlines/windows.js
+
+### jsx/optional-chaining
+* jsx/optional-chaining/optional-chaining.jsx
+
+### jsx/significant-space
+* jsx/significant-space/comments.js
+* jsx/significant-space/test.js
+
+### jsx/single-attribute-per-line
+* jsx/single-attribute-per-line/single-attribute-per-line.js
+
+### jsx/split-attrs
+* jsx/split-attrs/test.js
+
+### jsx/spread
+* jsx/spread/attribute.js
+* jsx/spread/child.js
+
+### jsx/stateless-arrow-fn
+* jsx/stateless-arrow-fn/test.js
+
+### jsx/text-wrap
+* jsx/text-wrap/test.js
+
+### typescript/ambient
+* typescript/ambient/ambient.ts
+
+### typescript/angular-component-examples
+* typescript/angular-component-examples/15934-computed.component.ts
+* typescript/angular-component-examples/15934.component.ts
+* typescript/angular-component-examples/15969-computed.component.ts
+* typescript/angular-component-examples/test.component.ts
+
+### typescript/argument-expansion
+* typescript/argument-expansion/argument_expansion.ts
+* typescript/argument-expansion/arrow-with-return-type.ts
+
+### typescript/array
+* typescript/array/comment.ts
+
+### typescript/arrow
+* typescript/arrow/16067.ts
+* typescript/arrow/arrow_regression.ts
+* typescript/arrow/comments.ts
+* typescript/arrow/issue-6107-curry.ts
+
+### typescript/arrows
+* typescript/arrows/arrow_function_expression.ts
+* typescript/arrows/type_params.ts
+
+### typescript/as
+* typescript/as/as.ts
+* typescript/as/assignment2.ts
+* typescript/as/export_default_as.ts
+* typescript/as/expression-statement.ts
+* typescript/as/long-identifiers.ts
+* typescript/as/nested-await-and-as.ts
+* typescript/as/ternary.ts
+
+### typescript/assert
+* typescript/assert/comment.ts
+
+### typescript/assignment
+* typescript/assignment/issue-10846.ts
+* typescript/assignment/issue-10848.tsx
+* typescript/assignment/issue-10850.ts
+* typescript/assignment/issue-2482.ts
+* typescript/assignment/parenthesized.ts
+
+### typescript/call-signature
+* typescript/call-signature/call-signature.ts
+
+### typescript/cast
+* typescript/cast/as-const.ts
+* typescript/cast/assert-and-assign.ts
+* typescript/cast/generic-cast.ts
+* typescript/cast/hug-args.ts
+* typescript/cast/parenthesis.ts
+* typescript/cast/tuple-and-record.ts
+
+### typescript/chain-expression
+* typescript/chain-expression/call-expression.ts
+* typescript/chain-expression/member-expression.ts
+* typescript/chain-expression/test.ts
+
+### typescript/class
+* typescript/class/constructor.ts
+* typescript/class/declare-field.ts
+* typescript/class/empty-method-body.ts
+* typescript/class/extends_implements.ts
+* typescript/class/generics.ts
+* typescript/class/issue-16723.ts
+* typescript/class/parameter-properties.ts
+* typescript/class/quoted-property.ts
+
+### typescript/class-comment
+* typescript/class-comment/class-implements.ts
+* typescript/class-comment/declare.ts
+* typescript/class-comment/generic.ts
+* typescript/class-comment/misc.ts
+
+### typescript/classes
+* typescript/classes/break-heritage.ts
+* typescript/classes/break.ts
+
+### typescript/comments
+* typescript/comments/15707.ts
+* typescript/comments/16065-2.ts
+* typescript/comments/16065.ts
+* typescript/comments/abstract_class.ts
+* typescript/comments/abstract_methods.ts
+* typescript/comments/after_jsx_generic.tsx
+* typescript/comments/declare_function.ts
+* typescript/comments/interface.ts
+* typescript/comments/issues.ts
+* typescript/comments/jsx.tsx
+* typescript/comments/location.ts
+* typescript/comments/mapped_types.ts
+* typescript/comments/method_types.ts
+* typescript/comments/methods.ts
+* typescript/comments/ts-parameter-proerty.ts
+* typescript/comments/type-parameters.ts
+* typescript/comments/type_literals.ts
+* typescript/comments/types.ts
+* typescript/comments/union.ts
+
+### typescript/comments-2
+* typescript/comments-2/dangling.ts
+* typescript/comments-2/issues.ts
+* typescript/comments-2/last-arg.ts
+
+### typescript/compiler
+* typescript/compiler/anyIsAssignableToObject.ts
+* typescript/compiler/castOfAwait.ts
+* typescript/compiler/castParentheses.ts
+* typescript/compiler/checkInfiniteExpansionTermination.ts
+* typescript/compiler/commentInNamespaceDeclarationWithIdentifierPathName.ts
+* typescript/compiler/commentsInterface.ts
+* typescript/compiler/contextualSignatureInstantiation2.ts
+* typescript/compiler/declareDottedModuleName.ts
+* typescript/compiler/es5ExportDefaultClassDeclaration4.ts
+* typescript/compiler/functionOverloadsOnGenericArity1.ts
+* typescript/compiler/indexSignatureWithInitializer.ts
+* typescript/compiler/mappedTypeWithCombinedTypeMappers.ts
+* typescript/compiler/privacyGloImport.ts
+
+### typescript/conditional-types
+* typescript/conditional-types/comments.ts
+* typescript/conditional-types/conditonal-types.ts
+* typescript/conditional-types/infer-type.ts
+* typescript/conditional-types/nested-in-condition.ts
+* typescript/conditional-types/new-ternary-spec.ts
+* typescript/conditional-types/parentheses.ts
+
+### typescript/conformance/classes
+* typescript/conformance/classes/mixinAccessModifiers.ts
+* typescript/conformance/classes/mixinClassesAnnotated.ts
+* typescript/conformance/classes/mixinClassesAnonymous.ts
+* typescript/conformance/classes/mixinClassesMembers.ts
+* typescript/conformance/classes/nestedClassDeclaration.ts
+
+### typescript/conformance/classes/classDeclarations/classAbstractKeyword
+* typescript/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
+
+### typescript/conformance/classes/classDeclarations/classHeritageSpecification
+* typescript/conformance/classes/classDeclarations/classHeritageSpecification/classExtendsItselfIndirectly.ts
+
+### typescript/conformance/classes/constructorDeclarations/constructorParameters
+* typescript/conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues2.ts
+* typescript/conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties.ts
+* typescript/conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties2.ts
+* typescript/conformance/classes/constructorDeclarations/constructorParameters/declarationEmitReadonly.ts
+* typescript/conformance/classes/constructorDeclarations/constructorParameters/readonlyConstructorAssignment.ts
+
+### typescript/conformance/comments
+* typescript/conformance/comments/comments.ts
+
+### typescript/conformance/declarationEmit/typePredicates
+* typescript/conformance/declarationEmit/typePredicates/declarationEmitThisPredicatesWithPrivateName01.ts
+
+### typescript/conformance/es6/Symbols
+* typescript/conformance/es6/Symbols/symbolProperty15.ts
+
+### typescript/conformance/es6/templates
+* typescript/conformance/es6/templates/templateStringWithEmbeddedTypeAssertionOnAdditionES6.ts
+
+### typescript/conformance/expressions/asOperator
+* typescript/conformance/expressions/asOperator/asOperatorContextualType.ts
+
+### typescript/conformance/expressions/functionCalls
+* typescript/conformance/expressions/functionCalls/callWithSpreadES6.ts
+
+### typescript/conformance/internalModules/importDeclarations
+* typescript/conformance/internalModules/importDeclarations/circularImportAlias.ts
+* typescript/conformance/internalModules/importDeclarations/exportImportAlias.ts
+* typescript/conformance/internalModules/importDeclarations/importAliasIdentifiers.ts
+* typescript/conformance/internalModules/importDeclarations/invalidImportAliasIdentifiers.ts
+* typescript/conformance/internalModules/importDeclarations/shadowedInternalModule.ts
+
+### typescript/conformance/types/any
+* typescript/conformance/types/any/anyAsConstructor.ts
+* typescript/conformance/types/any/anyAsFunctionCall.ts
+* typescript/conformance/types/any/anyAsGenericFunctionCall.ts
+
+### typescript/conformance/types/firstTypeNode
+* typescript/conformance/types/firstTypeNode/firstTypeNode.ts
+
+### typescript/conformance/types/functions
+* typescript/conformance/types/functions/functionImplementationErrors.ts
+* typescript/conformance/types/functions/functionImplementations.ts
+* typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts
+* typescript/conformance/types/functions/parameterInitializersForwardReferencing.ts
+
+### typescript/conformance/types/mappedType
+* typescript/conformance/types/mappedType/mappedType.ts
+
+### typescript/conformance/types/moduleDeclaration
+* typescript/conformance/types/moduleDeclaration/kind-detection.ts
+
+### typescript/conformance/types/namespaceExportDeclaration
+* typescript/conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts
+
+### typescript/conformance/types/parameterProperty
+* typescript/conformance/types/parameterProperty/parameterProperty.ts
+
+### typescript/conformance/types/tuple
+* typescript/conformance/types/tuple/contextualTypeWithTuple.ts
+* typescript/conformance/types/tuple/indexerWithTuple.ts
+* typescript/conformance/types/tuple/typeInferenceWithTupleType.ts
+* typescript/conformance/types/tuple/wideningTuples1.ts
+* typescript/conformance/types/tuple/wideningTuples2.ts
+* typescript/conformance/types/tuple/wideningTuples3.ts
+* typescript/conformance/types/tuple/wideningTuples5.ts
+* typescript/conformance/types/tuple/wideningTuples7.ts
+
+### typescript/conformance/types/tuple/emptyTuples
+* typescript/conformance/types/tuple/emptyTuples/emptyTuplesTypeAssertion02.ts
+
+### typescript/conformance/types/typeOperator
+* typescript/conformance/types/typeOperator/typeOperator.ts
+
+### typescript/conformance/types/typeParameter
+* typescript/conformance/types/typeParameter/typeParameter.ts
+
+### typescript/conformance/types/typeParameters/typeParameterLists
+* typescript/conformance/types/typeParameters/typeParameterLists/innerTypeParameterShadowingOuterOne.ts
+* typescript/conformance/types/typeParameters/typeParameterLists/innerTypeParameterShadowingOuterOne2.ts
+* typescript/conformance/types/typeParameters/typeParameterLists/staticMembersUsingClassTypeParameter.ts
+
+### typescript/conformance/types/union
+* typescript/conformance/types/union/unionTypeCallSignatures.ts
+* typescript/conformance/types/union/unionTypeCallSignatures3.ts
+* typescript/conformance/types/union/unionTypeCallSignatures4.ts
+* typescript/conformance/types/union/unionTypeConstructSignatures.ts
+* typescript/conformance/types/union/unionTypeEquivalence.ts
+* typescript/conformance/types/union/unionTypeFromArrayLiteral.ts
+* typescript/conformance/types/union/unionTypeIndexSignature.ts
+
+### typescript/const
+* typescript/const/initializer-ambient-context.ts
+
+### typescript/custom/computedProperties
+* typescript/custom/computedProperties/symbol.ts
+
+### typescript/custom/modifiers
+* typescript/custom/modifiers/minustoken.ts
+* typescript/custom/modifiers/question.ts
+* typescript/custom/modifiers/readonly.ts
+
+### typescript/custom/module
+* typescript/custom/module/global.ts
+* typescript/custom/module/nestedNamespace.ts
+
+### typescript/custom/new
+* typescript/custom/new/newKeyword.ts
+
+### typescript/custom/stability
+* typescript/custom/stability/moduleBlock.ts
+
+### typescript/custom/typeParameters
+* typescript/custom/typeParameters/callAndConstructSignatureLong.ts
+* typescript/custom/typeParameters/functionTypeLong.ts
+* typescript/custom/typeParameters/interfaceParamsLong.ts
+* typescript/custom/typeParameters/typeParametersLong.ts
+* typescript/custom/typeParameters/variables.ts
+
+### typescript/declare
+* typescript/declare/declare_var.ts
+* typescript/declare/object-type-in-declare-function.ts
+
+### typescript/decorator-auto-accessors
+* typescript/decorator-auto-accessors/decorator-auto-accessors-type-annotations.ts
+
+### typescript/decorators
+* typescript/decorators/abstract-method.ts
+* typescript/decorators/accessor.ts
+* typescript/decorators/argument-list-preserve-line.ts
+* typescript/decorators/comments.ts
+* typescript/decorators/decorator-type-assertion.ts
+* typescript/decorators/decorators-comments.ts
+* typescript/decorators/decorators.ts
+* typescript/decorators/inline-decorators.ts
+* typescript/decorators/legacy.ts
+* typescript/decorators/mobx.ts
+
+### typescript/decorators-ts
+* typescript/decorators-ts/accessor-decorator.ts
+* typescript/decorators-ts/angular.ts
+* typescript/decorators-ts/method-decorator.ts
+* typescript/decorators-ts/mobx.ts
+* typescript/decorators-ts/multiple.ts
+* typescript/decorators-ts/parameter-decorator.ts
+* typescript/decorators-ts/property-decorator.ts
+* typescript/decorators-ts/typeorm.ts
+
+### typescript/definite
+* typescript/definite/definite.ts
+* typescript/definite/without-annotation.ts
+
+### typescript/end-of-line
+* typescript/end-of-line/multiline.ts
+
+### typescript/enum
+* typescript/enum/computed-members.ts
+* typescript/enum/enum.ts
+
+### typescript/export
+* typescript/export/comment.ts
+* typescript/export/export-type-star-from-2.ts
+* typescript/export/export-type-star-from.ts
+
+### typescript/export-default
+* typescript/export-default/function_as.ts
+
+### typescript/function-type
+* typescript/function-type/consistent.ts
+* typescript/function-type/type-annotation.ts
+
+### typescript/functional-composition
+* typescript/functional-composition/pipe-function-calls-with-comments.ts
+* typescript/functional-composition/pipe-function-calls.ts
+
+### typescript/generic
+* typescript/generic/arrow-return-type.ts
+* typescript/generic/issue-6899.ts
+* typescript/generic/ungrouped-parameters.ts
+
+### typescript/import-export
+* typescript/import-export/empty-import.ts
+* typescript/import-export/type-modifier.ts
+
+### typescript/import-require
+* typescript/import-require/type-imports.ts
+
+### typescript/import-type
+* typescript/import-type/import-type.ts
+
+### typescript/index-signature
+* typescript/index-signature/index-signature.ts
+* typescript/index-signature/static.ts
+
+### typescript/infer-extends
+* typescript/infer-extends/basic.ts
+
+### typescript/instantiation-expression
+* typescript/instantiation-expression/basic.ts
+* typescript/instantiation-expression/inferface-asi.ts
+* typescript/instantiation-expression/new.ts
+* typescript/instantiation-expression/property-access.ts
+
+### typescript/interface
+* typescript/interface/comments-generic.ts
+* typescript/interface/comments.ts
+* typescript/interface/generic.ts
+* typescript/interface/ignore.ts
+* typescript/interface/long-extends.ts
+
+### typescript/interface/long-type-parameters
+* typescript/interface/long-type-parameters/long-type-parameters.ts
+
+### typescript/interface2
+* typescript/interface2/comments-declare.ts
+* typescript/interface2/comments.ts
+
+### typescript/interface2/break
+* typescript/interface2/break/break.ts
+
+### typescript/intersection
+* typescript/intersection/type-arguments.ts
+
+### typescript/intersection/consistent-with-flow
+* typescript/intersection/consistent-with-flow/comment.ts
+* typescript/intersection/consistent-with-flow/intersection-parens.ts
+
+### typescript/key-remapping-in-mapped-types
+* typescript/key-remapping-in-mapped-types/key-remapping.ts
+
+### typescript/keyof
+* typescript/keyof/keyof.ts
+
+### typescript/keyword-types
+* typescript/keyword-types/conditional-types.ts
+* typescript/keyword-types/keyword-types-with-parens-comments.ts
+
+### typescript/keywords
+* typescript/keywords/keywords-2.ts
+* typescript/keywords/module.ts
+
+### typescript/last-argument-expansion
+* typescript/last-argument-expansion/break.ts
+* typescript/last-argument-expansion/decorated-function.tsx
+* typescript/last-argument-expansion/edge_case.ts
+* typescript/last-argument-expansion/forward-ref.tsx
+
+### typescript/mapped-type
+* typescript/mapped-type/intersection.ts
+* typescript/mapped-type/issue-11098.ts
+* typescript/mapped-type/mapped-type.ts
+
+### typescript/mapped-type/break-mode
+* typescript/mapped-type/break-mode/break-mode.ts
+
+### typescript/method
+* typescript/method/issue-10352-consistency.ts
+
+### typescript/method-chain
+* typescript/method-chain/comment.ts
+
+### typescript/module
+* typescript/module/empty.ts
+* typescript/module/global.ts
+* typescript/module/keyword.ts
+* typescript/module/module_nested.ts
+* typescript/module/namespace_nested.ts
+
+### typescript/multiparser-css
+* typescript/multiparser-css/issue-6259.ts
+
+### typescript/new
+* typescript/new/new-signature.ts
+
+### typescript/no-semi
+* typescript/no-semi/no-semi.ts
+* typescript/no-semi/non-null.ts
+
+### typescript/non-null
+* typescript/non-null/braces.ts
+* typescript/non-null/optional-chain.ts
+* typescript/non-null/parens.ts
+
+### typescript/nosemi
+* typescript/nosemi/type.ts
+
+### typescript/optional-method
+* typescript/optional-method/optional-method.ts
+
+### typescript/optional-type
+* typescript/optional-type/complex.ts
+
+### typescript/prettier-ignore
+* typescript/prettier-ignore/issue-14238.ts
+* typescript/prettier-ignore/mapped-types.ts
+* typescript/prettier-ignore/prettier-ignore-nested-unions.ts
+* typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts
+
+### typescript/private-fields-in-in
+* typescript/private-fields-in-in/basic.ts
+
+### typescript/rest-type
+* typescript/rest-type/complex.ts
+* typescript/rest-type/infer-type.ts
+
+### typescript/satisfies-operators
+* typescript/satisfies-operators/argument-expansion.ts
+* typescript/satisfies-operators/assignment.ts
+* typescript/satisfies-operators/basic.ts
+* typescript/satisfies-operators/comments-unstable.ts
+* typescript/satisfies-operators/comments.ts
+* typescript/satisfies-operators/export-default-as.ts
+* typescript/satisfies-operators/expression-statement.ts
+* typescript/satisfies-operators/gt-lt.ts
+* typescript/satisfies-operators/hug-args.ts
+* typescript/satisfies-operators/lhs.ts
+* typescript/satisfies-operators/nested-await-and-satisfies.ts
+* typescript/satisfies-operators/non-null.ts
+* typescript/satisfies-operators/satisfies.ts
+* typescript/satisfies-operators/template-literal.ts
+* typescript/satisfies-operators/ternary.ts
+* typescript/satisfies-operators/types-comments.ts
+
+### typescript/static-blocks
+* typescript/static-blocks/nested.ts
+
+### typescript/template-literals
+* typescript/template-literals/as-expression.ts
+* typescript/template-literals/expressions.ts
+
+### typescript/ternaries
+* typescript/ternaries/indent.ts
+
+### typescript/test-declarations
+* typescript/test-declarations/test_declarations.ts
+
+### typescript/trailing-comma
+* typescript/trailing-comma/arrow-functions.tsx
+* typescript/trailing-comma/trailing.ts
+* typescript/trailing-comma/type-arguments.ts
+* typescript/trailing-comma/type-parameters-vs-arguments.ts
+
+### typescript/tsx
+* typescript/tsx/member-expression.tsx
+* typescript/tsx/not-react.ts
+* typescript/tsx/react.tsx
+* typescript/tsx/type-parameters.tsx
+* typescript/tsx/url.tsx
+
+### typescript/tuple
+* typescript/tuple/dangling-comments.ts
+* typescript/tuple/trailing-comma-for-empty-tuples.ts
+* typescript/tuple/trailing-comma-trailing-rest.ts
+* typescript/tuple/trailing-comma.ts
+* typescript/tuple/tuple-labeled.ts
+* typescript/tuple/tuple-rest-not-last.ts
+* typescript/tuple/tuple.ts
+
+### typescript/type-alias
+* typescript/type-alias/conditional.ts
+* typescript/type-alias/issue-100857.ts
+* typescript/type-alias/issue-9874.ts
+
+### typescript/type-arguments-bit-shift-left-like
+* typescript/type-arguments-bit-shift-left-like/1.ts
+* typescript/type-arguments-bit-shift-left-like/3.ts
+* typescript/type-arguments-bit-shift-left-like/4.ts
+* typescript/type-arguments-bit-shift-left-like/5.tsx
+
+### typescript/type-member-get-set
+* typescript/type-member-get-set/type-member-get-set.ts
+
+### typescript/type-only-module-specifiers
+* typescript/type-only-module-specifiers/basic.ts
+
+### typescript/typeof
+* typescript/typeof/typeof.ts
+
+### typescript/typeof-this
+* typescript/typeof-this/decorators.ts
+* typescript/typeof-this/typeof-this.ts
+
+### typescript/typeparams
+* typescript/typeparams/class-method.ts
+* typescript/typeparams/const.ts
+* typescript/typeparams/line-breaking-after-extends-2.ts
+* typescript/typeparams/line-breaking-after-extends.ts
+* typescript/typeparams/long-function-arg.ts
+* typescript/typeparams/tagged-template-expression.ts
+
+### typescript/typeparams/empty-parameters-with-arrow-function
+* typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts
+
+### typescript/typeparams/print-width-120
+* typescript/typeparams/print-width-120/issue-7542.tsx
+
+### typescript/typeparams/trailing-comma
+* typescript/typeparams/trailing-comma/type-paramters.ts
+
+### typescript/union
+* typescript/union/comments.ts
+* typescript/union/inlining.ts
+* typescript/union/union-parens.ts
+* typescript/union/with-type-params.ts
+
+### typescript/union/consistent-with-flow
+* typescript/union/consistent-with-flow/comment.ts
+* typescript/union/consistent-with-flow/comments.ts
+* typescript/union/consistent-with-flow/prettier-ignore.ts
+* typescript/union/consistent-with-flow/single-type.ts
+* typescript/union/consistent-with-flow/within-tuple.ts
+
+### typescript/union/single-type
+* typescript/union/single-type/single-type.ts
+
+### typescript/update-expression
+* typescript/update-expression/update-expressions.ts
+
+### typescript/webhost
+* typescript/webhost/webtsc.ts

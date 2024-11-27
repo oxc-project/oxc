@@ -20,11 +20,14 @@ pub struct SpecParser {
 impl SpecParser {
     pub fn parse(&mut self, spec: &Path) {
         let spec_content = fs::read_to_string(spec).unwrap_or_default();
+
+        self.source_text.clone_from(&spec_content);
+        self.calls.clear();
+
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(spec).unwrap_or_default();
+
         let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
-        self.source_text.clone_from(&spec_content);
-        self.calls = vec![];
         self.visit_program(&mut ret.program);
     }
 }

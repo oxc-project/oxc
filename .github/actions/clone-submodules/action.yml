@@ -31,4 +31,4 @@ runs:
         show-progress: false
         repository: prettier/prettier
         path: tasks/prettier_conformance/prettier
-        ref: 52829385bcc4d785e58ae2602c0b098a643523c9 # v3.3.3
+        ref: 37fd1774d13ef68abcc03775ceef0a91f87a57d7 # v3.4.1
