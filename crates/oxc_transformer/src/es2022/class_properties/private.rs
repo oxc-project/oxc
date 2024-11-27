@@ -143,15 +143,55 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             unreachable!()
         };
 
-        let prop_details = self.lookup_private_property(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
-        let Some((prop, class_name_binding, is_declaration)) = prop_details else { return };
+        let Some((callee, object)) = self.transform_private_field_callee(field_expr, ctx) else {
+            return;
+        };
+
+        // Substitute `<callee>.call` as callee of call expression
+        call_expr.callee = Expression::from(ctx.ast.member_expression_static(
+            SPAN,
+            callee,
+            ctx.ast.identifier_name(SPAN, Atom::from("call")),
+            false,
+        ));
+        // Add `object` to call arguments
+        call_expr.arguments.insert(0, Argument::from(object));
+    }
+
+    /// Transform [`CallExpression::callee`] or [`TaggedTemplateExpression::tag`] that is a private field.
+    ///
+    /// Returns two expressions for `callee` and `object`:
+    ///
+    /// Instance prop:
+    /// * `this.#prop` ->
+    ///   callee: `_classPrivateFieldGet(_prop, this)`
+    ///   object: `this`
+    /// * `this.obj.#prop` ->
+    ///   callee: `_classPrivateFieldGet(_prop, _this$obj = this.obj);`
+    ///   object: `_this$obj`
+    ///
+    /// Static prop:
+    /// * `this.#prop` ->
+    ///   callee: `_assertClassBrand(Class, this, _prop)._`
+    ///   object: `this`
+    /// * `this.obj.#prop` ->
+    ///   callee: `_assertClassBrand(Class, (_this$obj = this.obj), _prop)._`
+    ///   object: `_this$obj`
+    fn transform_private_field_callee(
+        &mut self,
+        field_expr: &mut PrivateFieldExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<(Expression<'a>, Expression<'a>)> {
+        // TODO: Should never be `None` - only because implementation is incomplete.
+        let (prop, class_name_binding, is_declaration) =
+            self.lookup_private_property(&field_expr.field)?;
         let prop_ident = prop.binding.create_read_expression(ctx);
 
         let object = ctx.ast.move_expression(&mut field_expr.object);
 
         // Get replacement for callee
-        let (callee, object) = if prop.is_static {
+        let replacement = if prop.is_static {
             // TODO: If `object` is reference to class name, and class is declaration, use shortcut `_prop._.call(Class)`.
             // TODO(improve-on-babel): No reason not to apply these shortcuts for class expressions too.
 
@@ -196,15 +236,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             (get_call, object2)
         };
 
-        // Substitute `<callee>.call` as callee of call expression
-        call_expr.callee = Expression::from(ctx.ast.member_expression_static(
-            SPAN,
-            callee,
-            ctx.ast.identifier_name(SPAN, Atom::from("call")),
-            false,
-        ));
-        // Add `object` to call arguments
-        call_expr.arguments.insert(0, Argument::from(object));
+        Some(replacement)
     }
 
     /// Transform assignment to private field.
