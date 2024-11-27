@@ -161,5 +161,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireReturnsType::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireReturnsType::NAME, RequireReturnsType::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -105,5 +105,5 @@ fn test() {
         ("Array = 1;", None),
     ];
 
-    Tester::new(NoGlobalAssign::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoGlobalAssign::NAME, NoGlobalAssign::CATEGORY, pass, fail).test_and_snapshot();
 }

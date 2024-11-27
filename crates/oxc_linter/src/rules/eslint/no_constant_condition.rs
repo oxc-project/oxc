@@ -405,5 +405,6 @@ fn test() {
         // ("function* foo() { for (let foo = 1 + 2 + 3 + (yield); true; baz) {}}", None),
     ];
 
-    Tester::new(NoConstantCondition::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoConstantCondition::NAME, NoConstantCondition::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

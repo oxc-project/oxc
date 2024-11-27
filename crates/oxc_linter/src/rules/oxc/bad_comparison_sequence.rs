@@ -162,5 +162,6 @@ fn test() {
         ("if (a <= b <= c) { console.log('foo') }", None),
     ];
 
-    Tester::new(BadComparisonSequence::NAME, pass, fail).test_and_snapshot();
+    Tester::new(BadComparisonSequence::NAME, BadComparisonSequence::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

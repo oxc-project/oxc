@@ -132,5 +132,6 @@ fn test() {
         "Promise.all([await /* comment*/ promise])",
     ];
 
-    Tester::new(NoAwaitInPromiseMethods::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAwaitInPromiseMethods::NAME, NoAwaitInPromiseMethods::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

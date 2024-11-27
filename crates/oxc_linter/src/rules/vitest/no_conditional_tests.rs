@@ -141,5 +141,7 @@ fn test() {
 			   });"#,
     ];
 
-    Tester::new(NoConditionalTests::NAME, pass, fail).with_vitest_plugin(true).test_and_snapshot();
+    Tester::new(NoConditionalTests::NAME, NoConditionalTests::CATEGORY, pass, fail)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }

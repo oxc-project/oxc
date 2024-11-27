@@ -432,5 +432,5 @@ fn test() {
         ("export const notThen = 1, then = 1", None),
     ];
 
-    Tester::new(NoThenable::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoThenable::NAME, NoThenable::CATEGORY, pass, fail).test_and_snapshot();
 }

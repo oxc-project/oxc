@@ -84,7 +84,7 @@ impl Rule for NoRedundantRoles {
 
 #[test]
 fn test() {
-    use crate::{rules::NoRedundantRoles, tester::Tester};
+    use crate::tester::Tester;
 
     fn settings() -> serde_json::Value {
         serde_json::json!({
@@ -115,5 +115,7 @@ fn test() {
         ("<body role='document' />", "<body  />"),
     ];
 
-    Tester::new(NoRedundantRoles::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

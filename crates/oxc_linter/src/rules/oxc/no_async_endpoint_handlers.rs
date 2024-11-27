@@ -389,5 +389,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoAsyncEndpointHandlers::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAsyncEndpointHandlers::NAME, NoAsyncEndpointHandlers::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -215,5 +215,7 @@ console.log('hello');
         ),
     ];
 
-    Tester::new(PreferTsExpectError::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferTsExpectError::NAME, PreferTsExpectError::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -189,5 +189,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireParamName::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireParamName::NAME, RequireParamName::CATEGORY, pass, fail).test_and_snapshot();
 }

@@ -80,5 +80,7 @@ fn test() {
         ("const   enum Color { Red, Green, Blue }", "enum Color { Red, Green, Blue }", None),
     ];
 
-    Tester::new(NoConstEnum::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoConstEnum::NAME, NoConstEnum::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

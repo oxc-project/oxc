@@ -85,5 +85,5 @@ fn test() {
         r"new Buffer(input, encoding);",
     ];
 
-    Tester::new(NoNewBuffer::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNewBuffer::NAME, NoNewBuffer::CATEGORY, pass, fail).test_and_snapshot();
 }

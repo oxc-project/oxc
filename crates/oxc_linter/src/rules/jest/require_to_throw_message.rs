@@ -179,5 +179,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireToThrowMessage::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(RequireToThrowMessage::NAME, RequireToThrowMessage::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

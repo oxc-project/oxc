@@ -323,5 +323,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoPageCustomFont::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoPageCustomFont::NAME, NoPageCustomFont::CATEGORY, pass, fail).test_and_snapshot();
 }

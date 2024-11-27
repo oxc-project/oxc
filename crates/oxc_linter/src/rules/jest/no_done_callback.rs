@@ -287,5 +287,7 @@ fn test() {
         ("it.each``('something', ({ a, b }, done) => { done(); })", None),
     ];
 
-    Tester::new(NoDoneCallback::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(NoDoneCallback::NAME, NoDoneCallback::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

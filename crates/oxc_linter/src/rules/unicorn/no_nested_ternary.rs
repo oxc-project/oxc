@@ -176,5 +176,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoNestedTernary::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoNestedTernary::NAME, NoNestedTernary::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

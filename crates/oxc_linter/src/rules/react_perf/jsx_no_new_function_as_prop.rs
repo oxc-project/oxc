@@ -191,7 +191,7 @@ fn test() {
         ",
     ];
 
-    Tester::new(JsxNoNewFunctionAsProp::NAME, pass, fail)
+    Tester::new(JsxNoNewFunctionAsProp::NAME, JsxNoNewFunctionAsProp::CATEGORY, pass, fail)
         .with_react_perf_plugin(true)
         .test_and_snapshot();
 }

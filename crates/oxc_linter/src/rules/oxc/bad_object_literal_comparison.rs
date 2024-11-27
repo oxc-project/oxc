@@ -139,5 +139,6 @@ fn test() {
         r"if (config != []) { }",
     ];
 
-    Tester::new(BadObjectLiteralComparison::NAME, pass, fail).test_and_snapshot();
+    Tester::new(BadObjectLiteralComparison::NAME, BadObjectLiteralComparison::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

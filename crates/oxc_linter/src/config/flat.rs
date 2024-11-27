@@ -186,7 +186,10 @@ mod test {
 
     #[allow(clippy::default_trait_access)]
     fn no_explicit_any() -> RuleWithSeverity {
-        RuleWithSeverity::new(RuleEnum::NoExplicitAny(Default::default()), AllowWarnDeny::Warn)
+        RuleWithSeverity::new(
+            RuleEnum::TypescriptNoExplicitAny(Default::default()),
+            AllowWarnDeny::Warn,
+        )
     }
 
     /// an empty ruleset is a no-op

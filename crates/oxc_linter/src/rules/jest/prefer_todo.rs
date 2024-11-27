@@ -248,7 +248,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferTodo::NAME, pass, fail)
+    Tester::new(PreferTodo::NAME, PreferTodo::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

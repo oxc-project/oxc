@@ -104,5 +104,7 @@ fn test() {
         (r"<div accessKey={`${undefined}${undefined}`} />", r"<div  />"),
     ];
 
-    Tester::new(NoAccessKey::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoAccessKey::NAME, NoAccessKey::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

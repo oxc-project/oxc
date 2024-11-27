@@ -92,5 +92,7 @@ fn test() {
         r"const Foo = () => { const Icon = <svg />; return (<IconButton icon={Icon} />) }",
     ];
 
-    Tester::new(JsxNoJsxAsProp::NAME, pass, fail).with_react_perf_plugin(true).test_and_snapshot();
+    Tester::new(JsxNoJsxAsProp::NAME, JsxNoJsxAsProp::CATEGORY, pass, fail)
+        .with_react_perf_plugin(true)
+        .test_and_snapshot();
 }

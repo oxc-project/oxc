@@ -913,7 +913,7 @@ fn test() {
     fail.extend(fail_vitest);
     fix.extend(fix_vitest);
 
-    Tester::new(ConsistentTestIt::NAME, pass, fail)
+    Tester::new(ConsistentTestIt::NAME, ConsistentTestIt::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .expect_fix(fix)

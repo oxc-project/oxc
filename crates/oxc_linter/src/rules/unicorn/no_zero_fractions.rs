@@ -213,5 +213,7 @@ fn test() {
         ("ôTest(0.)", "ôTest(0)"),
     ];
 
-    Tester::new(NoZeroFractions::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoZeroFractions::NAME, NoZeroFractions::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

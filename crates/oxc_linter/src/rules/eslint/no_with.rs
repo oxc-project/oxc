@@ -50,5 +50,5 @@ fn test() {
 
     let fail = vec!["with(foo) { bar() }"];
 
-    Tester::new(NoWith::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoWith::NAME, NoWith::CATEGORY, pass, fail).test_and_snapshot();
 }

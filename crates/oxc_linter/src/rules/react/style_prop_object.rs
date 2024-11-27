@@ -493,5 +493,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(StylePropObject::NAME, pass, fail).test_and_snapshot();
+    Tester::new(StylePropObject::NAME, StylePropObject::CATEGORY, pass, fail).test_and_snapshot();
 }

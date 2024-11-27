@@ -317,5 +317,6 @@ fn test() {
         (r"<><Foo>{moo}</Foo></>", None),
     ];
 
-    Tester::new(JsxNoUselessFragment::NAME, pass, fail).test_and_snapshot();
+    Tester::new(JsxNoUselessFragment::NAME, JsxNoUselessFragment::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

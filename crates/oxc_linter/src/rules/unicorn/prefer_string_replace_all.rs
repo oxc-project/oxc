@@ -237,5 +237,7 @@ fn test() {
         ("foo.replaceAll(/a/g, bar)", "foo.replaceAll(\"a\", bar)"),
     ];
 
-    Tester::new(PreferStringReplaceAll::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferStringReplaceAll::NAME, PreferStringReplaceAll::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

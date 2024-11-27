@@ -187,5 +187,7 @@ fn test() {
         ("const x = { foo: console.log(bar) }", "const x = { foo: undefined }", None),
     ];
 
-    Tester::new(NoConsole::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoConsole::NAME, NoConsole::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -70,7 +70,7 @@ fn test() {
 			      ",
     ];
 
-    Tester::new(NoAssignModuleVariable::NAME, pass, fail)
+    Tester::new(NoAssignModuleVariable::NAME, NoAssignModuleVariable::CATEGORY, pass, fail)
         .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

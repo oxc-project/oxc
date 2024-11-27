@@ -687,5 +687,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUselessUndefined::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

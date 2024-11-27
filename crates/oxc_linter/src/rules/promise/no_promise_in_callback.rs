@@ -164,5 +164,6 @@ fn test() {
         "let x = (err) => doThingWith(err).then(a)",
     ];
 
-    Tester::new(NoPromiseInCallback::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoPromiseInCallback::NAME, NoPromiseInCallback::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

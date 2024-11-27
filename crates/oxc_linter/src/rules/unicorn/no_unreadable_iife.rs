@@ -126,5 +126,5 @@ fn test() {
         "(async () => (( {bar} )))();",
     ];
 
-    Tester::new(NoUnreadableIife::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnreadableIife::NAME, NoUnreadableIife::CATEGORY, pass, fail).test_and_snapshot();
 }

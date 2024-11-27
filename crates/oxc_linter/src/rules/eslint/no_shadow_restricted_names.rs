@@ -162,5 +162,6 @@ fn test() {
         ("class foo { #undefined(undefined) { } }", None),
     ];
 
-    Tester::new(NoShadowRestrictedNames::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoShadowRestrictedNames::NAME, NoShadowRestrictedNames::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

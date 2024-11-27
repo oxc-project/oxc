@@ -254,5 +254,5 @@ fn test() {
         "var foo = new RegExp('[[    ]    ]    ', 'v');",
     ];
 
-    Tester::new(NoRegexSpaces::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::CATEGORY, pass, fail).test_and_snapshot();
 }

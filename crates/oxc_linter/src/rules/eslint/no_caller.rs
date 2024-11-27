@@ -98,5 +98,5 @@ fn test() {
 
     let fail = vec![("var x = arguments.callee", None), ("var x = arguments.caller", None)];
 
-    Tester::new(NoCaller::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoCaller::NAME, NoCaller::CATEGORY, pass, fail).test_and_snapshot();
 }

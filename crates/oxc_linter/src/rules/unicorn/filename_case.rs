@@ -310,5 +310,5 @@ fn test() {
         test_cases("src/foo/{foo_bar}.js", ["camelCase", "pascalCase", "kebabCase"]),
     ];
 
-    Tester::new(FilenameCase::NAME, pass, fail).test_and_snapshot();
+    Tester::new(FilenameCase::NAME, FilenameCase::CATEGORY, pass, fail).test_and_snapshot();
 }

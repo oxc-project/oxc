@@ -97,5 +97,6 @@ fn test() {
         "something().then(async () => await somethingElse())",
     ];
 
-    Tester::new(PreferAwaitToThen::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferAwaitToThen::NAME, PreferAwaitToThen::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

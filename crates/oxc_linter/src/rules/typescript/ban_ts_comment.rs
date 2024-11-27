@@ -995,5 +995,7 @@ if (false) {
         ("// @ts-ignore    : TS1234 because xyz", r"// @ts-expect-error    : TS1234 because xyz"),
     ];
 
-    Tester::new(BanTsComment::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(BanTsComment::NAME, BanTsComment::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

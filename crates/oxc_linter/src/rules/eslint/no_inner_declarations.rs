@@ -196,5 +196,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoInnerDeclarations::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

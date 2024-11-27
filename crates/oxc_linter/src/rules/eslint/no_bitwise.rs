@@ -158,5 +158,5 @@ fn test() {
         ("a >>>= b", None),
     ];
 
-    Tester::new(NoBitwise::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoBitwise::NAME, NoBitwise::CATEGORY, pass, fail).test_and_snapshot();
 }

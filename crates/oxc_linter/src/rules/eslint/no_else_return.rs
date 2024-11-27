@@ -563,5 +563,7 @@ fn test() {
 ("function foo() { if (bar) { if (baz) { return true; } else { let a; } } function a(){} }", "function foo() { if (bar) { if (baz) { return true; } let a; } function a(){} }", None),
 ("if (foo) { return true; } else { let a; }", "if (foo) { return true; } let a;", None)
     ];
-    Tester::new(NoElseReturn::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoElseReturn::NAME, NoElseReturn::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -54,5 +54,5 @@ fn test() {
 
     let fail = vec![("delete x", None)];
 
-    Tester::new(NoDeleteVar::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDeleteVar::NAME, NoDeleteVar::CATEGORY, pass, fail).test_and_snapshot();
 }

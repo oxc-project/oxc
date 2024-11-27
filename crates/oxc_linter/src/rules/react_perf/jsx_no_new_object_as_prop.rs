@@ -159,7 +159,7 @@ fn test() {
         r"const Foo = ({ x = {} }) => <Item x={x} />",
     ];
 
-    Tester::new(JsxNoNewObjectAsProp::NAME, pass, fail)
+    Tester::new(JsxNoNewObjectAsProp::NAME, JsxNoNewObjectAsProp::CATEGORY, pass, fail)
         .with_react_perf_plugin(true)
         .test_and_snapshot();
 }

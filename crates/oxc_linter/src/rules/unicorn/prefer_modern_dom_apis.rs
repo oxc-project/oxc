@@ -206,5 +206,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferModernDomApis::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferModernDomApis::NAME, PreferModernDomApis::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

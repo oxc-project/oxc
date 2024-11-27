@@ -142,5 +142,6 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoAbusiveEslintDisable::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAbusiveEslintDisable::NAME, NoAbusiveEslintDisable::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

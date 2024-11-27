@@ -7,22 +7,22 @@ use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn import_no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
+fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Usage of namespaced aka wildcard \"*\" imports prohibited")
         .with_help("Use named or default imports")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct ImportNoNamespace(Box<ImportNoNamespaceConfig>);
+pub struct NoNamespace(Box<NoNamespaceConfig>);
 
 #[derive(Debug, Default, Clone)]
-pub struct ImportNoNamespaceConfig {
+pub struct NoNamespaceConfig {
     ignore: Vec<CompactStr>,
 }
 
-impl std::ops::Deref for ImportNoNamespace {
-    type Target = ImportNoNamespaceConfig;
+impl std::ops::Deref for NoNamespace {
+    type Target = NoNamespaceConfig;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -77,16 +77,16 @@ declare_oxc_lint!(
     /// import defaultExport, { isUser } from './user';
     /// ```
     ///
-    ImportNoNamespace,
+    NoNamespace,
     style,
     pending  // TODO: fixer
 );
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-namespace.md>
-impl Rule for ImportNoNamespace {
+impl Rule for NoNamespace {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
-        Self(Box::new(ImportNoNamespaceConfig {
+        Self(Box::new(NoNamespaceConfig {
             ignore: obj
                 .and_then(|v| v.get("ignore"))
                 .and_then(serde_json::Value::as_array)
@@ -110,7 +110,7 @@ impl Rule for ImportNoNamespace {
                     let source = entry.module_request.name();
 
                     if self.ignore.is_empty() {
-                        ctx.diagnostic(import_no_namespace_diagnostic(entry.local_name.span()));
+                        ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span()));
                     } else {
                         if !source.contains('.') {
                             return;
@@ -124,7 +124,7 @@ impl Rule for ImportNoNamespace {
                             return;
                         }
 
-                        ctx.diagnostic(import_no_namespace_diagnostic(entry.local_name.span()));
+                        ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span()));
                     }
                 }
                 ImportImportName::Name(_) | ImportImportName::Default(_) => {}
@@ -159,7 +159,7 @@ fn test() {
         (r"import * as foo from './foo';", None),
     ];
 
-    Tester::new(ImportNoNamespace::NAME, pass, fail)
+    Tester::new(NoNamespace::NAME, NoNamespace::CATEGORY, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

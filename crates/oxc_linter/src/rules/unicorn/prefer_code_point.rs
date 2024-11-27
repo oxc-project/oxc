@@ -115,5 +115,7 @@ fn test() {
         (r"String.fromCharCode(0x1f984);", r"String.fromCodePoint(0x1f984);"),
     ];
 
-    Tester::new(PreferCodePoint::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferCodePoint::NAME, PreferCodePoint::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

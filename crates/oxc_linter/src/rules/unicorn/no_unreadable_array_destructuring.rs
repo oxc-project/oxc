@@ -132,5 +132,11 @@ fn test() {
         (r"let[]=[],[,,thirdElement] = foo;", None),
     ];
 
-    Tester::new(NoUnreadableArrayDestructuring::NAME, pass, fail).test_and_snapshot();
+    Tester::new(
+        NoUnreadableArrayDestructuring::NAME,
+        NoUnreadableArrayDestructuring::CATEGORY,
+        pass,
+        fail,
+    )
+    .test_and_snapshot();
 }

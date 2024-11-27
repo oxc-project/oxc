@@ -1644,5 +1644,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(ArrayType::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(ArrayType::NAME, ArrayType::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -405,5 +405,5 @@ fn test() {
         //   ),
     ];
 
-    Tester::new(NoDefaults::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDefaults::NAME, NoDefaults::CATEGORY, pass, fail).test_and_snapshot();
 }

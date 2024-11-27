@@ -99,5 +99,5 @@ fn test() {
         "var a = `JavaScript:`;",
     ];
 
-    Tester::new(NoScriptUrl::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoScriptUrl::NAME, NoScriptUrl::CATEGORY, pass, fail).test_and_snapshot();
 }

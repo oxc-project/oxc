@@ -252,5 +252,7 @@ fn test() {
         ("console.error(foo, ` bar`)", "console.error(foo, `bar`)", None),
     ];
 
-    Tester::new(NoConsoleSpaces::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoConsoleSpaces::NAME, NoConsoleSpaces::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -290,5 +290,7 @@ fn test() {
         (r"<Image alt='Word2' />;", Some(array()), None),
     ];
 
-    Tester::new(ImgRedundantAlt::NAME, pass, fail).with_jsx_a11y_plugin(true).test_and_snapshot();
+    Tester::new(ImgRedundantAlt::NAME, ImgRedundantAlt::CATEGORY, pass, fail)
+        .with_jsx_a11y_plugin(true)
+        .test_and_snapshot();
 }

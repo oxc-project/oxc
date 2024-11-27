@@ -112,5 +112,6 @@ fn test() {
         "(foo?.[`hasOwnProperty`])('bar')",
     ];
 
-    Tester::new(NoPrototypeBuiltins::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoPrototypeBuiltins::NAME, NoPrototypeBuiltins::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -244,5 +244,7 @@ fn test() {
 			     "#,
     ];
 
-    Tester::new(GoogleFontDisplay::NAME, pass, fail).with_nextjs_plugin(true).test_and_snapshot();
+    Tester::new(GoogleFontDisplay::NAME, GoogleFontDisplay::CATEGORY, pass, fail)
+        .with_nextjs_plugin(true)
+        .test_and_snapshot();
 }

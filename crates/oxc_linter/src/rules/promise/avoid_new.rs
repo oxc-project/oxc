@@ -77,5 +77,5 @@ fn test() {
         "Thing(new Promise(() => {}))",
     ];
 
-    Tester::new(AvoidNew::NAME, pass, fail).test_and_snapshot();
+    Tester::new(AvoidNew::NAME, AvoidNew::CATEGORY, pass, fail).test_and_snapshot();
 }

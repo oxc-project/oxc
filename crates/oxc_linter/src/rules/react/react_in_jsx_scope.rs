@@ -105,5 +105,5 @@ fn test() {
         ("var Foo, a = <img />;", None),
     ];
 
-    Tester::new(ReactInJsxScope::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ReactInJsxScope::NAME, ReactInJsxScope::CATEGORY, pass, fail).test_and_snapshot();
 }

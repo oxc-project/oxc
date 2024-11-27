@@ -480,5 +480,7 @@ fn test() {
         // ),
     ];
 
-    Tester::new(NoLargeSnapshots::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(NoLargeSnapshots::NAME, NoLargeSnapshots::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

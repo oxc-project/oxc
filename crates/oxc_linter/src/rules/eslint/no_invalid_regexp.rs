@@ -340,5 +340,5 @@ fn test() {
         ("new RegExp('(?<k>a)(?<k>b)')", None),
     ];
 
-    Tester::new(NoInvalidRegexp::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoInvalidRegexp::NAME, NoInvalidRegexp::CATEGORY, pass, fail).test_and_snapshot();
 }

@@ -626,7 +626,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferLowercaseTitle::NAME, pass, fail)
+    Tester::new(PreferLowercaseTitle::NAME, PreferLowercaseTitle::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

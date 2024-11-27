@@ -184,5 +184,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(AnchorHasContent::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(AnchorHasContent::NAME, AnchorHasContent::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

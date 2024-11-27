@@ -80,5 +80,6 @@ fn test() {
 
     let fail = vec!["Symbol();", "Symbol(); Symbol = function () {};"];
 
-    Tester::new(SymbolDescription::NAME, pass, fail).test_and_snapshot();
+    Tester::new(SymbolDescription::NAME, SymbolDescription::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -266,5 +266,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoPlusplus::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoPlusplus::NAME, NoPlusplus::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

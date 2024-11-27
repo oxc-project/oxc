@@ -431,7 +431,7 @@ mod test {
     fn test_override_allow() {
         let mut rules = RuleSet::default();
         rules.insert(RuleWithSeverity {
-            rule: RuleEnum::NoConsole(Default::default()),
+            rule: RuleEnum::EslintNoConsole(Default::default()),
             severity: AllowWarnDeny::Deny,
         });
         r#override(&mut rules, &json!({ "eslint/no-console": "off" }));
@@ -461,7 +461,7 @@ mod test {
         for config in &configs {
             let mut rules = RuleSet::default();
             rules.insert(RuleWithSeverity {
-                rule: RuleEnum::NoUnusedVars(Default::default()),
+                rule: RuleEnum::EslintNoUnusedVars(Default::default()),
                 severity: AllowWarnDeny::Warn,
             });
             r#override(&mut rules, config);

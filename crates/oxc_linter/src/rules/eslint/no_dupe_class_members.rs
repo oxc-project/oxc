@@ -164,5 +164,6 @@ fn test() {
         "class A { foo;  foo() {}}",
     ];
 
-    Tester::new(NoDupeClassMembers::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDupeClassMembers::NAME, NoDupeClassMembers::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

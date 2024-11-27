@@ -117,7 +117,7 @@ fn test() {
         (r"<h1 scope='bar' />;", r"<h1  />;", Some(settings())),
     ];
 
-    Tester::new(Scope::NAME, pass, fail)
+    Tester::new(Scope::NAME, Scope::CATEGORY, pass, fail)
         .expect_fix(fix)
         .with_jsx_a11y_plugin(true)
         .test_and_snapshot();

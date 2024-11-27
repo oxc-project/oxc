@@ -255,5 +255,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(DefaultCase::NAME, pass, fail).test_and_snapshot();
+    Tester::new(DefaultCase::NAME, DefaultCase::CATEGORY, pass, fail).test_and_snapshot();
 }

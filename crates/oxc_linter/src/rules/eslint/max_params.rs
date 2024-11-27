@@ -157,5 +157,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxParams::NAME, pass, fail).test_and_snapshot();
+    Tester::new(MaxParams::NAME, MaxParams::CATEGORY, pass, fail).test_and_snapshot();
 }

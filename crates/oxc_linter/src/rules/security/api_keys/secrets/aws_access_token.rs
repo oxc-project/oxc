@@ -68,7 +68,7 @@ static AWS_TOKEN_PREFIXES: Map<&'static str, &'static str> = phf_map! {
 
 #[test]
 fn test() {
-    use crate::{rules::ApiKeys, tester::Tester, RuleMeta};
+    use crate::{rules::SecurityApiKeys, tester::Tester, RuleMeta};
 
     let pass = vec![
         "let x = ''",
@@ -94,7 +94,7 @@ fn test() {
         "let key = 'AKIAAABCD1099FAM9KEY'",
     ];
 
-    Tester::new(ApiKeys::NAME, pass, fail)
+    Tester::new(SecurityApiKeys::NAME, SecurityApiKeys::CATEGORY, pass, fail)
         .with_snapshot_suffix("aws_access_token")
         .test_and_snapshot();
 }

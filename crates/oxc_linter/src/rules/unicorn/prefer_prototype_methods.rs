@@ -282,5 +282,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferPrototypeMethods::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferPrototypeMethods::NAME, PreferPrototypeMethods::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

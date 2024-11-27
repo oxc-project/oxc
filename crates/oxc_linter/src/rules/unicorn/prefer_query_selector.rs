@@ -200,5 +200,7 @@ fn test() {
         ("document.getElementsByClassName(fn());", "document.getElementsByClassName(fn());", None),
     ];
 
-    Tester::new(PreferQuerySelector::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferQuerySelector::NAME, PreferQuerySelector::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

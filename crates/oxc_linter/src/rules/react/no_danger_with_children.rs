@@ -235,7 +235,8 @@ fn test() {
         "#,
     ];
 
-    Tester::new(NoDangerWithChildren::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDangerWithChildren::NAME, NoDangerWithChildren::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }
 
 fn is_whitespace(s: &str) -> bool {

@@ -211,5 +211,5 @@ fn test() {
     ",
     ];
 
-    Tester::new(NoLonelyIf::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoLonelyIf::NAME, NoLonelyIf::CATEGORY, pass, fail).test_and_snapshot();
 }

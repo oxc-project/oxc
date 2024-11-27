@@ -101,5 +101,6 @@ fn test() {
         ("const list = new Array(5)['every'](function(_) {})", None),
     ];
 
-    Tester::new(UninvokedArrayCallback::NAME, pass, fail).test_and_snapshot();
+    Tester::new(UninvokedArrayCallback::NAME, UninvokedArrayCallback::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

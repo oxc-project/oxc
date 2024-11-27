@@ -374,5 +374,7 @@ fn test() {
         (r#"(Number?.parseInt)?.("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
     ];
 
-    Tester::new(PreferNumericLiterals::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferNumericLiterals::NAME, PreferNumericLiterals::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

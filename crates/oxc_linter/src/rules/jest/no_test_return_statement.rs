@@ -235,5 +235,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoTestReturnStatement::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(NoTestReturnStatement::NAME, NoTestReturnStatement::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

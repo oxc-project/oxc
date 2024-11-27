@@ -71,5 +71,7 @@ fn test() {
         None,
     )];
 
-    Tester::new(NoDivRegex::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoDivRegex::NAME, NoDivRegex::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

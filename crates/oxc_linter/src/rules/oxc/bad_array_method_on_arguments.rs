@@ -185,7 +185,8 @@ fn test() {
         ("function fn() {arguments['@@iterator'](() => {})}", None),
     ];
 
-    Tester::new(BadArrayMethodOnArguments::NAME, pass, fail).test_and_snapshot();
+    Tester::new(BadArrayMethodOnArguments::NAME, BadArrayMethodOnArguments::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }
 
 #[test]

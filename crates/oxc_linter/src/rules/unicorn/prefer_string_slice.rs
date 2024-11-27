@@ -141,5 +141,7 @@ fn test() {
         ("foo.bar.baz?.substr()", "foo.bar.baz?.slice()"),
     ];
 
-    Tester::new(PreferStringSlice::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferStringSlice::NAME, PreferStringSlice::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

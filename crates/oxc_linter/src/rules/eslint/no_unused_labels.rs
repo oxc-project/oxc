@@ -95,5 +95,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUnusedLabels::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoUnusedLabels::NAME, NoUnusedLabels::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

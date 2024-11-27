@@ -847,5 +847,7 @@ function writeChunks(a,callac){writeChunks(m,callac)}writeChunks(i,{})",
         ),
     ];
 
-    Tester::new(OnlyUsedInRecursion::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(OnlyUsedInRecursion::NAME, OnlyUsedInRecursion::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

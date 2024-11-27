@@ -258,5 +258,6 @@ fn test() {
         (r"-globalThis.Infinity", None),
     ];
 
-    Tester::new(PreferNumberProperties::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferNumberProperties::NAME, PreferNumberProperties::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

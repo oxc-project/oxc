@@ -524,5 +524,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferTypeError::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferTypeError::NAME, PreferTypeError::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -267,7 +267,7 @@ fn test() {
         "import { FooBar } from './typescript-export-assign-object'",
     ];
 
-    Tester::new(Named::NAME, pass, fail)
+    Tester::new(Named::NAME, Named::CATEGORY, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

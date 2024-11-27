@@ -175,5 +175,5 @@ fn test() {
         "(window?.alert)(foo)",     // { "ecmaVersion": 2020 }
     ];
 
-    Tester::new(NoAlert::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAlert::NAME, NoAlert::CATEGORY, pass, fail).test_and_snapshot();
 }

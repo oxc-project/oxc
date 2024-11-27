@@ -621,5 +621,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(JsxKey::NAME, pass, fail).test_and_snapshot();
+    Tester::new(JsxKey::NAME, JsxKey::CATEGORY, pass, fail).test_and_snapshot();
 }

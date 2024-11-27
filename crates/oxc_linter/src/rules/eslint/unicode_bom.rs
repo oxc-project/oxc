@@ -116,5 +116,7 @@ fn test() {
         ("var a = 123;", "﻿var a = 123;", Some(serde_json::json!(["always"]))),
     ];
 
-    Tester::new(UnicodeBom::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(UnicodeBom::NAME, UnicodeBom::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -158,5 +158,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(BadReplaceAllArg::NAME, pass, fail).test_and_snapshot();
+    Tester::new(BadReplaceAllArg::NAME, BadReplaceAllArg::CATEGORY, pass, fail).test_and_snapshot();
 }

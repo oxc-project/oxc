@@ -670,5 +670,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUselessEscape::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoUselessEscape::NAME, NoUselessEscape::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

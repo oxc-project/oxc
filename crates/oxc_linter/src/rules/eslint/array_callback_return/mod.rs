@@ -580,5 +580,6 @@ fn test() {
         ("foo?.filter((function() { return () => { console.log('hello') } })?.())", None),
     ];
 
-    Tester::new(ArrayCallbackReturn::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ArrayCallbackReturn::NAME, ArrayCallbackReturn::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

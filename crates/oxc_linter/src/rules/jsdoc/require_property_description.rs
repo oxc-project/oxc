@@ -201,5 +201,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequirePropertyDescription::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequirePropertyDescription::NAME, RequirePropertyDescription::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

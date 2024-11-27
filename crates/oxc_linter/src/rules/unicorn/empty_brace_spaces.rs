@@ -341,5 +341,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(EmptyBraceSpaces::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(EmptyBraceSpaces::NAME, EmptyBraceSpaces::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

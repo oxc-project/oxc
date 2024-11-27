@@ -226,7 +226,7 @@ fn test() {
     fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
     fix.extend(fix_vitest);
 
-    Tester::new(NoAliasMethods::NAME, pass, fail)
+    Tester::new(NoAliasMethods::NAME, NoAliasMethods::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .expect_fix(fix)

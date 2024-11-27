@@ -363,7 +363,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoCycle::NAME, pass, fail)
+    Tester::new(NoCycle::NAME, NoCycle::CATEGORY, pass, fail)
         .change_rule_path("cycles/depth-zero.js")
         .with_import_plugin(true)
         .test_and_snapshot();

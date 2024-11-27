@@ -1019,7 +1019,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(ValidTitle::NAME, pass, fail)
+    Tester::new(ValidTitle::NAME, ValidTitle::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

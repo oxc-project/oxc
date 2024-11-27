@@ -193,5 +193,6 @@ fn test() {
         r#"<script>测试 " 测试</script>"#,
     ];
 
-    Tester::new(NoUnescapedEntities::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnescapedEntities::NAME, NoUnescapedEntities::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

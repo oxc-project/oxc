@@ -281,5 +281,5 @@ fn test() {
         ("promise.then(undefined, (foo) => { })", None),
     ];
 
-    Tester::new(CatchErrorName::NAME, pass, fail).test_and_snapshot();
+    Tester::new(CatchErrorName::NAME, CatchErrorName::CATEGORY, pass, fail).test_and_snapshot();
 }

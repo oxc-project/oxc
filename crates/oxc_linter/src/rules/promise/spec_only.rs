@@ -133,5 +133,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(SpecOnly::NAME, pass, fail).test_and_snapshot();
+    Tester::new(SpecOnly::NAME, SpecOnly::CATEGORY, pass, fail).test_and_snapshot();
 }

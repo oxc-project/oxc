@@ -80,7 +80,7 @@ fn test() {
         (r#"import * as foo from "node:test""#, r#"import * as foo from "vitest""#, None),
     ];
 
-    Tester::new(NoImportNodeTest::NAME, pass, fail)
+    Tester::new(NoImportNodeTest::NAME, NoImportNodeTest::CATEGORY, pass, fail)
         .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

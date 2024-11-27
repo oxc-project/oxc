@@ -75,7 +75,7 @@ fn test() {
 
     let fail = vec![r"function x() {}", r"(function x() { return 42 })()"];
 
-    Tester::new(Unambiguous::NAME, pass, fail)
+    Tester::new(Unambiguous::NAME, Unambiguous::CATEGORY, pass, fail)
         .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();

@@ -143,5 +143,11 @@ fn test() {
         (r"<CustomComponent aria-activedescendant={someID} />;", None, Some(settings()), None),
     ];
 
-    Tester::new(AriaActivedescendantHasTabindex::NAME, pass, fail).test_and_snapshot();
+    Tester::new(
+        AriaActivedescendantHasTabindex::NAME,
+        AriaActivedescendantHasTabindex::CATEGORY,
+        pass,
+        fail,
+    )
+    .test_and_snapshot();
 }

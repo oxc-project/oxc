@@ -102,5 +102,7 @@ fn test() {
         ("import thing from './__mocks__/index'", None),
     ];
 
-    Tester::new(NoMocksImport::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(NoMocksImport::NAME, NoMocksImport::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

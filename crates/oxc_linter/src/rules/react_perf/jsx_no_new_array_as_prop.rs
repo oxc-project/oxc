@@ -140,7 +140,7 @@ fn test() {
         r"const Foo = ({ x = [] }) => <Item list={x} />",
     ];
 
-    Tester::new(JsxNoNewArrayAsProp::NAME, pass, fail)
+    Tester::new(JsxNoNewArrayAsProp::NAME, JsxNoNewArrayAsProp::CATEGORY, pass, fail)
         .with_react_perf_plugin(true)
         .test_and_snapshot();
 }

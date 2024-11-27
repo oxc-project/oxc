@@ -494,5 +494,12 @@ fn test() {
         ("funcction foo(): Record<string, any> {}", Some(serde_json::json!(["index-signature"]))),
     ];
 
-    Tester::new(ConsistentIndexedObjectStyle::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(
+        ConsistentIndexedObjectStyle::NAME,
+        ConsistentIndexedObjectStyle::CATEGORY,
+        pass,
+        fail,
+    )
+    .expect_fix(fix)
+    .test_and_snapshot();
 }

@@ -264,5 +264,5 @@ fn test() {
         ("import * as mod from 'mod'; delete mod?.prop", None),
     ];
 
-    Tester::new(NoImportAssign::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoImportAssign::NAME, NoImportAssign::CATEGORY, pass, fail).test_and_snapshot();
 }

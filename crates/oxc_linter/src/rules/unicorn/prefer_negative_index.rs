@@ -642,5 +642,7 @@ fn test() {
         							NOT_SUPPORTED.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
         						", None)
     ];
-    Tester::new(PreferNegativeIndex::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferNegativeIndex::NAME, PreferNegativeIndex::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

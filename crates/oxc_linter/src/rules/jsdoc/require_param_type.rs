@@ -257,5 +257,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireParamType::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireParamType::NAME, RequireParamType::CATEGORY, pass, fail).test_and_snapshot();
 }

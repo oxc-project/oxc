@@ -386,5 +386,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoStandaloneExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(NoStandaloneExpect::NAME, NoStandaloneExpect::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

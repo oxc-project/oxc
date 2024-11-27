@@ -211,5 +211,5 @@ fn test() {
       ",
     ];
 
-    Tester::new(NoUselessCatch::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessCatch::NAME, NoUselessCatch::CATEGORY, pass, fail).test_and_snapshot();
 }

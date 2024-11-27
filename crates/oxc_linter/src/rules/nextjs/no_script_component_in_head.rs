@@ -127,5 +127,6 @@ fn test() {
         "#,
     ];
 
-    Tester::new(NoScriptComponentInHead::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoScriptComponentInHead::NAME, NoScriptComponentInHead::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

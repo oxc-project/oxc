@@ -757,5 +757,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUnknownProperty::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnknownProperty::NAME, NoUnknownProperty::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

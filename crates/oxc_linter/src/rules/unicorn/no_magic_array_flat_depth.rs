@@ -130,5 +130,6 @@ fn test() {
 
     let fail = vec!["array.flat(2)", "array?.flat(2)", "array.flat(99,)", "array.flat(0b10,)"];
 
-    Tester::new(NoMagicArrayFlatDepth::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoMagicArrayFlatDepth::NAME, NoMagicArrayFlatDepth::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

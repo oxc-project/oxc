@@ -210,5 +210,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoDocumentImportInPage::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDocumentImportInPage::NAME, NoDocumentImportInPage::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -125,5 +125,6 @@ fn test() {
         r"a.charAt(4) === '\\ukeff'",
     ];
 
-    Tester::new(BadCharAtComparison::NAME, pass, fail).test_and_snapshot();
+    Tester::new(BadCharAtComparison::NAME, BadCharAtComparison::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

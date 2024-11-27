@@ -188,5 +188,5 @@ fn test() {
         "promiseReference.finally(() => {}, () => {})",
     ];
 
-    Tester::new(ValidParams::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ValidParams::NAME, ValidParams::CATEGORY, pass, fail).test_and_snapshot();
 }

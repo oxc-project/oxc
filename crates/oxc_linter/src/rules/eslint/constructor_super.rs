@@ -71,5 +71,5 @@ fn test() {
         // ("class A extends 'test' { constructor() { super(); } }", None),
     ];
 
-    Tester::new(ConstructorSuper::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ConstructorSuper::NAME, ConstructorSuper::CATEGORY, pass, fail).test_and_snapshot();
 }

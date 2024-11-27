@@ -486,5 +486,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoThisBeforeSuper::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoThisBeforeSuper::NAME, NoThisBeforeSuper::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

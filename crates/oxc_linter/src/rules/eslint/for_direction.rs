@@ -320,5 +320,7 @@ fn test() {
         ("for(var ii = 10; ii > 0; ii+=1){}", "for(var ii = 10; ii > 0; ii-=1){}", None),
     ];
 
-    Tester::new(ForDirection::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(ForDirection::NAME, ForDirection::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

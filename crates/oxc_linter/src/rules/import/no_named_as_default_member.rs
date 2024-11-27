@@ -207,7 +207,7 @@ fn test() {
         r#"import baz from "./named-and-default-export"; const {foo: _foo} = baz"#,
     ];
 
-    Tester::new(NoNamedAsDefaultMember::NAME, pass, fail)
+    Tester::new(NoNamedAsDefaultMember::NAME, NoNamedAsDefaultMember::CATEGORY, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

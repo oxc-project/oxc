@@ -159,5 +159,5 @@ fn test() {
         ("for (var a, a;;);", None),
     ];
 
-    Tester::new(NoRedeclare::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoRedeclare::NAME, NoRedeclare::CATEGORY, pass, fail).test_and_snapshot();
 }

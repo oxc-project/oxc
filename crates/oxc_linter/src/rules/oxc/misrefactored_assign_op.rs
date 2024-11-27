@@ -227,5 +227,6 @@ fn test() {
         //~^ ERROR: variable appears on both sides of an assignment operation
     ];
 
-    Tester::new(MisrefactoredAssignOp::NAME, pass, fail).test_and_snapshot();
+    Tester::new(MisrefactoredAssignOp::NAME, MisrefactoredAssignOp::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

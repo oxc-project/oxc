@@ -104,7 +104,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferStrictEqual::NAME, pass, fail)
+    Tester::new(PreferStrictEqual::NAME, PreferStrictEqual::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

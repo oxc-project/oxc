@@ -274,5 +274,6 @@ fn test() {
         ("(foo ? obj?.foo : obj?.bar).bar", None),
     ];
 
-    Tester::new(NoUnsafeOptionalChaining::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnsafeOptionalChaining::NAME, NoUnsafeOptionalChaining::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

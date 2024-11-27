@@ -87,5 +87,7 @@ fn test() {
         ("const foo = () => { new Error() }", "const foo = () => { throw new Error() }"),
     ];
 
-    Tester::new(MissingThrow::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(MissingThrow::NAME, MissingThrow::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -164,5 +164,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoRestSpreadProperties::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoRestSpreadProperties::NAME, NoRestSpreadProperties::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

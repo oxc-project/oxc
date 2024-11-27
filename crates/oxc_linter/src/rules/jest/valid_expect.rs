@@ -423,7 +423,7 @@ fn test_1() {
     )];
     let fail = vec![];
 
-    Tester::new(ValidExpect::NAME, pass, fail).with_jest_plugin(true).test();
+    Tester::new(ValidExpect::NAME, ValidExpect::CATEGORY, pass, fail).with_jest_plugin(true).test();
 }
 
 #[test]
@@ -1132,7 +1132,7 @@ fn test() {
     pass.extend(pass_vitest);
     fail.extend(fail_vitest);
 
-    Tester::new(ValidExpect::NAME, pass, fail)
+    Tester::new(ValidExpect::NAME, ValidExpect::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();

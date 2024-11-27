@@ -244,5 +244,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoHeadImportInDocument::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoHeadImportInDocument::NAME, NoHeadImportInDocument::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

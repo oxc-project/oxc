@@ -91,5 +91,5 @@ fn test() {
         "function bar(x) { x: for(;;) { break x; } }",
     ];
 
-    Tester::new(NoLabelVar::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoLabelVar::NAME, NoLabelVar::CATEGORY, pass, fail).test_and_snapshot();
 }

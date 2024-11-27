@@ -147,7 +147,9 @@ mod tests {
             ("let x: any = 1", "let x: unknown = 1", Some(json!([{ "fixToUnknown": true }]))),
             ("let x: any = 1", "let x: any = 1", None),
         ];
-        Tester::new(NoExplicitAny::NAME, pass, fail).expect_fix(fix).test();
+        Tester::new(NoExplicitAny::NAME, NoExplicitAny::CATEGORY, pass, fail)
+            .expect_fix(fix)
+            .test();
     }
 
     #[test]
@@ -652,6 +654,8 @@ mod tests {
             // NOTE: no current way to check that fixes don't occur when `ignoreRestArgs` is
             // `true`, since no fix technically occurs and `expect_fix()` panics without a fix.
         ];
-        Tester::new(NoExplicitAny::NAME, pass, fail).expect_fix(fixes).test_and_snapshot();
+        Tester::new(NoExplicitAny::NAME, NoExplicitAny::CATEGORY, pass, fail)
+            .expect_fix(fixes)
+            .test_and_snapshot();
     }
 }

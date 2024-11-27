@@ -729,5 +729,7 @@ type X = {} & (() => void);
         ),
     ];
 
-    Tester::new(PreferFunctionType::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferFunctionType::NAME, PreferFunctionType::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

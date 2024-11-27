@@ -96,5 +96,6 @@ fn test() {
 
     let fail = vec![r"fileReader.readAsArrayBuffer(blob)", r"fileReader.readAsText(blob)"];
 
-    Tester::new(PreferBlobReadingMethods::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferBlobReadingMethods::NAME, PreferBlobReadingMethods::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -519,7 +519,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(GetterReturn::NAME, pass, fail)
+    Tester::new(GetterReturn::NAME, GetterReturn::CATEGORY, pass, fail)
         .change_rule_path_extension("js")
         .test_and_snapshot();
 
@@ -537,5 +537,5 @@ fn test() {
 
     let fail = vec![];
 
-    Tester::new(GetterReturn::NAME, pass, fail).test();
+    Tester::new(GetterReturn::NAME, GetterReturn::CATEGORY, pass, fail).test();
 }

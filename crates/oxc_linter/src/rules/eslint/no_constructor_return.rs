@@ -104,5 +104,6 @@ fn test() {
         "class C { constructor(a) { if (!a) { return '' } else { a() } } }",
     ];
 
-    Tester::new(NoConstructorReturn::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoConstructorReturn::NAME, NoConstructorReturn::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

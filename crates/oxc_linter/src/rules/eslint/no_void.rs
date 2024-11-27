@@ -92,5 +92,5 @@ fn test() {
         ("var foo = void 0", Some(serde_json::json!([{ "allowAsStatement": true }]))),
     ];
 
-    Tester::new(NoVoid::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoVoid::NAME, NoVoid::CATEGORY, pass, fail).test_and_snapshot();
 }

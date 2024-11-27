@@ -195,7 +195,7 @@ fn test() {
 			      "#,
     ];
 
-    Tester::new(NoAsyncClientComponent::NAME, pass, fail)
+    Tester::new(NoAsyncClientComponent::NAME, NoAsyncClientComponent::CATEGORY, pass, fail)
         .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

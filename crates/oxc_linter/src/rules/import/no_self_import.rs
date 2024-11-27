@@ -86,7 +86,7 @@ fn test() {
             // "var bar = require('./no-self-import.js')",
         ];
 
-        Tester::new(NoSelfImport::NAME, pass, fail)
+        Tester::new(NoSelfImport::NAME, NoSelfImport::CATEGORY, pass, fail)
             .with_import_plugin(true)
             .change_rule_path("no-self-import.js")
             .test();
@@ -96,7 +96,7 @@ fn test() {
     // let pass = vec!["var bar = require('./bar')"];
     // let fail = vec![];
 
-    // Tester::new(NoSelfImport::NAME, pass, fail)
+    // Tester::new(NoSelfImport::NAME, NoSelfImport::CATEGORY, pass, fail)
     // .with_import_plugin(true)
     // .change_rule_path("bar/index.js")
     // .test();
@@ -110,7 +110,7 @@ fn test() {
     // "var bar = require('././././')",
     // ];
 
-    // Tester::new(NoSelfImport::NAME, pass, fail)
+    // Tester::new(NoSelfImport::NAME, NoSelfImport::CATEGORY, pass, fail)
     // .with_import_plugin(true)
     // .change_rule_path("index.js")
     // .test();
@@ -120,7 +120,7 @@ fn test() {
     // let pass = vec![];
     // let fail = vec!["var bar = require('../no-self-import-folder')"];
 
-    // Tester::new(NoSelfImport::NAME, pass, fail)
+    // Tester::new(NoSelfImport::NAME, NoSelfImport::CATEGORY, pass, fail)
     // .with_import_plugin(true)
     // .change_rule_path("no-self-import-folder/index.js")
     // .test();

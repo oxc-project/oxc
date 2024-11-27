@@ -144,5 +144,5 @@ fn test() {
         "interface I { constructor(): '';}",
     ];
 
-    Tester::new(NoMisusedNew::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoMisusedNew::NAME, NoMisusedNew::CATEGORY, pass, fail).test_and_snapshot();
 }

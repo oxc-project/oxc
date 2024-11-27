@@ -135,5 +135,11 @@ fn test() {
         "(await a) ? (await (a)) : (foo)",
     ];
 
-    Tester::new(PreferLogicalOperatorOverTernary::NAME, pass, fail).test_and_snapshot();
+    Tester::new(
+        PreferLogicalOperatorOverTernary::NAME,
+        PreferLogicalOperatorOverTernary::CATEGORY,
+        pass,
+        fail,
+    )
+    .test_and_snapshot();
 }

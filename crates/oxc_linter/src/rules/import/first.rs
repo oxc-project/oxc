@@ -228,7 +228,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(First::NAME, pass, fail)
+    Tester::new(First::NAME, First::CATEGORY, pass, fail)
         .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();

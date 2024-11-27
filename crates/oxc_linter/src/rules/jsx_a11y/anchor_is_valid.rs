@@ -769,5 +769,5 @@ fn test() {
         // ),
     ];
 
-    Tester::new(AnchorIsValid::NAME, pass, fail).test_and_snapshot();
+    Tester::new(AnchorIsValid::NAME, AnchorIsValid::CATEGORY, pass, fail).test_and_snapshot();
 }

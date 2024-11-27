@@ -484,5 +484,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoConfusingSetTimeout::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(NoConfusingSetTimeout::NAME, NoConfusingSetTimeout::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

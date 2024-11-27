@@ -344,5 +344,5 @@ fn test() {
         ("frank()['catch'](go).someOtherMethod()", None),
     ];
 
-    Tester::new(CatchOrReturn::NAME, pass, fail).test_and_snapshot();
+    Tester::new(CatchOrReturn::NAME, CatchOrReturn::CATEGORY, pass, fail).test_and_snapshot();
 }

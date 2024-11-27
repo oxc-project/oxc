@@ -349,7 +349,7 @@ fn test() {
         ("(foo as jest.Mock) = jest.fn();", "(foo as jest.Mock) = jest.fn();"),
     ];
 
-    Tester::new(PreferJestMocked::NAME, pass, fail)
+    Tester::new(PreferJestMocked::NAME, PreferJestMocked::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

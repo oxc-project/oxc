@@ -141,5 +141,6 @@ fn test() {
 			      }"#,
     ];
 
-    Tester::new(NoTitleInDocumentHead::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoTitleInDocumentHead::NAME, NoTitleInDocumentHead::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

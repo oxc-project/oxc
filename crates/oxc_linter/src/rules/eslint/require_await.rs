@@ -208,5 +208,5 @@ fn test() {
         "async function foo() { await (async () => { doSomething() }) }",
     ];
 
-    Tester::new(RequireAwait::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireAwait::NAME, RequireAwait::CATEGORY, pass, fail).test_and_snapshot();
 }

@@ -185,5 +185,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUnsafeDeclarationMerging::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnsafeDeclarationMerging::NAME, NoUnsafeDeclarationMerging::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

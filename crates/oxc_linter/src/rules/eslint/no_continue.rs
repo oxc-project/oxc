@@ -65,5 +65,5 @@ fn test() {
         "var sum = 0, i = 0; myLabel: while(i < 10) { if(i <= 5) { i++; continue myLabel; } sum += i; i++; }",
     ];
 
-    Tester::new(NoContinue::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoContinue::NAME, NoContinue::CATEGORY, pass, fail).test_and_snapshot();
 }

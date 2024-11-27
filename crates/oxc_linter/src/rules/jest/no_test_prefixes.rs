@@ -216,7 +216,7 @@ fn test() {
         ("fit('foo', () => {})", "it.only('foo', () => {})"),
     ];
 
-    Tester::new(NoTestPrefixes::NAME, pass, fail)
+    Tester::new(NoTestPrefixes::NAME, NoTestPrefixes::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .expect_fix(fix)

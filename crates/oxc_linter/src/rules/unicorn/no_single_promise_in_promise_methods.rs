@@ -263,7 +263,12 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoSinglePromiseInPromiseMethods::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(
+        NoSinglePromiseInPromiseMethods::NAME,
+        NoSinglePromiseInPromiseMethods::CATEGORY,
+        pass,
+        fail,
+    )
+    .expect_fix(fix)
+    .test_and_snapshot();
 }

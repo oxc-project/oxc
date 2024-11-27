@@ -177,5 +177,7 @@ fn test() {
         ("<div autoFocus id='lol'>foo</div>", "<div  id='lol'>foo</div>", None),
     ];
 
-    Tester::new(NoAutofocus::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoAutofocus::NAME, NoAutofocus::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

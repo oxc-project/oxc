@@ -670,5 +670,5 @@ fn test() {
         // ("switch (a === b ? c : d) { case 1: ; case 2: ; case 3: ; }", None)
     ];
 
-    Tester::new(NoFallthrough::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoFallthrough::NAME, NoFallthrough::CATEGORY, pass, fail).test_and_snapshot();
 }

@@ -76,5 +76,5 @@ fn test() {
         "test[`__proto__`] = function () {};",
     ];
 
-    Tester::new(NoProto::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoProto::NAME, NoProto::CATEGORY, pass, fail).test_and_snapshot();
 }

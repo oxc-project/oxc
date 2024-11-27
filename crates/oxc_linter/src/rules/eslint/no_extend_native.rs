@@ -315,5 +315,5 @@ fn test() {
         ("Array.prototype.p ??= 0", None), // { "ecmaVersion": 2021 }
     ];
 
-    Tester::new(NoExtendNative::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoExtendNative::NAME, NoExtendNative::CATEGORY, pass, fail).test_and_snapshot();
 }

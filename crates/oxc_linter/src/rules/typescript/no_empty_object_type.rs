@@ -450,5 +450,6 @@ fn test() {
         ("interface Base {}", Some(serde_json::json!([{ "allowWithName": "Props" }])), None, None),
     ];
 
-    Tester::new(NoEmptyObjectType::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyObjectType::NAME, NoEmptyObjectType::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -207,7 +207,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxDependencies::NAME, pass, fail)
+    Tester::new(MaxDependencies::NAME, MaxDependencies::CATEGORY, pass, fail)
         .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();

@@ -122,7 +122,7 @@ fn test() {
 
     let fix = vec![("exports = {}", "module.exports = {}")];
 
-    Tester::new(NoExportsAssign::NAME, pass, fail)
+    Tester::new(NoExportsAssign::NAME, NoExportsAssign::CATEGORY, pass, fail)
         .expect_fix(fix)
         .with_node_plugin(true)
         .test_and_snapshot();

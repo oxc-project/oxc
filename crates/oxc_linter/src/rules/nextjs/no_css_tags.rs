@@ -158,5 +158,7 @@ fn test() {
 			      </div>"#,
     ];
 
-    Tester::new(NoCssTags::NAME, pass, fail).with_nextjs_plugin(true).test_and_snapshot();
+    Tester::new(NoCssTags::NAME, NoCssTags::CATEGORY, pass, fail)
+        .with_nextjs_plugin(true)
+        .test_and_snapshot();
 }

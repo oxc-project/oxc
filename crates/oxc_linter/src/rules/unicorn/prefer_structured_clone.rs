@@ -197,5 +197,6 @@ fn test() {
         ("my.cloneDeep(foo,)", Some(serde_json::json!([{"functions": ["my.cloneDeep"]}]))),
     ];
 
-    Tester::new(PreferStructuredClone::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferStructuredClone::NAME, PreferStructuredClone::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

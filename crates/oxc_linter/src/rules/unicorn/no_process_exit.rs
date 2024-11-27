@@ -186,5 +186,5 @@ fn test() {
         (r#"lib.process.once("SIGINT", function() { process.exit(1); })"#),
     ];
 
-    Tester::new(NoProcessExit::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoProcessExit::NAME, NoProcessExit::CATEGORY, pass, fail).test_and_snapshot();
 }

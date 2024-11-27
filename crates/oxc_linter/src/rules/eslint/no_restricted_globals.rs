@@ -148,5 +148,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoRestrictedGlobals::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoRestrictedGlobals::NAME, NoRestrictedGlobals::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

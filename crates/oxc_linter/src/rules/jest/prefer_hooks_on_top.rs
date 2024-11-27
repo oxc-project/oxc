@@ -375,5 +375,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferHooksOnTop::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(PreferHooksOnTop::NAME, PreferHooksOnTop::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

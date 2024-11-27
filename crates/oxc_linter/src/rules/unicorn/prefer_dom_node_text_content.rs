@@ -153,5 +153,7 @@ fn test() {
         ("innerText.innerText = 'foo';", "innerText.textContent = 'foo';"),
     ];
 
-    Tester::new(PreferDomNodeTextContent::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferDomNodeTextContent::NAME, PreferDomNodeTextContent::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -112,5 +112,5 @@ fn test() {
         ("do {} while (null == x)", "do {} while (null === x)"),
     ];
 
-    Tester::new(NoEqNull::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoEqNull::NAME, NoEqNull::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
 }

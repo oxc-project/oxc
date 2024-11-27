@@ -123,5 +123,6 @@ fn test() {
         "var data = require('json!@scope/my-package/data.json')",
     ];
 
-    Tester::new(NoWebpackLoaderSyntax::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoWebpackLoaderSyntax::NAME, NoWebpackLoaderSyntax::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

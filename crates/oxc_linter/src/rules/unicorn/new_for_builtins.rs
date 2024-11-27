@@ -287,5 +287,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NewForBuiltins::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NewForBuiltins::NAME, NewForBuiltins::CATEGORY, pass, fail).test_and_snapshot();
 }

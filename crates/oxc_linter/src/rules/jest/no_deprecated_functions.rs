@@ -187,7 +187,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(NoDeprecatedFunctions::NAME, pass, fail)
+    Tester::new(NoDeprecatedFunctions::NAME, NoDeprecatedFunctions::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

@@ -363,5 +363,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(EmptyTags::NAME, pass, fail).test_and_snapshot();
+    Tester::new(EmptyTags::NAME, EmptyTags::CATEGORY, pass, fail).test_and_snapshot();
 }

@@ -70,5 +70,5 @@ fn test() {
         "var appHeader = new require('headers').appHeader",
     ];
 
-    Tester::new(NoNewRequire::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNewRequire::NAME, NoNewRequire::CATEGORY, pass, fail).test_and_snapshot();
 }

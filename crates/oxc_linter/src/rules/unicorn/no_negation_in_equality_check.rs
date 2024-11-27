@@ -135,5 +135,6 @@ fn test() {
 					",
     ];
 
-    Tester::new(NoNegationInEqualityCheck::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNegationInEqualityCheck::NAME, NoNegationInEqualityCheck::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

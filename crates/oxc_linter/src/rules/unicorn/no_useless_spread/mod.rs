@@ -751,5 +751,7 @@ fn test() {
         ("[...arr.reduce((a, b) => a.push(b), [])]", "arr.reduce((a, b) => a.push(b), [])"),
         ("[...arr.reduce((a, b) => a.push(b), [])]", "arr.reduce((a, b) => a.push(b), [])"),
     ];
-    Tester::new(NoUselessSpread::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoUselessSpread::NAME, NoUselessSpread::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

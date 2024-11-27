@@ -143,5 +143,7 @@ fn test() {
         (r#"<p tabIndex="0" aria-hidden="true">text</p>;"#, r#"<p tabIndex="0" >text</p>;"#),
     ];
 
-    Tester::new(NoAriaHiddenOnFocusable::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoAriaHiddenOnFocusable::NAME, NoAriaHiddenOnFocusable::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

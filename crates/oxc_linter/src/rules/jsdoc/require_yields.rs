@@ -1458,5 +1458,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireYields::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireYields::NAME, RequireYields::CATEGORY, pass, fail).test_and_snapshot();
 }

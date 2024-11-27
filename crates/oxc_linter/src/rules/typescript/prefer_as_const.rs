@@ -198,5 +198,7 @@ fn test() {
         // ("class foo { foo = <'bar'>'bar'; }", "class foo { foo = <const>'bar'; }", None),
     ];
 
-    Tester::new(PreferAsConst::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferAsConst::NAME, PreferAsConst::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

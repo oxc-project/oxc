@@ -250,5 +250,5 @@ fn test() {
         ("(((3496.29)).bkufyydt = 2e308) ? foo : bar;", None),
     ];
 
-    Tester::new(NoCondAssign::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoCondAssign::NAME, NoCondAssign::CATEGORY, pass, fail).test_and_snapshot();
 }

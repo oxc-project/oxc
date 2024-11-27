@@ -167,7 +167,7 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(PreferToBeTruthy::NAME, pass, fail)
+    Tester::new(PreferToBeTruthy::NAME, PreferToBeTruthy::CATEGORY, pass, fail)
         .expect_fix(fix)
         .with_vitest_plugin(true)
         .test_and_snapshot();

@@ -390,5 +390,7 @@ fn test() {
     // TODO: add more fixer tests
     let fix = vec![("var a = b\n(x || y).doSomething()", "var a = b\n;(x || y).doSomething()")];
 
-    Tester::new(NoUnexpectedMultiline::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoUnexpectedMultiline::NAME, NoUnexpectedMultiline::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

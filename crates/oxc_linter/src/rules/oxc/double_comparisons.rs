@@ -161,5 +161,7 @@ fn test() {
         ("x > y || x === y", "x >= y"),
     ];
 
-    Tester::new(DoubleComparisons::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(DoubleComparisons::NAME, DoubleComparisons::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

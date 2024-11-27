@@ -180,5 +180,7 @@ fn test() {
         (r"foo?.join()", r#"foo?.join(",")"#),
     ];
 
-    Tester::new(RequireArrayJoinSeparator::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(RequireArrayJoinSeparator::NAME, RequireArrayJoinSeparator::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

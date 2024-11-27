@@ -272,5 +272,5 @@ fn test() {
         (r"<Box as='audio'><Track kind='subtitles' /></Box>", None, Some(settings()), None),
     ];
 
-    Tester::new(MediaHasCaption::NAME, pass, fail).test_and_snapshot();
+    Tester::new(MediaHasCaption::NAME, MediaHasCaption::CATEGORY, pass, fail).test_and_snapshot();
 }

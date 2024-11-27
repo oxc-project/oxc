@@ -130,5 +130,7 @@ fn test() {
         ("module foo.'a'", "namespace foo.'a'", None),
     ];
 
-    Tester::new(PreferNamespaceKeyword::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferNamespaceKeyword::NAME, PreferNamespaceKeyword::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

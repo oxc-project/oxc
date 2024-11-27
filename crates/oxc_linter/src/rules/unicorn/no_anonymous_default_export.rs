@@ -170,5 +170,6 @@ fn test() {
         "export default (class extends class {} {})",
     ];
 
-    Tester::new(NoAnonymousDefaultExport::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAnonymousDefaultExport::NAME, NoAnonymousDefaultExport::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

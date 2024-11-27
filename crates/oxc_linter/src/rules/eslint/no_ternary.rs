@@ -56,5 +56,5 @@ fn test() {
         "function foo(bar) { return bar ? baz : qux; }",
     ];
 
-    Tester::new(NoTernary::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoTernary::NAME, NoTernary::CATEGORY, pass, fail).test_and_snapshot();
 }

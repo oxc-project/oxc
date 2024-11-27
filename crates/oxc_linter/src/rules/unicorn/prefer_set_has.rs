@@ -905,5 +905,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferSetHas::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferSetHas::NAME, PreferSetHas::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -226,5 +226,5 @@ fn test() {
     ",
     ];
 
-    Tester::new(NoEmptyFunction::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::CATEGORY, pass, fail).test_and_snapshot();
 }

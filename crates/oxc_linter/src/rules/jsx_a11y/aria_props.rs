@@ -102,5 +102,7 @@ fn test() {
     let fix =
         vec![(r#"<div aria-labeledby="foobar" />"#, r#"<div aria-labelledby="foobar" />"#, None)];
 
-    Tester::new(AriaProps::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(AriaProps::NAME, AriaProps::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

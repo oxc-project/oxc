@@ -167,5 +167,7 @@ fn test() {
         ("-0n <= x", "0n <= x", None),
     ];
 
-    Tester::new(NoCompareNegZero::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoCompareNegZero::NAME, NoCompareNegZero::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

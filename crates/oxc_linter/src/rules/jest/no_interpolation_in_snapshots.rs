@@ -122,7 +122,7 @@ fn test() {
         ("expect(something).not.toThrowErrorMatchingInlineSnapshot(`${interpolated}`);", None),
     ];
 
-    Tester::new(NoInterpolationInSnapshots::NAME, pass, fail)
+    Tester::new(NoInterpolationInSnapshots::NAME, NoInterpolationInSnapshots::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

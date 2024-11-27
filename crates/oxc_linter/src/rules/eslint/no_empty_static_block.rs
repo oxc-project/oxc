@@ -101,5 +101,7 @@ fn test() {
         ("class Foo { static { bar(); } static {} }", "class Foo { static { bar(); }  }"),
     ];
 
-    Tester::new(NoEmptyStaticBlock::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoEmptyStaticBlock::NAME, NoEmptyStaticBlock::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

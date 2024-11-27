@@ -399,7 +399,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoRequireImports::NAME, pass, fail)
+    Tester::new(NoRequireImports::NAME, NoRequireImports::CATEGORY, pass, fail)
         .change_rule_path_extension("ts")
         .test_and_snapshot();
 }

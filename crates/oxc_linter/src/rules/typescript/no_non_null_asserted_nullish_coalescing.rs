@@ -182,5 +182,11 @@ fn test() {
         	      ",
     ];
 
-    Tester::new(NoNonNullAssertedNullishCoalescing::NAME, pass, fail).test_and_snapshot();
+    Tester::new(
+        NoNonNullAssertedNullishCoalescing::NAME,
+        NoNonNullAssertedNullishCoalescing::CATEGORY,
+        pass,
+        fail,
+    )
+    .test_and_snapshot();
 }

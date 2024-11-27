@@ -126,5 +126,6 @@ fn test() {
         ("var foo = /[[]&&b]/v;", None),      // { "ecmaVersion": 2024 }
     ];
 
-    Tester::new(NoEmptyCharacterClass::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyCharacterClass::NAME, NoEmptyCharacterClass::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

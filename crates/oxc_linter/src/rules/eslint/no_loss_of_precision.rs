@@ -356,5 +356,6 @@ fn test() {
         ("var x = 1e18_446_744_073_709_551_615", None),
     ];
 
-    Tester::new(NoLossOfPrecision::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoLossOfPrecision::NAME, NoLossOfPrecision::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

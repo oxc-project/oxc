@@ -121,5 +121,6 @@ fn test() {
 			      ",
     ];
 
-    Tester::new(PreferEnumInitializers::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferEnumInitializers::NAME, PreferEnumInitializers::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

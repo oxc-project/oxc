@@ -225,5 +225,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUnsafeFinally::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnsafeFinally::NAME, NoUnsafeFinally::CATEGORY, pass, fail).test_and_snapshot();
 }

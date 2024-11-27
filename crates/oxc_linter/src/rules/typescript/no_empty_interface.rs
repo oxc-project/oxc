@@ -214,5 +214,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoEmptyInterface::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyInterface::NAME, NoEmptyInterface::CATEGORY, pass, fail).test_and_snapshot();
 }

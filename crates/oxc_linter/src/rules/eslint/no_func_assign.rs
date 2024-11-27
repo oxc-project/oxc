@@ -73,5 +73,5 @@ fn test() {
         ("var a = function foo() { foo = 123; };", None),
     ];
 
-    Tester::new(NoFuncAssign::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoFuncAssign::NAME, NoFuncAssign::CATEGORY, pass, fail).test_and_snapshot();
 }

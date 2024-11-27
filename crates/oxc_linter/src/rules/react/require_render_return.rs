@@ -363,5 +363,6 @@ fn test() {
          ",
     ];
 
-    Tester::new(RequireRenderReturn::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireRenderReturn::NAME, RequireRenderReturn::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

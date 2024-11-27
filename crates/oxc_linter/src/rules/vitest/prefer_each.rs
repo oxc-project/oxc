@@ -285,5 +285,5 @@ fn test() {
 			     "#,
     ];
 
-    Tester::new(PreferEach::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferEach::NAME, PreferEach::CATEGORY, pass, fail).test_and_snapshot();
 }

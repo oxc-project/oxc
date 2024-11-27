@@ -81,5 +81,7 @@ fn test() {
         ("if (foo) { debugger }", "if (foo) {  }", None),
     ];
 
-    Tester::new(NoDebugger::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoDebugger::NAME, NoDebugger::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

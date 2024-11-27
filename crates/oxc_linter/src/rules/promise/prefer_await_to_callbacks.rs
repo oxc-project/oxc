@@ -181,5 +181,6 @@ fn test() {
         "customMap(errors, (err) => err.message)",
     ];
 
-    Tester::new(PreferAwaitToCallbacks::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferAwaitToCallbacks::NAME, PreferAwaitToCallbacks::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

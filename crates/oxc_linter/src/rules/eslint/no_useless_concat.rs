@@ -133,5 +133,5 @@ fn test() {
         "'a' + 'b' + 'c' + 'd' + 'e' + foo",
     ];
 
-    Tester::new(NoUselessConcat::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessConcat::NAME, NoUselessConcat::CATEGORY, pass, fail).test_and_snapshot();
 }

@@ -186,7 +186,7 @@ fn test() {
         "hasOwnProperty()",
     ];
 
-    Tester::new(NoUndef::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUndef::NAME, NoUndef::CATEGORY, pass, fail).test_and_snapshot();
 
     let pass = vec![];
     let fail = vec![(
@@ -194,10 +194,10 @@ fn test() {
         Some(serde_json::json!([{ "typeof": true }])),
     )];
 
-    Tester::new(NoUndef::NAME, pass, fail).test();
+    Tester::new(NoUndef::NAME, NoUndef::CATEGORY, pass, fail).test();
 
     let pass = vec![("foo", None, Some(serde_json::json!({ "globals": { "foo": "readonly" } })))];
     let fail = vec![("foo", None, Some(serde_json::json!({ "globals": { "foo": "off" } })))];
 
-    Tester::new(NoUndef::NAME, pass, fail).test();
+    Tester::new(NoUndef::NAME, NoUndef::CATEGORY, pass, fail).test();
 }

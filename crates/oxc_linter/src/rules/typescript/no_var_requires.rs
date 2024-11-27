@@ -117,5 +117,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoVarRequires::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoVarRequires::NAME, NoVarRequires::CATEGORY, pass, fail).test_and_snapshot();
 }

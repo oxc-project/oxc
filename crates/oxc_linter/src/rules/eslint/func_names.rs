@@ -798,5 +798,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(FuncNames::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(FuncNames::NAME, FuncNames::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

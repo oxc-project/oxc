@@ -281,5 +281,5 @@ fn test() {
         // ("(Object?.defineProperty)(foo, 'bar', { set(val) { return 1; } })", None),
     ];
 
-    Tester::new(NoSetterReturn::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoSetterReturn::NAME, NoSetterReturn::CATEGORY, pass, fail).test_and_snapshot();
 }

@@ -872,5 +872,6 @@ fn test() {
         ("if (!Boolean(a as any)) { }", None),
     ];
 
-    Tester::new(NoExtraBooleanCast::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoExtraBooleanCast::NAME, NoExtraBooleanCast::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

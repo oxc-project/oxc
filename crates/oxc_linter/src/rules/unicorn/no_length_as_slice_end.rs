@@ -136,5 +136,7 @@ fn test() {
         ("foo?.slice(1, foo?.length)", "foo?.slice(1)"),
     ];
 
-    Tester::new(NoLengthAsSliceEnd::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoLengthAsSliceEnd::NAME, NoLengthAsSliceEnd::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

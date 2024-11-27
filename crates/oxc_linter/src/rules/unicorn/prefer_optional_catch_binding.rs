@@ -153,5 +153,7 @@ fn test() {
         (r"try {} catch ({cause: {message}}) {}", r"try {} catch {}"),
     ];
 
-    Tester::new(PreferOptionalCatchBinding::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferOptionalCatchBinding::NAME, PreferOptionalCatchBinding::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -131,5 +131,7 @@ fn test() {
         (r"foo?.trimLeft()", r"foo?.trimStart()"),
     ];
 
-    Tester::new(PreferStringTrimStartEnd::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferStringTrimStartEnd::NAME, PreferStringTrimStartEnd::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

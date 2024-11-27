@@ -168,5 +168,7 @@ fn test() {
         (r"const object = {...(Infinity || {})}", r"const object = {...(Infinity || {})}"),
     ];
 
-    Tester::new(NoUselessFallbackInSpread::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoUselessFallbackInSpread::NAME, NoUselessFallbackInSpread::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -279,5 +279,7 @@ fn test() {
         (r"for (const f of'a\\b') {}", r"for (const f of String.raw`a\b`) {}", None),
     ];
 
-    Tester::new(PreferStringRaw::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferStringRaw::NAME, PreferStringRaw::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

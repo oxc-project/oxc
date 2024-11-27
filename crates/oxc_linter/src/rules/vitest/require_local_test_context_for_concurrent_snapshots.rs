@@ -176,7 +176,12 @@ fn test() {
         r#"it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingInlineSnapshot("bar") })"#,
     ];
 
-    Tester::new(RequireLocalTestContextForConcurrentSnapshots::NAME, pass, fail)
-        .with_vitest_plugin(true)
-        .test_and_snapshot();
+    Tester::new(
+        RequireLocalTestContextForConcurrentSnapshots::NAME,
+        RequireLocalTestContextForConcurrentSnapshots::CATEGORY,
+        pass,
+        fail,
+    )
+    .with_vitest_plugin(true)
+    .test_and_snapshot();
 }

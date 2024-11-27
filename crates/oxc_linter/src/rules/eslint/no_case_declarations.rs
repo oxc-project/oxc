@@ -103,5 +103,6 @@ fn test() {
         ("switch (a) { default: class C {} break; }", None),
     ];
 
-    Tester::new(NoCaseDeclarations::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoCaseDeclarations::NAME, NoCaseDeclarations::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -89,5 +89,6 @@ fn test() {
         "function bar() { return function BigInt() {}; } var baz = new BigInt(9007199254740991);",
     ];
 
-    Tester::new(NoNewNativeNonconstructor::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNewNativeNonconstructor::NAME, NoNewNativeNonconstructor::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

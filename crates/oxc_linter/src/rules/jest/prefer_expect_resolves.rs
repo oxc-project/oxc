@@ -261,7 +261,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferExpectResolves::NAME, pass, fail)
+    Tester::new(PreferExpectResolves::NAME, PreferExpectResolves::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

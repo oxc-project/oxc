@@ -784,7 +784,7 @@ fn test() {
     pass.extend(pass_vitest);
     fail.extend(fail_vitest);
 
-    Tester::new(ExpectExpect::NAME, pass, fail)
+    Tester::new(ExpectExpect::NAME, ExpectExpect::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();

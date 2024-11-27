@@ -128,5 +128,5 @@ fn test() {
         r"return foo.forEach(element => {bar(element)});",
     ];
 
-    Tester::new(NoArrayForEach::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoArrayForEach::NAME, NoArrayForEach::CATEGORY, pass, fail).test_and_snapshot();
 }

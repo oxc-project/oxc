@@ -149,5 +149,5 @@ fn test() {
         ("var x = ({ '/(?<zero>0)/': 1, [/(?<zero>0)/]: 2 })", None),
     ];
 
-    Tester::new(NoDupeKeys::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDupeKeys::NAME, NoDupeKeys::CATEGORY, pass, fail).test_and_snapshot();
 }

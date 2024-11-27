@@ -457,5 +457,7 @@ fn test() {
         ("array.reduce((a, b) => [...a, ...b], [])", "array.flat()"),
     ];
 
-    Tester::new(PreferArrayFlat::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

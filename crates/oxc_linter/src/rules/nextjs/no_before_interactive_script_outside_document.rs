@@ -382,5 +382,11 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoBeforeInteractiveScriptOutsideDocument::NAME, pass, fail).test_and_snapshot();
+    Tester::new(
+        NoBeforeInteractiveScriptOutsideDocument::NAME,
+        NoBeforeInteractiveScriptOutsideDocument::CATEGORY,
+        pass,
+        fail,
+    )
+    .test_and_snapshot();
 }

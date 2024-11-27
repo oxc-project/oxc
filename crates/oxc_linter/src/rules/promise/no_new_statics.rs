@@ -112,5 +112,7 @@ fn test() {
         ("new Promise.any()", "Promise.any()", None),
         ("new Promise.race()", "Promise.race()", None),
     ];
-    Tester::new(NoNewStatics::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoNewStatics::NAME, NoNewStatics::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

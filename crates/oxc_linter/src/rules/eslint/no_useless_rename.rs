@@ -397,5 +397,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUselessRename::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessRename::NAME, NoUselessRename::CATEGORY, pass, fail).test_and_snapshot();
 }

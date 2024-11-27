@@ -265,7 +265,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferToHaveLength::NAME, pass, fail)
+    Tester::new(PreferToHaveLength::NAME, PreferToHaveLength::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

@@ -202,5 +202,5 @@ fn test() {
         ("const foo = (a) => (b) => a = b", None), // { "ecmaVersion": 6 }
     ];
 
-    Tester::new(NoReturnAssign::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoReturnAssign::NAME, NoReturnAssign::CATEGORY, pass, fail).test_and_snapshot();
 }

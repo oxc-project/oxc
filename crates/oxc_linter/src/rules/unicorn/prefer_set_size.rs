@@ -182,5 +182,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferSetSize::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferSetSize::NAME, PreferSetSize::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -234,5 +234,7 @@ fn test() {
 			        }",
     ];
 
-    Tester::new(InlineScriptId::NAME, pass, fail).with_nextjs_plugin(true).test_and_snapshot();
+    Tester::new(InlineScriptId::NAME, InlineScriptId::CATEGORY, pass, fail)
+        .with_nextjs_plugin(true)
+        .test_and_snapshot();
 }

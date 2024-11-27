@@ -112,5 +112,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoOptionalChaining::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoOptionalChaining::NAME, NoOptionalChaining::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

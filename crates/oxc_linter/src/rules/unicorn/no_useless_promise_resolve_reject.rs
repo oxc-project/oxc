@@ -1368,7 +1368,12 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUselessPromiseResolveReject::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(
+        NoUselessPromiseResolveReject::NAME,
+        NoUselessPromiseResolveReject::CATEGORY,
+        pass,
+        fail,
+    )
+    .expect_fix(fix)
+    .test_and_snapshot();
 }

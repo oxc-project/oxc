@@ -243,5 +243,7 @@ fn test() {
         ("<App foo />", "<App foo={true} />", Some(serde_json::json!(["always"]))),
     ];
 
-    Tester::new(JsxBooleanValue::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(JsxBooleanValue::NAME, JsxBooleanValue::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

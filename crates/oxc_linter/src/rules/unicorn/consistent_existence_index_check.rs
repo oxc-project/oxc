@@ -666,7 +666,12 @@ fn test() {
         ),
     ];
 
-    Tester::new(ConsistentExistenceIndexCheck::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(
+        ConsistentExistenceIndexCheck::NAME,
+        ConsistentExistenceIndexCheck::CATEGORY,
+        pass,
+        fail,
+    )
+    .expect_fix(fix)
+    .test_and_snapshot();
 }

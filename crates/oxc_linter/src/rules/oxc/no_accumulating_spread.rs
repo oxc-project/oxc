@@ -460,5 +460,6 @@ fn test() {
         "let foo = {}; while (Object.keys(foo).length < 10) { foo = { ...foo, [Object.keys(foo).length]: Object.keys(foo).length }; }",
     ];
 
-    Tester::new(NoAccumulatingSpread::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAccumulatingSpread::NAME, NoAccumulatingSpread::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

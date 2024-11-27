@@ -101,5 +101,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoAsyncAwait::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAsyncAwait::NAME, NoAsyncAwait::CATEGORY, pass, fail).test_and_snapshot();
 }

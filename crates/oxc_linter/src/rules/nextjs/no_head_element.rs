@@ -170,5 +170,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoHeadElement::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoHeadElement::NAME, NoHeadElement::CATEGORY, pass, fail).test_and_snapshot();
 }

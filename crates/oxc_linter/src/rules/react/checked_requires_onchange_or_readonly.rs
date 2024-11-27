@@ -276,5 +276,11 @@ fn test() {
         ),
     ];
 
-    Tester::new(CheckedRequiresOnchangeOrReadonly::NAME, pass, fail).test_and_snapshot();
+    Tester::new(
+        CheckedRequiresOnchangeOrReadonly::NAME,
+        CheckedRequiresOnchangeOrReadonly::CATEGORY,
+        pass,
+        fail,
+    )
+    .test_and_snapshot();
 }

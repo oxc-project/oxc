@@ -106,5 +106,5 @@ fn test() {
         ("const b = 0; ({a, ...b} = {a: 1, c: 2, d: 3})", None),
     ];
 
-    Tester::new(NoConstAssign::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoConstAssign::NAME, NoConstAssign::CATEGORY, pass, fail).test_and_snapshot();
 }

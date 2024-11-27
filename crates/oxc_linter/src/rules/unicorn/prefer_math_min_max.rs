@@ -260,5 +260,7 @@ fn test() {
         ("return -10e4 <= height ? height : -10e4;", "return Math.max(height, -10e4);", None),
     ];
 
-    Tester::new(PreferMathMinMax::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferMathMinMax::NAME, PreferMathMinMax::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

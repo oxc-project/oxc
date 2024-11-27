@@ -125,5 +125,6 @@ fn test() {
         ("Array(0, 1, 2)", None),
     ];
 
-    Tester::new(NoArrayConstructor::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoArrayConstructor::NAME, NoArrayConstructor::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -122,5 +122,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(JsxNoDuplicateProps::NAME, pass, fail).test_and_snapshot();
+    Tester::new(JsxNoDuplicateProps::NAME, JsxNoDuplicateProps::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

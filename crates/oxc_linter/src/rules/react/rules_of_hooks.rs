@@ -1519,5 +1519,5 @@ fn test() {
         // " ,
     ];
 
-    Tester::new(RulesOfHooks::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RulesOfHooks::NAME, RulesOfHooks::CATEGORY, pass, fail).test_and_snapshot();
 }

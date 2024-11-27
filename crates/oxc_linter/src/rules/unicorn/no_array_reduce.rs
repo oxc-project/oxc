@@ -476,5 +476,5 @@ fn test() {
             Some(json!({ "allowSimpleOperations": false})),
         ),
     ];
-    Tester::new(NoArrayReduce::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoArrayReduce::NAME, NoArrayReduce::CATEGORY, pass, fail).test_and_snapshot();
 }

@@ -391,5 +391,5 @@ fn test() {
         "status_code < 500 && response && status_code <= 500;",
     ];
 
-    Tester::new(ConstComparisons::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ConstComparisons::NAME, ConstComparisons::CATEGORY, pass, fail).test_and_snapshot();
 }

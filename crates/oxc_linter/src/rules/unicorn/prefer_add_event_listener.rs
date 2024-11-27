@@ -353,5 +353,6 @@ fn test() {
         (r"(el as HTMLElement).onmouseenter = onAnchorMouseEnter;", None),
     ];
 
-    Tester::new(PreferAddEventListener::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferAddEventListener::NAME, PreferAddEventListener::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

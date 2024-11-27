@@ -84,5 +84,5 @@ fn test() {
         ("if (foo) { class A {} A = 1; }", None),
     ];
 
-    Tester::new(NoClassAssign::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoClassAssign::NAME, NoClassAssign::CATEGORY, pass, fail).test_and_snapshot();
 }

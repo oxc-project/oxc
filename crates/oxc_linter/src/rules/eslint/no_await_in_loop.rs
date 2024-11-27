@@ -232,5 +232,5 @@ fn test() {
         "async function foo() { for await (var x of xs) { while (1) await f(x) } }",
     ];
 
-    Tester::new(NoAwaitInLoop::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAwaitInLoop::NAME, NoAwaitInLoop::CATEGORY, pass, fail).test_and_snapshot();
 }

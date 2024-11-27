@@ -143,5 +143,6 @@ fn test() {
         ("foo[\"apply\"](null, [42]);", None),
     ];
 
-    Tester::new(PreferReflectApply::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferReflectApply::NAME, PreferReflectApply::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -88,5 +88,5 @@ fn test() {
         ("class C { #field; foo() { this.#field === this.#field; } }", None),
     ];
 
-    Tester::new(NoSelfCompare::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoSelfCompare::NAME, NoSelfCompare::CATEGORY, pass, fail).test_and_snapshot();
 }

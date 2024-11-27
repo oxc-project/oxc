@@ -356,5 +356,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferLiteralEnumMember::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferLiteralEnumMember::NAME, PreferLiteralEnumMember::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

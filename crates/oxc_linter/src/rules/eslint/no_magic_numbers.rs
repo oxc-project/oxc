@@ -918,5 +918,5 @@ fn test() {
         ("type Foo = -7.1e-8;", Some(serde_json::json!([{ "ignore": [7.1e-8] }]))),
     ];
 
-    Tester::new(NoMagicNumbers::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoMagicNumbers::NAME, NoMagicNumbers::CATEGORY, pass, fail).test_and_snapshot();
 }

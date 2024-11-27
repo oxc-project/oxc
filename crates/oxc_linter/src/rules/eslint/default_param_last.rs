@@ -97,5 +97,5 @@ fn test() {
         "const f = ([a, b] = [1, 2], c) => {}",
     ];
 
-    Tester::new(DefaultParamLast::NAME, pass, fail).test_and_snapshot();
+    Tester::new(DefaultParamLast::NAME, DefaultParamLast::CATEGORY, pass, fail).test_and_snapshot();
 }

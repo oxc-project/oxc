@@ -212,7 +212,9 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoHexEscape::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoHexEscape::NAME, NoHexEscape::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
 
 #[test]

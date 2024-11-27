@@ -464,5 +464,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferArraySome::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferArraySome::NAME, PreferArraySome::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

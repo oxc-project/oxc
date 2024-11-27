@@ -158,5 +158,5 @@ fn test() {
         ("var { a } = {}; let b = a", "const { a } = {}; let b = a"),
     ];
 
-    Tester::new(NoVar::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoVar::NAME, NoVar::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
 }

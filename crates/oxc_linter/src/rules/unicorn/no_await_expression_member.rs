@@ -103,5 +103,6 @@ fn test() {
         (r"const foo: Type | A = (await promise).foo", None),
     ];
 
-    Tester::new(NoAwaitExpressionMember::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoAwaitExpressionMember::NAME, NoAwaitExpressionMember::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -237,5 +237,5 @@ fn test() {
         // ("function foo() { 'use strict'; this.eval(); }", None),
     ];
 
-    Tester::new(NoEval::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoEval::NAME, NoEval::CATEGORY, pass, fail).test_and_snapshot();
 }

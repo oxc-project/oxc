@@ -414,5 +414,7 @@ fn test() {
         ("for(const a of!foo.length);", "for(const a of foo.length === 0);", None),
         ("for(const a in!foo.length);", "for(const a in foo.length === 0);", None),
     ];
-    Tester::new(ExplicitLengthCheck::NAME, pass, fail).expect_fix(fixes).test_and_snapshot();
+    Tester::new(ExplicitLengthCheck::NAME, ExplicitLengthCheck::CATEGORY, pass, fail)
+        .expect_fix(fixes)
+        .test_and_snapshot();
 }

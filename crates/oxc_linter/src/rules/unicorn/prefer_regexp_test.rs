@@ -272,5 +272,7 @@ fn test() {
         ("const re = /a/; if (re.exec(foo)) {}", "const re = /a/; if (re.test(foo)) {}"),
     ];
 
-    Tester::new(PreferRegexpTest::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferRegexpTest::NAME, PreferRegexpTest::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

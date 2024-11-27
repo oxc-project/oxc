@@ -256,5 +256,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireReturnsDescription::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireReturnsDescription::NAME, RequireReturnsDescription::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

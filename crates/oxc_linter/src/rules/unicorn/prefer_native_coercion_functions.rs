@@ -316,5 +316,11 @@ fn test() {
         r"array.some((v, ) => /* comment */ v)",
     ];
 
-    Tester::new(PreferNativeCoercionFunctions::NAME, pass, fail).test_and_snapshot();
+    Tester::new(
+        PreferNativeCoercionFunctions::NAME,
+        PreferNativeCoercionFunctions::CATEGORY,
+        pass,
+        fail,
+    )
+    .test_and_snapshot();
 }

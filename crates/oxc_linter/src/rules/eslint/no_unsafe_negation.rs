@@ -157,5 +157,7 @@ fn test() {
         // ("!a <= b", "!(a <= b)"),
     ];
 
-    Tester::new(NoUnsafeNegation::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoUnsafeNegation::NAME, NoUnsafeNegation::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

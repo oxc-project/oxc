@@ -124,5 +124,11 @@ fn test() {
         "Math.pow(a, b) as any",
     ];
 
-    Tester::new(PreferExponentiationOperator::NAME, pass, fail).test_and_snapshot();
+    Tester::new(
+        PreferExponentiationOperator::NAME,
+        PreferExponentiationOperator::CATEGORY,
+        pass,
+        fail,
+    )
+    .test_and_snapshot();
 }

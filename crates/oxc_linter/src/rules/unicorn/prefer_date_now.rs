@@ -238,5 +238,7 @@ fn test() {
         ("BigInt(new Date());", "Date.now();"),
     ];
 
-    Tester::new(PreferDateNow::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferDateNow::NAME, PreferDateNow::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

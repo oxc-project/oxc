@@ -277,5 +277,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireParamDescription::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireParamDescription::NAME, RequireParamDescription::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

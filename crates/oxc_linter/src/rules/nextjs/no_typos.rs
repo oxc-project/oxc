@@ -298,5 +298,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoTypos::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoTypos::NAME, NoTypos::CATEGORY, pass, fail).test_and_snapshot();
 }

@@ -166,5 +166,7 @@ fn test() {
         ("-await -1", "-await -1", None),                     // no autofix
     ];
 
-    Tester::new(NoUnnecessaryAwait::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoUnnecessaryAwait::NAME, NoUnnecessaryAwait::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

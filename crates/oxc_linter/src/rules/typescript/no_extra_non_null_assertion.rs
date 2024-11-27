@@ -95,5 +95,6 @@ fn test() {
         "function foo(bar?: { n: number }) { return (bar!)?.(); }",
     ];
 
-    Tester::new(NoExtraNonNullAssertion::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoExtraNonNullAssertion::NAME, NoExtraNonNullAssertion::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

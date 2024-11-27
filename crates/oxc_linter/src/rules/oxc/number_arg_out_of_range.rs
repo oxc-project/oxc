@@ -86,5 +86,6 @@ fn test() {
         ("var x = 42;var s = x.toPrecision(100);", None),
     ];
 
-    Tester::new(NumberArgOutOfRange::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NumberArgOutOfRange::NAME, NumberArgOutOfRange::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

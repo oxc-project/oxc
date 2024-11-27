@@ -144,5 +144,6 @@ fn test() {
         // ("var inst = React.render(<div />, document.body);", None),
     ];
 
-    Tester::new(NoRenderReturnValue::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoRenderReturnValue::NAME, NoRenderReturnValue::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

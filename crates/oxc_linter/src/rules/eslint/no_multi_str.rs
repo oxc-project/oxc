@@ -83,5 +83,5 @@ fn test() {
         "'\\ still fails';",
     ];
 
-    Tester::new(NoMultiStr::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoMultiStr::NAME, NoMultiStr::CATEGORY, pass, fail).test_and_snapshot();
 }

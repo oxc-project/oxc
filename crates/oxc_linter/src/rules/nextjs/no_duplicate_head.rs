@@ -208,5 +208,5 @@ fn test() {
 			      "#,
     ];
 
-    Tester::new(NoDuplicateHead::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDuplicateHead::NAME, NoDuplicateHead::CATEGORY, pass, fail).test_and_snapshot();
 }

@@ -315,5 +315,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(JsxNoCommentTextnodes::NAME, pass, fail).test_and_snapshot();
+    Tester::new(JsxNoCommentTextnodes::NAME, JsxNoCommentTextnodes::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

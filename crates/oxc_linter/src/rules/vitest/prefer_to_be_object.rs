@@ -231,7 +231,7 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(PreferToBeObject::NAME, pass, fail)
+    Tester::new(PreferToBeObject::NAME, PreferToBeObject::CATEGORY, pass, fail)
         .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

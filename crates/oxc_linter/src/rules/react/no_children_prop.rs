@@ -161,5 +161,5 @@ fn test() {
         (r#"React.createElement(MyComponent, {...props, children: "Children"})"#, None),
     ];
 
-    Tester::new(NoChildrenProp::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoChildrenProp::NAME, NoChildrenProp::CATEGORY, pass, fail).test_and_snapshot();
 }

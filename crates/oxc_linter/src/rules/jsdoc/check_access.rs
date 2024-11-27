@@ -368,5 +368,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(CheckAccess::NAME, pass, fail).test_and_snapshot();
+    Tester::new(CheckAccess::NAME, CheckAccess::CATEGORY, pass, fail).test_and_snapshot();
 }

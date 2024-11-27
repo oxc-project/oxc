@@ -467,5 +467,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoDuplicateImports::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDuplicateImports::NAME, NoDuplicateImports::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

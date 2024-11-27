@@ -224,5 +224,7 @@ fn test() {
 
     let fix = vec![("typeof foo === undefined", r#"typeof foo === "undefined""#)];
 
-    Tester::new(ValidTypeof::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(ValidTypeof::NAME, ValidTypeof::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

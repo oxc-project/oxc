@@ -2235,5 +2235,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireReturns::NAME, pass, fail).test_and_snapshot();
+    Tester::new(RequireReturns::NAME, RequireReturns::CATEGORY, pass, fail).test_and_snapshot();
 }

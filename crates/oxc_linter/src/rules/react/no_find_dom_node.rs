@@ -202,5 +202,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoFindDomNode::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoFindDomNode::NAME, NoFindDomNode::CATEGORY, pass, fail).test_and_snapshot();
 }

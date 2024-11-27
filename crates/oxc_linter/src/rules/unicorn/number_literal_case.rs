@@ -242,5 +242,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NumberLiteralCase::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NumberLiteralCase::NAME, NumberLiteralCase::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

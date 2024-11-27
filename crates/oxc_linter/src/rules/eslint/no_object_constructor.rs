@@ -174,5 +174,6 @@ fn test() {
         }",
     ];
 
-    Tester::new(NoObjectConstructor::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoObjectConstructor::NAME, NoObjectConstructor::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

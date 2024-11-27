@@ -222,5 +222,5 @@ fn test() {
         ("var {} = 1, b, a", "var {} = 1, a, b", Some(serde_json::json!([{ "ignoreCase": true }]))),
     ];
 
-    Tester::new(SortVars::NAME, pass, fail).test_and_snapshot();
+    Tester::new(SortVars::NAME, SortVars::CATEGORY, pass, fail).test_and_snapshot();
 }

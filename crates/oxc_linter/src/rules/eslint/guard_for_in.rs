@@ -93,5 +93,5 @@ fn test() {
         "for (var x in o) foo();",
     ];
 
-    Tester::new(GuardForIn::NAME, pass, fail).test_and_snapshot();
+    Tester::new(GuardForIn::NAME, GuardForIn::CATEGORY, pass, fail).test_and_snapshot();
 }

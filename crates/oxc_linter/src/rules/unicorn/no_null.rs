@@ -411,5 +411,5 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(NoNull::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoNull::NAME, NoNull::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -229,5 +229,6 @@ fn test() {
         // ("var a = '1'; var b = a | {}", None),
     ];
 
-    Tester::new(BadBitwiseOperator::NAME, pass, fail).test_and_snapshot();
+    Tester::new(BadBitwiseOperator::NAME, BadBitwiseOperator::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

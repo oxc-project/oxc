@@ -131,7 +131,12 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireNumberToFixedDigitsArgument::NAME, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(
+        RequireNumberToFixedDigitsArgument::NAME,
+        RequireNumberToFixedDigitsArgument::CATEGORY,
+        pass,
+        fail,
+    )
+    .expect_fix(fix)
+    .test_and_snapshot();
 }

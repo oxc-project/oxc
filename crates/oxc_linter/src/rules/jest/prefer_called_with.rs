@@ -114,5 +114,7 @@ fn test() {
         ("expect(fn).toHaveBeenCalled();", None),
     ];
 
-    Tester::new(PreferCalledWith::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(PreferCalledWith::NAME, PreferCalledWith::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

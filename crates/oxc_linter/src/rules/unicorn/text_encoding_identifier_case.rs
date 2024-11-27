@@ -201,5 +201,7 @@ fn test() {
         (r#"<META CHARSET="ASCII" />"#, r#"<META CHARSET="ascii" />"#),
     ];
 
-    Tester::new(TextEncodingIdentifierCase::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(TextEncodingIdentifierCase::NAME, TextEncodingIdentifierCase::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

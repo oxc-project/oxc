@@ -1024,5 +1024,5 @@ fn test() {
         ), // { "ecmaVersion": 2018 }
     ];
 
-    Tester::new(SortKeys::NAME, pass, fail).test_and_snapshot();
+    Tester::new(SortKeys::NAME, SortKeys::CATEGORY, pass, fail).test_and_snapshot();
 }

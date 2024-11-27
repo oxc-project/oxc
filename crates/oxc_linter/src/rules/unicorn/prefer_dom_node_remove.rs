@@ -188,5 +188,6 @@ fn test() {
         r"a?.b.parentNode.removeChild(a.b)",
     ];
 
-    Tester::new(PreferDomNodeRemove::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferDomNodeRemove::NAME, PreferDomNodeRemove::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -205,5 +205,11 @@ fn test() {
         "#,
     ];
 
-    Tester::new(NoInvalidRemoveEventListener::NAME, pass, fail).test_and_snapshot();
+    Tester::new(
+        NoInvalidRemoveEventListener::NAME,
+        NoInvalidRemoveEventListener::CATEGORY,
+        pass,
+        fail,
+    )
+    .test_and_snapshot();
 }

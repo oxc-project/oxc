@@ -253,5 +253,5 @@ fn test() {
         ("a == b", "a == b", None),
     ];
 
-    Tester::new(Eqeqeq::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(Eqeqeq::NAME, Eqeqeq::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -130,5 +130,5 @@ fn test() {
 			      }",
     ];
 
-    Tester::new(NoSyncScripts::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoSyncScripts::NAME, NoSyncScripts::CATEGORY, pass, fail).test_and_snapshot();
 }

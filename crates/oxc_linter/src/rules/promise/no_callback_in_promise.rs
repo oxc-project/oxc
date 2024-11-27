@@ -182,5 +182,6 @@ fn test() {
         ("a.catch(function(err) { callback(err) })", None),
     ];
 
-    Tester::new(NoCallbackInPromise::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoCallbackInPromise::NAME, NoCallbackInPromise::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

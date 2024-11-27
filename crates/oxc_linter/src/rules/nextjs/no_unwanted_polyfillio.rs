@@ -263,5 +263,6 @@ fn test() {
                   }",
     ];
 
-    Tester::new(NoUnwantedPolyfillio::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnwantedPolyfillio::NAME, NoUnwantedPolyfillio::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

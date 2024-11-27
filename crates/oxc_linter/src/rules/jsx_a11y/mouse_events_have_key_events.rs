@@ -252,5 +252,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(MouseEventsHaveKeyEvents::NAME, pass, fail).test_and_snapshot();
+    Tester::new(MouseEventsHaveKeyEvents::NAME, MouseEventsHaveKeyEvents::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

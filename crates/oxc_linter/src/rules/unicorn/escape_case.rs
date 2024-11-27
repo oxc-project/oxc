@@ -283,5 +283,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(EscapeCase::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(EscapeCase::NAME, EscapeCase::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

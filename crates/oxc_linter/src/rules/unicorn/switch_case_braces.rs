@@ -156,5 +156,7 @@ fn test() {
         ("switch(s){case'':/]/}", "switch(s){case '': {/]/}}", None),
     ];
 
-    Tester::new(SwitchCaseBraces::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(SwitchCaseBraces::NAME, SwitchCaseBraces::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

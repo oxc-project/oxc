@@ -93,5 +93,5 @@ fn test() {
         "test[`__iterator__`] = function () {};",
     ];
 
-    Tester::new(NoIterator::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoIterator::NAME, NoIterator::CATEGORY, pass, fail).test_and_snapshot();
 }

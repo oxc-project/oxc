@@ -186,5 +186,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferEs6Class::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferEs6Class::NAME, PreferEs6Class::CATEGORY, pass, fail).test_and_snapshot();
 }

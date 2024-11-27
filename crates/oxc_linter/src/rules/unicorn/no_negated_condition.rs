@@ -142,5 +142,6 @@ fn test() {
         r"(!!a) ? b() : c();",
     ];
 
-    Tester::new(NoNegatedCondition::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNegatedCondition::NAME, NoNegatedCondition::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -410,5 +410,6 @@ fn test() {
 		",
     ];
 
-    Tester::new(PreferModernMathApis::NAME, pass, fail).test_and_snapshot();
+    Tester::new(PreferModernMathApis::NAME, PreferModernMathApis::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

@@ -3363,5 +3363,7 @@ fn test() {
         .map(|(a, b, c)| (remove_common_prefix_space(a), remove_common_prefix_space(b), c))
         .collect::<Vec<_>>();
 
-    Tester::new(ConsistentTypeImports::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

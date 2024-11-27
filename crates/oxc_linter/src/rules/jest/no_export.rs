@@ -139,5 +139,7 @@ fn test() {
         // ("module.export.invalid = function() {}; ;  test('a test', () => { expect(1).toBe(1);});", None)
     ];
 
-    Tester::new(NoExport::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(NoExport::NAME, NoExport::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

@@ -654,5 +654,6 @@ fn test() {
         ("window.abc ?? 'non-nullish' ?? anything", None),
     ];
 
-    Tester::new(NoConstantBinaryExpression::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoConstantBinaryExpression::NAME, NoConstantBinaryExpression::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

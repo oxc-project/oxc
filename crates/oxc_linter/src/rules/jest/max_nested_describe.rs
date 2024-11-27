@@ -391,5 +391,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxNestedDescribe::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(MaxNestedDescribe::NAME, MaxNestedDescribe::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

@@ -501,5 +501,7 @@ export declare type Test = {
         ),
     ];
 
-    Tester::new(ConsistentTypeDefinitions::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(ConsistentTypeDefinitions::NAME, ConsistentTypeDefinitions::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

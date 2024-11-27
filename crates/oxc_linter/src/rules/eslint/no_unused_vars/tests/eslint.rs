@@ -22,7 +22,9 @@ fn fixme() {
         ), // { "ecmaVersion": 2015 },
     ];
     let fail = vec![];
-    Tester::new(NoUnusedVars::NAME, pass, fail).intentionally_allow_no_fix_tests().test();
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::CATEGORY, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
 }
 
 /// !!!! STOP !!!
@@ -978,7 +980,7 @@ fn test() {
         ), // { "ecmaVersion": 2015 }
     ];
 
-    Tester::new(NoUnusedVars::NAME, pass, fail)
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::CATEGORY, pass, fail)
         .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("eslint")
         .test_and_snapshot();

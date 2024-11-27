@@ -258,5 +258,5 @@ fn test() {
         ("if (a && a) {} else if (a) {}", None),
     ];
 
-    Tester::new(NoDupeElseIf::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDupeElseIf::NAME, NoDupeElseIf::CATEGORY, pass, fail).test_and_snapshot();
 }

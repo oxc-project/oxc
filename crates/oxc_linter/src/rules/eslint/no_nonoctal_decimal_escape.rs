@@ -227,5 +227,6 @@ fn test() {
         r"'\0\\n\8'",
     ];
 
-    Tester::new(NoNonoctalDecimalEscape::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNonoctalDecimalEscape::NAME, NoNonoctalDecimalEscape::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

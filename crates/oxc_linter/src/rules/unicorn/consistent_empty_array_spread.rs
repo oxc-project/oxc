@@ -152,5 +152,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(ConsistentEmptyArraySpread::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(ConsistentEmptyArraySpread::NAME, ConsistentEmptyArraySpread::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

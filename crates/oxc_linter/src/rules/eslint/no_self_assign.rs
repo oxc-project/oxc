@@ -365,5 +365,5 @@ fn test() {
         ("a ??= a", None),
     ];
 
-    Tester::new(NoSelfAssign::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoSelfAssign::NAME, NoSelfAssign::CATEGORY, pass, fail).test_and_snapshot();
 }

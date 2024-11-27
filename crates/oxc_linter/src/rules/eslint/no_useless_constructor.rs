@@ -359,5 +359,7 @@ class A extends B {  foo() { bar(); } }",
         ),
     ];
 
-    Tester::new(NoUselessConstructor::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoUselessConstructor::NAME, NoUselessConstructor::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -270,5 +270,7 @@ fn test() {
         ("throw 'error' satisfies Error", "throw new Error('error' satisfies Error)"),
     ];
 
-    Tester::new(NoThrowLiteral::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoThrowLiteral::NAME, NoThrowLiteral::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -140,5 +140,7 @@ fn test() {
         // ("import _ = require('_');export {};", "import _ = require('_');"),
     ];
 
-    Tester::new(NoUselessEmptyExport::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoUselessEmptyExport::NAME, NoUselessEmptyExport::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

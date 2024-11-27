@@ -842,5 +842,6 @@ fn test() {
         ("function outer() { const inner = function inner() {}; }", None),
     ];
 
-    Tester::new(ConsistentFunctionScoping::NAME, pass, fail).test_and_snapshot();
+    Tester::new(ConsistentFunctionScoping::NAME, ConsistentFunctionScoping::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

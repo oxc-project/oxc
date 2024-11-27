@@ -340,7 +340,7 @@ fn test() {
         (r"var x = module.exports", Some(json!([{ "allowPrimitiveModules": true }]))),
     ];
 
-    Tester::new(NoCommonjs::NAME, pass, fail)
+    Tester::new(NoCommonjs::NAME, NoCommonjs::CATEGORY, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

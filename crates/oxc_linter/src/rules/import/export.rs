@@ -367,7 +367,7 @@ fn test() {
             "#),
         ];
 
-        Tester::new(Export::NAME, pass, fail)
+        Tester::new(Export::NAME, Export::CATEGORY, pass, fail)
             .with_import_plugin(true)
             .change_rule_path("index.ts")
             .test_and_snapshot();
@@ -376,7 +376,7 @@ fn test() {
     {
         let pass = vec!["export * from './module'"];
         let fail = vec![];
-        Tester::new(Export::NAME, pass, fail)
+        Tester::new(Export::NAME, Export::CATEGORY, pass, fail)
             .with_import_plugin(true)
             .change_rule_path("export-star-4/index.js")
             .test();

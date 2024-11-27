@@ -293,5 +293,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoArrayIndexKey::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoArrayIndexKey::NAME, NoArrayIndexKey::CATEGORY, pass, fail).test_and_snapshot();
 }

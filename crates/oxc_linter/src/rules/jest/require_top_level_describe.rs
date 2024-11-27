@@ -392,7 +392,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireTopLevelDescribe::NAME, pass, fail)
+    Tester::new(RequireTopLevelDescribe::NAME, RequireTopLevelDescribe::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

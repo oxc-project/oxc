@@ -108,5 +108,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoNewWrappers::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoNewWrappers::NAME, NoNewWrappers::CATEGORY, pass, fail).test_and_snapshot();
 }

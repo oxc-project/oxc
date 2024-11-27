@@ -551,5 +551,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoDuplicateHooks::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(NoDuplicateHooks::NAME, NoDuplicateHooks::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

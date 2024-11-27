@@ -219,5 +219,7 @@ fn tests() {
         ("expect(a.includes(b)).toEqual(false as boolean);", None),
     ];
 
-    Tester::new(PreferToContain::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(PreferToContain::NAME, PreferToContain::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

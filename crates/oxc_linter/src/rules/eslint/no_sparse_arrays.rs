@@ -96,5 +96,5 @@ fn test() {
         , , , , , , , , , , , , , , , , , , ,  2];",
     ];
 
-    Tester::new(NoSparseArrays::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoSparseArrays::NAME, NoSparseArrays::CATEGORY, pass, fail).test_and_snapshot();
 }

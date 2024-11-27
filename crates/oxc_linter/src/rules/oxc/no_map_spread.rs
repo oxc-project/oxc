@@ -857,5 +857,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoMapSpread::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoMapSpread::NAME, NoMapSpread::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

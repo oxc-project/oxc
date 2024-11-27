@@ -216,5 +216,5 @@ fn test() {
         ("let m = globalThis.Math; new m();", None),
     ];
 
-    Tester::new(NoObjCalls::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoObjCalls::NAME, NoObjCalls::CATEGORY, pass, fail).test_and_snapshot();
 }

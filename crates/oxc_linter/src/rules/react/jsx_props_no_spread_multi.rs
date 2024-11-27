@@ -186,5 +186,7 @@ fn test() {
         ("<div {...props} {...props} {...props} />", "<div   {...props} />"),
     ];
 
-    Tester::new(JsxPropsNoSpreadMulti::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(JsxPropsNoSpreadMulti::NAME, JsxPropsNoSpreadMulti::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

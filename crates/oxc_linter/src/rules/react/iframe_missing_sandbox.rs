@@ -253,5 +253,6 @@ fn test() {
         r#"<iframe sandbox="allow-same-origin allow-scripts"/>;"#,
     ];
 
-    Tester::new(IframeMissingSandbox::NAME, pass, fail).test_and_snapshot();
+    Tester::new(IframeMissingSandbox::NAME, IframeMissingSandbox::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

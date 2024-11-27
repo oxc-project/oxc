@@ -795,5 +795,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(JsxNoTargetBlank::NAME, pass, fail).test_and_snapshot();
+    Tester::new(JsxNoTargetBlank::NAME, JsxNoTargetBlank::CATEGORY, pass, fail).test_and_snapshot();
 }

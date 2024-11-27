@@ -288,5 +288,7 @@ fn test() {
         ("/^foo/.test(x + y)", "/^foo/.test(x + y)", None),
     ];
 
-    Tester::new(PreferStringStartsEndsWith::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferStringStartsEndsWith::NAME, PreferStringStartsEndsWith::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

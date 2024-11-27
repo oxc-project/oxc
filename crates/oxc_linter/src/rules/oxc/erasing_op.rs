@@ -100,5 +100,7 @@ fn test() {
 
     let fix = vec![("x * 0;", "0;"), ("0 * x;", "0;"), ("0 & x;", "0;"), ("0 / x;", "0;")];
 
-    Tester::new(ErasingOp::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(ErasingOp::NAME, ErasingOp::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

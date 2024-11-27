@@ -106,7 +106,7 @@ fn test() {
         r#"import foo, { foo as bar } from "./export-default-string-and-named""#,
     ];
 
-    Tester::new(NoNamedAsDefault::NAME, pass, fail)
+    Tester::new(NoNamedAsDefault::NAME, NoNamedAsDefault::CATEGORY, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

@@ -186,5 +186,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferArrayFlatMap::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(PreferArrayFlatMap::NAME, PreferArrayFlatMap::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

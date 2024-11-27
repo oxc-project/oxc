@@ -101,5 +101,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoInstanceofArray::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoInstanceofArray::NAME, NoInstanceofArray::CATEGORY, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -102,7 +102,7 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(PreferToBeFalsy::NAME, pass, fail)
+    Tester::new(PreferToBeFalsy::NAME, PreferToBeFalsy::CATEGORY, pass, fail)
         .expect_fix(fix)
         .with_vitest_plugin(true)
         .test_and_snapshot();

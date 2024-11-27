@@ -236,5 +236,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoThisAlias::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoThisAlias::NAME, NoThisAlias::CATEGORY, pass, fail).test_and_snapshot();
 }

@@ -105,5 +105,6 @@ fn test() {
         (r"<div tabIndex={1.589} />", None),
     ];
 
-    Tester::new(TabindexNoPositive::NAME, pass, fail).test_and_snapshot();
+    Tester::new(TabindexNoPositive::NAME, TabindexNoPositive::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

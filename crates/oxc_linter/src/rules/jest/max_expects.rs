@@ -470,5 +470,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxExpects::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(MaxExpects::NAME, MaxExpects::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }

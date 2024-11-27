@@ -401,7 +401,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUntypedMockFactory::NAME, pass, fail)
+    Tester::new(NoUntypedMockFactory::NAME, NoUntypedMockFactory::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

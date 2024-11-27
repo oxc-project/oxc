@@ -512,7 +512,7 @@ fn test() {
             Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
     ];
-    Tester::new(NoInferrableTypes::NAME, pass, fail)
+    Tester::new(NoInferrableTypes::NAME, NoInferrableTypes::CATEGORY, pass, fail)
         //.expect_fix(fix)
         .test_and_snapshot();
 }

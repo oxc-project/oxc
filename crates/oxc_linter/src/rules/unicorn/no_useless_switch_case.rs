@@ -262,5 +262,6 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoUselessSwitchCase::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessSwitchCase::NAME, NoUselessSwitchCase::CATEGORY, pass, fail)
+        .test_and_snapshot();
 }

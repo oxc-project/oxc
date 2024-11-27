@@ -119,5 +119,7 @@ fn test() {
         ("expect(a !== b).resolves.not.toBe(false)", None),
     ];
 
-    Tester::new(PreferEqualityMatcher::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    Tester::new(PreferEqualityMatcher::NAME, PreferEqualityMatcher::CATEGORY, pass, fail)
+        .with_jest_plugin(true)
+        .test_and_snapshot();
 }
