@@ -227,6 +227,14 @@ impl<'a> Traverse<'a> for ReplaceGlobalDefines<'a> {
         self.replace_identifier_defines(expr, ctx);
         self.replace_dot_defines(expr, ctx);
     }
+
+    fn enter_assignment_expression(
+        &mut self,
+        node: &mut AssignmentExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.replace_define_with_assignment_expr(node, ctx);
+    }
 }
 
 impl<'a> ReplaceGlobalDefines<'a> {
@@ -255,16 +263,8 @@ impl<'a> ReplaceGlobalDefines<'a> {
     fn replace_identifier_defines(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::Identifier(ident) => {
-                if !ident.is_global_reference(ctx.symbols()) {
-                    return;
-                }
-
-                for (key, value) in &self.config.0.identifier.identifier_defines {
-                    if ident.name.as_str() == key {
-                        let value = self.parse_value(value);
-                        *expr = value;
-                        break;
-                    }
+                if let Some(new_expr) = self.replace_identifier_define_impl(ident, ctx) {
+                    *expr = new_expr;
                 }
             }
             Expression::ThisExpression(_)
@@ -280,6 +280,50 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 }
             }
             _ => {}
+        }
+    }
+
+    fn replace_identifier_define_impl(
+        &self,
+        ident: &mut oxc_allocator::Box<'_, IdentifierReference<'_>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if !ident.is_global_reference(ctx.symbols()) {
+            return None;
+        }
+        for (key, value) in &self.config.0.identifier.identifier_defines {
+            if ident.name.as_str() == key {
+                let value = self.parse_value(value);
+
+                return Some(value);
+            }
+        }
+        None
+    }
+
+    fn replace_define_with_assignment_expr(
+        &mut self,
+        node: &mut AssignmentExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let new_left = node
+            .left
+            .as_simple_assignment_target_mut()
+            .and_then(|item| match item {
+                SimpleAssignmentTarget::ComputedMemberExpression(ref mut computed_member_expr) => {
+                    self.replace_dot_computed_member_expr(ctx, computed_member_expr)
+                }
+                SimpleAssignmentTarget::StaticMemberExpression(ref mut member) => {
+                    self.replace_dot_static_member_expr(ctx, member)
+                }
+                SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                    self.replace_identifier_define_impl(ident, ctx)
+                }
+                _ => None,
+            })
+            .and_then(assignment_target_from_expr);
+        if let Some(new_left) = new_left {
+            node.left = new_left;
         }
     }
 
@@ -594,4 +638,17 @@ fn destructing_dot_define_optimizer<'ast>(
 
 const fn should_replace_this_expr(scope_flags: ScopeFlags) -> bool {
     !scope_flags.contains(ScopeFlags::Function) || scope_flags.contains(ScopeFlags::Arrow)
+}
+
+fn assignment_target_from_expr(expr: Expression) -> Option<AssignmentTarget> {
+    match expr {
+        Expression::ComputedMemberExpression(expr) => {
+            Some(AssignmentTarget::ComputedMemberExpression(expr))
+        }
+        Expression::StaticMemberExpression(expr) => {
+            Some(AssignmentTarget::StaticMemberExpression(expr))
+        }
+        Expression::Identifier(ident) => Some(AssignmentTarget::AssignmentTargetIdentifier(ident)),
+        _ => None,
+    }
 }
