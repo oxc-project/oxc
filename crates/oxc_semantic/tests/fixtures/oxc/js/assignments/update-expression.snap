@@ -1,0 +1,78 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/assignments/update-expression.js
+---
+[
+  {
+    "children": [],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "num",
+        "node": "VariableDeclarator(num)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 0,
+            "name": "num",
+            "node_id": 8
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 1,
+            "name": "num",
+            "node_id": 12
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 2,
+            "name": "num",
+            "node_id": 16
+          },
+          {
+            "flags": "ReferenceFlags(Read | Write)",
+            "id": 3,
+            "name": "num",
+            "node_id": 20
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 1,
+        "name": "obj",
+        "node": "VariableDeclarator(obj)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 4,
+            "name": "obj",
+            "node_id": 33
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 5,
+            "name": "obj",
+            "node_id": 39
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 6,
+            "name": "obj",
+            "node_id": 45
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 7,
+            "name": "obj",
+            "node_id": 51
+          }
+        ]
+      }
+    ]
+  }
+]
