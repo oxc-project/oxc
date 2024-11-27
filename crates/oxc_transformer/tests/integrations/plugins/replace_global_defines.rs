@@ -182,3 +182,26 @@ fn this_expr() {
         config,
     );
 }
+
+#[test]
+fn assignment_target() {
+    let config = ReplaceGlobalDefinesConfig::new(&[
+        ("d", "ident"),
+        ("e.f", "ident"),
+        ("g", "dot.chain"),
+        ("h.i", "dot.chain"),
+    ])
+    .unwrap();
+
+    test(
+        r"
+console.log(
+	[a = 0, b.c = 0, b['c'] = 0],
+	[d = 0, e.f = 0, e['f'] = 0],
+	[g = 0, h.i = 0, h['i'] = 0],
+)
+        ",
+        "console.log([a = 0,b.c = 0,b['c'] = 0], [ident = 0,ident = 0,ident = 0], [dot.chain = 0,dot.chain = 0,dot.chain = 0\n]);",
+        config.clone(),
+    );
+}
