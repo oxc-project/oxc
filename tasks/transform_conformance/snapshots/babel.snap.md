@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 413/846
+Passed: 414/846
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (86/264)
+# babel-plugin-transform-class-properties (87/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -556,9 +556,6 @@ x Output mismatch
 x Output mismatch
 
 * private/super-expression/input.js
-x Output mismatch
-
-* private/tagged-template/input.js
 x Output mismatch
 
 * private-loose/assignment/input.js

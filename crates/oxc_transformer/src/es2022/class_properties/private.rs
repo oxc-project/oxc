@@ -4,7 +4,7 @@
 use std::mem;
 
 use oxc_allocator::Box as ArenaBox;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
@@ -829,20 +829,50 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
     /// Transform tagged template expression where tag is a private field.
     ///
-    /// "object.#prop`xyz`" -> "_classPrivateFieldGet(_prop, object).bind(object)`xyz`"
+    /// Instance prop:
+    /// * "object.#prop`xyz`"
+    ///   -> "_classPrivateFieldGet(_prop, object).bind(object)`xyz`"
+    /// * "object.obj.#prop`xyz`"
+    ///   -> "_classPrivateFieldGet(_prop, _object$obj = object.obj).bind(_object$obj)`xyz`"
+    ///
+    /// Static prop:
+    /// * "object.#prop`xyz`"
+    ///   -> "_assertClassBrand(Class, object, _prop)._.bind(object)`xyz`"
+    /// * "object.obj.#prop`xyz`"
+    ///   -> "_assertClassBrand(Class, (_object$obj = object.obj), _prop)._.bind(_object$obj)`xyz`"
     //
     // `#[inline]` so that compiler sees that `expr` is an `Expression::TaggedTemplateExpression`
     #[inline]
-    #[expect(clippy::unused_self)]
     pub(super) fn transform_tagged_template_expression(
         &mut self,
         expr: &mut Expression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::TaggedTemplateExpression(_tagged_temp_expr) = expr else { unreachable!() };
+        let Expression::TaggedTemplateExpression(tagged_temp_expr) = expr else { unreachable!() };
+        let Expression::PrivateFieldExpression(field_expr) = &mut tagged_temp_expr.tag else {
+            return;
+        };
+        if let Some(tag) = self.transform_tagged_template_expression_impl(field_expr, ctx) {
+            tagged_temp_expr.tag = tag;
+        };
+    }
 
-        // TODO: "object.#prop`xyz`"
-        // See `private/tagged-template` fixture.
+    pub(super) fn transform_tagged_template_expression_impl(
+        &mut self,
+        field_expr: &mut PrivateFieldExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let (callee, object) = self.transform_private_field_callee(field_expr, ctx)?;
+
+        // Return `<callee>.bind(object)`, to be substituted as tag of tagged template expression
+        let callee = Expression::from(ctx.ast.member_expression_static(
+            SPAN,
+            callee,
+            ctx.ast.identifier_name(SPAN, Atom::from("bind")),
+            false,
+        ));
+        let arguments = ctx.ast.vec1(Argument::from(object));
+        Some(ctx.ast.expression_call(field_expr.span, callee, NONE, arguments, false))
     }
 
     /// Transform private field in assignment pattern.
