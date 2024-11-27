@@ -1,4 +1,6 @@
-use once_cell::sync::Lazy;
+use lazy_static::lazy_static;
+use phf::phf_map;
+
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
@@ -6,7 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_map;
 
 use crate::{
     context::LintContext,
@@ -78,16 +79,16 @@ impl PreferTagOverRole {
     }
 }
 
-static ROLE_TO_TAG_MAP: Lazy<phf::Map<&'static str, &'static str>> = Lazy::new(|| {
-    phf_map! {
+lazy_static! {
+    static ref ROLE_TO_TAG_MAP: phf::Map<&'static str, &'static str> = phf_map! {
         "checkbox" => "input",
         "button" => "button",
         "heading" => "h1,h2,h3,h4,h5,h6",
         "link" => "a,area",
         "rowgroup" => "tbody,tfoot,thead",
         "banner" => "header",
-    }
-});
+    };
+}
 
 impl Rule for PreferTagOverRole {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
-use once_cell::sync::Lazy;
+use lazy_static::lazy_static;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
     AstKind,
@@ -425,12 +425,12 @@ const DOM_PROPERTIES_IGNORE_CASE: [&str; 5] = [
     "webkitDirectory",
 ];
 
-static DOM_PROPERTIES_LOWER_MAP: Lazy<FxHashMap<String, &'static str>> = Lazy::new(|| {
-    DOM_PROPERTIES_NAMES
+lazy_static! {
+    static ref DOM_PROPERTIES_LOWER_MAP: FxHashMap<String, &'static str> = DOM_PROPERTIES_NAMES
         .iter()
         .map(|it| (it.cow_to_lowercase().into_owned(), *it))
-        .collect::<FxHashMap<_, _>>()
-});
+        .collect::<FxHashMap<_, _>>();
+}
 
 /// Checks if an attribute name is a valid `data-*` attribute:
 /// - Name starts with "data-" and has alphanumeric words (browsers require lowercase, but React and TS lowercase them),
