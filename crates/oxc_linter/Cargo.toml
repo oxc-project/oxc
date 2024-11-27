@@ -49,7 +49,6 @@ lazy_static = { workspace = true }
 memchr = { workspace = true }
 mime_guess = { workspace = true }
 nonmax = { workspace = true }
-once_cell = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 regex = { workspace = true }
