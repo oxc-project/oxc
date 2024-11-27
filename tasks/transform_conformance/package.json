@@ -11,6 +11,7 @@
     "@babel/plugin-external-helpers": "^7.25.9",
     "@babel/plugin-proposal-decorators": "^7.25.9",
     "@babel/plugin-transform-arrow-functions": "^7.25.9",
+    "@babel/plugin-transform-async-to-generator": "^7.25.9",
     "@babel/plugin-transform-class-properties": "^7.25.9",
     "@babel/plugin-transform-class-static-block": "^7.26.0",
     "@babel/plugin-transform-exponentiation-operator": "^7.25.9",

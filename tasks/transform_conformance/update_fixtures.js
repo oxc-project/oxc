@@ -51,7 +51,7 @@ async function updateDir(dirPath, options, hasChangedOptions) {
       dirFiles.push(file);
     } else if (file.name === 'options.json') {
       optionsFile = file;
-    } else if (file.name === 'output.js') {
+    } else if (file.name.startsWith('output.')) {
       outputFile = file;
     } else if (file.name.startsWith('input.')) {
       inputFile = file;
@@ -73,7 +73,7 @@ async function updateDir(dirPath, options, hasChangedOptions) {
   if (outputFile && hasChangedOptions) {
     const inputPath = pathJoin(dirPath, inputFile.name);
     const outputPath = pathJoin(dirPath, outputFile.name);
-    const backupOutputPath = pathJoin(dirPath, 'output.original.js');
+    const backupOutputPath = pathJoin(dirPath, `output.original.${outputFile.name.slice(7)}`);
     await rename(outputPath, backupOutputPath);
     await transform(inputPath, outputPath, options);
   }
@@ -187,7 +187,16 @@ async function transform(inputPath, outputPath, options) {
   if (options.presets) options.presets = options.presets.map(preset => prefixName(preset, 'preset'));
 
   options.plugins = (options.plugins || []).map(plugin => prefixName(plugin, 'plugin'));
-  options.plugins.push(['@babel/plugin-external-helpers', { helperVersion: EXTERNAL_HELPERS_VERSION }]);
+
+  let addExternalHelpersPlugin = true;
+  if (Object.hasOwn(options, 'externalHelpers')) {
+    if (!options.externalHelpers) addExternalHelpersPlugin = false;
+    delete options.externalHelpers;
+  }
+
+  if (addExternalHelpersPlugin) {
+    options.plugins.push(['@babel/plugin-external-helpers', { helperVersion: EXTERNAL_HELPERS_VERSION }]);
+  }
 
   const { code } = await transformFileAsync(inputPath, options);
   await writeFile(outputPath, code);

@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 406/846
+Passed: 413/846
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (79/264)
+# babel-plugin-transform-class-properties (86/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -817,12 +817,6 @@ Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
 
-* public/non-block-arrow-func/input.mjs
-x Output mismatch
-
-* public/regression-T2983/input.mjs
-x Output mismatch
-
 * public/regression-T7364/input.mjs
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(7)]
@@ -855,9 +849,6 @@ rebuilt        : ScopeId(9): Some(ScopeId(8))
 * public/static-class-binding/input.js
 x Output mismatch
 
-* public/static-export/input.mjs
-x Output mismatch
-
 * public/static-infer-name/input.js
 x Output mismatch
 
@@ -886,12 +877,6 @@ x Output mismatch
 x Output mismatch
 
 * public-loose/foobar/input.js
-x Output mismatch
-
-* public-loose/non-block-arrow-func/input.mjs
-x Output mismatch
-
-* public-loose/regression-T2983/input.mjs
 x Output mismatch
 
 * public-loose/regression-T7364/input.mjs
@@ -924,9 +909,6 @@ after transform: ScopeId(6): Some(ScopeId(5))
 rebuilt        : ScopeId(9): Some(ScopeId(8))
 
 * public-loose/static-class-binding/input.js
-x Output mismatch
-
-* public-loose/static-export/input.mjs
 x Output mismatch
 
 * public-loose/static-infer-name/input.js
@@ -969,9 +951,6 @@ rebuilt        : SymbolId(2): ScopeId(0)
 Symbol scope ID mismatch for "_bar":
 after transform: SymbolId(4): ScopeId(2)
 rebuilt        : SymbolId(3): ScopeId(0)
-
-* regression/T2983/input.mjs
-x Output mismatch
 
 * regression/T7364/input.mjs
 Scope children mismatch:
