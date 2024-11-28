@@ -88,7 +88,6 @@ enum SyntheticRunLevel {
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         self.init(params.root_uri)?;
-        self.init_ignore_glob().await;
         let options = params.initialization_options.and_then(|mut value| {
             let settings = value.get_mut("settings")?.take();
             serde_json::from_value::<Options>(settings).ok()
@@ -117,7 +116,8 @@ impl LanguageServer for Backend {
             None
         };
 
-        self.init_linter_config().await;
+        let oxlintrc = self.init_linter_config().await;
+        self.init_ignore_glob(oxlintrc).await;
         Ok(InitializeResult {
             server_info: Some(ServerInfo { name: "oxc".into(), version: None }),
             offset_encoding: None,
@@ -411,7 +411,7 @@ impl Backend {
         Ok(())
     }
 
-    async fn init_ignore_glob(&self) {
+    async fn init_ignore_glob(&self, oxlintrc: Option<Oxlintrc>) {
         let uri = self
             .root_uri
             .get()
@@ -447,6 +447,17 @@ impl Backend {
                 }
             }
         }
+
+        if let Some(oxlintrc) = oxlintrc {
+            if !oxlintrc.ignore_patterns.is_empty() {
+                let mut builder =
+                    ignore::gitignore::GitignoreBuilder::new(oxlintrc.path.parent().unwrap());
+                for entry in &oxlintrc.ignore_patterns {
+                    builder.add_line(None, entry).expect("Failed to add ignore line");
+                }
+                gitignore_globs.push(builder.build().unwrap());
+            }
+        }
     }
 
     #[allow(clippy::ptr_arg)]
@@ -470,12 +481,12 @@ impl Backend {
         .await;
     }
 
-    async fn init_linter_config(&self) {
+    async fn init_linter_config(&self) -> Option<Oxlintrc> {
         let Some(Some(uri)) = self.root_uri.get() else {
-            return;
+            return None;
         };
         let Ok(root_path) = uri.to_file_path() else {
-            return;
+            return None;
         };
         let mut config_path = None;
         let config = root_path.join(self.options.lock().await.get_config_path().unwrap());
@@ -484,16 +495,17 @@ impl Backend {
         }
         if let Some(config_path) = config_path {
             let mut linter = self.server_linter.write().await;
+            let config = Oxlintrc::from_file(&config_path)
+                .expect("should have initialized linter with new options");
             *linter = ServerLinter::new_with_linter(
-                LinterBuilder::from_oxlintrc(
-                    true,
-                    Oxlintrc::from_file(&config_path)
-                        .expect("should have initialized linter with new options"),
-                )
-                .with_fix(FixKind::SafeFix)
-                .build(),
+                LinterBuilder::from_oxlintrc(true, config.clone())
+                    .with_fix(FixKind::SafeFix)
+                    .build(),
             );
+            return Some(config);
         }
+
+        None
     }
 
     async fn handle_file_update(&self, uri: Url, content: Option<String>, version: Option<i32>) {

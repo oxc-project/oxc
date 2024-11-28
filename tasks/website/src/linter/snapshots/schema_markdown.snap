@@ -1,7 +1,6 @@
 ---
 source: tasks/website/src/linter/json_schema.rs
 expression: snapshot
-snapshot_kind: text
 ---
 # Oxlint Configuration File
 
@@ -159,6 +158,15 @@ Globals can be disabled by setting their value to `"off"`. For example, in an en
 ```
 
 You may also use `"readable"` or `false` to represent `"readonly"`, and `"writeable"` or `true` to represent `"writable"`.
+
+
+## ignorePatterns
+
+type: `string[]`
+
+default: `[]`
+
+Globs to ignore during linting. These are resolved from the configuration file path.
 
 
 ## overrides

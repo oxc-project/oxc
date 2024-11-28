@@ -88,6 +88,9 @@ pub struct Oxlintrc {
     /// Absolute path to the configuration file.
     #[serde(skip)]
     pub path: PathBuf,
+    /// Globs to ignore during linting. These are resolved from the configuration file path.
+    #[serde(rename = "ignorePatterns")]
+    pub ignore_patterns: Vec<String>,
 }
 
 impl Oxlintrc {

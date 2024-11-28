@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_linter/src/lib.rs
 expression: json
-snapshot_kind: text
 ---
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -36,6 +35,14 @@ snapshot_kind: text
           "$ref": "#/definitions/OxlintGlobals"
         }
       ]
+    },
+    "ignorePatterns": {
+      "description": "Globs to ignore during linting. These are resolved from the configuration file path.",
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "overrides": {
       "description": "Add, remove, or otherwise reconfigure rules for specific files or groups of files.",

@@ -33,5 +33,6 @@
   "env": {
     "builtin": true
   },
-  "globals": {}
+  "globals": {},
+  "ignorePatterns": []
 }
