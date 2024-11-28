@@ -12,14 +12,10 @@ use crate::CompressorPass;
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/StatementFusion.java>
 pub struct StatementFusion {
-    changed: bool,
+    pub(crate) changed: bool,
 }
 
 impl<'a> CompressorPass<'a> for StatementFusion {
-    fn changed(&self) -> bool {
-        self.changed
-    }
-
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
         traverse_mut_with_ctx(self, program, ctx);

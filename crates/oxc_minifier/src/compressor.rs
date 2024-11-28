@@ -5,8 +5,8 @@ use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
     ast_passes::{
-        EarlyPass, LatePass, PeepholeFoldConstants, PeepholeMinimizeConditions,
-        PeepholeRemoveDeadCode, RemoveSyntax,
+        CollapsePass, LatePeepholeOptimizations, PeepholeFoldConstants, PeepholeMinimizeConditions,
+        PeepholeOptimizations, PeepholeRemoveDeadCode, RemoveSyntax,
     },
     CompressOptions, CompressorPass,
 };
@@ -41,25 +41,10 @@ impl<'a> Compressor<'a> {
             return;
         }
 
-        let mut i = 0;
-        loop {
-            let mut changed = false;
-            let mut pass = EarlyPass::new();
-            pass.build(program, &mut ctx);
-            if pass.changed() {
-                changed = true;
-            }
-            if !changed {
-                break;
-            }
-            if i > 50 {
-                debug_assert!(false, "Ran in a infinite loop.");
-                break;
-            }
-            i += 1;
-        }
-
-        LatePass::new().build(program, &mut ctx);
+        PeepholeOptimizations::new().build(program, &mut ctx);
+        CollapsePass::new().build(program, &mut ctx);
+        LatePeepholeOptimizations::new().run_in_loop(program, &mut ctx);
+        PeepholeOptimizations::new().build(program, &mut ctx);
     }
 
     fn dead_code_elimination(program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {

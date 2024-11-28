@@ -16,14 +16,10 @@ use crate::{node_util::Ctx, CompressorPass};
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 pub struct PeepholeFoldConstants {
-    changed: bool,
+    pub(crate) changed: bool,
 }
 
 impl<'a> CompressorPass<'a> for PeepholeFoldConstants {
-    fn changed(&self) -> bool {
-        self.changed
-    }
-
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
         traverse_mut_with_ctx(self, program, ctx);

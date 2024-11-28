@@ -15,10 +15,6 @@ pub struct RemoveSyntax {
 }
 
 impl<'a> CompressorPass<'a> for RemoveSyntax {
-    fn changed(&self) -> bool {
-        false
-    }
-
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         traverse_mut_with_ctx(self, program, ctx);
     }

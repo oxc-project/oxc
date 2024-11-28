@@ -11,14 +11,10 @@ use crate::{node_util::Ctx, CompressorPass};
 /// Minimize With Known Methods
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
 pub struct PeepholeReplaceKnownMethods {
-    changed: bool,
+    pub(crate) changed: bool,
 }
 
 impl<'a> CompressorPass<'a> for PeepholeReplaceKnownMethods {
-    fn changed(&self) -> bool {
-        self.changed
-    }
-
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
         traverse_mut_with_ctx(self, program, ctx);

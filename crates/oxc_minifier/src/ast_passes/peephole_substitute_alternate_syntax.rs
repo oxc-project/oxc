@@ -24,14 +24,10 @@ pub struct PeepholeSubstituteAlternateSyntax {
     // states
     in_define_export: bool,
 
-    changed: bool,
+    pub(crate) changed: bool,
 }
 
 impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {
-    fn changed(&self) -> bool {
-        self.changed
-    }
-
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
         traverse_mut_with_ctx(self, program, ctx);
