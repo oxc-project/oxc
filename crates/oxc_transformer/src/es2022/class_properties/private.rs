@@ -192,9 +192,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // Get replacement for callee
         let replacement = if prop.is_static {
-            // TODO: If `object` is reference to class name, and class is declaration, use shortcut `_prop._.call(Class)`.
-            // TODO(improve-on-babel): No reason not to apply these shortcuts for class expressions too.
-
             // `object.#prop(arg)` -> `_assertClassBrand(Class, object, _prop)._.call(object, arg)`
             // or shortcut `_prop._.call(object, arg)`
             let class_name_binding = class_name_binding.as_ref().unwrap();
