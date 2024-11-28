@@ -281,7 +281,7 @@ impl<'a> Keys<'a> {
 mod test {
     use oxc_allocator::Allocator;
     use oxc_semantic::{ScopeTree, SymbolTable};
-    use oxc_traverse::TraverseCtx;
+    use oxc_traverse::ReusableTraverseCtx;
 
     use super::Keys;
 
@@ -290,7 +290,10 @@ mod test {
             let allocator = Allocator::default();
             let scopes = ScopeTree::default();
             let symbols = SymbolTable::default();
-            let mut $ctx = TraverseCtx::new(scopes, symbols, &allocator);
+            let ctx = ReusableTraverseCtx::new(scopes, symbols, &allocator);
+            // SAFETY: Macro user only gets a `&mut TraverseCtx`, which cannot be abused
+            let mut ctx = unsafe { ctx.unwrap() };
+            let $ctx = &mut ctx;
         };
     }
 
@@ -300,18 +303,18 @@ mod test {
 
         let mut keys = Keys::default();
 
-        assert_eq!(keys.get_unique(&mut ctx), "_");
-        assert_eq!(keys.get_unique(&mut ctx), "_2");
-        assert_eq!(keys.get_unique(&mut ctx), "_3");
-        assert_eq!(keys.get_unique(&mut ctx), "_4");
-        assert_eq!(keys.get_unique(&mut ctx), "_5");
-        assert_eq!(keys.get_unique(&mut ctx), "_6");
-        assert_eq!(keys.get_unique(&mut ctx), "_7");
-        assert_eq!(keys.get_unique(&mut ctx), "_8");
-        assert_eq!(keys.get_unique(&mut ctx), "_9");
-        assert_eq!(keys.get_unique(&mut ctx), "_10");
-        assert_eq!(keys.get_unique(&mut ctx), "_11");
-        assert_eq!(keys.get_unique(&mut ctx), "_12");
+        assert_eq!(keys.get_unique(ctx), "_");
+        assert_eq!(keys.get_unique(ctx), "_2");
+        assert_eq!(keys.get_unique(ctx), "_3");
+        assert_eq!(keys.get_unique(ctx), "_4");
+        assert_eq!(keys.get_unique(ctx), "_5");
+        assert_eq!(keys.get_unique(ctx), "_6");
+        assert_eq!(keys.get_unique(ctx), "_7");
+        assert_eq!(keys.get_unique(ctx), "_8");
+        assert_eq!(keys.get_unique(ctx), "_9");
+        assert_eq!(keys.get_unique(ctx), "_10");
+        assert_eq!(keys.get_unique(ctx), "_11");
+        assert_eq!(keys.get_unique(ctx), "_12");
     }
 
     #[test]
@@ -328,9 +331,9 @@ mod test {
         keys.reserve("_foo");
         keys.reserve("_2foo");
 
-        assert_eq!(keys.get_unique(&mut ctx), "_");
-        assert_eq!(keys.get_unique(&mut ctx), "_2");
-        assert_eq!(keys.get_unique(&mut ctx), "_3");
+        assert_eq!(keys.get_unique(ctx), "_");
+        assert_eq!(keys.get_unique(ctx), "_2");
+        assert_eq!(keys.get_unique(ctx), "_3");
     }
 
     #[test]
@@ -340,9 +343,9 @@ mod test {
         let mut keys = Keys::default();
         keys.reserve("_");
 
-        assert_eq!(keys.get_unique(&mut ctx), "_2");
-        assert_eq!(keys.get_unique(&mut ctx), "_3");
-        assert_eq!(keys.get_unique(&mut ctx), "_4");
+        assert_eq!(keys.get_unique(ctx), "_2");
+        assert_eq!(keys.get_unique(ctx), "_3");
+        assert_eq!(keys.get_unique(ctx), "_4");
     }
 
     #[test]
@@ -354,15 +357,15 @@ mod test {
         keys.reserve("_4");
         keys.reserve("_11");
 
-        assert_eq!(keys.get_unique(&mut ctx), "_");
-        assert_eq!(keys.get_unique(&mut ctx), "_3");
-        assert_eq!(keys.get_unique(&mut ctx), "_5");
-        assert_eq!(keys.get_unique(&mut ctx), "_6");
-        assert_eq!(keys.get_unique(&mut ctx), "_7");
-        assert_eq!(keys.get_unique(&mut ctx), "_8");
-        assert_eq!(keys.get_unique(&mut ctx), "_9");
-        assert_eq!(keys.get_unique(&mut ctx), "_10");
-        assert_eq!(keys.get_unique(&mut ctx), "_12");
+        assert_eq!(keys.get_unique(ctx), "_");
+        assert_eq!(keys.get_unique(ctx), "_3");
+        assert_eq!(keys.get_unique(ctx), "_5");
+        assert_eq!(keys.get_unique(ctx), "_6");
+        assert_eq!(keys.get_unique(ctx), "_7");
+        assert_eq!(keys.get_unique(ctx), "_8");
+        assert_eq!(keys.get_unique(ctx), "_9");
+        assert_eq!(keys.get_unique(ctx), "_10");
+        assert_eq!(keys.get_unique(ctx), "_12");
     }
 
     #[test]
@@ -375,16 +378,16 @@ mod test {
         keys.reserve("_12");
         keys.reserve("_13");
 
-        assert_eq!(keys.get_unique(&mut ctx), "_");
-        assert_eq!(keys.get_unique(&mut ctx), "_2");
-        assert_eq!(keys.get_unique(&mut ctx), "_3");
-        assert_eq!(keys.get_unique(&mut ctx), "_6");
-        assert_eq!(keys.get_unique(&mut ctx), "_7");
-        assert_eq!(keys.get_unique(&mut ctx), "_8");
-        assert_eq!(keys.get_unique(&mut ctx), "_9");
-        assert_eq!(keys.get_unique(&mut ctx), "_10");
-        assert_eq!(keys.get_unique(&mut ctx), "_11");
-        assert_eq!(keys.get_unique(&mut ctx), "_14");
+        assert_eq!(keys.get_unique(ctx), "_");
+        assert_eq!(keys.get_unique(ctx), "_2");
+        assert_eq!(keys.get_unique(ctx), "_3");
+        assert_eq!(keys.get_unique(ctx), "_6");
+        assert_eq!(keys.get_unique(ctx), "_7");
+        assert_eq!(keys.get_unique(ctx), "_8");
+        assert_eq!(keys.get_unique(ctx), "_9");
+        assert_eq!(keys.get_unique(ctx), "_10");
+        assert_eq!(keys.get_unique(ctx), "_11");
+        assert_eq!(keys.get_unique(ctx), "_14");
     }
 
     #[test]
@@ -396,9 +399,9 @@ mod test {
         keys.reserve("_4");
         keys.reserve("_");
 
-        assert_eq!(keys.get_unique(&mut ctx), "_3");
-        assert_eq!(keys.get_unique(&mut ctx), "_5");
-        assert_eq!(keys.get_unique(&mut ctx), "_6");
+        assert_eq!(keys.get_unique(ctx), "_3");
+        assert_eq!(keys.get_unique(ctx), "_5");
+        assert_eq!(keys.get_unique(ctx), "_6");
     }
 
     #[test]
@@ -410,8 +413,8 @@ mod test {
         keys.reserve("_4");
         keys.reserve("_");
 
-        assert_eq!(keys.get_unique(&mut ctx), "_2");
-        assert_eq!(keys.get_unique(&mut ctx), "_3");
-        assert_eq!(keys.get_unique(&mut ctx), "_6");
+        assert_eq!(keys.get_unique(ctx), "_2");
+        assert_eq!(keys.get_unique(ctx), "_3");
+        assert_eq!(keys.get_unique(ctx), "_6");
     }
 }

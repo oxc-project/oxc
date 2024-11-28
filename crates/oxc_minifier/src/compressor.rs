@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
     ast_passes::{
@@ -33,7 +33,7 @@ impl<'a> Compressor<'a> {
         scopes: ScopeTree,
         program: &mut Program<'a>,
     ) {
-        let mut ctx = TraverseCtx::new(scopes, symbols, self.allocator);
+        let mut ctx = ReusableTraverseCtx::new(scopes, symbols, self.allocator);
         RemoveSyntax::new(self.options).build(program, &mut ctx);
 
         if self.options.dead_code_elimination {
@@ -62,7 +62,7 @@ impl<'a> Compressor<'a> {
         LatePass::new().build(program, &mut ctx);
     }
 
-    fn dead_code_elimination(program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn dead_code_elimination(program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         PeepholeFoldConstants::new().build(program, ctx);
         PeepholeMinimizeConditions::new().build(program, ctx);
         PeepholeRemoveDeadCode::new().build(program, ctx);

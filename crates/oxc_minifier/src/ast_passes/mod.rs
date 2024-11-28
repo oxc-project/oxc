@@ -20,12 +20,12 @@ pub use statement_fusion::StatementFusion;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 pub trait CompressorPass<'a>: Traverse<'a> {
     fn changed(&self) -> bool;
 
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>);
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>);
 }
 
 // See `latePeepholeOptimizations`
@@ -61,9 +61,9 @@ impl<'a> CompressorPass<'a> for EarlyPass {
         self.changed
     }
 
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
-        oxc_traverse::walk_program(self, program, ctx);
+        traverse_mut_with_ctx(self, program, ctx);
         self.changed = self.x0_statement_fusion.changed()
             || self.x1_peephole_remove_dead_code.changed()
             || self.x2_peephole_minimize_conditions.changed()
@@ -167,9 +167,9 @@ impl<'a> CompressorPass<'a> for LatePass {
         self.changed
     }
 
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
-        oxc_traverse::walk_program(self, program, ctx);
+        traverse_mut_with_ctx(self, program, ctx);
         self.changed = self.x0_exploit_assigns.changed()
             || self.x0_exploit_assigns.changed()
             || self.x1_collapse_variable_declarations.changed()

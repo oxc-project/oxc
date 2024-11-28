@@ -2,7 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsLiteralValue};
 use oxc_span::SPAN;
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::node_util::Ctx;
 use crate::{keep_var::KeepVar, CompressorPass};
@@ -22,9 +22,9 @@ impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {
         self.changed
     }
 
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
-        oxc_traverse::walk_program(self, program, ctx);
+        traverse_mut_with_ctx(self, program, ctx);
     }
 }
 

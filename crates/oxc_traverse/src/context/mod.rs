@@ -19,11 +19,13 @@ use crate::{
 mod ancestry;
 mod bound_identifier;
 mod maybe_bound_identifier;
+mod reusable;
 mod scoping;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
 pub use bound_identifier::BoundIdentifier;
 pub use maybe_bound_identifier::MaybeBoundIdentifier;
+pub use reusable::ReusableTraverseCtx;
 pub use scoping::TraverseScoping;
 
 /// Traverse context.
@@ -119,14 +121,6 @@ pub struct TraverseCtx<'a> {
 
 // Public methods
 impl<'a> TraverseCtx<'a> {
-    /// Create new traversal context.
-    pub fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
-        let ancestry = TraverseAncestry::new();
-        let scoping = TraverseScoping::new(scopes, symbols);
-        let ast = AstBuilder::new(allocator);
-        Self { ancestry, scoping, ast }
-    }
-
     /// Allocate a node in the arena.
     ///
     /// Returns a [`Box<T>`].
@@ -601,6 +595,17 @@ impl<'a> TraverseCtx<'a> {
 
 // Methods used internally within crate
 impl<'a> TraverseCtx<'a> {
+    /// Create new traversal context.
+    ///
+    /// # SAFETY
+    /// This function must not be public to maintain soundness of [`TraverseAncestry`].
+    pub(crate) fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
+        let ancestry = TraverseAncestry::new();
+        let scoping = TraverseScoping::new(scopes, symbols);
+        let ast = AstBuilder::new(allocator);
+        Self { ancestry, scoping, ast }
+    }
+
     /// Shortcut for `self.ancestry.push_stack`, to make `walk_*` methods less verbose.
     ///
     /// # SAFETY
