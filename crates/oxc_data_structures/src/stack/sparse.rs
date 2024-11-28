@@ -128,6 +128,21 @@ impl<T> SparseStack<T> {
         }
     }
 
+    /// Get value of last entry on the stack.
+    #[inline]
+    pub fn last_mut(&mut self) -> Option<&mut T> {
+        let has_value = *self.has_values.last();
+        if has_value {
+            debug_assert!(!self.values.is_empty());
+            // SAFETY: Last `self.has_values` is only `true` if there's a corresponding value in `self.values`.
+            // This invariant is maintained in `push`, `pop`, `take_last`, `last_or_init`, and `last_mut_or_init`.
+            let value = unsafe { self.values.last_mut_unchecked() };
+            Some(value)
+        } else {
+            None
+        }
+    }
+
     /// Take value from last entry on the stack, leaving last entry empty.
     #[inline]
     pub fn take_last(&mut self) -> Option<T> {
