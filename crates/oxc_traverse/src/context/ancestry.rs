@@ -35,7 +35,8 @@ const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 /// 1. `TraverseAncestry`'s `stack` field is private.
 /// 2. Public methods of `TraverseAncestry` provide no means for mutating `stack`.
 /// 3. Visitors receive a `&mut TraverseCtx`, but cannot overwrite its `ancestry` field because they:
-///    a. cannot create a new `TraverseAncestry` - `TraverseAncestry::new` is private.
+///    a. cannot create a new `TraverseAncestry`
+///       - `TraverseAncestry::new` and `TraverseCtx::new` are private.
 ///    b. cannot obtain an owned `TraverseAncestry` from a `&TraverseAncestry`
 ///       - `TraverseAncestry` is not `Clone`.
 pub struct TraverseAncestry<'a> {

@@ -60,6 +60,8 @@
 //! scheme could very easily be derailed entirely by a single mistake, so in my opinion, it's unwise
 //! to edit by hand.
 
+use std::ptr;
+
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_semantic::{ScopeTree, SymbolTable};
@@ -67,7 +69,8 @@ use oxc_semantic::{ScopeTree, SymbolTable};
 pub mod ast_operations;
 mod context;
 pub use context::{
-    BoundIdentifier, MaybeBoundIdentifier, TraverseAncestry, TraverseCtx, TraverseScoping,
+    BoundIdentifier, MaybeBoundIdentifier, ReusableTraverseCtx, TraverseAncestry, TraverseCtx,
+    TraverseScoping,
 };
 
 mod generated {
@@ -77,7 +80,7 @@ mod generated {
     pub(super) mod walk;
 }
 pub use generated::{ancestor, ancestor::Ancestor, traverse::Traverse};
-use generated::{scopes_collector, walk};
+use generated::{scopes_collector, walk::walk_program};
 
 mod compile_fail_tests;
 
@@ -144,7 +147,6 @@ mod compile_fail_tests;
 ///     }
 /// }
 /// ```
-
 pub fn traverse_mut<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     allocator: &'a Allocator,
@@ -152,17 +154,24 @@ pub fn traverse_mut<'a, Tr: Traverse<'a>>(
     symbols: SymbolTable,
     scopes: ScopeTree,
 ) -> (SymbolTable, ScopeTree) {
-    let mut ctx = TraverseCtx::new(scopes, symbols, allocator);
-    walk_program(traverser, program, &mut ctx);
-    debug_assert!(ctx.ancestors_depth() == 1);
-    ctx.scoping.into_symbol_table_and_scope_tree()
+    let mut ctx = ReusableTraverseCtx::new(scopes, symbols, allocator);
+    traverse_mut_with_ctx(traverser, program, &mut ctx);
+    ctx.into_symbol_table_and_scope_tree()
 }
 
-pub fn walk_program<'a, Tr: Traverse<'a>>(
+/// Traverse AST with a [`Traverse`] impl, reusing an existing [`ReusableTraverseCtx`].
+///
+/// [`ReusableTraverseCtx`] is specific to a single AST. It will likely cause malfunction if
+/// `traverse_mut_with_ctx` is called with a [`Program`] and [`ReusableTraverseCtx`] which do not match.
+///
+/// See [`traverse_mut`] for more details of how traversal works.
+pub fn traverse_mut_with_ctx<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     program: &mut Program<'a>,
-    ctx: &mut TraverseCtx<'a>,
+    ctx: &mut ReusableTraverseCtx<'a>,
 ) {
+    let ctx = ctx.get_mut();
     // SAFETY: Walk functions are constructed to avoid unsoundness
-    unsafe { walk::walk_program(traverser, std::ptr::from_mut(program), ctx) };
+    unsafe { walk_program(traverser, ptr::from_mut(program), ctx) };
+    debug_assert!(ctx.ancestors_depth() == 1);
 }

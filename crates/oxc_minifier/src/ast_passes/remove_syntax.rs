@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::{CompressOptions, CompressorPass};
 
@@ -19,8 +19,8 @@ impl<'a> CompressorPass<'a> for RemoveSyntax {
         false
     }
 
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        oxc_traverse::walk_program(self, program, ctx);
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+        traverse_mut_with_ctx(self, program, ctx);
     }
 }
 

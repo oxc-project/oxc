@@ -8,7 +8,7 @@ use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{BinaryOperator, LogicalOperator},
 };
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::{node_util::Ctx, CompressorPass};
 
@@ -24,9 +24,9 @@ impl<'a> CompressorPass<'a> for PeepholeFoldConstants {
         self.changed
     }
 
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
-        oxc_traverse::walk_program(self, program, ctx);
+        traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
