@@ -13,7 +13,6 @@ use oxc::{
     allocator::Allocator,
     ast::{ast::Program, Comment as OxcComment, CommentKind, Visit},
     codegen::{CodeGenerator, CodegenOptions},
-    diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
@@ -71,9 +70,11 @@ pub struct Oxc {
     #[wasm_bindgen(readonly, skip_typescript, js_name = "prettierIrText")]
     pub prettier_ir_text: String,
 
+    #[serde(skip)]
     comments: Vec<Comment>,
 
-    diagnostics: RefCell<Vec<Error>>,
+    #[serde(skip)]
+    diagnostics: RefCell<Vec<oxc::diagnostics::OxcDiagnostic>>,
 
     #[serde(skip)]
     serializer: serde_wasm_bindgen::Serializer,
@@ -120,21 +121,24 @@ impl Oxc {
             .diagnostics
             .borrow()
             .iter()
-            .flat_map(|error| {
-                let Some(labels) = error.labels() else { return vec![] };
-                labels
-                    .map(|label| {
-                        OxcDiagnostic {
-                            start: label.offset(),
-                            end: label.offset() + label.len(),
-                            severity: format!("{:?}", error.severity().unwrap_or_default()),
-                            message: format!("{error}"),
-                        }
-                        .serialize(&self.serializer)
-                        .unwrap()
+            .flat_map(|error| match &error.labels {
+                Some(labels) => labels
+                    .iter()
+                    .map(|label| OxcDiagnostic {
+                        start: label.offset(),
+                        end: label.offset() + label.len(),
+                        severity: format!("{:?}", error.severity),
+                        message: format!("{error}"),
                     })
-                    .collect::<Vec<_>>()
+                    .collect::<Vec<_>>(),
+                None => vec![OxcDiagnostic {
+                    start: 0,
+                    end: 0,
+                    severity: format!("{:?}", error.severity),
+                    message: format!("{error}"),
+                }],
             })
+            .map(|v| v.serialize(&self.serializer).unwrap())
             .collect::<Vec<_>>())
     }
 
@@ -169,7 +173,7 @@ impl Oxc {
         let _linter_options = linter_options.unwrap_or_default();
         let minifier_options = minifier_options.unwrap_or_default();
         let _codegen_options = codegen_options.unwrap_or_default();
-        let _transform_options = transform_options.unwrap_or_default();
+        let transform_options = transform_options.unwrap_or_default();
         let control_flow_options = control_flow_options.unwrap_or_default();
 
         let allocator = Allocator::default();
@@ -222,7 +226,7 @@ impl Oxc {
         });
         if run_options.syntax.unwrap_or_default() {
             self.save_diagnostics(
-                errors.into_iter().chain(semantic_ret.errors).map(Error::from).collect::<Vec<_>>(),
+                errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>(),
             );
         }
 
@@ -242,13 +246,23 @@ impl Oxc {
         }
 
         if run_options.transform.unwrap_or_default() {
-            let options = TransformOptions::enable_all();
+            let options = transform_options
+                .target
+                .as_ref()
+                .and_then(|target| {
+                    TransformOptions::from_target(target)
+                        .map_err(|err| {
+                            self.save_diagnostics(vec![oxc::diagnostics::OxcDiagnostic::error(
+                                err,
+                            )]);
+                        })
+                        .ok()
+                })
+                .unwrap_or_default();
             let result = Transformer::new(&allocator, &path, &options)
                 .build_with_symbols_and_scopes(symbols, scopes, &mut program);
             if !result.errors.is_empty() {
-                self.save_diagnostics(
-                    result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
-                );
+                self.save_diagnostics(result.errors.into_iter().collect::<Vec<_>>());
             }
         }
 
@@ -294,7 +308,7 @@ impl Oxc {
                 .build(program);
             let semantic = Rc::new(semantic_ret.semantic);
             let linter_ret = Linter::default().run(path, Rc::clone(&semantic));
-            let diagnostics = linter_ret.into_iter().map(|e| Error::from(e.error)).collect();
+            let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
         }
     }
@@ -389,7 +403,7 @@ impl Oxc {
         writer.scope_text
     }
 
-    fn save_diagnostics(&self, diagnostics: Vec<Error>) {
+    fn save_diagnostics(&self, diagnostics: Vec<oxc::diagnostics::OxcDiagnostic>) {
         self.diagnostics.borrow_mut().extend(diagnostics);
     }
 

@@ -6,6 +6,32 @@
  * @returns {any}
  */
 export function browserslist(query: string, opts: any): any;
+
+import type { Program, Span } from "@oxc-project/types";
+export * from "@oxc-project/types";
+
+
+export interface Oxc {
+    ast: Program;
+    ir: string;
+    controlFlowGraph: string;
+    symbols: SymbolTable;
+    scopeText: string;
+    codegenText: string;
+    formattedText: string;
+    prettierFormattedText: string;
+    prettierIrText: string;
+}
+
+export interface Comment {
+    type: CommentType;
+    value: string;
+    start: number;
+    end: number;
+}
+
+export type CommentType = "Line" | "Block";
+
 export interface OxcOptions {
     run?: OxcRunOptions;
     parser?: OxcParserOptions;
@@ -37,7 +63,9 @@ export interface OxcParserOptions {
 
 export interface OxcLinterOptions {}
 
-export interface OxcTransformerOptions {}
+export interface OxcTransformerOptions {
+    target?: string;
+}
 
 export interface OxcCodegenOptions {
     indentation?: number;
@@ -64,34 +92,6 @@ export interface OxcCompressOptions {
     loops: boolean;
     typeofs: boolean;
 }
-
-
-import type { Program, Span } from "@oxc-project/types";
-export * from "@oxc-project/types";
-
-
-export interface Oxc {
-    ast: Program;
-    ir: string;
-    controlFlowGraph: string;
-    symbols: SymbolTable;
-    scopeText: string;
-    codegenText: string;
-    formattedText: string;
-    prettierFormattedText: string;
-    prettierIrText: string;
-    comments: Comment[];
-    diagnostics: Error[];
-}
-
-export interface Comment {
-    type: CommentType;
-    value: string;
-    start: number;
-    end: number;
-}
-
-export type CommentType = "Line" | "Block";
 
 
 export type IndexVec<I, T> = Array<T>;

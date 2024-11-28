@@ -143,9 +143,9 @@ watch-wasm:
   just watch 'just build-wasm dev'
 
 build-wasm mode="release":
-  wasm-pack build --out-dir ../../npm/oxc-wasm --target web --{{mode}} --scope oxc crates/oxc_wasm
-  echo '*.wasm' > npm/oxc-wasm/.gitignore
+  wasm-pack build crates/oxc_wasm --mode no-install --no-pack --target web --scope oxc --out-dir ../../npm/oxc-wasm --{{mode}}
   cp crates/oxc_wasm/package.json npm/oxc-wasm/package.json
+  rm npm/oxc-wasm/.gitignore
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:

@@ -1,2 +1,0 @@
-[profile.release]
-opt-level = "s" # Tell `rustc` to optimize for small code size.
