@@ -78,7 +78,7 @@ pub struct ModuleRecord {
 
     /// Reexported bindings from `export * from 'specifier'`
     /// Keyed by resolved path
-    pub exported_bindings_from_star_export: DashMap<PathBuf, Vec<CompactStr>>,
+    pub exported_bindings_from_star_export: FxDashMap<PathBuf, Vec<CompactStr>>,
 
     /// `export default name`
     ///         ^^^^^^^ span
