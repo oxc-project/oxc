@@ -9,6 +9,7 @@ use globset::Glob;
 use ignore::gitignore::Gitignore;
 use log::{debug, error, info};
 use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
+use rustc_hash::FxBuildHasher;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::lsp_types::{NumberOrString, Position, Range};
@@ -27,11 +28,13 @@ use tower_lsp::{
     Client, LanguageServer, LspService, Server,
 };
 
+type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
+
 struct Backend {
     client: Client,
     root_uri: OnceCell<Option<Url>>,
     server_linter: RwLock<ServerLinter>,
-    diagnostics_report_map: DashMap<String, Vec<DiagnosticReport>>,
+    diagnostics_report_map: FxDashMap<String, Vec<DiagnosticReport>>,
     options: Mutex<Options>,
     gitignore_glob: Mutex<Vec<Gitignore>>,
 }
@@ -561,7 +564,7 @@ async fn main() {
     let stdout = tokio::io::stdout();
 
     let server_linter = ServerLinter::new();
-    let diagnostics_report_map = DashMap::new();
+    let diagnostics_report_map = FxDashMap::default();
 
     let (service, socket) = LspService::build(|client| Backend {
         client,
