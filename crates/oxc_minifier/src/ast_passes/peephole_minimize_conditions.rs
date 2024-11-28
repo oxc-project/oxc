@@ -68,15 +68,19 @@ impl<'a> PeepholeMinimizeConditions {
     /// Duplicate logic to DCE part.
     fn try_fold_if_block_one(&mut self, if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Statement::BlockStatement(block) = &mut if_stmt.consequent {
-            if block.body.len() == 1 {
+            if block.body.len() == 1
+                && !matches!(&block.body[0], Statement::VariableDeclaration(decl) if !decl.kind.is_var())
+            {
                 self.changed = true;
-                if_stmt.consequent = ctx.ast.move_statement(block.body.first_mut().unwrap());
+                if_stmt.consequent = ctx.ast.move_statement(&mut block.body[0]);
             }
         }
         if let Some(Statement::BlockStatement(block)) = &mut if_stmt.alternate {
-            if block.body.len() == 1 {
+            if block.body.len() == 1
+                && !matches!(&block.body[0], Statement::VariableDeclaration(decl) if !decl.kind.is_var())
+            {
                 self.changed = true;
-                if_stmt.alternate = Some(ctx.ast.move_statement(block.body.first_mut().unwrap()));
+                if_stmt.alternate = Some(ctx.ast.move_statement(&mut block.body[0]));
             }
         }
     }
@@ -241,6 +245,15 @@ mod test {
         fold_same("function f(){foo()}");
         fold_same("switch(x){case y: foo()}");
         fold_same("try{foo()}catch(ex){bar()}finally{baz()}");
+
+        // Dot not fold `let` and `const`.
+        // Lexical declaration cannot appear in a single-statement context.
+        fold_same("if (foo) { const bar = 1 } else { const baz = 1 }");
+        fold_same("if (foo) { let bar = 1 } else { let baz = 1 }");
+        fold(
+            "if (foo) { var bar = 1 } else { var baz = 1 }",
+            "if (foo) var bar = 1; else var baz = 1;",
+        );
     }
 
     /** Try to minimize returns */
