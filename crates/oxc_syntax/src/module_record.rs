@@ -1,11 +1,13 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 #![allow(missing_docs)] // fixme
 
-use std::{fmt, hash::BuildHasherDefault, path::PathBuf, sync::Arc};
+use std::{fmt, path::PathBuf, sync::Arc};
 
 use dashmap::DashMap;
 use oxc_span::{CompactStr, Span};
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::{FxBuildHasher, FxHashMap};
+
+type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 
 /// ESM Module Record
 ///
@@ -41,7 +43,7 @@ pub struct ModuleRecord {
     ///
     /// Note that Oxc does not support cross-file analysis, so this map will be empty after
     /// [`ModuleRecord`] is created. You must link the module records yourself.
-    pub loaded_modules: DashMap<CompactStr, Arc<ModuleRecord>, BuildHasherDefault<FxHasher>>,
+    pub loaded_modules: FxDashMap<CompactStr, Arc<ModuleRecord>>,
 
     /// `[[ImportEntries]]`
     ///
