@@ -88,11 +88,11 @@
 use std::{
     cell::Cell,
     fmt::{Debug, Display},
-    hash::{BuildHasherDefault, Hash},
+    hash::Hash,
 };
 
 use indexmap::IndexMap;
-use rustc_hash::FxHasher;
+use rustc_hash::FxBuildHasher;
 
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::{ast::*, visit::walk, Visit};
@@ -105,7 +105,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 
-type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
+type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
 /// Check `ScopeTree` and `SymbolTable` are correct after transform
 pub fn check_semantic_after_transform(

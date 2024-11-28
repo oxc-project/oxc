@@ -87,11 +87,9 @@
 //! The Implementation based on
 //! <https://github.com/babel/babel/blob/d20b314c14533ab86351ecf6ca6b7296b66a57b3/packages/babel-traverse/src/path/conversion.ts#L170-L247>
 
-use std::hash::BuildHasherDefault;
-
 use compact_str::CompactString;
 use indexmap::IndexMap;
-use rustc_hash::{FxHashSet, FxHasher};
+use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
@@ -106,7 +104,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::EnvOptions;
 
-type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
+type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
 /// Mode for arrow function conversion
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
