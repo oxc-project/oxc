@@ -5,8 +5,10 @@ use std::{
 
 use dashmap::{mapref::one::Ref, DashMap};
 use oxc_semantic::ModuleRecord;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 use std::num::NonZeroUsize;
+
+type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 
 /// `CacheState` and `CacheStateEntry` are used to fix the problem where
 /// there is a brief moment when a concurrent fetch can miss the cache.
@@ -26,7 +28,7 @@ enum CacheStateEntry {
 }
 
 /// Keyed by canonicalized path
-type ModuleMap = DashMap<Box<Path>, ModuleState>;
+type ModuleMap = FxDashMap<Box<Path>, ModuleState>;
 
 #[derive(Clone)]
 pub(super) enum ModuleState {
