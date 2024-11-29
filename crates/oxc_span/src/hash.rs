@@ -32,13 +32,13 @@ impl<T: ContentHash> ContentHash for Option<T> {
     }
 }
 
-impl<'a, T: ContentHash> ContentHash for oxc_allocator::Box<'a, T> {
+impl<T: ContentHash> ContentHash for oxc_allocator::Box<'_, T> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(self.as_ref(), state);
     }
 }
 
-impl<'a, T: ContentHash> ContentHash for oxc_allocator::Vec<'a, T> {
+impl<T: ContentHash> ContentHash for oxc_allocator::Vec<'_, T> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         for piece in self {
             piece.content_hash(state);

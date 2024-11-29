@@ -53,7 +53,7 @@ pub(super) trait ConstEval {
     fn const_eval(&self) -> ValueHint;
 }
 
-impl<'a> ConstEval for Expression<'a> {
+impl ConstEval for Expression<'_> {
     fn const_eval(&self) -> ValueHint {
         match self.get_inner_expression() {
             Self::ArrayExpression(_) => ValueHint::NewArray,
@@ -70,13 +70,13 @@ impl<'a> ConstEval for Expression<'a> {
     }
 }
 
-impl<'a> ConstEval for ConditionalExpression<'a> {
+impl ConstEval for ConditionalExpression<'_> {
     fn const_eval(&self) -> ValueHint {
         self.consequent.const_eval() & self.alternate.const_eval()
     }
 }
 
-impl<'a> ConstEval for Argument<'a> {
+impl ConstEval for Argument<'_> {
     fn const_eval(&self) -> ValueHint {
         match self {
             // using a spread as an initial accumulator value creates a new
@@ -87,7 +87,7 @@ impl<'a> ConstEval for Argument<'a> {
     }
 }
 
-impl<'a> ConstEval for NewExpression<'a> {
+impl ConstEval for NewExpression<'_> {
     fn const_eval(&self) -> ValueHint {
         if is_new_array(self) || is_new_typed_array(self) {
             ValueHint::NewArray
@@ -137,7 +137,7 @@ pub fn is_new_typed_array(new_expr: &NewExpression) -> bool {
     )
 }
 
-impl<'a> ConstEval for CallExpression<'a> {
+impl ConstEval for CallExpression<'_> {
     fn const_eval(&self) -> ValueHint {
         if is_array_from(self)
             || is_split_method(self)

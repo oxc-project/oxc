@@ -116,7 +116,7 @@ impl<'de> Deserialize<'de> for AllowWarnDeny {
     {
         struct AllowWarnDenyVisitor;
 
-        impl<'de> de::Visitor<'de> for AllowWarnDenyVisitor {
+        impl de::Visitor<'_> for AllowWarnDenyVisitor {
             type Value = AllowWarnDeny;
 
             fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {

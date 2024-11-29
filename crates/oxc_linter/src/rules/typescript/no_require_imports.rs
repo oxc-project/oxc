@@ -119,10 +119,10 @@ declare_oxc_lint!(
 );
 
 fn match_argument_value_with_regex(allow: &[CompactStr], argument_value: &str) -> bool {
-    return allow
+    allow
         .iter()
         .map(|pattern| Regex::new(pattern).unwrap())
-        .any(|regex| regex.is_match(argument_value));
+        .any(|regex| regex.is_match(argument_value))
 }
 
 impl Rule for NoRequireImports {

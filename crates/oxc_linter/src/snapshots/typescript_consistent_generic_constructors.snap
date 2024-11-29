@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:1:8]
@@ -59,9 +60,9 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:1:8]
- 1 │ const a: Foo<string> = new 
+ 1 │ const a: Foo<string> = new
    ·        ─────────────
- 2 │              Foo 
+ 2 │              Foo
    ╰────
   help: Move the type annotation to the constructor
 
@@ -158,8 +159,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:2:8]
- 1 │ const a = new 
- 2 │              Foo<string> 
+ 1 │ const a = new
+ 2 │              Foo<string>
    ·                 ────────
  3 │              ();
    ╰────

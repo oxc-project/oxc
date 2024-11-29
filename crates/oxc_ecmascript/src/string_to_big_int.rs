@@ -9,7 +9,7 @@ pub trait StringToBigInt<'a> {
     fn string_to_big_int(&self) -> Option<BigInt>;
 }
 
-impl<'a> StringToBigInt<'a> for &str {
+impl StringToBigInt<'_> for &str {
     fn string_to_big_int(&self) -> Option<BigInt> {
         if self.contains('\u{000b}') {
             // vertical tab is not always whitespace
@@ -37,6 +37,6 @@ impl<'a> StringToBigInt<'a> for &str {
             return BigInt::parse_bytes(s[2..].as_bytes(), radix);
         }
 
-        return BigInt::parse_bytes(s.as_bytes(), 10);
+        BigInt::parse_bytes(s.as_bytes(), 10)
     }
 }

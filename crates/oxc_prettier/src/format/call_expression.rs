@@ -13,7 +13,7 @@ pub(super) enum CallExpressionLike<'a, 'b> {
     NewExpression(&'b NewExpression<'a>),
 }
 
-impl<'a, 'b> CallExpressionLike<'a, 'b> {
+impl<'a> CallExpressionLike<'a, '_> {
     pub fn is_new(&self) -> bool {
         matches!(self, CallExpressionLike::NewExpression(_))
     }

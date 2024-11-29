@@ -52,7 +52,7 @@ impl<T: ContentEq> ContentEq for Option<T> {
 }
 
 /// Blanket implementation for [oxc_allocator::Box] types
-impl<'a, T: ContentEq> ContentEq for oxc_allocator::Box<'a, T> {
+impl<T: ContentEq> ContentEq for oxc_allocator::Box<'_, T> {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self.as_ref().content_eq(other.as_ref())
@@ -65,7 +65,7 @@ impl<'a, T: ContentEq> ContentEq for oxc_allocator::Box<'a, T> {
 /// This implementation is slow compared to [PartialEq] for native types which are [Copy] (e.g. `u32`).
 /// Prefer comparing the 2 vectors using `==` if they contain such native types (e.g. `Vec<u32>`).
 /// <https://godbolt.org/z/54on5sMWc>
-impl<'a, T: ContentEq> ContentEq for oxc_allocator::Vec<'a, T> {
+impl<T: ContentEq> ContentEq for oxc_allocator::Vec<'_, T> {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         if self.len() == other.len() {

@@ -60,7 +60,7 @@ pub struct ModuleLexerExportSpecifier {
     pub le: Option<u32>,
 }
 
-impl<'a> From<oxc_module_lexer::ImportSpecifier<'a>> for ModuleLexerImportSpecifier {
+impl From<oxc_module_lexer::ImportSpecifier<'_>> for ModuleLexerImportSpecifier {
     #[allow(clippy::cast_lossless)]
     fn from(i: oxc_module_lexer::ImportSpecifier) -> Self {
         Self {
@@ -80,7 +80,7 @@ impl<'a> From<oxc_module_lexer::ImportSpecifier<'a>> for ModuleLexerImportSpecif
     }
 }
 
-impl<'a> From<oxc_module_lexer::ExportSpecifier<'a>> for ModuleLexerExportSpecifier {
+impl From<oxc_module_lexer::ExportSpecifier<'_>> for ModuleLexerExportSpecifier {
     fn from(e: oxc_module_lexer::ExportSpecifier) -> Self {
         Self {
             n: e.n.to_string(),

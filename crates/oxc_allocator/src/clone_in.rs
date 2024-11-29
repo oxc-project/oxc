@@ -41,7 +41,7 @@ where
     }
 }
 
-impl<'old_alloc, 'new_alloc, T, C> CloneIn<'new_alloc> for Box<'old_alloc, T>
+impl<'new_alloc, T, C> CloneIn<'new_alloc> for Box<'_, T>
 where
     T: CloneIn<'new_alloc, Cloned = C>,
 {
@@ -52,7 +52,7 @@ where
     }
 }
 
-impl<'old_alloc, 'new_alloc, T, C> CloneIn<'new_alloc> for Vec<'old_alloc, T>
+impl<'new_alloc, T, C> CloneIn<'new_alloc> for Vec<'_, T>
 where
     T: CloneIn<'new_alloc, Cloned = C>,
 {
@@ -71,7 +71,7 @@ impl<'alloc, T: Copy> CloneIn<'alloc> for Cell<T> {
     }
 }
 
-impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for &'old_alloc str {
+impl<'new_alloc> CloneIn<'new_alloc> for &str {
     type Cloned = &'new_alloc str;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {

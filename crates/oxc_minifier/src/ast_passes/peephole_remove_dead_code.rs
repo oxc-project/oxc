@@ -304,10 +304,10 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                         );
                     }
 
-                    return Some(ctx.ast.statement_expression(
+                    Some(ctx.ast.statement_expression(
                         template_lit.span,
                         ctx.ast.expression_sequence(template_lit.span, expressions),
-                    ));
+                    ))
                 }
                 Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
                     Some(ctx.ast.statement_empty(SPAN))

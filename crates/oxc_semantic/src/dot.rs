@@ -35,7 +35,7 @@ impl<'a, 'b> DebugDotContext<'a, 'b> {
     }
 }
 
-impl<'a, 'b> DebugDotContext<'a, 'b> {
+impl DebugDotContext<'_, '_> {
     fn debug_ast_kind(self, id: NodeId) -> String {
         self.nodes.kind(id).debug_name().into_owned()
     }

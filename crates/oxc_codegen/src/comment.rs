@@ -7,7 +7,7 @@ use crate::{Codegen, LegalComment};
 
 pub(crate) type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
 
-impl<'a> Codegen<'a> {
+impl Codegen<'_> {
     pub(crate) fn build_comments(&mut self, comments: &[Comment]) {
         for comment in comments {
             self.comments.entry(comment.attached_to).or_default().push(*comment);

@@ -140,7 +140,7 @@ pub struct Modifiers<'a> {
     flags: ModifierFlags,
 }
 
-impl<'a> Default for Modifiers<'a> {
+impl Default for Modifiers<'_> {
     fn default() -> Self {
         Self::empty()
     }

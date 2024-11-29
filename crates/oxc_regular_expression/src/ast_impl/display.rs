@@ -7,19 +7,19 @@ use std::{
 use crate::ast::*;
 use crate::surrogate_pair::{combine_surrogate_pair, is_lead_surrogate, is_trail_surrogate};
 
-impl<'a> Display for Pattern<'a> {
+impl Display for Pattern<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.body)
     }
 }
 
-impl<'a> Display for Disjunction<'a> {
+impl Display for Disjunction<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write_join(f, "|", &self.body)
     }
 }
 
-impl<'a> Display for Alternative<'a> {
+impl Display for Alternative<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fn as_character<'a>(term: &'a Term) -> Option<&'a Character> {
             if let Term::Character(ch) = term {
@@ -44,7 +44,7 @@ impl<'a> Display for Alternative<'a> {
     }
 }
 
-impl<'a> Display for Term<'a> {
+impl Display for Term<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::BoundaryAssertion(it) => write!(f, "{}", it.as_ref()),
@@ -80,7 +80,7 @@ impl Display for BoundaryAssertionKind {
     }
 }
 
-impl<'a> Display for LookAroundAssertion<'a> {
+impl Display for LookAroundAssertion<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}{})", self.kind, self.body)
     }
@@ -97,7 +97,7 @@ impl Display for LookAroundAssertionKind {
     }
 }
 
-impl<'a> Display for Quantifier<'a> {
+impl Display for Quantifier<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.body)?;
 
@@ -154,7 +154,7 @@ impl Display for CharacterClassEscapeKind {
     }
 }
 
-impl<'a> Display for UnicodePropertyEscape<'a> {
+impl Display for UnicodePropertyEscape<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.negative {
             write!(f, r"\P")?;
@@ -172,7 +172,7 @@ impl<'a> Display for UnicodePropertyEscape<'a> {
     }
 }
 
-impl<'a> Display for CharacterClass<'a> {
+impl Display for CharacterClass<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fn as_character<'a>(content: &'a CharacterClassContents) -> Option<&'a Character> {
             if let CharacterClassContents::Character(ch) = content {
@@ -214,7 +214,7 @@ impl<'a> Display for CharacterClass<'a> {
     }
 }
 
-impl<'a> Display for CharacterClassContents<'a> {
+impl Display for CharacterClassContents<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::CharacterClassRange(it) => write!(f, "{}", it.as_ref()),
@@ -233,7 +233,7 @@ impl Display for CharacterClassRange {
     }
 }
 
-impl<'a> Display for ClassStringDisjunction<'a> {
+impl Display for ClassStringDisjunction<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, r"\q{{")?;
         write_join(f, "|", &self.body)?;
@@ -241,13 +241,13 @@ impl<'a> Display for ClassStringDisjunction<'a> {
     }
 }
 
-impl<'a> Display for ClassString<'a> {
+impl Display for ClassString<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write_join(f, "", &self.body)
     }
 }
 
-impl<'a> Display for CapturingGroup<'a> {
+impl Display for CapturingGroup<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "(")?;
 
@@ -260,7 +260,7 @@ impl<'a> Display for CapturingGroup<'a> {
     }
 }
 
-impl<'a> Display for IgnoreGroup<'a> {
+impl Display for IgnoreGroup<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fn write_flags(f: &mut fmt::Formatter<'_>, flags: &Modifier) -> fmt::Result {
             if flags.ignore_case {
@@ -297,7 +297,7 @@ impl Display for IndexedReference {
     }
 }
 
-impl<'a> Display for NamedReference<'a> {
+impl Display for NamedReference<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, r"\k<{}>", self.name)
     }

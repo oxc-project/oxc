@@ -9,7 +9,7 @@ use crate::ast::{
     YieldExpression,
 };
 
-impl<'a> GetPrecedence for Expression<'a> {
+impl GetPrecedence for Expression<'_> {
     fn precedence(&self) -> Precedence {
         match self {
             Self::SequenceExpression(expr) => expr.precedence(),
@@ -29,55 +29,55 @@ impl<'a> GetPrecedence for Expression<'a> {
     }
 }
 
-impl<'a> GetPrecedence for SequenceExpression<'a> {
+impl GetPrecedence for SequenceExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Comma
     }
 }
 
-impl<'a> GetPrecedence for YieldExpression<'a> {
+impl GetPrecedence for YieldExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Yield
     }
 }
 
-impl<'a> GetPrecedence for ConditionalExpression<'a> {
+impl GetPrecedence for ConditionalExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Conditional
     }
 }
 
-impl<'a> GetPrecedence for AssignmentExpression<'a> {
+impl GetPrecedence for AssignmentExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Assign
     }
 }
 
-impl<'a> GetPrecedence for LogicalExpression<'a> {
+impl GetPrecedence for LogicalExpression<'_> {
     fn precedence(&self) -> Precedence {
         self.operator.precedence()
     }
 }
 
-impl<'a> GetPrecedence for BinaryExpression<'a> {
+impl GetPrecedence for BinaryExpression<'_> {
     fn precedence(&self) -> Precedence {
         self.operator.precedence()
     }
 }
 
-impl<'a> GetPrecedence for UnaryExpression<'a> {
+impl GetPrecedence for UnaryExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Prefix
     }
 }
 
-impl<'a> GetPrecedence for AwaitExpression<'a> {
+impl GetPrecedence for AwaitExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Prefix
     }
 }
 
-impl<'a> GetPrecedence for UpdateExpression<'a> {
+impl GetPrecedence for UpdateExpression<'_> {
     fn precedence(&self) -> Precedence {
         if self.prefix {
             Precedence::Prefix
@@ -87,55 +87,55 @@ impl<'a> GetPrecedence for UpdateExpression<'a> {
     }
 }
 
-impl<'a> GetPrecedence for CallExpression<'a> {
+impl GetPrecedence for CallExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Call
     }
 }
 
-impl<'a> GetPrecedence for ImportExpression<'a> {
+impl GetPrecedence for ImportExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Call
     }
 }
 
-impl<'a> GetPrecedence for NewExpression<'a> {
+impl GetPrecedence for NewExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Call
     }
 }
 
-impl<'a> GetPrecedence for ChainExpression<'a> {
+impl GetPrecedence for ChainExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Member
     }
 }
 
-impl<'a> GetPrecedence for MemberExpression<'a> {
+impl GetPrecedence for MemberExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Member
     }
 }
 
-impl<'a> GetPrecedence for ComputedMemberExpression<'a> {
+impl GetPrecedence for ComputedMemberExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Member
     }
 }
 
-impl<'a> GetPrecedence for StaticMemberExpression<'a> {
+impl GetPrecedence for StaticMemberExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Member
     }
 }
 
-impl<'a> GetPrecedence for PrivateFieldExpression<'a> {
+impl GetPrecedence for PrivateFieldExpression<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Member
     }
 }
 
-impl<'a> GetPrecedence for TSTypeAssertion<'a> {
+impl GetPrecedence for TSTypeAssertion<'_> {
     fn precedence(&self) -> Precedence {
         Precedence::Lowest
     }

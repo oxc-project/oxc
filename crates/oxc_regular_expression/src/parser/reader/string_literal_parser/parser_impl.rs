@@ -47,7 +47,7 @@ pub struct Parser {
     options: Options,
 }
 
-impl<'a> Parser {
+impl Parser {
     // This is public because it is used in `parse_regexp_literal()`.
     pub fn handle_code_point(
         body: &mut Vec<ast::CodePoint>,
@@ -71,7 +71,7 @@ impl<'a> Parser {
 
     // ---
 
-    pub fn new(source_text: &'a str, options: Options) -> Self {
+    pub fn new(source_text: &str, options: Options) -> Self {
         Self { chars: source_text.chars().collect::<Vec<_>>(), index: 0, offset: 0, options }
     }
 

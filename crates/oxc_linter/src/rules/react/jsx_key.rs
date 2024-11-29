@@ -138,7 +138,7 @@ pub fn is_children<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> b
 
     let Some(local_name) = inner_member.static_property_name() else { return false };
 
-    return is_import(ctx, ident.name.as_str(), REACT, REACT) && local_name == CHILDREN;
+    is_import(ctx, ident.name.as_str(), REACT, REACT) && local_name == CHILDREN
 }
 fn is_within_children_to_array<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let parents_iter = ctx.nodes().ancestors(node.id()).skip(2);

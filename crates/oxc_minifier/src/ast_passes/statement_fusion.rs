@@ -165,7 +165,7 @@ impl<'a> StatementFusion {
 }
 
 fn can_merge_block_stmt(node: &BlockStatement) -> bool {
-    return node.body.iter().all(can_merge_block_stmt_member);
+    node.body.iter().all(can_merge_block_stmt_member)
 }
 
 fn can_merge_block_stmt_member(node: &Statement) -> bool {

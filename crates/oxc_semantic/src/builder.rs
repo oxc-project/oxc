@@ -116,7 +116,7 @@ pub struct SemanticBuilderReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
 }
 
-impl<'a> Default for SemanticBuilder<'a> {
+impl Default for SemanticBuilder<'_> {
     fn default() -> Self {
         Self::new()
     }
