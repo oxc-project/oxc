@@ -47,7 +47,7 @@ fn minify(
 ) -> String {
     let ret = Parser::new(allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let options = MinifierOptions { mangle, compress: CompressOptions::default() };
+    let options = MinifierOptions { mangle, compress: CompressOptions::dead_code_elimination() };
     let ret = Minifier::new(options).build(allocator, &mut program);
     CodeGenerator::new()
         .with_options(CodegenOptions { minify: nospace, ..CodegenOptions::default() })
