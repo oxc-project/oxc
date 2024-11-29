@@ -13,8 +13,8 @@ use oxc_ast::{
 };
 use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
+use oxc_syntax::module_record::ModuleRecord;
 pub use oxc_syntax::{
-    module_record::ModuleRecord,
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -28,7 +28,6 @@ mod class;
 mod diagnostics;
 mod jsdoc;
 mod label;
-mod module_record;
 mod node;
 mod reference;
 mod scope;
@@ -133,6 +132,10 @@ impl<'a> Semantic<'a> {
 
     pub fn set_irregular_whitespaces(&mut self, irregular_whitespaces: Box<[Span]>) {
         self.irregular_whitespaces = irregular_whitespaces;
+    }
+
+    pub fn set_module_record(&mut self, module_record: &Arc<ModuleRecord>) {
+        self.module_record = Arc::clone(module_record);
     }
 
     /// Trivias (comments) found while parsing

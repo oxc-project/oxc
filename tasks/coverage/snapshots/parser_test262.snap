@@ -22136,17 +22136,6 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
     ·             ╰── It cannot be redeclared here
     ╰────
 
-  × Identifier `f` has already been declared
-    ╭─[test262/test/language/module-code/early-dup-export-decl.js:17:17]
- 16 │ 
- 17 │ export function f() {}
-    ·                 ┬
-    ·                 ╰── `f` has already been declared here
- 18 │ export function *f() {}
-    ·                  ┬
-    ·                  ╰── It can not be redeclared here
-    ╰────
-
   × Duplicated export 'f'
     ╭─[test262/test/language/module-code/early-dup-export-decl.js:17:17]
  16 │ 
@@ -22156,6 +22145,17 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  18 │ export function *f() {}
     ·                  ┬
     ·                  ╰── It cannot be redeclared here
+    ╰────
+
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/module-code/early-dup-export-decl.js:17:17]
+ 16 │ 
+ 17 │ export function f() {}
+    ·                 ┬
+    ·                 ╰── `f` has already been declared here
+ 18 │ export function *f() {}
+    ·                  ┬
+    ·                  ╰── It can not be redeclared here
     ╰────
 
   × Duplicated export 'default'

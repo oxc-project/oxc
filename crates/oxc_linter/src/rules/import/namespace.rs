@@ -6,9 +6,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ModuleRecord};
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::module_record::{ExportExportName, ExportImportName, ImportImportName};
+use oxc_syntax::module_record::{
+    ExportExportName, ExportImportName, ImportImportName, ModuleRecord,
+};
 
 use crate::{context::LintContext, rule::Rule};
 

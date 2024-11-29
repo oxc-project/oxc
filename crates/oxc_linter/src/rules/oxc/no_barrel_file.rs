@@ -1,7 +1,9 @@
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ModuleRecord;
-use oxc_syntax::module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile};
+use oxc_syntax::{
+    module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile},
+    module_record::ModuleRecord,
+};
 
 use crate::{context::LintContext, rule::Rule};
 

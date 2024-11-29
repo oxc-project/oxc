@@ -448,6 +448,14 @@ pub fn cover_initialized_name(span: Span) -> OxcDiagnostic {
 .with_label(span)
 }
 
+#[cold]
+pub fn duplicate_export(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Duplicated export '{x0}'")).with_labels([
+        span1.label("Export has already been declared here"),
+        span2.label("It cannot be redeclared here"),
+    ])
+}
+
 // ================================= MODIFIERS =================================
 
 #[cold]

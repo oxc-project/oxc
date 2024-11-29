@@ -212,11 +212,8 @@ impl Oxc {
             // Estimate transformer will triple scopes, symbols, references
             semantic_builder = semantic_builder.with_excess_capacity(2.0);
         }
-        let semantic_ret = semantic_builder
-            .with_check_syntax_error(true)
-            .with_cfg(true)
-            .build_module_record(&path, &program)
-            .build(&program);
+        let semantic_ret =
+            semantic_builder.with_check_syntax_error(true).with_cfg(true).build(&program);
 
         self.control_flow_graph = semantic_ret.semantic.cfg().map_or_else(String::default, |cfg| {
             cfg.debug_dot(DebugDotContext::new(
@@ -302,10 +299,7 @@ impl Oxc {
     fn run_linter(&mut self, run_options: &OxcRunOptions, path: &Path, program: &Program) {
         // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
-            let semantic_ret = SemanticBuilder::new()
-                .with_cfg(true)
-                .build_module_record(path, program)
-                .build(program);
+            let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = Rc::new(semantic_ret.semantic);
             let linter_ret = Linter::default().run(path, Rc::clone(&semantic));
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();

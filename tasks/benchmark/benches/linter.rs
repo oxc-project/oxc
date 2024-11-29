@@ -36,7 +36,6 @@ fn bench_linter(criterion: &mut Criterion) {
                     .with_build_jsdoc(true)
                     .with_scope_tree_child_ids(true)
                     .with_cfg(true)
-                    .build_module_record(path, &ret.program)
                     .build(&ret.program);
                 let linter = LinterBuilder::all().with_fix(FixKind::All).build();
                 let semantic = Rc::new(semantic_ret.semantic);

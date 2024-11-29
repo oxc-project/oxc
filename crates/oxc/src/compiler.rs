@@ -143,7 +143,7 @@ pub trait CompilerInterface {
 
         /* Semantic */
 
-        let mut semantic_return = self.semantic(&program, source_path);
+        let mut semantic_return = self.semantic(&program);
         if !semantic_return.errors.is_empty() {
             self.handle_errors(semantic_return.errors);
             return;
@@ -231,7 +231,7 @@ pub trait CompilerInterface {
         Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
     }
 
-    fn semantic<'a>(&self, program: &Program<'a>, source_path: &Path) -> SemanticBuilderReturn<'a> {
+    fn semantic<'a>(&self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         let mut builder = SemanticBuilder::new();
 
         if self.transform_options().is_some() {
@@ -242,7 +242,6 @@ pub trait CompilerInterface {
         builder
             .with_check_syntax_error(self.check_semantic_error())
             .with_scope_tree_child_ids(self.semantic_child_scope_ids())
-            .build_module_record(source_path, program)
             .build(program)
     }
 

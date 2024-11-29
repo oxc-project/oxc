@@ -11,8 +11,9 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
-use oxc_semantic::{ModuleRecord, SemanticBuilder};
+use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc_syntax::module_record::ModuleRecord;
 use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
 use rustc_hash::FxHashSet;
 
@@ -215,9 +216,11 @@ impl Runtime {
             .with_cfg(true)
             .with_scope_tree_child_ids(true)
             .with_build_jsdoc(true)
-            .with_check_syntax_error(check_syntax_errors)
-            .build_module_record(path, &ret.program);
-        let module_record = semantic_builder.module_record();
+            .with_check_syntax_error(check_syntax_errors);
+
+        let mut module_record = ret.module_record;
+        module_record.resolved_absolute_path = path.to_path_buf();
+        let module_record = Arc::new(module_record);
 
         if self.resolver.is_some() {
             self.modules.add_resolved_module(path, Arc::clone(&module_record));
@@ -294,6 +297,7 @@ impl Runtime {
         };
 
         let mut semantic = semantic_ret.semantic;
+        semantic.set_module_record(&module_record);
         semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
         self.linter.run(path, Rc::new(semantic))
     }

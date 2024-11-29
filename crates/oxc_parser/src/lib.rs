@@ -69,6 +69,7 @@
 mod context;
 mod cursor;
 mod modifiers;
+mod module_record;
 mod state;
 
 mod js;
@@ -84,7 +85,6 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use context::{Context, StatementContext};
 use oxc_allocator::{Allocator, Box as ArenaBox};
 use oxc_ast::{
     ast::{Expression, Program},
@@ -92,9 +92,12 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
+use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
+    context::{Context, StatementContext},
     lexer::{Kind, Lexer, Token},
+    module_record::ModuleRecordBuilder,
     state::ParserState,
 };
 
@@ -149,6 +152,9 @@ pub struct ParserReturn<'a> {
     /// To ensure a valid AST, check that [`errors`](ParserReturn::errors) is empty. Then, run
     /// semantic analysis with syntax error checking enabled.
     pub program: Program<'a>,
+
+    /// See <https://tc39.es/ecma262/#sec-abstract-module-records>
+    pub module_record: ModuleRecord,
 
     /// Syntax errors encountered while parsing.
     ///
@@ -363,6 +369,9 @@ struct ParserImpl<'a> {
     /// Ast builder for creating AST nodes
     ast: AstBuilder<'a>,
 
+    /// Module Record Builder
+    module_record_builder: ModuleRecordBuilder,
+
     /// Precomputed typescript detection
     is_ts: bool,
 }
@@ -380,6 +389,8 @@ impl<'a> ParserImpl<'a> {
         options: ParseOptions,
         unique: UniquePromise,
     ) -> Self {
+        let mut module_record_builder = ModuleRecordBuilder::default();
+        module_record_builder.module_record.not_esm = true;
         Self {
             options,
             lexer: Lexer::new(allocator, source_text, source_type, unique),
@@ -391,6 +402,7 @@ impl<'a> ParserImpl<'a> {
             state: ParserState::default(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
+            module_record_builder,
             is_ts: source_type.is_typescript(),
         }
     }
@@ -432,10 +444,21 @@ impl<'a> ParserImpl<'a> {
             errors.reserve(self.lexer.errors.len() + self.errors.len());
             errors.extend(self.lexer.errors);
             errors.extend(self.errors);
+            // Skip checking for exports in TypeScript {
+            if !self.source_type.is_typescript() {
+                errors.extend(self.module_record_builder.errors());
+            }
         }
         let irregular_whitespaces =
             self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
-        ParserReturn { program, errors, irregular_whitespaces, panicked, is_flow_language }
+        ParserReturn {
+            program,
+            module_record: self.module_record_builder.build(),
+            errors,
+            irregular_whitespaces,
+            panicked,
+            is_flow_language,
+        }
     }
 
     pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {

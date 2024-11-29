@@ -1,12 +1,13 @@
 use std::{
+    num::NonZeroUsize,
     path::Path,
     sync::{Arc, Condvar, Mutex},
 };
 
 use dashmap::{mapref::one::Ref, DashMap};
-use oxc_semantic::ModuleRecord;
 use rustc_hash::{FxBuildHasher, FxHashMap};
-use std::num::NonZeroUsize;
+
+use oxc_syntax::module_record::ModuleRecord;
 
 type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 
