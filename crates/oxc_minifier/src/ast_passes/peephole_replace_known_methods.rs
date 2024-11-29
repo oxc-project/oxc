@@ -164,11 +164,11 @@ impl PeepholeReplaceKnownMethods {
             }
         };
 
-        return Some(ctx.ast.expression_string_literal(
+        Some(ctx.ast.expression_string_literal(
             span,
             string_lit.value.as_str().substring(start_idx, end_idx),
             None,
-        ));
+        ))
     }
 
     fn try_fold_string_char_at<'a>(
@@ -201,7 +201,7 @@ impl PeepholeReplaceKnownMethods {
             .char_at(char_at_index)
             .map_or(String::new(), |v| v.to_string());
 
-        return Some(ctx.ast.expression_string_literal(span, result, None));
+        Some(ctx.ast.expression_string_literal(span, result, None))
     }
 
     fn try_fold_string_char_code_at<'a>(

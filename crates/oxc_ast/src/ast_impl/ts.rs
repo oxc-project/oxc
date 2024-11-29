@@ -116,7 +116,7 @@ impl<'a> TSTypeName<'a> {
     }
 }
 
-impl<'a> fmt::Display for TSTypeName<'a> {
+impl fmt::Display for TSTypeName<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             TSTypeName::IdentifierReference(ident) => ident.fmt(f),
@@ -125,13 +125,13 @@ impl<'a> fmt::Display for TSTypeName<'a> {
     }
 }
 
-impl<'a> fmt::Display for TSQualifiedName<'a> {
+impl fmt::Display for TSQualifiedName<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}.{}", self.left, self.right)
     }
 }
 
-impl<'a> TSType<'a> {
+impl TSType<'_> {
     /// Remove nested parentheses from this type.
     pub fn without_parenthesized(&self) -> &Self {
         match self {
@@ -170,7 +170,7 @@ impl fmt::Display for TSAccessibility {
     }
 }
 
-impl<'a> TSModuleDeclaration<'a> {
+impl TSModuleDeclaration<'_> {
     /// Returns `true` if this module's body exists and uses strict mode
     /// semantics (as determined by [`TSModuleDeclarationBody::is_strict`]).
     pub fn is_strict(&self) -> bool {
@@ -223,7 +223,7 @@ impl<'a> TSModuleDeclarationName<'a> {
     }
 }
 
-impl<'a> fmt::Display for TSModuleDeclarationName<'a> {
+impl fmt::Display for TSModuleDeclarationName<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Identifier(id) => id.fmt(f),
@@ -258,14 +258,14 @@ impl<'a> TSModuleDeclarationBody<'a> {
     }
 }
 
-impl<'a> TSModuleBlock<'a> {
+impl TSModuleBlock<'_> {
     /// Returns `true` if this module contains a `"use strict"` directive.
     pub fn is_strict(&self) -> bool {
         self.directives.iter().any(Directive::is_use_strict)
     }
 }
 
-impl<'a> TSModuleReference<'a> {
+impl TSModuleReference<'_> {
     /// Returns `true` if this is an [`TSModuleReference::ExternalModuleReference`].
     pub fn is_external(&self) -> bool {
         matches!(self, Self::ExternalModuleReference(_))

@@ -31,8 +31,8 @@ fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool
         return false;
     };
 
-    return mem_expr.static_property_name() == Some("exports")
-        && obj_id.is_global_reference_name("module", ctx.symbols());
+    mem_expr.static_property_name() == Some("exports")
+        && obj_id.is_global_reference_name("module", ctx.symbols())
 }
 
 #[derive(Debug, Default, Clone)]

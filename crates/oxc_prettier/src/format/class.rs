@@ -140,7 +140,7 @@ pub enum ClassMemberish<'a, 'b> {
     AccessorProperty(&'b AccessorProperty<'a>),
 }
 
-impl<'a, 'b> ClassMemberish<'a, 'b> {
+impl<'a> ClassMemberish<'a, '_> {
     fn format_key(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
             ClassMemberish::PropertyDefinition(property_definition) => {

@@ -33,7 +33,7 @@ pub trait GetAddress {
     fn address(&self) -> Address;
 }
 
-impl<'a, T> GetAddress for Box<'a, T> {
+impl<T> GetAddress for Box<'_, T> {
     /// Get the memory address of a value allocated in the arena.
     ///
     /// AST nodes in a `Box` in an arena are guaranteed to never move in memory,

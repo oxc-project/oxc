@@ -35,7 +35,7 @@ declare_oxc_lint!(
     correctness
 );
 
-fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a IdentifierReference> {
+fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a IdentifierReference<'a>> {
     match node {
         JSXElementName::Identifier(_)
         | JSXElementName::NamespacedName(_)
@@ -45,7 +45,9 @@ fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a Identifi
     }
 }
 
-fn get_member_ident<'a>(mut expr: &'a JSXMemberExpression<'a>) -> Option<&'a IdentifierReference> {
+fn get_member_ident<'a>(
+    mut expr: &'a JSXMemberExpression<'a>,
+) -> Option<&'a IdentifierReference<'a>> {
     loop {
         match &expr.object {
             JSXMemberExpressionObject::IdentifierReference(ident) => return Some(ident),

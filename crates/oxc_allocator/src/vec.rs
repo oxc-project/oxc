@@ -215,7 +215,7 @@ impl<'alloc, T> IntoIterator for &'alloc Vec<'alloc, T> {
     }
 }
 
-impl<'alloc, T> ops::Index<usize> for Vec<'alloc, T> {
+impl<T> ops::Index<usize> for Vec<'_, T> {
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -223,14 +223,14 @@ impl<'alloc, T> ops::Index<usize> for Vec<'alloc, T> {
     }
 }
 
-impl<'alloc, T> ops::IndexMut<usize> for Vec<'alloc, T> {
+impl<T> ops::IndexMut<usize> for Vec<'_, T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         self.0.index_mut(index)
     }
 }
 
 #[cfg(any(feature = "serialize", test))]
-impl<'alloc, T> Serialize for Vec<'alloc, T>
+impl<T> Serialize for Vec<'_, T>
 where
     T: Serialize,
 {
@@ -246,7 +246,7 @@ where
     }
 }
 
-impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
+impl<T: Hash> Hash for Vec<'_, T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         for e in self.0.iter() {
             e.hash(state);
@@ -254,7 +254,7 @@ impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
     }
 }
 
-impl<'alloc, T: Debug> Debug for Vec<'alloc, T> {
+impl<T: Debug> Debug for Vec<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let inner = &*self.0;
         f.debug_tuple("Vec").field(inner).finish()

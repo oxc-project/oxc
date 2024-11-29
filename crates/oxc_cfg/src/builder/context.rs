@@ -52,7 +52,7 @@ pub trait CtxCursor {
 
 pub struct QueryCtx<'a, 'c>(&'c mut ControlFlowGraphBuilder<'a>, /* label */ Option<&'a str>);
 
-impl<'a, 'c> CtxCursor for QueryCtx<'a, 'c> {
+impl CtxCursor for QueryCtx<'_, '_> {
     fn mark_break(self, jmp_pos: BlockNodeId) -> Self {
         self.0.in_break_context(self.1, |ctx| {
             debug_assert!(ctx.break_jmp.is_none());
@@ -177,7 +177,7 @@ impl<'a, 'c> QueryCtx<'a, 'c> {
 
 pub struct RefCtxCursor<'a, 'c>(&'c mut Ctx<'a>);
 
-impl<'a, 'c> RefCtxCursor<'a, 'c> {
+impl RefCtxCursor<'_, '_> {
     /// Allow break entries in this context.
     pub fn allow_break(self) -> Self {
         self.0.flags.insert(CtxFlags::BREAK);
@@ -191,7 +191,7 @@ impl<'a, 'c> RefCtxCursor<'a, 'c> {
     }
 }
 
-impl<'a, 'c> CtxCursor for RefCtxCursor<'a, 'c> {
+impl CtxCursor for RefCtxCursor<'_, '_> {
     fn mark_break(self, jmp_pos: BlockNodeId) -> Self {
         debug_assert!(self.0.break_jmp.is_none());
         self.0.break_jmp = Some(jmp_pos);

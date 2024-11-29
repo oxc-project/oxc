@@ -87,7 +87,7 @@ fn get_last_comment_line(comment: Comment, raw: &str) -> String {
         return String::from(raw);
     }
 
-    return String::from(raw.lines().last().unwrap_or(raw));
+    String::from(raw.lines().last().unwrap_or(raw))
 }
 
 fn is_valid_ts_ignore_present(comment: Comment, raw: &str) -> bool {

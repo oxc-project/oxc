@@ -532,13 +532,13 @@ impl<'a> CompositeFix<'a> {
 mod test {
     use super::*;
 
-    impl<'a> PartialEq for Fix<'a> {
+    impl PartialEq for Fix<'_> {
         fn eq(&self, other: &Self) -> bool {
             self.span == other.span && self.content == other.content
         }
     }
 
-    impl<'a> Clone for CompositeFix<'a> {
+    impl Clone for CompositeFix<'_> {
         fn clone(&self) -> Self {
             match self {
                 Self::None => Self::None,
@@ -548,7 +548,7 @@ mod test {
         }
     }
 
-    impl<'a> PartialEq for CompositeFix<'a> {
+    impl PartialEq for CompositeFix<'_> {
         fn eq(&self, other: &Self) -> bool {
             match self {
                 Self::None => matches!(other, CompositeFix::None),

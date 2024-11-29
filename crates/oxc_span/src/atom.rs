@@ -57,7 +57,7 @@ impl<'a> Atom<'a> {
     }
 }
 
-impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Atom<'old_alloc> {
+impl<'new_alloc> CloneIn<'new_alloc> for Atom<'_> {
     type Cloned = Atom<'new_alloc>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
@@ -128,7 +128,7 @@ impl<'a> From<Atom<'a>> for Cow<'a, str> {
     }
 }
 
-impl<'a> Deref for Atom<'a> {
+impl Deref for Atom<'_> {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
@@ -136,19 +136,19 @@ impl<'a> Deref for Atom<'a> {
     }
 }
 
-impl<'a> AsRef<str> for Atom<'a> {
+impl AsRef<str> for Atom<'_> {
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
-impl<'a> Borrow<str> for Atom<'a> {
+impl Borrow<str> for Atom<'_> {
     fn borrow(&self) -> &str {
         self.as_str()
     }
 }
 
-impl<'a, T: AsRef<str>> PartialEq<T> for Atom<'a> {
+impl<T: AsRef<str>> PartialEq<T> for Atom<'_> {
     fn eq(&self, other: &T) -> bool {
         self.as_str() == other.as_ref()
     }
@@ -160,7 +160,7 @@ impl<'a> PartialEq<Atom<'a>> for &str {
     }
 }
 
-impl<'a> PartialEq<str> for Atom<'a> {
+impl PartialEq<str> for Atom<'_> {
     fn eq(&self, other: &str) -> bool {
         self.as_str() == other
     }
@@ -178,31 +178,31 @@ impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
     }
 }
 
-impl<'a> ContentEq for Atom<'a> {
+impl ContentEq for Atom<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
     }
 }
 
-impl<'a> ContentHash for Atom<'a> {
+impl ContentHash for Atom<'_> {
     fn content_hash<H: hash::Hasher>(&self, state: &mut H) {
         hash::Hash::hash(self, state);
     }
 }
 
-impl<'a> hash::Hash for Atom<'a> {
+impl hash::Hash for Atom<'_> {
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
         self.as_str().hash(hasher);
     }
 }
 
-impl<'a> fmt::Debug for Atom<'a> {
+impl fmt::Debug for Atom<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(self.as_str(), f)
     }
 }
 
-impl<'a> fmt::Display for Atom<'a> {
+impl fmt::Display for Atom<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self.as_str(), f)
     }

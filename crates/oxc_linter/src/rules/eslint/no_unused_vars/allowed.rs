@@ -6,7 +6,7 @@ use oxc_semantic::{NodeId, Semantic};
 use super::{options::ArgsOption, NoUnusedVars, Symbol};
 use crate::rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding};
 
-impl<'s, 'a> Symbol<'s, 'a> {
+impl Symbol<'_, '_> {
     /// Check if the declaration of this [`Symbol`] is use.
     ///
     /// If it's an expression, then it's always passed in as an argument

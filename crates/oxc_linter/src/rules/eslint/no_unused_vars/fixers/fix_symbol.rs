@@ -50,7 +50,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
             return fixer.replace(delete_range, ", ");
         }
 
-        return fixer.delete(&delete_range);
+        fixer.delete(&delete_range)
     }
 
     pub(super) fn rename(&self, new_name: &CompactStr) -> RuleFix<'a> {
@@ -72,8 +72,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
             }
         }
 
-        return RuleFix::from(fixes)
-            .with_message(format!("Rename '{}' to '{new_name}'", self.name()));
+        RuleFix::from(fixes).with_message(format!("Rename '{}' to '{new_name}'", self.name()))
     }
 
     /// - `true` if `pattern` is a destructuring pattern and only contains one symbol

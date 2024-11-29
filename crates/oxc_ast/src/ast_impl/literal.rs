@@ -44,7 +44,7 @@ impl fmt::Display for NullLiteral {
     }
 }
 
-impl<'a> NumericLiteral<'a> {
+impl NumericLiteral<'_> {
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/base/JSCompDoubles.java#L113)
     ///
     /// <https://262.ecma-international.org/5.1/#sec-9.5>
@@ -73,33 +73,33 @@ impl<'a> NumericLiteral<'a> {
     }
 }
 
-impl<'a> ContentHash for NumericLiteral<'a> {
+impl ContentHash for NumericLiteral<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.base, state);
         ContentHash::content_hash(&self.raw, state);
     }
 }
 
-impl<'a> fmt::Display for NumericLiteral<'a> {
+impl fmt::Display for NumericLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.raw.fmt(f)
     }
 }
 
-impl<'a> BigIntLiteral<'a> {
+impl BigIntLiteral<'_> {
     /// Is this BigInt literal zero? (`0n`).
     pub fn is_zero(&self) -> bool {
         self.raw == "0n"
     }
 }
 
-impl<'a> fmt::Display for BigIntLiteral<'a> {
+impl fmt::Display for BigIntLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.raw.fmt(f)
     }
 }
 
-impl<'a> fmt::Display for RegExp<'a> {
+impl fmt::Display for RegExp<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "/{}/{}", self.pattern, self.flags)
     }
@@ -154,7 +154,7 @@ impl<'a> RegExpPattern<'a> {
     }
 }
 
-impl<'a> fmt::Display for RegExpPattern<'a> {
+impl fmt::Display for RegExpPattern<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Raw(it) | Self::Invalid(it) => write!(f, "{it}"),
@@ -249,7 +249,7 @@ impl fmt::Display for RegExpFlags {
     }
 }
 
-impl<'a> StringLiteral<'a> {
+impl StringLiteral<'_> {
     /// Static Semantics: `IsStringWellFormedUnicode`
     /// test for \uD800-\uDFFF
     ///
@@ -270,14 +270,14 @@ impl<'a> StringLiteral<'a> {
     }
 }
 
-impl<'a> AsRef<str> for StringLiteral<'a> {
+impl AsRef<str> for StringLiteral<'_> {
     #[inline]
     fn as_ref(&self) -> &str {
         self.value.as_ref()
     }
 }
 
-impl<'a> fmt::Display for StringLiteral<'a> {
+impl fmt::Display for StringLiteral<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.value.fmt(f)

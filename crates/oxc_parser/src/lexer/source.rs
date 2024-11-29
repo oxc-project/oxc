@@ -555,7 +555,7 @@ pub struct SourcePosition<'a> {
     _marker: PhantomData<&'a u8>,
 }
 
-impl<'a> SourcePosition<'a> {
+impl SourcePosition<'_> {
     /// Create a new `SourcePosition` from a pointer.
     ///
     /// # SAFETY

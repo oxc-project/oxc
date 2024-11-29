@@ -7,14 +7,14 @@ use crate::ast::*;
 
 // 1.2 JSX Elements
 
-impl<'a> fmt::Display for JSXIdentifier<'a> {
+impl fmt::Display for JSXIdentifier<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
     }
 }
 
-impl<'a> fmt::Display for JSXNamespacedName<'a> {
+impl fmt::Display for JSXNamespacedName<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.namespace.name, self.property.name)
     }
@@ -70,13 +70,13 @@ impl<'a> JSXMemberExpressionObject<'a> {
     }
 }
 
-impl<'a> fmt::Display for JSXMemberExpression<'a> {
+impl fmt::Display for JSXMemberExpression<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}.{}", self.object, self.property)
     }
 }
 
-impl<'a> fmt::Display for JSXMemberExpressionObject<'a> {
+impl fmt::Display for JSXMemberExpressionObject<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::IdentifierReference(id) => id.fmt(f),
@@ -86,7 +86,7 @@ impl<'a> fmt::Display for JSXMemberExpressionObject<'a> {
     }
 }
 
-impl<'a> fmt::Display for JSXElementName<'a> {
+impl fmt::Display for JSXElementName<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Identifier(ident) => ident.fmt(f),
@@ -98,14 +98,14 @@ impl<'a> fmt::Display for JSXElementName<'a> {
     }
 }
 
-impl<'a> JSXExpression<'a> {
+impl JSXExpression<'_> {
     /// Determines whether the given expr is a `undefined` literal
     pub fn is_undefined(&self) -> bool {
         matches!(self, Self::Identifier(ident) if ident.name == "undefined")
     }
 }
 
-impl<'a> JSXAttribute<'a> {
+impl JSXAttribute<'_> {
     /// Returns `true` if this attribute's name is the expected `name`.
     ///
     /// Use [`JSXAttribute::is_identifier_ignore_case`] if you want to ignore
@@ -192,7 +192,7 @@ impl<'a> JSXAttributeItem<'a> {
     }
 }
 
-impl<'a> JSXChild<'a> {
+impl JSXChild<'_> {
     /// Returns `true` if this an [expression container](JSXChild::ExpressionContainer).
     pub const fn is_expression_container(&self) -> bool {
         matches!(self, Self::ExpressionContainer(_))

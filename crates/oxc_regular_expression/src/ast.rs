@@ -52,7 +52,7 @@ pub enum Term<'a> {
     NamedReference(Box<'a, NamedReference<'a>>) = 11,
 }
 
-impl<'a> GetSpan for Term<'a> {
+impl GetSpan for Term<'_> {
     #[inline]
     fn span(&self) -> Span {
         match self {
@@ -241,7 +241,7 @@ pub enum CharacterClassContents<'a> {
     ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>) = 5,
 }
 
-impl<'a> GetSpan for CharacterClassContents<'a> {
+impl GetSpan for CharacterClassContents<'_> {
     #[inline]
     fn span(&self) -> Span {
         match self {

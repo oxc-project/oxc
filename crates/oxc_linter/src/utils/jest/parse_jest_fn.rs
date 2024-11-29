@@ -161,11 +161,11 @@ fn parse_jest_expect_fn_call<'a>(
         expect_error,
     };
 
-    return Some(if is_type_of {
+    Some(if is_type_of {
         ParsedJestFnCall::ExpectTypeOf(parsed_expect_fn)
     } else {
         ParsedJestFnCall::Expect(parsed_expect_fn)
-    });
+    })
 }
 
 type ModifiersAndMatcherIndex = (Vec<usize>, Option<usize>);
@@ -265,12 +265,12 @@ fn parse_jest_jest_fn_call<'a>(
     let kind =
         if lowercase_name == "jest" { JestGeneralFnKind::Jest } else { JestGeneralFnKind::Vitest };
 
-    return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
+    Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
         kind: JestFnKind::General(kind),
         members,
         name: Cow::Borrowed(name),
         local: Cow::Borrowed(local),
-    }));
+    }))
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -340,7 +340,7 @@ pub enum ParsedJestFnCall<'a> {
     ExpectTypeOf(ParsedExpectFnCall<'a>),
 }
 
-impl<'a> ParsedJestFnCall<'a> {
+impl ParsedJestFnCall<'_> {
     pub fn kind(&self) -> JestFnKind {
         match self {
             Self::GeneralJest(call) => call.kind,

@@ -331,7 +331,7 @@ rebuilt        : {value_rebuilt}
     }
 }
 
-impl<'a, 's> PostTransformChecker<'a, 's> {
+impl PostTransformChecker<'_, '_> {
     fn check_scopes(&mut self) {
         for scope_ids in self.scope_ids_map.pairs() {
             // Check bindings are the same
@@ -642,7 +642,7 @@ impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
     }
 }
 
-impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'a, 'e> {
+impl<'a> Visit<'a> for SemanticIdsCollector<'a, '_> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let scope_id = scope_id.get();
         self.scope_ids.push(scope_id);

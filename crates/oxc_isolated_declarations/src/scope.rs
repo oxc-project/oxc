@@ -25,7 +25,7 @@ struct Scope<'a> {
     flags: ScopeFlags,
 }
 
-impl<'a> Scope<'a> {
+impl Scope<'_> {
     fn new(flags: ScopeFlags) -> Self {
         Self { bindings: FxHashMap::default(), references: FxHashMap::default(), flags }
     }

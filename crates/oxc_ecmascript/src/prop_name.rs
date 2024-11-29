@@ -9,7 +9,7 @@ pub trait PropName {
     fn prop_name(&self) -> Option<(&str, Span)>;
 }
 
-impl<'a> PropName for ObjectPropertyKind<'a> {
+impl PropName for ObjectPropertyKind<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
             ObjectPropertyKind::ObjectProperty(prop) => prop.prop_name(),
@@ -18,7 +18,7 @@ impl<'a> PropName for ObjectPropertyKind<'a> {
     }
 }
 
-impl<'a> PropName for ObjectProperty<'a> {
+impl PropName for ObjectProperty<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         if self.shorthand || self.computed {
             return None;
@@ -27,7 +27,7 @@ impl<'a> PropName for ObjectProperty<'a> {
     }
 }
 
-impl<'a> PropName for PropertyKey<'a> {
+impl PropName for PropertyKey<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
             PropertyKey::StaticIdentifier(ident) => Some((&ident.name, ident.span)),
@@ -38,7 +38,7 @@ impl<'a> PropName for PropertyKey<'a> {
     }
 }
 
-impl<'a> PropName for ClassElement<'a> {
+impl PropName for ClassElement<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
             ClassElement::MethodDefinition(def) => def.prop_name(),
@@ -48,7 +48,7 @@ impl<'a> PropName for ClassElement<'a> {
     }
 }
 
-impl<'a> PropName for MethodDefinition<'a> {
+impl PropName for MethodDefinition<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         if self.computed {
             return None;
@@ -57,7 +57,7 @@ impl<'a> PropName for MethodDefinition<'a> {
     }
 }
 
-impl<'a> PropName for PropertyDefinition<'a> {
+impl PropName for PropertyDefinition<'_> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         if self.computed {
             return None;

@@ -97,7 +97,7 @@ pub struct ModuleLexer<'a> {
     pub facade: bool,
 }
 
-impl<'a> Default for ModuleLexer<'a> {
+impl Default for ModuleLexer<'_> {
     fn default() -> Self {
         Self::new()
     }

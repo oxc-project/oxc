@@ -100,7 +100,7 @@ impl fmt::Display for GlobalValue {
 }
 
 struct GlobalValueVisitor;
-impl<'de> Visitor<'de> for GlobalValueVisitor {
+impl Visitor<'_> for GlobalValueVisitor {
     type Value = GlobalValue;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

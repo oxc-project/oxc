@@ -7,7 +7,7 @@ pub struct AppendTo<'a, TVec, TAfter> {
     pub after: &'a Option<TAfter>,
 }
 
-impl<'b, TVec: Serialize, TAfter: Serialize> Serialize for AppendTo<'b, TVec, TAfter> {
+impl<TVec: Serialize, TAfter: Serialize> Serialize for AppendTo<'_, TVec, TAfter> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         if let Some(after) = self.after {
             let mut seq = serializer.serialize_seq(Some(self.array.len() + 1))?;

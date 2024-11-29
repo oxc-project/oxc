@@ -119,7 +119,7 @@ struct HexEscapeFinder {
     hex_escapes: Vec<Span>,
 }
 
-impl<'a> Visit<'a> for HexEscapeFinder {
+impl Visit<'_> for HexEscapeFinder {
     fn visit_character(&mut self, ch: &Character) {
         if ch.kind == CharacterKind::HexadecimalEscape {
             self.hex_escapes.push(ch.span);

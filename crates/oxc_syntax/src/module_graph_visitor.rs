@@ -110,7 +110,7 @@ impl<'a, T> ModuleGraphVisitorBuilder<'a, T> {
     }
 }
 
-impl<'a, T> Default for ModuleGraphVisitorBuilder<'a, T> {
+impl<T> Default for ModuleGraphVisitorBuilder<'_, T> {
     fn default() -> Self {
         Self {
             max_depth: u32::MAX,

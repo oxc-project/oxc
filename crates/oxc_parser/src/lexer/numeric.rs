@@ -3,7 +3,7 @@ use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 use super::{Kind, Lexer, Span};
 use crate::diagnostics;
 
-impl<'a> Lexer<'a> {
+impl Lexer<'_> {
     /// 12.9.3 Numeric Literals with `0` prefix
     pub(super) fn read_zero(&mut self) -> Kind {
         match self.peek_byte() {

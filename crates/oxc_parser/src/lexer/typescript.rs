@@ -1,6 +1,6 @@
 use super::{Kind, Lexer, Token};
 
-impl<'a> Lexer<'a> {
+impl Lexer<'_> {
     /// Re-tokenize '<<' or '<=' or '<<=' to '<'
     pub(crate) fn re_lex_as_typescript_l_angle(&mut self, kind: Kind) -> Token {
         let offset = match kind {

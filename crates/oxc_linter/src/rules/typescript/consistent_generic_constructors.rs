@@ -83,9 +83,9 @@ impl Rule for ConsistentGenericConstructors {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(variable_declarator) => {
-                let type_ann = &variable_declarator.id.type_annotation;
-                let init = &variable_declarator.init;
-                self.check(type_ann, init.as_ref(), ctx);
+                let type_ann = variable_declarator.id.type_annotation.as_ref();
+                let init = variable_declarator.init.as_ref();
+                self.check(type_ann, init, ctx);
             }
             AstKind::AssignmentPattern(assignment_pattern) => {
                 let Some(parent) = ctx.nodes().parent_kind(node.id()) else {
@@ -96,15 +96,14 @@ impl Rule for ConsistentGenericConstructors {
                     return;
                 }
 
-                let type_ann = &assignment_pattern.left.type_annotation;
+                let type_ann = assignment_pattern.left.type_annotation.as_ref();
                 let init = &assignment_pattern.right;
                 self.check(type_ann, Some(init), ctx);
             }
             AstKind::PropertyDefinition(property_definition) => {
-                let type_ann = &property_definition.type_annotation;
-                let init = &property_definition.value;
-
-                self.check(type_ann, init.as_ref(), ctx);
+                let type_ann = property_definition.type_annotation.as_ref();
+                let init = property_definition.value.as_ref();
+                self.check(type_ann, init, ctx);
             }
             _ => {}
         }
@@ -124,7 +123,7 @@ impl Rule for ConsistentGenericConstructors {
 impl ConsistentGenericConstructors {
     fn check(
         &self,
-        type_annotation: &Option<oxc_allocator::Box<TSTypeAnnotation>>,
+        type_annotation: Option<&oxc_allocator::Box<TSTypeAnnotation>>,
         init: Option<&Expression>,
         ctx: &LintContext,
     ) {
@@ -309,8 +308,8 @@ fn test() {
         ("const a: /* comment */ Foo/* another */ <string> = new Foo();", None),
         ("const a: Foo/* comment */ <string> = new Foo /* another */();", None),
         (
-            "const a: Foo<string> = new 
-			 Foo 
+            "const a: Foo<string> = new
+			 Foo
 			 ();",
             None,
         ),
@@ -367,8 +366,8 @@ fn test() {
         ("const a = new Map <string, number> ();", Some(serde_json::json!(["type-annotation"]))),
         ("const a = new Map< string, number >();", Some(serde_json::json!(["type-annotation"]))),
         (
-            "const a = new 
-			 Foo<string> 
+            "const a = new
+			 Foo<string>
 			 ();",
             Some(serde_json::json!(["type-annotation"])),
         ),
@@ -468,11 +467,11 @@ fn test() {
             None,
         ),
         (
-            "const a: Foo<string> = new 
-			 Foo 
+            "const a: Foo<string> = new
+			 Foo
 			 ();",
-            "const a = new 
-			 Foo<string> 
+            "const a = new
+			 Foo<string>
 			 ();",
             None,
         ),
@@ -572,11 +571,11 @@ fn test() {
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
-            "const a = new 
-			 Foo<string> 
+            "const a = new
+			 Foo<string>
 			 ();",
-            "const a: Foo<string> = new 
-			 Foo 
+            "const a: Foo<string> = new
+			 Foo
 			 ();",
             Some(serde_json::json!(["type-annotation"])),
         ),
