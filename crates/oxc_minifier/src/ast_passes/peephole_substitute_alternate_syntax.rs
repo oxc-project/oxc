@@ -230,7 +230,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             let num = ctx.ast.expression_numeric_literal(
                 SPAN,
                 if lit.value ^ no_unary { 0.0 } else { 1.0 },
-                if lit.value ^ no_unary { "0" } else { "1" },
+                if lit.value ^ no_unary { Some(Atom::from("0")) } else { Some(Atom::from("1")) },
                 NumberBase::Decimal,
             );
             *expr = if no_unary {

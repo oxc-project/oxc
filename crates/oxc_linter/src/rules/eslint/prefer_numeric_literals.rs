@@ -136,11 +136,11 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
         return;
     };
 
-    if let Some(name_prefix_set) = RADIX_MAP.get(numeric_lit.raw) {
+    if let Some(name_prefix_set) = RADIX_MAP.get(numeric_lit.raw.as_ref().unwrap().as_str()) {
         let name = name_prefix_set.index(0).unwrap();
         let prefix = name_prefix_set.index(1).unwrap();
 
-        match is_fixable(call_expr, numeric_lit.raw) {
+        match is_fixable(call_expr, numeric_lit.raw.as_ref().unwrap().as_str()) {
             Ok(argument) => {
                 ctx.diagnostic_with_fix(
                     prefer_numeric_literals_diagnostic(call_expr.span, name),

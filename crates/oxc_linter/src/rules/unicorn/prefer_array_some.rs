@@ -178,7 +178,7 @@ impl Rule for PreferArraySome {
                         return;
                     };
 
-                    if right_num_lit.raw == "0"
+                    if right_num_lit.raw.as_ref().unwrap().as_str() == "0"
                         && is_method_call(
                             left_call_expr,
                             None,
@@ -207,7 +207,7 @@ impl Rule for PreferArraySome {
                     return;
                 };
 
-                if right_num_lit.raw != "0" {
+                if right_num_lit.raw.as_ref().unwrap() != "0" {
                     return;
                 }
 

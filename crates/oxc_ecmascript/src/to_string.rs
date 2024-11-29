@@ -86,7 +86,7 @@ impl<'a> ToJsString<'a> for NumericLiteral<'a> {
 impl<'a> ToJsString<'a> for BigIntLiteral<'a> {
     fn to_js_string(&self) -> Option<Cow<'a, str>> {
         // FIXME: to js bigint string
-        Some(Cow::Owned(self.raw.to_string()))
+        self.raw.as_ref().map(|raw| Cow::Borrowed(raw.as_str()))
     }
 }
 

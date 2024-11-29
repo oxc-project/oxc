@@ -241,7 +241,9 @@ fn get_property_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
         PropertyKey::RegExpLiteral(regex) => {
             Some(Cow::Owned(format!("/{}/{}", regex.regex.pattern, regex.regex.flags)))
         }
-        PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.raw.as_str())),
+        PropertyKey::BigIntLiteral(bigint) => {
+            Some(Cow::Borrowed(bigint.raw.as_ref().unwrap().as_str()))
+        }
         PropertyKey::TemplateLiteral(template) => {
             if template.expressions.len() == 0 && template.quasis.len() == 1 {
                 if let Some(cooked) = &template.quasis[0].value.cooked {

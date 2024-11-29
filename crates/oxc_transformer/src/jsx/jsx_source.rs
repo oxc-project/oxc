@@ -157,7 +157,7 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
             let value = ctx.ast.expression_numeric_literal(
                 SPAN,
                 line as f64,
-                line.to_string(),
+                None,
                 NumberBase::Decimal,
             );
             ctx.ast
@@ -169,7 +169,7 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
             let value = ctx.ast.expression_numeric_literal(
                 SPAN,
                 column as f64,
-                column.to_string(),
+                None,
                 NumberBase::Decimal,
             );
             ctx.ast

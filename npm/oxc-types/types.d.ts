@@ -16,7 +16,7 @@ export interface NullLiteral extends Span {
 export interface NumericLiteral extends Span {
   type: 'Literal';
   value: number;
-  raw: string;
+  raw: string | null;
 }
 
 export interface StringLiteral extends Span {
@@ -27,14 +27,14 @@ export interface StringLiteral extends Span {
 
 export interface BigIntLiteral extends Span {
   type: 'Literal';
-  raw: string;
+  raw: string | null;
   value: null;
   bigint: string;
 }
 
 export interface RegExpLiteral extends Span {
   type: 'Literal';
-  raw: string;
+  raw: string | null;
   value: {} | null;
   regex: { pattern: string; flags: string };
 }

@@ -127,7 +127,7 @@ impl PeepholeReplaceKnownMethods {
         Some(ctx.ast.expression_numeric_literal(
             span,
             result as f64,
-            result.to_string(),
+            None,
             NumberBase::Decimal,
         ))
     }
@@ -222,7 +222,7 @@ impl PeepholeReplaceKnownMethods {
         Some(ctx.ast.expression_numeric_literal(
             span,
             result as f64,
-            result.to_string(),
+            None,
             NumberBase::Decimal,
         ))
     }

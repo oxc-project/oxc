@@ -215,7 +215,12 @@ impl<'a> AstBuilder<'a> {
     /// `0`
     #[inline]
     pub fn number_0(self) -> Expression<'a> {
-        self.expression_numeric_literal(Span::default(), 0.0, "0", NumberBase::Decimal)
+        self.expression_numeric_literal(
+            Span::default(),
+            0.0,
+            Some(Atom::from("0")),
+            NumberBase::Decimal,
+        )
     }
 
     /// `void 0`

@@ -306,7 +306,7 @@ impl<'a> TypeScriptEnum<'a> {
     }
 
     fn get_number_literal_expression(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {
-        ctx.ast.expression_numeric_literal(SPAN, value, value.to_string(), NumberBase::Decimal)
+        ctx.ast.expression_numeric_literal(SPAN, value, None, NumberBase::Decimal)
     }
 
     fn get_initializer_expr(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {

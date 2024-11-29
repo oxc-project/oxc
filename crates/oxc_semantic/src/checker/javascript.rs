@@ -233,10 +233,12 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
 
     if ctx.strict_mode() {
         match lit.base {
-            NumberBase::Octal if leading_zero(lit.raw) => {
+            NumberBase::Octal if leading_zero(lit.raw.as_ref().unwrap().as_str()) => {
                 ctx.error(legacy_octal(lit.span));
             }
-            NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) => {
+            NumberBase::Decimal | NumberBase::Float
+                if leading_zero(lit.raw.as_ref().unwrap().as_str()) =>
+            {
                 ctx.error(leading_zero_decimal(lit.span));
             }
             _ => {}

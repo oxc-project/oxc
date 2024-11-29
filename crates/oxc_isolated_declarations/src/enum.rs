@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{CloneIn, IntoIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::ToInt32;
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -63,10 +63,11 @@ impl<'a> IsolatedDeclarations<'a> {
                             self.ast.expression_identifier_reference(SPAN, "Infinity")
                         } else {
                             let value = if is_negative { -v } else { v };
+                            let raw: &str = value.to_string().into_in(&self.ast.allocator);
                             self.ast.expression_numeric_literal(
                                 SPAN,
                                 value,
-                                value.to_string(),
+                                Some(Atom::from(raw)),
                                 NumberBase::Decimal,
                             )
                         };

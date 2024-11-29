@@ -2153,7 +2153,11 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                     if need_quote {
                         dynamic_text!(
                             p,
-                            string::print_string(p, literal.raw, p.options.single_quote)
+                            string::print_string(
+                                p,
+                                literal.raw.as_ref().unwrap(),
+                                p.options.single_quote
+                            )
                         )
                     } else {
                         literal.format(p)
