@@ -92,7 +92,7 @@ fn impl_clone_in(
 ) -> TokenStream {
     if has_lifetime {
         quote! {
-            impl <'old_alloc, 'new_alloc> CloneIn<'new_alloc> for #ty_ident<'old_alloc> {
+            impl <'new_alloc> CloneIn<'new_alloc> for #ty_ident<'_> {
                 type Cloned = #ty_ident<'new_alloc>;
                 fn clone_in(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned {
                     #body

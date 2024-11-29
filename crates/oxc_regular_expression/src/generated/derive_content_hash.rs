@@ -9,25 +9,25 @@ use oxc_span::hash::ContentHash;
 
 use crate::ast::*;
 
-impl<'a> ContentHash for Pattern<'a> {
+impl ContentHash for Pattern<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for Disjunction<'a> {
+impl ContentHash for Disjunction<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for Alternative<'a> {
+impl ContentHash for Alternative<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for Term<'a> {
+impl ContentHash for Term<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -59,7 +59,7 @@ impl ContentHash for BoundaryAssertionKind {
     }
 }
 
-impl<'a> ContentHash for LookAroundAssertion<'a> {
+impl ContentHash for LookAroundAssertion<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.kind, state);
         ContentHash::content_hash(&self.body, state);
@@ -72,7 +72,7 @@ impl ContentHash for LookAroundAssertionKind {
     }
 }
 
-impl<'a> ContentHash for Quantifier<'a> {
+impl ContentHash for Quantifier<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.min, state);
         ContentHash::content_hash(&self.max, state);
@@ -106,7 +106,7 @@ impl ContentHash for CharacterClassEscapeKind {
     }
 }
 
-impl<'a> ContentHash for UnicodePropertyEscape<'a> {
+impl ContentHash for UnicodePropertyEscape<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.negative, state);
         ContentHash::content_hash(&self.strings, state);
@@ -119,7 +119,7 @@ impl ContentHash for Dot {
     fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
-impl<'a> ContentHash for CharacterClass<'a> {
+impl ContentHash for CharacterClass<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.negative, state);
         ContentHash::content_hash(&self.strings, state);
@@ -134,7 +134,7 @@ impl ContentHash for CharacterClassContentsKind {
     }
 }
 
-impl<'a> ContentHash for CharacterClassContents<'a> {
+impl ContentHash for CharacterClassContents<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -155,28 +155,28 @@ impl ContentHash for CharacterClassRange {
     }
 }
 
-impl<'a> ContentHash for ClassStringDisjunction<'a> {
+impl ContentHash for ClassStringDisjunction<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.strings, state);
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for ClassString<'a> {
+impl ContentHash for ClassString<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.strings, state);
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for CapturingGroup<'a> {
+impl ContentHash for CapturingGroup<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for IgnoreGroup<'a> {
+impl ContentHash for IgnoreGroup<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.modifiers, state);
         ContentHash::content_hash(&self.body, state);
@@ -204,7 +204,7 @@ impl ContentHash for IndexedReference {
     }
 }
 
-impl<'a> ContentHash for NamedReference<'a> {
+impl ContentHash for NamedReference<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
     }

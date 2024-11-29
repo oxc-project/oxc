@@ -118,6 +118,7 @@ impl AppArgs {
             .spawn()
             .expect("Run runtime.js failed");
         Test262Suite::<Test262RuntimeCase>::new().run_async(self);
+        let _ = runtime_process.wait();
         let _ = runtime_process.kill();
     }
 

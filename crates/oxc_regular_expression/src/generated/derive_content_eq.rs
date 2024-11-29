@@ -7,25 +7,25 @@ use oxc_span::cmp::ContentEq;
 
 use crate::ast::*;
 
-impl<'a> ContentEq for Pattern<'a> {
+impl ContentEq for Pattern<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.body, &other.body)
     }
 }
 
-impl<'a> ContentEq for Disjunction<'a> {
+impl ContentEq for Disjunction<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.body, &other.body)
     }
 }
 
-impl<'a> ContentEq for Alternative<'a> {
+impl ContentEq for Alternative<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.body, &other.body)
     }
 }
 
-impl<'a> ContentEq for Term<'a> {
+impl ContentEq for Term<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match self {
             Self::BoundaryAssertion(it) => match other {
@@ -92,7 +92,7 @@ impl ContentEq for BoundaryAssertionKind {
     }
 }
 
-impl<'a> ContentEq for LookAroundAssertion<'a> {
+impl ContentEq for LookAroundAssertion<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.body, &other.body)
@@ -105,7 +105,7 @@ impl ContentEq for LookAroundAssertionKind {
     }
 }
 
-impl<'a> ContentEq for Quantifier<'a> {
+impl ContentEq for Quantifier<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.min, &other.min)
             && ContentEq::content_eq(&self.max, &other.max)
@@ -139,7 +139,7 @@ impl ContentEq for CharacterClassEscapeKind {
     }
 }
 
-impl<'a> ContentEq for UnicodePropertyEscape<'a> {
+impl ContentEq for UnicodePropertyEscape<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.negative, &other.negative)
             && ContentEq::content_eq(&self.strings, &other.strings)
@@ -154,7 +154,7 @@ impl ContentEq for Dot {
     }
 }
 
-impl<'a> ContentEq for CharacterClass<'a> {
+impl ContentEq for CharacterClass<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.negative, &other.negative)
             && ContentEq::content_eq(&self.strings, &other.strings)
@@ -169,7 +169,7 @@ impl ContentEq for CharacterClassContentsKind {
     }
 }
 
-impl<'a> ContentEq for CharacterClassContents<'a> {
+impl ContentEq for CharacterClassContents<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match self {
             Self::CharacterClassRange(it) => match other {
@@ -206,28 +206,28 @@ impl ContentEq for CharacterClassRange {
     }
 }
 
-impl<'a> ContentEq for ClassStringDisjunction<'a> {
+impl ContentEq for ClassStringDisjunction<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.strings, &other.strings)
             && ContentEq::content_eq(&self.body, &other.body)
     }
 }
 
-impl<'a> ContentEq for ClassString<'a> {
+impl ContentEq for ClassString<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.strings, &other.strings)
             && ContentEq::content_eq(&self.body, &other.body)
     }
 }
 
-impl<'a> ContentEq for CapturingGroup<'a> {
+impl ContentEq for CapturingGroup<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.name, &other.name)
             && ContentEq::content_eq(&self.body, &other.body)
     }
 }
 
-impl<'a> ContentEq for IgnoreGroup<'a> {
+impl ContentEq for IgnoreGroup<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.modifiers, &other.modifiers)
             && ContentEq::content_eq(&self.body, &other.body)
@@ -255,7 +255,7 @@ impl ContentEq for IndexedReference {
     }
 }
 
-impl<'a> ContentEq for NamedReference<'a> {
+impl ContentEq for NamedReference<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.name, &other.name)
     }

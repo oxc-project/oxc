@@ -23,35 +23,35 @@ impl ContentHash for BooleanLiteral {
     }
 }
 
-impl<'a> ContentHash for StringLiteral<'a> {
+impl ContentHash for StringLiteral<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.value, state);
         ContentHash::content_hash(&self.raw, state);
     }
 }
 
-impl<'a> ContentHash for BigIntLiteral<'a> {
+impl ContentHash for BigIntLiteral<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.raw, state);
         ContentHash::content_hash(&self.base, state);
     }
 }
 
-impl<'a> ContentHash for RegExpLiteral<'a> {
+impl ContentHash for RegExpLiteral<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.regex, state);
         ContentHash::content_hash(&self.raw, state);
     }
 }
 
-impl<'a> ContentHash for RegExp<'a> {
+impl ContentHash for RegExp<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.pattern, state);
         ContentHash::content_hash(&self.flags, state);
     }
 }
 
-impl<'a> ContentHash for RegExpPattern<'a> {
+impl ContentHash for RegExpPattern<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -62,7 +62,7 @@ impl<'a> ContentHash for RegExpPattern<'a> {
     }
 }
 
-impl<'a> ContentHash for Program<'a> {
+impl ContentHash for Program<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.source_type, state);
         ContentHash::content_hash(&self.source_text, state);
@@ -73,7 +73,7 @@ impl<'a> ContentHash for Program<'a> {
     }
 }
 
-impl<'a> ContentHash for Expression<'a> {
+impl ContentHash for Expression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -123,25 +123,25 @@ impl<'a> ContentHash for Expression<'a> {
     }
 }
 
-impl<'a> ContentHash for IdentifierName<'a> {
+impl ContentHash for IdentifierName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
     }
 }
 
-impl<'a> ContentHash for IdentifierReference<'a> {
+impl ContentHash for IdentifierReference<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
     }
 }
 
-impl<'a> ContentHash for BindingIdentifier<'a> {
+impl ContentHash for BindingIdentifier<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
     }
 }
 
-impl<'a> ContentHash for LabelIdentifier<'a> {
+impl ContentHash for LabelIdentifier<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
     }
@@ -151,13 +151,13 @@ impl ContentHash for ThisExpression {
     fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
-impl<'a> ContentHash for ArrayExpression<'a> {
+impl ContentHash for ArrayExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.elements, state);
     }
 }
 
-impl<'a> ContentHash for ArrayExpressionElement<'a> {
+impl ContentHash for ArrayExpressionElement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -213,13 +213,13 @@ impl ContentHash for Elision {
     fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
-impl<'a> ContentHash for ObjectExpression<'a> {
+impl ContentHash for ObjectExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.properties, state);
     }
 }
 
-impl<'a> ContentHash for ObjectPropertyKind<'a> {
+impl ContentHash for ObjectPropertyKind<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -229,7 +229,7 @@ impl<'a> ContentHash for ObjectPropertyKind<'a> {
     }
 }
 
-impl<'a> ContentHash for ObjectProperty<'a> {
+impl ContentHash for ObjectProperty<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.kind, state);
         ContentHash::content_hash(&self.key, state);
@@ -240,7 +240,7 @@ impl<'a> ContentHash for ObjectProperty<'a> {
     }
 }
 
-impl<'a> ContentHash for PropertyKey<'a> {
+impl ContentHash for PropertyKey<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -298,14 +298,14 @@ impl ContentHash for PropertyKind {
     }
 }
 
-impl<'a> ContentHash for TemplateLiteral<'a> {
+impl ContentHash for TemplateLiteral<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.quasis, state);
         ContentHash::content_hash(&self.expressions, state);
     }
 }
 
-impl<'a> ContentHash for TaggedTemplateExpression<'a> {
+impl ContentHash for TaggedTemplateExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.tag, state);
         ContentHash::content_hash(&self.quasi, state);
@@ -313,21 +313,21 @@ impl<'a> ContentHash for TaggedTemplateExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for TemplateElement<'a> {
+impl ContentHash for TemplateElement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.tail, state);
         ContentHash::content_hash(&self.value, state);
     }
 }
 
-impl<'a> ContentHash for TemplateElementValue<'a> {
+impl ContentHash for TemplateElementValue<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.raw, state);
         ContentHash::content_hash(&self.cooked, state);
     }
 }
 
-impl<'a> ContentHash for MemberExpression<'a> {
+impl ContentHash for MemberExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -338,7 +338,7 @@ impl<'a> ContentHash for MemberExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for ComputedMemberExpression<'a> {
+impl ContentHash for ComputedMemberExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.object, state);
         ContentHash::content_hash(&self.expression, state);
@@ -346,7 +346,7 @@ impl<'a> ContentHash for ComputedMemberExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for StaticMemberExpression<'a> {
+impl ContentHash for StaticMemberExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.object, state);
         ContentHash::content_hash(&self.property, state);
@@ -354,7 +354,7 @@ impl<'a> ContentHash for StaticMemberExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for PrivateFieldExpression<'a> {
+impl ContentHash for PrivateFieldExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.object, state);
         ContentHash::content_hash(&self.field, state);
@@ -362,7 +362,7 @@ impl<'a> ContentHash for PrivateFieldExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for CallExpression<'a> {
+impl ContentHash for CallExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.callee, state);
         ContentHash::content_hash(&self.type_parameters, state);
@@ -371,7 +371,7 @@ impl<'a> ContentHash for CallExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for NewExpression<'a> {
+impl ContentHash for NewExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.callee, state);
         ContentHash::content_hash(&self.arguments, state);
@@ -379,20 +379,20 @@ impl<'a> ContentHash for NewExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for MetaProperty<'a> {
+impl ContentHash for MetaProperty<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.meta, state);
         ContentHash::content_hash(&self.property, state);
     }
 }
 
-impl<'a> ContentHash for SpreadElement<'a> {
+impl ContentHash for SpreadElement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.argument, state);
     }
 }
 
-impl<'a> ContentHash for Argument<'a> {
+impl ContentHash for Argument<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -443,7 +443,7 @@ impl<'a> ContentHash for Argument<'a> {
     }
 }
 
-impl<'a> ContentHash for UpdateExpression<'a> {
+impl ContentHash for UpdateExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.operator, state);
         ContentHash::content_hash(&self.prefix, state);
@@ -451,14 +451,14 @@ impl<'a> ContentHash for UpdateExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for UnaryExpression<'a> {
+impl ContentHash for UnaryExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.operator, state);
         ContentHash::content_hash(&self.argument, state);
     }
 }
 
-impl<'a> ContentHash for BinaryExpression<'a> {
+impl ContentHash for BinaryExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.left, state);
         ContentHash::content_hash(&self.operator, state);
@@ -466,7 +466,7 @@ impl<'a> ContentHash for BinaryExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for PrivateInExpression<'a> {
+impl ContentHash for PrivateInExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.left, state);
         ContentHash::content_hash(&self.operator, state);
@@ -474,7 +474,7 @@ impl<'a> ContentHash for PrivateInExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for LogicalExpression<'a> {
+impl ContentHash for LogicalExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.left, state);
         ContentHash::content_hash(&self.operator, state);
@@ -482,7 +482,7 @@ impl<'a> ContentHash for LogicalExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for ConditionalExpression<'a> {
+impl ContentHash for ConditionalExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.test, state);
         ContentHash::content_hash(&self.consequent, state);
@@ -490,7 +490,7 @@ impl<'a> ContentHash for ConditionalExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for AssignmentExpression<'a> {
+impl ContentHash for AssignmentExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.operator, state);
         ContentHash::content_hash(&self.left, state);
@@ -498,7 +498,7 @@ impl<'a> ContentHash for AssignmentExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for AssignmentTarget<'a> {
+impl ContentHash for AssignmentTarget<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -517,7 +517,7 @@ impl<'a> ContentHash for AssignmentTarget<'a> {
     }
 }
 
-impl<'a> ContentHash for SimpleAssignmentTarget<'a> {
+impl ContentHash for SimpleAssignmentTarget<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -534,7 +534,7 @@ impl<'a> ContentHash for SimpleAssignmentTarget<'a> {
     }
 }
 
-impl<'a> ContentHash for AssignmentTargetPattern<'a> {
+impl ContentHash for AssignmentTargetPattern<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -544,27 +544,27 @@ impl<'a> ContentHash for AssignmentTargetPattern<'a> {
     }
 }
 
-impl<'a> ContentHash for ArrayAssignmentTarget<'a> {
+impl ContentHash for ArrayAssignmentTarget<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.elements, state);
         ContentHash::content_hash(&self.rest, state);
     }
 }
 
-impl<'a> ContentHash for ObjectAssignmentTarget<'a> {
+impl ContentHash for ObjectAssignmentTarget<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.properties, state);
         ContentHash::content_hash(&self.rest, state);
     }
 }
 
-impl<'a> ContentHash for AssignmentTargetRest<'a> {
+impl ContentHash for AssignmentTargetRest<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.target, state);
     }
 }
 
-impl<'a> ContentHash for AssignmentTargetMaybeDefault<'a> {
+impl ContentHash for AssignmentTargetMaybeDefault<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -584,14 +584,14 @@ impl<'a> ContentHash for AssignmentTargetMaybeDefault<'a> {
     }
 }
 
-impl<'a> ContentHash for AssignmentTargetWithDefault<'a> {
+impl ContentHash for AssignmentTargetWithDefault<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.binding, state);
         ContentHash::content_hash(&self.init, state);
     }
 }
 
-impl<'a> ContentHash for AssignmentTargetProperty<'a> {
+impl ContentHash for AssignmentTargetProperty<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -601,21 +601,21 @@ impl<'a> ContentHash for AssignmentTargetProperty<'a> {
     }
 }
 
-impl<'a> ContentHash for AssignmentTargetPropertyIdentifier<'a> {
+impl ContentHash for AssignmentTargetPropertyIdentifier<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.binding, state);
         ContentHash::content_hash(&self.init, state);
     }
 }
 
-impl<'a> ContentHash for AssignmentTargetPropertyProperty<'a> {
+impl ContentHash for AssignmentTargetPropertyProperty<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
         ContentHash::content_hash(&self.binding, state);
     }
 }
 
-impl<'a> ContentHash for SequenceExpression<'a> {
+impl ContentHash for SequenceExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expressions, state);
     }
@@ -625,19 +625,19 @@ impl ContentHash for Super {
     fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
-impl<'a> ContentHash for AwaitExpression<'a> {
+impl ContentHash for AwaitExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.argument, state);
     }
 }
 
-impl<'a> ContentHash for ChainExpression<'a> {
+impl ContentHash for ChainExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
     }
 }
 
-impl<'a> ContentHash for ChainElement<'a> {
+impl ContentHash for ChainElement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -650,13 +650,13 @@ impl<'a> ContentHash for ChainElement<'a> {
     }
 }
 
-impl<'a> ContentHash for ParenthesizedExpression<'a> {
+impl ContentHash for ParenthesizedExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
     }
 }
 
-impl<'a> ContentHash for Statement<'a> {
+impl ContentHash for Statement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -696,26 +696,26 @@ impl<'a> ContentHash for Statement<'a> {
     }
 }
 
-impl<'a> ContentHash for Directive<'a> {
+impl ContentHash for Directive<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
         ContentHash::content_hash(&self.directive, state);
     }
 }
 
-impl<'a> ContentHash for Hashbang<'a> {
+impl ContentHash for Hashbang<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.value, state);
     }
 }
 
-impl<'a> ContentHash for BlockStatement<'a> {
+impl ContentHash for BlockStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for Declaration<'a> {
+impl ContentHash for Declaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -731,7 +731,7 @@ impl<'a> ContentHash for Declaration<'a> {
     }
 }
 
-impl<'a> ContentHash for VariableDeclaration<'a> {
+impl ContentHash for VariableDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.kind, state);
         ContentHash::content_hash(&self.declarations, state);
@@ -745,7 +745,7 @@ impl ContentHash for VariableDeclarationKind {
     }
 }
 
-impl<'a> ContentHash for VariableDeclarator<'a> {
+impl ContentHash for VariableDeclarator<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.kind, state);
         ContentHash::content_hash(&self.id, state);
@@ -758,13 +758,13 @@ impl ContentHash for EmptyStatement {
     fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
-impl<'a> ContentHash for ExpressionStatement<'a> {
+impl ContentHash for ExpressionStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
     }
 }
 
-impl<'a> ContentHash for IfStatement<'a> {
+impl ContentHash for IfStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.test, state);
         ContentHash::content_hash(&self.consequent, state);
@@ -772,21 +772,21 @@ impl<'a> ContentHash for IfStatement<'a> {
     }
 }
 
-impl<'a> ContentHash for DoWhileStatement<'a> {
+impl ContentHash for DoWhileStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.body, state);
         ContentHash::content_hash(&self.test, state);
     }
 }
 
-impl<'a> ContentHash for WhileStatement<'a> {
+impl ContentHash for WhileStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.test, state);
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for ForStatement<'a> {
+impl ContentHash for ForStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.init, state);
         ContentHash::content_hash(&self.test, state);
@@ -795,7 +795,7 @@ impl<'a> ContentHash for ForStatement<'a> {
     }
 }
 
-impl<'a> ContentHash for ForStatementInit<'a> {
+impl ContentHash for ForStatementInit<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -846,7 +846,7 @@ impl<'a> ContentHash for ForStatementInit<'a> {
     }
 }
 
-impl<'a> ContentHash for ForInStatement<'a> {
+impl ContentHash for ForInStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.left, state);
         ContentHash::content_hash(&self.right, state);
@@ -854,7 +854,7 @@ impl<'a> ContentHash for ForInStatement<'a> {
     }
 }
 
-impl<'a> ContentHash for ForStatementLeft<'a> {
+impl ContentHash for ForStatementLeft<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -874,7 +874,7 @@ impl<'a> ContentHash for ForStatementLeft<'a> {
     }
 }
 
-impl<'a> ContentHash for ForOfStatement<'a> {
+impl ContentHash for ForOfStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.r#await, state);
         ContentHash::content_hash(&self.left, state);
@@ -883,59 +883,59 @@ impl<'a> ContentHash for ForOfStatement<'a> {
     }
 }
 
-impl<'a> ContentHash for ContinueStatement<'a> {
+impl ContentHash for ContinueStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.label, state);
     }
 }
 
-impl<'a> ContentHash for BreakStatement<'a> {
+impl ContentHash for BreakStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.label, state);
     }
 }
 
-impl<'a> ContentHash for ReturnStatement<'a> {
+impl ContentHash for ReturnStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.argument, state);
     }
 }
 
-impl<'a> ContentHash for WithStatement<'a> {
+impl ContentHash for WithStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.object, state);
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for SwitchStatement<'a> {
+impl ContentHash for SwitchStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.discriminant, state);
         ContentHash::content_hash(&self.cases, state);
     }
 }
 
-impl<'a> ContentHash for SwitchCase<'a> {
+impl ContentHash for SwitchCase<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.test, state);
         ContentHash::content_hash(&self.consequent, state);
     }
 }
 
-impl<'a> ContentHash for LabeledStatement<'a> {
+impl ContentHash for LabeledStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.label, state);
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for ThrowStatement<'a> {
+impl ContentHash for ThrowStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.argument, state);
     }
 }
 
-impl<'a> ContentHash for TryStatement<'a> {
+impl ContentHash for TryStatement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.block, state);
         ContentHash::content_hash(&self.handler, state);
@@ -943,14 +943,14 @@ impl<'a> ContentHash for TryStatement<'a> {
     }
 }
 
-impl<'a> ContentHash for CatchClause<'a> {
+impl ContentHash for CatchClause<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.param, state);
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for CatchParameter<'a> {
+impl ContentHash for CatchParameter<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.pattern, state);
     }
@@ -960,7 +960,7 @@ impl ContentHash for DebuggerStatement {
     fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
-impl<'a> ContentHash for BindingPattern<'a> {
+impl ContentHash for BindingPattern<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.kind, state);
         ContentHash::content_hash(&self.type_annotation, state);
@@ -968,7 +968,7 @@ impl<'a> ContentHash for BindingPattern<'a> {
     }
 }
 
-impl<'a> ContentHash for BindingPatternKind<'a> {
+impl ContentHash for BindingPatternKind<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -980,21 +980,21 @@ impl<'a> ContentHash for BindingPatternKind<'a> {
     }
 }
 
-impl<'a> ContentHash for AssignmentPattern<'a> {
+impl ContentHash for AssignmentPattern<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.left, state);
         ContentHash::content_hash(&self.right, state);
     }
 }
 
-impl<'a> ContentHash for ObjectPattern<'a> {
+impl ContentHash for ObjectPattern<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.properties, state);
         ContentHash::content_hash(&self.rest, state);
     }
 }
 
-impl<'a> ContentHash for BindingProperty<'a> {
+impl ContentHash for BindingProperty<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.key, state);
         ContentHash::content_hash(&self.value, state);
@@ -1003,20 +1003,20 @@ impl<'a> ContentHash for BindingProperty<'a> {
     }
 }
 
-impl<'a> ContentHash for ArrayPattern<'a> {
+impl ContentHash for ArrayPattern<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.elements, state);
         ContentHash::content_hash(&self.rest, state);
     }
 }
 
-impl<'a> ContentHash for BindingRestElement<'a> {
+impl ContentHash for BindingRestElement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.argument, state);
     }
 }
 
-impl<'a> ContentHash for Function<'a> {
+impl ContentHash for Function<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.r#type, state);
         ContentHash::content_hash(&self.id, state);
@@ -1037,7 +1037,7 @@ impl ContentHash for FunctionType {
     }
 }
 
-impl<'a> ContentHash for FormalParameters<'a> {
+impl ContentHash for FormalParameters<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.kind, state);
         ContentHash::content_hash(&self.items, state);
@@ -1045,7 +1045,7 @@ impl<'a> ContentHash for FormalParameters<'a> {
     }
 }
 
-impl<'a> ContentHash for FormalParameter<'a> {
+impl ContentHash for FormalParameter<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.decorators, state);
         ContentHash::content_hash(&self.pattern, state);
@@ -1061,14 +1061,14 @@ impl ContentHash for FormalParameterKind {
     }
 }
 
-impl<'a> ContentHash for FunctionBody<'a> {
+impl ContentHash for FunctionBody<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.directives, state);
         ContentHash::content_hash(&self.statements, state);
     }
 }
 
-impl<'a> ContentHash for ArrowFunctionExpression<'a> {
+impl ContentHash for ArrowFunctionExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
         ContentHash::content_hash(&self.r#async, state);
@@ -1079,14 +1079,14 @@ impl<'a> ContentHash for ArrowFunctionExpression<'a> {
     }
 }
 
-impl<'a> ContentHash for YieldExpression<'a> {
+impl ContentHash for YieldExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.delegate, state);
         ContentHash::content_hash(&self.argument, state);
     }
 }
 
-impl<'a> ContentHash for Class<'a> {
+impl ContentHash for Class<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.r#type, state);
         ContentHash::content_hash(&self.decorators, state);
@@ -1107,13 +1107,13 @@ impl ContentHash for ClassType {
     }
 }
 
-impl<'a> ContentHash for ClassBody<'a> {
+impl ContentHash for ClassBody<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for ClassElement<'a> {
+impl ContentHash for ClassElement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1126,7 +1126,7 @@ impl<'a> ContentHash for ClassElement<'a> {
     }
 }
 
-impl<'a> ContentHash for MethodDefinition<'a> {
+impl ContentHash for MethodDefinition<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.r#type, state);
         ContentHash::content_hash(&self.decorators, state);
@@ -1147,7 +1147,7 @@ impl ContentHash for MethodDefinitionType {
     }
 }
 
-impl<'a> ContentHash for PropertyDefinition<'a> {
+impl ContentHash for PropertyDefinition<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.r#type, state);
         ContentHash::content_hash(&self.decorators, state);
@@ -1177,19 +1177,19 @@ impl ContentHash for MethodDefinitionKind {
     }
 }
 
-impl<'a> ContentHash for PrivateIdentifier<'a> {
+impl ContentHash for PrivateIdentifier<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
     }
 }
 
-impl<'a> ContentHash for StaticBlock<'a> {
+impl ContentHash for StaticBlock<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for ModuleDeclaration<'a> {
+impl ContentHash for ModuleDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1209,7 +1209,7 @@ impl ContentHash for AccessorPropertyType {
     }
 }
 
-impl<'a> ContentHash for AccessorProperty<'a> {
+impl ContentHash for AccessorProperty<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.r#type, state);
         ContentHash::content_hash(&self.decorators, state);
@@ -1223,14 +1223,14 @@ impl<'a> ContentHash for AccessorProperty<'a> {
     }
 }
 
-impl<'a> ContentHash for ImportExpression<'a> {
+impl ContentHash for ImportExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.source, state);
         ContentHash::content_hash(&self.arguments, state);
     }
 }
 
-impl<'a> ContentHash for ImportDeclaration<'a> {
+impl ContentHash for ImportDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.specifiers, state);
         ContentHash::content_hash(&self.source, state);
@@ -1239,7 +1239,7 @@ impl<'a> ContentHash for ImportDeclaration<'a> {
     }
 }
 
-impl<'a> ContentHash for ImportDeclarationSpecifier<'a> {
+impl ContentHash for ImportDeclarationSpecifier<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1250,7 +1250,7 @@ impl<'a> ContentHash for ImportDeclarationSpecifier<'a> {
     }
 }
 
-impl<'a> ContentHash for ImportSpecifier<'a> {
+impl ContentHash for ImportSpecifier<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.imported, state);
         ContentHash::content_hash(&self.local, state);
@@ -1258,33 +1258,33 @@ impl<'a> ContentHash for ImportSpecifier<'a> {
     }
 }
 
-impl<'a> ContentHash for ImportDefaultSpecifier<'a> {
+impl ContentHash for ImportDefaultSpecifier<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.local, state);
     }
 }
 
-impl<'a> ContentHash for ImportNamespaceSpecifier<'a> {
+impl ContentHash for ImportNamespaceSpecifier<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.local, state);
     }
 }
 
-impl<'a> ContentHash for WithClause<'a> {
+impl ContentHash for WithClause<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.attributes_keyword, state);
         ContentHash::content_hash(&self.with_entries, state);
     }
 }
 
-impl<'a> ContentHash for ImportAttribute<'a> {
+impl ContentHash for ImportAttribute<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.key, state);
         ContentHash::content_hash(&self.value, state);
     }
 }
 
-impl<'a> ContentHash for ImportAttributeKey<'a> {
+impl ContentHash for ImportAttributeKey<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1294,7 +1294,7 @@ impl<'a> ContentHash for ImportAttributeKey<'a> {
     }
 }
 
-impl<'a> ContentHash for ExportNamedDeclaration<'a> {
+impl ContentHash for ExportNamedDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.declaration, state);
         ContentHash::content_hash(&self.specifiers, state);
@@ -1304,14 +1304,14 @@ impl<'a> ContentHash for ExportNamedDeclaration<'a> {
     }
 }
 
-impl<'a> ContentHash for ExportDefaultDeclaration<'a> {
+impl ContentHash for ExportDefaultDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.declaration, state);
         ContentHash::content_hash(&self.exported, state);
     }
 }
 
-impl<'a> ContentHash for ExportAllDeclaration<'a> {
+impl ContentHash for ExportAllDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.exported, state);
         ContentHash::content_hash(&self.source, state);
@@ -1320,7 +1320,7 @@ impl<'a> ContentHash for ExportAllDeclaration<'a> {
     }
 }
 
-impl<'a> ContentHash for ExportSpecifier<'a> {
+impl ContentHash for ExportSpecifier<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.local, state);
         ContentHash::content_hash(&self.exported, state);
@@ -1328,7 +1328,7 @@ impl<'a> ContentHash for ExportSpecifier<'a> {
     }
 }
 
-impl<'a> ContentHash for ExportDefaultDeclarationKind<'a> {
+impl ContentHash for ExportDefaultDeclarationKind<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1381,7 +1381,7 @@ impl<'a> ContentHash for ExportDefaultDeclarationKind<'a> {
     }
 }
 
-impl<'a> ContentHash for ModuleExportName<'a> {
+impl ContentHash for ModuleExportName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1392,13 +1392,13 @@ impl<'a> ContentHash for ModuleExportName<'a> {
     }
 }
 
-impl<'a> ContentHash for TSThisParameter<'a> {
+impl ContentHash for TSThisParameter<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_annotation, state);
     }
 }
 
-impl<'a> ContentHash for TSEnumDeclaration<'a> {
+impl ContentHash for TSEnumDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.id, state);
         ContentHash::content_hash(&self.members, state);
@@ -1407,14 +1407,14 @@ impl<'a> ContentHash for TSEnumDeclaration<'a> {
     }
 }
 
-impl<'a> ContentHash for TSEnumMember<'a> {
+impl ContentHash for TSEnumMember<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.id, state);
         ContentHash::content_hash(&self.initializer, state);
     }
 }
 
-impl<'a> ContentHash for TSEnumMemberName<'a> {
+impl ContentHash for TSEnumMemberName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1424,19 +1424,19 @@ impl<'a> ContentHash for TSEnumMemberName<'a> {
     }
 }
 
-impl<'a> ContentHash for TSTypeAnnotation<'a> {
+impl ContentHash for TSTypeAnnotation<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_annotation, state);
     }
 }
 
-impl<'a> ContentHash for TSLiteralType<'a> {
+impl ContentHash for TSLiteralType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.literal, state);
     }
 }
 
-impl<'a> ContentHash for TSLiteral<'a> {
+impl ContentHash for TSLiteral<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1452,7 +1452,7 @@ impl<'a> ContentHash for TSLiteral<'a> {
     }
 }
 
-impl<'a> ContentHash for TSType<'a> {
+impl ContentHash for TSType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1498,7 +1498,7 @@ impl<'a> ContentHash for TSType<'a> {
     }
 }
 
-impl<'a> ContentHash for TSConditionalType<'a> {
+impl ContentHash for TSConditionalType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.check_type, state);
         ContentHash::content_hash(&self.extends_type, state);
@@ -1507,25 +1507,25 @@ impl<'a> ContentHash for TSConditionalType<'a> {
     }
 }
 
-impl<'a> ContentHash for TSUnionType<'a> {
+impl ContentHash for TSUnionType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.types, state);
     }
 }
 
-impl<'a> ContentHash for TSIntersectionType<'a> {
+impl ContentHash for TSIntersectionType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.types, state);
     }
 }
 
-impl<'a> ContentHash for TSParenthesizedType<'a> {
+impl ContentHash for TSParenthesizedType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_annotation, state);
     }
 }
 
-impl<'a> ContentHash for TSTypeOperator<'a> {
+impl ContentHash for TSTypeOperator<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.operator, state);
         ContentHash::content_hash(&self.type_annotation, state);
@@ -1538,26 +1538,26 @@ impl ContentHash for TSTypeOperatorOperator {
     }
 }
 
-impl<'a> ContentHash for TSArrayType<'a> {
+impl ContentHash for TSArrayType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.element_type, state);
     }
 }
 
-impl<'a> ContentHash for TSIndexedAccessType<'a> {
+impl ContentHash for TSIndexedAccessType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.object_type, state);
         ContentHash::content_hash(&self.index_type, state);
     }
 }
 
-impl<'a> ContentHash for TSTupleType<'a> {
+impl ContentHash for TSTupleType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.element_types, state);
     }
 }
 
-impl<'a> ContentHash for TSNamedTupleMember<'a> {
+impl ContentHash for TSNamedTupleMember<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.element_type, state);
         ContentHash::content_hash(&self.label, state);
@@ -1565,19 +1565,19 @@ impl<'a> ContentHash for TSNamedTupleMember<'a> {
     }
 }
 
-impl<'a> ContentHash for TSOptionalType<'a> {
+impl ContentHash for TSOptionalType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_annotation, state);
     }
 }
 
-impl<'a> ContentHash for TSRestType<'a> {
+impl ContentHash for TSRestType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_annotation, state);
     }
 }
 
-impl<'a> ContentHash for TSTupleElement<'a> {
+impl ContentHash for TSTupleElement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1681,14 +1681,14 @@ impl ContentHash for TSBigIntKeyword {
     fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
-impl<'a> ContentHash for TSTypeReference<'a> {
+impl ContentHash for TSTypeReference<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_name, state);
         ContentHash::content_hash(&self.type_parameters, state);
     }
 }
 
-impl<'a> ContentHash for TSTypeName<'a> {
+impl ContentHash for TSTypeName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1698,20 +1698,20 @@ impl<'a> ContentHash for TSTypeName<'a> {
     }
 }
 
-impl<'a> ContentHash for TSQualifiedName<'a> {
+impl ContentHash for TSQualifiedName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.left, state);
         ContentHash::content_hash(&self.right, state);
     }
 }
 
-impl<'a> ContentHash for TSTypeParameterInstantiation<'a> {
+impl ContentHash for TSTypeParameterInstantiation<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.params, state);
     }
 }
 
-impl<'a> ContentHash for TSTypeParameter<'a> {
+impl ContentHash for TSTypeParameter<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
         ContentHash::content_hash(&self.constraint, state);
@@ -1722,13 +1722,13 @@ impl<'a> ContentHash for TSTypeParameter<'a> {
     }
 }
 
-impl<'a> ContentHash for TSTypeParameterDeclaration<'a> {
+impl ContentHash for TSTypeParameterDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.params, state);
     }
 }
 
-impl<'a> ContentHash for TSTypeAliasDeclaration<'a> {
+impl ContentHash for TSTypeAliasDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.id, state);
         ContentHash::content_hash(&self.type_parameters, state);
@@ -1743,14 +1743,14 @@ impl ContentHash for TSAccessibility {
     }
 }
 
-impl<'a> ContentHash for TSClassImplements<'a> {
+impl ContentHash for TSClassImplements<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
         ContentHash::content_hash(&self.type_parameters, state);
     }
 }
 
-impl<'a> ContentHash for TSInterfaceDeclaration<'a> {
+impl ContentHash for TSInterfaceDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.id, state);
         ContentHash::content_hash(&self.extends, state);
@@ -1760,13 +1760,13 @@ impl<'a> ContentHash for TSInterfaceDeclaration<'a> {
     }
 }
 
-impl<'a> ContentHash for TSInterfaceBody<'a> {
+impl ContentHash for TSInterfaceBody<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for TSPropertySignature<'a> {
+impl ContentHash for TSPropertySignature<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.computed, state);
         ContentHash::content_hash(&self.optional, state);
@@ -1776,7 +1776,7 @@ impl<'a> ContentHash for TSPropertySignature<'a> {
     }
 }
 
-impl<'a> ContentHash for TSSignature<'a> {
+impl ContentHash for TSSignature<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1789,7 +1789,7 @@ impl<'a> ContentHash for TSSignature<'a> {
     }
 }
 
-impl<'a> ContentHash for TSIndexSignature<'a> {
+impl ContentHash for TSIndexSignature<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.parameters, state);
         ContentHash::content_hash(&self.type_annotation, state);
@@ -1798,7 +1798,7 @@ impl<'a> ContentHash for TSIndexSignature<'a> {
     }
 }
 
-impl<'a> ContentHash for TSCallSignatureDeclaration<'a> {
+impl ContentHash for TSCallSignatureDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_parameters, state);
         ContentHash::content_hash(&self.this_param, state);
@@ -1813,7 +1813,7 @@ impl ContentHash for TSMethodSignatureKind {
     }
 }
 
-impl<'a> ContentHash for TSMethodSignature<'a> {
+impl ContentHash for TSMethodSignature<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.key, state);
         ContentHash::content_hash(&self.computed, state);
@@ -1826,7 +1826,7 @@ impl<'a> ContentHash for TSMethodSignature<'a> {
     }
 }
 
-impl<'a> ContentHash for TSConstructSignatureDeclaration<'a> {
+impl ContentHash for TSConstructSignatureDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_parameters, state);
         ContentHash::content_hash(&self.params, state);
@@ -1834,21 +1834,21 @@ impl<'a> ContentHash for TSConstructSignatureDeclaration<'a> {
     }
 }
 
-impl<'a> ContentHash for TSIndexSignatureName<'a> {
+impl ContentHash for TSIndexSignatureName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
         ContentHash::content_hash(&self.type_annotation, state);
     }
 }
 
-impl<'a> ContentHash for TSInterfaceHeritage<'a> {
+impl ContentHash for TSInterfaceHeritage<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
         ContentHash::content_hash(&self.type_parameters, state);
     }
 }
 
-impl<'a> ContentHash for TSTypePredicate<'a> {
+impl ContentHash for TSTypePredicate<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.parameter_name, state);
         ContentHash::content_hash(&self.asserts, state);
@@ -1856,7 +1856,7 @@ impl<'a> ContentHash for TSTypePredicate<'a> {
     }
 }
 
-impl<'a> ContentHash for TSTypePredicateName<'a> {
+impl ContentHash for TSTypePredicateName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1866,7 +1866,7 @@ impl<'a> ContentHash for TSTypePredicateName<'a> {
     }
 }
 
-impl<'a> ContentHash for TSModuleDeclaration<'a> {
+impl ContentHash for TSModuleDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.id, state);
         ContentHash::content_hash(&self.body, state);
@@ -1881,7 +1881,7 @@ impl ContentHash for TSModuleDeclarationKind {
     }
 }
 
-impl<'a> ContentHash for TSModuleDeclarationName<'a> {
+impl ContentHash for TSModuleDeclarationName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1891,7 +1891,7 @@ impl<'a> ContentHash for TSModuleDeclarationName<'a> {
     }
 }
 
-impl<'a> ContentHash for TSModuleDeclarationBody<'a> {
+impl ContentHash for TSModuleDeclarationBody<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1901,33 +1901,33 @@ impl<'a> ContentHash for TSModuleDeclarationBody<'a> {
     }
 }
 
-impl<'a> ContentHash for TSModuleBlock<'a> {
+impl ContentHash for TSModuleBlock<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.directives, state);
         ContentHash::content_hash(&self.body, state);
     }
 }
 
-impl<'a> ContentHash for TSTypeLiteral<'a> {
+impl ContentHash for TSTypeLiteral<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.members, state);
     }
 }
 
-impl<'a> ContentHash for TSInferType<'a> {
+impl ContentHash for TSInferType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_parameter, state);
     }
 }
 
-impl<'a> ContentHash for TSTypeQuery<'a> {
+impl ContentHash for TSTypeQuery<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expr_name, state);
         ContentHash::content_hash(&self.type_parameters, state);
     }
 }
 
-impl<'a> ContentHash for TSTypeQueryExprName<'a> {
+impl ContentHash for TSTypeQueryExprName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1938,7 +1938,7 @@ impl<'a> ContentHash for TSTypeQueryExprName<'a> {
     }
 }
 
-impl<'a> ContentHash for TSImportType<'a> {
+impl ContentHash for TSImportType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.is_type_of, state);
         ContentHash::content_hash(&self.parameter, state);
@@ -1948,21 +1948,21 @@ impl<'a> ContentHash for TSImportType<'a> {
     }
 }
 
-impl<'a> ContentHash for TSImportAttributes<'a> {
+impl ContentHash for TSImportAttributes<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.attributes_keyword, state);
         ContentHash::content_hash(&self.elements, state);
     }
 }
 
-impl<'a> ContentHash for TSImportAttribute<'a> {
+impl ContentHash for TSImportAttribute<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
         ContentHash::content_hash(&self.value, state);
     }
 }
 
-impl<'a> ContentHash for TSImportAttributeName<'a> {
+impl ContentHash for TSImportAttributeName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -1972,7 +1972,7 @@ impl<'a> ContentHash for TSImportAttributeName<'a> {
     }
 }
 
-impl<'a> ContentHash for TSFunctionType<'a> {
+impl ContentHash for TSFunctionType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_parameters, state);
         ContentHash::content_hash(&self.this_param, state);
@@ -1981,7 +1981,7 @@ impl<'a> ContentHash for TSFunctionType<'a> {
     }
 }
 
-impl<'a> ContentHash for TSConstructorType<'a> {
+impl ContentHash for TSConstructorType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.r#abstract, state);
         ContentHash::content_hash(&self.type_parameters, state);
@@ -1990,7 +1990,7 @@ impl<'a> ContentHash for TSConstructorType<'a> {
     }
 }
 
-impl<'a> ContentHash for TSMappedType<'a> {
+impl ContentHash for TSMappedType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_parameter, state);
         ContentHash::content_hash(&self.name_type, state);
@@ -2006,35 +2006,35 @@ impl ContentHash for TSMappedTypeModifierOperator {
     }
 }
 
-impl<'a> ContentHash for TSTemplateLiteralType<'a> {
+impl ContentHash for TSTemplateLiteralType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.quasis, state);
         ContentHash::content_hash(&self.types, state);
     }
 }
 
-impl<'a> ContentHash for TSAsExpression<'a> {
+impl ContentHash for TSAsExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
         ContentHash::content_hash(&self.type_annotation, state);
     }
 }
 
-impl<'a> ContentHash for TSSatisfiesExpression<'a> {
+impl ContentHash for TSSatisfiesExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
         ContentHash::content_hash(&self.type_annotation, state);
     }
 }
 
-impl<'a> ContentHash for TSTypeAssertion<'a> {
+impl ContentHash for TSTypeAssertion<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
         ContentHash::content_hash(&self.type_annotation, state);
     }
 }
 
-impl<'a> ContentHash for TSImportEqualsDeclaration<'a> {
+impl ContentHash for TSImportEqualsDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.id, state);
         ContentHash::content_hash(&self.module_reference, state);
@@ -2042,7 +2042,7 @@ impl<'a> ContentHash for TSImportEqualsDeclaration<'a> {
     }
 }
 
-impl<'a> ContentHash for TSModuleReference<'a> {
+impl ContentHash for TSModuleReference<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -2053,37 +2053,37 @@ impl<'a> ContentHash for TSModuleReference<'a> {
     }
 }
 
-impl<'a> ContentHash for TSExternalModuleReference<'a> {
+impl ContentHash for TSExternalModuleReference<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
     }
 }
 
-impl<'a> ContentHash for TSNonNullExpression<'a> {
+impl ContentHash for TSNonNullExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
     }
 }
 
-impl<'a> ContentHash for Decorator<'a> {
+impl ContentHash for Decorator<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
     }
 }
 
-impl<'a> ContentHash for TSExportAssignment<'a> {
+impl ContentHash for TSExportAssignment<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
     }
 }
 
-impl<'a> ContentHash for TSNamespaceExportDeclaration<'a> {
+impl ContentHash for TSNamespaceExportDeclaration<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.id, state);
     }
 }
 
-impl<'a> ContentHash for TSInstantiationExpression<'a> {
+impl ContentHash for TSInstantiationExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
         ContentHash::content_hash(&self.type_parameters, state);
@@ -2096,14 +2096,14 @@ impl ContentHash for ImportOrExportKind {
     }
 }
 
-impl<'a> ContentHash for JSDocNullableType<'a> {
+impl ContentHash for JSDocNullableType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_annotation, state);
         ContentHash::content_hash(&self.postfix, state);
     }
 }
 
-impl<'a> ContentHash for JSDocNonNullableType<'a> {
+impl ContentHash for JSDocNonNullableType<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.type_annotation, state);
         ContentHash::content_hash(&self.postfix, state);
@@ -2114,7 +2114,7 @@ impl ContentHash for JSDocUnknownType {
     fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
-impl<'a> ContentHash for JSXElement<'a> {
+impl ContentHash for JSXElement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.opening_element, state);
         ContentHash::content_hash(&self.closing_element, state);
@@ -2122,7 +2122,7 @@ impl<'a> ContentHash for JSXElement<'a> {
     }
 }
 
-impl<'a> ContentHash for JSXOpeningElement<'a> {
+impl ContentHash for JSXOpeningElement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.self_closing, state);
         ContentHash::content_hash(&self.name, state);
@@ -2131,13 +2131,13 @@ impl<'a> ContentHash for JSXOpeningElement<'a> {
     }
 }
 
-impl<'a> ContentHash for JSXClosingElement<'a> {
+impl ContentHash for JSXClosingElement<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
     }
 }
 
-impl<'a> ContentHash for JSXFragment<'a> {
+impl ContentHash for JSXFragment<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.opening_fragment, state);
         ContentHash::content_hash(&self.closing_fragment, state);
@@ -2153,7 +2153,7 @@ impl ContentHash for JSXClosingFragment {
     fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
-impl<'a> ContentHash for JSXElementName<'a> {
+impl ContentHash for JSXElementName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -2166,21 +2166,21 @@ impl<'a> ContentHash for JSXElementName<'a> {
     }
 }
 
-impl<'a> ContentHash for JSXNamespacedName<'a> {
+impl ContentHash for JSXNamespacedName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.namespace, state);
         ContentHash::content_hash(&self.property, state);
     }
 }
 
-impl<'a> ContentHash for JSXMemberExpression<'a> {
+impl ContentHash for JSXMemberExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.object, state);
         ContentHash::content_hash(&self.property, state);
     }
 }
 
-impl<'a> ContentHash for JSXMemberExpressionObject<'a> {
+impl ContentHash for JSXMemberExpressionObject<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -2191,13 +2191,13 @@ impl<'a> ContentHash for JSXMemberExpressionObject<'a> {
     }
 }
 
-impl<'a> ContentHash for JSXExpressionContainer<'a> {
+impl ContentHash for JSXExpressionContainer<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
     }
 }
 
-impl<'a> ContentHash for JSXExpression<'a> {
+impl ContentHash for JSXExpression<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -2252,7 +2252,7 @@ impl ContentHash for JSXEmptyExpression {
     fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
-impl<'a> ContentHash for JSXAttributeItem<'a> {
+impl ContentHash for JSXAttributeItem<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -2262,20 +2262,20 @@ impl<'a> ContentHash for JSXAttributeItem<'a> {
     }
 }
 
-impl<'a> ContentHash for JSXAttribute<'a> {
+impl ContentHash for JSXAttribute<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
         ContentHash::content_hash(&self.value, state);
     }
 }
 
-impl<'a> ContentHash for JSXSpreadAttribute<'a> {
+impl ContentHash for JSXSpreadAttribute<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.argument, state);
     }
 }
 
-impl<'a> ContentHash for JSXAttributeName<'a> {
+impl ContentHash for JSXAttributeName<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -2285,7 +2285,7 @@ impl<'a> ContentHash for JSXAttributeName<'a> {
     }
 }
 
-impl<'a> ContentHash for JSXAttributeValue<'a> {
+impl ContentHash for JSXAttributeValue<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -2297,13 +2297,13 @@ impl<'a> ContentHash for JSXAttributeValue<'a> {
     }
 }
 
-impl<'a> ContentHash for JSXIdentifier<'a> {
+impl ContentHash for JSXIdentifier<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
     }
 }
 
-impl<'a> ContentHash for JSXChild<'a> {
+impl ContentHash for JSXChild<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
@@ -2316,13 +2316,13 @@ impl<'a> ContentHash for JSXChild<'a> {
     }
 }
 
-impl<'a> ContentHash for JSXSpreadChild<'a> {
+impl ContentHash for JSXSpreadChild<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.expression, state);
     }
 }
 
-impl<'a> ContentHash for JSXText<'a> {
+impl ContentHash for JSXText<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.value, state);
     }

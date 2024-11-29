@@ -100,11 +100,11 @@ fn generate_for_type(def: &TypeDef) -> Option<TokenStream> {
     }
 
     let struct_name_ident = struct_name.to_ident();
-    let lifetime = if def.has_lifetime { quote!(<'a>) } else { TokenStream::default() };
+    let lifetime = if def.has_lifetime { quote!(<'_>) } else { TokenStream::default() };
 
     Some(quote! {
         ///@@line_break
-        impl #lifetime #struct_name_ident #lifetime {
+        impl #struct_name_ident #lifetime {
             #(#methods)*
         }
     })

@@ -105,12 +105,11 @@ fn derive_struct(def: &StructDef) -> (&str, TokenStream) {
 }
 
 fn impl_content_eq(def: &TypeDef, other_name: &str, body: &TokenStream) -> TokenStream {
-    let ty = def.to_type();
-    let generics = def.generics();
+    let ty = if def.has_lifetime() { def.to_elided_type() } else { def.to_type_elide() };
     let other = other_name.to_ident();
 
     quote! {
-        impl #generics ContentEq for #ty {
+        impl ContentEq for #ty {
             fn content_eq(&self, #other: &Self) -> bool {
                 #body
             }

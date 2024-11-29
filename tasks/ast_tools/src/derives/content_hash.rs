@@ -104,12 +104,11 @@ fn derive_struct(def: &StructDef) -> (&str, TokenStream) {
 }
 
 fn impl_content_hash(def: &TypeDef, hasher_name: &str, body: &TokenStream) -> TokenStream {
-    let ty = def.to_type();
-    let generics = def.generics();
+    let ty = if def.has_lifetime() { def.to_elided_type() } else { def.to_type_elide() };
     let hasher = hasher_name.to_ident();
 
     quote! {
-        impl #generics ContentHash for #ty {
+        impl ContentHash for #ty {
             fn content_hash<H: Hasher>(&self, #hasher: &mut H) {
                 #body
             }

@@ -14,9 +14,8 @@ const MIN_ESCAPED_TEMPLATE_LIT_LEN: usize = 16;
 static TEMPLATE_LITERAL_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'$' | b'`' | b'\r' | b'\\'));
 
+/// 12.8.6 Template Literal Lexical Components
 impl<'a> Lexer<'a> {
-    /// 12.8.6 Template Literal Lexical Components
-
     /// Read template literal component.
     ///
     /// This function handles the common case where template contains no escapes or `\r` characters

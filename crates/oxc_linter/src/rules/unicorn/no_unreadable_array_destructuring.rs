@@ -39,7 +39,7 @@ declare_oxc_lint!(
     style
 );
 
-fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: &Option<U>) -> bool {
+fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: Option<&U>) -> bool {
     if elements.len() >= 3 && elements.windows(2).any(|window| window.iter().all(Option::is_none)) {
         return true;
     }
@@ -54,7 +54,10 @@ fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: &Opt
 impl Rule for NoUnreadableArrayDestructuring {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ArrayPattern(array_pattern) = node.kind() {
-            if is_unreadable_array_destructuring(&array_pattern.elements, &array_pattern.rest) {
+            if is_unreadable_array_destructuring(
+                &array_pattern.elements,
+                array_pattern.rest.as_ref(),
+            ) {
                 ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
             }
         }
@@ -62,7 +65,10 @@ impl Rule for NoUnreadableArrayDestructuring {
         if let AstKind::AssignmentTarget(AssignmentTarget::ArrayAssignmentTarget(array_pattern)) =
             node.kind()
         {
-            if is_unreadable_array_destructuring(&array_pattern.elements, &array_pattern.rest) {
+            if is_unreadable_array_destructuring(
+                &array_pattern.elements,
+                array_pattern.rest.as_ref(),
+            ) {
                 ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
             }
         }

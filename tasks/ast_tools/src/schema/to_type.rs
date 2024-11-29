@@ -10,6 +10,7 @@ use super::{
 pub trait ToType {
     fn to_type(&self) -> Type;
     fn to_type_elide(&self) -> Type;
+    fn to_elided_type(&self) -> Type;
     fn to_type_with_explicit_generics(&self, generics: TokenStream) -> Type;
 }
 
@@ -20,6 +21,10 @@ impl ToType for TypeRef {
 
     fn to_type_elide(&self) -> Type {
         self.to_type_with_explicit_generics(proc_macro2::TokenStream::default())
+    }
+
+    fn to_elided_type(&self) -> Type {
+        self.to_type_with_explicit_generics(parse_quote! {<'_>})
     }
 
     fn to_type_with_explicit_generics(&self, generics: proc_macro2::TokenStream) -> Type {
@@ -38,6 +43,10 @@ macro_rules! impl_to_type {
 
                 fn to_type_elide(&self) -> Type {
                     self.to_type_with_explicit_generics(TokenStream::default())
+                }
+
+                fn to_elided_type(&self) -> Type {
+                    self.to_type_with_explicit_generics(parse_quote! {<'_>})
                 }
 
                 fn to_type_with_explicit_generics(&self, generics: TokenStream) -> Type {

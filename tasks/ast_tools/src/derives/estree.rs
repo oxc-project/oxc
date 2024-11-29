@@ -54,9 +54,9 @@ impl Derive for DeriveESTree {
         };
         let ident = def.ident();
 
-        let lifetime = if def.has_lifetime() { quote!(<'a>) } else { TokenStream::new() };
+        let lifetime = if def.has_lifetime() { quote!(<'_>) } else { TokenStream::new() };
         quote! {
-            impl #lifetime Serialize for #ident #lifetime {
+            impl Serialize for #ident #lifetime {
                 fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
                     #body
                 }

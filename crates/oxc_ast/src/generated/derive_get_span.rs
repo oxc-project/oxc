@@ -27,42 +27,42 @@ impl GetSpan for NullLiteral {
     }
 }
 
-impl<'a> GetSpan for NumericLiteral<'a> {
+impl GetSpan for NumericLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for StringLiteral<'a> {
+impl GetSpan for StringLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for BigIntLiteral<'a> {
+impl GetSpan for BigIntLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for RegExpLiteral<'a> {
+impl GetSpan for RegExpLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for Program<'a> {
+impl GetSpan for Program<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for Expression<'a> {
+impl GetSpan for Expression<'_> {
     fn span(&self) -> Span {
         match self {
             Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
@@ -111,28 +111,28 @@ impl<'a> GetSpan for Expression<'a> {
     }
 }
 
-impl<'a> GetSpan for IdentifierName<'a> {
+impl GetSpan for IdentifierName<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for IdentifierReference<'a> {
+impl GetSpan for IdentifierReference<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for BindingIdentifier<'a> {
+impl GetSpan for BindingIdentifier<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for LabelIdentifier<'a> {
+impl GetSpan for LabelIdentifier<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -146,14 +146,14 @@ impl GetSpan for ThisExpression {
     }
 }
 
-impl<'a> GetSpan for ArrayExpression<'a> {
+impl GetSpan for ArrayExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ArrayExpressionElement<'a> {
+impl GetSpan for ArrayExpressionElement<'_> {
     fn span(&self) -> Span {
         match self {
             Self::SpreadElement(it) => GetSpan::span(it.as_ref()),
@@ -211,14 +211,14 @@ impl GetSpan for Elision {
     }
 }
 
-impl<'a> GetSpan for ObjectExpression<'a> {
+impl GetSpan for ObjectExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ObjectPropertyKind<'a> {
+impl GetSpan for ObjectPropertyKind<'_> {
     fn span(&self) -> Span {
         match self {
             Self::ObjectProperty(it) => GetSpan::span(it.as_ref()),
@@ -227,14 +227,14 @@ impl<'a> GetSpan for ObjectPropertyKind<'a> {
     }
 }
 
-impl<'a> GetSpan for ObjectProperty<'a> {
+impl GetSpan for ObjectProperty<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for PropertyKey<'a> {
+impl GetSpan for PropertyKey<'_> {
     fn span(&self) -> Span {
         match self {
             Self::StaticIdentifier(it) => GetSpan::span(it.as_ref()),
@@ -285,28 +285,28 @@ impl<'a> GetSpan for PropertyKey<'a> {
     }
 }
 
-impl<'a> GetSpan for TemplateLiteral<'a> {
+impl GetSpan for TemplateLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TaggedTemplateExpression<'a> {
+impl GetSpan for TaggedTemplateExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TemplateElement<'a> {
+impl GetSpan for TemplateElement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for MemberExpression<'a> {
+impl GetSpan for MemberExpression<'_> {
     fn span(&self) -> Span {
         match self {
             Self::ComputedMemberExpression(it) => GetSpan::span(it.as_ref()),
@@ -316,56 +316,56 @@ impl<'a> GetSpan for MemberExpression<'a> {
     }
 }
 
-impl<'a> GetSpan for ComputedMemberExpression<'a> {
+impl GetSpan for ComputedMemberExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for StaticMemberExpression<'a> {
+impl GetSpan for StaticMemberExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for PrivateFieldExpression<'a> {
+impl GetSpan for PrivateFieldExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for CallExpression<'a> {
+impl GetSpan for CallExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for NewExpression<'a> {
+impl GetSpan for NewExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for MetaProperty<'a> {
+impl GetSpan for MetaProperty<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for SpreadElement<'a> {
+impl GetSpan for SpreadElement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for Argument<'a> {
+impl GetSpan for Argument<'_> {
     fn span(&self) -> Span {
         match self {
             Self::SpreadElement(it) => GetSpan::span(it.as_ref()),
@@ -415,56 +415,56 @@ impl<'a> GetSpan for Argument<'a> {
     }
 }
 
-impl<'a> GetSpan for UpdateExpression<'a> {
+impl GetSpan for UpdateExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for UnaryExpression<'a> {
+impl GetSpan for UnaryExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for BinaryExpression<'a> {
+impl GetSpan for BinaryExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for PrivateInExpression<'a> {
+impl GetSpan for PrivateInExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for LogicalExpression<'a> {
+impl GetSpan for LogicalExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ConditionalExpression<'a> {
+impl GetSpan for ConditionalExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for AssignmentExpression<'a> {
+impl GetSpan for AssignmentExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for AssignmentTarget<'a> {
+impl GetSpan for AssignmentTarget<'_> {
     fn span(&self) -> Span {
         match self {
             Self::AssignmentTargetIdentifier(it) => GetSpan::span(it.as_ref()),
@@ -482,7 +482,7 @@ impl<'a> GetSpan for AssignmentTarget<'a> {
     }
 }
 
-impl<'a> GetSpan for SimpleAssignmentTarget<'a> {
+impl GetSpan for SimpleAssignmentTarget<'_> {
     fn span(&self) -> Span {
         match self {
             Self::AssignmentTargetIdentifier(it) => GetSpan::span(it.as_ref()),
@@ -498,7 +498,7 @@ impl<'a> GetSpan for SimpleAssignmentTarget<'a> {
     }
 }
 
-impl<'a> GetSpan for AssignmentTargetPattern<'a> {
+impl GetSpan for AssignmentTargetPattern<'_> {
     fn span(&self) -> Span {
         match self {
             Self::ArrayAssignmentTarget(it) => GetSpan::span(it.as_ref()),
@@ -507,28 +507,28 @@ impl<'a> GetSpan for AssignmentTargetPattern<'a> {
     }
 }
 
-impl<'a> GetSpan for ArrayAssignmentTarget<'a> {
+impl GetSpan for ArrayAssignmentTarget<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ObjectAssignmentTarget<'a> {
+impl GetSpan for ObjectAssignmentTarget<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for AssignmentTargetRest<'a> {
+impl GetSpan for AssignmentTargetRest<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for AssignmentTargetMaybeDefault<'a> {
+impl GetSpan for AssignmentTargetMaybeDefault<'_> {
     fn span(&self) -> Span {
         match self {
             Self::AssignmentTargetWithDefault(it) => GetSpan::span(it.as_ref()),
@@ -547,14 +547,14 @@ impl<'a> GetSpan for AssignmentTargetMaybeDefault<'a> {
     }
 }
 
-impl<'a> GetSpan for AssignmentTargetWithDefault<'a> {
+impl GetSpan for AssignmentTargetWithDefault<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for AssignmentTargetProperty<'a> {
+impl GetSpan for AssignmentTargetProperty<'_> {
     fn span(&self) -> Span {
         match self {
             Self::AssignmentTargetPropertyIdentifier(it) => GetSpan::span(it.as_ref()),
@@ -563,21 +563,21 @@ impl<'a> GetSpan for AssignmentTargetProperty<'a> {
     }
 }
 
-impl<'a> GetSpan for AssignmentTargetPropertyIdentifier<'a> {
+impl GetSpan for AssignmentTargetPropertyIdentifier<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for AssignmentTargetPropertyProperty<'a> {
+impl GetSpan for AssignmentTargetPropertyProperty<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for SequenceExpression<'a> {
+impl GetSpan for SequenceExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -591,21 +591,21 @@ impl GetSpan for Super {
     }
 }
 
-impl<'a> GetSpan for AwaitExpression<'a> {
+impl GetSpan for AwaitExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ChainExpression<'a> {
+impl GetSpan for ChainExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ChainElement<'a> {
+impl GetSpan for ChainElement<'_> {
     fn span(&self) -> Span {
         match self {
             Self::CallExpression(it) => GetSpan::span(it.as_ref()),
@@ -617,14 +617,14 @@ impl<'a> GetSpan for ChainElement<'a> {
     }
 }
 
-impl<'a> GetSpan for ParenthesizedExpression<'a> {
+impl GetSpan for ParenthesizedExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for Statement<'a> {
+impl GetSpan for Statement<'_> {
     fn span(&self) -> Span {
         match self {
             Self::BlockStatement(it) => GetSpan::span(it.as_ref()),
@@ -663,28 +663,28 @@ impl<'a> GetSpan for Statement<'a> {
     }
 }
 
-impl<'a> GetSpan for Directive<'a> {
+impl GetSpan for Directive<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for Hashbang<'a> {
+impl GetSpan for Hashbang<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for BlockStatement<'a> {
+impl GetSpan for BlockStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for Declaration<'a> {
+impl GetSpan for Declaration<'_> {
     fn span(&self) -> Span {
         match self {
             Self::VariableDeclaration(it) => GetSpan::span(it.as_ref()),
@@ -699,14 +699,14 @@ impl<'a> GetSpan for Declaration<'a> {
     }
 }
 
-impl<'a> GetSpan for VariableDeclaration<'a> {
+impl GetSpan for VariableDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for VariableDeclarator<'a> {
+impl GetSpan for VariableDeclarator<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -720,42 +720,42 @@ impl GetSpan for EmptyStatement {
     }
 }
 
-impl<'a> GetSpan for ExpressionStatement<'a> {
+impl GetSpan for ExpressionStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for IfStatement<'a> {
+impl GetSpan for IfStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for DoWhileStatement<'a> {
+impl GetSpan for DoWhileStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for WhileStatement<'a> {
+impl GetSpan for WhileStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ForStatement<'a> {
+impl GetSpan for ForStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ForStatementInit<'a> {
+impl GetSpan for ForStatementInit<'_> {
     fn span(&self) -> Span {
         match self {
             Self::VariableDeclaration(it) => GetSpan::span(it.as_ref()),
@@ -805,14 +805,14 @@ impl<'a> GetSpan for ForStatementInit<'a> {
     }
 }
 
-impl<'a> GetSpan for ForInStatement<'a> {
+impl GetSpan for ForInStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ForStatementLeft<'a> {
+impl GetSpan for ForStatementLeft<'_> {
     fn span(&self) -> Span {
         match self {
             Self::VariableDeclaration(it) => GetSpan::span(it.as_ref()),
@@ -831,84 +831,84 @@ impl<'a> GetSpan for ForStatementLeft<'a> {
     }
 }
 
-impl<'a> GetSpan for ForOfStatement<'a> {
+impl GetSpan for ForOfStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ContinueStatement<'a> {
+impl GetSpan for ContinueStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for BreakStatement<'a> {
+impl GetSpan for BreakStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ReturnStatement<'a> {
+impl GetSpan for ReturnStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for WithStatement<'a> {
+impl GetSpan for WithStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for SwitchStatement<'a> {
+impl GetSpan for SwitchStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for SwitchCase<'a> {
+impl GetSpan for SwitchCase<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for LabeledStatement<'a> {
+impl GetSpan for LabeledStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ThrowStatement<'a> {
+impl GetSpan for ThrowStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TryStatement<'a> {
+impl GetSpan for TryStatement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for CatchClause<'a> {
+impl GetSpan for CatchClause<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for CatchParameter<'a> {
+impl GetSpan for CatchParameter<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -922,14 +922,14 @@ impl GetSpan for DebuggerStatement {
     }
 }
 
-impl<'a> GetSpan for BindingPattern<'a> {
+impl GetSpan for BindingPattern<'_> {
     #[inline]
     fn span(&self) -> Span {
         GetSpan::span(&self.kind)
     }
 }
 
-impl<'a> GetSpan for BindingPatternKind<'a> {
+impl GetSpan for BindingPatternKind<'_> {
     fn span(&self) -> Span {
         match self {
             Self::BindingIdentifier(it) => GetSpan::span(it.as_ref()),
@@ -940,98 +940,98 @@ impl<'a> GetSpan for BindingPatternKind<'a> {
     }
 }
 
-impl<'a> GetSpan for AssignmentPattern<'a> {
+impl GetSpan for AssignmentPattern<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ObjectPattern<'a> {
+impl GetSpan for ObjectPattern<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for BindingProperty<'a> {
+impl GetSpan for BindingProperty<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ArrayPattern<'a> {
+impl GetSpan for ArrayPattern<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for BindingRestElement<'a> {
+impl GetSpan for BindingRestElement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for Function<'a> {
+impl GetSpan for Function<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for FormalParameters<'a> {
+impl GetSpan for FormalParameters<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for FormalParameter<'a> {
+impl GetSpan for FormalParameter<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for FunctionBody<'a> {
+impl GetSpan for FunctionBody<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ArrowFunctionExpression<'a> {
+impl GetSpan for ArrowFunctionExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for YieldExpression<'a> {
+impl GetSpan for YieldExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for Class<'a> {
+impl GetSpan for Class<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ClassBody<'a> {
+impl GetSpan for ClassBody<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ClassElement<'a> {
+impl GetSpan for ClassElement<'_> {
     fn span(&self) -> Span {
         match self {
             Self::StaticBlock(it) => GetSpan::span(it.as_ref()),
@@ -1043,35 +1043,35 @@ impl<'a> GetSpan for ClassElement<'a> {
     }
 }
 
-impl<'a> GetSpan for MethodDefinition<'a> {
+impl GetSpan for MethodDefinition<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for PropertyDefinition<'a> {
+impl GetSpan for PropertyDefinition<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for PrivateIdentifier<'a> {
+impl GetSpan for PrivateIdentifier<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for StaticBlock<'a> {
+impl GetSpan for StaticBlock<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ModuleDeclaration<'a> {
+impl GetSpan for ModuleDeclaration<'_> {
     fn span(&self) -> Span {
         match self {
             Self::ImportDeclaration(it) => GetSpan::span(it.as_ref()),
@@ -1084,28 +1084,28 @@ impl<'a> GetSpan for ModuleDeclaration<'a> {
     }
 }
 
-impl<'a> GetSpan for AccessorProperty<'a> {
+impl GetSpan for AccessorProperty<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ImportExpression<'a> {
+impl GetSpan for ImportExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ImportDeclaration<'a> {
+impl GetSpan for ImportDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ImportDeclarationSpecifier<'a> {
+impl GetSpan for ImportDeclarationSpecifier<'_> {
     fn span(&self) -> Span {
         match self {
             Self::ImportSpecifier(it) => GetSpan::span(it.as_ref()),
@@ -1115,42 +1115,42 @@ impl<'a> GetSpan for ImportDeclarationSpecifier<'a> {
     }
 }
 
-impl<'a> GetSpan for ImportSpecifier<'a> {
+impl GetSpan for ImportSpecifier<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ImportDefaultSpecifier<'a> {
+impl GetSpan for ImportDefaultSpecifier<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ImportNamespaceSpecifier<'a> {
+impl GetSpan for ImportNamespaceSpecifier<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for WithClause<'a> {
+impl GetSpan for WithClause<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ImportAttribute<'a> {
+impl GetSpan for ImportAttribute<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ImportAttributeKey<'a> {
+impl GetSpan for ImportAttributeKey<'_> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(it) => GetSpan::span(it),
@@ -1159,35 +1159,35 @@ impl<'a> GetSpan for ImportAttributeKey<'a> {
     }
 }
 
-impl<'a> GetSpan for ExportNamedDeclaration<'a> {
+impl GetSpan for ExportNamedDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ExportDefaultDeclaration<'a> {
+impl GetSpan for ExportDefaultDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ExportAllDeclaration<'a> {
+impl GetSpan for ExportAllDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ExportSpecifier<'a> {
+impl GetSpan for ExportSpecifier<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for ExportDefaultDeclarationKind<'a> {
+impl GetSpan for ExportDefaultDeclarationKind<'_> {
     fn span(&self) -> Span {
         match self {
             Self::FunctionDeclaration(it) => GetSpan::span(it.as_ref()),
@@ -1239,7 +1239,7 @@ impl<'a> GetSpan for ExportDefaultDeclarationKind<'a> {
     }
 }
 
-impl<'a> GetSpan for ModuleExportName<'a> {
+impl GetSpan for ModuleExportName<'_> {
     fn span(&self) -> Span {
         match self {
             Self::IdentifierName(it) => GetSpan::span(it),
@@ -1249,28 +1249,28 @@ impl<'a> GetSpan for ModuleExportName<'a> {
     }
 }
 
-impl<'a> GetSpan for TSThisParameter<'a> {
+impl GetSpan for TSThisParameter<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSEnumDeclaration<'a> {
+impl GetSpan for TSEnumDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSEnumMember<'a> {
+impl GetSpan for TSEnumMember<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSEnumMemberName<'a> {
+impl GetSpan for TSEnumMemberName<'_> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(it) => GetSpan::span(it.as_ref()),
@@ -1279,21 +1279,21 @@ impl<'a> GetSpan for TSEnumMemberName<'a> {
     }
 }
 
-impl<'a> GetSpan for TSTypeAnnotation<'a> {
+impl GetSpan for TSTypeAnnotation<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSLiteralType<'a> {
+impl GetSpan for TSLiteralType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSLiteral<'a> {
+impl GetSpan for TSLiteral<'_> {
     fn span(&self) -> Span {
         match self {
             Self::BooleanLiteral(it) => GetSpan::span(it.as_ref()),
@@ -1308,7 +1308,7 @@ impl<'a> GetSpan for TSLiteral<'a> {
     }
 }
 
-impl<'a> GetSpan for TSType<'a> {
+impl GetSpan for TSType<'_> {
     fn span(&self) -> Span {
         match self {
             Self::TSAnyKeyword(it) => GetSpan::span(it.as_ref()),
@@ -1353,84 +1353,84 @@ impl<'a> GetSpan for TSType<'a> {
     }
 }
 
-impl<'a> GetSpan for TSConditionalType<'a> {
+impl GetSpan for TSConditionalType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSUnionType<'a> {
+impl GetSpan for TSUnionType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSIntersectionType<'a> {
+impl GetSpan for TSIntersectionType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSParenthesizedType<'a> {
+impl GetSpan for TSParenthesizedType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypeOperator<'a> {
+impl GetSpan for TSTypeOperator<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSArrayType<'a> {
+impl GetSpan for TSArrayType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSIndexedAccessType<'a> {
+impl GetSpan for TSIndexedAccessType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTupleType<'a> {
+impl GetSpan for TSTupleType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSNamedTupleMember<'a> {
+impl GetSpan for TSNamedTupleMember<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSOptionalType<'a> {
+impl GetSpan for TSOptionalType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSRestType<'a> {
+impl GetSpan for TSRestType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTupleElement<'a> {
+impl GetSpan for TSTupleElement<'_> {
     fn span(&self) -> Span {
         match self {
             Self::TSOptionalType(it) => GetSpan::span(it.as_ref()),
@@ -1575,14 +1575,14 @@ impl GetSpan for TSBigIntKeyword {
     }
 }
 
-impl<'a> GetSpan for TSTypeReference<'a> {
+impl GetSpan for TSTypeReference<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypeName<'a> {
+impl GetSpan for TSTypeName<'_> {
     fn span(&self) -> Span {
         match self {
             Self::IdentifierReference(it) => GetSpan::span(it.as_ref()),
@@ -1591,70 +1591,70 @@ impl<'a> GetSpan for TSTypeName<'a> {
     }
 }
 
-impl<'a> GetSpan for TSQualifiedName<'a> {
+impl GetSpan for TSQualifiedName<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypeParameterInstantiation<'a> {
+impl GetSpan for TSTypeParameterInstantiation<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypeParameter<'a> {
+impl GetSpan for TSTypeParameter<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypeParameterDeclaration<'a> {
+impl GetSpan for TSTypeParameterDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypeAliasDeclaration<'a> {
+impl GetSpan for TSTypeAliasDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSClassImplements<'a> {
+impl GetSpan for TSClassImplements<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSInterfaceDeclaration<'a> {
+impl GetSpan for TSInterfaceDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSInterfaceBody<'a> {
+impl GetSpan for TSInterfaceBody<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSPropertySignature<'a> {
+impl GetSpan for TSPropertySignature<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSSignature<'a> {
+impl GetSpan for TSSignature<'_> {
     fn span(&self) -> Span {
         match self {
             Self::TSIndexSignature(it) => GetSpan::span(it.as_ref()),
@@ -1666,56 +1666,56 @@ impl<'a> GetSpan for TSSignature<'a> {
     }
 }
 
-impl<'a> GetSpan for TSIndexSignature<'a> {
+impl GetSpan for TSIndexSignature<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSCallSignatureDeclaration<'a> {
+impl GetSpan for TSCallSignatureDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSMethodSignature<'a> {
+impl GetSpan for TSMethodSignature<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSConstructSignatureDeclaration<'a> {
+impl GetSpan for TSConstructSignatureDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSIndexSignatureName<'a> {
+impl GetSpan for TSIndexSignatureName<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSInterfaceHeritage<'a> {
+impl GetSpan for TSInterfaceHeritage<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypePredicate<'a> {
+impl GetSpan for TSTypePredicate<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypePredicateName<'a> {
+impl GetSpan for TSTypePredicateName<'_> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(it) => GetSpan::span(it.as_ref()),
@@ -1724,14 +1724,14 @@ impl<'a> GetSpan for TSTypePredicateName<'a> {
     }
 }
 
-impl<'a> GetSpan for TSModuleDeclaration<'a> {
+impl GetSpan for TSModuleDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSModuleDeclarationName<'a> {
+impl GetSpan for TSModuleDeclarationName<'_> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(it) => GetSpan::span(it),
@@ -1740,7 +1740,7 @@ impl<'a> GetSpan for TSModuleDeclarationName<'a> {
     }
 }
 
-impl<'a> GetSpan for TSModuleDeclarationBody<'a> {
+impl GetSpan for TSModuleDeclarationBody<'_> {
     fn span(&self) -> Span {
         match self {
             Self::TSModuleDeclaration(it) => GetSpan::span(it.as_ref()),
@@ -1749,35 +1749,35 @@ impl<'a> GetSpan for TSModuleDeclarationBody<'a> {
     }
 }
 
-impl<'a> GetSpan for TSModuleBlock<'a> {
+impl GetSpan for TSModuleBlock<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypeLiteral<'a> {
+impl GetSpan for TSTypeLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSInferType<'a> {
+impl GetSpan for TSInferType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypeQuery<'a> {
+impl GetSpan for TSTypeQuery<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypeQueryExprName<'a> {
+impl GetSpan for TSTypeQueryExprName<'_> {
     fn span(&self) -> Span {
         match self {
             Self::TSImportType(it) => GetSpan::span(it.as_ref()),
@@ -1787,28 +1787,28 @@ impl<'a> GetSpan for TSTypeQueryExprName<'a> {
     }
 }
 
-impl<'a> GetSpan for TSImportType<'a> {
+impl GetSpan for TSImportType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSImportAttributes<'a> {
+impl GetSpan for TSImportAttributes<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSImportAttribute<'a> {
+impl GetSpan for TSImportAttribute<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSImportAttributeName<'a> {
+impl GetSpan for TSImportAttributeName<'_> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(it) => GetSpan::span(it),
@@ -1817,63 +1817,63 @@ impl<'a> GetSpan for TSImportAttributeName<'a> {
     }
 }
 
-impl<'a> GetSpan for TSFunctionType<'a> {
+impl GetSpan for TSFunctionType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSConstructorType<'a> {
+impl GetSpan for TSConstructorType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSMappedType<'a> {
+impl GetSpan for TSMappedType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTemplateLiteralType<'a> {
+impl GetSpan for TSTemplateLiteralType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSAsExpression<'a> {
+impl GetSpan for TSAsExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSSatisfiesExpression<'a> {
+impl GetSpan for TSSatisfiesExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSTypeAssertion<'a> {
+impl GetSpan for TSTypeAssertion<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSImportEqualsDeclaration<'a> {
+impl GetSpan for TSImportEqualsDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSModuleReference<'a> {
+impl GetSpan for TSModuleReference<'_> {
     fn span(&self) -> Span {
         match self {
             Self::ExternalModuleReference(it) => GetSpan::span(it.as_ref()),
@@ -1883,56 +1883,56 @@ impl<'a> GetSpan for TSModuleReference<'a> {
     }
 }
 
-impl<'a> GetSpan for TSExternalModuleReference<'a> {
+impl GetSpan for TSExternalModuleReference<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSNonNullExpression<'a> {
+impl GetSpan for TSNonNullExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for Decorator<'a> {
+impl GetSpan for Decorator<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSExportAssignment<'a> {
+impl GetSpan for TSExportAssignment<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSNamespaceExportDeclaration<'a> {
+impl GetSpan for TSNamespaceExportDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for TSInstantiationExpression<'a> {
+impl GetSpan for TSInstantiationExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSDocNullableType<'a> {
+impl GetSpan for JSDocNullableType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSDocNonNullableType<'a> {
+impl GetSpan for JSDocNonNullableType<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -1946,28 +1946,28 @@ impl GetSpan for JSDocUnknownType {
     }
 }
 
-impl<'a> GetSpan for JSXElement<'a> {
+impl GetSpan for JSXElement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSXOpeningElement<'a> {
+impl GetSpan for JSXOpeningElement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSXClosingElement<'a> {
+impl GetSpan for JSXClosingElement<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSXFragment<'a> {
+impl GetSpan for JSXFragment<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -1988,7 +1988,7 @@ impl GetSpan for JSXClosingFragment {
     }
 }
 
-impl<'a> GetSpan for JSXElementName<'a> {
+impl GetSpan for JSXElementName<'_> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(it) => GetSpan::span(it.as_ref()),
@@ -2000,21 +2000,21 @@ impl<'a> GetSpan for JSXElementName<'a> {
     }
 }
 
-impl<'a> GetSpan for JSXNamespacedName<'a> {
+impl GetSpan for JSXNamespacedName<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSXMemberExpression<'a> {
+impl GetSpan for JSXMemberExpression<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSXMemberExpressionObject<'a> {
+impl GetSpan for JSXMemberExpressionObject<'_> {
     fn span(&self) -> Span {
         match self {
             Self::IdentifierReference(it) => GetSpan::span(it.as_ref()),
@@ -2024,14 +2024,14 @@ impl<'a> GetSpan for JSXMemberExpressionObject<'a> {
     }
 }
 
-impl<'a> GetSpan for JSXExpressionContainer<'a> {
+impl GetSpan for JSXExpressionContainer<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSXExpression<'a> {
+impl GetSpan for JSXExpression<'_> {
     fn span(&self) -> Span {
         match self {
             Self::EmptyExpression(it) => GetSpan::span(it),
@@ -2088,7 +2088,7 @@ impl GetSpan for JSXEmptyExpression {
     }
 }
 
-impl<'a> GetSpan for JSXAttributeItem<'a> {
+impl GetSpan for JSXAttributeItem<'_> {
     fn span(&self) -> Span {
         match self {
             Self::Attribute(it) => GetSpan::span(it.as_ref()),
@@ -2097,21 +2097,21 @@ impl<'a> GetSpan for JSXAttributeItem<'a> {
     }
 }
 
-impl<'a> GetSpan for JSXAttribute<'a> {
+impl GetSpan for JSXAttribute<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSXSpreadAttribute<'a> {
+impl GetSpan for JSXSpreadAttribute<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSXAttributeName<'a> {
+impl GetSpan for JSXAttributeName<'_> {
     fn span(&self) -> Span {
         match self {
             Self::Identifier(it) => GetSpan::span(it.as_ref()),
@@ -2120,7 +2120,7 @@ impl<'a> GetSpan for JSXAttributeName<'a> {
     }
 }
 
-impl<'a> GetSpan for JSXAttributeValue<'a> {
+impl GetSpan for JSXAttributeValue<'_> {
     fn span(&self) -> Span {
         match self {
             Self::StringLiteral(it) => GetSpan::span(it.as_ref()),
@@ -2131,14 +2131,14 @@ impl<'a> GetSpan for JSXAttributeValue<'a> {
     }
 }
 
-impl<'a> GetSpan for JSXIdentifier<'a> {
+impl GetSpan for JSXIdentifier<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSXChild<'a> {
+impl GetSpan for JSXChild<'_> {
     fn span(&self) -> Span {
         match self {
             Self::Text(it) => GetSpan::span(it.as_ref()),
@@ -2150,14 +2150,14 @@ impl<'a> GetSpan for JSXChild<'a> {
     }
 }
 
-impl<'a> GetSpan for JSXSpreadChild<'a> {
+impl GetSpan for JSXSpreadChild<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl<'a> GetSpan for JSXText<'a> {
+impl GetSpan for JSXText<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span

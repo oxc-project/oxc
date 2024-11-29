@@ -11,7 +11,7 @@ use crate::ast::jsx::*;
 
 use crate::ast::ts::*;
 
-impl<'a> GetAddress for Expression<'a> {
+impl GetAddress for Expression<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -62,7 +62,7 @@ impl<'a> GetAddress for Expression<'a> {
     }
 }
 
-impl<'a> GetAddress for ObjectPropertyKind<'a> {
+impl GetAddress for ObjectPropertyKind<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -73,7 +73,7 @@ impl<'a> GetAddress for ObjectPropertyKind<'a> {
     }
 }
 
-impl<'a> GetAddress for PropertyKey<'a> {
+impl GetAddress for PropertyKey<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -126,7 +126,7 @@ impl<'a> GetAddress for PropertyKey<'a> {
     }
 }
 
-impl<'a> GetAddress for MemberExpression<'a> {
+impl GetAddress for MemberExpression<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -138,7 +138,7 @@ impl<'a> GetAddress for MemberExpression<'a> {
     }
 }
 
-impl<'a> GetAddress for Argument<'a> {
+impl GetAddress for Argument<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -190,7 +190,7 @@ impl<'a> GetAddress for Argument<'a> {
     }
 }
 
-impl<'a> GetAddress for AssignmentTarget<'a> {
+impl GetAddress for AssignmentTarget<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -210,7 +210,7 @@ impl<'a> GetAddress for AssignmentTarget<'a> {
     }
 }
 
-impl<'a> GetAddress for SimpleAssignmentTarget<'a> {
+impl GetAddress for SimpleAssignmentTarget<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -228,7 +228,7 @@ impl<'a> GetAddress for SimpleAssignmentTarget<'a> {
     }
 }
 
-impl<'a> GetAddress for AssignmentTargetPattern<'a> {
+impl GetAddress for AssignmentTargetPattern<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -239,7 +239,7 @@ impl<'a> GetAddress for AssignmentTargetPattern<'a> {
     }
 }
 
-impl<'a> GetAddress for AssignmentTargetMaybeDefault<'a> {
+impl GetAddress for AssignmentTargetMaybeDefault<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -260,7 +260,7 @@ impl<'a> GetAddress for AssignmentTargetMaybeDefault<'a> {
     }
 }
 
-impl<'a> GetAddress for AssignmentTargetProperty<'a> {
+impl GetAddress for AssignmentTargetProperty<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -271,7 +271,7 @@ impl<'a> GetAddress for AssignmentTargetProperty<'a> {
     }
 }
 
-impl<'a> GetAddress for ChainElement<'a> {
+impl GetAddress for ChainElement<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -285,7 +285,7 @@ impl<'a> GetAddress for ChainElement<'a> {
     }
 }
 
-impl<'a> GetAddress for Statement<'a> {
+impl GetAddress for Statement<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -326,7 +326,7 @@ impl<'a> GetAddress for Statement<'a> {
     }
 }
 
-impl<'a> GetAddress for Declaration<'a> {
+impl GetAddress for Declaration<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -343,7 +343,7 @@ impl<'a> GetAddress for Declaration<'a> {
     }
 }
 
-impl<'a> GetAddress for ForStatementInit<'a> {
+impl GetAddress for ForStatementInit<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -395,7 +395,7 @@ impl<'a> GetAddress for ForStatementInit<'a> {
     }
 }
 
-impl<'a> GetAddress for ForStatementLeft<'a> {
+impl GetAddress for ForStatementLeft<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -416,7 +416,7 @@ impl<'a> GetAddress for ForStatementLeft<'a> {
     }
 }
 
-impl<'a> GetAddress for BindingPatternKind<'a> {
+impl GetAddress for BindingPatternKind<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -429,7 +429,7 @@ impl<'a> GetAddress for BindingPatternKind<'a> {
     }
 }
 
-impl<'a> GetAddress for ClassElement<'a> {
+impl GetAddress for ClassElement<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -443,7 +443,7 @@ impl<'a> GetAddress for ClassElement<'a> {
     }
 }
 
-impl<'a> GetAddress for ModuleDeclaration<'a> {
+impl GetAddress for ModuleDeclaration<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -458,7 +458,7 @@ impl<'a> GetAddress for ModuleDeclaration<'a> {
     }
 }
 
-impl<'a> GetAddress for ImportDeclarationSpecifier<'a> {
+impl GetAddress for ImportDeclarationSpecifier<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -470,7 +470,7 @@ impl<'a> GetAddress for ImportDeclarationSpecifier<'a> {
     }
 }
 
-impl<'a> GetAddress for ExportDefaultDeclarationKind<'a> {
+impl GetAddress for ExportDefaultDeclarationKind<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -524,7 +524,7 @@ impl<'a> GetAddress for ExportDefaultDeclarationKind<'a> {
     }
 }
 
-impl<'a> GetAddress for TSEnumMemberName<'a> {
+impl GetAddress for TSEnumMemberName<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -535,7 +535,7 @@ impl<'a> GetAddress for TSEnumMemberName<'a> {
     }
 }
 
-impl<'a> GetAddress for TSLiteral<'a> {
+impl GetAddress for TSLiteral<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -552,7 +552,7 @@ impl<'a> GetAddress for TSLiteral<'a> {
     }
 }
 
-impl<'a> GetAddress for TSType<'a> {
+impl GetAddress for TSType<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -599,7 +599,7 @@ impl<'a> GetAddress for TSType<'a> {
     }
 }
 
-impl<'a> GetAddress for TSTupleElement<'a> {
+impl GetAddress for TSTupleElement<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -648,7 +648,7 @@ impl<'a> GetAddress for TSTupleElement<'a> {
     }
 }
 
-impl<'a> GetAddress for TSTypeName<'a> {
+impl GetAddress for TSTypeName<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -659,7 +659,7 @@ impl<'a> GetAddress for TSTypeName<'a> {
     }
 }
 
-impl<'a> GetAddress for TSSignature<'a> {
+impl GetAddress for TSSignature<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -673,7 +673,7 @@ impl<'a> GetAddress for TSSignature<'a> {
     }
 }
 
-impl<'a> GetAddress for TSModuleDeclarationBody<'a> {
+impl GetAddress for TSModuleDeclarationBody<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -684,7 +684,7 @@ impl<'a> GetAddress for TSModuleDeclarationBody<'a> {
     }
 }
 
-impl<'a> GetAddress for TSTypeQueryExprName<'a> {
+impl GetAddress for TSTypeQueryExprName<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -696,7 +696,7 @@ impl<'a> GetAddress for TSTypeQueryExprName<'a> {
     }
 }
 
-impl<'a> GetAddress for TSModuleReference<'a> {
+impl GetAddress for TSModuleReference<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -708,7 +708,7 @@ impl<'a> GetAddress for TSModuleReference<'a> {
     }
 }
 
-impl<'a> GetAddress for JSXElementName<'a> {
+impl GetAddress for JSXElementName<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -722,7 +722,7 @@ impl<'a> GetAddress for JSXElementName<'a> {
     }
 }
 
-impl<'a> GetAddress for JSXMemberExpressionObject<'a> {
+impl GetAddress for JSXMemberExpressionObject<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -734,7 +734,7 @@ impl<'a> GetAddress for JSXMemberExpressionObject<'a> {
     }
 }
 
-impl<'a> GetAddress for JSXAttributeItem<'a> {
+impl GetAddress for JSXAttributeItem<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -745,7 +745,7 @@ impl<'a> GetAddress for JSXAttributeItem<'a> {
     }
 }
 
-impl<'a> GetAddress for JSXAttributeName<'a> {
+impl GetAddress for JSXAttributeName<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -756,7 +756,7 @@ impl<'a> GetAddress for JSXAttributeName<'a> {
     }
 }
 
-impl<'a> GetAddress for JSXAttributeValue<'a> {
+impl GetAddress for JSXAttributeValue<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
@@ -769,7 +769,7 @@ impl<'a> GetAddress for JSXAttributeValue<'a> {
     }
 }
 
-impl<'a> GetAddress for JSXChild<'a> {
+impl GetAddress for JSXChild<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {

@@ -7,7 +7,7 @@ use oxc_allocator::{Address, GetAddress};
 
 use crate::ast::*;
 
-impl<'a> GetAddress for CharacterClassContents<'a> {
+impl GetAddress for CharacterClassContents<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
