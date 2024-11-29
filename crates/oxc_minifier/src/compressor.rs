@@ -5,8 +5,8 @@ use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
     ast_passes::{
-        CollapsePass, LatePeepholeOptimizations, PeepholeFoldConstants, PeepholeMinimizeConditions,
-        PeepholeOptimizations, PeepholeRemoveDeadCode, RemoveSyntax,
+        CollapsePass, LatePeepholeOptimizations, PeepholeFoldConstants, PeepholeOptimizations,
+        PeepholeRemoveDeadCode, RemoveSyntax,
     },
     CompressOptions, CompressorPass,
 };
@@ -49,7 +49,6 @@ impl<'a> Compressor<'a> {
 
     fn dead_code_elimination(program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         PeepholeFoldConstants::new().build(program, ctx);
-        PeepholeMinimizeConditions::new().build(program, ctx);
         PeepholeRemoveDeadCode::new().build(program, ctx);
     }
 }
