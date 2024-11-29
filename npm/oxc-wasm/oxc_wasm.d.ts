@@ -6,32 +6,6 @@
  * @returns {any}
  */
 export function browserslist(query: string, opts: any): any;
-
-import type { Program, Span } from "@oxc-project/types";
-export * from "@oxc-project/types";
-
-
-export interface Oxc {
-    ast: Program;
-    ir: string;
-    controlFlowGraph: string;
-    symbols: SymbolTable;
-    scopeText: string;
-    codegenText: string;
-    formattedText: string;
-    prettierFormattedText: string;
-    prettierIrText: string;
-}
-
-export interface Comment {
-    type: CommentType;
-    value: string;
-    start: number;
-    end: number;
-}
-
-export type CommentType = "Line" | "Block";
-
 export interface OxcOptions {
     run?: OxcRunOptions;
     parser?: OxcParserOptions;
@@ -94,6 +68,38 @@ export interface OxcCompressOptions {
 }
 
 
+import type { Program, Span } from "@oxc-project/types";
+export * from "@oxc-project/types";
+
+
+export interface Oxc {
+    ast: Program;
+    ir: string;
+    controlFlowGraph: string;
+    symbols: SymbolTable;
+    scopeText: string;
+    codegenText: string;
+    formattedText: string;
+    prettierFormattedText: string;
+    prettierIrText: string;
+}
+
+export interface Comment {
+    type: CommentType;
+    value: string;
+    start: number;
+    end: number;
+}
+
+export type CommentType = "Line" | "Block";
+
+export interface Reference {
+    nodeId: NodeId;
+    symbolId: SymbolId | null;
+    flags: ReferenceFlags;
+}
+
+
 export type IndexVec<I, T> = Array<T>;
 export type CompactStr = string;
 
@@ -110,27 +116,6 @@ export interface SymbolTable {
     references: IndexVec<ReferenceId, Reference>;
 }
 
-export interface Reference {
-    nodeId: NodeId;
-    symbolId: SymbolId | null;
-    flags: ReferenceFlags;
-}
-
-
-export type ReferenceId = number;
-export type ReferenceFlags = {
-    None: 0,
-    Read: 0b1,
-    Write: 0b10,
-    Type: 0b100,
-    Value: 0b11
-}
-
-
-
-export type ScopeId = number;
-
-
 
 export type SymbolId = number;
 export type SymbolFlags = unknown;
@@ -145,6 +130,21 @@ export type NodeFlags = {
     HasYield: 4
     Parameter: 8
 };
+
+
+
+export type ScopeId = number;
+
+
+
+export type ReferenceId = number;
+export type ReferenceFlags = {
+    None: 0,
+    Read: 0b1,
+    Write: 0b10,
+    Type: 0b100,
+    Value: 0b11
+}
 
 
 export class Oxc {
@@ -178,24 +178,28 @@ export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly __wbg_oxc_free: (a: number, b: number) => void;
   readonly __wbg_get_oxc_ast: (a: number) => number;
-  readonly __wbg_get_oxc_ir: (a: number, b: number) => void;
-  readonly __wbg_get_oxc_controlFlowGraph: (a: number, b: number) => void;
+  readonly __wbg_get_oxc_ir: (a: number) => number[];
+  readonly __wbg_get_oxc_controlFlowGraph: (a: number) => number[];
   readonly __wbg_get_oxc_symbols: (a: number) => number;
-  readonly __wbg_get_oxc_scopeText: (a: number, b: number) => void;
-  readonly __wbg_get_oxc_codegenText: (a: number, b: number) => void;
-  readonly __wbg_get_oxc_formattedText: (a: number, b: number) => void;
-  readonly __wbg_get_oxc_prettierFormattedText: (a: number, b: number) => void;
-  readonly __wbg_get_oxc_prettierIrText: (a: number, b: number) => void;
+  readonly __wbg_get_oxc_scopeText: (a: number) => number[];
+  readonly __wbg_get_oxc_codegenText: (a: number) => number[];
+  readonly __wbg_get_oxc_formattedText: (a: number) => number[];
+  readonly __wbg_get_oxc_prettierFormattedText: (a: number) => number[];
+  readonly __wbg_get_oxc_prettierIrText: (a: number) => number[];
   readonly oxc_new: () => number;
-  readonly oxc_getDiagnostics: (a: number, b: number) => void;
-  readonly oxc_getComments: (a: number, b: number) => void;
-  readonly oxc_run: (a: number, b: number, c: number, d: number, e: number) => void;
-  readonly browserslist: (a: number, b: number, c: number, d: number) => void;
+  readonly oxc_getDiagnostics: (a: number) => number[];
+  readonly oxc_getComments: (a: number) => number[];
+  readonly oxc_run: (a: number, b: number, c: number, d: number) => number[];
+  readonly browserslist: (a: number, b: number, c: number) => number[];
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
-  readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
+  readonly __wbindgen_export_2: WebAssembly.Table;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+  readonly __externref_table_dealloc: (a: number) => void;
+  readonly __externref_drop_slice: (a: number, b: number) => void;
   readonly __wbindgen_exn_store: (a: number) => void;
+  readonly __externref_table_alloc: () => number;
+  readonly __wbindgen_start: () => void;
 }
 
 export type SyncInitInput = BufferSource | WebAssembly.Module;

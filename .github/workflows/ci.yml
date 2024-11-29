@@ -121,6 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
+
       - uses: Boshen/setup-rust@main
         with:
           cache-key: wasm
@@ -134,7 +135,9 @@ jobs:
 
       - run: just build-wasm debug
       - working-directory: npm/oxc-wasm
-        run: pnpm run check
+        run: |
+          sed -i ${{ (runner.os == 'macOS' && '""') || '' }} -e 's/=> Array;/=> number[];/g' oxc_wasm.d.ts
+          pnpm run check
 
       - working-directory: wasm/parser
         run: pnpm run build
