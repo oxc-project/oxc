@@ -7,6 +7,7 @@ use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::Semantic;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::module_record::ModuleRecord;
 
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
@@ -103,6 +104,11 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn semantic(&self) -> &Rc<Semantic<'a>> {
         &self.parent.semantic
+    }
+
+    #[inline]
+    pub fn module_record(&self) -> &ModuleRecord {
+        self.parent.module_record()
     }
 
     /// Get the control flow graph for the current program.

@@ -321,10 +321,12 @@ mod test {
             SemanticBuilder::new().with_cfg(true).build(&parser_ret.program).semantic;
         let semantic_ret = Rc::new(semantic_ret);
 
+        let module_record = Arc::new(parser_ret.module_record);
         let build_ctx = |path: &'static str| {
             Rc::new(ContextHost::new(
                 path,
                 Rc::clone(&semantic_ret),
+                Arc::clone(&module_record),
                 LintOptions::default(),
                 Arc::default(),
             ))

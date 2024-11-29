@@ -297,9 +297,8 @@ impl Runtime {
         };
 
         let mut semantic = semantic_ret.semantic;
-        semantic.set_module_record(&module_record);
         semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
-        self.linter.run(path, Rc::new(semantic))
+        self.linter.run(path, Rc::new(semantic), Arc::clone(&module_record))
     }
 
     pub(super) fn init_cache_state(&self, path: &Path) -> bool {

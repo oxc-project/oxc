@@ -7,6 +7,7 @@ use std::{
     cell::{Cell, RefCell},
     path::{Path, PathBuf},
     rc::Rc,
+    sync::Arc,
 };
 
 use oxc::{
@@ -20,6 +21,7 @@ use oxc::{
         ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable,
     },
     span::SourceType,
+    syntax::module_record::ModuleRecord,
     transformer::{TransformOptions, Transformer},
 };
 use oxc_index::Idx;
@@ -198,7 +200,7 @@ impl Oxc {
                 .preserve_parens
                 .unwrap_or(default_parser_options.preserve_parens),
         };
-        let ParserReturn { mut program, errors, .. } =
+        let ParserReturn { mut program, errors, module_record, .. } =
             Parser::new(&allocator, source_text, source_type)
                 .with_options(oxc_parser_options)
                 .parse();
@@ -227,7 +229,8 @@ impl Oxc {
             );
         }
 
-        self.run_linter(&run_options, &path, &program);
+        let module_record = Arc::new(module_record);
+        self.run_linter(&run_options, &path, &program, &module_record);
 
         self.run_prettier(&run_options, source_text, source_type);
 
@@ -296,12 +299,19 @@ impl Oxc {
         Ok(())
     }
 
-    fn run_linter(&mut self, run_options: &OxcRunOptions, path: &Path, program: &Program) {
+    fn run_linter(
+        &mut self,
+        run_options: &OxcRunOptions,
+        path: &Path,
+        program: &Program,
+        module_record: &Arc<ModuleRecord>,
+    ) {
         // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = Rc::new(semantic_ret.semantic);
-            let linter_ret = Linter::default().run(path, Rc::clone(&semantic));
+            let linter_ret =
+                Linter::default().run(path, Rc::clone(&semantic), Arc::clone(module_record));
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
         }

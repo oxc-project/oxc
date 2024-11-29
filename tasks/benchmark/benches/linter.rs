@@ -1,4 +1,4 @@
-use std::{env, path::Path, rc::Rc};
+use std::{env, path::Path, rc::Rc, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
@@ -39,7 +39,8 @@ fn bench_linter(criterion: &mut Criterion) {
                     .build(&ret.program);
                 let linter = LinterBuilder::all().with_fix(FixKind::All).build();
                 let semantic = Rc::new(semantic_ret.semantic);
-                b.iter(|| linter.run(path, Rc::clone(&semantic)));
+                let module_record = Arc::new(ret.module_record);
+                b.iter(|| linter.run(path, Rc::clone(&semantic), Arc::clone(&module_record)));
             },
         );
     }

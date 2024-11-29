@@ -1,9 +1,6 @@
 //! Semantic Builder
 
-use std::{
-    cell::{Cell, RefCell},
-    sync::Arc,
-};
+use std::cell::{Cell, RefCell};
 
 use rustc_hash::FxHashMap;
 
@@ -289,7 +286,6 @@ impl<'a> SemanticBuilder<'a> {
             source_type: self.source_type,
             comments,
             irregular_whitespaces: [].into(),
-            module_record: Arc::new(oxc_syntax::module_record::ModuleRecord::default()),
             nodes: self.nodes,
             scopes: self.scope,
             symbols: self.symbols,

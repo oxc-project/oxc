@@ -6,14 +6,12 @@
 //! ```
 
 use std::ops::RangeBounds;
-use std::sync::Arc;
 
 use oxc_ast::{
     ast::IdentifierReference, comments_range, has_comments_between, AstKind, Comment, CommentsRange,
 };
 use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
-use oxc_syntax::module_record::ModuleRecord;
 pub use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
@@ -81,8 +79,6 @@ pub struct Semantic<'a> {
     comments: &'a oxc_allocator::Vec<'a, Comment>,
     irregular_whitespaces: Box<[Span]>,
 
-    module_record: Arc<ModuleRecord>,
-
     /// Parsed JSDoc comments.
     jsdoc: JSDocFinder<'a>,
 
@@ -134,10 +130,6 @@ impl<'a> Semantic<'a> {
         self.irregular_whitespaces = irregular_whitespaces;
     }
 
-    pub fn set_module_record(&mut self, module_record: &Arc<ModuleRecord>) {
-        self.module_record = Arc::clone(module_record);
-    }
-
     /// Trivias (comments) found while parsing
     pub fn comments(&self) -> &[Comment] {
         self.comments
@@ -163,11 +155,6 @@ impl<'a> Semantic<'a> {
     /// Will be empty if JSDoc parsing is disabled.
     pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         &self.jsdoc
-    }
-
-    /// ESM module record containing imports and exports.
-    pub fn module_record(&self) -> &ModuleRecord {
-        self.module_record.as_ref()
     }
 
     /// [`SymbolTable`] containing all symbols in the program and their

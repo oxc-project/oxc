@@ -69,8 +69,7 @@ impl Rule for NoBarrelFile {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let semantic = ctx.semantic();
-        let module_record = semantic.module_record();
+        let module_record = ctx.module_record();
 
         if module_record.not_esm {
             return;

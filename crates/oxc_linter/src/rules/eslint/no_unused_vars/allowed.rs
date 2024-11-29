@@ -2,6 +2,7 @@
 //! consider variables ignored by name pattern, but by where they are declared.
 use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{NodeId, Semantic};
+use oxc_syntax::module_record::ModuleRecord;
 
 use super::{options::ArgsOption, NoUnusedVars, Symbol};
 use crate::rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding};
@@ -120,6 +121,7 @@ impl NoUnusedVars {
     pub(super) fn is_allowed_argument<'a>(
         &self,
         semantic: &Semantic<'a>,
+        module_record: &ModuleRecord,
         symbol: &Symbol<'_, 'a>,
         param: &FormalParameter<'a>,
     ) -> bool {
@@ -178,7 +180,7 @@ impl NoUnusedVars {
             return false;
         }
 
-        let ctx = BindingContext { options: self, semantic };
+        let ctx = BindingContext { options: self, semantic, module_record };
         params
             .items
             .iter()

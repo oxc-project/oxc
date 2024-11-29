@@ -290,9 +290,10 @@ impl IsolatedLintHandler {
                 return Some(Self::wrap_diagnostics(path, &source_text, reports, start));
             };
 
+            let module_record = Arc::new(ret.module_record);
             let mut semantic = semantic_ret.semantic;
             semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
-            let result = self.linter.run(path, Rc::new(semantic));
+            let result = self.linter.run(path, Rc::new(semantic), module_record);
 
             let reports = result
                 .into_iter()

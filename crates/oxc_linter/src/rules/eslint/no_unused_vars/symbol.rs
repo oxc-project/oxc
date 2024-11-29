@@ -12,10 +12,12 @@ use oxc_semantic::{
     SymbolTable,
 };
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::module_record::ModuleRecord;
 
 #[derive(Clone)]
 pub(super) struct Symbol<'s, 'a> {
     semantic: &'s Semantic<'a>,
+    module_record: &'s ModuleRecord,
     id: SymbolId,
     flags: SymbolFlags,
     span: OnceCell<Span>,
@@ -29,9 +31,13 @@ impl PartialEq for Symbol<'_, '_> {
 
 // constructor and simple getters
 impl<'s, 'a> Symbol<'s, 'a> {
-    pub fn new(semantic: &'s Semantic<'a>, symbol_id: SymbolId) -> Self {
+    pub fn new(
+        semantic: &'s Semantic<'a>,
+        module_record: &'s ModuleRecord,
+        symbol_id: SymbolId,
+    ) -> Self {
         let flags = semantic.symbols().get_flags(symbol_id);
-        Self { semantic, id: symbol_id, flags, span: OnceCell::new() }
+        Self { semantic, module_record, id: symbol_id, flags, span: OnceCell::new() }
     }
 
     #[inline]
@@ -172,7 +178,7 @@ impl<'a> Symbol<'_, 'a> {
     pub fn is_exported(&self) -> bool {
         let is_in_exportable_scope = self.is_root() || self.is_in_ts_namespace();
         is_in_exportable_scope
-            && (self.semantic.module_record().exported_bindings.contains_key(self.name())
+            && (self.module_record.exported_bindings.contains_key(self.name())
                 || self.in_export_node())
     }
 

@@ -86,7 +86,7 @@ impl Rule for Named {
             return;
         }
 
-        let module_record = semantic.module_record();
+        let module_record = ctx.module_record();
 
         for import_entry in &module_record.import_entries {
             // Get named import

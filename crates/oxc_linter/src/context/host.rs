@@ -1,6 +1,8 @@
+use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
+
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;
-use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
+use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
     config::{LintConfig, LintPlugins},
@@ -37,6 +39,8 @@ pub(crate) struct ContextHost<'a> {
     /// Shared semantic information about the file being linted, which includes scopes, symbols
     /// and AST nodes. See [`Semantic`].
     pub(super) semantic: Rc<Semantic<'a>>,
+    /// Cross module information.
+    pub(super) module_record: Arc<ModuleRecord>,
     /// Information about specific rules that should be disabled or enabled, via comment directives like
     /// `eslint-disable` or `eslint-disable-next-line`.
     pub(super) disable_directives: DisableDirectives<'a>,
@@ -67,6 +71,7 @@ impl<'a> ContextHost<'a> {
     pub fn new<P: AsRef<Path>>(
         file_path: P,
         semantic: Rc<Semantic<'a>>,
+        module_record: Arc<ModuleRecord>,
         options: LintOptions,
         config: Arc<LintConfig>,
     ) -> Self {
@@ -87,6 +92,7 @@ impl<'a> ContextHost<'a> {
 
         Self {
             semantic,
+            module_record,
             disable_directives,
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
@@ -117,6 +123,12 @@ impl<'a> ContextHost<'a> {
     #[inline]
     pub fn semantic(&self) -> &Semantic<'a> {
         &self.semantic
+    }
+
+    /// Shared reference to the [`ModuleRecord`] of the file.
+    #[inline]
+    pub fn module_record(&self) -> &ModuleRecord {
+        &self.module_record
     }
 
     /// Path to the file being linted.
@@ -214,9 +226,9 @@ impl<'a> ContextHost<'a> {
         if self.plugins.has_test() {
             // let mut test_flags = FrameworkFlags::empty();
 
-            let vitest_like = frameworks::has_vitest_imports(self.semantic.module_record());
+            let vitest_like = frameworks::has_vitest_imports(self.module_record());
             let jest_like = frameworks::is_jestlike_file(&self.file_path)
-                || frameworks::has_jest_imports(self.semantic.module_record());
+                || frameworks::has_jest_imports(self.module_record());
 
             self.frameworks.set(FrameworkFlags::Vitest, vitest_like);
             self.frameworks.set(FrameworkFlags::Jest, jest_like);

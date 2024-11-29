@@ -48,7 +48,7 @@ declare_oxc_lint!(
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/unambiguous.md>
 impl Rule for Unambiguous {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        if ctx.semantic().module_record().not_esm {
+        if ctx.module_record().not_esm {
             ctx.diagnostic(unambiguous_diagnostic(Span::default()));
         }
     }
