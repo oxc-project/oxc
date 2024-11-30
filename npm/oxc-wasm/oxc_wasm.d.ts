@@ -1,10 +1,5 @@
 /* tslint:disable */
 /* eslint-disable */
-/**
- * @param {string} query
- * @param {any} opts
- * @returns {any}
- */
 export function browserslist(query: string, opts: any): any;
 export interface OxcOptions {
     run?: OxcRunOptions;
@@ -93,12 +88,6 @@ export interface Comment {
 
 export type CommentType = "Line" | "Block";
 
-export interface Reference {
-    nodeId: NodeId;
-    symbolId: SymbolId | null;
-    flags: ReferenceFlags;
-}
-
 
 export type IndexVec<I, T> = Array<T>;
 export type CompactStr = string;
@@ -116,11 +105,11 @@ export interface SymbolTable {
     references: IndexVec<ReferenceId, Reference>;
 }
 
-
-export type SymbolId = number;
-export type SymbolFlags = unknown;
-export type RedeclarationId = unknown;
-
+export interface Reference {
+    nodeId: NodeId;
+    symbolId: SymbolId | null;
+    flags: ReferenceFlags;
+}
 
 
 export type NodeId = number;
@@ -130,10 +119,6 @@ export type NodeFlags = {
     HasYield: 4
     Parameter: 8
 };
-
-
-
-export type ScopeId = number;
 
 
 
@@ -147,6 +132,16 @@ export type ReferenceFlags = {
 }
 
 
+
+export type ScopeId = number;
+
+
+
+export type SymbolId = number;
+export type SymbolFlags = unknown;
+export type RedeclarationId = unknown;
+
+
 export class Oxc {
   free(): void;
   constructor();
@@ -154,20 +149,16 @@ export class Oxc {
    * Returns Array of String
    * # Errors
    * # Panics
-   * @returns {any[]}
    */
   getDiagnostics(): any[];
   /**
    * Returns comments
    * # Errors
-   * @returns {any[]}
    */
   getComments(): any[];
   /**
    * # Errors
    * Serde serialization error
-   * @param {string} source_text
-   * @param {OxcOptions} options
    */
   run(source_text: string, options: OxcOptions): void;
 }
@@ -177,28 +168,28 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly __wbg_oxc_free: (a: number, b: number) => void;
-  readonly __wbg_get_oxc_ast: (a: number) => number;
-  readonly __wbg_get_oxc_ir: (a: number) => number[];
-  readonly __wbg_get_oxc_controlFlowGraph: (a: number) => number[];
-  readonly __wbg_get_oxc_symbols: (a: number) => number;
-  readonly __wbg_get_oxc_scopeText: (a: number) => number[];
-  readonly __wbg_get_oxc_codegenText: (a: number) => number[];
-  readonly __wbg_get_oxc_formattedText: (a: number) => number[];
-  readonly __wbg_get_oxc_prettierFormattedText: (a: number) => number[];
-  readonly __wbg_get_oxc_prettierIrText: (a: number) => number[];
+  readonly __wbg_get_oxc_ast: (a: number) => any;
+  readonly __wbg_get_oxc_ir: (a: number) => [number, number];
+  readonly __wbg_get_oxc_controlFlowGraph: (a: number) => [number, number];
+  readonly __wbg_get_oxc_symbols: (a: number) => any;
+  readonly __wbg_get_oxc_scopeText: (a: number) => [number, number];
+  readonly __wbg_get_oxc_codegenText: (a: number) => [number, number];
+  readonly __wbg_get_oxc_formattedText: (a: number) => [number, number];
+  readonly __wbg_get_oxc_prettierFormattedText: (a: number) => [number, number];
+  readonly __wbg_get_oxc_prettierIrText: (a: number) => [number, number];
   readonly oxc_new: () => number;
-  readonly oxc_getDiagnostics: (a: number) => number[];
-  readonly oxc_getComments: (a: number) => number[];
-  readonly oxc_run: (a: number, b: number, c: number, d: number) => number[];
-  readonly browserslist: (a: number, b: number, c: number) => number[];
-  readonly __wbindgen_malloc: (a: number, b: number) => number;
-  readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
-  readonly __wbindgen_export_2: WebAssembly.Table;
-  readonly __wbindgen_free: (a: number, b: number, c: number) => void;
-  readonly __externref_table_dealloc: (a: number) => void;
-  readonly __externref_drop_slice: (a: number, b: number) => void;
+  readonly oxc_getDiagnostics: (a: number) => [number, number, number, number];
+  readonly oxc_getComments: (a: number) => [number, number, number, number];
+  readonly oxc_run: (a: number, b: number, c: number, d: any) => [number, number];
+  readonly browserslist: (a: number, b: number, c: any) => [number, number, number];
   readonly __wbindgen_exn_store: (a: number) => void;
   readonly __externref_table_alloc: () => number;
+  readonly __wbindgen_export_2: WebAssembly.Table;
+  readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+  readonly __wbindgen_malloc: (a: number, b: number) => number;
+  readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+  readonly __externref_table_dealloc: (a: number) => void;
+  readonly __externref_drop_slice: (a: number, b: number) => void;
   readonly __wbindgen_start: () => void;
 }
 
