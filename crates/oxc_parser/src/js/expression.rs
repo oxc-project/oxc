@@ -339,7 +339,7 @@ impl<'a> ParserImpl<'a> {
         let _value = parse_big_int(src, token.kind, token.has_separator())
             .map_err(|err| diagnostics::invalid_number(err, token.span()))?;
         self.bump_any();
-        Ok(self.ast.big_int_literal(self.end_span(span), Some(Atom::from(raw)), base))
+        Ok(self.ast.big_int_literal(self.end_span(span), raw, base))
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> Result<RegExpLiteral<'a>> {

@@ -218,7 +218,7 @@ impl<'a> AstBuilder<'a> {
         self.expression_numeric_literal(
             Span::default(),
             0.0,
-            Some(Atom::from("0")),
+            None,
             NumberBase::Decimal,
         )
     }

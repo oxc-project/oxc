@@ -56,12 +56,11 @@ impl Rule for NoZeroFractions {
             return;
         };
 
-        let Some((fmt, is_dangling_dot)) =
-            format_raw(number_literal.raw.as_ref().unwrap().as_str())
-        else {
+        let raw = number_literal.raw.as_ref().unwrap().as_str();
+        let Some((fmt, is_dangling_dot)) = format_raw(raw) else {
             return;
         };
-        if fmt == number_literal.raw.as_ref().unwrap().as_str() {
+        if fmt == raw {
             return;
         };
 

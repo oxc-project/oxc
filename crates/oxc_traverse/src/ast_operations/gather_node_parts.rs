@@ -466,7 +466,7 @@ impl<'a> GatherNodeParts<'a> for StringLiteral<'a> {
 
 impl<'a> GatherNodeParts<'a> for NumericLiteral<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        f(self.raw.as_ref().unwrap().as_str());
+        f(&self.raw_str());
     }
 }
 
@@ -482,7 +482,7 @@ impl GatherNodeParts<'_> for BooleanLiteral {
 
 impl<'a> GatherNodeParts<'a> for BigIntLiteral<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        f(self.raw.as_ref().unwrap().as_str());
+        f(self.raw.as_str());
     }
 }
 

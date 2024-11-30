@@ -156,13 +156,11 @@ impl<'a> AstBuilder<'a> {
     /// - raw: The bigint as it appears in source code
     /// - base: The base representation used by the literal in source code
     #[inline]
-    pub fn big_int_literal(
-        self,
-        span: Span,
-        raw: Option<Atom<'a>>,
-        base: BigintBase,
-    ) -> BigIntLiteral<'a> {
-        BigIntLiteral { span, raw, base }
+    pub fn big_int_literal<A>(self, span: Span, raw: A, base: BigintBase) -> BigIntLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        BigIntLiteral { span, raw: raw.into_in(self.allocator), base }
     }
 
     /// Build a [`BigIntLiteral`], and store it in the memory arena.
@@ -174,12 +172,15 @@ impl<'a> AstBuilder<'a> {
     /// - raw: The bigint as it appears in source code
     /// - base: The base representation used by the literal in source code
     #[inline]
-    pub fn alloc_big_int_literal(
+    pub fn alloc_big_int_literal<A>(
         self,
         span: Span,
-        raw: Option<Atom<'a>>,
+        raw: A,
         base: BigintBase,
-    ) -> Box<'a, BigIntLiteral<'a>> {
+    ) -> Box<'a, BigIntLiteral<'a>>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
         Box::new_in(self.big_int_literal(span, raw, base), self.allocator)
     }
 
@@ -424,12 +425,15 @@ impl<'a> AstBuilder<'a> {
     /// - raw: The bigint as it appears in source code
     /// - base: The base representation used by the literal in source code
     #[inline]
-    pub fn expression_big_int_literal(
+    pub fn expression_big_int_literal<A>(
         self,
         span: Span,
-        raw: Option<Atom<'a>>,
+        raw: A,
         base: BigintBase,
-    ) -> Expression<'a> {
+    ) -> Expression<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
         Expression::BigIntLiteral(self.alloc(self.big_int_literal(span, raw, base)))
     }
 
@@ -7913,12 +7917,15 @@ impl<'a> AstBuilder<'a> {
     /// - raw: The bigint as it appears in source code
     /// - base: The base representation used by the literal in source code
     #[inline]
-    pub fn ts_literal_big_int_literal(
+    pub fn ts_literal_big_int_literal<A>(
         self,
         span: Span,
-        raw: Option<Atom<'a>>,
+        raw: A,
         base: BigintBase,
-    ) -> TSLiteral<'a> {
+    ) -> TSLiteral<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
         TSLiteral::BigIntLiteral(self.alloc(self.big_int_literal(span, raw, base)))
     }
 

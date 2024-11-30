@@ -151,11 +151,12 @@ impl NumericSeparatorsStyle {
     fn format_number(&self, number: &NumericLiteral) -> String {
         use oxc_syntax::number::NumberBase;
 
+        let raw = number.raw.as_ref().unwrap();
         match number.base {
-            NumberBase::Binary => self.format_binary(number.raw.as_ref().unwrap()),
-            NumberBase::Decimal | NumberBase::Float => self.format_decimal(number.raw.as_ref().unwrap()),
-            NumberBase::Hex => self.format_hex(number.raw.as_ref().unwrap()),
-            NumberBase::Octal => self.format_octal(number.raw.as_ref().unwrap()),
+            NumberBase::Binary => self.format_binary(raw),
+            NumberBase::Decimal | NumberBase::Float => self.format_decimal(raw),
+            NumberBase::Hex => self.format_hex(raw),
+            NumberBase::Octal => self.format_octal(raw),
         }
     }
 

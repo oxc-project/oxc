@@ -53,6 +53,8 @@ pub struct NumericLiteral<'a> {
     /// The value of the number, converted into base 10
     pub value: f64,
     /// The number as it appears in source code
+    ///
+    /// `None` when this ast node is not constructed from the parser.
     pub raw: Option<Atom<'a>>,
     /// The base representation used by the literal in source code
     #[estree(skip)]
@@ -89,7 +91,7 @@ pub struct BigIntLiteral<'a> {
     /// Node location in source code
     pub span: Span,
     /// The bigint as it appears in source code
-    pub raw: Option<Atom<'a>>,
+    pub raw: Atom<'a>,
     /// The base representation used by the literal in source code
     #[estree(skip)]
     pub base: BigintBase,
@@ -114,6 +116,8 @@ pub struct RegExpLiteral<'a> {
     #[estree(skip)]
     pub regex: RegExp<'a>,
     /// The regular expression as it appears in source code
+    ///
+    /// `None` when this ast node is not constructed from the parser.
     pub raw: Option<Atom<'a>>,
 }
 

@@ -36,15 +36,11 @@ impl<'a> Ctx<'a, '_> {
             ConstantValue::Number(n) => {
                 let number_base =
                     if is_exact_int64(n) { NumberBase::Decimal } else { NumberBase::Float };
-                self.ast.expression_numeric_literal(span, n, Some(Atom::from("")), number_base)
+                self.ast.expression_numeric_literal(span, n, None, number_base)
             }
             ConstantValue::BigInt(n) => {
                 let raw: &str = (n.to_string() + "n").into_in(&self.ast.allocator);
-                self.ast.expression_big_int_literal(
-                    span,
-                    Some(Atom::from(raw)),
-                    BigintBase::Decimal,
-                )
+                self.ast.expression_big_int_literal(span, raw, BigintBase::Decimal)
             }
             ConstantValue::String(s) => self.ast.expression_string_literal(span, s, None),
             ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),

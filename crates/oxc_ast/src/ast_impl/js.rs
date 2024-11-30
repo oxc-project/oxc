@@ -135,7 +135,7 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given numeral literal's raw value is exactly val
     pub fn is_specific_raw_number_literal(&self, val: &str) -> bool {
-        matches!(self, Self::NumericLiteral(lit) if lit.raw.as_ref().map(|raw| raw.as_str()).unwrap_or_default() == val)
+        matches!(self, Self::NumericLiteral(lit) if lit.raw.as_ref().is_some_and(|raw| raw == val))
     }
 
     /// Determines whether the given expr evaluate to `undefined`
@@ -327,7 +327,7 @@ impl<'a> PropertyKey<'a> {
             Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
-            Self::BigIntLiteral(lit) => lit.raw.as_ref().map(|raw| Cow::Borrowed(raw.as_str())),
+            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.raw.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
             Self::TemplateLiteral(lit) => {
                 lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Into::into)

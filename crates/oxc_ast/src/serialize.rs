@@ -73,8 +73,7 @@ impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
 
 impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
     fn from(value: &'a BigIntLiteral) -> Self {
-        let src =
-            &value.raw.as_ref().unwrap().as_str().strip_suffix('n').unwrap().cow_replace('_', "");
+        let src = &value.raw.as_str().strip_suffix('n').unwrap().cow_replace('_', "");
 
         let src = match value.base {
             BigintBase::Decimal => src,
@@ -92,7 +91,7 @@ impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
             span: value.span,
             // BigInts can't be serialized to JSON
             value: (),
-            raw: value.raw.as_ref().map(|raw| raw.as_str()),
+            raw: Some(value.raw.as_str()),
             bigint: Some(bigint.to_string()),
             regex: None,
         }

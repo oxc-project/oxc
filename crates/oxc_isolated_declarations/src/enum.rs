@@ -63,11 +63,10 @@ impl<'a> IsolatedDeclarations<'a> {
                             self.ast.expression_identifier_reference(SPAN, "Infinity")
                         } else {
                             let value = if is_negative { -v } else { v };
-                            let raw: &str = value.to_string().into_in(&self.ast.allocator);
                             self.ast.expression_numeric_literal(
                                 SPAN,
                                 value,
-                                Some(Atom::from(raw)),
+                                None,
                                 NumberBase::Decimal,
                             )
                         };

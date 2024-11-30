@@ -1155,7 +1155,7 @@ impl GenExpr for NumericLiteral<'_> {
         p.add_source_mapping(self.span);
         let value = self.value;
         if ctx.contains(Context::TYPESCRIPT) {
-            p.print_str(self.raw.as_ref().unwrap());
+            p.print_str(&self.raw_str());
         } else if value.is_nan() {
             p.print_space_before_identifier();
             p.print_str("NaN");
@@ -1192,7 +1192,7 @@ impl GenExpr for NumericLiteral<'_> {
 
 impl Gen for BigIntLiteral<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        let raw = self.raw.as_ref().unwrap().as_str().cow_replace('_', "");
+        let raw = self.raw.as_str().cow_replace('_', "");
         if raw.starts_with('-') {
             p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
         }

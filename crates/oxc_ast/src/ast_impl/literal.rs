@@ -71,6 +71,23 @@ impl NumericLiteral<'_> {
             int32bit as i32
         }
     }
+
+    /// Provide a fallback for converting NumericLiteral's value to a string if `raw` is None
+    pub fn raw_str(&self) -> Cow<str> {
+        match self.raw.as_ref() {
+            Some(raw) => return Cow::Borrowed(raw),
+            None => {
+                let value = self.value;
+                let s = match self.base {
+                    NumberBase::Binary => format!("{:#b}", value as i64),
+                    NumberBase::Decimal | NumberBase::Float =>  format!("{}", value),
+                    NumberBase::Hex => format!("{:#x}", value as i64),
+                    NumberBase::Octal => format!("{:#o}", value as i64),
+                };
+                Cow::Owned(s)
+            }
+        }
+    }
 }
 
 impl ContentHash for NumericLiteral<'_> {
@@ -82,20 +99,24 @@ impl ContentHash for NumericLiteral<'_> {
 
 impl fmt::Display for NumericLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.raw.as_ref().unwrap().fmt(f)
+        // There are basically 2 choices:
+        // 1. If raw.is_none(), then use the NumericLiteral's number field. or
+        // 2. Always use the NumericLiteral's number field.
+        // For now, the first approach is chosen, since to_string is only used in linter, in which raw does matter
+        self.raw_str().fmt(f)
     }
 }
 
 impl BigIntLiteral<'_> {
     /// Is this BigInt literal zero? (`0n`).
     pub fn is_zero(&self) -> bool {
-        matches!(&self.raw, Some(x) if x == "0n")
+        self.raw == "0n"
     }
 }
 
 impl fmt::Display for BigIntLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.raw.as_ref().unwrap().fmt(f)
+        self.raw.fmt(f)
     }
 }
 
