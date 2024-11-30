@@ -135,9 +135,7 @@ jobs:
 
       - run: just build-wasm debug
       - working-directory: npm/oxc-wasm
-        run: |
-          sed -i ${{ (runner.os == 'macOS' && '""') || '' }} -e 's/=> Array;/=> number[];/g' oxc_wasm.d.ts
-          pnpm run check
+        run: pnpm run check
 
       - working-directory: wasm/parser
         run: pnpm run build
