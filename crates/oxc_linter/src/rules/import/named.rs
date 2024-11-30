@@ -1,9 +1,12 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::{ExportImportName, ImportImportName},
+    rule::Rule,
+};
 
 fn named_diagnostic(imported_name: &str, module_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("named import {imported_name:?} not found"))

@@ -1,9 +1,8 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_syntax::module_record::ImportImportName;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
 
 fn no_named_as_default_diagnostic(
     span: Span,

@@ -5,9 +5,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use oxc_syntax::module_record::ModuleRecord;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, ModuleRecord};
 
 fn no_named_export(module_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("No named exports found in module '{module_name}'"))

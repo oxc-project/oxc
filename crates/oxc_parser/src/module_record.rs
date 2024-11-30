@@ -1,19 +1,24 @@
+use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::module_record::*;
 
 use crate::diagnostics;
 
-#[derive(Default)]
-pub struct ModuleRecordBuilder {
-    pub module_record: ModuleRecord,
-    export_entries: Vec<ExportEntry>,
+pub struct ModuleRecordBuilder<'a> {
+    allocator: &'a Allocator,
+    module_record: ModuleRecord<'a>,
+    export_entries: Vec<ExportEntry<'a>>,
 }
 
-impl ModuleRecordBuilder {
-    pub fn build(mut self) -> ModuleRecord {
+impl<'a> ModuleRecordBuilder<'a> {
+    pub fn new(allocator: &'a Allocator) -> Self {
+        Self { allocator, module_record: ModuleRecord::new(allocator), export_entries: vec![] }
+    }
+
+    pub fn build(mut self) -> ModuleRecord<'a> {
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
         // resolved before resolving export entries.
         self.resolve_export_entries();
@@ -27,12 +32,8 @@ impl ModuleRecordBuilder {
 
         // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
         for name_span in &module_record.exported_bindings_duplicated {
-            let old_span = module_record.exported_bindings[name_span.name()];
-            errors.push(diagnostics::duplicate_export(
-                name_span.name(),
-                name_span.span(),
-                old_span,
-            ));
+            let old_span = module_record.exported_bindings[&name_span.name];
+            errors.push(diagnostics::duplicate_export(&name_span.name, name_span.span, old_span));
         }
 
         for span in &module_record.export_default_duplicated {
@@ -51,35 +52,35 @@ impl ModuleRecordBuilder {
         errors
     }
 
-    fn add_module_request(&mut self, name_span: &NameSpan, is_type: bool, is_import: bool) {
+    fn add_module_request(&mut self, name_span: &NameSpan<'a>, is_type: bool, is_import: bool) {
         self.module_record
             .requested_modules
-            .entry(name_span.name().clone())
-            .or_default()
-            .push(RequestedModule::new(name_span.span(), is_type, is_import));
+            .entry(name_span.name.clone())
+            .or_insert_with(|| oxc_allocator::Vec::new_in(self.allocator))
+            .push(RequestedModule::new(name_span.span, is_type, is_import));
     }
 
-    fn add_import_entry(&mut self, entry: ImportEntry) {
+    fn add_import_entry(&mut self, entry: ImportEntry<'a>) {
         self.module_record.import_entries.push(entry);
     }
 
-    fn add_export_entry(&mut self, entry: ExportEntry) {
+    fn add_export_entry(&mut self, entry: ExportEntry<'a>) {
         self.export_entries.push(entry);
     }
 
-    fn append_local_export_entry(&mut self, entry: ExportEntry) {
+    fn append_local_export_entry(&mut self, entry: ExportEntry<'a>) {
         self.module_record.local_export_entries.push(entry);
     }
 
-    fn append_indirect_export_entry(&mut self, entry: ExportEntry) {
+    fn append_indirect_export_entry(&mut self, entry: ExportEntry<'a>) {
         self.module_record.indirect_export_entries.push(entry);
     }
 
-    fn append_star_export_entry(&mut self, entry: ExportEntry) {
+    fn append_star_export_entry(&mut self, entry: ExportEntry<'a>) {
         self.module_record.star_export_entries.push(entry);
     }
 
-    fn add_export_binding(&mut self, name: CompactStr, span: Span) {
+    fn add_export_binding(&mut self, name: Atom<'a>, span: Span) {
         if let Some(old_node) = self.module_record.exported_bindings.insert(name.clone(), span) {
             self.module_record.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
         }
@@ -104,7 +105,7 @@ impl ModuleRecordBuilder {
                         .module_record
                         .import_entries
                         .iter()
-                        .find(|entry| entry.local_name.name() == name.name()),
+                        .find(|entry| entry.local_name.name == name.name),
                     _ => None,
                 };
                 match found_import_entry {
@@ -164,7 +165,7 @@ impl ModuleRecordBuilder {
         }
     }
 
-    pub fn visit_module_declaration(&mut self, module_decl: &ModuleDeclaration) {
+    pub fn visit_module_declaration(&mut self, module_decl: &ModuleDeclaration<'a>) {
         self.module_record.not_esm = false;
         match module_decl {
             ModuleDeclaration::ImportDeclaration(import_decl) => {
@@ -184,28 +185,28 @@ impl ModuleRecordBuilder {
         }
     }
 
-    fn visit_import_declaration(&mut self, decl: &ImportDeclaration) {
-        let module_request = NameSpan::new(decl.source.value.to_compact_str(), decl.source.span);
+    fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
+        let module_request = NameSpan::new(decl.source.value.clone(), decl.source.span);
 
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
                 let (import_name, local_name, is_type) = match specifier {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => (
                         ImportImportName::Name(NameSpan::new(
-                            specifier.imported.name().to_compact_str(),
+                            specifier.imported.name(),
                             specifier.imported.span(),
                         )),
-                        NameSpan::new(specifier.local.name.to_compact_str(), specifier.local.span),
+                        NameSpan::new(specifier.local.name.clone(), specifier.local.span),
                         decl.import_kind.is_type() || specifier.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
                         ImportImportName::NamespaceObject,
-                        NameSpan::new(specifier.local.name.to_compact_str(), specifier.local.span),
+                        NameSpan::new(specifier.local.name.clone(), specifier.local.span),
                         decl.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => (
                         ImportImportName::Default(specifier.span),
-                        NameSpan::new(specifier.local.name.to_compact_str(), specifier.local.span),
+                        NameSpan::new(specifier.local.name.clone(), specifier.local.span),
                         decl.import_kind.is_type(),
                     ),
                 };
@@ -224,8 +225,8 @@ impl ModuleRecordBuilder {
         );
     }
 
-    fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration) {
-        let module_request = NameSpan::new(decl.source.value.to_compact_str(), decl.source.span);
+    fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
+        let module_request = NameSpan::new(decl.source.value.clone(), decl.source.span);
         let export_entry = ExportEntry {
             module_request: Some(module_request.clone()),
             import_name: decl
@@ -233,17 +234,14 @@ impl ModuleRecordBuilder {
                 .as_ref()
                 .map_or(ExportImportName::AllButDefault, |_| ExportImportName::All),
             export_name: decl.exported.as_ref().map_or(ExportExportName::Null, |exported_name| {
-                ExportExportName::Name(NameSpan::new(
-                    exported_name.name().to_compact_str(),
-                    exported_name.span(),
-                ))
+                ExportExportName::Name(NameSpan::new(exported_name.name(), exported_name.span()))
             }),
             span: decl.span,
             ..ExportEntry::default()
         };
         self.add_export_entry(export_entry);
         if let Some(exported_name) = &decl.exported {
-            self.add_export_binding(exported_name.name().to_compact_str(), exported_name.span());
+            self.add_export_binding(exported_name.name(), exported_name.span());
         }
         self.add_module_request(
             &module_request,
@@ -252,7 +250,7 @@ impl ModuleRecordBuilder {
         );
     }
 
-    fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration) {
+    fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
         // ignore all TypeScript syntax as they overload
         if decl.declaration.is_typescript_syntax() {
             return;
@@ -263,17 +261,17 @@ impl ModuleRecordBuilder {
 
         let local_name = match &decl.declaration {
             ExportDefaultDeclarationKind::Identifier(ident) => {
-                ExportLocalName::Default(NameSpan::new(ident.name.to_compact_str(), ident.span))
+                ExportLocalName::Default(NameSpan::new(ident.name.clone(), ident.span))
             }
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                 func.id.as_ref().map_or_else(
                     || ExportLocalName::Null,
-                    |id| ExportLocalName::Name(NameSpan::new(id.name.to_compact_str(), id.span)),
+                    |id| ExportLocalName::Name(NameSpan::new(id.name.clone(), id.span)),
                 )
             }
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref().map_or_else(
                 || ExportLocalName::Null,
-                |id| ExportLocalName::Name(NameSpan::new(id.name.to_compact_str(), id.span)),
+                |id| ExportLocalName::Name(NameSpan::new(id.name.clone(), id.span)),
             ),
             _ => ExportLocalName::Null,
         };
@@ -286,7 +284,7 @@ impl ModuleRecordBuilder {
         self.add_export_entry(export_entry);
     }
 
-    fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration) {
+    fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
         if decl.export_kind.is_type() {
             return;
         }
@@ -295,10 +293,8 @@ impl ModuleRecordBuilder {
             return;
         }
 
-        let module_request = decl
-            .source
-            .as_ref()
-            .map(|source| NameSpan::new(source.value.to_compact_str(), source.span));
+        let module_request =
+            decl.source.as_ref().map(|source| NameSpan::new(source.value.clone(), source.span));
 
         if let Some(module_request) = &module_request {
             self.add_module_request(
@@ -311,9 +307,9 @@ impl ModuleRecordBuilder {
         if let Some(decl) = &decl.declaration {
             decl.bound_names(&mut |ident| {
                 let export_name =
-                    ExportExportName::Name(NameSpan::new(ident.name.to_compact_str(), ident.span));
+                    ExportExportName::Name(NameSpan::new(ident.name.clone(), ident.span));
                 let local_name =
-                    ExportLocalName::Name(NameSpan::new(ident.name.to_compact_str(), ident.span));
+                    ExportLocalName::Name(NameSpan::new(ident.name.clone(), ident.span));
                 let export_entry = ExportEntry {
                     span: decl.span(),
                     module_request: module_request.clone(),
@@ -322,18 +318,18 @@ impl ModuleRecordBuilder {
                     local_name,
                 };
                 self.add_export_entry(export_entry);
-                self.add_export_binding(ident.name.to_compact_str(), ident.span);
+                self.add_export_binding(ident.name.clone(), ident.span);
             });
         }
 
         for specifier in &decl.specifiers {
             let export_name = ExportExportName::Name(NameSpan::new(
-                specifier.exported.name().to_compact_str(),
+                specifier.exported.name().clone(),
                 specifier.exported.span(),
             ));
             let import_name = if module_request.is_some() {
                 ExportImportName::Name(NameSpan::new(
-                    specifier.local.name().to_compact_str(),
+                    specifier.local.name().clone(),
                     specifier.local.span(),
                 ))
             } else {
@@ -343,7 +339,7 @@ impl ModuleRecordBuilder {
                 ExportLocalName::Null
             } else {
                 ExportLocalName::Name(NameSpan::new(
-                    specifier.local.name().to_compact_str(),
+                    specifier.local.name().clone(),
                     specifier.local.span(),
                 ))
             };
@@ -355,10 +351,7 @@ impl ModuleRecordBuilder {
                 local_name,
             };
             self.add_export_entry(export_entry);
-            self.add_export_binding(
-                specifier.exported.name().to_compact_str(),
-                specifier.exported.span(),
-            );
+            self.add_export_binding(specifier.exported.name().clone(), specifier.exported.span());
         }
     }
 }
@@ -371,10 +364,9 @@ mod module_record_tests {
 
     use crate::Parser;
 
-    fn build(source_text: &str) -> ModuleRecord {
+    fn build<'a>(allocator: &'a Allocator, source_text: &'a str) -> ModuleRecord<'a> {
         let source_type = SourceType::mjs();
-        let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let ret = Parser::new(allocator, source_text, source_type).parse();
         ret.module_record
     }
 
@@ -383,7 +375,8 @@ mod module_record_tests {
 
     #[test]
     fn import_default() {
-        let module_record = build("import v from 'mod'");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "import v from 'mod'");
         let import_entry = ImportEntry {
             module_request: NameSpan::new("mod".into(), Span::new(14, 19)),
             import_name: ImportImportName::Default(Span::new(7, 8)),
@@ -396,7 +389,8 @@ mod module_record_tests {
 
     #[test]
     fn import_namespace() {
-        let module_record = build("import * as ns from 'mod'");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "import * as ns from 'mod'");
         let import_entry = ImportEntry {
             module_request: NameSpan::new("mod".into(), Span::new(20, 25)),
             import_name: ImportImportName::NamespaceObject,
@@ -409,7 +403,8 @@ mod module_record_tests {
 
     #[test]
     fn import_specifier() {
-        let module_record = build("import { x } from 'mod'");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "import { x } from 'mod'");
         let import_entry = ImportEntry {
             module_request: NameSpan::new("mod".into(), Span::new(18, 23)),
             import_name: ImportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
@@ -422,7 +417,8 @@ mod module_record_tests {
 
     #[test]
     fn import_specifier_alias() {
-        let module_record = build("import { x as v } from 'mod'");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "import { x as v } from 'mod'");
         let import_entry = ImportEntry {
             module_request: NameSpan::new("mod".into(), Span::new(23, 28)),
             import_name: ImportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
@@ -435,7 +431,8 @@ mod module_record_tests {
 
     #[test]
     fn import_without_binding() {
-        let module_record = build("import 'mod'");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "import 'mod'");
         assert!(module_record.import_entries.is_empty());
     }
 
@@ -446,7 +443,8 @@ mod module_record_tests {
     fn export_star() {
         // ExportDeclaration : export ExportFromClause FromClause ;
         // ExportFromClause : *
-        let module_record = build("export * from 'mod'");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export * from 'mod'");
         let export_entry = ExportEntry {
             module_request: Some(NameSpan::new("mod".into(), Span::new(14, 19))),
             import_name: ExportImportName::AllButDefault,
@@ -461,7 +459,8 @@ mod module_record_tests {
     fn export_star_as_namespace() {
         // ExportDeclaration : export ExportFromClause FromClause ;
         // ExportFromClause : * as ModuleExportName
-        let module_record = build("export * as ns from 'mod'");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export * as ns from 'mod'");
         let export_entry = ExportEntry {
             module_request: Some(NameSpan::new("mod".into(), Span::new(20, 25))),
             import_name: ExportImportName::All,
@@ -477,7 +476,8 @@ mod module_record_tests {
     fn named_exports() {
         // ExportDeclaration : export NamedExports ;
         // ExportSpecifier : ModuleExportName
-        let module_record = build("export { x }");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export { x }");
         let export_entry = ExportEntry {
             export_name: ExportExportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             local_name: ExportLocalName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
@@ -492,7 +492,8 @@ mod module_record_tests {
     fn named_exports_alias() {
         // ExportDeclaration : export NamedExports ;
         // ExportSpecifier : ModuleExportName as ModuleExportName
-        let module_record = build("export { x as v }");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export { x as v }");
         let export_entry = ExportEntry {
             export_name: ExportExportName::Name(NameSpan::new("v".into(), Span::new(14, 15))),
             local_name: ExportLocalName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
@@ -507,7 +508,8 @@ mod module_record_tests {
     fn named_exports_from() {
         // ExportDeclaration : export ExportFromClause FromClause ;
         // ExportSpecifier : ModuleExportName
-        let module_record = build("export { x } from 'mod'");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export { x } from 'mod'");
         let export_entry = ExportEntry {
             module_request: Some(NameSpan::new("mod".into(), Span::new(18, 23))),
             export_name: ExportExportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
@@ -523,7 +525,8 @@ mod module_record_tests {
     fn named_exports_alias_from() {
         // ExportDeclaration : export ExportFromClause FromClause ;
         // ExportSpecifier : ModuleExportName as ModuleExportName
-        let module_record = build("export { x as v } from 'mod'");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export { x as v } from 'mod'");
         let export_entry = ExportEntry {
             module_request: Some(NameSpan::new("mod".into(), Span::new(23, 28))),
             export_name: ExportExportName::Name(NameSpan::new("v".into(), Span::new(14, 15))),
@@ -538,7 +541,8 @@ mod module_record_tests {
     #[test]
     fn export_declaration() {
         // ExportDeclaration : export VariableStatement
-        let module_record = build("export var v");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export var v");
         let export_entry = ExportEntry {
             export_name: ExportExportName::Name(NameSpan::new("v".into(), Span::new(11, 12))),
             local_name: ExportLocalName::Name(NameSpan::new("v".into(), Span::new(11, 12))),
@@ -552,7 +556,8 @@ mod module_record_tests {
     #[test]
     fn export_default_declaration() {
         // ExportDeclaration : export default HoistableDeclaration
-        let module_record = build("export default function f() {}");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export default function f() {}");
         let export_entry = ExportEntry {
             export_name: ExportExportName::Default(Span::new(7, 14)),
             local_name: ExportLocalName::Name(NameSpan::new("f".into(), Span::new(24, 25))),
@@ -566,7 +571,8 @@ mod module_record_tests {
     #[test]
     fn export_default_function_expression() {
         // ExportDeclaration : export default HoistableDeclaration
-        let module_record = build("export default function() {}");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export default function() {}");
         let export_entry = ExportEntry {
             export_name: ExportExportName::Default(Span::new(7, 14)),
             local_name: ExportLocalName::Null,
@@ -580,7 +586,8 @@ mod module_record_tests {
     #[test]
     fn export_default_expression() {
         // ExportDeclaration : export default HoistableDeclaration
-        let module_record = build("export default 42");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export default 42");
         let export_entry = ExportEntry {
             export_name: ExportExportName::Default(Span::new(7, 14)),
             local_name: ExportLocalName::Null,
@@ -593,7 +600,8 @@ mod module_record_tests {
 
     #[test]
     fn export_named_default() {
-        let module_record = build("export { default }");
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export { default }");
         let export_entry = ExportEntry {
             export_name: ExportExportName::Name(NameSpan::new("default".into(), Span::new(9, 16))),
             local_name: ExportLocalName::Name(NameSpan::new("default".into(), Span::new(9, 16))),
@@ -606,8 +614,9 @@ mod module_record_tests {
 
     #[test]
     fn indirect_export_entries() {
+        let allocator = Allocator::default();
         let module_record =
-            build("import { x } from 'mod';export { x };export * as ns from 'mod';");
+            build(&allocator, "import { x } from 'mod';export { x };export * as ns from 'mod';");
         assert_eq!(module_record.indirect_export_entries.len(), 2);
         assert_eq!(
             module_record.indirect_export_entries[0],

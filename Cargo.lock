@@ -1986,7 +1986,6 @@ version = "0.38.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
- "dashmap 6.1.0",
  "nonmax",
  "oxc_allocator",
  "oxc_ast_macros",

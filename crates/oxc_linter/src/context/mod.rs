@@ -7,7 +7,6 @@ use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::Semantic;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::module_record::ModuleRecord;
 
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
@@ -15,7 +14,7 @@ use crate::{
     disable_directives::DisableDirectives,
     fixer::{FixKind, Message, RuleFix, RuleFixer},
     javascript_globals::GLOBALS,
-    AllowWarnDeny, FrameworkFlags, OxlintEnv, OxlintGlobals, OxlintSettings,
+    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
 pub(crate) use host::ContextHost;

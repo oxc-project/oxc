@@ -21,11 +21,10 @@ use oxc::{
         ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable,
     },
     span::SourceType,
-    syntax::module_record::ModuleRecord,
     transformer::{TransformOptions, Transformer},
 };
 use oxc_index::Idx;
-use oxc_linter::Linter;
+use oxc_linter::{Linter, ModuleRecord};
 use oxc_prettier::{Prettier, PrettierOptions};
 use serde::Serialize;
 use tsify::Tsify;
@@ -229,7 +228,7 @@ impl Oxc {
             );
         }
 
-        let module_record = Arc::new(module_record);
+        let module_record = Arc::new(ModuleRecord::new(&path, &module_record));
         self.run_linter(&run_options, &path, &program, &module_record);
 
         self.run_prettier(&run_options, source_text, source_type);

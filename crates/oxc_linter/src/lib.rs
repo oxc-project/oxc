@@ -12,6 +12,8 @@ mod fixer;
 mod frameworks;
 mod globals;
 mod javascript_globals;
+mod module_graph_visitor;
+mod module_record;
 mod options;
 mod rule;
 mod rules;
@@ -24,7 +26,6 @@ pub mod table;
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 
 use oxc_semantic::{AstNode, Semantic};
-use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::{
     builder::{LinterBuilder, LinterBuilderError},
@@ -32,6 +33,7 @@ pub use crate::{
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
+    module_record::ModuleRecord,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},

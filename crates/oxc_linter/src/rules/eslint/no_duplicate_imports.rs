@@ -3,9 +3,12 @@ use rustc_hash::FxHashMap;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::{ExportImportName, ImportImportName},
+    rule::Rule,
+};
 
 fn no_duplicate_imports_diagnostic(module_name: &str, span: Span, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{module_name}' import is duplicated"))

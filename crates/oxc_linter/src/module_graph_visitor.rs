@@ -4,7 +4,7 @@ use std::{marker::PhantomData, path::PathBuf, sync::Arc};
 use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
-use crate::module_record::ModuleRecord;
+use crate::ModuleRecord;
 
 type ModulePair<'a> = (&'a CompactStr, &'a Arc<ModuleRecord>);
 
@@ -73,19 +73,19 @@ impl<'a, T> ModuleGraphVisitorBuilder<'a, T> {
         self
     }
 
-    /// Sets the enter module event closure.
-    #[must_use]
-    pub fn enter<F: FnMut(ModulePair, &ModuleRecord) + 'a>(mut self, enter: F) -> Self {
-        self.enter = Some(Box::new(enter));
-        self
-    }
+    // /// Sets the enter module event closure.
+    // #[must_use]
+    // pub fn enter<F: FnMut(ModulePair, &ModuleRecord) + 'a>(mut self, enter: F) -> Self {
+    // self.enter = Some(Box::new(enter));
+    // self
+    // }
 
-    /// Sets the leave module event closure.
-    #[must_use]
-    pub fn leave<F: FnMut(ModulePair, &ModuleRecord) + 'a>(mut self, leave: F) -> Self {
-        self.leave = Some(Box::new(leave));
-        self
-    }
+    // /// Sets the leave module event closure.
+    // #[must_use]
+    // pub fn leave<F: FnMut(ModulePair, &ModuleRecord) + 'a>(mut self, leave: F) -> Self {
+    // self.leave = Some(Box::new(leave));
+    // self
+    // }
 
     /// Behaves similar to a flat fold_while iteration.
     pub fn visit_fold<V: Fn(T, ModulePair, &ModuleRecord) -> VisitFoldWhile<T>>(
@@ -125,13 +125,13 @@ impl<T> Default for ModuleGraphVisitorBuilder<'_, T> {
 
 pub struct ModuleGraphVisitResult<T> {
     pub result: T,
-    pub traversed: FxHashSet<PathBuf>,
-    pub max_depth: u32,
+    pub _traversed: FxHashSet<PathBuf>,
+    pub _max_depth: u32,
 }
 
 impl<T> ModuleGraphVisitResult<T> {
     fn with_result(result: T, visitor: ModuleGraphVisitor) -> Self {
-        Self { result, traversed: visitor.traversed, max_depth: visitor.max_depth }
+        Self { result, _traversed: visitor.traversed, _max_depth: visitor.max_depth }
     }
 }
 

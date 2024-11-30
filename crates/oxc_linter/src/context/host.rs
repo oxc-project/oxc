@@ -2,13 +2,13 @@ use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;
-use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
     config::{LintConfig, LintPlugins},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{FixKind, Message},
     frameworks,
+    module_record::ModuleRecord,
     options::LintOptions,
     utils, FrameworkFlags, RuleWithSeverity,
 };

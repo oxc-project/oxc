@@ -7,18 +7,19 @@ use std::{
     sync::Arc,
 };
 
+use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
-use oxc_syntax::module_record::ModuleRecord;
-use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
-use rustc_hash::FxHashSet;
 
 use crate::{
     loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    module_record::ModuleRecord,
     utils::read_to_string,
     Fixer, Linter, Message,
 };
@@ -218,7 +219,7 @@ impl Runtime {
             .with_build_jsdoc(true)
             .with_check_syntax_error(check_syntax_errors);
 
-        let mut module_record = ret.module_record;
+        let mut module_record = ModuleRecord::new(path, &ret.module_record);
         module_record.resolved_absolute_path = path.to_path_buf();
         let module_record = Arc::new(module_record);
 

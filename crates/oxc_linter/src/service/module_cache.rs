@@ -7,7 +7,7 @@ use std::{
 use dashmap::{mapref::one::Ref, DashMap};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
-use oxc_syntax::module_record::ModuleRecord;
+use crate::ModuleRecord;
 
 type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 

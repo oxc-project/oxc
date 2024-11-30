@@ -12,7 +12,8 @@ use oxc_semantic::{
     SymbolTable,
 };
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::module_record::ModuleRecord;
+
+use crate::ModuleRecord;
 
 #[derive(Clone)]
 pub(super) struct Symbol<'s, 'a> {

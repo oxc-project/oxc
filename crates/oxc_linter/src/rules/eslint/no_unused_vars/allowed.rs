@@ -2,10 +2,12 @@
 //! consider variables ignored by name pattern, but by where they are declared.
 use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{NodeId, Semantic};
-use oxc_syntax::module_record::ModuleRecord;
 
 use super::{options::ArgsOption, NoUnusedVars, Symbol};
-use crate::rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding};
+use crate::{
+    rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding},
+    ModuleRecord,
+};
 
 impl Symbol<'_, '_> {
     /// Check if the declaration of this [`Symbol`] is use.

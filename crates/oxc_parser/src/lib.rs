@@ -154,7 +154,7 @@ pub struct ParserReturn<'a> {
     pub program: Program<'a>,
 
     /// See <https://tc39.es/ecma262/#sec-abstract-module-records>
-    pub module_record: ModuleRecord,
+    pub module_record: ModuleRecord<'a>,
 
     /// Syntax errors encountered while parsing.
     ///
@@ -370,7 +370,7 @@ struct ParserImpl<'a> {
     ast: AstBuilder<'a>,
 
     /// Module Record Builder
-    module_record_builder: ModuleRecordBuilder,
+    module_record_builder: ModuleRecordBuilder<'a>,
 
     /// Precomputed typescript detection
     is_ts: bool,
@@ -389,8 +389,6 @@ impl<'a> ParserImpl<'a> {
         options: ParseOptions,
         unique: UniquePromise,
     ) -> Self {
-        let mut module_record_builder = ModuleRecordBuilder::default();
-        module_record_builder.module_record.not_esm = true;
         Self {
             options,
             lexer: Lexer::new(allocator, source_text, source_type, unique),
@@ -402,7 +400,7 @@ impl<'a> ParserImpl<'a> {
             state: ParserState::default(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
-            module_record_builder,
+            module_record_builder: ModuleRecordBuilder::new(allocator),
             is_ts: source_type.is_typescript(),
         }
     }

@@ -4,10 +4,13 @@ use itertools::Itertools;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_syntax::module_record::{ImportImportName, RequestedModule};
 use rustc_hash::FxHashMap;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::{ImportImportName, RequestedModule},
+    rule::Rule,
+};
 
 fn no_duplicates_diagnostic<I>(
     module_name: &str,

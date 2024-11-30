@@ -8,11 +8,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::module_record::{
-    ExportExportName, ExportImportName, ImportImportName, ModuleRecord,
-};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::{ExportExportName, ExportImportName, ImportImportName, ModuleRecord},
+    rule::Rule,
+};
 
 fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
