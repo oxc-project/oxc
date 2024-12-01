@@ -1,5 +1,4 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
-#![allow(missing_docs)] // fixme
 
 use std::{
     fmt,
@@ -124,7 +123,7 @@ impl fmt::Debug for ModuleRecord {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NameSpan {
-    name: CompactStr,
+    pub name: CompactStr,
     span: Span,
 }
 
@@ -133,11 +132,11 @@ impl NameSpan {
         Self { name, span }
     }
 
-    pub const fn name(&self) -> &CompactStr {
-        &self.name
+    pub fn name(&self) -> &str {
+        self.name.as_str()
     }
 
-    pub const fn span(&self) -> Span {
+    pub fn span(&self) -> Span {
         self.span
     }
 }
@@ -413,9 +412,9 @@ impl ExportLocalName {
     }
 
     /// Get the bound name of this export. [`None`] for [`ExportLocalName::Null`].
-    pub const fn name(&self) -> Option<&CompactStr> {
+    pub fn name(&self) -> Option<&str> {
         match self {
-            Self::Name(name) | Self::Default(name) => Some(name.name()),
+            Self::Name(name) | Self::Default(name) => Some(name.name.as_str()),
             Self::Null => None,
         }
     }

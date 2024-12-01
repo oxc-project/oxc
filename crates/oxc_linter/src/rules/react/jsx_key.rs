@@ -98,8 +98,8 @@ pub fn import_matcher<'a>(
 ) -> bool {
     let expected_module_name = expected_module_name.cow_to_lowercase();
     ctx.module_record().import_entries.iter().any(|import| {
-        import.module_request.name().as_str() == expected_module_name
-            && import.local_name.name().as_str() == actual_local_name
+        import.module_request.name() == expected_module_name
+            && import.local_name.name() == actual_local_name
     })
 }
 

@@ -107,10 +107,12 @@ fn is_inside_export_default(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
         let Some(name) = name else {
             continue;
         };
-        if ctx.module_record().local_export_entries.iter().any(|e| {
-            e.local_name.is_default()
-                && e.local_name.name().is_some_and(|n| n.as_str() == name.as_str())
-        }) {
+        if ctx
+            .module_record()
+            .local_export_entries
+            .iter()
+            .any(|e| e.local_name.is_default() && e.local_name.name().is_some_and(|n| n == name))
+        {
             is_inside_export_default = true;
         }
     }

@@ -106,25 +106,25 @@ impl Rule for Named {
                 continue;
             }
             let import_span = import_name.span();
-            let import_name = import_name.name();
+            let name = import_name.name();
             // Check `import { default as foo } from 'bar'`
-            if import_name.as_str() == "default" && remote_module_record.export_default.is_some() {
+            if name == "default" && remote_module_record.export_default.is_some() {
                 continue;
             }
             // Check remote bindings
-            if remote_module_record.exported_bindings.contains_key(import_name) {
+            if remote_module_record.exported_bindings.contains_key(name) {
                 continue;
             }
             // check re-export
             if remote_module_record
                 .exported_bindings_from_star_export
                 .iter()
-                .any(|entry| entry.value().contains(import_name))
+                .any(|entry| entry.value().contains(&import_name.name))
             {
                 continue;
             }
 
-            ctx.diagnostic(named_diagnostic(import_name, specifier, import_span));
+            ctx.diagnostic(named_diagnostic(name, specifier, import_span));
         }
 
         for export_entry in &module_record.indirect_export_entries {
@@ -146,7 +146,7 @@ impl Rule for Named {
             // Check remote bindings
             let name = import_name.name();
             // `export { default as foo } from './source'` <> `export default xxx`
-            if *name == "default" && remote_module_record.export_default.is_some() {
+            if name == "default" && remote_module_record.export_default.is_some() {
                 continue;
             }
             if remote_module_record.exported_bindings.contains_key(name) {

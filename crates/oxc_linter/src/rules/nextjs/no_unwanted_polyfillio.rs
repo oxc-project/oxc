@@ -117,8 +117,7 @@ impl Rule for NoUnwantedPolyfillio {
 
         if tag_name.as_str() != "script" {
             let next_script_import_local_name = get_next_script_import_local_name(ctx);
-            if !matches!(next_script_import_local_name, Some(import) if tag_name.as_str() == import.as_str())
-            {
+            if !matches!(next_script_import_local_name, Some(import) if tag_name == import) {
                 return;
             }
         }

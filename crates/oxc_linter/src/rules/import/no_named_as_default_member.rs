@@ -90,16 +90,13 @@ impl Rule for NoNamedAsDefaultMember {
                 continue;
             }
 
-            let Some(symbol_id) =
-                ctx.scopes().get_root_binding(import_entry.local_name.name().as_str())
+            let Some(symbol_id) = ctx.scopes().get_root_binding(import_entry.local_name.name())
             else {
                 return;
             };
 
-            has_members_map.insert(
-                symbol_id,
-                (remote_module_record_ref, import_entry.module_request.name().clone()),
-            );
+            has_members_map
+                .insert(symbol_id, (remote_module_record_ref, import_entry.module_request.clone()));
         }
 
         if has_members_map.is_empty() {
@@ -134,7 +131,7 @@ impl Rule for NoNamedAsDefaultMember {
                     },
                     &ident.name,
                     prop_str,
-                    module_name,
+                    module_name.name(),
                 ));
             };
         };
@@ -161,7 +158,7 @@ impl Rule for NoNamedAsDefaultMember {
                                 decl.span,
                                 &ident.name,
                                 &name,
-                                module_name,
+                                module_name.name(),
                             ));
                         }
                     }
