@@ -170,7 +170,7 @@ impl Rule for NoCycle {
             });
 
         if visitor_result.result {
-            let span = module_record.requested_modules[&stack[0].0][0].span();
+            let span = module_record.requested_modules[&stack[0].0][0].span;
             let help = stack
                 .iter()
                 .map(|(specifier, path)| {

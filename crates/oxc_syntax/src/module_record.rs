@@ -1,7 +1,4 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
-#![allow(missing_docs)] // fixme
-
-use std::fmt;
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_span::{Atom, Span};
@@ -15,6 +12,7 @@ use rustc_hash::FxHashMap;
 /// See
 /// * <https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records>
 /// * <https://tc39.es/ecma262/#cyclic-module-record>
+#[derive(Debug)]
 pub struct ModuleRecord<'a> {
     /// This module has no import / export statements
     pub not_esm: bool,
@@ -74,6 +72,7 @@ pub struct ModuleRecord<'a> {
 }
 
 impl<'a> ModuleRecord<'a> {
+    /// Constructor
     pub fn new(allocator: &'a Allocator) -> Self {
         Self {
             not_esm: true,
@@ -91,30 +90,18 @@ impl<'a> ModuleRecord<'a> {
     }
 }
 
-impl fmt::Debug for ModuleRecord<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ModuleRecord")
-            .field("not_esm", &self.not_esm)
-            .field("import_entries", &self.import_entries)
-            .field("local_export_entries", &self.local_export_entries)
-            .field("indirect_export_entries", &self.indirect_export_entries)
-            .field("star_export_entries", &self.star_export_entries)
-            .field("exported_bindings", &self.exported_bindings)
-            .field("exported_bindings_duplicated", &self.exported_bindings_duplicated)
-            .field("exported_bindings_from_star_export", &self.exported_bindings_from_star_export)
-            .field("export_default", &self.export_default)
-            .field("export_default_duplicated", &self.export_default_duplicated)
-            .finish()
-    }
-}
-
+/// Name and Span
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NameSpan<'a> {
+    /// Name
     pub name: Atom<'a>,
+
+    /// Span
     pub span: Span,
 }
 
 impl<'a> NameSpan<'a> {
+    /// Constructor
     pub fn new(name: Atom<'a>, span: Span) -> Self {
         Self { name, span }
     }
@@ -193,16 +180,21 @@ pub struct ImportEntry<'a> {
 /// `ImportName` For `ImportEntry`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ImportImportName<'a> {
+    /// Name
     Name(NameSpan<'a>),
+    /// Namespace Object
     NamespaceObject,
+    /// Default
     Default(Span),
 }
 
 impl ImportImportName<'_> {
+    /// Is `default`
     pub fn is_default(&self) -> bool {
         matches!(self, Self::Default(_))
     }
 
+    /// Is namespace
     pub fn is_namespace_object(&self) -> bool {
         matches!(self, Self::NamespaceObject)
     }
@@ -253,6 +245,7 @@ pub struct ExportEntry<'a> {
 /// `ImportName` for `ExportEntry`
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum ExportImportName<'a> {
+    /// Name
     Name(NameSpan<'a>),
     /// all is used for export * as ns from "mod" declarations.
     All,
@@ -263,11 +256,14 @@ pub enum ExportImportName<'a> {
     Null,
 }
 
+/// Export Import Name
 impl ExportImportName<'_> {
+    /// Is all
     pub fn is_all(&self) -> bool {
         matches!(self, Self::All)
     }
 
+    /// Is all but default
     pub fn is_all_but_default(&self) -> bool {
         matches!(self, Self::AllButDefault)
     }
@@ -276,8 +272,11 @@ impl ExportImportName<'_> {
 /// `ExportName` for `ExportEntry`
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum ExportExportName<'a> {
+    /// Name
     Name(NameSpan<'a>),
+    /// Default
     Default(Span),
+    /// Null
     #[default]
     Null,
 }
@@ -306,9 +305,11 @@ impl ExportExportName<'_> {
 /// `LocalName` for `ExportEntry`
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum ExportLocalName<'a> {
+    /// Name
     Name(NameSpan<'a>),
     /// `export default name_span`
     Default(NameSpan<'a>),
+    /// Null
     #[default]
     Null,
 }
@@ -333,22 +334,11 @@ impl<'a> ExportLocalName<'a> {
     }
 }
 
+/// RequestedModule
 #[derive(Debug, Clone, Copy)]
 pub struct RequestedModule {
-    span: Span,
-    is_type: bool,
-    /// is_import is true if the module is requested by an import statement.
-    is_import: bool,
-}
-
-impl RequestedModule {
-    pub fn new(span: Span, is_type: bool, is_import: bool) -> Self {
-        Self { span, is_type, is_import }
-    }
-
-    pub fn span(&self) -> Span {
-        self.span
-    }
+    /// Span
+    pub span: Span,
 
     /// `true` if a `type` modifier was used in the import statement.
     ///
@@ -358,13 +348,16 @@ impl RequestedModule {
     /// import { type bar } from "bar"; // false, `type` is on specifier
     /// import { baz } from "baz";      // false, no `type` modifier
     /// ```
-    pub fn is_type(&self) -> bool {
-        self.is_type
-    }
+    pub is_type: bool,
 
     /// `true` if the module is requested by an import statement.
-    pub fn is_import(&self) -> bool {
-        self.is_import
+    pub is_import: bool,
+}
+
+impl RequestedModule {
+    /// Constructor
+    pub fn new(span: Span, is_type: bool, is_import: bool) -> Self {
+        Self { span, is_type, is_import }
     }
 }
 
