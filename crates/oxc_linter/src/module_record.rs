@@ -9,6 +9,7 @@ use std::{
 use dashmap::DashMap;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
+use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, Span};
 pub use oxc_syntax::module_record::RequestedModule;
 
@@ -435,7 +436,11 @@ impl<'a> From<&oxc_syntax::module_record::ExportLocalName<'a>> for ExportLocalNa
 }
 
 impl ModuleRecord {
-    pub fn new(path: &Path, other: &oxc_syntax::module_record::ModuleRecord) -> Self {
+    pub fn new(
+        path: &Path,
+        other: &oxc_syntax::module_record::ModuleRecord,
+        _semantic: &Semantic,
+    ) -> Self {
         Self {
             not_esm: other.not_esm,
             resolved_absolute_path: path.to_path_buf(),

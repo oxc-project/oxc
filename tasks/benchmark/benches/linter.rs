@@ -37,9 +37,11 @@ fn bench_linter(criterion: &mut Criterion) {
                     .with_scope_tree_child_ids(true)
                     .with_cfg(true)
                     .build(&ret.program);
+                let semantic = semantic_ret.semantic;
+                let module_record =
+                    Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
+                let semantic = Rc::new(semantic);
                 let linter = LinterBuilder::all().with_fix(FixKind::All).build();
-                let semantic = Rc::new(semantic_ret.semantic);
-                let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record));
                 b.iter(|| linter.run(path, Rc::clone(&semantic), Arc::clone(&module_record)));
             },
         );

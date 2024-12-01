@@ -215,10 +215,11 @@ impl Oxc {
         }
         let semantic_ret =
             semantic_builder.with_check_syntax_error(true).with_cfg(true).build(&program);
+        let semantic = semantic_ret.semantic;
 
-        self.control_flow_graph = semantic_ret.semantic.cfg().map_or_else(String::default, |cfg| {
+        self.control_flow_graph = semantic.cfg().map_or_else(String::default, |cfg| {
             cfg.debug_dot(DebugDotContext::new(
-                semantic_ret.semantic.nodes(),
+                semantic.nodes(),
                 control_flow_options.verbose.unwrap_or_default(),
             ))
         });
@@ -228,12 +229,12 @@ impl Oxc {
             );
         }
 
-        let module_record = Arc::new(ModuleRecord::new(&path, &module_record));
+        let module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
         self.run_linter(&run_options, &path, &program, &module_record);
 
         self.run_prettier(&run_options, source_text, source_type);
 
-        let (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
+        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
 
         if !source_type.is_typescript_definition() {
             if run_options.scope.unwrap_or_default() {

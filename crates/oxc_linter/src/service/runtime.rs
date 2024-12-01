@@ -211,12 +211,25 @@ impl Runtime {
             };
         };
 
-        let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record));
+        let semantic_ret = SemanticBuilder::new()
+            .with_cfg(true)
+            .with_scope_tree_child_ids(true)
+            .with_build_jsdoc(true)
+            .with_check_syntax_error(check_syntax_errors)
+            .build(&ret.program);
+
+        if !semantic_ret.errors.is_empty() {
+            return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
+        };
+
+        let mut semantic = semantic_ret.semantic;
+        semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
+
+        let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
 
         // If import plugin is enabled.
         if self.resolver.is_some() {
             self.modules.add_resolved_module(path, Arc::clone(&module_record));
-
             // Retrieve all dependent modules from this module.
             let dir = path.parent().unwrap();
             module_record
@@ -230,18 +243,14 @@ impl Runtime {
                 .for_each_with(tx_error, |tx_error, (specifier, resolution)| {
                     let path = resolution.path();
                     self.process_path(path, tx_error);
-                    let Some(target_module_record_ref) = self.modules.get(path) else {
-                        return;
-                    };
-                    let ModuleState::Resolved(target_module_record) =
-                        target_module_record_ref.value()
-                    else {
-                        return;
-                    };
                     // Append target_module to loaded_modules
-                    module_record
-                        .loaded_modules
-                        .insert(specifier.clone(), Arc::clone(target_module_record));
+                    if let Some(target_ref) = self.modules.get(path) {
+                        if let ModuleState::Resolved(target_module_record) = target_ref.value() {
+                            module_record
+                                .loaded_modules
+                                .insert(specifier.clone(), Arc::clone(target_module_record));
+                        }
+                    };
                 });
 
             // The thread is blocked here until all dependent modules are resolved.
@@ -256,7 +265,6 @@ impl Runtime {
                     continue;
                 };
                 let remote_module_record = remote_module_record_ref.value();
-
                 // Append both remote `bindings` and `exported_bindings_from_star_export`
                 let remote_exported_bindings_from_star_export = remote_module_record
                     .exported_bindings_from_star_export
@@ -282,19 +290,6 @@ impl Runtime {
             }
         }
 
-        let semantic_ret = SemanticBuilder::new()
-            .with_cfg(true)
-            .with_scope_tree_child_ids(true)
-            .with_build_jsdoc(true)
-            .with_check_syntax_error(check_syntax_errors)
-            .build(&ret.program);
-
-        if !semantic_ret.errors.is_empty() {
-            return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
-        };
-
-        let mut semantic = semantic_ret.semantic;
-        semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
         self.linter.run(path, Rc::new(semantic), Arc::clone(&module_record))
     }
 
@@ -302,7 +297,6 @@ impl Runtime {
         if self.resolver.is_none() {
             return false;
         }
-
         self.modules.init_cache_state(path)
     }
 
