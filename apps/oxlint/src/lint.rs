@@ -777,4 +777,19 @@ mod test {
         ]);
         assert_eq!(result.number_of_files, 1);
     }
+
+    // Issue: <https://github.com/oxc-project/oxc/pull/7566>
+    #[test]
+    fn ignore_path_with_relative_files() {
+        let args = &[
+            "--ignore-path",
+            "fixtures/issue_7566/.oxlintignore",
+            "fixtures/issue_7566/tests/main.js",
+            "fixtures/issue_7566/tests/function/main.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 0);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
+    }
 }
