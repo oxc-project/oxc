@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.14.0] - 2024-12-01
+
+- c2ced15 parser,linter: [**BREAKING**] Use a different `ModuleRecord` for linter (#7554) (Boshen)
+
+- 0be5233 semantic: [**BREAKING**] Remove `ModuleRecord` from `Semantic` (#7548) (Boshen)
+
+- 8a788b8 parser: [**BREAKING**] Build `ModuleRecord` directly in parser (#7546) (Boshen)
+
+### Features
+
+- 32f860d linter: Add support for ignorePatterns property within config file (#7092) (Nicholas Rayburn)
+- 053bc08 linter: Implement typescript/no-unused-expressions (#7498) (camc314)
+- 60b28fc linter: Implement typescript/consistent-generic-constructors (#7497) (camc314)
+- bd0693b linter: Allow lint rules with the same name (#7496) (camc314)
+- 2ac9f96 linter: Typescript/no-inferrable-types (#7438) (camc314)
+- 8d89fdc linter: Add eslint/prefer-spread (#7112) (tbashiyy)
+
+### Bug Fixes
+
+- 123b5b7 linter: False positive in `typescript/consistent-type-definitions` (#7560) (dalaoshu)
+- cc078d6 linter: Add missing error message prefix to `eslint/no-const-assign` (Boshen)
+- 17c0dd8 linter: Fix `jsx_no_script_url` doc failed to build (Boshen)
+
+### Performance
+
+- 6cc7a48 linter: Use `OsString` for module cache hash (#7558) (Boshen)
+- 6655345 linter: Use `FxDashMap` for module cache (#7522) (overlookmotel)
+
+### Documentation
+
+- a6b0100 linter: Fix config example headings (#7562) (Boshen)
+
+### Refactor
+
+- 0f3f67a linter: Add capability of adding semantic data to module record (#7561) (Boshen)
+- 8392177 linter: Clean up the runtime after the module record change (#7557) (Boshen)
+- 823353a linter: Clean up APIs for `ModuleRecord` (#7556) (Boshen)
+- f847d0f linter: Call `str::ends_with` with array not slice (#7526) (overlookmotel)
+- 2077ff9 linter: Remove `once_cell` (#7510) (Boshen)
+- 169b8bf linter, syntax: Introduce type alias `FxDashMap` (#7520) (overlookmotel)
+
 ## [0.13.2] - 2024-11-26
 
 ### Features
