@@ -780,13 +780,21 @@ mod test {
 
     #[test]
     fn test_jest_and_vitest_alias_rules() {
-        let args = &["-c", "fixtures/jest_and_vitest_alias_rules/oxlint-jest.json", "fixtures/jest_and_vitest_alias_rules/test.js"];
+        let args = &[
+            "-c",
+            "fixtures/jest_and_vitest_alias_rules/oxlint-jest.json",
+            "fixtures/jest_and_vitest_alias_rules/test.js",
+        ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
 
-        let args = &["-c", "fixtures/jest_and_vitest_alias_rules/oxlint-vitest.json", "fixtures/jest_and_vitest_alias_rules/test.js"];
+        let args = &[
+            "-c",
+            "fixtures/jest_and_vitest_alias_rules/oxlint-vitest.json",
+            "fixtures/jest_and_vitest_alias_rules/test.js",
+        ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
