@@ -3,7 +3,7 @@ use std::{path::Path, process::Command};
 use crate::{conformance_root, TestRunner};
 
 impl TestRunner {
-    pub(crate) fn run_vitest(&self, dest: &Path) {
+    pub(crate) fn run_vitest(&self, dir: &str, dest: &Path) {
         let version = String::from("node: ")
             + &String::from_utf8(Command::new("node").arg("--version").output().unwrap().stdout)
                 .unwrap();
@@ -18,7 +18,7 @@ impl TestRunner {
                 "--reporter=basic",
                 "--exclude=\"\"",
                 "--no-color",
-                "./fixtures",
+                dir,
             ])
             .output()
             .unwrap();
