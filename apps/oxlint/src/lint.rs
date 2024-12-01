@@ -57,16 +57,6 @@ impl Runner for LintRunner {
         let provided_path_count = paths.len();
         let now = Instant::now();
 
-        // append cwd to all paths
-        paths = paths
-            .into_iter()
-            .map(|x| {
-                let mut path_with_cwd = self.cwd.clone();
-                path_with_cwd.push(x);
-                path_with_cwd
-            })
-            .collect();
-
         // The ignore crate whitelists explicit paths, but priority
         // should be given to the ignore file. Many users lint
         // automatically and pass a list of changed files explicitly.
@@ -76,6 +66,16 @@ impl Runner for LintRunner {
             let (ignore, _err) = Gitignore::new(&ignore_options.ignore_path);
             paths.retain(|p| if p.is_dir() { true } else { !ignore.matched(p, false).is_ignore() });
         }
+
+        // Append cwd to all paths
+        paths = paths
+            .into_iter()
+            .map(|x| {
+                let mut path_with_cwd = self.cwd.clone();
+                path_with_cwd.push(x);
+                path_with_cwd
+            })
+            .collect();
 
         if paths.is_empty() {
             // If explicit paths were provided, but all have been
