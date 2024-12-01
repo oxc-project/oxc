@@ -211,22 +211,13 @@ impl Runtime {
             };
         };
 
-        // Build the module record to unblock other threads from waiting for too long.
-        // The semantic model is not built at this stage.
-        let semantic_builder = SemanticBuilder::new()
-            .with_cfg(true)
-            .with_scope_tree_child_ids(true)
-            .with_build_jsdoc(true)
-            .with_check_syntax_error(check_syntax_errors);
+        let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record));
 
-        let mut module_record = ModuleRecord::new(path, &ret.module_record);
-        module_record.resolved_absolute_path = path.to_path_buf();
-        let module_record = Arc::new(module_record);
-
+        // If import plugin is enabled.
         if self.resolver.is_some() {
             self.modules.add_resolved_module(path, Arc::clone(&module_record));
 
-            // Retrieve all dependency modules from this module.
+            // Retrieve all dependent modules from this module.
             let dir = path.parent().unwrap();
             module_record
                 .requested_modules
@@ -291,7 +282,12 @@ impl Runtime {
             }
         }
 
-        let semantic_ret = semantic_builder.build(&ret.program);
+        let semantic_ret = SemanticBuilder::new()
+            .with_cfg(true)
+            .with_scope_tree_child_ids(true)
+            .with_build_jsdoc(true)
+            .with_check_syntax_error(check_syntax_errors)
+            .build(&ret.program);
 
         if !semantic_ret.errors.is_empty() {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
