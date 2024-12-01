@@ -248,7 +248,7 @@
       "type": "object",
       "properties": {
         "components": {
-          "description": "To have your custom components be checked as DOM elements, you can provide a mapping of your component names to the DOM element name.\n\n## Example\n\n```json { \"settings\": { \"jsx-a11y\": { \"components\": { \"Link\": \"a\", \"IconButton\": \"button\" } } } } ```",
+          "description": "To have your custom components be checked as DOM elements, you can provide a mapping of your component names to the DOM element name.\n\nExample:\n\n```json { \"settings\": { \"jsx-a11y\": { \"components\": { \"Link\": \"a\", \"IconButton\": \"button\" } } } } ```",
           "default": {},
           "type": "object",
           "additionalProperties": {
@@ -275,7 +275,7 @@
       "type": "object",
       "properties": {
         "rootDir": {
-          "description": "The root directory of the Next.js project.\n\nThis is particularly useful when you have a monorepo and your Next.js project is in a subfolder.\n\n## Example\n\n```json { \"settings\": { \"next\": { \"rootDir\": \"apps/dashboard/\" } } } ```",
+          "description": "The root directory of the Next.js project.\n\nThis is particularly useful when you have a monorepo and your Next.js project is in a subfolder.\n\nExample:\n\n```json { \"settings\": { \"next\": { \"rootDir\": \"apps/dashboard/\" } } } ```",
           "default": [],
           "allOf": [
             {
@@ -392,7 +392,7 @@
     },
     "OxlintSettings": {
       "title": "Oxlint Plugin Settings",
-      "description": "Configure the behavior of linter plugins.\n\n## Example\n\nHere's an example if you're using Next.js in a monorepo:\n\n```json { \"settings\": { \"next\": { \"rootDir\": \"apps/dashboard/\" }, \"react\": { \"linkComponents\": [ { \"name\": \"Link\", \"linkAttribute\": \"to\" } ] }, \"jsx-a11y\": { \"components\": { \"Link\": \"a\", \"Button\": \"button\" } } } } ```",
+      "description": "Configure the behavior of linter plugins.\n\nHere's an example if you're using Next.js in a monorepo:\n\n```json { \"settings\": { \"next\": { \"rootDir\": \"apps/dashboard/\" }, \"react\": { \"linkComponents\": [ { \"name\": \"Link\", \"linkAttribute\": \"to\" } ] }, \"jsx-a11y\": { \"components\": { \"Link\": \"a\", \"Button\": \"button\" } } } } ```",
       "type": "object",
       "properties": {
         "jsdoc": {
@@ -451,7 +451,7 @@
       "type": "object",
       "properties": {
         "formComponents": {
-          "description": "Components used as alternatives to `<form>` for forms, such as `<Formik>`.\n\n## Example\n\n```jsonc { \"settings\": { \"react\": { \"formComponents\": [ \"CustomForm\", // OtherForm is considered a form component and has an endpoint attribute { \"name\": \"OtherForm\", \"formAttribute\": \"endpoint\" }, // allows specifying multiple properties if necessary { \"name\": \"Form\", \"formAttribute\": [\"registerEndpoint\", \"loginEndpoint\"] } ] } } } ```",
+          "description": "Components used as alternatives to `<form>` for forms, such as `<Formik>`.\n\nExample:\n\n```jsonc { \"settings\": { \"react\": { \"formComponents\": [ \"CustomForm\", // OtherForm is considered a form component and has an endpoint attribute { \"name\": \"OtherForm\", \"formAttribute\": \"endpoint\" }, // allows specifying multiple properties if necessary { \"name\": \"Form\", \"formAttribute\": [\"registerEndpoint\", \"loginEndpoint\"] } ] } } } ```",
           "default": [],
           "type": "array",
           "items": {
@@ -459,7 +459,7 @@
           }
         },
         "linkComponents": {
-          "description": "Components used as alternatives to `<a>` for linking, such as `<Link>`.\n\n## Example\n\n```jsonc { \"settings\": { \"react\": { \"linkComponents\": [ \"HyperLink\", // Use `linkAttribute` for components that use a different prop name // than `href`. { \"name\": \"MyLink\", \"linkAttribute\": \"to\" }, // allows specifying multiple properties if necessary { \"name\": \"Link\", \"linkAttribute\": [\"to\", \"href\"] } ] } } } ```",
+          "description": "Components used as alternatives to `<a>` for linking, such as `<Link>`.\n\nExample:\n\n```jsonc { \"settings\": { \"react\": { \"linkComponents\": [ \"HyperLink\", // Use `linkAttribute` for components that use a different prop name // than `href`. { \"name\": \"MyLink\", \"linkAttribute\": \"to\" }, // allows specifying multiple properties if necessary { \"name\": \"Link\", \"linkAttribute\": [\"to\", \"href\"] } ] } } } ```",
           "default": [],
           "type": "array",
           "items": {

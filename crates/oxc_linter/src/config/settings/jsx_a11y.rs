@@ -29,7 +29,7 @@ pub struct JSXA11yPluginSettings {
     /// To have your custom components be checked as DOM elements, you can
     /// provide a mapping of your component names to the DOM element name.
     ///
-    /// ## Example
+    /// Example:
     ///
     /// ```json
     /// {
