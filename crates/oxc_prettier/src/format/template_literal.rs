@@ -12,7 +12,7 @@ pub enum TemplateLiteralPrinter<'a, 'b> {
     TSTemplateLiteralType(&'b TSTemplateLiteralType<'a>),
 }
 
-impl<'a, 'b> TemplateLiteralPrinter<'a, 'b> {
+impl<'a> TemplateLiteralPrinter<'a, '_> {
     fn quasis(&self) -> &[TemplateElement<'a>] {
         match self {
             Self::TemplateLiteral(template_literal) => &template_literal.quasis,

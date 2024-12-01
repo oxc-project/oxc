@@ -1,9 +1,12 @@
 use std::sync::OnceLock;
 
 use dashmap::DashMap;
+use rustc_hash::FxBuildHasher;
 use serde::Deserialize;
 
 use super::EngineTargets;
+
+type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 
 #[derive(Debug, Clone, Deserialize, Eq, PartialEq, PartialOrd, Ord, Hash)]
 #[serde(untagged)]
@@ -12,9 +15,9 @@ pub enum BrowserslistQuery {
     Multiple(Vec<String>),
 }
 
-fn cache() -> &'static DashMap<BrowserslistQuery, EngineTargets> {
-    static CACHE: OnceLock<DashMap<BrowserslistQuery, EngineTargets>> = OnceLock::new();
-    CACHE.get_or_init(DashMap::new)
+fn cache() -> &'static FxDashMap<BrowserslistQuery, EngineTargets> {
+    static CACHE: OnceLock<FxDashMap<BrowserslistQuery, EngineTargets>> = OnceLock::new();
+    CACHE.get_or_init(FxDashMap::default)
 }
 
 impl BrowserslistQuery {

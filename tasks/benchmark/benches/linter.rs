@@ -1,8 +1,8 @@
-use std::{env, path::Path, rc::Rc};
+use std::{env, path::Path, rc::Rc, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_linter::{FixKind, LinterBuilder};
+use oxc_linter::{FixKind, LinterBuilder, ModuleRecord};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -36,11 +36,13 @@ fn bench_linter(criterion: &mut Criterion) {
                     .with_build_jsdoc(true)
                     .with_scope_tree_child_ids(true)
                     .with_cfg(true)
-                    .build_module_record(path, &ret.program)
                     .build(&ret.program);
+                let semantic = semantic_ret.semantic;
+                let module_record =
+                    Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
+                let semantic = Rc::new(semantic);
                 let linter = LinterBuilder::all().with_fix(FixKind::All).build();
-                let semantic = Rc::new(semantic_ret.semantic);
-                b.iter(|| linter.run(path, Rc::clone(&semantic)));
+                b.iter(|| linter.run(path, Rc::clone(&semantic), Arc::clone(&module_record)));
             },
         );
     }

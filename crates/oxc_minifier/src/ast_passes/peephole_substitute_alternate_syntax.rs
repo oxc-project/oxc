@@ -7,7 +7,7 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::{node_util::Ctx, CompressorPass};
 
@@ -24,17 +24,13 @@ pub struct PeepholeSubstituteAlternateSyntax {
     // states
     in_define_export: bool,
 
-    changed: bool,
+    pub(crate) changed: bool,
 }
 
 impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {
-    fn changed(&self) -> bool {
-        self.changed
-    }
-
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
-        oxc_traverse::walk_program(self, program, ctx);
+        traverse_mut_with_ctx(self, program, ctx);
     }
 }
 

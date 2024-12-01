@@ -5,7 +5,7 @@ pub trait IsSimpleParameterList {
     fn is_simple_parameter_list(&self) -> bool;
 }
 
-impl<'a> IsSimpleParameterList for FormalParameters<'a> {
+impl IsSimpleParameterList for FormalParameters<'_> {
     fn is_simple_parameter_list(&self) -> bool {
         self.items.iter().all(|pat| pat.pattern.kind.is_binding_identifier()) && self.rest.is_none()
     }

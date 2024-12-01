@@ -8,7 +8,7 @@ use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{BinaryOperator, LogicalOperator},
 };
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::{node_util::Ctx, CompressorPass};
 
@@ -16,17 +16,13 @@ use crate::{node_util::Ctx, CompressorPass};
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 pub struct PeepholeFoldConstants {
-    changed: bool,
+    pub(crate) changed: bool,
 }
 
 impl<'a> CompressorPass<'a> for PeepholeFoldConstants {
-    fn changed(&self) -> bool {
-        self.changed
-    }
-
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
-        oxc_traverse::walk_program(self, program, ctx);
+        traverse_mut_with_ctx(self, program, ctx);
     }
 }
 

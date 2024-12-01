@@ -15,8 +15,6 @@ use self::{
 ///
 /// Configure the behavior of linter plugins.
 ///
-/// ## Example
-///
 /// Here's an example if you're using Next.js in a monorepo:
 ///
 /// ```json

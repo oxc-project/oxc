@@ -1,7 +1,7 @@
-use std::{hash::BuildHasherDefault, mem};
+use std::mem;
 
 use indexmap::IndexMap;
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
@@ -10,7 +10,7 @@ pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{symbol::SymbolId, NodeId};
 
-type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
+type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
 pub(crate) type Bindings = FxIndexMap<CompactStr, SymbolId>;
 pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;

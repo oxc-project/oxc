@@ -277,7 +277,7 @@ impl IsGlobalReference for ReferenceId {
     }
 }
 
-impl<'a> IsGlobalReference for IdentifierReference<'a> {
+impl IsGlobalReference for IdentifierReference<'_> {
     fn is_global_reference(&self, symbols: &SymbolTable) -> bool {
         self.reference_id
             .get()
@@ -289,7 +289,7 @@ impl<'a> IsGlobalReference for IdentifierReference<'a> {
     }
 }
 
-impl<'a> IsGlobalReference for Expression<'a> {
+impl IsGlobalReference for Expression<'_> {
     fn is_global_reference(&self, symbols: &SymbolTable) -> bool {
         if let Expression::Identifier(ident) = self {
             return ident.is_global_reference(symbols);

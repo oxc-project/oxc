@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ModuleRecord;
-use oxc_span::{CompactStr, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{context::LintContext, rule::Rule};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_macros::declare_oxc_lint;
+use oxc_span::{CompactStr, Span};
+
+use crate::{context::LintContext, rule::Rule, ModuleRecord};
 
 fn no_named_export(module_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("No named exports found in module '{module_name}'"))

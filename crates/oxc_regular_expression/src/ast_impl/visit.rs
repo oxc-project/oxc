@@ -36,7 +36,7 @@ pub enum RegExpAstKind<'a> {
     NamedReference(&'a NamedReference<'a>),
 }
 
-impl<'a> GetSpan for RegExpAstKind<'a> {
+impl GetSpan for RegExpAstKind<'_> {
     #[inline]
     fn span(&self) -> Span {
         match self {

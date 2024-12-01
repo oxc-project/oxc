@@ -32,7 +32,7 @@ jobs:
         include:
           # - os: windows-latest # See `test-windows` job below
           - os: ubuntu-latest
-          - os: macos-14
+          - os: macos-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: taiki-e/checkout-action@v1
@@ -47,8 +47,8 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    if: false
     name: Test (windows-latest)
+    if: ${{ github.ref_name == 'main' }}
     runs-on: windows-latest
     steps:
       - uses: taiki-e/checkout-action@v1
@@ -94,7 +94,7 @@ jobs:
         shell: bash
         run: |
           # cargo ck # no need to check because it's already checked in linux
-          cargo test
+          cargo test --workspace --exclude oxc_sourcemap
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
@@ -121,6 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
+
       - uses: Boshen/setup-rust@main
         with:
           cache-key: wasm
@@ -149,28 +150,6 @@ jobs:
       - uses: crate-ci/typos@v1.27.3
         with:
           files: .
-
-  deny:
-    name: Cargo Deny
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@v1
-
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            src:
-              - 'Cargo.lock'
-
-      - uses: Boshen/setup-rust@main
-        if: steps.filter.outputs.src == 'true'
-        with:
-          restore-cache: false
-          tools: cargo-deny
-
-      - if: steps.filter.outputs.src == 'true'
-        run: cargo deny check
 
   lint:
     name: Clippy

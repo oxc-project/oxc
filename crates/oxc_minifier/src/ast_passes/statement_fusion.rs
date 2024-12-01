@@ -2,7 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::SPAN;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::CompressorPass;
 
@@ -12,17 +12,13 @@ use crate::CompressorPass;
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/StatementFusion.java>
 pub struct StatementFusion {
-    changed: bool,
+    pub(crate) changed: bool,
 }
 
 impl<'a> CompressorPass<'a> for StatementFusion {
-    fn changed(&self) -> bool {
-        self.changed
-    }
-
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
-        oxc_traverse::walk_program(self, program, ctx);
+        traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
@@ -169,7 +165,7 @@ impl<'a> StatementFusion {
 }
 
 fn can_merge_block_stmt(node: &BlockStatement) -> bool {
-    return node.body.iter().all(can_merge_block_stmt_member);
+    node.body.iter().all(can_merge_block_stmt_member)
 }
 
 fn can_merge_block_stmt_member(node: &Statement) -> bool {

@@ -280,19 +280,19 @@ pub trait ConstantEvaluation<'a> {
                 None
             }
             BinaryOperator::LessThan => {
-                return self.is_less_than(left, right, true).map(|value| match value {
+                self.is_less_than(left, right, true).map(|value| match value {
                     ConstantValue::Undefined => ConstantValue::Boolean(false),
                     _ => value,
                 })
             }
             BinaryOperator::GreaterThan => {
-                return self.is_less_than(right, left, false).map(|value| match value {
+                self.is_less_than(right, left, false).map(|value| match value {
                     ConstantValue::Undefined => ConstantValue::Boolean(false),
                     _ => value,
                 })
             }
             BinaryOperator::LessEqualThan => {
-                return self.is_less_than(right, left, false).map(|value| match value {
+                self.is_less_than(right, left, false).map(|value| match value {
                     ConstantValue::Boolean(true) | ConstantValue::Undefined => {
                         ConstantValue::Boolean(false)
                     }
@@ -301,7 +301,7 @@ pub trait ConstantEvaluation<'a> {
                 })
             }
             BinaryOperator::GreaterEqualThan => {
-                return self.is_less_than(left, right, true).map(|value| match value {
+                self.is_less_than(left, right, true).map(|value| match value {
                     ConstantValue::Boolean(true) | ConstantValue::Undefined => {
                         ConstantValue::Boolean(false)
                     }
@@ -436,6 +436,6 @@ pub trait ConstantEvaluation<'a> {
             return Some(ConstantValue::Undefined);
         }
 
-        return Some(ConstantValue::Boolean(left_num < right_num));
+        Some(ConstantValue::Boolean(left_num < right_num))
     }
 }

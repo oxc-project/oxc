@@ -95,6 +95,7 @@ impl LinterBuilder {
             rules: oxlintrc_rules,
             overrides,
             path,
+            ignore_patterns: _,
         } = oxlintrc;
 
         let config = LintConfig { plugins, settings, env, globals, path: Some(path) };
@@ -285,15 +286,13 @@ impl LinterBuilder {
         let new_rules = self
             .rules
             .iter()
-            .map(|r: &RuleWithSeverity| {
-                return ESLintRule {
-                    plugin_name: r.plugin_name().to_string(),
-                    rule_name: r.rule.name().to_string(),
-                    severity: r.severity,
-                    config: rule_name_to_rule
-                        .get(&get_name(r.plugin_name(), r.rule.name()))
-                        .and_then(|r| r.config.clone()),
-                };
+            .map(|r: &RuleWithSeverity| ESLintRule {
+                plugin_name: r.plugin_name().to_string(),
+                rule_name: r.rule.name().to_string(),
+                severity: r.severity,
+                config: rule_name_to_rule
+                    .get(&get_name(r.plugin_name(), r.rule.name()))
+                    .and_then(|r| r.config.clone()),
             })
             .collect();
 

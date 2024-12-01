@@ -32,7 +32,7 @@ pub fn is_immutable_value(expr: &Expression<'_>) -> bool {
     }
 }
 
-impl<'a, 'b> IsLiteralValue<'a, 'b> for Expression<'a> {
+impl<'a> IsLiteralValue<'a, '_> for Expression<'a> {
     fn is_literal_value(&self, include_functions: bool) -> bool {
         match self {
             Self::FunctionExpression(_) | Self::ArrowFunctionExpression(_) => include_functions,
@@ -47,7 +47,7 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for Expression<'a> {
     }
 }
 
-impl<'a, 'b> IsLiteralValue<'a, 'b> for ArrayExpressionElement<'a> {
+impl<'a> IsLiteralValue<'a, '_> for ArrayExpressionElement<'a> {
     fn is_literal_value(&self, include_functions: bool) -> bool {
         match self {
             Self::SpreadElement(element) => element.is_literal_value(include_functions),
@@ -57,13 +57,13 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for ArrayExpressionElement<'a> {
     }
 }
 
-impl<'a, 'b> IsLiteralValue<'a, 'b> for SpreadElement<'a> {
+impl<'a> IsLiteralValue<'a, '_> for SpreadElement<'a> {
     fn is_literal_value(&self, include_functions: bool) -> bool {
         self.argument.is_literal_value(include_functions)
     }
 }
 
-impl<'a, 'b> IsLiteralValue<'a, 'b> for ObjectPropertyKind<'a> {
+impl<'a> IsLiteralValue<'a, '_> for ObjectPropertyKind<'a> {
     fn is_literal_value(&self, include_functions: bool) -> bool {
         match self {
             Self::ObjectProperty(method) => method.is_literal_value(include_functions),
@@ -72,14 +72,14 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for ObjectPropertyKind<'a> {
     }
 }
 
-impl<'a, 'b> IsLiteralValue<'a, 'b> for ObjectProperty<'a> {
+impl<'a> IsLiteralValue<'a, '_> for ObjectProperty<'a> {
     fn is_literal_value(&self, include_functions: bool) -> bool {
         self.key.is_literal_value(include_functions)
             && self.value.is_literal_value(include_functions)
     }
 }
 
-impl<'a, 'b> IsLiteralValue<'a, 'b> for PropertyKey<'a> {
+impl<'a> IsLiteralValue<'a, '_> for PropertyKey<'a> {
     fn is_literal_value(&self, include_functions: bool) -> bool {
         match self {
             Self::StaticIdentifier(_) => true,

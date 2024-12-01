@@ -184,15 +184,15 @@ impl PartialEq<CompactStr> for str {
     }
 }
 
-impl PartialEq<str> for CompactStr {
-    fn eq(&self, other: &str) -> bool {
-        self.as_str() == other
-    }
-}
-
 impl PartialEq<CompactStr> for Cow<'_, str> {
     fn eq(&self, other: &CompactStr) -> bool {
         self.as_ref() == other.as_str()
+    }
+}
+
+impl PartialEq<str> for CompactStr {
+    fn eq(&self, other: &str) -> bool {
+        self.as_str() == other
     }
 }
 

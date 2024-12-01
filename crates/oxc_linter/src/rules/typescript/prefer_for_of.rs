@@ -66,7 +66,7 @@ trait ExpressionExt {
     fn is_increment_of(&self, var_name: &str) -> bool;
 }
 
-impl<'a> ExpressionExt for Expression<'a> {
+impl ExpressionExt for Expression<'_> {
     fn is_increment_of(&self, var_name: &str) -> bool {
         match self {
             Expression::UpdateExpression(expr) => match (&expr.argument, &expr.operator) {

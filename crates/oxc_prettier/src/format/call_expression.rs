@@ -13,7 +13,7 @@ pub(super) enum CallExpressionLike<'a, 'b> {
     NewExpression(&'b NewExpression<'a>),
 }
 
-impl<'a, 'b> CallExpressionLike<'a, 'b> {
+impl<'a> CallExpressionLike<'a, '_> {
     pub fn is_new(&self) -> bool {
         matches!(self, CallExpressionLike::NewExpression(_))
     }
@@ -41,10 +41,10 @@ impl<'a, 'b> CallExpressionLike<'a, 'b> {
 
     pub fn type_parameters(
         &self,
-    ) -> &Option<oxc_allocator::Box<'a, TSTypeParameterInstantiation<'a>>> {
+    ) -> Option<&oxc_allocator::Box<'a, TSTypeParameterInstantiation<'a>>> {
         match self {
-            CallExpressionLike::CallExpression(call) => &call.type_parameters,
-            CallExpressionLike::NewExpression(new) => &new.type_parameters,
+            CallExpressionLike::CallExpression(call) => call.type_parameters.as_ref(),
+            CallExpressionLike::NewExpression(new) => new.type_parameters.as_ref(),
         }
     }
 }

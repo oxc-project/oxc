@@ -102,18 +102,25 @@ impl Runner for LintRunner {
             .copied()
             .collect::<Vec<&'static str>>();
 
-        let paths =
-            Walk::new(&paths, &ignore_options).with_extensions(Extensions(extensions)).paths();
-
-        let number_of_files = paths.len();
-
-        let config_search_result = Self::find_oxlint_config(&self.cwd, &basic_options.config);
+        let config_search_result =
+            Self::find_oxlint_config(&self.cwd, basic_options.config.as_ref());
 
         if let Err(err) = config_search_result {
             return err;
         }
 
         let mut oxlintrc = config_search_result.unwrap();
+
+        let ignore_paths = oxlintrc
+            .ignore_patterns
+            .iter()
+            .map(|value| oxlintrc.path.parent().unwrap().join(value))
+            .collect::<Vec<_>>();
+        let paths = Walk::new(&paths, &ignore_options, &ignore_paths)
+            .with_extensions(Extensions(extensions))
+            .paths();
+
+        let number_of_files = paths.len();
 
         enable_plugins.apply_overrides(&mut oxlintrc.plugins);
 
@@ -245,7 +252,7 @@ impl LintRunner {
     // when config is provided, but not found, an CliRunResult is returned, else the oxlintrc config file is returned
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
-    fn find_oxlint_config(cwd: &Path, config: &Option<PathBuf>) -> Result<Oxlintrc, CliRunResult> {
+    fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, CliRunResult> {
         if let Some(config_path) = config {
             return match Oxlintrc::from_file(config_path) {
                 Ok(config) => Ok(config),
@@ -749,5 +756,25 @@ mod test {
         assert_eq!(result.number_of_files, 7);
         assert_eq!(result.number_of_warnings, 2);
         assert_eq!(result.number_of_errors, 2);
+    }
+
+    #[test]
+    fn test_config_ignore_patterns_extension() {
+        let result = test(&[
+            "-c",
+            "fixtures/config_ignore_patterns/ignore_extension/eslintrc.json",
+            "fixtures/config_ignore_patterns/ignore_extension",
+        ]);
+        assert_eq!(result.number_of_files, 1);
+    }
+
+    #[test]
+    fn test_config_ignore_patterns_directory() {
+        let result = test(&[
+            "-c",
+            "fixtures/config_ignore_patterns/ignore_directory/eslintrc.json",
+            "fixtures/config_ignore_patterns/ignore_directory",
+        ]);
+        assert_eq!(result.number_of_files, 1);
     }
 }

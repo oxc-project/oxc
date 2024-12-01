@@ -1,6 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::CompressorPass;
 
@@ -9,17 +9,13 @@ use crate::CompressorPass;
 /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/CollapseVariableDeclarations.java>
 pub struct CollapseVariableDeclarations {
-    changed: bool,
+    pub(crate) changed: bool,
 }
 
 impl<'a> CompressorPass<'a> for CollapseVariableDeclarations {
-    fn changed(&self) -> bool {
-        self.changed
-    }
-
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         self.changed = false;
-        oxc_traverse::walk_program(self, program, ctx);
+        traverse_mut_with_ctx(self, program, ctx);
     }
 }
 

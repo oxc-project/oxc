@@ -35,9 +35,30 @@ const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 /// 1. `TraverseAncestry`'s `stack` field is private.
 /// 2. Public methods of `TraverseAncestry` provide no means for mutating `stack`.
 /// 3. Visitors receive a `&mut TraverseCtx`, but cannot overwrite its `ancestry` field because they:
-///    a. cannot create a new `TraverseAncestry` - `TraverseAncestry::new` is private.
+///    a. cannot create a new `TraverseAncestry`
+///       - `TraverseAncestry::new` and `TraverseCtx::new` are private.
 ///    b. cannot obtain an owned `TraverseAncestry` from a `&TraverseAncestry`
 ///       - `TraverseAncestry` is not `Clone`.
+///
+/// ## Soundness hole
+///
+/// Strictly speaking, there is still room to abuse the API and cause UB as follows:
+///
+/// * Initiate a 2nd traversal of a different AST inside a `Traverse` visitor method.
+/// * `mem::swap` the 2 x `&mut TraverseCtx`s from the 2 different traversals.
+///
+/// The 2 ASTs would have to be different, but borrowed for same lifetime, so I (@overlookmotel) don't
+/// think it's possible by this method to produce aliasing violations, or to over-extend AST node
+/// lifetimes to cause a use-after-free.
+/// But it *could* produce buffer underrun in `pop_stack`, when it tries to pop from a stack which
+/// is already empty.
+///
+/// In practice, this would be a completely bizarre thing to do, and would basically require you to
+/// write malicious code specifically designed to cause UB. So it's not a particularly real risk.
+///
+/// To close this hole and make the API 100% sound, we'd need branded lifetimes so that all
+/// `TraverseCtx`s have unique lifetimes, and so cannot be swapped for any other without
+/// the borrow-checker complaining.
 pub struct TraverseAncestry<'a> {
     stack: NonEmptyStack<Ancestor<'a, 'static>>,
 }

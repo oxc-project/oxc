@@ -1,9 +1,12 @@
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ModuleRecord;
-use oxc_syntax::module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile},
+    rule::Rule,
+    ModuleRecord,
+};
 
 fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -67,8 +70,7 @@ impl Rule for NoBarrelFile {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let semantic = ctx.semantic();
-        let module_record = semantic.module_record();
+        let module_record = ctx.module_record();
 
         if module_record.not_esm {
             return;

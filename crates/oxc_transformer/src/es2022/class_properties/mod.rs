@@ -139,10 +139,8 @@
 //!   * <https://github.com/babel/babel/blob/v7.26.2/packages/babel-helper-create-class-features-plugin/src/fields.ts>
 //! * Class properties TC39 proposal: <https://github.com/tc39/proposal-class-fields>
 
-use std::hash::BuildHasherDefault;
-
 use indexmap::IndexMap;
-use rustc_hash::FxHasher;
+use rustc_hash::FxBuildHasher;
 use serde::Deserialize;
 
 use oxc_allocator::{Address, GetAddress};
@@ -158,7 +156,7 @@ mod private;
 mod static_prop;
 mod utils;
 
-type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
+type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]

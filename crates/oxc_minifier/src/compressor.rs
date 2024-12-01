@@ -1,11 +1,11 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
     ast_passes::{
-        EarlyPass, LatePass, PeepholeFoldConstants, PeepholeMinimizeConditions,
+        CollapsePass, LatePeepholeOptimizations, PeepholeFoldConstants, PeepholeOptimizations,
         PeepholeRemoveDeadCode, RemoveSyntax,
     },
     CompressOptions, CompressorPass,
@@ -33,7 +33,7 @@ impl<'a> Compressor<'a> {
         scopes: ScopeTree,
         program: &mut Program<'a>,
     ) {
-        let mut ctx = TraverseCtx::new(scopes, symbols, self.allocator);
+        let mut ctx = ReusableTraverseCtx::new(scopes, symbols, self.allocator);
         RemoveSyntax::new(self.options).build(program, &mut ctx);
 
         if self.options.dead_code_elimination {
@@ -41,30 +41,14 @@ impl<'a> Compressor<'a> {
             return;
         }
 
-        let mut i = 0;
-        loop {
-            let mut changed = false;
-            let mut pass = EarlyPass::new();
-            pass.build(program, &mut ctx);
-            if pass.changed() {
-                changed = true;
-            }
-            if !changed {
-                break;
-            }
-            if i > 50 {
-                debug_assert!(false, "Ran in a infinite loop.");
-                break;
-            }
-            i += 1;
-        }
-
-        LatePass::new().build(program, &mut ctx);
+        PeepholeOptimizations::new().build(program, &mut ctx);
+        CollapsePass::new().build(program, &mut ctx);
+        LatePeepholeOptimizations::new().run_in_loop(program, &mut ctx);
+        PeepholeOptimizations::new().build(program, &mut ctx);
     }
 
-    fn dead_code_elimination(program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn dead_code_elimination(program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         PeepholeFoldConstants::new().build(program, ctx);
-        PeepholeMinimizeConditions::new().build(program, ctx);
         PeepholeRemoveDeadCode::new().build(program, ctx);
     }
 }

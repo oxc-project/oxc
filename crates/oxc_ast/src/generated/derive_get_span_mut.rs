@@ -27,42 +27,42 @@ impl GetSpanMut for NullLiteral {
     }
 }
 
-impl<'a> GetSpanMut for NumericLiteral<'a> {
+impl GetSpanMut for NumericLiteral<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for StringLiteral<'a> {
+impl GetSpanMut for StringLiteral<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for BigIntLiteral<'a> {
+impl GetSpanMut for BigIntLiteral<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for RegExpLiteral<'a> {
+impl GetSpanMut for RegExpLiteral<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for Program<'a> {
+impl GetSpanMut for Program<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for Expression<'a> {
+impl GetSpanMut for Expression<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
@@ -111,28 +111,28 @@ impl<'a> GetSpanMut for Expression<'a> {
     }
 }
 
-impl<'a> GetSpanMut for IdentifierName<'a> {
+impl GetSpanMut for IdentifierName<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for IdentifierReference<'a> {
+impl GetSpanMut for IdentifierReference<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for BindingIdentifier<'a> {
+impl GetSpanMut for BindingIdentifier<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for LabelIdentifier<'a> {
+impl GetSpanMut for LabelIdentifier<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -146,14 +146,14 @@ impl GetSpanMut for ThisExpression {
     }
 }
 
-impl<'a> GetSpanMut for ArrayExpression<'a> {
+impl GetSpanMut for ArrayExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ArrayExpressionElement<'a> {
+impl GetSpanMut for ArrayExpressionElement<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::SpreadElement(it) => GetSpanMut::span_mut(&mut **it),
@@ -211,14 +211,14 @@ impl GetSpanMut for Elision {
     }
 }
 
-impl<'a> GetSpanMut for ObjectExpression<'a> {
+impl GetSpanMut for ObjectExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ObjectPropertyKind<'a> {
+impl GetSpanMut for ObjectPropertyKind<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::ObjectProperty(it) => GetSpanMut::span_mut(&mut **it),
@@ -227,14 +227,14 @@ impl<'a> GetSpanMut for ObjectPropertyKind<'a> {
     }
 }
 
-impl<'a> GetSpanMut for ObjectProperty<'a> {
+impl GetSpanMut for ObjectProperty<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for PropertyKey<'a> {
+impl GetSpanMut for PropertyKey<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::StaticIdentifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -285,28 +285,28 @@ impl<'a> GetSpanMut for PropertyKey<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TemplateLiteral<'a> {
+impl GetSpanMut for TemplateLiteral<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TaggedTemplateExpression<'a> {
+impl GetSpanMut for TaggedTemplateExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TemplateElement<'a> {
+impl GetSpanMut for TemplateElement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for MemberExpression<'a> {
+impl GetSpanMut for MemberExpression<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -316,56 +316,56 @@ impl<'a> GetSpanMut for MemberExpression<'a> {
     }
 }
 
-impl<'a> GetSpanMut for ComputedMemberExpression<'a> {
+impl GetSpanMut for ComputedMemberExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for StaticMemberExpression<'a> {
+impl GetSpanMut for StaticMemberExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for PrivateFieldExpression<'a> {
+impl GetSpanMut for PrivateFieldExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for CallExpression<'a> {
+impl GetSpanMut for CallExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for NewExpression<'a> {
+impl GetSpanMut for NewExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for MetaProperty<'a> {
+impl GetSpanMut for MetaProperty<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for SpreadElement<'a> {
+impl GetSpanMut for SpreadElement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for Argument<'a> {
+impl GetSpanMut for Argument<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::SpreadElement(it) => GetSpanMut::span_mut(&mut **it),
@@ -415,56 +415,56 @@ impl<'a> GetSpanMut for Argument<'a> {
     }
 }
 
-impl<'a> GetSpanMut for UpdateExpression<'a> {
+impl GetSpanMut for UpdateExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for UnaryExpression<'a> {
+impl GetSpanMut for UnaryExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for BinaryExpression<'a> {
+impl GetSpanMut for BinaryExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for PrivateInExpression<'a> {
+impl GetSpanMut for PrivateInExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for LogicalExpression<'a> {
+impl GetSpanMut for LogicalExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ConditionalExpression<'a> {
+impl GetSpanMut for ConditionalExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for AssignmentExpression<'a> {
+impl GetSpanMut for AssignmentExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for AssignmentTarget<'a> {
+impl GetSpanMut for AssignmentTarget<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::AssignmentTargetIdentifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -482,7 +482,7 @@ impl<'a> GetSpanMut for AssignmentTarget<'a> {
     }
 }
 
-impl<'a> GetSpanMut for SimpleAssignmentTarget<'a> {
+impl GetSpanMut for SimpleAssignmentTarget<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::AssignmentTargetIdentifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -498,7 +498,7 @@ impl<'a> GetSpanMut for SimpleAssignmentTarget<'a> {
     }
 }
 
-impl<'a> GetSpanMut for AssignmentTargetPattern<'a> {
+impl GetSpanMut for AssignmentTargetPattern<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::ArrayAssignmentTarget(it) => GetSpanMut::span_mut(&mut **it),
@@ -507,28 +507,28 @@ impl<'a> GetSpanMut for AssignmentTargetPattern<'a> {
     }
 }
 
-impl<'a> GetSpanMut for ArrayAssignmentTarget<'a> {
+impl GetSpanMut for ArrayAssignmentTarget<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ObjectAssignmentTarget<'a> {
+impl GetSpanMut for ObjectAssignmentTarget<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for AssignmentTargetRest<'a> {
+impl GetSpanMut for AssignmentTargetRest<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for AssignmentTargetMaybeDefault<'a> {
+impl GetSpanMut for AssignmentTargetMaybeDefault<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::AssignmentTargetWithDefault(it) => GetSpanMut::span_mut(&mut **it),
@@ -547,14 +547,14 @@ impl<'a> GetSpanMut for AssignmentTargetMaybeDefault<'a> {
     }
 }
 
-impl<'a> GetSpanMut for AssignmentTargetWithDefault<'a> {
+impl GetSpanMut for AssignmentTargetWithDefault<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for AssignmentTargetProperty<'a> {
+impl GetSpanMut for AssignmentTargetProperty<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::AssignmentTargetPropertyIdentifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -563,21 +563,21 @@ impl<'a> GetSpanMut for AssignmentTargetProperty<'a> {
     }
 }
 
-impl<'a> GetSpanMut for AssignmentTargetPropertyIdentifier<'a> {
+impl GetSpanMut for AssignmentTargetPropertyIdentifier<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for AssignmentTargetPropertyProperty<'a> {
+impl GetSpanMut for AssignmentTargetPropertyProperty<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for SequenceExpression<'a> {
+impl GetSpanMut for SequenceExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -591,21 +591,21 @@ impl GetSpanMut for Super {
     }
 }
 
-impl<'a> GetSpanMut for AwaitExpression<'a> {
+impl GetSpanMut for AwaitExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ChainExpression<'a> {
+impl GetSpanMut for ChainExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ChainElement<'a> {
+impl GetSpanMut for ChainElement<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::CallExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -617,14 +617,14 @@ impl<'a> GetSpanMut for ChainElement<'a> {
     }
 }
 
-impl<'a> GetSpanMut for ParenthesizedExpression<'a> {
+impl GetSpanMut for ParenthesizedExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for Statement<'a> {
+impl GetSpanMut for Statement<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::BlockStatement(it) => GetSpanMut::span_mut(&mut **it),
@@ -663,28 +663,28 @@ impl<'a> GetSpanMut for Statement<'a> {
     }
 }
 
-impl<'a> GetSpanMut for Directive<'a> {
+impl GetSpanMut for Directive<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for Hashbang<'a> {
+impl GetSpanMut for Hashbang<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for BlockStatement<'a> {
+impl GetSpanMut for BlockStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for Declaration<'a> {
+impl GetSpanMut for Declaration<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::VariableDeclaration(it) => GetSpanMut::span_mut(&mut **it),
@@ -699,14 +699,14 @@ impl<'a> GetSpanMut for Declaration<'a> {
     }
 }
 
-impl<'a> GetSpanMut for VariableDeclaration<'a> {
+impl GetSpanMut for VariableDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for VariableDeclarator<'a> {
+impl GetSpanMut for VariableDeclarator<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -720,42 +720,42 @@ impl GetSpanMut for EmptyStatement {
     }
 }
 
-impl<'a> GetSpanMut for ExpressionStatement<'a> {
+impl GetSpanMut for ExpressionStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for IfStatement<'a> {
+impl GetSpanMut for IfStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for DoWhileStatement<'a> {
+impl GetSpanMut for DoWhileStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for WhileStatement<'a> {
+impl GetSpanMut for WhileStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ForStatement<'a> {
+impl GetSpanMut for ForStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ForStatementInit<'a> {
+impl GetSpanMut for ForStatementInit<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::VariableDeclaration(it) => GetSpanMut::span_mut(&mut **it),
@@ -805,14 +805,14 @@ impl<'a> GetSpanMut for ForStatementInit<'a> {
     }
 }
 
-impl<'a> GetSpanMut for ForInStatement<'a> {
+impl GetSpanMut for ForInStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ForStatementLeft<'a> {
+impl GetSpanMut for ForStatementLeft<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::VariableDeclaration(it) => GetSpanMut::span_mut(&mut **it),
@@ -831,84 +831,84 @@ impl<'a> GetSpanMut for ForStatementLeft<'a> {
     }
 }
 
-impl<'a> GetSpanMut for ForOfStatement<'a> {
+impl GetSpanMut for ForOfStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ContinueStatement<'a> {
+impl GetSpanMut for ContinueStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for BreakStatement<'a> {
+impl GetSpanMut for BreakStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ReturnStatement<'a> {
+impl GetSpanMut for ReturnStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for WithStatement<'a> {
+impl GetSpanMut for WithStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for SwitchStatement<'a> {
+impl GetSpanMut for SwitchStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for SwitchCase<'a> {
+impl GetSpanMut for SwitchCase<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for LabeledStatement<'a> {
+impl GetSpanMut for LabeledStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ThrowStatement<'a> {
+impl GetSpanMut for ThrowStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TryStatement<'a> {
+impl GetSpanMut for TryStatement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for CatchClause<'a> {
+impl GetSpanMut for CatchClause<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for CatchParameter<'a> {
+impl GetSpanMut for CatchParameter<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -922,14 +922,14 @@ impl GetSpanMut for DebuggerStatement {
     }
 }
 
-impl<'a> GetSpanMut for BindingPattern<'a> {
+impl GetSpanMut for BindingPattern<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         GetSpanMut::span_mut(&mut self.kind)
     }
 }
 
-impl<'a> GetSpanMut for BindingPatternKind<'a> {
+impl GetSpanMut for BindingPatternKind<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::BindingIdentifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -940,98 +940,98 @@ impl<'a> GetSpanMut for BindingPatternKind<'a> {
     }
 }
 
-impl<'a> GetSpanMut for AssignmentPattern<'a> {
+impl GetSpanMut for AssignmentPattern<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ObjectPattern<'a> {
+impl GetSpanMut for ObjectPattern<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for BindingProperty<'a> {
+impl GetSpanMut for BindingProperty<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ArrayPattern<'a> {
+impl GetSpanMut for ArrayPattern<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for BindingRestElement<'a> {
+impl GetSpanMut for BindingRestElement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for Function<'a> {
+impl GetSpanMut for Function<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for FormalParameters<'a> {
+impl GetSpanMut for FormalParameters<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for FormalParameter<'a> {
+impl GetSpanMut for FormalParameter<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for FunctionBody<'a> {
+impl GetSpanMut for FunctionBody<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ArrowFunctionExpression<'a> {
+impl GetSpanMut for ArrowFunctionExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for YieldExpression<'a> {
+impl GetSpanMut for YieldExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for Class<'a> {
+impl GetSpanMut for Class<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ClassBody<'a> {
+impl GetSpanMut for ClassBody<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ClassElement<'a> {
+impl GetSpanMut for ClassElement<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::StaticBlock(it) => GetSpanMut::span_mut(&mut **it),
@@ -1043,35 +1043,35 @@ impl<'a> GetSpanMut for ClassElement<'a> {
     }
 }
 
-impl<'a> GetSpanMut for MethodDefinition<'a> {
+impl GetSpanMut for MethodDefinition<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for PropertyDefinition<'a> {
+impl GetSpanMut for PropertyDefinition<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for PrivateIdentifier<'a> {
+impl GetSpanMut for PrivateIdentifier<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for StaticBlock<'a> {
+impl GetSpanMut for StaticBlock<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ModuleDeclaration<'a> {
+impl GetSpanMut for ModuleDeclaration<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::ImportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
@@ -1084,28 +1084,28 @@ impl<'a> GetSpanMut for ModuleDeclaration<'a> {
     }
 }
 
-impl<'a> GetSpanMut for AccessorProperty<'a> {
+impl GetSpanMut for AccessorProperty<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ImportExpression<'a> {
+impl GetSpanMut for ImportExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ImportDeclaration<'a> {
+impl GetSpanMut for ImportDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ImportDeclarationSpecifier<'a> {
+impl GetSpanMut for ImportDeclarationSpecifier<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::ImportSpecifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -1115,42 +1115,42 @@ impl<'a> GetSpanMut for ImportDeclarationSpecifier<'a> {
     }
 }
 
-impl<'a> GetSpanMut for ImportSpecifier<'a> {
+impl GetSpanMut for ImportSpecifier<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ImportDefaultSpecifier<'a> {
+impl GetSpanMut for ImportDefaultSpecifier<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ImportNamespaceSpecifier<'a> {
+impl GetSpanMut for ImportNamespaceSpecifier<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for WithClause<'a> {
+impl GetSpanMut for WithClause<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ImportAttribute<'a> {
+impl GetSpanMut for ImportAttribute<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ImportAttributeKey<'a> {
+impl GetSpanMut for ImportAttributeKey<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::Identifier(it) => GetSpanMut::span_mut(it),
@@ -1159,35 +1159,35 @@ impl<'a> GetSpanMut for ImportAttributeKey<'a> {
     }
 }
 
-impl<'a> GetSpanMut for ExportNamedDeclaration<'a> {
+impl GetSpanMut for ExportNamedDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ExportDefaultDeclaration<'a> {
+impl GetSpanMut for ExportDefaultDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ExportAllDeclaration<'a> {
+impl GetSpanMut for ExportAllDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ExportSpecifier<'a> {
+impl GetSpanMut for ExportSpecifier<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for ExportDefaultDeclarationKind<'a> {
+impl GetSpanMut for ExportDefaultDeclarationKind<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::FunctionDeclaration(it) => GetSpanMut::span_mut(&mut **it),
@@ -1239,7 +1239,7 @@ impl<'a> GetSpanMut for ExportDefaultDeclarationKind<'a> {
     }
 }
 
-impl<'a> GetSpanMut for ModuleExportName<'a> {
+impl GetSpanMut for ModuleExportName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::IdentifierName(it) => GetSpanMut::span_mut(it),
@@ -1249,28 +1249,28 @@ impl<'a> GetSpanMut for ModuleExportName<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSThisParameter<'a> {
+impl GetSpanMut for TSThisParameter<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSEnumDeclaration<'a> {
+impl GetSpanMut for TSEnumDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSEnumMember<'a> {
+impl GetSpanMut for TSEnumMember<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSEnumMemberName<'a> {
+impl GetSpanMut for TSEnumMemberName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -1279,21 +1279,21 @@ impl<'a> GetSpanMut for TSEnumMemberName<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSTypeAnnotation<'a> {
+impl GetSpanMut for TSTypeAnnotation<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSLiteralType<'a> {
+impl GetSpanMut for TSLiteralType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSLiteral<'a> {
+impl GetSpanMut for TSLiteral<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::BooleanLiteral(it) => GetSpanMut::span_mut(&mut **it),
@@ -1308,7 +1308,7 @@ impl<'a> GetSpanMut for TSLiteral<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSType<'a> {
+impl GetSpanMut for TSType<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::TSAnyKeyword(it) => GetSpanMut::span_mut(&mut **it),
@@ -1353,84 +1353,84 @@ impl<'a> GetSpanMut for TSType<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSConditionalType<'a> {
+impl GetSpanMut for TSConditionalType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSUnionType<'a> {
+impl GetSpanMut for TSUnionType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSIntersectionType<'a> {
+impl GetSpanMut for TSIntersectionType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSParenthesizedType<'a> {
+impl GetSpanMut for TSParenthesizedType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypeOperator<'a> {
+impl GetSpanMut for TSTypeOperator<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSArrayType<'a> {
+impl GetSpanMut for TSArrayType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSIndexedAccessType<'a> {
+impl GetSpanMut for TSIndexedAccessType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTupleType<'a> {
+impl GetSpanMut for TSTupleType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSNamedTupleMember<'a> {
+impl GetSpanMut for TSNamedTupleMember<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSOptionalType<'a> {
+impl GetSpanMut for TSOptionalType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSRestType<'a> {
+impl GetSpanMut for TSRestType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTupleElement<'a> {
+impl GetSpanMut for TSTupleElement<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::TSOptionalType(it) => GetSpanMut::span_mut(&mut **it),
@@ -1575,14 +1575,14 @@ impl GetSpanMut for TSBigIntKeyword {
     }
 }
 
-impl<'a> GetSpanMut for TSTypeReference<'a> {
+impl GetSpanMut for TSTypeReference<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypeName<'a> {
+impl GetSpanMut for TSTypeName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
@@ -1591,70 +1591,70 @@ impl<'a> GetSpanMut for TSTypeName<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSQualifiedName<'a> {
+impl GetSpanMut for TSQualifiedName<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypeParameterInstantiation<'a> {
+impl GetSpanMut for TSTypeParameterInstantiation<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypeParameter<'a> {
+impl GetSpanMut for TSTypeParameter<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypeParameterDeclaration<'a> {
+impl GetSpanMut for TSTypeParameterDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypeAliasDeclaration<'a> {
+impl GetSpanMut for TSTypeAliasDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSClassImplements<'a> {
+impl GetSpanMut for TSClassImplements<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSInterfaceDeclaration<'a> {
+impl GetSpanMut for TSInterfaceDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSInterfaceBody<'a> {
+impl GetSpanMut for TSInterfaceBody<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSPropertySignature<'a> {
+impl GetSpanMut for TSPropertySignature<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSSignature<'a> {
+impl GetSpanMut for TSSignature<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::TSIndexSignature(it) => GetSpanMut::span_mut(&mut **it),
@@ -1666,56 +1666,56 @@ impl<'a> GetSpanMut for TSSignature<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSIndexSignature<'a> {
+impl GetSpanMut for TSIndexSignature<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSCallSignatureDeclaration<'a> {
+impl GetSpanMut for TSCallSignatureDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSMethodSignature<'a> {
+impl GetSpanMut for TSMethodSignature<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSConstructSignatureDeclaration<'a> {
+impl GetSpanMut for TSConstructSignatureDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSIndexSignatureName<'a> {
+impl GetSpanMut for TSIndexSignatureName<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSInterfaceHeritage<'a> {
+impl GetSpanMut for TSInterfaceHeritage<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypePredicate<'a> {
+impl GetSpanMut for TSTypePredicate<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypePredicateName<'a> {
+impl GetSpanMut for TSTypePredicateName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -1724,14 +1724,14 @@ impl<'a> GetSpanMut for TSTypePredicateName<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSModuleDeclaration<'a> {
+impl GetSpanMut for TSModuleDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSModuleDeclarationName<'a> {
+impl GetSpanMut for TSModuleDeclarationName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::Identifier(it) => GetSpanMut::span_mut(it),
@@ -1740,7 +1740,7 @@ impl<'a> GetSpanMut for TSModuleDeclarationName<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSModuleDeclarationBody<'a> {
+impl GetSpanMut for TSModuleDeclarationBody<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::TSModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
@@ -1749,35 +1749,35 @@ impl<'a> GetSpanMut for TSModuleDeclarationBody<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSModuleBlock<'a> {
+impl GetSpanMut for TSModuleBlock<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypeLiteral<'a> {
+impl GetSpanMut for TSTypeLiteral<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSInferType<'a> {
+impl GetSpanMut for TSInferType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypeQuery<'a> {
+impl GetSpanMut for TSTypeQuery<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypeQueryExprName<'a> {
+impl GetSpanMut for TSTypeQueryExprName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::TSImportType(it) => GetSpanMut::span_mut(&mut **it),
@@ -1787,28 +1787,28 @@ impl<'a> GetSpanMut for TSTypeQueryExprName<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSImportType<'a> {
+impl GetSpanMut for TSImportType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSImportAttributes<'a> {
+impl GetSpanMut for TSImportAttributes<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSImportAttribute<'a> {
+impl GetSpanMut for TSImportAttribute<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSImportAttributeName<'a> {
+impl GetSpanMut for TSImportAttributeName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::Identifier(it) => GetSpanMut::span_mut(it),
@@ -1817,63 +1817,63 @@ impl<'a> GetSpanMut for TSImportAttributeName<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSFunctionType<'a> {
+impl GetSpanMut for TSFunctionType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSConstructorType<'a> {
+impl GetSpanMut for TSConstructorType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSMappedType<'a> {
+impl GetSpanMut for TSMappedType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTemplateLiteralType<'a> {
+impl GetSpanMut for TSTemplateLiteralType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSAsExpression<'a> {
+impl GetSpanMut for TSAsExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSSatisfiesExpression<'a> {
+impl GetSpanMut for TSSatisfiesExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSTypeAssertion<'a> {
+impl GetSpanMut for TSTypeAssertion<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSImportEqualsDeclaration<'a> {
+impl GetSpanMut for TSImportEqualsDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSModuleReference<'a> {
+impl GetSpanMut for TSModuleReference<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::ExternalModuleReference(it) => GetSpanMut::span_mut(&mut **it),
@@ -1883,56 +1883,56 @@ impl<'a> GetSpanMut for TSModuleReference<'a> {
     }
 }
 
-impl<'a> GetSpanMut for TSExternalModuleReference<'a> {
+impl GetSpanMut for TSExternalModuleReference<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSNonNullExpression<'a> {
+impl GetSpanMut for TSNonNullExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for Decorator<'a> {
+impl GetSpanMut for Decorator<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSExportAssignment<'a> {
+impl GetSpanMut for TSExportAssignment<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSNamespaceExportDeclaration<'a> {
+impl GetSpanMut for TSNamespaceExportDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for TSInstantiationExpression<'a> {
+impl GetSpanMut for TSInstantiationExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSDocNullableType<'a> {
+impl GetSpanMut for JSDocNullableType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSDocNonNullableType<'a> {
+impl GetSpanMut for JSDocNonNullableType<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -1946,28 +1946,28 @@ impl GetSpanMut for JSDocUnknownType {
     }
 }
 
-impl<'a> GetSpanMut for JSXElement<'a> {
+impl GetSpanMut for JSXElement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSXOpeningElement<'a> {
+impl GetSpanMut for JSXOpeningElement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSXClosingElement<'a> {
+impl GetSpanMut for JSXClosingElement<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSXFragment<'a> {
+impl GetSpanMut for JSXFragment<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -1988,7 +1988,7 @@ impl GetSpanMut for JSXClosingFragment {
     }
 }
 
-impl<'a> GetSpanMut for JSXElementName<'a> {
+impl GetSpanMut for JSXElementName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -2000,21 +2000,21 @@ impl<'a> GetSpanMut for JSXElementName<'a> {
     }
 }
 
-impl<'a> GetSpanMut for JSXNamespacedName<'a> {
+impl GetSpanMut for JSXNamespacedName<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSXMemberExpression<'a> {
+impl GetSpanMut for JSXMemberExpression<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSXMemberExpressionObject<'a> {
+impl GetSpanMut for JSXMemberExpressionObject<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
@@ -2024,14 +2024,14 @@ impl<'a> GetSpanMut for JSXMemberExpressionObject<'a> {
     }
 }
 
-impl<'a> GetSpanMut for JSXExpressionContainer<'a> {
+impl GetSpanMut for JSXExpressionContainer<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSXExpression<'a> {
+impl GetSpanMut for JSXExpression<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::EmptyExpression(it) => GetSpanMut::span_mut(it),
@@ -2088,7 +2088,7 @@ impl GetSpanMut for JSXEmptyExpression {
     }
 }
 
-impl<'a> GetSpanMut for JSXAttributeItem<'a> {
+impl GetSpanMut for JSXAttributeItem<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::Attribute(it) => GetSpanMut::span_mut(&mut **it),
@@ -2097,21 +2097,21 @@ impl<'a> GetSpanMut for JSXAttributeItem<'a> {
     }
 }
 
-impl<'a> GetSpanMut for JSXAttribute<'a> {
+impl GetSpanMut for JSXAttribute<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSXSpreadAttribute<'a> {
+impl GetSpanMut for JSXSpreadAttribute<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSXAttributeName<'a> {
+impl GetSpanMut for JSXAttributeName<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
@@ -2120,7 +2120,7 @@ impl<'a> GetSpanMut for JSXAttributeName<'a> {
     }
 }
 
-impl<'a> GetSpanMut for JSXAttributeValue<'a> {
+impl GetSpanMut for JSXAttributeValue<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::StringLiteral(it) => GetSpanMut::span_mut(&mut **it),
@@ -2131,14 +2131,14 @@ impl<'a> GetSpanMut for JSXAttributeValue<'a> {
     }
 }
 
-impl<'a> GetSpanMut for JSXIdentifier<'a> {
+impl GetSpanMut for JSXIdentifier<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSXChild<'a> {
+impl GetSpanMut for JSXChild<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::Text(it) => GetSpanMut::span_mut(&mut **it),
@@ -2150,14 +2150,14 @@ impl<'a> GetSpanMut for JSXChild<'a> {
     }
 }
 
-impl<'a> GetSpanMut for JSXSpreadChild<'a> {
+impl GetSpanMut for JSXSpreadChild<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl<'a> GetSpanMut for JSXText<'a> {
+impl GetSpanMut for JSXText<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span

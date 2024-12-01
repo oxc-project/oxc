@@ -629,7 +629,7 @@ impl<'a> CallbackNode<'a> {
     }
 }
 
-impl<'a> GetSpan for CallbackNode<'a> {
+impl GetSpan for CallbackNode<'_> {
     fn span(&self) -> Span {
         match self {
             CallbackNode::Function(func) => func.span,
@@ -991,7 +991,7 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
     }
 }
 
-impl<'a, 'b> Visit<'a> for ExhaustiveDepsVisitor<'a, 'b> {
+impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.stack.push(kind);
     }

@@ -344,14 +344,19 @@ impl TestCase {
     }
 
     fn write_to_test_files(&self, content: &str) {
-        let unprefixed_path = self
-            .path
-            .strip_prefix(packages_root())
-            .or_else(|_| self.path.strip_prefix(oxc_test_root()))
-            .unwrap();
+        let name;
+        let unprefixed_path = if let Ok(p) = self.path.strip_prefix(packages_root()) {
+            name = "babel";
+            p
+        } else if let Ok(p) = self.path.strip_prefix(oxc_test_root()) {
+            name = "oxc";
+            p
+        } else {
+            unreachable!()
+        };
         let new_file_name: String =
             normalize_path(unprefixed_path).split('/').collect::<Vec<&str>>().join("-");
-        let mut target_path = fixture_root().join(new_file_name);
+        let mut target_path = fixture_root().join(name).join(new_file_name);
         target_path.set_extension("test.js");
         let content = Self::template(content);
         fs::write(&target_path, content).unwrap();

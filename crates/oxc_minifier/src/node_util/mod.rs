@@ -15,7 +15,7 @@ impl<'a, 'b> Deref for Ctx<'a, 'b> {
     }
 }
 
-impl<'a, 'b> ConstantEvaluation<'a> for Ctx<'a, 'b> {
+impl<'a> ConstantEvaluation<'a> for Ctx<'a, '_> {
     fn is_global_reference(&self, ident: &oxc_ast::ast::IdentifierReference<'a>) -> bool {
         ident.is_global_reference(self.0.symbols())
     }
@@ -25,7 +25,7 @@ pub fn is_exact_int64(num: f64) -> bool {
     num.fract() == 0.0
 }
 
-impl<'a, 'b> Ctx<'a, 'b> {
+impl<'a> Ctx<'a, '_> {
     fn symbols(&self) -> &SymbolTable {
         self.0.symbols()
     }

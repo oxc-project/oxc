@@ -59,11 +59,6 @@ fn fixture_root() -> PathBuf {
     conformance_root().join("fixtures")
 }
 
-const CONFORMANCE_SNAPSHOT: &str = "babel.snap.md";
-const OXC_CONFORMANCE_SNAPSHOT: &str = "oxc.snap.md";
-const EXEC_SNAPSHOT: &str = "babel_exec.snap.md";
-const OXC_EXEC_SNAPSHOT: &str = "oxc_exec.snap.md";
-
 impl TestRunner {
     pub fn new(options: TestRunnerOptions) -> Self {
         let snapshot = Snapshot::new(&babel_root(), /* show_commit */ true);
@@ -72,19 +67,18 @@ impl TestRunner {
 
     /// # Panics
     pub fn run(self) {
-        for (root, snapshot, exec_snapshot) in &[
-            (packages_root(), CONFORMANCE_SNAPSHOT, EXEC_SNAPSHOT),
-            (oxc_test_root(), OXC_CONFORMANCE_SNAPSHOT, OXC_EXEC_SNAPSHOT),
-        ] {
+        for (root, name) in &[(packages_root(), "babel"), (oxc_test_root(), "oxc")] {
+            let snapshot = format!("{name}.snap.md");
+            let exec_snapshot = format!("{name}_exec.snap.md");
+            let fixture_root = fixture_root().join(name);
             if self.options.exec {
-                let fixture_root = fixture_root();
                 let _ = fs::remove_dir_all(&fixture_root);
-                let _ = fs::create_dir(&fixture_root);
+                let _ = fs::create_dir_all(&fixture_root);
             }
             let transform_paths = Self::generate_test_cases(root, &self.options);
             self.generate_snapshot(root, &snap_root().join(snapshot), transform_paths);
             if self.options.exec {
-                self.run_vitest(&snap_root().join(exec_snapshot));
+                self.run_vitest(&format!("./fixtures/{name}"), &snap_root().join(exec_snapshot));
             }
         }
     }

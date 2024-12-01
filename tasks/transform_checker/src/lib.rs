@@ -88,11 +88,11 @@
 use std::{
     cell::Cell,
     fmt::{Debug, Display},
-    hash::{BuildHasherDefault, Hash},
+    hash::Hash,
 };
 
 use indexmap::IndexMap;
-use rustc_hash::FxHasher;
+use rustc_hash::FxBuildHasher;
 
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::{ast::*, visit::walk, Visit};
@@ -105,7 +105,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 
-type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
+type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
 /// Check `ScopeTree` and `SymbolTable` are correct after transform
 pub fn check_semantic_after_transform(
@@ -331,7 +331,7 @@ rebuilt        : {value_rebuilt}
     }
 }
 
-impl<'a, 's> PostTransformChecker<'a, 's> {
+impl PostTransformChecker<'_, '_> {
     fn check_scopes(&mut self) {
         for scope_ids in self.scope_ids_map.pairs() {
             // Check bindings are the same
@@ -642,7 +642,7 @@ impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
     }
 }
 
-impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'a, 'e> {
+impl<'a> Visit<'a> for SemanticIdsCollector<'a, '_> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let scope_id = scope_id.get();
         self.scope_ids.push(scope_id);

@@ -3,9 +3,12 @@ use rustc_hash::FxHashMap;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::{ExportImportName, ImportImportName},
+    rule::Rule,
+};
 
 fn no_duplicate_imports_diagnostic(module_name: &str, span: Span, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{module_name}' import is duplicated"))
@@ -89,7 +92,7 @@ impl Rule for NoDuplicateImports {
         let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<Span>> = FxHashMap::default();
 
         for entry in &module_record.import_entries {
-            let source = entry.module_request.name();
+            let source = &entry.module_request.name;
             let span = entry.module_request.span();
 
             let same_statement = if let Some(curr_span) = current_span {
@@ -150,7 +153,7 @@ impl Rule for NoDuplicateImports {
         if self.include_exports {
             for entry in &module_record.star_export_entries {
                 if let Some(module_request) = &entry.module_request {
-                    let source = module_request.name();
+                    let source = &module_request.name;
                     let span = entry.span;
 
                     if entry.import_name.is_all_but_default() {
@@ -205,7 +208,7 @@ impl Rule for NoDuplicateImports {
 
             for entry in &module_record.indirect_export_entries {
                 if let Some(module_request) = &entry.module_request {
-                    let source = module_request.name();
+                    let source = &module_request.name;
                     let span = entry.span;
 
                     if let Some(existing) = import_map.get(source) {

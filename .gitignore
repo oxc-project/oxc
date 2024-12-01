@@ -2,6 +2,9 @@
 target/
 **/*.rs.bk
 
+# Wasm
+**/*.wasm
+
 # node_modules
 /node_modules/
 /website/node_modules/

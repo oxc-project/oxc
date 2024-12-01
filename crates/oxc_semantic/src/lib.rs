@@ -6,7 +6,6 @@
 //! ```
 
 use std::ops::RangeBounds;
-use std::sync::Arc;
 
 use oxc_ast::{
     ast::IdentifierReference, comments_range, has_comments_between, AstKind, Comment, CommentsRange,
@@ -14,7 +13,6 @@ use oxc_ast::{
 use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
 pub use oxc_syntax::{
-    module_record::ModuleRecord,
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -28,7 +26,6 @@ mod class;
 mod diagnostics;
 mod jsdoc;
 mod label;
-mod module_record;
 mod node;
 mod reference;
 mod scope;
@@ -81,8 +78,6 @@ pub struct Semantic<'a> {
     /// Parsed comments.
     comments: &'a oxc_allocator::Vec<'a, Comment>,
     irregular_whitespaces: Box<[Span]>,
-
-    module_record: Arc<ModuleRecord>,
 
     /// Parsed JSDoc comments.
     jsdoc: JSDocFinder<'a>,
@@ -160,11 +155,6 @@ impl<'a> Semantic<'a> {
     /// Will be empty if JSDoc parsing is disabled.
     pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         &self.jsdoc
-    }
-
-    /// ESM module record containing imports and exports.
-    pub fn module_record(&self) -> &ModuleRecord {
-        self.module_record.as_ref()
     }
 
     /// [`SymbolTable`] containing all symbols in the program and their

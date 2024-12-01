@@ -256,7 +256,7 @@ impl From<Message<'_>> for OxcDiagnostic {
     }
 }
 
-impl<'a> GetSpan for Message<'a> {
+impl GetSpan for Message<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span

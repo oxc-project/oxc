@@ -202,7 +202,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
                 return false;
             };
 
-            return template_str.as_str() == right_string_lit.to_string();
+            template_str.as_str() == right_string_lit.to_string()
         }
         (
             Expression::StringLiteral(left_string_lit),
@@ -212,7 +212,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
                 return false;
             };
 
-            return left_string_lit.to_string() == template_str.as_str();
+            left_string_lit.to_string() == template_str.as_str()
         }
         _ => false,
     }

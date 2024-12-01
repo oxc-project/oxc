@@ -14,6 +14,7 @@ use super::TypeName;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
+#[expect(clippy::large_enum_variant)]
 pub enum TypeDef {
     Struct(StructDef),
     Enum(EnumDef),

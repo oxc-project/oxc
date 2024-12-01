@@ -282,7 +282,7 @@ impl Rule for PreferSetHas {
                 };
                 references_fix.push(fixer.replace(property_info.0, "has"));
             }
-            return declaration_fix.extend(references_fix);
+            declaration_fix.extend(references_fix)
         });
     }
 }

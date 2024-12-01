@@ -143,9 +143,9 @@ watch-wasm:
   just watch 'just build-wasm dev'
 
 build-wasm mode="release":
-  wasm-pack build --out-dir ../../npm/oxc-wasm --target web --{{mode}} --scope oxc crates/oxc_wasm
-  echo '*.wasm' > npm/oxc-wasm/.gitignore
+  wasm-pack build crates/oxc_wasm --no-pack --target web --scope oxc --out-dir ../../npm/oxc-wasm --{{mode}}
   cp crates/oxc_wasm/package.json npm/oxc-wasm/package.json
+  rm npm/oxc-wasm/.gitignore
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:
@@ -201,13 +201,13 @@ new-security-rule name:
 clone-submodule dir url sha:
   cd {{dir}} || git init {{dir}}
   cd {{dir}} && git remote add origin {{url}} || true
-  cd {{dir}} && git fetch --depth=1 origin {{sha}} && git reset --hard {{sha}}
+  cd {{dir}} && git fetch --depth=1 origin {{sha}} && git reset --hard {{sha}} && git clean -f -q
 
 [windows]
 clone-submodule dir url sha:
   if (-not (Test-Path {{dir}}/.git)) { git init {{dir}} }
   cd {{dir}} ; if ((git remote) -notcontains 'origin') { git remote add origin {{url}} } else { git remote set-url origin {{url}} }
-  cd {{dir}} ; git fetch --depth=1 origin {{sha}} ; git reset --hard {{sha}}
+  cd {{dir}} ; git fetch --depth=1 origin {{sha}} ; git reset --hard {{sha}} ; git clean -f -q
 
 website path:
   cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD)

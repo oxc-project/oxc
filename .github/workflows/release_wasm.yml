@@ -59,6 +59,10 @@ jobs:
           pnpm run build
           pnpm run test
 
+      - name: Check
+        working-directory: npm/parser-wasm
+        run: pnpm run check
+
       - name: Publish
         working-directory: npm/parser-wasm
         env:

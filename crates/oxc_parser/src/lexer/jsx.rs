@@ -11,18 +11,17 @@ use crate::diagnostics;
 static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || matches!(b, b'_' | b'$' | b'-')));
 
-impl<'a> Lexer<'a> {
-    /// `JSXDoubleStringCharacters` ::
-    ///   `JSXDoubleStringCharacter` `JSXDoubleStringCharactersopt`
-    /// `JSXDoubleStringCharacter` ::
-    ///   `JSXStringCharacter` but not "
-    /// `JSXSingleStringCharacters` ::
-    ///   `JSXSingleStringCharacter` `JSXSingleStringCharactersopt`
-    /// `JSXSingleStringCharacter` ::
-    ///   `JSXStringCharacter` but not '
-    /// `JSXStringCharacter` ::
-    ///   `SourceCharacter` but not one of `HTMLCharacterReference`
-
+/// `JSXDoubleStringCharacters` ::
+///   `JSXDoubleStringCharacter` `JSXDoubleStringCharactersopt`
+/// `JSXDoubleStringCharacter` ::
+///   `JSXStringCharacter` but not "
+/// `JSXSingleStringCharacters` ::
+///   `JSXSingleStringCharacter` `JSXSingleStringCharactersopt`
+/// `JSXSingleStringCharacter` ::
+///   `JSXStringCharacter` but not '
+/// `JSXStringCharacter` ::
+///   `SourceCharacter` but not one of `HTMLCharacterReference`
+impl Lexer<'_> {
     /// Read JSX string literal.
     /// # SAFETY
     /// * `delimiter` must be an ASCII character.

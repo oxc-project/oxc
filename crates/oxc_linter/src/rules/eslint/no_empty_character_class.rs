@@ -63,7 +63,7 @@ struct EmptyClassFinder {
     empty_classes: Vec<Span>,
 }
 
-impl<'a> Visit<'a> for EmptyClassFinder {
+impl Visit<'_> for EmptyClassFinder {
     fn visit_character_class(&mut self, class: &CharacterClass) {
         if !class.negative && class.body.is_empty() {
             self.empty_classes.push(class.span);

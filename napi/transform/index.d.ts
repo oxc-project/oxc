@@ -215,7 +215,7 @@ export interface TransformOptions {
    *
    * @default `esnext` (No transformation)
    *
-   * @see [esbuild#target](<https://esbuild.github.io/api/#target)
+   * @see [esbuild#target](https://esbuild.github.io/api/#target)
    */
   target?: string | Array<string>
   /** Define Plugin */

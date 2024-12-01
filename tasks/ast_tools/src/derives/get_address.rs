@@ -36,7 +36,7 @@ impl Derive for DeriveGetAddress {
 }
 
 fn derive_enum(def: &EnumDef) -> TokenStream {
-    let target_type = def.to_type();
+    let target_type = def.to_elided_type();
 
     let matches = def.all_variants().map(|variant| {
         assert!(
@@ -50,7 +50,7 @@ fn derive_enum(def: &EnumDef) -> TokenStream {
     });
 
     quote! {
-        impl<'a> GetAddress for #target_type {
+        impl GetAddress for #target_type {
             ///@ `#[inline]` because compiler should boil this down to a single assembly instruction
             #[inline]
             fn address(&self) -> Address {

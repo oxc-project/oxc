@@ -1,5 +1,5 @@
 {
-  "name": "oxc_wasm",
+  "name": "@oxc/oxc_wasm",
   "type": "module",
   "collaborators": [
     "Boshen <boshenc@gmail.com>",
@@ -12,9 +12,6 @@
     "oxc_wasm.js",
     "oxc_wasm.d.ts"
   ],
-  "dependencies": {
-    "@oxc-project/types": "workspace:^"
-  },
   "main": "oxc_wasm.js",
   "types": "oxc_wasm.d.ts",
   "sideEffects": [
@@ -29,5 +26,8 @@
   ],
   "scripts": {
     "check": "tsc --lib es2020,dom ./oxc_wasm.d.ts"
+  },
+  "dependencies": {
+    "@oxc-project/types": "workspace:^"
   }
 }

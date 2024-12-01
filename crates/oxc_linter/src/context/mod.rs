@@ -14,7 +14,7 @@ use crate::{
     disable_directives::DisableDirectives,
     fixer::{FixKind, Message, RuleFix, RuleFixer},
     javascript_globals::GLOBALS,
-    AllowWarnDeny, FrameworkFlags, OxlintEnv, OxlintGlobals, OxlintSettings,
+    AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
 pub(crate) use host::ContextHost;
@@ -103,6 +103,11 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn semantic(&self) -> &Rc<Semantic<'a>> {
         &self.parent.semantic
+    }
+
+    #[inline]
+    pub fn module_record(&self) -> &ModuleRecord {
+        self.parent.module_record()
     }
 
     /// Get the control flow graph for the current program.

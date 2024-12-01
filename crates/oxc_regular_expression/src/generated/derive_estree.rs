@@ -7,7 +7,7 @@ use serde::{ser::SerializeMap, Serialize, Serializer};
 
 use crate::ast::*;
 
-impl<'a> Serialize for Pattern<'a> {
+impl Serialize for Pattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Pattern")?;
@@ -17,7 +17,7 @@ impl<'a> Serialize for Pattern<'a> {
     }
 }
 
-impl<'a> Serialize for Disjunction<'a> {
+impl Serialize for Disjunction<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Disjunction")?;
@@ -27,7 +27,7 @@ impl<'a> Serialize for Disjunction<'a> {
     }
 }
 
-impl<'a> Serialize for Alternative<'a> {
+impl Serialize for Alternative<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Alternative")?;
@@ -37,7 +37,7 @@ impl<'a> Serialize for Alternative<'a> {
     }
 }
 
-impl<'a> Serialize for Term<'a> {
+impl Serialize for Term<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Term::BoundaryAssertion(x) => Serialize::serialize(x, serializer),
@@ -85,7 +85,7 @@ impl Serialize for BoundaryAssertionKind {
     }
 }
 
-impl<'a> Serialize for LookAroundAssertion<'a> {
+impl Serialize for LookAroundAssertion<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "LookAroundAssertion")?;
@@ -119,7 +119,7 @@ impl Serialize for LookAroundAssertionKind {
     }
 }
 
-impl<'a> Serialize for Quantifier<'a> {
+impl Serialize for Quantifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "Quantifier")?;
@@ -213,7 +213,7 @@ impl Serialize for CharacterClassEscapeKind {
     }
 }
 
-impl<'a> Serialize for UnicodePropertyEscape<'a> {
+impl Serialize for UnicodePropertyEscape<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "UnicodePropertyEscape")?;
@@ -235,7 +235,7 @@ impl Serialize for Dot {
     }
 }
 
-impl<'a> Serialize for CharacterClass<'a> {
+impl Serialize for CharacterClass<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "CharacterClass")?;
@@ -266,7 +266,7 @@ impl Serialize for CharacterClassContentsKind {
     }
 }
 
-impl<'a> Serialize for CharacterClassContents<'a> {
+impl Serialize for CharacterClassContents<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             CharacterClassContents::CharacterClassRange(x) => Serialize::serialize(x, serializer),
@@ -292,7 +292,7 @@ impl Serialize for CharacterClassRange {
     }
 }
 
-impl<'a> Serialize for ClassStringDisjunction<'a> {
+impl Serialize for ClassStringDisjunction<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ClassStringDisjunction")?;
@@ -303,7 +303,7 @@ impl<'a> Serialize for ClassStringDisjunction<'a> {
     }
 }
 
-impl<'a> Serialize for ClassString<'a> {
+impl Serialize for ClassString<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "ClassString")?;
@@ -314,7 +314,7 @@ impl<'a> Serialize for ClassString<'a> {
     }
 }
 
-impl<'a> Serialize for CapturingGroup<'a> {
+impl Serialize for CapturingGroup<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "CapturingGroup")?;
@@ -325,7 +325,7 @@ impl<'a> Serialize for CapturingGroup<'a> {
     }
 }
 
-impl<'a> Serialize for IgnoreGroup<'a> {
+impl Serialize for IgnoreGroup<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "IgnoreGroup")?;
@@ -368,7 +368,7 @@ impl Serialize for IndexedReference {
     }
 }
 
-impl<'a> Serialize for NamedReference<'a> {
+impl Serialize for NamedReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("type", "NamedReference")?;

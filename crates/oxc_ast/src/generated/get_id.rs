@@ -5,7 +5,7 @@ use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
 use crate::ast::*;
 
-impl<'a> Program<'a> {
+impl Program<'_> {
     /// Get [`ScopeId`] of [`Program`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -24,7 +24,7 @@ impl<'a> Program<'a> {
     }
 }
 
-impl<'a> IdentifierReference<'a> {
+impl IdentifierReference<'_> {
     /// Get [`ReferenceId`] of [`IdentifierReference`].
     ///
     /// Only use this method on a post-semantic AST where [`ReferenceId`]s are always defined.
@@ -43,7 +43,7 @@ impl<'a> IdentifierReference<'a> {
     }
 }
 
-impl<'a> BindingIdentifier<'a> {
+impl BindingIdentifier<'_> {
     /// Get [`SymbolId`] of [`BindingIdentifier`].
     ///
     /// Only use this method on a post-semantic AST where [`SymbolId`]s are always defined.
@@ -62,7 +62,7 @@ impl<'a> BindingIdentifier<'a> {
     }
 }
 
-impl<'a> BlockStatement<'a> {
+impl BlockStatement<'_> {
     /// Get [`ScopeId`] of [`BlockStatement`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -81,7 +81,7 @@ impl<'a> BlockStatement<'a> {
     }
 }
 
-impl<'a> ForStatement<'a> {
+impl ForStatement<'_> {
     /// Get [`ScopeId`] of [`ForStatement`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -100,7 +100,7 @@ impl<'a> ForStatement<'a> {
     }
 }
 
-impl<'a> ForInStatement<'a> {
+impl ForInStatement<'_> {
     /// Get [`ScopeId`] of [`ForInStatement`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -119,7 +119,7 @@ impl<'a> ForInStatement<'a> {
     }
 }
 
-impl<'a> ForOfStatement<'a> {
+impl ForOfStatement<'_> {
     /// Get [`ScopeId`] of [`ForOfStatement`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -138,7 +138,7 @@ impl<'a> ForOfStatement<'a> {
     }
 }
 
-impl<'a> SwitchStatement<'a> {
+impl SwitchStatement<'_> {
     /// Get [`ScopeId`] of [`SwitchStatement`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -157,7 +157,7 @@ impl<'a> SwitchStatement<'a> {
     }
 }
 
-impl<'a> CatchClause<'a> {
+impl CatchClause<'_> {
     /// Get [`ScopeId`] of [`CatchClause`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -176,7 +176,7 @@ impl<'a> CatchClause<'a> {
     }
 }
 
-impl<'a> Function<'a> {
+impl Function<'_> {
     /// Get [`ScopeId`] of [`Function`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -195,7 +195,7 @@ impl<'a> Function<'a> {
     }
 }
 
-impl<'a> ArrowFunctionExpression<'a> {
+impl ArrowFunctionExpression<'_> {
     /// Get [`ScopeId`] of [`ArrowFunctionExpression`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -214,7 +214,7 @@ impl<'a> ArrowFunctionExpression<'a> {
     }
 }
 
-impl<'a> Class<'a> {
+impl Class<'_> {
     /// Get [`ScopeId`] of [`Class`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -233,7 +233,7 @@ impl<'a> Class<'a> {
     }
 }
 
-impl<'a> StaticBlock<'a> {
+impl StaticBlock<'_> {
     /// Get [`ScopeId`] of [`StaticBlock`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -252,7 +252,7 @@ impl<'a> StaticBlock<'a> {
     }
 }
 
-impl<'a> TSEnumDeclaration<'a> {
+impl TSEnumDeclaration<'_> {
     /// Get [`ScopeId`] of [`TSEnumDeclaration`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -271,7 +271,7 @@ impl<'a> TSEnumDeclaration<'a> {
     }
 }
 
-impl<'a> TSConditionalType<'a> {
+impl TSConditionalType<'_> {
     /// Get [`ScopeId`] of [`TSConditionalType`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -290,7 +290,7 @@ impl<'a> TSConditionalType<'a> {
     }
 }
 
-impl<'a> TSTypeAliasDeclaration<'a> {
+impl TSTypeAliasDeclaration<'_> {
     /// Get [`ScopeId`] of [`TSTypeAliasDeclaration`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -309,7 +309,7 @@ impl<'a> TSTypeAliasDeclaration<'a> {
     }
 }
 
-impl<'a> TSInterfaceDeclaration<'a> {
+impl TSInterfaceDeclaration<'_> {
     /// Get [`ScopeId`] of [`TSInterfaceDeclaration`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -328,7 +328,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
     }
 }
 
-impl<'a> TSMethodSignature<'a> {
+impl TSMethodSignature<'_> {
     /// Get [`ScopeId`] of [`TSMethodSignature`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -347,7 +347,7 @@ impl<'a> TSMethodSignature<'a> {
     }
 }
 
-impl<'a> TSConstructSignatureDeclaration<'a> {
+impl TSConstructSignatureDeclaration<'_> {
     /// Get [`ScopeId`] of [`TSConstructSignatureDeclaration`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -366,7 +366,7 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
     }
 }
 
-impl<'a> TSModuleDeclaration<'a> {
+impl TSModuleDeclaration<'_> {
     /// Get [`ScopeId`] of [`TSModuleDeclaration`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
@@ -385,7 +385,7 @@ impl<'a> TSModuleDeclaration<'a> {
     }
 }
 
-impl<'a> TSMappedType<'a> {
+impl TSMappedType<'_> {
     /// Get [`ScopeId`] of [`TSMappedType`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.

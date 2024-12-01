@@ -12,6 +12,8 @@ mod fixer;
 mod frameworks;
 mod globals;
 mod javascript_globals;
+mod module_graph_visitor;
+mod module_record;
 mod options;
 mod rule;
 mod rules;
@@ -21,14 +23,9 @@ mod utils;
 pub mod loader;
 pub mod table;
 
-use crate::config::ResolvedLinterState;
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 
-use config::{ConfigStore, LintConfig};
-use context::ContextHost;
-use options::LintOptions;
 use oxc_semantic::{AstNode, Semantic};
-use utils::iter_possible_jest_call_node;
 
 pub use crate::{
     builder::{LinterBuilder, LinterBuilderError},
@@ -36,15 +33,21 @@ pub use crate::{
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
+    module_record::ModuleRecord,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
 use crate::{
-    config::{OxlintEnv, OxlintGlobals, OxlintSettings},
+    config::{
+        ConfigStore, LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState,
+    },
+    context::ContextHost,
     fixer::{Fixer, Message},
+    options::LintOptions,
     rules::RuleEnum,
     table::RuleTable,
+    utils::iter_possible_jest_call_node,
 };
 
 #[cfg(target_pointer_width = "64")]
@@ -110,10 +113,16 @@ impl Linter {
         self.config.rules()
     }
 
-    pub fn run<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> Vec<Message<'a>> {
+    pub fn run<'a>(
+        &self,
+        path: &Path,
+        semantic: Rc<Semantic<'a>>,
+        module_record: Arc<ModuleRecord>,
+    ) -> Vec<Message<'a>> {
         // Get config + rules for this file. Takes base rules and applies glob-based overrides.
         let ResolvedLinterState { rules, config } = self.config.resolve(path);
-        let ctx_host = Rc::new(ContextHost::new(path, semantic, self.options, config));
+        let ctx_host =
+            Rc::new(ContextHost::new(path, semantic, module_record, self.options, config));
 
         let rules = rules
             .iter()

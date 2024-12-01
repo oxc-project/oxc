@@ -246,9 +246,9 @@ pub fn is_same_member_expression(
         }
     }
 
-    return is_same_reference(
+    is_same_reference(
         left.object().get_inner_expression(),
         right.object().get_inner_expression(),
         ctx,
-    );
+    )
 }

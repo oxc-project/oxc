@@ -1,10 +1,6 @@
 //! Semantic Builder
 
-use std::{
-    cell::{Cell, RefCell},
-    path::Path,
-    sync::Arc,
-};
+use std::cell::{Cell, RefCell};
 
 use rustc_hash::FxHashMap;
 
@@ -15,7 +11,6 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
-use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
     binder::Binder,
@@ -24,7 +19,6 @@ use crate::{
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
     label::UnusedLabels,
-    module_record::ModuleRecordBuilder,
     node::{AstNodes, NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{Bindings, ScopeFlags, ScopeId, ScopeTree},
@@ -66,7 +60,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) source_type: SourceType,
 
     /// Semantic early errors such as redeclaration errors.
-    errors: RefCell<Vec<OxcDiagnostic>>,
+    pub(crate) errors: RefCell<Vec<OxcDiagnostic>>,
 
     // states
     pub(crate) current_node_id: NodeId,
@@ -88,9 +82,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) scope: ScopeTree,
     pub(crate) symbols: SymbolTable,
 
-    unresolved_references: UnresolvedReferencesStack<'a>,
-
-    pub(crate) module_record: Arc<ModuleRecord>,
+    pub(crate) unresolved_references: UnresolvedReferencesStack<'a>,
 
     unused_labels: UnusedLabels<'a>,
     build_jsdoc: bool,
@@ -116,7 +108,7 @@ pub struct SemanticBuilderReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
 }
 
-impl<'a> Default for SemanticBuilder<'a> {
+impl Default for SemanticBuilder<'_> {
     fn default() -> Self {
         Self::new()
     }
@@ -143,7 +135,6 @@ impl<'a> SemanticBuilder<'a> {
             scope,
             symbols: SymbolTable::default(),
             unresolved_references: UnresolvedReferencesStack::new(),
-            module_record: Arc::new(ModuleRecord::default()),
             unused_labels: UnusedLabels::default(),
             build_jsdoc: false,
             jsdoc: JSDocBuilder::default(),
@@ -222,25 +213,6 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
-    /// Get the built module record from `build_module_record`
-    pub fn module_record(&self) -> Arc<ModuleRecord> {
-        Arc::clone(&self.module_record)
-    }
-
-    /// Build the module record with a shallow AST visit
-    #[must_use]
-    pub fn build_module_record(
-        mut self,
-        resolved_absolute_path: &Path,
-        program: &Program<'a>,
-    ) -> Self {
-        let mut module_record_builder =
-            ModuleRecordBuilder::new(resolved_absolute_path.to_path_buf());
-        module_record_builder.visit(program);
-        self.module_record = Arc::new(module_record_builder.build());
-        self
-    }
-
     /// Finalize the builder.
     ///
     /// # Panics
@@ -292,16 +264,14 @@ impl<'a> SemanticBuilder<'a> {
                 );
                 stats.assert_accurate(actual_stats);
             }
-
-            // Checking syntax error on module record requires scope information from the previous AST pass
-            if self.check_syntax_error {
-                checker::check_module_record(&self);
-            }
         }
 
         let comments = self.alloc(&program.comments);
 
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
+        if self.check_syntax_error && !self.source_type.is_typescript() {
+            checker::check_unresolved_exports(&self);
+        }
         self.scope.root_unresolved_references = self
             .unresolved_references
             .into_root()
@@ -320,7 +290,6 @@ impl<'a> SemanticBuilder<'a> {
             scopes: self.scope,
             symbols: self.symbols,
             classes: self.class_table_builder.build(),
-            module_record: Arc::clone(&self.module_record),
             jsdoc,
             unused_labels: self.unused_labels.labels,
             cfg: self.cfg.map(ControlFlowGraphBuilder::build),
@@ -1878,6 +1847,7 @@ impl<'a> SemanticBuilder<'a> {
                 } else {
                     self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
                 }
+                self.current_node_flags |= NodeFlags::ExportSpecifier;
             }
             AstKind::ImportSpecifier(specifier) => {
                 specifier.bind(self);
@@ -2040,6 +2010,7 @@ impl<'a> SemanticBuilder<'a> {
                 if !self.current_reference_flags.is_type_only() {
                     self.current_reference_flags = ReferenceFlags::empty();
                 }
+                self.current_node_flags -= NodeFlags::ExportSpecifier;
             }
             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();

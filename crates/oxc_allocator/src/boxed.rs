@@ -28,7 +28,7 @@ use crate::Allocator;
 /// being called to guarantee soundness.
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
-impl<'alloc, T> Box<'alloc, T> {
+impl<T> Box<'_, T> {
     /// Take ownership of the value stored in this [`Box`], consuming the box in
     /// the process.
     ///
@@ -56,7 +56,7 @@ impl<'alloc, T> Box<'alloc, T> {
     }
 }
 
-impl<'alloc, T> Box<'alloc, T> {
+impl<T> Box<'_, T> {
     /// Put a `value` into a memory arena and get back a [`Box`] with ownership
     /// to the allocation.
     ///
@@ -82,7 +82,7 @@ impl<'alloc, T> Box<'alloc, T> {
     }
 }
 
-impl<'alloc, T: ?Sized> Box<'alloc, T> {
+impl<T: ?Sized> Box<'_, T> {
     /// Create a [`Box`] from a raw pointer to a value.
     ///
     /// The [`Box`] takes ownership of the data pointed to by `ptr`.
@@ -108,7 +108,7 @@ impl<'alloc, T: ?Sized> Box<'alloc, T> {
     }
 }
 
-impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
+impl<T: ?Sized> ops::Deref for Box<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -117,26 +117,26 @@ impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
     }
 }
 
-impl<'alloc, T: ?Sized> ops::DerefMut for Box<'alloc, T> {
+impl<T: ?Sized> ops::DerefMut for Box<'_, T> {
     fn deref_mut(&mut self) -> &mut T {
         // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
         unsafe { self.0.as_mut() }
     }
 }
 
-impl<'alloc, T: ?Sized> AsRef<T> for Box<'alloc, T> {
+impl<T: ?Sized> AsRef<T> for Box<'_, T> {
     fn as_ref(&self) -> &T {
         self
     }
 }
 
-impl<'alloc, T: ?Sized> AsMut<T> for Box<'alloc, T> {
+impl<T: ?Sized> AsMut<T> for Box<'_, T> {
     fn as_mut(&mut self) -> &mut T {
         self
     }
 }
 
-impl<'alloc, T: ?Sized + Debug> Debug for Box<'alloc, T> {
+impl<T: ?Sized + Debug> Debug for Box<'_, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         self.deref().fmt(f)
     }
@@ -153,7 +153,7 @@ impl<'alloc, T: ?Sized + Debug> Debug for Box<'alloc, T> {
 // }
 
 #[cfg(any(feature = "serialize", test))]
-impl<'alloc, T> Serialize for Box<'alloc, T>
+impl<T> Serialize for Box<'_, T>
 where
     T: Serialize,
 {
@@ -165,7 +165,7 @@ where
     }
 }
 
-impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
+impl<T: Hash> Hash for Box<'_, T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.deref().hash(state);
     }

@@ -31,10 +31,6 @@ pub struct TraverseScoping {
 
 // Public methods
 impl TraverseScoping {
-    pub fn into_symbol_table_and_scope_tree(self) -> (SymbolTable, ScopeTree) {
-        (self.symbols, self.scopes)
-    }
-
     /// Get current scope ID
     #[inline]
     pub fn current_scope_id(&self) -> ScopeId {
@@ -406,6 +402,11 @@ impl TraverseScoping {
             current_scope_id: ScopeId::new(0),
             current_hoist_scope_id: ScopeId::new(0),
         }
+    }
+
+    /// Consume [`TraverseScoping`] and return [`SymbolTable`] and [`ScopeTree`].
+    pub(super) fn into_symbol_table_and_scope_tree(self) -> (SymbolTable, ScopeTree) {
+        (self.symbols, self.scopes)
     }
 
     /// Set current scope ID

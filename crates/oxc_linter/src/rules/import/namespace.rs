@@ -6,11 +6,14 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ModuleRecord};
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::module_record::{ExportExportName, ExportImportName, ImportImportName};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::{ExportExportName, ExportImportName, ImportImportName, ModuleRecord},
+    rule::Rule,
+};
 
 fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -152,8 +155,7 @@ impl Rule for Namespace {
                 return;
             }
 
-            let Some(symbol_id) = ctx.scopes().get_root_binding(entry.local_name.name().as_str())
-            else {
+            let Some(symbol_id) = ctx.scopes().get_root_binding(entry.local_name.name()) else {
                 return;
             };
 
@@ -232,16 +234,15 @@ fn get_module_request_name(name: &str, module_record: &ModuleRecord) -> Option<S
         module_record.indirect_export_entries.iter().find(|e| match &e.import_name {
             ExportImportName::All => {
                 if let ExportExportName::Name(name_span) = &e.export_name {
-                    return name_span.name().as_str() == name;
+                    return name_span.name() == name;
                 }
 
                 false
             }
             ExportImportName::Name(name_span) => {
-                name_span.name().as_str() == name
+                name_span.name() == name
                     && module_record.import_entries.iter().any(|entry| {
-                        entry.local_name.name().as_str() == name
-                            && entry.import_name.is_namespace_object()
+                        entry.local_name.name() == name && entry.import_name.is_namespace_object()
                     })
             }
             _ => false,
@@ -253,9 +254,7 @@ fn get_module_request_name(name: &str, module_record: &ModuleRecord) -> Option<S
     module_record
         .import_entries
         .iter()
-        .find(|entry| {
-            entry.local_name.name().as_str() == name && entry.import_name.is_namespace_object()
-        })
+        .find(|entry| entry.local_name.name() == name && entry.import_name.is_namespace_object())
         .map(|entry| entry.module_request.name().to_string())
 }
 

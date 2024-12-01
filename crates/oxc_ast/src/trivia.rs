@@ -79,7 +79,7 @@ impl<'c> Iterator for CommentsRange<'c> {
     }
 }
 
-impl<'c> DoubleEndedIterator for CommentsRange<'c> {
+impl DoubleEndedIterator for CommentsRange<'_> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.current_start < self.current_end {
             for comment in self.comments[self.current_start..self.current_end].iter().rev() {

@@ -1,9 +1,8 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Span, VALID_EXTENSIONS};
-use oxc_syntax::module_record::ImportImportName;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
 
 fn default_diagnostic(imported_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("No default export found in imported module {imported_name:?}"))

@@ -1,4 +1,5 @@
 mod ast_passes;
+mod ecmascript;
 mod mangler;
 
 use oxc_allocator::Allocator;

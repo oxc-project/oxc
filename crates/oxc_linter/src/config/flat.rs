@@ -15,6 +15,7 @@ use dashmap::DashMap;
 use rustc_hash::FxBuildHasher;
 
 type AppliedOverrideHash = u64;
+type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 
 // TODO: support `categories` et. al. in overrides.
 #[derive(Debug)]
@@ -41,7 +42,7 @@ pub struct ConfigStore {
     // with nested configs.
     /// Resolved override cache. The key is a hash of each override's ID that matched the list of
     /// file globs in order to avoid re-allocating the same set of rules multiple times.
-    cache: DashMap<AppliedOverrideHash, ResolvedLinterState, FxBuildHasher>,
+    cache: FxDashMap<AppliedOverrideHash, ResolvedLinterState>,
     /// "root" level configuration. In the future this may just be the first entry in `overrides`.
     base: ResolvedLinterState,
     /// Config deltas applied to `base`.
@@ -64,7 +65,7 @@ impl ConfigStore {
         // could end up needing (overrides.len() ** 2) capacity. I don't really want to
         // pre-allocate that much space unconditionally. Better to re-alloc if we end up needing
         // it.
-        let cache = DashMap::with_capacity_and_hasher(overrides.len(), FxBuildHasher);
+        let cache = FxDashMap::with_capacity_and_hasher(overrides.len(), FxBuildHasher);
 
         Self { cache, base, overrides }
     }

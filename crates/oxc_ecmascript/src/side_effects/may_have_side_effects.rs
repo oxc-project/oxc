@@ -16,7 +16,7 @@ where
     }
 }
 
-impl<'a, 'b> MayHaveSideEffects<'a, 'b> for Expression<'a> {}
-impl<'a, 'b> MayHaveSideEffects<'a, 'b> for UnaryExpression<'a> {}
-impl<'a, 'b> MayHaveSideEffects<'a, 'b> for ForStatementLeft<'a> {}
-impl<'a, 'b> MayHaveSideEffects<'a, 'b> for PropertyKey<'a> {}
+impl<'a> MayHaveSideEffects<'a, '_> for Expression<'a> {}
+impl<'a> MayHaveSideEffects<'a, '_> for UnaryExpression<'a> {}
+impl<'a> MayHaveSideEffects<'a, '_> for ForStatementLeft<'a> {}
+impl<'a> MayHaveSideEffects<'a, '_> for PropertyKey<'a> {}

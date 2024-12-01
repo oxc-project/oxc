@@ -425,6 +425,7 @@ impl Tester {
         }
     }
 
+    #[expect(clippy::ref_option)]
     fn run(
         &mut self,
         source_text: &str,

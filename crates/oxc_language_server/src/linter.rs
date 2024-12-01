@@ -13,7 +13,7 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource, Severity};
 use oxc_linter::{
     loader::{JavaScriptSource, Loader},
-    FixKind, Linter,
+    FixKind, Linter, ModuleRecord,
 };
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
@@ -292,7 +292,8 @@ impl IsolatedLintHandler {
 
             let mut semantic = semantic_ret.semantic;
             semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
-            let result = self.linter.run(path, Rc::new(semantic));
+            let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
+            let result = self.linter.run(path, Rc::new(semantic), module_record);
 
             let reports = result
                 .into_iter()

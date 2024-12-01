@@ -64,7 +64,7 @@ pub trait IsConstant<'a, 'b> {
     fn is_constant(&self, in_boolean_position: bool, semantic: &Semantic<'a>) -> bool;
 }
 
-impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
+impl<'a> IsConstant<'a, '_> for Expression<'a> {
     fn is_constant(&self, in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
         match self {
             Self::ArrowFunctionExpression(_)
@@ -138,7 +138,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
     }
 }
 
-impl<'a, 'b> IsConstant<'a, 'b> for CallExpression<'a> {
+impl<'a> IsConstant<'a, '_> for CallExpression<'a> {
     fn is_constant(&self, _in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
         if let Expression::Identifier(ident) = &self.callee {
             if ident.name == "Boolean"
@@ -155,7 +155,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for CallExpression<'a> {
     }
 }
 
-impl<'a, 'b> IsConstant<'a, 'b> for Argument<'a> {
+impl<'a> IsConstant<'a, '_> for Argument<'a> {
     fn is_constant(&self, in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
         match self {
             Self::SpreadElement(element) => element.is_constant(in_boolean_position, semantic),
@@ -166,7 +166,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for Argument<'a> {
     }
 }
 
-impl<'a, 'b> IsConstant<'a, 'b> for ArrayExpressionElement<'a> {
+impl<'a> IsConstant<'a, '_> for ArrayExpressionElement<'a> {
     fn is_constant(&self, in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
         match self {
             Self::SpreadElement(element) => element.is_constant(in_boolean_position, semantic),
@@ -178,7 +178,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for ArrayExpressionElement<'a> {
     }
 }
 
-impl<'a, 'b> IsConstant<'a, 'b> for SpreadElement<'a> {
+impl<'a> IsConstant<'a, '_> for SpreadElement<'a> {
     fn is_constant(&self, in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
         self.argument.is_constant(in_boolean_position, semantic)
     }

@@ -70,7 +70,11 @@ impl ignore::ParallelVisitor for WalkCollector {
 impl Walk {
     /// Will not canonicalize paths.
     /// # Panics
-    pub fn new(paths: &[PathBuf], options: &IgnoreOptions) -> Self {
+    pub fn new(
+        paths: &[PathBuf],
+        options: &IgnoreOptions,
+        config_ignore_patterns: &[PathBuf],
+    ) -> Self {
         assert!(!paths.is_empty(), "At least one path must be provided to Walk::new");
 
         let mut inner = ignore::WalkBuilder::new(
@@ -89,17 +93,24 @@ impl Walk {
         if !options.no_ignore {
             inner.add_custom_ignore_filename(&options.ignore_path);
 
+            let mut override_builder = OverrideBuilder::new(Path::new("/"));
             if !options.ignore_pattern.is_empty() {
-                let mut override_builder = OverrideBuilder::new(Path::new("/"));
                 for pattern in &options.ignore_pattern {
                     // Meaning of ignore pattern is reversed
                     // <https://docs.rs/ignore/latest/ignore/overrides/struct.OverrideBuilder.html#method.add>
                     let pattern = format!("!{pattern}");
                     override_builder.add(&pattern).unwrap();
                 }
-                let overrides = override_builder.build().unwrap();
-                inner.overrides(overrides);
             }
+
+            if !config_ignore_patterns.is_empty() {
+                for pattern in config_ignore_patterns {
+                    let pattern = format!("!{}", pattern.to_str().unwrap());
+                    override_builder.add(&pattern).unwrap();
+                }
+            }
+
+            inner.overrides(override_builder.build().unwrap());
         }
         // Turning off `follow_links` because:
         // * following symlinks is a really slow syscall
@@ -155,7 +166,7 @@ mod test {
             symlinks: false,
         };
 
-        let mut paths = Walk::new(&fixtures, &ignore_options)
+        let mut paths = Walk::new(&fixtures, &ignore_options, &[])
             .with_extensions(Extensions(["js", "vue"].to_vec()))
             .paths()
             .into_iter()

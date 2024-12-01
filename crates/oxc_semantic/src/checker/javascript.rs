@@ -6,7 +6,6 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_ecmascript::{IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
-    module_record::ExportLocalName,
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
@@ -47,61 +46,6 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
             }
         }
     });
-}
-
-fn undefined_export(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Export '{x0}' is not defined")).with_label(span1)
-}
-
-fn duplicate_export(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Duplicated export '{x0}'")).with_labels([
-        span1.label("Export has already been declared here"),
-        span2.label("It cannot be redeclared here"),
-    ])
-}
-
-pub fn check_module_record(ctx: &SemanticBuilder<'_>) {
-    // Skip checkking for exports in TypeScript for now
-    if ctx.source_type.is_typescript() {
-        return;
-    }
-
-    let module_record = &ctx.module_record;
-
-    // It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
-    // does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
-    module_record
-        .local_export_entries
-        .iter()
-        .filter_map(|export_entry| match &export_entry.local_name {
-            ExportLocalName::Name(name_span) => Some(name_span),
-            _ => None,
-        })
-        .filter(|name_span| {
-            ctx.scope.get_binding(ctx.current_scope_id, name_span.name().as_ref()).is_none()
-        })
-        .for_each(|name_span| {
-            ctx.error(undefined_export(name_span.name(), name_span.span()));
-        });
-
-    // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
-    for name_span in &module_record.exported_bindings_duplicated {
-        let old_span = module_record.exported_bindings[name_span.name()];
-        ctx.error(duplicate_export(name_span.name(), name_span.span(), old_span));
-    }
-
-    for span in &module_record.export_default_duplicated {
-        let old_span = module_record.export_default.unwrap();
-        ctx.error(duplicate_export("default", *span, old_span));
-    }
-
-    // `export default x;`
-    // `export { y as default };`
-    if let (Some(span), Some(default_span)) =
-        (module_record.exported_bindings.get("default"), &module_record.export_default)
-    {
-        ctx.error(duplicate_export("default", *default_span, *span));
-    }
 }
 
 fn class_static_block_await(span: Span) -> OxcDiagnostic {

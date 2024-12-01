@@ -1,0 +1,31 @@
+name: Cargo Deny
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "Cargo.lock"
+  push:
+    branches:
+      - main
+    paths:
+      - "Cargo.lock"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+jobs:
+  deny:
+    name: Cargo Deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: Boshen/setup-rust@main
+        with:
+          restore-cache: false
+          tools: cargo-deny
+
+      - run: cargo deny check

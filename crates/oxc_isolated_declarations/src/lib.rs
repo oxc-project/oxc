@@ -498,7 +498,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     fn get_assignable_properties_for_namespaces(
         stmts: &'a oxc_allocator::Vec<'a, Statement<'a>>,
-    ) -> FxHashMap<&'a str, FxHashSet<Atom>> {
+    ) -> FxHashMap<&'a str, FxHashSet<Atom<'a>>> {
         let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::default();
         for stmt in stmts {
             let decl = match stmt {

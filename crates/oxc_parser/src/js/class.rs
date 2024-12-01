@@ -1,6 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+use oxc_ecmascript::PropName;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -14,15 +15,6 @@ type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
 
 type Implements<'a> = Vec<'a, TSClassImplements<'a>>;
-
-fn prop_name<'a>(key: &'a PropertyKey<'a>) -> Option<(&'a str, Span)> {
-    match key {
-        PropertyKey::StaticIdentifier(ident) => Some((&ident.name, ident.span)),
-        PropertyKey::Identifier(ident) => Some((&ident.name, ident.span)),
-        PropertyKey::StringLiteral(lit) => Some((&lit.value, lit.span)),
-        _ => None,
-    }
-}
 
 /// Section 15.7 Class Definitions
 impl<'a> ParserImpl<'a> {
@@ -318,7 +310,7 @@ impl<'a> ParserImpl<'a> {
             .map(Some)
         } else if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
             if !computed {
-                if let Some((name, span)) = prop_name(&key) {
+                if let Some((name, span)) = key.prop_name() {
                     if r#static && name == "prototype" && !self.ctx.has_ambient() {
                         self.error(diagnostics::static_prototype(span));
                     }
@@ -357,7 +349,7 @@ impl<'a> ParserImpl<'a> {
                 return Err(self.unexpected());
             }
             if !computed {
-                if let Some((name, span)) = prop_name(&key) {
+                if let Some((name, span)) = key.prop_name() {
                     if name == "constructor" {
                         self.error(diagnostics::field_constructor(span));
                     }
@@ -410,7 +402,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<ClassElement<'a>> {
         let kind = if !r#static
             && !computed
-            && prop_name(&key).map_or(false, |(name, _)| name == "constructor")
+            && key.prop_name().map_or(false, |(name, _)| name == "constructor")
         {
             MethodDefinitionKind::Constructor
         } else {

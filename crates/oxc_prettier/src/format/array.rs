@@ -19,7 +19,7 @@ pub enum Array<'a, 'b> {
     ArrayAssignmentTarget(&'b ArrayAssignmentTarget<'a>),
 }
 
-impl<'a, 'b> Array<'a, 'b> {
+impl Array<'_, '_> {
     fn len(&self) -> usize {
         match self {
             Self::ArrayExpression(array) => array.elements.len(),
@@ -45,7 +45,7 @@ impl<'a, 'b> Array<'a, 'b> {
                     return false;
                 }
 
-                return array.elements.iter().all(|element| match element {
+                array.elements.iter().all(|element| match element {
                     ArrayExpressionElement::NumericLiteral(_) => true,
                     ArrayExpressionElement::UnaryExpression(unary_expr) => {
                         matches!(
@@ -54,7 +54,7 @@ impl<'a, 'b> Array<'a, 'b> {
                         ) && matches!(unary_expr.argument, Expression::NumericLiteral(_))
                     }
                     _ => false,
-                });
+                })
             }
             Self::ArrayPattern(_) | Self::ArrayAssignmentTarget(_) | Self::TSTupleType(_) => false,
         }

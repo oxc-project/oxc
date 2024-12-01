@@ -12,7 +12,7 @@ use crate::{
 };
 
 impl<'a> ParserImpl<'a> {
-    /** ------------------- Enum ------------------ */
+    /* ------------------- Enum ------------------ */
 
     pub(crate) fn is_at_enum_declaration(&mut self) -> bool {
         self.at(Kind::Enum) || (self.at(Kind::Const) && self.peek_at(Kind::Enum))
@@ -96,7 +96,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    /** ------------------- Annotation ----------------- */
+    /* ------------------- Annotation ----------------- */
 
     pub(crate) fn parse_ts_type_annotation(
         &mut self,
@@ -144,7 +144,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    /** ---------------------  Interface  ------------------------ */
+    /* ---------------------  Interface  ------------------------ */
 
     pub(crate) fn parse_ts_interface_declaration(
         &mut self,
@@ -266,7 +266,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    /** ----------------------- Namespace & Module ----------------------- */
+    /* ----------------------- Namespace & Module ----------------------- */
 
     fn parse_ts_module_block(&mut self) -> Result<Box<'a, TSModuleBlock<'a>>> {
         let span = self.start_span();
@@ -323,7 +323,7 @@ impl<'a> ParserImpl<'a> {
         ))
     }
 
-    /** ----------------------- declare --------------------- */
+    /* ----------------------- declare --------------------- */
 
     pub(crate) fn parse_ts_declaration_statement(
         &mut self,

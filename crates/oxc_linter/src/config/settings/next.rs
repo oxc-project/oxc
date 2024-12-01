@@ -12,7 +12,7 @@ pub struct NextPluginSettings {
     /// This is particularly useful when you have a monorepo and your Next.js
     /// project is in a subfolder.
     ///
-    /// ## Example
+    /// Example:
     ///
     /// ```json
     /// {

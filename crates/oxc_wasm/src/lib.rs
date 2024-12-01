@@ -7,13 +7,13 @@ use std::{
     cell::{Cell, RefCell},
     path::{Path, PathBuf},
     rc::Rc,
+    sync::Arc,
 };
 
 use oxc::{
     allocator::Allocator,
     ast::{ast::Program, Comment as OxcComment, CommentKind, Visit},
     codegen::{CodeGenerator, CodegenOptions},
-    diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
@@ -24,7 +24,7 @@ use oxc::{
     transformer::{TransformOptions, Transformer},
 };
 use oxc_index::Idx;
-use oxc_linter::Linter;
+use oxc_linter::{Linter, ModuleRecord};
 use oxc_prettier::{Prettier, PrettierOptions};
 use serde::Serialize;
 use tsify::Tsify;
@@ -71,9 +71,11 @@ pub struct Oxc {
     #[wasm_bindgen(readonly, skip_typescript, js_name = "prettierIrText")]
     pub prettier_ir_text: String,
 
+    #[serde(skip)]
     comments: Vec<Comment>,
 
-    diagnostics: RefCell<Vec<Error>>,
+    #[serde(skip)]
+    diagnostics: RefCell<Vec<oxc::diagnostics::OxcDiagnostic>>,
 
     #[serde(skip)]
     serializer: serde_wasm_bindgen::Serializer,
@@ -120,21 +122,24 @@ impl Oxc {
             .diagnostics
             .borrow()
             .iter()
-            .flat_map(|error| {
-                let Some(labels) = error.labels() else { return vec![] };
-                labels
-                    .map(|label| {
-                        OxcDiagnostic {
-                            start: label.offset(),
-                            end: label.offset() + label.len(),
-                            severity: format!("{:?}", error.severity().unwrap_or_default()),
-                            message: format!("{error}"),
-                        }
-                        .serialize(&self.serializer)
-                        .unwrap()
+            .flat_map(|error| match &error.labels {
+                Some(labels) => labels
+                    .iter()
+                    .map(|label| OxcDiagnostic {
+                        start: label.offset(),
+                        end: label.offset() + label.len(),
+                        severity: format!("{:?}", error.severity),
+                        message: format!("{error}"),
                     })
-                    .collect::<Vec<_>>()
+                    .collect::<Vec<_>>(),
+                None => vec![OxcDiagnostic {
+                    start: 0,
+                    end: 0,
+                    severity: format!("{:?}", error.severity),
+                    message: format!("{error}"),
+                }],
             })
+            .map(|v| v.serialize(&self.serializer).unwrap())
             .collect::<Vec<_>>())
     }
 
@@ -169,7 +174,7 @@ impl Oxc {
         let _linter_options = linter_options.unwrap_or_default();
         let minifier_options = minifier_options.unwrap_or_default();
         let _codegen_options = codegen_options.unwrap_or_default();
-        let _transform_options = transform_options.unwrap_or_default();
+        let transform_options = transform_options.unwrap_or_default();
         let control_flow_options = control_flow_options.unwrap_or_default();
 
         let allocator = Allocator::default();
@@ -194,7 +199,7 @@ impl Oxc {
                 .preserve_parens
                 .unwrap_or(default_parser_options.preserve_parens),
         };
-        let ParserReturn { mut program, errors, .. } =
+        let ParserReturn { mut program, errors, module_record, .. } =
             Parser::new(&allocator, source_text, source_type)
                 .with_options(oxc_parser_options)
                 .parse();
@@ -208,29 +213,28 @@ impl Oxc {
             // Estimate transformer will triple scopes, symbols, references
             semantic_builder = semantic_builder.with_excess_capacity(2.0);
         }
-        let semantic_ret = semantic_builder
-            .with_check_syntax_error(true)
-            .with_cfg(true)
-            .build_module_record(&path, &program)
-            .build(&program);
+        let semantic_ret =
+            semantic_builder.with_check_syntax_error(true).with_cfg(true).build(&program);
+        let semantic = semantic_ret.semantic;
 
-        self.control_flow_graph = semantic_ret.semantic.cfg().map_or_else(String::default, |cfg| {
+        self.control_flow_graph = semantic.cfg().map_or_else(String::default, |cfg| {
             cfg.debug_dot(DebugDotContext::new(
-                semantic_ret.semantic.nodes(),
+                semantic.nodes(),
                 control_flow_options.verbose.unwrap_or_default(),
             ))
         });
         if run_options.syntax.unwrap_or_default() {
             self.save_diagnostics(
-                errors.into_iter().chain(semantic_ret.errors).map(Error::from).collect::<Vec<_>>(),
+                errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>(),
             );
         }
 
-        self.run_linter(&run_options, &path, &program);
+        let module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
+        self.run_linter(&run_options, &path, &program, &module_record);
 
         self.run_prettier(&run_options, source_text, source_type);
 
-        let (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
+        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
 
         if !source_type.is_typescript_definition() {
             if run_options.scope.unwrap_or_default() {
@@ -242,13 +246,23 @@ impl Oxc {
         }
 
         if run_options.transform.unwrap_or_default() {
-            let options = TransformOptions::enable_all();
+            let options = transform_options
+                .target
+                .as_ref()
+                .and_then(|target| {
+                    TransformOptions::from_target(target)
+                        .map_err(|err| {
+                            self.save_diagnostics(vec![oxc::diagnostics::OxcDiagnostic::error(
+                                err,
+                            )]);
+                        })
+                        .ok()
+                })
+                .unwrap_or_default();
             let result = Transformer::new(&allocator, &path, &options)
                 .build_with_symbols_and_scopes(symbols, scopes, &mut program);
             if !result.errors.is_empty() {
-                self.save_diagnostics(
-                    result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
-                );
+                self.save_diagnostics(result.errors.into_iter().collect::<Vec<_>>());
             }
         }
 
@@ -285,16 +299,20 @@ impl Oxc {
         Ok(())
     }
 
-    fn run_linter(&mut self, run_options: &OxcRunOptions, path: &Path, program: &Program) {
+    fn run_linter(
+        &mut self,
+        run_options: &OxcRunOptions,
+        path: &Path,
+        program: &Program,
+        module_record: &Arc<ModuleRecord>,
+    ) {
         // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
-            let semantic_ret = SemanticBuilder::new()
-                .with_cfg(true)
-                .build_module_record(path, program)
-                .build(program);
+            let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = Rc::new(semantic_ret.semantic);
-            let linter_ret = Linter::default().run(path, Rc::clone(&semantic));
-            let diagnostics = linter_ret.into_iter().map(|e| Error::from(e.error)).collect();
+            let linter_ret =
+                Linter::default().run(path, Rc::clone(&semantic), Arc::clone(module_record));
+            let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
         }
     }
@@ -361,7 +379,7 @@ impl Oxc {
             }
         }
 
-        impl<'a, 's> Visit<'a> for ScopesTextWriter<'s> {
+        impl Visit<'_> for ScopesTextWriter<'_> {
             fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
                 let scope_id = scope_id.get().unwrap();
                 self.write_line(format!("Scope {} ({flags:?}) {{", scope_id.index()));
@@ -389,7 +407,7 @@ impl Oxc {
         writer.scope_text
     }
 
-    fn save_diagnostics(&self, diagnostics: Vec<Error>) {
+    fn save_diagnostics(&self, diagnostics: Vec<oxc::diagnostics::OxcDiagnostic>) {
         self.diagnostics.borrow_mut().extend(diagnostics);
     }
 

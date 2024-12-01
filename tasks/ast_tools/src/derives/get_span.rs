@@ -129,8 +129,7 @@ fn derive_enum<U>(
 where
     U: Fn(TokenStream) -> TokenStream,
 {
-    let target_type = def.to_type();
-    let generics = def.generics();
+    let target_type = if def.has_lifetime() { def.to_elided_type() } else { def.to_type_elide() };
 
     let matches = def.all_variants().map(|var| {
         let ident = var.ident();
@@ -142,7 +141,7 @@ where
     });
 
     quote! {
-        impl #generics #trait_name for #target_type {
+        impl #trait_name for #target_type {
             fn #method_name(#self_type) -> #result_type {
                 match self {
                     #(#matches),*
@@ -164,8 +163,7 @@ fn derive_struct<R>(
 where
     R: Fn(TokenStream) -> TokenStream,
 {
-    let target_type = def.to_type();
-    let generics = def.generics();
+    let target_type = if def.has_lifetime() { def.to_elided_type() } else { def.to_type_elide() };
 
     let span_field = def.fields.iter().find(|field| field.markers.span);
     let result_expr = if let Some(span_field) = span_field {
@@ -177,7 +175,7 @@ where
     };
 
     quote! {
-        impl #generics #trait_name for #target_type {
+        impl #trait_name for #target_type {
             #[inline]
             fn #method_name(#self_type) -> #result_type {
                 #result_expr

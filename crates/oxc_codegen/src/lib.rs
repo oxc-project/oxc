@@ -126,7 +126,7 @@ pub struct Codegen<'a> {
     sourcemap_builder: Option<SourcemapBuilder>,
 }
 
-impl<'a> Default for Codegen<'a> {
+impl Default for Codegen<'_> {
     fn default() -> Self {
         Self::new()
     }

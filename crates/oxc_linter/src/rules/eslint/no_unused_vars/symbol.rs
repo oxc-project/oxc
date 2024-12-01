@@ -13,9 +13,12 @@ use oxc_semantic::{
 };
 use oxc_span::{GetSpan, Span};
 
+use crate::ModuleRecord;
+
 #[derive(Clone)]
 pub(super) struct Symbol<'s, 'a> {
     semantic: &'s Semantic<'a>,
+    module_record: &'s ModuleRecord,
     id: SymbolId,
     flags: SymbolFlags,
     span: OnceCell<Span>,
@@ -29,9 +32,13 @@ impl PartialEq for Symbol<'_, '_> {
 
 // constructor and simple getters
 impl<'s, 'a> Symbol<'s, 'a> {
-    pub fn new(semantic: &'s Semantic<'a>, symbol_id: SymbolId) -> Self {
+    pub fn new(
+        semantic: &'s Semantic<'a>,
+        module_record: &'s ModuleRecord,
+        symbol_id: SymbolId,
+    ) -> Self {
         let flags = semantic.symbols().get_flags(symbol_id);
-        Self { semantic, id: symbol_id, flags, span: OnceCell::new() }
+        Self { semantic, module_record, id: symbol_id, flags, span: OnceCell::new() }
     }
 
     #[inline]
@@ -165,14 +172,14 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 }
 
-impl<'s, 'a> Symbol<'s, 'a> {
+impl<'a> Symbol<'_, 'a> {
     /// Is this [`Symbol`] exported?
     ///
     /// NOTE: does not support CJS right now.
     pub fn is_exported(&self) -> bool {
         let is_in_exportable_scope = self.is_root() || self.is_in_ts_namespace();
         is_in_exportable_scope
-            && (self.semantic.module_record().exported_bindings.contains_key(self.name())
+            && (self.module_record.exported_bindings.contains_key(self.name())
                 || self.in_export_node())
     }
 
@@ -270,7 +277,7 @@ impl<'a> PartialEq<AssignmentTarget<'a>> for Symbol<'_, 'a> {
     }
 }
 
-impl<'s, 'a> PartialEq<ImportDeclarationSpecifier<'a>> for Symbol<'s, 'a> {
+impl<'a> PartialEq<ImportDeclarationSpecifier<'a>> for Symbol<'_, 'a> {
     fn eq(&self, import: &ImportDeclarationSpecifier<'a>) -> bool {
         self == import.local()
     }

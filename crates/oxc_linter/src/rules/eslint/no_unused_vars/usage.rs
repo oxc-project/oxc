@@ -7,7 +7,7 @@ use oxc_span::{GetSpan, Span};
 
 use super::{ignored::FoundStatus, NoUnusedVars, Symbol};
 
-impl<'s, 'a> Symbol<'s, 'a> {
+impl<'a> Symbol<'_, 'a> {
     // =========================================================================
     // ==================== ENABLE/DISABLE USAGE SUB-CHECKS ====================
     // =========================================================================

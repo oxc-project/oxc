@@ -42,8 +42,11 @@ impl<'a> ParserImpl<'a> {
             }
             let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
 
-            if is_top_level && stmt.is_module_declaration() {
-                self.set_source_type_to_module_if_unambiguous();
+            if is_top_level {
+                if let Some(module_decl) = stmt.as_module_declaration() {
+                    self.set_source_type_to_module_if_unambiguous();
+                    self.module_record_builder.visit_module_declaration(module_decl);
+                }
             }
 
             // Section 11.2.1 Directive Prologue

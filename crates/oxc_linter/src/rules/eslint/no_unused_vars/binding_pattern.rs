@@ -3,20 +3,24 @@ use oxc_semantic::{Semantic, SymbolId};
 
 use super::{symbol::Symbol, NoUnusedVars};
 
+use crate::ModuleRecord;
+
 #[derive(Clone, Copy)]
 pub(super) struct BindingContext<'s, 'a> {
     pub options: &'s NoUnusedVars,
     pub semantic: &'s Semantic<'a>,
+    pub module_record: &'s ModuleRecord,
 }
+
 impl<'s, 'a> BindingContext<'s, 'a> {
     #[inline]
-    pub fn symbol(&self, symbol_id: SymbolId) -> Symbol<'s, 'a> {
-        Symbol::new(self.semantic, symbol_id)
+    pub fn symbol(&self, module_record: &'s ModuleRecord, symbol_id: SymbolId) -> Symbol<'s, 'a> {
+        Symbol::new(self.semantic, module_record, symbol_id)
     }
 
     #[inline]
-    pub fn has_usages(&self, symbol_id: SymbolId) -> bool {
-        self.symbol(symbol_id).has_usages(self.options)
+    pub fn has_usages(&self, symbol_id: SymbolId, module_record: &'s ModuleRecord) -> bool {
+        self.symbol(module_record, symbol_id).has_usages(self.options)
     }
 }
 
@@ -44,7 +48,7 @@ impl<'a> HasAnyUsedBinding<'a> for BindingPatternKind<'a> {
 
 impl<'a> HasAnyUsedBinding<'a> for BindingIdentifier<'a> {
     fn has_any_used_binding(&self, ctx: BindingContext<'_, 'a>) -> bool {
-        ctx.has_usages(self.symbol_id())
+        ctx.has_usages(self.symbol_id(), ctx.module_record)
     }
 }
 impl<'a> HasAnyUsedBinding<'a> for ObjectPattern<'a> {
