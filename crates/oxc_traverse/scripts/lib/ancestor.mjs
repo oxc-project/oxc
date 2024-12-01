@@ -121,9 +121,7 @@ export default function generateAncestorsCode(types) {
       clippy::needless_lifetimes
     )]
 
-    use std::{cell::Cell, marker::PhantomData};
-
-    use memoffset::offset_of;
+    use std::{cell::Cell, marker::PhantomData, mem::offset_of};
 
     use oxc_allocator::{Address, Box, GetAddress, Vec};
     use oxc_ast::ast::*;
