@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 pub struct ReactPluginSettings {
     /// Components used as alternatives to `<form>` for forms, such as `<Formik>`.
     ///
-    /// ## Example
+    /// Example:
     ///
     /// ```jsonc
     /// {
@@ -35,7 +35,7 @@ pub struct ReactPluginSettings {
 
     /// Components used as alternatives to `<a>` for linking, such as `<Link>`.
     ///
-    /// ## Example
+    /// Example:
     ///
     /// ```jsonc
     /// {
