@@ -7,6 +7,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_semantic::AstNode;
+use oxc_span::cmp::ContentEq;
 use oxc_syntax::operator::LogicalOperator;
 
 pub use self::boolean::*;
@@ -177,6 +178,23 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
         (Expression::StringLiteral(left_str), Expression::StringLiteral(right_str)) => {
             return left_str.value == right_str.value;
         }
+        (Expression::StringLiteral(left_str), Expression::TemplateLiteral(right_str)) => {
+            return right_str.is_no_substitution_template()
+                && left_str.value == right_str.quasi().unwrap();
+        }
+        (Expression::TemplateLiteral(left_str), Expression::StringLiteral(right_str)) => {
+            return left_str.is_no_substitution_template()
+                && left_str.quasi().unwrap() == right_str.value;
+        }
+        (Expression::TemplateLiteral(left_str), Expression::TemplateLiteral(right_str)) => {
+            return left_str.quasis.content_eq(&right_str.quasis)
+                && left_str.expressions.len() == right_str.expressions.len()
+                && left_str
+                    .expressions
+                    .iter()
+                    .zip(right_str.expressions.iter())
+                    .all(|(left, right)| is_same_reference(left, right, ctx));
+        }
         (Expression::NumericLiteral(left_num), Expression::NumericLiteral(right_num)) => {
             return left_num.raw == right_num.raw;
         }
@@ -266,12 +284,56 @@ pub fn is_same_member_expression(
         MemberExpression::ComputedMemberExpression(right),
     ) = (left, right)
     {
-        if !is_same_reference(
-            left.expression.get_inner_expression(),
-            right.expression.get_inner_expression(),
-            ctx,
-        ) {
-            return false;
+        match (&left.expression, &right.expression) {
+            // ex) x['/regex/'] === x[/regex/]
+            (
+                Expression::StringLiteral(left_expression),
+                Expression::RegExpLiteral(right_expression),
+            ) => {
+                if left_expression.value != right_expression.raw {
+                    return false;
+                }
+            }
+            // ex) x[`/regex/`] === x[/regex/]
+            (
+                Expression::TemplateLiteral(left_expression),
+                Expression::RegExpLiteral(right_expression),
+            ) => {
+                if !(left_expression.is_no_substitution_template()
+                    && left_expression.quasi().unwrap() == right_expression.raw)
+                {
+                    return false;
+                }
+            }
+            // ex) x[/regex/] === x['/regex/']
+            (
+                Expression::RegExpLiteral(left_expression),
+                Expression::StringLiteral(right_expression),
+            ) => {
+                if left_expression.raw != right_expression.value {
+                    return false;
+                }
+            }
+            // ex) x[/regex/] === x[`/regex/`]
+            (
+                Expression::RegExpLiteral(left_expression),
+                Expression::TemplateLiteral(right_expression),
+            ) => {
+                if !(right_expression.is_no_substitution_template()
+                    && left_expression.raw == right_expression.quasi().unwrap())
+                {
+                    return false;
+                }
+            }
+            _ => {
+                if !is_same_reference(
+                    left.expression.get_inner_expression(),
+                    right.expression.get_inner_expression(),
+                    ctx,
+                ) {
+                    return false;
+                }
+            }
         }
     }
 

@@ -148,6 +148,7 @@ mod eslint {
     pub mod unicode_bom;
     pub mod use_isnan;
     pub mod valid_typeof;
+    pub mod yoda;
 }
 
 mod typescript {
@@ -640,6 +641,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::unicode_bom,
     eslint::use_isnan,
     eslint::valid_typeof,
+    eslint::yoda,
     import::default,
     import::export,
     import::first,
