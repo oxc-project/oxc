@@ -1,4 +1,5 @@
 use std::{
+    ffi::OsString,
     num::NonZeroUsize,
     path::Path,
     sync::{Arc, Condvar, Mutex},
@@ -29,7 +30,8 @@ enum CacheStateEntry {
 }
 
 /// Keyed by canonicalized path
-type ModuleMap = FxDashMap<Box<Path>, ModuleState>;
+/// `OsString` hash is after than `Path` - go checkout their source code.
+type ModuleMap = FxDashMap<OsString, ModuleState>;
 
 #[derive(Clone)]
 pub(super) enum ModuleState {
@@ -45,8 +47,8 @@ pub(super) struct ModuleCache {
 
 impl ModuleCache {
     #[inline]
-    pub fn get(&self, path: &Path) -> Option<Ref<'_, Box<Path>, ModuleState>> {
-        self.modules.get(path)
+    pub fn get(&self, path: &Path) -> Option<Ref<'_, OsString, ModuleState>> {
+        self.modules.get(path.as_os_str())
     }
 
     #[inline]
@@ -67,7 +69,7 @@ impl ModuleCache {
             })
             .unwrap();
 
-        let cache_hit = if self.modules.contains_key(path) {
+        let cache_hit = if self.modules.contains_key(path.as_os_str()) {
             true
         } else {
             let i = if let CacheStateEntry::PendingStore(i) = *state { i.get() } else { 0 };
@@ -87,16 +89,14 @@ impl ModuleCache {
     /// # Panics
     /// If a cache entry for `path` does not exist. You must call `init_cache_state` first.
     pub(super) fn add_resolved_module(&self, path: &Path, module_record: Arc<ModuleRecord>) {
-        self.modules
-            .insert(path.to_path_buf().into_boxed_path(), ModuleState::Resolved(module_record));
-
+        self.modules.insert(path.as_os_str().to_os_string(), ModuleState::Resolved(module_record));
         self.update_cache_state(path);
     }
 
     /// # Panics
     /// If a cache entry for `path` does not exist. You must call `init_cache_state` first.
     pub(super) fn ignore_path(&self, path: &Path) {
-        self.modules.insert(path.to_path_buf().into_boxed_path(), ModuleState::Ignored);
+        self.modules.insert(path.as_os_str().to_os_string(), ModuleState::Ignored);
         self.update_cache_state(path);
     }
 
