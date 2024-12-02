@@ -24,8 +24,8 @@ type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 /// * <https://tc39.es/ecma262/#cyclic-module-record>
 #[derive(Default)]
 pub struct ModuleRecord {
-    /// This module has no import / export statements
-    pub not_esm: bool,
+    /// This module has ESM syntax: `import` and `export`.
+    pub has_module_syntax: bool,
 
     /// Resolved absolute path to this module record
     pub resolved_absolute_path: PathBuf,
@@ -99,7 +99,7 @@ impl fmt::Debug for ModuleRecord {
             .unwrap_or_default();
         let loaded_modules = format!("{{ {loaded_modules} }}");
         f.debug_struct("ModuleRecord")
-            .field("not_esm", &self.not_esm)
+            .field("has_module_syntax", &self.has_module_syntax)
             .field("resolved_absolute_path", &self.resolved_absolute_path)
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
@@ -434,7 +434,7 @@ impl ModuleRecord {
         _semantic: &Semantic,
     ) -> Self {
         Self {
-            not_esm: other.not_esm,
+            has_module_syntax: other.has_module_syntax,
             resolved_absolute_path: path.to_path_buf(),
             requested_modules: other
                 .requested_modules

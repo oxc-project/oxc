@@ -173,7 +173,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_module_declaration(&mut self, module_decl: &ModuleDeclaration<'a>) {
-        self.module_record.not_esm = false;
+        self.module_record.has_module_syntax = true;
         match module_decl {
             ModuleDeclaration::ImportDeclaration(import_decl) => {
                 self.visit_import_declaration(import_decl);

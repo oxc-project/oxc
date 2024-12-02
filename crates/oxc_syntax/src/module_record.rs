@@ -14,8 +14,8 @@ use rustc_hash::FxHashMap;
 /// * <https://tc39.es/ecma262/#cyclic-module-record>
 #[derive(Debug)]
 pub struct ModuleRecord<'a> {
-    /// This module has no import / export statements
-    pub not_esm: bool,
+    /// This module has ESM syntax: `import` and `export`.
+    pub has_module_syntax: bool,
 
     /// `[[RequestedModules]]`
     ///
@@ -61,7 +61,7 @@ impl<'a> ModuleRecord<'a> {
     /// Constructor
     pub fn new(allocator: &'a Allocator) -> Self {
         Self {
-            not_esm: true,
+            has_module_syntax: false,
             requested_modules: FxHashMap::default(),
             import_entries: Vec::new_in(allocator),
             local_export_entries: Vec::new_in(allocator),
