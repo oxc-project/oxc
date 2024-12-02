@@ -10,14 +10,14 @@ pub(super) fn adjust_clause<'a>(
     force_space: bool,
 ) -> Doc<'a> {
     if matches!(node, Statement::EmptyStatement(_)) {
-        return p._p_text(";");
+        return p.text(";");
     }
 
     if matches!(node, Statement::BlockStatement(_)) || force_space {
-        return p._p_array(p_vec!(p, p._p_space(), clause));
+        return p.array(p_vec!(p, p.space(), clause));
     }
 
-    p._p_indent(p_vec!(p, p._p_line(), clause))
+    p.indent(p_vec!(p, p.line(), clause))
 }
 
 pub(super) fn has_new_line_in_range(text: &str, start: u32, end: u32) -> bool {

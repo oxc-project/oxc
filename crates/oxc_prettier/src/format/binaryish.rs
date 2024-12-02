@@ -28,7 +28,7 @@ pub(super) fn print_binaryish_expression<'a>(
     let parts = print_binaryish_expressions(p, left, operator, right);
 
     if is_inside_parenthesis {
-        return p._p_array(parts);
+        return p.array(parts);
     }
 
     // Avoid indenting sub-expressions in some cases where the first sub-expression is already
@@ -56,7 +56,7 @@ pub(super) fn print_binaryish_expression<'a>(
             rest.push(part);
         }
     }
-    group.push(p._p_indent(rest));
+    group.push(p.indent(rest));
     Doc::Group(Group::new(group))
 }
 
@@ -78,11 +78,11 @@ fn print_binaryish_expressions<'a>(
         parts.push(match left {
             Expression::BinaryExpression(e) => {
                 let expr_doc = print_binaryish_expressions(p, &e.left, e.operator.into(), &e.right);
-                p._p_array(expr_doc)
+                p.array(expr_doc)
             }
             Expression::LogicalExpression(e) => {
                 let expr_doc = print_binaryish_expressions(p, &e.left, e.operator.into(), &e.right);
-                p._p_array(expr_doc)
+                p.array(expr_doc)
             }
             _ => unreachable!(),
         });
@@ -95,17 +95,17 @@ fn print_binaryish_expressions<'a>(
 
     let right = if should_inline {
         let mut parts = p.vec();
-        parts.push(p._p_text(operator.as_str()));
-        parts.push(p._p_space());
+        parts.push(p.text(operator.as_str()));
+        parts.push(p.space());
         parts.push(right.format(p));
         parts
     } else {
         let mut parts = p.vec();
         if line_before_operator {
-            parts.push(p._p_line());
+            parts.push(p.line());
         }
-        parts.push(p._p_text(operator.as_str()));
-        parts.push(if line_before_operator { p._p_space() } else { p._p_line() });
+        parts.push(p.text(operator.as_str()));
+        parts.push(if line_before_operator { p.space() } else { p.line() });
         parts.push(right.format(p));
         parts
     };
@@ -114,13 +114,13 @@ fn print_binaryish_expressions<'a>(
     let should_group = should_break;
 
     if !line_before_operator {
-        parts.push(p._p_space());
+        parts.push(p.space());
     }
 
     parts.push(if should_group {
         Doc::Group(Group::new(right).with_break(should_break))
     } else {
-        p._p_array(right)
+        p.array(right)
     });
 
     parts

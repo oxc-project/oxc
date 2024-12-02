@@ -66,7 +66,7 @@ pub(super) fn print_function_parameters<'a>(
     let need_parens =
         !is_arrow_function || p.options.arrow_parens.is_always() || params.items.len() != 1;
     if need_parens {
-        parts.push(p._p_text("("));
+        parts.push(p.text("("));
     }
 
     let should_hug_the_only_function_parameter = should_hug_the_only_function_parameter(p, params);
@@ -80,15 +80,15 @@ pub(super) fn print_function_parameters<'a>(
             parts.push(this_param.format(p));
 
             if params.items.len() > 0 {
-                printed.push(p._p_text(","));
+                printed.push(p.text(","));
 
                 if should_hug_the_only_function_parameter {
-                    printed.push(p._p_space());
+                    printed.push(p.space());
                 } else if p.is_next_line_empty(this_param.span) {
-                    printed.extend(p._p_hardline());
-                    printed.extend(p._p_hardline());
+                    printed.extend(p.hardline());
+                    printed.extend(p.hardline());
                 } else {
-                    printed.push(p._p_line());
+                    printed.push(p.line());
                 }
             }
         }
@@ -96,30 +96,30 @@ pub(super) fn print_function_parameters<'a>(
 
     for (i, param) in params.items.iter().enumerate() {
         if let Some(accessibility) = &param.accessibility {
-            printed.push(p._p_text(accessibility.as_str()));
-            printed.push(p._p_space());
+            printed.push(p.text(accessibility.as_str()));
+            printed.push(p.space());
         }
 
         if param.r#override {
-            printed.push(p._p_text("override "));
+            printed.push(p.text("override "));
         }
 
         if param.readonly {
-            printed.push(p._p_text("readonly "));
+            printed.push(p.text("readonly "));
         }
 
         printed.push(param.format(p));
         if i == len - 1 && !has_rest {
             break;
         }
-        printed.push(p._p_text(","));
+        printed.push(p.text(","));
         if should_hug_the_only_function_parameter {
-            printed.push(p._p_space());
+            printed.push(p.space());
         } else if p.is_next_line_empty(param.span) {
-            printed.extend(p._p_hardline());
-            printed.extend(p._p_hardline());
+            printed.extend(p.hardline());
+            printed.extend(p.hardline());
         } else {
-            printed.push(p._p_line());
+            printed.push(p.line());
         }
     }
     if let Some(rest) = &params.rest {
@@ -128,31 +128,31 @@ pub(super) fn print_function_parameters<'a>(
 
     if should_hug_the_only_function_parameter {
         let mut parts = p.vec();
-        parts.push(p._p_text("("));
+        parts.push(p.text("("));
         parts.extend(printed);
-        parts.push(p._p_text(")"));
-        return p._p_array(parts);
+        parts.push(p.text(")"));
+        return p.array(parts);
     }
 
     let mut indented = p.vec();
-    indented.push(p._p_softline());
+    indented.push(p.softline());
     indented.extend(printed);
-    let indented = p._p_indent(p_vec!(p, p._p_array(indented)));
+    let indented = p.indent(p_vec!(p, p.array(indented)));
     parts.push(indented);
     let skip_dangling_comma = params.rest.is_some()
         || matches!(p.parent_kind(), AstKind::Function(func) if func.this_param.is_some());
-    parts.push(p._p_if_break(
-        p.boxed(p._p_text(if skip_dangling_comma { "" } else { "," })),
-        p.boxed(p._p_text("")),
+    parts.push(p.if_break(
+        p.boxed(p.text(if skip_dangling_comma { "" } else { "," })),
+        p.boxed(p.text("")),
         None,
     ));
-    parts.push(p._p_softline());
+    parts.push(p.softline());
     if need_parens {
-        parts.push(p._p_text(")"));
+        parts.push(p.text(")"));
     }
 
     if p.args.expand_first_arg {
-        p._p_array(parts)
+        p.array(parts)
     } else {
         Doc::Group(Group::new(parts))
     }

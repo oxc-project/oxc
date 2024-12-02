@@ -65,7 +65,7 @@ pub(super) fn print_call_expression<'a>(
     let mut parts = p.vec();
 
     if expression.is_new() {
-        parts.push(p._p_text("new "));
+        parts.push(p.text("new "));
     };
 
     parts.push(expression.callee().format(p));
@@ -75,7 +75,7 @@ pub(super) fn print_call_expression<'a>(
     }
 
     if expression.optional() {
-        parts.push(p._p_text("?."));
+        parts.push(p.text("?."));
     }
 
     parts.push(print_call_arguments(p, expression));

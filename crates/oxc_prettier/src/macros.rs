@@ -67,7 +67,7 @@ macro_rules! wrap {
 
         let doc = $block;
         let doc = if $p.need_parens(kind) {
-            $p._p_array(p_vec!($p, $p._p_text("("), doc, $p._p_text(")")))
+            $p.array(p_vec!($p, $p.text("("), doc, $p.text(")")))
         } else {
             doc
         };

@@ -100,28 +100,24 @@ pub(super) fn print_object_properties<'a>(
     p: &mut Prettier<'a>,
     object: ObjectLike<'a, '_>,
 ) -> Doc<'a> {
-    let left_brace = p._p_text("{");
-    let right_brace = p._p_text("}");
+    let left_brace = p.text("{");
+    let right_brace = p.text("}");
 
     let should_break = false;
     let member_separator = object.member_separator(p);
 
     let content = if object.is_empty() {
-        group![p, left_brace, p._p_softline(), right_brace]
+        group![p, left_brace, p.softline(), right_brace]
     } else {
         let mut parts = p.vec();
-        parts.push(p._p_text("{"));
+        parts.push(p.text("{"));
 
         let indent_parts = {
             let len = object.len();
             let has_rest = object.has_rest();
             let mut indent_parts = p.vec();
 
-            indent_parts.push(if p.options.bracket_spacing {
-                p._p_line()
-            } else {
-                p._p_softline()
-            });
+            indent_parts.push(if p.options.bracket_spacing { p.line() } else { p.softline() });
 
             let object_docs = object.iter(p).collect::<Vec<_>>();
             for (i, doc) in object_docs.into_iter().enumerate() {
@@ -130,8 +126,8 @@ pub(super) fn print_object_properties<'a>(
                     break;
                 }
 
-                indent_parts.push(p._p_text(member_separator));
-                indent_parts.push(p._p_line());
+                indent_parts.push(p.text(member_separator));
+                indent_parts.push(p.line());
             }
 
             match object {
@@ -151,21 +147,17 @@ pub(super) fn print_object_properties<'a>(
             }
             indent_parts
         };
-        parts.push(p._p_indent(indent_parts));
+        parts.push(p.indent(indent_parts));
         if p.should_print_es5_comma()
             && match object {
                 ObjectLike::Pattern(pattern) => pattern.rest.is_none(),
                 _ => true,
             }
         {
-            parts.push(p._p_if_break(
-                p.boxed(p._p_text(member_separator)),
-                p.boxed(p._p_text("")),
-                None,
-            ));
+            parts.push(p.if_break(p.boxed(p.text(member_separator)), p.boxed(p.text("")), None));
         }
-        parts.push(if p.options.bracket_spacing { p._p_line() } else { p._p_softline() });
-        parts.push(p._p_text("}"));
+        parts.push(if p.options.bracket_spacing { p.line() } else { p.softline() });
+        parts.push(p.text("}"));
 
         if matches!(p.current_kind(), AstKind::Program(_)) {
             let should_break =
@@ -182,7 +174,7 @@ pub(super) fn print_object_properties<'a>(
                     AstKind::AssignmentExpression(_) | AstKind::VariableDeclarator(_)
                 ))
         {
-            p._p_array(parts)
+            p.array(parts)
         } else {
             let should_break =
                 misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);

@@ -36,41 +36,41 @@ pub trait DocBuilder<'a> {
         Box::new_in(doc, self.allocator())
     }
 
-    fn _p_text(&self, s: &'a str) -> Doc<'a> {
+    fn text(&self, s: &'a str) -> Doc<'a> {
         Doc::Str(s)
     }
-    fn _p_space(&self) -> Doc<'a> {
+    fn space(&self) -> Doc<'a> {
         Doc::Str(" ")
     }
 
-    fn _p_line(&self) -> Doc<'a> {
+    fn line(&self) -> Doc<'a> {
         Doc::Line(Line::default())
     }
     /// Specify a line break.
     /// The difference from line is that if the expression fits on one line, it will be replaced with nothing.
-    fn _p_softline(&self) -> Doc<'a> {
+    fn softline(&self) -> Doc<'a> {
         Doc::Line(Line { soft: true, ..Line::default() })
     }
     /// Specify a line break that is **always** included in the output,
     /// no matter if the expression fits on one line or not.
-    fn _p_hardline(&self) -> [Doc<'a>; 2] {
+    fn hardline(&self) -> [Doc<'a>; 2] {
         let hardline = Doc::Line(Line { hard: true, ..Line::default() });
         [hardline, Doc::BreakParent]
     }
 
-    fn _p_indent(&self, items: Vec<'a, Doc<'a>>) -> Doc<'a> {
+    fn indent(&self, items: Vec<'a, Doc<'a>>) -> Doc<'a> {
         Doc::Indent(items)
     }
 
-    fn _p_array(&self, items: Vec<'a, Doc<'a>>) -> Doc<'a> {
+    fn array(&self, items: Vec<'a, Doc<'a>>) -> Doc<'a> {
         Doc::Array(items)
     }
 
-    fn _p_fill(&self, parts: Vec<'a, Doc<'a>>) -> Doc<'a> {
+    fn fill(&self, parts: Vec<'a, Doc<'a>>) -> Doc<'a> {
         Doc::Fill(Fill { parts })
     }
 
-    fn _p_if_break(
+    fn if_break(
         &self,
         break_contents: Box<'a, Doc<'a>>,
         flat_contents: Box<'a, Doc<'a>>,
@@ -85,10 +85,10 @@ pub trait DocBuilder<'a> {
         for (i, doc) in docs.into_iter().enumerate() {
             if i != 0 {
                 match separator {
-                    Separator::Softline => parts.push(self._p_softline()),
-                    Separator::Hardline => parts.extend(self._p_hardline()),
+                    Separator::Softline => parts.push(self.softline()),
+                    Separator::Hardline => parts.extend(self.hardline()),
                     Separator::CommaLine => {
-                        parts.push(self._p_array(p_vec!(self, self._p_text(","), self._p_line())))
+                        parts.push(self.array(p_vec!(self, self.text(","), self.line())))
                     }
                 }
             }

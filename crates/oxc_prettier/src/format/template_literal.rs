@@ -37,7 +37,7 @@ pub(super) fn print_template_literal<'a, 'b>(
     template_literal: &'b TemplateLiteralPrinter<'a, 'b>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    parts.push(p._p_text("`"));
+    parts.push(p.text("`"));
 
     for (index, quais) in template_literal.quasis().iter().enumerate() {
         parts.push(quais.format(p));
@@ -45,12 +45,12 @@ pub(super) fn print_template_literal<'a, 'b>(
             break;
         };
 
-        parts.push(p._p_text("${"));
+        parts.push(p.text("${"));
         parts.push(expr_doc);
-        parts.push(p._p_text("}"));
+        parts.push(p.text("}"));
     }
 
-    parts.push(p._p_text("`"));
+    parts.push(p.text("`"));
 
-    p._p_array(parts)
+    p.array(parts)
 }

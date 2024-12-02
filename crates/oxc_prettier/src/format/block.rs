@@ -12,15 +12,15 @@ pub(super) fn print_block<'a>(
     directives: Option<&[Directive<'a>]>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    parts.push(p._p_text("{"));
+    parts.push(p.text("{"));
     if let Some(doc) = print_block_body(p, stmts, directives, true, false) {
         parts.push({
             let mut parts = p.vec();
-            parts.extend(p._p_hardline());
+            parts.extend(p.hardline());
             parts.push(doc);
-            p._p_indent(parts)
+            p.indent(parts)
         });
-        parts.extend(p._p_hardline());
+        parts.extend(p.hardline());
     } else {
         let parent = p.parent_kind();
         let parent_parent = p.parent_parent_kind();
@@ -42,11 +42,11 @@ pub(super) fn print_block<'a>(
                 && !matches!(p.parent_parent_kind(), Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
                 || matches!(p.current_kind(), AstKind::StaticBlock(_)))
         {
-            parts.extend(p._p_hardline());
+            parts.extend(p.hardline());
         }
     }
-    parts.push(p._p_text("}"));
-    p._p_array(parts)
+    parts.push(p.text("}"));
+    p.array(parts)
 }
 
 pub(super) fn print_block_body<'a>(
@@ -80,5 +80,5 @@ pub(super) fn print_block_body<'a>(
         ));
     }
 
-    Some(p._p_array(parts))
+    Some(p.array(parts))
 }
