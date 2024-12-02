@@ -108,17 +108,6 @@ impl Rule for Export {
                 );
             }
         }
-
-        if !module_record.export_default_duplicated.is_empty() {
-            let mut spans = module_record.export_default_duplicated.clone();
-            if let Some(span) = module_record.export_default {
-                spans.push(span);
-                let labels = spans.into_iter().map(LabeledSpan::underline).collect::<Vec<_>>();
-                ctx.diagnostic(
-                    OxcDiagnostic::warn("Multiple default exports.").with_labels(labels),
-                );
-            }
-        }
     }
 }
 

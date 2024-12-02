@@ -89,9 +89,6 @@ pub struct ModuleRecord {
     /// `export default name`
     ///         ^^^^^^^ span
     pub export_default: Option<Span>,
-
-    /// Duplicated span of `export default` for diagnostics
-    pub export_default_duplicated: Vec<Span>,
 }
 
 impl fmt::Debug for ModuleRecord {
@@ -117,7 +114,6 @@ impl fmt::Debug for ModuleRecord {
             .field("exported_bindings_duplicated", &self.exported_bindings_duplicated)
             .field("exported_bindings_from_star_export", &self.exported_bindings_from_star_export)
             .field("export_default", &self.export_default)
-            .field("export_default_duplicated", &self.export_default_duplicated)
             .finish()
     }
 }
@@ -477,21 +473,7 @@ impl ModuleRecord {
                 .iter()
                 .map(NameSpan::from)
                 .collect(),
-            exported_bindings_from_star_export: other
-                .exported_bindings_from_star_export
-                .iter()
-                .map(|(name, values)| {
-                    (
-                        PathBuf::from(name.as_str()),
-                        values
-                            .into_iter()
-                            .map(|v| CompactStr::from(v.as_str()))
-                            .collect::<Vec<_>>(),
-                    )
-                })
-                .collect(),
             export_default: other.export_default,
-            export_default_duplicated: other.export_default_duplicated.iter().copied().collect(),
             ..ModuleRecord::default()
         }
     }

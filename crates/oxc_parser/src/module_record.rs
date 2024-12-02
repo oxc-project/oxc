@@ -11,11 +11,17 @@ pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
     module_record: ModuleRecord<'a>,
     export_entries: Vec<ExportEntry<'a>>,
+    export_default_duplicated: Vec<Span>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator, module_record: ModuleRecord::new(allocator), export_entries: vec![] }
+        Self {
+            allocator,
+            module_record: ModuleRecord::new(allocator),
+            export_entries: vec![],
+            export_default_duplicated: vec![],
+        }
     }
 
     pub fn build(mut self) -> ModuleRecord<'a> {
@@ -36,7 +42,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             errors.push(diagnostics::duplicate_export(&name_span.name, name_span.span, old_span));
         }
 
-        for span in &module_record.export_default_duplicated {
+        for span in &self.export_default_duplicated {
             let old_span = module_record.export_default.unwrap();
             errors.push(diagnostics::duplicate_export("default", *span, old_span));
         }
@@ -88,7 +94,7 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     fn add_default_export(&mut self, span: Span) {
         if let Some(old_node) = self.module_record.export_default.replace(span) {
-            self.module_record.export_default_duplicated.push(old_node);
+            self.export_default_duplicated.push(old_node);
         }
     }
 

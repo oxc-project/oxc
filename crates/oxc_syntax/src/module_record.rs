@@ -59,16 +59,9 @@ pub struct ModuleRecord<'a> {
     /// Local duplicated exported bindings, for diagnostics
     pub exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
 
-    /// Reexported bindings from `export * from 'specifier'`
-    /// Keyed by resolved path
-    pub exported_bindings_from_star_export: FxHashMap<Atom<'a>, Vec<'a, Atom<'a>>>,
-
     /// `export default name`
     ///         ^^^^^^^ span
     pub export_default: Option<Span>,
-
-    /// Duplicated span of `export default` for diagnostics
-    pub export_default_duplicated: Vec<'a, Span>,
 }
 
 impl<'a> ModuleRecord<'a> {
@@ -83,9 +76,7 @@ impl<'a> ModuleRecord<'a> {
             star_export_entries: Vec::new_in(allocator),
             exported_bindings: FxHashMap::default(),
             exported_bindings_duplicated: Vec::new_in(allocator),
-            exported_bindings_from_star_export: FxHashMap::default(),
             export_default: None,
-            export_default_duplicated: Vec::new_in(allocator),
         }
     }
 }
