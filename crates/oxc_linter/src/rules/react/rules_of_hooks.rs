@@ -172,13 +172,12 @@ impl Rule for RulesOfHooks {
             }) => {
                 let ident = get_declaration_identifier(nodes, parent_func.id());
 
-                // Hooks cannot be called inside of export default functions or used in a function
-                // declaration outside of a react component or hook.
+                // Hooks cannot be used in a function declaration outside of a react component or hook.
                 // For example these are invalid:
                 // const notAComponent = () => {
                 //    return () => {
                 //         useState();
-                //   }
+                //    }
                 // }
                 // --------------
                 // export default () => {
@@ -192,9 +191,7 @@ impl Rule for RulesOfHooks {
                 //         useState(0);
                 //     }
                 // }
-                if ident.is_some_and(|name| !is_react_component_or_hook_name(&name))
-                    || is_export_default(nodes, parent_func.id())
-                {
+                if ident.is_some_and(|name| !is_react_component_or_hook_name(&name)) {
                     return ctx.diagnostic(diagnostics::function_error(
                         *span,
                         hook_name,
@@ -398,14 +395,6 @@ fn get_declaration_identifier<'a>(
             _ => None,
         }
     })
-}
-
-fn is_export_default<'a>(nodes: &'a AstNodes<'a>, node_id: NodeId) -> bool {
-    nodes
-        .ancestor_ids(node_id)
-        .map(|id| nodes.get_node(id))
-        .nth(1)
-        .is_some_and(|node| matches!(node.kind(), AstKind::ExportDefaultDeclaration(_)))
 }
 
 /// # Panics
@@ -916,6 +905,16 @@ fn test() {
                 });
             });
     ",
+    "export default function App() {
+       const [state, setState] = useState(0);
+
+       useEffect(() => {
+         console.log('Effect called');
+       }, []);
+
+       return <div>{state}</div>;
+    }
+    "
     ];
 
     let fail = vec![
