@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, Box, String, Vec};
 
 use crate::{
-    ir::{Doc, Line},
+    ir::{Doc, Fill, Line},
     p_vec,
 };
 
@@ -33,6 +33,10 @@ pub fn indent<'a>(items: Vec<'a, Doc<'a>>) -> Doc<'a> {
 
 pub fn array<'a>(items: Vec<'a, Doc<'a>>) -> Doc<'a> {
     Doc::Array(items)
+}
+
+pub fn fill<'a>(parts: Vec<'a, Doc<'a>>) -> Doc<'a> {
+    Doc::Fill(Fill { parts })
 }
 
 #[derive(Clone, Copy)]

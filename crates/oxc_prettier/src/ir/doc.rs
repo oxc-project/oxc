@@ -99,10 +99,6 @@ pub struct Fill<'a> {
 }
 
 impl<'a> Fill<'a> {
-    pub fn new(docs: Vec<'a, Doc<'a>>) -> Self {
-        Self { parts: docs }
-    }
-
     pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
         let content = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
         let whitespace = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };

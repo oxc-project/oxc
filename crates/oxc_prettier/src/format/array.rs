@@ -6,7 +6,7 @@ use super::Format;
 use crate::{
     comments::{CommentFlags, DanglingCommentsPrintOptions},
     group, if_break,
-    ir::{array, hardline, indent, line, softline, text, Doc, DocBuilder, Fill, Group},
+    ir::{array, fill, hardline, indent, line, softline, text, Doc, DocBuilder, Group},
     p_vec, Prettier,
 };
 
@@ -243,7 +243,7 @@ where
         }
     }
 
-    Doc::Fill(Fill::new(parts))
+    fill(parts)
 }
 
 fn should_break(array: &Array) -> bool {
