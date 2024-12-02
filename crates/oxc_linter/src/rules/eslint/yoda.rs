@@ -13,9 +13,10 @@ use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
-fn yoda_diagnostic(span: Span) -> OxcDiagnostic {
+fn yoda_diagnostic(span: Span, never: bool, operator: &str) -> OxcDiagnostic {
+    let expected_side = if never { "right" } else { "left" };
     OxcDiagnostic::warn("Require or disallow \"Yoda\" conditions")
-        .with_help("Expected literal to be on the opposite side of the operator.")
+        .with_help(format!("Expected literal to be on the {expected_side} side of {operator}."))
         .with_label(span)
 }
 
@@ -243,12 +244,12 @@ impl Rule for Yoda {
 
         // never
         if self.never && is_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx);
+            do_diagnostic_with_fix(expr, ctx, self.never);
         }
 
         // always
         if !self.never && is_not_yoda(expr) {
-            do_diagnostic_with_fix(expr, ctx);
+            do_diagnostic_with_fix(expr, ctx, self.never);
         }
     }
 }
@@ -263,8 +264,8 @@ fn is_not_yoda(expr: &BinaryExpression) -> bool {
         && is_literal_or_simple_template_literal(expr.right.get_inner_expression())
 }
 
-fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext) {
-    ctx.diagnostic_with_fix(yoda_diagnostic(expr.span), |fix| {
+fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: bool) {
+    ctx.diagnostic_with_fix(yoda_diagnostic(expr.span, never, expr.operator.as_str()), |fix| {
         let flipped_operator = flip_operator(expr.operator);
 
         let left_str = ctx.source_range(expr.left.span());
