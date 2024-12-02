@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, AstKind};
 use crate::{
     comments::CommentFlags,
     if_break,
-    ir::{hardline, indent, line, softline, space, text, Doc, DocBuilder, Group},
+    ir::{array, hardline, indent, line, softline, space, text, Doc, DocBuilder, Group},
     p_vec, Format, Prettier,
 };
 
@@ -128,17 +128,17 @@ pub(super) fn print_function_parameters<'a>(
     }
 
     if should_hug_the_only_function_parameter {
-        let mut array = p.vec();
-        array.push(text("("));
-        array.extend(printed);
-        array.push(text(")"));
-        return Doc::Array(array);
+        let mut parts = p.vec();
+        parts.push(text("("));
+        parts.extend(printed);
+        parts.push(text(")"));
+        return array(parts);
     }
 
     let mut indented = p.vec();
     indented.push(softline());
     indented.extend(printed);
-    let indented = indent(p_vec!(p, Doc::Array(indented)));
+    let indented = indent(p_vec!(p, array(indented)));
     parts.push(indented);
     let skip_dangling_comma = params.rest.is_some()
         || matches!(p.parent_kind(), AstKind::Function(func) if func.this_param.is_some());
@@ -149,7 +149,7 @@ pub(super) fn print_function_parameters<'a>(
     }
 
     if p.args.expand_first_arg {
-        Doc::Array(parts)
+        array(parts)
     } else {
         Doc::Group(Group::new(parts))
     }

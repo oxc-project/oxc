@@ -6,7 +6,7 @@ use crate::{
     binaryish::BinaryishOperator,
     comments::CommentFlags,
     group,
-    ir::{indent, line, space, text, Doc, DocBuilder, Group},
+    ir::{array, indent, line, space, text, Doc, DocBuilder, Group},
     Format, Prettier,
 };
 
@@ -28,7 +28,7 @@ pub(super) fn print_binaryish_expression<'a>(
     let parts = print_binaryish_expressions(p, left, operator, right);
 
     if is_inside_parenthesis {
-        return Doc::Array(parts);
+        return array(parts);
     }
 
     // Avoid indenting sub-expressions in some cases where the first sub-expression is already
@@ -77,10 +77,10 @@ fn print_binaryish_expressions<'a>(
     if left_operator.is_some_and(|left_operator| operator.should_flatten(left_operator)) {
         parts.push(match left {
             Expression::BinaryExpression(e) => {
-                Doc::Array(print_binaryish_expressions(p, &e.left, e.operator.into(), &e.right))
+                array(print_binaryish_expressions(p, &e.left, e.operator.into(), &e.right))
             }
             Expression::LogicalExpression(e) => {
-                Doc::Array(print_binaryish_expressions(p, &e.left, e.operator.into(), &e.right))
+                array(print_binaryish_expressions(p, &e.left, e.operator.into(), &e.right))
             }
             _ => unreachable!(),
         });
@@ -118,7 +118,7 @@ fn print_binaryish_expressions<'a>(
     parts.push(if should_group {
         Doc::Group(Group::new(right).with_break(should_break))
     } else {
-        Doc::Array(right)
+        array(right)
     });
 
     parts

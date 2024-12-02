@@ -4,11 +4,10 @@ use oxc_syntax::operator::UnaryOperator;
 
 use super::Format;
 use crate::{
-    array,
     comments::{CommentFlags, DanglingCommentsPrintOptions},
     group, if_break,
-    ir::{hardline, indent, line, softline, text, Doc, DocBuilder, Fill, Group},
-    Prettier,
+    ir::{array, hardline, indent, line, softline, text, Doc, DocBuilder, Fill, Group},
+    p_vec, Prettier,
 };
 
 #[allow(clippy::enum_variant_names)]
@@ -61,14 +60,14 @@ impl Array<'_, '_> {
     }
 }
 
-pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
-    if array.len() == 0 {
-        return print_empty_array_elements(p, array);
+pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
+    if arr.len() == 0 {
+        return print_empty_array_elements(p, arr);
     }
 
     let (needs_forced_trailing_comma, can_have_trailing_comma) =
-        if let Array::ArrayExpression(array) = array {
-            array.elements.last().map_or((false, false), |last| {
+        if let Array::ArrayExpression(arr) = arr {
+            arr.elements.last().map_or((false, false), |last| {
                 (
                     matches!(last, ArrayExpressionElement::Elision(_)),
                     !matches!(last, ArrayExpressionElement::SpreadElement(_)),
@@ -79,7 +78,7 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
         };
 
     let id = p.next_id();
-    let should_use_concise_formatting = array.is_concisely_printed();
+    let should_use_concise_formatting = arr.is_concisely_printed();
 
     let trailing_comma_fn = |p: &Prettier<'a>| {
         if !can_have_trailing_comma {
@@ -104,12 +103,12 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
                     let mut indent_parts = p.vec();
                     indent_parts.push(softline());
                     indent_parts.push(if should_use_concise_formatting {
-                        print_array_elements_concisely(p, array, trailing_comma_fn)
+                        print_array_elements_concisely(p, arr, trailing_comma_fn)
                     } else {
                         let trailing_comma = trailing_comma_fn(p);
-                        array!(p, print_array_elements(p, array), trailing_comma)
+                        array(p_vec!(p, print_array_elements(p, arr), trailing_comma))
                     });
-                    if let Some(dangling_comments) = p.print_dangling_comments(array.span(), None) {
+                    if let Some(dangling_comments) = p.print_dangling_comments(arr.span(), None) {
                         indent_parts.push(dangling_comments);
                     };
                     indent_parts
@@ -119,11 +118,11 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             group.push(text("]"));
             group
         })
-        .with_break(should_break(array))
+        .with_break(should_break(arr))
         .with_id(id),
     ));
 
-    Doc::Array(parts)
+    array(parts)
 }
 
 fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
@@ -134,9 +133,9 @@ fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -
     )
 }
 
-fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
+fn print_array_elements<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
     let mut parts = p.vec();
-    match array {
+    match arr {
         Array::ArrayExpression(array) => {
             for (i, element) in array.elements.iter().enumerate() {
                 parts.push(element.format(p));
@@ -197,26 +196,26 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<
         }
     }
 
-    Doc::Array(parts)
+    array(parts)
 }
 
 fn print_array_elements_concisely<'a, F>(
     p: &mut Prettier<'a>,
-    array: &Array<'a, '_>,
+    arr: &Array<'a, '_>,
     trailing_comma_fn: F,
 ) -> Doc<'a>
 where
     F: Fn(&Prettier<'a>) -> Doc<'a>,
 {
     let mut parts = p.vec();
-    match array {
-        Array::ArrayExpression(array) => {
-            for (i, element) in array.elements.iter().enumerate() {
-                let is_last = i == array.elements.len() - 1;
+    match arr {
+        Array::ArrayExpression(arr) => {
+            for (i, element) in arr.elements.iter().enumerate() {
+                let is_last = i == arr.elements.len() - 1;
                 let part = if is_last {
-                    array!(p, element.format(p), trailing_comma_fn(p))
+                    array(p_vec!(p, element.format(p), trailing_comma_fn(p)))
                 } else {
-                    array!(p, element.format(p), text(","))
+                    array(p_vec!(p, element.format(p), text(",")))
                 };
                 parts.push(part);
 
@@ -225,13 +224,13 @@ where
                         let mut space_parts = p.vec();
                         space_parts.extend(hardline());
                         space_parts.extend(hardline());
-                        parts.push(Doc::Array(space_parts));
-                    } else if array.elements.get(i + 1).is_some_and(|next| {
+                        parts.push(array(space_parts));
+                    } else if arr.elements.get(i + 1).is_some_and(|next| {
                         p.has_comment(next.span(), CommentFlags::Leading | CommentFlags::Line)
                     }) {
                         let mut space_parts = p.vec();
                         space_parts.extend(hardline());
-                        parts.push(Doc::Array(space_parts));
+                        parts.push(array(space_parts));
                     } else {
                         parts.push(line());
                     }
@@ -240,7 +239,7 @@ where
         }
         _ => {
             // TODO: implement
-            array!(p, print_array_elements(p, array), trailing_comma_fn(p));
+            array(p_vec!(p, print_array_elements(p, arr), trailing_comma_fn(p)));
         }
     }
 

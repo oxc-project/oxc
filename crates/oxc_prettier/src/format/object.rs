@@ -7,7 +7,7 @@ use oxc_span::Span;
 use super::{misc, Format};
 use crate::{
     group, if_break,
-    ir::{indent, line, softline, text, Doc, DocBuilder, Group},
+    ir::{array, indent, line, softline, text, Doc, DocBuilder, Group},
     Prettier,
 };
 
@@ -169,7 +169,7 @@ pub(super) fn print_object_properties<'a>(
                     AstKind::AssignmentExpression(_) | AstKind::VariableDeclarator(_)
                 ))
         {
-            Doc::Array(parts)
+            array(parts)
         } else {
             let should_break =
                 misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);

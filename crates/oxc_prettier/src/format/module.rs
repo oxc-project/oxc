@@ -5,7 +5,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     group, if_break,
-    ir::{indent, line, softline, space, text, Doc, DocBuilder, Separator},
+    ir::{array, indent, line, softline, space, text, Doc, DocBuilder, Separator},
     p_vec, Format, Prettier,
 };
 
@@ -45,7 +45,7 @@ pub(super) fn print_export_declaration<'a>(
         parts.push(doc);
     }
 
-    Doc::Array(parts)
+    array(parts)
 }
 
 fn print_semicolon_after_export_declaration<'a>(
@@ -120,7 +120,7 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
                     indent(p_vec!(
                         p,
                         if p.options.bracket_spacing { line() } else { softline() },
-                        Doc::Array(p.join(Separator::CommaLine, docs))
+                        array(p.join(Separator::CommaLine, docs))
                     )),
                     if_break!(p, if p.should_print_es5_comma() { "," } else { "" }, "", None),
                     if p.options.bracket_spacing { line() } else { softline() },
@@ -140,5 +140,5 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
         }
     }
 
-    Doc::Array(parts)
+    array(parts)
 }

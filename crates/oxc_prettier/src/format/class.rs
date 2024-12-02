@@ -5,10 +5,9 @@ use oxc_span::GetSpan;
 
 use super::assignment::AssignmentLikeNode;
 use crate::{
-    array,
     format::{assignment, Separator},
     group,
-    ir::{hardline, indent, line, softline, space, text, Doc, DocBuilder, Group, IfBreak},
+    ir::{array, hardline, indent, line, softline, space, text, Doc, DocBuilder, Group, IfBreak},
     p_vec, Format, Prettier,
 };
 
@@ -39,7 +38,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
             heritage_clauses_parts.push(softline());
         }
 
-        heritage_clauses_parts.push(Doc::Array(extend_parts));
+        heritage_clauses_parts.push(array(extend_parts));
     }
 
     heritage_clauses_parts.push(print_heritage_clauses_implements(p, class));
@@ -74,17 +73,9 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
 
     if group_mode {
         let printend_parts_group = if should_indent_only_heritage_clauses(class) {
-            array!(
-                p,
-                Doc::Array(group_parts),
-                indent(p_vec!(p, Doc::Array(heritage_clauses_parts)))
-            )
+            array(p_vec!(p, array(group_parts), indent(p_vec!(p, array(heritage_clauses_parts)))))
         } else {
-            indent(p_vec!(
-                p,
-                Doc::Array(group_parts),
-                group!(p, Doc::Array(heritage_clauses_parts))
-            ))
+            indent(p_vec!(p, array(group_parts), group!(p, array(heritage_clauses_parts))))
         };
 
         parts.push(printend_parts_group);
@@ -93,11 +84,11 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
             parts.extend(hardline());
         }
     } else {
-        parts.push(array!(p, Doc::Array(group_parts), Doc::Array(heritage_clauses_parts)));
+        parts.push(array(p_vec!(p, array(group_parts), array(heritage_clauses_parts))));
     }
 
     parts.push(class.body.format(p));
-    Doc::Array(parts)
+    array(parts)
 }
 
 pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<'a>) -> Doc<'a> {
@@ -130,16 +121,16 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
         let indent = {
             let mut parts = p.vec();
             parts.extend(hardline());
-            parts.push(Doc::Array(parts_inner));
+            parts.push(array(parts_inner));
             indent(parts)
         };
-        parts.push(array![p, indent]);
+        parts.push(array(p_vec!(p, indent)));
         parts.extend(hardline());
     }
 
     parts.push(text("}"));
 
-    Doc::Array(parts)
+    array(parts)
 }
 
 #[derive(Debug)]
@@ -308,14 +299,13 @@ pub(super) fn print_class_property<'a>(
         ClassMemberish::PropertyDefinition(v) => AssignmentLikeNode::PropertyDefinition(v),
         ClassMemberish::AccessorProperty(v) => AssignmentLikeNode::AccessorProperty(v),
     };
-    let mut result =
-        assignment::print_assignment(p, node, Doc::Array(parts), text(" ="), right_expr);
+    let mut result = assignment::print_assignment(p, node, array(parts), text(" ="), right_expr);
 
     if p.options.semi {
         let mut parts = p.vec();
         parts.push(result);
         parts.push(text(";"));
-        result = Doc::Array(parts);
+        result = array(parts);
     }
     result
 }
@@ -387,13 +377,13 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
     let mut parts = p.vec();
 
     if class.implements.is_none() {
-        return Doc::Array(parts);
+        return array(parts);
     }
 
     let implements = class.implements.as_ref().unwrap();
 
     if implements.len() == 0 {
-        return Doc::Array(parts);
+        return array(parts);
     }
 
     if should_indent_only_heritage_clauses(class) {
@@ -414,7 +404,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     parts.push(indent(p_vec!(
         p,
-        group!(p, softline(), Doc::Array(p.join(Separator::CommaLine, implements_docs)))
+        group!(p, softline(), array(p.join(Separator::CommaLine, implements_docs)))
     )));
     parts.push(space());
 

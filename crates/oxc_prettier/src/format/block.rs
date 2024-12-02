@@ -2,7 +2,7 @@ use oxc_ast::{ast::*, AstKind};
 
 use super::{statement, Format};
 use crate::{
-    ir::{hardline, indent, text, Doc, DocBuilder},
+    ir::{array, hardline, indent, text, Doc, DocBuilder},
     Prettier,
 };
 
@@ -46,7 +46,7 @@ pub(super) fn print_block<'a>(
         }
     }
     parts.push(text("}"));
-    Doc::Array(parts)
+    array(parts)
 }
 
 pub(super) fn print_block_body<'a>(
@@ -80,5 +80,5 @@ pub(super) fn print_block_body<'a>(
         ));
     }
 
-    Some(Doc::Array(parts))
+    Some(array(parts))
 }

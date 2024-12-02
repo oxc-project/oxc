@@ -1,17 +1,6 @@
 //! Utility macros for constructing the IR
 
 #[macro_export]
-macro_rules! array {
-    ($p:ident, $( $x:expr ),* $(,)?) => {{
-        let mut temp_vec = $p.vec();
-        $(
-            temp_vec.push($x);
-        )*
-        Doc::Array(temp_vec)
-    }};
-}
-
-#[macro_export]
 macro_rules! group {
     ($p:ident, $( $x:expr ),* $(,)?) => {{
         use $crate::ir::Group;
@@ -95,7 +84,8 @@ macro_rules! wrap {
         let leading = $p.print_leading_comments(kind.span());
 
         let doc = $block;
-        let doc = if $p.need_parens(kind) { array![$p, text("("), doc, text(")")] } else { doc };
+        let doc =
+            if $p.need_parens(kind) { array(p_vec!($p, text("("), doc, text(")"))) } else { doc };
 
         // TODO: dangling comments?
         let trailing = $p.print_trailing_comments(kind.span());

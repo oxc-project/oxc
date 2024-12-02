@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     format::Format,
-    ir::{text, Doc, DocBuilder},
+    ir::{array, text, Doc, DocBuilder},
     Prettier,
 };
 
@@ -52,5 +52,5 @@ pub(super) fn print_template_literal<'a, 'b>(
 
     parts.push(text("`"));
 
-    Doc::Array(parts)
+    array(parts)
 }

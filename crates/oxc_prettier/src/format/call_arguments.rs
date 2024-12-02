@@ -8,8 +8,8 @@ use super::{
     misc,
 };
 use crate::{
-    array, conditional_group, group_break, if_break,
-    ir::{hardline, indent, line, softline, text, Doc, DocBuilder, Group},
+    conditional_group, group_break, if_break,
+    ir::{array, hardline, indent, line, softline, text, Doc, DocBuilder, Group},
     p_vec,
     utils::will_break,
     Format, Prettier,
@@ -33,7 +33,7 @@ pub fn print_call_arguments<'a>(
     if arguments.is_empty() {
         parts.extend(p.print_inner_comment(Span::new(callee.span().end, expression.span().end)));
         parts.push(text(")"));
-        return Doc::Array(parts);
+        return array(parts);
     }
 
     #[allow(clippy::cast_sign_loss)]
@@ -68,7 +68,7 @@ pub fn print_call_arguments<'a>(
                     arg.push(line());
                 }
             }
-            printed_arguments.push(Doc::Array(arg));
+            printed_arguments.push(array(arg));
         }
         printed_arguments
     };
@@ -79,7 +79,7 @@ pub fn print_call_arguments<'a>(
         parts.push(indent(p_vec!(
             p,
             line(),
-            Doc::Array(get_printed_arguments(p, 0)),
+            array(get_printed_arguments(p, 0)),
             if p.should_print_all_comma() { text(",") } else { text("") }
         )));
         parts.push(line());
@@ -94,22 +94,22 @@ pub fn print_call_arguments<'a>(
 
         if will_break(&mut first_doc) {
             let last_doc = get_printed_arguments(p, 1).pop().unwrap();
-            return array![
+            return array(p_vec!(
                 p,
                 Doc::BreakParent,
                 conditional_group!(
                     p,
-                    array!(
+                    array(p_vec!(
                         p,
                         text("("),
                         group_break!(p, first_doc),
                         text(", "),
                         last_doc,
                         text(")")
-                    ),
+                    )),
                     all_args_broken_out(p)
                 )
-            ];
+            ));
         }
     }
 
@@ -134,33 +134,33 @@ pub fn print_call_arguments<'a>(
         let mut last_doc = get_last_doc(p);
 
         if will_break(&mut last_doc) {
-            return array![
+            return array(p_vec!(
                 p,
                 Doc::BreakParent,
                 conditional_group!(
                     p,
-                    array!(
+                    array(p_vec!(
                         p,
                         text("("),
-                        Doc::Array(printed_arguments),
+                        array(printed_arguments),
                         group_break!(p, last_doc),
                         text(")")
-                    ),
+                    )),
                     all_args_broken_out(p)
                 ),
-            ];
+            ));
         }
 
         return conditional_group!(
             p,
-            array!(p, text("("), Doc::Array(printed_arguments), last_doc, text(")")),
-            array!(
+            array(p_vec!(p, text("("), array(printed_arguments), last_doc, text(")"))),
+            array(p_vec!(
                 p,
                 text("("),
-                Doc::Array(get_printed_arguments(p, -1)),
+                array(get_printed_arguments(p, -1)),
                 group_break!(p, get_last_doc(p)),
                 text(")")
-            ),
+            )),
             all_args_broken_out(p)
         );
     }

@@ -1,8 +1,8 @@
 use oxc_allocator::{Allocator, Box, String, Vec};
 
 use crate::{
-    array,
     ir::{Doc, Line},
+    p_vec,
 };
 
 pub fn text<'a>(s: &'a str) -> Doc<'a> {
@@ -24,6 +24,10 @@ pub fn hardline<'a>() -> [Doc<'a>; 2] {
 
 pub fn indent<'a>(items: Vec<'a, Doc<'a>>) -> Doc<'a> {
     Doc::Indent(items)
+}
+
+pub fn array<'a>(items: Vec<'a, Doc<'a>>) -> Doc<'a> {
+    Doc::Array(items)
 }
 
 #[derive(Clone, Copy)]
@@ -64,7 +68,7 @@ pub trait DocBuilder<'a> {
                 parts.push(match separator {
                     Separator::Softline => Doc::Line(Line::softline()),
                     Separator::Hardline => Doc::Line(Line::hardline()),
-                    Separator::CommaLine => array![self, text(","), line()],
+                    Separator::CommaLine => array(p_vec!(self, text(","), line())),
                 });
             }
             parts.push(doc);

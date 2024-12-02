@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     group,
-    ir::{text, Doc, DocBuilder},
+    ir::{array, text, Doc, DocBuilder},
     Format, Prettier,
 };
 
@@ -46,5 +46,5 @@ pub(super) fn print_arrow_function<'a>(
         parts.push(expr.body.format(p));
     }
 
-    Doc::Array(parts)
+    array(parts)
 }

@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use crate::{
     format::function_parameters::should_group_function_parameters,
     group, if_break,
-    ir::{indent, softline, space, text, Doc, DocBuilder},
+    ir::{array, indent, softline, space, text, Doc, DocBuilder},
     p_str, p_vec, Format, Prettier,
 };
 
@@ -64,7 +64,7 @@ pub(super) fn print_function<'a>(
         }
     }
 
-    Doc::Array(parts)
+    array(parts)
 }
 
 pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
@@ -113,7 +113,7 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
 
     parts.push(print_method_value(p, &method.value));
 
-    Doc::Array(parts)
+    array(parts)
 }
 
 fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<'a> {
@@ -141,7 +141,7 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
         parts.push(text(";"));
     }
 
-    Doc::Array(parts)
+    array(parts)
 }
 
 pub(super) fn print_return_or_throw_argument<'a>(
@@ -173,5 +173,5 @@ pub(super) fn print_return_or_throw_argument<'a>(
     if let Some(semi) = p.semi() {
         parts.push(semi);
     }
-    Doc::Array(parts)
+    array(parts)
 }
