@@ -79,9 +79,6 @@ pub struct ModuleRecord {
     /// Local exported bindings
     pub exported_bindings: FxHashMap<CompactStr, Span>,
 
-    /// Local duplicated exported bindings, for diagnostics
-    pub exported_bindings_duplicated: Vec<NameSpan>,
-
     /// Reexported bindings from `export * from 'specifier'`
     /// Keyed by resolved path
     pub exported_bindings_from_star_export: FxDashMap<PathBuf, Vec<CompactStr>>,
@@ -111,7 +108,6 @@ impl fmt::Debug for ModuleRecord {
             .field("indirect_export_entries", &self.indirect_export_entries)
             .field("star_export_entries", &self.star_export_entries)
             .field("exported_bindings", &self.exported_bindings)
-            .field("exported_bindings_duplicated", &self.exported_bindings_duplicated)
             .field("exported_bindings_from_star_export", &self.exported_bindings_from_star_export)
             .field("export_default", &self.export_default)
             .finish()
@@ -467,11 +463,6 @@ impl ModuleRecord {
                 .exported_bindings
                 .iter()
                 .map(|(name, span)| (CompactStr::from(name.as_str()), *span))
-                .collect(),
-            exported_bindings_duplicated: other
-                .exported_bindings_duplicated
-                .iter()
-                .map(NameSpan::from)
                 .collect(),
             export_default: other.export_default,
             ..ModuleRecord::default()

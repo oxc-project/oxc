@@ -12,6 +12,7 @@ pub struct ModuleRecordBuilder<'a> {
     module_record: ModuleRecord<'a>,
     export_entries: Vec<ExportEntry<'a>>,
     export_default_duplicated: Vec<Span>,
+    exported_bindings_duplicated: Vec<NameSpan<'a>>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
@@ -21,6 +22,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             module_record: ModuleRecord::new(allocator),
             export_entries: vec![],
             export_default_duplicated: vec![],
+            exported_bindings_duplicated: vec![],
         }
     }
 
@@ -37,7 +39,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         let module_record = &self.module_record;
 
         // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
-        for name_span in &module_record.exported_bindings_duplicated {
+        for name_span in &self.exported_bindings_duplicated {
             let old_span = module_record.exported_bindings[&name_span.name];
             errors.push(diagnostics::duplicate_export(&name_span.name, name_span.span, old_span));
         }
@@ -88,7 +90,7 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     fn add_export_binding(&mut self, name: Atom<'a>, span: Span) {
         if let Some(old_node) = self.module_record.exported_bindings.insert(name.clone(), span) {
-            self.module_record.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
+            self.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
         }
     }
 
