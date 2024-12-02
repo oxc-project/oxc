@@ -23,30 +23,6 @@ macro_rules! indent_if_break {
 }
 
 #[macro_export]
-macro_rules! line {
-    () => {{
-        use $crate::ir::Line;
-        Doc::Line(Line::default())
-    }};
-}
-
-#[macro_export]
-macro_rules! softline {
-    () => {{
-        use $crate::ir::Line;
-        Doc::Line(Line::softline())
-    }};
-}
-
-#[macro_export]
-macro_rules! hardline {
-    () => {{
-        use $crate::ir::Line;
-        [Doc::Line(Line::hardline()), Doc::BreakParent]
-    }};
-}
-
-#[macro_export]
 macro_rules! array {
     ($p:ident, $( $x:expr ),* $(,)?) => {{
         let mut temp_vec = $p.vec();

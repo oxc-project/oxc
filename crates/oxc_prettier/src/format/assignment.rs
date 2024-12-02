@@ -11,8 +11,8 @@ use oxc_ast::{
 use super::{binaryish::should_inline_logical_expression, class::ClassMemberish};
 use crate::{
     array, group, indent,
-    ir::{space, text, Doc, DocBuilder, Group, IndentIfBreak},
-    line, Format, Prettier,
+    ir::{line, space, text, Doc, DocBuilder, Group, IndentIfBreak},
+    Format, Prettier,
 };
 
 pub(super) fn print_assignment_expression<'a>(
@@ -81,7 +81,7 @@ pub(super) fn print_assignment<'a>(
 
     match layout {
         Layout::BreakAfterOperator => {
-            group!(p, group!(p, left_doc), op, group!(p, indent!(p, line!(), right_doc)))
+            group!(p, group!(p, left_doc), op, group!(p, indent!(p, line(), right_doc)))
         }
         Layout::NeverBreakAfterOperator => {
             group!(p, group!(p, left_doc), op, space(), group!(p, right_doc))
@@ -92,7 +92,7 @@ pub(super) fn print_assignment<'a>(
 
             let after_op = {
                 let mut parts = p.vec();
-                parts.push(indent!(p, line!()));
+                parts.push(indent!(p, line()));
                 Doc::Group(Group::new(parts).with_id(group_id))
             };
 
@@ -110,10 +110,10 @@ pub(super) fn print_assignment<'a>(
         // Parts of assignment chains aren't wrapped in groups.
         // Once one of them breaks, the chain breaks too.
         Layout::Chain => {
-            array!(p, group!(p, left_doc), op, line!(), right_doc)
+            array!(p, group!(p, left_doc), op, line(), right_doc)
         }
         Layout::ChainTail => {
-            array!(p, group!(p, left_doc), op, indent!(p, line!(), right_doc))
+            array!(p, group!(p, left_doc), op, indent!(p, line(), right_doc))
         }
         Layout::ChainTailArrowChain => {
             array!(p, group!(p, left_doc), op, right_doc)

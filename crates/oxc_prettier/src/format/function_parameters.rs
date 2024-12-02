@@ -2,9 +2,9 @@ use oxc_ast::{ast::*, AstKind};
 
 use crate::{
     comments::CommentFlags,
-    hardline, if_break, indent,
-    ir::{space, text, Doc, DocBuilder, Group},
-    line, softline, Format, Prettier,
+    if_break, indent,
+    ir::{hardline, line, softline, space, text, Doc, DocBuilder, Group},
+    Format, Prettier,
 };
 
 pub(super) fn should_hug_the_only_function_parameter(
@@ -86,10 +86,10 @@ pub(super) fn print_function_parameters<'a>(
                 if should_hug_the_only_function_parameter {
                     printed.push(space());
                 } else if p.is_next_line_empty(this_param.span) {
-                    printed.extend(hardline!());
-                    printed.extend(hardline!());
+                    printed.extend(hardline());
+                    printed.extend(hardline());
                 } else {
-                    printed.push(line!());
+                    printed.push(line());
                 }
             }
         }
@@ -117,10 +117,10 @@ pub(super) fn print_function_parameters<'a>(
         if should_hug_the_only_function_parameter {
             printed.push(space());
         } else if p.is_next_line_empty(param.span) {
-            printed.extend(hardline!());
-            printed.extend(hardline!());
+            printed.extend(hardline());
+            printed.extend(hardline());
         } else {
-            printed.push(line!());
+            printed.push(line());
         }
     }
     if let Some(rest) = &params.rest {
@@ -136,14 +136,14 @@ pub(super) fn print_function_parameters<'a>(
     }
 
     let mut indented = p.vec();
-    indented.push(softline!());
+    indented.push(softline());
     indented.extend(printed);
     let indented = indent!(p, Doc::Array(indented));
     parts.push(indented);
     let skip_dangling_comma = params.rest.is_some()
         || matches!(p.parent_kind(), AstKind::Function(func) if func.this_param.is_some());
     parts.push(if_break!(p, if skip_dangling_comma { "" } else { "," }));
-    parts.push(softline!());
+    parts.push(softline());
     if need_parens {
         parts.push(text(")"));
     }

@@ -8,9 +8,8 @@ use super::{
     misc,
 };
 use crate::{
-    array, conditional_group, group_break, hardline, if_break, indent,
-    ir::{text, Doc, DocBuilder, Group},
-    line, softline,
+    array, conditional_group, group_break, if_break, indent,
+    ir::{hardline, line, softline, text, Doc, DocBuilder, Group},
     utils::will_break,
     Format, Prettier,
 };
@@ -62,10 +61,10 @@ pub fn print_call_arguments<'a>(
             if i < len - 1 {
                 arg.push(text(","));
                 if p.is_next_line_empty(element.span()) {
-                    arg.extend(hardline!());
-                    arg.extend(hardline!());
+                    arg.extend(hardline());
+                    arg.extend(hardline());
                 } else {
-                    arg.push(line!());
+                    arg.push(line());
                 }
             }
             printed_arguments.push(Doc::Array(arg));
@@ -78,11 +77,11 @@ pub fn print_call_arguments<'a>(
         parts.push(text("("));
         parts.push(indent!(
             p,
-            line!(),
+            line(),
             Doc::Array(get_printed_arguments(p, 0)),
             if p.should_print_all_comma() { text(",") } else { text("") }
         ));
-        parts.push(line!());
+        parts.push(line());
         parts.push(text(")"));
         Doc::Group(Group::new(parts).with_break(true))
     };
@@ -121,7 +120,7 @@ pub fn print_call_arguments<'a>(
 
         if !printed_arguments.is_empty() {
             printed_arguments.push(text(","));
-            printed_arguments.push(line!());
+            printed_arguments.push(line());
         }
 
         let get_last_doc = |p: &mut Prettier<'a>| {
@@ -168,10 +167,10 @@ pub fn print_call_arguments<'a>(
     let mut printed_arguments = get_printed_arguments(p, 0);
 
     if should_break {
-        printed_arguments.insert(0, softline!());
+        printed_arguments.insert(0, softline());
         parts.push(Doc::Indent(printed_arguments));
         parts.push(if_break!(p, ",", "", None));
-        parts.push(softline!());
+        parts.push(softline());
     } else {
         parts.extend(printed_arguments);
     }

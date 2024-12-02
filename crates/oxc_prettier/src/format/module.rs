@@ -5,8 +5,8 @@ use oxc_ast::ast::*;
 
 use crate::{
     group, if_break, indent,
-    ir::{space, text, Doc, DocBuilder, Separator},
-    line, softline, Format, Prettier,
+    ir::{line, softline, space, text, Doc, DocBuilder, Separator},
+    Format, Prettier,
 };
 
 pub(super) fn print_export_declaration<'a>(
@@ -119,11 +119,11 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
                     text("{"),
                     indent![
                         p,
-                        if p.options.bracket_spacing { line!() } else { softline!() },
+                        if p.options.bracket_spacing { line() } else { softline() },
                         Doc::Array(p.join(Separator::CommaLine, docs))
                     ],
                     if_break!(p, if p.should_print_es5_comma() { "," } else { "" }, "", None),
-                    if p.options.bracket_spacing { line!() } else { softline!() },
+                    if p.options.bracket_spacing { line() } else { softline() },
                     text("}"),
                 ]);
             } else {

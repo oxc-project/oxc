@@ -3,8 +3,8 @@ use oxc_ast::ast::*;
 use crate::{
     format::function_parameters::should_group_function_parameters,
     group, if_break, indent,
-    ir::{space, text, Doc, DocBuilder},
-    p_str, softline, Format, Prettier,
+    ir::{softline, space, text, Doc, DocBuilder},
+    p_str, Format, Prettier,
 };
 
 pub(super) fn print_function<'a>(
@@ -160,8 +160,8 @@ pub(super) fn print_return_or_throw_argument<'a>(
                 group![
                     p,
                     if_break!(p, "("),
-                    indent!(p, softline!(), argument.format(p)),
-                    softline!(),
+                    indent!(p, softline(), argument.format(p)),
+                    softline(),
                     if_break!(p, ")"),
                 ]
             } else {

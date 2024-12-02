@@ -7,9 +7,9 @@ use super::assignment::AssignmentLikeNode;
 use crate::{
     array,
     format::{assignment, Separator},
-    group, hardline, indent,
-    ir::{space, text, Doc, DocBuilder, Group, IfBreak},
-    line, softline, Format, Prettier,
+    group, indent,
+    ir::{line, softline, hardline, space, text, Doc, DocBuilder, Group, IfBreak},
+    Format, Prettier,
 };
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
@@ -36,7 +36,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
         extend_parts.push(space());
 
         if group_mode {
-            heritage_clauses_parts.push(softline!());
+            heritage_clauses_parts.push(softline());
         }
 
         heritage_clauses_parts.push(Doc::Array(extend_parts));
@@ -47,7 +47,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     for decorator in &class.decorators {
         parts.push(text("@"));
         parts.push(decorator.expression.format(p));
-        parts.extend(hardline!());
+        parts.extend(hardline());
     }
 
     if class.declare {
@@ -82,7 +82,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
         parts.push(printend_parts_group);
 
         if !class.body.body.is_empty() && has_multiple_heritage(class) {
-            parts.extend(hardline!());
+            parts.extend(hardline());
         }
     } else {
         parts.push(array!(p, Doc::Array(group_parts), Doc::Array(heritage_clauses_parts)));
@@ -106,10 +106,10 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
         }
 
         if i < class_body.body.len() - 1 {
-            parts_inner.extend(hardline!());
+            parts_inner.extend(hardline());
 
             if p.is_next_line_empty(node.span()) {
-                parts_inner.extend(hardline!());
+                parts_inner.extend(hardline());
             }
         }
     }
@@ -121,12 +121,12 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
     if !parts_inner.is_empty() {
         let indent = {
             let mut parts = p.vec();
-            parts.extend(hardline!());
+            parts.extend(hardline());
             parts.push(Doc::Array(parts_inner));
             Doc::Indent(parts)
         };
         parts.push(array![p, indent]);
-        parts.extend(hardline!());
+        parts.extend(hardline());
     }
 
     parts.push(text("}"));
@@ -253,7 +253,7 @@ pub(super) fn print_class_property<'a>(
         for decorator in decarators {
             parts.push(text("@"));
             parts.push(decorator.expression.format(p));
-            parts.extend(hardline!());
+            parts.extend(hardline());
         }
     }
 
@@ -391,13 +391,13 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
     if should_indent_only_heritage_clauses(class) {
         parts.push(Doc::IfBreak(IfBreak {
             flat_content: p.boxed(text("")),
-            break_contents: p.boxed(line!()),
+            break_contents: p.boxed(line()),
             group_id: None, // ToDo - how to attach group id
         }));
     } else if class.super_class.is_some() {
-        parts.extend(hardline!());
+        parts.extend(hardline());
     } else {
-        parts.push(softline!());
+        parts.push(softline());
     }
 
     parts.push(text("implements "));
@@ -406,7 +406,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     parts.push(indent!(
         p,
-        group!(p, softline!(), Doc::Array(p.join(Separator::CommaLine, implements_docs)))
+        group!(p, softline(), Doc::Array(p.join(Separator::CommaLine, implements_docs)))
     ));
     parts.push(space());
 

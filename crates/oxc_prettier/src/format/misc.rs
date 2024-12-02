@@ -3,8 +3,8 @@ use oxc_span::Span;
 
 use crate::{
     array, indent,
-    ir::{space, text, Doc},
-    line, DocBuilder, Prettier,
+    ir::{line, space, text, Doc},
+    DocBuilder, Prettier,
 };
 
 pub(super) fn adjust_clause<'a>(
@@ -21,7 +21,7 @@ pub(super) fn adjust_clause<'a>(
         return array![p, space(), clause];
     }
 
-    indent![p, line!(), clause]
+    indent![p, line(), clause]
 }
 
 pub(super) fn has_new_line_in_range(text: &str, start: u32, end: u32) -> bool {
