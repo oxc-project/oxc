@@ -7,7 +7,10 @@ use super::assignment::AssignmentLikeNode;
 use crate::{
     format::{assignment, Separator},
     group,
-    ir::{array, hardline, indent, line, softline, space, text, Doc, DocBuilder, Group, IfBreak},
+    ir::{
+        array, hardline, if_break, indent, line, softline, space, text, Doc, DocBuilder, Group,
+        IfBreak,
+    },
     p_vec, Format, Prettier,
 };
 
@@ -387,11 +390,11 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
     }
 
     if should_indent_only_heritage_clauses(class) {
-        parts.push(Doc::IfBreak(IfBreak {
-            flat_content: p.boxed(text("")),
-            break_contents: p.boxed(line()),
-            group_id: None, // ToDo - how to attach group id
-        }));
+        parts.push(if_break(
+            p.boxed(line()),
+            p.boxed(text("")),
+            None, // ToDo - how to attach group id
+        ));
     } else if class.super_class.is_some() {
         parts.extend(hardline());
     } else {

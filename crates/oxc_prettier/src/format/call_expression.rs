@@ -4,7 +4,7 @@ use oxc_span::{GetSpan, Span};
 
 use super::call_arguments::print_call_arguments;
 use crate::{
-    ir::{Doc, DocBuilder, Group, text},
+    ir::{text, Doc, DocBuilder, Group},
     Format, Prettier,
 };
 

@@ -2,8 +2,8 @@ use oxc_ast::ast::*;
 
 use crate::{
     format::function_parameters::should_group_function_parameters,
-    group, if_break,
-    ir::{array, indent, softline, space, text, Doc, DocBuilder},
+    group,
+    ir::{array, if_break, indent, softline, space, text, Doc, DocBuilder},
     p_str, p_vec, Format, Prettier,
 };
 
@@ -159,10 +159,10 @@ pub(super) fn print_return_or_throw_argument<'a>(
             if argument.is_binaryish() || matches!(argument, Expression::SequenceExpression(_)) {
                 group![
                     p,
-                    if_break!(p, "("),
+                    if_break(p.boxed(text("(")), p.boxed(text("")), None),
                     indent(p_vec!(p, softline(), argument.format(p))),
                     softline(),
-                    if_break!(p, ")"),
+                    if_break(p.boxed(text(")")), p.boxed(text("")), None),
                 ]
             } else {
                 argument.format(p)

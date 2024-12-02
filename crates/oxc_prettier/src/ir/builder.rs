@@ -1,8 +1,8 @@
 use oxc_allocator::{Allocator, Box, String, Vec};
 
 use crate::{
-    ir::{Doc, Fill, Line},
-    p_vec,
+    ir::{Doc, Fill, IfBreak, Line},
+    p_vec, GroupId,
 };
 
 pub fn text<'a>(s: &'a str) -> Doc<'a> {
@@ -37,6 +37,14 @@ pub fn array<'a>(items: Vec<'a, Doc<'a>>) -> Doc<'a> {
 
 pub fn fill<'a>(parts: Vec<'a, Doc<'a>>) -> Doc<'a> {
     Doc::Fill(Fill { parts })
+}
+
+pub fn if_break<'a>(
+    break_contents: Box<'a, Doc<'a>>,
+    flat_contents: Box<'a, Doc<'a>>,
+    group_id: Option<GroupId>,
+) -> Doc<'a> {
+    Doc::IfBreak(IfBreak { break_contents, flat_contents, group_id })
 }
 
 #[derive(Clone, Copy)]

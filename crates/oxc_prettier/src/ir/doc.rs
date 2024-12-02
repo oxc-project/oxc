@@ -1,16 +1,16 @@
 //! Prettier IR
 //!
 //! References:
-//! * <https://github.com/prettier/prettier/blob/3.3.3/commands.md>
+//! * <https://github.com/prettier/prettier/blob/3.4.1/commands.md>
 
-use oxc_allocator::{Allocator, Box, String, Vec};
+use oxc_allocator::{Box, Vec};
 
-use crate::{GroupId};
+use crate::GroupId;
 
 #[derive(Debug)]
 pub enum Doc<'a> {
     Str(&'a str),
-    // perf: can we use &[Doc] here?
+    // PERF: can we use &[Doc] here?
     Array(Vec<'a, Doc<'a>>),
     /// Increase the level of indentation.
     Indent(Vec<'a, Doc<'a>>),
@@ -76,6 +76,7 @@ impl<'a> Group<'a> {
         self
     }
 }
+
 #[derive(Debug)]
 pub struct IndentIfBreak<'a> {
     pub contents: Vec<'a, Doc<'a>>,
@@ -98,6 +99,7 @@ pub struct Fill<'a> {
     pub parts: Vec<'a, Doc<'a>>,
 }
 
+// Printer utils
 impl<'a> Fill<'a> {
     pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
         let content = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
@@ -129,6 +131,6 @@ impl<'a> Fill<'a> {
 #[derive(Debug)]
 pub struct IfBreak<'a> {
     pub break_contents: Box<'a, Doc<'a>>,
-    pub flat_content: Box<'a, Doc<'a>>,
+    pub flat_contents: Box<'a, Doc<'a>>,
     pub group_id: Option<GroupId>,
 }

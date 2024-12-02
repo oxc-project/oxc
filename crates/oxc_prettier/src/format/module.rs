@@ -4,8 +4,8 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    group, if_break,
-    ir::{array, indent, line, softline, space, text, Doc, DocBuilder, Separator},
+    group,
+    ir::{array, if_break, indent, line, softline, space, text, Doc, DocBuilder, Separator},
     p_vec, Format, Prettier,
 };
 
@@ -122,7 +122,11 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
                         if p.options.bracket_spacing { line() } else { softline() },
                         array(p.join(Separator::CommaLine, docs))
                     )),
-                    if_break!(p, if p.should_print_es5_comma() { "," } else { "" }, "", None),
+                    if_break(
+                        p.boxed(text(if p.should_print_es5_comma() { "," } else { "" })),
+                        p.boxed(text("",)),
+                        None,
+                    ),
                     if p.options.bracket_spacing { line() } else { softline() },
                     text("}"),
                 ]);

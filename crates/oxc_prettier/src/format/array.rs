@@ -5,8 +5,8 @@ use oxc_syntax::operator::UnaryOperator;
 use super::Format;
 use crate::{
     comments::{CommentFlags, DanglingCommentsPrintOptions},
-    group, if_break,
-    ir::{array, fill, hardline, indent, line, softline, text, Doc, DocBuilder, Group},
+    group,
+    ir::{array, fill, hardline, if_break, indent, line, softline, text, Doc, DocBuilder, Group},
     p_vec, Prettier,
 };
 
@@ -86,9 +86,9 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
         } else if needs_forced_trailing_comma {
             text(",")
         } else if should_use_concise_formatting {
-            if_break!(p, ",", "", Some(id))
+            if_break(p.boxed(text(",")), p.boxed(text("")), Some(id))
         } else {
-            if_break!(p, ",", "", None)
+            if_break(p.boxed(text(",")), p.boxed(text("")), None)
         }
     };
 

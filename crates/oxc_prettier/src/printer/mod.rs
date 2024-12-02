@@ -237,12 +237,12 @@ impl<'a> Printer<'a> {
     }
 
     fn handle_if_break(&mut self, if_break: IfBreak<'a>, indent: Indent, mode: Mode) {
-        let IfBreak { break_contents, flat_content, group_id } = if_break;
+        let IfBreak { break_contents, flat_contents, group_id } = if_break;
         let group_mode = group_id.map_or(Some(mode), |id| self.group_mode_map.get(&id).copied());
 
         match group_mode {
             Some(Mode::Flat) => {
-                self.cmds.push(Command::new(indent, Mode::Flat, flat_content.unbox()));
+                self.cmds.push(Command::new(indent, Mode::Flat, flat_contents.unbox()));
             }
             Some(Mode::Break) => {
                 self.cmds.push(Command::new(indent, Mode::Break, break_contents.unbox()));
@@ -401,7 +401,7 @@ impl<'a> Printer<'a> {
                     let contents = if group_mode.is_break() {
                         &if_break_doc.break_contents
                     } else {
-                        &if_break_doc.flat_content
+                        &if_break_doc.flat_contents
                     };
 
                     queue.push_front((mode, contents));

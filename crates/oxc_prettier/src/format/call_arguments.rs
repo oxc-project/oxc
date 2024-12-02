@@ -8,8 +8,8 @@ use super::{
     misc,
 };
 use crate::{
-    conditional_group, group_break, if_break,
-    ir::{array, hardline, indent, line, softline, text, Doc, DocBuilder, Group},
+    conditional_group, group_break,
+    ir::{array, hardline, if_break, indent, line, softline, text, Doc, DocBuilder, Group},
     p_vec,
     utils::will_break,
     Format, Prettier,
@@ -170,7 +170,7 @@ pub fn print_call_arguments<'a>(
     if should_break {
         printed_arguments.insert(0, softline());
         parts.push(indent(printed_arguments));
-        parts.push(if_break!(p, ",", "", None));
+        parts.push(if_break(p.boxed(text(",")), p.boxed(text("")), None));
         parts.push(softline());
     } else {
         parts.extend(printed_arguments);

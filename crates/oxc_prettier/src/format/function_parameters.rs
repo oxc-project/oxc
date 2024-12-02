@@ -2,8 +2,7 @@ use oxc_ast::{ast::*, AstKind};
 
 use crate::{
     comments::CommentFlags,
-    if_break,
-    ir::{array, hardline, indent, line, softline, space, text, Doc, DocBuilder, Group},
+    ir::{array, hardline, if_break, indent, line, softline, space, text, Doc, DocBuilder, Group},
     p_vec, Format, Prettier,
 };
 
@@ -142,7 +141,11 @@ pub(super) fn print_function_parameters<'a>(
     parts.push(indented);
     let skip_dangling_comma = params.rest.is_some()
         || matches!(p.parent_kind(), AstKind::Function(func) if func.this_param.is_some());
-    parts.push(if_break!(p, if skip_dangling_comma { "" } else { "," }));
+    parts.push(if_break(
+        p.boxed(text(if skip_dangling_comma { "" } else { "," })),
+        p.boxed(text("")),
+        None,
+    ));
     parts.push(softline());
     if need_parens {
         parts.push(text(")"));

@@ -6,8 +6,8 @@ use oxc_span::Span;
 
 use super::{misc, Format};
 use crate::{
-    group, if_break,
-    ir::{array, indent, line, softline, text, Doc, DocBuilder, Group},
+    group,
+    ir::{array, if_break, indent, line, softline, text, Doc, DocBuilder, Group},
     Prettier,
 };
 
@@ -149,7 +149,7 @@ pub(super) fn print_object_properties<'a>(
                 _ => true,
             }
         {
-            parts.push(if_break!(p, member_separator, "", None));
+            parts.push(if_break(p.boxed(text(member_separator)), p.boxed(text("")), None));
         }
         parts.push(if p.options.bracket_spacing { line() } else { softline() });
         parts.push(text("}"));

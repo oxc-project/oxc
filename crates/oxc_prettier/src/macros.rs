@@ -37,24 +37,6 @@ macro_rules! group_break {
     }};
 }
 
-#[macro_export]
-macro_rules! if_break {
-    ($p:ident, $s:expr, $flat:expr, $group_id:expr) => {{
-        use $crate::ir::IfBreak;
-        Doc::IfBreak(IfBreak {
-            break_contents: $p.boxed(Doc::Str($s)),
-            flat_content: $p.boxed(Doc::Str($flat)),
-            group_id: $group_id,
-        })
-    }};
-    ($p:ident, $s:expr, $flat:expr) => {{
-        if_break!($p, $s, $flat, None)
-    }};
-    ($p:ident, $s:expr) => {{
-        if_break!($p, $s, "", None)
-    }};
-}
-
 // ---
 
 #[macro_export]
