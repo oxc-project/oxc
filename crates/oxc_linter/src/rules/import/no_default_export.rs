@@ -49,9 +49,6 @@ impl Rule for NoDefaultExport {
         if let Some(span) = module_record.export_default {
             ctx.diagnostic(no_default_export_diagnostic(span));
         }
-        if let Some(span) = module_record.exported_bindings.get("default") {
-            ctx.diagnostic(no_default_export_diagnostic(*span));
-        }
     }
 }
 

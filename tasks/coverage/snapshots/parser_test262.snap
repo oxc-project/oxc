@@ -22158,15 +22158,13 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
     ·                  ╰── It can not be redeclared here
     ╰────
 
-  × Duplicated export 'default'
+  × Duplicated default export
     ╭─[test262/test/language/module-code/early-dup-export-dflt-id.js:18:8]
  17 │ var x, y;
  18 │ export default x;
-    ·        ───┬───
-    ·           ╰── Export has already been declared here
+    ·        ───────
  19 │ export { y as default };
-    ·               ───┬───
-    ·                  ╰── It cannot be redeclared here
+    ·               ───────
     ╰────
 
   × Unexpected token
@@ -22199,15 +22197,13 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
     ·          ╰── It cannot be redeclared here
     ╰────
 
-  × Duplicated export 'default'
+  × Duplicated default export
     ╭─[test262/test/language/module-code/early-dup-export-star-as-dflt.js:18:8]
  17 │ var x;
  18 │ export default x;
-    ·        ───┬───
-    ·           ╰── Export has already been declared here
+    ·        ───────
  19 │ export * as default from './early-dup-export-start-as-dflt.js';
-    ·             ───┬───
-    ·                ╰── It cannot be redeclared here
+    ·             ───────
     ╰────
 
   × Label `label` has already been declared

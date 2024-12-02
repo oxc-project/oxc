@@ -438,20 +438,21 @@ impl<'a> ParserImpl<'a> {
                 errors.push(error);
             }
         }
+        let (module_record, module_record_errors) = self.module_record_builder.build();
         if errors.len() != 1 {
             errors.reserve(self.lexer.errors.len() + self.errors.len());
             errors.extend(self.lexer.errors);
             errors.extend(self.errors);
             // Skip checking for exports in TypeScript {
             if !self.source_type.is_typescript() {
-                errors.extend(self.module_record_builder.errors());
+                errors.extend(module_record_errors);
             }
         }
         let irregular_whitespaces =
             self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
         ParserReturn {
             program,
-            module_record: self.module_record_builder.build(),
+            module_record,
             errors,
             irregular_whitespaces,
             panicked,

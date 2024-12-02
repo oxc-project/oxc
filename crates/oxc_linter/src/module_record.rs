@@ -464,7 +464,17 @@ impl ModuleRecord {
                 .iter()
                 .map(|(name, span)| (CompactStr::from(name.as_str()), *span))
                 .collect(),
-            export_default: other.export_default,
+            export_default: other
+                .local_export_entries
+                .iter()
+                .filter_map(|export_entry| export_entry.export_name.default_export_span())
+                .chain(
+                    other
+                        .indirect_export_entries
+                        .iter()
+                        .filter_map(|export_entry| export_entry.export_name.default_export_span()),
+                )
+                .next(),
             ..ModuleRecord::default()
         }
     }

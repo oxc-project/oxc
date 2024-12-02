@@ -55,10 +55,6 @@ pub struct ModuleRecord<'a> {
 
     /// Local exported bindings
     pub exported_bindings: FxHashMap<Atom<'a>, Span>,
-
-    /// `export default name`
-    ///         ^^^^^^^ span
-    pub export_default: Option<Span>,
 }
 
 impl<'a> ModuleRecord<'a> {
@@ -72,7 +68,6 @@ impl<'a> ModuleRecord<'a> {
             indirect_export_entries: Vec::new_in(allocator),
             star_export_entries: Vec::new_in(allocator),
             exported_bindings: FxHashMap::default(),
-            export_default: None,
         }
     }
 }
@@ -285,6 +280,17 @@ impl ExportExportName<'_> {
             Self::Name(name) => Some(name.span),
             Self::Default(span) => Some(*span),
             Self::Null => None,
+        }
+    }
+
+    /// Get default export span
+    /// `export default foo`
+    /// `export { default }`
+    pub fn default_export_span(&self) -> Option<Span> {
+        match self {
+            Self::Default(span) => Some(*span),
+            Self::Name(name_span) if name_span.name == "default" => Some(name_span.span),
+            _ => None,
         }
     }
 }
