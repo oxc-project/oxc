@@ -99,7 +99,7 @@ impl Rule for NoNamespace {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
-        if module_record.not_esm {
+        if !module_record.has_module_syntax {
             return;
         }
 

@@ -1,7 +1,4 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
-#![allow(missing_docs)] // fixme
-
-use std::fmt;
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_span::{Atom, Span};
@@ -15,9 +12,10 @@ use rustc_hash::FxHashMap;
 /// See
 /// * <https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records>
 /// * <https://tc39.es/ecma262/#cyclic-module-record>
+#[derive(Debug)]
 pub struct ModuleRecord<'a> {
-    /// This module has no import / export statements
-    pub not_esm: bool,
+    /// This module has ESM syntax: `import` and `export`.
+    pub has_module_syntax: bool,
 
     /// `[[RequestedModules]]`
     ///
@@ -27,6 +25,7 @@ pub struct ModuleRecord<'a> {
     ///   import ImportClause FromClause
     ///   import ModuleSpecifier
     ///   export ExportFromClause FromClause
+    ///
     /// Keyed by ModuleSpecifier, valued by all node occurrences
     pub requested_modules: FxHashMap<Atom<'a>, Vec<'a, RequestedModule>>,
 
@@ -57,64 +56,35 @@ pub struct ModuleRecord<'a> {
 
     /// Local exported bindings
     pub exported_bindings: FxHashMap<Atom<'a>, Span>,
-
-    /// Local duplicated exported bindings, for diagnostics
-    pub exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
-
-    /// Reexported bindings from `export * from 'specifier'`
-    /// Keyed by resolved path
-    pub exported_bindings_from_star_export: FxHashMap<Atom<'a>, Vec<'a, Atom<'a>>>,
-
-    /// `export default name`
-    ///         ^^^^^^^ span
-    pub export_default: Option<Span>,
-
-    /// Duplicated span of `export default` for diagnostics
-    pub export_default_duplicated: Vec<'a, Span>,
 }
 
 impl<'a> ModuleRecord<'a> {
+    /// Constructor
     pub fn new(allocator: &'a Allocator) -> Self {
         Self {
-            not_esm: true,
+            has_module_syntax: false,
             requested_modules: FxHashMap::default(),
             import_entries: Vec::new_in(allocator),
             local_export_entries: Vec::new_in(allocator),
             indirect_export_entries: Vec::new_in(allocator),
             star_export_entries: Vec::new_in(allocator),
             exported_bindings: FxHashMap::default(),
-            exported_bindings_duplicated: Vec::new_in(allocator),
-            exported_bindings_from_star_export: FxHashMap::default(),
-            export_default: None,
-            export_default_duplicated: Vec::new_in(allocator),
         }
     }
 }
 
-impl fmt::Debug for ModuleRecord<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ModuleRecord")
-            .field("not_esm", &self.not_esm)
-            .field("import_entries", &self.import_entries)
-            .field("local_export_entries", &self.local_export_entries)
-            .field("indirect_export_entries", &self.indirect_export_entries)
-            .field("star_export_entries", &self.star_export_entries)
-            .field("exported_bindings", &self.exported_bindings)
-            .field("exported_bindings_duplicated", &self.exported_bindings_duplicated)
-            .field("exported_bindings_from_star_export", &self.exported_bindings_from_star_export)
-            .field("export_default", &self.export_default)
-            .field("export_default_duplicated", &self.export_default_duplicated)
-            .finish()
-    }
-}
-
+/// Name and Span
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NameSpan<'a> {
+    /// Name
     pub name: Atom<'a>,
+
+    /// Span
     pub span: Span,
 }
 
 impl<'a> NameSpan<'a> {
+    /// Constructor
     pub fn new(name: Atom<'a>, span: Span) -> Self {
         Self { name, span }
     }
@@ -137,6 +107,9 @@ impl<'a> NameSpan<'a> {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportEntry<'a> {
+    /// Span of the import statement.
+    pub statement_span: Span,
+
     /// String value of the ModuleSpecifier of the ImportDeclaration.
     ///
     /// ## Examples
@@ -193,16 +166,21 @@ pub struct ImportEntry<'a> {
 /// `ImportName` For `ImportEntry`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ImportImportName<'a> {
+    /// Name
     Name(NameSpan<'a>),
+    /// Namespace Object
     NamespaceObject,
+    /// Default
     Default(Span),
 }
 
 impl ImportImportName<'_> {
+    /// Is `default`
     pub fn is_default(&self) -> bool {
         matches!(self, Self::Default(_))
     }
 
+    /// Is namespace
     pub fn is_namespace_object(&self) -> bool {
         matches!(self, Self::NamespaceObject)
     }
@@ -229,6 +207,9 @@ impl ImportImportName<'_> {
 /// ```
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct ExportEntry<'a> {
+    /// Span of the import statement.
+    pub statement_span: Span,
+
     /// Span for the entire export entry
     pub span: Span,
 
@@ -253,6 +234,7 @@ pub struct ExportEntry<'a> {
 /// `ImportName` for `ExportEntry`
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum ExportImportName<'a> {
+    /// Name
     Name(NameSpan<'a>),
     /// all is used for export * as ns from "mod" declarations.
     All,
@@ -263,11 +245,14 @@ pub enum ExportImportName<'a> {
     Null,
 }
 
+/// Export Import Name
 impl ExportImportName<'_> {
+    /// Is all
     pub fn is_all(&self) -> bool {
         matches!(self, Self::All)
     }
 
+    /// Is all but default
     pub fn is_all_but_default(&self) -> bool {
         matches!(self, Self::AllButDefault)
     }
@@ -276,8 +261,11 @@ impl ExportImportName<'_> {
 /// `ExportName` for `ExportEntry`
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum ExportExportName<'a> {
+    /// Name
     Name(NameSpan<'a>),
+    /// Default
     Default(Span),
+    /// Null
     #[default]
     Null,
 }
@@ -301,14 +289,27 @@ impl ExportExportName<'_> {
             Self::Null => None,
         }
     }
+
+    /// Get default export span
+    /// `export default foo`
+    /// `export { default }`
+    pub fn default_export_span(&self) -> Option<Span> {
+        match self {
+            Self::Default(span) => Some(*span),
+            Self::Name(name_span) if name_span.name == "default" => Some(name_span.span),
+            _ => None,
+        }
+    }
 }
 
 /// `LocalName` for `ExportEntry`
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum ExportLocalName<'a> {
+    /// Name
     Name(NameSpan<'a>),
     /// `export default name_span`
     Default(NameSpan<'a>),
+    /// Null
     #[default]
     Null,
 }
@@ -333,22 +334,14 @@ impl<'a> ExportLocalName<'a> {
     }
 }
 
+/// RequestedModule
 #[derive(Debug, Clone, Copy)]
 pub struct RequestedModule {
-    span: Span,
-    is_type: bool,
-    /// is_import is true if the module is requested by an import statement.
-    is_import: bool,
-}
+    /// Span of the import statement.
+    pub statement_span: Span,
 
-impl RequestedModule {
-    pub fn new(span: Span, is_type: bool, is_import: bool) -> Self {
-        Self { span, is_type, is_import }
-    }
-
-    pub fn span(&self) -> Span {
-        self.span
-    }
+    /// Span
+    pub span: Span,
 
     /// `true` if a `type` modifier was used in the import statement.
     ///
@@ -358,14 +351,10 @@ impl RequestedModule {
     /// import { type bar } from "bar"; // false, `type` is on specifier
     /// import { baz } from "baz";      // false, no `type` modifier
     /// ```
-    pub fn is_type(&self) -> bool {
-        self.is_type
-    }
+    pub is_type: bool,
 
     /// `true` if the module is requested by an import statement.
-    pub fn is_import(&self) -> bool {
-        self.is_import
-    }
+    pub is_import: bool,
 }
 
 #[cfg(test)]

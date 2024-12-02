@@ -102,7 +102,7 @@ impl Rule for Named {
                 continue;
             };
             let remote_module_record = remote_module_record_ref.value();
-            if remote_module_record.not_esm {
+            if !remote_module_record.has_module_syntax {
                 continue;
             }
             let import_span = import_name.span();
@@ -140,7 +140,7 @@ impl Rule for Named {
                 continue;
             };
             let remote_module_record = remote_module_record_ref.value();
-            if remote_module_record.not_esm {
+            if !remote_module_record.has_module_syntax {
                 continue;
             }
             // Check remote bindings

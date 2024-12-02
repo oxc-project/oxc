@@ -97,14 +97,3 @@ snapshot_kind: text
    ·                               ╰── It can not be redeclared here
  4 │                 export namespace Foo { }
    ╰────
-
-  ⚠ eslint-plugin-import(export): Multiple exports of name 'default'.
-    ╭─[index.ts:7:32]
-  6 │                 const Bar = 2;
-  7 │                 export {Bar as default};
-    ·                                ───────
-  8 │                 const Baz = 3;
-  9 │                 export {Baz as default};
-    ·                                ───────
- 10 │             
-    ╰────

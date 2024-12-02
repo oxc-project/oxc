@@ -118,7 +118,12 @@ impl Rule for Namespace {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
-        module_record.import_entries.iter().for_each(|entry| {
+
+        if !module_record.has_module_syntax {
+            return;
+        }
+
+        for entry in &module_record.import_entries {
             let (source, module) = match &entry.import_name {
                 ImportImportName::NamespaceObject => {
                     let source = entry.module_request.name();
@@ -150,10 +155,6 @@ impl Rule for Namespace {
                     return;
                 }
             };
-
-            if module.not_esm {
-                return;
-            }
 
             let Some(symbol_id) = ctx.scopes().get_root_binding(entry.local_name.name()) else {
                 return;
@@ -213,7 +214,7 @@ impl Rule for Namespace {
                     }
                 }
             });
-        });
+        }
     }
 }
 

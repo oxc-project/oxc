@@ -50,7 +50,7 @@ impl Rule for NoSelfImport {
             };
             if remote_module_record_ref.value().resolved_absolute_path == *resolved_absolute_path {
                 for requested_module in requested_modules {
-                    ctx.diagnostic(no_self_import_diagnostic(requested_module.span()));
+                    ctx.diagnostic(no_self_import_diagnostic(requested_module.span));
                 }
             }
         }

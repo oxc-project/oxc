@@ -315,7 +315,7 @@ fn get_import_source(jsx_runtime_importer: &str, react_importer_len: u32) -> Ato
 /// Pragma used in classic mode
 struct Pragma<'a> {
     object: Atom<'a>,
-    property: Option<Atom<'a>>,
+    properties: Vec<Atom<'a>>,
 }
 
 impl<'a> Pragma<'a> {
@@ -335,19 +335,10 @@ impl<'a> Pragma<'a> {
             if object_name.is_empty() {
                 return Self::invalid(default_property_name, ctx);
             }
-
-            let property = match parts.next() {
-                Some(property_name) => {
-                    if property_name.is_empty() || parts.next().is_some() {
-                        return Self::invalid(default_property_name, ctx);
-                    }
-                    Some(ast.atom(property_name))
-                }
-                None => None,
-            };
+            let props = parts.map(|item| ast.atom(item)).collect();
 
             let object = ast.atom(object_name);
-            Self { object, property }
+            Self { object, properties: props }
         } else {
             Self::default(default_property_name)
         }
@@ -359,16 +350,27 @@ impl<'a> Pragma<'a> {
     }
 
     fn default(default_property_name: &'static str) -> Self {
-        Self { object: Atom::from("React"), property: Some(Atom::from(default_property_name)) }
+        Self { object: Atom::from("React"), properties: vec![Atom::from(default_property_name)] }
     }
 
     fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let object = get_read_identifier_reference(SPAN, self.object.clone(), ctx);
-        if let Some(property) = self.property.as_ref() {
-            create_static_member_expression(object, property.clone(), ctx)
-        } else {
-            Expression::Identifier(ctx.alloc(object))
+        Self::create_arbitrary_length_member_expr_or_ident(object, &self.properties, ctx)
+    }
+
+    /// create a static member expression without caring about the referenceId,
+    /// this function is always used to creat a tail part of a real member expression
+    fn create_arbitrary_length_member_expr_or_ident(
+        object: IdentifierReference<'a>,
+        list: &[Atom<'a>],
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let mut expr = Expression::Identifier(ctx.alloc(object));
+        for item in list {
+            let name = ctx.ast.identifier_name(SPAN, item.clone());
+            expr = ctx.ast.member_expression_static(SPAN, expr, name, false).into();
         }
+        expr
     }
 }
 

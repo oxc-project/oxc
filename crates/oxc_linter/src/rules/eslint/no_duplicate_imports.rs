@@ -129,8 +129,8 @@ impl Rule for NoDuplicateImports {
 
         for (source, requests) in &module_record.requested_modules {
             for request in requests {
-                if request.is_import() && module_record.import_entries.is_empty() {
-                    side_effect_import_map.entry(source).or_default().push(request.span());
+                if request.is_import && module_record.import_entries.is_empty() {
+                    side_effect_import_map.entry(source).or_default().push(request.span);
                 }
             }
         }

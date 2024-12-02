@@ -62,7 +62,7 @@ impl Rule for Default {
             let Some(remote_module_record_ref) = module_record.loaded_modules.get(specifier) else {
                 continue;
             };
-            if remote_module_record_ref.not_esm {
+            if !remote_module_record_ref.has_module_syntax {
                 continue;
             }
             if !remote_module_record_ref
