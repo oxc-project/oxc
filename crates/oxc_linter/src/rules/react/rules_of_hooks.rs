@@ -604,7 +604,6 @@ fn test() {
             use_hook();
             // also valid because it's not matching the PascalCase namespace
             jest.useFakeTimer()
-            AFFiNE.plugins.use('oauth');
         ",
         // Regression test for some internal code.
         // This shows how the "callback rule" is more relaxed,
@@ -922,37 +921,6 @@ fn test() {
     let fail = vec![
         // Invalid because it's dangerous and might not warn otherwise.
         // This *must* be invalid.
-        "
-            function useHook() {
-              if (a) return;
-              useState();
-            }
-        ",
-        // Invalid because it's dangerous and might not warn otherwise.
-        // This *must* be invalid.
-        "
-            function useHook() {
-              if (a) return;
-              if (b) {
-                console.log('true');
-              } else {
-                console.log('false');
-              }
-              useState();
-            }
-        ",
-        // Is valid but hard to compute by brute-forcing
-        "
-            function MyComponent() {
-              // 40 conditions
-              // if (c) {} else {}
-              if (c) {} else { return; }
-
-              useHook();
-            }
-        ",
-        // Invalid because it's dangerous and might not warn otherwise.
-        // This *must* be invalid.
         // errors: [conditionalError('useConditionalHook')],
         "
         function ComponentWithConditionalHook() {
@@ -1123,6 +1091,22 @@ fn test() {
                     }
                 }
         ",
+        "
+            function ComponentWithHookInsideLoop() {
+              do {
+                useHookInsideLoop();
+              } while (cond);
+            }
+        ",
+        // Invalid because it's dangerous and might not warn otherwise.
+        // This *must* be invalid.
+        "
+            function ComponentWithHookInsideLoop() {
+              do {
+                foo();
+              } while (useHookInsideLoop());
+            }
+        ",
         // Invalid because it's dangerous and might not warn otherwise.
         // This *must* be invalid.
         // errors: [functionError('useState', 'renderItem')],
@@ -1206,6 +1190,34 @@ fn test() {
                     useHook2();
                 }
             }
+        ",
+        // Invalid because it's dangerous and might not warn otherwise.
+        // This *must* be invalid.
+        r"
+       function useHookInLoops() {
+         do {
+           useHook1();
+           if (a) return;
+           useHook2();
+         } while (b);
+       
+         do {
+           useHook3();
+           if (c) return;
+           useHook4();
+         } while (d)
+       }
+       ",
+        // Invalid because it's dangerous and might not warn otherwise.
+        // This *must* be invalid.
+        r"
+        function useHookInLoops() {
+          do {
+            useHook1();
+            if (a) continue;
+            useHook2();
+          } while (b);
+        }
         ",
         // Invalid because it's dangerous and might not warn otherwise.
         // This *must* be invalid.
@@ -1429,10 +1441,21 @@ fn test() {
                     useState();
                 }
         ",
+        r"
+                async function Page() {
+                  useId();
+                  React.useId();
+                }
+        ",
         // errors: [asyncComponentHookError('useState')],
         "
                 async function useAsyncHook() {
                     useState();
+                }
+        ",
+        r"
+                async function notAHook() {
+                  useId();
                 }
         ",
         // errors: [

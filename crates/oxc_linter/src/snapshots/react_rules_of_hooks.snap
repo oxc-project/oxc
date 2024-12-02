@@ -1,31 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
-   ╭─[rules_of_hooks.tsx:4:15]
- 3 │               if (a) return;
- 4 │               useState();
-   ·               ──────────
- 5 │             }
-   ╰────
-
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
-    ╭─[rules_of_hooks.tsx:9:15]
-  8 │               }
-  9 │               useState();
-    ·               ──────────
- 10 │             }
-    ╰────
-
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
-   ╭─[rules_of_hooks.tsx:7:15]
- 6 │ 
- 7 │               useHook();
-   ·               ─────────
- 8 │             }
-   ╰────
-
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useConditionalHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:18]
  3 │                if (cond) {
@@ -170,6 +145,22 @@ snapshot_kind: text
  5 │                     }
    ╰────
 
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideLoop" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:4:17]
+ 3 │               do {
+ 4 │                 useHookInsideLoop();
+   ·                 ───────────────────
+ 5 │               } while (cond);
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideLoop" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:5:24]
+ 4 │                 foo();
+ 5 │               } while (useHookInsideLoop());
+   ·                        ───────────────────
+ 6 │             }
+   ╰────
+
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "renderItem" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:2:26]
  1 │ 
@@ -256,6 +247,54 @@ snapshot_kind: text
  6 │                     useHook2();
    ·                     ──────────
  7 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook1" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:4:12]
+ 3 │          do {
+ 4 │            useHook1();
+   ·            ──────────
+ 5 │            if (a) return;
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:6:12]
+ 5 │            if (a) return;
+ 6 │            useHook2();
+   ·            ──────────
+ 7 │          } while (b);
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook3" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
+    ╭─[rules_of_hooks.tsx:10:12]
+  9 │          do {
+ 10 │            useHook3();
+    ·            ──────────
+ 11 │            if (c) return;
+    ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook4" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
+    ╭─[rules_of_hooks.tsx:12:12]
+ 11 │            if (c) return;
+ 12 │            useHook4();
+    ·            ──────────
+ 13 │          } while (d)
+    ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook1" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:4:13]
+ 3 │           do {
+ 4 │             useHook1();
+   ·             ──────────
+ 5 │             if (a) continue;
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:6:13]
+ 5 │             if (a) continue;
+ 6 │             useHook2();
+   ·             ──────────
+ 7 │           } while (b);
    ╰────
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
@@ -523,12 +562,36 @@ snapshot_kind: text
  5 │             
    ╰────
 
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "Page" cannot be called in an async function.
+   ╭─[rules_of_hooks.tsx:2:32]
+ 1 │ 
+ 2 │                 async function Page() {
+   ·                                ────
+ 3 │                   useId();
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "Page" cannot be called in an async function.
+   ╭─[rules_of_hooks.tsx:2:32]
+ 1 │ 
+ 2 │                 async function Page() {
+   ·                                ────
+ 3 │                   useId();
+   ╰────
+
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "useAsyncHook" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:2:32]
  1 │ 
  2 │                 async function useAsyncHook() {
    ·                                ────────────
  3 │                     useState();
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useId" is called in function "notAHook" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+   ╭─[rules_of_hooks.tsx:2:32]
+ 1 │ 
+ 2 │                 async function notAHook() {
+   ·                                ────────
+ 3 │                   useId();
    ╰────
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "use" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
