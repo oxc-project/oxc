@@ -36,7 +36,11 @@ impl Runner for LintRunner {
     fn run(self) -> CliRunResult {
         if self.options.list_rules {
             let mut stdout = BufWriter::new(std::io::stdout());
-            Linter::print_rules(&mut stdout);
+            if self.options.output_options.format == OutputFormat::Json {
+                Linter::print_rules_json(&mut stdout);
+            } else {
+                Linter::print_rules(&mut stdout);
+            }
             return CliRunResult::None;
         }
 

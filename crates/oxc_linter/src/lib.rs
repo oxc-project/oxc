@@ -26,6 +26,7 @@ pub mod table;
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 
 use oxc_semantic::{AstNode, Semantic};
+use rules::RULES;
 
 pub use crate::{
     builder::{LinterBuilder, LinterBuilderError},
@@ -210,6 +211,30 @@ impl Linter {
         }
         writeln!(writer, "Default: {}", table.turned_on_by_default_count).unwrap();
         writeln!(writer, "Total: {}", table.total).unwrap();
+    }
+
+    /// # Panics
+    pub fn print_rules_json<W: Write>(writer: &mut W) {
+        #[derive(Debug, serde::Serialize)]
+        struct RuleInfoJson<'a> {
+            scope: &'a str,
+            value: &'a str,
+            category: RuleCategory,
+        }
+
+        let rules_info = RULES.iter().map(|rule| RuleInfoJson {
+            scope: rule.plugin_name(),
+            value: rule.name(),
+            category: rule.category(),
+        });
+
+        writer
+            .write_all(
+                serde_json::to_string_pretty(&rules_info.collect::<Vec<_>>())
+                    .expect("Failed to serialize")
+                    .as_bytes(),
+            )
+            .unwrap();
     }
 }
 
