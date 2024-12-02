@@ -31,7 +31,7 @@ declare_oxc_lint!(
     /// ## What it does
     ///
     /// Require or disallow "Yoda" conditions.
-    /// This rule aims to enforce consistent style of conditions which compare a variable to a literal value. The literal value must always come first in the comparison.
+    /// This rule aims to enforce consistent style of conditions which compare a variable to a literal value.
     ///
     /// ## Why is this bad?
     ///
