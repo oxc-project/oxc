@@ -2,9 +2,9 @@ use oxc_ast::{ast::*, AstKind};
 use oxc_span::Span;
 
 use crate::{
-    array, indent,
-    ir::{line, space, text, Doc},
-    DocBuilder, Prettier,
+    array,
+    ir::{indent, line, space, text, Doc},
+    p_vec, DocBuilder, Prettier,
 };
 
 pub(super) fn adjust_clause<'a>(
@@ -21,7 +21,7 @@ pub(super) fn adjust_clause<'a>(
         return array![p, space(), clause];
     }
 
-    indent![p, line(), clause]
+    indent(p_vec!(p, line(), clause))
 }
 
 pub(super) fn has_new_line_in_range(text: &str, start: u32, end: u32) -> bool {

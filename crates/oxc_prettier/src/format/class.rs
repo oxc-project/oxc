@@ -7,9 +7,9 @@ use super::assignment::AssignmentLikeNode;
 use crate::{
     array,
     format::{assignment, Separator},
-    group, indent,
-    ir::{line, softline, hardline, space, text, Doc, DocBuilder, Group, IfBreak},
-    Format, Prettier,
+    group,
+    ir::{hardline, indent, line, softline, space, text, Doc, DocBuilder, Group, IfBreak},
+    p_vec, Format, Prettier,
 };
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
@@ -74,9 +74,17 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
 
     if group_mode {
         let printend_parts_group = if should_indent_only_heritage_clauses(class) {
-            array!(p, Doc::Array(group_parts), indent!(p, Doc::Array(heritage_clauses_parts)))
+            array!(
+                p,
+                Doc::Array(group_parts),
+                indent(p_vec!(p, Doc::Array(heritage_clauses_parts)))
+            )
         } else {
-            indent!(p, Doc::Array(group_parts), group!(p, Doc::Array(heritage_clauses_parts)))
+            indent(p_vec!(
+                p,
+                Doc::Array(group_parts),
+                group!(p, Doc::Array(heritage_clauses_parts))
+            ))
         };
 
         parts.push(printend_parts_group);
@@ -123,7 +131,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
             let mut parts = p.vec();
             parts.extend(hardline());
             parts.push(Doc::Array(parts_inner));
-            Doc::Indent(parts)
+            indent(parts)
         };
         parts.push(array![p, indent]);
         parts.extend(hardline());
@@ -404,10 +412,10 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     let implements_docs = implements.iter().map(|v| v.format(p)).collect();
 
-    parts.push(indent!(
+    parts.push(indent(p_vec!(
         p,
         group!(p, softline(), Doc::Array(p.join(Separator::CommaLine, implements_docs)))
-    ));
+    )));
     parts.push(space());
 
     Doc::Group(Group::new(parts))

@@ -22,6 +22,10 @@ pub fn hardline<'a>() -> [Doc<'a>; 2] {
     [Doc::Line(Line::hardline()), Doc::BreakParent]
 }
 
+pub fn indent<'a>(items: Vec<'a, Doc<'a>>) -> Doc<'a> {
+    Doc::Indent(items)
+}
+
 #[derive(Clone, Copy)]
 pub enum Separator {
     #[allow(unused)]

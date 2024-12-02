@@ -7,7 +7,7 @@ use oxc_span::Span;
 use super::{misc, Format};
 use crate::{
     group, if_break,
-    ir::{line, softline, text, Doc, DocBuilder, Group},
+    ir::{indent, line, softline, text, Doc, DocBuilder, Group},
     Prettier,
 };
 
@@ -111,7 +111,7 @@ pub(super) fn print_object_properties<'a>(
     } else {
         let mut parts = p.vec();
         parts.push(text("{"));
-        parts.push(Doc::Indent({
+        parts.push(indent({
             let len = object.len();
             let has_rest = object.has_rest();
             let mut indent_parts = p.vec();

@@ -35,9 +35,9 @@ use oxc_syntax::identifier::{is_identifier_name, is_line_terminator};
 use crate::{
     array,
     format::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter},
-    group, indent,
-    ir::{hardline, line, softline, space, text, Doc, DocBuilder, Group, Separator},
-    p_str, wrap, Prettier,
+    group,
+    ir::{hardline, indent, line, softline, space, text, Doc, DocBuilder, Group, Separator},
+    p_str, p_vec, wrap, Prettier,
 };
 
 pub trait Format<'a> {
@@ -167,7 +167,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
             let opening = group![
                 p,
                 text("if ("),
-                group!(p, indent!(p, softline(), test_doc), softline()),
+                group!(p, indent(p_vec!(p, softline(), test_doc)), softline()),
                 text(")"),
                 consequent
             ];
@@ -230,7 +230,7 @@ impl<'a> Format<'a> for ForStatement<'a> {
                 if let Some(init) = &self.update {
                     parts_head.push(init.format(p));
                 }
-                Doc::Indent(parts_head)
+                indent(parts_head)
             };
 
             group![p, text("for ("), group![p, parts_head, softline()], text(")"), body]
@@ -298,7 +298,7 @@ impl<'a> Format<'a> for WhileStatement<'a> {
             let mut parts = p.vec();
 
             parts.push(text("while ("));
-            parts.push(group!(p, indent!(p, softline(), self.test.format(p)), softline()));
+            parts.push(group!(p, indent(p_vec!(p, softline(), self.test.format(p))), softline()));
             parts.push(text(")"));
 
             let body = self.body.format(p);
@@ -327,7 +327,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
             }
 
             parts.push(text("while ("));
-            parts.push(group!(p, indent!(p, softline(), self.test.format(p)), softline()));
+            parts.push(group!(p, indent(p_vec!(p, softline(), self.test.format(p))), softline()));
             parts.push(text(")"));
             if let Some(semi) = p.semi() {
                 parts.push(semi);
@@ -379,7 +379,7 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
 
             header_parts.push(text("switch ("));
 
-            header_parts.push(indent!(p, softline(), self.discriminant.format(p)));
+            header_parts.push(indent(p_vec!(p, softline(), self.discriminant.format(p))));
 
             header_parts.push(softline());
             header_parts.push(text(")"));
@@ -395,7 +395,7 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
                     let mut parts = p.vec();
                     parts.extend(hardline());
                     parts.push(case.format(p));
-                    Doc::Indent(parts)
+                    indent(parts)
                 });
                 if i != len - 1 && p.is_next_line_empty(case.span) {
                     cases_parts.extend(hardline());
@@ -454,7 +454,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             if is_only_one_block_statement {
                 parts.extend(consequent_parts);
             } else {
-                parts.push(indent!(p, Doc::Group(Group::new(consequent_parts))));
+                parts.push(indent(p_vec!(p, Doc::Group(Group::new(consequent_parts)))));
             }
         }
 
@@ -616,7 +616,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                         }
                     }
                     d_parts.push(decl.format(p));
-                    Doc::Indent(d_parts)
+                    indent(d_parts)
                 } else {
                     decl.format(p)
                 }
@@ -1207,7 +1207,7 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
                     indent_parts.push(semi);
                 }
             }
-            parts.push(Doc::Indent(indent_parts));
+            parts.push(indent(indent_parts));
             parts.extend(hardline());
         }
         parts.push(text("}"));
@@ -1233,7 +1233,7 @@ impl<'a> Format<'a> for TSEnumDeclaration<'a> {
                 indent_parts.extend(hardline());
                 indent_parts.push(member.format(p));
             }
-            parts.push(Doc::Indent(indent_parts));
+            parts.push(indent(indent_parts));
             parts.extend(hardline());
         }
         parts.push(text("}"));
@@ -1287,7 +1287,7 @@ impl<'a> Format<'a> for TSModuleDeclaration<'a> {
                 indent_parts.extend(hardline());
                 indent_parts.push(body.format(p));
 
-                parts.push(Doc::Indent(indent_parts));
+                parts.push(indent(indent_parts));
                 parts.extend(hardline());
             }
         }
@@ -2199,7 +2199,7 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
                 &self.right,
             );
             if misc::in_parentheses(p.parent_kind(), p.source_text, self.span) {
-                group!(p, indent!(p, softline(), doc), softline())
+                group!(p, indent(p_vec!(p, softline(), doc)), softline())
             } else {
                 doc
             }
@@ -2233,7 +2233,7 @@ impl<'a> Format<'a> for LogicalExpression<'a> {
             );
 
             if misc::in_parentheses(p.parent_kind(), p.source_text, self.span) {
-                group!(p, indent!(p, softline(), doc), softline())
+                group!(p, indent(p_vec!(p, softline(), doc)), softline())
             } else {
                 doc
             }
@@ -2379,7 +2379,7 @@ impl<'a> Format<'a> for ImportExpression<'a> {
                     indent_parts.push(arg.format(p));
                 }
             }
-            parts.push(group!(p, Doc::Indent(indent_parts)));
+            parts.push(group!(p, indent(indent_parts)));
             parts.push(softline());
             parts.push(text(")"));
 

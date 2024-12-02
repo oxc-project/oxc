@@ -1,28 +1,6 @@
 //! Utility macros for constructing the IR
 
 #[macro_export]
-macro_rules! indent {
-    ($p:ident, $( $x:expr ),* $(,)?) => {{
-        let mut temp_vec = $p.vec();
-        $(
-            temp_vec.push($x);
-        )*
-        Doc::Indent(temp_vec)
-    }};
-}
-
-#[macro_export]
-macro_rules! indent_if_break {
-    ($p:ident, $( $x:expr ),* $(,)?) => {{
-        let mut temp_vec = $p.vec();
-        $(
-            temp_vec.push($x);
-        )*
-        Doc::IndentIfBreak(temp_vec)
-    }};
-}
-
-#[macro_export]
 macro_rules! array {
     ($p:ident, $( $x:expr ),* $(,)?) => {{
         let mut temp_vec = $p.vec();
@@ -94,6 +72,17 @@ macro_rules! if_break {
 macro_rules! p_str {
     ($p:ident, $s:expr) => {{
         $p.string($s)
+    }};
+}
+
+#[macro_export]
+macro_rules! p_vec {
+    ($p:ident, $( $x:expr ),* $(,)?) => {{
+        let mut temp_vec = $p.vec();
+        $(
+            temp_vec.push($x);
+        )*
+        temp_vec
     }};
 }
 

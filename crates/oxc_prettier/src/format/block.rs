@@ -2,7 +2,7 @@ use oxc_ast::{ast::*, AstKind};
 
 use super::{statement, Format};
 use crate::{
-    ir::{hardline, text, Doc, DocBuilder},
+    ir::{hardline, indent, text, Doc, DocBuilder},
     Prettier,
 };
 
@@ -18,7 +18,7 @@ pub(super) fn print_block<'a>(
             let mut parts = p.vec();
             parts.extend(hardline());
             parts.push(doc);
-            Doc::Indent(parts)
+            indent(parts)
         });
         parts.extend(hardline());
     } else {

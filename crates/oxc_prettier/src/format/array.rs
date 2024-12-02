@@ -7,7 +7,7 @@ use crate::{
     array,
     comments::{CommentFlags, DanglingCommentsPrintOptions},
     group, if_break,
-    ir::{hardline, line, softline, text, Doc, DocBuilder, Fill, Group},
+    ir::{hardline, indent, line, softline, text, Doc, DocBuilder, Fill, Group},
     Prettier,
 };
 
@@ -100,7 +100,7 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
             let mut group = p.vec();
             group.push(text("["));
             group.push({
-                Doc::Indent({
+                indent({
                     let mut indent_parts = p.vec();
                     indent_parts.push(softline());
                     indent_parts.push(if should_use_concise_formatting {

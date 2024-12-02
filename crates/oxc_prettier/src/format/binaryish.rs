@@ -6,7 +6,7 @@ use crate::{
     binaryish::BinaryishOperator,
     comments::CommentFlags,
     group,
-    ir::{line, space, text, Doc, DocBuilder, Group},
+    ir::{indent, line, space, text, Doc, DocBuilder, Group},
     Format, Prettier,
 };
 
@@ -56,7 +56,7 @@ pub(super) fn print_binaryish_expression<'a>(
             rest.push(part);
         }
     }
-    group.push(Doc::Indent(rest));
+    group.push(indent(rest));
     Doc::Group(Group::new(group))
 }
 

@@ -8,8 +8,9 @@ use super::{
     misc,
 };
 use crate::{
-    array, conditional_group, group_break, if_break, indent,
-    ir::{hardline, line, softline, text, Doc, DocBuilder, Group},
+    array, conditional_group, group_break, if_break,
+    ir::{hardline, indent, line, softline, text, Doc, DocBuilder, Group},
+    p_vec,
     utils::will_break,
     Format, Prettier,
 };
@@ -75,12 +76,12 @@ pub fn print_call_arguments<'a>(
     let all_args_broken_out = |p: &mut Prettier<'a>| {
         let mut parts = p.vec();
         parts.push(text("("));
-        parts.push(indent!(
+        parts.push(indent(p_vec!(
             p,
             line(),
             Doc::Array(get_printed_arguments(p, 0)),
             if p.should_print_all_comma() { text(",") } else { text("") }
-        ));
+        )));
         parts.push(line());
         parts.push(text(")"));
         Doc::Group(Group::new(parts).with_break(true))
@@ -168,7 +169,7 @@ pub fn print_call_arguments<'a>(
 
     if should_break {
         printed_arguments.insert(0, softline());
-        parts.push(Doc::Indent(printed_arguments));
+        parts.push(indent(printed_arguments));
         parts.push(if_break!(p, ",", "", None));
         parts.push(softline());
     } else {
