@@ -11,18 +11,25 @@ pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
     module_record: ModuleRecord<'a>,
     export_entries: Vec<ExportEntry<'a>>,
+    exported_bindings_duplicated: Vec<NameSpan<'a>>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator, module_record: ModuleRecord::new(allocator), export_entries: vec![] }
+        Self {
+            allocator,
+            module_record: ModuleRecord::new(allocator),
+            export_entries: vec![],
+            exported_bindings_duplicated: vec![],
+        }
     }
 
-    pub fn build(mut self) -> ModuleRecord<'a> {
+    pub fn build(mut self) -> (ModuleRecord<'a>, Vec<OxcDiagnostic>) {
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
         // resolved before resolving export entries.
         self.resolve_export_entries();
-        self.module_record
+        let errors = self.errors();
+        (self.module_record, errors)
     }
 
     pub fn errors(&self) -> Vec<OxcDiagnostic> {
@@ -31,24 +38,30 @@ impl<'a> ModuleRecordBuilder<'a> {
         let module_record = &self.module_record;
 
         // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
-        for name_span in &module_record.exported_bindings_duplicated {
+        for name_span in &self.exported_bindings_duplicated {
             let old_span = module_record.exported_bindings[&name_span.name];
             errors.push(diagnostics::duplicate_export(&name_span.name, name_span.span, old_span));
         }
 
-        for span in &module_record.export_default_duplicated {
-            let old_span = module_record.export_default.unwrap();
-            errors.push(diagnostics::duplicate_export("default", *span, old_span));
+        // Multiple default exports
+        // `export default foo`
+        // `export { default }`
+        let default_exports = module_record
+            .local_export_entries
+            .iter()
+            .filter_map(|export_entry| export_entry.export_name.default_export_span())
+            .chain(
+                module_record
+                    .indirect_export_entries
+                    .iter()
+                    .filter_map(|export_entry| export_entry.export_name.default_export_span()),
+            )
+            .collect::<Vec<_>>();
+        if default_exports.len() > 1 {
+            errors.push(
+                OxcDiagnostic::error("Duplicated default export").with_labels(default_exports),
+            );
         }
-
-        // `export default x;`
-        // `export { y as default };`
-        if let (Some(span), Some(default_span)) =
-            (module_record.exported_bindings.get("default"), &module_record.export_default)
-        {
-            errors.push(diagnostics::duplicate_export("default", *default_span, *span));
-        }
-
         errors
     }
 
@@ -82,13 +95,7 @@ impl<'a> ModuleRecordBuilder<'a> {
 
     fn add_export_binding(&mut self, name: Atom<'a>, span: Span) {
         if let Some(old_node) = self.module_record.exported_bindings.insert(name.clone(), span) {
-            self.module_record.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
-        }
-    }
-
-    fn add_default_export(&mut self, span: Span) {
-        if let Some(old_node) = self.module_record.export_default.replace(span) {
-            self.module_record.export_default_duplicated.push(old_node);
+            self.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
         }
     }
 
@@ -166,7 +173,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_module_declaration(&mut self, module_decl: &ModuleDeclaration<'a>) {
-        self.module_record.not_esm = false;
+        self.module_record.has_module_syntax = true;
         match module_decl {
             ModuleDeclaration::ImportDeclaration(import_decl) => {
                 self.visit_import_declaration(import_decl);
@@ -256,8 +263,6 @@ impl<'a> ModuleRecordBuilder<'a> {
             return;
         }
         let exported_name = &decl.exported;
-        let exported_name_span = decl.exported.span();
-        self.add_default_export(exported_name_span);
 
         let local_name = match &decl.declaration {
             ExportDefaultDeclarationKind::Identifier(ident) => {

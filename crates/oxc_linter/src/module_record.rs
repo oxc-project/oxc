@@ -24,8 +24,8 @@ type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 /// * <https://tc39.es/ecma262/#cyclic-module-record>
 #[derive(Default)]
 pub struct ModuleRecord {
-    /// This module has no import / export statements
-    pub not_esm: bool,
+    /// This module has ESM syntax: `import` and `export`.
+    pub has_module_syntax: bool,
 
     /// Resolved absolute path to this module record
     pub resolved_absolute_path: PathBuf,
@@ -79,9 +79,6 @@ pub struct ModuleRecord {
     /// Local exported bindings
     pub exported_bindings: FxHashMap<CompactStr, Span>,
 
-    /// Local duplicated exported bindings, for diagnostics
-    pub exported_bindings_duplicated: Vec<NameSpan>,
-
     /// Reexported bindings from `export * from 'specifier'`
     /// Keyed by resolved path
     pub exported_bindings_from_star_export: FxDashMap<PathBuf, Vec<CompactStr>>,
@@ -89,9 +86,6 @@ pub struct ModuleRecord {
     /// `export default name`
     ///         ^^^^^^^ span
     pub export_default: Option<Span>,
-
-    /// Duplicated span of `export default` for diagnostics
-    pub export_default_duplicated: Vec<Span>,
 }
 
 impl fmt::Debug for ModuleRecord {
@@ -105,7 +99,7 @@ impl fmt::Debug for ModuleRecord {
             .unwrap_or_default();
         let loaded_modules = format!("{{ {loaded_modules} }}");
         f.debug_struct("ModuleRecord")
-            .field("not_esm", &self.not_esm)
+            .field("has_module_syntax", &self.has_module_syntax)
             .field("resolved_absolute_path", &self.resolved_absolute_path)
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
@@ -114,10 +108,8 @@ impl fmt::Debug for ModuleRecord {
             .field("indirect_export_entries", &self.indirect_export_entries)
             .field("star_export_entries", &self.star_export_entries)
             .field("exported_bindings", &self.exported_bindings)
-            .field("exported_bindings_duplicated", &self.exported_bindings_duplicated)
             .field("exported_bindings_from_star_export", &self.exported_bindings_from_star_export)
             .field("export_default", &self.export_default)
-            .field("export_default_duplicated", &self.export_default_duplicated)
             .finish()
     }
 }
@@ -442,7 +434,7 @@ impl ModuleRecord {
         _semantic: &Semantic,
     ) -> Self {
         Self {
-            not_esm: other.not_esm,
+            has_module_syntax: other.has_module_syntax,
             resolved_absolute_path: path.to_path_buf(),
             requested_modules: other
                 .requested_modules
@@ -472,26 +464,17 @@ impl ModuleRecord {
                 .iter()
                 .map(|(name, span)| (CompactStr::from(name.as_str()), *span))
                 .collect(),
-            exported_bindings_duplicated: other
-                .exported_bindings_duplicated
+            export_default: other
+                .local_export_entries
                 .iter()
-                .map(NameSpan::from)
-                .collect(),
-            exported_bindings_from_star_export: other
-                .exported_bindings_from_star_export
-                .iter()
-                .map(|(name, values)| {
-                    (
-                        PathBuf::from(name.as_str()),
-                        values
-                            .into_iter()
-                            .map(|v| CompactStr::from(v.as_str()))
-                            .collect::<Vec<_>>(),
-                    )
-                })
-                .collect(),
-            export_default: other.export_default,
-            export_default_duplicated: other.export_default_duplicated.iter().copied().collect(),
+                .filter_map(|export_entry| export_entry.export_name.default_export_span())
+                .chain(
+                    other
+                        .indirect_export_entries
+                        .iter()
+                        .filter_map(|export_entry| export_entry.export_name.default_export_span()),
+                )
+                .next(),
             ..ModuleRecord::default()
         }
     }

@@ -22418,14 +22418,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  13 │     deleted() {
     ╰────
 
-  × Duplicated export 'default'
+  × Duplicated default export
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:1:8]
  1 │ export default 12
-   ·        ───┬───
-   ·           ╰── Export has already been declared here
+   ·        ───────
  2 │ export default 13
-   ·        ───┬───
-   ·           ╰── It cannot be redeclared here
+   ·        ───────
  3 │ const await = 1
    ╰────
 

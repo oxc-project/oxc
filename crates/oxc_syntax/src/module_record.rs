@@ -14,8 +14,8 @@ use rustc_hash::FxHashMap;
 /// * <https://tc39.es/ecma262/#cyclic-module-record>
 #[derive(Debug)]
 pub struct ModuleRecord<'a> {
-    /// This module has no import / export statements
-    pub not_esm: bool,
+    /// This module has ESM syntax: `import` and `export`.
+    pub has_module_syntax: bool,
 
     /// `[[RequestedModules]]`
     ///
@@ -55,37 +55,19 @@ pub struct ModuleRecord<'a> {
 
     /// Local exported bindings
     pub exported_bindings: FxHashMap<Atom<'a>, Span>,
-
-    /// Local duplicated exported bindings, for diagnostics
-    pub exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
-
-    /// Reexported bindings from `export * from 'specifier'`
-    /// Keyed by resolved path
-    pub exported_bindings_from_star_export: FxHashMap<Atom<'a>, Vec<'a, Atom<'a>>>,
-
-    /// `export default name`
-    ///         ^^^^^^^ span
-    pub export_default: Option<Span>,
-
-    /// Duplicated span of `export default` for diagnostics
-    pub export_default_duplicated: Vec<'a, Span>,
 }
 
 impl<'a> ModuleRecord<'a> {
     /// Constructor
     pub fn new(allocator: &'a Allocator) -> Self {
         Self {
-            not_esm: true,
+            has_module_syntax: false,
             requested_modules: FxHashMap::default(),
             import_entries: Vec::new_in(allocator),
             local_export_entries: Vec::new_in(allocator),
             indirect_export_entries: Vec::new_in(allocator),
             star_export_entries: Vec::new_in(allocator),
             exported_bindings: FxHashMap::default(),
-            exported_bindings_duplicated: Vec::new_in(allocator),
-            exported_bindings_from_star_export: FxHashMap::default(),
-            export_default: None,
-            export_default_duplicated: Vec::new_in(allocator),
         }
     }
 }
@@ -298,6 +280,17 @@ impl ExportExportName<'_> {
             Self::Name(name) => Some(name.span),
             Self::Default(span) => Some(*span),
             Self::Null => None,
+        }
+    }
+
+    /// Get default export span
+    /// `export default foo`
+    /// `export { default }`
+    pub fn default_export_span(&self) -> Option<Span> {
+        match self {
+            Self::Default(span) => Some(*span),
+            Self::Name(name_span) if name_span.name == "default" => Some(name_span.span),
+            _ => None,
         }
     }
 }
