@@ -65,12 +65,12 @@ impl<'a> ModuleRecordBuilder<'a> {
         errors
     }
 
-    fn add_module_request(&mut self, name_span: &NameSpan<'a>, is_type: bool, is_import: bool) {
+    fn add_module_request(&mut self, name: &Atom<'a>, requested_module: RequestedModule) {
         self.module_record
             .requested_modules
-            .entry(name_span.name.clone())
+            .entry(name.clone())
             .or_insert_with(|| oxc_allocator::Vec::new_in(self.allocator))
-            .push(RequestedModule::new(name_span.span, is_type, is_import));
+            .push(requested_module);
     }
 
     fn add_import_entry(&mut self, entry: ImportEntry<'a>) {
@@ -137,6 +137,8 @@ impl<'a> ModuleRecordBuilder<'a> {
                             // to indirectExportEntries.
                             ImportImportName::Name(_) | ImportImportName::Default(_) => {
                                 let export_entry = ExportEntry {
+                                    statement_span: ie.statement_span,
+                                    span: ee.span,
                                     module_request: Some(ie.module_request.clone()),
                                     import_name: match &ie.import_name {
                                         ImportImportName::Name(name) => {
@@ -151,8 +153,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                                         ImportImportName::NamespaceObject => unreachable!(),
                                     },
                                     export_name: ee.export_name.clone(),
-                                    span: ee.span,
-                                    ..ExportEntry::default()
+                                    local_name: ExportLocalName::default(),
                                 };
                                 self.append_indirect_export_entry(export_entry);
                             }
@@ -218,6 +219,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                     ),
                 };
                 self.add_import_entry(ImportEntry {
+                    statement_span: decl.span,
                     module_request: module_request.clone(),
                     import_name,
                     local_name,
@@ -226,15 +228,21 @@ impl<'a> ModuleRecordBuilder<'a> {
             }
         }
         self.add_module_request(
-            &module_request,
-            decl.import_kind.is_type(),
-            /* is_import */ true,
+            &module_request.name,
+            RequestedModule {
+                statement_span: decl.span,
+                span: module_request.span,
+                is_type: decl.import_kind.is_type(),
+                is_import: true,
+            },
         );
     }
 
     fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
         let module_request = NameSpan::new(decl.source.value.clone(), decl.source.span);
         let export_entry = ExportEntry {
+            statement_span: decl.span,
+            span: decl.span,
             module_request: Some(module_request.clone()),
             import_name: decl
                 .exported
@@ -243,17 +251,20 @@ impl<'a> ModuleRecordBuilder<'a> {
             export_name: decl.exported.as_ref().map_or(ExportExportName::Null, |exported_name| {
                 ExportExportName::Name(NameSpan::new(exported_name.name(), exported_name.span()))
             }),
-            span: decl.span,
-            ..ExportEntry::default()
+            local_name: ExportLocalName::default(),
         };
         self.add_export_entry(export_entry);
         if let Some(exported_name) = &decl.exported {
             self.add_export_binding(exported_name.name(), exported_name.span());
         }
         self.add_module_request(
-            &module_request,
-            decl.export_kind.is_type(),
-            /* is_import */ false,
+            &module_request.name,
+            RequestedModule {
+                statement_span: decl.span,
+                span: module_request.span,
+                is_type: decl.export_kind.is_type(),
+                is_import: false,
+            },
         );
     }
 
@@ -281,10 +292,12 @@ impl<'a> ModuleRecordBuilder<'a> {
             _ => ExportLocalName::Null,
         };
         let export_entry = ExportEntry {
+            statement_span: decl.span,
+            span: decl.declaration.span(),
+            module_request: None,
+            import_name: ExportImportName::default(),
             export_name: ExportExportName::Default(exported_name.span()),
             local_name,
-            span: decl.declaration.span(),
-            ..ExportEntry::default()
         };
         self.add_export_entry(export_entry);
     }
@@ -303,20 +316,25 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         if let Some(module_request) = &module_request {
             self.add_module_request(
-                module_request,
-                decl.export_kind.is_type(),
-                /* is_import */ false,
+                &module_request.name,
+                RequestedModule {
+                    statement_span: decl.span,
+                    span: module_request.span,
+                    is_type: decl.export_kind.is_type(),
+                    is_import: false,
+                },
             );
         }
 
-        if let Some(decl) = &decl.declaration {
-            decl.bound_names(&mut |ident| {
+        if let Some(d) = &decl.declaration {
+            d.bound_names(&mut |ident| {
                 let export_name =
                     ExportExportName::Name(NameSpan::new(ident.name.clone(), ident.span));
                 let local_name =
                     ExportLocalName::Name(NameSpan::new(ident.name.clone(), ident.span));
                 let export_entry = ExportEntry {
-                    span: decl.span(),
+                    statement_span: decl.span,
+                    span: d.span(),
                     module_request: module_request.clone(),
                     import_name: ExportImportName::Null,
                     export_name,
@@ -349,6 +367,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                 ))
             };
             let export_entry = ExportEntry {
+                statement_span: decl.span,
                 span: specifier.span,
                 module_request: module_request.clone(),
                 import_name,
@@ -383,6 +402,7 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "import v from 'mod'");
         let import_entry = ImportEntry {
+            statement_span: Span::new(0, 19),
             module_request: NameSpan::new("mod".into(), Span::new(14, 19)),
             import_name: ImportImportName::Default(Span::new(7, 8)),
             local_name: NameSpan::new("v".into(), Span::new(7, 8)),
@@ -397,6 +417,7 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "import * as ns from 'mod'");
         let import_entry = ImportEntry {
+            statement_span: Span::new(0, 25),
             module_request: NameSpan::new("mod".into(), Span::new(20, 25)),
             import_name: ImportImportName::NamespaceObject,
             local_name: NameSpan::new("ns".into(), Span::new(12, 14)),
@@ -411,6 +432,7 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "import { x } from 'mod'");
         let import_entry = ImportEntry {
+            statement_span: Span::new(0, 23),
             module_request: NameSpan::new("mod".into(), Span::new(18, 23)),
             import_name: ImportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             local_name: NameSpan::new("x".into(), Span::new(9, 10)),
@@ -425,6 +447,7 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "import { x as v } from 'mod'");
         let import_entry = ImportEntry {
+            statement_span: Span::new(0, 28),
             module_request: NameSpan::new("mod".into(), Span::new(23, 28)),
             import_name: ImportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             local_name: NameSpan::new("v".into(), Span::new(14, 15)),
@@ -451,6 +474,7 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "export * from 'mod'");
         let export_entry = ExportEntry {
+            statement_span: Span::new(0, 19),
             module_request: Some(NameSpan::new("mod".into(), Span::new(14, 19))),
             import_name: ExportImportName::AllButDefault,
             span: Span::new(0, 19),
@@ -467,6 +491,7 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "export * as ns from 'mod'");
         let export_entry = ExportEntry {
+            statement_span: Span::new(0, 25),
             module_request: Some(NameSpan::new("mod".into(), Span::new(20, 25))),
             import_name: ExportImportName::All,
             export_name: ExportExportName::Name(NameSpan::new("ns".into(), Span::new(12, 14))),
@@ -484,9 +509,10 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "export { x }");
         let export_entry = ExportEntry {
+            statement_span: Span::new(0, 12),
+            span: Span::new(9, 10),
             export_name: ExportExportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             local_name: ExportLocalName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
-            span: Span::new(9, 10),
             ..ExportEntry::default()
         };
         assert_eq!(module_record.local_export_entries.len(), 1);
@@ -500,9 +526,10 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "export { x as v }");
         let export_entry = ExportEntry {
+            statement_span: Span::new(0, 17),
+            span: Span::new(9, 15),
             export_name: ExportExportName::Name(NameSpan::new("v".into(), Span::new(14, 15))),
             local_name: ExportLocalName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
-            span: Span::new(9, 15),
             ..ExportEntry::default()
         };
         assert_eq!(module_record.local_export_entries.len(), 1);
@@ -516,6 +543,7 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "export { x } from 'mod'");
         let export_entry = ExportEntry {
+            statement_span: Span::new(0, 23),
             module_request: Some(NameSpan::new("mod".into(), Span::new(18, 23))),
             export_name: ExportExportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
             import_name: ExportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
@@ -533,6 +561,7 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "export { x as v } from 'mod'");
         let export_entry = ExportEntry {
+            statement_span: Span::new(0, 28),
             module_request: Some(NameSpan::new("mod".into(), Span::new(23, 28))),
             export_name: ExportExportName::Name(NameSpan::new("v".into(), Span::new(14, 15))),
             import_name: ExportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
@@ -549,6 +578,7 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "export var v");
         let export_entry = ExportEntry {
+            statement_span: Span::new(0, 12),
             export_name: ExportExportName::Name(NameSpan::new("v".into(), Span::new(11, 12))),
             local_name: ExportLocalName::Name(NameSpan::new("v".into(), Span::new(11, 12))),
             span: Span::new(7, 12),
@@ -564,9 +594,10 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "export default function f() {}");
         let export_entry = ExportEntry {
+            statement_span: Span::new(0, 30),
+            span: Span::new(15, 30),
             export_name: ExportExportName::Default(Span::new(7, 14)),
             local_name: ExportLocalName::Name(NameSpan::new("f".into(), Span::new(24, 25))),
-            span: Span::new(15, 30),
             ..ExportEntry::default()
         };
         assert_eq!(module_record.local_export_entries.len(), 1);
@@ -579,9 +610,10 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "export default function() {}");
         let export_entry = ExportEntry {
+            statement_span: Span::new(0, 28),
+            span: Span::new(15, 28),
             export_name: ExportExportName::Default(Span::new(7, 14)),
             local_name: ExportLocalName::Null,
-            span: Span::new(15, 28),
             ..ExportEntry::default()
         };
         assert_eq!(module_record.local_export_entries.len(), 1);
@@ -594,9 +626,10 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "export default 42");
         let export_entry = ExportEntry {
+            statement_span: Span::new(0, 17),
+            span: Span::new(15, 17),
             export_name: ExportExportName::Default(Span::new(7, 14)),
             local_name: ExportLocalName::Null,
-            span: Span::new(15, 17),
             ..ExportEntry::default()
         };
         assert_eq!(module_record.local_export_entries.len(), 1);
@@ -608,9 +641,10 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let module_record = build(&allocator, "export { default }");
         let export_entry = ExportEntry {
+            statement_span: Span::new(0, 18),
+            span: Span::new(9, 16),
             export_name: ExportExportName::Name(NameSpan::new("default".into(), Span::new(9, 16))),
             local_name: ExportLocalName::Name(NameSpan::new("default".into(), Span::new(9, 16))),
-            span: Span::new(9, 16),
             ..ExportEntry::default()
         };
         assert_eq!(module_record.local_export_entries.len(), 1);
@@ -626,8 +660,9 @@ mod module_record_tests {
         assert_eq!(
             module_record.indirect_export_entries[0],
             ExportEntry {
-                module_request: Some(NameSpan::new("mod".into(), Span::new(18, 23))),
+                statement_span: Span::new(0, 24),
                 span: Span::new(33, 34),
+                module_request: Some(NameSpan::new("mod".into(), Span::new(18, 23))),
                 import_name: ExportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
                 export_name: ExportExportName::Name(NameSpan::new("x".into(), Span::new(33, 34))),
                 local_name: ExportLocalName::Null,
@@ -636,8 +671,9 @@ mod module_record_tests {
         assert_eq!(
             module_record.indirect_export_entries[1],
             ExportEntry {
-                module_request: Some(NameSpan::new("mod".into(), Span::new(57, 62))),
+                statement_span: Span::new(37, 63),
                 span: Span::new(37, 63),
+                module_request: Some(NameSpan::new("mod".into(), Span::new(57, 62))),
                 import_name: ExportImportName::All,
                 export_name: ExportExportName::Name(NameSpan::new("ns".into(), Span::new(49, 51))),
                 local_name: ExportLocalName::Null,
