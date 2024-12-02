@@ -2,7 +2,7 @@ use oxc_ast::{ast::*, AstKind};
 
 use super::{statement, Format};
 use crate::{
-    ir::{array, hardline, indent, text, Doc, DocBuilder},
+    ir::{Doc, DocBuilder},
     Prettier,
 };
 
@@ -12,15 +12,15 @@ pub(super) fn print_block<'a>(
     directives: Option<&[Directive<'a>]>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    parts.push(text("{"));
+    parts.push(p._p_text("{"));
     if let Some(doc) = print_block_body(p, stmts, directives, true, false) {
         parts.push({
             let mut parts = p.vec();
-            parts.extend(hardline());
+            parts.extend(p._p_hardline());
             parts.push(doc);
-            indent(parts)
+            p._p_indent(parts)
         });
-        parts.extend(hardline());
+        parts.extend(p._p_hardline());
     } else {
         let parent = p.parent_kind();
         let parent_parent = p.parent_parent_kind();
@@ -42,11 +42,11 @@ pub(super) fn print_block<'a>(
                 && !matches!(p.parent_parent_kind(), Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
                 || matches!(p.current_kind(), AstKind::StaticBlock(_)))
         {
-            parts.extend(hardline());
+            parts.extend(p._p_hardline());
         }
     }
-    parts.push(text("}"));
-    array(parts)
+    parts.push(p._p_text("}"));
+    p._p_array(parts)
 }
 
 pub(super) fn print_block_body<'a>(
@@ -80,5 +80,5 @@ pub(super) fn print_block_body<'a>(
         ));
     }
 
-    Some(array(parts))
+    Some(p._p_array(parts))
 }

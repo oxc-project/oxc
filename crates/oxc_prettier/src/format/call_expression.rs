@@ -4,7 +4,7 @@ use oxc_span::{GetSpan, Span};
 
 use super::call_arguments::print_call_arguments;
 use crate::{
-    ir::{text, Doc, DocBuilder, Group},
+    ir::{Doc, DocBuilder, Group},
     Format, Prettier,
 };
 
@@ -65,7 +65,7 @@ pub(super) fn print_call_expression<'a>(
     let mut parts = p.vec();
 
     if expression.is_new() {
-        parts.push(text("new "));
+        parts.push(p._p_text("new "));
     };
 
     parts.push(expression.callee().format(p));
@@ -75,7 +75,7 @@ pub(super) fn print_call_expression<'a>(
     }
 
     if expression.optional() {
-        parts.push(text("?."));
+        parts.push(p._p_text("?."));
     }
 
     parts.push(print_call_arguments(p, expression));

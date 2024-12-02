@@ -5,48 +5,6 @@ use crate::{
     p_vec, GroupId,
 };
 
-pub fn text<'a>(s: &'a str) -> Doc<'a> {
-    Doc::Str(s)
-}
-pub fn space<'a>() -> Doc<'a> {
-    Doc::Str(" ")
-}
-
-pub fn line<'a>() -> Doc<'a> {
-    Doc::Line(Line::default())
-}
-/// Specify a line break.
-/// The difference from line is that if the expression fits on one line, it will be replaced with nothing.
-pub fn softline<'a>() -> Doc<'a> {
-    Doc::Line(Line { soft: true, ..Line::default() })
-}
-/// Specify a line break that is **always** included in the output,
-/// no matter if the expression fits on one line or not.
-pub fn hardline<'a>() -> [Doc<'a>; 2] {
-    let hardline = Doc::Line(Line { hard: true, ..Line::default() });
-    [hardline, Doc::BreakParent]
-}
-
-pub fn indent<'a>(items: Vec<'a, Doc<'a>>) -> Doc<'a> {
-    Doc::Indent(items)
-}
-
-pub fn array<'a>(items: Vec<'a, Doc<'a>>) -> Doc<'a> {
-    Doc::Array(items)
-}
-
-pub fn fill<'a>(parts: Vec<'a, Doc<'a>>) -> Doc<'a> {
-    Doc::Fill(Fill { parts })
-}
-
-pub fn if_break<'a>(
-    break_contents: Box<'a, Doc<'a>>,
-    flat_contents: Box<'a, Doc<'a>>,
-    group_id: Option<GroupId>,
-) -> Doc<'a> {
-    Doc::IfBreak(IfBreak { break_contents, flat_contents, group_id })
-}
-
 #[derive(Clone, Copy)]
 pub enum Separator {
     #[allow(unused)]
@@ -78,15 +36,60 @@ pub trait DocBuilder<'a> {
         Box::new_in(doc, self.allocator())
     }
 
+    fn _p_text(&self, s: &'a str) -> Doc<'a> {
+        Doc::Str(s)
+    }
+    fn _p_space(&self) -> Doc<'a> {
+        Doc::Str(" ")
+    }
+
+    fn _p_line(&self) -> Doc<'a> {
+        Doc::Line(Line::default())
+    }
+    /// Specify a line break.
+    /// The difference from line is that if the expression fits on one line, it will be replaced with nothing.
+    fn _p_softline(&self) -> Doc<'a> {
+        Doc::Line(Line { soft: true, ..Line::default() })
+    }
+    /// Specify a line break that is **always** included in the output,
+    /// no matter if the expression fits on one line or not.
+    fn _p_hardline(&self) -> [Doc<'a>; 2] {
+        let hardline = Doc::Line(Line { hard: true, ..Line::default() });
+        [hardline, Doc::BreakParent]
+    }
+
+    fn _p_indent(&self, items: Vec<'a, Doc<'a>>) -> Doc<'a> {
+        Doc::Indent(items)
+    }
+
+    fn _p_array(&self, items: Vec<'a, Doc<'a>>) -> Doc<'a> {
+        Doc::Array(items)
+    }
+
+    fn _p_fill(&self, parts: Vec<'a, Doc<'a>>) -> Doc<'a> {
+        Doc::Fill(Fill { parts })
+    }
+
+    fn _p_if_break(
+        &self,
+        break_contents: Box<'a, Doc<'a>>,
+        flat_contents: Box<'a, Doc<'a>>,
+        group_id: Option<GroupId>,
+    ) -> Doc<'a> {
+        Doc::IfBreak(IfBreak { break_contents, flat_contents, group_id })
+    }
+
     // TODO: Just use `Doc` instead of `Separator`...?
     fn join(&self, separator: Separator, docs: std::vec::Vec<Doc<'a>>) -> Vec<'a, Doc<'a>> {
         let mut parts = self.vec();
         for (i, doc) in docs.into_iter().enumerate() {
             if i != 0 {
                 match separator {
-                    Separator::Softline => parts.push(softline()),
-                    Separator::Hardline => parts.extend(hardline()),
-                    Separator::CommaLine => parts.push(array(p_vec!(self, text(","), line()))),
+                    Separator::Softline => parts.push(self._p_softline()),
+                    Separator::Hardline => parts.extend(self._p_hardline()),
+                    Separator::CommaLine => {
+                        parts.push(self._p_array(p_vec!(self, self._p_text(","), self._p_line())))
+                    }
                 }
             }
             parts.push(doc);

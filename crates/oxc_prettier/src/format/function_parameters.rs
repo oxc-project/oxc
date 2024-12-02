@@ -2,7 +2,7 @@ use oxc_ast::{ast::*, AstKind};
 
 use crate::{
     comments::CommentFlags,
-    ir::{array, hardline, if_break, indent, line, softline, space, text, Doc, DocBuilder, Group},
+    ir::{Doc, DocBuilder, Group},
     p_vec, Format, Prettier,
 };
 
@@ -66,7 +66,7 @@ pub(super) fn print_function_parameters<'a>(
     let need_parens =
         !is_arrow_function || p.options.arrow_parens.is_always() || params.items.len() != 1;
     if need_parens {
-        parts.push(text("("));
+        parts.push(p._p_text("("));
     }
 
     let should_hug_the_only_function_parameter = should_hug_the_only_function_parameter(p, params);
@@ -80,15 +80,15 @@ pub(super) fn print_function_parameters<'a>(
             parts.push(this_param.format(p));
 
             if params.items.len() > 0 {
-                printed.push(text(","));
+                printed.push(p._p_text(","));
 
                 if should_hug_the_only_function_parameter {
-                    printed.push(space());
+                    printed.push(p._p_space());
                 } else if p.is_next_line_empty(this_param.span) {
-                    printed.extend(hardline());
-                    printed.extend(hardline());
+                    printed.extend(p._p_hardline());
+                    printed.extend(p._p_hardline());
                 } else {
-                    printed.push(line());
+                    printed.push(p._p_line());
                 }
             }
         }
@@ -96,30 +96,30 @@ pub(super) fn print_function_parameters<'a>(
 
     for (i, param) in params.items.iter().enumerate() {
         if let Some(accessibility) = &param.accessibility {
-            printed.push(text(accessibility.as_str()));
-            printed.push(space());
+            printed.push(p._p_text(accessibility.as_str()));
+            printed.push(p._p_space());
         }
 
         if param.r#override {
-            printed.push(text("override "));
+            printed.push(p._p_text("override "));
         }
 
         if param.readonly {
-            printed.push(text("readonly "));
+            printed.push(p._p_text("readonly "));
         }
 
         printed.push(param.format(p));
         if i == len - 1 && !has_rest {
             break;
         }
-        printed.push(text(","));
+        printed.push(p._p_text(","));
         if should_hug_the_only_function_parameter {
-            printed.push(space());
+            printed.push(p._p_space());
         } else if p.is_next_line_empty(param.span) {
-            printed.extend(hardline());
-            printed.extend(hardline());
+            printed.extend(p._p_hardline());
+            printed.extend(p._p_hardline());
         } else {
-            printed.push(line());
+            printed.push(p._p_line());
         }
     }
     if let Some(rest) = &params.rest {
@@ -128,31 +128,31 @@ pub(super) fn print_function_parameters<'a>(
 
     if should_hug_the_only_function_parameter {
         let mut parts = p.vec();
-        parts.push(text("("));
+        parts.push(p._p_text("("));
         parts.extend(printed);
-        parts.push(text(")"));
-        return array(parts);
+        parts.push(p._p_text(")"));
+        return p._p_array(parts);
     }
 
     let mut indented = p.vec();
-    indented.push(softline());
+    indented.push(p._p_softline());
     indented.extend(printed);
-    let indented = indent(p_vec!(p, array(indented)));
+    let indented = p._p_indent(p_vec!(p, p._p_array(indented)));
     parts.push(indented);
     let skip_dangling_comma = params.rest.is_some()
         || matches!(p.parent_kind(), AstKind::Function(func) if func.this_param.is_some());
-    parts.push(if_break(
-        p.boxed(text(if skip_dangling_comma { "" } else { "," })),
-        p.boxed(text("")),
+    parts.push(p._p_if_break(
+        p.boxed(p._p_text(if skip_dangling_comma { "" } else { "," })),
+        p.boxed(p._p_text("")),
         None,
     ));
-    parts.push(softline());
+    parts.push(p._p_softline());
     if need_parens {
-        parts.push(text(")"));
+        parts.push(p._p_text(")"));
     }
 
     if p.args.expand_first_arg {
-        array(parts)
+        p._p_array(parts)
     } else {
         Doc::Group(Group::new(parts))
     }

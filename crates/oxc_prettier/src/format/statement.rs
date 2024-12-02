@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 
 use super::Format;
 use crate::{
-    ir::{hardline, Doc, DocBuilder},
+    ir::{Doc, DocBuilder},
     Prettier,
 };
 
@@ -27,9 +27,9 @@ pub(super) fn print_statement_sequence<'a>(
         parts.push(stmt.format(p));
 
         if Some(stmt.span()) != last_statement_span {
-            parts.extend(hardline());
+            parts.extend(p._p_hardline());
             if p.is_next_line_empty(stmt.span()) {
-                parts.extend(hardline());
+                parts.extend(p._p_hardline());
             }
         }
     }

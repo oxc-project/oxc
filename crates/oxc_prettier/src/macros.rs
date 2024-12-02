@@ -66,8 +66,11 @@ macro_rules! wrap {
         let leading = $p.print_leading_comments(kind.span());
 
         let doc = $block;
-        let doc =
-            if $p.need_parens(kind) { array(p_vec!($p, text("("), doc, text(")"))) } else { doc };
+        let doc = if $p.need_parens(kind) {
+            $p._p_array(p_vec!($p, $p._p_text("("), doc, $p._p_text(")")))
+        } else {
+            doc
+        };
 
         // TODO: dangling comments?
         let trailing = $p.print_trailing_comments(kind.span());

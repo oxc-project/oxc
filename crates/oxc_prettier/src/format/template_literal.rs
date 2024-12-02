@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     format::Format,
-    ir::{array, text, Doc, DocBuilder},
+    ir::{Doc, DocBuilder},
     Prettier,
 };
 
@@ -37,7 +37,7 @@ pub(super) fn print_template_literal<'a, 'b>(
     template_literal: &'b TemplateLiteralPrinter<'a, 'b>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    parts.push(text("`"));
+    parts.push(p._p_text("`"));
 
     for (index, quais) in template_literal.quasis().iter().enumerate() {
         parts.push(quais.format(p));
@@ -45,12 +45,12 @@ pub(super) fn print_template_literal<'a, 'b>(
             break;
         };
 
-        parts.push(text("${"));
+        parts.push(p._p_text("${"));
         parts.push(expr_doc);
-        parts.push(text("}"));
+        parts.push(p._p_text("}"));
     }
 
-    parts.push(text("`"));
+    parts.push(p._p_text("`"));
 
-    array(parts)
+    p._p_array(parts)
 }

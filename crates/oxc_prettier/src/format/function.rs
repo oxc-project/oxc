@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use crate::{
     format::function_parameters::should_group_function_parameters,
     group,
-    ir::{array, if_break, indent, softline, space, text, Doc, DocBuilder},
+    ir::{Doc, DocBuilder},
     p_str, p_vec, Format, Prettier,
 };
 
@@ -15,26 +15,26 @@ pub(super) fn print_function<'a>(
     let mut parts = p.vec();
 
     if func.declare {
-        parts.push(text("declare "));
+        parts.push(p._p_text("declare "));
     }
 
     if func.r#async {
-        parts.push(text("async "));
+        parts.push(p._p_text("async "));
     }
 
     if let Some(name) = property_name {
-        parts.push(text(p_str!(p, name)));
+        parts.push(p._p_text(p_str!(p, name)));
     } else {
-        parts.push(text("function"));
+        parts.push(p._p_text("function"));
         if func.generator {
-            parts.push(text("*"));
+            parts.push(p._p_text("*"));
         }
 
-        parts.push(text(" "));
+        parts.push(p._p_text(" "));
     }
 
     if let Some(id) = &func.id {
-        parts.push(text(p_str!(p, id.name.as_str())));
+        parts.push(p._p_text(p_str!(p, id.name.as_str())));
     }
 
     if let Some(type_params) = &func.type_parameters {
@@ -50,12 +50,12 @@ pub(super) fn print_function<'a>(
     }));
 
     if let Some(return_type) = &func.return_type {
-        parts.push(text(": "));
+        parts.push(p._p_text(": "));
         parts.push(return_type.type_annotation.format(p));
     }
 
     if let Some(body) = &func.body {
-        parts.push(space());
+        parts.push(p._p_space());
         parts.push(body.format(p));
     }
     if func.is_ts_declare_function() || func.body.is_none() {
@@ -64,56 +64,56 @@ pub(super) fn print_function<'a>(
         }
     }
 
-    array(parts)
+    p._p_array(parts)
 }
 
 pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
     let mut parts = p.vec();
 
     if let Some(accessibility) = &method.accessibility {
-        parts.push(text(accessibility.as_str()));
-        parts.push(space());
+        parts.push(p._p_text(accessibility.as_str()));
+        parts.push(p._p_space());
     }
 
     if method.r#static {
-        parts.push(text("static "));
+        parts.push(p._p_text("static "));
     }
 
     if matches!(method.r#type, MethodDefinitionType::TSAbstractMethodDefinition) {
-        parts.push(text("abstract "));
+        parts.push(p._p_text("abstract "));
     }
 
     if method.r#override {
-        parts.push(text("override "));
+        parts.push(p._p_text("override "));
     }
 
     match method.kind {
         MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
         MethodDefinitionKind::Get => {
-            parts.push(text("get "));
+            parts.push(p._p_text("get "));
         }
         MethodDefinitionKind::Set => {
-            parts.push(text("set "));
+            parts.push(p._p_text("set "));
         }
     }
 
     if method.value.r#async {
-        parts.push(text("async "));
+        parts.push(p._p_text("async "));
     }
 
     if method.value.generator {
-        parts.push(text("*"));
+        parts.push(p._p_text("*"));
     }
 
     parts.push(method.key.format(p));
 
     if method.optional {
-        parts.push(text("?"));
+        parts.push(p._p_text("?"));
     }
 
     parts.push(print_method_value(p, &method.value));
 
-    array(parts)
+    p._p_array(parts)
 }
 
 fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<'a> {
@@ -130,18 +130,18 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
     parts.push(group!(p, parameters_doc));
 
     if let Some(ret_typ) = &function.return_type {
-        parts.push(text(": "));
+        parts.push(p._p_text(": "));
         parts.push(ret_typ.type_annotation.format(p));
     }
 
     if let Some(body) = &function.body {
-        parts.push(space());
+        parts.push(p._p_space());
         parts.push(body.format(p));
     } else if p.options.semi {
-        parts.push(text(";"));
+        parts.push(p._p_text(";"));
     }
 
-    array(parts)
+    p._p_array(parts)
 }
 
 pub(super) fn print_return_or_throw_argument<'a>(
@@ -151,18 +151,19 @@ pub(super) fn print_return_or_throw_argument<'a>(
 ) -> Doc<'a> {
     let mut parts = p.vec();
 
-    parts.push(text(if is_return { "return" } else { "throw" }));
+    parts.push(p._p_text(if is_return { "return" } else { "throw" }));
 
     if let Some(argument) = argument {
-        parts.push(space());
+        parts.push(p._p_space());
         parts.push(
             if argument.is_binaryish() || matches!(argument, Expression::SequenceExpression(_)) {
+                let argument_doc = argument.format(p);
                 group![
                     p,
-                    if_break(p.boxed(text("(")), p.boxed(text("")), None),
-                    indent(p_vec!(p, softline(), argument.format(p))),
-                    softline(),
-                    if_break(p.boxed(text(")")), p.boxed(text("")), None),
+                    p._p_if_break(p.boxed(p._p_text("(")), p.boxed(p._p_text("")), None),
+                    p._p_indent(p_vec!(p, p._p_softline(), argument_doc)),
+                    p._p_softline(),
+                    p._p_if_break(p.boxed(p._p_text(")")), p.boxed(p._p_text("")), None),
                 ]
             } else {
                 argument.format(p)
@@ -173,5 +174,5 @@ pub(super) fn print_return_or_throw_argument<'a>(
     if let Some(semi) = p.semi() {
         parts.push(semi);
     }
-    array(parts)
+    p._p_array(parts)
 }
