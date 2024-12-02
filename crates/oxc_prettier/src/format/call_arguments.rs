@@ -9,8 +9,8 @@ use super::{
 };
 use crate::{
     array, conditional_group, group_break, hardline, if_break, indent,
-    ir::{Doc, DocBuilder, Group},
-    line, softline, text,
+    ir::{text, Doc, DocBuilder, Group},
+    line, softline,
     utils::will_break,
     Format, Prettier,
 };
@@ -20,7 +20,7 @@ pub fn print_call_arguments<'a>(
     expression: &CallExpressionLike<'a, '_>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    parts.push(text!("("));
+    parts.push(text("("));
 
     let callee = expression.callee();
     let arguments = expression.arguments();
@@ -32,7 +32,7 @@ pub fn print_call_arguments<'a>(
 
     if arguments.is_empty() {
         parts.extend(p.print_inner_comment(Span::new(callee.span().end, expression.span().end)));
-        parts.push(text!(")"));
+        parts.push(text(")"));
         return Doc::Array(parts);
     }
 
@@ -60,7 +60,7 @@ pub fn print_call_arguments<'a>(
             arg.push(doc);
 
             if i < len - 1 {
-                arg.push(text!(","));
+                arg.push(text(","));
                 if p.is_next_line_empty(element.span()) {
                     arg.extend(hardline!());
                     arg.extend(hardline!());
@@ -75,15 +75,15 @@ pub fn print_call_arguments<'a>(
 
     let all_args_broken_out = |p: &mut Prettier<'a>| {
         let mut parts = p.vec();
-        parts.push(text!("("));
+        parts.push(text("("));
         parts.push(indent!(
             p,
             line!(),
             Doc::Array(get_printed_arguments(p, 0)),
-            if p.should_print_all_comma() { text!(",") } else { text!("") }
+            if p.should_print_all_comma() { text(",") } else { text("") }
         ));
         parts.push(line!());
-        parts.push(text!(")"));
+        parts.push(text(")"));
         Doc::Group(Group::new(parts).with_break(true))
     };
 
@@ -101,11 +101,11 @@ pub fn print_call_arguments<'a>(
                     p,
                     array!(
                         p,
-                        text!("("),
+                        text("("),
                         group_break!(p, first_doc),
-                        text!(", "),
+                        text(", "),
                         last_doc,
-                        text!(")")
+                        text(")")
                     ),
                     all_args_broken_out(p)
                 )
@@ -120,7 +120,7 @@ pub fn print_call_arguments<'a>(
         }
 
         if !printed_arguments.is_empty() {
-            printed_arguments.push(text!(","));
+            printed_arguments.push(text(","));
             printed_arguments.push(line!());
         }
 
@@ -141,10 +141,10 @@ pub fn print_call_arguments<'a>(
                     p,
                     array!(
                         p,
-                        text!("("),
+                        text("("),
                         Doc::Array(printed_arguments),
                         group_break!(p, last_doc),
-                        text!(")")
+                        text(")")
                     ),
                     all_args_broken_out(p)
                 ),
@@ -153,13 +153,13 @@ pub fn print_call_arguments<'a>(
 
         return conditional_group!(
             p,
-            array!(p, text!("("), Doc::Array(printed_arguments), last_doc, text!(")")),
+            array!(p, text("("), Doc::Array(printed_arguments), last_doc, text(")")),
             array!(
                 p,
-                text!("("),
+                text("("),
                 Doc::Array(get_printed_arguments(p, -1)),
                 group_break!(p, get_last_doc(p)),
-                text!(")")
+                text(")")
             ),
             all_args_broken_out(p)
         );
@@ -175,7 +175,7 @@ pub fn print_call_arguments<'a>(
     } else {
         parts.extend(printed_arguments);
     }
-    parts.push(text!(")"));
+    parts.push(text(")"));
 
     let should_break = should_break
         && arguments.iter().any(|arg| {

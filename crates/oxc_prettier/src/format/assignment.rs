@@ -11,8 +11,8 @@ use oxc_ast::{
 use super::{binaryish::should_inline_logical_expression, class::ClassMemberish};
 use crate::{
     array, group, indent,
-    ir::{Doc, DocBuilder, Group, IndentIfBreak},
-    line, space, text, Format, Prettier,
+    ir::{space, text, Doc, DocBuilder, Group, IndentIfBreak},
+    line, Format, Prettier,
 };
 
 pub(super) fn print_assignment_expression<'a>(
@@ -24,7 +24,7 @@ pub(super) fn print_assignment_expression<'a>(
         p,
         AssignmentLikeNode::AssignmentExpression(assignment_expr),
         left_doc,
-        array![p, space!(), text!(assignment_expr.operator.as_str())],
+        array![p, space(), text(assignment_expr.operator.as_str())],
         Some(&assignment_expr.right),
     )
 }
@@ -38,7 +38,7 @@ pub(super) fn print_variable_declarator<'a>(
         p,
         AssignmentLikeNode::VariableDeclarator(variable_declarator),
         left_doc,
-        text!(" ="),
+        text(" ="),
         variable_declarator.init.as_ref(),
     )
 }
@@ -84,7 +84,7 @@ pub(super) fn print_assignment<'a>(
             group!(p, group!(p, left_doc), op, group!(p, indent!(p, line!(), right_doc)))
         }
         Layout::NeverBreakAfterOperator => {
-            group!(p, group!(p, left_doc), op, space!(), group!(p, right_doc))
+            group!(p, group!(p, left_doc), op, space(), group!(p, right_doc))
         }
         // First break right-hand side, then after operator
         Layout::Fluid => {
@@ -105,7 +105,7 @@ pub(super) fn print_assignment<'a>(
             group!(p, group!(p, left_doc), op, after_op, right_doc)
         }
         Layout::BreakLhs => {
-            group!(p, left_doc, op, space!(), group!(p, right_doc))
+            group!(p, left_doc, op, space(), group!(p, right_doc))
         }
         // Parts of assignment chains aren't wrapped in groups.
         // Once one of them breaks, the chain breaks too.

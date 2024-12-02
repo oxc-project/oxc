@@ -7,8 +7,8 @@ use crate::{
     array,
     comments::{CommentFlags, DanglingCommentsPrintOptions},
     group, hardline, if_break,
-    ir::{Doc, DocBuilder, Fill, Group},
-    line, softline, text, Prettier,
+    ir::{text, Doc, DocBuilder, Fill, Group},
+    line, softline, Prettier,
 };
 
 #[allow(clippy::enum_variant_names)]
@@ -83,9 +83,9 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
 
     let trailing_comma_fn = |p: &Prettier<'a>| {
         if !can_have_trailing_comma {
-            text!("")
+            text("")
         } else if needs_forced_trailing_comma {
-            text!(",")
+            text(",")
         } else if should_use_concise_formatting {
             if_break!(p, ",", "", Some(id))
         } else {
@@ -98,7 +98,7 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     parts.push(Doc::Group(
         Group::new({
             let mut group = p.vec();
-            group.push(text!("["));
+            group.push(text("["));
             group.push({
                 Doc::Indent({
                     let mut indent_parts = p.vec();
@@ -116,7 +116,7 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
                 })
             });
             group.push(softline!());
-            group.push(text!("]"));
+            group.push(text("]"));
             group
         })
         .with_break(should_break(array))
@@ -129,8 +129,8 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
 fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     let dangling_options = DanglingCommentsPrintOptions::default().with_ident(true);
     p.print_dangling_comments(array.span(), Some(&dangling_options)).map_or_else(
-        || text!("[]"),
-        |dangling_comments| group![p, text!("["), dangling_comments, softline!(), text!("]")],
+        || text("[]"),
+        |dangling_comments| group![p, text("["), dangling_comments, softline!(), text("]")],
     )
 }
 
@@ -142,7 +142,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<
                 parts.push(element.format(p));
                 let is_last = i == array.elements.len() - 1;
                 if !is_last {
-                    parts.push(text!(","));
+                    parts.push(text(","));
                     parts.push(line!());
                     if !element.is_elision() && is_line_after_element_empty(p, element.span().end) {
                         parts.push(softline!());
@@ -153,7 +153,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<
         Array::TSTupleType(tuple) => {
             for (i, element) in tuple.element_types.iter().enumerate() {
                 if i > 0 && i < tuple.element_types.len() {
-                    parts.push(text!(","));
+                    parts.push(text(","));
                     parts.push(line!());
                 }
 
@@ -170,7 +170,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<
                 if i == len - 1 && !has_rest {
                     break;
                 }
-                parts.push(text!(","));
+                parts.push(text(","));
                 parts.push(line!());
             }
             if let Some(rest) = &array_pat.rest {
@@ -180,7 +180,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<
         Array::ArrayAssignmentTarget(array_pat) => {
             for (i, element) in array_pat.elements.iter().enumerate() {
                 if i > 0 && i < array_pat.elements.len() {
-                    parts.push(text!(","));
+                    parts.push(text(","));
                     parts.push(line!());
                 }
 
@@ -190,7 +190,7 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<
             }
 
             if let Some(rest) = &array_pat.rest {
-                parts.push(text!(","));
+                parts.push(text(","));
                 parts.push(line!());
                 parts.push(rest.format(p));
             }
@@ -216,7 +216,7 @@ where
                 let part = if is_last {
                     array!(p, element.format(p), trailing_comma_fn(p))
                 } else {
-                    array!(p, element.format(p), text!(","))
+                    array!(p, element.format(p), text(","))
                 };
                 parts.push(part);
 

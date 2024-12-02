@@ -3,8 +3,15 @@ use oxc_allocator::{Allocator, Box, String, Vec};
 use crate::{
     array,
     ir::{Doc, Line},
-    line, text,
+    line,
 };
+
+pub fn text<'a>(s: &'a str) -> Doc<'a> {
+    Doc::Str(s)
+}
+pub fn space<'a>() -> Doc<'a> {
+    Doc::Str(" ")
+}
 
 #[derive(Clone, Copy)]
 pub enum Separator {
@@ -28,8 +35,8 @@ pub trait DocBuilder<'a> {
     }
 
     #[inline]
-    fn string(&self, s: &str) -> Doc<'a> {
-        Doc::Str(String::from_str_in(s, self.allocator()).into_bump_str())
+    fn string(&self, s: &str) -> &'a str {
+        String::from_str_in(s, self.allocator()).into_bump_str()
     }
 
     #[inline]
@@ -44,7 +51,7 @@ pub trait DocBuilder<'a> {
                 parts.push(match separator {
                     Separator::Softline => Doc::Line(Line::softline()),
                     Separator::Hardline => Doc::Line(Line::hardline()),
-                    Separator::CommaLine => array![self, text!(","), line!()],
+                    Separator::CommaLine => array![self, text(","), line!()],
                 });
             }
             parts.push(doc);

@@ -6,9 +6,9 @@ use oxc_span::Span;
 
 use super::{misc, Format};
 use crate::{
-    dynamic_text, group, if_break,
-    ir::{Doc, DocBuilder, Group},
-    line, softline, text, Prettier,
+    group, if_break,
+    ir::{Doc, DocBuilder, Group, text},
+    line, softline, Prettier,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -100,8 +100,8 @@ pub(super) fn print_object_properties<'a>(
     p: &mut Prettier<'a>,
     object: ObjectLike<'a, '_>,
 ) -> Doc<'a> {
-    let left_brace = text!("{");
-    let right_brace = text!("}");
+    let left_brace = text("{");
+    let right_brace = text("}");
 
     let should_break = false;
     let member_separator = object.member_separator(p);
@@ -110,7 +110,7 @@ pub(super) fn print_object_properties<'a>(
         group![p, left_brace, softline!(), right_brace]
     } else {
         let mut parts = p.vec();
-        parts.push(text!("{"));
+        parts.push(text("{"));
         parts.push(Doc::Indent({
             let len = object.len();
             let has_rest = object.has_rest();
@@ -123,7 +123,7 @@ pub(super) fn print_object_properties<'a>(
                     break;
                 }
 
-                indent_parts.push(text!(member_separator));
+                indent_parts.push(text(member_separator));
                 indent_parts.push(line!());
             }
             match object {
@@ -152,7 +152,7 @@ pub(super) fn print_object_properties<'a>(
             parts.push(if_break!(p, member_separator, "", None));
         }
         parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
-        parts.push(text!("}"));
+        parts.push(text("}"));
 
         if matches!(p.current_kind(), AstKind::Program(_)) {
             let should_break =

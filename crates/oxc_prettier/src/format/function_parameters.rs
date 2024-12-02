@@ -3,8 +3,8 @@ use oxc_ast::{ast::*, AstKind};
 use crate::{
     comments::CommentFlags,
     hardline, if_break, indent,
-    ir::{Doc, DocBuilder, Group},
-    line, softline, space, text, Format, Prettier,
+    ir::{space, text, Doc, DocBuilder, Group},
+    line, softline, Format, Prettier,
 };
 
 pub(super) fn should_hug_the_only_function_parameter(
@@ -67,7 +67,7 @@ pub(super) fn print_function_parameters<'a>(
     let need_parens =
         !is_arrow_function || p.options.arrow_parens.is_always() || params.items.len() != 1;
     if need_parens {
-        parts.push(text!("("));
+        parts.push(text("("));
     }
 
     let should_hug_the_only_function_parameter = should_hug_the_only_function_parameter(p, params);
@@ -81,10 +81,10 @@ pub(super) fn print_function_parameters<'a>(
             parts.push(this_param.format(p));
 
             if params.items.len() > 0 {
-                printed.push(text!(","));
+                printed.push(text(","));
 
                 if should_hug_the_only_function_parameter {
-                    printed.push(space!());
+                    printed.push(space());
                 } else if p.is_next_line_empty(this_param.span) {
                     printed.extend(hardline!());
                     printed.extend(hardline!());
@@ -97,25 +97,25 @@ pub(super) fn print_function_parameters<'a>(
 
     for (i, param) in params.items.iter().enumerate() {
         if let Some(accessibility) = &param.accessibility {
-            printed.push(text!(accessibility.as_str()));
-            printed.push(space!());
+            printed.push(text(accessibility.as_str()));
+            printed.push(space());
         }
 
         if param.r#override {
-            printed.push(text!("override "));
+            printed.push(text("override "));
         }
 
         if param.readonly {
-            printed.push(text!("readonly "));
+            printed.push(text("readonly "));
         }
 
         printed.push(param.format(p));
         if i == len - 1 && !has_rest {
             break;
         }
-        printed.push(text!(","));
+        printed.push(text(","));
         if should_hug_the_only_function_parameter {
-            printed.push(space!());
+            printed.push(space());
         } else if p.is_next_line_empty(param.span) {
             printed.extend(hardline!());
             printed.extend(hardline!());
@@ -129,9 +129,9 @@ pub(super) fn print_function_parameters<'a>(
 
     if should_hug_the_only_function_parameter {
         let mut array = p.vec();
-        array.push(text!("("));
+        array.push(text("("));
         array.extend(printed);
-        array.push(text!(")"));
+        array.push(text(")"));
         return Doc::Array(array);
     }
 
@@ -145,7 +145,7 @@ pub(super) fn print_function_parameters<'a>(
     parts.push(if_break!(p, if skip_dangling_comma { "" } else { "," }));
     parts.push(softline!());
     if need_parens {
-        parts.push(text!(")"));
+        parts.push(text(")"));
     }
 
     if p.args.expand_first_arg {

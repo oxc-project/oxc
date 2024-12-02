@@ -5,7 +5,7 @@
 
 use oxc_allocator::{Allocator, Box, String, Vec};
 
-use crate::{array, line, text, GroupId};
+use crate::{array, line, GroupId};
 
 #[derive(Debug)]
 pub enum Doc<'a> {

@@ -6,8 +6,8 @@ use crate::{
     binaryish::BinaryishOperator,
     comments::CommentFlags,
     group,
-    ir::{Doc, DocBuilder, Group},
-    line, space, text, Format, Prettier,
+    ir::{space, text, Doc, DocBuilder, Group},
+    line, Format, Prettier,
 };
 
 pub(super) fn print_binaryish_expression<'a>(
@@ -93,8 +93,8 @@ fn print_binaryish_expressions<'a>(
 
     let right = if should_inline {
         let mut parts = p.vec();
-        parts.push(text!(operator.as_str()));
-        parts.push(space!());
+        parts.push(text(operator.as_str()));
+        parts.push(space());
         parts.push(right.format(p));
         parts
     } else {
@@ -102,8 +102,8 @@ fn print_binaryish_expressions<'a>(
         if line_before_operator {
             parts.push(line!());
         }
-        parts.push(text!(operator.as_str()));
-        parts.push(if line_before_operator { space!() } else { line!() });
+        parts.push(text(operator.as_str()));
+        parts.push(if line_before_operator { space() } else { line!() });
         parts.push(right.format(p));
         parts
     };
@@ -112,7 +112,7 @@ fn print_binaryish_expressions<'a>(
     let should_group = should_break;
 
     if !line_before_operator {
-        parts.push(space!());
+        parts.push(space());
     }
 
     parts.push(if should_group {

@@ -1,29 +1,5 @@
 //! Utility macros for constructing the IR
 
-/// Wrap a static text
-#[macro_export]
-macro_rules! text {
-    ($s:expr) => {{
-        let s: &'static str = $s;
-        Doc::Str(s)
-    }};
-}
-
-#[macro_export]
-macro_rules! space {
-    () => {{
-        Doc::Str(" ")
-    }};
-}
-
-/// Wrap a dynamic text
-#[macro_export]
-macro_rules! dynamic_text {
-    ($p:ident, $s:expr) => {{
-        $p.string($s)
-    }};
-}
-
 #[macro_export]
 macro_rules! indent {
     ($p:ident, $( $x:expr ),* $(,)?) => {{
@@ -136,18 +112,14 @@ macro_rules! if_break {
     }};
 }
 
+// ---
+
 #[macro_export]
-macro_rules! line_suffix {
-    ($p:ident, $( $x:expr ),* $(,)?) => {{
-        let mut temp_vec = $p.vec();
-        $(
-            temp_vec.push($x);
-        )*
-        Doc::LineSuffix(temp_vec)
+macro_rules! p_str {
+    ($p:ident, $s:expr) => {{
+        $p.string($s)
     }};
 }
-
-// ---
 
 #[macro_export]
 macro_rules! wrap {
@@ -158,7 +130,7 @@ macro_rules! wrap {
         let leading = $p.print_leading_comments(kind.span());
 
         let doc = $block;
-        let doc = if $p.need_parens(kind) { array![$p, text!("("), doc, text!(")")] } else { doc };
+        let doc = if $p.need_parens(kind) { array![$p, text("("), doc, text(")")] } else { doc };
 
         // TODO: dangling comments?
         let trailing = $p.print_trailing_comments(kind.span());
