@@ -15,11 +15,16 @@ pub fn space<'a>() -> Doc<'a> {
 pub fn line<'a>() -> Doc<'a> {
     Doc::Line(Line::default())
 }
+/// Specify a line break.
+/// The difference from line is that if the expression fits on one line, it will be replaced with nothing.
 pub fn softline<'a>() -> Doc<'a> {
-    Doc::Line(Line::softline())
+    Doc::Line(Line { soft: true, ..Line::default() })
 }
+/// Specify a line break that is **always** included in the output,
+/// no matter if the expression fits on one line or not.
 pub fn hardline<'a>() -> [Doc<'a>; 2] {
-    [Doc::Line(Line::hardline()), Doc::BreakParent]
+    let hardline = Doc::Line(Line { hard: true, ..Line::default() });
+    [hardline, Doc::BreakParent]
 }
 
 pub fn indent<'a>(items: Vec<'a, Doc<'a>>) -> Doc<'a> {
@@ -61,15 +66,16 @@ pub trait DocBuilder<'a> {
         Box::new_in(doc, self.allocator())
     }
 
+    // TODO: Just use `Doc` instead of `Separator`...?
     fn join(&self, separator: Separator, docs: std::vec::Vec<Doc<'a>>) -> Vec<'a, Doc<'a>> {
         let mut parts = self.vec();
         for (i, doc) in docs.into_iter().enumerate() {
             if i != 0 {
-                parts.push(match separator {
-                    Separator::Softline => Doc::Line(Line::softline()),
-                    Separator::Hardline => Doc::Line(Line::hardline()),
-                    Separator::CommaLine => array(p_vec!(self, text(","), line())),
-                });
+                match separator {
+                    Separator::Softline => parts.push(softline()),
+                    Separator::Hardline => parts.extend(hardline()),
+                    Separator::CommaLine => parts.push(array(p_vec!(self, text(","), line()))),
+                }
             }
             parts.push(doc);
         }

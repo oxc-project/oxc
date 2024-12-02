@@ -46,32 +46,6 @@ pub struct Line {
     pub literal: bool,
 }
 
-impl Line {
-    /// Specify a line break.
-    /// The difference from line is that if the expression fits on one line, it will be replaced with nothing.
-    pub fn softline() -> Self {
-        Self { soft: true, ..Self::default() }
-    }
-
-    /// Specify a line break that is **always** included in the output,
-    /// no matter if the expression fits on one line or not.
-    pub fn hardline() -> Self {
-        Self { hard: true, ..Self::default() }
-    }
-
-    pub fn literal_line() -> Self {
-        Self { literal: true, ..Self::default() }
-    }
-
-    pub fn hardline_without_break_parent() -> Self {
-        Self { hard: true, ..Self::default() }
-    }
-
-    pub fn literal_line_without_break_parent() -> Self {
-        Self { hard: true, literal: true, ..Self::default() }
-    }
-}
-
 #[derive(Debug)]
 pub struct Group<'a> {
     pub contents: Vec<'a, Doc<'a>>,
