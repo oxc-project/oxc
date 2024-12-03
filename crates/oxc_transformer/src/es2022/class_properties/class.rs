@@ -339,6 +339,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             index_not_including_removed += 1;
         }
 
+        // Exit if nothing to transform
+        if instance_prop_count == 0 && !has_static_prop_or_static_block {
+            self.private_props_stack.push(None);
+            return;
+        }
+
+        // Add entry to `private_props_stack`
         if private_props.is_empty() {
             self.private_props_stack.push(None);
         } else {
@@ -351,11 +358,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 class_binding,
                 is_declaration: self.is_declaration,
             }));
-        }
-
-        // Exit if nothing to transform
-        if instance_prop_count == 0 && !has_static_prop_or_static_block {
-            return;
         }
 
         // Extract properties and static blocks from class body + substitute computed method keys
