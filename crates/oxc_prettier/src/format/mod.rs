@@ -32,7 +32,7 @@ use oxc_syntax::identifier::{is_identifier_name, is_line_terminator};
 
 use crate::{
     format::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter},
-    ir::{Doc, DocBuilder, Group, Separator},
+    ir::{Doc, DocBuilder, Separator},
     p_vec, wrap, Prettier,
 };
 

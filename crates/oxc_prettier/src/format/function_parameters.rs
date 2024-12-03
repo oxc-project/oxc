@@ -2,7 +2,7 @@ use oxc_ast::{ast::*, AstKind};
 
 use crate::{
     comments::CommentFlags,
-    ir::{Doc, DocBuilder, Group},
+    ir::{Doc, DocBuilder},
     p_vec, Format, Prettier,
 };
 

@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 use crate::{
     binaryish::BinaryishOperator,
     comments::CommentFlags,
-    ir::{Doc, DocBuilder, Group},
+    ir::{Doc, DocBuilder},
     Format, Prettier,
 };
 

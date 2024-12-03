@@ -2,9 +2,9 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
-use super::call_arguments::print_call_arguments;
 use crate::{
-    ir::{Doc, DocBuilder, Group},
+    format::call_arguments::print_call_arguments,
+    ir::{Doc, DocBuilder},
     Format, Prettier,
 };
 

@@ -2,10 +2,9 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::Statement;
 use oxc_span::GetSpan;
 
-use super::Format;
 use crate::{
     ir::{Doc, DocBuilder},
-    Prettier,
+    Format, Prettier,
 };
 
 pub(super) fn print_statement_sequence<'a>(

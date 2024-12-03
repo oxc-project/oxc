@@ -2,11 +2,10 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use super::Format;
 use crate::{
     comments::{CommentFlags, DanglingCommentsPrintOptions},
-    ir::{Doc, DocBuilder, Group},
-    p_vec, Prettier,
+    ir::{Doc, DocBuilder},
+    p_vec, Format, Prettier,
 };
 
 #[allow(clippy::enum_variant_names)]

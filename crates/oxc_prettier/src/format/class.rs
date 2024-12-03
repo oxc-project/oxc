@@ -3,10 +3,9 @@ use std::ops::Add;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use super::assignment::AssignmentLikeNode;
 use crate::{
-    format::{assignment, Separator},
-    ir::{Doc, DocBuilder, Group, IfBreak},
+    format::{assignment, assignment::AssignmentLikeNode, Separator},
+    ir::{Doc, DocBuilder},
     p_vec, Format, Prettier,
 };
 

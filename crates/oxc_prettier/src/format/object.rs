@@ -4,10 +4,10 @@ use oxc_ast::{
 };
 use oxc_span::Span;
 
-use super::{misc, Format};
 use crate::{
-    ir::{Doc, DocBuilder, Group},
-    p_vec, Prettier,
+    format::{function_parameters, misc},
+    ir::{Doc, DocBuilder},
+    p_vec, Format, Prettier,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -187,7 +187,7 @@ pub(super) fn print_object_properties<'a>(
 fn should_hug_the_only_parameter(p: &mut Prettier<'_>, kind: AstKind<'_>) -> bool {
     match kind {
         AstKind::FormalParameters(params) => {
-            super::function_parameters::should_hug_the_only_function_parameter(p, params)
+            function_parameters::should_hug_the_only_function_parameter(p, params)
         }
         _ => false,
     }

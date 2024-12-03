@@ -3,12 +3,12 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use super::{
-    call_expression::{is_commons_js_or_amd_call, CallExpressionLike},
-    misc,
-};
 use crate::{
-    ir::{Doc, DocBuilder, Group},
+    format::{
+        call_expression::{is_commons_js_or_amd_call, CallExpressionLike},
+        misc,
+    },
+    ir::{Doc, DocBuilder},
     p_vec,
     utils::will_break,
     Format, Prettier,

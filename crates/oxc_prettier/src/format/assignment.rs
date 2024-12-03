@@ -8,8 +8,8 @@ use oxc_ast::{
     AstKind,
 };
 
-use super::{binaryish::should_inline_logical_expression, class::ClassMemberish};
 use crate::{
+    format::{binaryish::should_inline_logical_expression, class::ClassMemberish},
     ir::{Doc, DocBuilder},
     p_vec, Format, Prettier,
 };

@@ -1,9 +1,9 @@
 use oxc_ast::{ast::*, AstKind};
 
-use super::{statement, Format};
 use crate::{
+    format::statement,
     ir::{Doc, DocBuilder},
-    Prettier,
+    Format, Prettier,
 };
 
 pub(super) fn print_block<'a>(
