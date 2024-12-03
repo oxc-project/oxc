@@ -1,11 +1,3 @@
-// TODO: Useless
-#[macro_export]
-macro_rules! p_str {
-    ($p:ident, $s:expr) => {{
-        $p.string($s)
-    }};
-}
-
 #[macro_export]
 macro_rules! p_vec {
     ($p:ident, $( $x:expr ),* $(,)?) => {{

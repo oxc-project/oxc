@@ -35,7 +35,7 @@ use oxc_syntax::identifier::{is_identifier_name, is_line_terminator};
 use crate::{
     format::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter},
     ir::{Doc, DocBuilder, Group, Separator},
-    p_str, p_vec, wrap, Prettier,
+    p_vec, wrap, Prettier,
 };
 
 pub trait Format<'a> {
@@ -80,7 +80,7 @@ impl<'a> Format<'a> for Program<'a> {
 impl<'a> Format<'a> for Hashbang<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        parts.push(p.text(p_str!(p, self.span.source_text(p.source_text))));
+        parts.push(p.text(p.string(self.span.source_text(p.source_text))));
         parts.extend(p.hardline());
         // Preserve original newline
         if let Some(c) = p.source_text[self.span.end as usize..].chars().nth(1) {
@@ -95,10 +95,11 @@ impl<'a> Format<'a> for Hashbang<'a> {
 impl<'a> Format<'a> for Directive<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
-        parts.push(p.text(p_str!(
+        parts.push(p.text(p.string(string::print_string(
             p,
-            string::print_string(p, self.directive.as_str(), p.options.single_quote)
-        )));
+            self.directive.as_str(),
+            p.options.single_quote,
+        ))));
         if let Some(semi) = p.semi() {
             parts.push(semi);
         }
@@ -1792,25 +1793,25 @@ impl<'a> Format<'a> for Expression<'a> {
 
 impl<'a> Format<'a> for IdentifierReference<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, IdentifierReference, { p.text(p_str!(p, self.name.as_str())) })
+        wrap!(p, self, IdentifierReference, { p.text(p.string(self.name.as_str())) })
     }
 }
 
 impl<'a> Format<'a> for IdentifierName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.text(p_str!(p, self.name.as_str()))
+        p.text(p.string(self.name.as_str()))
     }
 }
 
 impl<'a> Format<'a> for BindingIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, BindingIdentifier, { p.text(p_str!(p, self.name.as_str())) })
+        wrap!(p, self, BindingIdentifier, { p.text(p.string(self.name.as_str())) })
     }
 }
 
 impl<'a> Format<'a> for LabelIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.text(p_str!(p, self.name.as_str()))
+        p.text(p.string(self.name.as_str()))
     }
 }
 
@@ -1884,7 +1885,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
                 }
             }
 
-            p.text(p_str!(p, &string))
+            p.text(p.string(&string))
         })
     }
 }
@@ -1892,8 +1893,8 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
 impl<'a> Format<'a> for BigIntLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self.span.source_text(p.source_text).cow_to_ascii_lowercase() {
-            Cow::Borrowed(s) => p.text(p_str!(p, s)),
-            Cow::Owned(s) => p.text(p_str!(p, &s)),
+            Cow::Borrowed(s) => p.text(p.string(s)),
+            Cow::Owned(s) => p.text(p.string(&s)),
         }
     }
 }
@@ -1902,7 +1903,7 @@ impl<'a> Format<'a> for RegExpLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(p.text("/"));
-        parts.push(p.text(p_str!(p, self.regex.pattern.source_text(p.source_text).as_ref())));
+        parts.push(p.text(p.string(self.regex.pattern.source_text(p.source_text).as_ref())));
         parts.push(p.text("/"));
         parts.push(self.regex.flags.format(p));
         p.array(parts)
@@ -1914,7 +1915,7 @@ impl<'a> Format<'a> for StringLiteral<'a> {
         wrap!(p, self, StringLiteral, {
             let raw = &p.source_text[(self.span.start + 1) as usize..(self.span.end - 1) as usize];
             // TODO: implement `makeString` from prettier/src/utils/print-string.js
-            p.text(p_str!(p, string::print_string(p, raw, p.options.single_quote)))
+            p.text(p.string(string::print_string(p, raw, p.options.single_quote)))
         })
     }
 }
@@ -2135,10 +2136,11 @@ impl<'a> Format<'a> for PropertyKey<'a> {
             match self {
                 PropertyKey::StaticIdentifier(ident) => {
                     if need_quote {
-                        p.text(p_str!(
+                        p.text(p.string(string::print_string(
                             p,
-                            string::print_string(p, &ident.name, p.options.single_quote)
-                        ))
+                            &ident.name,
+                            p.options.single_quote,
+                        )))
                     } else {
                         ident.format(p)
                     }
@@ -2152,20 +2154,22 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                         && (p.options.quote_props.as_needed()
                             || (p.options.quote_props.consistent()/* && !needsQuoteProps.get(parent) */))
                     {
-                        p.text(p_str!(p, literal.value.as_str()))
+                        p.text(p.string(literal.value.as_str()))
                     } else {
-                        p.text(p_str!(
+                        p.text(p.string(string::print_string(
                             p,
-                            string::print_string(p, literal.value.as_str(), p.options.single_quote)
-                        ))
+                            literal.value.as_str(),
+                            p.options.single_quote,
+                        )))
                     }
                 }
                 PropertyKey::NumericLiteral(literal) => {
                     if need_quote {
-                        p.text(p_str!(
+                        p.text(p.string(string::print_string(
                             p,
-                            string::print_string(p, literal.raw, p.options.single_quote)
-                        ))
+                            literal.raw,
+                            p.options.single_quote,
+                        )))
                     } else {
                         literal.format(p)
                     }
@@ -2221,7 +2225,7 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, UnaryExpression, {
             let mut parts = p.vec();
-            parts.push(p.text(p_str!(p, self.operator.as_str())));
+            parts.push(p.text(p.string(self.operator.as_str())));
             if self.operator.is_keyword() {
                 parts.push(p.space());
             }
@@ -2446,7 +2450,7 @@ impl<'a> Format<'a> for TemplateLiteral<'a> {
 impl<'a> Format<'a> for TemplateElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         // TODO: `replaceEndOfLine`
-        p.text(p_str!(p, self.value.raw.as_str()))
+        p.text(p.string(self.value.raw.as_str()))
     }
 }
 
@@ -2593,7 +2597,7 @@ impl<'a> Format<'a> for TSNonNullExpression<'a> {
 
 impl<'a> Format<'a> for JSXIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.text(p_str!(p, self.name.as_str()))
+        p.text(p.string(self.name.as_str()))
     }
 }
 
@@ -2812,7 +2816,7 @@ impl<'a> Format<'a> for JSXClosingFragment {
 
 impl<'a> Format<'a> for JSXText<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        p.text(p_str!(p, self.value.as_str()))
+        p.text(p.string(self.value.as_str()))
     }
 }
 
@@ -2884,7 +2888,7 @@ impl<'a> Format<'a> for PrivateIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(p.text("#"));
-        parts.push(p.text(p_str!(p, self.name.as_str())));
+        parts.push(p.text(p.string(self.name.as_str())));
         p.array(parts)
     }
 }
@@ -2982,7 +2986,7 @@ impl<'a> Format<'a> for RegExpFlags {
             string.push('y');
         }
         let sorted = &string.iter().collect::<String>();
-        p.text(p_str!(p, &sorted))
+        p.text(p.string(&sorted))
     }
 }
 
@@ -3008,7 +3012,7 @@ impl<'a> Format<'a> for TSIndexSignature<'a> {
 impl<'a> Format<'a> for TSIndexSignatureName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let type_annotation_doc = self.type_annotation.type_annotation.format(p);
-        p.array(p_vec!(p, p.text(p_str!(p, self.name.as_str())), p.text(": "), type_annotation_doc))
+        p.array(p_vec!(p, p.text(p.string(self.name.as_str())), p.text(": "), type_annotation_doc))
     }
 }
 

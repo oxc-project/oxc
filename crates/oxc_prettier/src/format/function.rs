@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use crate::{
     format::function_parameters::should_group_function_parameters,
     ir::{Doc, DocBuilder},
-    p_str, p_vec, Format, Prettier,
+    p_vec, Format, Prettier,
 };
 
 pub(super) fn print_function<'a>(
@@ -22,7 +22,7 @@ pub(super) fn print_function<'a>(
     }
 
     if let Some(name) = property_name {
-        parts.push(p.text(p_str!(p, name)));
+        parts.push(p.text(p.string(name)));
     } else {
         parts.push(p.text("function"));
         if func.generator {
@@ -33,7 +33,7 @@ pub(super) fn print_function<'a>(
     }
 
     if let Some(id) = &func.id {
-        parts.push(p.text(p_str!(p, id.name.as_str())));
+        parts.push(p.text(p.string(id.name.as_str())));
     }
 
     if let Some(type_params) = &func.type_parameters {
