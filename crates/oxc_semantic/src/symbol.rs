@@ -238,6 +238,12 @@ impl SymbolTable {
             .map(|&reference_id| &self.references[reference_id])
     }
 
+    /// Add a reference to a symbol.
+    pub fn add_resolved_reference(&mut self, symbol_id: SymbolId, reference_id: ReferenceId) {
+        let reference_ids = &mut self.resolved_references[symbol_id];
+        reference_ids.push(reference_id);
+    }
+
     /// Delete a reference to a symbol.
     ///
     /// # Panics
