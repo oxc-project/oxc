@@ -15,23 +15,10 @@ use oxc_traverse::{ast_operations::get_var_name_from_node, BoundIdentifier, Trav
 use crate::common::helper_loader::Helper;
 
 use super::{
+    private_props::ResolvedPrivateProp,
     utils::{create_assignment, create_underscore_ident_name},
     ClassProperties,
 };
-
-/// Details of a private property resolved for a private field.
-///
-/// This is the return value of `lookup_private_property`.
-struct ResolvedPrivateProp<'a, 'b> {
-    /// Binding for temp var representing the property
-    prop_binding: &'b BoundIdentifier<'a>,
-    /// Binding for class (if it has one)
-    class_binding: Option<&'b BoundIdentifier<'a>>,
-    /// `true` if is a static property
-    is_static: bool,
-    /// `true` if class which defines this property is a class declaration
-    is_declaration: bool,
-}
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform private field expression.
@@ -56,7 +43,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         field_expr: ArenaBox<'a, PrivateFieldExpression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let prop_details = self.lookup_private_property(&field_expr.field);
+        let prop_details = self.private_props_stack.find(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
         let Some(prop_details) = prop_details else {
             return Expression::PrivateFieldExpression(field_expr);
@@ -199,7 +186,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) -> Option<(Expression<'a>, Expression<'a>)> {
         // TODO: Should never be `None` - only because implementation is incomplete.
         let ResolvedPrivateProp { prop_binding, class_binding, is_static, is_declaration } =
-            self.lookup_private_property(&field_expr.field)?;
+            self.private_props_stack.find(&field_expr.field)?;
         let prop_ident = prop_binding.create_read_expression(ctx);
 
         let object = ctx.ast.move_expression(&mut field_expr.object);
@@ -278,7 +265,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             unreachable!()
         };
 
-        let prop_details = self.lookup_private_property(&field_expr.field);
+        let prop_details = self.private_props_stack.find(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
         let Some(prop_details) = prop_details else { return };
         let ResolvedPrivateProp { prop_binding, class_binding, is_static, is_declaration } =
@@ -629,7 +616,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             _ => unreachable!(),
         };
 
-        let prop_details = self.lookup_private_property(&field_expr.field);
+        let prop_details = self.private_props_stack.find(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
         let Some(prop_details) = prop_details else { return };
         let ResolvedPrivateProp { prop_binding, class_binding, is_static, is_declaration } =
@@ -1050,27 +1037,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) -> Expression<'a> {
         let func_call = self.create_assert_class_brand(class_ident, object, prop_ident, ctx);
         Self::create_underscore_member_expression(func_call, span, ctx)
-    }
-
-    /// Lookup details of private property referred to by `ident`.
-    fn lookup_private_property<'b>(
-        &'b self,
-        ident: &PrivateIdentifier<'a>,
-    ) -> Option<ResolvedPrivateProp<'a, 'b>> {
-        // Check for binding in closest class first, then enclosing classes
-        // TODO: Check there are tests for bindings in enclosing classes.
-        for private_props in self.private_props_stack.as_slice().iter().rev() {
-            if let Some(prop) = private_props.props.get(&ident.name) {
-                return Some(ResolvedPrivateProp {
-                    prop_binding: &prop.binding,
-                    class_binding: private_props.class_binding.as_ref(),
-                    is_static: prop.is_static,
-                    is_declaration: private_props.is_declaration,
-                });
-            }
-        }
-        // TODO: This should be unreachable. Only returning `None` because implementation is incomplete.
-        None
     }
 
     /// Create `<object>._` assignment target.

@@ -14,11 +14,12 @@ use crate::common::helper_loader::Helper;
 
 use super::super::ClassStaticBlock;
 use super::{
+    private_props::{PrivateProp, PrivateProps},
     utils::{
         create_assignment, create_underscore_ident_name, create_variable_declaration,
         exprs_into_stmts,
     },
-    ClassName, ClassProperties, FxIndexMap, PrivateProp, PrivateProps,
+    ClassName, ClassProperties, FxIndexMap,
 };
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {

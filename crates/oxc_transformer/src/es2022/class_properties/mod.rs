@@ -129,6 +129,7 @@
 //! * `class.rs`:          Transform of class body.
 //! * `constructor.rs`:    Insertion of property initializers into class constructor.
 //! * `private.rs`:        Transform of private property usages (`this.#prop`).
+//! * `private_props.rs`:  Structures storing details of private properties.
 //! * `static_prop.rs`:    Transform of static property initializers.
 //! * `utils.rs`:          Utility functions.
 //!
@@ -146,7 +147,7 @@ use serde::Deserialize;
 
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::ast::*;
-use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
+use oxc_data_structures::stack::NonEmptyStack;
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
@@ -154,8 +155,10 @@ use crate::TransformCtx;
 mod class;
 mod constructor;
 mod private;
+mod private_props;
 mod static_prop;
 mod utils;
+use private_props::PrivatePropsStack;
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
@@ -192,7 +195,7 @@ pub struct ClassProperties<'a, 'ctx> {
     // then stack will get out of sync.
     // TODO: Should push to the stack only when entering class body, because `#x` in class `extends`
     // clause resolves to `#x` in *outer* class, not the current class.
-    private_props_stack: SparseStack<PrivateProps<'a>>,
+    private_props_stack: PrivatePropsStack<'a>,
     /// Addresses of class expressions being processed, to prevent same class being visited twice.
     /// Have to use a stack because the revisit doesn't necessarily happen straight after the first visit.
     /// e.g. `c = class C { [class D {}] = 1; }` -> `c = (_D = class D {}, class C { ... })`
@@ -223,23 +226,6 @@ enum ClassName<'a> {
     Name(&'a str),
 }
 
-/// Details of private properties for a class.
-struct PrivateProps<'a> {
-    /// Private properties for class. Indexed by property name.
-    // TODO(improve-on-babel): Order that temp vars are created in is not important. Use `FxHashMap` instead.
-    props: FxIndexMap<Atom<'a>, PrivateProp<'a>>,
-    /// Binding for class, if class has name
-    class_binding: Option<BoundIdentifier<'a>>,
-    /// `true` for class declaration, `false` for class expression
-    is_declaration: bool,
-}
-
-/// Details of a private property.
-struct PrivateProp<'a> {
-    binding: BoundIdentifier<'a>,
-    is_static: bool,
-}
-
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     pub fn new(
         options: ClassPropertiesOptions,
@@ -254,7 +240,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             set_public_class_fields,
             transform_static_blocks,
             ctx,
-            private_props_stack: SparseStack::new(),
+            private_props_stack: PrivatePropsStack::default(),
             class_expression_addresses_stack: NonEmptyStack::new(Address::DUMMY),
             // Temporary values - overwritten when entering class
             is_declaration: false,
