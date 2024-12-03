@@ -125,11 +125,12 @@
 //!
 //! Implementation is split into several files:
 //!
-//! * `mod.rs`:         Setup, visitor and ancillary types.
-//! * `class.rs`:       Transform of class body.
-//! * `constructor.rs`: Insertion of property initializers into class constructor.
-//! * `private.rs`:     Transform of private property usages (`this.#prop`).
-//! * `utils.rs`:       Utility functions.
+//! * `mod.rs`:            Setup, visitor, and ancillary types.
+//! * `class.rs`:          Transform of class body.
+//! * `constructor.rs`:    Insertion of property initializers into class constructor.
+//! * `private.rs`:        Transform of private property usages (`this.#prop`).
+//! * `static_prop.rs`:    Transform of static property initializers.
+//! * `utils.rs`:          Utility functions.
 //!
 //! ## References
 //!
