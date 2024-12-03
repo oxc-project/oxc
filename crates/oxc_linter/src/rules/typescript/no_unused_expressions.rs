@@ -191,6 +191,57 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // https://github.com/eslint/eslint/blob/946ae00457265eb298eb169d6d48ca7ec71b9eef/tests/lib/rules/no-unused-expressions.js#L21
+        ("function f(){}", None),
+        ("a = b", None),
+        ("new a", None),
+        ("{}", None),
+        ("f(); g()", None),
+        ("i++", None),
+        ("a()", None),
+        ("a && a()", Some(serde_json::json!([{ "allowShortCircuit": true }]))),
+        ("a() || (b = c)", Some(serde_json::json!([{ "allowShortCircuit": true }]))),
+        ("a ? b() : c()", Some(serde_json::json!([{ "allowTernary": true }]))),
+        (
+            "a ? b() || (c = d) : e()",
+            Some(serde_json::json!([{ "allowShortCircuit": true, "allowTernary": true }])),
+        ),
+        ("delete foo.bar", None),
+        ("void new C", None),
+        (r#""use strict";"#, None),
+        (r#""directive one"; "directive two"; f();"#, None),
+        (r#"function foo() {"use strict"; return true; }"#, None),
+        (r#"var foo = () => {"use strict"; return true; }"#, None), // { "ecmaVersion": 6 },
+        (r#"function foo() {"directive one"; "directive two"; f(); }"#, None),
+        (r#"function foo() { var foo = "use strict"; return true; }"#, None),
+        ("function* foo(){ yield 0; }", None), // { "ecmaVersion": 6 },
+        ("async function foo() { await 5; }", None), // { "ecmaVersion": 8 },
+        ("async function foo() { await foo.bar; }", None), // { "ecmaVersion": 8 },
+        (
+            "async function foo() { bar && await baz; }",
+            Some(serde_json::json!([{ "allowShortCircuit": true }])),
+        ), // { "ecmaVersion": 8 },
+        (
+            "async function foo() { foo ? await bar : await baz; }",
+            Some(serde_json::json!([{ "allowTernary": true }])),
+        ), // { "ecmaVersion": 8 },
+        (
+            "tag`tagged template literal`",
+            Some(serde_json::json!([{ "allowTaggedTemplates": true }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "shouldNotBeAffectedByAllowTemplateTagsOption()",
+            Some(serde_json::json!([{ "allowTaggedTemplates": true }])),
+        ), // { "ecmaVersion": 6 },
+        (r#"import("foo")"#, None),            // { "ecmaVersion": 11 },
+        (r#"func?.("foo")"#, None),            // { "ecmaVersion": 11 },
+        (r#"obj?.foo("bar")"#, None),          // { "ecmaVersion": 11 },
+        ("<div />", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
+        ("<></>", None),   // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
+        ("var partial = <div />", None), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
+        ("var partial = <div />", Some(serde_json::json!([{ "enforceForJSX": true }]))), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
+        ("var partial = <></>", Some(serde_json::json!([{ "enforceForJSX": true }]))), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } }
+        // https://github.com/typescript-eslint/typescript-eslint/blob/32a7a7061abba5bbf1403230526514768d3e2760/packages/eslint-plugin/tests/rules/no-unused-expressions.test.ts#L29
         (
             "
 			      test.age?.toLocaleString();
@@ -285,6 +336,58 @@ fn test() {
     ];
 
     let fail = vec![
+        // https://github.com/eslint/eslint/blob/946ae00457265eb298eb169d6d48ca7ec71b9eef/tests/lib/rules/no-unused-expressions.js#L111
+        ("0", None),
+        ("a", None),
+        ("f(), 0", None),
+        ("{0}", None),
+        ("[]", None),
+        ("a && b();", None),
+        ("a() || false", None),
+        ("a || (b = c)", None),
+        ("a ? b() || (c = d) : e", None),
+        ("`untagged template literal`", None), // { "ecmaVersion": 6 },
+        ("tag`tagged template literal`", None), // { "ecmaVersion": 6 },
+        ("a && b()", Some(serde_json::json!([{ "allowTernary": true }]))),
+        ("a ? b() : c()", Some(serde_json::json!([{ "allowShortCircuit": true }]))),
+        ("a || b", Some(serde_json::json!([{ "allowShortCircuit": true }]))),
+        ("a() && b", Some(serde_json::json!([{ "allowShortCircuit": true }]))),
+        ("a ? b : 0", Some(serde_json::json!([{ "allowTernary": true }]))),
+        ("a ? b : c()", Some(serde_json::json!([{ "allowTernary": true }]))),
+        ("foo.bar;", None),
+        ("!a", None),
+        ("+a", None),
+        (r#""directive one"; f(); "directive two";"#, None),
+        (r#"function foo() {"directive one"; f(); "directive two"; }"#, None),
+        (r#"if (0) { "not a directive"; f(); }"#, None),
+        (r#"function foo() { var foo = true; "use strict"; }"#, None),
+        (r#"var foo = () => { var foo = true; "use strict"; }"#, None), // { "ecmaVersion": 6 },
+        (
+            "`untagged template literal`",
+            Some(serde_json::json!([{ "allowTaggedTemplates": true }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "`untagged template literal`",
+            Some(serde_json::json!([{ "allowTaggedTemplates": false }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "tag`tagged template literal`",
+            Some(serde_json::json!([{ "allowTaggedTemplates": false }])),
+        ), // { "ecmaVersion": 6 },
+        ("obj?.foo", None),                                             // { "ecmaVersion": 2020 },
+        ("obj?.foo.bar", None),                                         // { "ecmaVersion": 2020 },
+        ("obj?.foo().bar", None),                                       // { "ecmaVersion": 2020 },
+        ("<div />", Some(serde_json::json!([{ "enforceForJSX": true }]))), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
+        ("<></>", Some(serde_json::json!([{ "enforceForJSX": true }]))), // { "parserOptions": { "ecmaFeatures": { "jsx": true } } },
+        ("class C { static { 'use strict'; } }", None),                  // { "ecmaVersion": 2022 },
+        (
+            "class C { static { 
+			'foo'
+			'bar'
+			 } }",
+            None,
+        ), // { "ecmaVersion": 2022 }
+        // https://github.com/typescript-eslint/typescript-eslint/blob/32a7a7061abba5bbf1403230526514768d3e2760/packages/eslint-plugin/tests/rules/no-unused-expressions.test.ts#L91
         (
             "
 			if (0) 0;
