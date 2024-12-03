@@ -39,11 +39,12 @@ pub fn isolated_declaration(
     )
     .build(&ret.program);
 
+    let source_map_path = match options.sourcemap {
+        Some(true) => Some(source_path.to_path_buf()),
+        _ => None,
+    };
     let codegen_ret = CodeGenerator::new()
-        .with_options(CodegenOptions {
-            source_map_path: Some(source_path.to_path_buf()),
-            ..CodegenOptions::default()
-        })
+        .with_options(CodegenOptions { source_map_path, ..CodegenOptions::default() })
         .build(&transformed_ret.program);
 
     let errors = ret.errors.into_iter().chain(transformed_ret.errors).collect();
