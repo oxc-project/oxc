@@ -62,7 +62,11 @@ fn dot() {
 #[ignore]
 #[test]
 fn dot_with_overlap() {
-    let config = ReplaceGlobalDefinesConfig::new(&[("import.meta.env.FOO", "import.meta.env.FOO"), ("import.meta.env", "__foo__")]).unwrap();
+    let config = ReplaceGlobalDefinesConfig::new(&[
+        ("import.meta.env.FOO", "import.meta.env.FOO"),
+        ("import.meta.env", "__foo__"),
+    ])
+    .unwrap();
     test("import.meta.env", "__foo__", config.clone());
     test("import.meta.env.NODE_ENV", "import.meta.env.NODE_ENV", config.clone());
 }
