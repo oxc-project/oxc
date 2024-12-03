@@ -120,6 +120,10 @@ pub trait DocBuilder<'a> {
         })
     }
 
+    fn break_parent(&self) -> Doc<'a> {
+        Doc::BreakParent
+    }
+
     // TODO: Just use `Doc` instead of `Separator`...?
     fn join(&self, separator: Separator, docs: std::vec::Vec<Doc<'a>>) -> Vec<'a, Doc<'a>> {
         let mut parts = self.vec();

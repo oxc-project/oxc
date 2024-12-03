@@ -98,7 +98,7 @@ pub fn print_call_arguments<'a>(
 
             return p.array(p_vec!(
                 p,
-                Doc::BreakParent,
+                p.break_parent(),
                 p.conditional_group(
                     p.array(p_vec!(
                         p,
@@ -139,7 +139,7 @@ pub fn print_call_arguments<'a>(
             let all_args_broken_out_doc = all_args_broken_out(p);
             return p.array(p_vec!(
                 p,
-                Doc::BreakParent,
+                p.break_parent(),
                 p.conditional_group(
                     p.array(p_vec!(
                         p,
