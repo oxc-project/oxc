@@ -362,9 +362,8 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> b
             )
         })
         .any(|(id, ident)| {
-            ident.is_some_and(|name| {
-                is_react_component_or_hook_name(&name) || is_memo_or_forward_ref_callback(nodes, id)
-            })
+            ident.is_some_and(|name| is_react_component_or_hook_name(&name))
+                || is_memo_or_forward_ref_callback(nodes, id)
         })
 }
 
@@ -372,29 +371,44 @@ fn get_declaration_identifier<'a>(
     nodes: &'a AstNodes<'a>,
     node_id: NodeId,
 ) -> Option<Cow<'a, str>> {
-    nodes.ancestor_ids(node_id).map(|id| nodes.kind(id)).find_map(|kind| {
-        match kind {
-            // const useHook = () => {};
-            AstKind::VariableDeclaration(decl) if decl.declarations.len() == 1 => {
-                decl.declarations[0].id.get_identifier().map(|id| Cow::Borrowed(id.as_str()))
-            }
-            // useHook = () => {};
-            AstKind::AssignmentExpression(expr)
-                if matches!(expr.operator, AssignmentOperator::Assign) =>
-            {
-                expr.left.get_identifier().map(std::convert::Into::into)
-            }
-            // const {useHook = () => {}} = {};
-            // ({useHook = () => {}} = {});
-            AstKind::AssignmentPattern(patt) => {
-                patt.left.get_identifier().map(|id| Cow::Borrowed(id.as_str()))
-            }
-            // { useHook: () => {} }
-            // { useHook() {} }
-            AstKind::ObjectProperty(prop) => prop.key.name(),
-            _ => None,
+    let node = nodes.get_node(node_id);
+
+    match node.kind() {
+        AstKind::Function(Function { id: Some(id), .. }) => {
+            // function useHook() {}
+            // const whatever = function useHook() {};
+            //
+            // Function declaration or function expression names win over any
+            // assignment statements or other renames.
+            Some(Cow::Borrowed(id.name.as_str()))
         }
-    })
+        AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
+            let parent =
+                nodes.ancestor_ids(node_id).skip(1).map(|node| nodes.get_node(node)).next()?;
+
+            match parent.kind() {
+                AstKind::VariableDeclarator(decl) => {
+                    decl.id.get_identifier().map(|id| Cow::Borrowed(id.as_str()))
+                }
+                // useHook = () => {};
+                AstKind::AssignmentExpression(expr)
+                    if matches!(expr.operator, AssignmentOperator::Assign) =>
+                {
+                    expr.left.get_identifier().map(std::convert::Into::into)
+                }
+                // const {useHook = () => {}} = {};
+                // ({useHook = () => {}} = {});
+                AstKind::AssignmentPattern(patt) => {
+                    patt.left.get_identifier().map(|id| Cow::Borrowed(id.as_str()))
+                }
+                // { useHook: () => {} }
+                // { useHook() {} }
+                AstKind::ObjectProperty(prop) => prop.key.name(),
+                _ => None,
+            }
+        }
+        _ => None,
+    }
 }
 
 /// # Panics
@@ -914,7 +928,22 @@ fn test() {
 
        return <div>{state}</div>;
     }
-    "
+    // https://github.com/toeverything/AFFiNE/blob/0ec1995addbb09fb5d4af765d84cc914b2905150/packages/frontend/core/src/hooks/use-query.ts#L46
+    ",
+    "const createUseQuery =
+    (immutable: boolean): useQueryFn =>
+    (options, config) => {
+        const configWithSuspense: SWRConfiguration = useMemo(
+            () => ({
+                suspense: true,
+                ...config,
+            }),
+            [config],
+        );
+
+        const useSWRFn = immutable ? useSWRImutable : useSWR;
+        return useSWRFn(options ? () => ['cloud', options.query.id, options.variables] : null, options ? () => fetcher(options) : null, configWithSuspense);
+    };"
     ];
 
     let fail = vec![
@@ -1500,13 +1529,22 @@ fn test() {
             }
         ",
         // errors: [functionError('use', 'notAComponent')],
-        "
-            export const notAComponent = () => {
-                return () => {
-                    useState();
-              }
-            }
-        ",
+        // React doesn't report on this https://github.com/facebook/react/blob/9daabc0bf97805be23f6131be4d84d063a3ff446/packages/eslint-plugin-react-hooks/__tests__/ESLintRulesOfHooks-test.js#L520-L530
+        // Even so, i think this is valid
+        // e.g:
+        // ```
+        // const useMyHook = notAComponent();
+        // function Foo () {
+        //    useMyHook();
+        // }
+        // ```
+        // "
+        //     export const notAComponent = () => {
+        //         return () => {
+        //             useState();
+        //       }
+        //     }
+        // ",
         // errors: [functionError('use', 'notAComponent')],
         "
             const notAComponent = () => {

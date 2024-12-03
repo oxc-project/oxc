@@ -651,15 +651,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
-   ╭─[rules_of_hooks.tsx:3:24]
- 2 │                 export const notAComponent = () => {
- 3 │ ╭─▶                 return () => {
- 4 │ │                       useState();
- 5 │ ╰─▶               }
- 6 │                 }
-   ╰────
-
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:2:35]
  1 │     
  2 │ ╭─▶             const notAComponent = () => {
