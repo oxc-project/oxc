@@ -104,6 +104,7 @@ mod eslint {
     pub mod no_redeclare;
     pub mod no_regex_spaces;
     pub mod no_restricted_globals;
+    pub mod no_restricted_imports;
     pub mod no_return_assign;
     pub mod no_script_url;
     pub mod no_self_assign;
@@ -536,6 +537,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_classes_per_file,
     eslint::max_lines,
     eslint::max_params,
+    eslint::no_restricted_imports,
     eslint::no_object_constructor,
     eslint::no_duplicate_imports,
     eslint::no_alert,
