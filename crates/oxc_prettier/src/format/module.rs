@@ -4,9 +4,8 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    group, if_break, indent,
     ir::{Doc, DocBuilder, Separator},
-    line, softline, space, text, Format, Prettier,
+    p_vec, Format, Prettier,
 };
 
 pub(super) fn print_export_declaration<'a>(
@@ -16,10 +15,10 @@ pub(super) fn print_export_declaration<'a>(
     debug_assert!(decl.is_export());
 
     let mut parts = p.vec();
-    parts.push(text!("export"));
+    parts.push(p.text("export"));
 
     if decl.is_default_export() {
-        parts.push(text!(" default "));
+        parts.push(p.text(" default "));
     }
 
     parts.push(match decl {
@@ -32,12 +31,12 @@ pub(super) fn print_export_declaration<'a>(
     });
 
     if let Some(source) = decl.source() {
-        parts.push(text!(" from "));
+        parts.push(p.text(" from "));
         parts.push(source.format(p));
     }
 
     if let Some(with_clause) = decl.with_clause() {
-        parts.push(space!());
+        parts.push(p.space());
         parts.push(with_clause.format(p));
     }
 
@@ -45,7 +44,7 @@ pub(super) fn print_export_declaration<'a>(
         parts.push(doc);
     }
 
-    Doc::Array(parts)
+    p.array(parts)
 }
 
 fn print_semicolon_after_export_declaration<'a>(
@@ -58,12 +57,12 @@ fn print_semicolon_after_export_declaration<'a>(
 
     match decl {
         ModuleDeclaration::ExportDefaultDeclaration(decl) => match decl.declaration {
-            match_expression!(ExportDefaultDeclarationKind) => Some(text!(";")),
+            match_expression!(ExportDefaultDeclarationKind) => Some(p.text(";")),
             _ => None,
         },
         ModuleDeclaration::ExportNamedDeclaration(decl) => {
             let Some(declaration) = &decl.declaration else {
-                return Some(text!(";"));
+                return Some(p.text(";"));
             };
 
             match declaration {
@@ -71,11 +70,11 @@ fn print_semicolon_after_export_declaration<'a>(
                 | Declaration::VariableDeclaration(_)
                 | Declaration::ClassDeclaration(_)
                 | Declaration::TSModuleDeclaration(_) => None,
-                _ => Some(text!(";")),
+                _ => Some(p.text(";")),
             }
         }
         ModuleDeclaration::ExportAllDeclaration(_) | ModuleDeclaration::TSExportAssignment(_) => {
-            Some(text!(";"))
+            Some(p.text(";"))
         }
         _ => None,
     }
@@ -89,22 +88,22 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
 ) -> Doc<'a> {
     let mut parts = p.vec();
     if specifiers.is_empty() {
-        parts.push(text!(" {}"));
+        parts.push(p.text(" {}"));
     } else {
-        parts.push(space!());
+        parts.push(p.space());
 
         let mut specifiers_iter: VecDeque<_> = specifiers.iter().collect();
         if include_default {
             parts.push(specifiers_iter.pop_front().unwrap().format(p));
             if !specifiers_iter.is_empty() {
-                parts.push(text!(", "));
+                parts.push(p.text(", "));
             }
         }
 
         if include_namespace {
             parts.push(specifiers_iter.pop_front().unwrap().format(p));
             if !specifiers_iter.is_empty() {
-                parts.push(text!(", "));
+                parts.push(p.text(", "));
             }
         }
 
@@ -114,31 +113,35 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
             if can_break {
                 let docs =
                     specifiers_iter.iter().map(|s| s.format(p)).collect::<std::vec::Vec<_>>();
-                parts.push(group![
+                parts.push(p.group(p.array(p_vec!(
                     p,
-                    text!("{"),
-                    indent![
+                    p.text("{"),
+                    p.indent(p_vec!(
                         p,
-                        if p.options.bracket_spacing { line!() } else { softline!() },
-                        Doc::Array(p.join(Separator::CommaLine, docs))
-                    ],
-                    if_break!(p, if p.should_print_es5_comma() { "," } else { "" }, "", None),
-                    if p.options.bracket_spacing { line!() } else { softline!() },
-                    text!("}"),
-                ]);
+                        if p.options.bracket_spacing { p.line() } else { p.softline() },
+                        p.array(p.join(Separator::CommaLine, docs))
+                    )),
+                    p.if_break(
+                        p.text(if p.should_print_es5_comma() { "," } else { "" }),
+                        p.text(""),
+                        None,
+                    ),
+                    if p.options.bracket_spacing { p.line() } else { p.softline() },
+                    p.text("}"),
+                ))));
             } else {
-                parts.push(text!("{"));
+                parts.push(p.text("{"));
                 if p.options.bracket_spacing {
-                    parts.push(space!());
+                    parts.push(p.space());
                 }
                 parts.extend(specifiers_iter.iter().map(|s| s.format(p)));
                 if p.options.bracket_spacing {
-                    parts.push(space!());
+                    parts.push(p.space());
                 }
-                parts.push(text!("}"));
+                parts.push(p.text("}"));
             }
         }
     }
 
-    Doc::Array(parts)
+    p.array(parts)
 }

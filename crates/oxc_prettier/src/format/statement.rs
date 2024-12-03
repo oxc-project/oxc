@@ -2,11 +2,9 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::Statement;
 use oxc_span::GetSpan;
 
-use super::Format;
 use crate::{
-    hardline,
     ir::{Doc, DocBuilder},
-    Prettier,
+    Format, Prettier,
 };
 
 pub(super) fn print_statement_sequence<'a>(
@@ -28,9 +26,9 @@ pub(super) fn print_statement_sequence<'a>(
         parts.push(stmt.format(p));
 
         if Some(stmt.span()) != last_statement_span {
-            parts.extend(hardline!());
+            parts.extend(p.hardline());
             if p.is_next_line_empty(stmt.span()) {
-                parts.extend(hardline!());
+                parts.extend(p.hardline());
             }
         }
     }

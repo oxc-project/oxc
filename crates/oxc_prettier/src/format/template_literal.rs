@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use crate::{
     format::Format,
     ir::{Doc, DocBuilder},
-    text, Prettier,
+    Prettier,
 };
 
 #[allow(clippy::enum_variant_names)]
@@ -37,7 +37,7 @@ pub(super) fn print_template_literal<'a, 'b>(
     template_literal: &'b TemplateLiteralPrinter<'a, 'b>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
-    parts.push(text!("`"));
+    parts.push(p.text("`"));
 
     for (index, quais) in template_literal.quasis().iter().enumerate() {
         parts.push(quais.format(p));
@@ -45,12 +45,12 @@ pub(super) fn print_template_literal<'a, 'b>(
             break;
         };
 
-        parts.push(text!("${"));
+        parts.push(p.text("${"));
         parts.push(expr_doc);
-        parts.push(text!("}"));
+        parts.push(p.text("}"));
     }
 
-    parts.push(text!("`"));
+    parts.push(p.text("`"));
 
-    Doc::Array(parts)
+    p.array(parts)
 }

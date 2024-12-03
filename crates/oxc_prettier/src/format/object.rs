@@ -4,11 +4,10 @@ use oxc_ast::{
 };
 use oxc_span::Span;
 
-use super::{misc, Format};
 use crate::{
-    dynamic_text, group, if_break,
-    ir::{Doc, DocBuilder, Group},
-    line, softline, text, Prettier,
+    format::{function_parameters, misc},
+    ir::{Doc, DocBuilder},
+    p_vec, Format, Prettier,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -100,32 +99,36 @@ pub(super) fn print_object_properties<'a>(
     p: &mut Prettier<'a>,
     object: ObjectLike<'a, '_>,
 ) -> Doc<'a> {
-    let left_brace = text!("{");
-    let right_brace = text!("}");
+    let left_brace = p.text("{");
+    let right_brace = p.text("}");
 
     let should_break = false;
     let member_separator = object.member_separator(p);
 
     let content = if object.is_empty() {
-        group![p, left_brace, softline!(), right_brace]
+        p.group(p.array(p_vec!(p, left_brace, p.softline(), right_brace)))
     } else {
         let mut parts = p.vec();
-        parts.push(text!("{"));
-        parts.push(Doc::Indent({
+        parts.push(p.text("{"));
+
+        let indent_parts = {
             let len = object.len();
             let has_rest = object.has_rest();
             let mut indent_parts = p.vec();
 
-            indent_parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
-            for (i, doc) in object.iter(p).enumerate() {
+            indent_parts.push(if p.options.bracket_spacing { p.line() } else { p.softline() });
+
+            let object_docs = object.iter(p).collect::<Vec<_>>();
+            for (i, doc) in object_docs.into_iter().enumerate() {
                 indent_parts.push(doc);
                 if i == len - 1 && !has_rest {
                     break;
                 }
 
-                indent_parts.push(text!(member_separator));
-                indent_parts.push(line!());
+                indent_parts.push(p.text(member_separator));
+                indent_parts.push(p.line());
             }
+
             match object {
                 ObjectLike::Expression(_)
                 | ObjectLike::WithClause(_)
@@ -142,22 +145,23 @@ pub(super) fn print_object_properties<'a>(
                 }
             }
             indent_parts
-        }));
+        };
+        parts.push(p.indent(indent_parts));
         if p.should_print_es5_comma()
             && match object {
                 ObjectLike::Pattern(pattern) => pattern.rest.is_none(),
                 _ => true,
             }
         {
-            parts.push(if_break!(p, member_separator, "", None));
+            parts.push(p.if_break(p.text(member_separator), p.text(""), None));
         }
-        parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
-        parts.push(text!("}"));
+        parts.push(if p.options.bracket_spacing { p.line() } else { p.softline() });
+        parts.push(p.text("}"));
 
         if matches!(p.current_kind(), AstKind::Program(_)) {
             let should_break =
                 misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
-            return Doc::Group(Group::new(parts).with_break(should_break));
+            return p.group_with_opts(p.array(parts), should_break, None);
         }
 
         let parent_kind = p.parent_kind();
@@ -169,11 +173,11 @@ pub(super) fn print_object_properties<'a>(
                     AstKind::AssignmentExpression(_) | AstKind::VariableDeclarator(_)
                 ))
         {
-            Doc::Array(parts)
+            p.array(parts)
         } else {
             let should_break =
                 misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
-            Doc::Group(Group::new(parts).with_break(should_break))
+            p.group_with_opts(p.array(parts), should_break, None)
         }
     };
 
@@ -183,7 +187,7 @@ pub(super) fn print_object_properties<'a>(
 fn should_hug_the_only_parameter(p: &mut Prettier<'_>, kind: AstKind<'_>) -> bool {
     match kind {
         AstKind::FormalParameters(params) => {
-            super::function_parameters::should_hug_the_only_function_parameter(p, params)
+            function_parameters::should_hug_the_only_function_parameter(p, params)
         }
         _ => false,
     }
