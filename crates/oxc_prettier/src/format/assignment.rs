@@ -96,11 +96,7 @@ pub(super) fn print_assignment<'a>(
                 p.group_with_opts(p.array(parts), false, Some(group_id))
             };
 
-            let right_doc = {
-                let mut parts = p.vec();
-                parts.push(p.group(right_doc));
-                p.indent_if_break(parts, group_id)
-            };
+            let right_doc = { p.indent_if_break(p.group(right_doc), group_id) };
 
             p.group(p.array(p_vec!(p, p.group(left_doc), op, after_op, right_doc)))
         }

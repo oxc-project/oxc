@@ -39,12 +39,7 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
         Doc::IndentIfBreak(indent_if_break) => {
             string.push_str("indentIfBreak(");
             string.push_str("[\n");
-            for (idx, doc) in indent_if_break.contents.iter().enumerate() {
-                string.push_str(&print_doc_to_debug(doc));
-                if idx != indent_if_break.contents.len() - 1 {
-                    string.push_str(", ");
-                }
-            }
+            string.push_str(&print_doc_to_debug(&indent_if_break.contents));
             string.push_str(&format!(", {{id: {}}}", indent_if_break.group_id));
             string.push_str("])");
         }

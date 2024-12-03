@@ -181,16 +181,14 @@ impl<'a> Printer<'a> {
 
         match group_mode {
             Some(Mode::Flat) => {
-                self.cmds
-                    .extend(contents.into_iter().rev().map(|doc| Command::new(indent, mode, doc)));
+                self.cmds.push(Command::new(indent, mode, contents.unbox()));
             }
             Some(Mode::Break) => {
-                self.cmds.extend(
-                    contents
-                        .into_iter()
-                        .rev()
-                        .map(|doc| Command::new(Indent::new(indent.length + 1), mode, doc)),
-                );
+                self.cmds.push(Command::new(
+                    Indent::new(indent.length + 1),
+                    mode,
+                    contents.unbox(),
+                ));
             }
             None => {}
         }
@@ -372,9 +370,10 @@ impl<'a> Printer<'a> {
                 Doc::Str(string) => {
                     remaining_width -= string.len() as isize;
                 }
-                Doc::IndentIfBreak(IndentIfBreak { contents: docs, .. })
-                | Doc::Indent(docs)
-                | Doc::Array(docs) => {
+                Doc::IndentIfBreak(IndentIfBreak { contents, .. }) => {
+                    queue.push_front((mode, contents));
+                }
+                Doc::Indent(docs) | Doc::Array(docs) => {
                     // Prepend docs to the queue
                     for d in docs.iter().rev() {
                         queue.push_front((mode, d));
@@ -462,9 +461,8 @@ impl<'a> Printer<'a> {
                 group.should_break
             }
             Doc::IfBreak(d) => Self::propagate_breaks(&mut d.break_contents),
-            Doc::Array(arr)
-            | Doc::Indent(arr)
-            | Doc::IndentIfBreak(IndentIfBreak { contents: arr, .. }) => check_array(arr),
+            Doc::Array(arr) | Doc::Indent(arr) => check_array(arr),
+            Doc::IndentIfBreak(IndentIfBreak { contents, .. }) => Self::propagate_breaks(contents),
             _ => false,
         }
     }

@@ -77,8 +77,11 @@ pub trait DocBuilder<'a> {
         })
     }
 
-    fn indent_if_break(&self, contents: Vec<'a, Doc<'a>>, group_id: GroupId) -> Doc<'a> {
-        Doc::IndentIfBreak(IndentIfBreak { contents, group_id })
+    fn indent_if_break(&self, contents: Doc<'a>, group_id: GroupId) -> Doc<'a> {
+        Doc::IndentIfBreak(IndentIfBreak {
+            contents: Box::new_in(contents, self.allocator()),
+            group_id,
+        })
     }
 
     fn group(&self, contents: Doc<'a>) -> Doc<'a> {
