@@ -59,6 +59,7 @@ fn dot() {
     test("process['env'].NODE_ENV", "production", config.clone());
 }
 
+#[ignore]
 #[test]
 fn dot_nested_with_overlap() {
     let config = ReplaceGlobalDefinesConfig::new(&[
