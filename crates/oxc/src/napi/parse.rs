@@ -5,13 +5,16 @@ use rustc_hash::FxHashMap;
 use oxc_span::Span;
 use oxc_syntax::module_record::{self, ModuleRecord};
 
-/// Babel Parser Options
 #[napi(object)]
 #[derive(Default)]
 pub struct ParserOptions {
     #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
-    pub source_filename: Option<String>,
+
+    /// Treat the source text as `js`, `jsx`, `ts`, or `tsx`.
+    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx'")]
+    pub lang: Option<String>,
+
     /// Emit `ParenthesizedExpression` in AST.
     ///
     /// If this option is true, parenthesized expressions are represented by
@@ -23,6 +26,7 @@ pub struct ParserOptions {
 }
 
 #[napi(object)]
+#[derive(Default)]
 pub struct ParseResult {
     #[napi(ts_type = "import(\"@oxc-project/types\").Program")]
     pub program: String,
@@ -41,6 +45,7 @@ pub struct Comment {
 }
 
 #[napi(object)]
+#[derive(Default)]
 pub struct EcmaScriptModule {
     /// Import Statements.
     pub static_imports: Vec<StaticImport>,

@@ -1,6 +1,6 @@
-import { describe, expect, it, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
-import * as oxc from '../index.js';
+import { parseSync } from '../index.js';
 
 describe('esm', () => {
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax
@@ -48,7 +48,7 @@ export { default as name1 } from "module-name";
 `.split('\n').map((s) => s.trim()).filter(Boolean);
 
   test.each(code)('%s', (s) => {
-    const ret = oxc.parseSync(s, { sourceFilename: 'test.ts' });
+    const ret = parseSync('test.js', s);
     expect(ret.program.body.length).toBeGreaterThan(0);
     expect(ret.errors.length).toBe(0);
     expect(JSON.stringify(ret.module, null, 2)).toMatchSnapshot();

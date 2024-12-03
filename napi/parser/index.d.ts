@@ -136,7 +136,7 @@ export declare const enum ImportNameKind {
  *
  * Note: This function can be slower than `parseSync` due to the overhead of spawning a thread.
  */
-export declare function parseAsync(sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
+export declare function parseAsync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
 
 export interface ParseResult {
   program: import("@oxc-project/types").Program
@@ -145,10 +145,10 @@ export interface ParseResult {
   errors: Array<string>
 }
 
-/** Babel Parser Options */
 export interface ParserOptions {
   sourceType?: 'script' | 'module' | 'unambiguous' | undefined
-  sourceFilename?: string
+  /** Treat the source text as `js`, `jsx`, `ts`, or `tsx`. */
+  lang?: 'js' | 'jsx' | 'ts' | 'tsx'
   /**
    * Emit `ParenthesizedExpression` in AST.
    *
@@ -162,14 +162,14 @@ export interface ParserOptions {
 }
 
 /** Parse synchronously. */
-export declare function parseSync(sourceText: string, options?: ParserOptions | undefined | null): ParseResult
+export declare function parseSync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): ParseResult
 
 /**
  * Parse without returning anything.
  *
  * This is for benchmark purposes such as measuring napi communication overhead.
  */
-export declare function parseWithoutReturn(sourceText: string, options?: ParserOptions | undefined | null): void
+export declare function parseWithoutReturn(filename: string, sourceText: string, options?: ParserOptions | undefined | null): void
 
 export interface StaticExport {
   start: number

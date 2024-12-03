@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import * as oxc from '../index.js';
+import { parseAsync, parseSync } from '../index.js';
 
 describe('parse', () => {
   const code = '/* comment */ foo';
 
+  it('uses the `lang` option', () => {
+    const ret = parseSync('test.vue', code, { lang: 'ts' });
+    expect(ret.program.body.length).toBe(1);
+    expect(ret.errors.length).toBe(0);
+  });
+
   it('matches output', async () => {
-    const ret = oxc.parseSync(code);
+    const ret = await parseAsync('test.js', code);
     expect(ret.program.body.length).toBe(1);
     expect(ret.errors.length).toBe(0);
     expect(ret.comments.length).toBe(1);
@@ -20,7 +26,7 @@ describe('parse', () => {
     });
     expect(code.substring(comment.start, comment.end)).toBe('/*' + comment.value + '*/');
 
-    const ret2 = await oxc.parseAsync(code);
+    const ret2 = await parseAsync('test.js', code);
     expect(ret).toEqual(ret2);
   });
 });
