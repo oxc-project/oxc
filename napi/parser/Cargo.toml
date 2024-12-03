@@ -26,7 +26,9 @@ oxc_module_lexer = { workspace = true }
 
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
+self_cell = "1.0.4"
 serde_json = { workspace = true }
+string_wizard = { version = "0.0.22", features = ["source_map"] }
 
 [package.metadata.cargo-shear]
 ignored = ["napi"]

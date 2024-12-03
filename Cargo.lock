@@ -959,6 +959,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "index_vec"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44faf5bb8861a9c72e20d3fb0fdbd59233e43056e2b80475ab0aacdc2e781355"
+
+[[package]]
 name = "indexmap"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1011,7 +1017,7 @@ dependencies = [
  "handlebars",
  "lazy_static",
  "oxc_tasks_common",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
 ]
 
@@ -1397,11 +1403,11 @@ dependencies = [
  "oxc_parser",
  "oxc_regular_expression",
  "oxc_semantic",
- "oxc_sourcemap",
+ "oxc_sourcemap 0.38.0",
  "oxc_span",
  "oxc_syntax",
  "oxc_transformer",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -1412,7 +1418,7 @@ checksum = "d240f6572a29895f324ad834a42a0c4bad0739269a08d0181ad7d6db7537e0d1"
 dependencies = [
  "js-sys",
  "nom",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
@@ -1496,7 +1502,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "regex",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "serde_json",
  "syn",
@@ -1515,7 +1521,7 @@ dependencies = [
  "oxc_parser",
  "oxc_prettier",
  "oxc_semantic",
- "oxc_sourcemap",
+ "oxc_sourcemap 0.38.0",
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
@@ -1533,7 +1539,7 @@ dependencies = [
  "oxc_index",
  "oxc_syntax",
  "petgraph",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -1551,11 +1557,11 @@ dependencies = [
  "oxc_index",
  "oxc_mangler",
  "oxc_parser",
- "oxc_sourcemap",
+ "oxc_sourcemap 0.38.0",
  "oxc_span",
  "oxc_syntax",
  "pico-args",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -1588,7 +1594,7 @@ dependencies = [
  "pico-args",
  "rayon",
  "regex",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "saphyr",
  "serde",
  "serde_json",
@@ -1609,7 +1615,7 @@ name = "oxc_diagnostics"
 version = "0.38.0"
 dependencies = [
  "oxc-miette",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -1653,7 +1659,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -1674,7 +1680,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "ropey",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "serde_json",
  "tokio",
@@ -1720,7 +1726,7 @@ dependencies = [
  "rayon",
  "regex",
  "rust-lapper",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "schemars",
  "serde",
  "serde_json",
@@ -1795,7 +1801,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -1827,7 +1833,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "seq-macro",
  "serde_json",
 ]
@@ -1841,7 +1847,9 @@ dependencies = [
  "napi-derive",
  "oxc",
  "oxc_module_lexer",
+ "self_cell",
  "serde_json",
+ "string_wizard",
 ]
 
 [[package]]
@@ -1867,7 +1875,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -1881,7 +1889,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "pico-args",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "walkdir",
 ]
 
@@ -1895,7 +1903,7 @@ dependencies = [
  "oxc_estree",
  "oxc_span",
  "phf",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "unicode-id-start",
 ]
@@ -1911,7 +1919,7 @@ dependencies = [
  "indexmap",
  "json-strip-comments",
  "once_cell",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "serde_json",
  "simdutf8",
@@ -1937,11 +1945,24 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "phf",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "serde_json",
  "tsify",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "oxc_sourcemap"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1dd8e81ebe12ff1c13de9e44cc3d0d187de138cd23e9992959653ecd003d0261"
+dependencies = [
+ "base64-simd",
+ "cfg-if",
+ "rustc-hash 2.0.0",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1953,7 +1974,7 @@ dependencies = [
  "cow-utils",
  "insta",
  "rayon",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "serde_json",
 ]
@@ -1984,7 +2005,7 @@ dependencies = [
  "oxc_index",
  "oxc_span",
  "phf",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "ryu-js",
  "serde",
  "unicode-id-start",
@@ -2013,7 +2034,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -2066,7 +2087,7 @@ dependencies = [
  "oxc_traverse",
  "pico-args",
  "ropey",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "serde_json",
  "sha1",
@@ -2085,7 +2106,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -2436,7 +2457,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "regex",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "ureq",
 ]
@@ -2455,6 +2476,12 @@ name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "719b953e2095829ee67db738b3bfa9fa368c94900df327b3f07fe6e794d2fe1f"
+
+[[package]]
+name = "rustc-hash"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustc-hash"
@@ -2586,6 +2613,12 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "self_cell"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d369a96f978623eb3dc28807c4852d6cc617fed53da5d3c400feff1ef34a714a"
 
 [[package]]
 name = "semver"
@@ -2794,6 +2827,17 @@ name = "str_indices"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9557cb6521e8d009c51a8666f09356f4b817ba9ba0981a305bd86aee47bd35c"
+
+[[package]]
+name = "string_wizard"
+version = "0.0.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6dda97f92b3c192214daba2a9d2e6c046edec247901234636159f2169ee7150a"
+dependencies = [
+ "index_vec",
+ "oxc_sourcemap 0.25.0",
+ "rustc-hash 1.1.0",
+]
 
 [[package]]
 name = "subtle"

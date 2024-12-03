@@ -2,6 +2,30 @@
 /* eslint-disable */
 
 export * from '@oxc-project/types';
+/** A Parser instance that holds a MagicString. */
+export declare class ParserBuilder {
+  constructor(sourceText: string)
+  /**
+   * # Panics
+   *
+   * * File extension is invalid
+   * * Serde JSON serialization
+   */
+  parseSync(options?: ParserOptions | undefined | null): ParseResult
+  sourceText(start: number, end: number): string
+  toString(): string
+  len(): number
+  append(source: string): void
+  appendLeft(textIndex: number, content: string): void
+  appendRight(textIndex: number, content: string): void
+  indent(): void
+  prepend(source: string): void
+  prependLeft(textIndex: number, content: string): void
+  relocate(start: number, end: number, to: number): void
+  remove(start: number, end: number): void
+  update(start: number, end: number, content: string): void
+}
+
 export interface Comment {
   type: 'Line' | 'Block'
   value: string
@@ -89,7 +113,7 @@ export declare function moduleLexerSync(sourceText: string, options?: ParserOpti
 /**
  * # Panics
  *
- * * Tokio crashes
+ * * Internal runtime (tokio) crashes
  */
 export declare function parseAsync(sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
 

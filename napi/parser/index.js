@@ -14,3 +14,11 @@ module.exports.parseSync = function parseSync(...args) {
   result.program = JSON.parse(result.program);
   return result;
 };
+
+const parseSyncFn = bindings.ParserBuilder.prototype.parseSync;
+bindings.ParserBuilder.prototype.parseSync = function parseSync(...args) {
+  const result = parseSyncFn.apply(this, args);
+  result.program = JSON.parse(result.program);
+  return result;
+};
+module.exports.ParserBuilder = bindings.ParserBuilder;
