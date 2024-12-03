@@ -71,7 +71,6 @@ jobs:
           - semantic
           - minifier
           - codegen
-          - sourcemap
 
     steps:
       - name: Checkout Branch

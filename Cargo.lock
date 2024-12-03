@@ -1515,7 +1515,6 @@ dependencies = [
  "oxc_parser",
  "oxc_prettier",
  "oxc_semantic",
- "oxc_sourcemap",
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
@@ -1934,12 +1933,13 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "0.38.0"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05e75cb20b3bb96af20d320f71d67c9f20b5bedb253cae36881fedef51f7688f"
 dependencies = [
  "base64-simd",
  "cfg-if",
  "cow-utils",
- "insta",
  "rayon",
  "rustc-hash",
  "serde",

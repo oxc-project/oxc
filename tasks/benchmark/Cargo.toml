@@ -42,10 +42,6 @@ harness = false
 name = "codegen"
 harness = false
 
-[[bench]]
-name = "sourcemap"
-harness = false
-
 # Broken
 # [[bench]]
 # name    = "prettier"
@@ -76,7 +72,6 @@ oxc_minifier = { workspace = true, optional = true }
 oxc_parser = { workspace = true, features = ["benchmarking"], optional = true }
 oxc_prettier = { workspace = true, optional = true }
 oxc_semantic = { workspace = true, optional = true }
-oxc_sourcemap = { workspace = true, features = ["concurrent"], optional = true }
 oxc_span = { workspace = true, optional = true, features = ["schemars", "serialize"] }
 oxc_tasks_common = { workspace = true, optional = true }
 oxc_transformer = { workspace = true, optional = true }
@@ -97,7 +92,6 @@ default = [
   "dep:oxc_parser",
   "dep:oxc_prettier",
   "dep:oxc_semantic",
-  "dep:oxc_sourcemap",
   "dep:oxc_span",
   "dep:oxc_tasks_common",
   "dep:oxc_transformer",
@@ -127,14 +121,6 @@ minifier = [
   "dep:oxc_tasks_common",
 ]
 codegen = ["dep:oxc_allocator", "dep:oxc_codegen", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
-sourcemap = [
-  "dep:oxc_allocator",
-  "dep:oxc_codegen",
-  "dep:oxc_parser",
-  "dep:oxc_sourcemap",
-  "dep:oxc_span",
-  "dep:oxc_tasks_common",
-]
 linter = [
   "dep:oxc_allocator",
   "dep:oxc_linter",

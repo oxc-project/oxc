@@ -94,7 +94,7 @@ jobs:
         shell: bash
         run: |
           # cargo ck # no need to check because it's already checked in linux
-          cargo test --workspace --exclude oxc_sourcemap
+          cargo test --workspace
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
