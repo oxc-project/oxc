@@ -15,7 +15,6 @@ pub enum Doc<'a> {
     /// (however for the algorithm to work properly they shouldn't contain line break characters)
     Str(&'a str),
     /// Arrays are used to concatenate a list of docs to be printed sequentially into a single doc.
-    // PERF: can we use &[Doc] here?
     Array(Vec<'a, Doc<'a>>),
     /// Mark a group of items which the printer should try to fit on one line.
     /// This is the basic command to tell the printer when to break.
@@ -48,16 +47,8 @@ pub enum Doc<'a> {
     LineSuffix(Vec<'a, Doc<'a>>),
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct Line {
-    pub hard: bool,
-    pub soft: bool,
-    pub literal: bool,
-}
-
 #[derive(Debug)]
 pub struct Group<'a> {
-    // TODO: Vec? Box?
     pub contents: Vec<'a, Doc<'a>>,
     pub should_break: bool,
     pub expanded_states: Option<Vec<'a, Doc<'a>>>,
@@ -66,14 +57,28 @@ pub struct Group<'a> {
 }
 
 #[derive(Debug)]
-pub struct IndentIfBreak<'a> {
-    pub contents: Box<'a, Doc<'a>>,
-    pub group_id: GroupId,
+pub struct Fill<'a> {
+    pub contents: Vec<'a, Doc<'a>>,
 }
 
 #[derive(Debug)]
-pub struct Fill<'a> {
-    pub contents: Vec<'a, Doc<'a>>,
+pub struct IfBreak<'a> {
+    pub break_contents: Box<'a, Doc<'a>>,
+    pub flat_contents: Box<'a, Doc<'a>>,
+    pub group_id: Option<GroupId>,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Line {
+    pub hard: bool,
+    pub soft: bool,
+    pub literal: bool,
+}
+
+#[derive(Debug)]
+pub struct IndentIfBreak<'a> {
+    pub contents: Box<'a, Doc<'a>>,
+    pub group_id: GroupId,
 }
 
 // Printer utils
@@ -103,11 +108,4 @@ impl<'a> Fill<'a> {
     pub fn take_parts(self) -> Vec<'a, Doc<'a>> {
         self.contents
     }
-}
-
-#[derive(Debug)]
-pub struct IfBreak<'a> {
-    pub break_contents: Box<'a, Doc<'a>>,
-    pub flat_contents: Box<'a, Doc<'a>>,
-    pub group_id: Option<GroupId>,
 }
