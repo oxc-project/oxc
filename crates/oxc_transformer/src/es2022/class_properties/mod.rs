@@ -125,12 +125,13 @@
 //!
 //! Implementation is split into several files:
 //!
-//! * `mod.rs`:            Setup, visitor, and ancillary types.
+//! * `mod.rs`:            Setup and visitor.
 //! * `class.rs`:          Transform of class body.
 //! * `constructor.rs`:    Insertion of property initializers into class constructor.
 //! * `private.rs`:        Transform of private property usages (`this.#prop`).
 //! * `private_props.rs`:  Structures storing details of private properties.
 //! * `static_prop.rs`:    Transform of static property initializers.
+//! * `class_bindings.rs`: Structure containing bindings for class name and temp var.
 //! * `utils.rs`:          Utility functions.
 //!
 //! ## References
@@ -148,16 +149,18 @@ use serde::Deserialize;
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
 
 mod class;
+mod class_bindings;
 mod constructor;
 mod private;
 mod private_props;
 mod static_prop;
 mod utils;
+use class_bindings::ClassBindings;
 use private_props::PrivatePropsStack;
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
@@ -205,25 +208,16 @@ pub struct ClassProperties<'a, 'ctx> {
     //
     /// `true` for class declaration, `false` for class expression
     is_declaration: bool,
-    /// Var for class.
-    /// e.g. `X` in `class X {}`.
-    /// e.g. `_Class` in `_Class = class {}, _Class.x = 1, _Class`
-    class_name: ClassName<'a>,
+    /// Bindings for class name and temp var for class
+    class_bindings: ClassBindings<'a>,
+    /// `true` if temp var for class has been inserted
+    temp_var_is_created: bool,
     /// Expressions to insert before class
     insert_before: Vec<Expression<'a>>,
     /// Expressions to insert after class expression
     insert_after_exprs: Vec<Expression<'a>>,
     /// Statements to insert after class declaration
     insert_after_stmts: Vec<Statement<'a>>,
-}
-
-/// Representation of binding for class name.
-enum ClassName<'a> {
-    /// Class has a name. This is the binding.
-    Binding(BoundIdentifier<'a>),
-    /// Class is anonymous.
-    /// This is the name it would have if we need to set class name, in order to reference it.
-    Name(&'a str),
 }
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
@@ -244,7 +238,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             class_expression_addresses_stack: NonEmptyStack::new(Address::DUMMY),
             // Temporary values - overwritten when entering class
             is_declaration: false,
-            class_name: ClassName::Name(""),
+            class_bindings: ClassBindings::default(),
+            temp_var_is_created: false,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
             insert_before: vec![],
             insert_after_exprs: vec![],

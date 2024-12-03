@@ -3,7 +3,7 @@ use oxc_data_structures::stack::SparseStack;
 use oxc_span::Atom;
 use oxc_traverse::BoundIdentifier;
 
-use super::FxIndexMap;
+use super::{class_bindings::ClassBindings, FxIndexMap};
 
 /// Stack of private props defined by classes.
 ///
@@ -36,23 +36,22 @@ impl<'a> PrivatePropsStack<'a> {
     }
 
     #[inline]
-    #[expect(dead_code)]
     pub fn last_mut(&mut self) -> Option<&mut PrivateProps<'a>> {
         self.stack.last_mut()
     }
 
     /// Lookup details of private property referred to by `ident`.
     pub fn find<'b>(
-        &'b self,
+        &'b mut self,
         ident: &PrivateIdentifier<'a>,
     ) -> Option<ResolvedPrivateProp<'a, 'b>> {
         // Check for binding in closest class first, then enclosing classes
         // TODO: Check there are tests for bindings in enclosing classes.
-        for private_props in self.stack.as_slice().iter().rev() {
+        for private_props in self.stack.as_mut_slice().iter_mut().rev() {
             if let Some(prop) = private_props.props.get(&ident.name) {
                 return Some(ResolvedPrivateProp {
                     prop_binding: &prop.binding,
-                    class_binding: private_props.class_binding.as_ref(),
+                    class_bindings: &mut private_props.class_bindings,
                     is_static: prop.is_static,
                     is_declaration: private_props.is_declaration,
                 });
@@ -68,8 +67,8 @@ pub(super) struct PrivateProps<'a> {
     /// Private properties for class. Indexed by property name.
     // TODO(improve-on-babel): Order that temp vars are created in is not important. Use `FxHashMap` instead.
     pub props: FxIndexMap<Atom<'a>, PrivateProp<'a>>,
-    /// Binding for class, if class has name
-    pub class_binding: Option<BoundIdentifier<'a>>,
+    /// Bindings for class name and temp var for class
+    pub class_bindings: ClassBindings<'a>,
     /// `true` for class declaration, `false` for class expression
     pub is_declaration: bool,
 }
@@ -86,8 +85,8 @@ pub(super) struct PrivateProp<'a> {
 pub(super) struct ResolvedPrivateProp<'a, 'b> {
     /// Binding for temp var representing the property
     pub prop_binding: &'b BoundIdentifier<'a>,
-    /// Binding for class (if it has one)
-    pub class_binding: Option<&'b BoundIdentifier<'a>>,
+    /// Bindings for class name and temp var for class
+    pub class_bindings: &'b mut ClassBindings<'a>,
     /// `true` if is a static property
     pub is_static: bool,
     /// `true` if class which defines this property is a class declaration

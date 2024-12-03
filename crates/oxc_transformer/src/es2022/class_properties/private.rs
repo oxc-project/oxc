@@ -48,7 +48,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let Some(prop_details) = prop_details else {
             return Expression::PrivateFieldExpression(field_expr);
         };
-        let ResolvedPrivateProp { prop_binding, class_binding, is_static, is_declaration } =
+        let ResolvedPrivateProp { prop_binding, class_bindings, is_static, is_declaration } =
             prop_details;
         let prop_ident = prop_binding.create_read_expression(ctx);
 
@@ -57,20 +57,25 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         if is_static {
             // TODO: Ensure there are tests for nested classes with references to private static props
-            // of outer class inside inner class, to make sure we're getting the right `class_binding`.
-            let class_binding = class_binding.unwrap();
+            // of outer class inside inner class, to make sure we're getting the right `class_bindings`.
 
             // If `object` is reference to class name, there's no need for the class brand assertion
-            if let Some(reference_id) =
-                Self::shortcut_static_class(is_declaration, class_binding.symbol_id, &object, ctx)
-            {
+            if let Some((class_symbol_id, object_reference_id)) = Self::shortcut_static_class(
+                is_declaration,
+                class_bindings.name_symbol_id(),
+                &object,
+                ctx,
+            ) {
                 // `_prop._`
-                ctx.symbols_mut().delete_resolved_reference(class_binding.symbol_id, reference_id);
+                ctx.symbols_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
                 Self::create_underscore_member_expression(prop_ident, span, ctx)
             } else {
                 // `_assertClassBrand(Class, object, _prop)._`
+                let class_binding = class_bindings.get_or_init_temp_binding(ctx);
+                let class_ident = class_binding.create_read_expression(ctx);
+
                 self.create_assert_class_brand_underscore(
-                    class_binding.create_read_expression(ctx),
+                    class_ident,
                     object,
                     prop_ident,
                     span,
@@ -85,25 +90,29 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
     /// Check if can use shorter version of static private prop transform.
     ///
-    /// Can if both:
+    /// Can if all of:
     /// 1. Class is a declaration, not an expression.
-    /// 2. `object` is an `IdentifierReference` referring to class name binding.
+    /// 2. Class has a name.
+    /// 3. `object` is an `IdentifierReference` referring to class name binding.
     ///
-    /// If can use shorter version, returns `ReferenceId` of the `IdentifierReference`.
+    /// If can use shorter version, returns `SymbolId` and `ReferenceId` of the `IdentifierReference`.
     //
     // TODO(improve-on-babel): No reason not to use the short version for class expressions too.
+    // TODO: Take `&ClassBindings` instead of `Option<SymbolId>`.
     fn shortcut_static_class(
         is_declaration: bool,
-        class_symbol_id: SymbolId,
+        class_symbol_id: Option<SymbolId>,
         object: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<ReferenceId> {
+    ) -> Option<(SymbolId, ReferenceId)> {
         if is_declaration {
-            if let Expression::Identifier(ident) = object {
-                let reference_id = ident.reference_id();
-                if let Some(symbol_id) = ctx.symbols().get_reference(reference_id).symbol_id() {
-                    if symbol_id == class_symbol_id {
-                        return Some(reference_id);
+            if let Some(class_symbol_id) = class_symbol_id {
+                if let Expression::Identifier(ident) = object {
+                    let reference_id = ident.reference_id();
+                    if let Some(symbol_id) = ctx.symbols().get_reference(reference_id).symbol_id() {
+                        if symbol_id == class_symbol_id {
+                            return Some((class_symbol_id, reference_id));
+                        }
                     }
                 }
             }
@@ -185,7 +194,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<(Expression<'a>, Expression<'a>)> {
         // TODO: Should never be `None` - only because implementation is incomplete.
-        let ResolvedPrivateProp { prop_binding, class_binding, is_static, is_declaration } =
+        let ResolvedPrivateProp { prop_binding, class_bindings, is_static, is_declaration } =
             self.private_props_stack.find(&field_expr.field)?;
         let prop_ident = prop_binding.create_read_expression(ctx);
 
@@ -195,26 +204,33 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let replacement = if is_static {
             // `object.#prop(arg)` -> `_assertClassBrand(Class, object, _prop)._.call(object, arg)`
             // or shortcut `_prop._.call(object, arg)`
-            let class_binding = class_binding.unwrap();
-            let class_ident = class_binding.create_read_expression(ctx);
+
+            // TODO: Ensure there are tests for nested classes with references to private static props
+            // of outer class inside inner class, to make sure we're getting the right `class_bindings`.
 
             // If `object` is reference to class name, there's no need for the class brand assertion
             // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
             // and look up the `SymbolId`
-            if Self::shortcut_static_class(is_declaration, class_binding.symbol_id, &object, ctx)
-                .is_some()
+            if Self::shortcut_static_class(
+                is_declaration,
+                class_bindings.name_symbol_id(),
+                &object,
+                ctx,
+            )
+            .is_some()
             {
                 // `_prop._`
                 let callee =
                     Self::create_underscore_member_expression(prop_ident, field_expr.span, ctx);
                 (callee, object)
             } else {
+                let class_binding = class_bindings.get_or_init_temp_binding(ctx);
+                let class_ident = class_binding.create_read_expression(ctx);
+
                 // Make 2 copies of `object`
                 let (object1, object2) = self.duplicate_object(object, ctx);
 
                 // `_assertClassBrand(Class, object, _prop)._`
-                // TODO: Ensure there are tests for nested classes with references to private static props
-                // of outer class inside inner class, to make sure we're getting the right `class_binding`.
                 let assert_obj = self.create_assert_class_brand_underscore(
                     class_ident,
                     object1,
@@ -268,7 +284,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let prop_details = self.private_props_stack.find(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
         let Some(prop_details) = prop_details else { return };
-        let ResolvedPrivateProp { prop_binding, class_binding, is_static, is_declaration } =
+        let ResolvedPrivateProp { prop_binding, class_bindings, is_static, is_declaration } =
             prop_details;
 
         // Note: `transform_static_assignment_expression` and `transform_instance_assignment_expression`
@@ -279,11 +295,24 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let prop_binding = prop_binding.clone();
 
         if is_static {
-            let class_binding = class_binding.unwrap().clone();
+            // TODO: No temp var is required if able to use shortcut version, so want to skip calling
+            // `class_bindings.get_or_init_temp_binding(ctx)` if shortcut can be used.
+            // But can't pass `class_bindings` as a `&mut ClassBinding` into
+            // `transform_static_assignment_expression` due to borrow-checker restrictions.
+            // If clone it, then any update to `temp` field is not stored globally, so that doesn't work.
+            // Solution will have to be to break up `transform_static_assignment_expression` into 2 methods
+            // for shortcut/no shortcut and do the "can we shortcut?" check here.
+            // Then only create temp var for the "no shortcut" branch, and clone the resulting binding
+            // before passing it to the "no shortcut" method. What a palaver!
+            let class_binding = class_bindings.get_or_init_temp_binding(ctx);
+            let class_binding = class_binding.clone();
+            let class_symbol_id = class_bindings.name_symbol_id();
+
             self.transform_static_assignment_expression(
                 expr,
                 prop_binding,
                 class_binding,
+                class_symbol_id,
                 is_declaration,
                 ctx,
             );
@@ -314,6 +343,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         expr: &mut Expression<'a>,
         prop_binding: BoundIdentifier<'a>,
         class_binding: BoundIdentifier<'a>,
+        class_symbol_id: Option<SymbolId>,
         is_declaration: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -326,12 +356,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // Check if object (`object` in `object.#prop`) is a reference to class name
         // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
         // and look up the `SymbolId`.
-        let object_reference_id = Self::shortcut_static_class(
-            is_declaration,
-            class_binding.symbol_id,
-            &field_expr.object,
-            ctx,
-        );
+        let object_reference =
+            Self::shortcut_static_class(is_declaration, class_symbol_id, &field_expr.object, ctx);
 
         // If `object` is reference to class name, there's no need for the class brand assertion.
         // `Class.#prop = value` -> `_prop._ = value`
@@ -339,7 +365,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // `Class.#prop &&= value` -> `_prop._ && (_prop._ = 1)`
         // TODO(improve-on-babel): These shortcuts could be shorter - just swap `Class.#prop` for `_prop._`.
         // Or does that behave slightly differently if `Class.#prop` is an object with `valueOf` method?
-        if let Some(reference_id) = object_reference_id {
+        if let Some((class_symbol_id, object_reference_id)) = object_reference {
             // Replace left side of assignment with `_prop._`
             let field_expr_span = field_expr.span;
             assign_expr.left = Self::create_underscore_member_expr_target(
@@ -349,7 +375,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             );
 
             // Delete reference for `object` as `object.#prop` has been removed
-            ctx.symbols_mut().delete_resolved_reference(class_binding.symbol_id, reference_id);
+            ctx.symbols_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
 
             if operator == AssignmentOperator::Assign {
                 // `Class.#prop = value` -> `_prop._ = value`
@@ -619,7 +645,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let prop_details = self.private_props_stack.find(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
         let Some(prop_details) = prop_details else { return };
-        let ResolvedPrivateProp { prop_binding, class_binding, is_static, is_declaration } =
+        let ResolvedPrivateProp { prop_binding, class_bindings, is_static, is_declaration } =
             prop_details;
 
         let prop_ident = prop_binding.create_read_expression(ctx);
@@ -649,36 +675,45 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             //   (_object$prop = _assertClassBrand(Class, object, _prop)._, ++_object$prop)
             // )
             // ```
-            let class_binding = class_binding.unwrap().clone();
 
             // Check if object (`object` in `object.#prop`) is a reference to class name
             // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
             // and look up the `SymbolId`.
-            let object_reference_id =
-                Self::shortcut_static_class(is_declaration, class_binding.symbol_id, &object, ctx);
+            let object_reference = Self::shortcut_static_class(
+                is_declaration,
+                class_bindings.name_symbol_id(),
+                &object,
+                ctx,
+            );
 
             // `_assertClassBrand(Class, object, _prop)._` or `_prop._`
-            let (get_expr, object) = if let Some(reference_id) = object_reference_id {
+            let (get_expr, object, class_ident) = if let Some(object_reference) = object_reference {
                 // Delete reference for `object` as `object.#prop` is being removed
-                ctx.symbols_mut().delete_resolved_reference(class_binding.symbol_id, reference_id);
+                let (class_symbol_id, object_reference_id) = object_reference;
+                ctx.symbols_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
 
                 // `_prop._`
                 let get_expr = Self::create_underscore_member_expression(prop_ident, SPAN, ctx);
-                (get_expr, object)
+                (get_expr, object, None)
             } else {
+                let class_binding = class_bindings.get_or_init_temp_binding(ctx);
+                let class_ident = class_binding.create_read_expression(ctx);
+                let class_ident2 = class_binding.create_read_expression(ctx);
+
                 // Make 2 copies of `object`
                 let (object1, object2) = self.duplicate_object(object, ctx);
 
                 // `_assertClassBrand(Class, object, _prop)._`
                 let get_call = self.create_assert_class_brand_underscore(
-                    class_binding.create_read_expression(ctx),
+                    class_ident,
                     object2,
                     prop_ident,
                     SPAN,
                     ctx,
                 );
-                (get_call, object1)
+                (get_call, object1, Some(class_ident2))
             };
+
             // `_object$prop = _assertClassBrand(Class, object, _prop)._`
             self.ctx.var_declarations.insert_var(&temp_binding, None, ctx);
             let assignment = create_assignment(&temp_binding, get_expr, ctx);
@@ -697,9 +732,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     .ast
                     .expression_sequence(SPAN, ctx.ast.vec_from_array([assignment, update_expr]));
 
-                // `_assertClassBrand(Class, object, <value>)`
-                if object_reference_id.is_none() {
-                    let class_ident = class_binding.create_read_expression(ctx);
+                // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
+                if let Some(class_ident) = class_ident {
                     value = self.create_assert_class_brand(class_ident, object, value, ctx);
                 }
 
@@ -731,9 +765,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     ]),
                 );
 
-                // `_assertClassBrand(Class, object, <value>)`
-                if object_reference_id.is_none() {
-                    let class_ident = class_binding.create_read_expression(ctx);
+                // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
+                if let Some(class_ident) = class_ident {
                     value = self.create_assert_class_brand(class_ident, object, value, ctx);
                 }
 
