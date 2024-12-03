@@ -88,6 +88,8 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
+use std::iter;
+
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_ecmascript::PropName;
@@ -313,10 +315,18 @@ fn get_import_source(jsx_runtime_importer: &str, react_importer_len: u32) -> Ato
 }
 
 /// Pragma used in classic mode
-struct Pragma<'a> {
-    ident_parts: Vec<Atom<'a>>,
+enum Pragma<'a> {
+    /// `createElement`
+    Single(Atom<'a>),
+    /// `React.createElement`
+    Double(Atom<'a>, Atom<'a>),
+    /// `foo.bar.qux`
+    Many(Vec<Atom<'a>>),
+    /// `this`, `this.foo`, `this.foo.bar.qux`
+    This(Vec<Atom<'a>>),
+    /// `import.meta`, `import.meta.foo`, `import.meta.foo.bar.qux`
+    ImportMeta(Vec<Atom<'a>>),
 }
-
 impl<'a> Pragma<'a> {
     /// Parse `options.pragma` or `options.pragma_frag`.
     ///
@@ -333,7 +343,17 @@ impl<'a> Pragma<'a> {
             }
 
             let ident_parts = pragma.split('.').map(|item| ast.atom(item)).collect::<Vec<_>>();
-            Self { ident_parts }
+
+            match &ident_parts[..] {
+                [] => unreachable!(),
+                [atom, rest @ ..] if atom == "this" => Pragma::This(rest.into()),
+                [first, second, rest @ ..] if first == "import" && second == "meta" => {
+                    Pragma::ImportMeta(rest.into())
+                }
+                [single] => Self::Single(single.clone()),
+                [first, second] => Self::Double(first.clone(), second.clone()),
+                _ => Self::Many(ident_parts),
+            }
         } else {
             Self::default(default_property_name)
         }
@@ -345,27 +365,37 @@ impl<'a> Pragma<'a> {
     }
 
     fn default(default_property_name: &'static str) -> Self {
-        Self { ident_parts: vec![Atom::from("React"), Atom::from(default_property_name)] }
+        Self::Double(Atom::from("React"), Atom::from(default_property_name))
     }
 
     fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        let (mut expr, parts) = match &self.ident_parts[..] {
-            [] => unreachable!(),
-            [atom, rest @ ..] if atom == "this" => (ctx.ast.expression_this(SPAN), rest),
-            [first, second, rest @ ..] if first == "import" && second == "meta" => (
-                ctx.ast.expression_meta_property(
-                    SPAN,
-                    ctx.ast.identifier_name(SPAN, first),
-                    ctx.ast.identifier_name(SPAN, second),
+        let (mut expr, parts): (Expression<'a>, Box<dyn iter::Iterator<Item = &'_ Atom<'a>>>) =
+            match self {
+                Pragma::Single(atom) => {
+                    let object = get_read_identifier_reference(SPAN, atom.clone(), ctx);
+                    let expr = Expression::Identifier(ctx.alloc(object));
+                    (expr, Box::new(std::iter::empty()))
+                }
+                Pragma::Double(first, second) => {
+                    let object = get_read_identifier_reference(SPAN, first.clone(), ctx);
+                    let expr = Expression::Identifier(ctx.alloc(object));
+                    (expr, Box::new(iter::once(second)))
+                }
+                Pragma::Many(many) => {
+                    let object = get_read_identifier_reference(SPAN, many[0].clone(), ctx);
+                    let expr = Expression::Identifier(ctx.alloc(object));
+                    (expr, Box::new(many[1..].iter()))
+                }
+                Pragma::This(rest) => (ctx.ast.expression_this(SPAN), Box::new(rest.iter())),
+                Pragma::ImportMeta(rest) => (
+                    ctx.ast.expression_meta_property(
+                        SPAN,
+                        ctx.ast.identifier_name(SPAN, "import"),
+                        ctx.ast.identifier_name(SPAN, "meta"),
+                    ),
+                    Box::new(rest.iter()),
                 ),
-                rest,
-            ),
-            [first, rest @ ..] => {
-                let object = get_read_identifier_reference(SPAN, first.clone(), ctx);
-                let expr = Expression::Identifier(ctx.alloc(object));
-                (expr, rest)
-            }
-        };
+            };
         for item in parts {
             let name = ctx.ast.identifier_name(SPAN, item.clone());
             expr = ctx.ast.member_expression_static(SPAN, expr, name, false).into();
