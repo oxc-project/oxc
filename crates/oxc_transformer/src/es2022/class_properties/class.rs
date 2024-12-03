@@ -177,29 +177,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             return;
         }
 
-        self.transform_class_declaration_impl(class, stmt_address, ctx);
-    }
-
-    /// Transform `export default class {}`.
-    ///
-    /// Separate function as this is only circumstance where have to deal with anonymous class declaration,
-    /// and it's an uncommon case (can only be 1 per file).
-    // TODO: This method is now defunct. Can just have 1 `transform_class_declaration` function.
-    pub(super) fn transform_class_export_default(
-        &mut self,
-        class: &mut Class<'a>,
-        stmt_address: Address,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.transform_class_declaration_impl(class, stmt_address, ctx);
-    }
-
-    fn transform_class_declaration_impl(
-        &mut self,
-        class: &mut Class<'a>,
-        stmt_address: Address,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
         self.is_declaration = true;
 
         self.transform_class(class, ctx);

@@ -319,7 +319,7 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
                 let stmt_address = decl.address();
                 if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut decl.declaration
                 {
-                    self.transform_class_export_default(class, stmt_address, ctx);
+                    self.transform_class_declaration(class, stmt_address, ctx);
                 }
             }
             _ => {}
