@@ -1,8 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.toString'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:4:14]
  3 │             console.log(props.foo?.toString());
  4 │           }, []);
@@ -29,7 +28,7 @@ snapshot_kind: text
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar.toString'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo.bar'
    ╭─[exhaustive_deps.tsx:4:14]
  3 │             console.log(props.foo?.bar.toString());
  4 │           }, []);
@@ -299,7 +298,7 @@ snapshot_kind: text
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'history.listen'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'history'
    ╭─[exhaustive_deps.tsx:4:14]
  3 │             return history.listen();
  4 │           }, []);
@@ -308,7 +307,7 @@ snapshot_kind: text
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'history.foo.bar'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'history.foo', and 'history.foo.bar'
    ╭─[exhaustive_deps.tsx:7:14]
  6 │             ];
  7 │           }, []);
@@ -1035,7 +1034,7 @@ snapshot_kind: text
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.onChange'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onChange', and 'props'
    ╭─[exhaustive_deps.tsx:6:14]
  5 │             }
  6 │           }, []);
@@ -1044,7 +1043,7 @@ snapshot_kind: text
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.onChange'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onChange', and 'props'
    ╭─[exhaustive_deps.tsx:6:14]
  5 │             }
  6 │           }, []);
@@ -1053,7 +1052,7 @@ snapshot_kind: text
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onPause', and 'props.onPlay'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
     ╭─[exhaustive_deps.tsx:9:14]
   8 │             }
   9 │           }, []);
@@ -1062,7 +1061,7 @@ snapshot_kind: text
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props.foo.onChange'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.foo.onChange', and 'props.foo'
    ╭─[exhaustive_deps.tsx:6:14]
  5 │             }
  6 │           }, []);
@@ -1071,7 +1070,7 @@ snapshot_kind: text
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onChange', and 'props.foo.onChange'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.foo', 'props', and 'props.foo.onChange'
    ╭─[exhaustive_deps.tsx:7:14]
  6 │             }
  7 │           }, []);
@@ -1080,7 +1079,16 @@ snapshot_kind: text
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'skillsCount', 'props.toggleEditMode', and 'props.isEditMode'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
+   ╭─[exhaustive_deps.tsx:7:14]
+ 6 │             }
+ 7 │           }, [skillsCount, props.isEditMode, props.toggleEditMode]);
+   ·              ─────────────────────────────────────────────────────
+ 8 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'skillsCount', 'props.isEditMode', and 'props'
    ╭─[exhaustive_deps.tsx:7:14]
  6 │             }
  7 │           }, []);
@@ -1089,7 +1097,7 @@ snapshot_kind: text
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onChange', and 'props'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
    ╭─[exhaustive_deps.tsx:5:14]
  4 │             props.onChange();
  5 │           }, []);
@@ -1098,7 +1106,7 @@ snapshot_kind: text
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.onChange', and 'props'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'props'
    ╭─[exhaustive_deps.tsx:5:14]
  4 │             externalCall(props);
  5 │           }, []);

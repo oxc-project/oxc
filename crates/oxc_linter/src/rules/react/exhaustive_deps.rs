@@ -1032,22 +1032,30 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             return;
         }
 
+        let is_parent_call_expr = self
+            .stack
+            .get(self.stack.len() - 2)
+            .is_some_and(|kind| matches!(kind, AstKind::CallExpression(_)));
+
         match analyze_property_chain(&it.object, self.semantic) {
             Ok(source) => {
                 if let Some(source) = source {
-                    let new_chain = Vec::from([it.property.name.clone()]);
-
-                    self.found_dependencies.insert(Dependency {
-                        name: source.name.clone(),
-                        reference_id: source.reference_id,
-                        span: source.span,
-                        chain: [source.chain, new_chain].concat(),
-                        symbol_id: self
-                            .semantic
-                            .symbols()
-                            .get_reference(source.reference_id)
-                            .symbol_id(),
-                    });
+                    if is_parent_call_expr {
+                        self.found_dependencies.insert(source);
+                    } else {
+                        let new_chain = Vec::from([it.property.name.clone()]);
+                        self.found_dependencies.insert(Dependency {
+                            name: source.name.clone(),
+                            reference_id: source.reference_id,
+                            span: source.span,
+                            chain: [source.chain.clone(), new_chain].concat(),
+                            symbol_id: self
+                                .semantic
+                                .symbols()
+                                .get_reference(source.reference_id)
+                                .symbol_id(),
+                        });
+                    }
                 }
 
                 let cur_skip_reporting_dependency = self.skip_reporting_dependency;
@@ -1612,16 +1620,15 @@ fn test() {
           }, []);
           return <div />;
         }",
-        // TODO: fix, this shouldn't report because `myRef` comes from props
-        // r"function useMyThing(myRef) {
-        //   useEffect(() => {
-        //     const handleMove = () => {};
-        //     myRef.current = {};
-        //     return () => {
-        //       console.log(myRef.current.toString())
-        //     };
-        //   }, [myRef]);
-        // }",
+        r"function useMyThing(myRef) {
+          useEffect(() => {
+            const handleMove = () => {};
+            myRef.current = {};
+            return () => {
+              console.log(myRef.current.toString())
+            };
+          }, [myRef]);
+        }",
         r"function MyComponent() {
           const myRef = useRef();
           useEffect(() => {
@@ -2631,14 +2638,14 @@ fn test() {
             }
           }, []);
         }",
-        // r"function MyComponent(props) {
-        //   const [skillsCount] = useState();
-        //   useEffect(() => {
-        //     if (skillsCount === 0 && !props.isEditMode) {
-        //       props.toggleEditMode();
-        //     }
-        //   }, [skillsCount, props.isEditMode, props.toggleEditMode]);
-        // }",
+        r"function MyComponent(props) {
+          const [skillsCount] = useState();
+          useEffect(() => {
+            if (skillsCount === 0 && !props.isEditMode) {
+              props.toggleEditMode();
+            }
+          }, [skillsCount, props.isEditMode, props.toggleEditMode]);
+        }",
         r"function MyComponent(props) {
           const [skillsCount] = useState();
           useEffect(() => {
