@@ -45,11 +45,7 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
                     string.push_str(", ");
                 }
             }
-
-            if let Some(id) = indent_if_break.group_id {
-                string.push_str(&format!(", {{id: {id}}}"));
-            }
-
+            string.push_str(&format!(", {{id: {}}}", indent_if_break.group_id));
             string.push_str("])");
         }
         Doc::Group(group) => {

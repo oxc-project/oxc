@@ -77,7 +77,7 @@ pub trait DocBuilder<'a> {
         })
     }
 
-    fn indent_if_break(&self, contents: Vec<'a, Doc<'a>>, group_id: Option<GroupId>) -> Doc<'a> {
+    fn indent_if_break(&self, contents: Vec<'a, Doc<'a>>, group_id: GroupId) -> Doc<'a> {
         Doc::IndentIfBreak(IndentIfBreak { contents, group_id })
     }
 

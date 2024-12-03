@@ -177,7 +177,7 @@ impl<'a> Printer<'a> {
 
     fn handle_indent_if_break(&mut self, indent: Indent, mode: Mode, doc: IndentIfBreak<'a>) {
         let IndentIfBreak { contents, group_id } = doc;
-        let group_mode = group_id.map_or(Some(mode), |id| self.group_mode_map.get(&id).copied());
+        let group_mode = self.group_mode_map.get(&group_id).copied();
 
         match group_mode {
             Some(Mode::Flat) => {

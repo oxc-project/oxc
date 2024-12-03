@@ -10,7 +10,7 @@ use oxc_ast::{
 
 use super::{binaryish::should_inline_logical_expression, class::ClassMemberish};
 use crate::{
-    ir::{Doc, DocBuilder, Group, IndentIfBreak},
+    ir::{Doc, DocBuilder},
     p_vec, Format, Prettier,
 };
 
@@ -99,7 +99,7 @@ pub(super) fn print_assignment<'a>(
             let right_doc = {
                 let mut parts = p.vec();
                 parts.push(p.group(right_doc));
-                p.indent_if_break(parts, Some(group_id))
+                p.indent_if_break(parts, group_id)
             };
 
             p.group(p.array(p_vec!(p, p.group(left_doc), op, after_op, right_doc)))

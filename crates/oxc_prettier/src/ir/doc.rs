@@ -68,7 +68,7 @@ pub struct Group<'a> {
 #[derive(Debug)]
 pub struct IndentIfBreak<'a> {
     pub contents: Vec<'a, Doc<'a>>,
-    pub group_id: Option<GroupId>,
+    pub group_id: GroupId,
 }
 
 #[derive(Debug)]
