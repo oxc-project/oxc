@@ -1,0 +1,1398 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`esm > export * as name1 from "module-name"; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 37,
+      "entries": [
+        {
+          "start": 0,
+          "end": 37,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 23,
+            "end": 36
+          },
+          "importName": {
+            "kind": "All"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 12,
+            "end": 17
+          },
+          "localName": {
+            "kind": "None"
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export * from "module-name"; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 28,
+      "entries": [
+        {
+          "start": 0,
+          "end": 28,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 14,
+            "end": 27
+          },
+          "importName": {
+            "kind": "AllButDefault"
+          },
+          "exportName": {
+            "kind": "None"
+          },
+          "localName": {
+            "kind": "None"
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export { default as name1 } from "module-name"; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 47,
+      "entries": [
+        {
+          "start": 9,
+          "end": 25,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 33,
+            "end": 46
+          },
+          "importName": {
+            "kind": "Name",
+            "name": "default",
+            "start": 9,
+            "end": 16
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 20,
+            "end": 25
+          },
+          "localName": {
+            "kind": "None"
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export { default, /* …, */ } from "module-name"; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 50,
+      "entries": [
+        {
+          "start": 9,
+          "end": 16,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 36,
+            "end": 49
+          },
+          "importName": {
+            "kind": "Name",
+            "name": "default",
+            "start": 9,
+            "end": 16
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "default",
+            "start": 9,
+            "end": 16
+          },
+          "localName": {
+            "kind": "None"
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } from "module-name"; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 83,
+      "entries": [
+        {
+          "start": 9,
+          "end": 25,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 69,
+            "end": 82
+          },
+          "importName": {
+            "kind": "Name",
+            "name": "import1",
+            "start": 9,
+            "end": 16
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 20,
+            "end": 25
+          },
+          "localName": {
+            "kind": "None"
+          }
+        },
+        {
+          "start": 27,
+          "end": 43,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 69,
+            "end": 82
+          },
+          "importName": {
+            "kind": "Name",
+            "name": "import2",
+            "start": 27,
+            "end": 34
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name2",
+            "start": 38,
+            "end": 43
+          },
+          "localName": {
+            "kind": "None"
+          }
+        },
+        {
+          "start": 56,
+          "end": 61,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 69,
+            "end": 82
+          },
+          "importName": {
+            "kind": "Name",
+            "name": "nameN",
+            "start": 56,
+            "end": 61
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "nameN",
+            "start": 56,
+            "end": 61
+          },
+          "localName": {
+            "kind": "None"
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export { name1 as default /*, … */ }; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 39,
+      "entries": [
+        {
+          "start": 9,
+          "end": 25,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "default",
+            "start": 18,
+            "end": 25
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 9,
+            "end": 14
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export { name1, /* …, */ nameN } from "module-name"; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 54,
+      "entries": [
+        {
+          "start": 9,
+          "end": 14,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 40,
+            "end": 53
+          },
+          "importName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 9,
+            "end": 14
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 9,
+            "end": 14
+          },
+          "localName": {
+            "kind": "None"
+          }
+        },
+        {
+          "start": 27,
+          "end": 32,
+          "moduleRequest": {
+            "value": "module-name",
+            "start": 40,
+            "end": 53
+          },
+          "importName": {
+            "kind": "Name",
+            "name": "nameN",
+            "start": 27,
+            "end": 32
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "nameN",
+            "start": 27,
+            "end": 32
+          },
+          "localName": {
+            "kind": "None"
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export { name1, /* …, */ nameN }; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 35,
+      "entries": [
+        {
+          "start": 9,
+          "end": 14,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 9,
+            "end": 14
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 9,
+            "end": 14
+          }
+        },
+        {
+          "start": 27,
+          "end": 32,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "nameN",
+            "start": 27,
+            "end": 32
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "nameN",
+            "start": 27,
+            "end": 32
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export { variable1 as "string name" }; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 38,
+      "entries": [
+        {
+          "start": 9,
+          "end": 35,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "string name",
+            "start": 22,
+            "end": 35
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "variable1",
+            "start": 9,
+            "end": 18
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export { variable1 as name1, variable2 as name2, /* …, */ nameN }; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 68,
+      "entries": [
+        {
+          "start": 9,
+          "end": 27,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 22,
+            "end": 27
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "variable1",
+            "start": 9,
+            "end": 18
+          }
+        },
+        {
+          "start": 29,
+          "end": 47,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name2",
+            "start": 42,
+            "end": 47
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "variable2",
+            "start": 29,
+            "end": 38
+          }
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "nameN",
+            "start": 60,
+            "end": 65
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "nameN",
+            "start": 60,
+            "end": 65
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export class ClassName { /* … */ } 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 36,
+      "entries": [
+        {
+          "start": 7,
+          "end": 36,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "ClassName",
+            "start": 13,
+            "end": 22
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "ClassName",
+            "start": 13,
+            "end": 22
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export const [ name1, name2 ] = array; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 38,
+      "entries": [
+        {
+          "start": 7,
+          "end": 38,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 15,
+            "end": 20
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 15,
+            "end": 20
+          }
+        },
+        {
+          "start": 7,
+          "end": 38,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name2",
+            "start": 22,
+            "end": 27
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "name2",
+            "start": 22,
+            "end": 27
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export const { name1, name2: bar } = o; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 39,
+      "entries": [
+        {
+          "start": 7,
+          "end": 39,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 15,
+            "end": 20
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 15,
+            "end": 20
+          }
+        },
+        {
+          "start": 7,
+          "end": 39,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "bar",
+            "start": 29,
+            "end": 32
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "bar",
+            "start": 29,
+            "end": 32
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export const name1 = 1, name2 = 2/*, … */; // also var, let 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 44,
+      "entries": [
+        {
+          "start": 7,
+          "end": 44,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 13,
+            "end": 18
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 13,
+            "end": 18
+          }
+        },
+        {
+          "start": 7,
+          "end": 44,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name2",
+            "start": 24,
+            "end": 29
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "name2",
+            "start": 24,
+            "end": 29
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export default class { /* … */ } 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 34,
+      "entries": [
+        {
+          "start": 15,
+          "end": 34,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Default",
+            "start": 7,
+            "end": 14
+          },
+          "localName": {
+            "kind": "None"
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export default class ClassName { /* … */ } 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 44,
+      "entries": [
+        {
+          "start": 15,
+          "end": 44,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Default",
+            "start": 7,
+            "end": 14
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "ClassName",
+            "start": 21,
+            "end": 30
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export default expression; 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 26,
+      "entries": [
+        {
+          "start": 15,
+          "end": 25,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Default",
+            "start": 7,
+            "end": 14
+          },
+          "localName": {
+            "kind": "Default",
+            "name": "expression",
+            "start": 15,
+            "end": 25
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export default function () { /* … */ } 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 40,
+      "entries": [
+        {
+          "start": 15,
+          "end": 40,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Default",
+            "start": 7,
+            "end": 14
+          },
+          "localName": {
+            "kind": "None"
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export default function functionName() { /* … */ } 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 52,
+      "entries": [
+        {
+          "start": 15,
+          "end": 52,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Default",
+            "start": 7,
+            "end": 14
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "functionName",
+            "start": 24,
+            "end": 36
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export default function* () { /* … */ } 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 41,
+      "entries": [
+        {
+          "start": 15,
+          "end": 41,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Default",
+            "start": 7,
+            "end": 14
+          },
+          "localName": {
+            "kind": "None"
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export default function* generatorFunctionName() { /* … */ } 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 62,
+      "entries": [
+        {
+          "start": 15,
+          "end": 62,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Default",
+            "start": 7,
+            "end": 14
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "generatorFunctionName",
+            "start": 25,
+            "end": 46
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export function functionName() { /* … */ } 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 44,
+      "entries": [
+        {
+          "start": 7,
+          "end": 44,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "functionName",
+            "start": 16,
+            "end": 28
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "functionName",
+            "start": 16,
+            "end": 28
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export function* generatorFunctionName() { /* … */ } 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 54,
+      "entries": [
+        {
+          "start": 7,
+          "end": 54,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "generatorFunctionName",
+            "start": 17,
+            "end": 38
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "generatorFunctionName",
+            "start": 17,
+            "end": 38
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > export let name1, name2/*, … */; // also var 1`] = `
+"{
+  "staticImports": [],
+  "staticExports": [
+    {
+      "start": 0,
+      "end": 34,
+      "entries": [
+        {
+          "start": 7,
+          "end": 34,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 11,
+            "end": 16
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "name1",
+            "start": 11,
+            "end": 16
+          }
+        },
+        {
+          "start": 7,
+          "end": 34,
+          "importName": {
+            "kind": "None"
+          },
+          "exportName": {
+            "kind": "Name",
+            "name": "name2",
+            "start": 18,
+            "end": 23
+          },
+          "localName": {
+            "kind": "Name",
+            "name": "name2",
+            "start": 18,
+            "end": 23
+          }
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`esm > import "module-name"; 1`] = `
+"{
+  "staticImports": [
+    {
+      "start": 0,
+      "end": 21,
+      "moduleRequest": {
+        "value": "module-name",
+        "start": 7,
+        "end": 20
+      },
+      "entries": []
+    }
+  ],
+  "staticExports": []
+}"
+`;
+
+exports[`esm > import * as name from "module-name"; 1`] = `
+"{
+  "staticImports": [
+    {
+      "start": 0,
+      "end": 36,
+      "moduleRequest": {
+        "value": "module-name",
+        "start": 22,
+        "end": 35
+      },
+      "entries": [
+        {
+          "importName": {
+            "kind": "NamespaceObject"
+          },
+          "localName": {
+            "value": "name",
+            "start": 12,
+            "end": 16
+          },
+          "isType": false
+        }
+      ]
+    }
+  ],
+  "staticExports": []
+}"
+`;
+
+exports[`esm > import { "string name" as alias } from "module-name"; 1`] = `
+"{
+  "staticImports": [
+    {
+      "start": 0,
+      "end": 53,
+      "moduleRequest": {
+        "value": "module-name",
+        "start": 39,
+        "end": 52
+      },
+      "entries": [
+        {
+          "importName": {
+            "kind": "Name",
+            "name": "string name",
+            "start": 9,
+            "end": 22
+          },
+          "localName": {
+            "value": "alias",
+            "start": 26,
+            "end": 31
+          },
+          "isType": false
+        }
+      ]
+    }
+  ],
+  "staticExports": []
+}"
+`;
+
+exports[`esm > import { default as alias } from "module-name"; 1`] = `
+"{
+  "staticImports": [
+    {
+      "start": 0,
+      "end": 47,
+      "moduleRequest": {
+        "value": "module-name",
+        "start": 33,
+        "end": 46
+      },
+      "entries": [
+        {
+          "importName": {
+            "kind": "Name",
+            "name": "default",
+            "start": 9,
+            "end": 16
+          },
+          "localName": {
+            "value": "alias",
+            "start": 20,
+            "end": 25
+          },
+          "isType": false
+        }
+      ]
+    }
+  ],
+  "staticExports": []
+}"
+`;
+
+exports[`esm > import { export1 } from "module-name"; 1`] = `
+"{
+  "staticImports": [
+    {
+      "start": 0,
+      "end": 38,
+      "moduleRequest": {
+        "value": "module-name",
+        "start": 24,
+        "end": 37
+      },
+      "entries": [
+        {
+          "importName": {
+            "kind": "Name",
+            "name": "export1",
+            "start": 9,
+            "end": 16
+          },
+          "localName": {
+            "value": "export1",
+            "start": 9,
+            "end": 16
+          },
+          "isType": false
+        }
+      ]
+    }
+  ],
+  "staticExports": []
+}"
+`;
+
+exports[`esm > import { export1 as alias1 } from "module-name"; 1`] = `
+"{
+  "staticImports": [
+    {
+      "start": 0,
+      "end": 48,
+      "moduleRequest": {
+        "value": "module-name",
+        "start": 34,
+        "end": 47
+      },
+      "entries": [
+        {
+          "importName": {
+            "kind": "Name",
+            "name": "export1",
+            "start": 9,
+            "end": 16
+          },
+          "localName": {
+            "value": "alias1",
+            "start": 20,
+            "end": 26
+          },
+          "isType": false
+        }
+      ]
+    }
+  ],
+  "staticExports": []
+}"
+`;
+
+exports[`esm > import { export1, export2 } from "module-name"; 1`] = `
+"{
+  "staticImports": [
+    {
+      "start": 0,
+      "end": 47,
+      "moduleRequest": {
+        "value": "module-name",
+        "start": 33,
+        "end": 46
+      },
+      "entries": [
+        {
+          "importName": {
+            "kind": "Name",
+            "name": "export1",
+            "start": 9,
+            "end": 16
+          },
+          "localName": {
+            "value": "export1",
+            "start": 9,
+            "end": 16
+          },
+          "isType": false
+        },
+        {
+          "importName": {
+            "kind": "Name",
+            "name": "export2",
+            "start": 18,
+            "end": 25
+          },
+          "localName": {
+            "value": "export2",
+            "start": 18,
+            "end": 25
+          },
+          "isType": false
+        }
+      ]
+    }
+  ],
+  "staticExports": []
+}"
+`;
+
+exports[`esm > import { export1, export2 as alias2, /* … */ } from "module-name"; 1`] = `
+"{
+  "staticImports": [
+    {
+      "start": 0,
+      "end": 68,
+      "moduleRequest": {
+        "value": "module-name",
+        "start": 54,
+        "end": 67
+      },
+      "entries": [
+        {
+          "importName": {
+            "kind": "Name",
+            "name": "export1",
+            "start": 9,
+            "end": 16
+          },
+          "localName": {
+            "value": "export1",
+            "start": 9,
+            "end": 16
+          },
+          "isType": false
+        },
+        {
+          "importName": {
+            "kind": "Name",
+            "name": "export2",
+            "start": 18,
+            "end": 25
+          },
+          "localName": {
+            "value": "alias2",
+            "start": 29,
+            "end": 35
+          },
+          "isType": false
+        }
+      ]
+    }
+  ],
+  "staticExports": []
+}"
+`;
+
+exports[`esm > import defaultExport from "module-name"; 1`] = `
+"{
+  "staticImports": [
+    {
+      "start": 0,
+      "end": 40,
+      "moduleRequest": {
+        "value": "module-name",
+        "start": 26,
+        "end": 39
+      },
+      "entries": [
+        {
+          "importName": {
+            "kind": "Default",
+            "start": 7,
+            "end": 20
+          },
+          "localName": {
+            "value": "defaultExport",
+            "start": 7,
+            "end": 20
+          },
+          "isType": false
+        }
+      ]
+    }
+  ],
+  "staticExports": []
+}"
+`;
+
+exports[`esm > import defaultExport, * as name from "module-name"; 1`] = `
+"{
+  "staticImports": [
+    {
+      "start": 0,
+      "end": 51,
+      "moduleRequest": {
+        "value": "module-name",
+        "start": 37,
+        "end": 50
+      },
+      "entries": [
+        {
+          "importName": {
+            "kind": "Default",
+            "start": 7,
+            "end": 20
+          },
+          "localName": {
+            "value": "defaultExport",
+            "start": 7,
+            "end": 20
+          },
+          "isType": false
+        },
+        {
+          "importName": {
+            "kind": "NamespaceObject"
+          },
+          "localName": {
+            "value": "name",
+            "start": 27,
+            "end": 31
+          },
+          "isType": false
+        }
+      ]
+    }
+  ],
+  "staticExports": []
+}"
+`;
+
+exports[`esm > import defaultExport, { export1, /* … */ } from "module-name"; 1`] = `
+"{
+  "staticImports": [
+    {
+      "start": 0,
+      "end": 64,
+      "moduleRequest": {
+        "value": "module-name",
+        "start": 50,
+        "end": 63
+      },
+      "entries": [
+        {
+          "importName": {
+            "kind": "Default",
+            "start": 7,
+            "end": 20
+          },
+          "localName": {
+            "value": "defaultExport",
+            "start": 7,
+            "end": 20
+          },
+          "isType": false
+        },
+        {
+          "importName": {
+            "kind": "Name",
+            "name": "export1",
+            "start": 24,
+            "end": 31
+          },
+          "localName": {
+            "value": "export1",
+            "start": 24,
+            "end": 31
+          },
+          "isType": false
+        }
+      ]
+    }
+  ],
+  "staticExports": []
+}"
+`;

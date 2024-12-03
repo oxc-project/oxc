@@ -166,11 +166,11 @@ pub struct ImportEntry<'a> {
 /// `ImportName` For `ImportEntry`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ImportImportName<'a> {
-    /// Name
+    /// `import { x } from "mod"`
     Name(NameSpan<'a>),
-    /// Namespace Object
+    /// `import * as ns from "mod"`
     NamespaceObject,
-    /// Default
+    /// `import defaultExport from "mod"`
     Default(Span),
 }
 

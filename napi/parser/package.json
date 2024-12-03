@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "napi build --platform --release --js bindings.js",
+    "build-dev": "napi build --platform --js bindings.js",
     "test": "vitest --typecheck run ./test"
   },
   "napi": {

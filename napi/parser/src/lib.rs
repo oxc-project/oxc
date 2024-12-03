@@ -11,7 +11,7 @@ use oxc::{
     allocator::Allocator,
     ast::CommentKind,
     diagnostics::{Error, NamedSource},
-    napi::parse::{Comment, ParseResult, ParserOptions},
+    napi::parse::{Comment, EcmaScriptModule, ParseResult, ParserOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
@@ -81,7 +81,8 @@ fn parse_with_return(source_text: &str, options: &ParserOptions) -> ParseResult 
         })
         .collect::<Vec<Comment>>();
 
-    ParseResult { program, comments, errors }
+    let module = EcmaScriptModule::from(&ret.module_record);
+    ParseResult { program, module, comments, errors }
 }
 
 /// Parse synchronously.
