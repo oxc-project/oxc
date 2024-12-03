@@ -361,8 +361,6 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-module.exports.moduleLexerAsync = nativeBinding.moduleLexerAsync
-module.exports.moduleLexerSync = nativeBinding.moduleLexerSync
 module.exports.parseAsync = nativeBinding.parseAsync
 module.exports.parseSync = nativeBinding.parseSync
 module.exports.parseWithoutReturn = nativeBinding.parseWithoutReturn

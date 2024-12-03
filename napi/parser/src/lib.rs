@@ -1,5 +1,3 @@
-mod module_lexer;
-
 use std::sync::Arc;
 
 use napi::{bindgen_prelude::AsyncTask, Task};
@@ -13,8 +11,6 @@ use oxc::{
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
-
-pub use crate::module_lexer::*;
 
 fn parse<'a>(
     allocator: &'a Allocator,
