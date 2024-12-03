@@ -104,7 +104,7 @@ declare_oxc_lint!(
     /// <https://reactjs.org/docs/hooks-rules.html>
     ///
     RulesOfHooks,
-    nursery
+    correctness
 );
 
 impl Rule for RulesOfHooks {
@@ -1228,7 +1228,7 @@ fn test() {
            if (a) return;
            useHook2();
          } while (b);
-       
+
          do {
            useHook3();
            if (c) return;
