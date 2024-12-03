@@ -1945,13 +1945,15 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "1.0.0"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05e75cb20b3bb96af20d320f71d67c9f20b5bedb253cae36881fedef51f7688f"
+checksum = "f15cc100c3a8070aa20420a6e1eafa612ebfc3d86db01cb92d928abf082d9696"
 dependencies = [
  "base64-simd",
  "cfg-if",
  "cow-utils",
+ "napi",
+ "napi-derive",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -2037,6 +2039,7 @@ dependencies = [
  "napi-derive",
  "oxc",
  "oxc_napi",
+ "oxc_sourcemap",
 ]
 
 [[package]]

@@ -8,7 +8,7 @@ import oxc from 'oxc-parser';
 
 const sourceText = "let foo: Foo = 'foo';";
 // Filename extension is used to determine which dialect to parse source as.
-const filename = "test.tsx";
+const filename = 'test.tsx';
 
 test(oxc.parseSync(filename, sourceText, options));
 test(await oxc.parseAsync(filename, sourceText, options));

@@ -1,6 +1,6 @@
 use napi_derive::napi;
 
-use super::source_map::SourceMap;
+use oxc_sourcemap::napi::SourceMap;
 
 #[napi(object)]
 pub struct IsolatedDeclarationsResult {

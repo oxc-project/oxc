@@ -22,7 +22,7 @@ doctest = false
 
 [dependencies]
 oxc_isolated_declarations = { workspace = true }
-oxc_sourcemap = { workspace = true }
+oxc_sourcemap = { workspace = true, features = ["napi"] }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 oxc_transformer = { workspace = true }

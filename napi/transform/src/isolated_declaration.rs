@@ -9,10 +9,8 @@ use oxc::{
     parser::Parser,
     span::SourceType,
 };
-use oxc_napi::{
-    isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult},
-    source_map::SourceMap,
-};
+use oxc_napi::isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult};
+use oxc_sourcemap::napi::SourceMap;
 
 use crate::errors::wrap_diagnostics;
 

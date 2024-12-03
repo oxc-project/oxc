@@ -8,9 +8,10 @@ use napi::Either;
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
+use oxc_sourcemap::napi::SourceMap;
 use oxc_transformer::{EnvOptions, JsxRuntime, RewriteExtensionsMode};
 
-use super::{isolated_declarations::IsolatedDeclarationsOptions, source_map::SourceMap};
+use super::isolated_declarations::IsolatedDeclarationsOptions;
 
 #[derive(Default)]
 #[napi(object)]

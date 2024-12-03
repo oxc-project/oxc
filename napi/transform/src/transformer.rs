@@ -11,10 +11,8 @@ use oxc::{
     transformer::{InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefinesConfig},
     CompilerInterface,
 };
-use oxc_napi::{
-    source_map::SourceMap,
-    transform::{TransformOptions, TransformResult},
-};
+use oxc_napi::transform::{TransformOptions, TransformResult};
+use oxc_sourcemap::napi::SourceMap;
 
 use crate::errors::wrap_diagnostics;
 
