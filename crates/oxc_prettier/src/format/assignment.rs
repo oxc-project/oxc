@@ -99,7 +99,7 @@ pub(super) fn print_assignment<'a>(
             let right_doc = {
                 let mut parts = p.vec();
                 parts.push(group!(p, right_doc));
-                Doc::IndentIfBreak(IndentIfBreak::new(parts).with_id(group_id))
+                p.indent_if_break(parts, Some(group_id))
             };
 
             group!(p, group!(p, left_doc), op, after_op, right_doc)

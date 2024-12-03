@@ -83,48 +83,37 @@ pub struct IndentIfBreak<'a> {
     pub group_id: Option<GroupId>,
 }
 
-impl<'a> IndentIfBreak<'a> {
-    pub fn new(contents: Vec<'a, Doc<'a>>) -> Self {
-        Self { contents, group_id: None }
-    }
-
-    pub fn with_id(mut self, id: GroupId) -> Self {
-        self.group_id = Some(id);
-        self
-    }
-}
-
 #[derive(Debug)]
 pub struct Fill<'a> {
-    pub parts: Vec<'a, Doc<'a>>,
+    pub contents: Vec<'a, Doc<'a>>,
 }
 
 // Printer utils
 impl<'a> Fill<'a> {
     pub fn drain_out_pair(&mut self) -> (Option<Doc<'a>>, Option<Doc<'a>>) {
-        let content = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
-        let whitespace = if self.parts.len() > 0 { Some(self.parts.remove(0)) } else { None };
+        let content = if self.contents.len() > 0 { Some(self.contents.remove(0)) } else { None };
+        let whitespace = if self.contents.len() > 0 { Some(self.contents.remove(0)) } else { None };
         (content, whitespace)
     }
 
     pub fn dequeue(&mut self) -> Option<Doc<'a>> {
-        if self.parts.len() > 0 {
-            Some(self.parts.remove(0))
+        if self.contents.len() > 0 {
+            Some(self.contents.remove(0))
         } else {
             None
         }
     }
 
     pub fn enqueue(&mut self, doc: Doc<'a>) {
-        self.parts.insert(0, doc);
+        self.contents.insert(0, doc);
     }
 
     pub fn parts(&self) -> &[Doc<'a>] {
-        &self.parts
+        &self.contents
     }
 
     pub fn take_parts(self) -> Vec<'a, Doc<'a>> {
-        self.parts
+        self.contents
     }
 }
 

@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, Box, String, Vec};
 
 use crate::{
-    ir::{Doc, Fill, IfBreak, Line},
+    ir::{Doc, Fill, IfBreak, IndentIfBreak, Line},
     p_vec, GroupId,
 };
 
@@ -58,16 +58,16 @@ pub trait DocBuilder<'a> {
         [hardline, Doc::BreakParent]
     }
 
-    fn indent(&self, items: Vec<'a, Doc<'a>>) -> Doc<'a> {
-        Doc::Indent(items)
+    fn indent(&self, contents: Vec<'a, Doc<'a>>) -> Doc<'a> {
+        Doc::Indent(contents)
     }
 
-    fn array(&self, items: Vec<'a, Doc<'a>>) -> Doc<'a> {
-        Doc::Array(items)
+    fn array(&self, contents: Vec<'a, Doc<'a>>) -> Doc<'a> {
+        Doc::Array(contents)
     }
 
-    fn fill(&self, parts: Vec<'a, Doc<'a>>) -> Doc<'a> {
-        Doc::Fill(Fill { parts })
+    fn fill(&self, contents: Vec<'a, Doc<'a>>) -> Doc<'a> {
+        Doc::Fill(Fill { contents })
     }
 
     fn if_break(
@@ -81,6 +81,10 @@ pub trait DocBuilder<'a> {
             flat_contents: self.boxed(flat_contents),
             group_id,
         })
+    }
+
+    fn indent_if_break(&self, contents: Vec<'a, Doc<'a>>, group_id: Option<GroupId>) -> Doc<'a> {
+        Doc::IndentIfBreak(IndentIfBreak { contents, group_id })
     }
 
     // TODO: Just use `Doc` instead of `Separator`...?

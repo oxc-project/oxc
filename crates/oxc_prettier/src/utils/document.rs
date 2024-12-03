@@ -22,7 +22,7 @@ pub fn will_break(doc: &mut Doc<'_>) -> bool {
         | Doc::Indent(arr)
         | Doc::LineSuffix(arr)
         | Doc::IndentIfBreak(IndentIfBreak { contents: arr, .. }) => check_array(arr),
-        Doc::Fill(doc) => check_array(&mut doc.parts),
+        Doc::Fill(doc) => check_array(&mut doc.contents),
         Doc::Line(doc) => doc.hard,
         Doc::Str(_) => false,
     }
