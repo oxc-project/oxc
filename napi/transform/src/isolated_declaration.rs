@@ -6,12 +6,12 @@ use oxc::{
     allocator::Allocator,
     codegen::{CodeGenerator, CodegenOptions},
     isolated_declarations::IsolatedDeclarations,
-    napi::{
-        isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult},
-        source_map::SourceMap,
-    },
     parser::Parser,
     span::SourceType,
+};
+use oxc_napi::{
+    isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult},
+    source_map::SourceMap,
 };
 
 use crate::errors::wrap_diagnostics;

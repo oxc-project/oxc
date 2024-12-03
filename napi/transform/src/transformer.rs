@@ -7,13 +7,13 @@ use oxc::{
     codegen::CodegenReturn,
     diagnostics::OxcDiagnostic,
     isolated_declarations::IsolatedDeclarationsOptions,
-    napi::{
-        source_map::SourceMap,
-        transform::{TransformOptions, TransformResult},
-    },
     span::SourceType,
     transformer::{InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefinesConfig},
     CompilerInterface,
+};
+use oxc_napi::{
+    source_map::SourceMap,
+    transform::{TransformOptions, TransformResult},
 };
 
 use crate::errors::wrap_diagnostics;

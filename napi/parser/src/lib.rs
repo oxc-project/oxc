@@ -11,10 +11,10 @@ use oxc::{
     allocator::Allocator,
     ast::CommentKind,
     diagnostics::{Error, NamedSource},
-    napi::parse::{Comment, EcmaScriptModule, ParseResult, ParserOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
+use oxc_napi::parse::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
 
 fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
     match options.lang.as_deref() {

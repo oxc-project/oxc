@@ -38,15 +38,11 @@ oxc_isolated_declarations = { workspace = true, optional = true }
 oxc_mangler = { workspace = true, optional = true }
 oxc_minifier = { workspace = true, optional = true }
 oxc_semantic = { workspace = true, optional = true }
-oxc_sourcemap = { workspace = true, optional = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 oxc_transformer = { workspace = true, optional = true }
 
 napi = { workspace = true, optional = true, features = ["async"] }
-napi-derive = { workspace = true, optional = true }
-
-rustc-hash = { workspace = true, optional = true }
 
 [features]
 full = [
@@ -56,11 +52,9 @@ full = [
   "semantic",
   "transformer",
   "isolated_declarations",
-  "sourcemap",
   "cfg",
 ]
 
-parser = [] # for napi
 semantic = ["oxc_semantic"]
 transformer = ["oxc_transformer"]
 minifier = ["oxc_mangler", "oxc_minifier"]
@@ -76,11 +70,7 @@ serialize = [
   "oxc_syntax/serialize",
 ]
 
-sourcemap = ["oxc_sourcemap"]
-sourcemap_concurrent = ["oxc_sourcemap/concurrent", "sourcemap"]
-
 wasm = ["oxc_transformer/wasm"]
-napi = ["dep:napi", "dep:napi-derive", "dep:rustc-hash"]
 
 [package.metadata.docs.rs]
 all-features = true

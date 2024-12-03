@@ -1385,7 +1385,6 @@ name = "oxc"
 version = "0.38.0"
 dependencies = [
  "napi",
- "napi-derive",
  "oxc_allocator",
  "oxc_ast",
  "oxc_cfg",
@@ -1397,11 +1396,9 @@ dependencies = [
  "oxc_parser",
  "oxc_regular_expression",
  "oxc_semantic",
- "oxc_sourcemap",
  "oxc_span",
  "oxc_syntax",
  "oxc_transformer",
- "rustc-hash",
 ]
 
 [[package]]
@@ -1798,6 +1795,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_napi"
+version = "0.38.0"
+dependencies = [
+ "napi",
+ "napi-derive",
+ "oxc_isolated_declarations",
+ "oxc_sourcemap",
+ "oxc_span",
+ "oxc_syntax",
+ "oxc_transformer",
+ "rustc-hash",
+]
+
+[[package]]
 name = "oxc_parser"
 version = "0.38.0"
 dependencies = [
@@ -1828,6 +1839,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
+ "oxc_napi",
  "serde_json",
 ]
 
@@ -1940,7 +1952,6 @@ dependencies = [
  "base64-simd",
  "cfg-if",
  "cow-utils",
- "rayon",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -2025,6 +2036,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
+ "oxc_napi",
 ]
 
 [[package]]

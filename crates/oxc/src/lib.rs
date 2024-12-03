@@ -3,9 +3,6 @@
 #[cfg(feature = "full")]
 mod compiler;
 
-#[cfg(feature = "napi")]
-pub mod napi;
-
 #[cfg(feature = "full")]
 pub use compiler::{Compiler, CompilerInterface};
 
@@ -110,15 +107,6 @@ pub mod isolated_declarations {
     //! for more information.
     #[doc(inline)]
     pub use oxc_isolated_declarations::*;
-}
-
-#[cfg(feature = "sourcemap")]
-pub mod sourcemap {
-    //! Source Maps
-    //!
-    //! See the [`oxc_sourcemap` module-level documentation](oxc_sourcemap) for more information.
-    #[doc(inline)]
-    pub use oxc_sourcemap::*;
 }
 
 #[cfg(feature = "cfg")]
