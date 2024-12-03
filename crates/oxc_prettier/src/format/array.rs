@@ -86,9 +86,9 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
         } else if needs_forced_trailing_comma {
             p.text(",")
         } else if should_use_concise_formatting {
-            p.if_break(p.boxed(p.text(",")), p.boxed(p.text("")), Some(id))
+            p.if_break(p.text(","), p.text(""), Some(id))
         } else {
-            p.if_break(p.boxed(p.text(",")), p.boxed(p.text("")), None)
+            p.if_break(p.text(","), p.text(""), None)
         }
     };
 

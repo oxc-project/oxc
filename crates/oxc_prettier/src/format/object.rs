@@ -154,7 +154,7 @@ pub(super) fn print_object_properties<'a>(
                 _ => true,
             }
         {
-            parts.push(p.if_break(p.boxed(p.text(member_separator)), p.boxed(p.text("")), None));
+            parts.push(p.if_break(p.text(member_separator), p.text(""), None));
         }
         parts.push(if p.options.bracket_spacing { p.line() } else { p.softline() });
         parts.push(p.text("}"));

@@ -160,10 +160,10 @@ pub(super) fn print_return_or_throw_argument<'a>(
                 let argument_doc = argument.format(p);
                 group![
                     p,
-                    p.if_break(p.boxed(p.text("(")), p.boxed(p.text("")), None),
+                    p.if_break(p.text("("), p.text(""), None),
                     p.indent(p_vec!(p, p.softline(), argument_doc)),
                     p.softline(),
-                    p.if_break(p.boxed(p.text(")")), p.boxed(p.text("")), None),
+                    p.if_break(p.text(")"), p.text(""), None),
                 ]
             } else {
                 argument.format(p)

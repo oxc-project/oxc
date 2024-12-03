@@ -177,7 +177,7 @@ pub fn print_call_arguments<'a>(
     if should_break {
         printed_arguments.insert(0, p.softline());
         parts.push(p.indent(printed_arguments));
-        parts.push(p.if_break(p.boxed(p.text(",")), p.boxed(p.text("")), None));
+        parts.push(p.if_break(p.text(","), p.text(""), None));
         parts.push(p.softline());
     } else {
         parts.extend(printed_arguments);

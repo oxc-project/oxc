@@ -123,8 +123,8 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
                         p.array(p.join(Separator::CommaLine, docs))
                     )),
                     p.if_break(
-                        p.boxed(p.text(if p.should_print_es5_comma() { "," } else { "" })),
-                        p.boxed(p.text("",)),
+                        p.text(if p.should_print_es5_comma() { "," } else { "" }),
+                        p.text("",),
                         None,
                     ),
                     if p.options.bracket_spacing { p.line() } else { p.softline() },

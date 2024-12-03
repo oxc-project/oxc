@@ -72,11 +72,15 @@ pub trait DocBuilder<'a> {
 
     fn if_break(
         &self,
-        break_contents: Box<'a, Doc<'a>>,
-        flat_contents: Box<'a, Doc<'a>>,
+        break_contents: Doc<'a>,
+        flat_contents: Doc<'a>,
         group_id: Option<GroupId>,
     ) -> Doc<'a> {
-        Doc::IfBreak(IfBreak { break_contents, flat_contents, group_id })
+        Doc::IfBreak(IfBreak {
+            break_contents: self.boxed(break_contents),
+            flat_contents: self.boxed(flat_contents),
+            group_id,
+        })
     }
 
     // TODO: Just use `Doc` instead of `Separator`...?

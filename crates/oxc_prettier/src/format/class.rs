@@ -395,8 +395,8 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     if should_indent_only_heritage_clauses(class) {
         parts.push(p.if_break(
-            p.boxed(p.line()),
-            p.boxed(p.text("")),
+            p.line(),
+            p.text(""),
             None, // ToDo - how to attach group id
         ));
     } else if class.super_class.is_some() {

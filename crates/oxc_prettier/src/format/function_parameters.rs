@@ -141,11 +141,7 @@ pub(super) fn print_function_parameters<'a>(
     parts.push(indented);
     let skip_dangling_comma = params.rest.is_some()
         || matches!(p.parent_kind(), AstKind::Function(func) if func.this_param.is_some());
-    parts.push(p.if_break(
-        p.boxed(p.text(if skip_dangling_comma { "" } else { "," })),
-        p.boxed(p.text("")),
-        None,
-    ));
+    parts.push(p.if_break(p.text(if skip_dangling_comma { "" } else { "," }), p.text(""), None));
     parts.push(p.softline());
     if need_parens {
         parts.push(p.text(")"));
