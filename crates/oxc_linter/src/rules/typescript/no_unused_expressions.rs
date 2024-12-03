@@ -58,7 +58,9 @@ impl Rule for NoUnusedExpressions {
             return;
         };
 
-        if self.is_disallowed(&expression_stmt.expression) {
+        if self.is_disallowed(&expression_stmt.expression)
+            && !is_parent_arrow_function_expression(node, ctx)
+        {
             ctx.diagnostic(no_unused_expressions_diagnostic(expression_stmt.span));
         }
     }
@@ -87,6 +89,20 @@ impl Rule for NoUnusedExpressions {
                 .unwrap_or_default(),
         }))
     }
+}
+
+fn is_parent_arrow_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let Some(parent) = ctx.nodes().parent_node(node.id()) else { return false };
+
+    let AstKind::FunctionBody(_) = parent.kind() else { return false };
+
+    let Some(grand_parent) = ctx.nodes().parent_node(parent.id()) else { return false };
+
+    let AstKind::ArrowFunctionExpression(arrow_function_expression) = grand_parent.kind() else {
+        return false;
+    };
+
+    arrow_function_expression.expression
 }
 
 impl NoUnusedExpressions {
@@ -265,6 +281,7 @@ fn test() {
             "foo ? import('./foo') : import('./bar');",
             Some(serde_json::json!([{ "allowTernary": true }])),
         ),
+        ("const _func = (value: number) => value + 1;", None),
     ];
 
     let fail = vec![
@@ -411,6 +428,7 @@ fn test() {
 			      ",
             None,
         ),
+        ("const _func = (value: number) => { value + 1; }", None),
     ];
 
     Tester::new(NoUnusedExpressions::NAME, NoUnusedExpressions::CATEGORY, pass, fail)
