@@ -1,6 +1,5 @@
 use std::ops::Deref;
 
-use oxc_allocator::IntoIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
 use oxc_semantic::{IsGlobalReference, SymbolTable};
@@ -39,8 +38,7 @@ impl<'a> Ctx<'a, '_> {
                 self.ast.expression_numeric_literal(span, n, None, number_base)
             }
             ConstantValue::BigInt(n) => {
-                let raw: &str = (n.to_string() + "n").into_in(&self.ast.allocator);
-                self.ast.expression_big_int_literal(span, raw, BigintBase::Decimal)
+                self.ast.expression_big_int_literal(span, n.to_string() + "n", BigintBase::Decimal)
             }
             ConstantValue::String(s) => self.ast.expression_string_literal(span, s, None),
             ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),

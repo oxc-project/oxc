@@ -13,7 +13,7 @@ fn test() {
     elements.push(ArrayExpressionElement::NumericLiteral(ast.alloc(ast.numeric_literal(
         SPAN,
         42f64,
-        "42",
+        None,
         NumberBase::Decimal,
     ))));
     elements.push(ArrayExpressionElement::StringLiteral(

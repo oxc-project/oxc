@@ -75,17 +75,8 @@ impl NumericLiteral<'_> {
     /// Provide a fallback for converting NumericLiteral's value to a string if `raw` is None
     pub fn raw_str(&self) -> Cow<str> {
         match self.raw.as_ref() {
-            Some(raw) => return Cow::Borrowed(raw),
-            None => {
-                let value = self.value;
-                let s = match self.base {
-                    NumberBase::Binary => format!("{:#b}", value as i64),
-                    NumberBase::Decimal | NumberBase::Float =>  format!("{}", value),
-                    NumberBase::Hex => format!("{:#x}", value as i64),
-                    NumberBase::Octal => format!("{:#o}", value as i64),
-                };
-                Cow::Owned(s)
-            }
+            Some(raw) => Cow::Borrowed(raw),
+            None => Cow::Owned(format!("{}", self.value)),
         }
     }
 }

@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{CloneIn, IntoIn};
+use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::ToInt32;
 use oxc_span::{Atom, GetSpan, SPAN};

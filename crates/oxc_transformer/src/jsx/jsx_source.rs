@@ -154,24 +154,16 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
 
         let line_number = {
             let key = ctx.ast.property_key_identifier_name(SPAN, "lineNumber");
-            let value = ctx.ast.expression_numeric_literal(
-                SPAN,
-                line as f64,
-                None,
-                NumberBase::Decimal,
-            );
+            let value =
+                ctx.ast.expression_numeric_literal(SPAN, line as f64, None, NumberBase::Decimal);
             ctx.ast
                 .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
         };
 
         let column_number = {
             let key = ctx.ast.property_key_identifier_name(SPAN, "columnNumber");
-            let value = ctx.ast.expression_numeric_literal(
-                SPAN,
-                column as f64,
-                None,
-                NumberBase::Decimal,
-            );
+            let value =
+                ctx.ast.expression_numeric_literal(SPAN, column as f64, None, NumberBase::Decimal);
             ctx.ast
                 .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
         };

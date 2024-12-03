@@ -364,7 +364,11 @@ impl<'a> ParserImpl<'a> {
                     pat.map_or_else(|| RegExpPattern::Invalid(pattern_text), RegExpPattern::Pattern)
                 },
             );
-        Ok(self.ast.reg_exp_literal(self.end_span(span), RegExp { pattern, flags }, Some(Atom::from(raw))))
+        Ok(self.ast.reg_exp_literal(
+            self.end_span(span),
+            RegExp { pattern, flags },
+            Some(Atom::from(raw)),
+        ))
     }
 
     fn parse_regex_pattern(
