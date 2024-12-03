@@ -16,8 +16,22 @@ use crate::common::helper_loader::Helper;
 
 use super::{
     utils::{create_assignment, create_underscore_ident_name},
-    ClassProperties, PrivateProp,
+    ClassProperties,
 };
+
+/// Details of a private property resolved for a private field.
+///
+/// This is the return value of `lookup_private_property`.
+struct ResolvedPrivateProp<'a, 'b> {
+    /// Binding for temp var representing the property
+    prop_binding: &'b BoundIdentifier<'a>,
+    /// Binding for class (if it has one)
+    class_binding: Option<&'b BoundIdentifier<'a>>,
+    /// `true` if is a static property
+    is_static: bool,
+    /// `true` if class which defines this property is a class declaration
+    is_declaration: bool,
+}
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform private field expression.
@@ -44,18 +58,20 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) -> Expression<'a> {
         let prop_details = self.lookup_private_property(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
-        let Some((prop, class_binding, is_declaration)) = prop_details else {
+        let Some(prop_details) = prop_details else {
             return Expression::PrivateFieldExpression(field_expr);
         };
-        let prop_ident = prop.binding.create_read_expression(ctx);
+        let ResolvedPrivateProp { prop_binding, class_binding, is_static, is_declaration } =
+            prop_details;
+        let prop_ident = prop_binding.create_read_expression(ctx);
 
         // TODO: Move this to top of function once `lookup_private_property` does not return `Option`
         let PrivateFieldExpression { span, object, .. } = field_expr.unbox();
 
-        if prop.is_static {
+        if is_static {
             // TODO: Ensure there are tests for nested classes with references to private static props
             // of outer class inside inner class, to make sure we're getting the right `class_binding`.
-            let class_binding = class_binding.as_ref().unwrap();
+            let class_binding = class_binding.unwrap();
 
             // If `object` is reference to class name, there's no need for the class brand assertion
             if let Some(reference_id) =
@@ -182,17 +198,17 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<(Expression<'a>, Expression<'a>)> {
         // TODO: Should never be `None` - only because implementation is incomplete.
-        let (prop, class_binding, is_declaration) =
+        let ResolvedPrivateProp { prop_binding, class_binding, is_static, is_declaration } =
             self.lookup_private_property(&field_expr.field)?;
-        let prop_ident = prop.binding.create_read_expression(ctx);
+        let prop_ident = prop_binding.create_read_expression(ctx);
 
         let object = ctx.ast.move_expression(&mut field_expr.object);
 
         // Get replacement for callee
-        let replacement = if prop.is_static {
+        let replacement = if is_static {
             // `object.#prop(arg)` -> `_assertClassBrand(Class, object, _prop)._.call(object, arg)`
             // or shortcut `_prop._.call(object, arg)`
-            let class_binding = class_binding.as_ref().unwrap();
+            let class_binding = class_binding.unwrap();
             let class_ident = class_binding.create_read_expression(ctx);
 
             // If `object` is reference to class name, there's no need for the class brand assertion
@@ -264,17 +280,19 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         let prop_details = self.lookup_private_property(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
-        let Some((prop, class_binding, is_declaration)) = prop_details else { return };
+        let Some(prop_details) = prop_details else { return };
+        let ResolvedPrivateProp { prop_binding, class_binding, is_static, is_declaration } =
+            prop_details;
 
         // Note: `transform_static_assignment_expression` and `transform_instance_assignment_expression`
         // are marked `#[inline]`, so hopefully compiler will see these clones of `BoundIdentifier`s
         // can be elided.
         // Can't break this up into separate functions otherwise, as `&BoundIdentifier`s keep `&self` ref
         // taken by `lookup_private_property` alive.
-        let prop_binding = prop.binding.clone();
+        let prop_binding = prop_binding.clone();
 
-        if prop.is_static {
-            let class_binding = class_binding.as_ref().unwrap().clone();
+        if is_static {
+            let class_binding = class_binding.unwrap().clone();
             self.transform_static_assignment_expression(
                 expr,
                 prop_binding,
@@ -613,9 +631,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         let prop_details = self.lookup_private_property(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
-        let Some((prop, class_binding, is_declaration)) = prop_details else { return };
-        let prop_ident = prop.binding.create_read_expression(ctx);
-        let prop_ident2 = prop.binding.create_read_expression(ctx);
+        let Some(prop_details) = prop_details else { return };
+        let ResolvedPrivateProp { prop_binding, class_binding, is_static, is_declaration } =
+            prop_details;
+
+        let prop_ident = prop_binding.create_read_expression(ctx);
+        let prop_ident2 = prop_binding.create_read_expression(ctx);
 
         let temp_var_name_base = get_var_name_from_node(field_expr);
         let temp_binding = ctx.generate_uid_in_current_scope(
@@ -627,7 +648,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // Only doing this first to match the order Babel creates temp vars.
         let object = ctx.ast.move_expression(&mut field_expr.object);
 
-        if prop.is_static {
+        if is_static {
             // TODO: If `object` is reference to class name, and class is declaration, use shortcuts:
             // `++Class.#prop` -> `_prop._ = ((_Class$prop = _prop._), ++_Class$prop)`
             // `Class.#prop++` -> `_prop._ = (_Class$prop = _prop._, _Class$prop2 = _Class$prop++, _Class$prop), _Class$prop2`
@@ -641,7 +662,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             //   (_object$prop = _assertClassBrand(Class, object, _prop)._, ++_object$prop)
             // )
             // ```
-            let class_binding = class_binding.as_ref().unwrap().clone();
+            let class_binding = class_binding.unwrap().clone();
 
             // Check if object (`object` in `object.#prop`) is a reference to class name
             // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
@@ -1032,15 +1053,20 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 
     /// Lookup details of private property referred to by `ident`.
-    fn lookup_private_property(
-        &self,
+    fn lookup_private_property<'b>(
+        &'b self,
         ident: &PrivateIdentifier<'a>,
-    ) -> Option<(&PrivateProp<'a>, &Option<BoundIdentifier<'a>>, /* is_declaration */ bool)> {
+    ) -> Option<ResolvedPrivateProp<'a, 'b>> {
         // Check for binding in closest class first, then enclosing classes
         // TODO: Check there are tests for bindings in enclosing classes.
         for private_props in self.private_props_stack.as_slice().iter().rev() {
             if let Some(prop) = private_props.props.get(&ident.name) {
-                return Some((prop, &private_props.class_binding, private_props.is_declaration));
+                return Some(ResolvedPrivateProp {
+                    prop_binding: &prop.binding,
+                    class_binding: private_props.class_binding.as_ref(),
+                    is_static: prop.is_static,
+                    is_declaration: private_props.is_declaration,
+                });
             }
         }
         // TODO: This should be unreachable. Only returning `None` because implementation is incomplete.
