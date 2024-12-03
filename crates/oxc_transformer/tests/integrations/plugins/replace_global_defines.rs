@@ -60,6 +60,16 @@ fn dot() {
 }
 
 #[test]
+fn dot_nested_with_overlap() {
+    let config = ReplaceGlobalDefinesConfig::new(&[
+        ("__OBJ__", "{\"process\":{\"env\":{\"SOMEVAR\":\"foo\"}}}"),
+        ("process.env.SOMEVAR", "\"SOMEVAR\""),
+    ])
+    .unwrap();
+    test("__OBJ__.process.env.SOMEVAR", "\"foo\"", config.clone());
+}
+
+#[test]
 fn dot_nested() {
     let config = ReplaceGlobalDefinesConfig::new(&[("process", "production")]).unwrap();
     test("foo.process.NODE_ENV", "foo.process.NODE_ENV", config.clone());
