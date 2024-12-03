@@ -227,8 +227,8 @@ struct PrivateProps<'a> {
     /// Private properties for class. Indexed by property name.
     // TODO(improve-on-babel): Order that temp vars are created in is not important. Use `FxHashMap` instead.
     props: FxIndexMap<Atom<'a>, PrivateProp<'a>>,
-    /// Binding for class name
-    class_name_binding: Option<BoundIdentifier<'a>>,
+    /// Binding for class, if class has name
+    class_binding: Option<BoundIdentifier<'a>>,
     /// `true` for class declaration, `false` for class expression
     is_declaration: bool,
 }

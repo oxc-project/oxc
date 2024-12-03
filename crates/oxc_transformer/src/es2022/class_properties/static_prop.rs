@@ -20,14 +20,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) {
         // TODO: Insert temp var if class binding is mutated.
 
-        let ClassName::Binding(class_name_binding) = &self.class_name else {
+        let ClassName::Binding(class_binding) = &self.class_name else {
             // Binding is initialized in 1st pass in `transform_class` when a static prop is found
             unreachable!();
         };
         // Unfortunately have to clone, because also pass `&mut self` to `StaticInitializerVisitor::new`
-        let class_name_binding = class_name_binding.clone();
+        let class_binding = class_binding.clone();
 
-        let mut replacer = StaticInitializerVisitor::new(class_name_binding, self, ctx);
+        let mut replacer = StaticInitializerVisitor::new(class_binding, self, ctx);
         replacer.visit_expression(value);
     }
 }
@@ -52,8 +52,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 //
 // TODO: Also re-parent child scopes.
 struct StaticInitializerVisitor<'a, 'ctx, 'v> {
-    /// Binding for class name.
-    class_name_binding: BoundIdentifier<'a>,
+    /// Binding for class (temp var).
+    class_binding: BoundIdentifier<'a>,
     /// `true` if class has private properties.
     class_has_private_props: bool,
     /// Incremented when entering a different `this` context, decremented when exiting it.
@@ -67,12 +67,12 @@ struct StaticInitializerVisitor<'a, 'ctx, 'v> {
 
 impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
     fn new(
-        class_name_binding: BoundIdentifier<'a>,
+        class_binding: BoundIdentifier<'a>,
         class_properties: &'v mut ClassProperties<'a, 'ctx>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
         Self {
-            class_name_binding,
+            class_binding,
             class_has_private_props: class_properties.private_props_stack.last().is_some(),
             this_depth: 0,
             class_properties,
@@ -219,7 +219,7 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
     /// Replace `this` with reference to class name binding.
     fn replace_this_with_class_name(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {
-            *expr = self.class_name_binding.create_spanned_read_expression(span, self.ctx);
+            *expr = self.class_binding.create_spanned_read_expression(span, self.ctx);
         }
     }
 

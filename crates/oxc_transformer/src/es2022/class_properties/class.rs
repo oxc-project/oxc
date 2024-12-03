@@ -342,13 +342,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         if private_props.is_empty() {
             self.private_props_stack.push(None);
         } else {
-            let class_name_binding = match &self.class_name {
+            let class_binding = match &self.class_name {
                 ClassName::Binding(binding) => Some(binding.clone()),
                 ClassName::Name(_) => None,
             };
             self.private_props_stack.push(Some(PrivateProps {
                 props: private_props,
-                class_name_binding,
+                class_binding,
                 is_declaration: self.is_declaration,
             }));
         }
@@ -460,11 +460,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             self.insert_private_static_init_assignment(ident, value, ctx);
         } else {
             // Convert to assignment or `_defineProperty` call, depending on `loose` option
-            let ClassName::Binding(class_name_binding) = &self.class_name else {
+            let ClassName::Binding(class_binding) = &self.class_name else {
                 // Binding is initialized in 1st pass in `transform_class` when a static prop is found
                 unreachable!();
             };
-            let assignee = class_name_binding.create_read_expression(ctx);
+            let assignee = class_binding.create_read_expression(ctx);
             let init_expr = self.create_init_assignment(prop, value, assignee, true, ctx);
             self.insert_expr_after_class(init_expr, ctx);
         }
