@@ -7,7 +7,6 @@ use crate::{
 
 #[derive(Clone, Copy)]
 pub enum Separator {
-    #[allow(unused)]
     Softline,
     Hardline,
     CommaLine, // [",", line]
@@ -133,7 +132,7 @@ pub trait DocBuilder<'a> {
                     Separator::Softline => parts.push(self.softline()),
                     Separator::Hardline => parts.extend(self.hardline()),
                     Separator::CommaLine => {
-                        parts.push(self.array(p_vec!(self, self.text(","), self.line())))
+                        parts.push(self.array(p_vec!(self, self.text(","), self.line())));
                     }
                 }
             }

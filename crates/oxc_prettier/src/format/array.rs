@@ -212,41 +212,38 @@ where
     F: Fn(&Prettier<'a>) -> Doc<'a>,
 {
     let mut parts = p.vec();
-    match arr {
-        Array::ArrayExpression(arr) => {
-            for (i, element) in arr.elements.iter().enumerate() {
-                let is_last = i == arr.elements.len() - 1;
-                let element_doc = element.format(p);
-                let part = if is_last {
-                    p.array(p_vec!(p, element_doc, trailing_comma_fn(p)))
-                } else {
-                    p.array(p_vec!(p, element_doc, p.text(",")))
-                };
-                parts.push(part);
+    if let Array::ArrayExpression(arr) = arr {
+        for (i, element) in arr.elements.iter().enumerate() {
+            let is_last = i == arr.elements.len() - 1;
+            let element_doc = element.format(p);
+            let part = if is_last {
+                p.array(p_vec!(p, element_doc, trailing_comma_fn(p)))
+            } else {
+                p.array(p_vec!(p, element_doc, p.text(",")))
+            };
+            parts.push(part);
 
-                if !is_last {
-                    if is_line_after_element_empty(p, element.span().end) {
-                        let mut space_parts = p.vec();
-                        space_parts.extend(p.hardline());
-                        space_parts.extend(p.hardline());
-                        parts.push(p.array(space_parts));
-                    } else if arr.elements.get(i + 1).is_some_and(|next| {
-                        p.has_comment(next.span(), CommentFlags::Leading | CommentFlags::Line)
-                    }) {
-                        let mut space_parts = p.vec();
-                        space_parts.extend(p.hardline());
-                        parts.push(p.array(space_parts));
-                    } else {
-                        parts.push(p.line());
-                    }
+            if !is_last {
+                if is_line_after_element_empty(p, element.span().end) {
+                    let mut space_parts = p.vec();
+                    space_parts.extend(p.hardline());
+                    space_parts.extend(p.hardline());
+                    parts.push(p.array(space_parts));
+                } else if arr.elements.get(i + 1).is_some_and(|next| {
+                    p.has_comment(next.span(), CommentFlags::Leading | CommentFlags::Line)
+                }) {
+                    let mut space_parts = p.vec();
+                    space_parts.extend(p.hardline());
+                    parts.push(p.array(space_parts));
+                } else {
+                    parts.push(p.line());
                 }
             }
         }
-        _ => {
-            // TODO: implement
-            let elements = print_array_elements(p, arr);
-            p.array(p_vec!(p, elements, trailing_comma_fn(p)));
-        }
+    } else {
+        // TODO: implement
+        let elements = print_array_elements(p, arr);
+        p.array(p_vec!(p, elements, trailing_comma_fn(p)));
     }
 
     p.fill(parts)

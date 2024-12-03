@@ -2,12 +2,6 @@
 //!
 //! See <https://github.com/prettier/prettier/blob/3.3.3/src/language-js/needs-parens.js>
 
-#![allow(
-    clippy::unused_self,
-    clippy::match_same_arms,
-    clippy::match_like_matches_macro,
-    clippy::single_match
-)]
 use oxc_ast::{
     ast::{
         match_member_expression, AssignmentTarget, ChainElement, ExportDefaultDeclarationKind,
@@ -25,6 +19,7 @@ use oxc_syntax::{
 use crate::{binaryish::BinaryishOperator, Prettier};
 
 impl<'a> Prettier<'a> {
+    // NOTE: Why this takes `mut`...?
     pub(crate) fn need_parens(&mut self, kind: AstKind<'a>) -> bool {
         if matches!(kind, AstKind::Program(_)) || kind.is_statement() || kind.is_declaration() {
             return false;
@@ -371,13 +366,12 @@ impl<'a> Prettier<'a> {
     fn check_update_unary(&self, span: Span) -> bool {
         match self.parent_kind() {
             AstKind::MemberExpression(member_expr) => member_expr.object().span() == span,
-            AstKind::TaggedTemplateExpression(_) => true,
             AstKind::CallExpression(call_expr) => call_expr.callee.span() == span,
             AstKind::NewExpression(new_expr) => new_expr.callee.span() == span,
             AstKind::BinaryExpression(bin_expr) => {
                 bin_expr.left.span() == span && bin_expr.operator == BinaryOperator::Exponential
             }
-            AstKind::TSNonNullExpression(_) => true,
+            AstKind::TaggedTemplateExpression(_) | AstKind::TSNonNullExpression(_) => true,
             _ => false,
         }
     }
@@ -404,8 +398,9 @@ impl<'a> Prettier<'a> {
         let current_kind = self.current_kind();
         let parent_kind = self.parent_kind();
         match parent_kind {
-            AstKind::TSAsExpression(_) => return !self.is_binary_cast_expression(span),
-            AstKind::TSSatisfiesExpression(_) => return !self.is_binary_cast_expression(span),
+            AstKind::TSAsExpression(_) | AstKind::TSSatisfiesExpression(_) => {
+                return !self.is_binary_cast_expression(span)
+            }
             AstKind::ConditionalExpression(_) => return self.is_binary_cast_expression(span),
             AstKind::NewExpression(new_expr) => return new_expr.callee.span() == span,
             AstKind::CallExpression(new_expr) => return new_expr.callee.span() == span,
@@ -577,7 +572,9 @@ impl<'a> Prettier<'a> {
             Expression::BinaryExpression(e) => Self::starts_with_no_lookahead_token(&e.left, span),
             Expression::LogicalExpression(e) => Self::starts_with_no_lookahead_token(&e.left, span),
             Expression::AssignmentExpression(e) => match &e.left {
-                AssignmentTarget::AssignmentTargetIdentifier(_) => false,
+                AssignmentTarget::AssignmentTargetIdentifier(_)
+                | AssignmentTarget::ArrayAssignmentTarget(_)
+                | AssignmentTarget::ObjectAssignmentTarget(_) => false,
                 AssignmentTarget::ComputedMemberExpression(e) => {
                     Self::starts_with_no_lookahead_token(&e.object, span)
                 }
@@ -602,8 +599,6 @@ impl<'a> Prettier<'a> {
                 AssignmentTarget::TSInstantiationExpression(e) => {
                     Self::starts_with_no_lookahead_token(&e.expression, span)
                 }
-                AssignmentTarget::ArrayAssignmentTarget(_)
-                | AssignmentTarget::ObjectAssignmentTarget(_) => false,
             },
             match_member_expression!(Expression) => {
                 Self::starts_with_no_lookahead_token(e.to_member_expression().object(), span)

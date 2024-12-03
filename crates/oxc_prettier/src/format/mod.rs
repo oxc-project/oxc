@@ -3,8 +3,6 @@
 //! References:
 //! * <https://github.com/prettier/prettier/blob/3.3.3/src/language-js/print/estree.js>
 
-#![allow(unused_variables)]
-
 mod array;
 mod arrow_function;
 mod assignment;
@@ -53,7 +51,6 @@ where
 }
 
 impl<'a> Format<'a> for Program<'a> {
-    #[allow(clippy::cast_possible_truncation)]
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, Program, {
             let mut parts = p.vec();
@@ -2977,7 +2974,7 @@ impl<'a> Format<'a> for RegExpFlags {
         if self.contains(Self::Y) {
             string.push('y');
         }
-        let sorted = &string.iter().collect::<String>();
+        let sorted = string.iter().collect::<String>();
         p.dynamic_text(&sorted)
     }
 }
