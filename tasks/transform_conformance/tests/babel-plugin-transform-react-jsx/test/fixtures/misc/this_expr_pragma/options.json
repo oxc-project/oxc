@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    [
+      "transform-react-jsx",
+      {
+        "runtime": "classic",
+        "pragma": "this.a"
+      }
+    ]
+  ]
+}

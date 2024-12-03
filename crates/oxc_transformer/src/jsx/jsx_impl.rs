@@ -314,8 +314,7 @@ fn get_import_source(jsx_runtime_importer: &str, react_importer_len: u32) -> Ato
 
 /// Pragma used in classic mode
 struct Pragma<'a> {
-    object: Atom<'a>,
-    properties: Vec<Atom<'a>>,
+    ident_parts: Vec<Atom<'a>>,
 }
 
 impl<'a> Pragma<'a> {
@@ -329,16 +328,12 @@ impl<'a> Pragma<'a> {
         ctx: &TransformCtx<'a>,
     ) -> Self {
         if let Some(pragma) = pragma {
-            let mut parts = pragma.split('.');
-
-            let object_name = parts.next().unwrap();
-            if object_name.is_empty() {
+            if pragma.is_empty() {
                 return Self::invalid(default_property_name, ctx);
             }
-            let props = parts.map(|item| ast.atom(item)).collect();
 
-            let object = ast.atom(object_name);
-            Self { object, properties: props }
+            let ident_parts = pragma.split('.').map(|item| ast.atom(item)).collect::<Vec<_>>();
+            Self { ident_parts }
         } else {
             Self::default(default_property_name)
         }
@@ -350,23 +345,28 @@ impl<'a> Pragma<'a> {
     }
 
     fn default(default_property_name: &'static str) -> Self {
-        Self { object: Atom::from("React"), properties: vec![Atom::from(default_property_name)] }
+        Self { ident_parts: vec![Atom::from("React"), Atom::from(default_property_name)] }
     }
 
     fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        let object = get_read_identifier_reference(SPAN, self.object.clone(), ctx);
-        Self::create_arbitrary_length_member_expr_or_ident(object, &self.properties, ctx)
-    }
-
-    /// create a static member expression without caring about the referenceId,
-    /// this function is always used to creat a tail part of a real member expression
-    fn create_arbitrary_length_member_expr_or_ident(
-        object: IdentifierReference<'a>,
-        list: &[Atom<'a>],
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let mut expr = Expression::Identifier(ctx.alloc(object));
-        for item in list {
+        let (mut expr, parts) = match &self.ident_parts[..] {
+            [] => unreachable!(),
+            [atom, rest @ ..] if atom == "this" => (ctx.ast.expression_this(SPAN), rest),
+            [first, second, rest @ ..] if first == "import" && second == "meta" => (
+                ctx.ast.expression_meta_property(
+                    SPAN,
+                    ctx.ast.identifier_name(SPAN, first),
+                    ctx.ast.identifier_name(SPAN, second),
+                ),
+                rest,
+            ),
+            [first, rest @ ..] => {
+                let object = get_read_identifier_reference(SPAN, first.clone(), ctx);
+                let expr = Expression::Identifier(ctx.alloc(object));
+                (expr, rest)
+            }
+        };
+        for item in parts {
             let name = ctx.ast.identifier_name(SPAN, item.clone());
             expr = ctx.ast.member_expression_static(SPAN, expr, name, false).into();
         }
@@ -1066,4 +1066,61 @@ fn create_static_member_expression<'a>(
 
 fn has_proto(e: &ObjectExpression<'_>) -> bool {
     e.properties.iter().any(|p| p.prop_name().is_some_and(|name| name.0 == "__proto__"))
+}
+
+#[cfg(test)]
+mod test {
+    use std::path::Path;
+
+    use oxc_allocator::Allocator;
+    use oxc_ast::{ast::Expression, AstBuilder};
+    use oxc_semantic::{ScopeTree, SymbolTable};
+    use oxc_traverse::ReusableTraverseCtx;
+
+    use crate::{context::TransformCtx, TransformOptions};
+
+    use super::Pragma;
+
+    #[test]
+    fn this_expr_pragma() {
+        let alloc = Allocator::default();
+        let ast = AstBuilder::new(&alloc);
+        let ctx = TransformCtx::new(Path::new("test.jsx"), &TransformOptions::default());
+        // SAFETY: constructed to avoid unsoundness
+        let mut traverse_ctx = unsafe {
+            ReusableTraverseCtx::new(ScopeTree::default(), SymbolTable::default(), &alloc).unwrap()
+        };
+
+        let pragma = Pragma::parse(Some(&"this.a.b".to_string()), "createElement", ast, &ctx);
+        let expr = pragma.create_expression(&mut traverse_ctx);
+
+        let Expression::StaticMemberExpression(outer_member) = &expr else { panic!() };
+        let Expression::StaticMemberExpression(inner_member) = &outer_member.object else {
+            panic!()
+        };
+        assert!(matches!(&inner_member.object, Expression::ThisExpression(_)));
+        assert_eq!(inner_member.property.name, "a");
+        assert_eq!(outer_member.property.name, "b");
+    }
+
+    #[test]
+    fn import_meta_pragma() {
+        let alloc = Allocator::default();
+        let ast = AstBuilder::new(&alloc);
+        let ctx = TransformCtx::new(Path::new("test.jsx"), &TransformOptions::default());
+        // SAFETY: constructed to avoid unsoundness
+        let mut traverse_ctx = unsafe {
+            ReusableTraverseCtx::new(ScopeTree::default(), SymbolTable::default(), &alloc).unwrap()
+        };
+
+        let pragma =
+            Pragma::parse(Some(&"import.meta.prop".to_string()), "createElement", ast, &ctx);
+        let expr = pragma.create_expression(&mut traverse_ctx);
+
+        let Expression::StaticMemberExpression(member) = &expr else { panic!() };
+        let Expression::MetaProperty(meta_prop) = &member.object else { panic!() };
+        assert_eq!(&meta_prop.meta.name, "import");
+        assert_eq!(&meta_prop.property.name, "meta");
+        assert_eq!(member.property.name, "prop");
+    }
 }
