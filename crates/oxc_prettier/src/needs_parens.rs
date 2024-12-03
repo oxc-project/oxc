@@ -85,8 +85,8 @@ impl<'a> Prettier<'a> {
                 AstKind::ExpressionStatement(_) => {
                     matches!(assign_expr.left, AssignmentTarget::ObjectAssignmentTarget(_))
                 }
-                AstKind::SequenceExpression(sequence_expr) => match parent_parent_kind {
-                    Some(AstKind::ForStatement(for_stat))
+                AstKind::SequenceExpression(sequence_expr) => {
+                    !matches!(parent_parent_kind, Some(AstKind::ForStatement(for_stat))
                         if for_stat
                             .init
                             .as_ref()
@@ -94,13 +94,8 @@ impl<'a> Prettier<'a> {
                             || for_stat
                                 .update
                                 .as_ref()
-                                .is_some_and(|e| e.span() == sequence_expr.span) =>
-                    {
-                        false
-                    }
-
-                    _ => true,
-                },
+                                .is_some_and(|e| e.span() == sequence_expr.span))
+                }
                 _ => true,
             },
             AstKind::UpdateExpression(update_expr) => match parent_kind {
