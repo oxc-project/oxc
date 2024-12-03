@@ -84,6 +84,9 @@ pub fn is_jest_rule_adapted_to_vitest(rule_name: &str) -> bool {
     VITEST_COMPATIBLE_JEST_RULES.contains(rule_name)
 }
 
+/// Check if the Eslint rule is adapted to Typescript.
+/// Many Typescript rule are essentially ports of Eslint plugin rules with minor modifications.
+/// For these rules, we use the corresponding eslint rules with some adjustments for compatibility.
 pub fn is_eslint_rule_adapted_to_typescript(rule_name: &str) -> bool {
     TYPESCRIPT_COMPATIBLE_ESLINT_RULES.contains(rule_name)
 }
