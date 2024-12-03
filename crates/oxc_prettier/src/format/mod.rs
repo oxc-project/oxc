@@ -34,7 +34,6 @@ use oxc_syntax::identifier::{is_identifier_name, is_line_terminator};
 
 use crate::{
     format::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter},
-    group,
     ir::{Doc, DocBuilder, Group, Separator},
     p_str, p_vec, wrap, Prettier,
 };
@@ -163,13 +162,17 @@ impl<'a> Format<'a> for IfStatement<'a> {
             let consequent = self.consequent.format(p);
             let consequent = misc::adjust_clause(p, &self.consequent, consequent, false);
 
-            let opening = group![
+            let opening = p.group(p.array(p_vec!(
                 p,
                 p.text("if ("),
-                group!(p, p.indent(p_vec!(p, p.softline(), test_doc)), p.softline()),
+                p.group(p.array(p_vec!(
+                    p,
+                    p.indent(p_vec!(p, p.softline(), test_doc)),
+                    p.softline(),
+                ))),
                 p.text(")"),
                 consequent
-            ];
+            )));
             parts.push(opening);
 
             if let Some(alternate) = &self.alternate {
@@ -181,15 +184,12 @@ impl<'a> Format<'a> for IfStatement<'a> {
                 }
                 parts.push(p.text("else"));
                 let alternate_doc = alternate.format(p);
-                parts.push(group!(
+                parts.push(p.group(misc::adjust_clause(
                     p,
-                    misc::adjust_clause(
-                        p,
-                        alternate,
-                        alternate_doc,
-                        matches!(alternate, Statement::IfStatement(_))
-                    )
-                ));
+                    alternate,
+                    alternate_doc,
+                    matches!(alternate, Statement::IfStatement(_)),
+                )));
             }
 
             p.array(parts)
@@ -210,7 +210,7 @@ impl<'a> Format<'a> for ForStatement<'a> {
             let body = misc::adjust_clause(p, &self.body, body, false);
 
             if self.init.is_none() && self.test.is_none() && self.update.is_none() {
-                return group![p, p.text("for (;;)"), body];
+                return p.group(p.array(p_vec!(p, p.text("for (;;)"), body)));
             }
 
             let parts_head = {
@@ -232,7 +232,13 @@ impl<'a> Format<'a> for ForStatement<'a> {
                 p.indent(parts_head)
             };
 
-            group![p, p.text("for ("), group![p, parts_head, p.softline()], p.text(")"), body]
+            p.group(p.array(p_vec!(
+                p,
+                p.text("for ("),
+                p.group(p.array(p_vec!(p, parts_head, p.softline()))),
+                p.text(")"),
+                body,
+            )))
         })
     }
 }
@@ -257,7 +263,7 @@ impl<'a> Format<'a> for ForInStatement<'a> {
             parts.push(p.text(")"));
             let body = self.body.format(p);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(Group::new(parts))
+            p.group(p.array(parts))
         })
     }
 }
@@ -277,7 +283,7 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
             parts.push(p.text(")"));
             let body = self.body.format(p);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
-            Doc::Group(Group::new(parts))
+            p.group(p.array(parts))
         })
     }
 }
@@ -298,13 +304,17 @@ impl<'a> Format<'a> for WhileStatement<'a> {
 
             parts.push(p.text("while ("));
             let test_doc = self.test.format(p);
-            parts.push(group!(p, p.indent(p_vec!(p, p.softline(), test_doc)), p.softline()));
+            parts.push(p.group(p.array(p_vec!(
+                p,
+                p.indent(p_vec!(p, p.softline(), test_doc)),
+                p.softline(),
+            ))));
             parts.push(p.text(")"));
 
             let body = self.body.format(p);
             parts.push(misc::adjust_clause(p, &self.body, body, false));
 
-            Doc::Group(Group::new(parts))
+            p.group(p.array(parts))
         })
     }
 }
@@ -316,7 +326,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
 
             let clause = self.body.format(p);
             let clause = misc::adjust_clause(p, &self.body, clause, false);
-            let do_body = group!(p, p.text("do"), clause);
+            let do_body = p.group(p.array(p_vec!(p, p.text("do"), clause)));
 
             parts.push(do_body);
 
@@ -328,7 +338,11 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
 
             parts.push(p.text("while ("));
             let test_doc = self.test.format(p);
-            parts.push(group!(p, p.indent(p_vec!(p, p.softline(), test_doc)), p.softline()));
+            parts.push(p.group(p.array(p_vec!(
+                p,
+                p.indent(p_vec!(p, p.softline(), test_doc)),
+                p.softline()
+            ))));
             parts.push(p.text(")"));
             if let Some(semi) = p.semi() {
                 parts.push(semi);
@@ -386,7 +400,7 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
             header_parts.push(p.softline());
             header_parts.push(p.text(")"));
 
-            parts.push(Doc::Group(Group::new(header_parts)));
+            parts.push(p.group(p.array(header_parts)));
 
             parts.push(p.text(" {"));
 
@@ -456,7 +470,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             if is_only_one_block_statement {
                 parts.extend(consequent_parts);
             } else {
-                parts.push(p.indent(p_vec!(p, Doc::Group(Group::new(consequent_parts)))));
+                parts.push(p.indent(p_vec!(p, p.group(p.array(consequent_parts)))));
             }
         }
 
@@ -532,14 +546,15 @@ impl<'a> Format<'a> for ThrowStatement<'a> {
 
 impl<'a> Format<'a> for WithStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let object_doc = self.object.format(p);
         let body_doc = self.body.format(p);
-        group![
+        p.group(p.array(p_vec!(
             p,
             p.text("with ("),
-            self.object.format(p),
+            object_doc,
             p.text(")"),
             misc::adjust_clause(p, &self.body, body_doc, false)
-        ]
+        )))
     }
 }
 
@@ -633,7 +648,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                 }
             }
 
-            Doc::Group(Group::new(parts))
+            p.group(p.array(parts))
         })
     }
 }
@@ -981,8 +996,8 @@ impl<'a> Format<'a> for TSMappedType<'a> {
         let mut result = p.vec();
         result.push(p.text("{ "));
 
-        // ToDo: check ident/grouping in method/method-signature.ts
-        result.push(Doc::Group(Group::new(parts)));
+        // TODO: check ident/grouping in method/method-signature.ts
+        result.push(p.group(p.array(parts)));
         result.push(p.text(" }"));
 
         p.array(result)
@@ -2053,7 +2068,7 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                     parts.push(p.text(": "));
                     parts.push(self.value.format(p));
                 }
-                return Doc::Group(Group::new(parts));
+                return p.group(p.array(parts));
             }
 
             if self.shorthand {
@@ -2226,7 +2241,7 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
                 &self.right,
             );
             if misc::in_parentheses(p.parent_kind(), p.source_text, self.span) {
-                group!(p, p.indent(p_vec!(p, p.softline(), doc)), p.softline())
+                p.group(p.array(p_vec!(p, p.indent(p_vec!(p, p.softline(), doc)), p.softline(),)))
             } else {
                 doc
             }
@@ -2262,7 +2277,7 @@ impl<'a> Format<'a> for LogicalExpression<'a> {
             );
 
             if misc::in_parentheses(p.parent_kind(), p.source_text, self.span) {
-                group!(p, p.indent(p_vec!(p, p.softline(), doc)), p.softline())
+                p.group(p.array(p_vec!(p, p.indent(p_vec!(p, p.softline(), doc)), p.softline())))
             } else {
                 doc
             }
@@ -2386,7 +2401,7 @@ impl<'a> Format<'a> for SequenceExpression<'a> {
         wrap!(p, self, SequenceExpression, {
             let docs =
                 self.expressions.iter().map(|expr| expr.format(p)).collect::<std::vec::Vec<_>>();
-            group![p, p.array(p.join(Separator::CommaLine, docs))]
+            p.group(p.array(p_vec!(p, p.array(p.join(Separator::CommaLine, docs)))))
         })
     }
 }
@@ -2413,11 +2428,11 @@ impl<'a> Format<'a> for ImportExpression<'a> {
                     indent_parts.push(arg.format(p));
                 }
             }
-            parts.push(group!(p, p.indent(indent_parts)));
+            parts.push(p.group(p.indent(indent_parts)));
             parts.push(p.softline());
             parts.push(p.text(")"));
 
-            Doc::Group(Group::new(parts))
+            p.group(p.array(parts))
         })
     }
 }
@@ -2909,7 +2924,9 @@ impl<'a> Format<'a> for BindingProperty<'a> {
         if self.shorthand {
             self.value.format(p)
         } else {
-            group!(p, self.key.format(p), p.text(": "), self.value.format(p))
+            let key_doc = self.key.format(p);
+            let value_doc = self.value.format(p);
+            p.group(p.array(p_vec!(p, key_doc, p.text(": "), value_doc)))
         }
     }
 }

@@ -2,7 +2,6 @@ use oxc_ast::ast::*;
 
 use crate::{
     format::function_parameters::should_group_function_parameters,
-    group,
     ir::{Doc, DocBuilder},
     p_str, p_vec, Format, Prettier,
 };
@@ -41,11 +40,12 @@ pub(super) fn print_function<'a>(
         parts.push(type_params.format(p));
     }
     // Prettier has `returnTypeDoc` to group together, write this for keep same with prettier.
-    parts.push(group!(p, {
+    let params_doc = func.params.format(p);
+    parts.push(p.group({
         if should_group_function_parameters(func) {
-            group!(p, func.params.format(p))
+            p.group(params_doc)
         } else {
-            func.params.format(p)
+            params_doc
         }
     }));
 
@@ -121,13 +121,13 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
     let parameters_doc = function.params.format(p);
     let should_group_parameters = should_group_function_parameters(function);
     let parameters_doc =
-        if should_group_parameters { group!(p, parameters_doc) } else { parameters_doc };
+        if should_group_parameters { p.group(parameters_doc) } else { parameters_doc };
 
     if let Some(type_parameters) = &function.type_parameters {
         parts.push(type_parameters.format(p));
     }
 
-    parts.push(group!(p, parameters_doc));
+    parts.push(p.group(parameters_doc));
 
     if let Some(ret_typ) = &function.return_type {
         parts.push(p.text(": "));
@@ -158,13 +158,13 @@ pub(super) fn print_return_or_throw_argument<'a>(
         parts.push(
             if argument.is_binaryish() || matches!(argument, Expression::SequenceExpression(_)) {
                 let argument_doc = argument.format(p);
-                group![
+                p.group(p.array(p_vec!(
                     p,
                     p.if_break(p.text("("), p.text(""), None),
                     p.indent(p_vec!(p, p.softline(), argument_doc)),
                     p.softline(),
                     p.if_break(p.text(")"), p.text(""), None),
-                ]
+                )))
             } else {
                 argument.format(p)
             },

@@ -6,9 +6,8 @@ use oxc_span::Span;
 
 use super::{misc, Format};
 use crate::{
-    group,
     ir::{Doc, DocBuilder, Group},
-    Prettier,
+    p_vec, Prettier,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -107,7 +106,7 @@ pub(super) fn print_object_properties<'a>(
     let member_separator = object.member_separator(p);
 
     let content = if object.is_empty() {
-        group![p, left_brace, p.softline(), right_brace]
+        p.group(p.array(p_vec!(p, left_brace, p.softline(), right_brace)))
     } else {
         let mut parts = p.vec();
         parts.push(p.text("{"));
@@ -162,7 +161,7 @@ pub(super) fn print_object_properties<'a>(
         if matches!(p.current_kind(), AstKind::Program(_)) {
             let should_break =
                 misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
-            return Doc::Group(Group::new(parts).with_break(should_break));
+            return p.group_with_opts(p.array(parts), should_break, None);
         }
 
         let parent_kind = p.parent_kind();
@@ -178,7 +177,7 @@ pub(super) fn print_object_properties<'a>(
         } else {
             let should_break =
                 misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
-            Doc::Group(Group::new(parts).with_break(should_break))
+            p.group_with_opts(p.array(parts), should_break, None)
         }
     };
 

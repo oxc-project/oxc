@@ -5,7 +5,6 @@ use oxc_syntax::operator::UnaryOperator;
 use super::Format;
 use crate::{
     comments::{CommentFlags, DanglingCommentsPrintOptions},
-    group,
     ir::{Doc, DocBuilder, Group},
     p_vec, Prettier,
 };
@@ -94,36 +93,34 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
 
     let mut parts = p.vec();
 
-    parts.push(Doc::Group(
-        Group::new({
-            let mut group = p.vec();
-            group.push(p.text("["));
+    let group = {
+        let mut group = p.vec();
+        group.push(p.text("["));
 
-            let indent_parts = {
-                let mut indent_parts = p.vec();
-                indent_parts.push(p.softline());
+        let indent_parts = {
+            let mut indent_parts = p.vec();
+            indent_parts.push(p.softline());
 
-                indent_parts.push(if should_use_concise_formatting {
-                    print_array_elements_concisely(p, arr, trailing_comma_fn)
-                } else {
-                    let trailing_comma = trailing_comma_fn(p);
-                    let elements = print_array_elements(p, arr);
-                    p.array(p_vec!(p, elements, trailing_comma))
-                });
-                if let Some(dangling_comments) = p.print_dangling_comments(arr.span(), None) {
-                    indent_parts.push(dangling_comments);
-                };
-                indent_parts
+            indent_parts.push(if should_use_concise_formatting {
+                print_array_elements_concisely(p, arr, trailing_comma_fn)
+            } else {
+                let trailing_comma = trailing_comma_fn(p);
+                let elements = print_array_elements(p, arr);
+                p.array(p_vec!(p, elements, trailing_comma))
+            });
+            if let Some(dangling_comments) = p.print_dangling_comments(arr.span(), None) {
+                indent_parts.push(dangling_comments);
             };
+            indent_parts
+        };
 
-            group.push(p.indent(indent_parts));
-            group.push(p.softline());
-            group.push(p.text("]"));
-            group
-        })
-        .with_break(should_break(arr))
-        .with_id(id),
-    ));
+        group.push(p.indent(indent_parts));
+        group.push(p.softline());
+        group.push(p.text("]"));
+
+        p.array(group)
+    };
+    parts.push(p.group_with_opts(group, should_break(arr), Some(id)));
 
     p.array(parts)
 }
@@ -132,7 +129,9 @@ fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -
     let dangling_options = DanglingCommentsPrintOptions::default().with_ident(true);
     p.print_dangling_comments(array.span(), Some(&dangling_options)).map_or_else(
         || p.text("[]"),
-        |dangling_comments| group![p, p.text("["), dangling_comments, p.softline(), p.text("]")],
+        |dangling_comments| {
+            p.group(p.array(p_vec!(p, p.text("["), dangling_comments, p.softline(), p.text("]"))))
+        },
     )
 }
 
@@ -167,7 +166,8 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a
             let has_rest = array_pat.rest.is_some();
             for (i, element) in array_pat.elements.iter().enumerate() {
                 if let Some(binding_pat) = element {
-                    parts.push(group!(p, binding_pat.format(p)));
+                    let binding_pat_doc = binding_pat.format(p);
+                    parts.push(p.group(binding_pat_doc));
                 }
                 if i == len - 1 && !has_rest {
                     break;
@@ -176,7 +176,8 @@ fn print_array_elements<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a
                 parts.push(p.line());
             }
             if let Some(rest) = &array_pat.rest {
-                parts.push(group!(p, rest.format(p)));
+                let rest_doc = rest.format(p);
+                parts.push(p.group(rest_doc));
             }
         }
         Array::ArrayAssignmentTarget(array_pat) => {

@@ -1,7 +1,7 @@
-use oxc_allocator::{Allocator, Box, String, Vec};
+use oxc_allocator::{Allocator, Box, IntoIn, String, Vec};
 
 use crate::{
-    ir::{Doc, Fill, IfBreak, IndentIfBreak, Line},
+    ir::{Doc, Fill, Group, IfBreak, IndentIfBreak, Line},
     p_vec, GroupId,
 };
 
@@ -85,6 +85,44 @@ pub trait DocBuilder<'a> {
 
     fn indent_if_break(&self, contents: Vec<'a, Doc<'a>>, group_id: Option<GroupId>) -> Doc<'a> {
         Doc::IndentIfBreak(IndentIfBreak { contents, group_id })
+    }
+
+    fn group(&self, contents: Doc<'a>) -> Doc<'a> {
+        Doc::Group(Group {
+            contents: self.vec_single(contents),
+            should_break: false,
+            expanded_states: None,
+            group_id: None,
+        })
+    }
+    fn group_with_opts(
+        &self,
+        contents: Doc<'a>,
+        should_break: bool,
+        group_id: Option<GroupId>,
+    ) -> Doc<'a> {
+        Doc::Group(Group {
+            contents: self.vec_single(contents),
+            should_break,
+            expanded_states: None,
+            group_id,
+        })
+    }
+
+    fn conditional_group(
+        &self,
+        contents: Doc<'a>,
+        alternatives: std::vec::Vec<Doc<'a>>,
+        group_id: Option<GroupId>,
+    ) -> Doc<'a> {
+        let contents = self.vec_single(contents);
+        let expanded_states = Vec::from_iter_in(alternatives, self.allocator());
+        Doc::Group(Group {
+            contents,
+            should_break: false,
+            expanded_states: Some(expanded_states),
+            group_id,
+        })
     }
 
     // TODO: Just use `Doc` instead of `Separator`...?

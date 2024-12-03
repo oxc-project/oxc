@@ -6,7 +6,6 @@ use oxc_span::GetSpan;
 use super::assignment::AssignmentLikeNode;
 use crate::{
     format::{assignment, Separator},
-    group,
     ir::{Doc, DocBuilder, Group, IfBreak},
     p_vec, Format, Prettier,
 };
@@ -79,7 +78,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
                 p.indent(p_vec!(p, p.array(heritage_clauses_parts)))
             ))
         } else {
-            p.indent(p_vec!(p, p.array(group_parts), group!(p, p.array(heritage_clauses_parts))))
+            p.indent(p_vec!(p, p.array(group_parts), p.group(p.array(heritage_clauses_parts))))
         };
 
         parts.push(printend_parts_group);
@@ -411,11 +410,15 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     parts.push(p.indent(p_vec!(
         p,
-        group!(p, p.softline(), p.array(p.join(Separator::CommaLine, implements_docs)))
+        p.group(p.array(p_vec!(
+            p,
+            p.softline(),
+            p.array(p.join(Separator::CommaLine, implements_docs)),
+        )))
     )));
     parts.push(p.space());
 
-    Doc::Group(Group::new(parts))
+    p.group(p.array(parts))
 }
 
 fn should_indent_only_heritage_clauses(class: &Class) -> bool {

@@ -131,7 +131,7 @@ impl<'a> Printer<'a> {
                     Command::new(indent, if group.should_break { Mode::Break } else { mode }, doc)
                 }));
 
-                self.set_group_mode_from_last_cmd(group.id);
+                self.set_group_mode_from_last_cmd(group.group_id);
             }
             Mode::Break => {
                 #[allow(clippy::cast_possible_wrap)]
@@ -140,7 +140,7 @@ impl<'a> Printer<'a> {
                     unreachable!();
                 };
                 let should_break = group.should_break;
-                let group_id = group.id;
+                let group_id = group.group_id;
                 let cmd = Command::new(indent, Mode::Flat, doc);
                 if !should_break && self.fits(&cmd, remaining_width) {
                     self.cmds.push(Command::new(indent, Mode::Flat, cmd.doc));

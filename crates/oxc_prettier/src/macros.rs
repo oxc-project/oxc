@@ -1,44 +1,4 @@
-//! Utility macros for constructing the IR
-
-#[macro_export]
-macro_rules! group {
-    ($p:ident, $( $x:expr ),* $(,)?) => {{
-        use $crate::ir::Group;
-        let mut temp_vec = $p.vec();
-        $(
-            temp_vec.push($x);
-        )*
-        Doc::Group(Group::new(temp_vec))
-    }};
-}
-
-#[macro_export]
-macro_rules! conditional_group {
-    ($p:ident, $c: expr, $( $x:expr ),* $(,)?) => {{
-        use $crate::ir::Group;
-        let mut temp_vec = $p.vec();
-        $(
-            temp_vec.push($x);
-        )*
-        let contents = $p.vec_single($c);
-        Doc::Group(Group::new_conditional_group(contents, temp_vec))
-    }};
-}
-
-#[macro_export]
-macro_rules! group_break {
-    ($p:ident, $( $x:expr ),* $(,)?) => {{
-        use $crate::ir::Group;
-        let mut temp_vec = $p.vec();
-        $(
-            temp_vec.push($x);
-        )*
-        Doc::Group(Group::new(temp_vec).with_break(true))
-    }};
-}
-
-// ---
-
+// TODO: Useless
 #[macro_export]
 macro_rules! p_str {
     ($p:ident, $s:expr) => {{

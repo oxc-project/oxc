@@ -5,7 +5,6 @@ use oxc_span::GetSpan;
 use crate::{
     binaryish::BinaryishOperator,
     comments::CommentFlags,
-    group,
     ir::{Doc, DocBuilder, Group},
     Format, Prettier,
 };
@@ -35,7 +34,7 @@ pub(super) fn print_binaryish_expression<'a>(
     // indented accordingly. We should indent sub-expressions where the first case isn't indented.
     let should_not_indent = matches!(parent_kind, AstKind::ReturnStatement(_));
     if should_not_indent {
-        return Doc::Group(Group::new(parts));
+        return p.group(p.array(parts));
     }
 
     let first_group_index = parts.iter().position(|part| {
@@ -57,7 +56,7 @@ pub(super) fn print_binaryish_expression<'a>(
         }
     }
     group.push(p.indent(rest));
-    Doc::Group(Group::new(group))
+    p.group(p.array(group))
 }
 
 fn print_binaryish_expressions<'a>(
@@ -87,7 +86,8 @@ fn print_binaryish_expressions<'a>(
             _ => unreachable!(),
         });
     } else {
-        parts.push(group!(p, left.format(p)));
+        let left_doc = left.format(p);
+        parts.push(p.group(left_doc));
     }
 
     let should_inline = should_inline_logical_expression(right);
@@ -118,7 +118,7 @@ fn print_binaryish_expressions<'a>(
     }
 
     parts.push(if should_group {
-        Doc::Group(Group::new(right).with_break(should_break))
+        p.group_with_opts(p.array(right), should_break, None)
     } else {
         p.array(right)
     });

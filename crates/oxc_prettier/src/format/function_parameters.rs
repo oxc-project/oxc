@@ -150,7 +150,7 @@ pub(super) fn print_function_parameters<'a>(
     if p.args.expand_first_arg {
         p.array(parts)
     } else {
-        Doc::Group(Group::new(parts))
+        p.group(p.array(parts))
     }
 }
 

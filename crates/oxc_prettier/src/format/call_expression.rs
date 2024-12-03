@@ -80,7 +80,7 @@ pub(super) fn print_call_expression<'a>(
 
     parts.push(print_call_arguments(p, expression));
 
-    Doc::Group(Group::new(parts))
+    p.group(p.array(parts))
 }
 
 /// <https://github.com/prettier/prettier/blob/7aecca5d6473d73f562ca3af874831315f8f2581/src/language-js/print/call-expression.js#L93-L116>

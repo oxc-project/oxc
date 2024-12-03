@@ -48,33 +48,11 @@ pub struct Line {
 
 #[derive(Debug)]
 pub struct Group<'a> {
+    // TODO: Vec? Box?
     pub contents: Vec<'a, Doc<'a>>,
     pub should_break: bool,
     pub expanded_states: Option<Vec<'a, Doc<'a>>>,
-    pub id: Option<GroupId>,
-}
-
-impl<'a> Group<'a> {
-    pub fn new(contents: Vec<'a, Doc<'a>>) -> Self {
-        Self { contents, should_break: false, id: None, expanded_states: None }
-    }
-
-    pub fn new_conditional_group(
-        contents: Vec<'a, Doc<'a>>,
-        expanded_states: Vec<'a, Doc<'a>>,
-    ) -> Self {
-        Self { contents, should_break: false, id: None, expanded_states: Some(expanded_states) }
-    }
-
-    pub fn with_break(mut self, yes: bool) -> Self {
-        self.should_break = yes;
-        self
-    }
-
-    pub fn with_id(mut self, id: GroupId) -> Self {
-        self.id = Some(id);
-        self
-    }
+    pub group_id: Option<GroupId>,
 }
 
 #[derive(Debug)]

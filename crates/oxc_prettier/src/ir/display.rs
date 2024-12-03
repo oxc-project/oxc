@@ -66,7 +66,7 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             }
             string.push_str("], { shouldBreak: ");
             string.push_str(&group.should_break.to_string());
-            if let Some(id) = group.id {
+            if let Some(id) = group.group_id {
                 string.push_str(&format!(", id: {id}"));
             }
             string.push_str(" })");

@@ -1,7 +1,6 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    group,
     ir::{Doc, DocBuilder},
     Format, Prettier,
 };
@@ -24,8 +23,8 @@ pub(super) fn print_arrow_function<'a>(
         parts.push(type_params.format(p));
     }
 
-    let parameters = expr.params.format(p);
-    parts.push(group!(p, parameters));
+    let params_doc = expr.params.format(p);
+    parts.push(p.group(params_doc));
 
     if let Some(return_type) = &expr.return_type {
         parts.push(p.text(": "));

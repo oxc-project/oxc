@@ -4,7 +4,6 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    group,
     ir::{Doc, DocBuilder, Separator},
     p_vec, Format, Prettier,
 };
@@ -114,7 +113,7 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
             if can_break {
                 let docs =
                     specifiers_iter.iter().map(|s| s.format(p)).collect::<std::vec::Vec<_>>();
-                parts.push(group![
+                parts.push(p.group(p.array(p_vec!(
                     p,
                     p.text("{"),
                     p.indent(p_vec!(
@@ -124,12 +123,12 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
                     )),
                     p.if_break(
                         p.text(if p.should_print_es5_comma() { "," } else { "" }),
-                        p.text("",),
+                        p.text(""),
                         None,
                     ),
                     if p.options.bracket_spacing { p.line() } else { p.softline() },
                     p.text("}"),
-                ]);
+                ))));
             } else {
                 parts.push(p.text("{"));
                 if p.options.bracket_spacing {

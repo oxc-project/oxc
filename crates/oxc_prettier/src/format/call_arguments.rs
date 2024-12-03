@@ -8,7 +8,6 @@ use super::{
     misc,
 };
 use crate::{
-    conditional_group, group_break,
     ir::{Doc, DocBuilder, Group},
     p_vec,
     utils::will_break,
@@ -85,7 +84,7 @@ pub fn print_call_arguments<'a>(
         )));
         parts.push(p.line());
         parts.push(p.text(")"));
-        Doc::Group(Group::new(parts).with_break(true))
+        p.group_with_opts(p.array(parts), true, None)
     };
 
     if should_expand_first_arg(arguments) {
@@ -95,21 +94,22 @@ pub fn print_call_arguments<'a>(
 
         if will_break(&mut first_doc) {
             let last_doc = get_printed_arguments(p, 1).pop().unwrap();
-            let all_args_broken_out = all_args_broken_out(p);
+            let all_args_broken_out_doc = all_args_broken_out(p);
+
             return p.array(p_vec!(
                 p,
                 Doc::BreakParent,
-                conditional_group!(
-                    p,
+                p.conditional_group(
                     p.array(p_vec!(
                         p,
                         p.text("("),
-                        group_break!(p, first_doc),
+                        p.group_with_opts(first_doc, true, None),
                         p.text(", "),
                         last_doc,
-                        p.text(")")
+                        p.text(")"),
                     )),
-                    all_args_broken_out
+                    vec![all_args_broken_out_doc],
+                    None
                 )
             ));
         }
@@ -136,39 +136,40 @@ pub fn print_call_arguments<'a>(
         let mut last_doc = get_last_doc(p);
 
         if will_break(&mut last_doc) {
-            let all_args_broken_out = all_args_broken_out(p);
+            let all_args_broken_out_doc = all_args_broken_out(p);
             return p.array(p_vec!(
                 p,
                 Doc::BreakParent,
-                conditional_group!(
-                    p,
+                p.conditional_group(
                     p.array(p_vec!(
                         p,
                         p.text("("),
                         p.array(printed_arguments),
-                        group_break!(p, last_doc),
+                        p.group_with_opts(last_doc, true, None),
                         p.text(")")
                     )),
-                    all_args_broken_out
+                    vec![all_args_broken_out_doc],
+                    None
                 ),
             ));
         }
 
-        return conditional_group!(
-            p,
+        let printed_arguments2 = get_printed_arguments(p, -1);
+        let last_doc2 = get_last_doc(p);
+        let all_args_broken_out_doc = all_args_broken_out(p);
+        return p.conditional_group(
             p.array(p_vec!(p, p.text("("), p.array(printed_arguments), last_doc, p.text(")"))),
-            {
-                let arguments_doc = get_printed_arguments(p, -1);
-                let last_doc = get_last_doc(p);
+            vec![
                 p.array(p_vec!(
                     p,
                     p.text("("),
-                    p.array(arguments_doc,),
-                    group_break!(p, last_doc),
+                    p.array(printed_arguments2),
+                    p.group_with_opts(last_doc2, true, None),
                     p.text(")")
-                ))
-            },
-            all_args_broken_out(p)
+                )),
+                all_args_broken_out_doc,
+            ],
+            None,
         );
     }
 
@@ -189,7 +190,7 @@ pub fn print_call_arguments<'a>(
             misc::has_new_line_in_range(p.source_text, arg.span().start, arg.span().end)
         });
 
-    Doc::Group(Group::new(parts).with_break(should_break))
+    p.group_with_opts(p.array(parts), should_break, None)
 }
 
 /// * Reference <https://github.com/prettier/prettier/blob/3.3.3/src/language-js/print/call-arguments.js#L247-L272>

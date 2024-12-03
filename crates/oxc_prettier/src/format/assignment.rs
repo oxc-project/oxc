@@ -10,7 +10,6 @@ use oxc_ast::{
 
 use super::{binaryish::should_inline_logical_expression, class::ClassMemberish};
 use crate::{
-    group,
     ir::{Doc, DocBuilder, Group, IndentIfBreak},
     p_vec, Format, Prettier,
 };
@@ -80,11 +79,14 @@ pub(super) fn print_assignment<'a>(
     let right_doc = if let Some(expr) = right_expr { expr.format(p) } else { p.array(p.vec()) };
 
     match layout {
-        Layout::BreakAfterOperator => {
-            group!(p, group!(p, left_doc), op, group!(p, p.indent(p_vec!(p, p.line(), right_doc))))
-        }
+        Layout::BreakAfterOperator => p.group(p.array(p_vec!(
+            p,
+            p.group(left_doc),
+            op,
+            p.group(p.indent(p_vec!(p, p.line(), right_doc)))
+        ))),
         Layout::NeverBreakAfterOperator => {
-            group!(p, group!(p, left_doc), op, p.space(), group!(p, right_doc))
+            p.group(p.array(p_vec!(p, p.group(left_doc), op, p.space(), p.group(right_doc))))
         }
         // First break right-hand side, then after operator
         Layout::Fluid => {
@@ -93,27 +95,27 @@ pub(super) fn print_assignment<'a>(
             let after_op = {
                 let mut parts = p.vec();
                 parts.push(p.indent(p_vec!(p, p.line())));
-                Doc::Group(Group::new(parts).with_id(group_id))
+                p.group_with_opts(p.array(parts), false, Some(group_id))
             };
 
             let right_doc = {
                 let mut parts = p.vec();
-                parts.push(group!(p, right_doc));
+                parts.push(p.group(right_doc));
                 p.indent_if_break(parts, Some(group_id))
             };
 
-            group!(p, group!(p, left_doc), op, after_op, right_doc)
+            p.group(p.array(p_vec!(p, p.group(left_doc), op, after_op, right_doc)))
         }
         Layout::BreakLhs => {
-            group!(p, left_doc, op, p.space(), group!(p, right_doc))
+            p.group(p.array(p_vec!(p, left_doc, op, p.space(), p.group(right_doc))))
         }
         // Parts of assignment chains aren't wrapped in groups.
         // Once one of them breaks, the chain breaks too.
-        Layout::Chain => p.array(p_vec!(p, group!(p, left_doc), op, p.line(), right_doc)),
+        Layout::Chain => p.array(p_vec!(p, p.group(left_doc), op, p.line(), right_doc)),
         Layout::ChainTail => {
-            p.array(p_vec!(p, group!(p, left_doc), op, p.indent(p_vec!(p, p.line(), right_doc))))
+            p.array(p_vec!(p, p.group(left_doc), op, p.indent(p_vec!(p, p.line(), right_doc))))
         }
-        Layout::ChainTailArrowChain => p.array(p_vec!(p, group!(p, left_doc), op, right_doc)),
+        Layout::ChainTailArrowChain => p.array(p_vec!(p, p.group(left_doc), op, right_doc)),
         Layout::OnlyLeft => left_doc,
     }
 }
