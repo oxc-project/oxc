@@ -9,7 +9,7 @@ use crate::{
 pub(super) fn print_function<'a>(
     p: &mut Prettier<'a>,
     func: &Function<'a>,
-    property_name: Option<&str>,
+    property_name: Option<&'a str>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
 
@@ -22,7 +22,7 @@ pub(super) fn print_function<'a>(
     }
 
     if let Some(name) = property_name {
-        parts.push(p.text(p.string(name)));
+        parts.push(p.dynamic_text(name));
     } else {
         parts.push(p.text("function"));
         if func.generator {
@@ -33,7 +33,7 @@ pub(super) fn print_function<'a>(
     }
 
     if let Some(id) = &func.id {
-        parts.push(p.text(p.string(id.name.as_str())));
+        parts.push(p.dynamic_text(id.name.as_str()));
     }
 
     if let Some(type_params) = &func.type_parameters {

@@ -1,3 +1,4 @@
+/// `p_vec!` macro, to support dynamic length of arguments.
 #[macro_export]
 macro_rules! p_vec {
     ($p:ident, $( $x:expr ),* $(,)?) => {{
@@ -9,6 +10,12 @@ macro_rules! p_vec {
     }};
 }
 
+/// `wrap!` macro,
+/// - to save the reference of the current node to be used as parent node later
+/// - to print parens and comments
+///
+/// NOTE: `wrap!` is not used by all AST nodes that implement `Format` trait.
+/// This may be or may not be a problem.
 #[macro_export]
 macro_rules! wrap {
     ($p:ident, $self:expr, $kind:ident, $block:block) => {{

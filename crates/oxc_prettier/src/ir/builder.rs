@@ -20,23 +20,18 @@ pub trait DocBuilder<'a> {
     fn vec<T>(&self) -> Vec<'a, T> {
         Vec::new_in(self.allocator())
     }
+    #[inline]
     fn vec_single<T>(&self, value: T) -> Vec<'a, T> {
         let mut vec = Vec::with_capacity_in(1, self.allocator());
         vec.push(value);
         vec
     }
 
-    #[inline]
-    fn string(&self, s: &str) -> &'a str {
-        String::from_str_in(s, self.allocator()).into_bump_str()
+    fn text(&self, s: &'static str) -> Doc<'a> {
+        Doc::Str(s)
     }
-
-    #[inline]
-    fn boxed(&self, doc: Doc<'a>) -> Box<'a, Doc<'a>> {
-        Box::new_in(doc, self.allocator())
-    }
-
-    fn text(&self, s: &'a str) -> Doc<'a> {
+    fn dynamic_text(&self, s: &str) -> Doc<'a> {
+        let s = String::from_str_in(s, self.allocator()).into_bump_str();
         Doc::Str(s)
     }
     fn space(&self) -> Doc<'a> {
@@ -77,8 +72,8 @@ pub trait DocBuilder<'a> {
         group_id: Option<GroupId>,
     ) -> Doc<'a> {
         Doc::IfBreak(IfBreak {
-            break_contents: self.boxed(break_contents),
-            flat_contents: self.boxed(flat_contents),
+            break_contents: Box::new_in(break_contents, self.allocator()),
+            flat_contents: Box::new_in(flat_contents, self.allocator()),
             group_id,
         })
     }
