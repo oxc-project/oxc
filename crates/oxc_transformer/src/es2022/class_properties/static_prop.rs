@@ -11,8 +11,10 @@ use oxc_traverse::TraverseCtx;
 use super::ClassProperties;
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
-    /// Transform any `this` in static property initializer to reference to class name,
-    /// and transform private field accesses (`object.#prop`).
+    /// Transform static property initializer.
+    ///
+    /// Replace `this` with temp var for class. Transform private fields.
+    /// See below for full details of transforms.
     pub(super) fn transform_static_initializer(
         &mut self,
         value: &mut Expression<'a>,
@@ -135,7 +137,7 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             // `this`
             Expression::ThisExpression(this_expr) => {
                 let span = this_expr.span;
-                self.replace_this_with_class_name(expr, span);
+                self.replace_this_with_temp_var(expr, span);
                 return;
             }
             // `delete this`
@@ -263,8 +265,8 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
 }
 
 impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
-    /// Replace `this` with reference to class name binding.
-    fn replace_this_with_class_name(&mut self, expr: &mut Expression<'a>, span: Span) {
+    /// Replace `this` with reference to temp var for class.
+    fn replace_this_with_temp_var(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {
             // `PrivateProps` is the source of truth for bindings if class has private props
             // because other visitors which transform private fields may create a temp binding
@@ -274,8 +276,8 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
                 None => &mut self.class_properties.class_bindings,
             };
 
-            let class_binding = class_bindings.get_or_init_temp_binding(self.ctx);
-            *expr = class_binding.create_spanned_read_expression(span, self.ctx);
+            let temp_binding = class_bindings.get_or_init_temp_binding(self.ctx);
+            *expr = temp_binding.create_spanned_read_expression(span, self.ctx);
         }
     }
 
