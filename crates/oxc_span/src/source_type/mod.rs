@@ -486,7 +486,7 @@ impl SourceType {
                 #[cfg(debug_assertions)]
                 unreachable!();
                 #[cfg(not(debug_assertions))]
-                return Err(UnknownExtension(format!("Unknown extension: {}", extension).into()));
+                return Err(UnknownExtension(format!("Unknown extension: {extension}").into()));
             }
         };
 

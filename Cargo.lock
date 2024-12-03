@@ -1799,17 +1799,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_module_lexer"
-version = "0.38.0"
-dependencies = [
- "oxc_allocator",
- "oxc_ast",
- "oxc_ecmascript",
- "oxc_parser",
- "oxc_span",
-]
-
-[[package]]
 name = "oxc_parser"
 version = "0.38.0"
 dependencies = [
@@ -1840,7 +1829,6 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
- "oxc_module_lexer",
  "serde_json",
 ]
 

@@ -351,7 +351,18 @@ x Output mismatch
 x Output mismatch
 
 * assumption-setPublicClassFields/static-this/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
 
 * assumption-setPublicClassFields/super-expression/input.js
 x Output mismatch
@@ -536,9 +547,6 @@ rebuilt        : ScopeId(3): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(0))
-Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(1)]
 
 * private/static-class-binding/input.js
 x Output mismatch
@@ -553,7 +561,18 @@ x Output mismatch
 x Output mismatch
 
 * private/static-this/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
 
 * private/super-expression/input.js
 x Output mismatch
@@ -853,7 +872,18 @@ x Output mismatch
 x Output mismatch
 
 * public/static-this/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
 
 * public/super-expression/input.js
 x Output mismatch
@@ -915,7 +945,18 @@ x Output mismatch
 x Output mismatch
 
 * public-loose/static-this/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
 
 * public-loose/super-expression/input.js
 x Output mismatch
@@ -943,10 +984,10 @@ Bindings mismatch:
 after transform: ScopeId(2): ["_A", "_bar", "_i"]
 rebuilt        : ScopeId(2): ["_i"]
 Symbol scope ID mismatch for "_A":
-after transform: SymbolId(3): ScopeId(2)
+after transform: SymbolId(4): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
 Symbol scope ID mismatch for "_bar":
-after transform: SymbolId(4): ScopeId(2)
+after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(3): ScopeId(0)
 
 * regression/T7364/input.mjs

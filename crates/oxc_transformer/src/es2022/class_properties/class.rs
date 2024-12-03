@@ -12,13 +12,14 @@ use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 use crate::common::helper_loader::Helper;
 
-use super::super::ClassStaticBlock;
+use super::{super::ClassStaticBlock, ClassBindings};
 use super::{
+    private_props::{PrivateProp, PrivateProps},
     utils::{
         create_assignment, create_underscore_ident_name, create_variable_declaration,
         exprs_into_stmts,
     },
-    ClassName, ClassProperties, FxIndexMap, PrivateProp, PrivateProps,
+    ClassProperties, FxIndexMap,
 };
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
@@ -57,10 +58,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             return 0;
         }
 
-        self.class_name = ClassName::Name(match &class.id {
-            Some(id) => id.name.as_str(),
-            None => "Class",
-        });
         self.is_declaration = false;
 
         self.transform_class(class, ctx);
@@ -103,10 +100,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // TODO: Deduct static private props from `expr_count`.
         // Or maybe should store count and increment it when create private static props?
         // They're probably pretty rare, so it'll be rarely used.
-        expr_count += match &self.class_name {
-            ClassName::Binding(_) => 2,
-            ClassName::Name(_) => 1,
-        };
+        expr_count += 1 + usize::from(self.class_bindings.temp.is_some());
 
         let mut exprs = ctx.ast.vec_with_capacity(expr_count);
 
@@ -140,7 +134,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // Insert class + static property assignments + static blocks
         let class_expr = ctx.ast.move_expression(expr);
-        if let ClassName::Binding(binding) = &self.class_name {
+        if let Some(binding) = &self.class_bindings.temp {
+            // Insert `var _Class` statement, if it wasn't already in `transform_class`
+            if !self.temp_var_is_created {
+                self.ctx.var_declarations.insert_var(binding, None, ctx);
+            }
+
             // `_Class = class {}`
             let assignment = create_assignment(binding, class_expr, ctx);
             exprs.push(assignment);
@@ -178,53 +177,35 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             return;
         }
 
-        // Class declarations are always named, except for `export default class {}`, which is handled separately
-        let ident = class.id.as_ref().unwrap();
-        self.class_name = ClassName::Binding(BoundIdentifier::from_binding_ident(ident));
-
-        self.transform_class_declaration_impl(class, stmt_address, ctx);
-    }
-
-    /// Transform `export default class {}`.
-    ///
-    /// Separate function as this is only circumstance where have to deal with anonymous class declaration,
-    /// and it's an uncommon case (can only be 1 per file).
-    pub(super) fn transform_class_export_default(
-        &mut self,
-        class: &mut Class<'a>,
-        stmt_address: Address,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        // Class declarations as default export may not have a name
-        self.class_name = match class.id.as_ref() {
-            Some(ident) => ClassName::Binding(BoundIdentifier::from_binding_ident(ident)),
-            None => ClassName::Name("Class"),
-        };
-
-        self.transform_class_declaration_impl(class, stmt_address, ctx);
-
-        // If class was unnamed `export default class {}`, and a binding is required, set its name.
-        // e.g. `export default class { static x = 1; }` -> `export default class _Class {}; _Class.x = 1;`
-        // TODO(improve-on-babel): Could avoid this if treated `export default class {}` as a class expression
-        // instead of a class declaration.
-        if class.id.is_none() {
-            if let ClassName::Binding(binding) = &self.class_name {
-                class.id = Some(binding.create_binding_identifier(ctx));
-            }
-        }
-    }
-
-    fn transform_class_declaration_impl(
-        &mut self,
-        class: &mut Class<'a>,
-        stmt_address: Address,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
         self.is_declaration = true;
 
         self.transform_class(class, ctx);
 
         // TODO: Run other transforms on inserted statements. How?
+
+        if let Some(temp_binding) = &self.class_bindings.temp {
+            // Binding for class name is required
+            if let Some(ident) = &class.id {
+                // Insert `var _Class` statement, if it wasn't already in `transform_class`
+                if !self.temp_var_is_created {
+                    self.ctx.var_declarations.insert_var(temp_binding, None, ctx);
+                }
+
+                // Insert `_Class = Class` after class.
+                // TODO(improve-on-babel): Could just insert `var _Class = Class;` after class,
+                // rather than separate `var _Class` declaration.
+                let class_name =
+                    BoundIdentifier::from_binding_ident(ident).create_read_expression(ctx);
+                let expr = create_assignment(temp_binding, class_name, ctx);
+                let stmt = ctx.ast.statement_expression(SPAN, expr);
+                self.insert_after_stmts.insert(0, stmt);
+            } else {
+                // Class must be default export `export default class {}`, as all other class declarations
+                // always have a name. Set class name.
+                *ctx.symbols_mut().get_flags_mut(temp_binding.symbol_id) = SymbolFlags::Class;
+                class.id = Some(temp_binding.create_binding_identifier(ctx));
+            }
+        }
 
         // Insert expressions before/after class
         if !self.insert_before.is_empty() {
@@ -282,7 +263,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // Check if class has any properties and get index of constructor (if class has one)
         let mut instance_prop_count = 0;
-        let mut has_static_prop_or_static_block = false;
+        let mut has_static_prop = false;
+        let mut has_static_block = false;
         // TODO: Store `FxIndexMap`s in a pool and re-use them
         let mut private_props = FxIndexMap::default();
         let mut constructor_index = None;
@@ -306,11 +288,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     }
 
                     if prop.r#static {
-                        // TODO(improve-on-babel): Even though private static properties may not access
-                        // class name, Babel still creates a temp var for class. That's unnecessary.
-                        self.initialize_class_name_binding(ctx);
-
-                        has_static_prop_or_static_block = true;
+                        has_static_prop = true;
                     } else {
                         instance_prop_count += 1;
                     }
@@ -320,7 +298,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 ClassElement::StaticBlock(_) => {
                     // Static block only necessitates transforming class if it's being transformed
                     if self.transform_static_blocks {
-                        has_static_prop_or_static_block = true;
+                        has_static_block = true;
                         continue;
                     }
                 }
@@ -339,23 +317,56 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             index_not_including_removed += 1;
         }
 
+        // Exit if nothing to transform
+        if instance_prop_count == 0 && !has_static_prop && !has_static_block {
+            self.private_props_stack.push(None);
+            return;
+        }
+
+        // Initialize class binding vars.
+        // Static prop in class expression or anonymous `export default class {}` always require
+        // temp var for class. Static prop in class declaration doesn't.
+        let mut class_name_binding = class.id.as_ref().map(BoundIdentifier::from_binding_ident);
+
+        let need_temp_var = has_static_prop && (!self.is_declaration || class.id.is_none());
+        self.temp_var_is_created = need_temp_var;
+
+        let class_temp_binding = if need_temp_var {
+            let temp_binding = ClassBindings::create_temp_binding(class_name_binding.as_ref(), ctx);
+            if self.is_declaration {
+                // Anonymous `export default class {}`. Set class name binding to temp var.
+                // Actual class name will be set to this later.
+                class_name_binding = Some(temp_binding.clone());
+            } else {
+                // Create temp var `var _Class;` statement.
+                // TODO(improve-on-babel): Inserting the temp var `var _Class` statement here is only
+                // to match Babel's output. It'd be simpler just to insert it at the end and get rid of
+                // `temp_var_is_created` that tracks whether it's done already or not.
+                self.ctx.var_declarations.insert_var(&temp_binding, None, ctx);
+            }
+            Some(temp_binding)
+        } else {
+            None
+        };
+
+        self.class_bindings = ClassBindings::new(class_name_binding, class_temp_binding);
+
+        // Add entry to `private_props_stack`
         if private_props.is_empty() {
             self.private_props_stack.push(None);
         } else {
-            let class_name_binding = match &self.class_name {
-                ClassName::Binding(binding) => Some(binding.clone()),
-                ClassName::Name(_) => None,
-            };
+            // `class_bindings.temp` in the `PrivateProps` entry is the temp var (if one has been created).
+            // Private fields in static prop initializers use the temp var in the transpiled output
+            // e.g. `_assertClassBrand(_Class, obj, _prop)`.
+            // At end of this function, if it's a class declaration, we set `class_bindings.temp` to be
+            // the binding for the class name, for when the class body is visited, because in the class
+            // body, private fields use the class name
+            // e.g. `_assertClassBrand(Class, obj, _prop)` (note `Class` not `_Class`).
             self.private_props_stack.push(Some(PrivateProps {
                 props: private_props,
-                class_name_binding,
+                class_bindings: self.class_bindings.clone(),
                 is_declaration: self.is_declaration,
             }));
-        }
-
-        // Exit if nothing to transform
-        if instance_prop_count == 0 && !has_static_prop_or_static_block {
-            return;
         }
 
         // Extract properties and static blocks from class body + substitute computed method keys
@@ -398,6 +409,29 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             } else {
                 // No constructor - create one
                 Self::insert_constructor(class, instance_inits, ctx);
+            }
+        }
+
+        // Update class bindings prior to traversing class body and insertion of statements/expressions
+        // before/after the class. See comments on `ClassBindings`.
+        if let Some(private_props) = self.private_props_stack.last_mut() {
+            // Transfer state of `temp` binding from `private_props_stack` to `self`.
+            // A temp binding may have been created while transpiling private fields in
+            // static prop initializers.
+            // TODO: Do this where `class_bindings.temp` is consumed instead?
+            if let Some(temp_binding) = &private_props.class_bindings.temp {
+                self.class_bindings.temp = Some(temp_binding.clone());
+            }
+
+            // Static private fields reference class name (not temp var) in class declarations.
+            // `class Class { static #prop; method() { return obj.#prop; } }`
+            // -> `method() { return _assertClassBrand(Class, obj, _prop)._; }`
+            // (note `Class` in `_assertClassBrand(Class, ...)`, not `_Class`)
+            // So set "temp" binding to actual class name while visiting class body.
+            // Note: If declaration is `export default class {}` with no name, and class has static props,
+            // then class has had name binding created already above. So name binding is always `Some`.
+            if self.is_declaration {
+                private_props.class_bindings.temp = private_props.class_bindings.name.clone();
             }
         }
     }
@@ -460,31 +494,19 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             self.insert_private_static_init_assignment(ident, value, ctx);
         } else {
             // Convert to assignment or `_defineProperty` call, depending on `loose` option
-            let ClassName::Binding(class_name_binding) = &self.class_name else {
-                // Binding is initialized in 1st pass in `transform_class` when a static prop is found
-                unreachable!();
+            let class_binding = if self.is_declaration {
+                // Class declarations always have a name except `export default class {}`.
+                // For default export, binding is created when static prop found in 1st pass.
+                self.class_bindings.name.as_ref().unwrap()
+            } else {
+                // Binding is created when static prop found in 1st pass.
+                self.class_bindings.temp.as_ref().unwrap()
             };
-            let assignee = class_name_binding.create_read_expression(ctx);
+
+            let assignee = class_binding.create_read_expression(ctx);
             let init_expr = self.create_init_assignment(prop, value, assignee, true, ctx);
             self.insert_expr_after_class(init_expr, ctx);
         }
-    }
-
-    /// Create a binding for class name, if there isn't one already.
-    fn initialize_class_name_binding(&mut self, ctx: &mut TraverseCtx<'a>) -> &BoundIdentifier<'a> {
-        if let ClassName::Name(name) = &self.class_name {
-            let binding = if self.is_declaration {
-                ctx.generate_uid_in_current_scope(name, SymbolFlags::Class)
-            } else {
-                let flags = SymbolFlags::FunctionScopedVariable;
-                let binding = ctx.generate_uid_in_current_scope(name, flags);
-                self.ctx.var_declarations.insert_var(&binding, None, ctx);
-                binding
-            };
-            self.class_name = ClassName::Binding(binding);
-        }
-        let ClassName::Binding(binding) = &self.class_name else { unreachable!() };
-        binding
     }
 
     /// `assignee.foo = value` or `_defineProperty(assignee, "foo", value)`

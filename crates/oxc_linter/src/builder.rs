@@ -421,9 +421,16 @@ impl RulesCache {
         let mut all_rules: Vec<_> = if self.plugins.is_all() {
             RULES.clone()
         } else {
+            let mut plugins = self.plugins;
+
+            // we need to include some jest rules when vitest is enabled, see [`VITEST_COMPATIBLE_JEST_RULES`]
+            if plugins.contains(LintPlugins::VITEST) {
+                plugins = plugins.union(LintPlugins::JEST);
+            }
+
             RULES
                 .iter()
-                .filter(|rule| self.plugins.contains(LintPlugins::from(rule.plugin_name())))
+                .filter(|rule| plugins.contains(LintPlugins::from(rule.plugin_name())))
                 .cloned()
                 .collect()
         };

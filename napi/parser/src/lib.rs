@@ -1,4 +1,6 @@
-mod module_lexer;
+#![allow(
+    clippy::needless_pass_by_value // Napi value need to be passed as value
+)]
 
 use std::sync::Arc;
 
@@ -13,8 +15,6 @@ use oxc::{
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
-
-pub use crate::module_lexer::*;
 
 fn parse<'a>(
     allocator: &'a Allocator,
@@ -40,13 +40,8 @@ fn parse<'a>(
 }
 
 /// Parse without returning anything.
+///
 /// This is for benchmark purposes such as measuring napi communication overhead.
-///
-/// # Panics
-///
-/// * File extension is invalid
-/// * Serde JSON serialization
-#[allow(clippy::needless_pass_by_value)]
 #[napi]
 pub fn parse_without_return(source_text: String, options: Option<ParserOptions>) {
     let options = options.unwrap_or_default();
@@ -54,8 +49,7 @@ pub fn parse_without_return(source_text: String, options: Option<ParserOptions>)
     parse(&allocator, &source_text, &options);
 }
 
-#[allow(clippy::needless_lifetimes)]
-fn parse_with_return<'a>(source_text: &'a str, options: &ParserOptions) -> ParseResult {
+fn parse_with_return(source_text: &str, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
     let ret = parse(&allocator, source_text, options);
     let program = serde_json::to_string(&ret.program).unwrap();
@@ -90,11 +84,7 @@ fn parse_with_return<'a>(source_text: &'a str, options: &ParserOptions) -> Parse
     ParseResult { program, comments, errors }
 }
 
-/// # Panics
-///
-/// * File extension is invalid
-/// * Serde JSON serialization
-#[allow(clippy::needless_pass_by_value)]
+/// Parse synchronously.
 #[napi]
 pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseResult {
     let options = options.unwrap_or_default();
@@ -120,10 +110,9 @@ impl Task for ResolveTask {
     }
 }
 
-/// # Panics
+/// Parse asynchronously.
 ///
-/// * Tokio crashes
-#[allow(clippy::needless_pass_by_value)]
+/// Note: This function can be slower than `parseSync` due to the overhead of spawning a thread.
 #[napi]
 pub fn parse_async(source_text: String, options: Option<ParserOptions>) -> AsyncTask<ResolveTask> {
     let options = options.unwrap_or_default();
