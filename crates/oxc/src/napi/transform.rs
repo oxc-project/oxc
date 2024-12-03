@@ -74,6 +74,9 @@ pub struct TransformOptions {
     /// @see {@link SourceMap}
     pub sourcemap: Option<bool>,
 
+    /// Set assumptions in order to produce smaller output.
+    pub assumptions: Option<CompilerAssumptions>,
+
     /// Configure how TypeScript is transformed.
     pub typescript: Option<TypeScriptOptions>,
 
@@ -114,6 +117,7 @@ impl TryFrom<TransformOptions> for oxc_transformer::TransformOptions {
         };
         Ok(Self {
             cwd: options.cwd.map(PathBuf::from).unwrap_or_default(),
+            assumptions: options.assumptions.map(Into::into).unwrap_or_default(),
             typescript: options
                 .typescript
                 .map(oxc_transformer::TypeScriptOptions::from)
@@ -122,6 +126,36 @@ impl TryFrom<TransformOptions> for oxc_transformer::TransformOptions {
             env,
             ..Self::default()
         })
+    }
+}
+
+#[napi(object)]
+#[derive(Default, Debug)]
+pub struct CompilerAssumptions {
+    pub ignore_function_length: Option<bool>,
+    pub no_document_all: Option<bool>,
+    pub object_rest_no_symbols: Option<bool>,
+    pub pure_getters: Option<bool>,
+    pub set_public_class_fields: Option<bool>,
+}
+
+impl From<CompilerAssumptions> for oxc_transformer::CompilerAssumptions {
+    fn from(value: CompilerAssumptions) -> Self {
+        let ops = oxc_transformer::CompilerAssumptions::default();
+        Self {
+            ignore_function_length: value
+                .ignore_function_length
+                .unwrap_or(ops.ignore_function_length),
+            no_document_all: value.no_document_all.unwrap_or(ops.no_document_all),
+            object_rest_no_symbols: value
+                .object_rest_no_symbols
+                .unwrap_or(ops.object_rest_no_symbols),
+            pure_getters: value.pure_getters.unwrap_or(ops.pure_getters),
+            set_public_class_fields: value
+                .set_public_class_fields
+                .unwrap_or(ops.set_public_class_fields),
+            ..ops
+        }
     }
 }
 
