@@ -12,6 +12,13 @@ export interface ArrowFunctionsOptions {
   spec?: boolean
 }
 
+export interface Comment {
+  type: 'Line' | 'Block'
+  value: string
+  start: number
+  end: number
+}
+
 export interface CompilerAssumptions {
   ignoreFunctionLength?: boolean
   noDocumentAll?: boolean
@@ -20,9 +27,131 @@ export interface CompilerAssumptions {
   setPublicClassFields?: boolean
 }
 
+export interface EcmaScriptModule {
+  /** Import Statements. */
+  staticImports: Array<StaticImport>
+  /** Export Statements. */
+  staticExports: Array<StaticExport>
+}
+
 export interface Es2015Options {
   /** Transform arrow functions into function expressions. */
   arrowFunction?: ArrowFunctionsOptions
+}
+
+export interface ExportEntry {
+  start: number
+  end: number
+  moduleRequest?: ValueSpan
+  /** The name under which the desired binding is exported by the module`. */
+  importName: ExportImportName
+  /** The name used to export this binding by this module. */
+  exportName: ExportExportName
+  /** The name that is used to locally access the exported value from within the importing module. */
+  localName: ExportLocalName
+}
+
+export interface ExportExportName {
+  kind: ExportExportNameKind
+  name?: string
+  start?: number
+  end?: number
+}
+
+export declare const enum ExportExportNameKind {
+  /** `export { name } */
+  Name = 'Name',
+  /** `export default expression` */
+  Default = 'Default',
+  /** `export * from "mod" */
+  None = 'None'
+}
+
+export interface ExportImportName {
+  kind: ExportImportNameKind
+  name?: string
+  start?: number
+  end?: number
+}
+
+export declare const enum ExportImportNameKind {
+  /** `export { name } */
+  Name = 'Name',
+  /** `export * as ns from "mod"` */
+  All = 'All',
+  /** `export * from "mod"` */
+  AllButDefault = 'AllButDefault',
+  /** Does not have a specifier. */
+  None = 'None'
+}
+
+export interface ExportLocalName {
+  kind: ExportLocalNameKind
+  name?: string
+  start?: number
+  end?: number
+}
+
+export declare const enum ExportLocalNameKind {
+  /** `export { name } */
+  Name = 'Name',
+  /** `export default expression` */
+  Default = 'Default',
+  /**
+   * If the exported value is not locally accessible from within the module.
+   * `export default function () {}`
+   */
+  None = 'None'
+}
+
+export interface ImportEntry {
+  /**
+   * The name under which the desired binding is exported by the module.
+   *
+   * ```js
+   * import { foo } from "mod";
+   * //       ^^^
+   * import { foo as bar } from "mod";
+   * //       ^^^
+   * ```
+   */
+  importName: ImportName
+  /**
+   * The name that is used to locally access the imported value from within the importing module.
+   * ```js
+   * import { foo } from "mod";
+   * //       ^^^
+   * import { foo as bar } from "mod";
+   * //              ^^^
+   * ```
+   */
+  localName: ValueSpan
+  /**
+   * Whether this binding is for a TypeScript type-only import.
+   *
+   * `true` for the following imports:
+   * ```ts
+   * import type { foo } from "mod";
+   * import { type foo } from "mod";
+   * ```
+   */
+  isType: boolean
+}
+
+export interface ImportName {
+  kind: ImportNameKind
+  name?: string
+  start?: number
+  end?: number
+}
+
+export declare const enum ImportNameKind {
+  /** `import { x } from "mod"` */
+  Name = 'Name',
+  /** `import * as ns from "mod"` */
+  NamespaceObject = 'NamespaceObject',
+  /** `import defaultExport from "mod"` */
+  Default = 'Default'
 }
 
 /** TypeScript Isolated Declarations for Standalone DTS Emit */
@@ -142,6 +271,29 @@ export interface JsxOptions {
   refresh?: boolean | ReactRefreshOptions
 }
 
+export interface ParseResult {
+  program: import("@oxc-project/types").Program
+  module: EcmaScriptModule
+  comments: Array<Comment>
+  errors: Array<string>
+}
+
+export interface ParserOptions {
+  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
+  /** Treat the source text as `js`, `jsx`, `ts`, or `tsx`. */
+  lang?: 'js' | 'jsx' | 'ts' | 'tsx'
+  /**
+   * Emit `ParenthesizedExpression` in AST.
+   *
+   * If this option is true, parenthesized expressions are represented by
+   * (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
+   * containing the expression inside parentheses.
+   *
+   * Default: true
+   */
+  preserveParens?: boolean
+}
+
 export interface ReactRefreshOptions {
   /**
    * Specify the identifier of the refresh registration variable.
@@ -167,6 +319,34 @@ export interface SourceMap {
   sourcesContent?: Array<string>
   version: number
   x_google_ignoreList?: Array<number>
+}
+
+export interface StaticExport {
+  start: number
+  end: number
+  entries: Array<ExportEntry>
+}
+
+export interface StaticImport {
+  /** Start of import statement. */
+  start: number
+  /** End of import statement. */
+  end: number
+  /**
+   * Import source.
+   *
+   * ```js
+   * import { foo } from "mod";
+   * //                   ^^^
+   * ```
+   */
+  moduleRequest: ValueSpan
+  /**
+   * Import specifiers.
+   *
+   * Empty for `import "mod"`.
+   */
+  entries: Array<ImportEntry>
 }
 
 /**
@@ -301,5 +481,11 @@ export interface TypeScriptOptions {
    * @default false
    */
   rewriteImportExtensions?: 'rewrite' | 'remove' | boolean
+}
+
+export interface ValueSpan {
+  value: string
+  start: number
+  end: number
 }
 
