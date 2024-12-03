@@ -943,10 +943,10 @@ Bindings mismatch:
 after transform: ScopeId(2): ["_A", "_bar", "_i"]
 rebuilt        : ScopeId(2): ["_i"]
 Symbol scope ID mismatch for "_A":
-after transform: SymbolId(3): ScopeId(2)
+after transform: SymbolId(4): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
 Symbol scope ID mismatch for "_bar":
-after transform: SymbolId(4): ScopeId(2)
+after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(3): ScopeId(0)
 
 * regression/T7364/input.mjs

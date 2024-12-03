@@ -282,7 +282,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // Check if class has any properties and get index of constructor (if class has one)
         let mut instance_prop_count = 0;
-        let mut has_static_prop_or_static_block = false;
+        let mut has_static_prop = false;
+        let mut has_static_block = false;
         // TODO: Store `FxIndexMap`s in a pool and re-use them
         let mut private_props = FxIndexMap::default();
         let mut constructor_index = None;
@@ -306,11 +307,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     }
 
                     if prop.r#static {
-                        // TODO(improve-on-babel): Even though private static properties may not access
-                        // class name, Babel still creates a temp var for class. That's unnecessary.
-                        self.initialize_class_name_binding(ctx);
-
-                        has_static_prop_or_static_block = true;
+                        has_static_prop = true;
                     } else {
                         instance_prop_count += 1;
                     }
@@ -320,7 +317,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 ClassElement::StaticBlock(_) => {
                     // Static block only necessitates transforming class if it's being transformed
                     if self.transform_static_blocks {
-                        has_static_prop_or_static_block = true;
+                        has_static_block = true;
                         continue;
                     }
                 }
@@ -340,9 +337,16 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         }
 
         // Exit if nothing to transform
-        if instance_prop_count == 0 && !has_static_prop_or_static_block {
+        if instance_prop_count == 0 && !has_static_prop && !has_static_block {
             self.private_props_stack.push(None);
             return;
+        }
+
+        // Create temp var if class has any static props
+        if has_static_prop {
+            // TODO(improve-on-babel): Even though private static properties may not access
+            // class name, Babel still creates a temp var for class. That's unnecessary.
+            self.initialize_class_name_binding(ctx);
         }
 
         // Add entry to `private_props_stack`
