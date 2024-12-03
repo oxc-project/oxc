@@ -1,0 +1,8 @@
+{
+    "categories": {
+        "correctness": "off"
+    },
+    "rules": {
+        "no-magic-numbers": "error"
+    }
+}
