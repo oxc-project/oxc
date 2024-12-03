@@ -25,6 +25,7 @@ pub struct ModuleRecord<'a> {
     ///   import ImportClause FromClause
     ///   import ModuleSpecifier
     ///   export ExportFromClause FromClause
+    ///
     /// Keyed by ModuleSpecifier, valued by all node occurrences
     pub requested_modules: FxHashMap<Atom<'a>, Vec<'a, RequestedModule>>,
 
@@ -106,6 +107,9 @@ impl<'a> NameSpan<'a> {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportEntry<'a> {
+    /// Span of the import statement.
+    pub statement_span: Span,
+
     /// String value of the ModuleSpecifier of the ImportDeclaration.
     ///
     /// ## Examples
@@ -203,6 +207,9 @@ impl ImportImportName<'_> {
 /// ```
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct ExportEntry<'a> {
+    /// Span of the import statement.
+    pub statement_span: Span,
+
     /// Span for the entire export entry
     pub span: Span,
 
@@ -330,6 +337,9 @@ impl<'a> ExportLocalName<'a> {
 /// RequestedModule
 #[derive(Debug, Clone, Copy)]
 pub struct RequestedModule {
+    /// Span of the import statement.
+    pub statement_span: Span,
+
     /// Span
     pub span: Span,
 
@@ -345,13 +355,6 @@ pub struct RequestedModule {
 
     /// `true` if the module is requested by an import statement.
     pub is_import: bool,
-}
-
-impl RequestedModule {
-    /// Constructor
-    pub fn new(span: Span, is_type: bool, is_import: bool) -> Self {
-        Self { span, is_type, is_import }
-    }
 }
 
 #[cfg(test)]
