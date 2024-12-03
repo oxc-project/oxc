@@ -12,6 +12,14 @@ export interface ArrowFunctionsOptions {
   spec?: boolean
 }
 
+export interface CompilerAssumptions {
+  ignoreFunctionLength?: boolean
+  noDocumentAll?: boolean
+  objectRestNoSymbols?: boolean
+  pureGetters?: boolean
+  setPublicClassFields?: boolean
+}
+
 export interface Es2015Options {
   /** Transform arrow functions into function expressions. */
   arrowFunction?: ArrowFunctionsOptions
@@ -199,6 +207,8 @@ export interface TransformOptions {
    * @see {@link SourceMap}
    */
   sourcemap?: boolean
+  /** Set assumptions in order to produce smaller output. */
+  assumptions?: CompilerAssumptions
   /** Configure how TypeScript is transformed. */
   typescript?: TypeScriptOptions
   /** Configure how TSX and JSX are transformed. */
