@@ -8,7 +8,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
-    symbol::SymbolFlags,
+    symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::{ast_operations::get_var_name_from_node, BoundIdentifier, TraverseCtx};
 
@@ -59,7 +59,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
             // If `object` is reference to class name, there's no need for the class brand assertion
             if let Some(reference_id) =
-                Self::shortcut_static_class(is_declaration, class_binding, &object, ctx)
+                Self::shortcut_static_class(is_declaration, class_binding.symbol_id, &object, ctx)
             {
                 // `_prop._`
                 ctx.symbols_mut().delete_resolved_reference(class_binding.symbol_id, reference_id);
@@ -89,10 +89,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// If can use shorter version, returns `ReferenceId` of the `IdentifierReference`.
     //
     // TODO(improve-on-babel): No reason not to use the short version for class expressions too.
-    // TODO: Take `SymbolId` instead of `class_binding: &BoundIdentifier<'a>`?
     fn shortcut_static_class(
         is_declaration: bool,
-        class_binding: &BoundIdentifier<'a>,
+        class_symbol_id: SymbolId,
         object: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<ReferenceId> {
@@ -100,7 +99,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             if let Expression::Identifier(ident) = object {
                 let reference_id = ident.reference_id();
                 if let Some(symbol_id) = ctx.symbols().get_reference(reference_id).symbol_id() {
-                    if symbol_id == class_binding.symbol_id {
+                    if symbol_id == class_symbol_id {
                         return Some(reference_id);
                     }
                 }
@@ -199,7 +198,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // If `object` is reference to class name, there's no need for the class brand assertion
             // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
             // and look up the `SymbolId`
-            if Self::shortcut_static_class(is_declaration, class_binding, &object, ctx).is_some() {
+            if Self::shortcut_static_class(is_declaration, class_binding.symbol_id, &object, ctx)
+                .is_some()
+            {
                 // `_prop._`
                 let callee =
                     Self::create_underscore_member_expression(prop_ident, field_expr.span, ctx);
@@ -320,8 +321,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // Check if object (`object` in `object.#prop`) is a reference to class name
         // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
         // and look up the `SymbolId`.
-        let object_reference_id =
-            Self::shortcut_static_class(is_declaration, &class_binding, &field_expr.object, ctx);
+        let object_reference_id = Self::shortcut_static_class(
+            is_declaration,
+            class_binding.symbol_id,
+            &field_expr.object,
+            ctx,
+        );
 
         // If `object` is reference to class name, there's no need for the class brand assertion.
         // `Class.#prop = value` -> `_prop._ = value`
@@ -642,7 +647,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
             // and look up the `SymbolId`.
             let object_reference_id =
-                Self::shortcut_static_class(is_declaration, &class_binding, &object, ctx);
+                Self::shortcut_static_class(is_declaration, class_binding.symbol_id, &object, ctx);
 
             // `_assertClassBrand(Class, object, _prop)._` or `_prop._`
             let (get_expr, object) = if let Some(reference_id) = object_reference_id {
