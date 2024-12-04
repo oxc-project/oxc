@@ -538,7 +538,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             };
         }
 
-        true
+        current_part_member_expression.is_none()
     }
 }
 
