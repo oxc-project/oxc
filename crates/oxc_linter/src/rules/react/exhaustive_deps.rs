@@ -407,7 +407,10 @@ impl Rule for ExhaustiveDeps {
                         })
                     });
 
-                    if has_write_reference {
+                    if has_write_reference
+                        || get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
+                            .is_some_and(|decl| decl.scope_id() != component_scope_id)
+                    {
                         continue;
                     }
                 }
@@ -2107,6 +2110,21 @@ fn test() {
         });
     }, [options]);
 }",
+        "export function useCanvasZoomOrScroll() {
+           useEffect(() => {
+               let wheelStopTimeoutId: { current: number | undefined } = { current: undefined };
+       
+               wheelStopTimeoutId = requestAnimationFrameTimeout(() => {
+                   setLastInteraction?.(null);
+               }, 300);
+       
+               return () => {
+                   if (wheelStopTimeoutId.current !== undefined) {
+                       console.log('h1');
+                   }
+               };
+           }, []);
+        }",
     ];
 
     let fail = vec![
