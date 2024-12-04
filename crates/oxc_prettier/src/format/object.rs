@@ -1,3 +1,4 @@
+use oxc_allocator::Vec;
 use oxc_ast::{
     ast::{ObjectAssignmentTarget, ObjectExpression, ObjectPattern, TSTypeLiteral, WithClause},
     AstKind,
@@ -5,9 +6,11 @@ use oxc_ast::{
 use oxc_span::Span;
 
 use crate::{
+    array,
     format::{function_parameters, misc},
-    ir::{Doc, DocBuilder},
-    p_vec, Format, Prettier,
+    group, if_break, indent,
+    ir::Doc,
+    line, softline, text, Format, Prettier,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -99,34 +102,34 @@ pub(super) fn print_object_properties<'a>(
     p: &mut Prettier<'a>,
     object: ObjectLike<'a, '_>,
 ) -> Doc<'a> {
-    let left_brace = p.text("{");
-    let right_brace = p.text("}");
+    let left_brace = text!("{");
+    let right_brace = text!("}");
 
     let should_break = false;
     let member_separator = object.member_separator(p);
 
     let content = if object.is_empty() {
-        p.group(p.array(p_vec!(p, left_brace, p.softline(), right_brace)))
+        group!(p, [left_brace, softline!(), right_brace])
     } else {
-        let mut parts = p.vec();
-        parts.push(p.text("{"));
+        let mut parts = Vec::new_in(p.allocator);
+        parts.push(text!("{"));
 
         let indent_parts = {
             let len = object.len();
             let has_rest = object.has_rest();
-            let mut indent_parts = p.vec();
+            let mut indent_parts = Vec::new_in(p.allocator);
 
-            indent_parts.push(if p.options.bracket_spacing { p.line() } else { p.softline() });
+            indent_parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
 
-            let object_docs = object.iter(p).collect::<Vec<_>>();
+            let object_docs = object.iter(p).collect::<std::vec::Vec<_>>();
             for (i, doc) in object_docs.into_iter().enumerate() {
                 indent_parts.push(doc);
                 if i == len - 1 && !has_rest {
                     break;
                 }
 
-                indent_parts.push(p.text(member_separator));
-                indent_parts.push(p.line());
+                indent_parts.push(text!(member_separator));
+                indent_parts.push(line!());
             }
 
             match object {
@@ -146,22 +149,22 @@ pub(super) fn print_object_properties<'a>(
             }
             indent_parts
         };
-        parts.push(p.indent(indent_parts));
+        parts.push(indent!(p, indent_parts));
         if p.should_print_es5_comma()
             && match object {
                 ObjectLike::Pattern(pattern) => pattern.rest.is_none(),
                 _ => true,
             }
         {
-            parts.push(p.if_break(p.text(member_separator), p.text(""), None));
+            parts.push(if_break!(p, text!(member_separator)));
         }
-        parts.push(if p.options.bracket_spacing { p.line() } else { p.softline() });
-        parts.push(p.text("}"));
+        parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
+        parts.push(text!("}"));
 
         if matches!(p.current_kind(), AstKind::Program(_)) {
             let should_break =
                 misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
-            return p.group_with_opts(p.array(parts), should_break, None);
+            return group!(p, parts, should_break, None);
         }
 
         let parent_kind = p.parent_kind();
@@ -173,11 +176,11 @@ pub(super) fn print_object_properties<'a>(
                     AstKind::AssignmentExpression(_) | AstKind::VariableDeclarator(_)
                 ))
         {
-            p.array(parts)
+            array!(p, parts)
         } else {
             let should_break =
                 misc::has_new_line_in_range(p.source_text, object.span().start, object.span().end);
-            p.group_with_opts(p.array(parts), should_break, None)
+            group!(p, parts, should_break, None)
         }
     };
 

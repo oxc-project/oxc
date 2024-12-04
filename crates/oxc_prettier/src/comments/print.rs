@@ -1,10 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_span::Span;
 
-use crate::{
-    ir::{Doc, DocBuilder},
-    Prettier,
-};
+use crate::{ir::Doc, Prettier};
 
 use super::{CommentFlags, DanglingCommentsPrintOptions};
 
@@ -17,7 +14,7 @@ impl<'a> Prettier<'a> {
         after: Option<Doc<'a>>,
     ) -> Doc<'a> {
         if before.is_some() || after.is_some() {
-            let mut parts = self.vec();
+            let mut parts = Vec::new_in(self.allocator);
             if let Some(doc) = before {
                 parts.push(doc);
             }
@@ -46,7 +43,7 @@ impl<'a> Prettier<'a> {
 
     #[must_use]
     pub(crate) fn print_inner_comment(&mut self, _span: Span) -> Vec<'a, Doc<'a>> {
-        self.vec()
+        Vec::new_in(self.allocator)
     }
 
     #[must_use]

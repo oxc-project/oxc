@@ -1,22 +1,20 @@
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
-use crate::{
-    ir::{Doc, DocBuilder},
-    Format, Prettier,
-};
+use crate::{array, group, ir::Doc, text, Format, Prettier};
 
 pub(super) fn print_arrow_function<'a>(
     p: &mut Prettier<'a>,
     expr: &ArrowFunctionExpression<'a>,
 ) -> Doc<'a> {
-    let mut parts = p.vec();
+    let mut parts = Vec::new_in(p.allocator);
 
     if !p.options.semi && p.options.arrow_parens.is_always() {
-        parts.push(p.text(";"));
+        parts.push(text!(";"));
     }
 
     if expr.r#async {
-        parts.push(p.text("async "));
+        parts.push(text!("async "));
     }
 
     if let Some(type_params) = &expr.type_parameters {
@@ -24,14 +22,14 @@ pub(super) fn print_arrow_function<'a>(
     }
 
     let params_doc = expr.params.format(p);
-    parts.push(p.group(params_doc));
+    parts.push(group!(p, [params_doc]));
 
     if let Some(return_type) = &expr.return_type {
-        parts.push(p.text(": "));
+        parts.push(text!(": "));
         parts.push(return_type.type_annotation.format(p));
     }
 
-    parts.push(p.text(" => "));
+    parts.push(text!(" => "));
 
     if expr.expression {
         let stmt = &expr.body.statements[0];
@@ -45,5 +43,5 @@ pub(super) fn print_arrow_function<'a>(
         parts.push(expr.body.format(p));
     }
 
-    p.array(parts)
+    array!(p, parts)
 }

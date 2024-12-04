@@ -1,26 +1,24 @@
+use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstKind};
 
-use crate::{
-    format::statement,
-    ir::{Doc, DocBuilder},
-    Format, Prettier,
-};
+use crate::{array, format::statement, hardline, indent, ir::Doc, text, Format, Prettier};
 
 pub(super) fn print_block<'a>(
     p: &mut Prettier<'a>,
     stmts: &[Statement<'a>],
     directives: Option<&[Directive<'a>]>,
 ) -> Doc<'a> {
-    let mut parts = p.vec();
-    parts.push(p.text("{"));
+    let mut parts = Vec::new_in(p.allocator);
+
+    parts.push(text!("{"));
     if let Some(doc) = print_block_body(p, stmts, directives, true, false) {
         parts.push({
-            let mut parts = p.vec();
-            parts.extend(p.hardline());
+            let mut parts = Vec::new_in(p.allocator);
+            parts.extend(hardline!());
             parts.push(doc);
-            p.indent(parts)
+            indent!(p, parts)
         });
-        parts.extend(p.hardline());
+        parts.extend(hardline!());
     } else {
         let parent = p.parent_kind();
         let parent_parent = p.parent_parent_kind();
@@ -42,11 +40,12 @@ pub(super) fn print_block<'a>(
                 && !matches!(p.parent_parent_kind(), Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
                 || matches!(p.current_kind(), AstKind::StaticBlock(_)))
         {
-            parts.extend(p.hardline());
+            parts.extend(hardline!());
         }
     }
-    parts.push(p.text("}"));
-    p.array(parts)
+    parts.push(text!("}"));
+
+    array!(p, parts)
 }
 
 pub(super) fn print_block_body<'a>(
@@ -63,7 +62,7 @@ pub(super) fn print_block_body<'a>(
         return None;
     }
 
-    let mut parts = p.vec();
+    let mut parts = Vec::new_in(p.allocator);
 
     if has_directives {
         if let Some(directives) = directives {
@@ -80,5 +79,5 @@ pub(super) fn print_block_body<'a>(
         ));
     }
 
-    Some(p.array(parts))
+    Some(array!(p, parts))
 }
