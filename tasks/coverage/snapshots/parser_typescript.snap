@@ -1,7 +1,7 @@
 commit: d85767ab
 
 parser_typescript Summary:
-AST Parsed     : 6494/6503 (99.86%)
+AST Parsed     : 6495/6503 (99.88%)
 Positive Passed: 6483/6503 (99.69%)
 Negative Passed: 1239/5747 (21.56%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -4514,13 +4514,91 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/t
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestionBun2.ts
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
 
-  × Expected `(` but found `await`
+  × `await` is only allowed within async functions and at the top levels of modules
     ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:22:5]
  21 │ const arr : number[] = [];
  22 │ for await (const v of asyncGen(4)) {
-    ·     ──┬──
-    ·       ╰── `(` expected
+    ·     ─────
  23 │   arr.push(v);
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:26:18]
+ 25 │ 
+ 26 │ const sameArr1 = await Array.fromAsync(arrLike);
+    ·                  ─────
+ 27 │ const sameArr2 = await Array.fromAsync([Promise.resolve(0), Promise.resolve(2), Promise.resolve(4), Promise.resolve(6)]);
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:27:18]
+ 26 │ const sameArr1 = await Array.fromAsync(arrLike);
+ 27 │ const sameArr2 = await Array.fromAsync([Promise.resolve(0), Promise.resolve(2), Promise.resolve(4), Promise.resolve(6)]);
+    ·                  ─────
+ 28 │ const sameArr3 = await Array.fromAsync(genPromises(4));
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:28:18]
+ 27 │ const sameArr2 = await Array.fromAsync([Promise.resolve(0), Promise.resolve(2), Promise.resolve(4), Promise.resolve(6)]);
+ 28 │ const sameArr3 = await Array.fromAsync(genPromises(4));
+    ·                  ─────
+ 29 │ const sameArr4 = await Array.fromAsync(asyncGen(4));
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:29:18]
+ 28 │ const sameArr3 = await Array.fromAsync(genPromises(4));
+ 29 │ const sameArr4 = await Array.fromAsync(asyncGen(4));
+    ·                  ─────
+ 30 │ 
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:33:18]
+ 32 │ Data.fromAsync = Array.fromAsync;
+ 33 │ const sameArr5 = await Data.fromAsync(asyncGen(4));
+    ·                  ─────
+ 34 │ 
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:35:17]
+ 34 │ 
+ 35 │ const mapArr1 = await Array.fromAsync(asyncGen(4), v => v ** 2);
+    ·                 ─────
+ 36 │ const mapArr2 = await Array.fromAsync([0,2,4,6], v => Promise.resolve(v ** 2));
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:36:17]
+ 35 │ const mapArr1 = await Array.fromAsync(asyncGen(4), v => v ** 2);
+ 36 │ const mapArr2 = await Array.fromAsync([0,2,4,6], v => Promise.resolve(v ** 2));
+    ·                 ─────
+ 37 │ const mapArr3 = await Array.fromAsync([0,2,4,6], v => v ** 2);
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:37:17]
+ 36 │ const mapArr2 = await Array.fromAsync([0,2,4,6], v => Promise.resolve(v ** 2));
+ 37 │ const mapArr3 = await Array.fromAsync([0,2,4,6], v => v ** 2);
+    ·                 ─────
+ 38 │ 
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:42:18]
+ 41 │ // This returns a promise that will reject with `err`.
+ 42 │ const badArray = await Array.fromAsync(badIterable);
+    ·                  ─────
+ 43 │ 
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:44:25]
+ 43 │ 
+ 44 │ const withIndexResult = await Array.fromAsync(["a", "b"], (str, index) => ({ index, str }));
+    ·                         ─────
     ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/bom-utf16be.ts
 
@@ -5514,14 +5592,132 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Expected `(` but found `await`
+  × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:4:7]
  3 │ function normalFunc(p: Promise<number>) {
  4 │   for await (const _ of []);
-   ·       ──┬──
-   ·         ╰── `(` expected
+   ·       ─────
  5 │   return await p;
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:5:10]
+ 4 │   for await (const _ of []);
+ 5 │   return await p;
+   ·          ─────
+ 6 │ }
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:9:7]
+  8 │ export function exportedFunc(p: Promise<number>) {
+  9 │   for await (const _ of []);
+    ·       ─────
+ 10 │   return await p;
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:10:10]
+  9 │   for await (const _ of []);
+ 10 │   return await p;
+    ·          ─────
+ 11 │ }
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:14:7]
+ 13 │ const functionExpression = function(p: Promise<number>) {
+ 14 │   for await (const _ of []);
+    ·       ─────
+ 15 │   await p;
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:15:3]
+ 14 │   for await (const _ of []);
+ 15 │   await p;
+    ·   ─────
+ 16 │ }
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:19:7]
+ 18 │ const arrowFunc = (p: Promise<number>) => {
+ 19 │   for await (const _ of []);
+    ·       ─────
+ 20 │   return await p;
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:20:10]
+ 19 │   for await (const _ of []);
+ 20 │   return await p;
+    ·          ─────
+ 21 │ };
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:24:7]
+ 23 │ function* generatorFunc(p: Promise<number>) {
+ 24 │   for await (const _ of []);
+    ·       ─────
+ 25 │   yield await p;
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:25:9]
+ 24 │   for await (const _ of []);
+ 25 │   yield await p;
+    ·         ─────
+ 26 │ }
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:30:9]
+ 29 │   constructor(p: Promise<number>) {
+ 30 │     for await (const _ of []);
+    ·         ─────
+ 31 │     await p;
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:31:5]
+ 30 │     for await (const _ of []);
+ 31 │     await p;
+    ·     ─────
+ 32 │   }
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:34:7]
+ 33 │   method(p: Promise<number>) {
+ 34 │   for await (const _ of []);
+    ·       ─────
+ 35 │     await p;
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:35:5]
+ 34 │   for await (const _ of []);
+ 35 │     await p;
+    ·     ─────
+ 36 │   }
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:39:5]
+ 38 │ 
+ 39 │ for await (const _ of []);
+    ·     ─────
+ 40 │ await null;
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:40:1]
+ 39 │ for await (const _ of []);
+ 40 │ await null;
+    · ─────
+    ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/compiler/awaitLiteralValues.ts:2:5]
@@ -9387,12 +9583,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Expected `(` but found `await`
+  × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts:1:5]
  1 │ for await (const x of []) {}
-   ·     ──┬──
-   ·       ╰── `(` expected
+   ·     ─────
  2 │ await Promise.resolve();
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts:2:1]
+ 1 │ for await (const x of []) {}
+ 2 │ await Promise.resolve();
+   · ─────
+ 3 │ 
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -19129,12 +19332,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ 
    ╰────
 
-  × Expected `(` but found `await`
+  × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts:5:5]
  4 │ 
  5 │ for await (const item of arr) {
-   ·     ──┬──
-   ·       ╰── `(` expected
+   ·     ─────
  6 │   item;
    ╰────
 
@@ -22808,12 +23010,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Expected `(` but found `await`
+  × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:5]
  4 │ 
  5 │ for await (await using of x);
-   ·     ──┬──
-   ·       ╰── `(` expected
+   ·     ─────
+ 6 │ 
+   ╰────
+
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:27]
+ 4 │ 
+ 5 │ for await (await using of x);
+   ·                           ┬
+   ·                           ╰── `;` expected
  6 │ 
    ╰────
 

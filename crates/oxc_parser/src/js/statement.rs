@@ -241,7 +241,15 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // bump `for`
 
         // [+Await]
-        let r#await = self.ctx.has_await() && self.eat(Kind::Await);
+        let r#await = if self.at(Kind::Await) {
+            if !self.ctx.has_await() {
+                self.error(diagnostics::await_expression(self.cur_token().span()));
+            }
+            self.bump_any();
+            true
+        } else {
+            false
+        };
 
         self.expect(Kind::LParen)?;
 

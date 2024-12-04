@@ -942,11 +942,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·            ──────
    ╰────
 
-  × Expected `(` but found `await`
+  × `await` is only allowed within async functions and at the top levels of modules
    ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowAwaitOutsideFunction-false/input.js:1:5]
  1 │ for await (const i of imports) {}
-   ·     ──┬──
-   ·       ╰── `(` expected
+   ·     ─────
    ╰────
 
   × Unexpected new.target expression
@@ -5370,12 +5369,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·       ╰── `)` expected
    ╰────
 
-  × Expected `(` but found `await`
+  × `await` is only allowed within async functions and at the top levels of modules
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await-async-context/input.js:2:7]
  1 │ function f() {
  2 │   for await (let x of y);
-   ·       ──┬──
-   ·         ╰── `(` expected
+   ·       ─────
  3 │ }
    ╰────
 
@@ -8317,11 +8315,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Expected `(` but found `await`
+  × `await` is only allowed within async functions and at the top levels of modules
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-script/for-await/input.js:1:5]
  1 │ for await (const a of b);
-   ·     ──┬──
-   ·       ╰── `(` expected
+   ·     ─────
    ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules

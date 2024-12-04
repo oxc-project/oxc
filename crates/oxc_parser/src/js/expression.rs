@@ -1136,11 +1136,10 @@ impl<'a> ParserImpl<'a> {
     ///     await `UnaryExpression`[?Yield, +Await]
     fn parse_await_expression(&mut self, lhs_span: Span) -> Result<Expression<'a>> {
         let span = self.start_span();
-        self.bump_any();
-        let has_await = self.ctx.has_await();
-        if !has_await {
-            self.error(diagnostics::await_expression(Span::new(span.start, span.start + 5)));
+        if !self.ctx.has_await() {
+            self.error(diagnostics::await_expression(self.cur_token().span()));
         }
+        self.bump_any();
         let argument = self.context(Context::Await, Context::empty(), |p| {
             p.parse_simple_unary_expression(lhs_span)
         })?;

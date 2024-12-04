@@ -987,7 +987,17 @@ after transform: ScopeId(1): ["T", "arr", "depth"]
 rebuilt        : ScopeId(1): ["arr", "depth"]
 
 tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
-semantic error: Expected `(` but found `await`
+semantic error: `await` is only allowed within async functions and at the top levels of modules
+`await` is only allowed within async functions and at the top levels of modules
+`await` is only allowed within async functions and at the top levels of modules
+`await` is only allowed within async functions and at the top levels of modules
+`await` is only allowed within async functions and at the top levels of modules
+`await` is only allowed within async functions and at the top levels of modules
+`await` is only allowed within async functions and at the top levels of modules
+`await` is only allowed within async functions and at the top levels of modules
+`await` is only allowed within async functions and at the top levels of modules
+`await` is only allowed within async functions and at the top levels of modules
+`await` is only allowed within async functions and at the top levels of modules
 
 tasks/coverage/typescript/tests/cases/compiler/arrayLiteralContextualType.ts
 semantic error: Bindings mismatch:
