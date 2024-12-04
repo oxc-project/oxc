@@ -72,6 +72,20 @@ fn dot_with_overlap() {
 }
 
 #[test]
+fn dot_define_is_member_expr_postfix() {
+    let config = ReplaceGlobalDefinesConfig::new(&[
+        ("__OBJ__", r#"{"process":{"env":{"SOMEVAR":"foo"}}}"#),
+        ("process.env.SOMEVAR", "\"SOMEVAR\""),
+    ])
+    .unwrap();
+    test(
+        "console.log(__OBJ__.process.env.SOMEVAR)",
+        "console.log({ 'process': { 'env': { 'SOMEVAR': 'foo' } } }.process.env.SOMEVAR);\n",
+        config.clone(),
+    );
+}
+
+#[test]
 fn dot_nested() {
     let config = ReplaceGlobalDefinesConfig::new(&[("process", "production")]).unwrap();
     test("foo.process.NODE_ENV", "foo.process.NODE_ENV", config.clone());
