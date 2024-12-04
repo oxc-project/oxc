@@ -1,3 +1,4 @@
+use oxc_allocator;
 use oxc_ast::ast::{
     AssignmentOperator, ClassBody, ClassElement, Expression, LogicalOperator, MethodDefinitionKind,
     Statement,
@@ -139,30 +140,46 @@ fn check_for_super_call(_class: &ClassBody<'_>) -> bool {
 }
 
 fn check_for_non_super_call(class: &ClassBody<'_>) -> bool {
-    if class.body.len() == 0 {
+    let Some(statements) = get_constructor_statements(class) else {
         return false;
+    };
+
+    for statement in statements {
+        let Statement::ExpressionStatement(expression) = statement else {
+            continue;
+        };
+
+        if expression.expression.is_super_call_expression() {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn get_constructor_statements<'a>(
+    class: &'a ClassBody<'a>,
+) -> Option<&'a oxc_allocator::Vec<'a, Statement<'a>>> {
+    if class.body.len() == 0 {
+        return None;
     }
 
     let constructor = class.body.iter().find(|part| matches!(part, ClassElement::MethodDefinition(method) if method.kind == MethodDefinitionKind::Constructor));
 
     if constructor.is_none() {
-        return false;
+        return None;
     }
 
     // we already checked it, only for the compiler
     let ClassElement::MethodDefinition(method) = constructor.unwrap() else {
-        return false;
+        return None;
     };
 
     let Some(func_body) = &method.value.body else {
-        return false;
+        return None;
     };
 
-    if func_body.statements.len() == 0 {
-        return false;
-    }
-
-    true
+    Some(&func_body.statements)
 }
 
 #[test]
