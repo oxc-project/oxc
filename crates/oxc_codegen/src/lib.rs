@@ -382,13 +382,6 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b'=');
     }
 
-    fn print_sequence<T: Gen>(&mut self, items: &[T], ctx: Context) {
-        for item in items {
-            item.print(self, ctx);
-            self.print_comma();
-        }
-    }
-
     fn print_curly_braces<F: FnOnce(&mut Self)>(&mut self, span: Span, single_line: bool, op: F) {
         self.add_source_mapping(span);
         self.print_ascii_byte(b'{');

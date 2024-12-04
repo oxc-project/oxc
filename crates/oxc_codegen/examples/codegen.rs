@@ -1,5 +1,5 @@
 #![allow(clippy::print_stdout)]
-use std::{env, path::Path};
+use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
@@ -8,14 +8,16 @@ use oxc_span::SourceType;
 use pico_args::Arguments;
 
 // Instruction:
-// 1. create a `test.js`
-// 2. run `cargo run -p oxc_codegen --example codegen` or `just example codegen`
+// create a `test.js`,
+// run `cargo run -p oxc_codegen --example codegen`
+// or `cargo watch -x "run -p oxc_codegen --example codegen"`
 
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
-    let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
+
     let twice = args.contains("--twice");
     let minify = args.contains("--minify");
+    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path)?;

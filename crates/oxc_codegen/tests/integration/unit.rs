@@ -3,9 +3,9 @@ use crate::tester::{test, test_minify, test_without_source};
 #[test]
 fn module_decl() {
     test("export * as foo from 'foo'", "export * as foo from \"foo\";\n");
-    test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {\n};\n");
-    test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {\n};\n");
-    test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {\n};\n");
+    test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
+    test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
+    test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
 }
 
 #[test]

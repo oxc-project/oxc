@@ -1,4 +1,5 @@
-use crate::snapshot;
+use crate::{snapshot, snapshot_options};
+use oxc_codegen::CodegenOptions;
 
 #[test]
 fn ts() {
@@ -54,7 +55,46 @@ export type Component<
 "(a || b) as any",
 "(a ** b) as any",
 "(function g() {}) as any",
+r#"
+import defaultExport from "module-name";
+import * as name from "module-name";
+import { export1 } from "module-name";
+import { export1 as alias1 } from "module-name";
+import { default as alias } from "module-name";
+import { export1, export2 } from "module-name";
+import { export1, export2 as alias2, /* … */ } from "module-name";
+import { "string name" as alias } from "module-name";
+import defaultExport, { export1, /* … */ } from "module-name";
+import defaultExport, * as name from "module-name";
+import "module-name";
+import {} from 'mod';
+
+export let name1, name2/*, … */; // also var
+export const name3 = 1, name4 = 2/*, … */; // also var, let
+export function functionName() { /* … */ }
+export class ClassName { /* … */ }
+export function* generatorFunctionName() { /* … */ }
+export const { name5, name2: bar } = o;
+export const [ name6, name7 ] = array;
+
+export { name8, /* …, */ name81 };
+export { variable1 as name9, variable2 as name10, /* …, */ name82 };
+export { variable1 as "string name" };
+export { name1 as default1 /*, … */ };
+
+export * from "module-name";
+export * as name11 from "module-name";
+export { name12, /* …, */ nameN } from "module-name";
+export { import1 as name13, import2 as name14, /* …, */ name15 } from "module-name";
+export { default, /* …, */ } from "module-name";
+export { default as name16 } from "module-name";
+"#
     ];
 
     snapshot("ts", &cases);
+    snapshot_options(
+        "minify",
+        &cases,
+        &CodegenOptions { minify: true, ..CodegenOptions::default() },
+    );
 }
