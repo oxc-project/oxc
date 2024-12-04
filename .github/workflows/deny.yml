@@ -6,11 +6,15 @@ on:
     types: [opened, synchronize]
     paths:
       - "Cargo.lock"
+      - "deny.toml"
+      - ".github/workflows/deny.yml"
   push:
     branches:
       - main
     paths:
       - "Cargo.lock"
+      - "deny.toml"
+      - ".github/workflows/deny.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
