@@ -37,6 +37,12 @@ fn impossible(span: Span, span1: Span, x2: &str, x3: &str, x4: &str) -> OxcDiagn
     ])
 }
 
+fn constant_comparison_diagnostic(span: Span, evaluates_to: bool, help: String) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("This comparison will always evaluate to {evaluates_to}"))
+        .with_help(help)
+        .with_label(span)
+}
+
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/impossible>
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/redundant_comparisons>
 #[derive(Debug, Default, Clone)]
@@ -45,13 +51,16 @@ pub struct ConstComparisons;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Checks for redundant comparisons between constants:
-    ///  - Checks for ineffective double comparisons against constants.
-    ///  - Checks for impossible comparisons against constants.
+    /// Checks for redundant or logically impossible comparisons. This includes:
+    /// - Ineffective double comparisons against constants.
+    /// - Impossible comparisons involving constants.
+    /// - Redundant comparisons where both operands are the same (e.g., a < a).
     ///
     /// ### Why is this bad?
     ///
-    /// Only one of the comparisons has any effect on the result, the programmer probably intended to flip one of the comparison operators, or compare a different value entirely.
+    /// Such comparisons can lead to confusing or incorrect logic in the program. In many cases:
+    /// - Only one of the comparisons has any effect on the result, suggesting that the programmer might have made a mistake, such as flipping one of the comparison operators or using the wrong variable.
+    /// - Comparisons like a < a or a >= a are always false or true respectively, making the logic redundant and potentially misleading.
     ///
     /// ### Example
     ///
@@ -60,6 +69,8 @@ declare_oxc_lint!(
     /// status_code <= 400 && status_code > 500;
     /// status_code < 200 && status_code <= 299;
     /// status_code > 500 && status_code >= 500;
+    /// a < a; // Always false
+    /// a >= a; // Always true
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -67,6 +78,8 @@ declare_oxc_lint!(
     /// status_code >= 400 && status_code < 500;
     /// 500 <= status_code && 600 > status_code;
     /// 500 <= status_code && status_code <= 600;
+    /// a < b;
+    /// a <= b;
     /// ```
     ConstComparisons,
     correctness
@@ -74,6 +87,13 @@ declare_oxc_lint!(
 
 impl Rule for ConstComparisons {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        Self::check_logical_expression(node, ctx);
+        Self::check_binary_expression(node, ctx);
+    }
+}
+
+impl ConstComparisons {
+    fn check_logical_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::LogicalExpression(logical_expr) = node.kind() else {
             return;
         };
@@ -154,6 +174,46 @@ impl Rule for ConstComparisons {
                     &diagnostic_note,
                 ));
             }
+        }
+    }
+
+    fn check_binary_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::BinaryExpression(bin_expr) = node.kind() else {
+            return;
+        };
+
+        if matches!(
+            bin_expr.operator,
+            BinaryOperator::LessEqualThan
+                | BinaryOperator::GreaterEqualThan
+                | BinaryOperator::LessThan
+                | BinaryOperator::GreaterThan
+        ) && is_same_reference(
+            bin_expr.left.get_inner_expression(),
+            bin_expr.right.get_inner_expression(),
+            ctx,
+        ) {
+            let is_const_truthy = matches!(
+                bin_expr.operator,
+                BinaryOperator::LessEqualThan | BinaryOperator::GreaterEqualThan
+            );
+
+            ctx.diagnostic(constant_comparison_diagnostic(
+                bin_expr.span,
+                is_const_truthy,
+                format!(
+                    "Because `{}` will {} be {} itself",
+                    bin_expr.left.span().source_text(ctx.source_text()),
+                    if is_const_truthy { "always" } else { "never" },
+                    match bin_expr.operator {
+                        BinaryOperator::GreaterEqualThan | BinaryOperator::LessEqualThan =>
+                            "equal to",
+                        BinaryOperator::LessThan => "less then",
+                        BinaryOperator::GreaterThan => "greater than",
+                        _ => unreachable!(),
+                    },
+                ),
+            ));
         }
     }
 }
@@ -312,6 +372,11 @@ fn test() {
         "styleCodes.length >= 5 && styleCodes[2] >= 0",
         "status_code <= 400 || foo() && status_code > 500;",
         "status_code > 500 && foo() && bar || status_code < 400;",
+        // oxc specific
+        "a < b",
+        "a <= b",
+        "a > b",
+        "a >= b",
     ];
 
     let fail = vec![
@@ -389,6 +454,11 @@ fn test() {
         "status_code <= 500 && response && status_code < 500;",
         // Useless right
         "status_code < 500 && response && status_code <= 500;",
+        // Oxc specific
+        "a < a",
+        "a <= a",
+        "a > a",
+        "a >= a",
     ];
 
     Tester::new(ConstComparisons::NAME, ConstComparisons::CATEGORY, pass, fail).test_and_snapshot();

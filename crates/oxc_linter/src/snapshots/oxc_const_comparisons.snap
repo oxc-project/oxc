@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ oxc(const-comparisons): Unexpected constant comparison
    ╭─[const_comparisons.tsx:1:1]
@@ -235,3 +234,31 @@ snapshot_kind: text
    ·         ╰── This will always evaluate to true.
    ╰────
   help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to false
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a < a
+   · ─────
+   ╰────
+  help: Because `a` will never be less then itself
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to true
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a <= a
+   · ──────
+   ╰────
+  help: Because `a` will always be equal to itself
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to false
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a > a
+   · ─────
+   ╰────
+  help: Because `a` will never be greater than itself
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to true
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a >= a
+   · ──────
+   ╰────
+  help: Because `a` will always be equal to itself
