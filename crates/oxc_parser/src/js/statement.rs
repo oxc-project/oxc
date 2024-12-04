@@ -44,7 +44,6 @@ impl<'a> ParserImpl<'a> {
 
             if is_top_level {
                 if let Some(module_decl) = stmt.as_module_declaration() {
-                    self.set_source_type_to_module_if_unambiguous();
                     self.module_record_builder.visit_module_declaration(module_decl);
                 }
             }

@@ -173,6 +173,10 @@ impl<'a> ModuleRecordBuilder<'a> {
         }
     }
 
+    pub fn visit_import_meta(&mut self) {
+        self.module_record.has_module_syntax = true;
+    }
+
     pub fn visit_module_declaration(&mut self, module_decl: &ModuleDeclaration<'a>) {
         self.module_record.has_module_syntax = true;
         match module_decl {
