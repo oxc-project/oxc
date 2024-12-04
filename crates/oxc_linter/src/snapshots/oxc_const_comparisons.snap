@@ -262,3 +262,39 @@ source: crates/oxc_linter/src/tester.rs
    · ──────
    ╰────
   help: Because `a` will always be equal to itself
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are the same
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a == b && a == b
+   · ───┬──    ───┬──
+   ·    │         ╰── This expression will always evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as the expression itself.
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are the same
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a == b || a == b
+   · ───┬──    ───┬──
+   ·    │         ╰── This expression will always evaluate to true
+   ·    ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as the expression itself.
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are the same
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ !foo && !foo
+   · ──┬─    ──┬─
+   ·   │       ╰── This expression will always evaluate to true
+   ·   ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as the expression itself.
+
+  ⚠ oxc(const-comparisons): Both sides of the logical operator are the same
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ !foo || !foo
+   · ──┬─    ──┬─
+   ·   │       ╰── This expression will always evaluate to true
+   ·   ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to the same value as the expression itself.

@@ -2,7 +2,7 @@
 use std::cmp::Ordering;
 
 use oxc_ast::{
-    ast::{Expression, NumericLiteral},
+    ast::{Expression, LogicalExpression, NumericLiteral},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -41,6 +41,16 @@ fn constant_comparison_diagnostic(span: Span, evaluates_to: bool, help: String) 
     OxcDiagnostic::warn(format!("This comparison will always evaluate to {evaluates_to}"))
         .with_help(help)
         .with_label(span)
+}
+
+fn identical_expressions_logical_operator(left_span: Span, right_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Both sides of the logical operator are the same")
+                    .with_help("This logical expression will always evaluate to the same value as the expression itself.")
+                    .with_labels([
+                        left_span.label("If this expression evaluates to true"),
+                        right_span
+                            .label("This expression will always evaluate to true"),
+                    ])
 }
 
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/impossible>
@@ -98,6 +108,16 @@ impl ConstComparisons {
             return;
         };
 
+        Self::check_logical_expression_const_literal_comparison(logical_expr, ctx);
+        Self::check_redundant_logical_expression(logical_expr, ctx);
+    }
+}
+impl ConstComparisons {
+    // checks for `x < 42 && x < 42` and `x < 42 && x > 42`
+    fn check_logical_expression_const_literal_comparison<'a>(
+        logical_expr: &LogicalExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) {
         if logical_expr.operator != LogicalOperator::And {
             return;
         }
@@ -174,6 +194,27 @@ impl ConstComparisons {
                     &diagnostic_note,
                 ));
             }
+        }
+    }
+
+    // checks for `a === b && a === b` and `a === b && a !== b`
+    fn check_redundant_logical_expression<'a>(
+        logical_expr: &LogicalExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        if !matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or) {
+            return;
+        }
+
+        if is_same_reference(
+            logical_expr.left.get_inner_expression(),
+            logical_expr.right.get_inner_expression(),
+            ctx,
+        ) {
+            ctx.diagnostic(identical_expressions_logical_operator(
+                logical_expr.left.span(),
+                logical_expr.right.span(),
+            ));
         }
     }
 
@@ -459,6 +500,10 @@ fn test() {
         "a <= a",
         "a > a",
         "a >= a",
+        "a == b && a == b",
+        "a == b || a == b",
+        "!foo && !foo",
+        "!foo || !foo",
     ];
 
     Tester::new(ConstComparisons::NAME, ConstComparisons::CATEGORY, pass, fail).test_and_snapshot();

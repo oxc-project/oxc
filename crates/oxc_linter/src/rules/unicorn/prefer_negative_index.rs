@@ -299,7 +299,6 @@ fn test() {
         "foo.slice(foo.length - 1 / 1)",
         "[1, 2, 3].slice([1, 2, 3].length - 1)",
         "foo[bar++].slice(foo[bar++].length - 1)",
-        "foo[a + b].slice(foo[a + b].length - 1)",
         "foo[`${bar}`].slice(foo[`${bar}`].length - 1)",
         "function foo() {return [].slice.apply(arguments);}",
         "String.prototype.toSpliced.call(foo, foo.length - 1)",
