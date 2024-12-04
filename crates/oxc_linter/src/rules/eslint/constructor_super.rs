@@ -98,8 +98,7 @@ fn is_possible_constructor(expression: &Expression<'_>) -> bool {
             assignment.operator,
             AssignmentOperator::Assign | AssignmentOperator::LogicalAnd
         ) {
-            // ToDo check right side
-            return true;
+            return is_possible_constructor(&assignment.right);
         }
 
         if matches!(
@@ -115,12 +114,10 @@ fn is_possible_constructor(expression: &Expression<'_>) -> bool {
 
     if let Expression::LogicalExpression(logical) = expression {
         if logical.operator == LogicalOperator::And {
-            // ToDo check right side
-            return true;
+            return is_possible_constructor(&logical.right);
         }
 
-        // ToDo check if left or right side
-        return true;
+        return is_possible_constructor(&logical.left) || is_possible_constructor(&logical.right);
     }
 
     if let Expression::ConditionalExpression(conditional) = expression {
