@@ -238,7 +238,7 @@ impl Rule for ExhaustiveDeps {
             Argument::SpreadElement(_) => {
                 ctx.diagnostic(unknown_dependencies_diagnostic(
                     hook_name.as_str(),
-                    callback_node.span(),
+                    call_expr.callee.span(),
                 ));
                 None
             }
@@ -324,7 +324,7 @@ impl Rule for ExhaustiveDeps {
                     _ => {
                         ctx.diagnostic(unknown_dependencies_diagnostic(
                             hook_name.as_str(),
-                            callback_node.span(),
+                            call_expr.callee.span(),
                         ));
                         None
                     }
@@ -528,7 +528,7 @@ impl Rule for ExhaustiveDeps {
                     ctx.diagnostic(unnecessary_dependency_diagnostic(
                         hook_name,
                         &b.to_string(),
-                        b.span,
+                        dependencies_node.span,
                     ));
                 }
             });
@@ -541,7 +541,7 @@ impl Rule for ExhaustiveDeps {
                 ctx.diagnostic(unnecessary_dependency_diagnostic(
                     hook_name,
                     &dep.to_string(),
-                    dep.span,
+                    dependencies_node.span,
                 ));
             }
         }
@@ -550,7 +550,10 @@ impl Rule for ExhaustiveDeps {
             let Some(symbol_id) = dep.symbol_id else { continue };
 
             if dep.chain.is_empty() && is_symbol_declaration_referentially_unique(symbol_id, ctx) {
-                ctx.diagnostic(dependency_changes_on_every_render_diagnostic(hook_name, dep.span));
+                ctx.diagnostic(dependency_changes_on_every_render_diagnostic(
+                    hook_name,
+                    dependencies_node.span,
+                ));
             }
         }
     }
