@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.39.0] - 2024-12-04
+
+- c2ced15 parser,linter: [**BREAKING**] Use a different `ModuleRecord` for linter (#7554) (Boshen)
+
+- 8a788b8 parser: [**BREAKING**] Build `ModuleRecord` directly in parser (#7546) (Boshen)
+
+- b0e1c03 ast: [**BREAKING**] Add `StringLiteral::raw` field (#7393) (Boshen)
+
+### Features
+
+- 33e5a49 syntax: Add statement span to `ImportEntry` and `ExportEntry` (#7583) (Boshen)
+
+### Refactor
+
+- b24beeb parser: Use `PropName` trait from `oxc_ecmascript` (#7543) (Boshen)
+- f0e7acc syntax: Change `ModuleRecord::not_esm` to `has_module_syntax` (#7579) (Boshen)
+- 18519de syntax: Remove `ModuleRecord::export_default` (#7578) (Boshen)
+- d476660 syntax: Remove `ModuleRecord::exported_bindings_duplicated` because it is a syntax error (#7577) (Boshen)
+- 17663f5 syntax: Remove `ModuleRecord::export_default_duplicated` because it is a syntax error (#7576) (Boshen)
+
 ## [0.37.0] - 2024-11-21
 
 - f059b0e ast: [**BREAKING**] Add missing `ChainExpression` from `TSNonNullExpression` (#7377) (Boshen)

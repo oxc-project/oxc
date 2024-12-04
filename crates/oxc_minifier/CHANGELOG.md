@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.39.0] - 2024-12-04
+
+- f2f31a8 traverse: [**BREAKING**] Remove unsound APIs (#7514) (overlookmotel)
+
+- b0e1c03 ast: [**BREAKING**] Add `StringLiteral::raw` field (#7393) (Boshen)
+
+### Features
+
+- 97af341 minifier: Minify alternated one child if block (#7231) (7086cmd)
+- ac0d25c minifier: Minify one child if statement expression (#7230) (Ethan Goh)
+
+### Bug Fixes
+
+- 896ff86 minifier: Do not fold if statement block with lexical declaration (#7519) (Boshen)
+
+### Performance
+
+- c133693 minifier: Fuse ast passes (#7493) (Boshen)
+
+### Refactor
+
+- 63a66cf minifier: Remove unused ast pass from DCE (#7540) (Boshen)
+- 625a5ba minifier: Improve ast passes (#7518) (Boshen)
+
+### Testing
+
+- 9d6e14b ecmascript: Move tests to `oxc_minifier` due to cyclic dependency with `oxc_parser` (#7542) (Boshen)
+
 ## [0.37.0] - 2024-11-21
 
 ### Features

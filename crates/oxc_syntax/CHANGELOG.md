@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.39.0] - 2024-12-04
+
+- c2ced15 parser,linter: [**BREAKING**] Use a different `ModuleRecord` for linter (#7554) (Boshen)
+
+- 8a788b8 parser: [**BREAKING**] Build `ModuleRecord` directly in parser (#7546) (Boshen)
+
+### Features
+
+- 7c62a33 napi/parser: Return esm info (#7602) (Boshen)
+- 33e5a49 syntax: Add statement span to `ImportEntry` and `ExportEntry` (#7583) (Boshen)
+
+### Performance
+
+- 4a98230 syntax: Use `FxDashMap` for exported bindings (#7525) (overlookmotel)
+
+### Refactor
+
+- 169b8bf linter, syntax: Introduce type alias `FxDashMap` (#7520) (overlookmotel)
+- f0e7acc syntax: Change `ModuleRecord::not_esm` to `has_module_syntax` (#7579) (Boshen)
+- 18519de syntax: Remove `ModuleRecord::export_default` (#7578) (Boshen)
+- d476660 syntax: Remove `ModuleRecord::exported_bindings_duplicated` because it is a syntax error (#7577) (Boshen)
+- 17663f5 syntax: Remove `ModuleRecord::export_default_duplicated` because it is a syntax error (#7576) (Boshen)
+- 79014ff syntax: Clean up `ModuleRecord` (#7568) (Boshen)
+
 ## [0.38.0] - 2024-11-26
 
 - 27b2268 semantic: [**BREAKING**] Remove `SymbolFlags::Export` (#7414) (Dunqing)

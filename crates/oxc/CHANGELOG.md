@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.39.0] - 2024-12-04
+
+- 8a788b8 parser: [**BREAKING**] Build `ModuleRecord` directly in parser (#7546) (Boshen)
+
+### Features
+
+- 40792b4 napi/parser: Change parse API to accept mandatory `filename` and optional `lang` (#7605) (Boshen)
+- 7c62a33 napi/parser: Return esm info (#7602) (Boshen)
+- 5864352 napi/transform: Add `TransformerOptions::assumptions` (#7601) (翠 / green)
+- 771c698 oxc: Remove `oxc_napi` crate (#7634) (Boshen)
+- bd977cf oxc: Add `oxc_napi` crate (#7612) (Boshen)
+
 ## [0.38.0] - 2024-11-26
 
 - 5d65656 oxc_index: [**BREAKING**] Move to own repo github.com/oxc-project/oxc-index-vec (#7464) (Boshen)
