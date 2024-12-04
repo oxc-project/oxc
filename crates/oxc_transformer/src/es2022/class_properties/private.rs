@@ -1331,16 +1331,16 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform chain expression inside unary expression.
     ///
     /// Instance prop:
-    /// * "delete object?.#prop.xyz`"
-    ///   -> "object === null || object === void 0 ? true : delete _classPrivateFieldGet(_prop, object).xyz;"
-    /// * "delete object?.#prop?.xyz;"
-    ///   -> "delete (object === null || object === void 0 ? void 0 : _classPrivateFieldGet(_prop, object))?.xyz;"
+    /// * `delete object?.#prop.xyz`
+    ///   -> `object === null || object === void 0 ? true : delete _classPrivateFieldGet(_prop, object).xyz;`
+    /// * `delete object?.#prop?.xyz;`
+    ///   -> `delete (object === null || object === void 0 ? void 0 : _classPrivateFieldGet(_prop, object))?.xyz;`
     ///
     /// Static prop:
-    /// * "delete object?.#prop.xyz`"
-    ///   -> "object === null || object === void 0 ? true : delete _assertClassBrand(Foo, object, _prop)._.xyz;"
-    /// * "delete object?.#prop?.xyz;"
-    ///   -> "delete (object === null || object === void 0 ? void 0 : _assertClassBrand(Foo, object, _prop)._)?.xyz;"
+    /// * `delete object?.#prop.xyz`
+    ///   -> `object === null || object === void 0 ? true : delete _assertClassBrand(Foo, object, _prop)._.xyz;`
+    /// * `delete object?.#prop?.xyz;`
+    ///   -> `delete (object === null || object === void 0 ? void 0 : _assertClassBrand(Foo, object, _prop)._)?.xyz;`
     //
     // `#[inline]` so that compiler sees that `expr` is an `Expression::UnaryExpression`.
     #[inline]
