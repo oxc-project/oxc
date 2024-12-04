@@ -31,7 +31,7 @@ jobs:
       matrix:
         include:
           # - os: windows-latest # See `test-windows` job below
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
           - os: macos-latest
     runs-on: ${{ matrix.os }}
     steps:
@@ -99,7 +99,7 @@ jobs:
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
     if: ${{ github.ref_name == 'main' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
       CARGO_TARGET_WASM32_WASIP1_THREADS_RUNNER: "wasmtime run -W bulk-memory=y -W threads=y -S threads=y --dir=${{ github.workspace }}::${{ github.workspace }} --"
@@ -118,7 +118,7 @@ jobs:
 
   test-wasm32-unknown-unknown:
     name: Check wasm32-unknown-unknown
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: taiki-e/checkout-action@v1
 
@@ -144,7 +144,7 @@ jobs:
 
   typos:
     name: Spell Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: crate-ci/typos@v1.28.2
@@ -153,7 +153,7 @@ jobs:
 
   lint:
     name: Clippy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: Boshen/setup-rust@main
@@ -174,7 +174,7 @@ jobs:
 
   doc:
     name: Doc
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: Boshen/setup-rust@main
@@ -185,7 +185,7 @@ jobs:
 
   conformance:
     name: Conformance
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: taiki-e/checkout-action@v1
 
@@ -232,7 +232,7 @@ jobs:
 
   ast_changes:
     name: AST Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: taiki-e/checkout-action@v1
 
@@ -273,7 +273,7 @@ jobs:
 
   napi:
     name: Test NAPI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: dorny/paths-filter@v3
