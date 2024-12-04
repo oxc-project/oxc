@@ -49,8 +49,7 @@ pub struct ClassTable {
     pub parent_ids: FxHashMap<ClassId, ClassId>,
     pub declarations: IndexVec<ClassId, NodeId>,
     pub elements: IndexVec<ClassId, IndexVec<ElementId, Element>>,
-    // PrivateIdentifier reference
-    pub private_identifiers: IndexVec<ClassId, Vec<PrivateIdentifierReference>>,
+    pub private_identifier_references: IndexVec<ClassId, Vec<PrivateIdentifierReference>>,
 }
 
 impl ClassTable {
@@ -70,7 +69,7 @@ impl ClassTable {
         &self,
         class_id: ClassId,
     ) -> impl Iterator<Item = &PrivateIdentifierReference> + '_ {
-        self.private_identifiers[class_id].iter()
+        self.private_identifier_references[class_id].iter()
     }
 
     pub fn get_node_id(&self, class_id: ClassId) -> NodeId {
@@ -108,7 +107,7 @@ impl ClassTable {
             self.parent_ids.insert(class_id, parent_id);
         };
         self.elements.push(IndexVec::default());
-        self.private_identifiers.push(Vec::new());
+        self.private_identifier_references.push(Vec::new());
         class_id
     }
 
@@ -121,6 +120,6 @@ impl ClassTable {
         class_id: ClassId,
         private_identifier_reference: PrivateIdentifierReference,
     ) {
-        self.private_identifiers[class_id].push(private_identifier_reference);
+        self.private_identifier_references[class_id].push(private_identifier_reference);
     }
 }

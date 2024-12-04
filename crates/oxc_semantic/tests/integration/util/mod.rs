@@ -133,7 +133,8 @@ impl<'a> SemanticTester<'a> {
         match (self.expect_errors, semantic_ret.errors.is_empty()) {
             (true, true) => panic!("Expected errors, but none were produced"),
             (false, false) => panic!(
-                "Semantic analysis failed:\n\n{}",
+                "Semantic analysis failed:\n\n{}\n\n{}",
+                self.source_text,
                 semantic_ret
                     .errors
                     .iter()

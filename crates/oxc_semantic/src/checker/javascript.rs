@@ -195,17 +195,13 @@ fn private_field_undeclared(x0: &str, span1: Span) -> OxcDiagnostic {
 
 fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
-        ctx.class_table_builder.classes.iter_private_identifiers(class_id).for_each(|reference| {
-            if reference.element_ids.is_empty()
-                && !ctx.class_table_builder.classes.ancestors(class_id).skip(1).any(|class_id| {
-                    ctx.class_table_builder
-                        .classes
-                        .has_private_definition(class_id, &reference.name)
-                })
-            {
+        for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
+            if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
+                ctx.class_table_builder.classes.has_private_definition(class_id, &reference.name)
+            }) {
                 ctx.error(private_field_undeclared(&reference.name, reference.span));
             }
-        });
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 30/30 (100.00%)
 Positive Passed: 30/30 (100.00%)
-Negative Passed: 25/25 (100.00%)
+Negative Passed: 26/26 (100.00%)
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
@@ -262,6 +262,14 @@ Negative Passed: 25/25 (100.00%)
  2 │     [key: string]?: number;
    ·                  ─
  3 │ }
+   ╰────
+
+  × Private field 'x' must be declared in an enclosing class
+   ╭─[misc/fail/oxc-7582.js:4:9]
+ 3 │   method() {
+ 4 │     obj.#x;
+   ·         ──
+ 5 │   }
    ╰────
 
   × The keyword 'let' is reserved
