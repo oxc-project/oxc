@@ -37,27 +37,6 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): Import baz from qux instead.
-   ╭─[no_restricted_imports.tsx:1:31]
- 1 │ import { foo, bar, baz } from "mod"
-   ·                               ─────
-   ╰────
-  help: Remove the import statement.
-
-  ⚠ eslint(no-restricted-imports): Import foo from qux instead.
-   ╭─[no_restricted_imports.tsx:1:31]
- 1 │ import { foo, bar, baz } from "mod"
-   ·                               ─────
-   ╰────
-  help: Remove the import statement.
-
-  ⚠ eslint(no-restricted-imports): Import baz from qux instead.
-   ╭─[no_restricted_imports.tsx:1:31]
- 1 │ import { foo, bar, baz } from "mod"
-   ·                               ─────
-   ╰────
-  help: Remove the import statement.
-
   ⚠ eslint(no-restricted-imports): Import foo from qux instead.
    ╭─[no_restricted_imports.tsx:1:31]
  1 │ import { foo, bar, baz } from "mod"

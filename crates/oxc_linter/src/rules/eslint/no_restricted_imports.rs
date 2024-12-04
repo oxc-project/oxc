@@ -9,14 +9,11 @@ use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
 fn no_restricted_imports_diagnostic(
     ctx: &LintContext,
     span: Span,
-    message: &Option<String>,
+    message: Option<String>,
     source: &str,
 ) {
-    let msg = message.as_ref().map_or_else(
-        || format!("'{source}' import is restricted from being used."),
-        std::clone::Clone::clone,
-    );
-
+    let msg =
+        message.unwrap_or_else(|| format!("'{source}' import is restricted from being used."));
     ctx.diagnostic(
         OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span),
     );
@@ -91,11 +88,11 @@ impl Rule for NoRestrictedImports {
         let module_record = ctx.module_record();
         let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<Span>> = FxHashMap::default();
 
-        for entry in &module_record.import_entries {
-            let source = entry.module_request.name();
-            let span = entry.module_request.span();
+        for path in &self.paths {
+            for entry in &module_record.import_entries {
+                let source = entry.module_request.name();
+                let span = entry.module_request.span();
 
-            for path in &self.paths {
                 if source == path.name.as_str() {
                     if let Some(import_names) = &path.import_names {
                         match &entry.import_name {
@@ -104,9 +101,10 @@ impl Rule for NoRestrictedImports {
                                     no_restricted_imports_diagnostic(
                                         ctx,
                                         span,
-                                        &path.message,
+                                        path.message.clone(),
                                         source,
                                     );
+                                    return;
                                 }
                             }
                             ImportImportName::Default(_) | ImportImportName::NamespaceObject => {
@@ -114,55 +112,55 @@ impl Rule for NoRestrictedImports {
                                     no_restricted_imports_diagnostic(
                                         ctx,
                                         span,
-                                        &path.message,
+                                        path.message.clone(),
                                         source,
                                     );
+                                    return;
                                 }
                             }
                         }
                     } else {
-                        no_restricted_imports_diagnostic(ctx, span, &path.message, source);
+                        no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
                     }
                 }
             }
-        }
 
-        for (source, requests) in &module_record.requested_modules {
-            for request in requests {
-                if request.is_import && module_record.import_entries.is_empty() {
-                    side_effect_import_map.entry(source).or_default().push(request.span);
+            for (source, requests) in &module_record.requested_modules {
+                for request in requests {
+                    if request.is_import && module_record.import_entries.is_empty() {
+                        side_effect_import_map.entry(source).or_default().push(request.span);
+                    }
                 }
             }
-        }
 
-        for (source, spans) in &side_effect_import_map {
-            for path in &self.paths {
+            for (source, spans) in &side_effect_import_map {
                 if source.as_str() == path.name.as_str() {
-                    for span in spans {
-                        no_restricted_imports_diagnostic(ctx, *span, &path.message, source);
+                    if let Some(span) = spans.iter().next() {
+                        no_restricted_imports_diagnostic(ctx, *span, path.message.clone(), source);
                     }
+                    return;
                 }
             }
-        }
 
-        for entry in &module_record.local_export_entries {
-            if let Some(module_request) = &entry.module_request {
-                let source = module_request.name();
-                let span = entry.span;
-                for path in &self.paths {
+            for entry in &module_record.local_export_entries {
+                if let Some(module_request) = &entry.module_request {
+                    let source = module_request.name();
+                    let span = entry.span;
+
                     if source == path.name.as_str() {
-                        no_restricted_imports_diagnostic(ctx, span, &path.message, source);
+                        no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
+                        return;
                     }
                 }
             }
-        }
-        for entry in &module_record.indirect_export_entries {
-            if let Some(module_request) = &entry.module_request {
-                let source = module_request.name();
-                let span = entry.span;
-                for path in &self.paths {
+            for entry in &module_record.indirect_export_entries {
+                if let Some(module_request) = &entry.module_request {
+                    let source = module_request.name();
+                    let span = entry.span;
+
                     if source == path.name.as_str() {
-                        no_restricted_imports_diagnostic(ctx, span, &path.message, source);
+                        no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
+                        return;
                     }
                 }
             }
