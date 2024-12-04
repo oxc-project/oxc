@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.39.0] - 2024-12-04
+
+- 0be5233 semantic: [**BREAKING**] Remove `ModuleRecord` from `Semantic` (#7548) (Boshen)
+
+- 8a788b8 parser: [**BREAKING**] Build `ModuleRecord` directly in parser (#7546) (Boshen)
+
+### Features
+
+- d2767be semantic: Syntax error for `delete object?.#a` (#7636) (Boshen)
+- 206de91 semantic: Add `SymbolTable::add_resolved_reference` method (#7608) (overlookmotel)
+
+### Bug Fixes
+
+- 1486849 semantic: Syntax error for undeclared private field access (#7635) (Boshen)
+- f3850eb semantic: Correctly resolve binding for return type of functions (#6388) (overlookmotel)
+
+### Refactor
+
+- d21448b semantic, transformer: Simplify `FxIndexMap` type aliases (#7524) (overlookmotel)
+
+### Testing
+
+- fed8327 semantic: Add a test for `UpdateExpression` (#7495) (Dunqing)
+- 4b0720a semantic: Re-organize snapshot-based tests (#7494) (Dunqing)
+
 ## [0.38.0] - 2024-11-26
 
 - 27b2268 semantic: [**BREAKING**] Remove `SymbolFlags::Export` (#7414) (Dunqing)

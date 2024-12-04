@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.39.0] - 2024-12-04
+
+### Bug Fixes
+
+- e787e9d codegen: Print parentheses correctly for ClassHeritage (#7637) (Boshen)
+
 ## [0.38.0] - 2024-11-26
 
 ### Bug Fixes

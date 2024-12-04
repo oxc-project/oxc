@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.39.0] - 2024-12-04
+
+### Features
+
+- 5864352 napi/transform: Add `TransformerOptions::assumptions` (#7601) (翠 / green)
+- 771c698 oxc: Remove `oxc_napi` crate (#7634) (Boshen)
+- bd977cf oxc: Add `oxc_napi` crate (#7612) (Boshen)
+
+### Bug Fixes
+
+- be2293a napi/transform: Respect `options.sourcemap` for id (#7590) (Kevin Deng 三咲智子)
+
+### Refactor
+
+- b4f3812 oxc_napi: Remove `source_map` - moved to its crate (#7614) (Boshen)
+
 ## [0.38.0] - 2024-11-26
 
 - bb2c0c2 transformer: [**BREAKING**] Return `String` as error instead of OxcDiagnostic (#7424) (Boshen)

@@ -4,6 +4,61 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.39.0] - 2024-12-04
+
+- f2f31a8 traverse: [**BREAKING**] Remove unsound APIs (#7514) (overlookmotel)
+
+- b0e1c03 ast: [**BREAKING**] Add `StringLiteral::raw` field (#7393) (Boshen)
+
+### Features
+
+- a784a82 oxc_transformer: Support jsx pragma that are long member expressions (#7538) (IWANABETHATGUY)
+- a23ce15 oxc_transformer: Replace_global_define for assignmentTarget (#7505) (IWANABETHATGUY)
+- 3539f56 transformer/class-properties: Support for transforming `TaggedTemplateExpresssion` (#7504) (Dunqing)
+
+### Bug Fixes
+
+- 64f92e9 oxc_transform: Oxc dot define is postfix of some MemberExpr (#7640) (IWANABETHATGUY)
+- 6af8659 oxc_transformer: Correct generate `ThisExpr` and `import.meta` in jsx pragma (#7553) (IWANABETHATGUY)
+- 58a125f transformer/async-to-generator: Correct the `SymbolFlags` of function id in module (#7470) (Dunqing)
+- eb825ed transformer/class-properties: Replace references to class name with temp var in static prop initializers (#7610) (overlookmotel)
+- 0eadd9f transformer/class-properties: Create temp var for class where required (#7516) (overlookmotel)
+- 199076b transformer/class-properties: Transform private property accesses in static prop initializers (#7483) (overlookmotel)
+- 37842c1 transformer/object-rest-spread: Generate catch variable binding with correct `SymbolFlags` (#7469) (Dunqing)
+
+### Performance
+
+- 7ebe8c2 transformer: Use `FxDashMap` for browser query cache (#7521) (overlookmotel)
+- 5ca6eea transformer/class-properties: Inline visitor methods (#7485) (overlookmotel)
+- 3b1e63e transformer/jsx: No string comparisons generating pragma expression (#7620) (overlookmotel)
+
+### Documentation
+
+- 370d4b9 transformer/class-properties: Add missing docs (#7588) (overlookmotel)
+
+### Refactor
+
+- d21448b semantic, transformer: Simplify `FxIndexMap` type aliases (#7524) (overlookmotel)
+- 7d1c12e transformer/class-properties: Rename misleadingly-named method (#7609) (overlookmotel)
+- 802233d transformer/class-properties: Remove pointless method (#7592) (overlookmotel)
+- a07f278 transformer/class-properties: `PrivatePropsStack` type (#7589) (overlookmotel)
+- 7bd6350 transformer/class-properties: Move creating temp var out of main loop (#7587) (overlookmotel)
+- ebd11fb transformer/class-properties: Exit `transform_class` faster if nothing to do (#7586) (overlookmotel)
+- dccff38 transformer/class-properties: `ResolvedPrivateProp` type (#7532) (overlookmotel)
+- 367b6c8 transformer/class-properties: `shortcut_static_class` take `SymbolId` (#7531) (overlookmotel)
+- ab1214d transformer/class-properties: Rename `class_binding` (#7533) (overlookmotel)
+- d5aaee7 transformer/class-properties: Remove defunct comments (#7527) (overlookmotel)
+- 968863b transformer/class-properties: Move transform logic of `callee` of `CallExpression` to `transform_private_field_callee` (#7503) (Dunqing)
+- 5261547 transformer/class-properties: Remove a branch from `transform_call_expression_impl` (#7507) (overlookmotel)
+- 1c4b29c transformer/class-properties: Correct comments (#7506) (overlookmotel)
+- 8ad52be transformer/jsx: `Pragma::parse` take a `&str` (#7619) (overlookmotel)
+- ef62b9d transformer/react-refresh: Use `generate_uid_in_current_hoist_scope` to add hoisted binding (#7492) (Dunqing)
+
+### Testing
+
+- 71b3437 oxc_transformer: Define works differently with esbuild (#7593) (翠 / green)
+- 2158c38 transformer/jsx: Move tests setup into a macro (#7618) (overlookmotel)
+
 ## [0.38.0] - 2024-11-26
 
 - bb2c0c2 transformer: [**BREAKING**] Return `String` as error instead of OxcDiagnostic (#7424) (Boshen)
