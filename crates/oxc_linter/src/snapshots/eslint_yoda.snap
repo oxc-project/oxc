@@ -1,0 +1,599 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 356
+snapshot_kind: text
+---
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (x <= 'foo' || 'bar' < x) {}
+   ·     ──────────
+   ╰────
+  help: Expected literal to be on the left side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if ("red" == value) {}
+   ·     ──────────────
+   ╰────
+  help: Expected literal to be on the right side of ==.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (true === value) {}
+   ·     ──────────────
+   ╰────
+  help: Expected literal to be on the right side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (5 != value) {}
+   ·     ──────────
+   ╰────
+  help: Expected literal to be on the right side of !=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (5n != value) {}
+   ·     ───────────
+   ╰────
+  help: Expected literal to be on the right side of !=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (null !== value) {}
+   ·     ──────────────
+   ╰────
+  help: Expected literal to be on the right side of !==.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if ("red" <= value) {}
+   ·     ──────────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (`red` <= value) {}
+   ·     ──────────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (`red` <= `${foo}`) {}
+   ·     ─────────────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (`red` <= `${"red"}`) {}
+   ·     ───────────────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (true >= value) {}
+   ·     ─────────────
+   ╰────
+  help: Expected literal to be on the right side of >=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:12]
+ 1 │ var foo = (5 < value) ? true : false
+   ·            ─────────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:26]
+ 1 │ function foo() { return (null > value); }
+   ·                          ────────────
+   ╰────
+  help: Expected literal to be on the right side of >.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (-1 < str.indexOf(substr)) {}
+   ·     ────────────────────────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (value == "red") {}
+   ·     ──────────────
+   ╰────
+  help: Expected literal to be on the left side of ==.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (value == `red`) {}
+   ·     ──────────────
+   ╰────
+  help: Expected literal to be on the left side of ==.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (value === true) {}
+   ·     ──────────────
+   ╰────
+  help: Expected literal to be on the left side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (value === 5n) {}
+   ·     ────────────
+   ╰────
+  help: Expected literal to be on the left side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (`${"red"}` <= `red`) {}
+   ·     ───────────────────
+   ╰────
+  help: Expected literal to be on the left side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:14]
+ 1 │ if (a < 0 && 0 <= b && b < 1) {}
+   ·              ──────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a && a < 1 && b < 1) {}
+   ·     ──────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (1 < a && a < 0) {}
+   ·     ─────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ 0 < a && a < 1
+   · ─────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:18]
+ 1 │ var a = b < 0 || 1 <= b;
+   ·                  ──────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= x && x < -1) {}
+   ·     ──────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:10]
+ 1 │ var a = (b < 0 && 0 <= b);
+   ·          ─────
+   ╰────
+  help: Expected literal to be on the left side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:10]
+ 1 │ var a = (b < `0` && `0` <= b);
+   ·          ───────
+   ╰────
+  help: Expected literal to be on the left side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (`green` < x.y && x.y < `blue`) {}
+   ·     ─────────────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a[b] && a['b'] < 1) {}
+   ·     ─────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a[b] && a[`b`] < 1) {}
+   ·     ─────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (`0` <= a[b] && a[`b`] < `1`) {}
+   ·     ───────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a[b] && a.b < 1) {}
+   ·     ─────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a[''] && a.b < 1) {}
+   ·     ──────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a[''] && a[' '] < 1) {}
+   ·     ──────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a[''] && a[null] < 1) {}
+   ·     ──────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a[``] && a[null] < 1) {}
+   ·     ──────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a[''] && a[b] < 1) {}
+   ·     ──────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a[''] && a[b()] < 1) {}
+   ·     ──────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a[``] && a[b()] < 1) {}
+   ·     ──────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a[b()] && a[b()] < 1) {}
+   ·     ───────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= a.null && a[/(?<zero>0)/] <= 1) {}
+   ·     ───────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (3 == a) {}
+   ·     ──────
+   ╰────
+  help: Expected literal to be on the right side of ==.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ foo(3 === a);
+   ·     ───────
+   ╰────
+  help: Expected literal to be on the right side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ foo(a === 3);
+   ·     ───────
+   ╰────
+  help: Expected literal to be on the left side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ foo(a === `3`);
+   ·     ─────────
+   ╰────
+  help: Expected literal to be on the left side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 <= x && x < 1) {}
+   ·     ──────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:14]
+ 1 │ if ( /* a */ 0 /* b */ < /* c */ foo /* d */ ) {}
+   ·              ───────────────────────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:14]
+ 1 │ if ( /* a */ foo /* b */ > /* c */ 0 /* d */ ) {}
+   ·              ───────────────────────
+   ╰────
+  help: Expected literal to be on the left side of >.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (foo()===1) {}
+   ·     ─────────
+   ╰────
+  help: Expected literal to be on the left side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (foo()     === 1) {}
+   ·     ───────────────
+   ╰────
+  help: Expected literal to be on the left side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:8]
+ 1 │ while (0 === (a));
+   ·        ─────────
+   ╰────
+  help: Expected literal to be on the right side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:8]
+ 1 │ while (0 === (a = b));
+   ·        ─────────────
+   ╰────
+  help: Expected literal to be on the right side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:8]
+ 1 │ while ((a) === 0);
+   ·        ─────────
+   ╰────
+  help: Expected literal to be on the left side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:8]
+ 1 │ while ((a = b) === 0);
+   ·        ─────────────
+   ╰────
+  help: Expected literal to be on the left side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (((((((((((foo)))))))))) === ((((((5)))))));
+   ·     ─────────────────────────────────────────
+   ╰────
+  help: Expected literal to be on the left side of ===.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:24]
+ 1 │ function *foo() { yield(1) < a }
+   ·                        ───────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:24]
+ 1 │ function *foo() { yield((1)) < a }
+   ·                        ─────────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:25]
+ 1 │ function *foo() { yield 1 < a }
+   ·                         ─────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:28]
+ 1 │ function *foo() { yield/**/1 < a }
+   ·                            ─────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:24]
+ 1 │ function *foo() { yield(1) < ++a }
+   ·                        ─────────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:24]
+ 1 │ function *foo() { yield(1) < (a) }
+   ·                        ─────────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:3]
+ 1 │ x=1 < a
+   ·   ─────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:24]
+ 1 │ function *foo() { yield++a < 1 }
+   ·                        ───────
+   ╰────
+  help: Expected literal to be on the left side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:24]
+ 1 │ function *foo() { yield(a) < 1 }
+   ·                        ───────
+   ╰────
+  help: Expected literal to be on the left side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:25]
+ 1 │ function *foo() { yield a < 1 }
+   ·                         ─────
+   ╰────
+  help: Expected literal to be on the left side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:28]
+ 1 │ function *foo() { yield/**/a < 1 }
+   ·                            ─────
+   ╰────
+  help: Expected literal to be on the left side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:24]
+ 1 │ function *foo() { yield++a < (1) }
+   ·                        ─────────
+   ╰────
+  help: Expected literal to be on the left side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:3]
+ 1 │ x=a < 1
+   ·   ─────
+   ╰────
+  help: Expected literal to be on the left side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ 0 < f()in obj
+   · ───────
+   ╰────
+  help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ 1 > x++instanceof foo
+   · ───────
+   ╰────
+  help: Expected literal to be on the right side of >.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ x < ('foo')in bar
+   · ───────────
+   ╰────
+  help: Expected literal to be on the left side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ false <= ((x))in foo
+   · ──────────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ x >= (1)instanceof foo
+   · ────────
+   ╰────
+  help: Expected literal to be on the left side of >=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ false <= ((x)) in foo
+   · ──────────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ x >= 1 instanceof foo
+   · ──────
+   ╰────
+  help: Expected literal to be on the left side of >=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ x >= 1/**/instanceof foo
+   · ──────
+   ╰────
+  help: Expected literal to be on the left side of >=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:2]
+ 1 │ (x >= 1)instanceof foo
+   ·  ──────
+   ╰────
+  help: Expected literal to be on the left side of >=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ (x) >= (1)instanceof foo
+   · ──────────
+   ╰────
+  help: Expected literal to be on the left side of >=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ 1 > x===foo
+   · ─────
+   ╰────
+  help: Expected literal to be on the right side of >.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:1]
+ 1 │ 1 > x
+   · ─────
+   ╰────
+  help: Expected literal to be on the right side of >.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:22]
+ 1 │ if (`green` < x.y && x.y < `blue`) {}
+   ·                      ────────────
+   ╰────
+  help: Expected literal to be on the left side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:16]
+ 1 │ if('a' <= x && x < 'b') {}
+   ·                ───────
+   ╰────
+  help: Expected literal to be on the left side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if ('b' <= x && x < 'a') {}
+   ·     ────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:4]
+ 1 │ if('a' <= x && x < 1) {}
+   ·    ────────
+   ╰────
+  help: Expected literal to be on the right side of <=.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ if (0 < a && b < max) {}
+   ·     ─────
+   ╰────
+  help: Expected literal to be on the right side of <.

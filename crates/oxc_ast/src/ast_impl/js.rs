@@ -502,6 +502,7 @@ impl<'a> ComputedMemberExpression<'a> {
             {
                 Some(lit.quasis[0].value.raw.clone())
             }
+            Expression::RegExpLiteral(lit) => Some(Atom::from(lit.raw)),
             _ => None,
         }
     }
