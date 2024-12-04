@@ -38,18 +38,6 @@ macro_rules! text {
     }};
 }
 
-/// Helper macro to create a `Doc` string with single space.
-/// ```
-/// space!();
-/// ```
-/// TODO: Remove this
-#[macro_export]
-macro_rules! space {
-    () => {{
-        $crate::ir::Doc::Str(" ")
-    }};
-}
-
 /// Strings are printed directly as is.
 /// However for the algorithm to work properly they shouldn't contain line break characters.
 /// (In Prettier(.js) this is just a string literal.)

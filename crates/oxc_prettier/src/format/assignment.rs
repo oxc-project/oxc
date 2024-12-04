@@ -14,7 +14,7 @@ use crate::{
     format::{binaryish::should_inline_logical_expression, class::ClassMemberish},
     group, indent, indent_if_break,
     ir::Doc,
-    line, space, text, Format, Prettier,
+    line, text, Format, Prettier,
 };
 
 pub(super) fn print_assignment_expression<'a>(
@@ -26,7 +26,7 @@ pub(super) fn print_assignment_expression<'a>(
         p,
         AssignmentLikeNode::AssignmentExpression(assignment_expr),
         left_doc,
-        array!(p, [space!(), text!(assignment_expr.operator.as_str())]),
+        array!(p, [text!(" "), text!(assignment_expr.operator.as_str())]),
         Some(&assignment_expr.right),
     )
 }
@@ -84,7 +84,7 @@ pub(super) fn print_assignment<'a>(
             group!(p, [group!(p, [left_doc]), op, group!(p, [indent!(p, [line!(), right_doc])])])
         }
         Layout::NeverBreakAfterOperator => {
-            group!(p, [group!(p, [left_doc]), op, space!(), group!(p, [right_doc])])
+            group!(p, [group!(p, [left_doc]), op, text!(" "), group!(p, [right_doc])])
         }
         // First break right-hand side, then after operator
         Layout::Fluid => {
@@ -100,7 +100,7 @@ pub(super) fn print_assignment<'a>(
 
             group!(p, [group!(p, [left_doc]), op, after_op, right_doc])
         }
-        Layout::BreakLhs => group!(p, [left_doc, op, space!(), group!(p, [right_doc])]),
+        Layout::BreakLhs => group!(p, [left_doc, op, text!(" "), group!(p, [right_doc])]),
         // Parts of assignment chains aren't wrapped in groups.
         // Once one of them breaks, the chain breaks too.
         Layout::Chain => array!(p, [group!(p, [left_doc]), op, line!(), right_doc]),

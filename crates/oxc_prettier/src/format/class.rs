@@ -9,7 +9,7 @@ use crate::{
     format::{assignment, assignment::AssignmentLikeNode, JoinSeparator},
     group, hardline, if_break, indent,
     ir::Doc,
-    join, line, softline, space, text, Format, Prettier,
+    join, line, softline, text, Format, Prettier,
 };
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
@@ -33,7 +33,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
             extend_parts.push(super_type_parameters.format(p));
         }
 
-        extend_parts.push(space!());
+        extend_parts.push(text!(" "));
 
         if group_mode {
             heritage_clauses_parts.push(softline!());
@@ -69,7 +69,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     }
 
     if class.id.is_some() || class.type_parameters.is_some() {
-        group_parts.push(space!());
+        group_parts.push(text!(" "));
     }
 
     if group_mode {
@@ -259,7 +259,7 @@ pub(super) fn print_class_property<'a>(
 
     if let Some(accessibility) = node.format_accessibility(p) {
         parts.push(accessibility);
-        parts.push(space!());
+        parts.push(text!(" "));
     }
 
     if node.is_declare() {
@@ -404,7 +404,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
         p,
         [group!(p, [softline!(), join!(p, JoinSeparator::CommaLine, implements_docs),])]
     ));
-    parts.push(space!());
+    parts.push(text!(" "));
 
     group!(p, parts)
 }

@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     array, dynamic_text, format::function_parameters::should_group_function_parameters, group,
-    if_break, indent, ir::Doc, softline, space, text, Format, Prettier,
+    if_break, indent, ir::Doc, softline, text, Format, Prettier,
 };
 
 pub(super) fn print_function<'a>(
@@ -58,7 +58,7 @@ pub(super) fn print_function<'a>(
     }
 
     if let Some(body) = &func.body {
-        parts.push(space!());
+        parts.push(text!(" "));
         parts.push(body.format(p));
     }
     if func.is_ts_declare_function() || func.body.is_none() {
@@ -75,7 +75,7 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
 
     if let Some(accessibility) = &method.accessibility {
         parts.push(text!(accessibility.as_str()));
-        parts.push(space!());
+        parts.push(text!(" "));
     }
 
     if method.r#static {
@@ -138,7 +138,7 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
     }
 
     if let Some(body) = &function.body {
-        parts.push(space!());
+        parts.push(text!(" "));
         parts.push(body.format(p));
     } else if p.options.semi {
         parts.push(text!(";"));
@@ -157,7 +157,7 @@ pub(super) fn print_return_or_throw_argument<'a>(
     parts.push(text!(if is_return { "return" } else { "throw" }));
 
     if let Some(argument) = argument {
-        parts.push(space!());
+        parts.push(text!(" "));
         parts.push(
             if argument.is_binaryish() || matches!(argument, Expression::SequenceExpression(_)) {
                 let argument_doc = argument.format(p);

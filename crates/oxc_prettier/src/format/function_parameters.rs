@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, AstKind};
 
 use crate::{
     array, comments::CommentFlags, group, hardline, if_break, indent, ir::Doc, line, softline,
-    space, text, Format, Prettier,
+    text, Format, Prettier,
 };
 
 pub(super) fn should_hug_the_only_function_parameter(
@@ -83,7 +83,7 @@ pub(super) fn print_function_parameters<'a>(
                 printed.push(text!(","));
 
                 if should_hug_the_only_function_parameter {
-                    printed.push(space!());
+                    printed.push(text!(" "));
                 } else if p.is_next_line_empty(this_param.span) {
                     printed.extend(hardline!());
                     printed.extend(hardline!());
@@ -97,7 +97,7 @@ pub(super) fn print_function_parameters<'a>(
     for (i, param) in params.items.iter().enumerate() {
         if let Some(accessibility) = &param.accessibility {
             printed.push(text!(accessibility.as_str()));
-            printed.push(space!());
+            printed.push(text!(" "));
         }
 
         if param.r#override {
@@ -114,7 +114,7 @@ pub(super) fn print_function_parameters<'a>(
         }
         printed.push(text!(","));
         if should_hug_the_only_function_parameter {
-            printed.push(space!());
+            printed.push(text!(" "));
         } else if p.is_next_line_empty(param.span) {
             printed.extend(hardline!());
             printed.extend(hardline!());

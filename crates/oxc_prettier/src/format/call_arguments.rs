@@ -11,7 +11,7 @@ use crate::{
     },
     group, hardline, if_break, indent,
     ir::Doc,
-    line, softline, space, text,
+    line, softline, text,
     utils::will_break,
     Format, Prettier,
 };

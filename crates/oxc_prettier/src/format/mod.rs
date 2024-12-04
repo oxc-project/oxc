@@ -35,7 +35,7 @@ use crate::{
     format::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter},
     group, hardline, indent,
     ir::{Doc, JoinSeparator},
-    join, line, softline, space, text, wrap, Prettier,
+    join, line, softline, text, wrap, Prettier,
 };
 
 pub trait Format<'a> {
@@ -175,7 +175,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
             if let Some(alternate) = &self.alternate {
                 let else_on_same_line = matches!(alternate, Statement::BlockStatement(_));
                 if else_on_same_line {
-                    parts.push(space!());
+                    parts.push(text!(" "));
                 } else {
                     parts.extend(hardline!());
                 }
@@ -321,7 +321,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
             parts.push(do_body);
 
             if matches!(self.body, Statement::BlockStatement(_)) {
-                parts.push(space!());
+                parts.push(text!(" "));
             } else {
                 parts.extend(hardline!());
             }
@@ -345,7 +345,7 @@ impl<'a> Format<'a> for ContinueStatement<'a> {
         parts.push(text!("continue"));
 
         if let Some(label) = &self.label {
-            parts.push(space!());
+            parts.push(text!(" "));
             parts.push(label.format(p));
         }
 
@@ -359,7 +359,7 @@ impl<'a> Format<'a> for BreakStatement<'a> {
         parts.push(text!("break"));
 
         if let Some(label) = &self.label {
-            parts.push(space!());
+            parts.push(text!(" "));
             parts.push(label.format(p));
         }
 
@@ -445,7 +445,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             }
 
             if is_only_one_block_statement {
-                consequent_parts.push(space!());
+                consequent_parts.push(text!(" "));
             } else {
                 consequent_parts.extend(hardline!());
             }
@@ -493,7 +493,7 @@ impl<'a> Format<'a> for TryStatement<'a> {
             parts.push(text!("try "));
             parts.push(self.block.format(p));
             if let Some(handler) = &self.handler {
-                parts.push(space!());
+                parts.push(text!(" "));
                 parts.push(handler.format(p));
             }
             if let Some(finalizer) = &self.finalizer {
@@ -607,7 +607,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
             }
 
             parts.push(text!(kind));
-            parts.push(space!());
+            parts.push(text!(" "));
 
             let is_hardline = !p.parent_kind().is_iteration_statement()
                 && self.declarations.iter().all(|decl| decl.init.is_some());
@@ -1058,7 +1058,7 @@ impl<'a> Format<'a> for TSTypeOperator<'a> {
         let mut parts = Vec::new_in(p.allocator);
 
         parts.push(text!(self.operator.to_str()));
-        parts.push(space!());
+        parts.push(text!(" "));
         parts.push(self.type_annotation.format(p));
 
         array!(p, parts)
@@ -1185,7 +1185,7 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
             parts.push(type_parameters.format(p));
         }
 
-        parts.push(space!());
+        parts.push(text!(" "));
 
         if let Some(extends) = &self.extends {
             if extends.len() > 0 {
@@ -1208,7 +1208,7 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
                 }
 
                 parts.extend(extends_parts);
-                parts.push(space!());
+                parts.push(text!(" "));
             }
         }
 
@@ -1292,7 +1292,7 @@ impl<'a> Format<'a> for TSModuleDeclaration<'a> {
         }
 
         parts.push(text!(self.kind.as_str()));
-        parts.push(space!());
+        parts.push(text!(" "));
         parts.push(self.id.format(p));
         parts.push(text!(" {"));
 
@@ -1572,11 +1572,11 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
             parts.push(module::print_module_specifiers(p, specifiers, is_default, is_namespace));
             parts.push(text!(" from"));
         }
-        parts.push(space!());
+        parts.push(text!(" "));
         parts.push(self.source.format(p));
 
         if let Some(with_clause) = &self.with_clause {
-            parts.push(space!());
+            parts.push(text!(" "));
             parts.push(with_clause.format(p));
         }
 
@@ -1629,7 +1629,7 @@ impl<'a> Format<'a> for WithClause<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let attribute_keyword_doc = self.attributes_keyword.format(p);
         let with_clause_doc = object::print_object_properties(p, ObjectLike::WithClause(self));
-        array!(p, [attribute_keyword_doc, space!(), with_clause_doc])
+        array!(p, [attribute_keyword_doc, text!(" "), with_clause_doc])
     }
 }
 
@@ -1654,7 +1654,7 @@ impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
         if let Some(decl) = &self.declaration {
-            parts.push(space!());
+            parts.push(text!(" "));
             parts.push(decl.format(p));
         } else {
             parts.push(module::print_module_specifiers(
@@ -2184,7 +2184,7 @@ impl<'a> Format<'a> for YieldExpression<'a> {
                 parts.push(text!("*"));
             }
             if let Some(argument) = &self.argument {
-                parts.push(space!());
+                parts.push(text!(" "));
                 parts.push(argument.format(p));
             }
             array!(p, parts)
@@ -2212,7 +2212,7 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
             let mut parts = Vec::new_in(p.allocator);
             parts.push(dynamic_text!(p, self.operator.as_str()));
             if self.operator.is_keyword() {
-                parts.push(space!());
+                parts.push(text!(" "));
             }
             parts.push(self.argument.format(p));
             array!(p, parts)
@@ -2243,7 +2243,7 @@ impl<'a> Format<'a> for PrivateInExpression<'a> {
         wrap!(p, self, PrivateInExpression, {
             let left_doc = self.left.format(p);
             let right_doc = self.right.format(p);
-            array!(p, [left_doc, space!(), text!(self.operator.as_str()), space!(), right_doc])
+            array!(p, [left_doc, text!(" "), text!(self.operator.as_str()), text!(" "), right_doc])
         })
     }
 }
@@ -2740,12 +2740,12 @@ impl<'a> Format<'a> for JSXOpeningElement<'a> {
         }
 
         for attribute in &self.attributes {
-            parts.push(space!());
+            parts.push(text!(" "));
             parts.push(attribute.format(p));
         }
 
         if self.self_closing {
-            parts.push(space!());
+            parts.push(text!(" "));
             parts.push(text!("/"));
         }
 
@@ -3006,7 +3006,7 @@ impl<'a> Format<'a> for TSPropertySignature<'a> {
                 parts.push(text!("?"));
             }
             parts.push(text!(":"));
-            parts.push(space!());
+            parts.push(text!(" "));
             parts.push(ty.type_annotation.format(p));
         }
         array!(p, parts)

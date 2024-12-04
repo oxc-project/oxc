@@ -6,7 +6,7 @@ use oxc_ast::ast::*;
 use crate::{
     array, group, if_break, indent,
     ir::{Doc, JoinSeparator},
-    join, line, softline, space, text, Format, Prettier,
+    join, line, softline, text, Format, Prettier,
 };
 
 pub(super) fn print_export_declaration<'a>(
@@ -37,7 +37,7 @@ pub(super) fn print_export_declaration<'a>(
     }
 
     if let Some(with_clause) = decl.with_clause() {
-        parts.push(space!());
+        parts.push(text!(" "));
         parts.push(with_clause.format(p));
     }
 
@@ -91,7 +91,7 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
     if specifiers.is_empty() {
         parts.push(text!(" {}"));
     } else {
-        parts.push(space!());
+        parts.push(text!(" "));
 
         let mut specifiers_iter: VecDeque<_> = specifiers.iter().collect();
         if include_default {
@@ -133,11 +133,11 @@ pub fn print_module_specifiers<'a, T: Format<'a>>(
             } else {
                 parts.push(text!("{"));
                 if p.options.bracket_spacing {
-                    parts.push(space!());
+                    parts.push(text!(" "));
                 }
                 parts.extend(specifiers_iter.iter().map(|s| s.format(p)));
                 if p.options.bracket_spacing {
-                    parts.push(space!());
+                    parts.push(text!(" "));
                 }
                 parts.push(text!("}"));
             }

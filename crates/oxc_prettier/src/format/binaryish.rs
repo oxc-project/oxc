@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     array, binaryish::BinaryishOperator, comments::CommentFlags, group, indent, ir::Doc, line,
-    space, text, Format, Prettier,
+    text, Format, Prettier,
 };
 
 pub(super) fn print_binaryish_expression<'a>(
@@ -94,7 +94,7 @@ fn print_binaryish_expressions<'a>(
     let right = if should_inline {
         let mut parts = Vec::new_in(p.allocator);
         parts.push(text!(operator.as_str()));
-        parts.push(space!());
+        parts.push(text!(" "));
         parts.push(right.format(p));
         parts
     } else {
@@ -103,7 +103,7 @@ fn print_binaryish_expressions<'a>(
             parts.push(line!());
         }
         parts.push(text!(operator.as_str()));
-        parts.push(if line_before_operator { space!() } else { line!() });
+        parts.push(if line_before_operator { text!(" ") } else { line!() });
         parts.push(right.format(p));
         parts
     };
@@ -112,7 +112,7 @@ fn print_binaryish_expressions<'a>(
     let should_group = should_break;
 
     if !line_before_operator {
-        parts.push(space!());
+        parts.push(text!(" "));
     }
 
     parts.push(if should_group { group!(p, right, should_break, None) } else { array!(p, right) });
