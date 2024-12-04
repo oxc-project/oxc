@@ -1,0 +1,9 @@
+{
+    "plugins": ["typescript"],
+    "categories": {
+        "correctness": "off"
+    },
+    "rules": {
+        "typescript/no-magic-numbers": "error"
+    }
+}

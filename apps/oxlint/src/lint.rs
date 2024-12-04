@@ -819,4 +819,27 @@ mod test {
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
     }
+
+    #[test]
+    fn test_eslint_and_typescript_alias_rules() {
+        let args = &[
+            "-c",
+            "fixtures/eslint_and_typescript_alias_rules/oxlint-eslint.json",
+            "fixtures/eslint_and_typescript_alias_rules/test.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
+
+        let args = &[
+            "-c",
+            "fixtures/eslint_and_typescript_alias_rules/oxlint-typescript.json",
+            "fixtures/eslint_and_typescript_alias_rules/test.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 1);
+    }
 }
