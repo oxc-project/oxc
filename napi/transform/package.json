@@ -2,6 +2,7 @@
   "name": "@oxc-transform/binding",
   "private": true,
   "scripts": {
+    "build-dev": "napi build --platform",
     "build": "napi build --platform --release",
     "test": "vitest --typecheck run ./test"
   },
