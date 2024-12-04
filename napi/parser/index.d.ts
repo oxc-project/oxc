@@ -10,6 +10,14 @@ export interface Comment {
 }
 
 export interface EcmaScriptModule {
+  /**
+   * Has ESM syntax.
+   *
+   * i.e. `import` and `export` statements, and `import.meta`.
+   *
+   * Dynamic imports `import('foo')` are ignored since they can be used in non-ESM files.
+   */
+  hasModuleSyntax: boolean
   /** Import Statements. */
   staticImports: Array<StaticImport>
   /** Export Statements. */

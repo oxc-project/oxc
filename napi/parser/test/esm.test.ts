@@ -52,6 +52,7 @@ export { default as name1 } from "module-name";
     expect(ret.program.body.length).toBeGreaterThan(0);
     expect(ret.errors.length).toBe(0);
     expect(JSON.stringify(ret.module, null, 2)).toMatchSnapshot();
+    expect(ret.module.hasModuleSyntax).toBe(true);
     if (s.startsWith('import')) {
       expect(ret.module.staticImports.length).toBe(1);
       expect(ret.module.staticExports.length).toBe(0);
@@ -60,5 +61,22 @@ export { default as name1 } from "module-name";
       expect(ret.module.staticImports.length).toBe(0);
       expect(ret.module.staticExports.length).toBe(1);
     }
+  });
+});
+
+describe('hasModuleSyntax', () => {
+  test('import.meta', () => {
+    const ret = parseSync('test.js', 'import.meta.foo');
+    expect(ret.module.hasModuleSyntax).toBe(true);
+  });
+
+  test('import expression', () => {
+    const ret = parseSync('test.js', "import('foo')");
+    expect(ret.module.hasModuleSyntax).toBe(false);
+  });
+
+  test('script', () => {
+    const ret = parseSync('test.js', "require('foo')");
+    expect(ret.module.hasModuleSyntax).toBe(false);
   });
 });

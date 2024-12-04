@@ -2,6 +2,7 @@
 
 exports[`esm > export * as name1 from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -37,6 +38,7 @@ exports[`esm > export * as name1 from "module-name"; 1`] = `
 
 exports[`esm > export * from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -69,6 +71,7 @@ exports[`esm > export * from "module-name"; 1`] = `
 
 exports[`esm > export { default as name1 } from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -107,6 +110,7 @@ exports[`esm > export { default as name1 } from "module-name"; 1`] = `
 
 exports[`esm > export { default, /* …, */ } from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -145,6 +149,7 @@ exports[`esm > export { default, /* …, */ } from "module-name"; 1`] = `
 
 exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -231,6 +236,7 @@ exports[`esm > export { import1 as name1, import2 as name2, /* …, */ nameN } f
 
 exports[`esm > export { name1 as default /*, … */ }; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -264,6 +270,7 @@ exports[`esm > export { name1 as default /*, … */ }; 1`] = `
 
 exports[`esm > export { name1, /* …, */ nameN } from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -326,6 +333,7 @@ exports[`esm > export { name1, /* …, */ nameN } from "module-name"; 1`] = `
 
 exports[`esm > export { name1, /* …, */ nameN }; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -378,6 +386,7 @@ exports[`esm > export { name1, /* …, */ nameN }; 1`] = `
 
 exports[`esm > export { variable1 as "string name" }; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -411,6 +420,7 @@ exports[`esm > export { variable1 as "string name" }; 1`] = `
 
 exports[`esm > export { variable1 as name1, variable2 as name2, /* …, */ nameN }; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -482,6 +492,7 @@ exports[`esm > export { variable1 as name1, variable2 as name2, /* …, */ nameN
 
 exports[`esm > export class ClassName { /* … */ } 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -515,6 +526,7 @@ exports[`esm > export class ClassName { /* … */ } 1`] = `
 
 exports[`esm > export const [ name1, name2 ] = array; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -567,6 +579,7 @@ exports[`esm > export const [ name1, name2 ] = array; 1`] = `
 
 exports[`esm > export const { name1, name2: bar } = o; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -619,6 +632,7 @@ exports[`esm > export const { name1, name2: bar } = o; 1`] = `
 
 exports[`esm > export const name1 = 1, name2 = 2/*, … */; // also var, let 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -671,6 +685,7 @@ exports[`esm > export const name1 = 1, name2 = 2/*, … */; // also var, let 1`]
 
 exports[`esm > export default class { /* … */ } 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -700,6 +715,7 @@ exports[`esm > export default class { /* … */ } 1`] = `
 
 exports[`esm > export default class ClassName { /* … */ } 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -732,6 +748,7 @@ exports[`esm > export default class ClassName { /* … */ } 1`] = `
 
 exports[`esm > export default expression; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -764,6 +781,7 @@ exports[`esm > export default expression; 1`] = `
 
 exports[`esm > export default function () { /* … */ } 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -793,6 +811,7 @@ exports[`esm > export default function () { /* … */ } 1`] = `
 
 exports[`esm > export default function functionName() { /* … */ } 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -825,6 +844,7 @@ exports[`esm > export default function functionName() { /* … */ } 1`] = `
 
 exports[`esm > export default function* () { /* … */ } 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -854,6 +874,7 @@ exports[`esm > export default function* () { /* … */ } 1`] = `
 
 exports[`esm > export default function* generatorFunctionName() { /* … */ } 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -886,6 +907,7 @@ exports[`esm > export default function* generatorFunctionName() { /* … */ } 1`
 
 exports[`esm > export function functionName() { /* … */ } 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -919,6 +941,7 @@ exports[`esm > export function functionName() { /* … */ } 1`] = `
 
 exports[`esm > export function* generatorFunctionName() { /* … */ } 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -952,6 +975,7 @@ exports[`esm > export function* generatorFunctionName() { /* … */ } 1`] = `
 
 exports[`esm > export let name1, name2/*, … */; // also var 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [],
   "staticExports": [
     {
@@ -1004,6 +1028,7 @@ exports[`esm > export let name1, name2/*, … */; // also var 1`] = `
 
 exports[`esm > import "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [
     {
       "start": 0,
@@ -1022,6 +1047,7 @@ exports[`esm > import "module-name"; 1`] = `
 
 exports[`esm > import * as name from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [
     {
       "start": 0,
@@ -1052,6 +1078,7 @@ exports[`esm > import * as name from "module-name"; 1`] = `
 
 exports[`esm > import { "string name" as alias } from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [
     {
       "start": 0,
@@ -1085,6 +1112,7 @@ exports[`esm > import { "string name" as alias } from "module-name"; 1`] = `
 
 exports[`esm > import { default as alias } from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [
     {
       "start": 0,
@@ -1118,6 +1146,7 @@ exports[`esm > import { default as alias } from "module-name"; 1`] = `
 
 exports[`esm > import { export1 } from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [
     {
       "start": 0,
@@ -1151,6 +1180,7 @@ exports[`esm > import { export1 } from "module-name"; 1`] = `
 
 exports[`esm > import { export1 as alias1 } from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [
     {
       "start": 0,
@@ -1184,6 +1214,7 @@ exports[`esm > import { export1 as alias1 } from "module-name"; 1`] = `
 
 exports[`esm > import { export1, export2 } from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [
     {
       "start": 0,
@@ -1231,6 +1262,7 @@ exports[`esm > import { export1, export2 } from "module-name"; 1`] = `
 
 exports[`esm > import { export1, export2 as alias2, /* … */ } from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [
     {
       "start": 0,
@@ -1278,6 +1310,7 @@ exports[`esm > import { export1, export2 as alias2, /* … */ } from "module-nam
 
 exports[`esm > import defaultExport from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [
     {
       "start": 0,
@@ -1310,6 +1343,7 @@ exports[`esm > import defaultExport from "module-name"; 1`] = `
 
 exports[`esm > import defaultExport, * as name from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [
     {
       "start": 0,
@@ -1353,6 +1387,7 @@ exports[`esm > import defaultExport, * as name from "module-name"; 1`] = `
 
 exports[`esm > import defaultExport, { export1, /* … */ } from "module-name"; 1`] = `
 "{
+  "hasModuleSyntax": true,
   "staticImports": [
     {
       "start": 0,

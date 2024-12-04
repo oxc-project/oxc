@@ -58,7 +58,7 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
             .collect::<Vec<_>>();
         static_exports.sort_unstable_by_key(|e| e.start);
 
-        Self { static_imports, static_exports }
+        Self { has_module_syntax: record.has_module_syntax, static_imports, static_exports }
     }
 }
 
