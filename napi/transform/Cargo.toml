@@ -21,9 +21,10 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["full", "napi"] }
-oxc_napi = { workspace = true }
-oxc_sourcemap = { workspace = true, features = ["napi"] }
+oxc = { workspace = true, features = ["full"] }
+oxc_sourcemap = { workspace = true, features = ["napi", "rayon"] }
+
+rustc-hash = { workspace = true }
 
 napi = { workspace = true }
 napi-derive = { workspace = true }

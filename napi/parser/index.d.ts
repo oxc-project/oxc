@@ -9,6 +9,27 @@ export interface Comment {
   end: number
 }
 
+export interface Comment {
+  type: 'Line' | 'Block'
+  value: string
+  start: number
+  end: number
+}
+
+export interface Comment {
+  type: 'Line' | 'Block'
+  value: string
+  start: number
+  end: number
+}
+
+export interface EcmaScriptModule {
+  /** Import Statements. */
+  staticImports: Array<StaticImport>
+  /** Export Statements. */
+  staticExports: Array<StaticExport>
+}
+
 export interface EcmaScriptModule {
   /** Import Statements. */
   staticImports: Array<StaticImport>
@@ -35,6 +56,13 @@ export interface ExportExportName {
   end?: number
 }
 
+export interface ExportExportName {
+  kind: ExportExportNameKind
+  name?: string
+  start?: number
+  end?: number
+}
+
 export declare const enum ExportExportNameKind {
   /** `export { name } */
   Name = 'Name',
@@ -42,6 +70,22 @@ export declare const enum ExportExportNameKind {
   Default = 'Default',
   /** `export * from "mod" */
   None = 'None'
+}
+
+export declare const enum ExportExportNameKind {
+  /** `export { name } */
+  Name = 'Name',
+  /** `export default expression` */
+  Default = 'Default',
+  /** `export * from "mod" */
+  None = 'None'
+}
+
+export interface ExportImportName {
+  kind: ExportImportNameKind
+  name?: string
+  start?: number
+  end?: number
 }
 
 export interface ExportImportName {
@@ -62,11 +106,41 @@ export declare const enum ExportImportNameKind {
   None = 'None'
 }
 
+export declare const enum ExportImportNameKind {
+  /** `export { name } */
+  Name = 'Name',
+  /** `export * as ns from "mod"` */
+  All = 'All',
+  /** `export * from "mod"` */
+  AllButDefault = 'AllButDefault',
+  /** Does not have a specifier. */
+  None = 'None'
+}
+
 export interface ExportLocalName {
   kind: ExportLocalNameKind
   name?: string
   start?: number
   end?: number
+}
+
+export interface ExportLocalName {
+  kind: ExportLocalNameKind
+  name?: string
+  start?: number
+  end?: number
+}
+
+export declare const enum ExportLocalNameKind {
+  /** `export { name } */
+  Name = 'Name',
+  /** `export default expression` */
+  Default = 'Default',
+  /**
+   * If the exported value is not locally accessible from within the module.
+   * `export default function () {}`
+   */
+  None = 'None'
 }
 
 export declare const enum ExportLocalNameKind {
@@ -122,6 +196,22 @@ export interface ImportName {
   end?: number
 }
 
+export interface ImportName {
+  kind: ImportNameKind
+  name?: string
+  start?: number
+  end?: number
+}
+
+export declare const enum ImportNameKind {
+  /** `import { x } from "mod"` */
+  Name = 'Name',
+  /** `import * as ns from "mod"` */
+  NamespaceObject = 'NamespaceObject',
+  /** `import defaultExport from "mod"` */
+  Default = 'Default'
+}
+
 export declare const enum ImportNameKind {
   /** `import { x } from "mod"` */
   Name = 'Name',
@@ -140,9 +230,58 @@ export declare function parseAsync(filename: string, sourceText: string, options
 
 export interface ParseResult {
   program: import("@oxc-project/types").Program
+  comments: Array<Comment>
+  errors: Array<string>
+}
+
+export interface ParseResult {
+  program: import("@oxc-project/types").Program
   module: EcmaScriptModule
   comments: Array<Comment>
   errors: Array<string>
+}
+
+export interface ParseResult {
+  program: import("@oxc-project/types").Program
+  module: EcmaScriptModule
+  comments: Array<Comment>
+  errors: Array<string>
+}
+
+/**
+ * Babel Parser Options
+ *
+ * <https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/typings/babel-parser.d.ts>
+ */
+export interface ParserOptions {
+  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
+  sourceFilename?: string
+  /**
+   * Emit `ParenthesizedExpression` in AST.
+   *
+   * If this option is true, parenthesized expressions are represented by
+   * (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
+   * containing the expression inside parentheses.
+   *
+   * Default: true
+   */
+  preserveParens?: boolean
+}
+
+export interface ParserOptions {
+  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
+  /** Treat the source text as `js`, `jsx`, `ts`, or `tsx`. */
+  lang?: 'js' | 'jsx' | 'ts' | 'tsx'
+  /**
+   * Emit `ParenthesizedExpression` in AST.
+   *
+   * If this option is true, parenthesized expressions are represented by
+   * (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
+   * containing the expression inside parentheses.
+   *
+   * Default: true
+   */
+  preserveParens?: boolean
 }
 
 export interface ParserOptions {
@@ -171,10 +310,39 @@ export declare function parseSync(filename: string, sourceText: string, options?
  */
 export declare function parseWithoutReturn(filename: string, sourceText: string, options?: ParserOptions | undefined | null): void
 
+export interface SourceMap {
+  file?: string
+  mappings: string
+  names: Array<string>
+  sourceRoot?: string
+  sources: Array<string>
+  sourcesContent?: Array<string>
+  version: number
+  x_google_ignoreList?: Array<number>
+}
+
 export interface StaticExport {
   start: number
   end: number
   entries: Array<ExportEntry>
+}
+
+export interface StaticExport {
+  start: number
+  end: number
+  entries: Array<StaticExportEntry>
+}
+
+export interface StaticExportEntry {
+  start: number
+  end: number
+  moduleRequest?: ValueSpan
+  /** The name under which the desired binding is exported by the module`. */
+  importName: ExportImportName
+  /** The name used to export this binding by this module. */
+  exportName: ExportExportName
+  /** The name that is used to locally access the exported value from within the importing module. */
+  localName: ExportLocalName
 }
 
 export interface StaticImport {
@@ -197,6 +365,68 @@ export interface StaticImport {
    * Empty for `import "mod"`.
    */
   entries: Array<ImportEntry>
+}
+
+export interface StaticImport {
+  /** Start of import statement. */
+  start: number
+  /** End of import statement. */
+  end: number
+  /**
+   * Import source.
+   *
+   * ```js
+   * import { foo } from "mod";
+   * //                   ^^^
+   * ```
+   */
+  moduleRequest: ValueSpan
+  /**
+   * Import specifiers.
+   *
+   * Empty for `import "mod"`.
+   */
+  entries: Array<StaticImportEntry>
+}
+
+export interface StaticImportEntry {
+  /**
+   * The name under which the desired binding is exported by the module.
+   *
+   * ```js
+   * import { foo } from "mod";
+   * //       ^^^
+   * import { foo as bar } from "mod";
+   * //       ^^^
+   * ```
+   */
+  importName: ImportName
+  /**
+   * The name that is used to locally access the imported value from within the importing module.
+   * ```js
+   * import { foo } from "mod";
+   * //       ^^^
+   * import { foo as bar } from "mod";
+   * //              ^^^
+   * ```
+   */
+  localName: ValueSpan
+  /**
+   * Whether this binding is for a TypeScript type-only import.
+   *
+   * `true` for the following imports:
+   * ```ts
+   * import type { foo } from "mod";
+   * import { type foo } from "mod";
+   * ```
+   */
+  isType: boolean
+}
+
+export interface ValueSpan {
+  value: string
+  start: number
+  end: number
 }
 
 export interface ValueSpan {

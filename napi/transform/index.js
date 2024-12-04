@@ -361,5 +361,9 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
+module.exports.ExportExportNameKind = nativeBinding.ExportExportNameKind
+module.exports.ExportImportNameKind = nativeBinding.ExportImportNameKind
+module.exports.ExportLocalNameKind = nativeBinding.ExportLocalNameKind
+module.exports.ImportNameKind = nativeBinding.ImportNameKind
 module.exports.isolatedDeclaration = nativeBinding.isolatedDeclaration
 module.exports.transform = nativeBinding.transform
