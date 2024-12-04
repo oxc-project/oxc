@@ -615,6 +615,8 @@ fn test_class() {
     test("class Foo { static foo() {} }", "class Foo {\n\tstatic foo() {}\n}\n");
     test("class Foo { static get foo() {} }", "class Foo {\n\tstatic get foo() {}\n}\n");
     test("class Foo { static set foo(x) {} }", "class Foo {\n\tstatic set foo(x) {}\n}\n");
+
+    test("class Foo extends foo() {}", "class Foo extends foo() {}\n");
 }
 
 #[test]

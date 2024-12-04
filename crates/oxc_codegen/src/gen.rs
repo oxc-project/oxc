@@ -2185,7 +2185,7 @@ impl Gen for Class<'_> {
             }
             if let Some(super_class) = self.super_class.as_ref() {
                 p.print_str(" extends ");
-                super_class.print_expr(p, Precedence::Call, Context::empty());
+                super_class.print_expr(p, Precedence::Postfix, Context::empty());
                 if let Some(super_type_parameters) = &self.super_type_parameters {
                     super_type_parameters.print(p, ctx);
                 }
