@@ -86,13 +86,14 @@ impl Rule for NumericSeparatorsStyle {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::NumericLiteral(number) => {
-                if self.only_if_contains_separator && !number.raw.as_ref().unwrap().contains('_') {
+                let raw = number.raw.as_ref().unwrap().as_str();
+                if self.only_if_contains_separator && !raw.contains('_') {
                     return;
                 }
 
                 let formatted = self.format_number(number);
 
-                if formatted != number.raw.as_ref().unwrap().as_str() {
+                if formatted != raw {
                     ctx.diagnostic_with_fix(
                         numeric_separators_style_diagnostic(number.span),
                         |fixer| fixer.replace(number.span, formatted),
