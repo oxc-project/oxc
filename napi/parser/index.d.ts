@@ -16,18 +16,6 @@ export interface EcmaScriptModule {
   staticExports: Array<StaticExport>
 }
 
-export interface ExportEntry {
-  start: number
-  end: number
-  moduleRequest?: ValueSpan
-  /** The name under which the desired binding is exported by the module`. */
-  importName: ExportImportName
-  /** The name used to export this binding by this module. */
-  exportName: ExportExportName
-  /** The name that is used to locally access the exported value from within the importing module. */
-  localName: ExportLocalName
-}
-
 export interface ExportExportName {
   kind: ExportExportNameKind
   name?: string
@@ -79,40 +67,6 @@ export declare const enum ExportLocalNameKind {
    * `export default function () {}`
    */
   None = 'None'
-}
-
-export interface ImportEntry {
-  /**
-   * The name under which the desired binding is exported by the module.
-   *
-   * ```js
-   * import { foo } from "mod";
-   * //       ^^^
-   * import { foo as bar } from "mod";
-   * //       ^^^
-   * ```
-   */
-  importName: ImportName
-  /**
-   * The name that is used to locally access the imported value from within the importing module.
-   * ```js
-   * import { foo } from "mod";
-   * //       ^^^
-   * import { foo as bar } from "mod";
-   * //              ^^^
-   * ```
-   */
-  localName: ValueSpan
-  /**
-   * Whether this binding is for a TypeScript type-only import.
-   *
-   * `true` for the following imports:
-   * ```ts
-   * import type { foo } from "mod";
-   * import { type foo } from "mod";
-   * ```
-   */
-  isType: boolean
 }
 
 export interface ImportName {
@@ -174,7 +128,19 @@ export declare function parseWithoutReturn(filename: string, sourceText: string,
 export interface StaticExport {
   start: number
   end: number
-  entries: Array<ExportEntry>
+  entries: Array<StaticExportEntry>
+}
+
+export interface StaticExportEntry {
+  start: number
+  end: number
+  moduleRequest?: ValueSpan
+  /** The name under which the desired binding is exported by the module`. */
+  importName: ExportImportName
+  /** The name used to export this binding by this module. */
+  exportName: ExportExportName
+  /** The name that is used to locally access the exported value from within the importing module. */
+  localName: ExportLocalName
 }
 
 export interface StaticImport {
@@ -196,7 +162,41 @@ export interface StaticImport {
    *
    * Empty for `import "mod"`.
    */
-  entries: Array<ImportEntry>
+  entries: Array<StaticImportEntry>
+}
+
+export interface StaticImportEntry {
+  /**
+   * The name under which the desired binding is exported by the module.
+   *
+   * ```js
+   * import { foo } from "mod";
+   * //       ^^^
+   * import { foo as bar } from "mod";
+   * //       ^^^
+   * ```
+   */
+  importName: ImportName
+  /**
+   * The name that is used to locally access the imported value from within the importing module.
+   * ```js
+   * import { foo } from "mod";
+   * //       ^^^
+   * import { foo as bar } from "mod";
+   * //              ^^^
+   * ```
+   */
+  localName: ValueSpan
+  /**
+   * Whether this binding is for a TypeScript type-only import.
+   *
+   * `true` for the following imports:
+   * ```ts
+   * import type { foo } from "mod";
+   * import { type foo } from "mod";
+   * ```
+   */
+  isType: boolean
 }
 
 export interface ValueSpan {

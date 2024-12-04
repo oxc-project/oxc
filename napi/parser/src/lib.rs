@@ -2,6 +2,9 @@
     clippy::needless_pass_by_value // Napi value need to be passed as value
 )]
 
+mod convert;
+mod types;
+
 use std::sync::Arc;
 
 use napi::{bindgen_prelude::AsyncTask, Task};
@@ -14,7 +17,8 @@ use oxc::{
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
-use oxc_napi::parse::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
+
+pub use crate::types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
 
 fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
     match options.lang.as_deref() {
@@ -83,8 +87,8 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
         .iter()
         .map(|comment| Comment {
             r#type: match comment.kind {
-                CommentKind::Line => "Line",
-                CommentKind::Block => "Block",
+                CommentKind::Line => String::from("Line"),
+                CommentKind::Block => String::from("Block"),
             },
             value: comment.content_span().source_text(source_text).to_string(),
             start: comment.span.start,

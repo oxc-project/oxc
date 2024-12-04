@@ -9,10 +9,37 @@ use oxc::{
     parser::Parser,
     span::SourceType,
 };
-use oxc_napi::isolated_declarations::{IsolatedDeclarationsOptions, IsolatedDeclarationsResult};
-use oxc_sourcemap::napi::SourceMap;
 
 use crate::errors::wrap_diagnostics;
+
+use oxc_sourcemap::napi::SourceMap;
+
+#[napi(object)]
+pub struct IsolatedDeclarationsResult {
+    pub code: String,
+    pub map: Option<SourceMap>,
+    pub errors: Vec<String>,
+}
+
+#[napi(object)]
+#[derive(Debug, Default, Clone, Copy)]
+pub struct IsolatedDeclarationsOptions {
+    /// Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
+    /// This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
+    ///
+    /// Default: `false`
+    ///
+    /// See <https://www.typescriptlang.org/tsconfig/#stripInternal>
+    pub strip_internal: Option<bool>,
+
+    pub sourcemap: Option<bool>,
+}
+
+impl From<IsolatedDeclarationsOptions> for oxc::isolated_declarations::IsolatedDeclarationsOptions {
+    fn from(options: IsolatedDeclarationsOptions) -> Self {
+        Self { strip_internal: options.strip_internal.unwrap_or_default() }
+    }
+}
 
 /// TypeScript Isolated Declarations for Standalone DTS Emit
 #[allow(clippy::needless_pass_by_value)]

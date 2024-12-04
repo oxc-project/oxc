@@ -42,8 +42,6 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 oxc_transformer = { workspace = true, optional = true }
 
-napi = { workspace = true, optional = true, features = ["async"] }
-
 [features]
 full = [
   "codegen",

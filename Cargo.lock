@@ -403,9 +403,9 @@ dependencies = [
 
 [[package]]
 name = "ctor"
-version = "0.2.8"
+version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edb49164822f3ee45b17acd4a208cfc1251410cf0cad9a833234c9890774dd9f"
+checksum = "32a2785755761f3ddc1492979ce1e48d2c00d09311c39e4466429188f3dd6501"
 dependencies = [
  "quote",
  "syn",
@@ -1067,9 +1067,9 @@ checksum = "09d6582e104315a817dff97f75133544b2e094ee22447d2acf4a74e189ba06fc"
 
 [[package]]
 name = "libloading"
-version = "0.8.5"
+version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
+checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
  "windows-targets 0.52.6",
@@ -1206,9 +1206,9 @@ dependencies = [
 
 [[package]]
 name = "napi"
-version = "3.0.0-alpha.14"
+version = "3.0.0-alpha.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b27505341e98aa6126eb9f56a6ea5d8608959f19f124b9d1f1a694633641e5a"
+checksum = "04aea9dbe75cd1a1abecf8a66fba1e694c12ce6e6e4e11824dc274e141a6c251"
 dependencies = [
  "bitflags 2.6.0",
  "ctor",
@@ -1225,9 +1225,9 @@ checksum = "e1c0f5d67ee408a4685b61f5ab7e58605c8ae3f2b4189f0127d804ff13d5560a"
 
 [[package]]
 name = "napi-derive"
-version = "3.0.0-alpha.14"
+version = "3.0.0-alpha.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c98bc3e1aef12e58d9ec48325790838a736f8428ae562716c4df1893b65be22"
+checksum = "c12428d113f2b64cf827a144dddaf2df50c4d93d655d57d83745c2a281e6ec62"
 dependencies = [
  "convert_case",
  "napi-derive-backend",
@@ -1238,23 +1238,22 @@ dependencies = [
 
 [[package]]
 name = "napi-derive-backend"
-version = "2.0.0-alpha.14"
+version = "2.0.0-alpha.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2e7fbd5478c5ac30408e4599af0b532726477e347e45fc8b20d95ab1b589057"
+checksum = "7a5122d26b6f849e524f1b92107364f2b4e9a2e8d41a77b3d6c5b3af75801c60"
 dependencies = [
  "convert_case",
  "proc-macro2",
  "quote",
- "regex",
  "semver",
  "syn",
 ]
 
 [[package]]
 name = "napi-sys"
-version = "2.4.0"
+version = "3.0.0-alpha.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "427802e8ec3a734331fec1035594a210ce1ff4dc5bc1950530920ab717964ea3"
+checksum = "ab9d950ea3a522a8cb9e9237ba7cf977eeca1fadaec182163be6b0feebfc7361"
 dependencies = [
  "libloading",
 ]
@@ -1377,7 +1376,6 @@ checksum = "fb37767f6569cd834a413442455e0f066d0d522de8630436e2a1761d9726ba56"
 name = "oxc"
 version = "0.38.0"
 dependencies = [
- "napi",
  "oxc_allocator",
  "oxc_ast",
  "oxc_cfg",
@@ -1788,20 +1786,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_napi"
-version = "0.38.0"
-dependencies = [
- "napi",
- "napi-derive",
- "oxc_isolated_declarations",
- "oxc_sourcemap",
- "oxc_span",
- "oxc_syntax",
- "oxc_transformer",
- "rustc-hash",
-]
-
-[[package]]
 name = "oxc_parser"
 version = "0.38.0"
 dependencies = [
@@ -1832,7 +1816,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
- "oxc_napi",
+ "rustc-hash",
  "serde_json",
 ]
 
@@ -1947,6 +1931,7 @@ dependencies = [
  "cow-utils",
  "napi",
  "napi-derive",
+ "rayon",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -2031,8 +2016,8 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
- "oxc_napi",
  "oxc_sourcemap",
+ "rustc-hash",
 ]
 
 [[package]]
