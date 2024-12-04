@@ -276,8 +276,14 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
             }
             // `object?.#prop`
             Expression::ChainExpression(_) => {
-                // TODO: `transform_chain_expression` is no-op at present
                 self.transform_chain_expression(expr, ctx);
+            }
+            // `delete object?.#prop.xyz`
+            Expression::UnaryExpression(unary)
+                if unary.operator == UnaryOperator::Delete
+                    && matches!(unary.argument, Expression::ChainExpression(_)) =>
+            {
+                self.transform_unary_expression(expr, ctx);
             }
             // "object.#prop`xyz`"
             Expression::TaggedTemplateExpression(_) => {

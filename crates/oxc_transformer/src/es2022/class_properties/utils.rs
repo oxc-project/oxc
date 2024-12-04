@@ -53,3 +53,11 @@ where
 pub(super) fn create_underscore_ident_name<'a>(ctx: &mut TraverseCtx<'a>) -> IdentifierName<'a> {
     ctx.ast.identifier_name(SPAN, Atom::from("_"))
 }
+
+#[inline]
+pub(super) fn assert_expr_neither_parenthesis_nor_typescript_syntax(expr: &Expression) {
+    debug_assert!(
+        !(matches!(expr, Expression::ParenthesizedExpression(_)) || expr.is_typescript_syntax()),
+        "Should not be: {expr:?}",
+    );
+}

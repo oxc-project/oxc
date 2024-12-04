@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 415/846
+Passed: 416/846
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (88/264)
+# babel-plugin-transform-class-properties (89/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -503,9 +503,6 @@ x Output mismatch
 * private/optional-chain-cast-to-boolean/input.js
 x Output mismatch
 
-* private/optional-chain-delete-property/input.js
-x Output mismatch
-
 * private/optional-chain-delete-property-with-transform/input.js
 x Output mismatch
 
@@ -537,7 +534,18 @@ x Output mismatch
 x Output mismatch
 
 * private/parenthesized-optional-member-call/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(5): ScopeFlags(Function)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(5): Some(ScopeId(0))
 
 * private/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
