@@ -322,7 +322,7 @@ impl<'a> Pragma<'a> {
     ///
     /// If provided option is invalid, raise an error and use default.
     fn parse(
-        pragma: Option<&String>,
+        pragma: Option<&str>,
         default_property_name: &'static str,
         ast: AstBuilder<'a>,
         ctx: &TransformCtx<'a>,
@@ -386,8 +386,9 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                 if options.import_source.is_some() {
                     ctx.error(diagnostics::import_source_cannot_be_set());
                 }
-                let pragma = Pragma::parse(options.pragma.as_ref(), "createElement", ast, ctx);
-                let pragma_frag = Pragma::parse(options.pragma_frag.as_ref(), "Fragment", ast, ctx);
+                let pragma = Pragma::parse(options.pragma.as_deref(), "createElement", ast, ctx);
+                let pragma_frag =
+                    Pragma::parse(options.pragma_frag.as_deref(), "Fragment", ast, ctx);
                 Bindings::Classic(ClassicBindings { pragma, pragma_frag })
             }
             JsxRuntime::Automatic => {
@@ -1098,12 +1099,8 @@ mod test {
     fn this_expr_pragma() {
         setup!(traverse_ctx, transform_ctx);
 
-        let pragma = Pragma::parse(
-            Some(&"this.a.b".to_string()),
-            "createElement",
-            traverse_ctx.ast,
-            &transform_ctx,
-        );
+        let pragma = Some("this.a.b");
+        let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::StaticMemberExpression(outer_member) = &expr else { panic!() };
@@ -1119,12 +1116,8 @@ mod test {
     fn import_meta_pragma() {
         setup!(traverse_ctx, transform_ctx);
 
-        let pragma = Pragma::parse(
-            Some(&"import.meta.prop".to_string()),
-            "createElement",
-            traverse_ctx.ast,
-            &transform_ctx,
-        );
+        let pragma = Some("import.meta.prop");
+        let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::StaticMemberExpression(member) = &expr else { panic!() };
