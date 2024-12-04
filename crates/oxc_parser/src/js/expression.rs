@@ -170,8 +170,6 @@ impl<'a> ParserImpl<'a> {
 
         match self.cur_kind() {
             Kind::Ident => self.parse_identifier_expression(), // fast path, keywords are checked at the end
-            // Literal, RegularExpressionLiteral
-            kind if kind.is_literal() => self.parse_literal_expression(),
             // ArrayLiteral
             Kind::LBrack => self.parse_array_expression(),
             // ObjectLiteral
@@ -199,6 +197,8 @@ impl<'a> ParserImpl<'a> {
             Kind::Slash | Kind::SlashEq => self
                 .parse_literal_regexp()
                 .map(|literal| Expression::RegExpLiteral(self.alloc(literal))),
+            // Literal, RegularExpressionLiteral
+            kind if kind.is_literal() => self.parse_literal_expression(),
             // JSXElement, JSXFragment
             Kind::LAngle if self.source_type.is_jsx() => self.parse_jsx_expression(),
             _ => self.parse_identifier_expression(),
