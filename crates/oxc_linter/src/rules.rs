@@ -122,6 +122,7 @@ mod eslint {
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
     pub mod no_unsafe_optional_chaining;
+    pub mod no_unused_expressions;
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
@@ -180,7 +181,7 @@ mod typescript {
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
     pub mod no_unsafe_function_type;
-    pub mod no_unused_expressions;
+
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
     pub mod no_wrapper_object_types;
@@ -560,12 +561,12 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_dupe_else_if,
     eslint::no_dupe_keys,
     eslint::no_duplicate_case,
-    eslint::no_empty,
+    eslint::no_else_return,
     eslint::no_empty_character_class,
     eslint::no_empty_function,
     eslint::no_empty_pattern,
     eslint::no_empty_static_block,
-    eslint::no_else_return,
+    eslint::no_empty,
     eslint::no_eq_null,
     eslint::no_eval,
     eslint::no_ex_assign,
@@ -583,10 +584,10 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_loss_of_precision,
     eslint::no_magic_numbers,
     eslint::no_multi_str,
-    eslint::no_new,
     eslint::no_new_func,
     eslint::no_new_native_nonconstructor,
     eslint::no_new_wrappers,
+    eslint::no_new,
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
     eslint::no_plusplus,
@@ -613,6 +614,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_unsafe_finally,
     eslint::no_unsafe_negation,
     eslint::no_unsafe_optional_chaining,
+    eslint::no_unused_expressions,
     eslint::no_unused_labels,
     eslint::no_unused_private_class_members,
     eslint::no_unused_vars,
@@ -855,7 +857,6 @@ oxc_macros::declare_all_lint_rules! {
     typescript::consistent_type_definitions,
     typescript::consistent_type_imports,
     typescript::explicit_function_return_type,
-    typescript::no_unused_expressions,
     typescript::no_inferrable_types,
     typescript::no_confusing_non_null_assertion,
     typescript::no_duplicate_enum_values,
