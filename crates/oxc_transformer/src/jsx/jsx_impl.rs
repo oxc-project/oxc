@@ -1073,26 +1073,38 @@ mod test {
     use std::path::Path;
 
     use oxc_allocator::Allocator;
-    use oxc_ast::{ast::Expression, AstBuilder};
+    use oxc_ast::ast::Expression;
     use oxc_semantic::{ScopeTree, SymbolTable};
     use oxc_traverse::ReusableTraverseCtx;
 
-    use crate::{context::TransformCtx, TransformOptions};
+    use crate::{TransformCtx, TransformOptions};
 
     use super::Pragma;
 
+    macro_rules! setup {
+        ($traverse_ctx:ident, $transform_ctx:ident) => {
+            let allocator = Allocator::default();
+            let traverse_ctx =
+                ReusableTraverseCtx::new(ScopeTree::default(), SymbolTable::default(), &allocator);
+            // SAFETY: Macro user only gets a `&mut TraverseCtx`, which cannot be abused
+            let mut traverse_ctx = unsafe { traverse_ctx.unwrap() };
+            let $traverse_ctx = &mut traverse_ctx;
+            let $transform_ctx =
+                TransformCtx::new(Path::new("test.jsx"), &TransformOptions::default());
+        };
+    }
+
     #[test]
     fn this_expr_pragma() {
-        let alloc = Allocator::default();
-        let ast = AstBuilder::new(&alloc);
-        let ctx = TransformCtx::new(Path::new("test.jsx"), &TransformOptions::default());
-        // SAFETY: constructed to avoid unsoundness
-        let mut traverse_ctx = unsafe {
-            ReusableTraverseCtx::new(ScopeTree::default(), SymbolTable::default(), &alloc).unwrap()
-        };
+        setup!(traverse_ctx, transform_ctx);
 
-        let pragma = Pragma::parse(Some(&"this.a.b".to_string()), "createElement", ast, &ctx);
-        let expr = pragma.create_expression(&mut traverse_ctx);
+        let pragma = Pragma::parse(
+            Some(&"this.a.b".to_string()),
+            "createElement",
+            traverse_ctx.ast,
+            &transform_ctx,
+        );
+        let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::StaticMemberExpression(outer_member) = &expr else { panic!() };
         let Expression::StaticMemberExpression(inner_member) = &outer_member.object else {
@@ -1105,17 +1117,15 @@ mod test {
 
     #[test]
     fn import_meta_pragma() {
-        let alloc = Allocator::default();
-        let ast = AstBuilder::new(&alloc);
-        let ctx = TransformCtx::new(Path::new("test.jsx"), &TransformOptions::default());
-        // SAFETY: constructed to avoid unsoundness
-        let mut traverse_ctx = unsafe {
-            ReusableTraverseCtx::new(ScopeTree::default(), SymbolTable::default(), &alloc).unwrap()
-        };
+        setup!(traverse_ctx, transform_ctx);
 
-        let pragma =
-            Pragma::parse(Some(&"import.meta.prop".to_string()), "createElement", ast, &ctx);
-        let expr = pragma.create_expression(&mut traverse_ctx);
+        let pragma = Pragma::parse(
+            Some(&"import.meta.prop".to_string()),
+            "createElement",
+            traverse_ctx.ast,
+            &transform_ctx,
+        );
+        let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::StaticMemberExpression(member) = &expr else { panic!() };
         let Expression::MetaProperty(meta_prop) = &member.object else { panic!() };
