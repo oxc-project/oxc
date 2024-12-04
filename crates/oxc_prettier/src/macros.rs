@@ -208,7 +208,7 @@ macro_rules! join {
                     $crate::ir::JoinSeparator::Softline => parts.push($crate::softline!()),
                     $crate::ir::JoinSeparator::Hardline => parts.extend($crate::hardline!()),
                     $crate::ir::JoinSeparator::CommaLine => {
-                        parts.extend([$crate::text!(", "), $crate::line!()]);
+                        parts.extend([$crate::text!(","), $crate::line!()]);
                     }
                 }
             }
