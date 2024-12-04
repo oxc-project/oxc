@@ -999,7 +999,8 @@ fn delete_of_unqualified(span: Span) -> OxcDiagnostic {
 }
 
 fn delete_private_field(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Private fields can not be deleted").with_label(span)
+    OxcDiagnostic::error("The operand of a 'delete' operator cannot be a private identifier.")
+        .with_label(span)
 }
 
 pub fn check_unary_expression<'a>(
@@ -1015,6 +1016,11 @@ pub fn check_unary_expression<'a>(
             }
             Expression::PrivateFieldExpression(expr) => {
                 ctx.error(delete_private_field(expr.span));
+            }
+            Expression::ChainExpression(chain_expr) => {
+                if let ChainElement::PrivateFieldExpression(e) = &chain_expr.expression {
+                    ctx.error(delete_private_field(e.field.span));
+                }
             }
             _ => {}
         }

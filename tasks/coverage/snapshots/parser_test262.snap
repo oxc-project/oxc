@@ -11039,7 +11039,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  25 │   
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:15]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -11055,7 +11055,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:15]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -11071,7 +11071,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:15]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -11087,7 +11087,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:41:15]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -11103,7 +11103,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:41:15]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -11119,7 +11119,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:41:15]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -11135,7 +11135,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:41:15]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -11151,7 +11151,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js:41:15]
  40 │   g = this.f;
  41 │   x = delete (g().#x);
@@ -11159,7 +11159,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:15]
  40 │   
  41 │   x = delete (this.#m
@@ -11175,7 +11175,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:15]
  40 │   
  41 │   x = delete (this.#m
@@ -11191,7 +11191,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js:41:15]
  40 │   
  41 │   x = delete (this.#m
@@ -11199,7 +11199,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async.js:41:15]
  40 │   
  41 │   x = delete (this.#m
@@ -11207,7 +11207,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-gen.js:41:15]
  40 │   
  41 │   x = delete (this.#m
@@ -11215,7 +11215,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:41:15]
  40 │   
  41 │   x = delete (this.#m
@@ -11231,7 +11231,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:41:15]
  40 │   
  41 │   x = delete (this.#m);
@@ -11247,7 +11247,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js:41:15]
  40 │   
  41 │   x = delete (this.#x);
@@ -11255,7 +11255,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -11271,7 +11271,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -11287,7 +11287,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -11303,7 +11303,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -11319,7 +11319,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -11335,7 +11335,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -11351,7 +11351,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -11367,7 +11367,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#x;
@@ -11375,7 +11375,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -11391,7 +11391,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -11407,7 +11407,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -11415,7 +11415,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -11423,7 +11423,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-gen.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -11431,7 +11431,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -11447,7 +11447,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:35:14]
  34 │   
  35 │   x = delete this.#m;
@@ -11463,7 +11463,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js:35:14]
  34 │   
  35 │   x = delete this.#x;
@@ -11471,7 +11471,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:16]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -11487,7 +11487,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:16]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -11503,7 +11503,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:16]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -11519,7 +11519,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:16]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -11535,7 +11535,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:16]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -11551,7 +11551,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:41:16]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -11567,7 +11567,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:16]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -11583,7 +11583,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js:41:16]
  40 │   g = this.f;
  41 │   x = delete ((g().#x));
@@ -11591,7 +11591,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:16]
  40 │   
  41 │   x = delete ((this.#m
@@ -11607,7 +11607,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:16]
  40 │   
  41 │   x = delete ((this.#m
@@ -11623,7 +11623,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:41:16]
  40 │   
  41 │   x = delete ((this.#m
@@ -11631,7 +11631,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async.js:41:16]
  40 │   
  41 │   x = delete ((this.#m
@@ -11639,7 +11639,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-gen.js:41:16]
  40 │   
  41 │   x = delete ((this.#m
@@ -11647,7 +11647,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:41:16]
  40 │   
  41 │   x = delete ((this.#m
@@ -11663,7 +11663,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:16]
  40 │   
  41 │   x = delete ((this.#m));
@@ -11679,7 +11679,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js:41:16]
  40 │   
  41 │   x = delete ((this.#x));
@@ -11687,7 +11687,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  42 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -11703,7 +11703,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -11719,7 +11719,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -11735,7 +11735,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -11751,7 +11751,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -11767,7 +11767,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -11783,7 +11783,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -11799,7 +11799,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#x);
@@ -11807,7 +11807,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -11823,7 +11823,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -11839,7 +11839,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -11847,7 +11847,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -11855,7 +11855,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-gen.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -11863,7 +11863,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -11879,7 +11879,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:43:13]
  42 │     
  43 │     delete (this.#m);
@@ -11895,7 +11895,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js:43:13]
  42 │     
  43 │     delete (this.#x);
@@ -11903,7 +11903,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -11919,7 +11919,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -11935,7 +11935,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -11951,7 +11951,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -11967,7 +11967,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -11983,7 +11983,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -11999,7 +11999,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -12015,7 +12015,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#x;
@@ -12023,7 +12023,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -12039,7 +12039,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -12055,7 +12055,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -12063,7 +12063,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -12071,7 +12071,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-gen.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -12079,7 +12079,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -12095,7 +12095,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:37:12]
  36 │     
  37 │     delete this.#m;
@@ -12111,7 +12111,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js:37:12]
  36 │     
  37 │     delete this.#x;
@@ -12119,7 +12119,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -12135,7 +12135,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -12151,7 +12151,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -12167,7 +12167,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -12183,7 +12183,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -12199,7 +12199,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -12215,7 +12215,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -12231,7 +12231,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#x));
@@ -12239,7 +12239,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -12255,7 +12255,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -12271,7 +12271,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -12279,7 +12279,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -12287,7 +12287,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -12295,7 +12295,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -12311,7 +12311,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:43:14]
  42 │     
  43 │     delete ((this.#m));
@@ -12327,7 +12327,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js:43:14]
  42 │     
  43 │     delete ((this.#x));
@@ -27885,7 +27885,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  25 │   
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:38:15]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -27901,7 +27901,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:38:15]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -27917,7 +27917,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:38:15]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -27933,7 +27933,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:38:15]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -27949,7 +27949,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:38:15]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -27965,7 +27965,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:38:15]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -27981,7 +27981,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:38:15]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -27997,7 +27997,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js:38:15]
  37 │   g = this.f;
  38 │   x = delete (g().#x);
@@ -28005,7 +28005,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:38:15]
  37 │   
  38 │   x = delete (this.#m
@@ -28021,7 +28021,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:38:15]
  37 │   
  38 │   x = delete (this.#m
@@ -28037,7 +28037,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js:38:15]
  37 │   
  38 │   x = delete (this.#m
@@ -28045,7 +28045,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async.js:38:15]
  37 │   
  38 │   x = delete (this.#m
@@ -28053,7 +28053,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-gen.js:38:15]
  37 │   
  38 │   x = delete (this.#m
@@ -28061,7 +28061,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:38:15]
  37 │   
  38 │   x = delete (this.#m
@@ -28077,7 +28077,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:38:15]
  37 │   
  38 │   x = delete (this.#m);
@@ -28093,7 +28093,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │   
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js:38:15]
  37 │   
  38 │   x = delete (this.#x);
@@ -28101,7 +28101,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │   
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -28117,7 +28117,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -28133,7 +28133,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -28149,7 +28149,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -28165,7 +28165,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -28181,7 +28181,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -28197,7 +28197,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -28213,7 +28213,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js:35:14]
  34 │   g = this.f;
  35 │   x = delete g().#x;
@@ -28221,7 +28221,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │   f() {
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -28237,7 +28237,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -28253,7 +28253,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -28261,7 +28261,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -28269,7 +28269,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-gen.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -28277,7 +28277,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:35:14]
  34 │   
  35 │   x = delete this.#m
@@ -28293,7 +28293,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:35:14]
  34 │   
  35 │   x = delete this.#m;
@@ -28309,7 +28309,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │   
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js:35:14]
  34 │   
  35 │   x = delete this.#x;
@@ -28317,7 +28317,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  36 │   
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:38:16]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -28333,7 +28333,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:38:16]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -28349,7 +28349,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:38:16]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -28365,7 +28365,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:38:16]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -28381,7 +28381,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:38:16]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -28397,7 +28397,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:38:16]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -28413,7 +28413,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:38:16]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -28429,7 +28429,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js:38:16]
  37 │   g = this.f;
  38 │   x = delete ((g().#x));
@@ -28437,7 +28437,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:38:16]
  37 │   
  38 │   x = delete ((this.#m
@@ -28453,7 +28453,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:38:16]
  37 │   
  38 │   x = delete ((this.#m
@@ -28469,7 +28469,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:38:16]
  37 │   
  38 │   x = delete ((this.#m
@@ -28477,7 +28477,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async.js:38:16]
  37 │   
  38 │   x = delete ((this.#m
@@ -28485,7 +28485,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-gen.js:38:16]
  37 │   
  38 │   x = delete ((this.#m
@@ -28493,7 +28493,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:38:16]
  37 │   
  38 │   x = delete ((this.#m
@@ -28509,7 +28509,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:38:16]
  37 │   
  38 │   x = delete ((this.#m));
@@ -28525,7 +28525,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js:38:16]
  37 │   
  38 │   x = delete ((this.#x));
@@ -28533,7 +28533,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  39 │ 
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -28549,7 +28549,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -28565,7 +28565,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -28581,7 +28581,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -28597,7 +28597,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -28613,7 +28613,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -28629,7 +28629,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -28645,7 +28645,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js:43:13]
  42 │     var g = this.f;
  43 │     delete (g().#x);
@@ -28653,7 +28653,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -28669,7 +28669,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -28685,7 +28685,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -28693,7 +28693,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -28701,7 +28701,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-gen.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -28709,7 +28709,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:43:13]
  42 │     
  43 │     delete (this.#m
@@ -28725,7 +28725,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ );
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:43:13]
  42 │     
  43 │     delete (this.#m);
@@ -28741,7 +28741,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js:43:13]
  42 │     
  43 │     delete (this.#x);
@@ -28749,7 +28749,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -28765,7 +28765,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -28781,7 +28781,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -28797,7 +28797,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -28813,7 +28813,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -28829,7 +28829,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -28845,7 +28845,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -28861,7 +28861,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js:37:12]
  36 │     var g = this.f;
  37 │     delete g().#x;
@@ -28869,7 +28869,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -28885,7 +28885,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -28901,7 +28901,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -28909,7 +28909,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -28917,7 +28917,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-gen.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -28925,7 +28925,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:37:12]
  36 │     
  37 │     delete this.#m
@@ -28941,7 +28941,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │ ;
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:37:12]
  36 │     
  37 │     delete this.#m;
@@ -28957,7 +28957,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js:37:12]
  36 │     
  37 │     delete this.#x;
@@ -28965,7 +28965,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  38 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -28981,7 +28981,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -28997,7 +28997,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -29013,7 +29013,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -29029,7 +29029,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -29045,7 +29045,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -29061,7 +29061,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -29077,7 +29077,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js:43:14]
  42 │     var g = this.f;
  43 │     delete ((g().#x));
@@ -29085,7 +29085,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -29101,7 +29101,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -29117,7 +29117,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -29125,7 +29125,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -29133,7 +29133,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -29141,7 +29141,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:43:14]
  42 │     
  43 │     delete ((this.#m
@@ -29157,7 +29157,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │ ));
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:43:14]
  42 │     
  43 │     delete ((this.#m));
@@ -29173,7 +29173,7 @@ Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attribut
  44 │   }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js:43:14]
  42 │     
  43 │     delete ((this.#x));

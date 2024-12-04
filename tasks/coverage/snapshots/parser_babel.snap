@@ -3,7 +3,7 @@ commit: 54a8389f
 parser_babel Summary:
 AST Parsed     : 2205/2218 (99.41%)
 Positive Passed: 2190/2218 (98.74%)
-Negative Passed: 1510/1634 (92.41%)
+Negative Passed: 1511/1634 (92.47%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -28,7 +28,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/comma-after-spread-nested/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/no-pattern-in-rest/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-delete-optional-private-property/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/super-inside-function/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/yield-in-class-property-in-generator/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/invalid-decorators/input.js
@@ -7869,7 +7868,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ }
    ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-delete-optional-private-property/input.js:4:18]
+ 3 │   constructor() {
+ 4 │     delete this?.#x;
+   ·                  ──
+ 5 │   }
+   ╰────
+
+  × The operand of a 'delete' operator cannot be a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/failure-delete-private-property/input.js:4:12]
  3 │   constructor() {
  4 │     delete this.#x;

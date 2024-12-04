@@ -14904,7 +14904,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  11 │ }
     ╰────
 
-  × Private fields can not be deleted
+  × The operand of a 'delete' operator cannot be a private identifier.
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesNoDelete.ts:4:16]
  3 │     constructor() {
  4 │         delete this.#v; // Error: The operand of a delete operator cannot be a private name.
