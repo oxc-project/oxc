@@ -72,7 +72,8 @@ impl NumericLiteral<'_> {
         }
     }
 
-    /// Provide a fallback for converting NumericLiteral's value to a string if `raw` is None
+    /// Return raw source code for `NumericLiteral`.
+    /// If `raw` is `None` (node is generated, not parsed from source), fallback to formatting `value`.
     pub fn raw_str(&self) -> Cow<str> {
         match self.raw.as_ref() {
             Some(raw) => Cow::Borrowed(raw),
@@ -90,10 +91,11 @@ impl ContentHash for NumericLiteral<'_> {
 
 impl fmt::Display for NumericLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // There are basically 2 choices:
-        // 1. If raw.is_none(), then use the NumericLiteral's number field. or
-        // 2. Always use the NumericLiteral's number field.
-        // For now, the first approach is chosen, since to_string is only used in linter, in which raw does matter
+        // We have 2 choices here:
+        // 1. Only use the `value` field. or
+        // 2. Use `raw` field if it's `Some`, otherwise fallback to using `value` field.
+        // For now, we take the 2nd approach, since `NumericLiteral::to_string` is only used in linter,
+        // where raw does matter.
         self.raw_str().fmt(f)
     }
 }
