@@ -2,11 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
-use crate::{
-    format::call_arguments::print_call_arguments,
-    ir::{Doc, DocBuilder},
-    Format, Prettier,
-};
+use crate::{format::call_arguments::print_call_arguments, group, ir::Doc, text, Format, Prettier};
 
 pub(super) enum CallExpressionLike<'a, 'b> {
     CallExpression(&'b CallExpression<'a>),
@@ -62,10 +58,10 @@ pub(super) fn print_call_expression<'a>(
     p: &mut Prettier<'a>,
     expression: &CallExpressionLike<'a, '_>,
 ) -> Doc<'a> {
-    let mut parts = p.vec();
+    let mut parts = Vec::new_in(p.allocator);
 
     if expression.is_new() {
-        parts.push(p.text("new "));
+        parts.push(text!("new "));
     };
 
     parts.push(expression.callee().format(p));
@@ -75,12 +71,12 @@ pub(super) fn print_call_expression<'a>(
     }
 
     if expression.optional() {
-        parts.push(p.text("?."));
+        parts.push(text!("?."));
     }
 
     parts.push(print_call_arguments(p, expression));
 
-    p.group(p.array(parts))
+    group!(p, parts)
 }
 
 /// <https://github.com/prettier/prettier/blob/7aecca5d6473d73f562ca3af874831315f8f2581/src/language-js/print/call-expression.js#L93-L116>

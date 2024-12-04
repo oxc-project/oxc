@@ -13,19 +13,13 @@ mod options;
 mod printer;
 mod utils;
 
-use std::vec;
-
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::Program, AstKind};
 use oxc_span::Span;
 use oxc_syntax::identifier::is_line_terminator;
 
 pub use crate::options::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
-use crate::{
-    format::Format,
-    ir::{Doc, DocBuilder},
-    printer::Printer,
-};
+use crate::{format::Format, ir::Doc, printer::Printer};
 
 type GroupId = u32;
 #[derive(Default)]
@@ -55,17 +49,10 @@ pub struct Prettier<'a> {
 
     /// The stack of AST Nodes
     /// See <https://github.com/prettier/prettier/blob/3.3.3/src/common/ast-path.js>
-    stack: Vec<AstKind<'a>>,
+    stack: Vec<'a, AstKind<'a>>,
 
     group_id_builder: GroupIdBuilder,
     args: PrettierArgs,
-}
-
-impl<'a> DocBuilder<'a> for Prettier<'a> {
-    #[inline]
-    fn allocator(&self) -> &'a Allocator {
-        self.allocator
-    }
 }
 
 impl<'a> Prettier<'a> {
@@ -75,7 +62,7 @@ impl<'a> Prettier<'a> {
             allocator,
             source_text: "",
             options,
-            stack: vec![],
+            stack: Vec::new_in(allocator),
             group_id_builder: GroupIdBuilder::default(),
             args: PrettierArgs::default(),
         }

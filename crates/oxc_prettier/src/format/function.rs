@@ -1,9 +1,9 @@
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    format::function_parameters::should_group_function_parameters,
-    ir::{Doc, DocBuilder},
-    p_vec, Format, Prettier,
+    array, dynamic_text, format::function_parameters::should_group_function_parameters, group,
+    if_break, indent, ir::Doc, softline, space, text, Format, Prettier,
 };
 
 pub(super) fn print_function<'a>(
@@ -11,29 +11,29 @@ pub(super) fn print_function<'a>(
     func: &Function<'a>,
     property_name: Option<&'a str>,
 ) -> Doc<'a> {
-    let mut parts = p.vec();
+    let mut parts = Vec::new_in(p.allocator);
 
     if func.declare {
-        parts.push(p.text("declare "));
+        parts.push(text!("declare "));
     }
 
     if func.r#async {
-        parts.push(p.text("async "));
+        parts.push(text!("async "));
     }
 
     if let Some(name) = property_name {
-        parts.push(p.dynamic_text(name));
+        parts.push(dynamic_text!(p, name));
     } else {
-        parts.push(p.text("function"));
+        parts.push(text!("function"));
         if func.generator {
-            parts.push(p.text("*"));
+            parts.push(text!("*"));
         }
 
-        parts.push(p.text(" "));
+        parts.push(text!(" "));
     }
 
     if let Some(id) = &func.id {
-        parts.push(p.dynamic_text(id.name.as_str()));
+        parts.push(dynamic_text!(p, id.name.as_str()));
     }
 
     if let Some(type_params) = &func.type_parameters {
@@ -41,21 +41,24 @@ pub(super) fn print_function<'a>(
     }
     // Prettier has `returnTypeDoc` to group together, write this for keep same with prettier.
     let params_doc = func.params.format(p);
-    parts.push(p.group({
-        if should_group_function_parameters(func) {
-            p.group(params_doc)
-        } else {
-            params_doc
-        }
-    }));
+    parts.push(group!(
+        p,
+        [{
+            if should_group_function_parameters(func) {
+                group!(p, [params_doc])
+            } else {
+                params_doc
+            }
+        }]
+    ));
 
     if let Some(return_type) = &func.return_type {
-        parts.push(p.text(": "));
+        parts.push(text!(": "));
         parts.push(return_type.type_annotation.format(p));
     }
 
     if let Some(body) = &func.body {
-        parts.push(p.space());
+        parts.push(space!());
         parts.push(body.format(p));
     }
     if func.is_ts_declare_function() || func.body.is_none() {
@@ -64,84 +67,84 @@ pub(super) fn print_function<'a>(
         }
     }
 
-    p.array(parts)
+    array!(p, parts)
 }
 
 pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
-    let mut parts = p.vec();
+    let mut parts = Vec::new_in(p.allocator);
 
     if let Some(accessibility) = &method.accessibility {
-        parts.push(p.text(accessibility.as_str()));
-        parts.push(p.space());
+        parts.push(text!(accessibility.as_str()));
+        parts.push(space!());
     }
 
     if method.r#static {
-        parts.push(p.text("static "));
+        parts.push(text!("static "));
     }
 
     if matches!(method.r#type, MethodDefinitionType::TSAbstractMethodDefinition) {
-        parts.push(p.text("abstract "));
+        parts.push(text!("abstract "));
     }
 
     if method.r#override {
-        parts.push(p.text("override "));
+        parts.push(text!("override "));
     }
 
     match method.kind {
         MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
         MethodDefinitionKind::Get => {
-            parts.push(p.text("get "));
+            parts.push(text!("get "));
         }
         MethodDefinitionKind::Set => {
-            parts.push(p.text("set "));
+            parts.push(text!("set "));
         }
     }
 
     if method.value.r#async {
-        parts.push(p.text("async "));
+        parts.push(text!("async "));
     }
 
     if method.value.generator {
-        parts.push(p.text("*"));
+        parts.push(text!("*"));
     }
 
     parts.push(method.key.format(p));
 
     if method.optional {
-        parts.push(p.text("?"));
+        parts.push(text!("?"));
     }
 
     parts.push(print_method_value(p, &method.value));
 
-    p.array(parts)
+    array!(p, parts)
 }
 
 fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<'a> {
-    let mut parts = p.vec();
+    let mut parts = Vec::new_in(p.allocator);
     let parameters_doc = function.params.format(p);
     let should_group_parameters = should_group_function_parameters(function);
     let parameters_doc =
-        if should_group_parameters { p.group(parameters_doc) } else { parameters_doc };
+        if should_group_parameters { group!(p, [parameters_doc]) } else { parameters_doc };
 
     if let Some(type_parameters) = &function.type_parameters {
         parts.push(type_parameters.format(p));
     }
 
-    parts.push(p.group(parameters_doc));
+    parts.push(group!(p, [parameters_doc]));
 
     if let Some(ret_typ) = &function.return_type {
-        parts.push(p.text(": "));
+        parts.push(text!(": "));
         parts.push(ret_typ.type_annotation.format(p));
     }
 
     if let Some(body) = &function.body {
-        parts.push(p.space());
+        parts.push(space!());
         parts.push(body.format(p));
     } else if p.options.semi {
-        parts.push(p.text(";"));
+        parts.push(text!(";"));
     }
 
-    p.array(parts)
+    array!(p, parts)
 }
 
 pub(super) fn print_return_or_throw_argument<'a>(
@@ -149,22 +152,24 @@ pub(super) fn print_return_or_throw_argument<'a>(
     argument: Option<&Expression<'a>>,
     is_return: bool,
 ) -> Doc<'a> {
-    let mut parts = p.vec();
+    let mut parts = Vec::new_in(p.allocator);
 
-    parts.push(p.text(if is_return { "return" } else { "throw" }));
+    parts.push(text!(if is_return { "return" } else { "throw" }));
 
     if let Some(argument) = argument {
-        parts.push(p.space());
+        parts.push(space!());
         parts.push(
             if argument.is_binaryish() || matches!(argument, Expression::SequenceExpression(_)) {
                 let argument_doc = argument.format(p);
-                p.group(p.array(p_vec!(
+                group!(
                     p,
-                    p.if_break(p.text("("), p.text(""), None),
-                    p.indent(p_vec!(p, p.softline(), argument_doc)),
-                    p.softline(),
-                    p.if_break(p.text(")"), p.text(""), None),
-                )))
+                    [
+                        if_break!(p, text!("(")),
+                        indent!(p, [softline!(), argument_doc]),
+                        softline!(),
+                        if_break!(p, text!(")")),
+                    ]
+                )
             } else {
                 argument.format(p)
             },
@@ -174,5 +179,6 @@ pub(super) fn print_return_or_throw_argument<'a>(
     if let Some(semi) = p.semi() {
         parts.push(semi);
     }
-    p.array(parts)
+
+    array!(p, parts)
 }

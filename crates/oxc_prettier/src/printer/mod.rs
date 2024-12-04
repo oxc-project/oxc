@@ -11,7 +11,7 @@ use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 
 use crate::{
-    ir::{Doc, DocBuilder, Fill, IfBreak, IndentIfBreak, Line},
+    ir::{Doc, Fill, IfBreak, IndentIfBreak, Line},
     printer::command::{Command, Indent, Mode},
     GroupId, PrettierOptions,
 };
@@ -34,13 +34,6 @@ pub struct Printer<'a> {
     new_line: &'static str,
 
     allocator: &'a Allocator,
-}
-
-impl<'a> DocBuilder<'a> for Printer<'a> {
-    #[inline]
-    fn allocator(&self) -> &'a Allocator {
-        self.allocator
-    }
 }
 
 impl<'a> Printer<'a> {
@@ -292,7 +285,7 @@ impl<'a> Printer<'a> {
         let Some(second_content) = fill.dequeue() else {
             return;
         };
-        let mut docs = self.vec();
+        let mut docs = oxc_allocator::Vec::new_in(self.allocator);
         let content = content_flat_cmd.doc;
         docs.push(content);
         docs.push(whitespace_flat_cmd.doc);

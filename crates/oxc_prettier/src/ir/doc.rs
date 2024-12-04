@@ -8,7 +8,7 @@ use oxc_allocator::{Box, Vec};
 use crate::GroupId;
 
 /// IR for the pretty printing.
-/// To produce, use the `DocBuilder` trait.
+/// Direct use is discouraged, use the macro instead.
 #[derive(Debug)]
 pub enum Doc<'a> {
     /// Strings are printed directly as is.
@@ -108,4 +108,12 @@ impl<'a> Fill<'a> {
     pub fn take_parts(self) -> Vec<'a, Doc<'a>> {
         self.contents
     }
+}
+
+// NOTE: Really needed? Just use `Doc` as a separator?
+#[derive(Clone, Copy)]
+pub enum JoinSeparator {
+    Softline,
+    Hardline,
+    CommaLine, // [",", line]
 }
