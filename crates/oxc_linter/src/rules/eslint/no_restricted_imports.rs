@@ -3,6 +3,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
 
@@ -74,28 +75,48 @@ declare_oxc_lint!(
 impl Rule for NoRestrictedImports {
     fn from_configuration(value: serde_json::Value) -> Self {
         let mut paths = Vec::new();
-
-        if let Some(obj) = value.as_object() {
-            if let Some(paths_value) = obj.get("paths") {
-                if let Some(paths_array) = paths_value.as_array() {
-                    for path_value in paths_array {
-                        if let Ok(mut path) =
-                            serde_json::from_value::<RestrictedPath>(path_value.clone())
-                        {
-                            if let Some(import_names) = path.import_names {
-                                path.import_names = Some(
-                                    import_names
-                                        .iter()
-                                        .map(|s| CompactStr::new(s))
-                                        .collect::<Vec<_>>()
-                                        .into_boxed_slice(),
-                                );
+        match value {
+            Value::Array(module_names) => {
+                for module_name in module_names {
+                    if let Some(module_name) = module_name.as_str() {
+                        paths.push(RestrictedPath {
+                            name: CompactStr::new(module_name),
+                            import_names: None,
+                            message: None,
+                        });
+                    }
+                }
+            }
+            Value::String(module_name) => {
+                paths.push(RestrictedPath {
+                    name: CompactStr::new(module_name.as_str()),
+                    import_names: None,
+                    message: None,
+                });
+            }
+            Value::Object(obj) => {
+                if let Some(paths_value) = obj.get("paths") {
+                    if let Some(paths_array) = paths_value.as_array() {
+                        for path_value in paths_array {
+                            if let Ok(mut path) =
+                                serde_json::from_value::<RestrictedPath>(path_value.clone())
+                            {
+                                if let Some(import_names) = path.import_names {
+                                    path.import_names = Some(
+                                        import_names
+                                            .iter()
+                                            .map(|s| CompactStr::new(s))
+                                            .collect::<Vec<_>>()
+                                            .into_boxed_slice(),
+                                    );
+                                }
+                                paths.push(path);
                             }
-                            paths.push(path);
                         }
                     }
                 }
             }
+            _ => {}
         }
 
         Self { paths: Box::new(NoRestrictedImportsConfig { paths: paths.into_boxed_slice() }) }
