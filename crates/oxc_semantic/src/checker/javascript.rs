@@ -221,11 +221,13 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // NumericLiteral :: legacy_octalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
-    fn leading_zero(s: &str) -> bool {
-        let mut chars = s.bytes();
-        if let Some(first) = chars.next() {
-            if let Some(second) = chars.next() {
-                return first == b'0' && second.is_ascii_digit();
+    fn leading_zero(s: Option<&Atom>) -> bool {
+        if let Some(s) = s {
+            let mut chars = s.bytes();
+            if let Some(first) = chars.next() {
+                if let Some(second) = chars.next() {
+                    return first == b'0' && second.is_ascii_digit();
+                }
             }
         }
         false
@@ -233,10 +235,10 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
 
     if ctx.strict_mode() {
         match lit.base {
-            NumberBase::Octal if leading_zero(lit.raw) => {
+            NumberBase::Octal if leading_zero(lit.raw.as_ref()) => {
                 ctx.error(legacy_octal(lit.span));
             }
-            NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) => {
+            NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw.as_ref()) => {
                 ctx.error(leading_zero_decimal(lit.span));
             }
             _ => {}

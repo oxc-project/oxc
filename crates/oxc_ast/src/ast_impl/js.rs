@@ -135,7 +135,7 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given numeral literal's raw value is exactly val
     pub fn is_specific_raw_number_literal(&self, val: &str) -> bool {
-        matches!(self, Self::NumericLiteral(lit) if lit.raw == val)
+        matches!(self, Self::NumericLiteral(lit) if lit.raw.as_ref().is_some_and(|raw| raw == val))
     }
 
     /// Determines whether the given expr evaluate to `undefined`
@@ -502,7 +502,7 @@ impl<'a> ComputedMemberExpression<'a> {
             {
                 Some(lit.quasis[0].value.raw.clone())
             }
-            Expression::RegExpLiteral(lit) => Some(Atom::from(lit.raw)),
+            Expression::RegExpLiteral(lit) => lit.raw.clone(),
             _ => None,
         }
     }

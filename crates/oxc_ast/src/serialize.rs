@@ -52,7 +52,7 @@ impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
         Self {
             span: value.span,
             value: value.value,
-            raw: Some(value.raw),
+            raw: value.raw.as_ref().map(oxc_span::Atom::as_str),
             bigint: None,
             regex: None,
         }
@@ -61,7 +61,13 @@ impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
 
 impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
     fn from(value: &'a StringLiteral) -> Self {
-        Self { span: value.span, value: &value.value, raw: None, bigint: None, regex: None }
+        Self {
+            span: value.span,
+            value: &value.value,
+            raw: value.raw.as_ref().map(oxc_span::Atom::as_str),
+            bigint: None,
+            regex: None,
+        }
     }
 }
 
@@ -107,7 +113,7 @@ impl<'a> From<&'a RegExpLiteral<'a>> for ESTreeLiteral<'a, Option<EmptyObject>> 
     fn from(value: &'a RegExpLiteral) -> Self {
         Self {
             span: value.span,
-            raw: Some(value.raw),
+            raw: value.raw.as_ref().map(oxc_span::Atom::as_str),
             value: match &value.regex.pattern {
                 RegExpPattern::Pattern(_) => Some(EmptyObject {}),
                 _ => None,

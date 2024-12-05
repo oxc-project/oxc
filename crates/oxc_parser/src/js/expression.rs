@@ -321,7 +321,7 @@ impl<'a> ParserImpl<'a> {
             _ => return Err(self.unexpected()),
         };
         self.bump_any();
-        Ok(self.ast.numeric_literal(self.end_span(span), value, src, base))
+        Ok(self.ast.numeric_literal(self.end_span(span), value, Some(Atom::from(src)), base))
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> Result<BigIntLiteral<'a>> {
@@ -364,7 +364,11 @@ impl<'a> ParserImpl<'a> {
                     pat.map_or_else(|| RegExpPattern::Invalid(pattern_text), RegExpPattern::Pattern)
                 },
             );
-        Ok(self.ast.reg_exp_literal(self.end_span(span), RegExp { pattern, flags }, raw))
+        Ok(self.ast.reg_exp_literal(
+            self.end_span(span),
+            RegExp { pattern, flags },
+            Some(Atom::from(raw)),
+        ))
     }
 
     fn parse_regex_pattern(

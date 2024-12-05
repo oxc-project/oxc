@@ -124,12 +124,7 @@ impl PeepholeReplaceKnownMethods {
         };
 
         #[expect(clippy::cast_precision_loss)]
-        Some(ctx.ast.expression_numeric_literal(
-            span,
-            result as f64,
-            result.to_string(),
-            NumberBase::Decimal,
-        ))
+        Some(ctx.ast.expression_numeric_literal(span, result as f64, None, NumberBase::Decimal))
     }
 
     fn try_fold_string_substring_or_slice<'a>(
@@ -219,12 +214,7 @@ impl PeepholeReplaceKnownMethods {
         let result = string_lit.value.as_str().char_code_at(Some(char_at_index))?;
 
         #[expect(clippy::cast_lossless)]
-        Some(ctx.ast.expression_numeric_literal(
-            span,
-            result as f64,
-            result.to_string(),
-            NumberBase::Decimal,
-        ))
+        Some(ctx.ast.expression_numeric_literal(span, result as f64, None, NumberBase::Decimal))
     }
     fn try_fold_string_replace_or_string_replace_all<'a>(
         span: Span,

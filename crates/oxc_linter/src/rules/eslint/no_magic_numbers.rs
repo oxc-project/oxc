@@ -247,13 +247,13 @@ impl InternConfig<'_> {
                     InternConfig {
                         node: parent_node,
                         value: NoMagicNumbersNumber::Float(0.0 - numeric.value),
-                        raw: format!("-{}", numeric.raw),
+                        raw: format!("-{}", numeric.raw.as_ref().unwrap()),
                     }
                 } else {
                     InternConfig {
                         node: if is_unary { parent_node } else { node },
                         value: NoMagicNumbersNumber::Float(numeric.value),
-                        raw: numeric.raw.into(),
+                        raw: numeric.raw.as_ref().unwrap().as_str().into(),
                     }
                 }
             }

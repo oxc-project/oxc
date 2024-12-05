@@ -228,7 +228,7 @@ fn is_negative_one(expression: &Expression) -> bool {
             if let Expression::NumericLiteral(value) =
                 &unary_expression.argument.get_inner_expression()
             {
-                return value.raw == "1";
+                return value.raw.as_ref().unwrap() == "1";
             }
         }
     }

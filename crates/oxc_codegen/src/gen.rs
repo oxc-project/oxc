@@ -1155,7 +1155,7 @@ impl GenExpr for NumericLiteral<'_> {
         p.add_source_mapping(self.span);
         let value = self.value;
         if ctx.contains(Context::TYPESCRIPT) {
-            p.print_str(self.raw);
+            p.print_str(&self.raw_str());
         } else if value.is_nan() {
             p.print_space_before_identifier();
             p.print_str("NaN");
