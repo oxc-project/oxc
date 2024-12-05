@@ -1,8 +1,29 @@
 import { promises as fsPromises } from 'node:fs';
 
-import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
+import {
+  commands,
+  ExtensionContext,
+  Position as VsCodePosition,
+  Range as VsCodeRange,
+  StatusBarAlignment,
+  StatusBarItem,
+  ThemeColor,
+  Uri,
+  window,
+  workspace,
+  WorkspaceEdit,
+} from 'vscode';
 
-import { MessageType, ShowMessageNotification } from 'vscode-languageclient';
+import {
+  CodeAction,
+  CodeActionRequest,
+  CodeActionTriggerKind,
+  MessageType,
+  Position,
+  Range,
+  ShowMessageNotification,
+  VersionedTextDocumentIdentifier,
+} from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
@@ -15,7 +36,7 @@ const commandPrefix = 'oxc';
 
 const enum OxcCommands {
   RestartServer = `${commandPrefix}.restartServer`,
-  ApplyAllFixes = `${commandPrefix}.applyAllFixes`,
+  ApplyAllFixesFile = `${commandPrefix}.applyAllFixesFile`,
   ShowOutputChannel = `${commandPrefix}.showOutputChannel`,
   ToggleEnable = `${commandPrefix}.toggleEnable`,
 }
@@ -62,7 +83,63 @@ export async function activate(context: ExtensionContext) {
     },
   );
 
+  const applyAllFixesFile = commands.registerCommand(
+    OxcCommands.ApplyAllFixesFile,
+    async () => {
+      if (!client) {
+        window.showErrorMessage('oxc client not found');
+        return;
+      }
+      const textEditor = window.activeTextEditor;
+      if (!textEditor) {
+        window.showErrorMessage('active text editor not found');
+        return;
+      }
+      const textDocument: VersionedTextDocumentIdentifier = {
+        uri: textEditor.document.uri.toString(),
+        version: textEditor.document.version,
+      };
+
+      const lastLine = textEditor.document.lineAt(textEditor.document.lineCount - 1);
+      const commandsOrCodeActions = await client.sendRequest(CodeActionRequest.type, {
+        textDocument: {
+          uri: textDocument.uri,
+        },
+        range: Range.create(Position.create(0, 0), lastLine.range.end),
+        context: {
+          diagnostics: [],
+          only: [],
+          triggerKind: CodeActionTriggerKind.Invoked,
+        },
+      }) || [];
+
+      await Promise.all(
+        commandsOrCodeActions
+          // Filter to CodeActions that are preferred and contain an edit.
+          .filter((commandOrCodeAction): commandOrCodeAction is CodeAction =>
+            'edit' in commandOrCodeAction && !!commandOrCodeAction.edit && !!commandOrCodeAction.edit.changes &&
+            !!commandOrCodeAction.isPreferred
+          )
+          .map(async (codeAction) => {
+            const workspaceEdit = new WorkspaceEdit();
+
+            Object.entries(codeAction.edit!.changes!).forEach(([uriString, edits]) => {
+              edits.forEach(edit => {
+                workspaceEdit.replace(
+                  Uri.parse(uriString),
+                  lspRangeToVsCodeRange(edit.range),
+                  edit.newText,
+                );
+              });
+            });
+            return workspace.applyEdit(workspaceEdit);
+          }),
+      );
+    },
+  );
+
   context.subscriptions.push(
+    applyAllFixesFile,
     restartCommand,
     showOutputCommand,
     toggleEnable,
@@ -221,4 +298,11 @@ export function deactivate(): Thenable<void> | undefined {
     return undefined;
   }
   return client.stop();
+}
+
+function lspRangeToVsCodeRange(range: Range): VsCodeRange {
+  return new VsCodeRange(
+    new VsCodePosition(range.start.line, range.start.character),
+    new VsCodePosition(range.end.line, range.end.character),
+  );
 }

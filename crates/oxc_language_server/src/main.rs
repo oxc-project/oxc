@@ -87,6 +87,9 @@ enum SyntheticRunLevel {
     OnType,
 }
 
+const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
+    CodeActionKind::new("source.fixAll.oxc");
+
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
@@ -111,7 +114,10 @@ impl LanguageServer for Backend {
             })
         }) {
             Some(CodeActionProviderCapability::Options(CodeActionOptions {
-                code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
+                code_action_kinds: Some(vec![
+                    CodeActionKind::QUICKFIX,
+                    CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
+                ]),
                 work_done_progress_options: WorkDoneProgressOptions { work_done_progress: None },
                 resolve_provider: None,
             }))
@@ -278,36 +284,127 @@ impl LanguageServer for Backend {
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
         let uri = params.text_document.uri;
+        let is_source_fix_all_oxc = params
+            .context
+            .only
+            .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
 
+        let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
         if let Some(value) = self.diagnostics_report_map.get(&uri.to_string()) {
-            if let Some(report) = value.iter().find(|r| r.diagnostic.range == params.range) {
-                // TODO: Would be better if we had exact rule name from the diagnostic instead of having to parse it.
-                let mut rule_name: Option<String> = None;
-                if let Some(NumberOrString::String(code)) = report.clone().diagnostic.code {
-                    let open_paren = code.chars().position(|c| c == '(');
-                    let close_paren = code.chars().position(|c| c == ')');
-                    if open_paren.is_some() && close_paren.is_some() {
-                        rule_name =
-                            Some(code[(open_paren.unwrap() + 1)..close_paren.unwrap()].to_string());
+            let reports = value
+                .iter()
+                .filter(|r| {
+                    r.diagnostic.range == params.range
+                        || range_includes(params.range, r.diagnostic.range)
+                })
+                .collect::<Vec<_>>();
+            if !reports.is_empty() {
+                for report in reports {
+                    // TODO: Would be better if we had exact rule name from the diagnostic instead of having to parse it.
+                    let mut rule_name: Option<String> = None;
+                    if let Some(NumberOrString::String(code)) = &report.diagnostic.code {
+                        let open_paren = code.chars().position(|c| c == '(');
+                        let close_paren = code.chars().position(|c| c == ')');
+                        if open_paren.is_some() && close_paren.is_some() {
+                            rule_name = Some(
+                                code[(open_paren.unwrap() + 1)..close_paren.unwrap()].to_string(),
+                            );
+                        }
                     }
-                }
 
-                let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
-                if let Some(fixed_content) = &report.fixed_content {
+                    if let Some(fixed_content) = &report.fixed_content {
+                        code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
+                            title: report.diagnostic.message.split(':').next().map_or_else(
+                                || "Fix this problem".into(),
+                                |s| format!("Fix this {s} problem"),
+                            ),
+                            kind: Some(if is_source_fix_all_oxc {
+                                CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC
+                            } else {
+                                CodeActionKind::QUICKFIX
+                            }),
+                            is_preferred: Some(true),
+                            edit: Some(WorkspaceEdit {
+                                #[expect(clippy::disallowed_types)]
+                                changes: Some(std::collections::HashMap::from([(
+                                    uri.clone(),
+                                    vec![TextEdit {
+                                        range: fixed_content.range,
+                                        new_text: fixed_content.code.clone(),
+                                    }],
+                                )])),
+                                ..WorkspaceEdit::default()
+                            }),
+                            disabled: None,
+                            data: None,
+                            diagnostics: None,
+                            command: None,
+                        }));
+                    }
+
+                    code_actions_vec.push(
+                        // TODO: This CodeAction doesn't support disabling multiple rules by name for a given line.
+                        //  To do that, we need to read `report.diagnostic.range.start.line` and check if a disable comment already exists.
+                        //  If it does, it needs to be appended to instead of a completely new line inserted.
+                        CodeActionOrCommand::CodeAction(CodeAction {
+                            title: rule_name.clone().map_or_else(
+                                || "Disable oxlint for this line".into(),
+                                |s| format!("Disable {s} for this line"),
+                            ),
+                            kind: Some(CodeActionKind::QUICKFIX),
+                            is_preferred: Some(false),
+                            edit: Some(WorkspaceEdit {
+                                #[expect(clippy::disallowed_types)]
+                                changes: Some(std::collections::HashMap::from([(
+                                    uri.clone(),
+                                    vec![TextEdit {
+                                        range: Range {
+                                            start: Position {
+                                                line: report.diagnostic.range.start.line,
+                                                // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
+                                                character: 0,
+                                            },
+                                            end: Position {
+                                                line: report.diagnostic.range.start.line,
+                                                // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
+                                                character: 0,
+                                            },
+                                        },
+                                        new_text: rule_name.clone().map_or_else(
+                                            || "// eslint-disable-next-line\n".into(),
+                                            |s| format!("// eslint-disable-next-line {s}\n"),
+                                        ),
+                                    }],
+                                )])),
+                                ..WorkspaceEdit::default()
+                            }),
+                            disabled: None,
+                            data: None,
+                            diagnostics: None,
+                            command: None,
+                        }),
+                    );
+
                     code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
-                        title: report.diagnostic.message.split(':').next().map_or_else(
-                            || "Fix this problem".into(),
-                            |s| format!("Fix this {s} problem"),
+                        title: rule_name.clone().map_or_else(
+                            || "Disable oxlint for this file".into(),
+                            |s| format!("Disable {s} for this file"),
                         ),
                         kind: Some(CodeActionKind::QUICKFIX),
-                        is_preferred: Some(true),
+                        is_preferred: Some(false),
                         edit: Some(WorkspaceEdit {
                             #[expect(clippy::disallowed_types)]
                             changes: Some(std::collections::HashMap::from([(
                                 uri.clone(),
                                 vec![TextEdit {
-                                    range: fixed_content.range,
-                                    new_text: fixed_content.code.clone(),
+                                    range: Range {
+                                        start: Position { line: 0, character: 0 },
+                                        end: Position { line: 0, character: 0 },
+                                    },
+                                    new_text: rule_name.clone().map_or_else(
+                                        || "// eslint-disable\n".into(),
+                                        |s| format!("// eslint-disable {s}\n"),
+                                    ),
                                 }],
                             )])),
                             ..WorkspaceEdit::default()
@@ -318,85 +415,14 @@ impl LanguageServer for Backend {
                         command: None,
                     }));
                 }
-
-                code_actions_vec.push(
-                    // TODO: This CodeAction doesn't support disabling multiple rules by name for a given line.
-                    //  To do that, we need to read `report.diagnostic.range.start.line` and check if a disable comment already exists.
-                    //  If it does, it needs to be appended to instead of a completely new line inserted.
-                    CodeActionOrCommand::CodeAction(CodeAction {
-                        title: rule_name.clone().map_or_else(
-                            || "Disable oxlint for this line".into(),
-                            |s| format!("Disable {s} for this line"),
-                        ),
-                        kind: Some(CodeActionKind::QUICKFIX),
-                        is_preferred: Some(false),
-                        edit: Some(WorkspaceEdit {
-                            #[expect(clippy::disallowed_types)]
-                            changes: Some(std::collections::HashMap::from([(
-                                uri.clone(),
-                                vec![TextEdit {
-                                    range: Range {
-                                        start: Position {
-                                            line: report.diagnostic.range.start.line,
-                                            // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
-                                            character: 0,
-                                        },
-                                        end: Position {
-                                            line: report.diagnostic.range.start.line,
-                                            // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
-                                            character: 0,
-                                        },
-                                    },
-                                    new_text: rule_name.clone().map_or_else(
-                                        || "// eslint-disable-next-line\n".into(),
-                                        |s| format!("// eslint-disable-next-line {s}\n"),
-                                    ),
-                                }],
-                            )])),
-                            ..WorkspaceEdit::default()
-                        }),
-                        disabled: None,
-                        data: None,
-                        diagnostics: None,
-                        command: None,
-                    }),
-                );
-
-                code_actions_vec.push(CodeActionOrCommand::CodeAction(CodeAction {
-                    title: rule_name.clone().map_or_else(
-                        || "Disable oxlint for this file".into(),
-                        |s| format!("Disable {s} for this file"),
-                    ),
-                    kind: Some(CodeActionKind::QUICKFIX),
-                    is_preferred: Some(false),
-                    edit: Some(WorkspaceEdit {
-                        #[expect(clippy::disallowed_types)]
-                        changes: Some(std::collections::HashMap::from([(
-                            uri.clone(),
-                            vec![TextEdit {
-                                range: Range {
-                                    start: Position { line: 0, character: 0 },
-                                    end: Position { line: 0, character: 0 },
-                                },
-                                new_text: rule_name.clone().map_or_else(
-                                    || "// eslint-disable\n".into(),
-                                    |s| format!("// eslint-disable {s}\n"),
-                                ),
-                            }],
-                        )])),
-                        ..WorkspaceEdit::default()
-                    }),
-                    disabled: None,
-                    data: None,
-                    diagnostics: None,
-                    command: None,
-                }));
-
-                return Ok(Some(code_actions_vec));
             }
         }
 
-        Ok(None)
+        if code_actions_vec.is_empty() {
+            return Ok(None);
+        }
+
+        Ok(Some(code_actions_vec))
     }
 }
 
@@ -577,4 +603,14 @@ async fn main() {
     .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
+}
+
+fn range_includes(range: Range, to_include: Range) -> bool {
+    if range.start >= to_include.start {
+        return false;
+    }
+    if range.end <= to_include.end {
+        return false;
+    }
+    true
 }
