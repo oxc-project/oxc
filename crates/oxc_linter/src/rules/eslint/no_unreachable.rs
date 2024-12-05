@@ -25,6 +25,27 @@ declare_oxc_lint!(
     ///
     /// Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements
     ///
+    /// ### Why is this bad?
+    ///
+    /// Unreachable code after a `return`, `throw`, `continue`, or `break` statement can never be run.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```ts
+    /// function foo() {
+    ///     return 2;
+    ///     console.log("this will never be executed");
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// function foo() {
+    ///     console.log("this will be executed");
+    ///     return 2;
+    /// }
+    /// ```
     NoUnreachable,
     nursery
 );

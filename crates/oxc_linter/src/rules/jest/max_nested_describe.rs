@@ -33,17 +33,20 @@ impl Default for MaxNestedDescribe {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces a maximum depth to nested `describe()` calls to improve code
-    /// clarity in your tests.
+    /// This rule enforces a maximum depth to nested `describe()` calls.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Nesting `describe()` blocks too deeply can make the test suite hard to read and understand.
+    ///
+    ///
+    /// ### Example
     ///
     /// The following patterns are considered warnings (with the default option of
     /// `{ "max": 5 } `):
     ///
-    /// ### Example
-    ///
+    /// /// /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
-    /// // invalid
     /// describe('foo', () => {
     ///     describe('bar', () => {
     ///         describe('baz', () => {
@@ -75,8 +78,10 @@ declare_oxc_lint!(
     ///         });
     ///     });
     /// });
+    /// ```
     ///
-    /// // valid
+    /// Examples of **correct** code for this rule:
+    /// ```ts
     /// describe('foo', () => {
     ///     describe('bar', () => {
     ///         it('should get something', () => {
