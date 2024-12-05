@@ -3,7 +3,7 @@
 
 use std::mem;
 
-use oxc_allocator::{Box as ArenaBox, CloneIn};
+use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{
@@ -11,8 +11,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 use oxc_traverse::{
-    ast_operations::get_var_name_from_node, Ancestor, BoundIdentifier, MaybeBoundIdentifier,
-    TraverseCtx,
+    ast_operations::get_var_name_from_node, Ancestor, BoundIdentifier, TraverseCtx,
 };
 
 use crate::common::helper_loader::Helper;
@@ -20,7 +19,7 @@ use crate::common::helper_loader::Helper;
 use super::{
     private_props::ResolvedPrivateProp,
     utils::{
-        assert_expr_neither_parenthesis_nor_typescript_syntax, create_assignment,
+        assert_expr_neither_parenthesis_nor_typescript_syntax, create_array, create_assignment,
         create_underscore_ident_name,
     },
     ClassProperties,
@@ -1106,7 +1105,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ///   * Unbound Identifier or anything else: `A.B` -> `(_A$B = A.B) === null || _A$B === void 0`
     ///
     /// NOTE: This method will mutate the passed-in `object` to a second copy of
-    /// [`Self::duplicate_object`]'s return.
+    /// [`Self::duplicate_object_twice`]'s return.
     fn transform_expression_to_wrap_nullish_check(
         &mut self,
         object: &mut Expression<'a>,
@@ -1115,14 +1114,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let owned_object = ctx.ast.move_expression(object.get_inner_expression_mut());
         let owned_object =
             Self::ensure_optional_expression_wrapped_by_chain_expression(owned_object, ctx);
-        let (assignment, reference) = self.duplicate_object(owned_object, ctx);
-        // We cannot use `clone_in` to clone identifier reference because it will lose reference id
-        *object = if let Expression::Identifier(ident) = &reference {
-            MaybeBoundIdentifier::from_identifier_reference(ident, ctx).create_read_expression(ctx)
-        } else {
-            reference.clone_in(ctx.ast.allocator)
-        };
-        self.wrap_nullish_check(assignment, reference, ctx)
+        let (assignment, reference1, reference2) = self.duplicate_object_twice(owned_object, ctx);
+        *object = reference1;
+        self.wrap_nullish_check(assignment, reference2, ctx)
     }
 
     /// Converts chain expression to expression
@@ -1456,7 +1450,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ///
     /// If `object` may have side effects, create a temp var `_object` and assign to it.
     ///
-    /// * `this` -> (`this`, `this`)
+    /// * `this` -> `this`, `this`
     /// * Bound identifier `object` -> `object`, `object`
     /// * Unbound identifier `object` -> `_object = object`, `_object`
     /// * Anything else `foo()` -> `_foo = foo()`, `_foo`
@@ -1467,7 +1461,48 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>) {
+        let (object1, duplicates) = self.duplicate_object_multiple::<1>(object, ctx);
+        let [object2] = duplicates;
+        (object1, object2)
+    }
+
+    /// Duplicate object to be used in triple.
+    ///
+    /// If `object` may have side effects, create a temp var `_object` and assign to it.
+    ///
+    /// * `this` -> `this`, `this`, `this`
+    /// * Bound identifier `object` -> `object`, `object`, `object`
+    /// * Unbound identifier `object` -> `_object = object`, `_object`, `_object`
+    /// * Anything else `foo()` -> `_foo = foo()`, `_foo`, `_foo`
+    ///
+    /// Returns 3 `Expression`s. The first must be inserted into output first.
+    fn duplicate_object_twice(
+        &mut self,
+        object: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> (Expression<'a>, Expression<'a>, Expression<'a>) {
+        let (object1, duplicates) = self.duplicate_object_multiple::<2>(object, ctx);
+        let [object2, object3] = duplicates;
+        (object1, object2, object3)
+    }
+
+    /// Duplicate object `N + 1` times.
+    ///
+    /// If `object` may have side effects, create a temp var `_object` and assign to it.
+    ///
+    /// * `this` -> `this`, [`this`; N]
+    /// * Bound identifier `object` -> `object`, [`object`; N]
+    /// * Unbound identifier `object` -> `_object = object`, [`_object`; N]
+    /// * Anything else `foo()` -> `_foo = foo()`, [`_foo`; N]
+    ///
+    /// Returns `N + 1` `Expression`s. The first must be inserted into output first.
+    fn duplicate_object_multiple<const N: usize>(
+        &mut self,
+        object: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> (Expression<'a>, [Expression<'a>; N]) {
         assert_expr_neither_parenthesis_nor_typescript_syntax(&object);
+
         // TODO: Handle if in a function's params
         let temp_var_binding = match &object {
             Expression::Identifier(ident) => {
@@ -1475,8 +1510,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 if let Some(symbol_id) = reference.symbol_id() {
                     // Reading bound identifier cannot have side effects, so no need for temp var
                     let binding = BoundIdentifier::new(ident.name.clone(), symbol_id);
-                    let object1 = binding.create_spanned_read_expression(ident.span, ctx);
-                    return (object1, object);
+                    let duplicates =
+                        create_array(|| binding.create_spanned_read_expression(ident.span, ctx));
+                    return (object, duplicates);
                 }
 
                 // Previously `x += 1` (`x` read + write), but moving to `_x = x` (`x` read only)
@@ -1486,16 +1522,16 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             }
             Expression::ThisExpression(this) => {
                 // Reading `this` cannot have side effects, so no need for temp var
-                let object1 = ctx.ast.expression_this(this.span);
-                return (object1, object);
+                let duplicates = create_array(|| ctx.ast.expression_this(this.span));
+                return (object, duplicates);
             }
             _ => self.ctx.var_declarations.create_uid_var_based_on_node(&object, ctx),
         };
 
         let object1 = create_assignment(&temp_var_binding, object, ctx);
-        let object2 = temp_var_binding.create_read_expression(ctx);
+        let references = create_array(|| temp_var_binding.create_read_expression(ctx));
 
-        (object1, object2)
+        (object1, references)
     }
 
     /// `_classPrivateFieldGet2(_prop, object)`
