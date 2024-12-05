@@ -1,4 +1,4 @@
-use crate::tester::{test, test_minify, test_without_source};
+use crate::tester::{test, test_minify, test_minify_same, test_without_source};
 
 #[test]
 fn module_decl() {
@@ -15,6 +15,15 @@ fn expr() {
 
     test("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);\n");
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
+
+    test_minify("throw 'foo'", "throw\"foo\";");
+    test_minify("return 'foo'", "return\"foo\";");
+    test_minify("return class {}", "return class{};");
+    test_minify("return async function foo() {}", "return async function foo(){};");
+    test_minify_same("return super();");
+    test_minify_same("return new.target;");
+    test_minify_same("throw await 1;");
+    test_minify_same("await import(\"\");");
 }
 
 #[test]
@@ -121,7 +130,7 @@ fn assignment() {
     test_minify("({a,b} = (1, 2))", "({a,b}=(1,2));");
     test_minify("a *= yield b", "a*=yield b;");
     test_minify("a /= () => {}", "a/=()=>{};");
-    test_minify("a %= async () => {}", "a%=async ()=>{};");
+    test_minify("a %= async () => {}", "a%=async()=>{};");
     test_minify("a -= (1, 2)", "a-=(1,2);");
     test_minify("a >>= b >>= c", "a>>=b>>=c;");
 }
@@ -132,11 +141,11 @@ fn r#yield() {
     test_minify("function *foo() { yield * a ? b : c }", "function*foo(){yield*a?b:c}");
     test_minify("function *foo() { yield * yield * a }", "function*foo(){yield*yield*a}");
     test_minify("function *foo() { yield * () => {} }", "function*foo(){yield*()=>{}}");
-    test_minify("function *foo() { yield * async () => {} }", "function*foo(){yield*async ()=>{}}");
+    test_minify("function *foo() { yield * async () => {} }", "function*foo(){yield*async()=>{}}");
     test_minify("function *foo() { yield a ? b : c }", "function*foo(){yield a?b:c}");
     test_minify("function *foo() { yield yield a }", "function*foo(){yield yield a}");
     test_minify("function *foo() { yield () => {} }", "function*foo(){yield ()=>{}}");
-    test_minify("function *foo() { yield async () => {} }", "function*foo(){yield async ()=>{}}");
+    test_minify("function *foo() { yield async () => {} }", "function*foo(){yield async()=>{}}");
     test_minify(
         "function *foo() { yield { a } = [ b ] = c ? b : d }",
         "function*foo(){yield {a}=[b]=c?b:d}",

@@ -29,3 +29,7 @@ pub fn test_minify(source_text: &str, expected: &str) {
         .code;
     assert_eq!(result, expected, "\nfor minify source: {source_text}");
 }
+
+pub fn test_minify_same(source_text: &str) {
+    test_minify(source_text, source_text);
+}
