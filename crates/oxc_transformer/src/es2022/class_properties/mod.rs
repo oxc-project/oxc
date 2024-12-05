@@ -285,7 +285,6 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
             }
             // "object.#prop`xyz`"
             Expression::TaggedTemplateExpression(_) => {
-                // TODO: `transform_tagged_template_expression` is no-op at present
                 self.transform_tagged_template_expression(expr, ctx);
             }
             _ => {}
