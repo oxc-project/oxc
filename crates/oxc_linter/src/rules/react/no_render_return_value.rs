@@ -23,6 +23,10 @@ declare_oxc_lint!(
     ///
     /// This rule will warn you if you try to use the ReactDOM.render() return value.
     ///
+    /// ### Why is this bad?
+    ///
+    /// Using the return value from ReactDOM.render() is a legacy feature and should not be used.
+    ///
     /// ### Example
     ///
     /// Examples of **incorrect** code for this rule:

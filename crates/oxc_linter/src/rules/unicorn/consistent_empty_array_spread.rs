@@ -19,6 +19,10 @@ declare_oxc_lint!(
     /// When spreading a ternary in an array, we can use both [] and '' as fallbacks,
     /// but it's better to have consistent types in both branches.
     ///
+    /// ### Why is this bad?
+    ///
+    /// Having consistent types in both branches makes the code easier to read and understand.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

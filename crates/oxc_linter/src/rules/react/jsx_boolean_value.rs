@@ -59,10 +59,21 @@ declare_oxc_lint!(
     ///
     /// Enforce a consistent boolean attribute style in your code.
     ///
+    /// ### Why is this bad?
+    ///
+    /// In JSX, you can set a boolean attribute to `true` or omit it. This rule will enforce a consistent style for boolean attributes.
+    ///
     /// ### Example
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// const Hello = <Hello personal={true} />;
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// const Hello = <Hello personal />;
+    /// ```
+    ///
     JsxBooleanValue,
     style,
     fix,

@@ -30,6 +30,11 @@ declare_oxc_lint!(
     ///
     /// Prefer `.querySelector()` over `.getElementById()`, `.querySelectorAll()` over `.getElementsByClassName()` and `.getElementsByTagName()`.
     ///
+    /// ### Why is this bad?
+    ///
+    /// - Using `.querySelector()` and `.querySelectorAll()` is more flexible and allows for more specific selectors.
+    /// - It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ///
     /// ### Example
     ///
     /// Examples of **incorrect** code for this rule:
