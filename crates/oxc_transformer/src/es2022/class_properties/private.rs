@@ -3,7 +3,7 @@
 
 use std::mem;
 
-use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::{Box as ArenaBox, CloneIn};
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{
@@ -1102,34 +1102,26 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ///
     /// Returns:
     ///   * Bound Identifier: `A` -> `A === null || A === void 0`
+    ///   * `this`: `this` -> `this === null || this === void 0`
     ///   * Unbound Identifier or anything else: `A.B` -> `(_A$B = A.B) === null || _A$B === void 0`
     ///
-    /// NOTE: This method will mutate the passed-in `object` to a temp variable identifier.
+    /// NOTE: This method will mutate the passed-in `object` to a second copy of
+    /// [`Self::duplicate_object`]'s return.
     fn transform_expression_to_wrap_nullish_check(
         &mut self,
         object: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        // `A` -> `A === null || A === void 0`
-        if let Expression::Identifier(ident) = object {
-            if let Some(binding) = self.get_existing_binding_for_identifier(ident, ctx) {
-                let left1 = binding.create_read_expression(ctx);
-                let left2 = binding.create_read_expression(ctx);
-                return self.wrap_nullish_check(left1, left2, ctx);
-            }
-        }
-
-        // `A.B` -> `(_A$B = A.B) === null || _A$B === void 0`
-        // TODO: should add an API `generate_uid_in_current_hoist_scope_based_on_node` to instead this
-        let temp_var_binding = self.ctx.var_declarations.create_uid_var_based_on_node(object, ctx);
-
-        let object = mem::replace(object, temp_var_binding.create_read_expression(ctx));
-        let assignment = create_assignment(
-            &temp_var_binding,
-            Self::ensure_optional_expression_wrapped_by_chain_expression(object, ctx),
-            ctx,
-        );
-        let reference = temp_var_binding.create_read_expression(ctx);
+        let owned_object = ctx.ast.move_expression(object.get_inner_expression_mut());
+        let owned_object =
+            Self::ensure_optional_expression_wrapped_by_chain_expression(owned_object, ctx);
+        let (assignment, reference) = self.duplicate_object(owned_object, ctx);
+        // We cannot use `clone_in` to clone identifier reference because it will lose reference id
+        *object = if let Expression::Identifier(ident) = &reference {
+            MaybeBoundIdentifier::from_identifier_reference(ident, ctx).create_read_expression(ctx)
+        } else {
+            reference.clone_in(ctx.ast.allocator)
+        };
         self.wrap_nullish_check(assignment, reference, ctx)
     }
 
@@ -1156,23 +1148,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             }
             ChainElement::CallExpression(call) => Expression::CallExpression(call),
             ChainElement::TSNonNullExpression(non_null) => non_null.unbox().expression,
-        }
-    }
-
-    /// Get an MaybeBoundIdentifier from an bound identifier reference.
-    ///
-    /// If no temp variable required, returns `MaybeBoundIdentifier` for existing variable/global.
-    /// If temp variable is required, returns `None`.
-    fn get_existing_binding_for_identifier(
-        &self,
-        ident: &IdentifierReference<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Option<MaybeBoundIdentifier<'a>> {
-        let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-        if self.ctx.assumptions.pure_getters || binding.to_bound_identifier().is_some() {
-            Some(binding)
-        } else {
-            None
         }
     }
 
