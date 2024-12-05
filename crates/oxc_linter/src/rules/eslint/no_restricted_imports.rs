@@ -9,11 +9,12 @@ use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
 fn no_restricted_imports_diagnostic(
     ctx: &LintContext,
     span: Span,
-    message: Option<String>,
+    message: Option<CompactStr>,
     source: &str,
 ) {
-    let msg =
-        message.unwrap_or_else(|| format!("'{source}' import is restricted from being used."));
+    let msg = message.unwrap_or_else(|| {
+        CompactStr::new(&format!("'{source}' import is restricted from being used."))
+    });
     ctx.diagnostic(
         OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span),
     );
@@ -21,15 +22,15 @@ fn no_restricted_imports_diagnostic(
 
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedImports {
-    paths: Vec<RestrictedPath>,
+    paths: Box<[RestrictedPath]>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 struct RestrictedPath {
-    name: String,
+    name: CompactStr,
     #[serde(rename = "importNames")]
-    import_names: Option<Vec<String>>,
-    message: Option<String>,
+    import_names: Option<Box<[CompactStr]>>,
+    message: Option<CompactStr>,
 }
 
 declare_oxc_lint!(
@@ -73,7 +74,18 @@ impl Rule for NoRestrictedImports {
             if let Some(paths_value) = obj.get("paths") {
                 if let Some(paths_array) = paths_value.as_array() {
                     for path_value in paths_array {
-                        if let Ok(path) = serde_json::from_value(path_value.clone()) {
+                        if let Ok(mut path) =
+                            serde_json::from_value::<RestrictedPath>(path_value.clone())
+                        {
+                            if let Some(import_names) = path.import_names {
+                                path.import_names = Some(
+                                    import_names
+                                        .iter()
+                                        .map(|s| CompactStr::new(s))
+                                        .collect::<Vec<_>>()
+                                        .into_boxed_slice(),
+                                );
+                            }
                             paths.push(path);
                         }
                     }
@@ -81,7 +93,7 @@ impl Rule for NoRestrictedImports {
             }
         }
 
-        Self { paths }
+        Self { paths: paths.into_boxed_slice() }
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -97,7 +109,9 @@ impl Rule for NoRestrictedImports {
                     if let Some(import_names) = &path.import_names {
                         match &entry.import_name {
                             ImportImportName::Name(import) => {
-                                if !import_names.contains(&import.name().to_string()) {
+                                let name = CompactStr::new(import.name());
+
+                                if !import_names.contains(&name) {
                                     no_restricted_imports_diagnostic(
                                         ctx,
                                         span,
@@ -108,7 +122,8 @@ impl Rule for NoRestrictedImports {
                                 }
                             }
                             ImportImportName::Default(_) | ImportImportName::NamespaceObject => {
-                                if !import_names.contains(&entry.local_name.name().to_string()) {
+                                let name = CompactStr::new(entry.local_name.name());
+                                if !import_names.contains(&name) {
                                     no_restricted_imports_diagnostic(
                                         ctx,
                                         span,
