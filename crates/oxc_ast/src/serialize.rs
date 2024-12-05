@@ -31,11 +31,11 @@ pub struct ESTreeLiteral<'a, T> {
 }
 
 impl From<&BooleanLiteral> for ESTreeLiteral<'_, bool> {
-    fn from(value: &BooleanLiteral) -> Self {
+    fn from(lit: &BooleanLiteral) -> Self {
         Self {
-            span: value.span,
-            value: value.value,
-            raw: Some(if value.value { "true" } else { "false" }),
+            span: lit.span,
+            value: lit.value,
+            raw: Some(if lit.value { "true" } else { "false" }),
             bigint: None,
             regex: None,
         }
@@ -43,17 +43,17 @@ impl From<&BooleanLiteral> for ESTreeLiteral<'_, bool> {
 }
 
 impl From<&NullLiteral> for ESTreeLiteral<'_, ()> {
-    fn from(value: &NullLiteral) -> Self {
-        Self { span: value.span, value: (), raw: Some("null"), bigint: None, regex: None }
+    fn from(lit: &NullLiteral) -> Self {
+        Self { span: lit.span, value: (), raw: Some("null"), bigint: None, regex: None }
     }
 }
 
 impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
-    fn from(value: &'a NumericLiteral) -> Self {
+    fn from(lit: &'a NumericLiteral) -> Self {
         Self {
-            span: value.span,
-            value: value.value,
-            raw: value.raw.as_ref().map(Atom::as_str),
+            span: lit.span,
+            value: lit.value,
+            raw: lit.raw.as_ref().map(Atom::as_str),
             bigint: None,
             regex: None,
         }
@@ -61,11 +61,11 @@ impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
 }
 
 impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
-    fn from(value: &'a StringLiteral) -> Self {
+    fn from(lit: &'a StringLiteral) -> Self {
         Self {
-            span: value.span,
-            value: &value.value,
-            raw: value.raw.as_ref().map(Atom::as_str),
+            span: lit.span,
+            value: &lit.value,
+            raw: lit.raw.as_ref().map(Atom::as_str),
             bigint: None,
             regex: None,
         }
@@ -73,14 +73,14 @@ impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
 }
 
 impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
-    fn from(value: &'a BigIntLiteral) -> Self {
-        let src = &value.raw.strip_suffix('n').unwrap().cow_replace('_', "");
+    fn from(lit: &'a BigIntLiteral) -> Self {
+        let src = &lit.raw.strip_suffix('n').unwrap().cow_replace('_', "");
 
-        let src = match value.base {
+        let src = match lit.base {
             BigintBase::Decimal => src,
             BigintBase::Binary | BigintBase::Octal | BigintBase::Hex => &src[2..],
         };
-        let radix = match value.base {
+        let radix = match lit.base {
             BigintBase::Decimal => 10,
             BigintBase::Binary => 2,
             BigintBase::Octal => 8,
@@ -89,10 +89,10 @@ impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
         let bigint = BigInt::from_str_radix(src, radix).unwrap();
 
         Self {
-            span: value.span,
+            span: lit.span,
             // BigInts can't be serialized to JSON
             value: (),
-            raw: Some(value.raw.as_str()),
+            raw: Some(lit.raw.as_str()),
             bigint: Some(bigint.to_string()),
             regex: None,
         }
@@ -111,18 +111,18 @@ pub struct SerRegExpValue {
 pub struct EmptyObject {}
 
 impl<'a> From<&'a RegExpLiteral<'a>> for ESTreeLiteral<'a, Option<EmptyObject>> {
-    fn from(value: &'a RegExpLiteral) -> Self {
+    fn from(lit: &'a RegExpLiteral) -> Self {
         Self {
-            span: value.span,
-            raw: value.raw.as_ref().map(Atom::as_str),
-            value: match &value.regex.pattern {
+            span: lit.span,
+            raw: lit.raw.as_ref().map(Atom::as_str),
+            value: match &lit.regex.pattern {
                 RegExpPattern::Pattern(_) => Some(EmptyObject {}),
                 _ => None,
             },
             bigint: None,
             regex: Some(SerRegExpValue {
-                pattern: value.regex.pattern.to_string(),
-                flags: value.regex.flags.to_string(),
+                pattern: lit.regex.pattern.to_string(),
+                flags: lit.regex.flags.to_string(),
             }),
         }
     }
