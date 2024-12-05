@@ -1,7 +1,6 @@
-use oxc_allocator;
 use oxc_ast::ast::{
-    AssignmentOperator, ClassBody, ClassElement, Expression, LogicalOperator, MethodDefinitionKind,
-    Statement,
+    AssignmentOperator, ClassBody, ClassElement, Expression, LogicalOperator, MethodDefinition,
+    MethodDefinitionKind, Statement,
 };
 use oxc_ast::{match_member_expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
@@ -60,12 +59,20 @@ impl Rule for ConstructorSuper {
                     ctx.diagnostic(constructor_super_diagnostic(class.span));
                 }
             } else {
-                if check_for_non_super_call(&class.body) {
+                let Some(constructor) = get_constructor_method(&class.body) else {
+                    return;
+                };
+
+                if !has_return_statement(constructor) {
                     ctx.diagnostic(constructor_super_diagnostic(class.span));
                 }
             }
         } else {
-            if check_for_non_super_call(&class.body) {
+            let Some(constructor) = get_constructor_method(&class.body) else {
+                return;
+            };
+
+            if check_for_non_super_callee(&constructor) {
                 ctx.diagnostic(constructor_super_diagnostic(class.span));
             }
         }
@@ -136,12 +143,12 @@ fn check_for_super_call(_class: &ClassBody<'_>) -> bool {
     false
 }
 
-fn check_for_non_super_call(class: &ClassBody<'_>) -> bool {
-    let Some(statements) = get_constructor_statements(class) else {
+fn check_for_non_super_callee<'a>(method: &'a MethodDefinition<'a>) -> bool {
+    let Some(func_body) = &method.value.body else {
         return false;
     };
 
-    for statement in statements {
+    for statement in &func_body.statements {
         let Statement::ExpressionStatement(expression) = statement else {
             continue;
         };
@@ -154,9 +161,21 @@ fn check_for_non_super_call(class: &ClassBody<'_>) -> bool {
     false
 }
 
-fn get_constructor_statements<'a>(
-    class: &'a ClassBody<'a>,
-) -> Option<&'a oxc_allocator::Vec<'a, Statement<'a>>> {
+fn has_return_statement<'a>(method: &'a MethodDefinition<'a>) -> bool {
+    let Some(func_body) = &method.value.body else {
+        return false;
+    };
+
+    for statement in &func_body.statements {
+        if matches!(statement, Statement::ReturnStatement(_)) {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn get_constructor_method<'a>(class: &'a ClassBody<'a>) -> Option<&'a MethodDefinition<'a>> {
     if class.body.len() == 0 {
         return None;
     }
@@ -172,11 +191,7 @@ fn get_constructor_statements<'a>(
         return None;
     };
 
-    let Some(func_body) = &method.value.body else {
-        return None;
-    };
-
-    Some(&func_body.statements)
+    return Some(&method);
 }
 
 #[test]
