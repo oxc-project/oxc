@@ -310,6 +310,6 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         if ctx.is_static(expr) {
             return None;
         }
-        Some(self.ctx.var_declarations.create_var_based_on_node(expr, ctx))
+        Some(self.ctx.var_declarations.create_uid_var_based_on_node(expr, ctx))
     }
 }

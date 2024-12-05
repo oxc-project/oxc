@@ -559,7 +559,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         // var _name;
-        let binding = self.ctx.var_declarations.create_var_based_on_node(&expr, ctx);
+        let binding = self.ctx.var_declarations.create_uid_var_based_on_node(&expr, ctx);
 
         // Add new reference `_name = name` to `temp_var_inits`
         temp_var_inits.push(ctx.ast.expression_assignment(

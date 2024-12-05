@@ -590,7 +590,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             ctx.ast.vec(),
             false,
         );
-        let binding = self.ctx.var_declarations.create_var_with_init("s", init, ctx);
+        let binding = self.ctx.var_declarations.create_uid_var_with_init("s", init, ctx);
 
         // _s();
         let call_expression = ctx.ast.statement_expression(
