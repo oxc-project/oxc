@@ -287,7 +287,7 @@ pub fn is_same_member_expression(
             // x[/regex/] === x['/regex/']
             (Expression::StringLiteral(string_lit), Expression::RegExpLiteral(regex_lit))
             | (Expression::RegExpLiteral(regex_lit), Expression::StringLiteral(string_lit)) => {
-                if string_lit.value != regex_lit.raw {
+                if string_lit.value != regex_lit.raw.as_ref().unwrap() {
                     return false;
                 }
             }
@@ -296,7 +296,7 @@ pub fn is_same_member_expression(
             (Expression::TemplateLiteral(template_lit), Expression::RegExpLiteral(regex_lit))
             | (Expression::RegExpLiteral(regex_lit), Expression::TemplateLiteral(template_lit)) => {
                 if !(template_lit.is_no_substitution_template()
-                    && template_lit.quasi().unwrap() == regex_lit.raw)
+                    && template_lit.quasi().unwrap() == regex_lit.raw.as_ref().unwrap())
                 {
                     return false;
                 }
