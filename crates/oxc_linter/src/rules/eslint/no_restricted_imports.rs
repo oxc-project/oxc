@@ -22,6 +22,11 @@ fn no_restricted_imports_diagnostic(
 
 #[derive(Debug, Default, Clone)]
 pub struct NoRestrictedImports {
+    paths: Box<NoRestrictedImportsConfig>,
+}
+
+#[derive(Debug, Default, Clone)]
+struct NoRestrictedImportsConfig {
     paths: Box<[RestrictedPath]>,
 }
 
@@ -93,14 +98,14 @@ impl Rule for NoRestrictedImports {
             }
         }
 
-        Self { paths: paths.into_boxed_slice() }
+        Self { paths: Box::new(NoRestrictedImportsConfig { paths: paths.into_boxed_slice() }) }
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
         let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<Span>> = FxHashMap::default();
 
-        for path in &self.paths {
+        for path in &self.paths.paths {
             for entry in &module_record.import_entries {
                 let source = entry.module_request.name();
                 let span = entry.module_request.span();
