@@ -26,12 +26,16 @@ pub struct NoDuplicateHooks;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// A `describe` block should not contain duplicate hooks.
+    /// Disallows duplicate hooks in describe blocks.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Having duplicate hooks in a describe block can lead to confusion and unexpected behavior.
     ///
     /// ### Example
-    /// ```javascript
     ///
-    /// // invalid
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// describe('foo', () => {
     ///     beforeEach(() => {
     ///         // some setup
@@ -65,9 +69,8 @@ declare_oxc_lint!(
     /// });
     /// ```
     ///
+    /// Examples of **correct** code for this rule:
     /// ```javascript
-    ///
-    /// // valid
     /// describe('foo', () => {
     ///     beforeEach(() => {
     ///         // some setup

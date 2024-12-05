@@ -52,6 +52,10 @@ impl Deref for NoLargeSnapshots {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallow large snapshots.
+    ///
+    /// ### Why is this bad?
+    ///
     /// When using Jest's snapshot capability one should be mindful of the size of
     /// created snapshots. As a general best practice snapshots should be limited in
     /// size in order to be more manageable and reviewable. A stored snapshot is only as
@@ -60,9 +64,9 @@ declare_oxc_lint!(
     ///
     /// ### Example
     ///
-    /// ```javascript
     ///
-    /// // invalid
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// exports[`a large snapshot 1`] = `
     /// line 1
     /// line 2
@@ -116,8 +120,9 @@ declare_oxc_lint!(
     /// line 50
     /// line 51
     /// `;
-    ///
-    /// // valid
+    /// ```
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
     /// exports[`a more manageable and readable snapshot 1`] = `
     /// line 1
     /// line 2

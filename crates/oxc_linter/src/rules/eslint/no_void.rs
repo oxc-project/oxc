@@ -22,14 +22,20 @@ declare_oxc_lint!(
     ///
     /// Disallow `void` operators.
     ///
-    /// ### Example
+    /// Why is this bad
     ///
-    /// ```javascript
-    /// // error
+    /// The `void` operator is often used to obtain the `undefined` primitive value, but it is unnecessary. You can use `undefined` directly instead.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```ts
     /// void 0;
     /// var foo = void 0;
+    /// ```
     ///
-    /// // success
+    /// Examples of **correct** code for this rule:
+    /// ```ts
     /// "var foo = bar()";
     /// "foo.void()";
     /// "foo.void = bar";

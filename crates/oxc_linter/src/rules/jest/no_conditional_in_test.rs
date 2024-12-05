@@ -18,7 +18,12 @@ pub struct NoConditionalInTest;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// This rule reports on any use of a conditional statement such as if, switch, and ternary expressions.
+    ///
+    /// Disallow conditional statements in tests.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Conditional statements in tests can make the test harder to read and understand. It is better to have a single test case per test function.
     ///
     /// ### Examples
     ///
