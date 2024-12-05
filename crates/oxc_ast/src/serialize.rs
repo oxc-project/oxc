@@ -32,13 +32,13 @@ pub struct ESTreeLiteral<'a, T> {
 
 impl From<&BooleanLiteral> for ESTreeLiteral<'_, bool> {
     fn from(lit: &BooleanLiteral) -> Self {
-        Self {
-            span: lit.span,
-            value: lit.value,
-            raw: Some(if lit.value { "true" } else { "false" }),
-            bigint: None,
-            regex: None,
-        }
+        let raw = if lit.span.is_unspanned() {
+            None
+        } else {
+            Some(if lit.value { "true" } else { "false" })
+        };
+
+        Self { span: lit.span, value: lit.value, raw, bigint: None, regex: None }
     }
 }
 

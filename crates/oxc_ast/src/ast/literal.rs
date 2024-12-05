@@ -20,7 +20,7 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "raw: string")]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "raw: string | null")]
 pub struct BooleanLiteral {
     /// Node location in source code
     pub span: Span,
