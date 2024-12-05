@@ -1,14 +1,14 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{BinaryExpression, BinaryOperator, Expression, UnaryOperator},
+    ast::{BinaryExpression, BinaryOperator, Expression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_same_expression, AstNode};
 
 fn prefer_math_min_max_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -108,21 +108,6 @@ fn get_expr_value(expr: &Expression) -> Option<String> {
         }
         Expression::Identifier(identifier) => Some(identifier.name.to_string()),
         _ => None,
-    }
-}
-
-fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintContext) -> bool {
-    if is_same_reference(left, right, ctx) {
-        return true;
-    }
-
-    match (left, right) {
-        (Expression::UnaryExpression(left_expr), Expression::UnaryExpression(right_expr)) => {
-            left_expr.operator == UnaryOperator::UnaryNegation
-                && right_expr.operator == UnaryOperator::UnaryNegation
-                && is_same_reference(&left_expr.argument, &right_expr.argument, ctx)
-        }
-        _ => false,
     }
 }
 

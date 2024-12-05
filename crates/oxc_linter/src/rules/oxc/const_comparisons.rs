@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_same_expression, AstNode};
 
 fn redundant_left_hand_side(span: Span, span1: Span, help: String) -> OxcDiagnostic {
     OxcDiagnostic::warn("Left-hand side of `&&` operator has no effect.")
@@ -144,7 +144,7 @@ impl ConstComparisons {
                 return;
             }
 
-            if !is_same_reference(left_expr, right_expr, ctx) {
+            if !is_same_expression(left_expr, right_expr, ctx) {
                 return;
             }
 
@@ -206,7 +206,7 @@ impl ConstComparisons {
             return;
         }
 
-        if is_same_reference(
+        if is_same_expression(
             logical_expr.left.get_inner_expression(),
             logical_expr.right.get_inner_expression(),
             ctx,
@@ -229,7 +229,7 @@ impl ConstComparisons {
                 | BinaryOperator::GreaterEqualThan
                 | BinaryOperator::LessThan
                 | BinaryOperator::GreaterThan
-        ) && is_same_reference(
+        ) && is_same_expression(
             bin_expr.left.get_inner_expression(),
             bin_expr.right.get_inner_expression(),
             ctx,

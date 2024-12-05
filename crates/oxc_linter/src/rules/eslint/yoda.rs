@@ -11,7 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use regex::Regex;
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_same_expression, AstNode};
 
 fn yoda_diagnostic(span: Span, never: bool, operator: &str) -> OxcDiagnostic {
     let expected_side = if never { "right" } else { "left" };
@@ -371,7 +371,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
     }
 
     if expr.operator == LogicalOperator::And {
-        if !is_same_reference(&left.right, &right.left, ctx) {
+        if !is_same_expression(&left.right, &right.left, ctx) {
             return false;
         }
 
@@ -405,7 +405,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
     }
 
     if expr.operator == LogicalOperator::Or {
-        if !is_same_reference(&left.left, &right.right, ctx) {
+        if !is_same_expression(&left.left, &right.right, ctx) {
             return false;
         }
 

@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_same_expression, AstNode};
 
 fn prefer_logical_operator_over_ternary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using a logical operator over a ternary.")
@@ -69,7 +69,7 @@ impl Rule for PreferLogicalOperatorOverTernary {
 }
 
 fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> bool {
-    if is_same_reference(left, right, ctx) {
+    if is_same_expression(left, right, ctx) {
         return true;
     }
 
