@@ -154,6 +154,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                                     },
                                     export_name: ee.export_name.clone(),
                                     local_name: ExportLocalName::default(),
+                                    is_type: ie.is_type,
                                 };
                                 self.append_indirect_export_entry(export_entry);
                             }
@@ -256,6 +257,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                 ExportExportName::Name(NameSpan::new(exported_name.name(), exported_name.span()))
             }),
             local_name: ExportLocalName::default(),
+            is_type: decl.export_kind.is_type(),
         };
         self.add_export_entry(export_entry);
         if let Some(exported_name) = &decl.exported {
@@ -302,6 +304,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             import_name: ExportImportName::default(),
             export_name: ExportExportName::Default(exported_name.span()),
             local_name,
+            is_type: false,
         };
         self.add_export_entry(export_entry);
     }
@@ -343,6 +346,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                     import_name: ExportImportName::Null,
                     export_name,
                     local_name,
+                    is_type: decl.export_kind.is_type(),
                 };
                 self.add_export_entry(export_entry);
                 self.add_export_binding(ident.name.clone(), ident.span);
@@ -377,6 +381,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                 import_name,
                 export_name,
                 local_name,
+                is_type: specifier.export_kind.is_type() || decl.export_kind.is_type(),
             };
             self.add_export_entry(export_entry);
             self.add_export_binding(specifier.exported.name().clone(), specifier.exported.span());
@@ -670,6 +675,7 @@ mod module_record_tests {
                 import_name: ExportImportName::Name(NameSpan::new("x".into(), Span::new(9, 10))),
                 export_name: ExportExportName::Name(NameSpan::new("x".into(), Span::new(33, 34))),
                 local_name: ExportLocalName::Null,
+                is_type: false
             }
         );
         assert_eq!(
@@ -681,6 +687,7 @@ mod module_record_tests {
                 import_name: ExportImportName::All,
                 export_name: ExportExportName::Name(NameSpan::new("ns".into(), Span::new(49, 51))),
                 local_name: ExportLocalName::Null,
+                is_type: false
             }
         );
     }
