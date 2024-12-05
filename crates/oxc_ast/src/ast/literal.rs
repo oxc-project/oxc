@@ -34,7 +34,7 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, raw: \"null\"")]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, raw: \"null\" | null")]
 pub struct NullLiteral {
     /// Node location in source code
     pub span: Span,

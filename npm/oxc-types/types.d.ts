@@ -10,7 +10,7 @@ export interface BooleanLiteral extends Span {
 export interface NullLiteral extends Span {
   type: 'Literal';
   value: null;
-  raw: 'null';
+  raw: 'null' | null;
 }
 
 export interface NumericLiteral extends Span {

@@ -44,7 +44,8 @@ impl From<&BooleanLiteral> for ESTreeLiteral<'_, bool> {
 
 impl From<&NullLiteral> for ESTreeLiteral<'_, ()> {
     fn from(lit: &NullLiteral) -> Self {
-        Self { span: lit.span, value: (), raw: Some("null"), bigint: None, regex: None }
+        let raw = if lit.span.is_unspanned() { None } else { Some("null") };
+        Self { span: lit.span, value: (), raw, bigint: None, regex: None }
     }
 }
 
