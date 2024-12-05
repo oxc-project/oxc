@@ -2,7 +2,12 @@ import { promises as fsPromises } from 'node:fs';
 
 import { commands, ExtensionContext, StatusBarAlignment, StatusBarItem, ThemeColor, window, workspace } from 'vscode';
 
-import { MessageType, ShowMessageNotification } from 'vscode-languageclient';
+import {
+  ExecuteCommandRequest,
+  MessageType,
+  ShowMessageNotification,
+  VersionedTextDocumentIdentifier,
+} from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
@@ -15,7 +20,7 @@ const commandPrefix = 'oxc';
 
 const enum OxcCommands {
   RestartServer = `${commandPrefix}.restartServer`,
-  ApplyAllFixes = `${commandPrefix}.applyAllFixes`,
+  ApplyAllFixesFile = `${commandPrefix}.applyAllFixesFile`,
   ShowOutputChannel = `${commandPrefix}.showOutputChannel`,
   ToggleEnable = `${commandPrefix}.toggleEnable`,
 }
@@ -62,7 +67,32 @@ export async function activate(context: ExtensionContext) {
     },
   );
 
+  const applyAllFixesFile = commands.registerCommand(
+    OxcCommands.ApplyAllFixesFile,
+    async () => {
+      if (!client) {
+        window.showErrorMessage('oxc client not found');
+        return;
+      }
+      const textEditor = window.activeTextEditor;
+      if (!textEditor) {
+        window.showErrorMessage('active text editor not found');
+        return;
+      }
+      const textDocument: VersionedTextDocumentIdentifier = {
+        uri: textEditor.document.uri.toString(),
+        version: textEditor.document.version,
+      };
+
+      await client.sendRequest(ExecuteCommandRequest.type, {
+        command: OxcCommands.ApplyAllFixesFile,
+        arguments: [textDocument],
+      });
+    },
+  );
+
   context.subscriptions.push(
+    applyAllFixesFile,
     restartCommand,
     showOutputCommand,
     toggleEnable,
