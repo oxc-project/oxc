@@ -149,8 +149,8 @@ impl Program<'_> {
     }
 
     /// # Panics
-    pub fn serializer(&self) -> serde_json::Serializer<std::vec::Vec<u8>, EcmaFormatter> {
-        let buf = std::vec::Vec::new();
+    pub fn serializer(&self) -> serde_json::Serializer<Vec<u8>, EcmaFormatter> {
+        let buf = Vec::new();
         let mut ser = serde_json::Serializer::with_formatter(buf, EcmaFormatter);
         self.serialize(&mut ser).unwrap();
         ser
