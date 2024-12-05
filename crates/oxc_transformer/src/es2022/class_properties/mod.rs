@@ -279,10 +279,7 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
                 self.transform_chain_expression(expr, ctx);
             }
             // `delete object?.#prop.xyz`
-            Expression::UnaryExpression(unary)
-                if unary.operator == UnaryOperator::Delete
-                    && matches!(unary.argument, Expression::ChainExpression(_)) =>
-            {
+            Expression::UnaryExpression(_) => {
                 self.transform_unary_expression(expr, ctx);
             }
             // "object.#prop`xyz`"

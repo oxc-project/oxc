@@ -1357,7 +1357,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// * `delete object?.#prop?.xyz;`
     ///   -> `delete (object === null || object === void 0 ? void 0 : _assertClassBrand(Foo, object, _prop)._)?.xyz;`
     //
-    // `#[inline]` so that compiler sees that `expr` is an `Expression::UnaryExpression`.
+    // `#[inline]` so that compiler sees that `expr` is an `Expression::UnaryExpression`,
+    // and make bailing out if is not `delete <chain expression>` (it rarely will be) a fast path without
+    // cost of a function call.
     #[inline]
     pub(super) fn transform_unary_expression(
         &mut self,
@@ -1365,6 +1367,21 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::UnaryExpression(unary_expr) = expr else { unreachable!() };
+
+        if unary_expr.operator == UnaryOperator::Delete
+            && matches!(unary_expr.argument, Expression::ChainExpression(_))
+        {
+            self.transform_unary_expression_impl(expr, ctx);
+        }
+    }
+
+    fn transform_unary_expression_impl(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::UnaryExpression(unary_expr) = expr else { unreachable!() };
+
         if let Some((result, chain_expr)) =
             self.transform_chain_expression_impl(&mut unary_expr.argument, ctx)
         {
