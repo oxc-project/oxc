@@ -8,7 +8,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
-    symbol::{SymbolFlags, SymbolId},
+    symbol::SymbolId,
 };
 use oxc_traverse::{
     ast_operations::get_var_name_from_node, Ancestor, BoundIdentifier, MaybeBoundIdentifier,
@@ -676,10 +676,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let prop_ident2 = prop_binding.create_read_expression(ctx);
 
         let temp_var_name_base = get_var_name_from_node(field_expr);
-        let temp_binding = ctx.generate_uid_in_current_scope(
-            &temp_var_name_base,
-            SymbolFlags::FunctionScopedVariable,
-        );
 
         // TODO(improve-on-babel): Could avoid `move_expression` here and replace `update_expr.argument` instead.
         // Only doing this first to match the order Babel creates temp vars.
@@ -739,7 +735,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             };
 
             // `_object$prop = _assertClassBrand(Class, object, _prop)._`
-            self.ctx.var_declarations.insert_var(&temp_binding, None, ctx);
+            let temp_binding = self.ctx.var_declarations.create_var(&temp_var_name_base, ctx);
             let assignment = create_assignment(&temp_binding, get_expr, ctx);
 
             // `++_object$prop` / `_object$prop++` (reusing existing `UpdateExpression`)
@@ -772,11 +768,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // Source = `object.#prop++` (postfix `++`)
 
                 // `_object$prop2 = _object$prop++`
-                let temp_binding2 = ctx.generate_uid_in_current_scope(
-                    &temp_var_name_base,
-                    SymbolFlags::FunctionScopedVariable,
-                );
-                self.ctx.var_declarations.insert_var(&temp_binding2, None, ctx);
+                let temp_binding2 = self.ctx.var_declarations.create_var(&temp_var_name_base, ctx);
                 let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
 
                 // `(_object$prop = _assertClassBrand(Class, object, _prop)._, _object$prop2 = _object$prop++, _object$prop)`
@@ -819,7 +811,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             let get_call = self.create_private_field_get(prop_ident, object2, SPAN, ctx);
 
             // `_object$prop = _classPrivateFieldGet(_prop, object)`
-            self.ctx.var_declarations.insert_var(&temp_binding, None, ctx);
+            let temp_binding = self.ctx.var_declarations.create_var(&temp_var_name_base, ctx);
             let assignment = create_assignment(&temp_binding, get_call, ctx);
 
             // `++_object$prop` / `_object$prop++` (reusing existing `UpdateExpression`)
@@ -839,11 +831,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             } else {
                 // Source = `object.#prop++` (postfix `++`)
                 // `_object$prop2 = _object$prop++`
-                let temp_binding2 = ctx.generate_uid_in_current_scope(
-                    &temp_var_name_base,
-                    SymbolFlags::FunctionScopedVariable,
-                );
-                self.ctx.var_declarations.insert_var(&temp_binding2, None, ctx);
+                let temp_binding2 = self.ctx.var_declarations.create_var(&temp_var_name_base, ctx);
                 let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
 
                 // `(_object$prop = _classPrivateFieldGet(_prop, object), _object$prop2 = _object$prop++, _object$prop)`
@@ -1131,11 +1119,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // `A.B` -> `(_A$B = A.B) === null || _A$B === void 0`
         // TODO: should add an API `generate_uid_in_current_hoist_scope_based_on_node` to instead this
-        let temp_var_binding = ctx.generate_uid_in_current_scope_based_on_node(
-            object,
-            SymbolFlags::FunctionScopedVariable,
-        );
-        self.ctx.var_declarations.insert_var(&temp_var_binding, None, ctx);
+        let temp_var_binding = self.ctx.var_declarations.create_var_based_on_node(object, ctx);
 
         let object = mem::replace(object, temp_var_binding.create_read_expression(ctx));
         let assignment = create_assignment(
@@ -1521,20 +1505,15 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // Previously `x += 1` (`x` read + write), but moving to `_x = x` (`x` read only)
                 *reference.flags_mut() = ReferenceFlags::Read;
 
-                ctx.generate_uid_in_current_scope(&ident.name, SymbolFlags::FunctionScopedVariable)
+                self.ctx.var_declarations.create_var(&ident.name, ctx)
             }
             Expression::ThisExpression(this) => {
                 // Reading `this` cannot have side effects, so no need for temp var
                 let object1 = ctx.ast.expression_this(this.span);
                 return (object1, object);
             }
-            _ => ctx.generate_uid_in_current_scope_based_on_node(
-                &object,
-                SymbolFlags::FunctionScopedVariable,
-            ),
+            _ => self.ctx.var_declarations.create_var_based_on_node(&object, ctx),
         };
-
-        self.ctx.var_declarations.insert_var(&temp_var_binding, None, ctx);
 
         let object1 = create_assignment(&temp_var_binding, object, ctx);
         let object2 = temp_var_binding.create_read_expression(ctx);

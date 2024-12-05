@@ -56,7 +56,7 @@
 
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
-use oxc_semantic::{ReferenceFlags, SymbolFlags};
+use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 use oxc_traverse::{BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
@@ -310,12 +310,6 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
         if ctx.is_static(expr) {
             return None;
         }
-
-        // var _name;
-        let binding = ctx
-            .generate_uid_in_current_scope_based_on_node(expr, SymbolFlags::FunctionScopedVariable);
-        self.ctx.var_declarations.insert_var(&binding, None, ctx);
-
-        Some(binding)
+        Some(self.ctx.var_declarations.create_var_based_on_node(expr, ctx))
     }
 }

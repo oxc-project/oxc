@@ -2,7 +2,7 @@ commit: fd979d85
 
 semantic_test262 Summary:
 AST Parsed     : 44026/44026 (100.00%)
-Positive Passed: 43495/44026 (98.79%)
+Positive Passed: 43497/44026 (98.80%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(3): ScopeId(4294967294)
@@ -3739,43 +3739,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["$DONE", "Object", "assert", "require"]
 rebuilt        : ["$DONE", "Object", "_superprop_getMethod", "assert", "require"]
-
-tasks/coverage/test262/test/language/expressions/optional-chaining/iteration-statement-for-of-type-error.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(1): []
-rebuilt        : ScopeId(1): ["_ref"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref", "key"]
-rebuilt        : ScopeId(2): ["key"]
-Bindings mismatch:
-after transform: ScopeId(3): []
-rebuilt        : ScopeId(3): ["_ref2"]
-Bindings mismatch:
-after transform: ScopeId(4): ["_ref2", "key"]
-rebuilt        : ScopeId(4): ["key"]
-Symbol scope ID mismatch for "_ref":
-after transform: SymbolId(5): ScopeId(2)
-rebuilt        : SymbolId(0): ScopeId(1)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(6): ScopeId(4)
-rebuilt        : SymbolId(2): ScopeId(3)
-
-tasks/coverage/test262/test/language/expressions/optional-chaining/iteration-statement-for.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["count", "count2", "obj", "obj2", "obj3", "touched"]
-rebuilt        : ScopeId(0): ["_obj3$a", "_undefined", "count", "count2", "obj", "obj2", "obj3", "touched"]
-Bindings mismatch:
-after transform: ScopeId(5): ["_undefined"]
-rebuilt        : ScopeId(5): []
-Bindings mismatch:
-after transform: ScopeId(8): ["_obj3$a"]
-rebuilt        : ScopeId(8): []
-Symbol scope ID mismatch for "_undefined":
-after transform: SymbolId(6): ScopeId(5)
-rebuilt        : SymbolId(0): ScopeId(0)
-Symbol scope ID mismatch for "_obj3$a":
-after transform: SymbolId(7): ScopeId(8)
-rebuilt        : SymbolId(1): ScopeId(0)
 
 tasks/coverage/test262/test/language/module-code/top-level-await/syntax/for-await-await-expr-func-expression.js
 semantic error: Scope children mismatch:

@@ -34,7 +34,7 @@
 
 use oxc_allocator::{CloneIn, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
-use oxc_semantic::{ReferenceFlags, SymbolFlags};
+use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
@@ -558,13 +558,8 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
         temp_var_inits: &mut ArenaVec<'a, Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        let binding = ctx.generate_uid_in_current_scope_based_on_node(
-            &expr,
-            SymbolFlags::FunctionScopedVariable,
-        );
-
         // var _name;
-        self.ctx.var_declarations.insert_var(&binding, None, ctx);
+        let binding = self.ctx.var_declarations.create_var_based_on_node(&expr, ctx);
 
         // Add new reference `_name = name` to `temp_var_inits`
         temp_var_inits.push(ctx.ast.expression_assignment(

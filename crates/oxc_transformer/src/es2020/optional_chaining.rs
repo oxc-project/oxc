@@ -51,7 +51,6 @@ use std::mem;
 
 use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, NONE};
-use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
@@ -296,18 +295,6 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         }
     }
 
-    /// Generate a binding based on the node and insert the binding at the top of the current block
-    fn generate_binding(
-        &mut self,
-        expr: &Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> BoundIdentifier<'a> {
-        let binding = ctx
-            .generate_uid_in_current_scope_based_on_node(expr, SymbolFlags::FunctionScopedVariable);
-        self.ctx.var_declarations.insert_var(&binding, None, ctx);
-        binding
-    }
-
     /// Return `left = right`
     fn create_assignment_expression(
         left: AssignmentTarget<'a>,
@@ -409,7 +396,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                     .create_read_expression(ctx)
             } else {
                 // `foo.bar` -> `_foo$bar = foo.bar`
-                let binding = self.generate_binding(object, ctx);
+                let binding = self.ctx.var_declarations.create_var_based_on_node(object, ctx);
                 *object = Self::create_assignment_expression(
                     binding.create_write_target(ctx),
                     ctx.ast.move_expression(object),
@@ -584,7 +571,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         }
 
         // We should generate a temp binding for the expression first to avoid the next step changing the expression.
-        let temp_binding = self.generate_binding(expr, ctx);
+        let temp_binding = self.ctx.var_declarations.create_var_based_on_node(expr, ctx);
         if is_call && !self.ctx.assumptions.pure_getters {
             if let Some(member) = expr.as_member_expression_mut() {
                 let object = member.object_mut();
@@ -593,7 +580,8 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                 if let Expression::Identifier(ident) = object {
                     let binding =
                         self.get_existing_binding_for_identifier(ident, ctx).unwrap_or_else(|| {
-                            let binding = self.generate_binding(object, ctx);
+                            let binding =
+                                self.ctx.var_declarations.create_var_based_on_node(object, ctx);
                             // `(_foo = foo)`
                             *object = Self::create_assignment_expression(
                                 binding.create_write_target(ctx),
@@ -650,7 +638,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
 
         let temp_binding = {
             if self.temp_binding.is_none() {
-                let binding = self.generate_binding(expr, ctx);
+                let binding = self.ctx.var_declarations.create_var_based_on_node(expr, ctx);
                 self.set_temp_binding(binding);
             }
             self.temp_binding.as_ref().unwrap()

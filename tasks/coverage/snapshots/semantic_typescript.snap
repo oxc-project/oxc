@@ -2,7 +2,7 @@ commit: d85767ab
 
 semantic_typescript Summary:
 AST Parsed     : 6503/6503 (100.00%)
-Positive Passed: 2699/6503 (41.50%)
+Positive Passed: 2700/6503 (41.52%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -40005,21 +40005,12 @@ after transform: ["Object"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "_extends", "_objectDestructuringEmpty"]
-rebuilt        : ScopeId(0): ["C", "_extends", "_objectDestructuringEmpty", "_this", "_this2"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Bindings mismatch:
-after transform: ScopeId(4): ["_this", "_this2", "_x"]
+after transform: ScopeId(4): ["_x"]
 rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_this":
-after transform: SymbolId(1): ScopeId(4)
-rebuilt        : SymbolId(2): ScopeId(0)
-Symbol scope ID mismatch for "_this2":
-after transform: SymbolId(2): ScopeId(4)
-rebuilt        : SymbolId(3): ScopeId(0)
 Reference symbol mismatch for "_x":
 after transform: SymbolId(3) "_x"
 rebuilt        : <None>
@@ -40040,21 +40031,12 @@ after transform: ["B", "require", "undefined"]
 rebuilt        : ["B", "_x", "require", "undefined"]
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "_extends", "_objectDestructuringEmpty"]
-rebuilt        : ScopeId(0): ["C", "_extends", "_objectDestructuringEmpty", "_this", "_this2"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Bindings mismatch:
-after transform: ScopeId(4): ["_this", "_this2", "_x"]
+after transform: ScopeId(4): ["_x"]
 rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_this":
-after transform: SymbolId(1): ScopeId(4)
-rebuilt        : SymbolId(2): ScopeId(0)
-Symbol scope ID mismatch for "_this2":
-after transform: SymbolId(2): ScopeId(4)
-rebuilt        : SymbolId(3): ScopeId(0)
 Reference symbol mismatch for "_x":
 after transform: SymbolId(3) "_x"
 rebuilt        : <None>
@@ -40075,38 +40057,14 @@ after transform: ["B", "require", "undefined"]
 rebuilt        : ["B", "_x", "require", "undefined"]
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers3.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C"]
-rebuilt        : ScopeId(0): ["C", "_this", "_this2"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Bindings mismatch:
-after transform: ScopeId(4): ["_this", "_this2"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_this":
-after transform: SymbolId(1): ScopeId(4)
-rebuilt        : SymbolId(0): ScopeId(0)
-Symbol scope ID mismatch for "_this2":
-after transform: SymbolId(2): ScopeId(4)
-rebuilt        : SymbolId(1): ScopeId(0)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers4.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C"]
-rebuilt        : ScopeId(0): ["C", "_this", "_this2"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Bindings mismatch:
-after transform: ScopeId(4): ["_this", "_this2"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch for "_this":
-after transform: SymbolId(1): ScopeId(4)
-rebuilt        : SymbolId(0): ScopeId(0)
-Symbol scope ID mismatch for "_this2":
-after transform: SymbolId(2): ScopeId(4)
-rebuilt        : SymbolId(1): ScopeId(0)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInInstanceMember2.ts
 semantic error: Bindings mismatch:
@@ -47565,17 +47523,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["o1", "o2", "o3", "o4", "o5", "o6"]
-
-tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInLoop.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["list"]
-rebuilt        : ScopeId(0): ["_item$t", "list"]
-Bindings mismatch:
-after transform: ScopeId(5): ["_item$t"]
-rebuilt        : ScopeId(5): []
-Symbol scope ID mismatch for "_item$t":
-after transform: SymbolId(4): ScopeId(5)
-rebuilt        : SymbolId(4): ScopeId(0)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInParameterBindingPattern.ts
 semantic error: Scope children mismatch:

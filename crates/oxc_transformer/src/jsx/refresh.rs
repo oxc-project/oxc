@@ -582,7 +582,15 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             arguments.push(function);
         }
 
-        let binding = ctx.generate_uid_in_current_hoist_scope("s");
+        // _s = refresh_sig();
+        let init = ctx.ast.expression_call(
+            SPAN,
+            self.refresh_sig.to_expression(ctx),
+            NONE,
+            ctx.ast.vec(),
+            false,
+        );
+        let binding = self.ctx.var_declarations.create_var_with_init("s", init, ctx);
 
         // _s();
         let call_expression = ctx.ast.statement_expression(
@@ -597,19 +605,6 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         );
 
         body.statements.insert(0, call_expression);
-
-        // _s = refresh_sig();
-        self.ctx.var_declarations.insert_var(
-            &binding,
-            Some(ctx.ast.expression_call(
-                SPAN,
-                self.refresh_sig.to_expression(ctx),
-                NONE,
-                ctx.ast.vec(),
-                false,
-            )),
-            ctx,
-        );
 
         // Following is the signature call expression, will be generated in call site.
         // _s(App, signature_key, false, function() { return [] });
