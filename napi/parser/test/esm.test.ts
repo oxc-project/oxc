@@ -68,6 +68,7 @@ describe('hasModuleSyntax', () => {
   test('import.meta', () => {
     const ret = parseSync('test.js', 'import.meta.foo');
     expect(ret.module.hasModuleSyntax).toBe(true);
+    expect(ret.module.importMetas).toEqual([{ start: 0, end: 11 }]);
   });
 
   test('import expression', () => {

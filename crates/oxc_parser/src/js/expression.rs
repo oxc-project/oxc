@@ -568,15 +568,16 @@ impl<'a> ParserImpl<'a> {
         meta: IdentifierName<'a>,
     ) -> Result<Expression<'a>> {
         self.bump_any(); // bump `.`
+        let kind = self.cur_kind();
         let property = match self.cur_kind() {
-            Kind::Meta => {
-                self.module_record_builder.visit_import_meta();
-                self.parse_keyword_identifier(Kind::Meta)
-            }
+            Kind::Meta => self.parse_keyword_identifier(Kind::Meta),
             Kind::Target => self.parse_keyword_identifier(Kind::Target),
             _ => self.parse_identifier_name()?,
         };
         let span = self.end_span(span);
+        if kind == Kind::Meta {
+            self.module_record_builder.visit_import_meta(span);
+        }
         Ok(self.ast.expression_meta_property(span, meta, property))
     }
 

@@ -1,13 +1,10 @@
 use rustc_hash::FxHashMap;
 
-use oxc::{
-    span::Span,
-    syntax::module_record::{self, ModuleRecord},
-};
+use oxc::syntax::module_record::{self, ModuleRecord};
 
 use crate::types::{
     EcmaScriptModule, ExportExportName, ExportExportNameKind, ExportImportName,
-    ExportImportNameKind, ExportLocalName, ExportLocalNameKind, ImportName, ImportNameKind,
+    ExportImportNameKind, ExportLocalName, ExportLocalNameKind, ImportName, ImportNameKind, Span,
     StaticExport, StaticExportEntry, StaticImport, StaticImportEntry, ValueSpan,
 };
 
@@ -49,7 +46,7 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
             .map(|e| (e.statement_span, StaticExportEntry::from(e)))
             .collect::<Vec<_>>()
             .into_iter()
-            .fold(FxHashMap::<Span, Vec<StaticExportEntry>>::default(), |mut acc, (span, e)| {
+            .fold(FxHashMap::<_, Vec<StaticExportEntry>>::default(), |mut acc, (span, e)| {
                 acc.entry(span).or_default().push(e);
                 acc
             })
@@ -58,7 +55,20 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
             .collect::<Vec<_>>();
         static_exports.sort_unstable_by_key(|e| e.start);
 
-        Self { has_module_syntax: record.has_module_syntax, static_imports, static_exports }
+        let import_metas = record.import_metas.iter().map(Span::from).collect();
+
+        Self {
+            has_module_syntax: record.has_module_syntax,
+            static_imports,
+            static_exports,
+            import_metas,
+        }
+    }
+}
+
+impl From<&oxc::span::Span> for Span {
+    fn from(span: &oxc::span::Span) -> Self {
+        Self { start: span.start, end: span.end }
     }
 }
 

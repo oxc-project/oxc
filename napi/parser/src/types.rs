@@ -50,6 +50,14 @@ pub struct EcmaScriptModule {
     pub static_imports: Vec<StaticImport>,
     /// Export Statements.
     pub static_exports: Vec<StaticExport>,
+    /// Span positions` of `import.meta`
+    pub import_metas: Vec<Span>,
+}
+
+#[napi(object)]
+pub struct Span {
+    pub start: u32,
+    pub end: u32,
 }
 
 #[napi(object)]

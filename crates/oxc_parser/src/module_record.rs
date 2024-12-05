@@ -174,8 +174,9 @@ impl<'a> ModuleRecordBuilder<'a> {
         }
     }
 
-    pub fn visit_import_meta(&mut self) {
+    pub fn visit_import_meta(&mut self, span: Span) {
         self.module_record.has_module_syntax = true;
+        self.module_record.import_metas.push(span);
     }
 
     pub fn visit_module_declaration(&mut self, module_decl: &ModuleDeclaration<'a>) {
@@ -690,5 +691,14 @@ mod module_record_tests {
                 is_type: false
             }
         );
+    }
+
+    #[test]
+    fn import_meta() {
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "import.meta.foo; import.meta.bar");
+        assert_eq!(module_record.import_metas.len(), 2);
+        assert_eq!(module_record.import_metas[0], Span::new(0, 11));
+        assert_eq!(module_record.import_metas[1], Span::new(17, 28));
     }
 }

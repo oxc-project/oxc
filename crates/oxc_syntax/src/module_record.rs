@@ -56,6 +56,9 @@ pub struct ModuleRecord<'a> {
 
     /// Local exported bindings
     pub exported_bindings: FxHashMap<Atom<'a>, Span>,
+
+    /// Span position of `import.meta`.
+    pub import_metas: Vec<'a, Span>,
 }
 
 impl<'a> ModuleRecord<'a> {
@@ -69,6 +72,7 @@ impl<'a> ModuleRecord<'a> {
             indirect_export_entries: Vec::new_in(allocator),
             star_export_entries: Vec::new_in(allocator),
             exported_bindings: FxHashMap::default(),
+            import_metas: Vec::new_in(allocator),
         }
     }
 }
