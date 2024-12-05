@@ -427,6 +427,19 @@ impl<'a> TraverseCtx<'a> {
         self.generate_uid(name, self.current_hoist_scope_id(), SymbolFlags::FunctionScopedVariable)
     }
 
+    /// Generate UID in current hoist scope based on node.
+    ///
+    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
+    /// on how UIDs are generated. There are some potential "gotchas".
+    #[inline]
+    pub fn generate_uid_in_current_hoist_scope_based_on_node<N: GatherNodeParts<'a>>(
+        &mut self,
+        node: &N,
+    ) -> BoundIdentifier<'a> {
+        let name = get_var_name_from_node(node);
+        self.generate_uid_in_current_hoist_scope(&name)
+    }
+
     /// Create a reference bound to a `SymbolId`.
     ///
     /// This is a shortcut for `ctx.scoping.create_bound_reference`.
