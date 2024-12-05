@@ -10,6 +10,7 @@ fn es_target() {
 
     let cases = [
         ("es5", "() => {}"),
+        ("es6", "a ** b"),
         ("es2015", "a ** b"),
         ("es2016", "async function foo() {}"),
         ("es2017", "({ ...x })"),
