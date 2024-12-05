@@ -1,5 +1,6 @@
-Original   | Minified   | esbuild    | Gzip       | esbuild   
-
+           | Oxc        | ESBuild    | Oxc        | ESBuild    |
+Original   | minified   | minified   | gzip       | gzip       | Fixture
+-------------------------------------------------------------------------------------
 72.14 kB   | 24.09 kB   | 23.70 kB   | 8.62 kB    | 8.54 kB    | react.development.js
 
 173.90 kB  | 61.61 kB   | 59.82 kB   | 19.55 kB   | 19.33 kB   | moment.js 

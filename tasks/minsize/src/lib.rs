@@ -59,15 +59,35 @@ pub fn run() -> Result<(), io::Error> {
     ]);
 
     let mut out = String::new();
+
+    let width = 10;
     out.push_str(&format!(
-        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$}\n",
-        "Original",
-        "Minified",
-        "esbuild",
-        "Gzip",
-        "esbuild",
-        width = 10
+        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} |\n",
+        "",
+        "Oxc",
+        "ESBuild",
+        "Oxc",
+        "ESBuild",
+        width = width,
     ));
+    out.push_str(&format!(
+        "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | Fixture\n",
+        "Original",
+        "minified",
+        "minified",
+        "gzip",
+        "gzip",
+        width = width,
+    ));
+
+    let fixture_width = files
+        .files()
+        .iter()
+        .max_by(|x, y| x.file_name.len().cmp(&y.file_name.len()))
+        .unwrap()
+        .file_name
+        .len();
+    out.push_str(&str::repeat("-", width * 5 + fixture_width + 15));
     out.push('\n');
 
     for file in files.files() {
@@ -80,7 +100,7 @@ pub fn run() -> Result<(), io::Error> {
             format_size(gzip_size(&minified), DECIMAL),
             gzip_targets[file.file_name.as_str()],
             &file.file_name,
-            width = 10
+            width = width
         );
         out.push_str(&s);
     }
