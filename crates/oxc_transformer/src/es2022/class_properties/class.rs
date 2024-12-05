@@ -114,7 +114,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // Insert `var _prop;` declaration.
                 // Do it here rather than when binding was created to maintain same order of `var`
                 // declarations as Babel. `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`
-                self.ctx.var_declarations.insert_var(&prop.binding, None, ctx);
+                self.ctx.var_declarations.insert_var(&prop.binding, ctx);
 
                 if prop.is_static {
                     return None;
@@ -137,7 +137,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         if let Some(binding) = &self.class_bindings.temp {
             // Insert `var _Class` statement, if it wasn't already in `transform_class`
             if !self.temp_var_is_created {
-                self.ctx.var_declarations.insert_var(binding, None, ctx);
+                self.ctx.var_declarations.insert_var(binding, ctx);
             }
 
             // `_Class = class {}`
@@ -188,7 +188,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             if let Some(ident) = &class.id {
                 // Insert `var _Class` statement, if it wasn't already in `transform_class`
                 if !self.temp_var_is_created {
-                    self.ctx.var_declarations.insert_var(temp_binding, None, ctx);
+                    self.ctx.var_declarations.insert_var(temp_binding, ctx);
                 }
 
                 // Insert `_Class = Class` after class.
@@ -342,7 +342,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // TODO(improve-on-babel): Inserting the temp var `var _Class` statement here is only
                 // to match Babel's output. It'd be simpler just to insert it at the end and get rid of
                 // `temp_var_is_created` that tracks whether it's done already or not.
-                self.ctx.var_declarations.insert_var(&temp_binding, None, ctx);
+                self.ctx.var_declarations.insert_var(&temp_binding, ctx);
             }
             Some(temp_binding)
         } else {

@@ -88,19 +88,14 @@ impl<'a> VarDeclarationsStore<'a> {
 
     /// Add a `var` declaration to be inserted at top of current enclosing statement block,
     /// given a `BoundIdentifier`.
-    pub fn insert_var(
-        &self,
-        binding: &BoundIdentifier<'a>,
-        init: Option<Expression<'a>>,
-        ctx: &TraverseCtx<'a>,
-    ) {
+    #[inline]
+    pub fn insert_var(&self, binding: &BoundIdentifier<'a>, ctx: &TraverseCtx<'a>) {
         let pattern = binding.create_binding_pattern(ctx);
-        self.insert_var_binding_pattern(pattern, init, ctx);
+        self.insert_var_binding_pattern(pattern, None, ctx);
     }
 
     /// Add a `var` declaration with the given init expression to be inserted at top of
     /// current enclosing statement block, given a `BoundIdentifier`.
-    #[expect(unused)]
     #[inline]
     pub fn insert_var_with_init(
         &self,
@@ -117,7 +112,7 @@ impl<'a> VarDeclarationsStore<'a> {
     #[inline]
     pub fn create_var(&self, name: &str, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_current_hoist_scope(name);
-        self.insert_var(&binding, None, ctx);
+        self.insert_var(&binding, ctx);
         binding
     }
 
@@ -132,7 +127,7 @@ impl<'a> VarDeclarationsStore<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_current_hoist_scope(name);
-        self.insert_var(&binding, Some(expression), ctx);
+        self.insert_var_with_init(&binding, expression, ctx);
         binding
     }
 
@@ -145,7 +140,7 @@ impl<'a> VarDeclarationsStore<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid_in_current_hoist_scope_based_on_node(node);
-        self.insert_var(&binding, None, ctx);
+        self.insert_var(&binding, ctx);
         binding
     }
 
