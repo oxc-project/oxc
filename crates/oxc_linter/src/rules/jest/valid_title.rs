@@ -44,14 +44,21 @@ impl std::ops::Deref for ValidTitle {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Checks that the title of Jest blocks are valid by ensuring that titles are:
+    /// Checks that the titles of Jest blocks are valid.
     ///
+    /// Titles must be:
     /// - not empty,
-    /// - is a string,
+    /// - strings,
     /// - not prefixed with their block name,
-    /// - have no leading or trailing spaces
+    /// - have no leading or trailing spaces.
+    ///
+    /// Why is this bad?
+    ///
+    /// Titles that are not valid can be misleading and make it harder to understand the purpose of the test.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// describe('', () => {});
     /// describe('foo', () => {
@@ -63,6 +70,11 @@ declare_oxc_lint!(
     /// xit('', () => {});
     /// xtest('', () => {});
     /// ```
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// describe('foo', () => {});
+    /// it('bar', () => {});
+    /// test('baz', () => {});
     ValidTitle,
     correctness,
     conditional_fix

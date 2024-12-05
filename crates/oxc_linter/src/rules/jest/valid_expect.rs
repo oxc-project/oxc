@@ -56,15 +56,26 @@ impl Default for ValidExpectConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule triggers a warning if `expect()` is called with more than one argument
-    /// or without arguments. It would also issue a warning if there is nothing called
-    /// on `expect()`, e.g.:
+    /// Checks that `expect()` is called correctly.
+    ///
+    /// Why is this bad?
+    ///
+    /// `expect()` is a function that is used to assert values in tests. It should be called with a single argument, which is the value to be tested. If you call `expect()` with no arguments, or with more than one argument, it will not work as expected.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// expect();
     /// expect('something');
     /// expect(true).toBeDefined;
+    /// expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// expect('something').toEqual('something');
+    /// expect(true).toBeDefined();
     /// expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
     /// ```
     ///
