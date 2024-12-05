@@ -1216,20 +1216,35 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Recursively check if the expression has optional expression.
     #[inline]
     fn has_optional_expression(expr: &Expression<'a>) -> bool {
-        match expr {
-            Expression::CallExpression(call) => {
-                call.optional || Self::has_optional_expression(call.callee.get_inner_expression())
+        let mut expr = expr;
+        loop {
+            match expr {
+                Expression::CallExpression(call) => {
+                    if call.optional {
+                        return true;
+                    }
+                    expr = call.callee.get_inner_expression();
+                }
+                Expression::StaticMemberExpression(member) => {
+                    if member.optional {
+                        return true;
+                    }
+                    expr = &member.object;
+                }
+                Expression::ComputedMemberExpression(member) => {
+                    if member.optional {
+                        return true;
+                    }
+                    expr = &member.object;
+                }
+                Expression::PrivateFieldExpression(member) => {
+                    if member.optional {
+                        return true;
+                    }
+                    expr = &member.object;
+                }
+                _ => return false,
             }
-            Expression::StaticMemberExpression(member) => {
-                member.optional || Self::has_optional_expression(&member.object)
-            }
-            Expression::ComputedMemberExpression(member) => {
-                member.optional || Self::has_optional_expression(&member.object)
-            }
-            Expression::PrivateFieldExpression(member) => {
-                member.optional || Self::has_optional_expression(&member.object)
-            }
-            _ => false,
         }
     }
 
