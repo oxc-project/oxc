@@ -98,6 +98,20 @@ impl<'a> VarDeclarationsStore<'a> {
         self.insert_var_binding_pattern(pattern, init, ctx);
     }
 
+    /// Add a `var` declaration with the given init expression to be inserted at top of
+    /// current enclosing statement block, given a `BoundIdentifier`.
+    #[expect(unused)]
+    #[inline]
+    pub fn insert_var_with_init(
+        &self,
+        binding: &BoundIdentifier<'a>,
+        init: Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        let pattern = binding.create_binding_pattern(ctx);
+        self.insert_var_binding_pattern(pattern, Some(init), ctx);
+    }
+
     /// Create a new [`BoundIdentifier`], add a var declaration to be inserted at the top of
     /// the current enclosing statement block, and then return the [`BoundIdentifier`].
     #[inline]
