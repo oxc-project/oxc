@@ -674,3 +674,9 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────────
  5 │                 }
    ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" is called in function "foo" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+   ╭─[rules_of_hooks.tsx:1:45]
+ 1 │ const MyComponent3 = makeComponent(function foo () { useHook(); });
+   ·                                             ───
+   ╰────
