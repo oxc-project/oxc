@@ -1375,12 +1375,15 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         }
     }
 
-    fn transform_unary_expression_impl(
+    // Note: This is also called by visitor in `static_prop.rs`
+    pub(super) fn transform_unary_expression_impl(
         &mut self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::UnaryExpression(unary_expr) = expr else { unreachable!() };
+        debug_assert!(unary_expr.operator == UnaryOperator::Delete);
+        debug_assert!(matches!(unary_expr.argument, Expression::ChainExpression(_)));
 
         if let Some((result, chain_expr)) =
             self.transform_chain_expression_impl(&mut unary_expr.argument, ctx)

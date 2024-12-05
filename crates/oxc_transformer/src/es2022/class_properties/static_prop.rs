@@ -163,14 +163,23 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
                 self.replace_this_with_temp_var(expr, span);
                 return;
             }
-            // `delete this`
+            // `delete this` / `delete object?.#prop.xyz`
             Expression::UnaryExpression(unary_expr) => {
-                if unary_expr.operator == UnaryOperator::Delete
-                    && matches!(&unary_expr.argument, Expression::ThisExpression(_))
-                {
-                    let span = unary_expr.span;
-                    self.replace_delete_this_with_true(expr, span);
-                    return;
+                if unary_expr.operator == UnaryOperator::Delete {
+                    match &unary_expr.argument {
+                        Expression::ThisExpression(_) => {
+                            let span = unary_expr.span;
+                            self.replace_delete_this_with_true(expr, span);
+                            return;
+                        }
+                        Expression::ChainExpression(_) => {
+                            // Call directly into `transform_unary_expression_impl` rather than
+                            // main entry point `transform_unary_expression`. We already checked that
+                            // `expr` is `delete <chain expression>`, so can avoid checking that again.
+                            self.class_properties.transform_unary_expression_impl(expr, self.ctx);
+                        }
+                        _ => {}
+                    }
                 }
             }
             // `object.#prop`

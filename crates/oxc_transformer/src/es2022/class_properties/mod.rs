@@ -252,7 +252,8 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
     // `#[inline]` because this is a hot path
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Note: `delete this.#prop` is an early syntax error, so no need to handle transforming it
+        // IMPORTANT: If add any other visitors here to handle private fields,
+        // also need to add them to visitor in `static_prop.rs`.
         match expr {
             // `class {}`
             Expression::ClassExpression(_) => {
