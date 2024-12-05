@@ -20,7 +20,9 @@ use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{
+    ast_operations::GatherNodeParts, Ancestor, BoundIdentifier, Traverse, TraverseCtx,
+};
 
 use crate::TransformCtx;
 
@@ -94,6 +96,46 @@ impl<'a> VarDeclarationsStore<'a> {
     ) {
         let pattern = binding.create_binding_pattern(ctx);
         self.insert_var_binding_pattern(pattern, init, ctx);
+    }
+
+    /// Create a new [`BoundIdentifier`], add a var declaration to be inserted at the top of
+    /// the current enclosing statement block, and then return the [`BoundIdentifier`].
+    #[inline]
+    #[expect(unused)]
+    pub fn create_var(&self, name: &str, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
+        let binding = ctx.generate_uid_in_current_hoist_scope(name);
+        self.insert_var(&binding, None, ctx);
+        binding
+    }
+
+    /// Create a new [`BoundIdentifier`], add a var declaration with the given init expression
+    /// to be inserted at the top of the current enclosing statement block, and then return
+    /// the [`BoundIdentifier`].
+    #[inline]
+    #[expect(unused)]
+    pub fn create_var_with_init(
+        &self,
+        name: &str,
+        expression: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> BoundIdentifier<'a> {
+        let binding = ctx.generate_uid_in_current_hoist_scope(name);
+        self.insert_var(&binding, Some(expression), ctx);
+        binding
+    }
+
+    /// Create a new [`BoundIdentifier`] based on node, add a var declaration to be inserted
+    /// at the top of the current enclosing statement block, and then return the [`BoundIdentifier`].
+    #[inline]
+    #[expect(unused)]
+    pub fn create_var_based_on_node<N: GatherNodeParts<'a>>(
+        &self,
+        node: &N,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> BoundIdentifier<'a> {
+        let binding = ctx.generate_uid_in_current_hoist_scope_based_on_node(node);
+        self.insert_var(&binding, None, ctx);
+        binding
     }
 
     /// Add a `let` declaration to be inserted at top of current enclosing statement block,
