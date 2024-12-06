@@ -50,29 +50,25 @@ impl Rule for ConstructorSuper {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::Class(class) = node.kind() else { return };
 
+        let Some(constructor) = get_constructor_method(&class.body) else {
+            return;
+        };
+
         if class.super_class.is_some() {
             let super_class = &class.super_class.as_ref().unwrap().without_parentheses();
             let has_super_constructor = is_possible_constructor(super_class);
 
             if has_super_constructor {
-                if check_for_super_call(&class.body) {
+                if !has_possible_super_call_expression(&constructor) {
                     ctx.diagnostic(constructor_super_diagnostic(class.span));
                 }
             } else {
-                let Some(constructor) = get_constructor_method(&class.body) else {
-                    return;
-                };
-
                 if !has_return_statement(constructor) {
                     ctx.diagnostic(constructor_super_diagnostic(class.span));
                 }
             }
         } else {
-            let Some(constructor) = get_constructor_method(&class.body) else {
-                return;
-            };
-
-            if check_for_non_super_callee(&constructor) {
+            if has_possible_super_call_expression(&constructor) {
                 ctx.diagnostic(constructor_super_diagnostic(class.span));
             }
         }
@@ -139,21 +135,33 @@ fn is_possible_constructor(expression: &Expression<'_>) -> bool {
     false
 }
 
-fn check_for_super_call(_class: &ClassBody<'_>) -> bool {
+fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> bool {
+    if matches!(statement, Statement::ExpressionStatement(expression) if expression.expression.is_super_call_expression())
+    {
+        return true;
+    }
+
+    if let Statement::IfStatement(if_statement) = statement {
+        if if_statement.alternate.is_none() {
+            return executes_always_super_expression(&if_statement.consequent);
+        }
+
+        return executes_always_super_expression(&if_statement.consequent)
+            || executes_always_super_expression(&if_statement.alternate.as_ref().unwrap());
+    }
+
+    println!("{:?}", statement);
+
     false
 }
 
-fn check_for_non_super_callee<'a>(method: &'a MethodDefinition<'a>) -> bool {
+fn has_possible_super_call_expression<'a>(method: &'a MethodDefinition<'a>) -> bool {
     let Some(func_body) = &method.value.body else {
         return false;
     };
 
     for statement in &func_body.statements {
-        let Statement::ExpressionStatement(expression) = statement else {
-            continue;
-        };
-
-        if expression.expression.is_super_call_expression() {
+        if executes_always_super_expression(&statement) {
             return true;
         }
     }
