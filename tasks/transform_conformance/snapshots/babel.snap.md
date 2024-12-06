@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 416/846
+Passed: 427/846
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (89/264)
+# babel-plugin-transform-class-properties (100/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -412,9 +412,6 @@ x Output mismatch
 * nested-class/super-property-in-decorator/input.js
 x Output mismatch
 
-* private/1-helpermemberexpressionfunction/input.js
-x Output mismatch
-
 * private/call/input.js
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
@@ -433,36 +430,6 @@ x Output mismatch
 x Output mismatch
 
 * private/derived-multiple-supers/input.js
-x Output mismatch
-
-* private/destructuring-array-pattern/input.js
-x Output mismatch
-
-* private/destructuring-array-pattern-1/input.js
-x Output mismatch
-
-* private/destructuring-array-pattern-2/input.js
-x Output mismatch
-
-* private/destructuring-array-pattern-3/input.js
-x Output mismatch
-
-* private/destructuring-array-pattern-static/input.js
-x Output mismatch
-
-* private/destructuring-object-pattern/input.js
-x Output mismatch
-
-* private/destructuring-object-pattern-1/input.js
-x Output mismatch
-
-* private/destructuring-object-pattern-2/input.js
-x Output mismatch
-
-* private/destructuring-object-pattern-3/input.js
-x Output mismatch
-
-* private/destructuring-object-pattern-static/input.js
 x Output mismatch
 
 * private/extracted-this/input.js

@@ -40,12 +40,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) {
         let owned_expr = ctx.ast.move_expression(expr);
         let Expression::PrivateFieldExpression(field_expr) = owned_expr else { unreachable!() };
-        *expr = self.transform_private_field_expression_impl(field_expr, ctx);
+        *expr = self.transform_private_field_expression_impl(field_expr, false, ctx);
     }
 
     fn transform_private_field_expression_impl(
         &mut self,
         field_expr: ArenaBox<'a, PrivateFieldExpression<'a>>,
+        is_assignment: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let prop_details = self.private_props_stack.find(&field_expr.field);
@@ -87,6 +88,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     ctx,
                 )
             }
+        } else if is_assignment {
+            // `_toSetter(_classPrivateFieldSet2, [_prop, object])._`
+            self.create_to_setter(prop_ident, object, span, ctx)
         } else {
             // `_classPrivateFieldGet2(_prop, object)`
             self.create_private_field_get(prop_ident, object, span, ctx)
@@ -1428,22 +1432,22 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // `object.#prop` in assignment pattern.
         // Must be in assignment pattern, as `enter_expression` already transformed `AssignmentExpression`s.
         if matches!(target, AssignmentTarget::PrivateFieldExpression(_)) {
-            self.transform_assignment_target_impl(target, ctx);
+            *target = self.transform_assignment_target_impl(target, ctx);
         }
     }
 
-    #[expect(clippy::unused_self)]
     fn transform_assignment_target_impl(
         &mut self,
         target: &mut AssignmentTarget<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        let AssignmentTarget::PrivateFieldExpression(_private_field) = target else {
+        ctx: &mut TraverseCtx<'a>,
+    ) -> AssignmentTarget<'a> {
+        let AssignmentTarget::PrivateFieldExpression(private_field) =
+            ctx.ast.move_assignment_target(target)
+        else {
             unreachable!()
         };
-
-        // TODO: `[object.#prop] = value`
-        // TODO: `({x: object.#prop} = value)`
+        let expr = self.transform_private_field_expression_impl(private_field, true, ctx);
+        AssignmentTarget::from(SimpleAssignmentTarget::from(expr.into_member_expression()))
     }
 
     /// Duplicate object to be used in get/set pair.
@@ -1569,6 +1573,30 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             ]),
             ctx,
         )
+    }
+
+    /// `_toSetter(_classPrivateFieldSet2, [_prop, object])._`
+    fn create_to_setter(
+        &self,
+        prop_ident: Expression<'a>,
+        object: Expression<'a>,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let arguments = ctx.ast.expression_array(
+            SPAN,
+            ctx.ast.vec_from_array([
+                ArrayExpressionElement::from(prop_ident),
+                ArrayExpressionElement::from(object),
+            ]),
+            None,
+        );
+        let arguments = ctx.ast.vec_from_array([
+            Argument::from(self.ctx.helper_load(Helper::ClassPrivateFieldSet2, ctx)),
+            Argument::from(arguments),
+        ]);
+        let call = self.ctx.helper_call_expr(Helper::ToSetter, span, arguments, ctx);
+        Self::create_underscore_member_expression(call, span, ctx)
     }
 
     /// `_assertClassBrand(Class, object, value)` or `_assertClassBrand(Class, object, _prop)`

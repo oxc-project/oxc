@@ -61,4 +61,14 @@ impl<'a, 'ctx> Traverse<'a> for ES2022<'a, 'ctx> {
             class_properties.exit_class(class, ctx);
         }
     }
+
+    fn enter_assignment_target(
+        &mut self,
+        node: &mut AssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_assignment_target(node, ctx);
+        }
+    }
 }

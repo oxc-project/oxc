@@ -310,6 +310,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_assignment_target(node, ctx);
         }
+        self.x2_es2022.enter_assignment_target(node, ctx);
     }
 
     fn enter_formal_parameters(
