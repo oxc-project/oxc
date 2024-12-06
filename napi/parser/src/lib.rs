@@ -3,6 +3,7 @@
 )]
 
 mod convert;
+mod magic_string;
 mod types;
 
 use std::sync::Arc;

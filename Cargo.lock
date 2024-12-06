@@ -1623,6 +1623,7 @@ version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f004e73d346bec03a428ca26cf2df245d08563f1d3268b7bcbd5554fc1db05c5"
 dependencies = [
+ "rayon",
  "serde",
 ]
 
@@ -1818,6 +1819,7 @@ dependencies = [
  "oxc",
  "rustc-hash",
  "serde_json",
+ "string_wizard",
 ]
 
 [[package]]
@@ -2775,6 +2777,15 @@ name = "str_indices"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9557cb6521e8d009c51a8666f09356f4b817ba9ba0981a305bd86aee47bd35c"
+
+[[package]]
+name = "string_wizard"
+version = "0.0.23"
+dependencies = [
+ "oxc_index",
+ "oxc_sourcemap",
+ "rustc-hash",
+]
 
 [[package]]
 name = "subtle"
