@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.14.1] - 2024-12-06
+
+### Features
+
+- 275d625 linter: Output rules to json array (#7574) (camc314)
+
+### Bug Fixes
+
+- 9761e94 apps/oxlint: Incorrect matching in `.oxlintignore` (#7566) (dalaoshu)
+- 29db060 linter: Detect typescript eslint alias rules (#7622) (Alexander S.)
+- 810671a linter: Detect vitest jest alias rules (#7567) (Alexander S.)
+
 ## [0.14.0] - 2024-12-01
 
 ### Features
