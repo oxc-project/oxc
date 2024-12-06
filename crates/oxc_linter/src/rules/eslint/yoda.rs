@@ -9,7 +9,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::ToBigInt;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, utils::is_same_expression, AstNode};
 
@@ -264,6 +263,7 @@ fn is_not_yoda(expr: &BinaryExpression) -> bool {
         && is_literal_or_simple_template_literal(expr.right.get_inner_expression())
 }
 
+#[allow(clippy::cast_possible_truncation)]
 fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: bool) {
     ctx.diagnostic_with_fix(yoda_diagnostic(expr.span, never, expr.operator.as_str()), |fix| {
         let flipped_operator = flip_operator(expr.operator);
@@ -273,29 +273,34 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
         let flipped_operator_str = flipped_operator.as_str();
 
         let operator_str = expr.operator.as_str();
-        let source_str = ctx.source_range(expr.span);
-        let regex = Regex::new(operator_str).unwrap();
-        let mut operator_position_start: u32 = 0;
-        let mut operator_position_end: u32 = 0;
-        for mat in regex.find_iter(source_str) {
-            let start = u32::try_from(mat.start()).unwrap();
-            let end = u32::try_from(mat.end()).unwrap();
+        let source_str = ctx.source_range(
+            Span::new(expr.left.span().end, expr.right.span().start)
+        );
 
-            let is_inside_comments = ctx.comments().iter().any(|c| {
-                c.span.start <= start + expr.span.start && end + expr.span.start <= c.span.end
-            });
+        let source_chars = source_str.char_indices().collect::<Vec<_>>();
 
-            if !is_inside_comments {
-                operator_position_start = start + expr.span.start;
-                operator_position_end = end + expr.span.start;
-                break;
+        let search_start_position = expr.left.span().end;
+
+        let operator_position_start = source_chars.windows(operator_str.len()).find(|str|  {
+            if str.iter().enumerate().all(|(i, (_pos, c))| *c == operator_str.chars().nth(i).unwrap()) {
+                !ctx.comments().iter().any(|c| {
+                    c.span.start <= (str[0].0 as u32) + search_start_position && (str[0].0 as u32) + operator_str.len() as u32 + search_start_position <= c.span.end
+                })
+            } else {
+                false
             }
-        }
+        });
 
-        let str_between_left_and_operator =
-            ctx.source_range(Span::new(expr.left.span().end, operator_position_start));
-        let str_between_operator_and_right =
-            ctx.source_range(Span::new(operator_position_end, expr.right.span().start));
+        let Some(operator_position_start) = operator_position_start else {
+            debug_assert!(false);
+            return fix.noop();
+        };
+
+        let operator_position_start = search_start_position + operator_position_start[0].0 as u32;
+
+        let operator_position_end = operator_position_start + operator_str.len() as u32;
+        let str_between_left_and_operator = ctx.source_range(Span::new(expr.left.span().end, operator_position_start));
+        let str_between_operator_and_right = ctx.source_range(Span::new(operator_position_end, expr.right.span().start));
 
         let left_start = expr.left.span().start;
         let left_prev_token = if left_start > 0 && (expr.right.is_literal() || expr.right.is_identifier_reference() ) {
@@ -1156,6 +1161,7 @@ fn test() {
             "if (a > 0 && b < max) {}",
             Some(serde_json::json!(["never", { "exceptRange": true }])),
         ),
+        ("y>E>1", "1<y>E", Some(serde_json::json!(["always", { "exceptRange": false }]))),
     ];
     Tester::new(Yoda::NAME, Yoda::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
 }
