@@ -398,6 +398,10 @@ impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
 
     /// Create `_super` function to go outside class.
     /// `function() { <inits>; return this; }`
+    //
+    // TODO(improve-on-babel): When not in loose mode, inits are `_defineProperty(this, propName, value)`.
+    // `_defineProperty` returns `this`, so last statement could be `return _defineProperty(this, propName, value)`,
+    // rather than an additional `return this` statement.
     fn create_super_func(inits: Vec<Expression<'a>>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let outer_scope_id = ctx.current_scope_id();
         let super_func_scope_id = ctx.scopes_mut().add_scope(
@@ -518,6 +522,10 @@ impl<'a, 'c> ConstructorBodyInitsInserter<'a, 'c> {
             ctx.generate_uid("args", super_func_scope_id, SymbolFlags::FunctionScopedVariable);
 
         // `super(..._args); <inits>; return this;`
+        //
+        // TODO(improve-on-babel): When not in loose mode, inits are `_defineProperty(this, propName, value)`.
+        // `_defineProperty` returns `this`, so last statement could be `return _defineProperty(this, propName, value)`,
+        // rather than an additional `return this` statement.
         let super_call = create_super_call_stmt(&args_binding, ctx);
         let return_stmt = ctx.ast.statement_return(SPAN, Some(ctx.ast.expression_this(SPAN)));
         let body_stmts = ctx.ast.vec_from_iter(
