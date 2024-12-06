@@ -4,6 +4,57 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.14.1] - 2024-12-06
+
+- ebc80f6 ast: [**BREAKING**] Change 'raw' from &str to Option<Atom> (#7547) (Song Gao)
+
+### Features
+
+- fd0935c linter: Change `react/rules-of-hooks` category to `pedantic` (#7691) (Boshen)
+- e64fd95 linter: Map `.js` to `.ts` when resolving with tsconfig.json (#7675) (Boshen)
+- bd9d38a linter: Implement eslint:yoda (#7559) (tbashiyy)
+- a14e76a linter: Report identical logical expressions in const-comparisons (#7630) (camc314)
+- afe1e9b linter: Enhance `const-comparisons` for more cases (#7628) (camc314)
+- 4eb87ea linter: RulesOfHooks from nursery to correctness (#7607) (Boshen)
+- 275d625 linter: Output rules to json array (#7574) (camc314)
+- b8dc333 syntax: Add `ExportEntry::is_type` (#7676) (Boshen)
+
+### Bug Fixes
+
+- 7cee065 linter: Panic in `yoda` (#7679) (camc314)
+- 6ae178e linter: Ignore type references in `no-undef` (#7670) (Boshen)
+- fcc2546 linter: Move `no-unused-expressions` from TS to eslint (#7624) (camc314)
+- 29db060 linter: Detect typescript eslint alias rules (#7622) (Alexander S.)
+- e824501 linter: False positive in exhaustive-deps (#7626) (camc314)
+- 8a68ef4 linter: Update reporting spans for exhaustive-deps (#7625) (camc314)
+- 543df6e linter: Fix false positives in exhaustive-deps (#7615) (camc314)
+- e80214c linter: Fix false positives in rules-of-hooks (#7606) (camc314)
+- 3dc46a8 linter: No-unused-expressions false positive with arrow fn expressions (#7585) (Cameron)
+- 810671a linter: Detect vitest jest alias rules (#7567) (Alexander S.)
+- 4e3044e linter: Rules-of-hooks fix false positive with default export (#7570) (camc314)
+
+### Documentation
+
+- f029090 linter: Update rule documentation (#7684) (camc314)
+- 4e489bd linter: Update rule documentation (#7681) (camc314)
+- 56fe5f8 linter: Update rule documentation (#7680) (Cameron)
+
+### Refactor
+
+- a0973dc linter: Use `BigIntLiteral::raw` field (#7660) (overlookmotel)
+- 3711a8e linter: Rename `is_same_reference` to `is_same_expression` (#7654) (camc314)
+- b445654 linter: Use `get_inner_expression` in `const-comparisons` (#7627) (camc314)
+- f0e7acc syntax: Change `ModuleRecord::not_esm` to `has_module_syntax` (#7579) (Boshen)
+- 18519de syntax: Remove `ModuleRecord::export_default` (#7578) (Boshen)
+- d476660 syntax: Remove `ModuleRecord::exported_bindings_duplicated` because it is a syntax error (#7577) (Boshen)
+- 17663f5 syntax: Remove `ModuleRecord::export_default_duplicated` because it is a syntax error (#7576) (Boshen)
+- 79014ff syntax: Clean up `ModuleRecord` (#7568) (Boshen)
+
+### Testing
+
+- be9863a linter: Add more tests fo rules-of-hooks (#7683) (camc314)
+- 6dd71c6 linter: Port eslint tests to no-unused-expressions (#7611) (camc314)
+
 ## [0.14.0] - 2024-12-01
 
 - c2ced15 parser,linter: [**BREAKING**] Use a different `ModuleRecord` for linter (#7554) (Boshen)
