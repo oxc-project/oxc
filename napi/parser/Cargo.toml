@@ -27,6 +27,7 @@ oxc_napi = { workspace = true }
 
 rustc-hash = { workspace = true }
 serde_json = { workspace = true }
+# string_wizard = { versoin = "0.0.23", features = ["sourcemap"] }
 
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }

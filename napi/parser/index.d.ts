@@ -2,6 +2,21 @@
 /* eslint-disable */
 
 export * from '@oxc-project/types';
+export declare class MagicString {
+  length(): number
+  toString(): string
+  append(input: string): this
+  prepend(input: string): this
+  appendLeft(index: number, input: string): this
+  appendRight(index: number, input: string): this
+  prependLeft(index: number, input: string): this
+  prependRight(index: number, input: string): this
+}
+
+export declare class ParseResult {
+  ast(): import("@oxc-project/types").Program
+}
+
 export interface Comment {
   type: 'Line' | 'Block'
   value: string
@@ -108,19 +123,16 @@ export declare const enum ImportNameKind {
   Default = 'Default'
 }
 
+export interface OverwriteOptions {
+  contentOnly: boolean
+}
+
 /**
  * Parse asynchronously.
  *
  * Note: This function can be slower than `parseSync` due to the overhead of spawning a thread.
  */
 export declare function parseAsync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
-
-export interface ParseResult {
-  program: import("@oxc-project/types").Program
-  module: EcmaScriptModule
-  comments: Array<Comment>
-  errors: Array<Error>
-}
 
 export interface ParserOptions {
   sourceType?: 'script' | 'module' | 'unambiguous' | undefined
