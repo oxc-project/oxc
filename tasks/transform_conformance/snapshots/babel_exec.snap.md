@@ -1,15 +1,15 @@
 commit: 54a8389f
 
-node: v22.11.0
+node: v22.12.0
 ⎯⎯⎯⎯⎯⎯ Failed Suites 32 ⎯⎯⎯⎯⎯⎯
 
  FAIL  fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js [ fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js ]
 Error: 'eval' and 'arguments' cannot be used as a binding identifier in strict mode
- ❯ getRollupError ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:396:41
- ❯ convertProgram ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:1084:26
- ❯ parseAstAsync ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:2070:106
- ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52381:11
- ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:51979:72
+ ❯ getRollupError ../../node_modules/.pnpm/rollup@4.28.0/node_modules/rollup/dist/es/shared/parseAst.js:396:41
+ ❯ convertProgram ../../node_modules/.pnpm/rollup@4.28.0/node_modules/rollup/dist/es/shared/parseAst.js:1084:26
+ ❯ parseAstAsync ../../node_modules/.pnpm/rollup@4.28.0/node_modules/rollup/dist/es/shared/parseAst.js:2070:106
+ ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.10.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52381:11
+ ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.10.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:51979:72
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/50]⎯
 
@@ -22,21 +22,21 @@ SyntaxError: Private field '#x' must be declared in an enclosing class
  FAIL  fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-super-exec.test.js [ fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-loose-static-super-exec.test.js ]
  FAIL  fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-static-super-exec.test.js [ fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-static-super-exec.test.js ]
 Error: Invalid access to super
- ❯ getRollupError ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:396:41
- ❯ convertProgram ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:1084:26
- ❯ parseAstAsync ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:2070:106
- ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52381:11
- ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:51979:72
+ ❯ getRollupError ../../node_modules/.pnpm/rollup@4.28.0/node_modules/rollup/dist/es/shared/parseAst.js:396:41
+ ❯ convertProgram ../../node_modules/.pnpm/rollup@4.28.0/node_modules/rollup/dist/es/shared/parseAst.js:1084:26
+ ❯ parseAstAsync ../../node_modules/.pnpm/rollup@4.28.0/node_modules/rollup/dist/es/shared/parseAst.js:2070:106
+ ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.10.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52381:11
+ ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.10.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:51979:72
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/50]⎯
 
  FAIL  fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js [ fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js ]
 Error: Unexpected token `[`. Expected * for generator, private key, identifier or async
- ❯ getRollupError ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:396:41
- ❯ convertProgram ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:1084:26
- ❯ parseAstAsync ../../node_modules/.pnpm/rollup@4.27.3/node_modules/rollup/dist/es/shared/parseAst.js:2070:106
- ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52381:11
- ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.9.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:51979:72
+ ❯ getRollupError ../../node_modules/.pnpm/rollup@4.28.0/node_modules/rollup/dist/es/shared/parseAst.js:396:41
+ ❯ convertProgram ../../node_modules/.pnpm/rollup@4.28.0/node_modules/rollup/dist/es/shared/parseAst.js:1084:26
+ ❯ parseAstAsync ../../node_modules/.pnpm/rollup@4.28.0/node_modules/rollup/dist/es/shared/parseAst.js:2070:106
+ ❯ ssrTransformScript ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.10.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:52381:11
+ ❯ loadAndTransform ../../node_modules/.pnpm/vite@5.4.11_@types+node@22.10.1/node_modules/vite/dist/node/chunks/dep-CB_7IfJ-.js:51979:72
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/50]⎯
 
