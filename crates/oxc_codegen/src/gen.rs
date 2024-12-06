@@ -291,7 +291,7 @@ impl Gen for ForInStatement<'_> {
         p.print_str("for");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
-        self.left.print(p, Context::empty().and_forbid_in(false));
+        self.left.print(p, Context::FORBID_IN);
         p.print_soft_space();
         p.print_space_before_identifier();
         p.print_str("in");

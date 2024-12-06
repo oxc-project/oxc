@@ -64,10 +64,10 @@ fn for_stmt() {
         "for (x = (y in z) || y || (y in z) || y || (y in z);;);",
         "for (x = (y in z) || y || (y in z) || y || (y in z);;);\n",
     );
-    // test(
-    //     "for (var a = 1 || (2 in {}) in { x: 1 }) count++;",
-    //     "for (var a = 1 || (2 in {}) in {x: 1}) count++;\n",
-    // );
+    test(
+        "for (var a = 1 || (2 in {}) in { x: 1 }) count++;",
+        "for (var a = 1 || (2 in {}) in { x: 1 }) count++;\n",
+    );
 }
 
 #[test]
