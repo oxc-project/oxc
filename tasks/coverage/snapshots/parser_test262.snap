@@ -1,8 +1,8 @@
-commit: fd979d85
+commit: eefc5cf3
 
 parser_test262 Summary:
-AST Parsed     : 44026/44026 (100.00%)
-Positive Passed: 44026/44026 (100.00%)
+AST Parsed     : 44037/44037 (100.00%)
+Positive Passed: 44037/44037 (100.00%)
 Negative Passed: 4320/4322 (99.95%)
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-invalid.js
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-named-bindings.js
