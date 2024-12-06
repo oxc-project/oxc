@@ -60,6 +60,8 @@ pub enum Kind {
     Set,
     Target,   // new.target
     Accessor, // keyword from https://github.com/tc39/proposal-decorators
+    Source,   // import.source https://github.com/tc39/proposal-source-phase-imports
+    Defer,    // import.defer https://github.com/tc39/proposal-defer-import-eval
     // TypeScript Contextual Keywords
     Abstract,
     As,
@@ -375,7 +377,9 @@ impl Kind {
         matches!(self, Async | From | Get | Meta | Of | Set | Target | Accessor | Abstract | As | Asserts
             | Assert | Any | Boolean | Constructor | Declare | Infer | Intrinsic | Is | KeyOf | Module
             | Namespace | Never | Out | Readonly | Require | Number | Object | Satisfies | String
-            | Symbol | Type | Undefined | Unique | Unknown | Using | Global | BigInt | Override)
+            | Symbol | Type | Undefined | Unique | Unknown | Using | Global | BigInt | Override
+            | Source | Defer
+            )
     }
 
     #[rustfmt::skip]
@@ -455,6 +459,7 @@ impl Kind {
             "using" => Using,
             "while" => While,
             "yield" => Yield,
+            "defer" => Defer,
 
             "assert" => Assert,
             "bigint" => BigInt,
@@ -474,6 +479,7 @@ impl Kind {
             "target" => Target,
             "typeof" => Typeof,
             "unique" => Unique,
+            "source" => Source,
 
             "asserts" => Asserts,
             "boolean" => Boolean,
@@ -566,6 +572,8 @@ impl Kind {
             Override => "override",
             Type => "type",
             Target => "target",
+            Source => "source",
+            Defer => "defer",
             Implements => "implements",
             Interface => "interface",
             Package => "package",

@@ -732,6 +732,10 @@ impl Gen for ImportDeclaration<'_> {
         if self.import_kind.is_type() {
             p.print_str(" type");
         }
+        if let Some(phase) = self.phase {
+            p.print_hard_space();
+            p.print_str(phase.as_str());
+        }
         if let Some(specifiers) = &self.specifiers {
             if specifiers.is_empty() {
                 p.print_soft_space();
@@ -1990,7 +1994,11 @@ impl GenExpr for ImportExpression<'_> {
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
-            p.print_str("import(");
+            p.print_str("import");
+            if let Some(phase) = self.phase {
+                p.print_str(phase.as_str());
+            }
+            p.print_ascii_byte(b'(');
             if has_comment {
                 p.indent();
             }

@@ -365,30 +365,18 @@ fn new_target(span: Span) -> OxcDiagnostic {
 .with_label(span)
 }
 
-fn new_target_property(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("The only valid meta property for new is new.target").with_label(span)
-}
-
 fn import_meta(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected import.meta expression")
         .with_help("import.meta is only allowed in module code")
         .with_label(span)
 }
 
-fn import_meta_property(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("The only valid meta property for import is import.meta").with_label(span)
-}
-
 pub fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     match prop.meta.name.as_str() {
         "import" => {
-            if prop.property.name == "meta" {
-                if ctx.source_type.is_script() {
-                    return ctx.error(import_meta(prop.span));
-                }
-                return;
+            if prop.property.name == "meta" && ctx.source_type.is_script() {
+                ctx.error(import_meta(prop.span));
             }
-            ctx.error(import_meta_property(prop.span));
         }
         "new" => {
             if prop.property.name == "target" {
@@ -405,11 +393,9 @@ pub fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &Se
                     }
                 }
                 if !in_function_scope {
-                    return ctx.error(new_target(prop.span));
+                    ctx.error(new_target(prop.span));
                 }
-                return;
             }
-            ctx.error(new_target_property(prop.span));
         }
         _ => {}
     }

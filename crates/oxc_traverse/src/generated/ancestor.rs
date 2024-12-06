@@ -9260,6 +9260,7 @@ pub(crate) const OFFSET_IMPORT_EXPRESSION_SPAN: usize = offset_of!(ImportExpress
 pub(crate) const OFFSET_IMPORT_EXPRESSION_SOURCE: usize = offset_of!(ImportExpression, source);
 pub(crate) const OFFSET_IMPORT_EXPRESSION_ARGUMENTS: usize =
     offset_of!(ImportExpression, arguments);
+pub(crate) const OFFSET_IMPORT_EXPRESSION_PHASE: usize = offset_of!(ImportExpression, phase);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -9279,6 +9280,14 @@ impl<'a, 't> ImportExpressionWithoutSource<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_ARGUMENTS)
                 as *const Vec<'a, Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_PHASE)
+                as *const Option<ImportPhase>)
         }
     }
 }
@@ -9309,6 +9318,14 @@ impl<'a, 't> ImportExpressionWithoutArguments<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_SOURCE) as *const Expression<'a>)
         }
     }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_EXPRESSION_PHASE)
+                as *const Option<ImportPhase>)
+        }
+    }
 }
 
 impl<'a, 't> GetAddress for ImportExpressionWithoutArguments<'a, 't> {
@@ -9322,6 +9339,7 @@ pub(crate) const OFFSET_IMPORT_DECLARATION_SPAN: usize = offset_of!(ImportDeclar
 pub(crate) const OFFSET_IMPORT_DECLARATION_SPECIFIERS: usize =
     offset_of!(ImportDeclaration, specifiers);
 pub(crate) const OFFSET_IMPORT_DECLARATION_SOURCE: usize = offset_of!(ImportDeclaration, source);
+pub(crate) const OFFSET_IMPORT_DECLARATION_PHASE: usize = offset_of!(ImportDeclaration, phase);
 pub(crate) const OFFSET_IMPORT_DECLARATION_WITH_CLAUSE: usize =
     offset_of!(ImportDeclaration, with_clause);
 pub(crate) const OFFSET_IMPORT_DECLARATION_IMPORT_KIND: usize =
@@ -9345,6 +9363,14 @@ impl<'a, 't> ImportDeclarationWithoutSpecifiers<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SOURCE)
                 as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
         }
     }
 
@@ -9390,6 +9416,14 @@ impl<'a, 't> ImportDeclarationWithoutSource<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SPECIFIERS)
                 as *const Option<Vec<'a, ImportDeclarationSpecifier<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
         }
     }
 
@@ -9443,6 +9477,14 @@ impl<'a, 't> ImportDeclarationWithoutWithClause<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_SOURCE)
                 as *const StringLiteral<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn phase(self) -> &'t Option<ImportPhase> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_PHASE)
+                as *const Option<ImportPhase>)
         }
     }
 

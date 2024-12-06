@@ -697,19 +697,24 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, type_annotation) == 88usize);
     assert!(offset_of!(AccessorProperty, accessibility) == 96usize);
 
-    assert!(size_of::<ImportExpression>() == 56usize);
+    assert!(size_of::<ImportExpression>() == 64usize);
     assert!(align_of::<ImportExpression>() == 8usize);
     assert!(offset_of!(ImportExpression, span) == 0usize);
     assert!(offset_of!(ImportExpression, source) == 8usize);
     assert!(offset_of!(ImportExpression, arguments) == 24usize);
+    assert!(offset_of!(ImportExpression, phase) == 56usize);
 
-    assert!(size_of::<ImportDeclaration>() == 96usize);
+    assert!(size_of::<ImportDeclaration>() == 104usize);
     assert!(align_of::<ImportDeclaration>() == 8usize);
     assert!(offset_of!(ImportDeclaration, span) == 0usize);
     assert!(offset_of!(ImportDeclaration, specifiers) == 8usize);
     assert!(offset_of!(ImportDeclaration, source) == 40usize);
-    assert!(offset_of!(ImportDeclaration, with_clause) == 80usize);
-    assert!(offset_of!(ImportDeclaration, import_kind) == 88usize);
+    assert!(offset_of!(ImportDeclaration, phase) == 80usize);
+    assert!(offset_of!(ImportDeclaration, with_clause) == 88usize);
+    assert!(offset_of!(ImportDeclaration, import_kind) == 96usize);
+
+    assert!(size_of::<ImportPhase>() == 1usize);
+    assert!(align_of::<ImportPhase>() == 1usize);
 
     assert!(size_of::<ImportDeclarationSpecifier>() == 16usize);
     assert!(align_of::<ImportDeclarationSpecifier>() == 8usize);
@@ -2254,19 +2259,24 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, type_annotation) == 48usize);
     assert!(offset_of!(AccessorProperty, accessibility) == 52usize);
 
-    assert!(size_of::<ImportExpression>() == 32usize);
+    assert!(size_of::<ImportExpression>() == 36usize);
     assert!(align_of::<ImportExpression>() == 4usize);
     assert!(offset_of!(ImportExpression, span) == 0usize);
     assert!(offset_of!(ImportExpression, source) == 8usize);
     assert!(offset_of!(ImportExpression, arguments) == 16usize);
+    assert!(offset_of!(ImportExpression, phase) == 32usize);
 
-    assert!(size_of::<ImportDeclaration>() == 56usize);
+    assert!(size_of::<ImportDeclaration>() == 60usize);
     assert!(align_of::<ImportDeclaration>() == 4usize);
     assert!(offset_of!(ImportDeclaration, span) == 0usize);
     assert!(offset_of!(ImportDeclaration, specifiers) == 8usize);
     assert!(offset_of!(ImportDeclaration, source) == 24usize);
-    assert!(offset_of!(ImportDeclaration, with_clause) == 48usize);
-    assert!(offset_of!(ImportDeclaration, import_kind) == 52usize);
+    assert!(offset_of!(ImportDeclaration, phase) == 48usize);
+    assert!(offset_of!(ImportDeclaration, with_clause) == 52usize);
+    assert!(offset_of!(ImportDeclaration, import_kind) == 56usize);
+
+    assert!(size_of::<ImportPhase>() == 1usize);
+    assert!(align_of::<ImportPhase>() == 1usize);
 
     assert!(size_of::<ImportDeclarationSpecifier>() == 8usize);
     assert!(align_of::<ImportDeclarationSpecifier>() == 4usize);

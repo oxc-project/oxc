@@ -2239,6 +2239,7 @@ impl ContentEq for ImportExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.source, &other.source)
             && ContentEq::content_eq(&self.arguments, &other.arguments)
+            && ContentEq::content_eq(&self.phase, &other.phase)
     }
 }
 
@@ -2246,8 +2247,15 @@ impl ContentEq for ImportDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.specifiers, &other.specifiers)
             && ContentEq::content_eq(&self.source, &other.source)
+            && ContentEq::content_eq(&self.phase, &other.phase)
             && ContentEq::content_eq(&self.with_clause, &other.with_clause)
             && ContentEq::content_eq(&self.import_kind, &other.import_kind)
+    }
+}
+
+impl ContentEq for ImportPhase {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
     }
 }
 

@@ -1478,3 +1478,13 @@ impl<'a> ModuleExportName<'a> {
         }
     }
 }
+
+impl ImportPhase {
+    #[allow(missing_docs)]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Source => "source",
+            Self::Defer => "defer",
+        }
+    }
+}

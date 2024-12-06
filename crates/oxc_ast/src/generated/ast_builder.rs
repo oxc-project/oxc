@@ -833,14 +833,18 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - source
     /// - arguments
+    /// - phase
     #[inline]
     pub fn expression_import(
         self,
         span: Span,
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
+        phase: Option<ImportPhase>,
     ) -> Expression<'a> {
-        Expression::ImportExpression(self.alloc(self.import_expression(span, source, arguments)))
+        Expression::ImportExpression(
+            self.alloc(self.import_expression(span, source, arguments, phase)),
+        )
     }
 
     /// Build an [`Expression::LogicalExpression`]
@@ -6587,6 +6591,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - specifiers: `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     /// - source
+    /// - phase
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
@@ -6595,6 +6600,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> ModuleDeclaration<'a>
@@ -6605,6 +6611,7 @@ impl<'a> AstBuilder<'a> {
             span,
             specifiers,
             source,
+            phase,
             with_clause,
             import_kind,
         )))
@@ -6836,14 +6843,16 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - source
     /// - arguments
+    /// - phase
     #[inline]
     pub fn import_expression(
         self,
         span: Span,
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
+        phase: Option<ImportPhase>,
     ) -> ImportExpression<'a> {
-        ImportExpression { span, source, arguments }
+        ImportExpression { span, source, arguments, phase }
     }
 
     /// Build an [`ImportExpression`], and store it in the memory arena.
@@ -6854,14 +6863,16 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - source
     /// - arguments
+    /// - phase
     #[inline]
     pub fn alloc_import_expression(
         self,
         span: Span,
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
+        phase: Option<ImportPhase>,
     ) -> Box<'a, ImportExpression<'a>> {
-        Box::new_in(self.import_expression(span, source, arguments), self.allocator)
+        Box::new_in(self.import_expression(span, source, arguments, phase), self.allocator)
     }
 
     /// Build an [`ImportDeclaration`].
@@ -6872,6 +6883,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - specifiers: `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     /// - source
+    /// - phase
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
@@ -6880,6 +6892,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> ImportDeclaration<'a>
@@ -6890,6 +6903,7 @@ impl<'a> AstBuilder<'a> {
             span,
             specifiers,
             source,
+            phase,
             with_clause: with_clause.into_in(self.allocator),
             import_kind,
         }
@@ -6903,6 +6917,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - specifiers: `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     /// - source
+    /// - phase
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
@@ -6911,6 +6926,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> Box<'a, ImportDeclaration<'a>>
@@ -6918,7 +6934,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
         Box::new_in(
-            self.import_declaration(span, specifiers, source, with_clause, import_kind),
+            self.import_declaration(span, specifiers, source, phase, with_clause, import_kind),
             self.allocator,
         )
     }

@@ -905,15 +905,19 @@ export interface ImportExpression extends Span {
   type: 'ImportExpression';
   source: Expression;
   arguments: Array<Expression>;
+  phase: ImportPhase | null;
 }
 
 export interface ImportDeclaration extends Span {
   type: 'ImportDeclaration';
   specifiers: Array<ImportDeclarationSpecifier> | null;
   source: StringLiteral;
+  phase: ImportPhase | null;
   withClause: WithClause | null;
   importKind: ImportOrExportKind;
 }
+
+export type ImportPhase = 'source' | 'defer';
 
 export type ImportDeclarationSpecifier = ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier;
 

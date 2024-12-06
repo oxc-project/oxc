@@ -2188,6 +2188,7 @@ pub struct ImportExpression<'a> {
     pub span: Span,
     pub source: Expression<'a>,
     pub arguments: Vec<'a, Expression<'a>>,
+    pub phase: Option<ImportPhase>,
 }
 
 #[ast(visit)]
@@ -2198,12 +2199,26 @@ pub struct ImportDeclaration<'a> {
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
+    pub phase: Option<ImportPhase>,
     /// Some(vec![]) for empty assertion
     #[ts]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
     /// `import type { foo } from 'bar'`
     #[ts]
     pub import_kind: ImportOrExportKind,
+}
+
+/// Import Phase
+///
+/// <https://github.com/tc39/proposal-defer-import-eval>
+/// <https://github.com/tc39/proposal-source-phase-imports>
+/// <https://github.com/estree/estree/blob/2b48e56efc223ea477a45b5e034039934c5791fa/stage3/source-phase-imports.md>
+#[ast]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+pub enum ImportPhase {
+    Source = 0,
+    Defer = 1,
 }
 
 #[ast(visit)]

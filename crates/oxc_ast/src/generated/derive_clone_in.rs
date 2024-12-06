@@ -2225,6 +2225,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ImportExpression<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             source: CloneIn::clone_in(&self.source, allocator),
             arguments: CloneIn::clone_in(&self.arguments, allocator),
+            phase: CloneIn::clone_in(&self.phase, allocator),
         }
     }
 }
@@ -2236,8 +2237,19 @@ impl<'new_alloc> CloneIn<'new_alloc> for ImportDeclaration<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             specifiers: CloneIn::clone_in(&self.specifiers, allocator),
             source: CloneIn::clone_in(&self.source, allocator),
+            phase: CloneIn::clone_in(&self.phase, allocator),
             with_clause: CloneIn::clone_in(&self.with_clause, allocator),
             import_kind: CloneIn::clone_in(&self.import_kind, allocator),
+        }
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for ImportPhase {
+    type Cloned = ImportPhase;
+    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Source => ImportPhase::Source,
+            Self::Defer => ImportPhase::Defer,
         }
     }
 }

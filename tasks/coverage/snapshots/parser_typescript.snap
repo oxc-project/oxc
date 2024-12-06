@@ -1,7 +1,7 @@
 commit: d85767ab
 
 parser_typescript Summary:
-AST Parsed     : 6495/6503 (99.88%)
+AST Parsed     : 6494/6503 (99.86%)
 Positive Passed: 6483/6503 (99.69%)
 Negative Passed: 1239/5747 (21.56%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
@@ -4763,13 +4763,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2019/import
  2 │ export let y = import.metal;
    ·                ────────────
  3 │ export let z = import.import.import.malkovich;
-   ╰────
-
-  × The only valid meta property for import is import.meta
-   ╭─[typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts:3:16]
- 2 │ export let y = import.metal;
- 3 │ export let z = import.import.import.malkovich;
-   ·                ─────────────
    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts
 

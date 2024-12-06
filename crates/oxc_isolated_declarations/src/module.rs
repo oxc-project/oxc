@@ -141,6 +141,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 decl.span,
                 Some(new_specifiers),
                 decl.source.clone(),
+                None,
                 decl.with_clause.clone_in(self.ast.allocator),
                 decl.import_kind,
             ))

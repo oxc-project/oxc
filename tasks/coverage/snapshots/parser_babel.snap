@@ -5680,10 +5680,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                           ╰── `)` expected
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/no-args/input.js:1:8]
+  × import() requires a specifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/no-args/input.js:1:1]
  1 │ import();
-   ·        ─
+   · ────────
    ╰────
 
   × The only valid meta property for import is import.meta
@@ -5719,10 +5719,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                           ╰── `)` expected
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/no-args/input.js:1:8]
+  × import() requires a specifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/no-args/input.js:1:1]
  1 │ import();
-   ·        ─
+   · ────────
    ╰────
 
   × Unexpected import.meta expression
@@ -8929,10 +8929,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ─────────
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-meta-property/invalid-dots/input.js:1:30]
+  × The only valid meta property for new is new.target
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-meta-property/invalid-dots/input.js:1:26]
  1 │ var x = function() { y = new..target; }
-   ·                              ─
+   ·                          ─────
    ╰────
 
   × Unexpected new.target expression

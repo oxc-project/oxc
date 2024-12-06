@@ -42303,7 +42303,6 @@ rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts
 semantic error: The only valid meta property for import is import.meta
-The only valid meta property for import is import.meta
 
 tasks/coverage/typescript/tests/cases/conformance/es2019/importMeta/importMetaNarrowing.ts
 semantic error: Scope children mismatch:

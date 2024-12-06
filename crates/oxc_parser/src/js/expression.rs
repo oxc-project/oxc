@@ -184,15 +184,7 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::New => self.parse_new_expression(),
             Kind::Super => Ok(self.parse_super()),
-            Kind::Import => {
-                let span = self.start_span();
-                let identifier = self.parse_keyword_identifier(Kind::Import);
-                match self.cur_kind() {
-                    Kind::Dot => self.parse_meta_property(span, identifier),
-                    Kind::LParen => self.parse_import_expression(span),
-                    _ => Err(self.unexpected()),
-                }
-            }
+            Kind::Import => self.parse_import_meta_or_call(),
             Kind::LParen => self.parse_parenthesized_expression(span),
             Kind::Slash | Kind::SlashEq => self
                 .parse_literal_regexp()
@@ -561,24 +553,40 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
-    /// Section 13.3 Meta Property
-    fn parse_meta_property(
-        &mut self,
-        span: Span,
-        meta: IdentifierName<'a>,
-    ) -> Result<Expression<'a>> {
-        self.bump_any(); // bump `.`
-        let kind = self.cur_kind();
-        let property = match self.cur_kind() {
-            Kind::Meta => self.parse_keyword_identifier(Kind::Meta),
-            Kind::Target => self.parse_keyword_identifier(Kind::Target),
-            _ => self.parse_identifier_name()?,
-        };
-        let span = self.end_span(span);
-        if kind == Kind::Meta {
-            self.module_record_builder.visit_import_meta(span);
+    /// Section 13.3 ImportCall or ImportMeta
+    fn parse_import_meta_or_call(&mut self) -> Result<Expression<'a>> {
+        let span = self.start_span();
+        let meta = self.parse_keyword_identifier(Kind::Import);
+        match self.cur_kind() {
+            Kind::Dot => {
+                self.bump_any(); // bump `.`
+                match self.cur_kind() {
+                    // `import.meta`
+                    Kind::Meta => {
+                        let property = self.parse_keyword_identifier(Kind::Meta);
+                        let span = self.end_span(span);
+                        self.module_record_builder.visit_import_meta(span);
+                        Ok(self.ast.expression_meta_property(span, meta, property))
+                    }
+                    // `import.source(expr)`
+                    Kind::Source => {
+                        self.bump_any();
+                        self.parse_import_expression(span, Some(ImportPhase::Source))
+                    }
+                    // `import.defer(expr)`
+                    Kind::Defer => {
+                        self.bump_any();
+                        self.parse_import_expression(span, Some(ImportPhase::Defer))
+                    }
+                    _ => {
+                        self.bump_any();
+                        Err(diagnostics::import_meta(self.end_span(span)))
+                    }
+                }
+            }
+            Kind::LParen => self.parse_import_expression(span, None),
+            _ => Err(self.unexpected()),
         }
-        Ok(self.ast.expression_meta_property(span, meta, property))
     }
 
     /// Section 13.3 Left-Hand-Side Expression
@@ -760,8 +768,15 @@ impl<'a> ParserImpl<'a> {
     fn parse_new_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
         let identifier = self.parse_keyword_identifier(Kind::New);
-        if self.at(Kind::Dot) {
-            return self.parse_meta_property(span, identifier);
+
+        if self.eat(Kind::Dot) {
+            return if self.at(Kind::Target) {
+                let property = self.parse_keyword_identifier(Kind::Target);
+                Ok(self.ast.expression_meta_property(self.end_span(span), identifier, property))
+            } else {
+                self.bump_any();
+                Err(diagnostics::new_target(self.end_span(span)))
+            };
         }
         let rhs_span = self.start_span();
 

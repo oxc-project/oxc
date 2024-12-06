@@ -57,6 +57,8 @@ static SKIP_FEATURES: &[&str] = &[
     // stage 3
     "decorators",
     "explicit-resource-management",
+    "source-phase-imports",
+    "import-defer",
 ];
 
 static SKIP_INCLUDES: &[&str] = &[
