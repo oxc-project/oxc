@@ -2,4 +2,243 @@
 source: crates/oxc_linter/src/tester.rs
 snapshot_kind: text
 ---
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:24]
+ 1 │ class A extends null { constructor() { super(); } }
+   ·                        ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
 
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:24]
+ 1 │ class A extends null { constructor() { } }
+   ·                        ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:23]
+ 1 │ class A extends 100 { constructor() { super(); } }
+   ·                       ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:26]
+ 1 │ class A extends 'test' { constructor() { super(); } }
+   ·                          ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:27]
+ 1 │ class A extends (B = 5) { constructor() { super(); } }
+   ·                           ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:28]
+ 1 │ class A extends (B && 5) { constructor() { super(); } }
+   ·                            ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:29]
+ 1 │ class A extends (B &&= 5) { constructor() { super(); } }
+   ·                             ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:28]
+ 1 │ class A extends (B += C) { constructor() { super(); } }
+   ·                            ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:28]
+ 1 │ class A extends (B -= C) { constructor() { super(); } }
+   ·                            ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:29]
+ 1 │ class A extends (B **= C) { constructor() { super(); } }
+   ·                             ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:28]
+ 1 │ class A extends (B |= C) { constructor() { super(); } }
+   ·                            ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:28]
+ 1 │ class A extends (B &= C) { constructor() { super(); } }
+   ·                            ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { for (var a of b) super.foo(); } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { for (var i = 1; i < 10; i++) super.foo(); } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { var c = class extends D { constructor() { super(); } } } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { var c = () => super(); } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { class C extends D { constructor() { super(); } } } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { var C = class extends D { constructor() { super(); } } } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:66]
+ 1 │ class A extends B { constructor() { super(); class C extends D { constructor() { } } } }
+   ·                                                                  ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:72]
+ 1 │ class A extends B { constructor() { super(); var C = class extends D { constructor() { } } } }
+   ·                                                                        ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { if (a) super(); } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { if (a); else super(); } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { a && super(); } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { switch (a) { case 0: break; default: super(); } } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { try { super(); } catch (err) {} } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { try { a; } catch (err) { super(); } } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor(a) { while (a) super(); } }
+   ·                     ───────────
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:2:20]
+ 1 │ class Foo extends Bar {
+ 2 │                             constructor() {
+   ·                             ───────────
+ 3 │                                 for (a in b) for (c in d);
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:3:20]
+ 2 │             
+ 3 │                             constructor() {
+   ·                             ───────────
+ 4 │                                 do {
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:3:20]
+ 2 │             
+ 3 │                             constructor() {
+   ·                             ───────────
+ 4 │                                 for (let i = 1;;i++) {
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:3:20]
+ 2 │             
+ 3 │                             constructor() {
+   ·                             ───────────
+ 4 │                                 do {
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
+
+  ⚠ eslint(constructor-super): Should be an imperative statement about what is wrong
+   ╭─[constructor_super.tsx:3:20]
+ 2 │             
+ 3 │                             constructor() {
+   ·                             ───────────
+ 4 │                                 while (foo) {
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
