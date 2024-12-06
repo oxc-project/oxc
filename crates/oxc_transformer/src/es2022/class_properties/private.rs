@@ -1447,7 +1447,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             unreachable!()
         };
         let expr = self.transform_private_field_expression_impl(private_field, true, ctx);
-        AssignmentTarget::from(SimpleAssignmentTarget::from(expr.into_member_expression()))
+        AssignmentTarget::from(expr.into_member_expression())
     }
 
     /// Duplicate object to be used in get/set pair.
