@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@9.14.1",
   "volta": {
-    "node": "22.11.0"
+    "node": "22.12.0"
   },
   "scripts": {
     "build": "pnpm --workspace-concurrency=1 --filter './napi/*' build",
