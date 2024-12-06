@@ -141,16 +141,46 @@ fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> bool {
         return true;
     }
 
-    if let Statement::IfStatement(if_statement) = statement {
+    if let Statement::IfStatement(if_statement) = &statement {
         if if_statement.alternate.is_none() {
-            return executes_always_super_expression(&if_statement.consequent);
+            return false;
         }
 
         return executes_always_super_expression(&if_statement.consequent)
-            || executes_always_super_expression(&if_statement.alternate.as_ref().unwrap());
+            && executes_always_super_expression(&if_statement.alternate.as_ref().unwrap());
     }
 
-    println!("{:?}", statement);
+    if let Statement::BlockStatement(block) = &statement {
+        return block.body.iter().all(executes_always_super_expression);
+    }
+
+    if let Statement::ExpressionStatement(expression) = &statement {
+        if let Expression::ConditionalExpression(conditional) = &expression.expression {
+            return conditional.consequent.is_super_call_expression()
+                && conditional.alternate.is_super_call_expression();
+        }
+    }
+
+    if let Statement::SwitchStatement(switch) = &statement {
+        return switch
+            .cases
+            .iter()
+            .all(|case| case.consequent.iter().any(executes_always_super_expression));
+    }
+
+    if let Statement::TryStatement(try_block) = &statement {
+        if try_block.finalizer.is_none() {
+            return false;
+        }
+
+        return try_block
+            .finalizer
+            .as_ref()
+            .unwrap()
+            .body
+            .iter()
+            .any(executes_always_super_expression);
+    }
 
     false
 }
