@@ -1432,7 +1432,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // `object.#prop` in assignment pattern.
         // Must be in assignment pattern, as `enter_expression` already transformed `AssignmentExpression`s.
         if matches!(target, AssignmentTarget::PrivateFieldExpression(_)) {
-            *target = self.transform_assignment_target_impl(target, ctx);
+            self.transform_assignment_target_impl(target, ctx);
         }
     }
 
@@ -1440,14 +1440,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         &mut self,
         target: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> AssignmentTarget<'a> {
+    ) {
         let AssignmentTarget::PrivateFieldExpression(private_field) =
             ctx.ast.move_assignment_target(target)
         else {
             unreachable!()
         };
         let expr = self.transform_private_field_expression_impl(private_field, true, ctx);
-        AssignmentTarget::from(expr.into_member_expression())
+        *target = AssignmentTarget::from(expr.into_member_expression());
     }
 
     /// Duplicate object to be used in get/set pair.
