@@ -1,8 +1,9 @@
 commit: 54a8389f
 
-Passed: 93/104
+Passed: 94/105
 
 # All Passed:
+* babel-plugin-transform-class-properties
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
