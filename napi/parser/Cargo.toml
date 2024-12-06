@@ -27,6 +27,7 @@ oxc_napi = { workspace = true }
 
 rustc-hash = { workspace = true }
 serde_json = { workspace = true }
+string_wizard = { path = "../../../../github/rolldown/crates/string_wizard", features = ["sourcemap"] }
 
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }

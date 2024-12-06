@@ -1516,7 +1516,7 @@ dependencies = [
  "bitflags 2.6.0",
  "itertools",
  "nonmax",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_syntax",
  "petgraph",
  "rustc-hash",
@@ -1534,7 +1534,7 @@ dependencies = [
  "nonmax",
  "oxc_allocator",
  "oxc_ast",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_mangler",
  "oxc_parser",
  "oxc_sourcemap",
@@ -1618,6 +1618,15 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f004e73d346bec03a428ca26cf2df245d08563f1d3268b7bcbd5554fc1db05c5"
+dependencies = [
+ "rayon",
+]
+
+[[package]]
+name = "oxc_index"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5eca5d9726cd0a6e433debe003b7bc88b2ecad0bb6109f0cef7c55e692139a34"
@@ -1692,7 +1701,7 @@ dependencies = [
  "oxc_codegen",
  "oxc_diagnostics",
  "oxc_ecmascript",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_macros",
  "oxc_parser",
  "oxc_regular_expression",
@@ -1730,7 +1739,7 @@ version = "0.39.0"
 dependencies = [
  "itertools",
  "oxc_ast",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_semantic",
  "oxc_span",
 ]
@@ -1827,6 +1836,7 @@ dependencies = [
  "oxc_napi",
  "rustc-hash",
  "serde_json",
+ "string_wizard",
 ]
 
 [[package]]
@@ -1917,7 +1927,7 @@ dependencies = [
  "oxc_cfg",
  "oxc_diagnostics",
  "oxc_ecmascript",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
@@ -1969,7 +1979,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_estree",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_span",
  "phf",
  "rustc-hash",
@@ -2085,7 +2095,7 @@ version = "0.0.0"
 dependencies = [
  "console_error_panic_hook",
  "oxc",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_linter",
  "oxc_prettier",
  "serde",
@@ -2785,6 +2795,15 @@ name = "str_indices"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9557cb6521e8d009c51a8666f09356f4b817ba9ba0981a305bd86aee47bd35c"
+
+[[package]]
+name = "string_wizard"
+version = "0.0.23"
+dependencies = [
+ "oxc_index 1.0.1",
+ "oxc_sourcemap",
+ "rustc-hash",
+]
 
 [[package]]
 name = "subtle"
