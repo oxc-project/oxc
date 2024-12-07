@@ -65,17 +65,17 @@ impl Rule for ConstructorSuper {
             let has_super_constructor = is_possible_constructor(super_class);
 
             if has_super_constructor {
-                if has_possible_super_call_expression(constructor).is_none() {
+                if has_method_possible_super_call_expression(constructor).is_none() {
                     ctx.diagnostic(has_missing_super_call_diagnostic(constructor.key.span()));
                 }
             } else if !has_return_statement(constructor) {
-                if let Some(result) = has_possible_super_call_expression(constructor) {
+                if let Some(result) = has_method_possible_super_call_expression(constructor) {
                     ctx.diagnostic(has_unexpected_super_call_diagnostic(result));
                 } else {
                     ctx.diagnostic(has_missing_super_call_diagnostic(constructor.key.span()));
                 }
             }
-        } else if let Some(result) = has_possible_super_call_expression(constructor) {
+        } else if let Some(result) = has_method_possible_super_call_expression(constructor) {
             ctx.diagnostic(has_unexpected_super_call_diagnostic(result));
         }
     }
@@ -176,18 +176,7 @@ fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> Option<
     }
 
     if let Statement::BlockStatement(block) = &statement {
-        let calls = block
-            .body
-            .iter()
-            .filter_map(executes_always_super_expression)
-            .flatten()
-            .collect::<Vec<Span>>();
-
-        if !calls.is_empty() {
-            return Some(calls);
-        }
-
-        return None;
+        return has_body_possible_super_call_expression(&block.body);
     }
 
     if let Statement::SwitchStatement(switch) = &statement {
@@ -252,14 +241,28 @@ fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> Option<
     None
 }
 
-fn has_possible_super_call_expression<'a>(method: &'a MethodDefinition<'a>) -> Option<Vec<Span>> {
+fn has_method_possible_super_call_expression<'a>(
+    method: &'a MethodDefinition<'a>,
+) -> Option<Vec<Span>> {
     let Some(func_body) = &method.value.body else {
         return None;
     };
 
-    for statement in &func_body.statements {
-        if let Some(span) = executes_always_super_expression(statement) {
-            return Some(span);
+    has_body_possible_super_call_expression(&func_body.statements)
+}
+
+fn has_body_possible_super_call_expression<'a>(
+    body: &'a oxc_allocator::Vec<Statement<'a>>,
+) -> Option<Vec<Span>> {
+    for statement in body {
+        if matches!(statement, Statement::ReturnStatement(_)) {
+            return None;
+        }
+
+        let result = executes_always_super_expression(statement);
+
+        if result.is_some() {
+            return result;
         }
     }
 
@@ -440,7 +443,7 @@ fn test() {
 // "class A extends B { constructor() { if (a) super(); super(); } }",
 // "class A extends B { constructor() { switch (a) { case 0: super(); default: super(); } } }",
 "class A extends B { constructor(a) { while (a) super(); } }",
-// "class A extends B { constructor() { return; super(); } }",
+"class A extends B { constructor() { return; super(); } }",
 "class Foo extends Bar {
 			                constructor() {
 			                    for (a in b) for (c in d);

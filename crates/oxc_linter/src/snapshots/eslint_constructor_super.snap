@@ -188,6 +188,12 @@ snapshot_kind: text
    ╰────
 
   ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { return; super(); } }
+   ·                     ───────────
+   ╰────
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
    ╭─[constructor_super.tsx:2:20]
  1 │ class Foo extends Bar {
  2 │                             constructor() {
