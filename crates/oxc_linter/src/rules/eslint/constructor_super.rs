@@ -13,6 +13,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 enum ErrorReason {
     NotFound,
     MissingCallOnBranch,
+    MissingTryFinalizer,
     ReturnWithoutCall,
     MissingDefaultBranchOnSwitch,
 }
@@ -41,6 +42,17 @@ fn has_missing_default_switch_branch_diagnostic(spans: Vec<Span>) -> OxcDiagnost
             .into_iter()
             .map(|span| {
                 span.label("This path is lacking of a 'super()' call inside 'case default:'")
+            })
+            .collect::<Vec<LabeledSpan>>(),
+    )
+}
+
+fn has_missing_try_finalizer_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Lacked a call of 'super()' in 'finally'.").with_labels(
+        spans
+            .into_iter()
+            .map(|span| {
+                span.label("Inside a 'try' and 'catch' block, a 'super' call not be guaranteed to be called")
             })
             .collect::<Vec<LabeledSpan>>(),
     )
@@ -109,6 +121,9 @@ impl Rule for ConstructorSuper {
             if has_super_constructor {
                 if let Err(error) = validate_method_super_call_expression(constructor) {
                     match error.reason {
+                        ErrorReason::MissingTryFinalizer => {
+                            ctx.diagnostic(has_missing_try_finalizer_diagnostic(error.spans));
+                        }
                         ErrorReason::MissingDefaultBranchOnSwitch => {
                             ctx.diagnostic(has_missing_default_switch_branch_diagnostic(
                                 error.spans,
@@ -296,7 +311,7 @@ fn executes_always_super_expression<'a>(
     if let Statement::TryStatement(try_block) = &statement {
         if try_block.finalizer.is_none() {
             return Err(ErrorReport {
-                reason: ErrorReason::MissingCallOnBranch,
+                reason: ErrorReason::MissingTryFinalizer,
                 spans: vec![try_block.span],
             });
         }

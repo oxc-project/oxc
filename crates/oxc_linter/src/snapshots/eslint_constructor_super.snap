@@ -172,18 +172,18 @@ snapshot_kind: text
    ·                                                            ╰── This path is lacking of a 'super()' call
    ╰────
 
-  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in 'finally'.
    ╭─[constructor_super.tsx:1:37]
  1 │ class A extends B { constructor() { try { super(); } catch (err) {} } }
    ·                                     ───────────────┬───────────────
-   ·                                                    ╰── This path is lacking of a 'super()' call
+   ·                                                    ╰── Inside a 'try' and 'catch' block, a 'super' call not be guaranteed to be called
    ╰────
 
-  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in 'finally'.
    ╭─[constructor_super.tsx:1:37]
  1 │ class A extends B { constructor() { try { a; } catch (err) { super(); } } }
    ·                                     ─────────────────┬─────────────────
-   ·                                                      ╰── This path is lacking of a 'super()' call
+   ·                                                      ╰── Inside a 'try' and 'catch' block, a 'super' call not be guaranteed to be called
    ╰────
 
   ⚠ eslint(constructor-super): Expected to call 'super()'
