@@ -9,7 +9,21 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn constructor_super_diagnostic(span: Span) -> OxcDiagnostic {
+fn has_missing_super_call_diagnostic(span: Span) -> OxcDiagnostic {
+    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
+    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
+        .with_help("Should be a command-like statement that tells the user how to fix the issue")
+        .with_label(span)
+}
+
+fn has_unexpected_super_call_diagnostic(span: Span) -> OxcDiagnostic {
+    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
+    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
+        .with_help("Should be a command-like statement that tells the user how to fix the issue")
+        .with_label(span)
+}
+
+fn _has_multiple_super_call_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
         .with_help("Should be a command-like statement that tells the user how to fix the issue")
@@ -59,17 +73,17 @@ impl Rule for ConstructorSuper {
             let has_super_constructor = is_possible_constructor(super_class);
 
             if has_super_constructor {
-                if !has_possible_super_call_expression(&constructor) {
-                    ctx.diagnostic(constructor_super_diagnostic(constructor.key.span()));
+                if has_possible_super_call_expression(&constructor).is_none() {
+                    ctx.diagnostic(has_missing_super_call_diagnostic(constructor.key.span()));
                 }
             } else {
                 if !has_return_statement(constructor) {
-                    ctx.diagnostic(constructor_super_diagnostic(constructor.key.span()));
+                    ctx.diagnostic(has_missing_super_call_diagnostic(constructor.key.span()));
                 }
             }
         } else {
-            if has_possible_super_call_expression(&constructor) {
-                ctx.diagnostic(constructor_super_diagnostic(constructor.key.span()));
+            if has_possible_super_call_expression(&constructor).is_some() {
+                ctx.diagnostic(has_unexpected_super_call_diagnostic(constructor.key.span()));
             }
         }
     }
@@ -135,68 +149,125 @@ fn is_possible_constructor(expression: &Expression<'_>) -> bool {
     false
 }
 
-fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> bool {
-    if matches!(statement, Statement::ExpressionStatement(expression) if expression.expression.is_super_call_expression())
-    {
-        return true;
+fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> Option<Vec<Span>> {
+    if let Statement::ExpressionStatement(expression) = statement {
+        if expression.expression.is_super_call_expression() {
+            return Some(vec![expression.expression.span()]);
+        }
+
+        if let Expression::ConditionalExpression(conditional) = &expression.expression {
+            if conditional.consequent.is_super_call_expression()
+                && conditional.alternate.is_super_call_expression()
+            {
+                return Some(vec![conditional.consequent.span(), conditional.alternate.span()]);
+            }
+        }
+
+        return None;
     }
 
     if let Statement::IfStatement(if_statement) = &statement {
         if if_statement.alternate.is_none() {
-            return false;
+            return None;
         }
 
-        return executes_always_super_expression(&if_statement.consequent)
-            && executes_always_super_expression(&if_statement.alternate.as_ref().unwrap());
+        if let Some(mut consequent) = executes_always_super_expression(&if_statement.consequent) {
+            if let Some(alternative) =
+                executes_always_super_expression(&if_statement.alternate.as_ref().unwrap())
+            {
+                consequent.extend(alternative);
+                return Some(consequent);
+            }
+        }
+
+        return None;
     }
 
     if let Statement::BlockStatement(block) = &statement {
-        return block.body.iter().all(executes_always_super_expression);
-    }
+        let calls = block
+            .body
+            .iter()
+            .flat_map(executes_always_super_expression)
+            .flatten()
+            .collect::<Vec<Span>>();
 
-    if let Statement::ExpressionStatement(expression) = &statement {
-        if let Expression::ConditionalExpression(conditional) = &expression.expression {
-            return conditional.consequent.is_super_call_expression()
-                && conditional.alternate.is_super_call_expression();
+        if calls.len() != 0 {
+            return Some(calls);
         }
+
+        return None;
     }
 
     if let Statement::SwitchStatement(switch) = &statement {
-        return switch
+        let calls_grouped: Vec<Option<Vec<Span>>> = switch
             .cases
             .iter()
-            .all(|case| case.consequent.iter().any(executes_always_super_expression));
+            .map(|case| {
+                let all = case.consequent.iter().map(executes_always_super_expression);
+
+                // we found a super call, filter them
+                if all.clone().any(|case| case.is_some()) {
+                    return Some(all.filter_map(|case| case).flatten().collect::<Vec<Span>>());
+                }
+
+                return None;
+            })
+            .collect();
+
+        if !calls_grouped.iter().all(|call| call.is_some()) {
+            return None;
+        }
+
+        let calls = calls_grouped
+            .into_iter()
+            .filter(|call| call.is_some())
+            .flat_map(|call| call.unwrap())
+            .collect::<Vec<Span>>();
+
+        if calls.len() != 0 {
+            return Some(calls);
+        }
+
+        return None;
     }
 
     if let Statement::TryStatement(try_block) = &statement {
         if try_block.finalizer.is_none() {
-            return false;
+            return None;
         }
 
-        return try_block
+        let calls = try_block
             .finalizer
             .as_ref()
             .unwrap()
             .body
             .iter()
-            .any(executes_always_super_expression);
+            .flat_map(executes_always_super_expression)
+            .flatten()
+            .collect::<Vec<Span>>();
+
+        if calls.len() != 0 {
+            return Some(calls);
+        }
+
+        return None;
     }
 
-    false
+    None
 }
 
-fn has_possible_super_call_expression<'a>(method: &'a MethodDefinition<'a>) -> bool {
+fn has_possible_super_call_expression<'a>(method: &'a MethodDefinition<'a>) -> Option<Vec<Span>> {
     let Some(func_body) = &method.value.body else {
-        return false;
+        return None;
     };
 
     for statement in &func_body.statements {
-        if executes_always_super_expression(&statement) {
-            return true;
+        if let Some(span) = executes_always_super_expression(&statement) {
+            return Some(span);
         }
     }
 
-    false
+    None
 }
 
 fn has_return_statement<'a>(method: &'a MethodDefinition<'a>) -> bool {
