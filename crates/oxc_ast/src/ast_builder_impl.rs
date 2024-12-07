@@ -124,6 +124,19 @@ impl<'a> AstBuilder<'a> {
         mem::replace(target, dummy.into())
     }
 
+    /// Moves the assignment target out by replacing it with a dummy target with
+    /// no name and an empty [`Span`].
+    // TODO: Delete this if not using it.
+    #[inline]
+    pub fn move_simple_assignment_target(
+        self,
+        target: &mut SimpleAssignmentTarget<'a>,
+    ) -> SimpleAssignmentTarget<'a> {
+        let dummy =
+            self.simple_assignment_target_identifier_reference(Span::default(), Atom::from(""));
+        mem::replace(target, dummy)
+    }
+
     /// Move a declaration out by replacing it with an empty [variable
     /// declaration](Declaration::VariableDeclaration).
     #[inline]

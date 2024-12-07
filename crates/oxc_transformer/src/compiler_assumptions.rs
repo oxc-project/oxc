@@ -66,7 +66,6 @@ pub struct CompilerAssumptions {
     pub private_fields_as_symbols: bool,
 
     #[serde(default)]
-    #[deprecated = "Not Implemented"]
     pub private_fields_as_properties: bool,
 
     #[serde(default)]

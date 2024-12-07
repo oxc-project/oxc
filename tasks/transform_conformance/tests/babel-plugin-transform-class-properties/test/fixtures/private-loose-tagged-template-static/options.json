@@ -1,0 +1,10 @@
+{
+  "plugins": [
+    [
+      "transform-class-properties",
+      {
+        "loose": true
+      }
+    ]
+  ]
+}
