@@ -304,34 +304,35 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
 
         let left_start = expr.left.span().start;
         let left_prev_token = if left_start > 0 && (expr.right.is_literal() || expr.right.is_identifier_reference() ) {
-            let token = ctx.source_range(Span::new(left_start - 1, left_start));
+            let tokens = ctx.source_range(Span::new(0, left_start));
+            let token = tokens.chars().last();
             match_token(token)
         } else {
-            ""
+            false
         };
 
         let right_end = expr.right.span().end;
         let source_size = u32::try_from(ctx.source_text().len()).unwrap();
         let right_next_token = if right_end < source_size && (expr.left.is_literal() || expr.left.is_identifier_reference()) {
-            let token = ctx.source_range(Span::new(right_end, right_end + 1));
+            let tokens = ctx.source_range(Span::new(right_end, source_size));
+            let token = tokens.chars().next();
             match_token(token)
         } else {
-            ""
+            false
         };
 
         let replacement = format!(
-            "{left_prev_token}{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{right_next_token}"
+            "{}{right_str}{str_between_left_and_operator}{flipped_operator_str}{str_between_operator_and_right}{left_str}{}",
+            if left_prev_token { " " } else { "" },
+            if right_next_token { " " } else { "" }
         );
 
         fix.replace(expr.span, replacement)
     });
 }
 
-fn match_token(token: &str) -> &str {
-    match token {
-        " " | "(" | ")" | "/" | "=" | ";" => "",
-        _ => " ",
-    }
+fn match_token(token: Option<char>) -> bool {
+    !matches!(token, Some(' ' | '(' | ')' | '/' | '=' | ';'))
 }
 
 fn flip_operator(operator: BinaryOperator) -> BinaryOperator {
@@ -840,6 +841,8 @@ fn test() {
         ),
         ("if('a' <= x && x < 1) {}", Some(serde_json::json!(["never", { "exceptRange": true }]))),
         ("if (0 < a && b < max) {}", Some(serde_json::json!(["never", { "exceptRange": true }]))),
+        // Issue: <https://github.com/oxc-project/oxc/issues/7714>
+        ("{( t=='' )}", Some(serde_json::json!(["always", { "onlyEquality": true }]))),
     ];
 
     let fix = vec![
@@ -1162,6 +1165,13 @@ fn test() {
             Some(serde_json::json!(["never", { "exceptRange": true }])),
         ),
         ("y>E>1", "1<y>E", Some(serde_json::json!(["always", { "exceptRange": false }]))),
+        // Issue: <https://github.com/oxc-project/oxc/issues/7714>
+        (
+            "{( t=='' )}",
+            "{(  ''==t  )}",
+            Some(serde_json::json!(["always", { "onlyEquality": true }])),
+        ),
     ];
+
     Tester::new(Yoda::NAME, Yoda::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
 }
