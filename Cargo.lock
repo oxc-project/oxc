@@ -1672,7 +1672,6 @@ dependencies = [
 name = "oxc_linter"
 version = "0.14.1"
 dependencies = [
- "aho-corasick",
  "bitflags 2.6.0",
  "convert_case",
  "cow-utils",
