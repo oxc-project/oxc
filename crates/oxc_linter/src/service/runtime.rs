@@ -69,7 +69,8 @@ impl Runtime {
         });
         Resolver::new(ResolveOptions {
             extensions: VALID_EXTENSIONS.iter().map(|ext| format!(".{ext}")).collect(),
-            condition_names: vec!["module".into(), "require".into()],
+            main_fields: vec!["module".into(), "main".into()],
+            condition_names: vec!["module".into(), "import".into()],
             extension_alias,
             tsconfig,
             ..ResolveOptions::default()

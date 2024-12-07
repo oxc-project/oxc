@@ -156,6 +156,10 @@ impl Rule for Namespace {
                 }
             };
 
+            if !module.has_module_syntax {
+                return;
+            }
+
             let Some(symbol_id) = ctx.scopes().get_root_binding(entry.local_name.name()) else {
                 return;
             };
