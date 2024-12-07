@@ -3,31 +3,23 @@ use oxc_ast::ast::{
     MethodDefinitionKind, Statement,
 };
 use oxc_ast::{match_member_expression, AstKind};
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn has_missing_super_call_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
-        .with_label(span)
+    OxcDiagnostic::warn("Expected to call 'super()'").with_label(span)
 }
 
-fn has_unexpected_super_call_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
-        .with_label(span)
-}
-
-fn _has_multiple_super_call_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
-        .with_label(span)
+fn has_unexpected_super_call_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected 'super()' because 'super' is not a constructor").with_labels(
+        spans
+            .into_iter()
+            .map(|span| span.label("Remove this `super()` call expression"))
+            .collect::<Vec<LabeledSpan>>(),
+    )
 }
 
 #[derive(Debug, Default, Clone)]
@@ -78,12 +70,20 @@ impl Rule for ConstructorSuper {
                 }
             } else {
                 if !has_return_statement(constructor) {
-                    ctx.diagnostic(has_missing_super_call_diagnostic(constructor.key.span()));
+                    let result = has_possible_super_call_expression(&constructor);
+
+                    if result.is_some() {
+                        ctx.diagnostic(has_unexpected_super_call_diagnostic(result.unwrap()));
+                    } else {
+                        ctx.diagnostic(has_missing_super_call_diagnostic(constructor.key.span()));
+                    }
                 }
             }
         } else {
-            if has_possible_super_call_expression(&constructor).is_some() {
-                ctx.diagnostic(has_unexpected_super_call_diagnostic(constructor.key.span()));
+            let result = has_possible_super_call_expression(&constructor);
+
+            if result.is_some() {
+                ctx.diagnostic(has_unexpected_super_call_diagnostic(result.unwrap()));
             }
         }
     }
