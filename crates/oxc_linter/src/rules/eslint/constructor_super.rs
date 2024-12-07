@@ -11,7 +11,8 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(PartialEq)]
 enum ErrorReason {
-    MissingCall,
+    NotFound,
+    MissingCallOnBranch,
     ReturnWithoutCall,
     MissingDefaultBranchOnSwitch,
 }
@@ -95,7 +96,7 @@ impl Rule for ConstructorSuper {
             let has_super_constructor = is_possible_constructor(super_class);
 
             if has_super_constructor {
-                if let Err(error) = has_method_possible_super_call_expression(constructor) {
+                if let Err(error) = validate_method_super_call_expression(constructor) {
                     match error.reason {
                         ErrorReason::MissingDefaultBranchOnSwitch => {
                             ctx.diagnostic(has_missing_some_super_call_diagnostic(error.spans));
@@ -103,7 +104,10 @@ impl Rule for ConstructorSuper {
                         ErrorReason::ReturnWithoutCall => {
                             ctx.diagnostic(has_unexpected_return_statement(error.spans));
                         }
-                        ErrorReason::MissingCall => {
+                        ErrorReason::MissingCallOnBranch => {
+                            ctx.diagnostic(has_missing_some_super_call_diagnostic(error.spans));
+                        }
+                        ErrorReason::NotFound => {
                             ctx.diagnostic(has_missing_all_super_call_diagnostic(
                                 constructor.key.span(),
                             ));
@@ -111,13 +115,13 @@ impl Rule for ConstructorSuper {
                     };
                 }
             } else if !has_return_statement(constructor) {
-                if let Ok(result) = has_method_possible_super_call_expression(constructor) {
+                if let Ok(result) = validate_method_super_call_expression(constructor) {
                     ctx.diagnostic(has_unexpected_super_call_diagnostic(result));
                 } else {
                     ctx.diagnostic(has_missing_all_super_call_diagnostic(constructor.key.span()));
                 }
             }
-        } else if let Ok(result) = has_method_possible_super_call_expression(constructor) {
+        } else if let Ok(result) = validate_method_super_call_expression(constructor) {
             ctx.diagnostic(has_unexpected_super_call_diagnostic(result));
         }
     }
@@ -202,7 +206,7 @@ fn executes_always_super_expression<'a>(
         }
 
         return Err(ErrorReport {
-            reason: ErrorReason::MissingCall,
+            reason: ErrorReason::MissingCallOnBranch,
             spans: vec![expression.expression.span()],
         });
     }
@@ -210,7 +214,7 @@ fn executes_always_super_expression<'a>(
     if let Statement::IfStatement(if_statement) = &statement {
         if if_statement.alternate.is_none() {
             return Err(ErrorReport {
-                reason: ErrorReason::MissingCall,
+                reason: ErrorReason::NotFound,
                 spans: vec![if_statement.span],
             });
         }
@@ -225,7 +229,7 @@ fn executes_always_super_expression<'a>(
         }
 
         return Err(ErrorReport {
-            reason: ErrorReason::MissingCall,
+            reason: ErrorReason::NotFound,
             spans: vec![if_statement.span],
         });
     }
@@ -264,7 +268,7 @@ fn executes_always_super_expression<'a>(
             .collect();
 
         if !calls_grouped.iter().all(std::option::Option::is_some) {
-            return Err(ErrorReport { reason: ErrorReason::MissingCall, spans: vec![switch.span] });
+            return Err(ErrorReport { reason: ErrorReason::MissingCallOnBranch, spans: vec![switch.span] });
         }
 
         let calls = calls_grouped.into_iter().flatten().flatten().collect::<Vec<Span>>();
@@ -274,7 +278,7 @@ fn executes_always_super_expression<'a>(
         }
 
         return Err(ErrorReport {
-            reason: ErrorReason::MissingCall,
+            reason: ErrorReason::NotFound,
             spans: vec![statement.span()],
         });
     }
@@ -282,7 +286,7 @@ fn executes_always_super_expression<'a>(
     if let Statement::TryStatement(try_block) = &statement {
         if try_block.finalizer.is_none() {
             return Err(ErrorReport {
-                reason: ErrorReason::MissingCall,
+                reason: ErrorReason::MissingCallOnBranch,
                 spans: vec![try_block.span],
             });
         }
@@ -292,10 +296,10 @@ fn executes_always_super_expression<'a>(
         );
     }
 
-    Err(ErrorReport { reason: ErrorReason::MissingCall, spans: vec![statement.span()] })
+    Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![statement.span()] })
 }
 
-fn has_method_possible_super_call_expression<'a>(
+fn validate_method_super_call_expression<'a>(
     method: &'a MethodDefinition<'a>,
 ) -> Result<Vec<Span>, ErrorReport> {
     let Some(func_body) = &method.value.body else {
@@ -319,12 +323,12 @@ fn has_body_possible_super_call_expression<'a>(
             return result;
         }
 
-        if result.as_ref().err().unwrap().reason != ErrorReason::MissingCall {
+        if result.as_ref().err().unwrap().reason != ErrorReason::NotFound {
             return result;
         }
     }
 
-    Err(ErrorReport { reason: ErrorReason::MissingCall, spans: vec![] })
+    Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![] })
 }
 
 fn has_return_statement<'a>(method: &'a MethodDefinition<'a>) -> bool {
