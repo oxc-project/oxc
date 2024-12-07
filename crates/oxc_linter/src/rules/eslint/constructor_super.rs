@@ -199,11 +199,21 @@ fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> Option<
     }
 
     if let Statement::SwitchStatement(switch) = &statement {
+        let has_default = switch.cases.iter().any(|case| case.is_default_case());
+
+        if !has_default {
+            return None;
+        }
+
         let calls_grouped: Vec<Option<Vec<Span>>> = switch
             .cases
             .iter()
             .map(|case| {
-                let all = case.consequent.iter().map(executes_always_super_expression);
+                // ToDo: check for fast return and break statement (no double call)
+                let all = case
+                    .consequent
+                    .iter()
+                    .map(|statement| executes_always_super_expression(statement));
 
                 // we found a super call, filter them
                 if all.clone().any(|case| case.is_some()) {
@@ -436,7 +446,7 @@ fn test() {
 "class A extends B { constructor() { if (a) super(); } }",
 "class A extends B { constructor() { if (a); else super(); } }",
 "class A extends B { constructor() { a && super(); } }",
-// "class A extends B { constructor() { switch (a) { case 0: super(); } } }",
+"class A extends B { constructor() { switch (a) { case 0: super(); } } }",
 "class A extends B { constructor() { switch (a) { case 0: break; default: super(); } } }",
 "class A extends B { constructor() { try { super(); } catch (err) {} } }",
 "class A extends B { constructor() { try { a; } catch (err) { super(); } } }",

@@ -159,6 +159,12 @@ snapshot_kind: text
 
   ⚠ eslint(constructor-super): Expected to call 'super()'
    ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { switch (a) { case 0: super(); } } }
+   ·                     ───────────
+   ╰────
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
  1 │ class A extends B { constructor() { switch (a) { case 0: break; default: super(); } } }
    ·                     ───────────
    ╰────
