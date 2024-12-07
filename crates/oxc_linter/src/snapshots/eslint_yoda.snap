@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 356
 snapshot_kind: text
 ---
   ⚠ eslint(yoda): Require or disallow "Yoda" conditions
@@ -597,3 +596,10 @@ snapshot_kind: text
    ·     ─────
    ╰────
   help: Expected literal to be on the right side of <.
+
+  ⚠ eslint(yoda): Require or disallow "Yoda" conditions
+   ╭─[yoda.tsx:1:5]
+ 1 │ {( t=='' )}
+   ·    ─────
+   ╰────
+  help: Expected literal to be on the left side of ==.
