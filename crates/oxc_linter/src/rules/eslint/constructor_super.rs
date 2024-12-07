@@ -2,7 +2,7 @@ use oxc_ast::ast::{
     AssignmentOperator, ClassBody, ClassElement, Expression, LogicalOperator, MethodDefinition,
     MethodDefinitionKind, Statement,
 };
-use oxc_ast::{match_member_expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -60,31 +60,23 @@ impl Rule for ConstructorSuper {
             return;
         };
 
-        if class.super_class.is_some() {
-            let super_class = &class.super_class.as_ref().unwrap().without_parentheses();
+        if let Some(super_class) = &class.super_class {
+            let super_class = &super_class.without_parentheses();
             let has_super_constructor = is_possible_constructor(super_class);
 
             if has_super_constructor {
-                if has_possible_super_call_expression(&constructor).is_none() {
+                if has_possible_super_call_expression(constructor).is_none() {
                     ctx.diagnostic(has_missing_super_call_diagnostic(constructor.key.span()));
                 }
-            } else {
-                if !has_return_statement(constructor) {
-                    let result = has_possible_super_call_expression(&constructor);
-
-                    if result.is_some() {
-                        ctx.diagnostic(has_unexpected_super_call_diagnostic(result.unwrap()));
-                    } else {
-                        ctx.diagnostic(has_missing_super_call_diagnostic(constructor.key.span()));
-                    }
+            } else if !has_return_statement(constructor) {
+                if let Some(result) = has_possible_super_call_expression(constructor) {
+                    ctx.diagnostic(has_unexpected_super_call_diagnostic(result));
+                } else {
+                    ctx.diagnostic(has_missing_super_call_diagnostic(constructor.key.span()));
                 }
             }
-        } else {
-            let result = has_possible_super_call_expression(&constructor);
-
-            if result.is_some() {
-                ctx.diagnostic(has_unexpected_super_call_diagnostic(result.unwrap()));
-            }
+        } else if let Some(result) = has_possible_super_call_expression(constructor) {
+            ctx.diagnostic(has_unexpected_super_call_diagnostic(result));
         }
     }
 }
@@ -101,7 +93,9 @@ fn is_possible_constructor(expression: &Expression<'_>) -> bool {
             | Expression::YieldExpression(_)
             | Expression::TaggedTemplateExpression(_)
             | Expression::MetaProperty(_)
-            | match_member_expression!(Expression)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::StaticMemberExpression(_)
+            | Expression::PrivateFieldExpression(_)
     ) {
         return true;
     }
@@ -167,13 +161,11 @@ fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> Option<
     }
 
     if let Statement::IfStatement(if_statement) = &statement {
-        if if_statement.alternate.is_none() {
-            return None;
-        }
+        if_statement.alternate.as_ref()?;
 
         if let Some(mut consequent) = executes_always_super_expression(&if_statement.consequent) {
             if let Some(alternative) =
-                executes_always_super_expression(&if_statement.alternate.as_ref().unwrap())
+                executes_always_super_expression(if_statement.alternate.as_ref().unwrap())
             {
                 consequent.extend(alternative);
                 return Some(consequent);
@@ -187,11 +179,11 @@ fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> Option<
         let calls = block
             .body
             .iter()
-            .flat_map(executes_always_super_expression)
+            .filter_map(executes_always_super_expression)
             .flatten()
             .collect::<Vec<Span>>();
 
-        if calls.len() != 0 {
+        if !calls.is_empty() {
             return Some(calls);
         }
 
@@ -199,7 +191,7 @@ fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> Option<
     }
 
     if let Statement::SwitchStatement(switch) = &statement {
-        let has_default = switch.cases.iter().any(|case| case.is_default_case());
+        let has_default = switch.cases.iter().any(oxc_ast::ast::SwitchCase::is_default_case);
 
         if !has_default {
             return None;
@@ -217,24 +209,20 @@ fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> Option<
 
                 // we found a super call, filter them
                 if all.clone().any(|case| case.is_some()) {
-                    return Some(all.filter_map(|case| case).flatten().collect::<Vec<Span>>());
+                    return Some(all.flatten().flatten().collect::<Vec<Span>>());
                 }
 
-                return None;
+                None
             })
             .collect();
 
-        if !calls_grouped.iter().all(|call| call.is_some()) {
+        if !calls_grouped.iter().all(std::option::Option::is_some) {
             return None;
         }
 
-        let calls = calls_grouped
-            .into_iter()
-            .filter(|call| call.is_some())
-            .flat_map(|call| call.unwrap())
-            .collect::<Vec<Span>>();
+        let calls = calls_grouped.into_iter().flatten().flatten().collect::<Vec<Span>>();
 
-        if calls.len() != 0 {
+        if !calls.is_empty() {
             return Some(calls);
         }
 
@@ -242,9 +230,7 @@ fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> Option<
     }
 
     if let Statement::TryStatement(try_block) = &statement {
-        if try_block.finalizer.is_none() {
-            return None;
-        }
+        try_block.finalizer.as_ref()?;
 
         let calls = try_block
             .finalizer
@@ -252,11 +238,11 @@ fn executes_always_super_expression<'a>(statement: &'a Statement<'a>) -> Option<
             .unwrap()
             .body
             .iter()
-            .flat_map(executes_always_super_expression)
+            .filter_map(executes_always_super_expression)
             .flatten()
             .collect::<Vec<Span>>();
 
-        if calls.len() != 0 {
+        if !calls.is_empty() {
             return Some(calls);
         }
 
@@ -272,7 +258,7 @@ fn has_possible_super_call_expression<'a>(method: &'a MethodDefinition<'a>) -> O
     };
 
     for statement in &func_body.statements {
-        if let Some(span) = executes_always_super_expression(&statement) {
+        if let Some(span) = executes_always_super_expression(statement) {
             return Some(span);
         }
     }
@@ -295,22 +281,20 @@ fn has_return_statement<'a>(method: &'a MethodDefinition<'a>) -> bool {
 }
 
 fn get_constructor_method<'a>(class: &'a ClassBody<'a>) -> Option<&'a MethodDefinition<'a>> {
-    if class.body.len() == 0 {
+    if class.body.is_empty() {
         return None;
     }
 
     let constructor = class.body.iter().find(|part| matches!(part, ClassElement::MethodDefinition(method) if method.kind == MethodDefinitionKind::Constructor));
 
-    if constructor.is_none() {
-        return None;
-    }
+    constructor?;
 
     // we already checked it, only for the compiler
     let ClassElement::MethodDefinition(method) = constructor.unwrap() else {
         return None;
     };
 
-    return Some(&method);
+    Some(method)
 }
 
 #[test]
