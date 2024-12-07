@@ -35,6 +35,17 @@ fn has_missing_some_super_call_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
     )
 }
 
+fn has_missing_default_switch_branch_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Lacked a call of 'super()' default.").with_labels(
+        spans
+            .into_iter()
+            .map(|span| {
+                span.label("This path is lacking of a 'super()' call inside 'case default:'")
+            })
+            .collect::<Vec<LabeledSpan>>(),
+    )
+}
+
 fn has_unexpected_return_statement(spans: Vec<Span>) -> OxcDiagnostic {
     OxcDiagnostic::warn("Lacked a call of 'super()' in some code paths.").with_labels(
         spans
@@ -99,7 +110,9 @@ impl Rule for ConstructorSuper {
                 if let Err(error) = validate_method_super_call_expression(constructor) {
                     match error.reason {
                         ErrorReason::MissingDefaultBranchOnSwitch => {
-                            ctx.diagnostic(has_missing_some_super_call_diagnostic(error.spans));
+                            ctx.diagnostic(has_missing_default_switch_branch_diagnostic(
+                                error.spans,
+                            ));
                         }
                         ErrorReason::ReturnWithoutCall => {
                             ctx.diagnostic(has_unexpected_return_statement(error.spans));
@@ -228,10 +241,7 @@ fn executes_always_super_expression<'a>(
             }
         }
 
-        return Err(ErrorReport {
-            reason: ErrorReason::NotFound,
-            spans: vec![if_statement.span],
-        });
+        return Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![if_statement.span] });
     }
 
     if let Statement::BlockStatement(block) = &statement {
@@ -268,7 +278,10 @@ fn executes_always_super_expression<'a>(
             .collect();
 
         if !calls_grouped.iter().all(std::option::Option::is_some) {
-            return Err(ErrorReport { reason: ErrorReason::MissingCallOnBranch, spans: vec![switch.span] });
+            return Err(ErrorReport {
+                reason: ErrorReason::MissingCallOnBranch,
+                spans: vec![switch.span],
+            });
         }
 
         let calls = calls_grouped.into_iter().flatten().flatten().collect::<Vec<Span>>();
@@ -277,10 +290,7 @@ fn executes_always_super_expression<'a>(
             return Ok(calls);
         }
 
-        return Err(ErrorReport {
-            reason: ErrorReason::NotFound,
-            spans: vec![statement.span()],
-        });
+        return Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![statement.span()] });
     }
 
     if let Statement::TryStatement(try_block) = &statement {
