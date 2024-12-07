@@ -6,7 +6,7 @@ snapshot_kind: text
    ╭─[constructor_super.tsx:1:40]
  1 │ class A extends null { constructor() { super(); } }
    ·                                        ───┬───
-   ·                                           ╰── Remove this `super()` call expression
+   ·                                           ╰── Remove this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Expected to call 'super()'
@@ -19,70 +19,70 @@ snapshot_kind: text
    ╭─[constructor_super.tsx:1:39]
  1 │ class A extends 100 { constructor() { super(); } }
    ·                                       ───┬───
-   ·                                          ╰── Remove this `super()` call expression
+   ·                                          ╰── Remove this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
    ╭─[constructor_super.tsx:1:42]
  1 │ class A extends 'test' { constructor() { super(); } }
    ·                                          ───┬───
-   ·                                             ╰── Remove this `super()` call expression
+   ·                                             ╰── Remove this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
    ╭─[constructor_super.tsx:1:43]
  1 │ class A extends (B = 5) { constructor() { super(); } }
    ·                                           ───┬───
-   ·                                              ╰── Remove this `super()` call expression
+   ·                                              ╰── Remove this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
    ╭─[constructor_super.tsx:1:44]
  1 │ class A extends (B && 5) { constructor() { super(); } }
    ·                                            ───┬───
-   ·                                               ╰── Remove this `super()` call expression
+   ·                                               ╰── Remove this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
    ╭─[constructor_super.tsx:1:45]
  1 │ class A extends (B &&= 5) { constructor() { super(); } }
    ·                                             ───┬───
-   ·                                                ╰── Remove this `super()` call expression
+   ·                                                ╰── Remove this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
    ╭─[constructor_super.tsx:1:44]
  1 │ class A extends (B += C) { constructor() { super(); } }
    ·                                            ───┬───
-   ·                                               ╰── Remove this `super()` call expression
+   ·                                               ╰── Remove this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
    ╭─[constructor_super.tsx:1:44]
  1 │ class A extends (B -= C) { constructor() { super(); } }
    ·                                            ───┬───
-   ·                                               ╰── Remove this `super()` call expression
+   ·                                               ╰── Remove this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
    ╭─[constructor_super.tsx:1:45]
  1 │ class A extends (B **= C) { constructor() { super(); } }
    ·                                             ───┬───
-   ·                                                ╰── Remove this `super()` call expression
+   ·                                                ╰── Remove this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
    ╭─[constructor_super.tsx:1:44]
  1 │ class A extends (B |= C) { constructor() { super(); } }
    ·                                            ───┬───
-   ·                                               ╰── Remove this `super()` call expression
+   ·                                               ╰── Remove this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
    ╭─[constructor_super.tsx:1:44]
  1 │ class A extends (B &= C) { constructor() { super(); } }
    ·                                            ───┬───
-   ·                                               ╰── Remove this `super()` call expression
+   ·                                               ╰── Remove this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Expected to call 'super()'
@@ -157,10 +157,11 @@ snapshot_kind: text
    ·                     ───────────
    ╰────
 
-  ⚠ eslint(constructor-super): Expected to call 'super()'
-   ╭─[constructor_super.tsx:1:21]
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
+   ╭─[constructor_super.tsx:1:37]
  1 │ class A extends B { constructor() { switch (a) { case 0: super(); } } }
-   ·                     ───────────
+   ·                                     ───────────────┬───────────────
+   ·                                                    ╰── This path is lacking of a 'super()' call
    ╰────
 
   ⚠ eslint(constructor-super): Expected to call 'super()'
@@ -187,11 +188,7 @@ snapshot_kind: text
    ·                     ───────────
    ╰────
 
-  ⚠ eslint(constructor-super): Expected to call 'super()'
-   ╭─[constructor_super.tsx:1:21]
- 1 │ class A extends B { constructor() { return; super(); } }
-   ·                     ───────────
-   ╰────
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
 
   ⚠ eslint(constructor-super): Expected to call 'super()'
    ╭─[constructor_super.tsx:2:20]
