@@ -87,6 +87,7 @@
 //! Oxc output:
 //! ```js
 //! let _super = function() {
+//!   "use strict";
 //!   this.prop = foo();
 //!   return this;
 //! };
@@ -95,7 +96,7 @@
 //! }
 //! ```
 //!
-//! ESBuild does not `super()` in constructor params correctly:
+//! ESBuild does not handle `super()` in constructor params correctly:
 //! [ESBuild REPL](https://esbuild.github.io/try/#dAAwLjI0LjAALS10YXJnZXQ9ZXMyMDIwAGNsYXNzIEMgZXh0ZW5kcyBTIHsKICBwcm9wID0gZm9vKCk7CiAgY29uc3RydWN0b3IoeCA9IHN1cGVyKCksIHkgPSBzdXBlcigpKSB7fQp9Cg)
 
 use oxc_allocator::Vec as ArenaVec;
@@ -407,8 +408,20 @@ impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
         let super_func_scope_id = ctx.scopes_mut().add_scope(
             Some(outer_scope_id),
             NodeId::DUMMY,
-            ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode,
+            ScopeFlags::Function | ScopeFlags::StrictMode,
         );
+
+        // Add `"use strict"` directive if outer scope is not strict mode
+        let directives = if ctx.scopes().get_flags(outer_scope_id).is_strict_mode() {
+            ctx.ast.vec()
+        } else {
+            ctx.ast.vec1(ctx.ast.directive(
+                SPAN,
+                ctx.ast.string_literal(SPAN, Atom::from("use strict"), None),
+                Atom::from("use strict"),
+            ))
+        };
+
         // `return this;`
         let return_stmt = ctx.ast.statement_return(SPAN, Some(ctx.ast.expression_this(SPAN)));
         // `<inits>; return this;`
@@ -430,7 +443,7 @@ impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
                 NONE,
             ),
             NONE,
-            Some(ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body_stmts)),
+            Some(ctx.ast.alloc_function_body(SPAN, directives, body_stmts)),
             super_func_scope_id,
         ))
     }

@@ -1,9 +1,8 @@
 commit: 54a8389f
 
-Passed: 94/105
+Passed: 94/106
 
 # All Passed:
-* babel-plugin-transform-class-properties
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
@@ -14,6 +13,16 @@ Passed: 94/105
 * babel-preset-typescript
 * babel-plugin-transform-react-jsx-source
 * regexp
+
+
+# babel-plugin-transform-class-properties (1/2)
+* super-in-constructor-strict/input.js
+Symbol flags mismatch for "_super":
+after transform: SymbolId(6): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
+Symbol flags mismatch for "_super2":
+after transform: SymbolId(7): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 
 
 # babel-plugin-transform-async-to-generator (14/15)

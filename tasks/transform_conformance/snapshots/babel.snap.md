@@ -822,25 +822,16 @@ x Output mismatch
 x Output mismatch
 
 * public/derived-super-in-default-params/input.js
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "_super":
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 * public/derived-super-in-default-params-complex/input.js
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "_super":
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 * public/derived-super-in-default-params-in-arrow/input.js
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "_super":
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
