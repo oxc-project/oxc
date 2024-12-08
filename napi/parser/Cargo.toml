@@ -21,7 +21,8 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["serialize"] }
+oxc = { workspace = true }
+oxc_ast = { workspace = true, features = ["serialize"] } # enable feature only
 oxc_napi = { workspace = true }
 
 rustc-hash = { workspace = true }
@@ -31,7 +32,7 @@ napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
 
 [package.metadata.cargo-shear]
-ignored = ["napi"]
+ignored = ["napi", "oxc_ast"]
 
 [build-dependencies]
 napi-build = { workspace = true }

@@ -1824,6 +1824,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
+ "oxc_ast",
  "oxc_napi",
  "rustc-hash",
  "serde_json",
