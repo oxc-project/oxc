@@ -6,7 +6,7 @@ use crate::{tester::Tester, RuleMeta as _};
 /// !!!! STOP !!!!
 /// Are you fixing a bug in this rule and want to add a test case? Please put
 /// it in `oxc.rs`. These are _only_ the test cases ported from the original
-/// ESLint rule.
+/// React rule.
 #[test]
 fn test() {
     let pass = vec![
