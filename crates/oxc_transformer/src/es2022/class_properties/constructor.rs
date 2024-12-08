@@ -377,7 +377,7 @@ impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
             self.ctx.generate_uid(
                 "super",
                 self.ctx.current_scope_id(),
-                SymbolFlags::FunctionScopedVariable,
+                SymbolFlags::BlockScopedVariable,
             )
         });
 

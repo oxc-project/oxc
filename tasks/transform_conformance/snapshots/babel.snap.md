@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 434/846
+Passed: 437/846
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (107/264)
+# babel-plugin-transform-class-properties (110/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -820,21 +820,6 @@ x Output mismatch
 
 * public/delete-super-property/input.js
 x Output mismatch
-
-* public/derived-super-in-default-params/input.js
-Symbol flags mismatch for "_super":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-* public/derived-super-in-default-params-complex/input.js
-Symbol flags mismatch for "_super":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-* public/derived-super-in-default-params-in-arrow/input.js
-Symbol flags mismatch for "_super":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 * public/extracted-this/input.js
 x Output mismatch
