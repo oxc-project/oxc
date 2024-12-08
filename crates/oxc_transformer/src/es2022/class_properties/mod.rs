@@ -168,8 +168,7 @@ type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ClassPropertiesOptions {
-    #[serde(alias = "loose")]
-    pub(crate) set_public_class_fields: bool,
+    pub(crate) loose: bool,
 }
 
 /// Class properties transform.
@@ -227,8 +226,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
         // TODO: Raise error if these 2 options are inconsistent
-        let set_public_class_fields =
-            options.set_public_class_fields || ctx.assumptions.set_public_class_fields;
+        let set_public_class_fields = options.loose || ctx.assumptions.set_public_class_fields;
 
         Self {
             set_public_class_fields,
