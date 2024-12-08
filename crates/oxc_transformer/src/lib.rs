@@ -51,7 +51,7 @@ use regexp::RegExp;
 use typescript::TypeScript;
 
 pub use crate::{
-    common::helper_loader::HelperLoaderMode,
+    common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},

@@ -1,6 +1,6 @@
 import { assert, describe, it, test } from 'vitest';
 
-import { transform } from '../index';
+import { HelperMode, transform } from '../index';
 
 describe('simple', () => {
   const code = 'export class A<T> {}';
@@ -89,6 +89,22 @@ describe('target', () => {
     assert(ret.errors.length == 0);
     assert(ret.code);
     assert.equal(ret.code, code);
+  });
+});
+
+describe('helpers', () => {
+  const data: Array<[HelperMode, string]> = [
+    [HelperMode.External, 'babelHelpers.objectSpread2({}, x);\n'],
+    [HelperMode.Runtime, 'import _objectSpread from "@babel/runtime/helpers/objectSpread2";\n_objectSpread({}, x);\n'],
+  ];
+
+  test.each(data)('%s', (mode, expected) => {
+    const code = `({ ...x })`;
+    const ret = transform('test.js', code, {
+      target: 'es2015',
+      helpers: { mode },
+    });
+    assert.equal(ret.code, expected);
   });
 });
 

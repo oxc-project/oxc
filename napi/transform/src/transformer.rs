@@ -12,8 +12,8 @@ use oxc::{
     diagnostics::OxcDiagnostic,
     span::SourceType,
     transformer::{
-        EnvOptions, InjectGlobalVariablesConfig, InjectImport, JsxRuntime,
-        ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
+        InjectImport, JsxRuntime, ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
     },
     CompilerInterface,
 };
@@ -107,6 +107,9 @@ pub struct TransformOptions {
     /// @see [esbuild#target](https://esbuild.github.io/api/#target)
     pub target: Option<Either<String, Vec<String>>>,
 
+    /// Behaviour for runtime helpers.
+    pub helpers: Option<Helpers>,
+
     /// Define Plugin
     #[napi(ts_type = "Record<string, string>")]
     pub define: Option<FxHashMap<String, String>>,
@@ -134,7 +137,9 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 .unwrap_or_default(),
             jsx: options.jsx.map(Into::into).unwrap_or_default(),
             env,
-            ..Self::default()
+            helper_loader: options
+                .helpers
+                .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
         })
     }
 }
@@ -390,6 +395,53 @@ pub struct Es2015Options {
 impl From<Es2015Options> for oxc::transformer::ES2015Options {
     fn from(options: Es2015Options) -> Self {
         oxc::transformer::ES2015Options { arrow_function: options.arrow_function.map(Into::into) }
+    }
+}
+
+#[napi(object)]
+#[derive(Default)]
+pub struct Helpers {
+    pub mode: Option<HelperMode>,
+}
+
+#[derive(Default, Clone, Copy)]
+#[napi(string_enum)]
+pub enum HelperMode {
+    /// Runtime mode (default): Helper functions are imported from a runtime package.
+    ///
+    /// Example:
+    ///
+    /// ```js
+    /// import helperName from "@babel/runtime/helpers/helperName";
+    /// helperName(...arguments);
+    /// ```
+    #[default]
+    Runtime,
+    /// External mode: Helper functions are accessed from a global `babelHelpers` object.
+    ///
+    /// Example:
+    ///
+    /// ```js
+    /// babelHelpers.helperName(...arguments);
+    /// ```
+    External,
+}
+
+impl From<Helpers> for HelperLoaderOptions {
+    fn from(value: Helpers) -> Self {
+        Self {
+            mode: value.mode.map(HelperLoaderMode::from).unwrap_or_default(),
+            ..HelperLoaderOptions::default()
+        }
+    }
+}
+
+impl From<HelperMode> for HelperLoaderMode {
+    fn from(value: HelperMode) -> Self {
+        match value {
+            HelperMode::Runtime => Self::Runtime,
+            HelperMode::External => Self::External,
+        }
     }
 }
 

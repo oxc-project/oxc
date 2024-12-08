@@ -38,6 +38,34 @@ export interface Es2015Options {
   arrowFunction?: ArrowFunctionsOptions
 }
 
+export declare const enum HelperMode {
+  /**
+   * Runtime mode (default): Helper functions are imported from a runtime package.
+   *
+   * Example:
+   *
+   * ```js
+   * import helperName from "@babel/runtime/helpers/helperName";
+   * helperName(...arguments);
+   * ```
+   */
+  Runtime = 'Runtime',
+  /**
+   * External mode: Helper functions are accessed from a global `babelHelpers` object.
+   *
+   * Example:
+   *
+   * ```js
+   * babelHelpers.helperName(...arguments);
+   * ```
+   */
+  External = 'External'
+}
+
+export interface Helpers {
+  mode?: HelperMode
+}
+
 /** TypeScript Isolated Declarations for Standalone DTS Emit */
 export declare function isolatedDeclaration(filename: string, sourceText: string, options?: IsolatedDeclarationsOptions | undefined | null): IsolatedDeclarationsResult
 
@@ -247,6 +275,8 @@ export interface TransformOptions {
    * @see [esbuild#target](https://esbuild.github.io/api/#target)
    */
   target?: string | Array<string>
+  /** Behaviour for runtime helpers. */
+  helpers?: Helpers
   /** Define Plugin */
   define?: Record<string, string>
   /** Inject Plugin */

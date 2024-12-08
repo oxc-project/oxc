@@ -361,6 +361,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
+module.exports.HelperMode = nativeBinding.HelperMode
 module.exports.isolatedDeclaration = nativeBinding.isolatedDeclaration
 module.exports.Severity = nativeBinding.Severity
 module.exports.transform = nativeBinding.transform
