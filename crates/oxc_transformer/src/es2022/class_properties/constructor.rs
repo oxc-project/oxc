@@ -403,6 +403,8 @@ impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
     // TODO(improve-on-babel): When not in loose mode, inits are `_defineProperty(this, propName, value)`.
     // `_defineProperty` returns `this`, so last statement could be `return _defineProperty(this, propName, value)`,
     // rather than an additional `return this` statement.
+    // Actually this wouldn't work at present, as `_classPrivateFieldInitSpec(this, _prop, value)`
+    // does not return `this`. We could alter it so it does when we have our own helper package.
     fn create_super_func(inits: Vec<Expression<'a>>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let outer_scope_id = ctx.current_scope_id();
         let super_func_scope_id = ctx.scopes_mut().add_scope(
@@ -534,6 +536,8 @@ impl<'a, 'c> ConstructorBodyInitsInserter<'a, 'c> {
         // TODO(improve-on-babel): When not in loose mode, inits are `_defineProperty(this, propName, value)`.
         // `_defineProperty` returns `this`, so last statement could be `return _defineProperty(this, propName, value)`,
         // rather than an additional `return this` statement.
+        // Actually this wouldn't work at present, as `_classPrivateFieldInitSpec(this, _prop, value)`
+        // does not return `this`. We could alter it so it does when we have our own helper package.
         let super_call = create_super_call(&args_binding, ctx);
         let this_expr = ctx.ast.expression_this(SPAN);
         let body_exprs = ctx.ast.expression_sequence(
