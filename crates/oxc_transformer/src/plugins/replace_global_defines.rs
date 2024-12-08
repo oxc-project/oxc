@@ -2,14 +2,14 @@ use std::{cmp::Ordering, sync::Arc};
 
 use lazy_static::lazy_static;
 use oxc_allocator::{Address, Allocator, GetAddress};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
 use oxc_semantic::{IsGlobalReference, ScopeFlags, ScopeTree, SymbolTable};
-use oxc_span::{CompactStr, SourceType};
+use oxc_span::{CompactStr, SourceType, SPAN};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{traverse_mut, Ancestor, Traverse, TraverseCtx};
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 /// Configuration for [ReplaceGlobalDefines].
 ///
@@ -26,7 +26,8 @@ lazy_static! {
 
 #[derive(Debug)]
 struct IdentifierDefine {
-    identifier_defines: Vec<(/* key */ CompactStr, /* value */ CompactStr)>,
+    identifier_defines:
+        Vec<(/* key */ CompactStr, /* value */ CompactStr, /* rule index */ usize)>,
     /// Whether user want to replace `ThisExpression`, avoid linear scan for each `ThisExpression`
     has_this_expr_define: bool,
 }
@@ -39,7 +40,12 @@ struct ReplaceGlobalDefinesConfigImpl {
     /// time
     /// Some(replacement): import.meta -> replacement
     /// None -> no need to replace import.meta
-    import_meta: Option<CompactStr>,
+    import_meta: Option<(CompactStr, usize)>,
+}
+
+pub struct ImportMetaMetaProperty {
+    pub name: CompactStr,
+    pub rule_index: usize,
 }
 
 #[derive(Debug)]
@@ -47,6 +53,7 @@ pub struct DotDefine {
     /// Member expression parts
     pub parts: Vec<CompactStr>,
     pub value: CompactStr,
+    pub rule_index: usize,
 }
 
 #[derive(Debug)]
@@ -55,17 +62,23 @@ pub struct MetaPropertyDefine {
     pub parts: Vec<CompactStr>,
     pub value: CompactStr,
     pub postfix_wildcard: bool,
+    pub rule_index: usize,
 }
 
 impl MetaPropertyDefine {
-    pub fn new(parts: Vec<CompactStr>, value: CompactStr, postfix_wildcard: bool) -> Self {
-        Self { parts, value, postfix_wildcard }
+    pub fn new(
+        parts: Vec<CompactStr>,
+        value: CompactStr,
+        postfix_wildcard: bool,
+        i: usize,
+    ) -> Self {
+        Self { parts, value, postfix_wildcard, rule_index: i }
     }
 }
 
 impl DotDefine {
-    fn new(parts: Vec<CompactStr>, value: CompactStr) -> Self {
-        Self { parts, value }
+    fn new(parts: Vec<CompactStr>, value: CompactStr, i: usize) -> Self {
+        Self { parts, value, rule_index: i }
     }
 }
 
@@ -90,7 +103,7 @@ impl ReplaceGlobalDefinesConfig {
         let mut meta_properties_defines = vec![];
         let mut import_meta = None;
         let mut has_this_expr_define = false;
-        for (key, value) in defines {
+        for (i, (key, value)) in defines.iter().enumerate() {
             let key = key.as_ref();
 
             let value = value.as_ref();
@@ -99,16 +112,17 @@ impl ReplaceGlobalDefinesConfig {
             match Self::check_key(key)? {
                 IdentifierType::Identifier => {
                     has_this_expr_define |= key == "this";
-                    identifier_defines.push((CompactStr::new(key), CompactStr::new(value)));
+                    identifier_defines.push((CompactStr::new(key), CompactStr::new(value), i));
                 }
                 IdentifierType::DotDefines { parts } => {
-                    dot_defines.push(DotDefine::new(parts, CompactStr::new(value)));
+                    dot_defines.push(DotDefine::new(parts, CompactStr::new(value), i));
                 }
                 IdentifierType::ImportMetaWithParts { parts, postfix_wildcard } => {
                     meta_properties_defines.push(MetaPropertyDefine::new(
                         parts,
                         CompactStr::new(value),
                         postfix_wildcard,
+                        i,
                     ));
                 }
                 IdentifierType::ImportMeta(postfix_wildcard) => {
@@ -117,9 +131,10 @@ impl ReplaceGlobalDefinesConfig {
                             vec![],
                             CompactStr::new(value),
                             postfix_wildcard,
+                            i,
                         ));
                     } else {
-                        import_meta = Some(CompactStr::new(value));
+                        import_meta = Some((CompactStr::new(value), i));
                     }
                 }
             }
@@ -198,6 +213,7 @@ impl ReplaceGlobalDefinesConfig {
         }
     }
 
+    /// return if `Expression` is `ObjectExpression`
     fn check_value(allocator: &Allocator, source_text: &str) -> Result<(), Vec<OxcDiagnostic>> {
         Parser::new(allocator, source_text, SourceType::default()).parse_expression()?;
         Ok(())
@@ -227,6 +243,9 @@ pub struct ReplaceGlobalDefines<'a> {
     /// When `exit` the node, reset the `Lock` to `None` to make sure not affect other
     /// transformation.
     ast_node_lock: Option<Address>,
+    shared_object_expr_map: FxHashMap<CompactStr, Expression<'a>>,
+    /// If a define value is a ObjectExpression, we should share the object expression reference
+    define_index_to_ident_ref: FxHashMap<usize, CompactStr>,
 }
 
 impl<'a> Traverse<'a> for ReplaceGlobalDefines<'a> {
@@ -271,11 +290,42 @@ impl<'a> Traverse<'a> for ReplaceGlobalDefines<'a> {
             self.ast_node_lock = None;
         }
     }
+
+    fn exit_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        let shared_objects_decl =
+            self.shared_object_expr_map.iter_mut().map(|(ident_name, expr)| {
+                let expr = ctx.ast.move_expression(expr);
+                let decl_kind = VariableDeclarationKind::Const;
+                let binding_pattern_kind =
+                    ctx.ast.binding_pattern_kind_binding_identifier(SPAN, ident_name.as_ref());
+                let binding_pattern = ctx.ast.binding_pattern(binding_pattern_kind, NONE, false);
+                let declarator = ctx.ast.variable_declarator(
+                    SPAN,
+                    decl_kind,
+                    binding_pattern,
+                    Some(expr),
+                    false,
+                );
+                Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
+                    SPAN,
+                    VariableDeclarationKind::Const,
+                    ctx.ast.vec1(declarator),
+                    false,
+                ))
+            });
+        node.body.splice(0..0, shared_objects_decl);
+    }
 }
 
 impl<'a> ReplaceGlobalDefines<'a> {
     pub fn new(allocator: &'a Allocator, config: ReplaceGlobalDefinesConfig) -> Self {
-        Self { allocator, config, ast_node_lock: None }
+        Self {
+            allocator,
+            config,
+            ast_node_lock: None,
+            shared_object_expr_map: FxHashMap::default(),
+            define_index_to_ident_ref: FxHashMap::default(),
+        }
     }
 
     pub fn build(
@@ -297,14 +347,16 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_identifier_defines(
-        &self,
+        &mut self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         match expr {
             Expression::Identifier(ident) => {
-                if let Some(new_expr) = self.replace_identifier_define_impl(ident, ctx) {
-                    *expr = new_expr;
+                if let Some((new_expr, rule_index)) =
+                    self.replace_identifier_define_impl(ident, ctx)
+                {
+                    *expr = self.try_share_object_expr(ctx, new_expr, rule_index);
                     return true;
                 }
             }
@@ -312,10 +364,15 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 if self.config.0.identifier.has_this_expr_define
                     && should_replace_this_expr(ctx.current_scope_flags()) =>
             {
-                for (key, value) in &self.config.0.identifier.identifier_defines {
+                for (key, value, rule_index) in &self.config.0.identifier.identifier_defines {
                     if key.as_str() == "this" {
-                        let value = self.parse_value(value);
-                        *expr = value;
+                        let new_expr =
+                            if let Some(ident) = self.define_index_to_ident_ref.get(rule_index) {
+                                ctx.ast.expression_identifier_reference(SPAN, ident.as_ref())
+                            } else {
+                                self.parse_value(value)
+                            };
+                        *expr = self.try_share_object_expr(ctx, new_expr, *rule_index);
 
                         return true;
                     }
@@ -330,15 +387,21 @@ impl<'a> ReplaceGlobalDefines<'a> {
         &self,
         ident: &mut oxc_allocator::Box<'_, IdentifierReference<'_>>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
+    ) -> Option<(Expression<'a>, usize)> {
         if !ident.is_global_reference(ctx.symbols()) {
             return None;
         }
-        for (key, value) in &self.config.0.identifier.identifier_defines {
+        for (key, value, i) in &self.config.0.identifier.identifier_defines {
             if ident.name.as_str() == key {
+                if let Some(ident) = self.define_index_to_ident_ref.get(i) {
+                    return Some((
+                        ctx.ast.expression_identifier_reference(SPAN, ident.as_ref()),
+                        *i,
+                    ));
+                }
                 let value = self.parse_value(value);
 
-                return Some(value);
+                return Some((value, *i));
             }
         }
         None
@@ -349,23 +412,26 @@ impl<'a> ReplaceGlobalDefines<'a> {
         node: &mut AssignmentExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        let new_left = node
-            .left
-            .as_simple_assignment_target_mut()
-            .and_then(|item| match item {
-                SimpleAssignmentTarget::ComputedMemberExpression(ref mut computed_member_expr) => {
-                    self.replace_dot_computed_member_expr(ctx, computed_member_expr)
-                }
-                SimpleAssignmentTarget::StaticMemberExpression(ref mut member) => {
-                    self.replace_dot_static_member_expr(ctx, member)
-                }
-                SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                    self.replace_identifier_define_impl(ident, ctx)
-                }
-                _ => None,
-            })
-            .and_then(assignment_target_from_expr);
-        if let Some(new_left) = new_left {
+        let ret = node.left.as_simple_assignment_target_mut().and_then(|item| match item {
+            SimpleAssignmentTarget::ComputedMemberExpression(ref mut computed_member_expr) => self
+                .replace_dot_computed_member_expr(ctx, computed_member_expr)
+                .map(|(expr, rule_index)| (expr, true, rule_index)),
+            SimpleAssignmentTarget::StaticMemberExpression(ref mut member) => {
+                self.replace_dot_static_member_expr(ctx, member)
+            }
+            SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => self
+                .replace_identifier_define_impl(ident, ctx)
+                .map(|(expr, rule_index)| (expr, true, rule_index)),
+            _ => None,
+        });
+        if let Some(new_left) = ret.and_then(|(new_left, could_be_shared, rule_index)| {
+            let new_left = if could_be_shared {
+                self.try_share_object_expr(ctx, new_left, rule_index)
+            } else {
+                new_left
+            };
+            assignment_target_from_expr(new_left)
+        }) {
             node.left = new_left;
             return true;
         }
@@ -379,11 +445,13 @@ impl<'a> ReplaceGlobalDefines<'a> {
     ) -> bool {
         match expr {
             Expression::ChainExpression(chain) => {
-                let Some(new_expr) =
+                let Some((new_expr, could_be_shared, rule_index)) =
                     chain.expression.as_member_expression_mut().and_then(|item| match item {
                         MemberExpression::ComputedMemberExpression(
                             ref mut computed_member_expr,
-                        ) => self.replace_dot_computed_member_expr(ctx, computed_member_expr),
+                        ) => self
+                            .replace_dot_computed_member_expr(ctx, computed_member_expr)
+                            .map(|(expr, rule_index)| (expr, true, rule_index)),
                         MemberExpression::StaticMemberExpression(ref mut member) => {
                             self.replace_dot_static_member_expr(ctx, member)
                         }
@@ -392,27 +460,46 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 else {
                     return false;
                 };
+                let new_expr = if could_be_shared {
+                    self.try_share_object_expr(ctx, new_expr, rule_index)
+                } else {
+                    new_expr
+                };
                 *expr = new_expr;
                 return true;
             }
             Expression::StaticMemberExpression(member) => {
-                if let Some(new_expr) = self.replace_dot_static_member_expr(ctx, member) {
+                if let Some((new_expr, could_be_shared, rule_index)) =
+                    self.replace_dot_static_member_expr(ctx, member)
+                {
+                    let new_expr = if could_be_shared {
+                        self.try_share_object_expr(ctx, new_expr, rule_index)
+                    } else {
+                        new_expr
+                    };
                     *expr = new_expr;
                     return true;
                 }
             }
             Expression::ComputedMemberExpression(member) => {
-                if let Some(new_expr) = self.replace_dot_computed_member_expr(ctx, member) {
-                    *expr = new_expr;
+                if let Some((new_expr, rule_index)) =
+                    self.replace_dot_computed_member_expr(ctx, member)
+                {
+                    *expr = self.try_share_object_expr(ctx, new_expr, rule_index);
                     return true;
                 }
             }
             Expression::MetaProperty(meta_property) => {
-                if let Some(ref replacement) = self.config.0.import_meta {
+                if let Some((ref replacement, rule_index)) = self.config.0.import_meta {
                     if meta_property.meta.name == "import" && meta_property.property.name == "meta"
                     {
-                        let value = self.parse_value(replacement);
-                        *expr = value;
+                        let value =
+                            if let Some(ident) = self.define_index_to_ident_ref.get(&rule_index) {
+                                ctx.ast.expression_identifier_reference(SPAN, ident.as_ref())
+                            } else {
+                                self.parse_value(replacement)
+                            };
+                        *expr = self.try_share_object_expr(ctx, value, rule_index);
                         return true;
                     }
                 }
@@ -422,44 +509,96 @@ impl<'a> ReplaceGlobalDefines<'a> {
         false
     }
 
+    /// return a tuple
+    /// the first element means the new Expression to replaced
+    /// the second element means the unique index of the define config
     fn replace_dot_computed_member_expr(
         &mut self,
         ctx: &mut TraverseCtx<'a>,
         member: &mut ComputedMemberExpression<'a>,
-    ) -> Option<Expression<'a>> {
+    ) -> Option<(Expression<'a>, usize)> {
         for dot_define in &self.config.0.dot {
             if Self::is_dot_define(
                 ctx,
                 dot_define,
                 DotDefineMemberExpression::ComputedMemberExpression(member),
             ) {
-                let value = self.parse_value(&dot_define.value);
-                return Some(value);
+                let value = if let Some(ident) =
+                    self.define_index_to_ident_ref.get(&dot_define.rule_index)
+                {
+                    ctx.ast.expression_identifier_reference(SPAN, ident.as_ref())
+                } else {
+                    self.parse_value(&dot_define.value)
+                };
+
+                return Some((value, dot_define.rule_index));
             }
         }
         // TODO: meta_property_define
         None
     }
 
+    pub fn try_share_object_expr(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+        expr: Expression<'a>,
+        i: usize,
+    ) -> Expression<'a> {
+        let Expression::ObjectExpression(_) = expr else { return expr };
+        let mut count = i;
+        let mut name = format!("__oxc_shared_object_expr_{count}",);
+        loop {
+            if ctx.scopes().get_root_binding(&name).is_none() {
+                break;
+            }
+            count += 1;
+            name = format!("__oxc_shared_object_expr_{count}",);
+        }
+        let ident_name: CompactStr = name.into();
+        self.define_index_to_ident_ref.insert(i, ident_name.clone());
+        self.shared_object_expr_map.insert(ident_name.clone(), expr);
+        ctx.ast.expression_identifier_reference(SPAN, ident_name.as_ref())
+    }
+
+    /// return a tuple
+    /// - the first element means the new Expression to replaced
+    /// - the second element means if the expr could be shared as a object expression, if a
+    /// ObjectExpression is apply the `destructing_dot_define_optimizer`, the `ObjectExpression`
+    /// should not be shared.
+    /// - the third element means the unique index of the define config,
     fn replace_dot_static_member_expr(
         &mut self,
         ctx: &mut TraverseCtx<'a>,
         member: &mut StaticMemberExpression<'a>,
-    ) -> Option<Expression<'a>> {
+    ) -> Option<(Expression<'a>, bool, usize)> {
         for dot_define in &self.config.0.dot {
             if Self::is_dot_define(
                 ctx,
                 dot_define,
                 DotDefineMemberExpression::StaticMemberExpression(member),
             ) {
-                let value = self.parse_value(&dot_define.value);
-                return Some(destructing_dot_define_optimizer(value, ctx));
+                let value = if let Some(ident) =
+                    self.define_index_to_ident_ref.get(&dot_define.rule_index)
+                {
+                    ctx.ast.expression_identifier_reference(SPAN, ident.as_ref())
+                } else {
+                    self.parse_value(&dot_define.value)
+                };
+                let (expr, is_optimized) = destructing_dot_define_optimizer(value, ctx);
+                return Some((expr, !is_optimized, dot_define.rule_index));
             }
         }
         for meta_property_define in &self.config.0.meta_property {
             if Self::is_meta_property_define(meta_property_define, member) {
-                let value = self.parse_value(&meta_property_define.value);
-                return Some(destructing_dot_define_optimizer(value, ctx));
+                let value = if let Some(ident) =
+                    self.define_index_to_ident_ref.get(&meta_property_define.rule_index)
+                {
+                    ctx.ast.expression_identifier_reference(SPAN, ident.as_ref())
+                } else {
+                    self.parse_value(&meta_property_define.value)
+                };
+                let (expr, is_optimized) = destructing_dot_define_optimizer(value, ctx);
+                return Some((expr, !is_optimized, meta_property_define.rule_index));
             }
         }
         None
@@ -632,19 +771,21 @@ fn static_property_name_of_computed_expr<'b, 'a: 'b>(
     }
 }
 
+/// First element is the new expression to replace
+/// Second element is if the expr is optimized
 fn destructing_dot_define_optimizer<'ast>(
     mut expr: Expression<'ast>,
     ctx: &mut TraverseCtx<'ast>,
-) -> Expression<'ast> {
-    let Expression::ObjectExpression(ref mut obj) = expr else { return expr };
+) -> (Expression<'ast>, bool) {
+    let Expression::ObjectExpression(ref mut obj) = expr else { return (expr, false) };
     let parent = ctx.parent();
     let destruct_obj_pat = match parent {
         Ancestor::VariableDeclaratorInit(declarator) => match declarator.id().kind {
             BindingPatternKind::ObjectPattern(ref pat) => pat,
-            _ => return expr,
+            _ => return (expr, false),
         },
         _ => {
-            return expr;
+            return (expr, false);
         }
     };
     let mut needed_keys = FxHashSet::default();
@@ -655,7 +796,7 @@ fn destructing_dot_define_optimizer<'ast>(
             }
             // if there exists a none static key, we can't optimize
             None => {
-                return expr;
+                return (expr, false);
             }
         }
     }
@@ -687,7 +828,7 @@ fn destructing_dot_define_optimizer<'ast>(
     // the method copy from std doc https://doc.rust-lang.org/std/vec/struct.Vec.html#examples-26
     let mut iter = should_preserved_keys.iter();
     obj.properties.retain(|_| *iter.next().unwrap());
-    expr
+    (expr, true)
 }
 
 const fn should_replace_this_expr(scope_flags: ScopeFlags) -> bool {

@@ -84,7 +84,9 @@ fn dot_define_is_member_expr_postfix() {
     .unwrap();
     test(
         "console.log(__OBJ__.process.env.SOMEVAR)",
-        "console.log({ 'process': { 'env': { 'SOMEVAR': 'foo' } } }.process.env.SOMEVAR);\n",
+        "
+            const __oxc_shared_object_expr_0 = { 'process': { 'env': { 'SOMEVAR': 'foo' } } };
+            console.log(__oxc_shared_object_expr_0.process.env.SOMEVAR);",
         config.clone(),
     );
 }
@@ -150,7 +152,10 @@ fn dot_define_with_destruct() {
     // bailout
     test(
         "const {[any]: alias} = process.env.NODE_ENV",
-        "const { [any]: alias } = {\n\t'a': 1,\n\tb: 2,\n\tc: true,\n\td: { a: b }\n};",
+        "
+        const __oxc_shared_object_expr_0 = { 'a': 1, b: 2, c: true, d: { a: b } };
+        const { [any]: alias } = __oxc_shared_object_expr_0;
+           ",
         config.clone(),
     );
 
@@ -234,4 +239,23 @@ console.log(
         "console.log([a = 0,b.c = 0,b['c'] = 0], [ident = 0,ident = 0,ident = 0], [dot.chain = 0,dot.chain = 0,dot.chain = 0\n]);",
         config.clone(),
     );
+}
+
+#[test]
+fn same_reference_for_object() {
+    let config =
+        ReplaceGlobalDefinesConfig::new(&[("__OBJ__", r#"{"vars":{"SOMEVAR":"foo"}}"#)]).unwrap();
+    test(
+        "
+        console.log(__OBJ__.vars);
+        __OBJ__.vars.ANOTHER = 'bar';
+        console.log(__OBJ__.vars)",
+        "
+        const __oxc_shared_object_expr_0 = { 'vars': { 'SOMEVAR': 'foo' } };
+        console.log(__oxc_shared_object_expr_0.vars);
+        __oxc_shared_object_expr_0.vars.ANOTHER = 'bar';
+        console.log(__oxc_shared_object_expr_0.vars);
+        ",
+        config.clone(),
+    ); // fails
 }
