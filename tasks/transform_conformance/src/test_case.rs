@@ -296,8 +296,10 @@ impl TestCase {
                 }
             } else {
                 println!("Expected:\n");
+                let output = output.cow_replace("\t", "  ");
                 println!("{output}\n");
                 println!("Transformed:\n");
+                let transformed_code = transformed_code.cow_replace("\t", "  ");
                 println!("{transformed_code}");
                 println!("Errors:\n");
                 if let Some(actual_errors) = &actual_errors {
