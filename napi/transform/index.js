@@ -362,4 +362,5 @@ if (!nativeBinding) {
 }
 
 module.exports.isolatedDeclaration = nativeBinding.isolatedDeclaration
+module.exports.Severity = nativeBinding.Severity
 module.exports.transform = nativeBinding.transform

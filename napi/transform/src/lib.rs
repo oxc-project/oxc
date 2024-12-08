@@ -1,5 +1,3 @@
-mod errors;
-
 mod isolated_declaration;
 pub use isolated_declaration::*;
 

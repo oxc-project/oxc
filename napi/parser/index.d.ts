@@ -26,6 +26,19 @@ export interface EcmaScriptModule {
   importMetas: Array<Span>
 }
 
+export interface Error {
+  severity: Severity
+  message: string
+  labels: Array<ErrorLabel>
+  helpMessage?: string
+}
+
+export interface ErrorLabel {
+  message?: string
+  start: number
+  end: number
+}
+
 export interface ExportExportName {
   kind: ExportExportNameKind
   name?: string
@@ -106,7 +119,7 @@ export interface ParseResult {
   program: import("@oxc-project/types").Program
   module: EcmaScriptModule
   comments: Array<Comment>
-  errors: Array<string>
+  errors: Array<Error>
 }
 
 export interface ParserOptions {
@@ -134,6 +147,12 @@ export declare function parseSync(filename: string, sourceText: string, options?
  * This is for benchmark purposes such as measuring napi communication overhead.
  */
 export declare function parseWithoutReturn(filename: string, sourceText: string, options?: ParserOptions | undefined | null): void
+
+export declare const enum Severity {
+  Error = 'Error',
+  Warning = 'Warning',
+  Advice = 'Advice'
+}
 
 export interface Span {
   start: number

@@ -808,7 +808,7 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
     let rule_mod_def_start = mod_rules
         .lines()
         .filter_map(|line| line.split_once("pub mod ").map(|(_, rest)| rest))
-        .position(|rule_mod| rule_mod < &rule_mod_def)
+        .position(|rule_mod| rule_mod < rule_mod_def.as_str())
         .map(|i| i + 1)
         .and_then(|i| rules[mod_start + i..].find("pub mod ").map(|j| i + j))
         .ok_or(format!(
@@ -830,7 +830,7 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
         .lines()
         .filter_map(|line| line.trim().split_once("::"))
         .find_map(|(plugin, rule)| {
-            if plugin == mod_name && rule > &ctx.kebab_rule_name {
+            if plugin == mod_name && rule > ctx.kebab_rule_name.as_str() {
                 let def = format!("{plugin}::{rule}");
                 rules.find(&def)
             } else {

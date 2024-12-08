@@ -5,18 +5,16 @@
 mod convert;
 mod types;
 
-use std::sync::Arc;
-
 use napi::{bindgen_prelude::AsyncTask, Task};
 use napi_derive::napi;
 
 use oxc::{
     allocator::Allocator,
     ast::CommentKind,
-    diagnostics::{Error, NamedSource},
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
+use oxc_napi::Error;
 
 pub use crate::types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
 
@@ -70,16 +68,7 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
     let ret = parse(&allocator, source_type, source_text, options);
     let program = serde_json::to_string(&ret.program).unwrap();
 
-    let errors = if ret.errors.is_empty() {
-        vec![]
-    } else {
-        let source = Arc::new(NamedSource::new(filename, source_text.to_string()));
-        ret.errors
-            .into_iter()
-            .map(|diagnostic| Error::from(diagnostic).with_source_code(Arc::clone(&source)))
-            .map(|error| format!("{error:?}"))
-            .collect()
-    };
+    let errors = ret.errors.into_iter().map(Error::from).collect::<Vec<_>>();
 
     let comments = ret
         .program

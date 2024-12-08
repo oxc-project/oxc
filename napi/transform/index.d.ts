@@ -20,6 +20,19 @@ export interface CompilerAssumptions {
   setPublicClassFields?: boolean
 }
 
+export interface Error {
+  severity: Severity
+  message: string
+  labels: Array<ErrorLabel>
+  helpMessage?: string
+}
+
+export interface ErrorLabel {
+  message?: string
+  start: number
+  end: number
+}
+
 export interface Es2015Options {
   /** Transform arrow functions into function expressions. */
   arrowFunction?: ArrowFunctionsOptions
@@ -44,7 +57,7 @@ export interface IsolatedDeclarationsOptions {
 export interface IsolatedDeclarationsResult {
   code: string
   map?: SourceMap
-  errors: Array<string>
+  errors: Array<Error>
 }
 
 /**
@@ -156,6 +169,12 @@ export interface ReactRefreshOptions {
    */
   refreshSig?: string
   emitFullSignatures?: boolean
+}
+
+export declare const enum Severity {
+  Error = 'Error',
+  Warning = 'Warning',
+  Advice = 'Advice'
 }
 
 export interface SourceMap {
@@ -271,7 +290,7 @@ export interface TransformResult {
    * transformed code may still be available even if there are errors in this
    * list.
    */
-  errors: Array<string>
+  errors: Array<Error>
 }
 
 export interface TypeScriptOptions {

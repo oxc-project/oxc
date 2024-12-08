@@ -1785,6 +1785,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_napi"
+version = "0.39.0"
+dependencies = [
+ "napi",
+ "napi-derive",
+ "oxc_diagnostics",
+]
+
+[[package]]
 name = "oxc_parser"
 version = "0.39.0"
 dependencies = [
@@ -1815,6 +1824,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
+ "oxc_napi",
  "rustc-hash",
  "serde_json",
 ]
@@ -2015,6 +2025,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc",
+ "oxc_napi",
  "oxc_sourcemap",
  "rustc-hash",
 ]

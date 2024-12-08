@@ -1,5 +1,7 @@
 use napi_derive::napi;
 
+use oxc_napi::Error;
+
 #[napi(object)]
 #[derive(Default)]
 pub struct ParserOptions {
@@ -26,7 +28,7 @@ pub struct ParseResult {
     pub program: String,
     pub module: EcmaScriptModule,
     pub comments: Vec<Comment>,
-    pub errors: Vec<String>,
+    pub errors: Vec<Error>,
 }
 
 #[napi(object)]

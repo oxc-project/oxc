@@ -368,3 +368,4 @@ module.exports.ImportNameKind = nativeBinding.ImportNameKind
 module.exports.parseAsync = nativeBinding.parseAsync
 module.exports.parseSync = nativeBinding.parseSync
 module.exports.parseWithoutReturn = nativeBinding.parseWithoutReturn
+module.exports.Severity = nativeBinding.Severity
