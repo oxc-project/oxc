@@ -1,0 +1,2 @@
+Disable arrow functions transform in `options.json` because it malfunctions.
+But these fixtures aren't to test arrow functions transform.

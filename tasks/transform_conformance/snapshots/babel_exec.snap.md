@@ -2,7 +2,7 @@ commit: 54a8389f
 
 node: v22.12.0
 
-Passed: 187 of 215 (86.98%)
+Passed: 188 of 215 (87.44%)
 
 Failures:
 
@@ -99,9 +99,6 @@ AssertionError: expected '_Class' to be 'Foo' // Object.is equality
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-static-super-exec.test.js
 Invalid access to super
-
-./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-regression-7371-exec.test.js
-'super' keyword unexpected here
 
 ./fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js
 TypeError: Cannot read properties of undefined (reading 'x')
