@@ -110,7 +110,7 @@ async function updateDir(dirPath, options, hasChangedOptions) {
       await backupFile(path);
       await writeFile(path, JSON.stringify(localOptions, null, 2) + '\n');
     }
-    options = mergeOptions(options, localOptions);
+    options = { ...options, ...localOptions };
   }
 
   // Run Babel with updated options/input
@@ -152,58 +152,6 @@ function updateOptions(options) {
   filter('plugins', FILTER_OUT_PLUGINS);
 
   return hasChangedOptions;
-}
-
-/**
- * Merge `options` into `parentOptions`.
- * Returns merged options object. Does not mutate either input.
- * @param {Object} parentOptions - Parent options
- * @param {Object} options - Local options
- * @returns {Object} - Merged options object
- */
-function mergeOptions(parentOptions, options) {
-  parentOptions = { ...parentOptions };
-
-  function merge(key) {
-    if (!options[key]) return;
-
-    if (!parentOptions[key]) {
-      parentOptions[key] = options[key];
-      return;
-    }
-
-    parentOptions[key] = [...parentOptions[key]];
-
-    const parentPluginIndexes = new Map();
-    for (const [index, plugin] of parentOptions[key].entries()) {
-      parentPluginIndexes.set(getName(plugin), index);
-    }
-
-    for (const plugin of options[key]) {
-      const pluginName = getName(plugin);
-      const parentPluginIndex = parentPluginIndexes.get(pluginName);
-      if (parentPluginIndex !== undefined) {
-        parentOptions[key][parentPluginIndex] = plugin;
-      } else {
-        parentOptions[key].push(plugin);
-      }
-    }
-  }
-
-  merge('presets');
-  merge('plugins');
-
-  if (options.assumptions) {
-    parentOptions.assumptions = { ...parentOptions.assumptions, ...options.assumptions };
-  }
-
-  for (const [key, value] of Object.entries(options)) {
-    if (key === 'plugins' || key === 'presets' || key === 'assumptions') continue;
-    if (Object.hasOwn(parentOptions, key)) throw new Error(`Clash: ${key}`);
-    parentOptions[key] = value;
-  }
-
-  return parentOptions;
 }
 
 /**

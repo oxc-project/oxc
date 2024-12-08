@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 437/846
+Passed: 439/846
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (110/264)
+# babel-plugin-transform-class-properties (112/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -795,9 +795,6 @@ x Output mismatch
 * private-loose/update/input.js
 x Output mismatch
 
-* public/arrow-static-this-without-transform/input.js
-x Output mismatch
-
 * public/call/input.js
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
@@ -899,9 +896,6 @@ after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
 
 * public/super-with-collision/input.js
-x Output mismatch
-
-* public-loose/arrow-static-this-without-transform/input.js
 x Output mismatch
 
 * public-loose/class-shadow-builtins/input.mjs
