@@ -109,9 +109,9 @@ oxc_tasks_common = { path = "tasks/common" }
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
 
 # Relaxed version so the user can decide which version to use.
-napi = "3.0.0-alpha.11"
+napi = "3.0.0-alpha"
 napi-build = "2.1.3"
-napi-derive = "3.0.0-alpha.11"
+napi-derive = "3.0.0-alpha"
 
 # Relaxed version so the user can decide which version to use.
 proc-macro2 = "1"
