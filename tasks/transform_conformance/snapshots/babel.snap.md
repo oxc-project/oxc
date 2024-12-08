@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 440/846
+Passed: 441/846
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (113/264)
+# babel-plugin-transform-class-properties (114/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -374,9 +374,6 @@ rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-
-* assumption-setPublicClassFields/super-expression/input.js
-x Output mismatch
 
 * assumption-setPublicClassFields/super-with-collision/input.js
 x Output mismatch
