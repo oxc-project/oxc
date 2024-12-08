@@ -477,6 +477,8 @@ fn test() {
         (r#"import * as a from "./deep-es7/a"; var {b:{c:{d:{e}}}} = a"#, None),
         (r#"import { b } from "./deep-es7/a"; var {c:{d:{e}}} = b"#, None),
         (r"import { a } from './oxc/indirect-export'; console.log(a.nothing)", None),
+        // Issue: <https://github.com/oxc-project/oxc/issues/7696>
+        (r"import * as acorn from 'acorn'; acorn.parse()", None),
     ];
 
     let fail = vec![
