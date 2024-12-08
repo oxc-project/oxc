@@ -1,0 +1,103 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint(no-unused-vars): Variable 'App' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:2:8]
+ 1 │ 
+ 2 │             var App;
+   ·                 ─┬─
+   ·                  ╰── 'App' is declared here
+ 3 │         
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'unused' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:3:16]
+ 2 │             var App;
+ 3 │             var unused;
+   ·                 ───┬──
+   ·                    ╰── 'unused' is declared here
+ 4 │             React.render(<App unused=""/>);
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'App' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:2:8]
+ 1 │ 
+ 2 │             var App;
+   ·                 ─┬─
+   ·                  ╰── 'App' is declared here
+ 3 │             var Hello;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'Hello' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:3:16]
+ 2 │             var App;
+ 3 │             var Hello;
+   ·                 ──┬──
+   ·                   ╰── 'Hello' is declared here
+ 4 │             React.render(<App:Hello/>);
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'Input' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:3:8]
+ 2 │             var Button;
+ 3 │             var Input;
+   ·                 ──┬──
+   ·                   ╰── 'Input' is declared here
+ 4 │             React.render(<Button.Input unused=""/>);
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'unused' is declared but never used.
+   ╭─[no_unused_vars.tsx:2:10]
+ 1 │ 
+ 2 │             class unused {}
+   ·                   ───┬──
+   ·                      ╰── 'unused' is declared here
+ 3 │         
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'HelloMessage' is declared but never used.
+   ╭─[no_unused_vars.tsx:2:10]
+ 1 │ 
+ 2 │             class HelloMessage {
+   ·                   ──────┬─────
+   ·                         ╰── 'HelloMessage' is declared here
+ 3 │                 render() {
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Hello' is imported but never used.
+   ╭─[no_unused_vars.tsx:2:12]
+ 1 │ 
+ 2 │             import {Hello} from 'Hello';
+   ·                     ──┬──
+   ·                       ╰── 'Hello' is imported here
+ 3 │             function Greetings() {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Variable 'lowercase' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:2:8]
+ 1 │ 
+ 2 │             var lowercase;
+   ·                 ────┬────
+   ·                     ╰── 'lowercase' is declared here
+ 3 │             React.render(<lowercase />);
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'div' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:2:23]
+ 1 │ 
+ 2 │             function Greetings(div) {
+   ·                                ─┬─
+   ·                                 ╰── 'div' is declared here
+ 3 │                 return <div />;
+   ╰────
+  help: Consider removing this parameter.
