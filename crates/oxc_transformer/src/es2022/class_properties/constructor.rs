@@ -52,11 +52,11 @@
 //! ```js
 //! class C extends S {
 //!   constructor(yes) {
-//!     var _super = (..._args) => {
-//!       super(..._args);
-//!       this.prop = foo();
-//!       return this;
-//!     };
+//!     var _super = (..._args) => (
+//!       super(..._args),
+//!       this.prop = foo(),
+//!       this
+//!     );
 //!     if (yes) {
 //!       _super(2);
 //!     } else {
@@ -145,7 +145,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             );
             params_rest =
                 Some(ctx.ast.alloc_binding_rest_element(SPAN, binding.create_binding_pattern(ctx)));
-            stmts.push(create_super_call_stmt(&binding, ctx));
+            stmts.push(ctx.ast.statement_expression(SPAN, create_super_call(&binding, ctx)));
         }
         // TODO: Should these have the span of the original `PropertyDefinition`s?
         stmts.extend(exprs_into_stmts(inits, ctx));
@@ -512,13 +512,8 @@ impl<'a, 'c> ConstructorBodyInitsInserter<'a, 'c> {
     }
 
     /// Insert `_super` function at top of constructor.
-    /// ```js
-    /// var _super = (..._args) => {
-    ///   super(..._args);
-    ///   <inits>
-    ///   return this;
-    /// };
-    /// ```
+    ///
+    /// `var _super = (..._args) => (super(..._args), <inits>, this);`
     fn insert_super_func(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
@@ -534,22 +529,24 @@ impl<'a, 'c> ConstructorBodyInitsInserter<'a, 'c> {
         let args_binding =
             ctx.generate_uid("args", super_func_scope_id, SymbolFlags::FunctionScopedVariable);
 
-        // `super(..._args); <inits>; return this;`
+        // `(super(..._args), <inits>, this)`
         //
         // TODO(improve-on-babel): When not in loose mode, inits are `_defineProperty(this, propName, value)`.
         // `_defineProperty` returns `this`, so last statement could be `return _defineProperty(this, propName, value)`,
         // rather than an additional `return this` statement.
-        let super_call = create_super_call_stmt(&args_binding, ctx);
-        let return_stmt = ctx.ast.statement_return(SPAN, Some(ctx.ast.expression_this(SPAN)));
-        let body_stmts = ctx.ast.vec_from_iter(
-            [super_call].into_iter().chain(exprs_into_stmts(inits, ctx)).chain([return_stmt]),
+        let super_call = create_super_call(&args_binding, ctx);
+        let this_expr = ctx.ast.expression_this(SPAN);
+        let body_exprs = ctx.ast.expression_sequence(
+            SPAN,
+            ctx.ast.vec_from_iter([super_call].into_iter().chain(inits).chain([this_expr])),
         );
+        let body = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, body_exprs));
 
-        // `(...args) => { super(..._args); <inits>; return this; }`
+        // `(..._args) => (super(..._args), <inits>, this)`
         let super_func = Expression::ArrowFunctionExpression(
             ctx.ast.alloc_arrow_function_expression_with_scope_id(
                 SPAN,
-                false,
+                true,
                 false,
                 NONE,
                 ctx.ast.alloc_formal_parameters(
@@ -562,12 +559,12 @@ impl<'a, 'c> ConstructorBodyInitsInserter<'a, 'c> {
                     )),
                 ),
                 NONE,
-                ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body_stmts),
+                ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body),
                 super_func_scope_id,
             ),
         );
 
-        // `var _super = (...args) => { ... }`
+        // `var _super = (..._args) => ( ... );`
         // Note: `super_binding` can be `None` at this point if no `super()` found in constructor
         // (see comment above in `insert`).
         let super_binding = self
@@ -664,20 +661,16 @@ impl<'a, 'c> ConstructorBodyInitsInserter<'a, 'c> {
 }
 
 /// `super(...args);`
-fn create_super_call_stmt<'a>(
+fn create_super_call<'a>(
     args_binding: &BoundIdentifier<'a>,
     ctx: &mut TraverseCtx<'a>,
-) -> Statement<'a> {
-    ctx.ast.statement_expression(
+) -> Expression<'a> {
+    ctx.ast.expression_call(
         SPAN,
-        ctx.ast.expression_call(
-            SPAN,
-            ctx.ast.expression_super(SPAN),
-            NONE,
-            ctx.ast.vec1(
-                ctx.ast.argument_spread_element(SPAN, args_binding.create_read_expression(ctx)),
-            ),
-            false,
-        ),
+        ctx.ast.expression_super(SPAN),
+        NONE,
+        ctx.ast
+            .vec1(ctx.ast.argument_spread_element(SPAN, args_binding.create_read_expression(ctx))),
+        false,
     )
 }

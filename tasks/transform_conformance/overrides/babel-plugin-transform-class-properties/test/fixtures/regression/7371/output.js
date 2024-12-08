@@ -27,11 +27,11 @@ class Obj {
 // ensure superClass is still transformed
 class SuperClass extends Obj {
   constructor() {
-    var _super = (..._args) => {
-      super(..._args);
-      babelHelpers.defineProperty(this, "field", 1);
-      return this;
-    };
+    var _super = (..._args) => (
+      super(..._args),
+      babelHelpers.defineProperty(this, "field", 1),
+      this
+    );
     class B extends (_super(), Obj) {
       constructor() {
         super();
@@ -47,11 +47,11 @@ new SuperClass();
 // ensure ComputedKey Method is still transformed
 class ComputedMethod extends Obj {
   constructor() {
-    var _super2 = (..._args2) => {
-      super(..._args2);
-      babelHelpers.defineProperty(this, "field", 1);
-      return this;
-    };
+    var _super2 = (..._args2) => (
+      super(..._args2),
+      babelHelpers.defineProperty(this, "field", 1),
+      this
+    );
     class B extends Obj {
       constructor() {
         super();
@@ -69,11 +69,11 @@ new ComputedMethod();
 class ComputedField extends Obj {
   constructor() {
     let _super4;
-    var _super3 = (..._args3) => {
-      super(..._args3);
-      babelHelpers.defineProperty(this, "field", 1);
-      return this;
-    };
+    var _super3 = (..._args3) => (
+      super(..._args3),
+      babelHelpers.defineProperty(this, "field", 1),
+      this
+    );
     _super4 = _super3();
     class B extends Obj {
       constructor() {
