@@ -240,20 +240,31 @@ fn executes_always_super_expression<'a>(
     }
 
     if let Statement::IfStatement(if_statement) = &statement {
-        if if_statement.alternate.is_none() {
+        if matches!(&if_statement.consequent, Statement::ReturnStatement(return_statement) if return_statement.argument.is_none())
+        {
             return Err(ErrorReport {
-                reason: ErrorReason::NotFound,
-                spans: vec![if_statement.span],
+                reason: ErrorReason::ReturnWithoutCall,
+                spans: vec![if_statement.consequent.span()],
             });
         }
 
         if let Ok(mut consequent) = executes_always_super_expression(&if_statement.consequent) {
-            if let Ok(alternative) =
-                executes_always_super_expression(if_statement.alternate.as_ref().unwrap())
-            {
+            let Some(alternative_call) = if_statement.alternate.as_ref() else {
+                return Err(ErrorReport {
+                    reason: ErrorReason::MissingCallOnBranch,
+                    spans: vec![if_statement.span],
+                });
+            };
+
+            if let Ok(alternative) = executes_always_super_expression(alternative_call) {
                 consequent.extend(alternative);
                 return Ok(consequent);
             }
+
+            return Err(ErrorReport {
+                reason: ErrorReason::MissingCallOnBranch,
+                spans: vec![if_statement.span],
+            });
         }
 
         return Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![if_statement.span] });
@@ -362,9 +373,17 @@ fn has_return_statement<'a>(method: &'a MethodDefinition<'a>) -> bool {
     };
 
     for statement in &func_body.statements {
-        if matches!(statement, Statement::ReturnStatement(_)) {
+        if is_blocking_execution(statement) {
             return true;
         }
+    }
+
+    false
+}
+
+fn is_blocking_execution<'a>(statement: &'a Statement<'a>) -> bool {
+    if matches!(statement, Statement::ReturnStatement(_) | Statement::ThrowStatement(_)) {
+        return true;
     }
 
     false
@@ -524,10 +543,10 @@ fn test() {
 "class A extends B { constructor() { switch (a) { case 0: break; default: super(); } } }",
 "class A extends B { constructor() { try { super(); } catch (err) {} } }",
 "class A extends B { constructor() { try { a; } catch (err) { super(); } } }",
-// "class A extends B { constructor() { if (a) return; super(); } }",
+"class A extends B { constructor() { if (a) return; super(); } }",
 // "class A extends B { constructor() { super(); super(); } }",
 // "class A extends B { constructor() { super() || super(); } }",
-// "class A extends B { constructor() { if (a) super(); super(); } }",
+"class A extends B { constructor() { if (a) super(); super(); } }",
 // "class A extends B { constructor() { switch (a) { case 0: super(); default: super(); } } }",
 "class A extends B { constructor(a) { while (a) super(); } }",
 "class A extends B { constructor() { return; super(); } }",
