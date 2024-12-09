@@ -121,7 +121,7 @@ unicode-id-start = "1"
 
 #
 oxc-browserslist = "1.1.0"
-oxc_index = "1.0.1"
+oxc_index = "2"
 oxc_resolver = "2.1.1"
 oxc_sourcemap = "1.0.3"
 

@@ -710,7 +710,6 @@ dependencies = [
  "log",
  "regex-automata",
  "regex-syntax",
- "serde",
 ]
 
 [[package]]
@@ -1619,9 +1618,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
-version = "1.0.1"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f004e73d346bec03a428ca26cf2df245d08563f1d3268b7bcbd5554fc1db05c5"
+checksum = "5eca5d9726cd0a6e433debe003b7bc88b2ecad0bb6109f0cef7c55e692139a34"
 dependencies = [
  "serde",
 ]

@@ -44,7 +44,7 @@ serialize = [
   "bitflags/serde",
   "dep:serde",
   "dep:wasm-bindgen",
-  "oxc_index/serialize",
+  "oxc_index/serde",
   "oxc_estree/serialize",
 ]
 
