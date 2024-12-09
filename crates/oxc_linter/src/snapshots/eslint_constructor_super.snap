@@ -199,6 +199,14 @@ snapshot_kind: text
    ·                                        ╰── Remove one of this 'super()' call expression
    ╰────
 
+  ⚠ eslint(constructor-super): Unexpected duplicate 'super()'.
+   ╭─[constructor_super.tsx:1:37]
+ 1 │ class A extends B { constructor() { super() || super(); } }
+   ·                                     ───┬───    ───┬───
+   ·                                        │          ╰── Remove one of this 'super()' call expression
+   ·                                        ╰── Remove one of this 'super()' call expression
+   ╰────
+
   ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
    ╭─[constructor_super.tsx:1:37]
  1 │ class A extends B { constructor() { if (a) super(); super(); } }

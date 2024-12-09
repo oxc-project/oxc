@@ -231,6 +231,15 @@ fn executes_always_super_expression<'a>(
             }
         }
 
+        if let Expression::LogicalExpression(logical) = &expression.expression {
+            if logical.left.is_super_call_expression() && logical.right.is_super_call_expression() {
+                return Err(ErrorReport {
+                    reason: ErrorReason::MultipleCalls,
+                    spans: vec![logical.left.span(), logical.right.span()]
+                })
+            }
+        }
+
         return Err(ErrorReport {
             reason: ErrorReason::NotFound,
             spans: vec![expression.expression.span()],
@@ -347,7 +356,10 @@ fn has_body_possible_super_call_expression<'a>(
 
     for statement in body {
         if matches!(statement, Statement::ReturnStatement(_)) {
-            return Err(ErrorReport { reason: ErrorReason::ReturnWithoutCall, spans: vec![statement.span()] });
+            return Err(ErrorReport {
+                reason: ErrorReason::ReturnWithoutCall,
+                spans: vec![statement.span()],
+            });
         }
 
         let result = executes_always_super_expression(statement);
@@ -549,7 +561,7 @@ fn test() {
 "class A extends B { constructor() { try { a; } catch (err) { super(); } } }",
 "class A extends B { constructor() { if (a) return; super(); } }",
 "class A extends B { constructor() { super(); super(); } }",
-// "class A extends B { constructor() { super() || super(); } }",
+"class A extends B { constructor() { super() || super(); } }",
 "class A extends B { constructor() { if (a) super(); super(); } }",
 // "class A extends B { constructor() { switch (a) { case 0: super(); default: super(); } } }",
 "class A extends B { constructor(a) { while (a) super(); } }",
