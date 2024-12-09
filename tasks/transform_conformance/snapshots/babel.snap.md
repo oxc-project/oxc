@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 441/846
+Passed: 442/846
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (114/264)
+# babel-plugin-transform-class-properties (115/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -450,13 +450,32 @@ x Output mismatch
 x Output mismatch
 
 * private/optional-chain-before-member-call/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(6)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(6): Some(ScopeId(0))
 
 * private/optional-chain-before-member-call-with-transform/input.js
-x Output mismatch
-
-* private/optional-chain-before-property/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(6)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(6): Some(ScopeId(0))
 
 * private/optional-chain-before-property-with-transform/input.js
 x Output mismatch
