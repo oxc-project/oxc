@@ -754,7 +754,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // Test for it in first pass over class elements, and avoid temp vars where possible.
                 match ctx.symbols().get_reference(ident.reference_id()).symbol_id() {
                     Some(symbol_id) => {
-                        ctx.symbols().get_flags(symbol_id).intersects(SymbolFlags::ConstVariable)
+                        ctx.symbols().get_flags(symbol_id).contains(SymbolFlags::ConstVariable)
                             || ctx
                                 .symbols()
                                 .get_resolved_references(symbol_id)
