@@ -1,9 +1,8 @@
 commit: 54a8389f
 
-Passed: 95/106
+Passed: 96/108
 
 # All Passed:
-* babel-plugin-transform-class-properties
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
@@ -14,6 +13,11 @@ Passed: 95/106
 * babel-preset-typescript
 * babel-plugin-transform-react-jsx-source
 * regexp
+
+
+# babel-plugin-transform-class-properties (3/4)
+* private-loose-logical-assignment/input.js
+x Output mismatch
 
 
 # babel-plugin-transform-async-to-generator (14/15)
