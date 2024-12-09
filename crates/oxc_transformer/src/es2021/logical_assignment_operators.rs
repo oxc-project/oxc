@@ -58,7 +58,6 @@ use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
-use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 use oxc_traverse::{BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
@@ -74,16 +73,28 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for LogicalAssignmentOperators<'a, 'ctx> {
+    // `#[inline]` because this is a hot path, and most `Expression`s are not `AssignmentExpression`s
+    // with a logical operator. So we want to bail out as fast as possible for everything else,
+    // without the cost of a function call.
+    #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::AssignmentExpression(assignment_expr) = expr else { return };
 
         // `&&=` `||=` `??=`
-        let operator = match assignment_expr.operator {
-            AssignmentOperator::LogicalAnd => LogicalOperator::And,
-            AssignmentOperator::LogicalOr => LogicalOperator::Or,
-            AssignmentOperator::LogicalNullish => LogicalOperator::Coalesce,
-            _ => return,
-        };
+        let Some(operator) = assignment_expr.operator.to_logical_operator() else { return };
+
+        self.transform_logical_assignment(expr, operator, ctx);
+    }
+}
+
+impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
+    fn transform_logical_assignment(
+        &mut self,
+        expr: &mut Expression<'a>,
+        operator: LogicalOperator,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::AssignmentExpression(assignment_expr) = expr else { unreachable!() };
 
         // `a &&= c` -> `a && (a = c);`
         //               ^     ^ assign_target
@@ -122,9 +133,7 @@ impl<'a, 'ctx> Traverse<'a> for LogicalAssignmentOperators<'a, 'ctx> {
 
         *expr = logical_expr;
     }
-}
 
-impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
     fn convert_identifier(
         ident: &IdentifierReference<'a>,
         ctx: &mut TraverseCtx<'a>,
