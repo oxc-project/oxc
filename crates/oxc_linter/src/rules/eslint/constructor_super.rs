@@ -235,8 +235,8 @@ fn executes_always_super_expression<'a>(
             if logical.left.is_super_call_expression() && logical.right.is_super_call_expression() {
                 return Err(ErrorReport {
                     reason: ErrorReason::MultipleCalls,
-                    spans: vec![logical.left.span(), logical.right.span()]
-                })
+                    spans: vec![logical.left.span(), logical.right.span()],
+                });
             }
         }
 
