@@ -95,14 +95,6 @@ describe('target', () => {
     expect(ret.code).toBeDefined();
     expect(ret.code).toEqual(code);
   });
-
-  it('should turn off class propertiers because plugin is not ready', () => {
-    const code = 'class Foo {\n\t#a;\n}\n';
-    const ret = transform('test.js', code, { target: 'es2015' });
-    expect(ret.errors.length).toBe(0);
-    expect(ret.code).toBeDefined();
-    expect(ret.code).toEqual(code);
-  });
 });
 
 describe('helpers', () => {

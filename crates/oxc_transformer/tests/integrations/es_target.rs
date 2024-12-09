@@ -21,7 +21,7 @@ fn es_target() {
         ("es2020", "a ||= b"),
         ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
-        ("es2021", "class Foo { #a; }"), // Plugin not ready
+        ("es2021", "class Foo { #a; }"),
     ];
 
     // Test no transformation for esnext.
@@ -52,13 +52,6 @@ fn es_target() {
             insta::assert_snapshot!("es_target", snapshot);
         });
     }
-}
-
-#[test]
-fn no_class_properties() {
-    let code = "class Foo { #a; }";
-    let options = TransformOptions::from(ESTarget::from_str("es2015").unwrap());
-    assert_eq!(test(code, &options), Ok(codegen(code, SourceType::mjs())));
 }
 
 #[test]
