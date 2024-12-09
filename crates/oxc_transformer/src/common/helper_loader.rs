@@ -71,7 +71,10 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
-use oxc_ast::ast::{Argument, CallExpression, Expression, TSTypeParameterInstantiation};
+use oxc_ast::{
+    ast::{Argument, CallExpression, Expression},
+    NONE,
+};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
@@ -210,13 +213,7 @@ impl<'a> TransformCtx<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> CallExpression<'a> {
         let callee = self.helper_load(helper, ctx);
-        ctx.ast.call_expression(
-            span,
-            callee,
-            None::<TSTypeParameterInstantiation<'a>>,
-            arguments,
-            false,
-        )
+        ctx.ast.call_expression(span, callee, NONE, arguments, false)
     }
 
     /// Same as [`TransformCtx::helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
@@ -228,13 +225,7 @@ impl<'a> TransformCtx<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let callee = self.helper_load(helper, ctx);
-        ctx.ast.expression_call(
-            span,
-            callee,
-            None::<TSTypeParameterInstantiation<'a>>,
-            arguments,
-            false,
-        )
+        ctx.ast.expression_call(span, callee, NONE, arguments, false)
     }
 
     /// Load a helper function and return a callee expression.

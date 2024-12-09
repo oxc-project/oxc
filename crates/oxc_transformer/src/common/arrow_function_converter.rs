@@ -565,7 +565,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             arrow_function_expr.r#async,
             false,
             arrow_function_expr.type_parameters,
-            None::<TSThisParameter<'a>>,
+            NONE,
             arrow_function_expr.params,
             arrow_function_expr.return_type,
             Some(body),

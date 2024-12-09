@@ -106,10 +106,10 @@ impl<'a> TypeScriptEnum<'a> {
             false,
             false,
             false,
-            None::<TSTypeParameterDeclaration>,
-            None::<TSThisParameter>,
+            NONE,
+            NONE,
             params,
-            None::<TSTypeAnnotation>,
+            NONE,
             Some(body),
             func_scope_id,
         ));
