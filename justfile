@@ -101,12 +101,11 @@ fix:
   typos -w
   git status
 
-# Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`, `tasks/minsize`
+# Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`
 coverage:
   cargo coverage
   cargo run -p oxc_transform_conformance -- --exec
   cargo run -p oxc_prettier_conformance
-  cargo minsize
 
 # Run Test262, Babel and TypeScript conformance suite
 conformance *args='':

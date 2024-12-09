@@ -230,6 +230,34 @@ jobs:
           just coverage
           git diff --exit-code
 
+  minification:
+    name: Minification Size
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - '.github/workflows/ci.yml'
+              - 'crates/oxc_minifier/**'
+              - 'crates/oxc_codegen/**'
+              - 'tasks/minsize/**'
+
+      - uses: Boshen/setup-rust@main
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: minsize
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Check minification size
+        if: steps.filter.outputs.src == 'true'
+        run: |
+          cargo minsize
+          git diff --exit-code
+
   ast_changes:
     name: AST Changes
     runs-on: ubuntu-latest
