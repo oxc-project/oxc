@@ -11,8 +11,12 @@ use log::{debug, error, info};
 use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
 use rustc_hash::FxBuildHasher;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::borrow::Cow;
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
-use tower_lsp::lsp_types::{NumberOrString, Position, Range};
+use tower_lsp::lsp_types::{
+    ExecuteCommandParams, NumberOrString, Position, Range, VersionedTextDocumentIdentifier,
+};
 use tower_lsp::{
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
@@ -397,6 +401,45 @@ impl LanguageServer for Backend {
         }
 
         Ok(None)
+    }
+
+    async fn execute_command(&self, params: ExecuteCommandParams) -> Result<Option<Value>> {
+        if params.command == "oxc.applyAllFixesFile" && params.arguments.len() == 1 {
+            let text_document =
+                VersionedTextDocumentIdentifier::deserialize(params.arguments.first().unwrap())
+                    .unwrap();
+            let uri = text_document.uri;
+            if let Some(value) = self.diagnostics_report_map.get(&uri.to_string()) {
+                join_all(value.iter().filter(|report| report.fixed_content.is_some()).map(
+                    |report| async {
+                        let fixed_content = report.fixed_content.as_ref().unwrap();
+                        return self
+                            .client
+                            .apply_edit(WorkspaceEdit {
+                                #[expect(clippy::disallowed_types)]
+                                changes: Some(std::collections::HashMap::from([(
+                                    uri.clone(),
+                                    vec![TextEdit {
+                                        range: fixed_content.range,
+                                        new_text: fixed_content.code.clone(),
+                                    }],
+                                )])),
+                                ..WorkspaceEdit::default()
+                            })
+                            .await;
+                    },
+                ))
+                .await;
+
+                return Ok(None);
+            };
+        }
+
+        Err(Error {
+            code: ErrorCode::InvalidRequest,
+            message: Cow::Owned(format!("Command {} is not supported", params.command)),
+            data: None,
+        })
     }
 }
 
