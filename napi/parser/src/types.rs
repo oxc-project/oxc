@@ -2,6 +2,8 @@ use napi_derive::napi;
 
 use oxc_napi::Error;
 
+use crate::magic_string::MagicString;
+
 #[napi(object)]
 #[derive(Default)]
 pub struct ParserOptions {
@@ -29,6 +31,7 @@ pub struct ParseResult {
     pub module: EcmaScriptModule,
     pub comments: Vec<Comment>,
     pub errors: Vec<Error>,
+    pub magic_string: MagicString,
 }
 
 #[napi(object)]
