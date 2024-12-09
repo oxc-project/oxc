@@ -378,13 +378,14 @@ impl TraverseScoping {
     pub fn is_static(&self, expr: &Expression) -> bool {
         match expr {
             Expression::ThisExpression(_) | Expression::Super(_) => true,
-            Expression::Identifier(ident) => {
-                self.symbols.get_reference(ident.reference_id()).symbol_id().is_some_and(
-                    |symbol_id| {
-                        self.symbols.get_resolved_references(symbol_id).all(|r| !r.is_write())
-                    },
-                )
-            }
+            Expression::Identifier(ident) => self
+                .symbols
+                .get_reference(ident.reference_id())
+                .symbol_id()
+                .is_some_and(|symbol_id| {
+                    self.symbols.get_flags(symbol_id).contains(SymbolFlags::ConstVariable)
+                        || self.symbols.get_resolved_references(symbol_id).all(|r| !r.is_write())
+                }),
             _ => false,
         }
     }
