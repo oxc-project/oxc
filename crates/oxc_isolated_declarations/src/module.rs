@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_allocator::CloneIn;
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_span::{Atom, GetSpan, SPAN};
 
 use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
@@ -19,7 +19,7 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.vec(),
             None,
             ImportOrExportKind::Value,
-            None::<WithClause>,
+            NONE,
         ))
     }
 
