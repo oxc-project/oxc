@@ -930,7 +930,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        assert_expr_neither_parenthesis_nor_typescript_syntax(expr);
+        assert_expr_neither_parenthesis_nor_typescript_syntax(expr, &self.ctx.source_path);
         match expr {
             Expression::PrivateFieldExpression(_) => {
                 Some(self.transform_private_field_expression_of_chain_expression(expr, ctx))
@@ -944,7 +944,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 self.transform_call_expression_of_chain_expression(call, ctx)
             }
             _ => {
-                assert_expr_neither_parenthesis_nor_typescript_syntax(expr);
+                assert_expr_neither_parenthesis_nor_typescript_syntax(expr, &self.ctx.source_path);
                 None
             }
         }
@@ -1505,7 +1505,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, [Expression<'a>; N]) {
-        assert_expr_neither_parenthesis_nor_typescript_syntax(&object);
+        assert_expr_neither_parenthesis_nor_typescript_syntax(&object, &self.ctx.source_path);
 
         // TODO: Handle if in a function's params
         let temp_var_binding = match &object {

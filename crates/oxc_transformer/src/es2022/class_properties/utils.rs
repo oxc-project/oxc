@@ -3,6 +3,7 @@
 
 use std::{
     mem::{ManuallyDrop, MaybeUninit},
+    path::Path,
     ptr,
 };
 
@@ -60,10 +61,13 @@ pub(super) fn create_underscore_ident_name<'a>(ctx: &mut TraverseCtx<'a>) -> Ide
 }
 
 #[inline]
-pub(super) fn assert_expr_neither_parenthesis_nor_typescript_syntax(expr: &Expression) {
+pub(super) fn assert_expr_neither_parenthesis_nor_typescript_syntax(
+    expr: &Expression,
+    source_path: &Path,
+) {
     debug_assert!(
         !(matches!(expr, Expression::ParenthesizedExpression(_)) || expr.is_typescript_syntax()),
-        "Should not be: {expr:?}",
+        "Should not be: parenthesized or ts syntax for {source_path:?}",
     );
 }
 
