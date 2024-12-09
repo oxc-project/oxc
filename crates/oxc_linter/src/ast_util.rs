@@ -468,3 +468,10 @@ pub fn leftmost_identifier_reference<'a, 'b: 'a>(
         _ => Err(expr),
     }
 }
+
+pub fn skip_chain_expression<'a>(expr: &'a Expression<'a>) -> Option<&MemberExpression<'a>> {
+    match expr.get_inner_expression() {
+        Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
+        expr => expr.as_member_expression(),
+    }
+}
