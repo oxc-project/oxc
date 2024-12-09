@@ -26,14 +26,14 @@ oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
-oxc_index = { workspace = true }
+oxc_index = { workspace = true, features = ["serde"] }
 oxc_macros = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_resolver = { workspace = true }
 oxc_semantic = { workspace = true }
-oxc_span = { workspace = true, features = ["schemars"] }
-oxc_syntax = { workspace = true }
+oxc_span = { workspace = true, features = ["schemars", "serialize"] }
+oxc_syntax = { workspace = true, features = ["serialize"] }
 
 #
 bitflags = { workspace = true }
