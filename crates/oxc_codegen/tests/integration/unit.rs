@@ -1,4 +1,6 @@
-use crate::tester::{test, test_minify, test_minify_same, test_without_source};
+use oxc_codegen::CodegenOptions;
+
+use crate::tester::{test, test_minify, test_minify_same, test_options};
 
 #[test]
 fn module_decl() {
@@ -94,7 +96,6 @@ fn regex() {
     fn test_all(source: &str, expect: &str, minify: &str) {
         test(source, expect);
         test_minify(source, minify);
-        test_without_source(source, expect);
     }
     test_all("/regex/giv", "/regex/giv;\n", "/regex/giv;");
     test_all(
@@ -382,4 +383,15 @@ fn big_int_minify() {
     test_minify("0xfabn", "4011n;");
     test_minify("0xaef_en;", "44798n;");
     test_minify("0xaefen;", "44798n;");
+}
+
+#[test]
+fn directive() {
+    let single_quote = CodegenOptions { single_quote: true, ..CodegenOptions::default() };
+    test_options("\"'\"", "\"'\";\n", single_quote.clone());
+    test_options("'\"'", "'\"';\n", single_quote);
+    let double_quote = CodegenOptions { single_quote: false, ..CodegenOptions::default() };
+    test_options("\"'\"", "\"'\";\n", double_quote.clone());
+    test_options("'\"'", "'\"';\n", double_quote.clone());
+    test_options(r#""'\"""#, "\"'\\\"\";\n", double_quote);
 }

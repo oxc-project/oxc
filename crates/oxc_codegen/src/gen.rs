@@ -68,9 +68,29 @@ impl Gen for Directive<'_> {
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
         // So here should print original `directive` value, the `expression` value is escaped str.
         // See https://github.com/babel/babel/blob/v7.26.2/packages/babel-generator/src/generators/base.ts#L64
-        p.wrap_quote(|p, _| {
-            p.print_str(self.directive.as_str());
-        });
+        let directive = self.directive.as_str();
+
+        let mut chars = directive.chars().peekable();
+        let mut quote = p.quote;
+        while let Some(c) = chars.next() {
+            match c {
+                '"' => {
+                    quote = b'\'';
+                    break;
+                }
+                '\'' => {
+                    quote = b'"';
+                    break;
+                }
+                '\\' => {
+                    chars.next();
+                }
+                _ => {}
+            }
+        }
+        p.print_ascii_byte(quote);
+        p.print_str(directive);
+        p.print_ascii_byte(quote);
         p.print_ascii_byte(b';');
         p.print_soft_newline();
     }
