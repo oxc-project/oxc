@@ -1,7 +1,10 @@
 // NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/b5dc32740d9b45d11cff9b025896dd333c795b39/types/babel__core/index.d.ts).
 #![allow(rustdoc::bare_urls)]
 
-use std::path::{Path, PathBuf};
+use std::{
+    ops::ControlFlow,
+    path::{Path, PathBuf},
+};
 
 use napi::Either;
 use napi_derive::napi;
@@ -49,6 +52,18 @@ pub struct TransformResult {
     /// {@link TypeScriptOptions#declaration declaration} and
     /// {@link TransformOptions#sourcemap sourcemap} are set to `true`.
     pub declaration_map: Option<SourceMap>,
+
+    /// Helpers used.
+    ///
+    /// @internal
+    ///
+    /// Example:
+    ///
+    /// ```text
+    /// { "_objectSpread": "@babel/runtime/helpers/objectSpread2" }
+    /// ```
+    #[napi(ts_type = "Record<string, string>")]
+    pub helpers_used: FxHashMap<String, String>,
 
     /// Parse and transformation errors.
     ///
@@ -461,6 +476,7 @@ struct Compiler {
     define: Option<ReplaceGlobalDefinesConfig>,
     inject: Option<InjectGlobalVariablesConfig>,
 
+    helpers_used: FxHashMap<String, String>,
     errors: Vec<OxcDiagnostic>,
 }
 
@@ -527,6 +543,7 @@ impl Compiler {
             declaration_map: None,
             define,
             inject,
+            helpers_used: FxHashMap::default(),
             errors: vec![],
         })
     }
@@ -567,6 +584,20 @@ impl CompilerInterface for Compiler {
     fn after_isolated_declarations(&mut self, ret: CodegenReturn) {
         self.declaration.replace(ret.code);
         self.declaration_map = ret.map.map(SourceMap::from);
+    }
+
+    #[allow(deprecated)]
+    fn after_transform(
+        &mut self,
+        _program: &mut oxc::ast::ast::Program<'_>,
+        transformer_return: &mut oxc::transformer::TransformerReturn,
+    ) -> ControlFlow<()> {
+        self.helpers_used = transformer_return
+            .helpers_used
+            .drain()
+            .map(|(helper, source)| (helper.name().to_string(), source))
+            .collect();
+        ControlFlow::Continue(())
     }
 }
 
@@ -629,6 +660,7 @@ pub fn transform(
         map: compiler.printed_sourcemap,
         declaration: compiler.declaration,
         declaration_map: compiler.declaration_map,
+        helpers_used: compiler.helpers_used,
         errors: compiler.errors.into_iter().map(Error::from).collect(),
     }
 }

@@ -314,6 +314,18 @@ export interface TransformResult {
    */
   declarationMap?: SourceMap
   /**
+   * Helpers used.
+   *
+   * @internal
+   *
+   * Example:
+   *
+   * ```text
+   * { "_objectSpread": "@babel/runtime/helpers/objectSpread2" }
+   * ```
+   */
+  helpersUsed: Record<string, string>
+  /**
    * Parse and transformation errors.
    *
    * Oxc's parser recovers from common syntax errors, meaning that

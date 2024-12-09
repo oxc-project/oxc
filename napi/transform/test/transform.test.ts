@@ -10,6 +10,7 @@ describe('simple', () => {
     expect(ret).toStrictEqual({
       code: 'export class A {}\n',
       errors: [],
+      helpersUsed: {},
       map: {
         mappings: 'AAAA,OAAO,MAAM,EAAK,CAAE',
         names: [],
@@ -117,6 +118,9 @@ describe('helpers', () => {
       helpers: { mode },
     });
     expect(ret.code).toEqual(expected);
+    expect(ret.helpersUsed).toStrictEqual({
+      objectSpread2: '@babel/runtime/helpers/objectSpread2',
+    });
   });
 });
 
