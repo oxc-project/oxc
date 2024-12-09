@@ -152,11 +152,10 @@ snapshot_kind: text
    ·                     ───────────
    ╰────
 
-  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
-   ╭─[constructor_super.tsx:1:37]
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
  1 │ class A extends B { constructor() { a && super(); } }
-   ·                                     ──────┬─────
-   ·                                           ╰── This path is lacking of a 'super()' call
+   ·                     ───────────
    ╰────
 
   ⚠ eslint(constructor-super): Lacked a call of 'super()' default.
@@ -173,18 +172,16 @@ snapshot_kind: text
    ·                                                            ╰── This path is lacking of a 'super()' call
    ╰────
 
-  ⚠ eslint(constructor-super): Lacked a call of 'super()' in 'finally'.
-   ╭─[constructor_super.tsx:1:37]
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
  1 │ class A extends B { constructor() { try { super(); } catch (err) {} } }
-   ·                                     ───────────────┬───────────────
-   ·                                                    ╰── Inside a 'try' and 'catch' block, a 'super' call not be guaranteed to be called
+   ·                     ───────────
    ╰────
 
-  ⚠ eslint(constructor-super): Lacked a call of 'super()' in 'finally'.
-   ╭─[constructor_super.tsx:1:37]
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
  1 │ class A extends B { constructor() { try { a; } catch (err) { super(); } } }
-   ·                                     ─────────────────┬─────────────────
-   ·                                                      ╰── Inside a 'try' and 'catch' block, a 'super' call not be guaranteed to be called
+   ·                     ───────────
    ╰────
 
   ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
@@ -192,6 +189,14 @@ snapshot_kind: text
  1 │ class A extends B { constructor() { if (a) return; super(); } }
    ·                                            ───┬───
    ·                                               ╰── This path fast returns without calling 'super()'
+   ╰────
+
+  ⚠ eslint(constructor-super): Unexpected duplicate 'super()'.
+   ╭─[constructor_super.tsx:1:37]
+ 1 │ class A extends B { constructor() { super(); super(); } }
+   ·                                     ───┬───  ───┬───
+   ·                                        │        ╰── Remove one of this 'super()' call expression
+   ·                                        ╰── Remove one of this 'super()' call expression
    ╰────
 
   ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
@@ -208,6 +213,11 @@ snapshot_kind: text
    ╰────
 
   ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
+   ╭─[constructor_super.tsx:1:37]
+ 1 │ class A extends B { constructor() { return; super(); } }
+   ·                                     ───┬───
+   ·                                        ╰── This path fast returns without calling 'super()'
+   ╰────
 
   ⚠ eslint(constructor-super): Expected to call 'super()'
    ╭─[constructor_super.tsx:2:20]

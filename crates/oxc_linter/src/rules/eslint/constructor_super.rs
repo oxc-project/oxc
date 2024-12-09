@@ -13,9 +13,9 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 enum ErrorReason {
     NotFound,
     MissingCallOnBranch,
-    MissingTryFinalizer,
     ReturnWithoutCall,
     MissingDefaultBranchOnSwitch,
+    MultipleCalls,
 }
 
 struct ErrorReport {
@@ -47,17 +47,6 @@ fn has_missing_default_switch_branch_diagnostic(spans: Vec<Span>) -> OxcDiagnost
     )
 }
 
-fn has_missing_try_finalizer_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Lacked a call of 'super()' in 'finally'.").with_labels(
-        spans
-            .into_iter()
-            .map(|span| {
-                span.label("Inside a 'try' and 'catch' block, a 'super' call not be guaranteed to be called")
-            })
-            .collect::<Vec<LabeledSpan>>(),
-    )
-}
-
 fn has_unexpected_return_statement(spans: Vec<Span>) -> OxcDiagnostic {
     OxcDiagnostic::warn("Lacked a call of 'super()' in some code paths.").with_labels(
         spans
@@ -72,6 +61,15 @@ fn has_unexpected_super_call_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
         spans
             .into_iter()
             .map(|span| span.label("Remove this 'super()' call expression"))
+            .collect::<Vec<LabeledSpan>>(),
+    )
+}
+
+fn has_multiple_super_call_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected duplicate 'super()'.").with_labels(
+        spans
+            .into_iter()
+            .map(|span| span.label("Remove one of this 'super()' call expression"))
             .collect::<Vec<LabeledSpan>>(),
     )
 }
@@ -121,9 +119,6 @@ impl Rule for ConstructorSuper {
             if has_super_constructor {
                 if let Err(error) = validate_method_super_call_expression(constructor) {
                     match error.reason {
-                        ErrorReason::MissingTryFinalizer => {
-                            ctx.diagnostic(has_missing_try_finalizer_diagnostic(error.spans));
-                        }
                         ErrorReason::MissingDefaultBranchOnSwitch => {
                             ctx.diagnostic(has_missing_default_switch_branch_diagnostic(
                                 error.spans,
@@ -139,6 +134,9 @@ impl Rule for ConstructorSuper {
                             ctx.diagnostic(has_missing_all_super_call_diagnostic(
                                 constructor.key.span(),
                             ));
+                        }
+                        ErrorReason::MultipleCalls => {
+                            ctx.diagnostic(has_multiple_super_call_diagnostic(error.spans));
                         }
                     };
                 }
@@ -234,7 +232,7 @@ fn executes_always_super_expression<'a>(
         }
 
         return Err(ErrorReport {
-            reason: ErrorReason::MissingCallOnBranch,
+            reason: ErrorReason::NotFound,
             spans: vec![expression.expression.span()],
         });
     }
@@ -321,10 +319,7 @@ fn executes_always_super_expression<'a>(
 
     if let Statement::TryStatement(try_block) = &statement {
         if try_block.finalizer.is_none() {
-            return Err(ErrorReport {
-                reason: ErrorReason::MissingTryFinalizer,
-                spans: vec![try_block.span],
-            });
+            return Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![try_block.span] });
         }
 
         return has_body_possible_super_call_expression(
@@ -348,23 +343,32 @@ fn validate_method_super_call_expression<'a>(
 fn has_body_possible_super_call_expression<'a>(
     body: &'a oxc_allocator::Vec<Statement<'a>>,
 ) -> Result<Vec<Span>, ErrorReport> {
+    let mut found_calls: Vec<Vec<Span>> = vec![];
+
     for statement in body {
         if matches!(statement, Statement::ReturnStatement(_)) {
-            return Err(ErrorReport { reason: ErrorReason::ReturnWithoutCall, spans: vec![] });
+            return Err(ErrorReport { reason: ErrorReason::ReturnWithoutCall, spans: vec![statement.span()] });
         }
 
         let result = executes_always_super_expression(statement);
 
-        if result.is_ok() {
+        if let Ok(result) = executes_always_super_expression(statement) {
+            found_calls.push(result);
+        } else if result.as_ref().err().unwrap().reason != ErrorReason::NotFound {
             return result;
-        }
-
-        if result.as_ref().err().unwrap().reason != ErrorReason::NotFound {
-            return result;
-        }
+        };
     }
 
-    Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![] })
+    if found_calls.len() > 1 {
+        return Err(ErrorReport {
+            reason: ErrorReason::MultipleCalls,
+            spans: found_calls.into_iter().flatten().collect::<Vec<Span>>(),
+        });
+    } else if found_calls.is_empty() {
+        return Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![] });
+    }
+
+    Ok(found_calls.into_iter().flatten().collect::<Vec<Span>>())
 }
 
 fn has_return_statement<'a>(method: &'a MethodDefinition<'a>) -> bool {
@@ -544,7 +548,7 @@ fn test() {
 "class A extends B { constructor() { try { super(); } catch (err) {} } }",
 "class A extends B { constructor() { try { a; } catch (err) { super(); } } }",
 "class A extends B { constructor() { if (a) return; super(); } }",
-// "class A extends B { constructor() { super(); super(); } }",
+"class A extends B { constructor() { super(); super(); } }",
 // "class A extends B { constructor() { super() || super(); } }",
 "class A extends B { constructor() { if (a) super(); super(); } }",
 // "class A extends B { constructor() { switch (a) { case 0: super(); default: super(); } } }",
