@@ -125,14 +125,14 @@
 //!
 //! Implementation is split into several files:
 //!
-//! * `mod.rs`:            Setup and visitor.
-//! * `class.rs`:          Transform of class body.
-//! * `constructor.rs`:    Insertion of property initializers into class constructor.
-//! * `private.rs`:        Transform of private property usages (`this.#prop`).
-//! * `private_props.rs`:  Structures storing details of private properties.
-//! * `static_prop.rs`:    Transform of static property initializers.
-//! * `class_bindings.rs`: Structure containing bindings for class name and temp var.
-//! * `utils.rs`:          Utility functions.
+//! * `mod.rs`:               Setup and visitor.
+//! * `class.rs`:             Transform of class body.
+//! * `constructor.rs`:       Insertion of property initializers into class constructor.
+//! * `private.rs`:           Transform of private property usages (`this.#prop`).
+//! * `private_props.rs`:     Structures storing details of private properties.
+//! * `static_prop_init.rs`:  Transform of static property initializers.
+//! * `class_bindings.rs`:    Structure containing bindings for class name and temp var.
+//! * `utils.rs`:             Utility functions.
 //!
 //! ## References
 //!
@@ -158,7 +158,7 @@ mod class_bindings;
 mod constructor;
 mod private;
 mod private_props;
-mod static_prop;
+mod static_prop_init;
 mod utils;
 use class_bindings::ClassBindings;
 use private_props::PrivatePropsStack;
