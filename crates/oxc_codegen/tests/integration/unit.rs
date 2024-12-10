@@ -26,6 +26,9 @@ fn expr() {
     test_minify_same("return new.target;");
     test_minify_same("throw await 1;");
     test_minify_same("await import(\"\");");
+
+    test("delete 2e308", "delete (0, Infinity);\n");
+    test_minify("delete 2e308", "delete (1/0);");
 }
 
 #[test]
