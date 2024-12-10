@@ -9,7 +9,7 @@
 use std::mem;
 
 use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
 use crate::ast::*;
@@ -119,8 +119,7 @@ impl<'a> AstBuilder<'a> {
     /// no name and an empty [`Span`].
     #[inline]
     pub fn move_assignment_target(self, target: &mut AssignmentTarget<'a>) -> AssignmentTarget<'a> {
-        let dummy =
-            self.simple_assignment_target_identifier_reference(Span::default(), Atom::from(""));
+        let dummy = self.simple_assignment_target_identifier_reference(SPAN, Atom::from(""));
         mem::replace(target, dummy.into())
     }
 
@@ -128,12 +127,8 @@ impl<'a> AstBuilder<'a> {
     /// declaration](Declaration::VariableDeclaration).
     #[inline]
     pub fn move_declaration(self, decl: &mut Declaration<'a>) -> Declaration<'a> {
-        let empty_decl = self.variable_declaration(
-            Span::default(),
-            VariableDeclarationKind::Var,
-            self.vec(),
-            false,
-        );
+        let empty_decl =
+            self.variable_declaration(SPAN, VariableDeclarationKind::Var, self.vec(), false);
         let empty_decl = Declaration::VariableDeclaration(self.alloc(empty_decl));
         mem::replace(decl, empty_decl)
     }
@@ -145,41 +140,33 @@ impl<'a> AstBuilder<'a> {
         self,
         decl: &mut VariableDeclaration<'a>,
     ) -> VariableDeclaration<'a> {
-        let empty_decl = self.variable_declaration(
-            Span::default(),
-            VariableDeclarationKind::Var,
-            self.vec(),
-            false,
-        );
+        let empty_decl =
+            self.variable_declaration(SPAN, VariableDeclarationKind::Var, self.vec(), false);
         mem::replace(decl, empty_decl)
     }
 
     /// Move a formal parameters out by replacing it with an empty [`FormalParameters`].
     #[inline]
     pub fn move_formal_parameters(self, params: &mut FormalParameters<'a>) -> FormalParameters<'a> {
-        let empty_params = self.formal_parameters(Span::default(), params.kind, self.vec(), NONE);
+        let empty_params = self.formal_parameters(SPAN, params.kind, self.vec(), NONE);
         mem::replace(params, empty_params)
     }
 
     /// Move a function body out by replacing it with an empty [`FunctionBody`].
     #[inline]
     pub fn move_function_body(self, body: &mut FunctionBody<'a>) -> FunctionBody<'a> {
-        let empty_body = self.function_body(Span::default(), self.vec(), self.vec());
+        let empty_body = self.function_body(SPAN, self.vec(), self.vec());
         mem::replace(body, empty_body)
     }
 
     /// Move a function out by replacing it with an empty [`Function`]
     #[inline]
     pub fn move_function(self, function: &mut Function<'a>) -> Function<'a> {
-        let params = self.formal_parameters(
-            Span::default(),
-            FormalParameterKind::FormalParameter,
-            self.vec(),
-            NONE,
-        );
+        let params =
+            self.formal_parameters(SPAN, FormalParameterKind::FormalParameter, self.vec(), NONE);
         let empty_function = self.function(
             FunctionType::FunctionDeclaration,
-            Span::default(),
+            SPAN,
             None,
             false,
             false,
@@ -199,7 +186,7 @@ impl<'a> AstBuilder<'a> {
         self,
         element: &mut ArrayExpressionElement<'a>,
     ) -> ArrayExpressionElement<'a> {
-        let empty_element = self.array_expression_element_elision(Span::default());
+        let empty_element = self.array_expression_element_elision(SPAN);
         mem::replace(element, empty_element)
     }
 
@@ -215,7 +202,7 @@ impl<'a> AstBuilder<'a> {
     /// `0`
     #[inline]
     pub fn number_0(self) -> Expression<'a> {
-        self.expression_numeric_literal(Span::default(), 0.0, None, NumberBase::Decimal)
+        self.expression_numeric_literal(SPAN, 0.0, None, NumberBase::Decimal)
     }
 
     /// `void 0`
