@@ -26,7 +26,7 @@ const code = 'const url: String = /* 🤨 */ import.meta.url;';
 const filename = 'test.tsx';
 
 const result = oxc.parseSync(filename, code);
-// or `await oxc.parseAsnyc(filename, code)`
+// or `await oxc.parseAsync(filename, code)`
 
 // An array of errors, if any.
 console.log(result.errors);
