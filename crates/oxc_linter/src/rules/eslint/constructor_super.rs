@@ -16,6 +16,7 @@ enum ErrorReason {
     ReturnWithoutCall,
     MissingDefaultBranchOnSwitch,
     MultipleCalls,
+    CallInLoop,
 }
 
 struct ErrorReport {
@@ -72,6 +73,11 @@ fn has_multiple_super_call_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
             .map(|span| span.label("Remove one of this 'super()' call expression"))
             .collect::<Vec<LabeledSpan>>(),
     )
+}
+
+fn has_super_call_inside_loop_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected duplicate 'super()'.")
+        .with_label(span.label("Move this 'super' call expression outside of the loop"))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -137,6 +143,11 @@ impl Rule for ConstructorSuper {
                         }
                         ErrorReason::MultipleCalls => {
                             ctx.diagnostic(has_multiple_super_call_diagnostic(error.spans));
+                        }
+                        ErrorReason::CallInLoop => {
+                            ctx.diagnostic(has_super_call_inside_loop_diagnostic(
+                                *error.spans.first().expect("We always provide one span"),
+                            ));
                         }
                     };
                 }
@@ -333,6 +344,74 @@ fn executes_always_super_expression<'a>(
         };
 
         return Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![try_block.span] });
+    }
+
+    if let Statement::DoWhileStatement(do_while) = &statement {
+        let result = executes_always_super_expression(&do_while.body);
+
+        if result.is_ok() {
+            return Err(ErrorReport {
+                reason: ErrorReason::CallInLoop,
+                spans: vec![do_while.body.span()],
+            });
+        }
+
+        return result;
+    }
+
+    if let Statement::WhileStatement(while_statement) = &statement {
+        let result = executes_always_super_expression(&while_statement.body);
+
+        if result.is_ok() {
+            return Err(ErrorReport {
+                reason: ErrorReason::CallInLoop,
+                spans: vec![while_statement.body.span()],
+            });
+        }
+
+        return result;
+    }
+
+    if let Statement::ForInStatement(for_in) = &statement {
+        // ToDo - what about left right
+        let result = executes_always_super_expression(&for_in.body);
+
+        if result.is_ok() {
+            return Err(ErrorReport {
+                reason: ErrorReason::CallInLoop,
+                spans: vec![for_in.body.span()],
+            });
+        }
+
+        return result;
+    }
+
+    // if let Statement::ForOfStatement(for_of) = &statement {
+    //     // ToDo - what about left right
+    //     let result = executes_always_super_expression(&for_of.body);
+
+    //     if result.is_ok() {
+    //         return Err(ErrorReport {
+    //             reason: ErrorReason::CallInLoop,
+    //             spans: vec![for_of.body.span()]
+    //         })
+    //     }
+
+    //     return result;
+    // }
+
+    if let Statement::ForStatement(for_statement) = &statement {
+        // ToDo - what about init, test and update?
+        let result = executes_always_super_expression(&for_statement.body);
+
+        if result.is_ok() {
+            return Err(ErrorReport {
+                reason: ErrorReason::CallInLoop,
+                spans: vec![for_statement.body.span()],
+            });
+        }
+
+        return result;
     }
 
     Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![statement.span()] })

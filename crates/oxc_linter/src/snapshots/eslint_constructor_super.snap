@@ -214,10 +214,11 @@ snapshot_kind: text
    ·                                            ╰── This path is lacking of a 'super()' call
    ╰────
 
-  ⚠ eslint(constructor-super): Expected to call 'super()'
-   ╭─[constructor_super.tsx:1:21]
+  ⚠ eslint(constructor-super): Unexpected duplicate 'super()'.
+   ╭─[constructor_super.tsx:1:48]
  1 │ class A extends B { constructor(a) { while (a) super(); } }
-   ·                     ───────────
+   ·                                                ────┬───
+   ·                                                    ╰── Move this 'super' call expression outside of the loop
    ╰────
 
   ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
@@ -251,18 +252,23 @@ snapshot_kind: text
  4 │                                 for (let i = 1;;i++) {
    ╰────
 
-  ⚠ eslint(constructor-super): Expected to call 'super()'
-   ╭─[constructor_super.tsx:3:20]
- 2 │             
- 3 │                             constructor() {
-   ·                             ───────────
- 4 │                                 do {
+  ⚠ eslint(constructor-super): Unexpected duplicate 'super()'.
+   ╭─[constructor_super.tsx:4:27]
+ 3 │                                 constructor() {
+ 4 │ ╭─▶                                 do {
+ 5 │ │                                       super();
+ 6 │ ├─▶                                 } while (foo);
+   · ╰──── Move this 'super' call expression outside of the loop
+ 7 │                                 }
    ╰────
 
-  ⚠ eslint(constructor-super): Expected to call 'super()'
-   ╭─[constructor_super.tsx:3:20]
- 2 │             
- 3 │                             constructor() {
-   ·                             ───────────
- 4 │                                 while (foo) {
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
+   ╭─[constructor_super.tsx:5:28]
+ 4 │                                     while (foo) {
+ 5 │ ╭─▶                                     if (bar) {
+ 6 │ │                                           super();
+ 7 │ │                                           break;
+ 8 │ ├─▶                                     }
+   · ╰──── This path is lacking of a 'super()' call
+ 9 │                                     }
    ╰────
