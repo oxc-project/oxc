@@ -1463,7 +1463,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>) {
         assert_expr_neither_parenthesis_nor_typescript_syntax(&object);
-        self.ctx.duplicate_expression(object, ctx)
+        self.ctx.duplicate_expression(object, false, ctx)
     }
 
     /// Duplicate object to be used in triple.
@@ -1482,7 +1482,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>, Expression<'a>) {
         assert_expr_neither_parenthesis_nor_typescript_syntax(&object);
-        self.ctx.duplicate_expression_twice(object, ctx)
+        self.ctx.duplicate_expression_twice(object, false, ctx)
     }
 
     /// `_classPrivateFieldGet2(_prop, object)`

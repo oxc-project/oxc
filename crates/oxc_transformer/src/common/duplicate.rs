@@ -22,14 +22,19 @@ impl<'a> TransformCtx<'a> {
     /// * Unbound identifier `foo` -> `_foo = foo`, `_foo`
     /// * Anything else `foo()` -> `_foo = foo()`, `_foo`
     ///
+    /// If `mutated_symbol_needs_temp_var` is `true`, temp var will be created for a bound identifier,
+    /// if it's mutated (assigned to) anywhere in AST.
+    ///
     /// Returns 2 `Expression`s. The first may be an `AssignmentExpression`,
     /// and must be inserted into output first.
     pub(crate) fn duplicate_expression(
         &self,
         expr: Expression<'a>,
+        mutated_symbol_needs_temp_var: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>) {
-        let (maybe_assignment, references) = self.duplicate_expression_multiple::<1>(expr, ctx);
+        let (maybe_assignment, references) =
+            self.duplicate_expression_multiple::<1>(expr, mutated_symbol_needs_temp_var, ctx);
         let [reference] = references;
         (maybe_assignment, reference)
     }
@@ -43,15 +48,20 @@ impl<'a> TransformCtx<'a> {
     /// * Unbound identifier `foo` -> `_foo = foo`, `_foo`, `_foo`
     /// * Anything else `foo()` -> `_foo = foo()`, `_foo`, `_foo`
     ///
+    /// If `mutated_symbol_needs_temp_var` is `true`, temp var will be created for a bound identifier,
+    /// if it's mutated (assigned to) anywhere in AST.
+    ///
     /// Returns 3 `Expression`s. The first may be an `AssignmentExpression`,
     /// and must be inserted into output first.
     #[expect(clippy::similar_names)]
     pub(crate) fn duplicate_expression_twice(
         &self,
         expr: Expression<'a>,
+        mutated_symbol_needs_temp_var: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>, Expression<'a>) {
-        let (maybe_assignment, references) = self.duplicate_expression_multiple::<2>(expr, ctx);
+        let (maybe_assignment, references) =
+            self.duplicate_expression_multiple::<2>(expr, mutated_symbol_needs_temp_var, ctx);
         let [reference1, reference2] = references;
         (maybe_assignment, reference1, reference2)
     }
@@ -65,26 +75,36 @@ impl<'a> TransformCtx<'a> {
     /// * Unbound identifier `foo` -> `_foo = foo`, [`_foo`; N]
     /// * Anything else `foo()` -> `_foo = foo()`, [`_foo`; N]
     ///
+    /// If `mutated_symbol_needs_temp_var` is `true`, temp var will be created for a bound identifier,
+    /// if it's mutated (assigned to) anywhere in AST.
+    ///
     /// Returns `N + 1` x `Expression`s. The first may be an `AssignmentExpression`,
     /// and must be inserted into output first.
     pub(crate) fn duplicate_expression_multiple<const N: usize>(
         &self,
         expr: Expression<'a>,
+        mutated_symbol_needs_temp_var: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, [Expression<'a>; N]) {
         // TODO: Handle if in a function's params
         let temp_var_binding = match &expr {
             Expression::Identifier(ident) => {
-                let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id());
+                let reference_id = ident.reference_id();
+                let reference = ctx.symbols().get_reference(reference_id);
                 if let Some(symbol_id) = reference.symbol_id() {
-                    // Reading bound identifier cannot have side effects, so no need for temp var
-                    let binding = BoundIdentifier::new(ident.name.clone(), symbol_id);
-                    let references =
-                        create_array(|| binding.create_spanned_read_expression(ident.span, ctx));
-                    return (expr, references);
+                    if !mutated_symbol_needs_temp_var || !ctx.symbols().symbol_is_mutated(symbol_id)
+                    {
+                        // Reading bound identifier cannot have side effects, so no need for temp var
+                        let binding = BoundIdentifier::new(ident.name.clone(), symbol_id);
+                        let references = create_array(|| {
+                            binding.create_spanned_read_expression(ident.span, ctx)
+                        });
+                        return (expr, references);
+                    }
                 }
 
                 // Previously `x += 1` (`x` read + write), but moving to `_x = x` (`x` read only)
+                let reference = ctx.symbols_mut().get_reference_mut(reference_id);
                 *reference.flags_mut() = ReferenceFlags::Read;
 
                 self.var_declarations.create_uid_var(&ident.name, ctx)
