@@ -16,3 +16,4 @@ This is the linter for Oxc. The currently supported features are listed below.
 - Highlighting for warnings or errors identified by Oxlint
 - Quick fixes to fix a warning or error when possible
 - JSON schema validation for supported Oxlint configuration files (does not include ESLint configuration files)
+- Command to fix all auto-fixable content within the current text editor.
