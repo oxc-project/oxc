@@ -188,8 +188,9 @@ fn is_possible_constructor(expression: &Expression<'_>) -> bool {
             assignment.operator,
             AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
         ) {
-            // ToDo check if left or right side
-            return true;
+            return (assignment.left.get_expression().is_some_and(is_possible_constructor)
+                || assignment.left.get_identifier().is_some())
+                || is_possible_constructor(&assignment.right);
         }
 
         return false;
@@ -278,7 +279,7 @@ fn executes_always_super_expression<'a>(
     }
 
     if let Statement::BlockStatement(block) = &statement {
-        return has_body_possible_super_call_expression(&block.body);
+        return has_body_possible_super_call_expression(&block.body, block.span);
     }
 
     if let Statement::SwitchStatement(switch) = &statement {
@@ -327,13 +328,11 @@ fn executes_always_super_expression<'a>(
     }
 
     if let Statement::TryStatement(try_block) = &statement {
-        if try_block.finalizer.is_none() {
-            return Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![try_block.span] });
-        }
+        if let Some(finalizer) = &try_block.finalizer {
+            return has_body_possible_super_call_expression(&finalizer.body, finalizer.span);
+        };
 
-        return has_body_possible_super_call_expression(
-            &try_block.finalizer.as_ref().unwrap().body,
-        );
+        return Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![try_block.span] });
     }
 
     Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![statement.span()] })
@@ -346,20 +345,25 @@ fn validate_method_super_call_expression<'a>(
         return Ok(vec![]);
     };
 
-    has_body_possible_super_call_expression(&func_body.statements)
+    has_body_possible_super_call_expression(&func_body.statements, func_body.span)
 }
 
 fn has_body_possible_super_call_expression<'a>(
     body: &'a oxc_allocator::Vec<Statement<'a>>,
+    alternative_span: Span,
 ) -> Result<Vec<Span>, ErrorReport> {
     let mut found_calls: Vec<Vec<Span>> = vec![];
 
     for statement in body {
         if matches!(statement, Statement::ReturnStatement(_)) {
-            return Err(ErrorReport {
-                reason: ErrorReason::ReturnWithoutCall,
-                spans: vec![statement.span()],
-            });
+            if found_calls.is_empty() {
+                return Err(ErrorReport {
+                    reason: ErrorReason::ReturnWithoutCall,
+                    spans: vec![statement.span()],
+                });
+            }
+
+            return Ok(found_calls.into_iter().flatten().collect::<Vec<Span>>());
         }
 
         let result = executes_always_super_expression(statement);
@@ -377,7 +381,7 @@ fn has_body_possible_super_call_expression<'a>(
             spans: found_calls.into_iter().flatten().collect::<Vec<Span>>(),
         });
     } else if found_calls.is_empty() {
-        return Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![] });
+        return Err(ErrorReport { reason: ErrorReason::NotFound, spans: vec![alternative_span] });
     }
 
     Ok(found_calls.into_iter().flatten().collect::<Vec<Span>>())
@@ -389,17 +393,9 @@ fn has_return_statement<'a>(method: &'a MethodDefinition<'a>) -> bool {
     };
 
     for statement in &func_body.statements {
-        if is_blocking_execution(statement) {
+        if matches!(statement, Statement::ReturnStatement(_)) {
             return true;
         }
-    }
-
-    false
-}
-
-fn is_blocking_execution<'a>(statement: &'a Statement<'a>) -> bool {
-    if matches!(statement, Statement::ReturnStatement(_) | Statement::ThrowStatement(_)) {
-        return true;
     }
 
     false
