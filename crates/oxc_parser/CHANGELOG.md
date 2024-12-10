@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.40.0] - 2024-12-10
+
+- 72eab6c parser: [**BREAKING**] Stage 3 `import source` and `import defer` (#7706) (Boshen)
+
+- ebc80f6 ast: [**BREAKING**] Change 'raw' from &str to Option<Atom> (#7547) (Song Gao)
+
+### Features
+
+- 00fea92 napi/parser: Expose span positions of `import.meta` (#7677) (Boshen)
+- b8dc333 syntax: Add `ExportEntry::is_type` (#7676) (Boshen)
+
+### Bug Fixes
+
+- 8c0b0ee parser: Better diagnostic for invalid `for await` syntax (#7649) (Boshen)
+
+### Performance
+
+- d503a84 parser: Reorder `parse_statement` match conditions (#7645) (Boshen)
+- e923e4e parser: Inline all token kind checks (#7644) (Boshen)
+
+### Refactor
+
+- 36d1493 parser: Use `ModuleRecord::has_module_syntax` for setting sourceType (#7646) (Boshen)
+
 ## [0.39.0] - 2024-12-04
 
 - c2ced15 parser,linter: [**BREAKING**] Use a different `ModuleRecord` for linter (#7554) (Boshen)

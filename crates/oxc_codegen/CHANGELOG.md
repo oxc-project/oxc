@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.40.0] - 2024-12-10
+
+- 72eab6c parser: [**BREAKING**] Stage 3 `import source` and `import defer` (#7706) (Boshen)
+
+- ebc80f6 ast: [**BREAKING**] Change 'raw' from &str to Option<Atom> (#7547) (Song Gao)
+
+### Features
+
+- d0b78f7 codegen: Minify whitespace for some expressions (#7671) (Boshen)
+- c523ccb codegen: Better whitespace minification for import / export statements (#7650) (Boshen)
+
+### Bug Fixes
+
+- a222f2b codegen: Print `delete 2e308` as `delete (0, Infinity)` (#7761) (Boshen)
+- b701232 codegen: Print quote correctly for directive (#7735) (Boshen)
+- 8c3a954 codegen: Missing parens for `in` in `for in` loop init (#7705) (Dunqing)
+- 4afbe55 codegen: Missing parens for `in` in for loop init when it includes two binary expression (#7703) (Dunqing)
+
+### Refactor
+
+
 ## [0.39.0] - 2024-12-04
 
 ### Bug Fixes
