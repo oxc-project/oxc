@@ -42409,8 +42409,8 @@ rebuilt        : ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
 
 tasks/coverage/typescript/tests/cases/conformance/es2021/logicalAssignment/logicalAssignment2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A", "_a$foo", "_a$foo$bar", "_b$foo", "_b$foo$bar", "_baz", "_baz2", "_baz3", "_c$baz", "_c$foo", "_c$foo$_baz", "_c$foo$bar", "_c$foo$bar$baz", "a", "b", "c", "result"]
-rebuilt        : ScopeId(0): ["_a$foo", "_a$foo$bar", "_b$foo", "_b$foo$bar", "_baz", "_baz2", "_baz3", "_c$baz", "_c$foo", "_c$foo$_baz", "_c$foo$bar", "_c$foo$bar$baz"]
+after transform: ScopeId(0): ["A", "_a$foo", "_a$foo$bar", "_b$foo", "_b$foo$bar", "_c$baz", "_c$foo", "_c$foo$bar", "_c$foo$bar$baz", "_c$foo$baz", "a", "b", "c", "result"]
+rebuilt        : ScopeId(0): ["_a$foo", "_a$foo$bar", "_b$foo", "_b$foo$bar", "_c$baz", "_c$foo", "_c$foo$bar", "_c$foo$bar$baz", "_c$foo$baz"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []

@@ -5,6 +5,7 @@ use std::{
     ptr,
 };
 
+use oxc_allocator::CloneIn;
 use oxc_ast::ast::{AssignmentOperator, Expression};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
@@ -109,13 +110,27 @@ impl<'a> TransformCtx<'a> {
 
                 self.var_declarations.create_uid_var(&ident.name, ctx)
             }
-            // Reading `this` or `super` cannot have side effects, so no need for temp var
-            Expression::ThisExpression(this) => {
-                let references = create_array(|| ctx.ast.expression_this(this.span));
+            // Reading any of these cannot have side effects, so no need for temp var
+            Expression::ThisExpression(_)
+            | Expression::Super(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::NullLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::RegExpLiteral(_)
+            | Expression::StringLiteral(_) => {
+                let references = create_array(|| expr.clone_in(ctx.ast.allocator));
                 return (expr, references);
             }
-            Expression::Super(super_expr) => {
-                let references = create_array(|| ctx.ast.expression_super(super_expr.span));
+            // Template literal can have no side effects if it has no expressions
+            Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
+                let references = create_array(|| {
+                    ctx.ast.expression_template_literal(
+                        lit.span,
+                        lit.quasis.clone_in(ctx.ast.allocator),
+                        ctx.ast.vec(),
+                    )
+                });
                 return (expr, references);
             }
             // Anything else requires temp var
