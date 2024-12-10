@@ -417,11 +417,7 @@ impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
         let directives = if ctx.scopes().get_flags(outer_scope_id).is_strict_mode() {
             ctx.ast.vec()
         } else {
-            ctx.ast.vec1(ctx.ast.directive(
-                SPAN,
-                ctx.ast.string_literal(SPAN, Atom::from("use strict"), None),
-                Atom::from("use strict"),
-            ))
+            ctx.ast.vec1(ctx.ast.use_strict_directive())
         };
 
         // `return this;`

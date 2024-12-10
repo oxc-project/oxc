@@ -216,6 +216,13 @@ impl<'a> AstBuilder<'a> {
         )))
     }
 
+    /// `"use strict"` directive
+    #[inline]
+    pub fn use_strict_directive(self) -> Directive<'a> {
+        let use_strict = Atom::from("use strict");
+        self.directive(SPAN, self.string_literal(SPAN, use_strict.clone(), None), use_strict)
+    }
+
     /* ---------- Functions ---------- */
 
     /// Create a [`FormalParameter`] with no type annotations, modifiers,
