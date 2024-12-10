@@ -1703,7 +1703,7 @@ pub mod walk_mut {
         visitor.enter_scope(
             {
                 let mut flags = ScopeFlags::Function | ScopeFlags::Arrow;
-                if it.body.has_use_strict_directive() {
+                if it.has_use_strict_directive() {
                     flags |= ScopeFlags::StrictMode;
                 }
                 flags

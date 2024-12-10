@@ -1701,7 +1701,7 @@ pub struct FunctionBody<'a> {
 #[ast(visit)]
 #[scope(
     flags(ScopeFlags::Function | ScopeFlags::Arrow),
-    strict_if(self.body.has_use_strict_directive()),
+    strict_if(self.has_use_strict_directive()),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]

@@ -1094,6 +1094,11 @@ impl<'a> ArrowFunctionExpression<'a> {
         }
         None
     }
+
+    /// Returns `true` if this arrow function's body has a `"use strict"` directive.
+    pub fn has_use_strict_directive(&self) -> bool {
+        self.body.has_use_strict_directive()
+    }
 }
 
 impl Class<'_> {
