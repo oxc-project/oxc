@@ -17,7 +17,10 @@ import assert from 'assert';
 import { copyFile, readdir, readFile, rename, writeFile } from 'fs/promises';
 import { extname, join as pathJoin } from 'path';
 
-const PACKAGES = ['babel-plugin-transform-class-properties'];
+const PACKAGES = [
+  'babel-plugin-transform-class-properties',
+  'babel-plugin-transform-logical-assignment-operators',
+];
 const FILTER_OUT_PRESETS = ['env'];
 const FILTER_OUT_PLUGINS = [
   'transform-classes',
