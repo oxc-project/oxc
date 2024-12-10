@@ -5,6 +5,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
+use oxc_syntax::identifier;
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 use super::{
@@ -211,10 +212,15 @@ impl<'a> InjectGlobalVariables<'a> {
         match &inject.specifier {
             InjectImportSpecifier::Specifier { imported, local } => {
                 let imported = imported.as_deref().unwrap_or("default");
+                let imported = if identifier::is_identifier_name(imported) {
+                    self.ast.module_export_name_identifier_name(SPAN, imported)
+                } else {
+                    self.ast.module_export_name_string_literal(SPAN, imported, None)
+                };
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
                 self.ast.import_declaration_specifier_import_specifier(
                     SPAN,
-                    self.ast.module_export_name_identifier_name(SPAN, imported),
+                    imported,
                     self.ast.binding_identifier(SPAN, local),
                     ImportOrExportKind::Value,
                 )
