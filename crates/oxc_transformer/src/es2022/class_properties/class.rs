@@ -104,29 +104,40 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         let mut exprs = ctx.ast.vec_with_capacity(expr_count);
 
-        // Insert `_prop = new WeakMap()` expressions for private instance props.
+        // Insert `_prop = new WeakMap()` expressions for private instance props
+        // (or `_prop = _classPrivateFieldLooseKey("prop")` if loose mode).
         // Babel has these always go first, regardless of order of class elements.
         // Also insert `var _prop;` temp var declarations for private static props.
         let private_props = self.private_props_stack.last();
         if let Some(private_props) = private_props {
-            let mut weakmap_symbol_id = None;
-            exprs.extend(private_props.props.values().filter_map(|prop| {
-                // Insert `var _prop;` declaration.
-                // Do it here rather than when binding was created to maintain same order of `var`
-                // declarations as Babel. `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`
-                self.ctx.var_declarations.insert_var(&prop.binding, ctx);
+            // Insert `var _prop;` declarations here rather than when binding was created to maintain
+            // same order of `var` declarations as Babel.
+            // `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`
+            // TODO(improve-on-babel): Simplify this.
+            if self.private_fields_as_properties {
+                exprs.extend(private_props.props.iter().map(|(name, prop)| {
+                    // Insert `var _prop;` declaration
+                    self.ctx.var_declarations.insert_var(&prop.binding, ctx);
 
-                if prop.is_static {
-                    return None;
-                }
+                    // `_prop = _classPrivateFieldLooseKey("prop")`
+                    let value = self.create_private_prop_key_loose(name, ctx);
+                    create_assignment(&prop.binding, value, ctx)
+                }));
+            } else {
+                let mut weakmap_symbol_id = None;
+                exprs.extend(private_props.props.values().filter_map(|prop| {
+                    // Insert `var _prop;` declaration
+                    self.ctx.var_declarations.insert_var(&prop.binding, ctx);
 
-                // `_prop = new WeakMap()`
-                Some(create_assignment(
-                    &prop.binding,
-                    create_new_weakmap(&mut weakmap_symbol_id, ctx),
-                    ctx,
-                ))
-            }));
+                    if prop.is_static {
+                        return None;
+                    }
+
+                    // `_prop = new WeakMap()`
+                    let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
+                    Some(create_assignment(&prop.binding, value, ctx))
+                }));
+            }
         }
 
         // Insert computed key initializers
@@ -216,23 +227,31 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         }
 
         if let Some(private_props) = self.private_props_stack.last() {
-            // TODO: Only call `insert_many_before` if some private *instance* props
-            let mut weakmap_symbol_id = None;
-            self.ctx.statement_injector.insert_many_before(
-                &stmt_address,
-                private_props.props.values().filter_map(|prop| {
-                    if prop.is_static {
-                        return None;
-                    }
+            if self.private_fields_as_properties {
+                self.ctx.statement_injector.insert_many_before(
+                    &stmt_address,
+                    private_props.props.iter().map(|(name, prop)| {
+                        // `var _prop = _classPrivateFieldLooseKey("prop");`
+                        let value = self.create_private_prop_key_loose(name, ctx);
+                        create_variable_declaration(&prop.binding, value, ctx)
+                    }),
+                );
+            } else {
+                // TODO: Only call `insert_many_before` if some private *instance* props
+                let mut weakmap_symbol_id = None;
+                self.ctx.statement_injector.insert_many_before(
+                    &stmt_address,
+                    private_props.props.values().filter_map(|prop| {
+                        if prop.is_static {
+                            return None;
+                        }
 
-                    // `var _prop = new WeakMap()`
-                    Some(create_variable_declaration(
-                        &prop.binding,
-                        create_new_weakmap(&mut weakmap_symbol_id, ctx),
-                        ctx,
-                    ))
-                }),
-            );
+                        // `var _prop = new WeakMap();`
+                        let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
+                        Some(create_variable_declaration(&prop.binding, value, ctx))
+                    }),
+                );
+            }
         }
 
         if !self.insert_after_stmts.is_empty() {
@@ -240,6 +259,24 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 .statement_injector
                 .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
         }
+    }
+
+    /// `_classPrivateFieldLooseKey("prop")`
+    fn create_private_prop_key_loose(
+        &self,
+        name: &Atom<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        self.ctx.helper_call_expr(
+            Helper::ClassPrivateFieldLooseKey,
+            SPAN,
+            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(
+                SPAN,
+                name.clone(),
+                None,
+            ))),
+            ctx,
+        )
     }
 
     /// Main guts of the transform.
@@ -600,8 +637,83 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         self.ctx.helper_call_expr(Helper::DefineProperty, SPAN, arguments, ctx)
     }
 
-    /// Create `_classPrivateFieldInitSpec(this, _prop, value)` to be inserted into class constructor.
+    /// Create init assignment for private instance prop, to be inserted into class constructor.
+    ///
+    /// Loose: `Object.defineProperty(this, _prop, {writable: true, value: value})`
+    /// Not loose: `_classPrivateFieldInitSpec(this, _prop, value)`
     fn create_private_instance_init_assignment(
+        &mut self,
+        ident: &PrivateIdentifier<'a>,
+        value: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        if self.private_fields_as_properties {
+            let this = ctx.ast.expression_this(SPAN);
+            self.create_private_init_assignment_loose(ident, value, this, ctx)
+        } else {
+            self.create_private_instance_init_assignment_not_loose(ident, value, ctx)
+        }
+    }
+
+    /// `Object.defineProperty(<assignee>, _prop, {writable: true, value: value})`
+    fn create_private_init_assignment_loose(
+        &mut self,
+        ident: &PrivateIdentifier<'a>,
+        value: Expression<'a>,
+        assignee: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        // `Object.defineProperty`
+        let object_symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "Object");
+        let object = ctx.create_ident_expr(
+            SPAN,
+            Atom::from("Object"),
+            object_symbol_id,
+            ReferenceFlags::Read,
+        );
+        let property = ctx.ast.identifier_name(SPAN, "defineProperty");
+        let callee =
+            Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
+
+        // `{writable: true, value: <value>}`
+        let prop_def = ctx.ast.expression_object(
+            SPAN,
+            ctx.ast.vec_from_array([
+                ctx.ast.object_property_kind_object_property(
+                    SPAN,
+                    PropertyKind::Init,
+                    ctx.ast.property_key_identifier_name(SPAN, Atom::from("writable")),
+                    ctx.ast.expression_boolean_literal(SPAN, true),
+                    false,
+                    false,
+                    false,
+                ),
+                ctx.ast.object_property_kind_object_property(
+                    SPAN,
+                    PropertyKind::Init,
+                    ctx.ast.property_key_identifier_name(SPAN, Atom::from("value")),
+                    value,
+                    false,
+                    false,
+                    false,
+                ),
+            ]),
+            None,
+        );
+
+        let private_props = self.private_props_stack.last().unwrap();
+        let prop = &private_props.props[&ident.name];
+        let arguments = ctx.ast.vec_from_array([
+            Argument::from(assignee),
+            Argument::from(prop.binding.create_read_expression(ctx)),
+            Argument::from(prop_def),
+        ]);
+        // TODO: Should this have span of original `PropertyDefinition`?
+        ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
+    }
+
+    /// `_classPrivateFieldInitSpec(this, _prop, value)`
+    fn create_private_instance_init_assignment_not_loose(
         &mut self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
@@ -619,9 +731,54 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 
     /// Insert after class:
+    ///
+    /// Not loose:
     /// * Class declaration: `var _prop = {_: value};`
     /// * Class expression: `_prop = {_: value}`
+    ///
+    /// Loose:
+    /// `Object.defineProperty(Class, _prop, {writable: true, value: value});`
     fn insert_private_static_init_assignment(
+        &mut self,
+        ident: &PrivateIdentifier<'a>,
+        value: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.private_fields_as_properties {
+            self.insert_private_static_init_assignment_loose(ident, value, ctx);
+        } else {
+            self.insert_private_static_init_assignment_not_loose(ident, value, ctx);
+        }
+    }
+
+    /// Insert after class:
+    /// `Object.defineProperty(Class, _prop, {writable: true, value: value});`
+    fn insert_private_static_init_assignment_loose(
+        &mut self,
+        ident: &PrivateIdentifier<'a>,
+        value: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // TODO: This logic appears elsewhere. De-duplicate it.
+        let class_binding = if self.is_declaration {
+            // Class declarations always have a name except `export default class {}`.
+            // For default export, binding is created when static prop found in 1st pass.
+            self.class_bindings.name.as_ref().unwrap()
+        } else {
+            // Binding is created when static prop found in 1st pass.
+            self.class_bindings.temp.as_ref().unwrap()
+        };
+
+        let assignee = class_binding.create_read_expression(ctx);
+        let assignment = self.create_private_init_assignment_loose(ident, value, assignee, ctx);
+        self.insert_expr_after_class(assignment, ctx);
+    }
+
+    /// Insert after class:
+    ///
+    /// * Class declaration: `var _prop = {_: value};`
+    /// * Class expression: `_prop = {_: value}`
+    fn insert_private_static_init_assignment_not_loose(
         &mut self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
@@ -791,6 +948,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 /// * `None` = Not looked up yet.
 /// * `Some(None)` = Has been looked up, and `WeakMap` is unbound.
 /// * `Some(Some(symbol_id))` = Has been looked up, and `WeakMap` has a local binding.
+///
+/// This is an optimization to avoid looking up the symbol for `WeakMap` over and over when defining
+/// multiple private properties.
 #[expect(clippy::option_option)]
 fn create_new_weakmap<'a>(
     symbol_id: &mut Option<Option<SymbolId>>,

@@ -11,7 +11,7 @@ use oxc_traverse::{
     ast_operations::get_var_name_from_node, Ancestor, BoundIdentifier, TraverseCtx,
 };
 
-use crate::common::helper_loader::Helper;
+use crate::{common::helper_loader::Helper, TransformCtx};
 
 use super::{
     private_props::ResolvedPrivateProp,
@@ -25,8 +25,11 @@ use super::{
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform private field expression.
     ///
-    /// Instance prop: `object.#prop` -> `_classPrivateFieldGet2(_prop, object)`
-    /// Static prop: `object.#prop` -> `_assertClassBrand(Class, object, _prop)._`
+    /// Not loose:
+    /// * Instance prop: `object.#prop` -> `_classPrivateFieldGet2(_prop, object)`
+    /// * Static prop: `object.#prop` -> `_assertClassBrand(Class, object, _prop)._`
+    ///
+    /// Loose: `object.#prop` -> `_classPrivateFieldLooseBase(object, _prop)[_prop]`
     //
     // `#[inline]` so that compiler sees that `expr` is an `Expression::PrivateFieldExpression`.
     #[inline]
@@ -53,10 +56,22 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         };
         let ResolvedPrivateProp { prop_binding, class_bindings, is_static, is_declaration } =
             prop_details;
-        let prop_ident = prop_binding.create_read_expression(ctx);
 
         // TODO: Move this to top of function once `lookup_private_property` does not return `Option`
         let PrivateFieldExpression { span, object, .. } = field_expr.unbox();
+
+        if self.private_fields_as_properties {
+            // `_classPrivateFieldLooseBase(object, _prop)[_prop]`
+            return Expression::from(Self::create_private_field_member_expr_loose(
+                object,
+                prop_binding,
+                span,
+                self.ctx,
+                ctx,
+            ));
+        }
+
+        let prop_ident = prop_binding.create_read_expression(ctx);
 
         if is_static {
             // TODO: Ensure there are tests for nested classes with references to private static props
@@ -129,10 +144,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
     /// Transform call expression where callee is private field.
     ///
-    /// Instance prop: `object.#prop(arg)` -> `_classPrivateFieldGet2(_prop, object).call(object, arg)`
-    /// Static prop: `object.#prop(arg)` -> `_assertClassBrand(Class, object, _prop)._.call(object, arg)`
+    /// Not loose:
+    /// * Instance prop: `object.#prop(arg)` -> `_classPrivateFieldGet2(_prop, object).call(object, arg)`
+    /// * Static prop: `object.#prop(arg)` -> `_assertClassBrand(Class, object, _prop)._.call(object, arg)`
     ///
-    /// Output in both cases contains a `CallExpression`, so mutate existing `CallExpression`
+    /// Loose: `object.#prop(arg)` -> `_classPrivateFieldLooseBase(object, _prop)[_prop](arg)`
+    ///
+    /// Output in all cases contains a `CallExpression`, so mutate existing `CallExpression`
     /// rather than creating a new one.
     //
     // `#[inline]` so that compiler sees that `expr` is an `Expression::CallExpression`
@@ -158,6 +176,23 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let Expression::PrivateFieldExpression(field_expr) = &mut call_expr.callee else {
             unreachable!()
         };
+
+        if self.private_fields_as_properties {
+            // `object.#prop(arg)` -> `_classPrivateFieldLooseBase(object, _prop)[_prop](arg)`
+            let prop_details = self.private_props_stack.find(&field_expr.field);
+            // TODO: Should never be `None` - only because implementation is incomplete.
+            let Some(ResolvedPrivateProp { prop_binding, .. }) = prop_details else { return };
+
+            let object = ctx.ast.move_expression(&mut field_expr.object);
+            call_expr.callee = Expression::from(Self::create_private_field_member_expr_loose(
+                object,
+                prop_binding,
+                field_expr.span,
+                self.ctx,
+                ctx,
+            ));
+            return;
+        }
 
         // TODO: Should never be `None` - only because implementation is incomplete.
         let Some((callee, object)) = self.transform_private_field_callee(field_expr, ctx) else {
@@ -278,6 +313,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 
     /// Transform assignment to private field.
+    ///
+    /// Not loose:
+    /// * Instance: See [`ClassProperties::transform_instance_assignment_expression`].
+    /// * Static: See [`ClassProperties::transform_static_assignment_expression`].
+    ///
+    /// Loose: `object.#prop = value` -> `_classPrivateFieldLooseBase(object, _prop)[_prop] = value`.
     //
     // `#[inline]` so that compiler sees that `expr` is an `Expression::AssignmentExpression`
     #[inline]
@@ -310,6 +351,21 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let Some(prop_details) = prop_details else { return };
         let ResolvedPrivateProp { prop_binding, class_bindings, is_static, is_declaration } =
             prop_details;
+
+        if self.private_fields_as_properties {
+            // `object.#prop = value` -> `_classPrivateFieldLooseBase(object, _prop)[_prop] = value`
+            // Same for all other assignment operators e.g. `+=`, `&&=`, `??=`.
+            let object = ctx.ast.move_expression(&mut field_expr.object);
+            let replacement = Self::create_private_field_member_expr_loose(
+                object,
+                prop_binding,
+                field_expr.span,
+                self.ctx,
+                ctx,
+            );
+            assign_expr.left = AssignmentTarget::from(replacement);
+            return;
+        }
 
         // Note: `transform_static_assignment_expression` and `transform_instance_assignment_expression`
         // are marked `#[inline]`, so hopefully compiler will see these clones of `BoundIdentifier`s
@@ -586,7 +642,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
     /// Transform update expression (`++` or `--`) where argument is private field.
     ///
-    /// Instance prop:
+    /// Instance prop (not loose):
     ///
     /// * `++object.#prop` ->
     /// ```js
@@ -611,7 +667,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// )
     /// ```
     ///
-    /// Static prop:
+    /// Static prop (not loose):
     ///
     /// * `++object.#prop` ->
     /// ```js
@@ -635,6 +691,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ///   _object$prop2
     /// )
     /// ```
+    ///
+    /// Loose:
+    /// `++object.#prop` -> `++_classPrivateFieldLooseBase(object, _prop)[_prop]`
+    /// `object.#prop++` -> `_classPrivateFieldLooseBase(object, _prop)[_prop]++`
     ///
     /// Output in all cases contains an `UpdateExpression`, so mutate existing `UpdateExpression`
     /// rather than creating a new one.
@@ -671,6 +731,20 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let Some(prop_details) = prop_details else { return };
         let ResolvedPrivateProp { prop_binding, class_bindings, is_static, is_declaration } =
             prop_details;
+
+        if self.private_fields_as_properties {
+            // `object.#prop++` -> `_classPrivateFieldLooseBase(object, _prop)[_prop]++`
+            let object = ctx.ast.move_expression(&mut field_expr.object);
+            let replacement = Self::create_private_field_member_expr_loose(
+                object,
+                prop_binding,
+                field_expr.span,
+                self.ctx,
+                ctx,
+            );
+            update_expr.argument = SimpleAssignmentTarget::from(replacement);
+            return;
+        }
 
         let prop_ident = prop_binding.create_read_expression(ctx);
         let prop_ident2 = prop_binding.create_read_expression(ctx);
@@ -1359,17 +1433,26 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
     /// Transform tagged template expression where tag is a private field.
     ///
-    /// Instance prop:
+    /// Instance prop (not loose):
     /// * "object.#prop`xyz`"
     ///   -> "_classPrivateFieldGet(_prop, object).bind(object)`xyz`"
     /// * "object.obj.#prop`xyz`"
     ///   -> "_classPrivateFieldGet(_prop, _object$obj = object.obj).bind(_object$obj)`xyz`"
     ///
-    /// Static prop:
+    /// Static prop (not loose):
     /// * "object.#prop`xyz`"
     ///   -> "_assertClassBrand(Class, object, _prop)._.bind(object)`xyz`"
     /// * "object.obj.#prop`xyz`"
     ///   -> "_assertClassBrand(Class, (_object$obj = object.obj), _prop)._.bind(_object$obj)`xyz`"
+    ///
+    /// Loose:
+    /// ```js
+    /// object.#prop`xyz`
+    /// ```
+    /// ->
+    /// ```js
+    /// _classPrivateFieldLooseBase(object, _prop)[_prop]`xyz`
+    /// ```
     //
     // `#[inline]` so that compiler sees that `expr` is an `Expression::TaggedTemplateExpression`
     #[inline]
@@ -1382,9 +1465,43 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let Expression::PrivateFieldExpression(field_expr) = &mut tagged_temp_expr.tag else {
             return;
         };
-        if let Some(tag) = self.transform_bindable_private_field(field_expr, ctx) {
+
+        if let Some(tag) = self.transform_tagged_template_expression_impl(field_expr, ctx) {
             tagged_temp_expr.tag = tag;
         };
+    }
+
+    fn transform_tagged_template_expression_impl(
+        &mut self,
+        field_expr: &mut PrivateFieldExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if self.private_fields_as_properties {
+            // "object.#prop`xyz`" -> "_classPrivateFieldLooseBase(object, _prop)[_prop]`xyz`"
+            //
+            // Babel adds an additional `.bind(object)`:
+            // ```js
+            // _classPrivateFieldLooseBase(object, _prop)[_prop].bind(object)`xyz`"
+            // //                                               ^^^^^^^^^^^^^
+            // ```
+            // But this is not needed, so we omit it.
+            //
+            // TODO: Should never be `None` - only because implementation is incomplete.
+            let ResolvedPrivateProp { prop_binding, .. } =
+                self.private_props_stack.find(&field_expr.field)?;
+
+            let object = ctx.ast.move_expression(&mut field_expr.object);
+            let replacement = Self::create_private_field_member_expr_loose(
+                object,
+                prop_binding,
+                field_expr.span,
+                self.ctx,
+                ctx,
+            );
+            Some(Expression::from(replacement))
+        } else {
+            self.transform_bindable_private_field(field_expr, ctx)
+        }
     }
 
     fn transform_bindable_private_field(
@@ -1483,6 +1600,34 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) -> (Expression<'a>, Expression<'a>, Expression<'a>) {
         assert_expr_neither_parenthesis_nor_typescript_syntax(&object);
         self.ctx.duplicate_expression_twice(object, false, ctx)
+    }
+
+    /// `_classPrivateFieldLooseBase(object, _prop)[_prop]`.
+    ///
+    /// Takes `&TransformCtx` instead of `&self` to allow passing a `&BoundIdentifier<'a>` returned by
+    /// `self.private_props_stack.find()`, which takes a partial mut borrow of `self`.
+    fn create_private_field_member_expr_loose(
+        object: Expression<'a>,
+        prop_binding: &BoundIdentifier<'a>,
+        span: Span,
+        transform_ctx: &TransformCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> MemberExpression<'a> {
+        let call_expr = transform_ctx.helper_call_expr(
+            Helper::ClassPrivateFieldLooseBase,
+            SPAN,
+            ctx.ast.vec_from_array([
+                Argument::from(object),
+                Argument::from(prop_binding.create_read_expression(ctx)),
+            ]),
+            ctx,
+        );
+        ctx.ast.member_expression_computed(
+            span,
+            call_expr,
+            prop_binding.create_read_expression(ctx),
+            false,
+        )
     }
 
     /// `_classPrivateFieldGet2(_prop, object)`

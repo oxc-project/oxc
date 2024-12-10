@@ -181,6 +181,8 @@ pub struct ClassProperties<'a, 'ctx> {
     //
     /// If `true`, set properties with `=`, instead of `_defineProperty` helper.
     set_public_class_fields: bool,
+    /// If `true`, record private properties as string keys
+    private_fields_as_properties: bool,
     /// If `true`, transform static blocks.
     transform_static_blocks: bool,
 
@@ -227,9 +229,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) -> Self {
         // TODO: Raise error if these 2 options are inconsistent
         let set_public_class_fields = options.loose || ctx.assumptions.set_public_class_fields;
+        // TODO: Raise error if these 2 options are inconsistent
+        let private_fields_as_properties =
+            options.loose || ctx.assumptions.private_fields_as_properties;
 
         Self {
             set_public_class_fields,
+            private_fields_as_properties,
             transform_static_blocks,
             ctx,
             private_props_stack: PrivatePropsStack::default(),

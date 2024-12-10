@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 441/846
+Passed: 480/846
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (114/264)
+# babel-plugin-transform-class-properties (153/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -588,14 +588,16 @@ Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
 
-* private-loose/assignment/input.js
-x Output mismatch
-
 * private-loose/call/input.js
-x Output mismatch
-
-* private-loose/canonical/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
+Scope children mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(2): [ScopeId(3)]
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
 
 * private-loose/class-shadow-builtins/input.mjs
 x Output mismatch
@@ -603,71 +605,19 @@ x Output mismatch
 * private-loose/constructor-collision/input.js
 x Output mismatch
 
-* private-loose/declaration-order/input.js
-x Output mismatch
-
-* private-loose/derived/input.js
-x Output mismatch
-
-* private-loose/derived-multiple-supers/input.js
-x Output mismatch
-
-* private-loose/destructuring-array-pattern/input.js
-x Output mismatch
-
-* private-loose/destructuring-array-pattern-1/input.js
-x Output mismatch
-
-* private-loose/destructuring-array-pattern-2/input.js
-x Output mismatch
-
-* private-loose/destructuring-array-pattern-3/input.js
-x Output mismatch
-
-* private-loose/destructuring-array-pattern-static/input.js
-x Output mismatch
-
-* private-loose/destructuring-object-pattern/input.js
-x Output mismatch
-
-* private-loose/destructuring-object-pattern-1/input.js
-x Output mismatch
-
-* private-loose/destructuring-object-pattern-2/input.js
-x Output mismatch
-
-* private-loose/destructuring-object-pattern-3/input.js
-x Output mismatch
-
-* private-loose/destructuring-object-pattern-static/input.js
-x Output mismatch
-
 * private-loose/extracted-this/input.js
 x Output mismatch
 
 * private-loose/foobar/input.js
-x Output mismatch
-
-* private-loose/instance/input.js
-x Output mismatch
-
-* private-loose/instance-undefined/input.js
-x Output mismatch
-
-* private-loose/logical-assignment/input.js
-x Output mismatch
-
-* private-loose/multiple/input.js
-x Output mismatch
-
-* private-loose/native-classes/input.js
-x Output mismatch
-
-* private-loose/nested-class/input.js
-x Output mismatch
-
-* private-loose/nested-class-computed/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): [ScopeId(3)]
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(1))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
 
 * private-loose/nested-class-computed-redeclared/input.js
 x Output mismatch
@@ -676,16 +626,18 @@ x Output mismatch
 x Output mismatch
 
 * private-loose/nested-class-extends-computed-redeclared/input.js
-x Output mismatch
-
-* private-loose/nested-class-other-redeclared/input.js
-x Output mismatch
-
-* private-loose/nested-class-redeclared/input.js
-x Output mismatch
-
-* private-loose/non-block-arrow-func/input.mjs
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(2): ["Nested", "_foo2"]
+rebuilt        : ScopeId(3): ["Nested", "_foo2", "_foo3", "_this$foo"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_foo3", "_this$foo"]
+rebuilt        : ScopeId(4): []
+Symbol scope ID mismatch for "_foo3":
+after transform: SymbolId(5): ScopeId(3)
+rebuilt        : SymbolId(2): ScopeId(3)
+Symbol scope ID mismatch for "_this$foo":
+after transform: SymbolId(6): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(3)
 
 * private-loose/optional-chain-before-member-call/input.js
 x Output mismatch
@@ -702,9 +654,6 @@ x Output mismatch
 * private-loose/optional-chain-cast-to-boolean/input.js
 x Output mismatch
 
-* private-loose/optional-chain-delete-property/input.js
-x Output mismatch
-
 * private-loose/optional-chain-delete-property-with-transform/input.js
 x Output mismatch
 
@@ -715,9 +664,6 @@ x Output mismatch
 x Output mismatch
 
 * private-loose/optional-chain-member-optional-call/input.js
-x Output mismatch
-
-* private-loose/optional-chain-member-optional-call-spread-arguments/input.js
 x Output mismatch
 
 * private-loose/optional-chain-member-optional-call-with-transform/input.js
@@ -741,53 +687,50 @@ x Output mismatch
 * private-loose/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
 
-* private-loose/preserve-comments/input.js
-x Output mismatch
-
-* private-loose/private-in-derived/input.js
-x Output mismatch
-
-* private-loose/reevaluated/input.js
-x Output mismatch
-
-* private-loose/reference-in-other-property/input.js
-x Output mismatch
-
-* private-loose/static/input.js
-x Output mismatch
-
 * private-loose/static-call/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(3): Some(ScopeId(0))
 
 * private-loose/static-class-binding/input.js
-x Output mismatch
-
-* private-loose/static-export/input.mjs
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
 
 * private-loose/static-infer-name/input.js
 x Output mismatch
 
-* private-loose/static-inherited/input.js
-x Output mismatch
-
-* private-loose/static-shadow/input.js
-x Output mismatch
-
 * private-loose/static-this/input.js
-x Output mismatch
-
-* private-loose/static-undefined/input.js
-x Output mismatch
-
-* private-loose/super-expression/input.js
-x Output mismatch
-
-* private-loose/super-statement/input.js
-x Output mismatch
-
-* private-loose/update/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
 
 * public/call/input.js
 Scope children mismatch:

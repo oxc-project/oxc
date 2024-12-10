@@ -156,6 +156,8 @@ pub enum Helper {
     ClassPrivateFieldSet2,
     AssertClassBrand,
     ToSetter,
+    ClassPrivateFieldLooseKey,
+    ClassPrivateFieldLooseBase,
 }
 
 impl Helper {
@@ -177,6 +179,8 @@ impl Helper {
             Self::ClassPrivateFieldSet2 => "classPrivateFieldSet2",
             Self::AssertClassBrand => "assertClassBrand",
             Self::ToSetter => "toSetter",
+            Self::ClassPrivateFieldLooseKey => "classPrivateFieldLooseKey",
+            Self::ClassPrivateFieldLooseBase => "classPrivateFieldLooseBase",
         }
     }
 }

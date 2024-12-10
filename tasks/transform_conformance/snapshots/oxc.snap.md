@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 102/114
+Passed: 103/116
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,9 +16,31 @@ Passed: 102/114
 * regexp
 
 
-# babel-plugin-transform-class-properties (3/4)
-* private-loose-logical-assignment/input.js
-x Output mismatch
+# babel-plugin-transform-class-properties (4/6)
+* private-loose-tagged-template/input.js
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
+Scope children mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(2): [ScopeId(3)]
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+* private-loose-tagged-template-static/input.js
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(3): Some(ScopeId(0))
 
 
 # babel-plugin-transform-async-to-generator (14/15)
