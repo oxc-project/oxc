@@ -1680,7 +1680,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_node(kind);
-        self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow, &expr.scope_id);
+        self.enter_scope(
+            {
+                let mut flags = ScopeFlags::Function | ScopeFlags::Arrow;
+                if expr.has_use_strict_directive() {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &expr.scope_id,
+        );
 
         if let Some(parameters) = &expr.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
