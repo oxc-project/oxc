@@ -1339,8 +1339,7 @@ pub mod walk {
         visitor.enter_scope(
             {
                 let mut flags = ScopeFlags::Top;
-                if it.source_type.is_strict() || it.directives.iter().any(Directive::is_use_strict)
-                {
+                if it.source_type.is_strict() || it.has_use_strict_directive() {
                     flags |= ScopeFlags::StrictMode;
                 }
                 flags
@@ -3022,7 +3021,7 @@ pub mod walk {
         visitor.enter_scope(
             {
                 let mut flags = flags;
-                if it.is_strict() {
+                if it.has_use_strict_directive() {
                     flags |= ScopeFlags::StrictMode;
                 }
                 flags
@@ -3823,7 +3822,7 @@ pub mod walk {
         visitor.enter_scope(
             {
                 let mut flags = ScopeFlags::TsModuleBlock;
-                if it.body.as_ref().is_some_and(TSModuleDeclarationBody::is_strict) {
+                if it.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive) {
                     flags |= ScopeFlags::StrictMode;
                 }
                 flags

@@ -606,7 +606,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Inline the specific logic for `Program` here instead.
         // This simplifies logic in `enter_scope`, as it doesn't have to handle the special case.
         let mut flags = ScopeFlags::Top;
-        if program.is_strict() {
+        if self.source_type.is_strict() || program.has_use_strict_directive() {
             flags |= ScopeFlags::StrictMode;
         }
         self.current_scope_id = self.scope.add_scope(None, self.current_node_id, flags);
@@ -1589,7 +1589,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_scope(
             {
                 let mut flags = flags;
-                if func.is_strict() {
+                if func.has_use_strict_directive() {
                     flags |= ScopeFlags::StrictMode;
                 }
                 flags

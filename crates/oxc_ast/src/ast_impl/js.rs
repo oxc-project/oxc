@@ -14,10 +14,9 @@ impl Program<'_> {
         self.body.is_empty() && self.directives.is_empty()
     }
 
-    /// Returns `true` if this program uses strict mode semantics. Both source
-    /// type and `"use strict"` directives are considered.
-    pub fn is_strict(&self) -> bool {
-        self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)
+    /// Returns `true` if this program has a `"use strict"` directive.
+    pub fn has_use_strict_directive(&self) -> bool {
+        self.directives.iter().any(Directive::is_use_strict)
     }
 }
 
@@ -996,8 +995,8 @@ impl<'a> Function<'a> {
         matches!(self.r#type, FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction)
     }
 
-    /// `true` if this function's body has a `"use strict"` directive.
-    pub fn is_strict(&self) -> bool {
+    /// Returns `true` if this function's body has a `"use strict"` directive.
+    pub fn has_use_strict_directive(&self) -> bool {
         self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())
     }
 }
@@ -1080,7 +1079,6 @@ impl FunctionBody<'_> {
     }
 
     /// `true` if this function body contains a `"use strict"` directive.
-    #[allow(missing_docs)]
     pub fn has_use_strict_directive(&self) -> bool {
         self.directives.iter().any(Directive::is_use_strict)
     }

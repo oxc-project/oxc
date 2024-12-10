@@ -25,7 +25,7 @@ use super::{macros::inherit_variants, *};
 #[ast(visit)]
 #[scope(
     flags(ScopeFlags::Top),
-    strict_if(self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)),
+    strict_if(self.source_type.is_strict() || self.has_use_strict_directive()),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
@@ -1565,7 +1565,7 @@ pub struct BindingRestElement<'a> {
 #[scope(
     // `flags` passed in to visitor via parameter defined by `#[visit(args(flags = ...))]` on parents
     flags(flags),
-    strict_if(self.is_strict()),
+    strict_if(self.has_use_strict_directive()),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
