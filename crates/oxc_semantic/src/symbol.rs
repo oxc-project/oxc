@@ -238,6 +238,18 @@ impl SymbolTable {
             .map(|&reference_id| &self.references[reference_id])
     }
 
+    /// Get whether a symbol is mutated (i.e. assigned to).
+    ///
+    /// If symbol is `const`, always returns `false`.
+    /// Otherwise, returns `true` if the symbol is assigned to somewhere in AST.
+    pub fn symbol_is_mutated(&self, symbol_id: SymbolId) -> bool {
+        if self.flags[symbol_id].contains(SymbolFlags::ConstVariable) {
+            false
+        } else {
+            self.get_resolved_references(symbol_id).any(Reference::is_write)
+        }
+    }
+
     /// Add a reference to a symbol.
     pub fn add_resolved_reference(&mut self, symbol_id: SymbolId, reference_id: ReferenceId) {
         let reference_ids = &mut self.resolved_references[symbol_id];
