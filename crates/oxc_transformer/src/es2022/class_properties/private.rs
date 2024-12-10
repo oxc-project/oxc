@@ -1096,6 +1096,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         let is_optional = field_expr.optional;
         let object = &mut field_expr.object;
+
         let left = if is_optional {
             Some(self.transform_expression_to_wrap_nullish_check(object, ctx))
         } else {
@@ -1192,9 +1193,17 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         object: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let owned_object = ctx.ast.move_expression(object.get_inner_expression_mut());
-        let owned_object =
-            Self::ensure_optional_expression_wrapped_by_chain_expression(owned_object, ctx);
+        let mut owned_object = ctx.ast.move_expression(object.get_inner_expression_mut());
+
+        let owned_object = if let Some(result) =
+            self.transform_chain_element_recursively(&mut owned_object, ctx)
+        {
+            // If the `object` contains PrivateFieldExpression, we need to transform it first.
+            Self::wrap_conditional_check(result, owned_object, ctx)
+        } else {
+            Self::ensure_optional_expression_wrapped_by_chain_expression(owned_object, ctx)
+        };
+
         let (assignment, reference1, reference2) = self.duplicate_object_twice(owned_object, ctx);
         *object = reference1;
         self.wrap_nullish_check(assignment, reference2, ctx)
