@@ -345,9 +345,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
@@ -368,9 +365,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
@@ -456,9 +450,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(6)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(6): Some(ScopeId(0))
@@ -470,9 +461,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(6)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(6): Some(ScopeId(0))
@@ -496,9 +484,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(6)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(6): Some(ScopeId(0))
@@ -516,9 +501,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(6)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(6): Some(ScopeId(0))
@@ -530,9 +512,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(6)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(6): Some(ScopeId(0))
@@ -544,9 +523,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(5): Some(ScopeId(0))
@@ -590,9 +566,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(0))
@@ -604,9 +577,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
@@ -624,9 +594,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
@@ -734,9 +701,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(0))
@@ -748,9 +712,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
@@ -765,9 +726,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
@@ -845,9 +803,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
@@ -865,9 +820,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
@@ -931,9 +883,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
@@ -951,9 +900,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))

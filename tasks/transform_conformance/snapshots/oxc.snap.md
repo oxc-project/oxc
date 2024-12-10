@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 103/116
+Passed: 103/117
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,7 +16,7 @@ Passed: 103/116
 * regexp
 
 
-# babel-plugin-transform-class-properties (4/6)
+# babel-plugin-transform-class-properties (4/7)
 * private-loose-tagged-template/input.js
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
@@ -35,12 +35,32 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(0))
+
+* static-prop-initializer-strict-mode/input.js
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(8), ScopeId(14), ScopeId(17), ScopeId(20)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(8), ScopeId(14), ScopeId(17), ScopeId(20)]
+rebuilt        : ScopeId(1): []
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
+Scope parent mismatch:
+after transform: ScopeId(8): Some(ScopeId(1))
+rebuilt        : ScopeId(8): Some(ScopeId(0))
+Scope parent mismatch:
+after transform: ScopeId(14): Some(ScopeId(1))
+rebuilt        : ScopeId(14): Some(ScopeId(0))
+Scope parent mismatch:
+after transform: ScopeId(17): Some(ScopeId(1))
+rebuilt        : ScopeId(17): Some(ScopeId(0))
+Scope parent mismatch:
+after transform: ScopeId(20): Some(ScopeId(1))
+rebuilt        : ScopeId(20): Some(ScopeId(0))
 
 
 # babel-plugin-transform-async-to-generator (14/15)

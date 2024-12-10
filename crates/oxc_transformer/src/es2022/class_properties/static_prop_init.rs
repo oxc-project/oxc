@@ -1,11 +1,13 @@
 //! ES2022: Class Properties
 //! Transform of static property initializers.
 
+use std::cell::Cell;
+
 use oxc_ast::{
     ast::*,
     visit::{walk_mut, VisitMut},
 };
-use oxc_syntax::scope::ScopeFlags;
+use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 use super::ClassProperties;
@@ -68,9 +70,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 ///    * Class expression: `x = class C { static #x = 123; static y = this.#x; }`
 ///      -> `var _C, _x; x = (_C = class C {}, _x = { _: 123 }, _C.y = _assertClassBrand(_C, _C, _x)._), _C)`
 ///
-/// Reason we need to do this is because the initializer is being moved from inside the class to outside.
-/// `this` outside the class refers to a different `this`, and private fields are only valid within the
-/// class body. So we need to transform them.
+/// Also sets `ScopeFlags` of scopes to sloppy mode if code outside the class is sloppy mode.
+///
+/// Reason we need to transform `this` is because the initializer is being moved from inside the class
+/// to outside. `this` outside the class refers to a different `this`, and private fields are only valid
+/// within the class body. So we need to transform them.
 ///
 /// Note that for class declarations, assignments are made to properties of original class name `C`,
 /// but temp var `_C` is used in replacements for `this` or class name, and private fields.
@@ -88,8 +92,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 /// assert(C2.getSelf2() === C); // Would fail if `C` in `getSelf2` was not replaced with temp var
 /// ```
 ///
-/// If this class defines no private properties and class has no name, we only need to transform `this`,
-/// so can skip traversing into functions and other contexts which have their own `this`.
+/// If this class defines no private properties, class has no name, and no `ScopeFlags` need updating,
+/// then we only need to transform `this`. So can skip traversing into functions and other contexts
+/// which have their own `this`.
 ///
 /// Note: Those functions could contain private fields referring to a *parent* class's private props,
 /// but we don't need to transform them here as they remain in same class scope.
@@ -99,12 +104,18 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 // 2. `this` / reference to class name / private field is not in a nested function, so we know the
 //    code runs immediately, before any mutation of the class name binding can occur.
 //
+// TODO(improve-on-babel): Updating `ScopeFlags` for strict mode makes semantic correctly for the output,
+// but actually the transform isn't right. Should wrap initializer in a strict mode IIFE so that
+// initializer code runs in strict mode, as it was before within class body.
+//
 // TODO: Also re-parent child scopes.
-// TODO: Alter scope flags on all scopes to remove `StrictMode`, if outside class is sloppy mode.
-// Or fix this properly by wrapping all static prop initializers in a strict mode arrow function IIFE.
 struct StaticInitializerVisitor<'a, 'ctx, 'v> {
-    /// `true` if class has name or private properties.
-    class_has_name_or_private_props: bool,
+    /// `true` if class has name, or class has private properties, or `ScopeFlags` need updating.
+    /// Any of these neccesitates walking the whole tree. If none of those apply, we only need to
+    /// walk as far as functions and other constructs which define a `this`.
+    walk_deep: bool,
+    /// `true` if should make scopes sloppy mode
+    make_sloppy_mode: bool,
     /// Incremented when entering a different `this` context, decremented when exiting it.
     /// `this` should be transformed when `this_depth == 0`.
     this_depth: u32,
@@ -119,9 +130,12 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
         class_properties: &'v mut ClassProperties<'a, 'ctx>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
+        let make_sloppy_mode = !ctx.current_scope_flags().is_strict_mode();
         Self {
-            class_has_name_or_private_props: class_properties.class_bindings.name.is_some()
+            walk_deep: make_sloppy_mode
+                || class_properties.class_bindings.name.is_some()
                 || class_properties.private_props_stack.last().is_some(),
+            make_sloppy_mode,
             this_depth: 0,
             class_properties,
             ctx,
@@ -224,24 +238,67 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
         self.replace_class_name_with_temp_var(ident);
     }
 
+    /// Convert scope to sloppy mode if `self.make_sloppy_mode == true`
+    fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+        if self.make_sloppy_mode {
+            *self.ctx.scopes_mut().get_flags_mut(scope_id.get().unwrap()) -= ScopeFlags::StrictMode;
+        }
+    }
+
     // Increment `this_depth` when entering code where `this` refers to a different `this`
     // from `this` within this class, and decrement it when exiting.
     // Therefore `this_depth == 0` when `this` refers to the `this` which needs to be transformed.
     //
-    // Or, if class has no private properties, stop traversing entirely. No private field accesses
-    // need to be transformed, so no point searching for them.
+    // Or, if class has no name, class has no private properties, and `ScopeFlags` don't need updating,
+    // stop traversing entirely. No private field accesses need to be transformed, and no scopes need
+    // flags updating, so no point searching for them.
+    //
+    // Also set `make_sloppy_mode = false` while traversing a construct which is strict mode.
+
     #[inline]
     fn visit_function(&mut self, func: &mut Function<'a>, flags: ScopeFlags) {
-        if self.class_has_name_or_private_props {
+        let parent_sloppy_mode = self.make_sloppy_mode;
+        if self.make_sloppy_mode && func.has_use_strict_directive() {
+            // Function has a `"use strict"` directive in body
+            self.make_sloppy_mode = false;
+        }
+
+        if self.walk_deep {
             self.this_depth += 1;
             walk_mut::walk_function(self, func, flags);
             self.this_depth -= 1;
         }
+
+        self.make_sloppy_mode = parent_sloppy_mode;
+    }
+
+    #[inline]
+    fn visit_arrow_function_expression(&mut self, func: &mut ArrowFunctionExpression<'a>) {
+        let parent_sloppy_mode = self.make_sloppy_mode;
+        if self.make_sloppy_mode && func.has_use_strict_directive() {
+            // Arrow function has a `"use strict"` directive in body
+            self.make_sloppy_mode = false;
+        }
+
+        walk_mut::walk_arrow_function_expression(self, func);
+
+        self.make_sloppy_mode = parent_sloppy_mode;
+    }
+
+    #[inline]
+    fn visit_class(&mut self, class: &mut Class<'a>) {
+        let parent_sloppy_mode = self.make_sloppy_mode;
+        // Classes are always strict mode
+        self.make_sloppy_mode = false;
+
+        walk_mut::walk_class(self, class);
+
+        self.make_sloppy_mode = parent_sloppy_mode;
     }
 
     #[inline]
     fn visit_static_block(&mut self, block: &mut StaticBlock<'a>) {
-        if self.class_has_name_or_private_props {
+        if self.walk_deep {
             self.this_depth += 1;
             walk_mut::walk_static_block(self, block);
             self.this_depth -= 1;
@@ -250,11 +307,19 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
 
     #[inline]
     fn visit_ts_module_block(&mut self, block: &mut TSModuleBlock<'a>) {
-        if self.class_has_name_or_private_props {
+        let parent_sloppy_mode = self.make_sloppy_mode;
+        if self.make_sloppy_mode && block.has_use_strict_directive() {
+            // Block has a `"use strict"` directive in body
+            self.make_sloppy_mode = false;
+        }
+
+        if self.walk_deep {
             self.this_depth += 1;
             walk_mut::walk_ts_module_block(self, block);
             self.this_depth -= 1;
         }
+
+        self.make_sloppy_mode = parent_sloppy_mode;
     }
 
     #[inline]
@@ -274,7 +339,7 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             self.visit_property_key(&mut prop.key);
         }
 
-        if self.class_has_name_or_private_props {
+        if self.walk_deep {
             if let Some(value) = &mut prop.value {
                 self.this_depth += 1;
                 self.visit_expression(value);
@@ -292,7 +357,7 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             self.visit_property_key(&mut prop.key);
         }
 
-        if self.class_has_name_or_private_props {
+        if self.walk_deep {
             if let Some(value) = &mut prop.value {
                 self.this_depth += 1;
                 self.visit_expression(value);
