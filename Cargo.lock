@@ -1516,7 +1516,7 @@ dependencies = [
  "bitflags 2.6.0",
  "itertools",
  "nonmax",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_syntax",
  "petgraph",
  "rustc-hash",
@@ -1534,10 +1534,10 @@ dependencies = [
  "nonmax",
  "oxc_allocator",
  "oxc_ast",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_mangler",
  "oxc_parser",
- "oxc_sourcemap",
+ "oxc_sourcemap 1.0.3",
  "oxc_span",
  "oxc_syntax",
  "pico-args",
@@ -1618,6 +1618,15 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f004e73d346bec03a428ca26cf2df245d08563f1d3268b7bcbd5554fc1db05c5"
+dependencies = [
+ "rayon",
+]
+
+[[package]]
+name = "oxc_index"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5eca5d9726cd0a6e433debe003b7bc88b2ecad0bb6109f0cef7c55e692139a34"
@@ -1692,7 +1701,7 @@ dependencies = [
  "oxc_codegen",
  "oxc_diagnostics",
  "oxc_ecmascript",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_macros",
  "oxc_parser",
  "oxc_regular_expression",
@@ -1730,7 +1739,7 @@ version = "0.39.0"
 dependencies = [
  "itertools",
  "oxc_ast",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_semantic",
  "oxc_span",
 ]
@@ -1826,7 +1835,9 @@ dependencies = [
  "oxc_ast",
  "oxc_napi",
  "rustc-hash",
+ "self_cell",
  "serde_json",
+ "string_wizard",
 ]
 
 [[package]]
@@ -1917,7 +1928,7 @@ dependencies = [
  "oxc_cfg",
  "oxc_diagnostics",
  "oxc_ecmascript",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
@@ -1927,6 +1938,20 @@ dependencies = [
  "serde_json",
  "tsify",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "oxc_sourcemap"
+version = "0.38.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6889e95c8db9298201db5389810d61ca491443863897f557c0ce47f961541cde"
+dependencies = [
+ "base64-simd",
+ "cfg-if",
+ "cow-utils",
+ "rustc-hash",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1969,7 +1994,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_estree",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_span",
  "phf",
  "rustc-hash",
@@ -2026,7 +2051,7 @@ dependencies = [
  "napi-derive",
  "oxc",
  "oxc_napi",
- "oxc_sourcemap",
+ "oxc_sourcemap 1.0.3",
  "rustc-hash",
 ]
 
@@ -2085,7 +2110,7 @@ version = "0.0.0"
 dependencies = [
  "console_error_panic_hook",
  "oxc",
- "oxc_index",
+ "oxc_index 2.0.0",
  "oxc_linter",
  "oxc_prettier",
  "serde",
@@ -2579,6 +2604,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
+name = "self_cell"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2fdfc24bc566f839a2da4c4295b82db7d25a24253867d5c64355abb5799bdbe"
+
+[[package]]
 name = "semver"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2785,6 +2816,17 @@ name = "str_indices"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9557cb6521e8d009c51a8666f09356f4b817ba9ba0981a305bd86aee47bd35c"
+
+[[package]]
+name = "string_wizard"
+version = "0.0.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "651f4a6ed8df932ab9285b892fdd35bdc72b17b5eff0232cd51048a0b28af4a5"
+dependencies = [
+ "oxc_index 1.0.1",
+ "oxc_sourcemap 0.38.0",
+ "rustc-hash",
+]
 
 [[package]]
 name = "subtle"

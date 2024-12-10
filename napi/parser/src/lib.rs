@@ -3,7 +3,10 @@
 )]
 
 mod convert;
+mod magic_string;
 mod types;
+
+use std::mem;
 
 use napi::{bindgen_prelude::AsyncTask, Task};
 use napi_derive::napi;
@@ -16,7 +19,10 @@ use oxc::{
 };
 use oxc_napi::Error;
 
-pub use crate::types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
+pub use crate::{
+    magic_string::MagicString,
+    types::{Comment, EcmaScriptModule, ParseResult, ParserOptions},
+};
 
 fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
     match options.lang.as_deref() {
@@ -62,10 +68,10 @@ pub fn parse_without_return(filename: String, source_text: String, options: Opti
     parse(&allocator, source_type, &source_text, &options);
 }
 
-fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions) -> ParseResult {
+fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
     let source_type = get_source_type(filename, options);
-    let ret = parse(&allocator, source_type, source_text, options);
+    let ret = parse(&allocator, source_type, &source_text, options);
     let program = serde_json::to_string(&ret.program).unwrap();
 
     let errors = ret.errors.into_iter().map(Error::from).collect::<Vec<_>>();
@@ -79,14 +85,14 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
                 CommentKind::Line => String::from("Line"),
                 CommentKind::Block => String::from("Block"),
             },
-            value: comment.content_span().source_text(source_text).to_string(),
+            value: comment.content_span().source_text(&source_text).to_string(),
             start: comment.span.start,
             end: comment.span.end,
         })
         .collect::<Vec<Comment>>();
 
     let module = EcmaScriptModule::from(&ret.module_record);
-    ParseResult { program, module, comments, errors }
+    ParseResult { source_text, program, module, comments, errors }
 }
 
 /// Parse synchronously.
@@ -97,7 +103,7 @@ pub fn parse_sync(
     options: Option<ParserOptions>,
 ) -> ParseResult {
     let options = options.unwrap_or_default();
-    parse_with_return(&filename, &source_text, &options)
+    parse_with_return(&filename, source_text, &options)
 }
 
 pub struct ResolveTask {
@@ -112,7 +118,8 @@ impl Task for ResolveTask {
     type Output = ParseResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(parse_with_return(&self.filename, &self.source_text, &self.options))
+        let source_text = mem::take(&mut self.source_text);
+        Ok(parse_with_return(&self.filename, source_text, &self.options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {

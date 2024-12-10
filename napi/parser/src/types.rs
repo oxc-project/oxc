@@ -1,6 +1,9 @@
 use napi_derive::napi;
+use std::mem;
 
 use oxc_napi::Error;
+
+use crate::magic_string::MagicString;
 
 #[napi(object)]
 #[derive(Default)]
@@ -22,13 +25,41 @@ pub struct ParserOptions {
     pub preserve_parens: Option<bool>,
 }
 
-#[napi(object)]
+#[napi]
 pub struct ParseResult {
-    #[napi(ts_type = "import(\"@oxc-project/types\").Program")]
-    pub program: String,
-    pub module: EcmaScriptModule,
-    pub comments: Vec<Comment>,
-    pub errors: Vec<Error>,
+    pub(crate) source_text: String,
+    pub(crate) program: String,
+    pub(crate) module: EcmaScriptModule,
+    pub(crate) comments: Vec<Comment>,
+    pub(crate) errors: Vec<Error>,
+}
+
+#[napi]
+impl ParseResult {
+    #[napi(getter, ts_return_type = "import(\"@oxc-project/types\").Program")]
+    pub fn get_program(&mut self) -> String {
+        mem::take(&mut self.program)
+    }
+
+    #[napi(getter)]
+    pub fn module(&mut self) -> EcmaScriptModule {
+        mem::take(&mut self.module)
+    }
+
+    #[napi(getter)]
+    pub fn comments(&mut self) -> Vec<Comment> {
+        mem::take(&mut self.comments)
+    }
+
+    #[napi(getter)]
+    pub fn errors(&mut self) -> Vec<Error> {
+        mem::take(&mut self.errors)
+    }
+
+    #[napi(getter)]
+    pub fn magic_string(&mut self) -> MagicString {
+        MagicString::new(mem::take(&mut self.source_text))
+    }
 }
 
 #[napi(object)]
@@ -41,6 +72,7 @@ pub struct Comment {
 }
 
 #[napi(object)]
+#[derive(Default)]
 pub struct EcmaScriptModule {
     /// Has ESM syntax.
     ///
