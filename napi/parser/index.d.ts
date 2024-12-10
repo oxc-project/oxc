@@ -3,7 +3,10 @@
 
 export * from '@oxc-project/types';
 export declare class MagicString {
+  /** Get source text from utf8 offset. */
   getSourceText(start: number, end: number): string
+  /** Get 0-based line and column number from utf8 offset. */
+  getLineColumnNumber(offset: number): LineColumn
   length(): number
   toString(): string
   append(input: string): this
@@ -129,6 +132,11 @@ export declare const enum ImportNameKind {
   NamespaceObject = 'NamespaceObject',
   /** `import defaultExport from "mod"` */
   Default = 'Default'
+}
+
+export interface LineColumn {
+  line: number
+  column: number
 }
 
 export interface OverwriteOptions {

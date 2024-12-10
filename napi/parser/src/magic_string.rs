@@ -2,6 +2,7 @@
 // use std::sync::Arc;
 
 use napi_derive::napi;
+use oxc_data_structures::rope::{get_line_column, Rope};
 
 // use oxc_sourcemap::napi::SourceMap;
 use self_cell::self_cell;
@@ -10,6 +11,7 @@ use string_wizard::MagicString as MS;
 #[napi]
 pub struct MagicString {
     cell: MagicStringImpl,
+    rope: Option<Rope>,
 }
 
 self_cell!(
@@ -22,8 +24,17 @@ self_cell!(
 
 impl MagicString {
     pub fn new(source_text: String) -> Self {
-        Self { cell: MagicStringImpl::new(source_text, |s| string_wizard::MagicString::new(s)) }
+        Self {
+            cell: MagicStringImpl::new(source_text, |s| string_wizard::MagicString::new(s)),
+            rope: None,
+        }
     }
+}
+
+#[napi(object)]
+pub struct LineColumn {
+    pub line: u32,
+    pub column: u32,
 }
 
 #[napi(object)]
@@ -40,9 +51,19 @@ pub struct SourceMapOptions {
 
 #[napi]
 impl MagicString {
+    /// Get source text from utf8 offset.
     #[napi]
     pub fn get_source_text(&self, start: u32, end: u32) -> &str {
         &self.cell.borrow_owner()[start as usize..end as usize]
+    }
+
+    /// Get 0-based line and column number from utf8 offset.
+    #[napi]
+    pub fn get_line_column_number(&mut self, offset: u32) -> LineColumn {
+        let source_text = self.cell.borrow_owner();
+        let rope = self.rope.get_or_insert_with(|| Rope::from_str(source_text));
+        let (line, column) = get_line_column(rope, offset, source_text);
+        LineColumn { line, column }
     }
 
     #[napi]

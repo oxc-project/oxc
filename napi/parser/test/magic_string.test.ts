@@ -19,6 +19,12 @@ describe('simple', () => {
     // Access source text by utf8 offset.
     expect(ms.getSourceText(start, end)).toEqual('测试');
 
+    // Access line and column number from utf8 offset.
+    expect(ms.getLineColumnNumber(start)).toStrictEqual({
+      line: 0,
+      column: 19,
+    });
+
     // Magic string manipulation.
     ms.remove(start, end).append(';');
     expect(ms.toString()).toEqual('const s: String = "";');
