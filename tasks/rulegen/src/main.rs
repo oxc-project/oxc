@@ -597,7 +597,6 @@ pub enum RuleKind {
     Node,
     Promise,
     Vitest,
-    Security,
 }
 
 impl RuleKind {
@@ -616,7 +615,6 @@ impl RuleKind {
             "n" => Self::Node,
             "promise" => Self::Promise,
             "vitest" => Self::Vitest,
-            "security" => Self::Security,
             _ => Self::ESLint,
         }
     }
@@ -639,7 +637,6 @@ impl Display for RuleKind {
             Self::Node => write!(f, "eslint-plugin-n"),
             Self::Promise => write!(f, "eslint-plugin-promise"),
             Self::Vitest => write!(f, "eslint-plugin-vitest"),
-            Self::Security => write!(f, "security"),
         }
     }
 }
@@ -668,7 +665,7 @@ fn main() {
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
-        RuleKind::Oxc | RuleKind::Security => String::new(),
+        RuleKind::Oxc => String::new(),
     };
     let language = match rule_kind {
         RuleKind::Typescript | RuleKind::Oxc => "ts",
@@ -791,7 +788,6 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
         RuleKind::Promise => "promise",
         RuleKind::Vitest => "vitest",
         RuleKind::Node => "node",
-        RuleKind::Security => "security",
     };
     let mod_def = format!("mod {mod_name}");
     let Some(mod_start) = rules.find(&mod_def) else {

@@ -350,5 +350,4 @@ const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "unicorn" => "eslint-plugin-unicorn",
     "vitest" => "eslint-plugin-vitest",
     "node" => "eslint-plugin-node",
-    "security" => "oxc-security",
 };
