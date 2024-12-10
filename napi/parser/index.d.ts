@@ -7,6 +7,8 @@ export declare class MagicString {
   getSourceText(start: number, end: number): string
   /** Get 0-based line and column number from utf8 offset. */
   getLineColumnNumber(offset: number): LineColumn
+  /** Get UTF16 byte offset from UTF8 byte offset. */
+  getUtf16ByteOffset(offset: number): number
   length(): number
   toString(): string
   append(input: string): this

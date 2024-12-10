@@ -66,6 +66,14 @@ impl MagicString {
         LineColumn { line, column }
     }
 
+    /// Get UTF16 byte offset from UTF8 byte offset.
+    #[napi]
+    pub fn get_utf16_byte_offset(&mut self, offset: u32) -> u32 {
+        let source_text = self.cell.borrow_owner();
+        // TODO(perf): this is obviously slow ...
+        source_text[..offset as usize].encode_utf16().count() as u32
+    }
+
     #[napi]
     pub fn length(&self) -> u32 {
         self.cell.borrow_dependent().len() as u32
