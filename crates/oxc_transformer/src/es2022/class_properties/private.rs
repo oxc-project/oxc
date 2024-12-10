@@ -1299,22 +1299,37 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) -> Expression<'a> {
         let Expression::CallExpression(call) = expr else { unreachable!() };
 
-        let callee = &mut call.callee;
         // `Foo?.bar()?.zoo?.()`
-        // ^^^^^^^^^^^^^^^^^ callee is a member expression
         // ^^^^^^^^^^^ object
-        let object = callee.to_member_expression_mut().object_mut();
+        // ^^^^^^^^^^^^^^^^^ callee is a member expression
+        let callee = &mut call.callee;
+        let callee_member = callee.to_member_expression_mut();
+        let is_optional_callee = callee_member.optional();
+        let object = callee_member.object_mut();
 
         let context = if let Some(result) = self.transform_chain_element_recursively(object, ctx) {
-            // `o?.Foo.#self.getSelf?.().#m?.();` -> `(_ref = o === null || o === void 0 ? void 0 : (_babelHelpers$assertC =
-            //                                        babelHelpers.assertClassBrand(Foo, o.Foo, _self)._).getSelf)`
-            // ^^^^^^^^^^^^^^^^^^^^^^ to make sure get `getSelf` call has a proper context, we need to assign
-            //                        the parent of callee (i.e `o?.Foo.#self`) to a temp variable,
-            //                        and then use it as a first argument of `_ref.call`.
-            let (assignment, context) = self.duplicate_object(ctx.ast.move_expression(object), ctx);
-            *object = assignment;
-            *callee = Self::wrap_conditional_check(result, ctx.ast.move_expression(callee), ctx);
-            context
+            if is_optional_callee {
+                // `o?.Foo.#self?.getSelf?.().#x;` -> `(_ref$getSelf = (_ref2 = _ref = o === null || o === void 0 ?
+                //              ^^ is optional         void 0 : babelHelpers.assertClassBrand(Foo, o.Foo, _self)._)`
+                *object =
+                    Self::wrap_conditional_check(result, ctx.ast.move_expression(object), ctx);
+                let (assignment, context) =
+                    self.duplicate_object(ctx.ast.move_expression(object), ctx);
+                *object = assignment;
+                context
+            } else {
+                // `o?.Foo.#self.getSelf?.().#m?.();` -> `(_ref = o === null || o === void 0 ? void 0 : (_babelHelpers$assertC =
+                //                                        babelHelpers.assertClassBrand(Foo, o.Foo, _self)._).getSelf)`
+                // ^^^^^^^^^^^^^^^^^^^^^^ to make sure get `getSelf` call has a proper context, we need to assign
+                //                        the parent of callee (i.e `o?.Foo.#self`) to a temp variable,
+                //                        and then use it as a first argument of `_ref.call`.
+                let (assignment, context) =
+                    self.duplicate_object(ctx.ast.move_expression(object), ctx);
+                *object = assignment;
+                *callee =
+                    Self::wrap_conditional_check(result, ctx.ast.move_expression(callee), ctx);
+                context
+            }
         } else {
             // `Foo?.bar()?.zoo?.().#x;` -> `(_Foo$bar$zoo = (_Foo$bar = Foo?.bar())?.zoo)`
             // ^^^^^^^^^^^^^^^^ this is a optional function call, to make sure it has a proper context,
