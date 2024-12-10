@@ -33,7 +33,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
 
-use ropey::Rope;
+use oxc_data_structures::rope::{get_line_column, Rope};
 
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
@@ -42,8 +42,6 @@ use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
 use crate::TransformCtx;
-
-use super::utils::get_line_column;
 
 const SOURCE: &str = "__source";
 const FILE_NAME_VAR: &str = "jsxFileName";
@@ -77,16 +75,24 @@ impl<'a, 'ctx> Traverse<'a> for JsxSource<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> JsxSource<'a, 'ctx> {
-    pub fn get_line_column(&mut self, offset: u32) -> (usize, usize) {
+    /// Get line and column from offset and source text.
+    ///
+    /// Line number starts at 1.
+    /// Column number is in UTF-16 characters, and starts at 1.
+    ///
+    /// This matches Babel's output.
+    pub fn get_line_column(&mut self, offset: u32) -> (u32, u32) {
         let source_rope =
             self.source_rope.get_or_insert_with(|| Rope::from_str(self.ctx.source_text));
-        get_line_column(source_rope, offset, self.ctx.source_text)
+        let (line, column) = get_line_column(source_rope, offset, self.ctx.source_text);
+        // line and column are zero-indexed, but we want 1-indexed
+        (line + 1, column + 1)
     }
 
     pub fn get_object_property_kind_for_jsx_plugin(
         &mut self,
-        line: usize,
-        column: usize,
+        line: u32,
+        column: u32,
         ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
@@ -136,11 +142,11 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
         elem.attributes.push(attribute_item);
     }
 
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_lossless)]
     pub fn get_source_object(
         &mut self,
-        line: usize,
-        column: usize,
+        line: u32,
+        column: u32,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let kind = PropertyKind::Init;

@@ -11,7 +11,6 @@ mod jsx_self;
 mod jsx_source;
 mod options;
 mod refresh;
-mod utils;
 use refresh::ReactRefresh;
 
 pub use display_name::ReactDisplayName;

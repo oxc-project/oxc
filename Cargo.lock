@@ -1588,6 +1588,7 @@ name = "oxc_data_structures"
 version = "0.39.0"
 dependencies = [
  "assert-unchecked",
+ "ropey",
 ]
 
 [[package]]
@@ -1663,12 +1664,12 @@ dependencies = [
  "ignore",
  "log",
  "oxc_allocator",
+ "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_linter",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
- "ropey",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -2081,7 +2082,6 @@ dependencies = [
  "oxc_syntax",
  "oxc_traverse",
  "pico-args",
- "ropey",
  "rustc-hash",
  "serde",
  "serde_json",

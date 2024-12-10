@@ -22,3 +22,4 @@ doctest = false
 
 [dependencies]
 assert-unchecked = { workspace = true }
+ropey = { workspace = true }
