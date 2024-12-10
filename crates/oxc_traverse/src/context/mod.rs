@@ -589,21 +589,6 @@ impl<'a> TraverseCtx<'a> {
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
         self.scoping.delete_reference_for_identifier(ident);
     }
-
-    /// Determine whether evaluating the specific input `node` is a consequenceless reference.
-    ///
-    /// i.e. evaluating it won't result in potentially arbitrary code from being run.
-    /// The following are allowed and determined not to cause side effects:
-    ///
-    /// - `this` expressions
-    /// - `super` expressions
-    /// - Bound identifiers which are not mutated
-    ///
-    /// This is a shortcut for `ctx.scoping.is_static`.
-    #[inline]
-    pub fn is_static(&self, expr: &Expression) -> bool {
-        self.scoping.is_static(expr)
-    }
 }
 
 // Methods used internally within crate

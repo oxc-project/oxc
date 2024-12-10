@@ -362,32 +362,6 @@ impl TraverseScoping {
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
         self.delete_reference(ident.reference_id(), &ident.name);
     }
-
-    /// Determine whether evaluating the specific input `node` is a consequenceless reference.
-    ///
-    /// i.e. evaluating it won't result in potentially arbitrary code from being run.
-    /// The following are allowed and determined not to cause side effects:
-    ///
-    /// - `this` expressions
-    /// - `super` expressions
-    /// - Bound identifiers which are not mutated
-    ///
-    /// Based on Babel's `scope.isStatic` logic.
-    /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L557>
-    #[inline]
-    pub fn is_static(&self, expr: &Expression) -> bool {
-        match expr {
-            Expression::ThisExpression(_) | Expression::Super(_) => true,
-            Expression::Identifier(ident) => {
-                self.symbols.get_reference(ident.reference_id()).symbol_id().is_some_and(
-                    |symbol_id| {
-                        self.symbols.get_resolved_references(symbol_id).all(|r| !r.is_write())
-                    },
-                )
-            }
-            _ => false,
-        }
-    }
 }
 
 // Methods used internally within crate
