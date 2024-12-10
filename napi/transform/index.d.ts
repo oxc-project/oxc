@@ -20,13 +20,6 @@ export interface CompilerAssumptions {
   setPublicClassFields?: boolean
 }
 
-export interface Error {
-  severity: Severity
-  message: string
-  labels: Array<ErrorLabel>
-  helpMessage?: string
-}
-
 export interface ErrorLabel {
   message?: string
   start: number
@@ -85,7 +78,7 @@ export interface IsolatedDeclarationsOptions {
 export interface IsolatedDeclarationsResult {
   code: string
   map?: SourceMap
-  errors: Array<Error>
+  errors: Array<OxcError>
 }
 
 /**
@@ -181,6 +174,13 @@ export interface JsxOptions {
    * @default false
    */
   refresh?: boolean | ReactRefreshOptions
+}
+
+export interface OxcError {
+  severity: Severity
+  message: string
+  labels: Array<ErrorLabel>
+  helpMessage?: string
 }
 
 export interface ReactRefreshOptions {
@@ -332,7 +332,7 @@ export interface TransformResult {
    * transformed code may still be available even if there are errors in this
    * list.
    */
-  errors: Array<Error>
+  errors: Array<OxcError>
 }
 
 export interface TypeScriptOptions {

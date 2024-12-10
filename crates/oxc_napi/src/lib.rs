@@ -3,20 +3,20 @@ use napi_derive::napi;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 
 #[napi(object)]
-pub struct Error {
+pub struct OxcError {
     pub severity: Severity,
     pub message: String,
     pub labels: Vec<ErrorLabel>,
     pub help_message: Option<String>,
 }
 
-impl Error {
+impl OxcError {
     pub fn new(message: String) -> Self {
         Self { severity: Severity::Error, message, labels: vec![], help_message: None }
     }
 }
 
-impl From<OxcDiagnostic> for Error {
+impl From<OxcDiagnostic> for OxcError {
     fn from(diagnostic: OxcDiagnostic) -> Self {
         let labels = diagnostic
             .labels
