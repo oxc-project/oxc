@@ -1,7 +1,7 @@
 use napi_derive::napi;
 use std::mem;
 
-use oxc_napi::Error;
+use oxc_napi::OxcError;
 
 use crate::magic_string::MagicString;
 
@@ -31,7 +31,7 @@ pub struct ParseResult {
     pub(crate) program: String,
     pub(crate) module: EcmaScriptModule,
     pub(crate) comments: Vec<Comment>,
-    pub(crate) errors: Vec<Error>,
+    pub(crate) errors: Vec<OxcError>,
 }
 
 #[napi]
@@ -52,7 +52,7 @@ impl ParseResult {
     }
 
     #[napi(getter)]
-    pub fn errors(&mut self) -> Vec<Error> {
+    pub fn errors(&mut self) -> Vec<OxcError> {
         mem::take(&mut self.errors)
     }
 

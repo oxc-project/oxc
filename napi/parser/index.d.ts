@@ -26,7 +26,7 @@ export declare class ParseResult {
   get program(): import("@oxc-project/types").Program
   get module(): EcmaScriptModule
   get comments(): Array<Comment>
-  get errors(): Array<Error>
+  get errors(): Array<OxcError>
   get magicString(): MagicString
 }
 
@@ -52,13 +52,6 @@ export interface EcmaScriptModule {
   staticExports: Array<StaticExport>
   /** Span positions` of `import.meta` */
   importMetas: Array<Span>
-}
-
-export interface Error {
-  severity: Severity
-  message: string
-  labels: Array<ErrorLabel>
-  helpMessage?: string
 }
 
 export interface ErrorLabel {
@@ -143,6 +136,13 @@ export interface LineColumn {
 
 export interface OverwriteOptions {
   contentOnly: boolean
+}
+
+export interface OxcError {
+  severity: Severity
+  message: string
+  labels: Array<ErrorLabel>
+  helpMessage?: string
 }
 
 /**

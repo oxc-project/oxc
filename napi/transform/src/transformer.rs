@@ -20,7 +20,7 @@ use oxc::{
     },
     CompilerInterface,
 };
-use oxc_napi::Error;
+use oxc_napi::OxcError;
 use oxc_sourcemap::napi::SourceMap;
 
 use crate::IsolatedDeclarationsOptions;
@@ -70,7 +70,7 @@ pub struct TransformResult {
     /// Oxc's parser recovers from common syntax errors, meaning that
     /// transformed code may still be available even if there are errors in this
     /// list.
-    pub errors: Vec<Error>,
+    pub errors: Vec<OxcError>,
 }
 
 /// Options for transforming a JavaScript or TypeScript file.
@@ -627,7 +627,7 @@ pub fn transform(
         Some("tsx") => SourceType::tsx(),
         Some(lang) => {
             return TransformResult {
-                errors: vec![Error::new(format!("Incorrect lang '{lang}'"))],
+                errors: vec![OxcError::new(format!("Incorrect lang '{lang}'"))],
                 ..Default::default()
             }
         }
@@ -647,7 +647,7 @@ pub fn transform(
         Ok(compiler) => compiler,
         Err(errors) => {
             return TransformResult {
-                errors: errors.into_iter().map(Error::from).collect(),
+                errors: errors.into_iter().map(OxcError::from).collect(),
                 ..Default::default()
             }
         }
@@ -661,6 +661,6 @@ pub fn transform(
         declaration: compiler.declaration,
         declaration_map: compiler.declaration_map,
         helpers_used: compiler.helpers_used,
-        errors: compiler.errors.into_iter().map(Error::from).collect(),
+        errors: compiler.errors.into_iter().map(OxcError::from).collect(),
     }
 }

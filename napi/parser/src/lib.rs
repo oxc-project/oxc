@@ -17,7 +17,7 @@ use oxc::{
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
-use oxc_napi::Error;
+use oxc_napi::OxcError;
 
 pub use crate::{
     magic_string::MagicString,
@@ -74,7 +74,7 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
     let ret = parse(&allocator, source_type, &source_text, options);
     let program = serde_json::to_string(&ret.program).unwrap();
 
-    let errors = ret.errors.into_iter().map(Error::from).collect::<Vec<_>>();
+    let errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();
 
     let comments = ret
         .program
