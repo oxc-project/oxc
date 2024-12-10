@@ -6,10 +6,7 @@ use std::mem;
 use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
-use oxc_syntax::{
-    reference::{ReferenceFlags, ReferenceId},
-    symbol::SymbolId,
-};
+use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
 use oxc_traverse::{
     ast_operations::get_var_name_from_node, Ancestor, BoundIdentifier, TraverseCtx,
 };
@@ -19,7 +16,7 @@ use crate::common::helper_loader::Helper;
 use super::{
     private_props::ResolvedPrivateProp,
     utils::{
-        assert_expr_neither_parenthesis_nor_typescript_syntax, create_array, create_assignment,
+        assert_expr_neither_parenthesis_nor_typescript_syntax, create_assignment,
         create_underscore_ident_name,
     },
     ClassProperties,
@@ -1461,13 +1458,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ///
     /// Returns 2 `Expression`s. The first must be inserted into output first.
     fn duplicate_object(
-        &mut self,
+        &self,
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>) {
-        let (object1, duplicates) = self.duplicate_object_multiple::<1>(object, ctx);
-        let [object2] = duplicates;
-        (object1, object2)
+        assert_expr_neither_parenthesis_nor_typescript_syntax(&object);
+        self.ctx.duplicate_expression(object, ctx)
     }
 
     /// Duplicate object to be used in triple.
@@ -1481,61 +1477,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ///
     /// Returns 3 `Expression`s. The first must be inserted into output first.
     fn duplicate_object_twice(
-        &mut self,
+        &self,
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>, Expression<'a>) {
-        let (object1, duplicates) = self.duplicate_object_multiple::<2>(object, ctx);
-        let [object2, object3] = duplicates;
-        (object1, object2, object3)
-    }
-
-    /// Duplicate object `N + 1` times.
-    ///
-    /// If `object` may have side effects, create a temp var `_object` and assign to it.
-    ///
-    /// * `this` -> `this`, [`this`; N]
-    /// * Bound identifier `object` -> `object`, [`object`; N]
-    /// * Unbound identifier `object` -> `_object = object`, [`_object`; N]
-    /// * Anything else `foo()` -> `_foo = foo()`, [`_foo`; N]
-    ///
-    /// Returns `N + 1` `Expression`s. The first must be inserted into output first.
-    fn duplicate_object_multiple<const N: usize>(
-        &mut self,
-        object: Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> (Expression<'a>, [Expression<'a>; N]) {
         assert_expr_neither_parenthesis_nor_typescript_syntax(&object);
-
-        // TODO: Handle if in a function's params
-        let temp_var_binding = match &object {
-            Expression::Identifier(ident) => {
-                let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id());
-                if let Some(symbol_id) = reference.symbol_id() {
-                    // Reading bound identifier cannot have side effects, so no need for temp var
-                    let binding = BoundIdentifier::new(ident.name.clone(), symbol_id);
-                    let duplicates =
-                        create_array(|| binding.create_spanned_read_expression(ident.span, ctx));
-                    return (object, duplicates);
-                }
-
-                // Previously `x += 1` (`x` read + write), but moving to `_x = x` (`x` read only)
-                *reference.flags_mut() = ReferenceFlags::Read;
-
-                self.ctx.var_declarations.create_uid_var(&ident.name, ctx)
-            }
-            Expression::ThisExpression(this) => {
-                // Reading `this` cannot have side effects, so no need for temp var
-                let duplicates = create_array(|| ctx.ast.expression_this(this.span));
-                return (object, duplicates);
-            }
-            _ => self.ctx.var_declarations.create_uid_var_based_on_node(&object, ctx),
-        };
-
-        let object1 = create_assignment(&temp_var_binding, object, ctx);
-        let references = create_array(|| temp_var_binding.create_read_expression(ctx));
-
-        (object1, references)
+        self.ctx.duplicate_expression_twice(object, ctx)
     }
 
     /// `_classPrivateFieldGet2(_prop, object)`
