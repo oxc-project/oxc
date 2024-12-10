@@ -1094,23 +1094,29 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) -> Expression<'a> {
         let Expression::PrivateFieldExpression(field_expr) = expr else { unreachable!() };
 
+        let is_optional = field_expr.optional;
         let object = &mut field_expr.object;
-        let left = self.transform_first_optional_expression(object, ctx).unwrap_or_else(|| {
-            // Even though no optional expression, we still need to transform the object
-            self.transform_expression_to_wrap_nullish_check(object, ctx)
-        });
+        let left = if is_optional {
+            Some(self.transform_expression_to_wrap_nullish_check(object, ctx))
+        } else {
+            self.transform_first_optional_expression(object, ctx)
+        };
 
         if matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_)) {
             // `(Foo?.#m)();` -> `(Foo === null || Foo === void 0 ? void 0 : _m._.bind(Foo))();`
             // ^^^^^^^^^^^^ is a call expression, we need to bind the proper context
-            *expr = self
-                .transform_bindable_private_field(field_expr, ctx)
-                .unwrap_or_else(|| unreachable!());
+            *expr = self.transform_bindable_private_field(field_expr, ctx).unwrap();
         } else {
             self.transform_private_field_expression(expr, ctx);
         }
 
-        left
+        left.unwrap_or_else(|| {
+            // `o.Foo.#x?.self` -> `(_babelHelpers$assertC = expr === null || _babelHelpers$assertC === void 0 ?
+            //                       void 0 : _babelHelpers$assertC?.self;`
+            // `expr` is `o.Foo.#x` that has transformed to `babelHelpers.assertClassBrand(Foo, o.Foo, _x)._)` by
+            // `self.transform_private_field_expression`.
+            self.transform_expression_to_wrap_nullish_check(expr, ctx)
+        })
     }
 
     fn transform_member_expression_of_chain_expression(
@@ -1121,7 +1127,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let is_optional = member.optional();
         let object = member.object_mut();
         let result = self.transform_chain_element_recursively(object, ctx)?;
-        if is_optional {
+        if is_optional && !object.is_identifier_reference() {
             // `o?.Foo.#self.self?.self.unicorn;` -> `(result ? void 0 : object)?.self.unicorn`
             //  ^^^^^^^^^^^^^^^^^ the object has transformed, if the current member is optional,
             //                    then we need to wrap it to a conditional expression
