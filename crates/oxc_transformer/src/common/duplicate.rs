@@ -109,11 +109,16 @@ impl<'a> TransformCtx<'a> {
 
                 self.var_declarations.create_uid_var(&ident.name, ctx)
             }
+            // Reading `this` or `super` cannot have side effects, so no need for temp var
             Expression::ThisExpression(this) => {
-                // Reading `this` cannot have side effects, so no need for temp var
                 let references = create_array(|| ctx.ast.expression_this(this.span));
                 return (expr, references);
             }
+            Expression::Super(super_expr) => {
+                let references = create_array(|| ctx.ast.expression_super(super_expr.span));
+                return (expr, references);
+            }
+            // Anything else requires temp var
             _ => self.var_declarations.create_uid_var_based_on_node(&expr, ctx),
         };
 
