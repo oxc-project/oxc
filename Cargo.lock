@@ -1679,7 +1679,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.14.1"
+version = "0.15.0"
 dependencies = [
  "bitflags 2.6.0",
  "convert_case",
@@ -2122,7 +2122,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.14.1"
+version = "0.15.0"
 dependencies = [
  "bpaf",
  "glob",
