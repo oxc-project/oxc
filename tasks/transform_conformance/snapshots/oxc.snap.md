@@ -1,9 +1,10 @@
 commit: 54a8389f
 
-Passed: 96/108
+Passed: 99/111
 
 # All Passed:
 * babel-plugin-transform-class-static-block
+* babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-async-generator-functions
