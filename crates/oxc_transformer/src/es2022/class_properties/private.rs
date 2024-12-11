@@ -1159,8 +1159,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             return result;
         }
 
+        let result = self.transform_chain_element_recursively(callee, ctx);
         if !is_optional {
-            return self.transform_chain_element_recursively(callee, ctx);
+            return result;
         }
 
         // `o?.Foo.#self.getSelf?.()?.self.#m();`
@@ -1169,7 +1170,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         //                            then use it as a first argument of `getSelf` call.
         //
         // TODO(improve-on-babel): Consider remove this logic, because it seems no runtime behavior change.
-        let result = self.transform_chain_element_recursively(callee, ctx)?;
+        let result = result?;
         let object = callee.to_member_expression_mut().object_mut();
         let (assignment, context) = self.duplicate_object(ctx.ast.move_expression(object), ctx);
         *object = assignment;
