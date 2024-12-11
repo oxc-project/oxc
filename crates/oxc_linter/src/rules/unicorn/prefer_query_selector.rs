@@ -3,7 +3,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::phf_map;
-use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, utils::is_node_value_not_dom_node, AstNode};
 
@@ -130,10 +129,12 @@ impl Rule for PreferQuerySelector {
                     let quotes_symbol = source_text.chars().next().unwrap();
                     let argument = match *cur_property_name {
                         "getElementById" => format!("#{literal_value}"),
-                        "getElementsByClassName" => format!(
-                            ".{}",
-                            Regex::new(r"\s+").unwrap().replace_all(literal_value, " .")
-                        ),
+                        "getElementsByClassName" => {
+                            format!(
+                                ".{}",
+                                literal_value.split_whitespace().collect::<Vec<_>>().join(" .")
+                            )
+                        }
                         _ => literal_value.to_string(),
                     };
                     let span = property_span.merge(&argument_expr.span());
