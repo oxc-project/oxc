@@ -123,8 +123,6 @@ impl Rule for PreferQuerySelector {
                         return fixer.replace(property_span, *preferred_selector);
                     }
 
-                    // let source_text =
-                    // argument_expr.span().source_text(ctx.source_text());
                     let source_text = fixer.source_range(argument_expr.span());
                     let quotes_symbol = source_text.chars().next().unwrap();
                     let argument = match *cur_property_name {
