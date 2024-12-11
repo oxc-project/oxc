@@ -1071,7 +1071,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -1516,7 +1516,7 @@ dependencies = [
  "bitflags 2.6.0",
  "itertools",
  "nonmax",
- "oxc_index 2.0.0",
+ "oxc_index",
  "oxc_syntax",
  "petgraph",
  "rustc-hash",
@@ -1534,10 +1534,10 @@ dependencies = [
  "nonmax",
  "oxc_allocator",
  "oxc_ast",
- "oxc_index 2.0.0",
+ "oxc_index",
  "oxc_mangler",
  "oxc_parser",
- "oxc_sourcemap 1.0.3",
+ "oxc_sourcemap",
  "oxc_span",
  "oxc_syntax",
  "pico-args",
@@ -1619,19 +1619,11 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f004e73d346bec03a428ca26cf2df245d08563f1d3268b7bcbd5554fc1db05c5"
-dependencies = [
- "rayon",
-]
-
-[[package]]
-name = "oxc_index"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5eca5d9726cd0a6e433debe003b7bc88b2ecad0bb6109f0cef7c55e692139a34"
 dependencies = [
+ "rayon",
  "serde",
 ]
 
@@ -1702,7 +1694,7 @@ dependencies = [
  "oxc_codegen",
  "oxc_diagnostics",
  "oxc_ecmascript",
- "oxc_index 2.0.0",
+ "oxc_index",
  "oxc_macros",
  "oxc_parser",
  "oxc_regular_expression",
@@ -1740,7 +1732,7 @@ version = "0.40.1"
 dependencies = [
  "itertools",
  "oxc_ast",
- "oxc_index 2.0.0",
+ "oxc_index",
  "oxc_semantic",
  "oxc_span",
 ]
@@ -1930,7 +1922,7 @@ dependencies = [
  "oxc_cfg",
  "oxc_diagnostics",
  "oxc_ecmascript",
- "oxc_index 2.0.0",
+ "oxc_index",
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
@@ -1944,23 +1936,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "0.38.0"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6889e95c8db9298201db5389810d61ca491443863897f557c0ce47f961541cde"
-dependencies = [
- "base64-simd",
- "cfg-if",
- "cow-utils",
- "rustc-hash",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "oxc_sourcemap"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fe680bb40eebfdfde9d2be8a38cfbfb2e43113648dc5d215ba9930b1009af54"
+checksum = "51f7c51c48ad723ccd069a37b16f4bcd4f75b32d5c74b06c2110335beb504a9a"
 dependencies = [
  "base64-simd",
  "cfg-if",
@@ -1996,7 +1974,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_estree",
- "oxc_index 2.0.0",
+ "oxc_index",
  "oxc_span",
  "phf",
  "rustc-hash",
@@ -2053,7 +2031,7 @@ dependencies = [
  "napi-derive",
  "oxc",
  "oxc_napi",
- "oxc_sourcemap 1.0.3",
+ "oxc_sourcemap",
  "rustc-hash",
 ]
 
@@ -2111,7 +2089,7 @@ version = "0.0.0"
 dependencies = [
  "console_error_panic_hook",
  "oxc",
- "oxc_index 2.0.0",
+ "oxc_index",
  "oxc_linter",
  "oxc_prettier",
  "serde",
@@ -2624,9 +2602,9 @@ checksum = "a3f0bf26fd526d2a95683cd0f87bf103b8539e2ca1ef48ce002d67aad59aa0b4"
 
 [[package]]
 name = "serde"
-version = "1.0.215"
+version = "1.0.216"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6513c1ad0b11a9376da888e3e0baa0077f1aed55c17f50e7b2397136129fb88f"
+checksum = "0b9781016e935a97e8beecf0c933758c97a5520d32930e460142b4cd80c6338e"
 dependencies = [
  "serde_derive",
 ]
@@ -2644,9 +2622,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.215"
+version = "1.0.216"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad1e866f866923f252f05c889987993144fb74e722403468a4ebd70c3cd756c0"
+checksum = "46f859dbbf73865c6627ed570e78961cd3ac92407a2d117204c49232485da55e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2820,12 +2798,12 @@ checksum = "e9557cb6521e8d009c51a8666f09356f4b817ba9ba0981a305bd86aee47bd35c"
 
 [[package]]
 name = "string_wizard"
-version = "0.0.23"
+version = "0.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "651f4a6ed8df932ab9285b892fdd35bdc72b17b5eff0232cd51048a0b28af4a5"
+checksum = "7c869b11cd240e884965d9d0add9d61e4c07ba3507c800f0edf82b2a69633a73"
 dependencies = [
- "oxc_index 1.0.1",
- "oxc_sourcemap 0.38.0",
+ "oxc_index",
+ "oxc_sourcemap",
  "rustc-hash",
 ]
 
@@ -3283,9 +3261,9 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
 name = "wasm-bindgen"
-version = "0.2.97"
+version = "0.2.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d15e63b4482863c109d70a7b8706c1e364eb6ea449b201a76c5b89cedcec2d5c"
+checksum = "a474f6281d1d70c17ae7aa6a613c87fce69a127e2624002df63dcb39d6cf6396"
 dependencies = [
  "cfg-if",
  "once_cell",
@@ -3294,13 +3272,12 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-backend"
-version = "0.2.97"
+version = "0.2.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d36ef12e3aaca16ddd3f67922bc63e48e953f126de60bd33ccc0101ef9998cd"
+checksum = "5f89bb38646b4f81674e8f5c3fb81b562be1fd936d84320f3264486418519c79"
 dependencies = [
  "bumpalo",
  "log",
- "once_cell",
  "proc-macro2",
  "quote",
  "syn",
@@ -3309,9 +3286,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro"
-version = "0.2.97"
+version = "0.2.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "705440e08b42d3e4b36de7d66c944be628d579796b8090bfa3471478a2260051"
+checksum = "2cc6181fd9a7492eef6fef1f33961e3695e4579b9872a6f7c83aee556666d4fe"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -3319,9 +3296,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro-support"
-version = "0.2.97"
+version = "0.2.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98c9ae5a76e46f4deecd0f0255cc223cfa18dc9b261213b8aa0c7b36f61b3f1d"
+checksum = "30d7a95b763d3c45903ed6c81f156801839e5ee968bb07e534c44df0fcd330c2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3332,9 +3309,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-shared"
-version = "0.2.97"
+version = "0.2.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ee99da9c5ba11bd675621338ef6fa52296b76b83305e9b6e5c77d4c286d6d49"
+checksum = "943aab3fdaaa029a6e0271b35ea10b72b943135afe9bffca82384098ad0e06a6"
 
 [[package]]
 name = "web-sys"
