@@ -70,7 +70,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 ///    * Class expression: `x = class C { static #x = 123; static y = this.#x; }`
 ///      -> `var _C, _x; x = (_C = class C {}, _x = { _: 123 }, _C.y = _assertClassBrand(_C, _C, _x)._), _C)`
 ///
-/// Also sets `ScopeFlags` of scopes to sloppy mode if code outside the class is sloppy mode.
+/// Also:
+/// * Updates parent `ScopeId` of first level of scopes in initializer.
+/// * Sets `ScopeFlags` of scopes to sloppy mode if code outside the class is sloppy mode.
 ///
 /// Reason we need to transform `this` is because the initializer is being moved from inside the class
 /// to outside. `this` outside the class refers to a different `this`, and private fields are only valid
@@ -107,8 +109,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 // TODO(improve-on-babel): Updating `ScopeFlags` for strict mode makes semantic correctly for the output,
 // but actually the transform isn't right. Should wrap initializer in a strict mode IIFE so that
 // initializer code runs in strict mode, as it was before within class body.
-//
-// TODO: Also re-parent child scopes.
 struct StaticInitializerVisitor<'a, 'ctx, 'v> {
     /// `true` if class has name, or class has private properties, or `ScopeFlags` need updating.
     /// Any of these neccesitates walking the whole tree. If none of those apply, we only need to
@@ -119,6 +119,9 @@ struct StaticInitializerVisitor<'a, 'ctx, 'v> {
     /// Incremented when entering a different `this` context, decremented when exiting it.
     /// `this` should be transformed when `this_depth == 0`.
     this_depth: u32,
+    /// Incremented when entering a scope, decremented when exiting it.
+    /// Parent `ScopeId` should be updated when `scope_depth == 0`.
+    scope_depth: u32,
     /// Main transform instance.
     class_properties: &'v mut ClassProperties<'a, 'ctx>,
     /// `TraverseCtx` object.
@@ -137,6 +140,7 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
                 || class_properties.private_props_stack.last().is_some(),
             make_sloppy_mode,
             this_depth: 0,
+            scope_depth: 0,
             class_properties,
             ctx,
         }
@@ -238,11 +242,29 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
         self.replace_class_name_with_temp_var(ident);
     }
 
-    /// Convert scope to sloppy mode if `self.make_sloppy_mode == true`
+    /// Update parent scope for first level of scopes.
+    /// Convert scope to sloppy mode if `self.make_sloppy_mode == true`.
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
-        if self.make_sloppy_mode {
-            *self.ctx.scopes_mut().get_flags_mut(scope_id.get().unwrap()) -= ScopeFlags::StrictMode;
+        let scope_id = scope_id.get().unwrap();
+
+        // TODO: Not necessary to do this check for all scopes.
+        // In JS, only `Function`, `ArrowFunctionExpression` or `Class` can be the first-level scope,
+        // as all other types which have a scope are statements or `StaticBlock` which would need to be
+        // inside a function or class. But some TS types with scopes could be first level via
+        // e.g. `TaggedTemplateExpression::type_parameters`, which contains `TSType`.
+        // Not sure if that matters though, as they'll be stripped out anyway by TS transform.
+        if self.scope_depth == 0 {
+            self.reparent_scope(scope_id);
         }
+        self.scope_depth += 1;
+
+        if self.make_sloppy_mode {
+            *self.ctx.scopes_mut().get_flags_mut(scope_id) -= ScopeFlags::StrictMode;
+        }
+    }
+
+    fn leave_scope(&mut self) {
+        self.scope_depth -= 1;
     }
 
     // Increment `this_depth` when entering code where `this` refers to a different `this`
@@ -267,6 +289,10 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             self.this_depth += 1;
             walk_mut::walk_function(self, func, flags);
             self.this_depth -= 1;
+        } else if self.scope_depth == 0 {
+            // Need to call `reparent_scope` because not calling `walk_function`,
+            // which is what calls `enter_scope`, and this can be first-level scope
+            self.reparent_scope(func.scope_id());
         }
 
         self.make_sloppy_mode = parent_sloppy_mode;
@@ -302,6 +328,9 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             self.this_depth += 1;
             walk_mut::walk_static_block(self, block);
             self.this_depth -= 1;
+        } else {
+            // Not possible that `self.scope_depth == 0` here, because a `StaticBlock`
+            // can only be in a class, and that class would be the first-level scope
         }
     }
 
@@ -317,6 +346,9 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             self.this_depth += 1;
             walk_mut::walk_ts_module_block(self, block);
             self.this_depth -= 1;
+        } else {
+            // Not possible that `self.scope_depth == 0` here, because a `TSModuleBlock`
+            // can only be in a function, and that function would be the first-level scope
         }
 
         self.make_sloppy_mode = parent_sloppy_mode;
@@ -345,6 +377,9 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
                 self.visit_expression(value);
                 self.this_depth -= 1;
             }
+        } else {
+            // Not possible that `self.scope_depth == 0` here, because a `PropertyDefinition`
+            // can only be in a class, and that class would be the first-level scope
         }
     }
 
@@ -363,6 +398,9 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
                 self.visit_expression(value);
                 self.this_depth -= 1;
             }
+        } else {
+            // Not possible that `self.scope_depth == 0` here, because an `AccessorProperty`
+            // can only be in a class, and that class would be the first-level scope
         }
     }
 }
@@ -405,6 +443,12 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
         if self.this_depth == 0 {
             *expr = self.ctx.ast.expression_boolean_literal(span, true);
         }
+    }
+
+    /// Update parent of scope to scope above class.
+    fn reparent_scope(&mut self, scope_id: ScopeId) {
+        let current_scope_id = self.ctx.current_scope_id();
+        self.ctx.scopes_mut().change_parent_id(scope_id, Some(current_scope_id));
     }
 }
 
