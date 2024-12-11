@@ -104,6 +104,8 @@ pub struct Codegen<'a> {
 
     /// Fast path for [CodegenOptions::single_quote]
     quote: u8,
+    /// Fast path for if print comments
+    print_comments: bool,
 
     // Builders
     comments: CommentsMap,
@@ -151,8 +153,10 @@ impl<'a> Codegen<'a> {
     /// This is equivalent to [`Codegen::default`].
     #[must_use]
     pub fn new() -> Self {
+        let options = CodegenOptions::default();
+        let print_comments = options.print_comments();
         Self {
-            options: CodegenOptions::default(),
+            options,
             source_text: "",
             mangler: None,
             code: CodeBuffer::default(),
@@ -168,6 +172,7 @@ impl<'a> Codegen<'a> {
             start_of_default_export: 0,
             indent: 0,
             quote: b'"',
+            print_comments,
             comments: CommentsMap::default(),
             start_of_annotation_comment: None,
             legal_comments: vec![],
@@ -179,6 +184,7 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_options(mut self, options: CodegenOptions) -> Self {
         self.quote = if options.single_quote { b'\'' } else { b'"' };
+        self.print_comments = options.print_comments();
         self.options = options;
         self
     }

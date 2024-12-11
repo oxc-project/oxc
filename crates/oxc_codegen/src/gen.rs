@@ -98,7 +98,9 @@ impl Gen for Directive<'_> {
 
 impl Gen for Statement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_statement_comments(self.span().start);
+        if p.print_comments {
+            p.print_statement_comments(self.span().start);
+        }
         match self {
             Self::BlockStatement(stmt) => stmt.print(p, ctx),
             Self::BreakStatement(stmt) => stmt.print(p, ctx),
@@ -686,7 +688,7 @@ impl Gen for Function<'_> {
 impl Gen for FunctionBody<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         let span_end = self.span.end;
-        let comments_at_end = if !p.options.minify && span_end > 0 {
+        let comments_at_end = if p.print_comments && span_end > 0 {
             p.get_statement_comments(span_end - 1)
         } else {
             None
