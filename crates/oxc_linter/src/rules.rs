@@ -127,6 +127,7 @@ mod eslint {
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
+    pub mod no_useless_call;
     pub mod no_useless_catch;
     pub mod no_useless_concat;
     pub mod no_useless_constructor;
@@ -616,6 +617,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_unused_expressions,
     eslint::no_unused_labels,
     eslint::no_unused_private_class_members,
+    eslint::no_useless_call,
     eslint::no_unused_vars,
     eslint::no_useless_catch,
     eslint::no_useless_concat,
