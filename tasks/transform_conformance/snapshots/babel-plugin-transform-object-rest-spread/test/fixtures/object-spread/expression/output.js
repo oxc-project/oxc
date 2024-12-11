@@ -1,14 +1,13 @@
-var _objectSpread = require("@babel/runtime/helpers/objectSpread2");
 var a;
 var b;
 var c;
 var d;
 var x;
 var y;
-_objectSpread(_objectSpread(_objectSpread({ x }, y), {}, { a }, b), {}, { c });
-_objectSpread({}, Object.prototype);
-_objectSpread({}, { foo: "bar" });
-_objectSpread(_objectSpread({}, { foo: "bar" }), { bar: "baz" });
-_objectSpread({}, { get foo() {
+babelHelpers.objectSpread2(babelHelpers.objectSpread2(babelHelpers.objectSpread2({ x }, y), {}, { a }, b), {}, { c });
+babelHelpers.objectSpread2({}, Object.prototype);
+babelHelpers.objectSpread2({}, { foo: "bar" });
+babelHelpers.objectSpread2(babelHelpers.objectSpread2({}, { foo: "bar" }), { bar: "baz" });
+babelHelpers.objectSpread2({}, { get foo() {
 	return "foo";
 } });

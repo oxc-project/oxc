@@ -1,10 +1,8 @@
-var _objectWithoutProperties = require("@babel/runtime/helpers/objectWithoutProperties");
-var _toPropertyKey = require("@babel/runtime/helpers/toPropertyKey");
 const a = {
 	"3": "three",
 	"foo": "bar"
 };
-const { [3]: omit } = a, rest = _objectWithoutProperties(a, ["3"]);
+const { [3]: omit } = a, rest = babelHelpers.objectWithoutProperties(a, ["3"]);
 expect(rest).toEqual({ "foo": "bar" });
 expect(omit).toBe("three");
 const [k1, k2, k3, k4, k5] = [
@@ -23,13 +21,13 @@ const c = {
 	[k4]: "4",
 	[k5]: "5"
 };
-const { [k1]: v1, [k2]: v2, [k3]: v3, [k4]: v4, [k5]: v5 } = c, vrest = _objectWithoutProperties(c, [
+const { [k1]: v1, [k2]: v2, [k3]: v3, [k4]: v4, [k5]: v5 } = c, vrest = babelHelpers.objectWithoutProperties(c, [
 	k1,
 	k2,
 	k3,
 	k4,
 	k5
-].map(_toPropertyKey));
+].map(babelHelpers.toPropertyKey));
 expect(v1).toBe("1");
 expect(v2).toBe("2");
 expect(v3).toBe("3");

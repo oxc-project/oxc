@@ -1,10 +1,9 @@
-var _objectWithoutProperties = require("@babel/runtime/helpers/objectWithoutProperties");
 var key, x, y, z;
 key = 1;
 var _ = { 1: {
 	a: 1,
 	y: 1
-} }, { [key++]: _ref } = _, { y } = _ref, x = _objectWithoutProperties(_ref, ["y"]);
+} }, { [key++]: _ref } = _, { y } = _ref, x = babelHelpers.objectWithoutProperties(_ref, ["y"]);
 expect(x).toEqual({ a: 1 });
 expect(key).toBe(2);
 expect(y).toBe(1);
@@ -18,7 +17,7 @@ var _$ = {
 		y: 2,
 		z: 3
 	}
-}, { [++key]: _ref2, [++key]: _ref3 } = _$, { y } = _ref2, rest_y = _objectWithoutProperties(_ref2, ["y"]), { z } = _ref3, rest_z = _objectWithoutProperties(_ref3, ["z"]);
+}, { [++key]: _ref2, [++key]: _ref3 } = _$, { y } = _ref2, rest_y = babelHelpers.objectWithoutProperties(_ref2, ["y"]), { z } = _ref3, rest_z = babelHelpers.objectWithoutProperties(_ref3, ["z"]);
 expect(y).toBe(2);
 expect(rest_y).toEqual({ z: 3 });
 expect(z).toBe(3);

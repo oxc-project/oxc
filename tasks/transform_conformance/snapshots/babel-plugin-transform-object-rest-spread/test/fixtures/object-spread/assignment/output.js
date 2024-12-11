@@ -1,9 +1,8 @@
-var _objectSpread = require("@babel/runtime/helpers/objectSpread2");
 var x;
 var y;
 var z;
-z = _objectSpread({ x }, y);
+z = babelHelpers.objectSpread2({ x }, y);
 z = {
 	x,
-	w: _objectSpread({}, y)
+	w: babelHelpers.objectSpread2({}, y)
 };

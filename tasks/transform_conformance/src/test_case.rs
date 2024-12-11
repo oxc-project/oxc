@@ -390,7 +390,7 @@ test("exec", () => {{
     }
 
     fn test_snapshot(&self, filtered: bool) {
-        let result = match self.transform(HelperLoaderMode::Runtime) {
+        let result = match self.transform(HelperLoaderMode::External) {
             Ok(code) => code,
             Err(error) => error,
         };
