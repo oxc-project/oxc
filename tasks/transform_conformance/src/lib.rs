@@ -51,6 +51,10 @@ fn snap_root() -> PathBuf {
     conformance_root().join("snapshots")
 }
 
+fn override_root() -> PathBuf {
+    conformance_root().join("overrides")
+}
+
 fn oxc_test_root() -> PathBuf {
     conformance_root().join("tests")
 }

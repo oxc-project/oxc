@@ -13,8 +13,7 @@
 //    (or maybe don't - what does this option mean?)
 
 import { transformFileAsync } from '@babel/core';
-import assert from 'assert';
-import { copyFile, readdir, readFile, rename, writeFile } from 'fs/promises';
+import { readdir, readFile, rename, writeFile } from 'fs/promises';
 import { extname, join as pathJoin } from 'path';
 
 const PACKAGES = [
@@ -28,7 +27,10 @@ const FILTER_OUT_PLUGINS = [
   'transform-destructuring',
 ];
 
-const PACKAGES_PATH = pathJoin(import.meta.dirname, '../coverage/babel/packages');
+const PACKAGES_PATH = pathJoin(
+  import.meta.dirname,
+  '../coverage/babel/packages',
+);
 const OVERRIDES_PATH = pathJoin(import.meta.dirname, 'overrides');
 
 // Copied from `@babel/helper-transform-fixture-test-runner`
@@ -52,7 +54,12 @@ async function updateDir(dirPath, options, hasChangedOptions) {
   const dirFiles = [];
 
   const filenames = { options: null, input: null, output: null, exec: null };
-  const overrides = { options: false, input: false, output: false, exec: false };
+  const overrides = {
+    options: false,
+    input: false,
+    output: false,
+    exec: false,
+  };
 
   // Find files in dir
   for (const file of files) {
@@ -63,44 +70,6 @@ async function updateDir(dirPath, options, hasChangedOptions) {
       const ext = extname(filename),
         type = ext === '' ? filename : filename.slice(0, -ext.length);
       if (Object.hasOwn(filenames, type)) filenames[type] = filename;
-    }
-  }
-
-  // Find override files
-  const overridesDirPath = pathJoin(`${OVERRIDES_PATH}${dirPath.slice(PACKAGES_PATH.length)}`);
-  let overrideFiles;
-  try {
-    overrideFiles = await readdir(overridesDirPath, { withFileTypes: true });
-  } catch (err) {
-    if (err?.code !== 'ENOENT') throw err;
-  }
-
-  if (overrideFiles) {
-    for (const file of overrideFiles) {
-      if (file.isDirectory()) continue;
-
-      const filename = file.name;
-      // `reason.txt` files are to document why override is used
-      if (filename === 'reason.txt') continue;
-
-      const ext = extname(filename),
-        type = filename.slice(0, -ext.length),
-        path = pathJoin(overridesDirPath, filename);
-
-      assert(Object.hasOwn(overrides, type), `Unexpected override file: ${path}`);
-
-      const originalPath = pathJoin(dirPath, filename);
-      if (filenames[type]) {
-        const originalFilename = filenames[type];
-        assert(originalFilename === filename, `Unmatched override file: ${path} (original: ${originalFilename})`);
-        await backupFile(originalPath);
-      }
-
-      filenames[type] = filename;
-      overrides[type] = true;
-      if (type === 'options') hasChangedOptions = true;
-
-      await copyFile(path, originalPath);
     }
   }
 
@@ -117,7 +86,11 @@ async function updateDir(dirPath, options, hasChangedOptions) {
   }
 
   // Run Babel with updated options/input
-  if (filenames.output && (hasChangedOptions || overrides.input) && !overrides.output) {
+  if (
+    filenames.output &&
+    (hasChangedOptions || overrides.input) &&
+    !overrides.output
+  ) {
     const inputPath = pathJoin(dirPath, filenames.input),
       outputPath = pathJoin(dirPath, filenames.output);
     await backupFile(outputPath);
@@ -165,7 +138,12 @@ function updateOptions(options) {
  * @returns {undefined}
  */
 async function transform(inputPath, outputPath, options) {
-  options = { ...options, configFile: false, babelrc: false, cwd: import.meta.dirname };
+  options = {
+    ...options,
+    configFile: false,
+    babelrc: false,
+    cwd: import.meta.dirname,
+  };
   delete options.SKIP_babel7plugins_babel8core;
   delete options.minNodeVersion;
 
@@ -179,9 +157,11 @@ async function transform(inputPath, outputPath, options) {
     return plugin;
   }
 
-  if (options.presets) options.presets = options.presets.map(preset => prefixName(preset, 'preset'));
+  if (options.presets) {
+    options.presets = options.presets.map((preset) => prefixName(preset, 'preset'));
+  }
 
-  options.plugins = (options.plugins || []).map(plugin => prefixName(plugin, 'plugin'));
+  options.plugins = (options.plugins || []).map((plugin) => prefixName(plugin, 'plugin'));
 
   let addExternalHelpersPlugin = true;
   if (Object.hasOwn(options, 'externalHelpers')) {
@@ -190,7 +170,10 @@ async function transform(inputPath, outputPath, options) {
   }
 
   if (addExternalHelpersPlugin) {
-    options.plugins.push(['@babel/plugin-external-helpers', { helperVersion: EXTERNAL_HELPERS_VERSION }]);
+    options.plugins.push([
+      '@babel/plugin-external-helpers',
+      { helperVersion: EXTERNAL_HELPERS_VERSION },
+    ]);
   }
 
   const { code } = await transformFileAsync(inputPath, options);

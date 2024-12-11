@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 503/846
+Passed: 562/927
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -783,6 +783,642 @@ x Output mismatch
 
 * nullish-coalescing/transform-loose/input.js
 x Output mismatch
+
+
+# babel-plugin-transform-optional-chaining (31/45)
+* assumption-noDocumentAll/assignment/input.js
+Symbol reference IDs mismatch for "_obj$a":
+after transform: SymbolId(5): [ReferenceId(9), ReferenceId(10), ReferenceId(11)]
+rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(5)]
+Symbol reference IDs mismatch for "_obj$b":
+after transform: SymbolId(6): [ReferenceId(14), ReferenceId(15), ReferenceId(16)]
+rebuilt        : SymbolId(1): [ReferenceId(7), ReferenceId(9)]
+Symbol reference IDs mismatch for "_obj$a2":
+after transform: SymbolId(7): [ReferenceId(19), ReferenceId(20), ReferenceId(21)]
+rebuilt        : SymbolId(2): [ReferenceId(12), ReferenceId(14)]
+Symbol reference IDs mismatch for "obj":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(12), ReferenceId(13), ReferenceId(17), ReferenceId(18)]
+rebuilt        : SymbolId(3): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(11), ReferenceId(13)]
+
+* assumption-noDocumentAll/cast-to-boolean/input.js
+Bindings mismatch:
+after transform: ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+rebuilt        : ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+Bindings mismatch:
+after transform: ScopeId(26): ["_o$a$b$c$non_existent2"]
+rebuilt        : ScopeId(26): []
+Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
+after transform: SymbolId(31): ScopeId(26)
+rebuilt        : SymbolId(33): ScopeId(25)
+
+* assumption-noDocumentAll/in-function-params/input.js
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9)]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "a"]
+rebuilt        : ScopeId(2): ["_x"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Bindings mismatch:
+after transform: ScopeId(2): ["a", "b"]
+rebuilt        : ScopeId(4): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(0))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Bindings mismatch:
+after transform: ScopeId(3): ["_a$b", "a", "b"]
+rebuilt        : ScopeId(6): ["_a$b"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(0))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Bindings mismatch:
+after transform: ScopeId(4): ["_a$b2", "a", "b"]
+rebuilt        : ScopeId(8): ["_a$b2"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(Function)
+rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(0))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+Bindings mismatch:
+after transform: ScopeId(5): ["_a$b3", "a", "b"]
+rebuilt        : ScopeId(10): ["_a$b3"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(Function)
+rebuilt        : ScopeId(10): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(0))
+rebuilt        : ScopeId(10): Some(ScopeId(9))
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol reference IDs mismatch for "_x":
+after transform: SymbolId(14): [ReferenceId(5), ReferenceId(6), ReferenceId(7)]
+rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(2)]
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(3)
+Symbol reference IDs mismatch for "a":
+after transform: SymbolId(3): [ReferenceId(1), ReferenceId(8), ReferenceId(9)]
+rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(4)]
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(3)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(6): ScopeId(3)
+rebuilt        : SymbolId(7): ScopeId(5)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(7): ScopeId(3)
+rebuilt        : SymbolId(8): ScopeId(5)
+Symbol reference IDs mismatch for "_a$b":
+after transform: SymbolId(15): [ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15)]
+rebuilt        : SymbolId(9): [ReferenceId(5), ReferenceId(7), ReferenceId(8), ReferenceId(9)]
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(9): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(7)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(10): ScopeId(4)
+rebuilt        : SymbolId(12): ScopeId(7)
+Symbol reference IDs mismatch for "_a$b2":
+after transform: SymbolId(16): [ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21)]
+rebuilt        : SymbolId(13): [ReferenceId(10), ReferenceId(12), ReferenceId(13), ReferenceId(14)]
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(9)
+Symbol reference IDs mismatch for "a":
+after transform: SymbolId(12): [ReferenceId(4), ReferenceId(22), ReferenceId(23)]
+rebuilt        : SymbolId(15): [ReferenceId(15), ReferenceId(17)]
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(13): ScopeId(5)
+rebuilt        : SymbolId(16): ScopeId(9)
+Symbol reference IDs mismatch for "_a$b3":
+after transform: SymbolId(17): [ReferenceId(24), ReferenceId(25), ReferenceId(26)]
+rebuilt        : SymbolId(17): [ReferenceId(16), ReferenceId(18)]
+
+* assumption-noDocumentAll/memoize/input.js
+Symbol reference IDs mismatch for "foo":
+after transform: SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(8), ReferenceId(10), ReferenceId(11), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(35), ReferenceId(54), ReferenceId(55), ReferenceId(56), ReferenceId(60), ReferenceId(64), ReferenceId(65), ReferenceId(76), ReferenceId(77)]
+rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(12), ReferenceId(16), ReferenceId(19), ReferenceId(23), ReferenceId(26), ReferenceId(30), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(36), ReferenceId(38), ReferenceId(39), ReferenceId(41), ReferenceId(43), ReferenceId(44), ReferenceId(46), ReferenceId(48), ReferenceId(50), ReferenceId(55), ReferenceId(56), ReferenceId(58), ReferenceId(63)]
+Symbol reference IDs mismatch for "_foo$bar":
+after transform: SymbolId(2): [ReferenceId(29), ReferenceId(30), ReferenceId(31)]
+rebuilt        : SymbolId(2): [ReferenceId(3), ReferenceId(5)]
+Symbol reference IDs mismatch for "_foo$get":
+after transform: SymbolId(3): [ReferenceId(36), ReferenceId(37), ReferenceId(38)]
+rebuilt        : SymbolId(3): [ReferenceId(11), ReferenceId(14)]
+Symbol reference IDs mismatch for "_foo$bar2":
+after transform: SymbolId(4): [ReferenceId(39), ReferenceId(40), ReferenceId(41)]
+rebuilt        : SymbolId(4): [ReferenceId(15), ReferenceId(17)]
+Symbol reference IDs mismatch for "_foo$bar3":
+after transform: SymbolId(5): [ReferenceId(42), ReferenceId(43), ReferenceId(44)]
+rebuilt        : SymbolId(5): [ReferenceId(18), ReferenceId(21)]
+Symbol reference IDs mismatch for "_foo$bar$baz":
+after transform: SymbolId(6): [ReferenceId(45), ReferenceId(46), ReferenceId(47)]
+rebuilt        : SymbolId(6): [ReferenceId(22), ReferenceId(24)]
+Symbol reference IDs mismatch for "_foo$bar$baz2":
+after transform: SymbolId(7): [ReferenceId(48), ReferenceId(49), ReferenceId(50)]
+rebuilt        : SymbolId(7): [ReferenceId(25), ReferenceId(28)]
+Symbol reference IDs mismatch for "_foo$bar4":
+after transform: SymbolId(8): [ReferenceId(51), ReferenceId(52), ReferenceId(53)]
+rebuilt        : SymbolId(8): [ReferenceId(29), ReferenceId(31)]
+Symbol reference IDs mismatch for "_foo$bar5":
+after transform: SymbolId(9): [ReferenceId(57), ReferenceId(58), ReferenceId(59)]
+rebuilt        : SymbolId(9): [ReferenceId(35), ReferenceId(37)]
+Symbol reference IDs mismatch for "_foo$bar6":
+after transform: SymbolId(10): [ReferenceId(61), ReferenceId(62), ReferenceId(63)]
+rebuilt        : SymbolId(10): [ReferenceId(40), ReferenceId(42)]
+Symbol reference IDs mismatch for "_foo$bar7":
+after transform: SymbolId(11): [ReferenceId(66), ReferenceId(67), ReferenceId(68)]
+rebuilt        : SymbolId(11): [ReferenceId(45), ReferenceId(47)]
+Symbol reference IDs mismatch for "_foo$bar8":
+after transform: SymbolId(12): [ReferenceId(69), ReferenceId(70), ReferenceId(71), ReferenceId(75)]
+rebuilt        : SymbolId(12): [ReferenceId(49), ReferenceId(52), ReferenceId(54)]
+Symbol reference IDs mismatch for "_foo$bar8$baz":
+after transform: SymbolId(13): [ReferenceId(72), ReferenceId(73), ReferenceId(74)]
+rebuilt        : SymbolId(13): [ReferenceId(51), ReferenceId(53)]
+Symbol reference IDs mismatch for "_foo$bar9":
+after transform: SymbolId(14): [ReferenceId(78), ReferenceId(79), ReferenceId(80), ReferenceId(84)]
+rebuilt        : SymbolId(14): [ReferenceId(57), ReferenceId(60), ReferenceId(62)]
+Symbol reference IDs mismatch for "_foo$bar9$baz":
+after transform: SymbolId(15): [ReferenceId(81), ReferenceId(82), ReferenceId(83)]
+rebuilt        : SymbolId(15): [ReferenceId(59), ReferenceId(61)]
+
+* assumption-noDocumentAll/optional-eval-call/input.js
+Symbol reference IDs mismatch for "_eval":
+after transform: SymbolId(1): [ReferenceId(20), ReferenceId(21), ReferenceId(22)]
+rebuilt        : SymbolId(0): [ReferenceId(10), ReferenceId(12)]
+Symbol reference IDs mismatch for "_eval2":
+after transform: SymbolId(2): [ReferenceId(23), ReferenceId(24), ReferenceId(25)]
+rebuilt        : SymbolId(1): [ReferenceId(13), ReferenceId(15)]
+Symbol reference IDs mismatch for "_foo$eval":
+after transform: SymbolId(3): [ReferenceId(26), ReferenceId(27), ReferenceId(28)]
+rebuilt        : SymbolId(2): [ReferenceId(16), ReferenceId(18)]
+Symbol reference IDs mismatch for "_eval$foo":
+after transform: SymbolId(4): [ReferenceId(30), ReferenceId(31), ReferenceId(32)]
+rebuilt        : SymbolId(3): [ReferenceId(21), ReferenceId(23)]
+Unresolved reference IDs mismatch for "eval":
+after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(10), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(33)]
+rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(14), ReferenceId(22), ReferenceId(24)]
+
+* assumption-noDocumentAll/super-method-call/input.js
+Symbol reference IDs mismatch for "_super$method":
+after transform: SymbolId(2): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2)]
+
+* general/cast-to-boolean/input.js
+Bindings mismatch:
+after transform: ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+rebuilt        : ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+Bindings mismatch:
+after transform: ScopeId(26): ["_o$a$b$c$non_existent2"]
+rebuilt        : ScopeId(26): []
+Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
+after transform: SymbolId(31): ScopeId(26)
+rebuilt        : SymbolId(33): ScopeId(25)
+
+* general/delete-in-function-params/input.js
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(1): ["_a", "x"]
+rebuilt        : ScopeId(2): ["_a"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
+
+* general/in-function-params/input.js
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9)]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "a"]
+rebuilt        : ScopeId(2): ["_x"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Bindings mismatch:
+after transform: ScopeId(2): ["a", "b"]
+rebuilt        : ScopeId(4): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(0))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Bindings mismatch:
+after transform: ScopeId(3): ["_a$b", "a", "b"]
+rebuilt        : ScopeId(6): ["_a$b"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(0))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Bindings mismatch:
+after transform: ScopeId(4): ["_a$b2", "a", "b"]
+rebuilt        : ScopeId(8): ["_a$b2"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(Function)
+rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(0))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+Bindings mismatch:
+after transform: ScopeId(5): ["_a$b3", "a", "b"]
+rebuilt        : ScopeId(10): ["_a$b3"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(Function)
+rebuilt        : ScopeId(10): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(0))
+rebuilt        : ScopeId(10): Some(ScopeId(9))
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(3)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(3)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(6): ScopeId(3)
+rebuilt        : SymbolId(7): ScopeId(5)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(7): ScopeId(3)
+rebuilt        : SymbolId(8): ScopeId(5)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(9): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(7)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(10): ScopeId(4)
+rebuilt        : SymbolId(12): ScopeId(7)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(9)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(13): ScopeId(5)
+rebuilt        : SymbolId(16): ScopeId(9)
+
+* general/in-function-params-loose/input.js
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9)]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "a"]
+rebuilt        : ScopeId(2): ["_x"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Bindings mismatch:
+after transform: ScopeId(2): ["a", "b"]
+rebuilt        : ScopeId(4): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(0))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Bindings mismatch:
+after transform: ScopeId(3): ["_a$b", "a", "b"]
+rebuilt        : ScopeId(6): ["_a$b"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(0))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Bindings mismatch:
+after transform: ScopeId(4): ["_a$b2", "a", "b"]
+rebuilt        : ScopeId(8): ["_a$b2"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(Function)
+rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(0))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+Bindings mismatch:
+after transform: ScopeId(5): ["_a$b3", "a", "b"]
+rebuilt        : ScopeId(10): ["_a$b3"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(Function)
+rebuilt        : ScopeId(10): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(0))
+rebuilt        : ScopeId(10): Some(ScopeId(9))
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(3)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(3)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(6): ScopeId(3)
+rebuilt        : SymbolId(7): ScopeId(5)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(7): ScopeId(3)
+rebuilt        : SymbolId(8): ScopeId(5)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(9): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(7)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(10): ScopeId(4)
+rebuilt        : SymbolId(12): ScopeId(7)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(9)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(13): ScopeId(5)
+rebuilt        : SymbolId(16): ScopeId(9)
+
+* loose/cast-to-boolean/input.js
+Bindings mismatch:
+after transform: ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+rebuilt        : ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+Bindings mismatch:
+after transform: ScopeId(26): ["_o$a$b$c$non_existent2"]
+rebuilt        : ScopeId(26): []
+Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
+after transform: SymbolId(31): ScopeId(26)
+rebuilt        : SymbolId(33): ScopeId(25)
+
+* transparent-expr-wrappers/ts-as-function-call-loose/input.ts
+Unresolved references mismatch:
+after transform: ["A", "B", "foo"]
+rebuilt        : ["foo"]
+
+* transparent-expr-wrappers/ts-as-member-expression/input.ts
+Unresolved references mismatch:
+after transform: ["ExampleType", "ExampleType2", "a"]
+rebuilt        : ["a"]
+
+* transparent-expr-wrappers/ts-parenthesized-expression-member-call/input.ts
+Unresolved references mismatch:
+after transform: ["ExampleType", "o"]
+rebuilt        : ["o"]
+
+
+# babel-plugin-transform-object-rest-spread (28/36)
+* object-rest/for-x/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_ref", "a", "b"]
+rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_ref", "_ref2", "_ref3", "a"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["a", "b"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_ref2"]
+rebuilt        : ScopeId(3): []
+Bindings mismatch:
+after transform: ScopeId(4): ["_ref3"]
+rebuilt        : ScopeId(4): []
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(5): ["_ref4", "_ref5"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_ref4"]
+rebuilt        : ScopeId(6): []
+Bindings mismatch:
+after transform: ScopeId(7): ["_ref5"]
+rebuilt        : ScopeId(7): []
+Symbol flags mismatch for "a":
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "a":
+after transform: SymbolId(0): Span { start: 27, end: 28 }
+rebuilt        : SymbolId(8): Span { start: 86, end: 87 }
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(8): ScopeId(0)
+Symbol redeclarations mismatch for "a":
+after transform: SymbolId(0): [Span { start: 86, end: 87 }, Span { start: 189, end: 190 }, Span { start: 274, end: 275 }]
+rebuilt        : SymbolId(8): [Span { start: 189, end: 190 }, Span { start: 274, end: 275 }]
+Symbol reference IDs mismatch for "b":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3)]
+rebuilt        : SymbolId(5): []
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(6): ScopeId(0)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(5): ScopeId(4)
+rebuilt        : SymbolId(7): ScopeId(0)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(7): ScopeId(6)
+rebuilt        : SymbolId(9): ScopeId(5)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(8): ScopeId(7)
+rebuilt        : SymbolId(10): ScopeId(5)
+Reference symbol mismatch for "b":
+after transform: SymbolId(1) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(1) "b"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["babelHelpers"]
+rebuilt        : ["b", "babelHelpers"]
+
+* object-rest/for-x-array-pattern/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "a"]
+rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_ref2", "_ref3", "_ref4", "a"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_ref2"]
+rebuilt        : ScopeId(3): []
+Bindings mismatch:
+after transform: ScopeId(4): ["_ref3", "_ref4"]
+rebuilt        : ScopeId(4): []
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(5): ["_ref5", "_ref6", "_ref7"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_ref5"]
+rebuilt        : ScopeId(6): []
+Bindings mismatch:
+after transform: ScopeId(7): ["_ref6", "_ref7"]
+rebuilt        : ScopeId(7): []
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(5): ScopeId(3)
+rebuilt        : SymbolId(6): ScopeId(0)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(6): ScopeId(4)
+rebuilt        : SymbolId(7): ScopeId(0)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(7): ScopeId(4)
+rebuilt        : SymbolId(8): ScopeId(0)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(9): ScopeId(6)
+rebuilt        : SymbolId(10): ScopeId(5)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(10): ScopeId(7)
+rebuilt        : SymbolId(11): ScopeId(5)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(11): ScopeId(7)
+rebuilt        : SymbolId(12): ScopeId(5)
+
+* object-rest/for-x-completion-record/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_excluded"]
+rebuilt        : ScopeId(0): ["_excluded", "_ref", "_ref2"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_ref"]
+rebuilt        : ScopeId(1): []
+Bindings mismatch:
+after transform: ScopeId(2): ["_ref2"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(0)
+
+* object-rest/nested-computed-key/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_ref3", "a", "c"]
+rebuilt        : ScopeId(0): ["a", "c"]
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["babelHelpers", "d"]
+rebuilt        : ["_ref3", "babelHelpers", "d"]
+
+* object-rest/nested-default-value/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_ref3", "a", "c"]
+rebuilt        : ScopeId(0): ["a", "c"]
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["babelHelpers", "d"]
+rebuilt        : ["_ref3", "babelHelpers", "d"]
+
+* object-rest/parameters-object-rest-used-in-default/input.js
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(3): []
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(2): [ReferenceId(1)]
+rebuilt        : SymbolId(6): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(6): [ReferenceId(2)]
+rebuilt        : SymbolId(10): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(7): [ReferenceId(3)]
+rebuilt        : SymbolId(16): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(13): [ReferenceId(6)]
+rebuilt        : SymbolId(20): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(15): [ReferenceId(7)]
+rebuilt        : SymbolId(23): []
+Reference symbol mismatch for "R":
+after transform: SymbolId(0) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "Y":
+after transform: SymbolId(2) "Y"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(6) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(7) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(13) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(15) "R"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["b", "babelHelpers", "f", "q"]
+rebuilt        : ["R", "Y", "b", "babelHelpers", "f", "q"]
+
+* object-rest/symbol/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_Symbol$for", "_Symbol$for2", "_Symbol$for3", "_ref", "_ref2", "_ref3", "foo", "rest"]
+rebuilt        : ScopeId(0): ["_Symbol$for", "_Symbol$for2", "_ref", "_ref2", "foo", "rest"]
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_Symbol$for3":
+after transform: SymbolId(7) "_Symbol$for3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_Symbol$for3":
+after transform: SymbolId(7) "_Symbol$for3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Symbol", "babelHelpers"]
+rebuilt        : ["Symbol", "_Symbol$for3", "_ref3", "babelHelpers"]
+Unresolved reference IDs mismatch for "Symbol":
+after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
+rebuilt        : [ReferenceId(0), ReferenceId(7)]
+
+* regression/gh-8323/input.js
+
+  x Option `loose` is not implemented for object-rest-spread.
+
 
 
 # babel-plugin-transform-async-to-generator (10/28)
