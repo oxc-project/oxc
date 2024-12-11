@@ -29,6 +29,7 @@ pub struct TestCase {
     source_type: SourceType,
     transform_options: Result<TransformOptions, Vec<String>>,
     pub errors: Vec<OxcDiagnostic>,
+    pub transformed_code: String,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -73,7 +74,15 @@ impl TestCase {
 
         let source_type = Self::source_type(&path, &options);
 
-        Some(Self { kind, path, options, source_type, transform_options, errors })
+        Some(Self {
+            kind,
+            path,
+            options,
+            source_type,
+            transform_options,
+            errors,
+            transformed_code: String::new(),
+        })
     }
 
     fn source_type(path: &Path, options: &BabelOptions) -> SourceType {
@@ -116,6 +125,22 @@ impl TestCase {
         }
 
         Some(babel_output_path)
+    }
+
+    pub fn write_override_output(&self) {
+        let Some(output_path) = self.get_output_path() else {
+            return;
+        };
+
+        let override_output_path = if output_path.starts_with(override_root()) {
+            output_path
+        } else if let Some(output_path) = Self::convert_to_override_path(&output_path) {
+            output_path
+        } else {
+            return;
+        };
+        fs::create_dir_all(override_output_path.parent().unwrap()).unwrap();
+        fs::write(&override_output_path, self.transformed_code.clone()).unwrap();
     }
 
     pub fn skip_test_case(&self) -> bool {
@@ -240,7 +265,6 @@ impl TestCase {
             println!("output_path: {output_path:?}");
         }
 
-        let mut transformed_code = String::new();
         let mut actual_errors = None;
         let mut transform_options = None;
 
@@ -250,7 +274,7 @@ impl TestCase {
             }
             Ok(code) => {
                 transform_options.replace(self.transform_options.as_ref().unwrap().clone());
-                transformed_code = code;
+                self.transformed_code = code;
             }
         }
 
@@ -285,7 +309,7 @@ impl TestCase {
                 },
             );
 
-            if transformed_code == output {
+            if self.transformed_code == output {
                 actual_errors.is_none()
             } else {
                 if actual_errors.is_none() {
@@ -316,7 +340,7 @@ impl TestCase {
                 let output = output.cow_replace("\t", "  ");
                 println!("{output}\n");
                 println!("Transformed:\n");
-                let transformed_code = transformed_code.cow_replace("\t", "  ");
+                let transformed_code = self.transformed_code.cow_replace("\t", "  ");
                 println!("{transformed_code}");
                 println!("Errors:\n");
                 if let Some(actual_errors) = &actual_errors {
