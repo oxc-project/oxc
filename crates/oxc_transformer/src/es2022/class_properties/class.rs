@@ -14,6 +14,7 @@ use crate::common::helper_loader::Helper;
 
 use super::{super::ClassStaticBlock, ClassBindings};
 use super::{
+    constructor::InstanceInitsInsertionLocation,
     private_props::{PrivateProp, PrivateProps},
     utils::{
         create_assignment, create_underscore_ident_name, create_variable_declaration,
@@ -305,8 +306,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // TODO: Store `FxIndexMap`s in a pool and re-use them
         let mut private_props = FxIndexMap::default();
         let mut constructor_index = None;
-        let mut index_not_including_removed = 0;
-        for element in &class.body.body {
+        for (index, element) in class.body.body.iter().enumerate() {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
                     // TODO: Throw error if property has decorators
@@ -343,15 +343,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     if method.kind == MethodDefinitionKind::Constructor
                         && method.value.body.is_some()
                     {
-                        constructor_index = Some(index_not_including_removed);
+                        constructor_index = Some(index);
                     }
                 }
                 ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
                     // TODO: Need to handle these?
                 }
             }
-
-            index_not_including_removed += 1;
         }
 
         // Exit if nothing to transform
@@ -406,8 +404,18 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             }));
         }
 
+        // Determine where to insert instance property initializers in constructor
+        let instance_inits_insertion_location = match constructor_index {
+            Some(constructor_index) if class.super_class.is_some() && instance_prop_count > 0 => {
+                Self::locate_super_in_constructor(class, constructor_index, ctx)
+            }
+            _ => InstanceInitsInsertionLocation::StatementIndex(0),
+        };
+
         // Extract properties and static blocks from class body + substitute computed method keys
         let mut instance_inits = Vec::with_capacity(instance_prop_count);
+        let mut constructor_index = None;
+        let mut index_not_including_removed = 0;
         class.body.body.retain_mut(|element| {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
@@ -416,25 +424,31 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     } else {
                         self.convert_instance_property(prop, &mut instance_inits, ctx);
                     }
-                    false
+                    return false;
                 }
                 ClassElement::StaticBlock(block) => {
                     if self.transform_static_blocks {
                         self.convert_static_block(block, ctx);
-                        false
-                    } else {
-                        true
+                        return false;
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
-                    self.substitute_temp_var_for_method_computed_key(method, ctx);
-                    true
+                    if method.kind == MethodDefinitionKind::Constructor {
+                        if method.value.body.is_some() {
+                            constructor_index = Some(index_not_including_removed);
+                        }
+                    } else {
+                        self.substitute_temp_var_for_method_computed_key(method, ctx);
+                    }
                 }
                 ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
                     // TODO: Need to handle these?
-                    true
                 }
             }
+
+            index_not_including_removed += 1;
+
+            true
         });
 
         // Insert instance initializers into constructor
@@ -442,7 +456,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // TODO: Re-parent any scopes within initializers.
             if let Some(constructor_index) = constructor_index {
                 // Existing constructor - amend it
-                self.insert_inits_into_constructor(class, instance_inits, constructor_index, ctx);
+                self.insert_inits_into_constructor(
+                    class,
+                    instance_inits,
+                    &instance_inits_insertion_location,
+                    constructor_index,
+                    ctx,
+                );
             } else {
                 // No constructor - create one
                 Self::insert_constructor(class, instance_inits, ctx);
