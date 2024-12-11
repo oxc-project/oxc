@@ -127,9 +127,21 @@ impl Rule for PreferQuerySelector {
                     // argument_expr.span().source_text(ctx.source_text());
                     let source_text = fixer.source_range(argument_expr.span());
                     let quotes_symbol = source_text.chars().next().unwrap();
-                    let sharp = if cur_property_name.eq(&"getElementById") { "#" } else { "" };
+                    let argument = match *cur_property_name {
+                        "getElementById" => format!("#{literal_value}"),
+                        "getElementsByClassName" => {
+                            format!(
+                                ".{}",
+                                literal_value.split_whitespace().collect::<Vec<_>>().join(" .")
+                            )
+                        }
+                        _ => literal_value.to_string(),
+                    };
                     let span = property_span.merge(&argument_expr.span());
-                    fixer.replace(span, format!("{preferred_selector}({quotes_symbol}{sharp}{literal_value}{quotes_symbol}"))
+                    fixer.replace(
+                        span,
+                        format!("{preferred_selector}({quotes_symbol}{argument}{quotes_symbol}"),
+                    )
                 });
             }
 
@@ -191,7 +203,7 @@ fn test() {
         ("document.getElementsByTagName('foo');", "document.querySelectorAll('foo');", None),
         (
             "document.getElementsByClassName(`foo bar`);",
-            "document.querySelectorAll(`foo bar`);",
+            "document.querySelectorAll(`.foo .bar`);",
             None,
         ),
         ("document.getElementsByClassName(null);", "document.querySelectorAll(null);", None),
