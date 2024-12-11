@@ -148,7 +148,7 @@
     "cross-env": "^7.0.3",
     "esbuild": "^0.24.0",
     "ovsx": "^0.10.0",
-    "oxlint": "^0.11.1",
+    "oxlint": "^0.15.0",
     "typescript": "^5.4.5"
   },
   "dependencies": {
