@@ -56,10 +56,13 @@ pub(super) fn create_underscore_ident_name<'a>(ctx: &mut TraverseCtx<'a>) -> Ide
     ctx.ast.identifier_name(SPAN, Atom::from("_"))
 }
 
+/// Debug assert that an `Expression` is not `ParenthesizedExpression` or TS syntax
+/// (e.g. `TSAsExpression`).
+//
 // `#[inline(always)]` because this is a no-op in release mode
 #[expect(clippy::inline_always)]
 #[inline(always)]
-pub(super) fn assert_expr_neither_parenthesis_nor_typescript_syntax(
+pub(super) fn debug_assert_expr_is_not_parenthesis_or_typescript_syntax(
     expr: &Expression,
     path: &PathBuf,
 ) {

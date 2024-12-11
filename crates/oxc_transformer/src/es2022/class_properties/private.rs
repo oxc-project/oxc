@@ -16,8 +16,8 @@ use crate::{common::helper_loader::Helper, TransformCtx};
 use super::{
     private_props::ResolvedPrivateProp,
     utils::{
-        assert_expr_neither_parenthesis_nor_typescript_syntax, create_assignment,
-        create_underscore_ident_name,
+        create_assignment, create_underscore_ident_name,
+        debug_assert_expr_is_not_parenthesis_or_typescript_syntax,
     },
     ClassProperties,
 };
@@ -1019,7 +1019,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 self.transform_call_expression_of_chain_expression(call, ctx)
             }
             _ => {
-                assert_expr_neither_parenthesis_nor_typescript_syntax(expr, &self.ctx.source_path);
+                debug_assert_expr_is_not_parenthesis_or_typescript_syntax(
+                    expr,
+                    &self.ctx.source_path,
+                );
                 None
             }
         }
@@ -1611,7 +1614,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>) {
-        assert_expr_neither_parenthesis_nor_typescript_syntax(&object, &self.ctx.source_path);
+        debug_assert_expr_is_not_parenthesis_or_typescript_syntax(&object, &self.ctx.source_path);
         self.ctx.duplicate_expression(object, false, ctx)
     }
 
@@ -1630,7 +1633,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>, Expression<'a>) {
-        assert_expr_neither_parenthesis_nor_typescript_syntax(&object, &self.ctx.source_path);
+        debug_assert_expr_is_not_parenthesis_or_typescript_syntax(&object, &self.ctx.source_path);
         self.ctx.duplicate_expression_twice(object, false, ctx)
     }
 
