@@ -1171,7 +1171,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         //
         // TODO(improve-on-babel): Consider remove this logic, because it seems no runtime behavior change.
         let result = self.transform_chain_element_recursively(callee, ctx)?;
-        let object = callee.to_member_expression_mut().object_mut();
+        let object = callee.as_member_expression_mut()?.object_mut();
         let (assignment, context) = self.duplicate_object(ctx.ast.move_expression(object), ctx);
         *object = assignment;
         let callee = ctx.ast.move_expression(&mut call_expr.callee);
