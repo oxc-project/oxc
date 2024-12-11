@@ -93,8 +93,12 @@ async function updateDir(dirPath, options, hasChangedOptions) {
   ) {
     const inputPath = pathJoin(dirPath, filenames.input),
       outputPath = pathJoin(dirPath, filenames.output);
-    await backupFile(outputPath);
-    await transform(inputPath, outputPath, options);
+    const originalCode = (await readFile(outputPath)).toString();
+    const code = await transform(inputPath, outputPath, options);
+    if (originalCode.trim() !== code.trim()) {
+      await backupFile(outputPath);
+      await writeFile(outputPath, code);
+    }
   }
 
   // Process subfolders
@@ -177,7 +181,7 @@ async function transform(inputPath, outputPath, options) {
   }
 
   const { code } = await transformFileAsync(inputPath, options);
-  await writeFile(outputPath, code);
+  return code;
 }
 
 /**
