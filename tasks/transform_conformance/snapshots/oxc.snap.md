@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 106/120
+Passed: 107/121
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,7 +16,7 @@ Passed: 106/120
 * regexp
 
 
-# babel-plugin-transform-class-properties (7/10)
+# babel-plugin-transform-class-properties (8/11)
 * private-loose-tagged-template/input.js
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]

@@ -959,8 +959,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         if matches!(element, ChainElement::PrivateFieldExpression(_)) {
             // The PrivateFieldExpression must be transformed, so we can convert it to a normal expression here.
             let mut chain_expr = Self::convert_chain_expression_to_expression(expr, ctx);
-            let result =
-                self.transform_private_field_expression_of_chain_expression(&mut chain_expr, ctx);
+            let result = self
+                .transform_private_field_expression_of_chain_expression(&mut chain_expr, ctx)
+                .unwrap_or_else(|| {
+                    unreachable!(
+                        "The ChainExpression must contains at least one optional expression, so it never be `None` here."
+                    )
+                });
             Some((result, chain_expr))
         } else if let Some(result) = self.transform_chain_expression_element(element, ctx) {
             let chain_expr = Self::convert_chain_expression_to_expression(expr, ctx);
@@ -1003,7 +1008,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) -> Option<Expression<'a>> {
         match expr {
             Expression::PrivateFieldExpression(_) => {
-                Some(self.transform_private_field_expression_of_chain_expression(expr, ctx))
+                self.transform_private_field_expression_of_chain_expression(expr, ctx)
             }
             match_member_expression!(Expression) => self
                 .transform_member_expression_of_chain_expression(
@@ -1086,17 +1091,20 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         Some(result)
     }
 
+    /// Transform private field expression of chain expression.
+    ///
+    /// Returns `None` if the `expr` doesn't contain any optional expression.
     fn transform_private_field_expression_of_chain_expression(
         &mut self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
+    ) -> Option<Expression<'a>> {
         let Expression::PrivateFieldExpression(field_expr) = expr else { unreachable!() };
 
         let is_optional = field_expr.optional;
         let object = &mut field_expr.object;
 
-        let left = if is_optional {
+        let result = if is_optional {
             Some(self.transform_expression_to_wrap_nullish_check(object, ctx))
         } else {
             self.transform_first_optional_expression(object, ctx)
@@ -1110,13 +1118,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             self.transform_private_field_expression(expr, ctx);
         }
 
-        left.unwrap_or_else(|| {
-            // `o.Foo.#x?.self` -> `(_babelHelpers$assertC = expr === null || _babelHelpers$assertC === void 0 ?
-            //                       void 0 : _babelHelpers$assertC?.self;`
-            // `expr` is `o.Foo.#x` that has transformed to `babelHelpers.assertClassBrand(Foo, o.Foo, _x)._)` by
-            // `self.transform_private_field_expression`.
-            self.transform_expression_to_wrap_nullish_check(expr, ctx)
-        })
+        result
     }
 
     fn transform_member_expression_of_chain_expression(
@@ -1145,6 +1147,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let is_optional = call_expr.optional;
+
         let callee = call_expr.callee.get_inner_expression_mut();
         if matches!(callee, Expression::PrivateFieldExpression(_)) {
             let result = self.transform_first_optional_expression(callee, ctx);
@@ -1157,9 +1160,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             return result;
         }
 
-        let result = self.transform_chain_element_recursively(callee, ctx)?;
         if !is_optional {
-            return Some(result);
+            return self.transform_chain_element_recursively(callee, ctx);
         }
 
         // `o?.Foo.#self.getSelf?.()?.self.#m();`
@@ -1168,6 +1170,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         //                            then use it as a first argument of `getSelf` call.
         //
         // TODO(improve-on-babel): Consider remove this logic, because it seems no runtime behavior change.
+        let result = self.transform_chain_element_recursively(callee, ctx)?;
         let object = callee.to_member_expression_mut().object_mut();
         let (assignment, context) = self.duplicate_object(ctx.ast.move_expression(object), ctx);
         *object = assignment;
