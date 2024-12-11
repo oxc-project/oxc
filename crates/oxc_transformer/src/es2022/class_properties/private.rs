@@ -961,11 +961,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             let mut chain_expr = Self::convert_chain_expression_to_expression(expr, ctx);
             let result = self
                 .transform_private_field_expression_of_chain_expression(&mut chain_expr, ctx)
-                .unwrap_or_else(|| {
-                    unreachable!(
-                        "The ChainExpression must contains at least one optional expression, so it never be `None` here."
-                    )
-                });
+                .expect("The ChainExpression must contain at least one optional expression, so it can never be `None` here.");
             Some((result, chain_expr))
         } else if let Some(result) = self.transform_chain_expression_element(element, ctx) {
             let chain_expr = Self::convert_chain_expression_to_expression(expr, ctx);
