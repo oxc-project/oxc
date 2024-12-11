@@ -6,7 +6,7 @@ use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{EnvOptions, HelperLoaderMode, TransformOptions, Transformer};
+use oxc_transformer::{BabelOptions, EnvOptions, HelperLoaderMode, TransformOptions, Transformer};
 use pico_args::Arguments;
 
 // Instruction:
@@ -15,6 +15,8 @@ use pico_args::Arguments;
 
 fn main() {
     let mut args = Arguments::from_env();
+    let babel_options_path: Option<String> =
+        args.opt_value_from_str("--babel-options").unwrap_or(None);
     let targets: Option<String> = args.opt_value_from_str("--targets").unwrap_or(None);
     let target: Option<String> = args.opt_value_from_str("--target").unwrap_or(None);
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
@@ -55,7 +57,11 @@ fn main() {
 
     let (symbols, scopes) = ret.semantic.into_symbol_table_and_scope_tree();
 
-    let mut transform_options = if let Some(query) = &targets {
+    let mut transform_options = if let Some(babel_options_path) = babel_options_path {
+        let babel_options_path = Path::new(&babel_options_path);
+        let babel_options = BabelOptions::from_test_path(babel_options_path);
+        TransformOptions::try_from(&babel_options).unwrap()
+    } else if let Some(query) = &targets {
         TransformOptions {
             env: EnvOptions::from_browserslist_query(query).unwrap(),
             ..TransformOptions::default()
