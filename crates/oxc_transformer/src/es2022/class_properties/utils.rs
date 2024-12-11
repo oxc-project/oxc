@@ -56,7 +56,9 @@ pub(super) fn create_underscore_ident_name<'a>(ctx: &mut TraverseCtx<'a>) -> Ide
     ctx.ast.identifier_name(SPAN, Atom::from("_"))
 }
 
-#[inline]
+// `#[inline(always)]` because this is a no-op in release mode
+#[expect(clippy::inline_always)]
+#[inline(always)]
 pub(super) fn assert_expr_neither_parenthesis_nor_typescript_syntax(
     expr: &Expression,
     path: &PathBuf,
