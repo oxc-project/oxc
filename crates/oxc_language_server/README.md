@@ -10,6 +10,8 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
   - File Operations: `false`
 - [Code Actions Provider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionKind):
   - `quickfix`
+  - `source.fixAll.oxc`, behaves the same as `quickfix` only used when the `CodeActionContext#only` contains
+    `source.fixAll.oxc`.
 
 ## Supported LSP Specifications from Server
 
