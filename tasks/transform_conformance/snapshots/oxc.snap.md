@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 105/117
+Passed: 106/120
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,7 +16,7 @@ Passed: 105/117
 * regexp
 
 
-# babel-plugin-transform-class-properties (6/7)
+# babel-plugin-transform-class-properties (7/10)
 * private-loose-tagged-template/input.js
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
@@ -27,6 +27,16 @@ rebuilt        : ScopeId(2): [ScopeId(3)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
+
+* typescript/optional-call/input.ts
+Symbol reference IDs mismatch for "X":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(16)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(8), ReferenceId(14)]
+
+* typescript/optional-member/input.ts
+Symbol reference IDs mismatch for "X":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(9), ReferenceId(12)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
 # babel-plugin-transform-async-to-generator (14/15)

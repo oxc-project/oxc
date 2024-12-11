@@ -1001,7 +1001,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        assert_expr_neither_parenthesis_nor_typescript_syntax(expr);
         match expr {
             Expression::PrivateFieldExpression(_) => {
                 Some(self.transform_private_field_expression_of_chain_expression(expr, ctx))
@@ -1015,7 +1014,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 self.transform_call_expression_of_chain_expression(call, ctx)
             }
             _ => {
-                assert_expr_neither_parenthesis_nor_typescript_syntax(expr);
+                assert_expr_neither_parenthesis_nor_typescript_syntax(expr, &self.ctx.source_path);
                 None
             }
         }
@@ -1126,7 +1125,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let is_optional = member.optional();
-        let object = member.object_mut();
+        let object = member.object_mut().get_inner_expression_mut();
         let result = self.transform_chain_element_recursively(object, ctx)?;
         if is_optional && !object.is_identifier_reference() {
             // `o?.Foo.#self.self?.self.unicorn;` -> `(result ? void 0 : object)?.self.unicorn`
@@ -1320,7 +1319,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let callee = &mut call.callee;
         let callee_member = callee.to_member_expression_mut();
         let is_optional_callee = callee_member.optional();
-        let object = callee_member.object_mut();
+        let object = callee_member.object_mut().get_inner_expression_mut();
 
         let context = if let Some(result) = self.transform_chain_element_recursively(object, ctx) {
             if is_optional_callee {
@@ -1609,7 +1608,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>) {
-        assert_expr_neither_parenthesis_nor_typescript_syntax(&object);
+        assert_expr_neither_parenthesis_nor_typescript_syntax(&object, &self.ctx.source_path);
         self.ctx.duplicate_expression(object, false, ctx)
     }
 
@@ -1628,7 +1627,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, Expression<'a>, Expression<'a>) {
-        assert_expr_neither_parenthesis_nor_typescript_syntax(&object);
+        assert_expr_neither_parenthesis_nor_typescript_syntax(&object, &self.ctx.source_path);
         self.ctx.duplicate_expression_twice(object, false, ctx)
     }
 

@@ -1,6 +1,8 @@
 //! ES2022: Class Properties
 //! Utility functions.
 
+use std::path::PathBuf;
+
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
@@ -55,9 +57,12 @@ pub(super) fn create_underscore_ident_name<'a>(ctx: &mut TraverseCtx<'a>) -> Ide
 }
 
 #[inline]
-pub(super) fn assert_expr_neither_parenthesis_nor_typescript_syntax(expr: &Expression) {
+pub(super) fn assert_expr_neither_parenthesis_nor_typescript_syntax(
+    expr: &Expression,
+    path: &PathBuf,
+) {
     debug_assert!(
         !(matches!(expr, Expression::ParenthesizedExpression(_)) || expr.is_typescript_syntax()),
-        "Should not be: {expr:?}",
+        "Should not be: {expr:?} in {path:?}",
     );
 }
