@@ -8,9 +8,6 @@ on:
     paths:
       - crates/oxc/Cargo.toml
 
-permissions:
-  contents: write
-  actions: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,10 +17,14 @@ jobs:
   release:
     name: Release crates
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }} # required for git tag push
+          persist-credentials: false
 
       - uses: Boshen/setup-rust@main
         with:
@@ -41,6 +42,8 @@ jobs:
           echo "TAG=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
 
       - name: Tag and Push
+        env:
+          TAG_NAME: ${{ steps.run.outputs.TAG }}
         run: |
-          git tag ${{ steps.run.outputs.TAG }}
-          git push origin tag ${{ steps.run.outputs.TAG }}
+          git tag ${TAG_NAME}
+          git push origin tag ${TAG_NAME}

@@ -10,11 +10,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  pull-requests: write
-  contents: write
-  actions: write
-
 jobs:
   prepare:
     name: Prepare Release Oxlint
@@ -28,6 +23,9 @@ jobs:
     needs: prepare
     name: Trigger Ecosystem CI
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
     steps:
       - uses: taiki-e/checkout-action@v1
 
@@ -50,6 +48,8 @@ jobs:
     needs: prepare
     name: Update oxc.rs
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: benc-uk/workflow-dispatch@v1
