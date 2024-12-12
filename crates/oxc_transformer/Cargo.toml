@@ -50,6 +50,7 @@ sha1 = { workspace = true }
 insta = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_parser = { workspace = true }
+oxc_sourcemap = { workspace = true }
 pico-args = { workspace = true }
 
 [features]
