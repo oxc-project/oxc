@@ -64,7 +64,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         property: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let class_binding = self.class_bindings.get_or_init_temp_binding(ctx);
+        let class_binding = self.get_temp_binding(ctx);
         // (_classBinding, "prop", _classBinding)
         let arguments = ctx.ast.vec_from_array([
             Argument::from(class_binding.create_read_expression(ctx)),
