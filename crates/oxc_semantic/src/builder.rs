@@ -491,15 +491,6 @@ impl<'a> SemanticBuilder<'a> {
                 references.retain(|&reference_id| {
                     let reference = &mut self.symbols.references[reference_id];
 
-                    // Ensure having correct flags for the reference `foo` in case
-                    // ```js
-                    // type foo = number;
-                    // export { foo };
-                    // ```
-                    if symbol_flags.is_type() {
-                        *reference.flags_mut() = ReferenceFlags::Type;
-                    }
-
                     let flags = reference.flags();
                     if flags.is_type() && symbol_flags.can_be_referenced_by_type()
                         || flags.is_value() && symbol_flags.can_be_referenced_by_value()
@@ -1860,6 +1851,10 @@ impl<'a> SemanticBuilder<'a> {
                     || matches!(self.nodes.parent_kind(self.current_node_id), Some(AstKind::ExportNamedDeclaration(decl)) if decl.export_kind.is_type())
                 {
                     self.current_reference_flags = ReferenceFlags::Type;
+                } else {
+                    // If the export specifier is not a explicit type export, oxc considers it as a potential type and value reference.
+                    // If it references to a value in the end, oxc would delete the `ReferenceFlags::Type` flag in `fn resolve_references_for_current_scope`.
+                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
                 }
                 self.current_node_flags |= NodeFlags::ExportSpecifier;
             }
