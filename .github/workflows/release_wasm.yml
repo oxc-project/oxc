@@ -32,8 +32,11 @@ jobs:
 
       - name: Set version name
         if: steps.version.outputs.changed == 'true'
+        env:
+          VERSION_NUMBER: ${{ steps.version.outputs.version }}
+          VERSION_TYPE: ${{ steps.version.outputs.version_type }}
         run: |
-          echo "Version change found! New version: ${{ steps.version.outputs.version }} (${{ steps.version.outputs.version_type }})"
+          echo "Version change found! New version: ${VERSION_NUMBER} (${VERSION_TYPE})"
 
   build:
     needs: check
