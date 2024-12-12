@@ -10,7 +10,7 @@ use crate::Helper;
 use super::ClassProperties;
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
-    /// Transform member expression where object is a super.
+    /// Transform member expression where object is `super`.
     ///
     /// - `super.prop` -> `_superPropGet(_classBinding, "prop", _classBinding)`
     /// - `super[expr]` -> `_superPropGet(_classBinding, expr, _classBinding)`
