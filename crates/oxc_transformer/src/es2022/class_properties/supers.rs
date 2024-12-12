@@ -2,7 +2,6 @@
 //! Transform of `super` expressions.
 
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
 use oxc_traverse::TraverseCtx;
 
 use crate::Helper;
@@ -38,7 +37,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             property.name.clone(),
             Some(property.name.clone()),
         );
-        self.create_super_prop_get(member.span(), property, ctx)
+        self.create_super_prop_get(member.span, property, ctx)
     }
 
     /// Transform computed member expression where object is `super`.
@@ -64,7 +63,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let property = ctx.ast.move_expression(&mut member.expression);
-        self.create_super_prop_get(member.span(), property, ctx)
+        self.create_super_prop_get(member.span, property, ctx)
     }
 
     // `_superPropGet(_classBinding, property, _classBinding)`
