@@ -127,6 +127,13 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
     array!(p, parts)
 }
 
+pub(super) fn is_concisely_printed_array<'a>(arr: &Expression<'a>) -> bool {
+    match arr {
+        Expression::ArrayExpression(array) => Array::ArrayExpression(array).is_concisely_printed(),
+        _ => false,
+    }
+}
+
 fn print_empty_array_elements<'a>(p: &mut Prettier<'a>, array: &Array<'a, '_>) -> Doc<'a> {
     let dangling_options = DanglingCommentsPrintOptions::default().with_ident(true);
     p.print_dangling_comments(array.span(), Some(&dangling_options)).map_or_else(
