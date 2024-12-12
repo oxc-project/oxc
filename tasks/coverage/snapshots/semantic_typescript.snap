@@ -25302,15 +25302,15 @@ tasks/coverage/typescript/tests/cases/compiler/noCircularDefinitionOnExportOfPri
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol reference IDs mismatch for "cat":
+after transform: SymbolId(0): [ReferenceId(1)]
+rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule | Ambient)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(1): [Span { start: 61, end: 64 }]
 rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["cat", "module"]
-rebuilt        : ["module"]
 
 tasks/coverage/typescript/tests/cases/compiler/noCollisionThisExpressionAndLocalVarInFunction.ts
 semantic error: Scope children mismatch:
