@@ -2079,6 +2079,7 @@ dependencies = [
  "oxc_parser",
  "oxc_regular_expression",
  "oxc_semantic",
+ "oxc_sourcemap 1.0.3",
  "oxc_span",
  "oxc_syntax",
  "oxc_traverse",
