@@ -29,16 +29,16 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
     fn transform_static_member_expression_impl(
         &mut self,
-        expr: &mut StaticMemberExpression<'a>,
+        member: &mut StaticMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let property = &expr.property;
+        let property = &member.property;
         let property = ctx.ast.expression_string_literal(
             property.span,
             property.name.clone(),
             Some(property.name.clone()),
         );
-        self.create_super_prop_get(expr.span(), property, ctx)
+        self.create_super_prop_get(member.span(), property, ctx)
     }
 
     /// Transform computed member expression where object is `super`.
@@ -60,11 +60,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
     fn transform_computed_member_expression_impl(
         &mut self,
-        expr: &mut ComputedMemberExpression<'a>,
+        member: &mut ComputedMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let property = ctx.ast.move_expression(&mut expr.expression);
-        self.create_super_prop_get(expr.span(), property, ctx)
+        let property = ctx.ast.move_expression(&mut member.expression);
+        self.create_super_prop_get(member.span(), property, ctx)
     }
 
     // `_superPropGet(_classBinding, property, _classBinding)`
