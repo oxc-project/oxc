@@ -1852,8 +1852,9 @@ impl<'a> SemanticBuilder<'a> {
                 {
                     self.current_reference_flags = ReferenceFlags::Type;
                 } else {
-                    // If the export specifier is not a explicit type export, oxc considers it as a potential type and value reference.
-                    // If it references to a value in the end, oxc would delete the `ReferenceFlags::Type` flag in `fn resolve_references_for_current_scope`.
+                    // If the export specifier is not a explicit type export, we consider it as a potential
+                    // type and value reference. If it references to a value in the end, we would delete the
+                    // `ReferenceFlags::Type` flag in `fn resolve_references_for_current_scope`.
                     self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
                 }
                 self.current_node_flags |= NodeFlags::ExportSpecifier;
