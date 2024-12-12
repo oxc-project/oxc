@@ -254,6 +254,8 @@ log(__OBJECT__);
 4;
 log(__STRING__);
 5;
+__OBJECT__.hello;
+6;
 "
     .trim_start();
 
