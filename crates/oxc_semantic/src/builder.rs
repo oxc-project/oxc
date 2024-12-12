@@ -1851,7 +1851,7 @@ impl<'a> SemanticBuilder<'a> {
                 {
                     self.current_reference_flags = ReferenceFlags::Type;
                 } else {
-                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
+                    self.current_reference_flags = ReferenceFlags::Read;
                 }
                 self.current_node_flags |= NodeFlags::ExportSpecifier;
             }
