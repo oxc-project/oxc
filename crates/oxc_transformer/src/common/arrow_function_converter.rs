@@ -558,8 +558,8 @@ impl<'a> ArrowFunctionConverter<'a> {
         }
 
         Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
-            FunctionType::FunctionExpression,
             arrow_function_expr.span,
+            FunctionType::FunctionExpression,
             None,
             false,
             arrow_function_expr.r#async,

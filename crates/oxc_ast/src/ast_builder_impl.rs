@@ -165,8 +165,8 @@ impl<'a> AstBuilder<'a> {
         let params =
             self.formal_parameters(SPAN, FormalParameterKind::FormalParameter, self.vec(), NONE);
         let empty_function = self.function(
-            FunctionType::FunctionDeclaration,
             SPAN,
+            FunctionType::FunctionDeclaration,
             None,
             false,
             false,
@@ -249,8 +249,8 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> Box<'a, Function<'a>> {
         self.alloc_function_with_scope_id(
-            r#type,
             span,
+            r#type,
             id,
             false,
             false,

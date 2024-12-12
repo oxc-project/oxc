@@ -151,15 +151,15 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         stmts.extend(exprs_into_stmts(inits, ctx));
 
         let ctor = ClassElement::MethodDefinition(ctx.ast.alloc_method_definition(
-            MethodDefinitionType::MethodDefinition,
             SPAN,
+            MethodDefinitionType::MethodDefinition,
             ctx.ast.vec(),
             PropertyKey::StaticIdentifier(
                 ctx.ast.alloc_identifier_name(SPAN, Atom::from("constructor")),
             ),
             ctx.ast.alloc_function_with_scope_id(
-                FunctionType::FunctionExpression,
                 SPAN,
+                FunctionType::FunctionExpression,
                 None,
                 false,
                 false,
@@ -426,8 +426,8 @@ impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
         let body_stmts = ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx).chain([return_stmt]));
         // `function() { <inits>; return this; }`
         Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
-            FunctionType::FunctionExpression,
             SPAN,
+            FunctionType::FunctionExpression,
             None,
             false,
             false,
