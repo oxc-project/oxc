@@ -11,7 +11,7 @@ pub(super) fn print_block<'a>(
     let mut parts = Vec::new_in(p.allocator);
 
     parts.push(text!("{"));
-    if let Some(doc) = print_block_body(p, stmts, directives, true, false) {
+    if let Some(doc) = print_block_body(p, stmts, directives) {
         parts.push({
             let mut parts = Vec::new_in(p.allocator);
             parts.extend(hardline!());
@@ -52,8 +52,6 @@ pub(super) fn print_block_body<'a>(
     p: &mut Prettier<'a>,
     stmts: &[Statement<'a>],
     directives: Option<&[Directive<'a>]>,
-    remove_last_statement_hardline: bool,
-    is_root: bool,
 ) -> Option<Doc<'a>> {
     let has_directives = directives.is_some_and(|directives| !directives.is_empty());
     let has_body = stmts.iter().any(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
@@ -71,12 +69,7 @@ pub(super) fn print_block_body<'a>(
     }
 
     if has_body {
-        parts.extend(statement::print_statement_sequence(
-            p,
-            stmts,
-            remove_last_statement_hardline,
-            !is_root,
-        ));
+        parts.extend(statement::print_statement_sequence(p, stmts));
     }
 
     Some(array!(p, parts))
