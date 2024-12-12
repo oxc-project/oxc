@@ -27,11 +27,7 @@ const FILTER_OUT_PLUGINS = [
   'transform-destructuring',
 ];
 
-const PACKAGES_PATH = pathJoin(
-  import.meta.dirname,
-  '../coverage/babel/packages',
-);
-const OVERRIDES_PATH = pathJoin(import.meta.dirname, 'overrides');
+const PACKAGES_PATH = pathJoin(import.meta.dirname, '../coverage/babel/packages');
 
 // Copied from `@babel/helper-transform-fixture-test-runner`
 const EXTERNAL_HELPERS_VERSION = '7.100.0';
@@ -51,15 +47,8 @@ for (const packageName of PACKAGES) {
 async function updateDir(dirPath, options, hasChangedOptions) {
   const files = await readdir(dirPath, { withFileTypes: true });
 
-  const dirFiles = [];
-
-  const filenames = { options: null, input: null, output: null, exec: null };
-  const overrides = {
-    options: false,
-    input: false,
-    output: false,
-    exec: false,
-  };
+  const dirFiles = [],
+    filenames = { options: null, input: null, output: null };
 
   // Find files in dir
   for (const file of files) {
@@ -77,7 +66,7 @@ async function updateDir(dirPath, options, hasChangedOptions) {
   if (filenames.options) {
     const path = pathJoin(dirPath, filenames.options);
     const localOptions = JSON.parse(await readFile(path, 'utf8'));
-    if (!overrides.options && updateOptions(localOptions)) {
+    if (updateOptions(localOptions)) {
       hasChangedOptions = true;
       await backupFile(path);
       await writeFile(path, JSON.stringify(localOptions, null, 2) + '\n');
@@ -86,18 +75,16 @@ async function updateDir(dirPath, options, hasChangedOptions) {
   }
 
   // Run Babel with updated options/input
-  if (
-    filenames.output &&
-    (hasChangedOptions || overrides.input) &&
-    !overrides.output
-  ) {
+  if (filenames.output && hasChangedOptions) {
     const inputPath = pathJoin(dirPath, filenames.input),
       outputPath = pathJoin(dirPath, filenames.output);
-    const originalCode = (await readFile(outputPath)).toString();
-    const code = await transform(inputPath, outputPath, options);
-    if (originalCode.trim() !== code.trim()) {
+
+    const transformedCode = await transform(inputPath, options);
+    const originalTransformedCode = await readFile(outputPath, 'utf8');
+
+    if (transformedCode.trim() !== originalTransformedCode.trim()) {
       await backupFile(outputPath);
-      await writeFile(outputPath, code);
+      await writeFile(outputPath, transformedCode);
     }
   }
 
@@ -137,11 +124,10 @@ function updateOptions(options) {
 /**
  * Transform input with Babel and save to output file.
  * @param {string} inputPath - Path of input file
- * @param {string} outputPath - Path of output file
  * @param {Object} options - Transform options
  * @returns {undefined}
  */
-async function transform(inputPath, outputPath, options) {
+async function transform(inputPath, options) {
   options = {
     ...options,
     configFile: false,
