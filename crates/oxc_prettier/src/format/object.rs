@@ -98,7 +98,7 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
     }
 }
 
-pub(super) fn print_object_properties<'a>(
+pub(super) fn print_object<'a>(
     p: &mut Prettier<'a>,
     object: ObjectLike<'a, '_>,
 ) -> Doc<'a> {

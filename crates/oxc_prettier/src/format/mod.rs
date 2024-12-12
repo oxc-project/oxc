@@ -1057,7 +1057,7 @@ impl<'a> Format<'a> for TSTupleType<'a> {
 
 impl<'a> Format<'a> for TSTypeLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object_properties(p, ObjectLike::TSTypeLiteral(self))
+        object::print_object(p, ObjectLike::TSTypeLiteral(self))
     }
 }
 
@@ -1636,7 +1636,7 @@ impl<'a> Format<'a> for ImportNamespaceSpecifier<'a> {
 impl<'a> Format<'a> for WithClause<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let attribute_keyword_doc = self.attributes_keyword.format(p);
-        let with_clause_doc = object::print_object_properties(p, ObjectLike::WithClause(self));
+        let with_clause_doc = object::print_object(p, ObjectLike::WithClause(self));
         array!(p, [attribute_keyword_doc, text!(" "), with_clause_doc])
     }
 }
@@ -2019,7 +2019,7 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
 impl<'a> Format<'a> for ObjectExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectExpression, {
-            object::print_object_properties(p, ObjectLike::Expression(self))
+            object::print_object(p, ObjectLike::Expression(self))
         })
     }
 }
@@ -2338,7 +2338,7 @@ impl<'a> Format<'a> for AssignmentTargetMaybeDefault<'a> {
 
 impl<'a> Format<'a> for ObjectAssignmentTarget<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object_properties(p, ObjectLike::AssignmentTarget(self))
+        object::print_object(p, ObjectLike::AssignmentTarget(self))
     }
 }
 
@@ -2904,7 +2904,7 @@ impl<'a> Format<'a> for BindingPattern<'a> {
 impl<'a> Format<'a> for ObjectPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ObjectPattern, {
-            object::print_object_properties(p, ObjectLike::Pattern(self))
+            object::print_object(p, ObjectLike::Pattern(self))
         })
     }
 }
