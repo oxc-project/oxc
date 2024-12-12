@@ -6,9 +6,9 @@ use oxc_span::GetSpan;
 
 use crate::{
     array,
-    format::{assignment, assignment::AssignmentLikeNode, JoinSeparator},
+    format::{assignment, assignment::AssignmentLikeNode},
     group, hardline, if_break, indent,
-    ir::Doc,
+    ir::{Doc, JoinSeparator},
     join, line, softline, text, Format, Prettier,
 };
 

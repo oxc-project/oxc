@@ -150,11 +150,8 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
 pub(super) fn print_return_or_throw_argument<'a>(
     p: &mut Prettier<'a>,
     argument: Option<&Expression<'a>>,
-    is_return: bool,
 ) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
-
-    parts.push(text!(if is_return { "return" } else { "throw" }));
 
     if let Some(argument) = argument {
         parts.push(text!(" "));

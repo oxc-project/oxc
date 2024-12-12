@@ -464,7 +464,13 @@ impl<'a> Format<'a> for SwitchCase<'a> {
 impl<'a> Format<'a> for ReturnStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ReturnStatement, {
-            function::print_return_or_throw_argument(p, self.argument.as_ref(), true)
+            array!(
+                p,
+                [
+                    text!("return"),
+                    function::print_return_or_throw_argument(p, self.argument.as_ref())
+                ]
+            )
         })
     }
 }
@@ -523,7 +529,12 @@ impl<'a> Format<'a> for CatchClause<'a> {
 
 impl<'a> Format<'a> for ThrowStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        function::print_return_or_throw_argument(p, Some(&self.argument), false)
+        wrap!(p, self, ThrowStatement, {
+            array!(
+                p,
+                [text!("throw"), function::print_return_or_throw_argument(p, Some(&self.argument))]
+            )
+        })
     }
 }
 
