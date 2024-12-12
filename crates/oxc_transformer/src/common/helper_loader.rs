@@ -158,6 +158,7 @@ pub enum Helper {
     ToSetter,
     ClassPrivateFieldLooseKey,
     ClassPrivateFieldLooseBase,
+    SuperPropGet,
 }
 
 impl Helper {
@@ -181,6 +182,7 @@ impl Helper {
             Self::ToSetter => "toSetter",
             Self::ClassPrivateFieldLooseKey => "classPrivateFieldLooseKey",
             Self::ClassPrivateFieldLooseBase => "classPrivateFieldLooseBase",
+            Self::SuperPropGet => "superPropGet",
         }
     }
 }

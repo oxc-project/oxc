@@ -200,6 +200,14 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
                     }
                 }
             }
+            // `super.prop`
+            Expression::StaticMemberExpression(_) => {
+                self.class_properties.transform_static_member_expression(expr, self.ctx);
+            }
+            // `super[prop]`
+            Expression::ComputedMemberExpression(_) => {
+                self.class_properties.transform_computed_member_expression(expr, self.ctx);
+            }
             // `object.#prop`
             Expression::PrivateFieldExpression(_) => {
                 self.class_properties.transform_private_field_expression(expr, self.ctx);
@@ -453,7 +461,7 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
 }
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
-    fn get_temp_binding(&mut self, ctx: &mut TraverseCtx<'a>) -> &BoundIdentifier<'a> {
+    pub(super) fn get_temp_binding(&mut self, ctx: &mut TraverseCtx<'a>) -> &BoundIdentifier<'a> {
         // `PrivateProps` is the source of truth for bindings if class has private props
         // because other visitors which transform private fields may create a temp binding
         // and store it on `PrivateProps`
