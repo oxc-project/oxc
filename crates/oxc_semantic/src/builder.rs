@@ -1846,7 +1846,9 @@ impl<'a> SemanticBuilder<'a> {
 
         match kind {
             AstKind::ExportSpecifier(s) => {
-                if s.export_kind.is_type() || matches!(self.nodes.parent_kind(self.current_node_id), Some(AstKind::ExportNamedDeclaration(decl)) if decl.export_kind.is_type()) {
+                if s.export_kind.is_type()
+                    || matches!(self.nodes.parent_kind(self.current_node_id), Some(AstKind::ExportNamedDeclaration(decl)) if decl.export_kind.is_type())
+                {
                     self.current_reference_flags = ReferenceFlags::Type;
                 } else {
                     self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
