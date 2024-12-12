@@ -1845,13 +1845,8 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::ExportNamedDeclaration(decl) => {
-                if decl.export_kind.is_type() {
-                    self.current_reference_flags = ReferenceFlags::Type;
-                }
-            }
             AstKind::ExportSpecifier(s) => {
-                if self.current_reference_flags.is_type() || s.export_kind.is_type() {
+                if s.export_kind.is_type() || matches!(self.nodes.parent_kind(self.current_node_id), Some(AstKind::ExportNamedDeclaration(decl)) if decl.export_kind.is_type()) {
                     self.current_reference_flags = ReferenceFlags::Type;
                 } else {
                     self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
@@ -2016,9 +2011,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.class_table_builder.pop_class();
             }
             AstKind::ExportSpecifier(_) => {
-                if !self.current_reference_flags.is_type_only() {
-                    self.current_reference_flags = ReferenceFlags::empty();
-                }
+                self.current_reference_flags = ReferenceFlags::empty();
                 self.current_node_flags -= NodeFlags::ExportSpecifier;
             }
             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
