@@ -119,7 +119,7 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
     array!(p, parts)
 }
 
-fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<'a> {
+pub(super) fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
     let parameters_doc = function.params.format(p);
     let should_group_parameters = should_group_function_parameters(function);
