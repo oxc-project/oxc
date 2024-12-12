@@ -11,7 +11,7 @@ use super::ClassProperties;
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform static member expression where object is `super`.
     ///
-    /// `super.prop` -> `_superPropGet(_classBinding, "prop", _classBinding)`
+    /// `super.prop` -> `_superPropGet(_Class, "prop", _Class)`
     //
     // `#[inline]` so that compiler sees that `expr` is an `Expression::StaticMemberExpression`.
     #[inline]
@@ -42,7 +42,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
     /// Transform computed member expression where object is `super`.
     ///
-    /// `super[expr]` -> `_superPropGet(_classBinding, expr, _classBinding)`
+    /// `super[prop]` -> `_superPropGet(_Class, prop, _Class)`
     //
     // `#[inline]` so that compiler sees that `expr` is an `Expression::ComputedMemberExpression`.
     #[inline]
@@ -66,7 +66,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         self.create_super_prop_get(member.span, property, ctx)
     }
 
-    // `_superPropGet(_classBinding, property, _classBinding)`
+    /// `_superPropGet(_Class, prop, _Class)`
     fn create_super_prop_get(
         &mut self,
         span: Span,
@@ -74,12 +74,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let class_binding = self.get_temp_binding(ctx);
-        // (_classBinding, property, _classBinding)
+        // `(_Class, prop, _Class)`
         let arguments = ctx.ast.vec_from_array([
             Argument::from(class_binding.create_read_expression(ctx)),
             Argument::from(property),
             Argument::from(class_binding.create_read_expression(ctx)),
         ]);
+        // `_superPropGet(_Class, prop, _Class)`
         self.ctx.helper_call_expr(Helper::SuperPropGet, span, arguments, ctx)
     }
 }
