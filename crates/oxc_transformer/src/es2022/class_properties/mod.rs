@@ -159,6 +159,7 @@ mod constructor;
 mod private;
 mod private_props;
 mod static_prop_init;
+mod supers;
 mod utils;
 use class_bindings::ClassBindings;
 use private_props::PrivatePropsStack;

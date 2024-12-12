@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 562/927
+Passed: 564/927
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (176/264)
+# babel-plugin-transform-class-properties (178/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -339,9 +339,6 @@ after transform: ScopeId(6): Some(ScopeId(5))
 rebuilt        : ScopeId(9): Some(ScopeId(8))
 
 * assumption-setPublicClassFields/static-infer-name/input.js
-x Output mismatch
-
-* assumption-setPublicClassFields/static-super/input.js
 x Output mismatch
 
 * assumption-setPublicClassFields/static-super-loose/input.js
@@ -645,9 +642,6 @@ rebuilt        : ScopeId(9): Some(ScopeId(8))
 * public/static-infer-name/input.js
 x Output mismatch
 
-* public/static-super/input.js
-x Output mismatch
-
 * public/super-with-collision/input.js
 x Output mismatch
 
@@ -713,7 +707,15 @@ x Output mismatch
 x Output mismatch
 
 * regression/6154/input.js
-x Output mismatch
+Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(6)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+Scope children mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(4): [ScopeId(5)]
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(3))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
 
 * regression/7951/input.mjs
 x Output mismatch

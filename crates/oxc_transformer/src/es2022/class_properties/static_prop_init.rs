@@ -200,6 +200,14 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
                     }
                 }
             }
+            // `super.prop`
+            Expression::StaticMemberExpression(_) => {
+                self.class_properties.transform_member_expression(expr, self.ctx);
+            }
+            // `super[prop]`
+            Expression::ComputedMemberExpression(_) => {
+                self.class_properties.transform_member_expression(expr, self.ctx);
+            }
             // `object.#prop`
             Expression::PrivateFieldExpression(_) => {
                 self.class_properties.transform_private_field_expression(expr, self.ctx);
