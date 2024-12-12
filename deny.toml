@@ -67,7 +67,6 @@ confidence-threshold = 0.8
 # aren't accepted for every possible crate as with the normal allow list
 exceptions = [
 
-
   # Each entry is the crate and version constraint, and its specific allow
   # list
   # { allow = ["Zlib"], name = "adler32", version = "*" },
@@ -104,7 +103,6 @@ ignore = false
 # not have its license(s) checked
 registries = [
 
-
   # "https://sekretz.com/registry
 ]
 
@@ -133,12 +131,10 @@ external-default-features = "allow"
 # List of crates that are allowed. Use with care!
 allow = [
 
-
   # { name = "ansi_term", version = "=0.11.0" },
 ]
 # List of crates to deny
 deny = [
-
 
   # Each entry the name of a crate and a version range. If version is
   # not specified, all versions will be matched.
@@ -175,7 +171,6 @@ deny = [
 # Certain crates/versions that will be skipped when doing duplicate detection.
 skip = [
 
-
   # { name = "ansi_term", version = "=0.11.0" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
@@ -183,7 +178,6 @@ skip = [
 # dependencies starting at the specified crate, up to a certain depth, which is
 # by default infinite.
 skip-tree = [
-
 
   # { name = "ansi_term", version = "=0.11.0", depth = 20 },
 ]
@@ -222,7 +216,6 @@ allow-git = []
 # dependencies not shared by any other crates, would be ignored, as the target
 # list here is effectively saying which targets you are building for.
 targets = [
-
 
   # The triple can be any string, but only the target triples built in to
   # rustc (as of 1.40) can be checked against actual config expressions
