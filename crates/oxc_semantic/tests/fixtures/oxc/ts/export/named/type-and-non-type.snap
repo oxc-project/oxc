@@ -1,0 +1,50 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/export/named/type-and-non-type.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "ToastViewport",
+        "node": "VariableDeclarator(ToastViewport)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "ToastViewport",
+            "node_id": 14
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "ToastProps",
+        "node": "TSTypeAliasDeclaration",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "ToastProps",
+            "node_id": 11
+          }
+        ]
+      }
+    ]
+  }
+]
