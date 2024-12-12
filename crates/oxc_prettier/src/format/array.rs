@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[allow(clippy::enum_variant_names)]
-pub enum Array<'a, 'b> {
+pub(super) enum Array<'a, 'b> {
     ArrayExpression(&'b ArrayExpression<'a>),
     TSTupleType(&'b TSTupleType<'a>),
     ArrayPattern(&'b ArrayPattern<'a>),
@@ -61,7 +61,7 @@ impl Array<'_, '_> {
     }
 }
 
-pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
+pub(super) fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
     if arr.len() == 0 {
         return print_empty_array_elements(p, arr);
     }

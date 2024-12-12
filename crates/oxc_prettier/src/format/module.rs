@@ -81,7 +81,7 @@ fn print_semicolon_after_export_declaration<'a>(
     }
 }
 
-pub fn print_module_specifiers<'a, T: Format<'a>>(
+pub(super) fn print_module_specifiers<'a, T: Format<'a>>(
     p: &mut Prettier<'a>,
     specifiers: &Vec<'a, T>,
     include_default: bool,

@@ -266,7 +266,7 @@ fn has_complex_type_annotation(expr: &AssignmentLikeNode) -> bool {
     false
 }
 
-fn is_arrow_function_variable_declarator(expr: &AssignmentLikeNode) -> bool {
+pub(super) fn is_arrow_function_variable_declarator(expr: &AssignmentLikeNode) -> bool {
     match expr {
         AssignmentLikeNode::VariableDeclarator(variable_declarator) => {
             if let Some(Expression::ArrowFunctionExpression(_)) = &variable_declarator.init {

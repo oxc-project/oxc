@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Copy)]
-pub enum ObjectLike<'a, 'b> {
+pub(super) enum ObjectLike<'a, 'b> {
     Expression(&'b ObjectExpression<'a>),
     AssignmentTarget(&'b ObjectAssignmentTarget<'a>),
     Pattern(&'b ObjectPattern<'a>),

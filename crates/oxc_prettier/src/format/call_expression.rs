@@ -10,7 +10,7 @@ pub(super) enum CallExpressionLike<'a, 'b> {
 }
 
 impl<'a> CallExpressionLike<'a, '_> {
-    pub fn is_new(&self) -> bool {
+    fn is_new(&self) -> bool {
         matches!(self, CallExpressionLike::NewExpression(_))
     }
 
@@ -21,7 +21,7 @@ impl<'a> CallExpressionLike<'a, '_> {
         }
     }
 
-    pub fn optional(&self) -> bool {
+    fn optional(&self) -> bool {
         match self {
             CallExpressionLike::CallExpression(call) => call.optional,
             CallExpressionLike::NewExpression(new) => false,
@@ -35,7 +35,7 @@ impl<'a> CallExpressionLike<'a, '_> {
         }
     }
 
-    pub fn type_parameters(
+    fn type_parameters(
         &self,
     ) -> Option<&oxc_allocator::Box<'a, TSTypeParameterInstantiation<'a>>> {
         match self {
@@ -80,7 +80,7 @@ pub(super) fn print_call_expression<'a>(
 }
 
 /// <https://github.com/prettier/prettier/blob/7aecca5d6473d73f562ca3af874831315f8f2581/src/language-js/print/call-expression.js#L93-L116>
-pub fn is_commons_js_or_amd_call<'a>(
+pub(super) fn is_commons_js_or_amd_call<'a>(
     callee: &Expression<'a>,
     arguments: &Vec<'a, Argument<'a>>,
 ) -> bool {

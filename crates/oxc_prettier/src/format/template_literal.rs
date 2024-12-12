@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use crate::{array, format::Format, ir::Doc, text, Prettier};
 
 #[allow(clippy::enum_variant_names)]
-pub enum TemplateLiteralPrinter<'a, 'b> {
+pub(super) enum TemplateLiteralPrinter<'a, 'b> {
     TemplateLiteral(&'b TemplateLiteral<'a>),
     TSTemplateLiteralType(&'b TSTemplateLiteralType<'a>),
 }

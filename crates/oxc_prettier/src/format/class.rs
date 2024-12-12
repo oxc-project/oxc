@@ -135,7 +135,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
 }
 
 #[derive(Debug)]
-pub enum ClassMemberish<'a, 'b> {
+pub(super) enum ClassMemberish<'a, 'b> {
     PropertyDefinition(&'b PropertyDefinition<'a>),
     AccessorProperty(&'b AccessorProperty<'a>),
 }

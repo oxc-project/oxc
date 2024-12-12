@@ -17,7 +17,7 @@ use crate::{
     Format, Prettier,
 };
 
-pub fn print_call_arguments<'a>(
+pub(super) fn print_call_arguments<'a>(
     p: &mut Prettier<'a>,
     expression: &CallExpressionLike<'a, '_>,
 ) -> Doc<'a> {
