@@ -1846,6 +1846,13 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
+            AstKind::ExportDefaultDeclaration(decl) => {
+                // `export default Ident`
+                //                 ^^^^^ -> Can reference both type binding and value
+                if matches!(decl.declaration, ExportDefaultDeclarationKind::Identifier(_)) {
+                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
+                }
+            }
             AstKind::ExportSpecifier(s) => {
                 if s.export_kind.is_type()
                     || matches!(self.nodes.parent_kind(self.current_node_id), Some(AstKind::ExportNamedDeclaration(decl)) if decl.export_kind.is_type())
@@ -2032,7 +2039,8 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeName(_) => {
                 self.current_reference_flags -= ReferenceFlags::Type;
             }
-            AstKind::ExportNamedDeclaration(_)
+            AstKind::ExportDefaultDeclaration(_)
+            | AstKind::ExportNamedDeclaration(_)
             | AstKind::TSTypeQuery(_)
             // Clear the reference flags that are set in AstKind::PropertySignature
             | AstKind::PropertyKey(_) => {
