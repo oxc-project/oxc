@@ -127,7 +127,7 @@ pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
     array!(p, parts)
 }
 
-pub fn is_concisely_printed_array<'a>(arr: &Expression<'a>) -> bool {
+pub fn is_concisely_printed_array(arr: &Expression) -> bool {
     match arr {
         Expression::ArrayExpression(array) => Array::ArrayExpression(array).is_concisely_printed(),
         _ => false,

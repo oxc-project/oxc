@@ -23,14 +23,14 @@ pub fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     // @link <https://github.com/prettier/prettier/blob/aa3853b7765645b3f3d8a76e41cf6d70b93c01fd/src/language-js/print/class.js#L62>
     let group_mode = class.implements.as_ref().is_some_and(|v| !v.is_empty());
 
-    if let Some(_class) = &class.super_class {
+    if let Some(super_class) = &class.super_class {
         let mut extend_parts = Vec::new_in(p.allocator);
 
         extend_parts.push(text!("extends "));
-        extend_parts.push(_class.format(p));
+        extend_parts.push(super_class.format(p));
 
-        if let Some(_type_parameters) = &class.super_type_parameters {
-            extend_parts.push(_type_parameters.format(p));
+        if let Some(super_type_parameters) = &class.super_type_parameters {
+            extend_parts.push(super_type_parameters.format(p));
         }
 
         extend_parts.push(text!(" "));
