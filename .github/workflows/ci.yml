@@ -112,7 +112,7 @@ jobs:
           cache-key: wasi
           save-cache: ${{ github.ref_name == 'main' }}
       - run: rustup target add wasm32-wasip1-threads
-      - uses: bytecodealliance/actions/wasmtime/setup@v1.3.1
+      - uses: bytecodealliance/actions/wasmtime/setup@v1.1.0
       - run: cargo test --target wasm32-wasip1-threads ${TEST_FLAGS}
       - run: git diff --exit-code # Must commit everything
 
