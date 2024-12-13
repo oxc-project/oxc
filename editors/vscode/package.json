@@ -52,6 +52,11 @@
         "command": "oxc.showOutputChannel",
         "title": "Show Output Channel",
         "category": "Oxc"
+      },
+      {
+        "command": "oxc.applyAllFixesFile",
+        "title": "Fix all auto-fixable problems (file)",
+        "category": "Oxc"
       }
     ],
     "configuration": {
