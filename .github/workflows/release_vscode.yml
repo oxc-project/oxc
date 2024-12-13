@@ -25,10 +25,10 @@ jobs:
       version: ${{ env.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - name: Check vscode version changes
-        uses: EndBug/version-check@v2
+        uses: EndBug/version-check@v2.46.8
         id: version
         with:
           diff-search: true
@@ -72,7 +72,7 @@ jobs:
     name: Package ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - uses: ./.github/actions/pnpm
 
@@ -81,10 +81,12 @@ jobs:
         run: pnpm run compile
 
       - name: Install cross
-        uses: taiki-e/install-action@cross
+        uses: taiki-e/install-action@v2.46.8
+        with:
+          tool: cross
 
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@v2.46.8
         with:
           shared-key: release-${{ matrix.target }}
 
@@ -129,7 +131,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - name: Download extension artifacts
         uses: actions/download-artifact@v4

@@ -23,10 +23,10 @@ jobs:
       version: ${{ env.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - name: Check version changes
-        uses: EndBug/version-check@v2
+        uses: EndBug/version-check@v2.46.8
         id: version
         with:
           static-checking: localIsNew
@@ -88,18 +88,18 @@ jobs:
     name: Package ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       ### install musl dependencies ###
 
-      - uses: goto-bus-stop/setup-zig@v2
+      - uses: goto-bus-stop/setup-zig@v2.46.8
         if: ${{ contains(matrix.target, 'musl') }}
         with:
           version: 0.11.0
 
       - name: Install cargo-zigbuild
         if: ${{ contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.46.8
         with:
           tool: cargo-zigbuild
 
@@ -107,7 +107,9 @@ jobs:
 
       - name: Install cross
         if: ${{ !contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@cross
+        uses: taiki-e/install-action@v2.46.8
+        with:
+          tool: cross
 
       ### Build
 
@@ -168,7 +170,7 @@ jobs:
     needs:
       - build
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - uses: ./.github/actions/pnpm
 
@@ -178,7 +180,7 @@ jobs:
           merge-multiple: true
 
       - name: Unzip
-        uses: montudor/action-zip@v1
+        uses: montudor/action-zip@v1.3.1
         with:
           args: unzip -qq *.zip -d .
 

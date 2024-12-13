@@ -30,9 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: taiki-e/checkout-action@v1
+        uses: taiki-e/checkout-action@v1.3.1
 
-      - uses: oxc-project/setup-rust@1.0.0
+      - uses: oxc-project/setup-rust@v1.0.0
         with:
           cache-key: miri
           save-cache: ${{ github.ref_name == 'main' }}

@@ -64,9 +64,9 @@ jobs:
 
     steps:
       - name: Checkout Branch
-        uses: taiki-e/checkout-action@v1
+        uses: taiki-e/checkout-action@v1.3.1
 
-      - uses: oxc-project/setup-rust@1.0.0
+      - uses: oxc-project/setup-rust@v1.0.0
         with:
           cache-key: benchmark-${{ matrix.component }}
           save-cache: ${{ github.ref_name == 'main' }}
@@ -115,9 +115,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Branch
-        uses: taiki-e/checkout-action@v1
+        uses: taiki-e/checkout-action@v1.3.1
 
-      - uses: oxc-project/setup-rust@1.0.0
+      - uses: oxc-project/setup-rust@v1.0.0
         with:
           cache-key: benchmark-linter
           save-cache: ${{ github.ref_name == 'main' }}
@@ -154,7 +154,7 @@ jobs:
 
     steps:
       - name: Checkout Branch
-        uses: taiki-e/checkout-action@v1
+        uses: taiki-e/checkout-action@v1.3.1
 
       - name: Download Binary
         uses: actions/download-artifact@v4
@@ -168,7 +168,7 @@ jobs:
           chmod +x ./target/codspeed/oxc_benchmark/*
 
       - name: Install codspeed
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.46.8
         with:
           tool: cargo-codspeed
 
@@ -206,15 +206,15 @@ jobs:
   # if: false
   # steps:
   # - name: Checkout Branch
-  # uses: taiki-e/checkout-action@v1
+  # uses: taiki-e/checkout-action@v1.3.1
 
-  # - uses: oxc-project/setup-rust@1.0.0
+  # - uses: oxc-project/setup-rust@v1.0.0
   # with:
   # shared-key: benchmark_napi
   # save-cache: ${{ github.ref_name == 'main' }}
 
   # - name: Install codspeed
-  # uses: taiki-e/install-action@v2
+  # uses: taiki-e/install-action@v2.46.8
   # with:
   # tool: cargo-codspeed
 
@@ -254,7 +254,7 @@ jobs:
   # rm -rf target/codspeed/oxc_benchmark/*.d
 
   # - name: Run Rust benchmark
-  # uses: CodSpeedHQ/action@v2
+  # uses: CodSpeedHQ/action@v2.46.8
   # timeout-minutes: 30
   # with:
   # run: cargo codspeed run
@@ -278,7 +278,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Branch
-        uses: taiki-e/checkout-action@v1
+        uses: taiki-e/checkout-action@v1.3.1
 
       - uses: ./.github/actions/pnpm
 

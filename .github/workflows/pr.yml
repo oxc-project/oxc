@@ -16,7 +16,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - uses: actions/labeler@v5
 
@@ -78,7 +78,7 @@ jobs:
           echo "CATEGORY=$CATEGORY" >> $GITHUB_OUTPUT
 
       - name: Add category label
-        uses: actions-ecosystem/action-add-labels@v1
+        uses: actions-ecosystem/action-add-labels@v1.3.1
         if: ${{ steps.get-category.outputs.CATEGORY != '' }}
         with:
           labels: ${{ steps.get-category.outputs.CATEGORY }}
