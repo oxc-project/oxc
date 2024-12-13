@@ -595,7 +595,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                             binding.to_maybe_bound_identifier()
                         });
                     self.set_binding_context(binding);
-                } else if matches!(object, Expression::Super(_)) {
+                } else if object.is_super() {
                     self.set_this_context();
                 }
             }

@@ -495,7 +495,7 @@ impl<'a, 'c> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, 'c> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         if let Expression::CallExpression(call_expr) = expr {
-            if let Expression::Super(_) = &call_expr.callee {
+            if call_expr.callee.is_super() {
                 // Walk `CallExpression`'s arguments here rather than falling through to `walk_expression`
                 // below to avoid infinite loop as `super()` gets visited over and over
                 self.visit_arguments(&mut call_expr.arguments);
@@ -610,7 +610,7 @@ impl<'a, 'c> ConstructorBodySuperReplacer<'a, 'c> {
                 // We can avoid a nested `_super` function for this common case.
                 if let Statement::ExpressionStatement(expr_stmt) = &*stmt {
                     if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
-                        if let Expression::Super(_) = &call_expr.callee {
+                        if call_expr.callee.is_super() {
                             let insert_location =
                                 InstanceInitsInsertLocation::ExistingConstructor(index + 1);
                             return (self.constructor_scope_id, insert_location);

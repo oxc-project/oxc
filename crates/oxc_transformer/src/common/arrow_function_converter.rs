@@ -630,16 +630,17 @@ impl<'a> ArrowFunctionConverter<'a> {
         let mut property = "";
         let init = match expr.to_member_expression_mut() {
             MemberExpression::ComputedMemberExpression(computed_member) => {
-                if !matches!(computed_member.object, Expression::Super(_)) {
+                if !computed_member.object.is_super() {
                     return None;
                 }
+
                 // The property will as a parameter to pass to the new arrow function.
                 // `super[property]` to `_superprop_get(property)`
                 argument = Some(ctx.ast.move_expression(&mut computed_member.expression));
                 ctx.ast.move_expression(&mut computed_member.object)
             }
             MemberExpression::StaticMemberExpression(static_member) => {
-                if !matches!(static_member.object, Expression::Super(_)) {
+                if !static_member.object.is_super() {
                     return None;
                 }
 
@@ -741,10 +742,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     ) -> Option<Expression<'a>> {
         // Check if the left of the assignment is a `super` member expression.
         if self.super_methods.is_none()
-            || !assignment
-                .left
-                .as_member_expression()
-                .is_some_and(|m| matches!(m.object(), Expression::Super(_)))
+            || !assignment.left.as_member_expression().is_some_and(|m| m.object().is_super())
         {
             return None;
         }
