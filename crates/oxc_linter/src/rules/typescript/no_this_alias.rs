@@ -81,7 +81,7 @@ impl Rule for NoThisAlias {
         let obj = value.get(0);
         let allowed_names: FxHashSet<CompactStr> = value
             .get(0)
-            .and_then(|v| v.get("allow_names"))
+            .and_then(|v| v.get("allowNames"))
             .and_then(Value::as_array)
             .unwrap_or(&vec![])
             .iter()
@@ -91,7 +91,7 @@ impl Rule for NoThisAlias {
 
         Self(Box::new(NoThisAliasConfig {
             allow_destructuring: obj
-                .and_then(|v| v.get("allow_destructuring"))
+                .and_then(|v| v.get("allowDestructuring"))
                 .and_then(Value::as_bool)
                 .unwrap_or_default(),
             allow_names: allowed_names,
@@ -175,28 +175,28 @@ fn test() {
         // allow destructuring
         (
             "const { props, state } = this;",
-            Some(serde_json::json!([{ "allow_destructuring": true }])),
+            Some(serde_json::json!([{ "allowDestructuring": true }])),
         ),
-        ("const { length } = this;", Some(serde_json::json!([{ "allow_destructuring": true }]))),
+        ("const { length } = this;", Some(serde_json::json!([{ "allowDestructuring": true }]))),
         (
             "const { length, toString } = this;",
-            Some(serde_json::json!([{ "allow_destructuring": true }])),
+            Some(serde_json::json!([{ "allowDestructuring": true }])),
         ),
-        ("const [foo] = this;", Some(serde_json::json!([{ "allow_destructuring": true }]))),
-        ("const [foo, bar] = this;", Some(serde_json::json!([{ "allow_destructuring": true }]))),
+        ("const [foo] = this;", Some(serde_json::json!([{ "allowDestructuring": true }]))),
+        ("const [foo, bar] = this;", Some(serde_json::json!([{ "allowDestructuring": true }]))),
         // allow list
-        ("const self = this;", Some(serde_json::json!([{ "allow_names": vec!["self"] }]))),
+        ("const self = this;", Some(serde_json::json!([{ "allowNames": vec!["self"] }]))),
     ];
 
     let fail = vec![
         ("const self = this;", None),
         (
             "const { props, state } = this;",
-            Some(serde_json::json!([{ "allow_destructuring": false }])),
+            Some(serde_json::json!([{ "allowDestructuring": false }])),
         ),
         (
             "const [ props, state ] = this;",
-            Some(serde_json::json!([{ "allow_destructuring": false }])),
+            Some(serde_json::json!([{ "allowDestructuring": false }])),
         ),
         ("let foo; \nconst other =3;\n\n\n\nfoo = this", None),
         ("let foo; (foo as any) = this", None),
@@ -232,7 +232,7 @@ fn test() {
               const [foo, bar] = this;
             }
           }",
-            Some(serde_json::json!([{ "allow_destructuring": false }])),
+            Some(serde_json::json!([{ "allowDestructuring": false }])),
         ),
     ];
 
