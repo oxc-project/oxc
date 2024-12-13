@@ -20,10 +20,10 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
-      - uses: taiki-e/checkout-action@v1.3.1
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Check version changes
-        uses: EndBug/version-check@v2
+        uses: EndBug/version-check@36ff30f37c7deabe56a30caa043d127be658c425 # v2
         id: version
         with:
           static-checking: localIsNew
@@ -46,11 +46,11 @@ jobs:
     permissions:
       id-token: write # for `pnpm publish --provenance`
     steps:
-      - uses: taiki-e/checkout-action@v1.3.1
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - uses: ./.github/actions/pnpm
 
-      - uses: oxc-project/setup-rust@v1.0.0
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         with:
           cache-key: "wasm"
           tools: wasm-pack

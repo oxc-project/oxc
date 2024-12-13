@@ -25,7 +25,7 @@ jobs:
       version: ${{ env.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
-      - uses: taiki-e/checkout-action@v1.3.1
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Check vscode version changes
         uses: EndBug/version-check@v2.46.8
@@ -72,7 +72,7 @@ jobs:
     name: Package ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: taiki-e/checkout-action@v1.3.1
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - uses: ./.github/actions/pnpm
 
@@ -81,7 +81,7 @@ jobs:
         run: pnpm run compile
 
       - name: Install cross
-        uses: taiki-e/install-action@v2.46.8
+        uses: taiki-e/install-action@8c39981484df4e7ba41af8e8e078ac546d5e1b11 # v2.46.8
         with:
           tool: cross
 
@@ -117,7 +117,7 @@ jobs:
           pnpm exec vsce package -o "../../oxc_language_server-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
 
       - name: Upload VSCode extension artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
         with:
           name: packages-${{ matrix.code-target }}
           path: ./oxc_language_server-${{ matrix.code-target }}.vsix
@@ -131,10 +131,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: taiki-e/checkout-action@v1.3.1
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Download extension artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
         with:
           merge-multiple: true
           path: editors/vscode
