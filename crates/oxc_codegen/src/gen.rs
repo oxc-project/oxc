@@ -98,72 +98,149 @@ impl Gen for Directive<'_> {
 
 impl Gen for Statement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        if p.print_comments {
-            p.print_statement_comments(self.span().start);
-        }
         match self {
-            Self::BlockStatement(stmt) => stmt.print(p, ctx),
-            Self::BreakStatement(stmt) => stmt.print(p, ctx),
-            Self::ContinueStatement(stmt) => stmt.print(p, ctx),
-            Self::DebuggerStatement(stmt) => stmt.print(p, ctx),
-            Self::DoWhileStatement(stmt) => stmt.print(p, ctx),
-            Self::EmptyStatement(stmt) => stmt.print(p, ctx),
-            Self::ExpressionStatement(stmt) => stmt.print(p, ctx),
-            Self::ForInStatement(stmt) => stmt.print(p, ctx),
-            Self::ForOfStatement(stmt) => stmt.print(p, ctx),
-            Self::ForStatement(stmt) => stmt.print(p, ctx),
-            Self::IfStatement(stmt) => stmt.print(p, ctx),
-            Self::LabeledStatement(stmt) => stmt.print(p, ctx),
-            Self::ReturnStatement(stmt) => stmt.print(p, ctx),
-            Self::SwitchStatement(stmt) => stmt.print(p, ctx),
-            Self::ThrowStatement(stmt) => stmt.print(p, ctx),
-            Self::TryStatement(stmt) => stmt.print(p, ctx),
-            Self::WhileStatement(stmt) => stmt.print(p, ctx),
-            Self::WithStatement(stmt) => stmt.print(p, ctx),
+            Self::BlockStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::BreakStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::ContinueStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::DebuggerStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::DoWhileStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::EmptyStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::ExpressionStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::ForInStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::ForOfStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::ForStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::IfStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::LabeledStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::ReturnStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::SwitchStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::ThrowStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::TryStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::WhileStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
+            Self::WithStatement(stmt) => {
+                p.print_statement_comments(stmt.span.start);
+                stmt.print(p, ctx);
+            }
 
-            Self::ImportDeclaration(decl) => decl.print(p, ctx),
-            Self::ExportAllDeclaration(decl) => decl.print(p, ctx),
-            Self::ExportDefaultDeclaration(decl) => decl.print(p, ctx),
-            Self::ExportNamedDeclaration(decl) => decl.print(p, ctx),
-            Self::TSExportAssignment(decl) => decl.print(p, ctx),
-            Self::TSNamespaceExportDeclaration(decl) => decl.print(p, ctx),
+            Self::ImportDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
+                decl.print(p, ctx);
+            }
+            Self::ExportAllDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
+                decl.print(p, ctx);
+            }
+            Self::ExportDefaultDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
+                decl.print(p, ctx);
+            }
+            Self::ExportNamedDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
+                decl.print(p, ctx);
+            }
+            Self::TSExportAssignment(decl) => {
+                p.print_statement_comments(decl.span.start);
+                decl.print(p, ctx);
+            }
+            Self::TSNamespaceExportDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
+                decl.print(p, ctx);
+            }
 
             Self::VariableDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::FunctionDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::ClassDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::TSModuleDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::TSTypeAliasDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::TSInterfaceDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::TSEnumDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::TSImportEqualsDeclaration(decl) => {
+                p.print_statement_comments(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
                 p.print_semicolon_after_statement();

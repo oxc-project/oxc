@@ -105,7 +105,11 @@ impl Codegen<'_> {
     }
 
     /// A statement comment also includes legal comments
+    #[inline]
     pub(crate) fn print_statement_comments(&mut self, start: u32) {
+        if !self.print_comments {
+            return;
+        }
         if let Some((comments, unused)) = self.get_statement_comments(start) {
             self.print_comments(start, &comments, unused);
         }
