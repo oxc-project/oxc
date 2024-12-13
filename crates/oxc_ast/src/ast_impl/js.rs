@@ -310,6 +310,16 @@ impl ArrayExpressionElement<'_> {
     }
 }
 
+impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
+    fn from(argument: Argument<'a>) -> Self {
+        if let Argument::SpreadElement(spread) = argument {
+            ArrayExpressionElement::SpreadElement(spread)
+        } else {
+            ArrayExpressionElement::from(argument.into_expression())
+        }
+    }
+}
+
 impl ObjectPropertyKind<'_> {
     /// Returns `true` if this object property is a [spread](SpreadElement).
     #[inline]
