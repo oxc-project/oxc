@@ -43,7 +43,7 @@ jobs:
           issue-number: ${{ needs.prepare.outputs.pull-request-number }}
           body: Triggering Monitor Oxc https://github.com/oxc-project/monitor-oxc/actions/workflows/ci.yml
 
-      - uses: benc-uk/workflow-dispatch@v1.2.4
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/monitor-oxc
           workflow: ci.yml

@@ -23,7 +23,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Check version changes
-        uses: EndBug/version-check@v2.1.5
+        uses: EndBug/version-check@36ff30f37c7deabe56a30caa043d127be658c425 # v2.1.5
         id: version
         with:
           static-checking: localIsNew
@@ -91,7 +91,7 @@ jobs:
           tool: cross
 
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.7.5
+        uses: Swatinem/rust-cache@82a92a6e8fbeee089604da2575dc567ae9ddeaab # v2.7.5
         with:
           shared-key: release-${{ matrix.target }}
 
@@ -177,7 +177,7 @@ jobs:
           merge-multiple: true
 
       - name: Unzip
-        uses: montudor/action-zip@v1.0.0
+        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
         with:
           args: unzip -qq *.zip -d .
 
@@ -204,7 +204,7 @@ jobs:
           done
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2.2.0
+        uses: softprops/action-gh-release@7b4da11513bf3f43f9999e90eabced41ab8bb048 # v2.2.0
         with:
           body: ${{ steps.run.outputs.CHANGELOG }}
           draft: false
@@ -245,7 +245,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: benc-uk/workflow-dispatch@v1.2.4
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/eslint-plugin-oxlint
           workflow: bump_oxlint.yml

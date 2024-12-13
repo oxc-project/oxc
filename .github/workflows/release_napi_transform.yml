@@ -26,7 +26,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Check version changes
-        uses: EndBug/version-check@v2.1.5
+        uses: EndBug/version-check@36ff30f37c7deabe56a30caa043d127be658c425 # v2.1.5
         id: version
         with:
           static-checking: localIsNew
@@ -92,7 +92,7 @@ jobs:
 
       ### install musl dependencies ###
 
-      - uses: goto-bus-stop/setup-zig@v1.2.1
+      - uses: goto-bus-stop/setup-zig@222d316fd35ce56a4141fe4a869e1aeefc7f3590 # v1.4.0
         if: ${{ contains(matrix.target, 'musl') }}
         with:
           version: 0.11.0
@@ -180,7 +180,7 @@ jobs:
           merge-multiple: true
 
       - name: Unzip
-        uses: montudor/action-zip@v1.0.0
+        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
         with:
           args: unzip -qq *.zip -d .
 
