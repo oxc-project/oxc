@@ -81,7 +81,9 @@ jobs:
         run: pnpm run compile
 
       - name: Install cross
-        uses: taiki-e/install-action@cross
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cross
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
