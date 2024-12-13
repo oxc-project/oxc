@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 578/927
+Passed: 579/927
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (192/264)
+# babel-plugin-transform-class-properties (193/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -400,14 +400,11 @@ x Output mismatch
 
 * private-loose/nested-class-extends-computed-redeclared/input.js
 Bindings mismatch:
-after transform: ScopeId(2): ["Nested", "_foo2"]
+after transform: ScopeId(2): ["Nested", "_foo2", "_foo3"]
 rebuilt        : ScopeId(3): ["Nested", "_foo2", "_foo3", "_this$foo"]
 Bindings mismatch:
-after transform: ScopeId(3): ["_foo3", "_this$foo"]
+after transform: ScopeId(3): ["_this$foo"]
 rebuilt        : ScopeId(4): []
-Symbol scope ID mismatch for "_foo3":
-after transform: SymbolId(5): ScopeId(3)
-rebuilt        : SymbolId(2): ScopeId(3)
 Symbol scope ID mismatch for "_this$foo":
 after transform: SymbolId(6): ScopeId(3)
 rebuilt        : SymbolId(3): ScopeId(3)
@@ -504,20 +501,6 @@ x Output mismatch
 
 * regression/7951/input.mjs
 x Output mismatch
-
-* regression/8882/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["classes"]
-rebuilt        : ScopeId(0): ["_A", "_bar", "classes"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_A", "_bar", "_i"]
-rebuilt        : ScopeId(2): ["_i"]
-Symbol scope ID mismatch for "_A":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(0)
-Symbol scope ID mismatch for "_bar":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(3): ScopeId(0)
 
 
 # babel-plugin-transform-nullish-coalescing-operator (5/12)

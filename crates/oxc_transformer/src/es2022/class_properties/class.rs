@@ -316,10 +316,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     // Create binding for private property key
                     if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
                         // Note: Current scope is outside class.
-                        let binding = ctx.generate_uid_in_current_scope(
-                            ident.name.as_str(),
-                            SymbolFlags::FunctionScopedVariable,
-                        );
+                        let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
                         private_props.insert(
                             ident.name.clone(),
                             PrivateProp { binding, is_static: prop.r#static },
