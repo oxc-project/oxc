@@ -148,29 +148,11 @@ jobs:
     needs: [check, build]
     runs-on: ubuntu-latest
     permissions:
-      contents: write # for softprops/action-gh-release@v1.3.1
       id-token: write # for `pnpm publish --provenance`
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
-          fetch-depth: 0 # for changelog
           persist-credentials: false
-
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
-        with:
-          restore-cache: false
-          tools: cargo-release-oxc
-
-      - name: Run
-        id: run
-        run: |
-          mkdir -p target
-          cargo release-oxc changelog --release oxlint
-          {
-            echo 'CHANGELOG<<EOF'
-            cat ./target/OXC_CHANGELOG
-            echo EOF
-          } >> $GITHUB_OUTPUT
 
       - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
         with:
@@ -203,8 +185,36 @@ jobs:
             echo '----'
           done
 
+  github_release:
+    name: GitHub Release
+    needs: [publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # for softprops/action-gh-release@v1.3.1
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          fetch-depth: 0 # for changelog
+          persist-credentials: false
+
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          restore-cache: false
+          tools: cargo-release-oxc
+
+      - name: Run
+        id: run
+        run: |
+          mkdir -p target
+          cargo release-oxc changelog --release oxlint
+          {
+            echo 'CHANGELOG<<EOF'
+            cat ./target/OXC_CHANGELOG
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@7b4da11513bf3f43f9999e90eabced41ab8bb048 # v2.2.0
+        uses: softprops/action-gh-release@01570a1f39cb168c169c802c3bceb9e93fb10974 # v2.1.0
         with:
           body: ${{ steps.run.outputs.CHANGELOG }}
           draft: false
@@ -218,7 +228,7 @@ jobs:
         run: sleep 180s
 
   smoke:
-    needs: [check, publish]
+    needs: [check, publish, github_release]
     strategy:
       matrix:
         include:
@@ -240,7 +250,7 @@ jobs:
           npx oxlint@${OXLINT_VERSION} ./test.js
 
   eslint-plugin-oxlint:
-    needs: [check, publish, smoke]
+    needs: [check, publish, github_release, smoke]
     name: Update eslint-plugin-oxlint
     runs-on: ubuntu-latest
     steps:
