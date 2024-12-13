@@ -2,6 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
+use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
 use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 
@@ -234,4 +235,58 @@ console.log(
         "console.log([a = 0,b.c = 0,b['c'] = 0], [ident = 0,ident = 0,ident = 0], [dot.chain = 0,dot.chain = 0,dot.chain = 0\n]);",
         config.clone(),
     );
+}
+
+#[test]
+fn test_sourcemap() {
+    let config = ReplaceGlobalDefinesConfig::new(&[
+        ("__OBJECT__", r#"{"hello": "test"}"#),
+        ("__STRING__", r#""development""#),
+        ("__MEMBER__", r"xx.yy.zz"),
+    ])
+    .unwrap();
+    let source_text = r"
+1;
+__OBJECT__;
+2;
+__STRING__;
+3;
+log(__OBJECT__);
+4;
+log(__STRING__);
+5;
+__OBJECT__.hello;
+6;
+log(__MEMBER__);
+7;
+"
+    .trim_start();
+
+    let source_type = SourceType::default();
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let mut program = ret.program;
+    let (symbols, scopes) =
+        SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
+    let _ = ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, &mut program);
+    let result = CodeGenerator::new()
+        .with_options(CodegenOptions {
+            single_quote: true,
+            source_map_path: Some(std::path::Path::new(&"test.js.map").to_path_buf()),
+            ..CodegenOptions::default()
+        })
+        .build(&program);
+
+    let output = result.code;
+    let output_map = result.map.unwrap();
+    let visualizer = SourcemapVisualizer::new(&output, &output_map);
+    let snapshot = visualizer.into_visualizer_text();
+    insta::assert_snapshot!("test_sourcemap", snapshot);
+}
+
+#[test]
+#[should_panic(expected = "")]
+fn test_complex() {
+    let config = ReplaceGlobalDefinesConfig::new(&[("__DEF__", "((() => {})())")]).unwrap();
+    test("__DEF__", "1", config.clone());
 }
