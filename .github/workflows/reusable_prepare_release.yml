@@ -24,12 +24,12 @@ jobs:
       pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
       version: ${{ steps.run.outputs.VERSION }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: oxc-project/setup-rust@v1.0.0
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         with:
           cache-key: warm
           tools: cargo-release-oxc
@@ -51,7 +51,7 @@ jobs:
       # update `Cargo.lock`
       - run: cargo check
 
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7
         id: pr
         with:
           # bot account with PAT required for triggering workflow runs
