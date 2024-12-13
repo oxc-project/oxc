@@ -10,7 +10,7 @@ runs:
         show-progress: false
         repository: tc39/test262
         path: tasks/coverage/test262
-        ref: eefc5cf367b999768445432e167606fd1acf1734
+        ref: dc0082c5ea347e5ecb585c1d7ebf4555aa429528
 
     - uses: actions/checkout@v4
       with:

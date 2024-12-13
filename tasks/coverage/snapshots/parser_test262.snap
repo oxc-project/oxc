@@ -1,38 +1,18 @@
-commit: eefc5cf3
+commit: dc0082c5
 
 parser_test262 Summary:
-AST Parsed     : 44166/44169 (99.99%)
-Positive Passed: 44166/44169 (99.99%)
+AST Parsed     : 44095/44096 (100.00%)
+Positive Passed: 44095/44096 (100.00%)
 Negative Passed: 4454/4456 (99.96%)
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-invalid.js
 Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-named-bindings.js
-Expect to Parse: tasks/coverage/test262/test/language/import/import-defer/errors/resolution-error/import-defer-of-missing-module-fails.js
+Expect to Parse: tasks/coverage/test262/test/language/module-code/source-phase-import/import-source-binding-name-2.js
 
-  × Expected `from` but found `string`
-    ╭─[test262/test/language/import/import-defer/errors/resolution-error/import-defer-of-missing-module-fails.js:22:22]
- 21 │ 
- 22 │ import defer * as ns "./resolution-error_FIXTURE.js";
-    ·                      ───────────────┬───────────────
-    ·                                     ╰── `from` expected
-    ╰────
-Expect to Parse: tasks/coverage/test262/test/language/import/import-defer/errors/syntax-error/import-defer-of-syntax-error-fails.js
-
-  × Expected `from` but found `string`
-    ╭─[test262/test/language/import/import-defer/errors/syntax-error/import-defer-of-syntax-error-fails.js:22:22]
- 21 │ 
- 22 │ import defer * as ns "./syntax-error_FIXTURE.js";
-    ·                      ─────────────┬─────────────
-    ·                                   ╰── `from` expected
-    ╰────
-Expect to Parse: tasks/coverage/test262/test/language/module-code/source-phase-import/import-source-binding-name.js
-
-  × Expected `from` but found `string`
-    ╭─[test262/test/language/module-code/source-phase-import/import-source-binding-name.js:22:20]
- 21 │ 
- 22 │ import source from '<do not resolve>';
-    ·                    ─────────┬────────
-    ·                             ╰── `from` expected
- 23 │ import from from '<do not resolve>';
+  × Unexpected token
+    ╭─[test262/test/language/module-code/source-phase-import/import-source-binding-name-2.js:23:20]
+ 22 │ import source source from '<do not resolve>';
+ 23 │ import source from from '<do not resolve>';
+    ·                    ────
     ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
