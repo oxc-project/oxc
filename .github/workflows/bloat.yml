@@ -14,7 +14,7 @@ jobs:
     name: Cargo Bloat
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - uses: oxc-project/setup-rust@1.0.0
         with:

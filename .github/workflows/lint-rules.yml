@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Branch
-        uses: taiki-e/checkout-action@v1
+        uses: taiki-e/checkout-action@v1.3.1
 
       - uses: actions/setup-node@v4
         with:

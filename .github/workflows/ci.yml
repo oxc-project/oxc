@@ -35,7 +35,7 @@ jobs:
           - os: macos-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
       - uses: oxc-project/setup-rust@1.0.0
         with:
           # warm cache factory for all other CI jobs
@@ -51,7 +51,7 @@ jobs:
     if: ${{ github.ref_name == 'main' }}
     runs-on: windows-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
       # Unsung heros of the internet, who led me here to speed up window's slowness:
       # https://github.com/actions/cache/issues/752#issuecomment-1847036770
       # https://github.com/astral-sh/uv/blob/502e04200d52de30d3159894833b3db4f0d6644d/.github/workflows/ci.yml#L158
@@ -106,13 +106,13 @@ jobs:
       # Insta is not able to run on wasmtime, omit the packages that depend on it
       TEST_FLAGS: "-p oxc_ast -p oxc_cfg -p oxc_regular_expression -- --nocapture"
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
       - uses: oxc-project/setup-rust@1.0.0
         with:
           cache-key: wasi
           save-cache: ${{ github.ref_name == 'main' }}
       - run: rustup target add wasm32-wasip1-threads
-      - uses: bytecodealliance/actions/wasmtime/setup@v1
+      - uses: bytecodealliance/actions/wasmtime/setup@v1.3.1
       - run: cargo test --target wasm32-wasip1-threads ${TEST_FLAGS}
       - run: git diff --exit-code # Must commit everything
 
@@ -120,7 +120,7 @@ jobs:
     name: Check wasm32-unknown-unknown
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - uses: oxc-project/setup-rust@1.0.0
         with:
@@ -146,7 +146,7 @@ jobs:
     name: Spell Check
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
       - uses: crate-ci/typos@v1.28.2
         with:
           files: .
@@ -155,7 +155,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
       - uses: oxc-project/setup-rust@1.0.0
         with:
           save-cache: ${{ github.ref_name == 'main' }}
@@ -176,7 +176,7 @@ jobs:
     name: Doc
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
       - uses: oxc-project/setup-rust@1.0.0
         with:
           cache-key: warm
@@ -187,7 +187,7 @@ jobs:
     name: Conformance
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -234,7 +234,7 @@ jobs:
     name: Minification Size
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -262,7 +262,7 @@ jobs:
     name: AST Changes
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -303,7 +303,7 @@ jobs:
     name: Test NAPI
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
       - uses: dorny/paths-filter@v3
         id: filter
         with:

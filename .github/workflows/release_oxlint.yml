@@ -20,7 +20,7 @@ jobs:
       version_changed: ${{ steps.version.outputs.changed }}
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - name: Check version changes
         uses: EndBug/version-check@v2
@@ -83,7 +83,7 @@ jobs:
     env:
       OXC_VERSION: ${{ needs.check.outputs.version }}
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - name: Install cross
         uses: taiki-e/install-action@cross
@@ -146,7 +146,7 @@ jobs:
     needs: [check, build]
     runs-on: ubuntu-latest
     permissions:
-      contents: write # for softprops/action-gh-release@v1
+      contents: write # for softprops/action-gh-release@v1.3.1
       id-token: write # for `pnpm publish --provenance`
     steps:
       - uses: actions/checkout@v4
@@ -175,7 +175,7 @@ jobs:
           merge-multiple: true
 
       - name: Unzip
-        uses: montudor/action-zip@v1
+        uses: montudor/action-zip@v1.3.1
         with:
           args: unzip -qq *.zip -d .
 
@@ -242,8 +242,8 @@ jobs:
     name: Update eslint-plugin-oxlint
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
-      - uses: benc-uk/workflow-dispatch@v1
+      - uses: taiki-e/checkout-action@v1.3.1
+      - uses: benc-uk/workflow-dispatch@v1.3.1
         with:
           repo: oxc-project/eslint-plugin-oxlint
           workflow: bump_oxlint.yml

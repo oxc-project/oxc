@@ -23,7 +23,7 @@ jobs:
       version: ${{ env.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - name: Check version changes
         uses: EndBug/version-check@v2
@@ -88,7 +88,7 @@ jobs:
     name: Package ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       ### install musl dependencies ###
 
@@ -168,7 +168,7 @@ jobs:
     needs:
       - build
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - uses: ./.github/actions/pnpm
 
@@ -178,7 +178,7 @@ jobs:
           merge-multiple: true
 
       - name: Unzip
-        uses: montudor/action-zip@v1
+        uses: montudor/action-zip@v1.3.1
         with:
           args: unzip -qq *.zip -d .
 

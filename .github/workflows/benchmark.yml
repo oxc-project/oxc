@@ -64,7 +64,7 @@ jobs:
 
     steps:
       - name: Checkout Branch
-        uses: taiki-e/checkout-action@v1
+        uses: taiki-e/checkout-action@v1.3.1
 
       - uses: oxc-project/setup-rust@1.0.0
         with:
@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Branch
-        uses: taiki-e/checkout-action@v1
+        uses: taiki-e/checkout-action@v1.3.1
 
       - uses: oxc-project/setup-rust@1.0.0
         with:
@@ -154,7 +154,7 @@ jobs:
 
     steps:
       - name: Checkout Branch
-        uses: taiki-e/checkout-action@v1
+        uses: taiki-e/checkout-action@v1.3.1
 
       - name: Download Binary
         uses: actions/download-artifact@v4
@@ -206,7 +206,7 @@ jobs:
   # if: false
   # steps:
   # - name: Checkout Branch
-  # uses: taiki-e/checkout-action@v1
+  # uses: taiki-e/checkout-action@v1.3.1
 
   # - uses: oxc-project/setup-rust@1.0.0
   # with:
@@ -278,7 +278,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Branch
-        uses: taiki-e/checkout-action@v1
+        uses: taiki-e/checkout-action@v1.3.1
 
       - uses: ./.github/actions/pnpm
 

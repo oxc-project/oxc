@@ -12,7 +12,7 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
       - uses: oxc-project/setup-rust@1.0.0
         with:
           cache-key: warm
@@ -34,7 +34,7 @@ jobs:
     name: Trigger Monitor Oxc
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1.3.1
 
       - uses: peter-evans/create-or-update-comment@v4
         id: comment
@@ -43,7 +43,7 @@ jobs:
           issue-number: ${{ needs.prepare.outputs.pull-request-number }}
           body: Triggering Monitor Oxc https://github.com/oxc-project/monitor-oxc/actions/workflows/ci.yml
 
-      - uses: benc-uk/workflow-dispatch@v1
+      - uses: benc-uk/workflow-dispatch@v1.3.1
         with:
           repo: oxc-project/monitor-oxc
           workflow: ci.yml
