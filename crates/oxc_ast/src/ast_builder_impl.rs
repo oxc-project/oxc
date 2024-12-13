@@ -75,6 +75,26 @@ impl<'a> AstBuilder<'a> {
         Vec::from_array_in(array, self.allocator)
     }
 
+    /// Convert a [`Vec`] of one type to a [`Vec`] of another type.
+    ///
+    /// This method is useful where the `Src` is inherited from `Dst` or vice versa, so that you can it
+    /// without any runtime overhead. For example, you can convert a `Vec<'a, Expression>` to a
+    /// `Vec<'a, Argument>`
+    #[inline]
+    pub fn vec_convert<Src, Dst>(&self, vec: Vec<'a, Src>) -> Vec<'a, Dst>
+    where
+        Src: 'a,
+        Dst: 'a,
+    {
+        // Verify types are layout-compatible
+        debug_assert!(std::mem::size_of::<Src>() == std::mem::size_of::<Dst>());
+        debug_assert!(std::mem::align_of::<Src>() == std::mem::align_of::<Dst>());
+
+        // SAFETY: Vec<Src> and Vec<Dst> have the same layout when Src and Dst have
+        // the same size and alignment. The lifetimes and allocator remain the same.
+        unsafe { std::mem::transmute(vec) }
+    }
+
     /// Move a string slice into the memory arena, returning a reference to the slice
     /// in the heap.
     #[inline]
