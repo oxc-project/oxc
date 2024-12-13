@@ -214,6 +214,7 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             }
             // `object.#prop()`
             Expression::CallExpression(_) => {
+                self.class_properties.transform_super_call_expression(expr, self.ctx);
                 self.class_properties.transform_call_expression(expr, self.ctx);
             }
             // `object.#prop = value`, `object.#prop += value`, `object.#prop ??= value` etc

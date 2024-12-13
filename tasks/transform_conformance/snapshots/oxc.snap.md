@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 108/122
+Passed: 109/123
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,7 +16,7 @@ Passed: 108/122
 * regexp
 
 
-# babel-plugin-transform-class-properties (9/11)
+# babel-plugin-transform-class-properties (10/12)
 * typescript/optional-call/input.ts
 Symbol reference IDs mismatch for "X":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(16)]

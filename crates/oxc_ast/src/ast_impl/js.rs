@@ -245,6 +245,11 @@ impl<'a> Expression<'a> {
     }
 
     #[allow(missing_docs)]
+    pub fn is_super(&self) -> bool {
+        matches!(self, Expression::Super(_))
+    }
+
+    #[allow(missing_docs)]
     pub fn is_super_call_expression(&self) -> bool {
         matches!(self, Expression::CallExpression(expr) if matches!(&expr.callee, Expression::Super(_)))
     }
