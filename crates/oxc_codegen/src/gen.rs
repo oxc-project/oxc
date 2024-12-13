@@ -2279,7 +2279,9 @@ impl Gen for ClassBody<'_> {
         p.print_curly_braces(self.span, self.body.is_empty(), |p| {
             for item in &self.body {
                 p.print_semicolon_if_needed();
-                p.print_leading_comments(item.span().start);
+                if p.print_comments {
+                    p.print_leading_comments(item.span().start);
+                }
                 p.print_indent();
                 item.print(p, ctx);
             }
@@ -3636,7 +3638,9 @@ impl Gen for TSInterfaceDeclaration<'_> {
         p.print_soft_space();
         p.print_curly_braces(self.body.span, self.body.body.is_empty(), |p| {
             for item in &self.body.body {
-                p.print_leading_comments(item.span().start);
+                if p.print_comments {
+                    p.print_leading_comments(item.span().start);
+                }
                 p.print_indent();
                 item.print(p, ctx);
                 p.print_semicolon();
@@ -3670,7 +3674,9 @@ impl Gen for TSEnumDeclaration<'_> {
         p.print_space_before_identifier();
         p.print_curly_braces(self.span, self.members.is_empty(), |p| {
             for member in &self.members {
-                p.print_leading_comments(member.span().start);
+                if p.print_comments {
+                    p.print_leading_comments(member.span().start);
+                }
                 p.print_indent();
                 member.print(p, ctx);
                 p.print_comma();

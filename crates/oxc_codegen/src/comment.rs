@@ -59,9 +59,6 @@ impl Codegen<'_> {
     }
 
     pub(crate) fn print_leading_comments(&mut self, start: u32) {
-        if self.options.minify {
-            return;
-        }
         let Some(comments) = self.comments.remove(&start) else {
             return;
         };
@@ -74,10 +71,6 @@ impl Codegen<'_> {
         &mut self,
         start: u32,
     ) -> Option<(Vec<Comment>, Vec<Comment>)> {
-        if self.options.minify {
-            return None;
-        }
-
         let comments = self.comments.remove(&start)?;
 
         let mut leading_comments = vec![];
@@ -144,9 +137,6 @@ impl Codegen<'_> {
     }
 
     pub(crate) fn print_expr_comments(&mut self, start: u32) -> bool {
-        if self.options.minify {
-            return false;
-        }
         let Some(comments) = self.comments.remove(&start) else { return false };
 
         let (annotation_comments, comments): (Vec<_>, Vec<_>) =
