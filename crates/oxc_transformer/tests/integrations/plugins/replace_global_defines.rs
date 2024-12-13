@@ -242,6 +242,7 @@ fn test_sourcemap() {
     let config = ReplaceGlobalDefinesConfig::new(&[
         ("__OBJECT__", r#"{"hello": "test"}"#),
         ("__STRING__", r#""development""#),
+        ("__MEMBER__", r#"xx.yy.zz"#),
     ])
     .unwrap();
     let source_text = r"
@@ -256,6 +257,8 @@ log(__STRING__);
 5;
 __OBJECT__.hello;
 6;
+log(__MEMBER__);
+7;
 "
     .trim_start();
 
