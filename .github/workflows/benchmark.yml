@@ -18,14 +18,9 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths:
-      - "**/*.rs"
-      - "!apps/**"
-      - "!tasks/website/**"
-      - "!tasks/ast_tools/**"
-      - "!tasks/coverage/**"
-      - "!crates/oxc_language_server/**"
-      - "napi/parser/**/*.js"
-      - "napi/parser/**/*.mjs"
+      - "crates/**/*.rs"
+      - "tasks/benchmark/**/*.rs"
+      - "tasks/common/**/*.rs"
       - "Cargo.lock"
       - "rust-toolchain.toml"
       - ".github/workflows/benchmark.yml"
@@ -34,14 +29,9 @@ on:
     branches:
       - main
     paths:
-      - "**/*.rs"
-      - "!apps/**"
-      - "!tasks/website/**"
-      - "!tasks/ast_tools/**"
-      - "!tasks/coverage/**"
-      - "!crates/oxc_language_server/**"
-      - "napi/parser/**/*.js"
-      - "napi/parser/**/*.mjs"
+      - "crates/**/*.rs"
+      - "tasks/benchmark/**/*.rs"
+      - "tasks/common/**/*.rs"
       - "Cargo.lock"
       - "rust-toolchain.toml"
       - ".github/workflows/benchmark.yml"

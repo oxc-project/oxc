@@ -130,8 +130,10 @@
 //! * `constructor.rs`:       Insertion of property initializers into class constructor.
 //! * `private.rs`:           Transform of private property usages (`this.#prop`).
 //! * `private_props.rs`:     Structures storing details of private properties.
+//! * `instance_prop_init.rs`: Transform of instance property initializers.
 //! * `static_prop_init.rs`:  Transform of static property initializers.
 //! * `class_bindings.rs`:    Structure containing bindings for class name and temp var.
+//! * `super.rs`:             Transform `super` expressions.
 //! * `utils.rs`:             Utility functions.
 //!
 //! ## References
@@ -149,6 +151,7 @@ use serde::Deserialize;
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
+use oxc_syntax::scope::ScopeId;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
@@ -156,9 +159,11 @@ use crate::TransformCtx;
 mod class;
 mod class_bindings;
 mod constructor;
+mod instance_prop_init;
 mod private;
 mod private_props;
 mod static_prop_init;
+mod supers;
 mod utils;
 use class_bindings::ClassBindings;
 use private_props::PrivatePropsStack;
@@ -213,6 +218,8 @@ pub struct ClassProperties<'a, 'ctx> {
     class_bindings: ClassBindings<'a>,
     /// `true` if temp var for class has been inserted
     temp_var_is_created: bool,
+    /// Scope that instance init initializers will be inserted into
+    instance_inits_scope_id: ScopeId,
     /// Expressions to insert before class
     insert_before: Vec<Expression<'a>>,
     /// Expressions to insert after class expression
@@ -244,6 +251,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             is_declaration: false,
             class_bindings: ClassBindings::default(),
             temp_var_is_created: false,
+            instance_inits_scope_id: ScopeId::new(0),
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
             insert_before: vec![],
             insert_after_exprs: vec![],

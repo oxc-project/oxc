@@ -32,8 +32,10 @@ jobs:
 
       - name: Print version
         if: steps.version.outputs.changed == 'true'
+        env:
+          NEW_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          echo "Version change found! New version: ${{ steps.version.outputs.version }}"
+          echo "Version change found! New version: ${NEW_VERSION}"
 
   build:
     needs: check
@@ -150,6 +152,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # for changelog
+          persist-credentials: false
 
       - uses: Boshen/setup-rust@main
         with:
@@ -227,10 +230,12 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - name: Test
+        env:
+          OXLINT_VERSION: ${{ needs.check.outputs.version}}
         run: |
           touch test.js
           ldd --version || true
-          npx oxlint@${{ needs.check.outputs.version }} ./test.js
+          npx oxlint@${OXLINT_VERSION} ./test.js
 
   eslint-plugin-oxlint:
     needs: [check, publish]

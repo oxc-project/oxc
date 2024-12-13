@@ -490,6 +490,7 @@ impl<'a> SemanticBuilder<'a> {
 
                 references.retain(|&reference_id| {
                     let reference = &mut self.symbols.references[reference_id];
+
                     let flags = reference.flags();
                     if flags.is_type() && symbol_flags.can_be_referenced_by_type()
                         || flags.is_value() && symbol_flags.can_be_referenced_by_value()
@@ -1845,15 +1846,22 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::ExportNamedDeclaration(decl) => {
-                if decl.export_kind.is_type() {
-                    self.current_reference_flags = ReferenceFlags::Type;
+            AstKind::ExportDefaultDeclaration(decl) => {
+                // `export default Ident`
+                //                 ^^^^^ -> Can reference both type binding and value
+                if matches!(decl.declaration, ExportDefaultDeclarationKind::Identifier(_)) {
+                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
                 }
             }
             AstKind::ExportSpecifier(s) => {
-                if self.current_reference_flags.is_type() || s.export_kind.is_type() {
+                if s.export_kind.is_type()
+                    || matches!(self.nodes.parent_kind(self.current_node_id), Some(AstKind::ExportNamedDeclaration(decl)) if decl.export_kind.is_type())
+                {
                     self.current_reference_flags = ReferenceFlags::Type;
                 } else {
+                    // If the export specifier is not a explicit type export, we consider it as a potential
+                    // type and value reference. If it references to a value in the end, we would delete the
+                    // `ReferenceFlags::Type` flag in `fn resolve_references_for_current_scope`.
                     self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
                 }
                 self.current_node_flags |= NodeFlags::ExportSpecifier;
@@ -2016,9 +2024,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.class_table_builder.pop_class();
             }
             AstKind::ExportSpecifier(_) => {
-                if !self.current_reference_flags.is_type_only() {
-                    self.current_reference_flags = ReferenceFlags::empty();
-                }
+                self.current_reference_flags = ReferenceFlags::empty();
                 self.current_node_flags -= NodeFlags::ExportSpecifier;
             }
             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
@@ -2033,7 +2039,8 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeName(_) => {
                 self.current_reference_flags -= ReferenceFlags::Type;
             }
-            AstKind::ExportNamedDeclaration(_)
+            AstKind::ExportDefaultDeclaration(_)
+            | AstKind::ExportNamedDeclaration(_)
             | AstKind::TSTypeQuery(_)
             // Clear the reference flags that are set in AstKind::PropertySignature
             | AstKind::PropertyKey(_) => {

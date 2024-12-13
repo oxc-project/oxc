@@ -350,10 +350,7 @@ impl<'a> Codegen<'a> {
             self.print_next_indent_as_space = false;
             return;
         }
-        // SAFETY: this iterator only yields tabs, which are always valid ASCII characters.
-        unsafe {
-            self.code.print_bytes_unchecked(std::iter::repeat(b'\t').take(self.indent as usize));
-        }
+        self.code.print_indent(self.indent as usize);
     }
 
     #[inline]

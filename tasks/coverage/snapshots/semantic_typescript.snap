@@ -574,6 +574,15 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "Color":
+after transform: SymbolId(0) "Color"
+rebuilt        : <None>
+Reference flags mismatch for "Color":
+after transform: ReferenceId(0): ReferenceFlags(Type)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["Color"]
 
 tasks/coverage/typescript/tests/cases/compiler/ambientClassDeclarationWithExtends.ts
 semantic error: Missing SymbolId: "D"
@@ -9306,6 +9315,15 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "Foo":
+after transform: SymbolId(0) "Foo"
+rebuilt        : <None>
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(0): ReferenceFlags(Type)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["Foo"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitToDeclarationDirWithDeclarationOption.ts
 semantic error: Bindings mismatch:
@@ -9314,6 +9332,15 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "Foo":
+after transform: SymbolId(0) "Foo"
+rebuilt        : <None>
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(0): ReferenceFlags(Type)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["Foo"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitTopLevelNodeFromCrossFile.ts
 semantic error: Bindings mismatch:
@@ -9507,6 +9534,15 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "Foo":
+after transform: SymbolId(0) "Foo"
+rebuilt        : <None>
+Reference flags mismatch for "Foo":
+after transform: ReferenceId(0): ReferenceFlags(Type)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["Foo"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitWithDefaultAsComputedName.ts
 semantic error: Bindings mismatch:
@@ -23393,6 +23429,15 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "I":
+after transform: SymbolId(0) "I"
+rebuilt        : <None>
+Reference flags mismatch for "I":
+after transform: ReferenceId(0): ReferenceFlags(Type)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["I"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationsBundledOutput1.ts
 semantic error: Bindings mismatch:
@@ -25257,15 +25302,15 @@ tasks/coverage/typescript/tests/cases/compiler/noCircularDefinitionOnExportOfPri
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol reference IDs mismatch for "cat":
+after transform: SymbolId(0): [ReferenceId(1)]
+rebuilt        : SymbolId(0): []
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule | Ambient)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(1): [Span { start: 61, end: 64 }]
 rebuilt        : SymbolId(1): []
-Unresolved references mismatch:
-after transform: ["cat", "module"]
-rebuilt        : ["module"]
 
 tasks/coverage/typescript/tests/cases/compiler/noCollisionThisExpressionAndLocalVarInFunction.ts
 semantic error: Scope children mismatch:
@@ -37384,6 +37429,9 @@ rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "Op":
 after transform: SymbolId(0) "Op"
 rebuilt        : <None>
+Reference flags mismatch for "Op":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["Op"]
@@ -52439,6 +52487,9 @@ rebuilt        : ScopeId(1): []
 Reference symbol mismatch for "doc":
 after transform: SymbolId(0) "doc"
 rebuilt        : <None>
+Reference flags mismatch for "doc":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
 Unresolved references mismatch:
 after transform: ["Document", "Element", "HTMLElement"]
 rebuilt        : ["HTMLElement", "doc"]
@@ -52453,6 +52504,9 @@ rebuilt        : ScopeId(1): []
 Reference symbol mismatch for "doc":
 after transform: SymbolId(0) "doc"
 rebuilt        : <None>
+Reference flags mismatch for "doc":
+after transform: ReferenceId(1): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
 Unresolved references mismatch:
 after transform: ["Document", "Element", "HTMLElement"]
 rebuilt        : ["HTMLElement", "doc"]
@@ -52464,6 +52518,9 @@ rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "val":
 after transform: SymbolId(0) "val"
 rebuilt        : <None>
+Reference flags mismatch for "val":
+after transform: ReferenceId(0): ReferenceFlags(Read)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["val"]
