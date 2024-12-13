@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.1] - 2024-12-13
+
+### Bug Fixes
+
+- 2b187e5 linter: Fix configuration casing for `typescript/no_this_alias` (#7836) (Boshen)
+- 06e6d38 linter: Fix unicorn/prefer-query-selector to use the correct replacement for getElementsByClassName (#7796) (Nicholas Rayburn)
+- 7a83230 semantic: Missing reference when `export default` references a type alias binding (#7813) (Dunqing)
+
 ## [0.15.0] - 2024-12-10
 
 - 39b9c5d linter: [**BREAKING**] Remove unmaintained security plugin (#7773) (Boshen)
