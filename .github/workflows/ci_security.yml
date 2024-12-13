@@ -25,10 +25,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        uses: taiki-e/install-action@8c39981484df4e7ba41af8e8e078ac546d5e1b11 # v2.46.8
         with:
-          cache-key: zizmor
-          tools: zizmor
+          tool: zizmor
 
       - name: Run zizmor 🌈
         run: zizmor --format sarif . > results.sarif
