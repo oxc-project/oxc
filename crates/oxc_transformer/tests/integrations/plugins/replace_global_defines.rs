@@ -285,7 +285,7 @@ log(__MEMBER__);
 }
 
 #[test]
-#[should_panic]
+#[should_panic(expected = "")]
 fn test_complex() {
     let config = ReplaceGlobalDefinesConfig::new(&[("__DEF__", "((() => {})())")]).unwrap();
     test("__DEF__", "1", config.clone());
