@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.41.0] - 2024-12-13
+
+- fb325dc ast: [**BREAKING**] `span` field must be the first element (#7821) (Boshen)
+
+### Features
+
+- e727ae9 transformer/class-properties: Transform super member expressions that are inside static prop initializer (#7815) (Dunqing)
+
+### Bug Fixes
+
+- 5b7e1ad transformer: Remove span of define value (#7811) (Hiroshi Ogawa)
+- 14896cb transformer/class-properties: Create temp vars in correct scope (#7824) (overlookmotel)
+- 25bb6da transformer/class-properties: Fix `ScopeId`s in instance prop initializers (#7823) (overlookmotel)
+- 65b109a transformer/class-properties: No `raw` for generated `StringLiteral` (#7825) (overlookmotel)
+- 2964a61 transformer/class-properties: Unwrap failed when private field expression doesn't contain optional expression in `ChainExpression` (#7798) (Dunqing)
+- 6fa6785 transformer/class-properties: Panic when the callee or member is `ParenthesisExpression` or TS-syntax expressions. (#7795) (Dunqing)
+- bb22c67 transformer/class-properties: Fix `ScopeId`s in static prop initializers (#7791) (overlookmotel)
+- caa57f1 transformer/class-properties: Fix scope flags in static prop initializers (#7786) (overlookmotel)
+
+### Refactor
+
+- b290ebd transformer: Handle `<CWD>` in test runner (#7799) (Dunqing)
+- e70deb9 transformer/class-properties: Locate instance props insertion location in separate step (#7819) (overlookmotel)
+- afc5f1e transformer/class-properties: De-deduplicate code (#7805) (overlookmotel)
+- 47a91d2 transformer/class-properties: Shorten code (#7804) (overlookmotel)
+- 54ef2b9 transformer/class-properties: Rename `debug_assert_expr_is_not_parenthesis_or_typescript_syntax` (#7803) (overlookmotel)
+- 3cdc47c transformer/class-properties: `#[inline(always)]` on `assert_expr_neither_parenthesis_nor_typescript_syntax` (#7802) (overlookmotel)
+
+### Testing
+
+- d72c888 transformer/replace-global-defines: Remove panicking test (#7838) (overlookmotel)
+
 ## [0.40.0] - 2024-12-10
 
 - 5913200 transformer/class-properties: [**BREAKING**] Rename `ClassPropertiesOptions::loose` (#7716) (overlookmotel)
