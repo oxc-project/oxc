@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
 
-      - uses: Boshen/setup-rust@main
+      - uses: oxc-project/setup-rust@1.0.0
         with:
           cache-key: warm
           tools: cargo-bloat

@@ -26,7 +26,7 @@ jobs:
       - name: Clone submodules
         uses: ./.github/actions/clone-submodules
 
-      - uses: Boshen/setup-rust@main
+      - uses: oxc-project/setup-rust@1.0.0
         with:
           cache-key: codecov
           save-cache: ${{ github.ref_name == 'main' }}
