@@ -27,6 +27,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: Boshen/setup-rust@main
         with:
@@ -35,9 +36,11 @@ jobs:
 
       - name: Run
         id: run
+        env:
+          RELEASE_NAME: ${{ inputs.name }}
         run: |
           cargo ck
-          cargo release-oxc update --release ${{ inputs.name }}
+          cargo release-oxc update --release ${RELEASE_NAME}
           echo "VERSION=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
           {
             echo 'CHANGELOG<<EOF'
