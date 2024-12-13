@@ -9,10 +9,7 @@ use crate::{
     join, line, softline, text, Format, Prettier,
 };
 
-pub(super) fn print_export_declaration<'a>(
-    p: &mut Prettier<'a>,
-    decl: &ModuleDeclaration<'a>,
-) -> Doc<'a> {
+pub fn print_export_declaration<'a>(p: &mut Prettier<'a>, decl: &ModuleDeclaration<'a>) -> Doc<'a> {
     debug_assert!(decl.is_export());
 
     let mut parts = Vec::new_in(p.allocator);
@@ -81,7 +78,7 @@ fn print_semicolon_after_export_declaration<'a>(
     }
 }
 
-pub(super) fn print_module_specifiers<'a, T: Format<'a>>(
+pub fn print_module_specifiers<'a, T: Format<'a>>(
     p: &mut Prettier<'a>,
     specifiers: &Vec<'a, T>,
     include_default: bool,

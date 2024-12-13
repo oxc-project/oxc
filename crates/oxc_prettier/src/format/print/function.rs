@@ -2,11 +2,11 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    array, dynamic_text, format::function_parameters::should_group_function_parameters, group,
-    if_break, indent, ir::Doc, softline, text, Format, Prettier,
+    array, dynamic_text, format::print::function_parameters::should_group_function_parameters,
+    group, if_break, indent, ir::Doc, softline, text, Format, Prettier,
 };
 
-pub(super) fn print_function<'a>(
+pub fn print_function<'a>(
     p: &mut Prettier<'a>,
     func: &Function<'a>,
     property_name: Option<&'a str>,
@@ -70,7 +70,7 @@ pub(super) fn print_function<'a>(
     array!(p, parts)
 }
 
-pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
+pub fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
 
     if let Some(accessibility) = &method.accessibility {
@@ -119,7 +119,7 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
     array!(p, parts)
 }
 
-pub(super) fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<'a> {
+pub fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
     let parameters_doc = function.params.format(p);
     let should_group_parameters = should_group_function_parameters(function);
@@ -147,7 +147,7 @@ pub(super) fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'
     array!(p, parts)
 }
 
-pub(super) fn print_return_or_throw_argument<'a>(
+pub fn print_return_or_throw_argument<'a>(
     p: &mut Prettier<'a>,
     argument: Option<&Expression<'a>>,
 ) -> Doc<'a> {

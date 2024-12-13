@@ -5,7 +5,7 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     array, break_parent, conditional_group,
-    format::{
+    format::print::{
         array::{is_concisely_printed_array, Array},
         call_expression::{is_commons_js_or_amd_call, CallExpressionLike},
         misc,
@@ -17,7 +17,7 @@ use crate::{
     Format, Prettier,
 };
 
-pub(super) fn print_call_arguments<'a>(
+pub fn print_call_arguments<'a>(
     p: &mut Prettier<'a>,
     expression: &CallExpressionLike<'a, '_>,
 ) -> Doc<'a> {

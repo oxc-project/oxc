@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 
 use crate::{hardline, ir::Doc, Format, Prettier};
 
-pub(super) fn print_statement_sequence<'a>(
+pub fn print_statement_sequence<'a>(
     p: &mut Prettier<'a>,
     stmts: &[Statement<'a>],
 ) -> Vec<'a, Doc<'a>> {

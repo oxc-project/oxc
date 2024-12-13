@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[allow(clippy::enum_variant_names)]
-pub(super) enum Array<'a, 'b> {
+pub enum Array<'a, 'b> {
     ArrayExpression(&'b ArrayExpression<'a>),
     TSTupleType(&'b TSTupleType<'a>),
     ArrayPattern(&'b ArrayPattern<'a>),
@@ -61,7 +61,7 @@ impl Array<'_, '_> {
     }
 }
 
-pub(super) fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
+pub fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<'a> {
     if arr.len() == 0 {
         return print_empty_array_elements(p, arr);
     }
@@ -127,7 +127,7 @@ pub(super) fn print_array<'a>(p: &mut Prettier<'a>, arr: &Array<'a, '_>) -> Doc<
     array!(p, parts)
 }
 
-pub(super) fn is_concisely_printed_array<'a>(arr: &Expression<'a>) -> bool {
+pub fn is_concisely_printed_array<'a>(arr: &Expression<'a>) -> bool {
     match arr {
         Expression::ArrayExpression(array) => Array::ArrayExpression(array).is_concisely_printed(),
         _ => false,

@@ -1,9 +1,9 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstKind};
 
-use crate::{array, format::statement, hardline, indent, ir::Doc, text, Format, Prettier};
+use crate::{array, format::print::statement, hardline, indent, ir::Doc, text, Format, Prettier};
 
-pub(super) fn print_block<'a>(
+pub fn print_block<'a>(
     p: &mut Prettier<'a>,
     stmts: &[Statement<'a>],
     directives: Option<&[Directive<'a>]>,
@@ -48,7 +48,7 @@ pub(super) fn print_block<'a>(
     array!(p, parts)
 }
 
-pub(super) fn print_block_body<'a>(
+pub fn print_block_body<'a>(
     p: &mut Prettier<'a>,
     stmts: &[Statement<'a>],
     directives: Option<&[Directive<'a>]>,

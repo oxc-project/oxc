@@ -3,7 +3,7 @@ use oxc_span::Span;
 
 use crate::{array, indent, ir::Doc, line, text, Prettier};
 
-pub(super) fn adjust_clause<'a>(
+pub fn adjust_clause<'a>(
     p: &Prettier<'a>,
     node: &Statement<'a>,
     clause: Doc<'a>,
@@ -20,11 +20,11 @@ pub(super) fn adjust_clause<'a>(
     indent!(p, [line!(), clause])
 }
 
-pub(super) fn has_new_line_in_range(text: &str, start: u32, end: u32) -> bool {
+pub fn has_new_line_in_range(text: &str, start: u32, end: u32) -> bool {
     text[(start as usize)..(end as usize)].contains('\n')
 }
 
-pub(super) fn in_parentheses(kind: AstKind, text: &str, span: Span) -> bool {
+pub fn in_parentheses(kind: AstKind, text: &str, span: Span) -> bool {
     if matches!(
         kind,
         AstKind::IfStatement(_)

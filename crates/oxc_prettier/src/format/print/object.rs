@@ -1,20 +1,17 @@
 use oxc_allocator::Vec;
-use oxc_ast::{
-    ast::{ObjectAssignmentTarget, ObjectExpression, ObjectPattern, TSTypeLiteral, WithClause},
-    AstKind,
-};
+use oxc_ast::{ast::*, AstKind};
 use oxc_span::Span;
 
 use crate::{
     array,
-    format::{function_parameters, misc},
+    format::print::{function_parameters, misc},
     group, if_break, indent,
     ir::Doc,
     line, softline, text, Format, Prettier,
 };
 
 #[derive(Debug, Clone, Copy)]
-pub(super) enum ObjectLike<'a, 'b> {
+pub enum ObjectLike<'a, 'b> {
     Expression(&'b ObjectExpression<'a>),
     AssignmentTarget(&'b ObjectAssignmentTarget<'a>),
     Pattern(&'b ObjectPattern<'a>),
@@ -98,10 +95,7 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
     }
 }
 
-pub(super) fn print_object<'a>(
-    p: &mut Prettier<'a>,
-    object: ObjectLike<'a, '_>,
-) -> Doc<'a> {
+pub fn print_object<'a>(p: &mut Prettier<'a>, object: ObjectLike<'a, '_>) -> Doc<'a> {
     let left_brace = text!("{");
     let right_brace = text!("}");
 

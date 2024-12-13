@@ -6,13 +6,13 @@ use oxc_span::GetSpan;
 
 use crate::{
     array,
-    format::{assignment, assignment::AssignmentLikeNode},
+    format::print::assignment::{print_assignment, AssignmentLikeNode},
     group, hardline, if_break, indent,
     ir::{Doc, JoinSeparator},
     join, line, softline, text, Format, Prettier,
 };
 
-pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
+pub fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
     let mut heritage_clauses_parts = Vec::new_in(p.allocator);
     let mut group_parts = Vec::new_in(p.allocator);
@@ -23,14 +23,14 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     // @link <https://github.com/prettier/prettier/blob/aa3853b7765645b3f3d8a76e41cf6d70b93c01fd/src/language-js/print/class.js#L62>
     let group_mode = class.implements.as_ref().is_some_and(|v| !v.is_empty());
 
-    if let Some(super_class) = &class.super_class {
+    if let Some(_class) = &class.super_class {
         let mut extend_parts = Vec::new_in(p.allocator);
 
         extend_parts.push(text!("extends "));
-        extend_parts.push(super_class.format(p));
+        extend_parts.push(_class.format(p));
 
-        if let Some(super_type_parameters) = &class.super_type_parameters {
-            extend_parts.push(super_type_parameters.format(p));
+        if let Some(_type_parameters) = &class.super_type_parameters {
+            extend_parts.push(_type_parameters.format(p));
         }
 
         extend_parts.push(text!(" "));
@@ -92,7 +92,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     array!(p, parts)
 }
 
-pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<'a>) -> Doc<'a> {
+pub fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<'a>) -> Doc<'a> {
     let mut parts_inner = Vec::new_in(p.allocator);
 
     for (i, node) in class_body.body.iter().enumerate() {
@@ -135,7 +135,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
 }
 
 #[derive(Debug)]
-pub(super) enum ClassMemberish<'a, 'b> {
+pub enum ClassMemberish<'a, 'b> {
     PropertyDefinition(&'b PropertyDefinition<'a>),
     AccessorProperty(&'b AccessorProperty<'a>),
 }
@@ -243,10 +243,7 @@ impl<'a> ClassMemberish<'a, '_> {
     }
 }
 
-pub(super) fn print_class_property<'a>(
-    p: &mut Prettier<'a>,
-    node: &ClassMemberish<'a, '_>,
-) -> Doc<'a> {
+pub fn print_class_property<'a>(p: &mut Prettier<'a>, node: &ClassMemberish<'a, '_>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
 
     if let Some(decarators) = node.decorators() {
@@ -300,8 +297,7 @@ pub(super) fn print_class_property<'a>(
         ClassMemberish::PropertyDefinition(v) => AssignmentLikeNode::PropertyDefinition(v),
         ClassMemberish::AccessorProperty(v) => AssignmentLikeNode::AccessorProperty(v),
     };
-    let mut result =
-        assignment::print_assignment(p, node, array!(p, parts), text!(" ="), right_expr);
+    let mut result = print_assignment(p, node, array!(p, parts), text!(" ="), right_expr);
 
     if p.options.semi {
         let mut parts = Vec::new_in(p.allocator);
