@@ -132,6 +132,7 @@
 //! * `private_props.rs`:     Structures storing details of private properties.
 //! * `static_prop_init.rs`:  Transform of static property initializers.
 //! * `class_bindings.rs`:    Structure containing bindings for class name and temp var.
+//! * `super.rs`:             Transform `super` expressions.
 //! * `utils.rs`:             Utility functions.
 //!
 //! ## References
@@ -159,6 +160,7 @@ mod constructor;
 mod private;
 mod private_props;
 mod static_prop_init;
+mod supers;
 mod utils;
 use class_bindings::ClassBindings;
 use private_props::PrivatePropsStack;
