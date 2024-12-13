@@ -586,8 +586,8 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             FunctionType::FunctionExpression
         };
         ctx.ast.alloc_function_with_scope_id(
-            r#type,
             SPAN,
+            r#type,
             id,
             false,
             false,

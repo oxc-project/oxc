@@ -110,8 +110,8 @@ impl ClassStaticBlock {
         let key = ctx.ast.property_key_private_identifier(SPAN, key);
 
         ctx.ast.class_element_property_definition(
-            PropertyDefinitionType::PropertyDefinition,
             block.span,
+            PropertyDefinitionType::PropertyDefinition,
             ctx.ast.vec(),
             key,
             Some(expr),

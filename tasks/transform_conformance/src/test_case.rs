@@ -217,11 +217,17 @@ impl TestCase {
         };
 
         let source_text = fs::read_to_string(path).unwrap();
-
         let project_root = project_root();
         let mut options = transform_options.clone();
         options.helper_loader.mode = mode;
-        let mut driver = Driver::new(false, options).execute(&source_text, self.source_type, path);
+        let cwd_path = self
+            .options
+            .cwd
+            .as_ref()
+            .and_then(|cwd| path.strip_prefix(cwd).ok().map(|p| Path::new("<CWD>").join(p)))
+            .unwrap_or(path.clone());
+        let mut driver =
+            Driver::new(false, options).execute(&source_text, self.source_type, cwd_path.as_path());
         let errors = driver.errors();
         if !errors.is_empty() {
             let source = NamedSource::new(

@@ -5,7 +5,9 @@ use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{
+    node::NodeId,
     reference::ReferenceFlags,
+    scope::ScopeFlags,
     symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
@@ -14,6 +16,7 @@ use crate::common::helper_loader::Helper;
 
 use super::{super::ClassStaticBlock, ClassBindings};
 use super::{
+    constructor::InstanceInitsInsertLocation,
     private_props::{PrivateProp, PrivateProps},
     utils::{
         create_assignment, create_underscore_ident_name, create_variable_declaration,
@@ -304,9 +307,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let mut has_static_block = false;
         // TODO: Store `FxIndexMap`s in a pool and re-use them
         let mut private_props = FxIndexMap::default();
-        let mut constructor_index = None;
-        let mut index_not_including_removed = 0;
-        for element in &class.body.body {
+        let mut constructor = None;
+        for element in class.body.body.iter_mut() {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
                     // TODO: Throw error if property has decorators
@@ -343,15 +345,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     if method.kind == MethodDefinitionKind::Constructor
                         && method.value.body.is_some()
                     {
-                        constructor_index = Some(index_not_including_removed);
+                        constructor = Some(method);
                     }
                 }
                 ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
                     // TODO: Need to handle these?
                 }
             }
-
-            index_not_including_removed += 1;
         }
 
         // Exit if nothing to transform
@@ -406,8 +406,37 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             }));
         }
 
+        // Determine where to insert instance property initializers in constructor
+        let instance_inits_insert_location = if instance_prop_count == 0 {
+            // No instance prop initializers to insert
+            None
+        } else if let Some(constructor) = constructor {
+            // Existing constructor
+            let constructor = constructor.value.as_mut();
+            if class.super_class.is_some() {
+                let (instance_inits_scope_id, insert_location) =
+                    Self::replace_super_in_constructor(constructor, ctx);
+                self.instance_inits_scope_id = instance_inits_scope_id;
+                Some(insert_location)
+            } else {
+                self.instance_inits_scope_id = constructor.scope_id();
+                Some(InstanceInitsInsertLocation::ExistingConstructor(0))
+            }
+        } else {
+            // No existing constructor - create scope for one
+            let constructor_scope_id = ctx.scopes_mut().add_scope(
+                Some(class.scope_id()),
+                NodeId::DUMMY,
+                ScopeFlags::Function | ScopeFlags::Constructor | ScopeFlags::StrictMode,
+            );
+            self.instance_inits_scope_id = constructor_scope_id;
+            Some(InstanceInitsInsertLocation::NewConstructor)
+        };
+
         // Extract properties and static blocks from class body + substitute computed method keys
         let mut instance_inits = Vec::with_capacity(instance_prop_count);
+        let mut constructor_index = 0;
+        let mut index_not_including_removed = 0;
         class.body.body.retain_mut(|element| {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
@@ -416,37 +445,43 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     } else {
                         self.convert_instance_property(prop, &mut instance_inits, ctx);
                     }
-                    false
+                    return false;
                 }
                 ClassElement::StaticBlock(block) => {
                     if self.transform_static_blocks {
                         self.convert_static_block(block, ctx);
-                        false
-                    } else {
-                        true
+                        return false;
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
-                    self.substitute_temp_var_for_method_computed_key(method, ctx);
-                    true
+                    if method.kind == MethodDefinitionKind::Constructor {
+                        if method.value.body.is_some() {
+                            constructor_index = index_not_including_removed;
+                        }
+                    } else {
+                        self.substitute_temp_var_for_method_computed_key(method, ctx);
+                    }
                 }
                 ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
                     // TODO: Need to handle these?
-                    true
                 }
             }
+
+            index_not_including_removed += 1;
+
+            true
         });
 
-        // Insert instance initializers into constructor
-        if !instance_inits.is_empty() {
-            // TODO: Re-parent any scopes within initializers.
-            if let Some(constructor_index) = constructor_index {
-                // Existing constructor - amend it
-                self.insert_inits_into_constructor(class, instance_inits, constructor_index, ctx);
-            } else {
-                // No constructor - create one
-                Self::insert_constructor(class, instance_inits, ctx);
-            }
+        // Insert instance initializers into constructor, or create constructor if there is none
+        if let Some(instance_inits_insert_location) = instance_inits_insert_location {
+            self.insert_instance_inits(
+                class,
+                instance_inits,
+                &instance_inits_insert_location,
+                self.instance_inits_scope_id,
+                constructor_index,
+                ctx,
+            );
         }
 
         // Update class bindings prior to traversing class body and insertion of statements/expressions

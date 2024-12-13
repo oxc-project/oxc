@@ -52,14 +52,10 @@ impl<'a> TransformCtx<'a> {
             .file_stem() // omit file extension
             .map_or_else(|| String::from("unknown"), |name| name.to_string_lossy().to_string());
 
-        let source_path = source_path
-            .strip_prefix(&options.cwd)
-            .map_or_else(|_| source_path.to_path_buf(), |p| Path::new("<CWD>").join(p));
-
         Self {
             errors: RefCell::new(vec![]),
             filename,
-            source_path,
+            source_path: source_path.to_path_buf(),
             source_type: SourceType::default(),
             source_text: "",
             module: options.env.module,

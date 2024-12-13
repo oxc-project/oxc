@@ -195,6 +195,19 @@ fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &EarlyCtx) -
 }
 
 fn lower_ast_struct(it @ rust::Struct { item, meta }: &rust::Struct, ctx: &EarlyCtx) -> StructDef {
+    // If the struct contains a `span` field, it must be the first field for consistency, and also
+    // small performance improvement from byte ordering.
+    if item
+        .fields
+        .iter()
+        .map(|field| field.ident.as_ref().unwrap().to_string())
+        .position(|ident| ident == "span")
+        .filter(|i| *i != 0)
+        .is_some()
+    {
+        panic!("First field of `{}` must be `span`.", it.item.ident);
+    }
+
     let (size_64, align_64, offsets_64) = meta
         .layout_64
         .clone()

@@ -6501,8 +6501,8 @@ impl<'a, 't> GetAddress for BindingRestElementWithoutArgument<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_FUNCTION_TYPE: usize = offset_of!(Function, r#type);
 pub(crate) const OFFSET_FUNCTION_SPAN: usize = offset_of!(Function, span);
+pub(crate) const OFFSET_FUNCTION_TYPE: usize = offset_of!(Function, r#type);
 pub(crate) const OFFSET_FUNCTION_ID: usize = offset_of!(Function, id);
 pub(crate) const OFFSET_FUNCTION_GENERATOR: usize = offset_of!(Function, generator);
 pub(crate) const OFFSET_FUNCTION_ASYNC: usize = offset_of!(Function, r#async);
@@ -6523,13 +6523,13 @@ pub struct FunctionWithoutId<'a, 't>(
 
 impl<'a, 't> FunctionWithoutId<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t FunctionType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
     }
 
     #[inline]
@@ -6611,13 +6611,13 @@ pub struct FunctionWithoutTypeParameters<'a, 't>(
 
 impl<'a, 't> FunctionWithoutTypeParameters<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t FunctionType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
     }
 
     #[inline]
@@ -6699,13 +6699,13 @@ pub struct FunctionWithoutThisParam<'a, 't>(
 
 impl<'a, 't> FunctionWithoutThisParam<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t FunctionType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
     }
 
     #[inline]
@@ -6787,13 +6787,13 @@ pub struct FunctionWithoutParams<'a, 't>(
 
 impl<'a, 't> FunctionWithoutParams<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t FunctionType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
     }
 
     #[inline]
@@ -6875,13 +6875,13 @@ pub struct FunctionWithoutReturnType<'a, 't>(
 
 impl<'a, 't> FunctionWithoutReturnType<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t FunctionType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
     }
 
     #[inline]
@@ -6963,13 +6963,13 @@ pub struct FunctionWithoutBody<'a, 't>(
 
 impl<'a, 't> FunctionWithoutBody<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t FunctionType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
     }
 
     #[inline]
@@ -7613,8 +7613,8 @@ impl<'a, 't> GetAddress for YieldExpressionWithoutArgument<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_CLASS_TYPE: usize = offset_of!(Class, r#type);
 pub(crate) const OFFSET_CLASS_SPAN: usize = offset_of!(Class, span);
+pub(crate) const OFFSET_CLASS_TYPE: usize = offset_of!(Class, r#type);
 pub(crate) const OFFSET_CLASS_DECORATORS: usize = offset_of!(Class, decorators);
 pub(crate) const OFFSET_CLASS_ID: usize = offset_of!(Class, id);
 pub(crate) const OFFSET_CLASS_TYPE_PARAMETERS: usize = offset_of!(Class, type_parameters);
@@ -7636,13 +7636,13 @@ pub struct ClassWithoutDecorators<'a, 't>(
 
 impl<'a, 't> ClassWithoutDecorators<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
     }
 
     #[inline]
@@ -7719,13 +7719,13 @@ pub struct ClassWithoutId<'a, 't>(pub(crate) *const Class<'a>, pub(crate) Phanto
 
 impl<'a, 't> ClassWithoutId<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
     }
 
     #[inline]
@@ -7805,13 +7805,13 @@ pub struct ClassWithoutTypeParameters<'a, 't>(
 
 impl<'a, 't> ClassWithoutTypeParameters<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
     }
 
     #[inline]
@@ -7890,13 +7890,13 @@ pub struct ClassWithoutSuperClass<'a, 't>(
 
 impl<'a, 't> ClassWithoutSuperClass<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
     }
 
     #[inline]
@@ -7976,13 +7976,13 @@ pub struct ClassWithoutSuperTypeParameters<'a, 't>(
 
 impl<'a, 't> ClassWithoutSuperTypeParameters<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
     }
 
     #[inline]
@@ -8061,13 +8061,13 @@ pub struct ClassWithoutImplements<'a, 't>(
 
 impl<'a, 't> ClassWithoutImplements<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
     }
 
     #[inline]
@@ -8143,13 +8143,13 @@ pub struct ClassWithoutBody<'a, 't>(pub(crate) *const Class<'a>, pub(crate) Phan
 
 impl<'a, 't> ClassWithoutBody<'a, 't> {
     #[inline]
-    pub fn r#type(self) -> &'t ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    pub fn r#type(self) -> &'t ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
     }
 
     #[inline]
@@ -8246,8 +8246,8 @@ impl<'a, 't> GetAddress for ClassBodyWithoutBody<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_METHOD_DEFINITION_TYPE: usize = offset_of!(MethodDefinition, r#type);
 pub(crate) const OFFSET_METHOD_DEFINITION_SPAN: usize = offset_of!(MethodDefinition, span);
+pub(crate) const OFFSET_METHOD_DEFINITION_TYPE: usize = offset_of!(MethodDefinition, r#type);
 pub(crate) const OFFSET_METHOD_DEFINITION_DECORATORS: usize =
     offset_of!(MethodDefinition, decorators);
 pub(crate) const OFFSET_METHOD_DEFINITION_KEY: usize = offset_of!(MethodDefinition, key);
@@ -8270,16 +8270,16 @@ pub struct MethodDefinitionWithoutDecorators<'a, 't>(
 
 impl<'a, 't> MethodDefinitionWithoutDecorators<'a, 't> {
     #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
     pub fn r#type(self) -> &'t MethodDefinitionType {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_TYPE)
                 as *const MethodDefinitionType)
         }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
     }
 
     #[inline]
@@ -8350,16 +8350,16 @@ pub struct MethodDefinitionWithoutKey<'a, 't>(
 
 impl<'a, 't> MethodDefinitionWithoutKey<'a, 't> {
     #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
     pub fn r#type(self) -> &'t MethodDefinitionType {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_TYPE)
                 as *const MethodDefinitionType)
         }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
     }
 
     #[inline]
@@ -8431,16 +8431,16 @@ pub struct MethodDefinitionWithoutValue<'a, 't>(
 
 impl<'a, 't> MethodDefinitionWithoutValue<'a, 't> {
     #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
     pub fn r#type(self) -> &'t MethodDefinitionType {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_TYPE)
                 as *const MethodDefinitionType)
         }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_SPAN) as *const Span) }
     }
 
     #[inline]
@@ -8502,8 +8502,8 @@ impl<'a, 't> GetAddress for MethodDefinitionWithoutValue<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_PROPERTY_DEFINITION_TYPE: usize = offset_of!(PropertyDefinition, r#type);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_SPAN: usize = offset_of!(PropertyDefinition, span);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_TYPE: usize = offset_of!(PropertyDefinition, r#type);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_DECORATORS: usize =
     offset_of!(PropertyDefinition, decorators);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_KEY: usize = offset_of!(PropertyDefinition, key);
@@ -8536,16 +8536,16 @@ pub struct PropertyDefinitionWithoutDecorators<'a, 't>(
 
 impl<'a, 't> PropertyDefinitionWithoutDecorators<'a, 't> {
     #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
     pub fn r#type(self) -> &'t PropertyDefinitionType {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
                 as *const PropertyDefinitionType)
         }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
     }
 
     #[inline]
@@ -8631,16 +8631,16 @@ pub struct PropertyDefinitionWithoutKey<'a, 't>(
 
 impl<'a, 't> PropertyDefinitionWithoutKey<'a, 't> {
     #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
     pub fn r#type(self) -> &'t PropertyDefinitionType {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
                 as *const PropertyDefinitionType)
         }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
     }
 
     #[inline]
@@ -8727,16 +8727,16 @@ pub struct PropertyDefinitionWithoutValue<'a, 't>(
 
 impl<'a, 't> PropertyDefinitionWithoutValue<'a, 't> {
     #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
     pub fn r#type(self) -> &'t PropertyDefinitionType {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
                 as *const PropertyDefinitionType)
         }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
     }
 
     #[inline]
@@ -8822,16 +8822,16 @@ pub struct PropertyDefinitionWithoutTypeAnnotation<'a, 't>(
 
 impl<'a, 't> PropertyDefinitionWithoutTypeAnnotation<'a, 't> {
     #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
     pub fn r#type(self) -> &'t PropertyDefinitionType {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
                 as *const PropertyDefinitionType)
         }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
     }
 
     #[inline]
@@ -8941,8 +8941,8 @@ impl<'a, 't> GetAddress for StaticBlockWithoutBody<'a, 't> {
     }
 }
 
-pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE: usize = offset_of!(AccessorProperty, r#type);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_SPAN: usize = offset_of!(AccessorProperty, span);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE: usize = offset_of!(AccessorProperty, r#type);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_DECORATORS: usize =
     offset_of!(AccessorProperty, decorators);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_KEY: usize = offset_of!(AccessorProperty, key);
@@ -8964,16 +8964,16 @@ pub struct AccessorPropertyWithoutDecorators<'a, 't>(
 
 impl<'a, 't> AccessorPropertyWithoutDecorators<'a, 't> {
     #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
     pub fn r#type(self) -> &'t AccessorPropertyType {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
                 as *const AccessorPropertyType)
         }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
     }
 
     #[inline]
@@ -9039,16 +9039,16 @@ pub struct AccessorPropertyWithoutKey<'a, 't>(
 
 impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
     #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
     pub fn r#type(self) -> &'t AccessorPropertyType {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
                 as *const AccessorPropertyType)
         }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
     }
 
     #[inline]
@@ -9115,16 +9115,16 @@ pub struct AccessorPropertyWithoutValue<'a, 't>(
 
 impl<'a, 't> AccessorPropertyWithoutValue<'a, 't> {
     #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
     pub fn r#type(self) -> &'t AccessorPropertyType {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
                 as *const AccessorPropertyType)
         }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
     }
 
     #[inline]
@@ -9190,16 +9190,16 @@ pub struct AccessorPropertyWithoutTypeAnnotation<'a, 't>(
 
 impl<'a, 't> AccessorPropertyWithoutTypeAnnotation<'a, 't> {
     #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
     pub fn r#type(self) -> &'t AccessorPropertyType {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
                 as *const AccessorPropertyType)
         }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
     }
 
     #[inline]
