@@ -6,13 +6,13 @@ use oxc_span::GetSpan;
 
 use crate::{
     array,
-    format::{assignment, assignment::AssignmentLikeNode, JoinSeparator},
+    format::print::assignment::{print_assignment, AssignmentLikeNode},
     group, hardline, if_break, indent,
-    ir::Doc,
+    ir::{Doc, JoinSeparator},
     join, line, softline, text, Format, Prettier,
 };
 
-pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
+pub fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
     let mut heritage_clauses_parts = Vec::new_in(p.allocator);
     let mut group_parts = Vec::new_in(p.allocator);
@@ -92,7 +92,7 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     array!(p, parts)
 }
 
-pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<'a>) -> Doc<'a> {
+pub fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<'a>) -> Doc<'a> {
     let mut parts_inner = Vec::new_in(p.allocator);
 
     for (i, node) in class_body.body.iter().enumerate() {
@@ -243,10 +243,7 @@ impl<'a> ClassMemberish<'a, '_> {
     }
 }
 
-pub(super) fn print_class_property<'a>(
-    p: &mut Prettier<'a>,
-    node: &ClassMemberish<'a, '_>,
-) -> Doc<'a> {
+pub fn print_class_property<'a>(p: &mut Prettier<'a>, node: &ClassMemberish<'a, '_>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
 
     if let Some(decarators) = node.decorators() {
@@ -300,8 +297,7 @@ pub(super) fn print_class_property<'a>(
         ClassMemberish::PropertyDefinition(v) => AssignmentLikeNode::PropertyDefinition(v),
         ClassMemberish::AccessorProperty(v) => AssignmentLikeNode::AccessorProperty(v),
     };
-    let mut result =
-        assignment::print_assignment(p, node, array!(p, parts), text!(" ="), right_expr);
+    let mut result = print_assignment(p, node, array!(p, parts), text!(" ="), right_expr);
 
     if p.options.semi {
         let mut parts = Vec::new_in(p.allocator);

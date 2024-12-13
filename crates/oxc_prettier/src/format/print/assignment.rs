@@ -11,13 +11,13 @@ use oxc_ast::{
 
 use crate::{
     array,
-    format::{binaryish::should_inline_logical_expression, class::ClassMemberish},
+    format::print::{binaryish::should_inline_logical_expression, class::ClassMemberish},
     group, indent, indent_if_break,
     ir::Doc,
     line, text, Format, Prettier,
 };
 
-pub(super) fn print_assignment_expression<'a>(
+pub fn print_assignment_expression<'a>(
     p: &mut Prettier<'a>,
     assignment_expr: &AssignmentExpression<'a>,
 ) -> Doc<'a> {
@@ -31,7 +31,7 @@ pub(super) fn print_assignment_expression<'a>(
     )
 }
 
-pub(super) fn print_variable_declarator<'a>(
+pub fn print_variable_declarator<'a>(
     p: &mut Prettier<'a>,
     variable_declarator: &VariableDeclarator<'a>,
 ) -> Doc<'a> {
@@ -46,7 +46,7 @@ pub(super) fn print_variable_declarator<'a>(
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(super) enum AssignmentLikeNode<'a, 'b> {
+pub enum AssignmentLikeNode<'a, 'b> {
     AssignmentExpression(&'b AssignmentExpression<'a>),
     VariableDeclarator(&'b VariableDeclarator<'a>),
     PropertyDefinition(&'b PropertyDefinition<'a>),
@@ -67,7 +67,7 @@ impl<'a, 'b> From<ClassMemberish<'a, 'b>> for AssignmentLikeNode<'a, 'b> {
     }
 }
 
-pub(super) fn print_assignment<'a>(
+pub fn print_assignment<'a>(
     p: &mut Prettier<'a>,
     node: AssignmentLikeNode<'a, '_>,
     left_doc: Doc<'a>,
@@ -266,7 +266,7 @@ fn has_complex_type_annotation(expr: &AssignmentLikeNode) -> bool {
     false
 }
 
-fn is_arrow_function_variable_declarator(expr: &AssignmentLikeNode) -> bool {
+pub fn is_arrow_function_variable_declarator(expr: &AssignmentLikeNode) -> bool {
     match expr {
         AssignmentLikeNode::VariableDeclarator(variable_declarator) => {
             if let Some(Expression::ArrowFunctionExpression(_)) = &variable_declarator.init {

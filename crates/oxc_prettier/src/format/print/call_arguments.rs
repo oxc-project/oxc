@@ -5,7 +5,8 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     array, break_parent, conditional_group,
-    format::{
+    format::print::{
+        array::{is_concisely_printed_array, Array},
         call_expression::{is_commons_js_or_amd_call, CallExpressionLike},
         misc,
     },
@@ -247,6 +248,7 @@ fn should_expand_last_arg(args: &Vec<'_, Argument<'_>>) -> bool {
         && (args.len() != 2
             || !matches!(penultimate_arg, Some(Argument::ArrowFunctionExpression(_)))
             || !matches!(last_arg, Expression::ArrayExpression(_)))
+        && !(args.len() > 1 && is_concisely_printed_array(last_arg))
 }
 
 fn is_hopefully_short_call_argument(mut node: &Expression) -> bool {

@@ -6,7 +6,7 @@ use crate::{
     text, Format, Prettier,
 };
 
-pub(super) fn should_hug_the_only_function_parameter(
+pub fn should_hug_the_only_function_parameter(
     p: &mut Prettier<'_>,
     params: &FormalParameters<'_>,
 ) -> bool {
@@ -57,7 +57,7 @@ pub(super) fn should_hug_the_only_function_parameter(
     }
 }
 
-pub(super) fn print_function_parameters<'a>(
+pub fn print_function_parameters<'a>(
     p: &mut Prettier<'a>,
     params: &FormalParameters<'a>,
 ) -> Doc<'a> {
@@ -154,7 +154,7 @@ pub(super) fn print_function_parameters<'a>(
     }
 }
 
-pub(super) fn should_group_function_parameters(func: &Function) -> bool {
+pub fn should_group_function_parameters(func: &Function) -> bool {
     let Some(return_type) = &func.return_type else {
         return false;
     };

@@ -2,15 +2,17 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
-use crate::{format::call_arguments::print_call_arguments, group, ir::Doc, text, Format, Prettier};
+use crate::{
+    format::print::call_arguments::print_call_arguments, group, ir::Doc, text, Format, Prettier,
+};
 
-pub(super) enum CallExpressionLike<'a, 'b> {
+pub enum CallExpressionLike<'a, 'b> {
     CallExpression(&'b CallExpression<'a>),
     NewExpression(&'b NewExpression<'a>),
 }
 
 impl<'a> CallExpressionLike<'a, '_> {
-    pub fn is_new(&self) -> bool {
+    fn is_new(&self) -> bool {
         matches!(self, CallExpressionLike::NewExpression(_))
     }
 
@@ -21,7 +23,7 @@ impl<'a> CallExpressionLike<'a, '_> {
         }
     }
 
-    pub fn optional(&self) -> bool {
+    fn optional(&self) -> bool {
         match self {
             CallExpressionLike::CallExpression(call) => call.optional,
             CallExpressionLike::NewExpression(new) => false,
@@ -35,9 +37,7 @@ impl<'a> CallExpressionLike<'a, '_> {
         }
     }
 
-    pub fn type_parameters(
-        &self,
-    ) -> Option<&oxc_allocator::Box<'a, TSTypeParameterInstantiation<'a>>> {
+    fn type_parameters(&self) -> Option<&oxc_allocator::Box<'a, TSTypeParameterInstantiation<'a>>> {
         match self {
             CallExpressionLike::CallExpression(call) => call.type_parameters.as_ref(),
             CallExpressionLike::NewExpression(new) => new.type_parameters.as_ref(),
@@ -54,7 +54,7 @@ impl GetSpan for CallExpressionLike<'_, '_> {
     }
 }
 
-pub(super) fn print_call_expression<'a>(
+pub fn print_call_expression<'a>(
     p: &mut Prettier<'a>,
     expression: &CallExpressionLike<'a, '_>,
 ) -> Doc<'a> {

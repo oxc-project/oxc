@@ -9,10 +9,7 @@ use crate::{
     join, line, softline, text, Format, Prettier,
 };
 
-pub(super) fn print_export_declaration<'a>(
-    p: &mut Prettier<'a>,
-    decl: &ModuleDeclaration<'a>,
-) -> Doc<'a> {
+pub fn print_export_declaration<'a>(p: &mut Prettier<'a>, decl: &ModuleDeclaration<'a>) -> Doc<'a> {
     debug_assert!(decl.is_export());
 
     let mut parts = Vec::new_in(p.allocator);

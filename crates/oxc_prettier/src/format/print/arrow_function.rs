@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 
 use crate::{array, group, ir::Doc, text, Format, Prettier};
 
-pub(super) fn print_arrow_function<'a>(
+pub fn print_arrow_function<'a>(
     p: &mut Prettier<'a>,
     expr: &ArrowFunctionExpression<'a>,
 ) -> Doc<'a> {

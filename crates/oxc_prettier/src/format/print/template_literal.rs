@@ -29,7 +29,7 @@ impl<'a> TemplateLiteralPrinter<'a, '_> {
     }
 }
 
-pub(super) fn print_template_literal<'a, 'b>(
+pub fn print_template_literal<'a, 'b>(
     p: &mut Prettier<'a>,
     template_literal: &'b TemplateLiteralPrinter<'a, 'b>,
 ) -> Doc<'a> {

@@ -7,7 +7,7 @@ use crate::{
     text, Format, Prettier,
 };
 
-pub(super) fn print_binaryish_expression<'a>(
+pub fn print_binaryish_expression<'a>(
     p: &mut Prettier<'a>,
     left: &Expression<'a>,
     operator: BinaryishOperator,
@@ -120,7 +120,7 @@ fn print_binaryish_expressions<'a>(
     parts
 }
 
-pub(super) fn should_inline_logical_expression(expr: &Expression) -> bool {
+pub fn should_inline_logical_expression(expr: &Expression) -> bool {
     let Expression::LogicalExpression(logical_expr) = expr else { return false };
 
     if let Expression::ObjectExpression(obj_expr) = &logical_expr.right {
