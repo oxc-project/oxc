@@ -163,7 +163,7 @@ impl<'a> Expression<'a> {
         expr
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is an [`IdentifierReference`] with specified `name`.
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self.get_inner_expression() {
             Expression::Identifier(ident) => ident.name == name,
@@ -221,7 +221,7 @@ impl<'a> Expression<'a> {
         expr
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is an [`IdentifierReference`].
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))
     }
@@ -234,33 +234,35 @@ impl<'a> Expression<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a function
+    /// (either [`Function`] or [`ArrowFunctionExpression`]).
     pub fn is_function(&self) -> bool {
         matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a [`CallExpression`].
     pub fn is_call_expression(&self) -> bool {
         matches!(self, Expression::CallExpression(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a [`Super`].
     pub fn is_super(&self) -> bool {
         matches!(self, Expression::Super(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a [`CallExpression`] with [`Super`] as callee.
     pub fn is_super_call_expression(&self) -> bool {
         matches!(self, Expression::CallExpression(expr) if matches!(&expr.callee, Expression::Super(_)))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a [`CallExpression`], [`NewExpression`],
+    /// or [`ImportExpression`].
     pub fn is_call_like_expression(&self) -> bool {
         self.is_call_expression()
             && matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a [`BinaryExpression`] or [`LogicalExpression`].
     pub fn is_binaryish(&self) -> bool {
         matches!(self, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
     }
@@ -273,7 +275,9 @@ impl<'a> Expression<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a `require` call.
+    ///
+    /// See [`CallExpression::is_require_call`] for details of the exact patterns that match.
     pub fn is_require_call(&self) -> bool {
         if let Self::CallExpression(call_expr) = self {
             call_expr.is_require_call()
@@ -568,7 +572,12 @@ impl CallExpression<'_> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`CallExpression`] matches one of these patterns:
+    /// ```js
+    /// require('string')
+    /// require(`string`)
+    /// require(`foo${bar}qux`) // Any number of expressions and quasis
+    /// ```
     pub fn is_require_call(&self) -> bool {
         if self.arguments.len() != 1 {
             return false;
