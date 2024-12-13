@@ -1825,6 +1825,94 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_expression(init);
         }
     }
+
+    fn visit_export_default_declaration_kind(&mut self, it: &ExportDefaultDeclarationKind<'a>) {
+        match it {
+            ExportDefaultDeclarationKind::FunctionDeclaration(it) => {
+                let flags = ScopeFlags::Function;
+                self.visit_function(it, flags);
+            }
+            ExportDefaultDeclarationKind::ClassDeclaration(it) => self.visit_class(it),
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => {
+                self.visit_ts_interface_declaration(it);
+            }
+            ExportDefaultDeclarationKind::Identifier(it) => {
+                // `export default ident`
+                //                 ^^^^^ -> can reference both type/value symbols
+                let prev_reference_flags = self.current_reference_flags;
+                self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
+                self.visit_identifier_reference(it);
+                self.current_reference_flags = prev_reference_flags;
+            }
+            match_expression!(ExportDefaultDeclarationKind) => {
+                self.visit_expression(it.to_expression());
+            }
+        }
+    }
+
+    fn visit_export_named_declaration(&mut self, it: &ExportNamedDeclaration<'a>) {
+        let kind = AstKind::ExportNamedDeclaration(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        if let Some(declaration) = &it.declaration {
+            self.visit_declaration(declaration);
+        }
+        let prev_reference_flags = self.current_reference_flags;
+        if it.export_kind.is_type() {
+            self.current_reference_flags = ReferenceFlags::Type;
+        }
+        self.visit_export_specifiers(&it.specifiers);
+        self.current_reference_flags = prev_reference_flags;
+
+        if let Some(source) = &it.source {
+            self.visit_string_literal(source);
+        }
+        if let Some(with_clause) = &it.with_clause {
+            self.visit_with_clause(with_clause);
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_export_specifier(&mut self, it: &ExportSpecifier<'a>) {
+        let kind = AstKind::ExportSpecifier(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+
+        self.current_node_flags |= NodeFlags::ExportSpecifier;
+        let prev_reference_flags = self.current_reference_flags;
+        // `export type { a }` or `export { type a }` -> `a` is a type reference
+        if prev_reference_flags.is_type() || it.export_kind.is_type() {
+            self.current_reference_flags = ReferenceFlags::Type;
+        } else {
+            // If the export specifier is not a explicit type export, we consider it as a potential
+            // type and value reference. If it references to a value in the end, we would delete the
+            // `ReferenceFlags::Type` flag in `fn resolve_references_for_current_scope`.
+            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
+        }
+
+        self.visit_module_export_name(&it.local);
+        self.visit_module_export_name(&it.exported);
+
+        self.current_reference_flags = prev_reference_flags;
+        self.current_node_flags -= NodeFlags::ExportSpecifier;
+
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_export_assignment(&mut self, it: &TSExportAssignment<'a>) {
+        let kind = AstKind::TSExportAssignment(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        let prev_reference_flags = self.current_reference_flags;
+        // export = a;
+        //          ^ can reference type/value symbols
+        if it.expression.is_identifier_reference() {
+            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
+        }
+        self.visit_expression(&it.expression);
+        self.current_reference_flags = prev_reference_flags;
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -1846,26 +1934,6 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::ExportDefaultDeclaration(decl) => {
-                // `export default Ident`
-                //                 ^^^^^ -> Can reference both type binding and value
-                if matches!(decl.declaration, ExportDefaultDeclarationKind::Identifier(_)) {
-                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
-                }
-            }
-            AstKind::ExportSpecifier(s) => {
-                if s.export_kind.is_type()
-                    || matches!(self.nodes.parent_kind(self.current_node_id), Some(AstKind::ExportNamedDeclaration(decl)) if decl.export_kind.is_type())
-                {
-                    self.current_reference_flags = ReferenceFlags::Type;
-                } else {
-                    // If the export specifier is not a explicit type export, we consider it as a potential
-                    // type and value reference. If it references to a value in the end, we would delete the
-                    // `ReferenceFlags::Type` flag in `fn resolve_references_for_current_scope`.
-                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
-                }
-                self.current_node_flags |= NodeFlags::ExportSpecifier;
-            }
             AstKind::ImportSpecifier(specifier) => {
                 specifier.bind(self);
             }
@@ -1990,13 +2058,6 @@ impl<'a> SemanticBuilder<'a> {
                     }
                 }
             }
-            AstKind::TSExportAssignment(export) => {
-                // export = a;
-                //          ^ can reference value or type
-                if export.expression.is_identifier_reference() {
-                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
-                }
-            }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
@@ -2023,10 +2084,6 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
             }
-            AstKind::ExportSpecifier(_) => {
-                self.current_reference_flags = ReferenceFlags::empty();
-                self.current_node_flags -= NodeFlags::ExportSpecifier;
-            }
             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
             }
@@ -2039,9 +2096,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeName(_) => {
                 self.current_reference_flags -= ReferenceFlags::Type;
             }
-            AstKind::ExportDefaultDeclaration(_)
-            | AstKind::ExportNamedDeclaration(_)
-            | AstKind::TSTypeQuery(_)
+            AstKind::TSTypeQuery(_)
             // Clear the reference flags that are set in AstKind::PropertySignature
             | AstKind::PropertyKey(_) => {
                 self.current_reference_flags = ReferenceFlags::empty();
