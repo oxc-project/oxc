@@ -204,7 +204,7 @@ jobs:
           done
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2.7.5
+        uses: softprops/action-gh-release@v2.2.0
         with:
           body: ${{ steps.run.outputs.CHANGELOG }}
           draft: false

@@ -92,7 +92,7 @@ jobs:
 
       ### install musl dependencies ###
 
-      - uses: goto-bus-stop/setup-zig@v2.46.8
+      - uses: goto-bus-stop/setup-zig@v1.2.1
         if: ${{ contains(matrix.target, 'musl') }}
         with:
           version: 0.11.0
