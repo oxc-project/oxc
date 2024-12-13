@@ -32,11 +32,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let property = &member.property;
-        let property = ctx.ast.expression_string_literal(
-            property.span,
-            property.name.clone(),
-            Some(property.name.clone()),
-        );
+        let property =
+            ctx.ast.expression_string_literal(property.span, property.name.clone(), None);
         self.create_super_prop_get(member.span, property, ctx)
     }
 
