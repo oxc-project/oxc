@@ -23,7 +23,7 @@ jobs:
       - uses: taiki-e/checkout-action@v1.3.1
 
       - name: Check version changes
-        uses: EndBug/version-check@v2
+        uses: EndBug/version-check@v2.46.8
         id: version
         with:
           static-checking: localIsNew
@@ -86,12 +86,12 @@ jobs:
       - uses: taiki-e/checkout-action@v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.46.8
         with:
           tool: cross
 
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@v2.46.8
         with:
           shared-key: release-${{ matrix.target }}
 
@@ -204,7 +204,7 @@ jobs:
           done
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.46.8
         with:
           body: ${{ steps.run.outputs.CHANGELOG }}
           draft: false
