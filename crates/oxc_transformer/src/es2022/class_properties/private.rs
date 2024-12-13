@@ -1132,8 +1132,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // `o?.Foo.#self.self?.self.unicorn;` -> `(result ? void 0 : object)?.self.unicorn`
             //  ^^^^^^^^^^^^^^^^^ the object has transformed, if the current member is optional,
             //                    then we need to wrap it to a conditional expression
-            let object_owner = ctx.ast.move_expression(object);
-            *object = Self::wrap_conditional_check(result, object_owner, ctx);
+            let owned_object = ctx.ast.move_expression(object);
+            *object = Self::wrap_conditional_check(result, owned_object, ctx);
             None
         } else {
             Some(result)
@@ -1359,8 +1359,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // After the below transformation, the `callee` will be a temp variable.
         let result = self.transform_expression_to_wrap_nullish_check(callee, ctx);
-        let callee_owner = ctx.ast.move_expression(callee);
-        Self::substitute_callee_and_insert_context(call, callee_owner, context, ctx);
+        let owned_callee = ctx.ast.move_expression(callee);
+        Self::substitute_callee_and_insert_context(call, owned_callee, context, ctx);
         result
     }
 
