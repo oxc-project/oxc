@@ -2,11 +2,11 @@ use std::{cmp::Ordering, sync::Arc};
 
 use lazy_static::lazy_static;
 use oxc_allocator::{Address, Allocator, GetAddress};
-use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
+use oxc_ast::{ast::*, VisitMut};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
 use oxc_semantic::{IsGlobalReference, ScopeFlags, ScopeTree, SymbolTable};
-use oxc_span::{CompactStr, GetSpanMut, SourceType, SPAN};
+use oxc_span::{CompactStr, SourceType, SPAN};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{traverse_mut, Ancestor, Traverse, TraverseCtx};
 use rustc_hash::FxHashSet;
@@ -297,7 +297,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             .parse_expression()
             .unwrap();
 
-        RemoveSpan.visit_expression(&mut expr);
+        RemoveSpans.visit_expression(&mut expr);
 
         expr
     }
@@ -713,16 +713,10 @@ fn assignment_target_from_expr(expr: Expression) -> Option<AssignmentTarget> {
     }
 }
 
-struct RemoveSpan;
+struct RemoveSpans;
 
-impl<'ast> VisitMut<'ast> for RemoveSpan {
-    fn visit_expression(&mut self, it: &mut Expression<'ast>) {
-        *it.span_mut() = SPAN;
-        walk_mut::walk_expression(self, it);
-    }
-
-    fn visit_object_property(&mut self, it: &mut ObjectProperty<'ast>) {
-        *it.span_mut() = SPAN;
-        walk_mut::walk_object_property(self, it);
+impl<'ast> VisitMut<'ast> for RemoveSpans {
+    fn visit_span(&mut self, span: &mut Span) {
+        *span = SPAN;
     }
 }
