@@ -36,7 +36,7 @@ jobs:
           issue-number: ${{ needs.prepare.outputs.pull-request-number }}
           body: Triggering Ecosystem CI https://github.com/oxc-project/oxlint-ecosystem-ci/actions/workflows/ci.yml
 
-      - uses: benc-uk/workflow-dispatch@v1.2.4
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/oxlint-ecosystem-ci
           workflow: ci.yml
@@ -52,7 +52,7 @@ jobs:
       actions: write
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: benc-uk/workflow-dispatch@v1.2.4
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/oxc-project.github.io
           workflow: release.yml
