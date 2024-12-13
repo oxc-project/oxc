@@ -214,8 +214,8 @@ jobs:
           fail_on_unmatched_files: true
           target_commitish: ${{ github.sha }}
 
-      - name: wait 1 minute for smoke test
-        run: sleep 60s
+      - name: wait 3 minutes for smoke test
+        run: sleep 180s
 
   smoke:
     needs: [check, publish]
@@ -240,7 +240,7 @@ jobs:
           npx oxlint@${OXLINT_VERSION} ./test.js
 
   eslint-plugin-oxlint:
-    needs: [check, publish]
+    needs: [check, publish, smoke]
     name: Update eslint-plugin-oxlint
     runs-on: ubuntu-latest
     steps:
