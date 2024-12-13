@@ -552,8 +552,6 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         // `foo` -> `foo === null || foo === void 0`
         if let Expression::Identifier(ident) = expr {
             if let Some(binding) = self.get_existing_binding_for_identifier(ident, ctx) {
-                let left1 = binding.create_read_expression(ctx);
-                let left2 = binding.create_read_expression(ctx);
                 if ident.name == "eval" {
                     // `eval?.()` is an indirect eval call transformed to `(0,eval)()`
                     let zero = ctx.ast.number_0();
@@ -561,13 +559,18 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                     let expressions = ctx.ast.vec_from_array([zero, original_callee]);
                     *expr = ctx.ast.expression_sequence(SPAN, expressions);
                 }
-                self.set_binding_context(binding);
-                if self.ctx.assumptions.no_document_all {
+
+                let left1 = binding.create_read_expression(ctx);
+                let replacement = if self.ctx.assumptions.no_document_all {
                     // `foo === null`
-                    return self.wrap_null_check(left1, ctx);
-                }
-                // `foo === null || foo === void 0`
-                return self.wrap_optional_check(left1, left2, ctx);
+                    self.wrap_null_check(left1, ctx)
+                } else {
+                    // `foo === null || foo === void 0`
+                    let left2 = binding.create_read_expression(ctx);
+                    self.wrap_optional_check(left1, left2, ctx)
+                };
+                self.set_binding_context(binding);
+                return replacement;
             }
         }
 
