@@ -25,7 +25,7 @@ jobs:
           token: ${{ secrets.PAT }} # required for git tag push
           persist-credentials: false
 
-      - uses: Boshen/setup-rust@main
+      - uses: oxc-project/setup-rust@1.0.0
         with:
           cache-key: warm
           tools: cargo-release-oxc

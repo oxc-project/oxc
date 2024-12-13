@@ -66,7 +66,7 @@ jobs:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
 
-      - uses: Boshen/setup-rust@main
+      - uses: oxc-project/setup-rust@1.0.0
         with:
           cache-key: benchmark-${{ matrix.component }}
           save-cache: ${{ github.ref_name == 'main' }}
@@ -117,7 +117,7 @@ jobs:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
 
-      - uses: Boshen/setup-rust@main
+      - uses: oxc-project/setup-rust@1.0.0
         with:
           cache-key: benchmark-linter
           save-cache: ${{ github.ref_name == 'main' }}
@@ -208,7 +208,7 @@ jobs:
   # - name: Checkout Branch
   # uses: taiki-e/checkout-action@v1
 
-  # - uses: Boshen/setup-rust@main
+  # - uses: oxc-project/setup-rust@1.0.0
   # with:
   # shared-key: benchmark_napi
   # save-cache: ${{ github.ref_name == 'main' }}
