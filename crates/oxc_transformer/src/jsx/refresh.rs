@@ -566,8 +566,8 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
             let function = Argument::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
-                FunctionType::FunctionExpression,
                 SPAN,
+                FunctionType::FunctionExpression,
                 None,
                 false,
                 false,

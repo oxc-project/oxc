@@ -95,8 +95,8 @@ impl<'a> ParserImpl<'a> {
         );
 
         Ok(self.ast.alloc_class(
-            r#type,
             self.end_span(start_span),
+            r#type,
             decorators,
             id,
             type_parameters,
@@ -430,8 +430,8 @@ impl<'a> ParserImpl<'a> {
             MethodDefinitionType::MethodDefinition
         };
         Ok(self.ast.class_element_method_definition(
-            r#type,
             self.end_span(span),
+            r#type,
             decorators,
             key,
             value,
@@ -471,8 +471,8 @@ impl<'a> ParserImpl<'a> {
             PropertyDefinitionType::PropertyDefinition
         };
         Ok(self.ast.class_element_property_definition(
-            r#type,
             self.end_span(span),
+            r#type,
             decorators,
             key,
             value,
@@ -519,8 +519,8 @@ impl<'a> ParserImpl<'a> {
 
         let decorators = self.consume_decorators();
         Ok(self.ast.class_element_accessor_property(
-            r#type,
             self.end_span(span),
+            r#type,
             decorators,
             key,
             value,

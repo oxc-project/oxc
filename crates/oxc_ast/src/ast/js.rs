@@ -1570,8 +1570,8 @@ pub struct BindingRestElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct Function<'a> {
-    pub r#type: FunctionType,
     pub span: Span,
+    pub r#type: FunctionType,
     /// The function identifier. [`None`] for anonymous function expressions.
     pub id: Option<BindingIdentifier<'a>>,
     /// Is this a generator function?
@@ -1738,8 +1738,8 @@ pub struct YieldExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct Class<'a> {
-    pub r#type: ClassType,
     pub span: Span,
+    pub r#type: ClassType,
     /// Decorators applied to the class.
     ///
     /// Decorators are currently a stage 3 proposal. Oxc handles both TC39 and
@@ -1879,11 +1879,11 @@ pub enum ClassElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct MethodDefinition<'a> {
+    pub span: Span,
     /// Method definition type
     ///
     /// This will always be true when an `abstract` modifier is used on the method.
     pub r#type: MethodDefinitionType,
-    pub span: Span,
     #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
@@ -1918,8 +1918,8 @@ pub enum MethodDefinitionType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct PropertyDefinition<'a> {
-    pub r#type: PropertyDefinitionType,
     pub span: Span,
+    pub r#type: PropertyDefinitionType,
     /// Decorators applied to the property.
     ///
     /// See [`Decorator`] for more information.
@@ -2140,8 +2140,8 @@ pub enum AccessorPropertyType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct AccessorProperty<'a> {
-    pub r#type: AccessorPropertyType,
     pub span: Span,
+    pub r#type: AccessorPropertyType,
     /// Decorators applied to the accessor property.
     ///
     /// See [`Decorator`] for more information.

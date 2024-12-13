@@ -1,0 +1,36 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/exports/default/type-alias.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "A",
+        "node": "TSTypeAliasDeclaration",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "A",
+            "node_id": 6
+          }
+        ]
+      }
+    ]
+  }
+]

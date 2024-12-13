@@ -543,8 +543,8 @@ const _: () = {
 
     assert!(size_of::<Function>() == 104usize);
     assert!(align_of::<Function>() == 8usize);
-    assert!(offset_of!(Function, r#type) == 0usize);
-    assert!(offset_of!(Function, span) == 4usize);
+    assert!(offset_of!(Function, span) == 0usize);
+    assert!(offset_of!(Function, r#type) == 8usize);
     assert!(offset_of!(Function, id) == 16usize);
     assert!(offset_of!(Function, generator) == 48usize);
     assert!(offset_of!(Function, r#async) == 49usize);
@@ -603,8 +603,8 @@ const _: () = {
 
     assert!(size_of::<Class>() == 160usize);
     assert!(align_of::<Class>() == 8usize);
-    assert!(offset_of!(Class, r#type) == 0usize);
-    assert!(offset_of!(Class, span) == 4usize);
+    assert!(offset_of!(Class, span) == 0usize);
+    assert!(offset_of!(Class, r#type) == 8usize);
     assert!(offset_of!(Class, decorators) == 16usize);
     assert!(offset_of!(Class, id) == 48usize);
     assert!(offset_of!(Class, type_parameters) == 80usize);
@@ -629,8 +629,8 @@ const _: () = {
 
     assert!(size_of::<MethodDefinition>() == 80usize);
     assert!(align_of::<MethodDefinition>() == 8usize);
-    assert!(offset_of!(MethodDefinition, r#type) == 0usize);
-    assert!(offset_of!(MethodDefinition, span) == 4usize);
+    assert!(offset_of!(MethodDefinition, span) == 0usize);
+    assert!(offset_of!(MethodDefinition, r#type) == 8usize);
     assert!(offset_of!(MethodDefinition, decorators) == 16usize);
     assert!(offset_of!(MethodDefinition, key) == 48usize);
     assert!(offset_of!(MethodDefinition, value) == 64usize);
@@ -646,8 +646,8 @@ const _: () = {
 
     assert!(size_of::<PropertyDefinition>() == 104usize);
     assert!(align_of::<PropertyDefinition>() == 8usize);
-    assert!(offset_of!(PropertyDefinition, r#type) == 0usize);
-    assert!(offset_of!(PropertyDefinition, span) == 4usize);
+    assert!(offset_of!(PropertyDefinition, span) == 0usize);
+    assert!(offset_of!(PropertyDefinition, r#type) == 8usize);
     assert!(offset_of!(PropertyDefinition, decorators) == 16usize);
     assert!(offset_of!(PropertyDefinition, key) == 48usize);
     assert!(offset_of!(PropertyDefinition, value) == 64usize);
@@ -686,8 +686,8 @@ const _: () = {
 
     assert!(size_of::<AccessorProperty>() == 104usize);
     assert!(align_of::<AccessorProperty>() == 8usize);
-    assert!(offset_of!(AccessorProperty, r#type) == 0usize);
-    assert!(offset_of!(AccessorProperty, span) == 4usize);
+    assert!(offset_of!(AccessorProperty, span) == 0usize);
+    assert!(offset_of!(AccessorProperty, r#type) == 8usize);
     assert!(offset_of!(AccessorProperty, decorators) == 16usize);
     assert!(offset_of!(AccessorProperty, key) == 48usize);
     assert!(offset_of!(AccessorProperty, value) == 64usize);
@@ -2105,8 +2105,8 @@ const _: () = {
 
     assert!(size_of::<Function>() == 60usize);
     assert!(align_of::<Function>() == 4usize);
-    assert!(offset_of!(Function, r#type) == 0usize);
-    assert!(offset_of!(Function, span) == 4usize);
+    assert!(offset_of!(Function, span) == 0usize);
+    assert!(offset_of!(Function, r#type) == 8usize);
     assert!(offset_of!(Function, id) == 12usize);
     assert!(offset_of!(Function, generator) == 32usize);
     assert!(offset_of!(Function, r#async) == 33usize);
@@ -2165,8 +2165,8 @@ const _: () = {
 
     assert!(size_of::<Class>() == 92usize);
     assert!(align_of::<Class>() == 4usize);
-    assert!(offset_of!(Class, r#type) == 0usize);
-    assert!(offset_of!(Class, span) == 4usize);
+    assert!(offset_of!(Class, span) == 0usize);
+    assert!(offset_of!(Class, r#type) == 8usize);
     assert!(offset_of!(Class, decorators) == 12usize);
     assert!(offset_of!(Class, id) == 28usize);
     assert!(offset_of!(Class, type_parameters) == 48usize);
@@ -2191,8 +2191,8 @@ const _: () = {
 
     assert!(size_of::<MethodDefinition>() == 48usize);
     assert!(align_of::<MethodDefinition>() == 4usize);
-    assert!(offset_of!(MethodDefinition, r#type) == 0usize);
-    assert!(offset_of!(MethodDefinition, span) == 4usize);
+    assert!(offset_of!(MethodDefinition, span) == 0usize);
+    assert!(offset_of!(MethodDefinition, r#type) == 8usize);
     assert!(offset_of!(MethodDefinition, decorators) == 12usize);
     assert!(offset_of!(MethodDefinition, key) == 28usize);
     assert!(offset_of!(MethodDefinition, value) == 36usize);
@@ -2208,8 +2208,8 @@ const _: () = {
 
     assert!(size_of::<PropertyDefinition>() == 60usize);
     assert!(align_of::<PropertyDefinition>() == 4usize);
-    assert!(offset_of!(PropertyDefinition, r#type) == 0usize);
-    assert!(offset_of!(PropertyDefinition, span) == 4usize);
+    assert!(offset_of!(PropertyDefinition, span) == 0usize);
+    assert!(offset_of!(PropertyDefinition, r#type) == 8usize);
     assert!(offset_of!(PropertyDefinition, decorators) == 12usize);
     assert!(offset_of!(PropertyDefinition, key) == 28usize);
     assert!(offset_of!(PropertyDefinition, value) == 36usize);
@@ -2248,8 +2248,8 @@ const _: () = {
 
     assert!(size_of::<AccessorProperty>() == 56usize);
     assert!(align_of::<AccessorProperty>() == 4usize);
-    assert!(offset_of!(AccessorProperty, r#type) == 0usize);
-    assert!(offset_of!(AccessorProperty, span) == 4usize);
+    assert!(offset_of!(AccessorProperty, span) == 0usize);
+    assert!(offset_of!(AccessorProperty, r#type) == 8usize);
     assert!(offset_of!(AccessorProperty, decorators) == 12usize);
     assert!(offset_of!(AccessorProperty, key) == 28usize);
     assert!(offset_of!(AccessorProperty, value) == 36usize);

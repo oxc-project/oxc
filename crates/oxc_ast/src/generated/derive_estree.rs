@@ -1357,8 +1357,8 @@ impl Serialize for BindingRestElement<'_> {
 impl Serialize for Function<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", &self.r#type)?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("type", &self.r#type)?;
         map.serialize_entry("id", &self.id)?;
         map.serialize_entry("generator", &self.generator)?;
         map.serialize_entry("async", &self.r#async)?;
@@ -1470,8 +1470,8 @@ impl Serialize for YieldExpression<'_> {
 impl Serialize for Class<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", &self.r#type)?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("type", &self.r#type)?;
         map.serialize_entry("decorators", &self.decorators)?;
         map.serialize_entry("id", &self.id)?;
         map.serialize_entry("typeParameters", &self.type_parameters)?;
@@ -1523,8 +1523,8 @@ impl Serialize for ClassElement<'_> {
 impl Serialize for MethodDefinition<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", &self.r#type)?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("type", &self.r#type)?;
         map.serialize_entry("decorators", &self.decorators)?;
         map.serialize_entry("key", &self.key)?;
         map.serialize_entry("value", &self.value)?;
@@ -1556,8 +1556,8 @@ impl Serialize for MethodDefinitionType {
 impl Serialize for PropertyDefinition<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", &self.r#type)?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("type", &self.r#type)?;
         map.serialize_entry("decorators", &self.decorators)?;
         map.serialize_entry("key", &self.key)?;
         map.serialize_entry("value", &self.value)?;
@@ -1664,8 +1664,8 @@ impl Serialize for AccessorPropertyType {
 impl Serialize for AccessorProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("type", &self.r#type)?;
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
+        map.serialize_entry("type", &self.r#type)?;
         map.serialize_entry("decorators", &self.decorators)?;
         map.serialize_entry("key", &self.key)?;
         map.serialize_entry("value", &self.value)?;
