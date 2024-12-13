@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.41.0] - 2024-12-13
+
+### Features
+
+- 8991f33 ast: Add `visit_span` to `Visit` and `VisitMut` (#7816) (overlookmotel)
+
 ## [0.39.0] - 2024-12-04
 
 ### Bug Fixes

@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.41.0] - 2024-12-13
+
+- fb325dc ast: [**BREAKING**] `span` field must be the first element (#7821) (Boshen)
+
+- 96a26d3 ast: [**BREAKING**] Rename `is_strict` methods to `has_use_strict_directive` (#7783) (overlookmotel)
+
+### Features
+
+- 8991f33 ast: Add `visit_span` to `Visit` and `VisitMut` (#7816) (overlookmotel)
+- f7900ab ast: Add `ArrowFunctionExpression::has_use_strict_directive` method (#7784) (overlookmotel)
+
+### Refactor
+
+
 ## [0.40.0] - 2024-12-10
 
 - 72eab6c parser: [**BREAKING**] Stage 3 `import source` and `import defer` (#7706) (Boshen)
