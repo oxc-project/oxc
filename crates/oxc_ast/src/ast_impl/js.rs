@@ -321,10 +321,9 @@ impl ArrayExpressionElement<'_> {
 
 impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
     fn from(argument: Argument<'a>) -> Self {
-        if let Argument::SpreadElement(spread) = argument {
-            ArrayExpressionElement::SpreadElement(spread)
-        } else {
-            ArrayExpressionElement::from(argument.into_expression())
+        match argument {
+            Argument::SpreadElement(spread) => Self::SpreadElement(spread),
+            match_expression!(Argument) => Self::from(argument.into_expression()),
         }
     }
 }
