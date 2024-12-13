@@ -22,8 +22,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
-          token: ${{ secrets.PAT }} # required for git tag push
-          persist-credentials: false
+          token: ${{ secrets.OXC_BOT_PAT }} # required for git tag push
+          persist-credentials: true
 
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         with:
