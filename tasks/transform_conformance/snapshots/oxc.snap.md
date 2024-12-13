@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 107/122
+Passed: 109/122
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,18 +16,7 @@ Passed: 107/122
 * regexp
 
 
-# babel-plugin-transform-class-properties (8/11)
-* private-loose-tagged-template/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
-Scope children mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-
+# babel-plugin-transform-class-properties (9/11)
 * typescript/optional-call/input.ts
 Symbol reference IDs mismatch for "X":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(16)]

@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 564/927
+Passed: 578/927
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (178/264)
+# babel-plugin-transform-class-properties (192/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -297,46 +297,6 @@ x Output mismatch
 
 * assumption-setPublicClassFields/constructor-collision/input.js
 x Output mismatch
-
-* assumption-setPublicClassFields/foobar/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-
-* assumption-setPublicClassFields/regression-T7364/input.mjs
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(7)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(7): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(8)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(5): [ScopeId(6)]
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(9)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(9): []
-rebuilt        : ScopeId(8): [ScopeId(9)]
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(5))
-rebuilt        : ScopeId(9): Some(ScopeId(8))
 
 * assumption-setPublicClassFields/static-infer-name/input.js
 x Output mismatch
@@ -378,17 +338,6 @@ x Output mismatch
 * nested-class/super-property-in-decorator/input.js
 x Output mismatch
 
-* private/call/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
-Scope children mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-
 * private/class-shadow-builtins/input.mjs
 x Output mismatch
 
@@ -397,17 +346,6 @@ x Output mismatch
 
 * private/extracted-this/input.js
 x Output mismatch
-
-* private/foobar/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 
 * private/nested-class-computed-redeclared/input.js
 x Output mismatch
@@ -439,51 +377,11 @@ x Output mismatch
 * private/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
 
-* private/regression-T7364/input.mjs
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(7)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(7): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(8)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(5): [ScopeId(6)]
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(9)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(9): []
-rebuilt        : ScopeId(8): [ScopeId(9)]
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(5))
-rebuilt        : ScopeId(9): Some(ScopeId(8))
-
 * private/static-infer-name/input.js
 x Output mismatch
 
 * private/static-shadow/input.js
 x Output mismatch
-
-* private-loose/call/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
-Scope children mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 
 * private-loose/class-shadow-builtins/input.mjs
 x Output mismatch
@@ -493,17 +391,6 @@ x Output mismatch
 
 * private-loose/extracted-this/input.js
 x Output mismatch
-
-* private-loose/foobar/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 
 * private-loose/nested-class-computed-redeclared/input.js
 x Output mismatch
@@ -573,17 +460,6 @@ x Output mismatch
 * private-loose/static-infer-name/input.js
 x Output mismatch
 
-* public/call/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
-Scope children mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-
 * public/class-shadow-builtins/input.mjs
 x Output mismatch
 
@@ -598,46 +474,6 @@ x Output mismatch
 
 * public/extracted-this/input.js
 x Output mismatch
-
-* public/foobar/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-
-* public/regression-T7364/input.mjs
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(7)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(7): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(8)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(5): [ScopeId(6)]
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(9)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(9): []
-rebuilt        : ScopeId(8): [ScopeId(9)]
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(5))
-rebuilt        : ScopeId(9): Some(ScopeId(8))
 
 * public/static-infer-name/input.js
 x Output mismatch
@@ -654,46 +490,6 @@ x Output mismatch
 * public-loose/constructor-collision/input.js
 x Output mismatch
 
-* public-loose/foobar/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-
-* public-loose/regression-T7364/input.mjs
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(7)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(7): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(8)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(5): [ScopeId(6)]
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(9)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(9): []
-rebuilt        : ScopeId(8): [ScopeId(9)]
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(5))
-rebuilt        : ScopeId(9): Some(ScopeId(8))
-
 * public-loose/static-infer-name/input.js
 x Output mismatch
 
@@ -705,17 +501,6 @@ x Output mismatch
 
 * regression/6153/input.js
 x Output mismatch
-
-* regression/6154/input.js
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(6)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
-Scope children mismatch:
-after transform: ScopeId(6): []
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(5): Some(ScopeId(4))
 
 * regression/7951/input.mjs
 x Output mismatch
@@ -733,35 +518,6 @@ rebuilt        : SymbolId(2): ScopeId(0)
 Symbol scope ID mismatch for "_bar":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(3): ScopeId(0)
-
-* regression/T7364/input.mjs
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(7)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(7): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(8)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(5): [ScopeId(6)]
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(9)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(9): []
-rebuilt        : ScopeId(8): [ScopeId(9)]
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(5))
-rebuilt        : ScopeId(9): Some(ScopeId(8))
 
 
 # babel-plugin-transform-nullish-coalescing-operator (5/12)

@@ -531,7 +531,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) {
         // Get value
         let value = match &mut prop.value {
-            Some(value) => ctx.ast.move_expression(value),
+            Some(value) => {
+                self.transform_instance_initializer(value, ctx);
+                ctx.ast.move_expression(value)
+            }
             None => ctx.ast.void_0(SPAN),
         };
 
