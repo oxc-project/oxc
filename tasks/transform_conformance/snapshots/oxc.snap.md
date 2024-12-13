@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 108/121
+Passed: 108/122
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -33,7 +33,7 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (2/9)
+# babel-plugin-transform-typescript (2/10)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -143,6 +143,14 @@ rebuilt        : SymbolId(8): []
 Reference symbol mismatch for "Name":
 after transform: SymbolId(7) "Name"
 rebuilt        : SymbolId(5) "Name"
+
+* exports/type-and-non-type/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["ToastProps", "ToastViewport"]
+rebuilt        : ScopeId(0): ["ToastViewport"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
 
 * redeclarations/input.ts
 Scope children mismatch:
