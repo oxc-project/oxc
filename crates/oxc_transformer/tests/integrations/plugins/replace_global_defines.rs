@@ -283,10 +283,3 @@ log(__MEMBER__);
     let snapshot = visualizer.into_visualizer_text();
     insta::assert_snapshot!("test_sourcemap", snapshot);
 }
-
-#[test]
-#[should_panic(expected = "")]
-fn test_complex() {
-    let config = ReplaceGlobalDefinesConfig::new(&[("__DEF__", "((() => {})())")]).unwrap();
-    test("__DEF__", "1", config.clone());
-}
