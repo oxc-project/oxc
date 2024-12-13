@@ -211,12 +211,8 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let null_check = self.wrap_null_check(left1, ctx);
-        if self.ctx.assumptions.no_document_all {
-            null_check
-        } else {
-            let void0_check = Self::wrap_void0_check(left2, ctx);
-            Self::create_logical_expression(null_check, void0_check, ctx)
-        }
+        let void0_check = Self::wrap_void0_check(left2, ctx);
+        Self::create_logical_expression(null_check, void0_check, ctx)
     }
 
     /// Return `left || right`
@@ -566,6 +562,11 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                     *expr = ctx.ast.expression_sequence(SPAN, expressions);
                 }
                 self.set_binding_context(binding);
+                if self.ctx.assumptions.no_document_all {
+                    // `foo === null`
+                    return self.wrap_null_check(left1, ctx);
+                }
+                // `foo === null || foo === void 0`
                 return self.wrap_optional_check(left1, left2, ctx);
             }
         }
@@ -602,12 +603,17 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         // `(binding = expr)`
         let assignment_expression =
             Self::create_assignment_expression(temp_binding.create_write_target(ctx), expr, ctx);
-        // `(binding = expr) === null || binding === void 0`
-        let expr = self.wrap_optional_check(
-            assignment_expression,
-            temp_binding.create_read_expression(ctx),
-            ctx,
-        );
+        let expr = if self.ctx.assumptions.no_document_all {
+            // `(binding = expr) === null`
+            self.wrap_null_check(assignment_expression, ctx)
+        } else {
+            // `(binding = expr) === null || binding === void 0`
+            self.wrap_optional_check(
+                assignment_expression,
+                temp_binding.create_read_expression(ctx),
+                ctx,
+            )
+        };
 
         self.set_temp_binding(temp_binding);
         expr

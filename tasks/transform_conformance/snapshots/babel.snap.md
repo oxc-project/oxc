@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 579/927
+Passed: 580/927
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -526,7 +526,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-optional-chaining (31/45)
+# babel-plugin-transform-optional-chaining (32/45)
 * assumption-noDocumentAll/assignment/input.js
 Symbol reference IDs mismatch for "_obj$a":
 after transform: SymbolId(5): [ReferenceId(9), ReferenceId(10), ReferenceId(11)]
@@ -604,14 +604,11 @@ rebuilt        : ScopeId(10): Some(ScopeId(9))
 Symbol scope ID mismatch for "a":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(1): ScopeId(1)
-Symbol reference IDs mismatch for "_x":
-after transform: SymbolId(14): [ReferenceId(5), ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(2)]
 Symbol scope ID mismatch for "a":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(4): ScopeId(3)
 Symbol reference IDs mismatch for "a":
-after transform: SymbolId(3): [ReferenceId(1), ReferenceId(8), ReferenceId(9)]
+after transform: SymbolId(3): [ReferenceId(1), ReferenceId(7), ReferenceId(8)]
 rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(4)]
 Symbol scope ID mismatch for "b":
 after transform: SymbolId(4): ScopeId(2)
@@ -623,7 +620,7 @@ Symbol scope ID mismatch for "b":
 after transform: SymbolId(7): ScopeId(3)
 rebuilt        : SymbolId(8): ScopeId(5)
 Symbol reference IDs mismatch for "_a$b":
-after transform: SymbolId(15): [ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15)]
+after transform: SymbolId(15): [ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13)]
 rebuilt        : SymbolId(9): [ReferenceId(5), ReferenceId(7), ReferenceId(8), ReferenceId(9)]
 Symbol scope ID mismatch for "a":
 after transform: SymbolId(9): ScopeId(4)
@@ -632,89 +629,48 @@ Symbol scope ID mismatch for "b":
 after transform: SymbolId(10): ScopeId(4)
 rebuilt        : SymbolId(12): ScopeId(7)
 Symbol reference IDs mismatch for "_a$b2":
-after transform: SymbolId(16): [ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21)]
+after transform: SymbolId(16): [ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18)]
 rebuilt        : SymbolId(13): [ReferenceId(10), ReferenceId(12), ReferenceId(13), ReferenceId(14)]
 Symbol scope ID mismatch for "a":
 after transform: SymbolId(12): ScopeId(5)
 rebuilt        : SymbolId(15): ScopeId(9)
 Symbol reference IDs mismatch for "a":
-after transform: SymbolId(12): [ReferenceId(4), ReferenceId(22), ReferenceId(23)]
+after transform: SymbolId(12): [ReferenceId(4), ReferenceId(19), ReferenceId(20)]
 rebuilt        : SymbolId(15): [ReferenceId(15), ReferenceId(17)]
 Symbol scope ID mismatch for "b":
 after transform: SymbolId(13): ScopeId(5)
 rebuilt        : SymbolId(16): ScopeId(9)
 Symbol reference IDs mismatch for "_a$b3":
-after transform: SymbolId(17): [ReferenceId(24), ReferenceId(25), ReferenceId(26)]
+after transform: SymbolId(17): [ReferenceId(21), ReferenceId(22), ReferenceId(23)]
 rebuilt        : SymbolId(17): [ReferenceId(16), ReferenceId(18)]
 
 * assumption-noDocumentAll/memoize/input.js
 Symbol reference IDs mismatch for "foo":
-after transform: SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(8), ReferenceId(10), ReferenceId(11), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(35), ReferenceId(54), ReferenceId(55), ReferenceId(56), ReferenceId(60), ReferenceId(64), ReferenceId(65), ReferenceId(76), ReferenceId(77)]
+after transform: SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(8), ReferenceId(10), ReferenceId(11), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(35), ReferenceId(48), ReferenceId(49), ReferenceId(50), ReferenceId(54), ReferenceId(57), ReferenceId(58), ReferenceId(68), ReferenceId(69)]
 rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(12), ReferenceId(16), ReferenceId(19), ReferenceId(23), ReferenceId(26), ReferenceId(30), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(36), ReferenceId(38), ReferenceId(39), ReferenceId(41), ReferenceId(43), ReferenceId(44), ReferenceId(46), ReferenceId(48), ReferenceId(50), ReferenceId(55), ReferenceId(56), ReferenceId(58), ReferenceId(63)]
 Symbol reference IDs mismatch for "_foo$bar":
 after transform: SymbolId(2): [ReferenceId(29), ReferenceId(30), ReferenceId(31)]
 rebuilt        : SymbolId(2): [ReferenceId(3), ReferenceId(5)]
-Symbol reference IDs mismatch for "_foo$get":
-after transform: SymbolId(3): [ReferenceId(36), ReferenceId(37), ReferenceId(38)]
-rebuilt        : SymbolId(3): [ReferenceId(11), ReferenceId(14)]
-Symbol reference IDs mismatch for "_foo$bar2":
-after transform: SymbolId(4): [ReferenceId(39), ReferenceId(40), ReferenceId(41)]
-rebuilt        : SymbolId(4): [ReferenceId(15), ReferenceId(17)]
-Symbol reference IDs mismatch for "_foo$bar3":
-after transform: SymbolId(5): [ReferenceId(42), ReferenceId(43), ReferenceId(44)]
-rebuilt        : SymbolId(5): [ReferenceId(18), ReferenceId(21)]
-Symbol reference IDs mismatch for "_foo$bar$baz":
-after transform: SymbolId(6): [ReferenceId(45), ReferenceId(46), ReferenceId(47)]
-rebuilt        : SymbolId(6): [ReferenceId(22), ReferenceId(24)]
-Symbol reference IDs mismatch for "_foo$bar$baz2":
-after transform: SymbolId(7): [ReferenceId(48), ReferenceId(49), ReferenceId(50)]
-rebuilt        : SymbolId(7): [ReferenceId(25), ReferenceId(28)]
-Symbol reference IDs mismatch for "_foo$bar4":
-after transform: SymbolId(8): [ReferenceId(51), ReferenceId(52), ReferenceId(53)]
-rebuilt        : SymbolId(8): [ReferenceId(29), ReferenceId(31)]
 Symbol reference IDs mismatch for "_foo$bar5":
-after transform: SymbolId(9): [ReferenceId(57), ReferenceId(58), ReferenceId(59)]
+after transform: SymbolId(9): [ReferenceId(51), ReferenceId(52), ReferenceId(53)]
 rebuilt        : SymbolId(9): [ReferenceId(35), ReferenceId(37)]
-Symbol reference IDs mismatch for "_foo$bar6":
-after transform: SymbolId(10): [ReferenceId(61), ReferenceId(62), ReferenceId(63)]
-rebuilt        : SymbolId(10): [ReferenceId(40), ReferenceId(42)]
 Symbol reference IDs mismatch for "_foo$bar7":
-after transform: SymbolId(11): [ReferenceId(66), ReferenceId(67), ReferenceId(68)]
+after transform: SymbolId(11): [ReferenceId(59), ReferenceId(60), ReferenceId(61)]
 rebuilt        : SymbolId(11): [ReferenceId(45), ReferenceId(47)]
-Symbol reference IDs mismatch for "_foo$bar8":
-after transform: SymbolId(12): [ReferenceId(69), ReferenceId(70), ReferenceId(71), ReferenceId(75)]
-rebuilt        : SymbolId(12): [ReferenceId(49), ReferenceId(52), ReferenceId(54)]
 Symbol reference IDs mismatch for "_foo$bar8$baz":
-after transform: SymbolId(13): [ReferenceId(72), ReferenceId(73), ReferenceId(74)]
+after transform: SymbolId(13): [ReferenceId(64), ReferenceId(65), ReferenceId(66)]
 rebuilt        : SymbolId(13): [ReferenceId(51), ReferenceId(53)]
 Symbol reference IDs mismatch for "_foo$bar9":
-after transform: SymbolId(14): [ReferenceId(78), ReferenceId(79), ReferenceId(80), ReferenceId(84)]
+after transform: SymbolId(14): [ReferenceId(70), ReferenceId(71), ReferenceId(72), ReferenceId(76)]
 rebuilt        : SymbolId(14): [ReferenceId(57), ReferenceId(60), ReferenceId(62)]
 Symbol reference IDs mismatch for "_foo$bar9$baz":
-after transform: SymbolId(15): [ReferenceId(81), ReferenceId(82), ReferenceId(83)]
+after transform: SymbolId(15): [ReferenceId(73), ReferenceId(74), ReferenceId(75)]
 rebuilt        : SymbolId(15): [ReferenceId(59), ReferenceId(61)]
 
 * assumption-noDocumentAll/optional-eval-call/input.js
-Symbol reference IDs mismatch for "_eval":
-after transform: SymbolId(1): [ReferenceId(20), ReferenceId(21), ReferenceId(22)]
-rebuilt        : SymbolId(0): [ReferenceId(10), ReferenceId(12)]
-Symbol reference IDs mismatch for "_eval2":
-after transform: SymbolId(2): [ReferenceId(23), ReferenceId(24), ReferenceId(25)]
-rebuilt        : SymbolId(1): [ReferenceId(13), ReferenceId(15)]
-Symbol reference IDs mismatch for "_foo$eval":
-after transform: SymbolId(3): [ReferenceId(26), ReferenceId(27), ReferenceId(28)]
-rebuilt        : SymbolId(2): [ReferenceId(16), ReferenceId(18)]
-Symbol reference IDs mismatch for "_eval$foo":
-after transform: SymbolId(4): [ReferenceId(30), ReferenceId(31), ReferenceId(32)]
-rebuilt        : SymbolId(3): [ReferenceId(21), ReferenceId(23)]
 Unresolved reference IDs mismatch for "eval":
-after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(10), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(33)]
+after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(10), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(29)]
 rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(14), ReferenceId(22), ReferenceId(24)]
-
-* assumption-noDocumentAll/super-method-call/input.js
-Symbol reference IDs mismatch for "_super$method":
-after transform: SymbolId(2): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
-rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2)]
 
 * general/cast-to-boolean/input.js
 Bindings mismatch:
