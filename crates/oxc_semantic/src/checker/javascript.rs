@@ -975,8 +975,8 @@ fn super_private(span: Span) -> OxcDiagnostic {
 
 pub fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBuilder<'_>) {
     if let MemberExpression::PrivateFieldExpression(private_expr) = member_expr {
-        // super.#m
-        if let Expression::Super(_) = &private_expr.object {
+        // `super.#m`
+        if private_expr.object.is_super() {
             ctx.error(super_private(private_expr.span));
         }
     }
