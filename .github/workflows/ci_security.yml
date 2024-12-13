@@ -26,9 +26,9 @@ jobs:
           persist-credentials: false
 
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
-
-      - name: Install zizmor 
-        run: cargo install zizmor
+        with:
+          cache-key: zizmor
+          tools: zizmor
 
       - name: Run zizmor 🌈
         run: zizmor --format sarif . > results.sarif
