@@ -28,7 +28,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Check vscode version changes
-        uses: EndBug/version-check@v2.46.8
+        uses: EndBug/version-check@v2.1.5
         id: version
         with:
           diff-search: true
@@ -86,7 +86,7 @@ jobs:
           tool: cross
 
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.46.8
+        uses: Swatinem/rust-cache@v2.7.5
         with:
           shared-key: release-${{ matrix.target }}
 
