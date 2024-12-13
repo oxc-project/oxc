@@ -485,37 +485,42 @@ impl<'a> SemanticBuilder<'a> {
             let bindings = self.scope.get_bindings(self.current_scope_id);
             if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
                 let symbol_flags = self.symbols.get_flags(symbol_id);
-
-                let resolved_references = &mut self.symbols.resolved_references[symbol_id];
-
                 references.retain(|&reference_id| {
                     let reference = &mut self.symbols.references[reference_id];
 
-                    let flags = reference.flags();
-                    if flags.is_type() && symbol_flags.can_be_referenced_by_type()
-                        || flags.is_value() && symbol_flags.can_be_referenced_by_value()
-                        || flags.is_value_as_type()
-                            && (symbol_flags.can_be_referenced_by_value()
-                                || symbol_flags.is_type_import())
-                    {
-                        if flags.is_value_as_type() {
-                            // Resolve pending type references (e.g., from `typeof` expressions) to proper type references.
-                            *reference.flags_mut() = ReferenceFlags::Type;
-                        } else if symbol_flags.is_value() && !flags.is_type_only() {
-                            // The non type-only ExportSpecifier can reference a type/value symbol,
-                            // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
-                            *reference.flags_mut() -= ReferenceFlags::Type;
-                        } else {
-                            // If the symbol is a type symbol and reference flag is not type-only, remove the value flag.
-                            *reference.flags_mut() -= ReferenceFlags::Value;
-                        }
+                    let flags = reference.flags_mut();
 
-                        reference.set_symbol_id(symbol_id);
-                        resolved_references.push(reference_id);
-                        false
-                    } else {
-                        true
+                    // Determine the symbol whether can be referenced by this reference.
+                    let resolved = (flags.is_value() && symbol_flags.can_be_referenced_by_value())
+                        || (flags.is_type() && symbol_flags.can_be_referenced_by_type())
+                        || (flags.is_value_as_type()
+                            && symbol_flags.can_be_referenced_by_value_as_type());
+
+                    if !resolved {
+                        return true;
                     }
+
+                    if symbol_flags.is_value() && flags.is_value() {
+                        // The non type-only ExportSpecifier can reference both type/value symbols,
+                        // if the symbol is a value symbol and reference flag is not type-only,
+                        // remove the type flag. For example: `const B = 1; export { B };`
+                        *flags -= ReferenceFlags::Type;
+                    } else {
+                        // 1. ReferenceFlags::ValueAsType -> ReferenceFlags::Type
+                        // `const ident = 0; typeof ident`
+                        //                          ^^^^^ -> The ident is a value symbols,
+                        //                                   but it used as a type.
+                        // 2. ReferenceFlags::Value | ReferenceFlags::Type -> ReferenceFlags::Type
+                        // `type ident = string; export default ident;
+                        //                                      ^^^^^ We have confirmed the symbol is
+                        //                                            not a value symbol, so we need to
+                        //                                            make sure the reference is a type only.
+                        *flags = ReferenceFlags::Type;
+                    }
+                    reference.set_symbol_id(symbol_id);
+                    self.symbols.resolved_references[symbol_id].push(reference_id);
+
+                    false
                 });
 
                 if references.is_empty() {
