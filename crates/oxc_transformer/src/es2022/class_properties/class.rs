@@ -12,6 +12,8 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
+use crate::common::helper_loader::Helper;
+
 use super::{
     super::ClassStaticBlock,
     constructor::InstanceInitsInsertLocation,
@@ -22,7 +24,6 @@ use super::{
     },
     ClassBindings, ClassProperties, FxIndexMap,
 };
-use crate::common::helper_loader::Helper;
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform class expression.

@@ -1,9 +1,9 @@
-mod partial_loader;
-mod source;
-
 use std::{error::Error, fmt, path::Path};
 
 use oxc_span::SourceType;
+
+mod partial_loader;
+mod source;
 pub use partial_loader::{PartialLoader, LINT_PARTIAL_LOADER_EXT};
 pub use source::JavaScriptSource;
 

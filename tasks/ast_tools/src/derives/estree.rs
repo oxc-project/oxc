@@ -3,7 +3,6 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::FxHashMap;
 
-use super::{define_derive, Derive};
 use crate::{
     markers::ESTreeStructTagMode,
     schema::{
@@ -11,6 +10,8 @@ use crate::{
         EnumDef, FieldDef, GetGenerics, GetIdent, Schema, StructDef, TypeDef,
     },
 };
+
+use super::{define_derive, Derive};
 
 pub struct DeriveESTree;
 

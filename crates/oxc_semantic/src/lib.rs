@@ -36,17 +36,15 @@ mod stats;
 mod symbol;
 mod unresolved_stack;
 
-use class::ClassTable;
+pub use builder::{SemanticBuilder, SemanticBuilderReturn};
+pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
+pub use node::{AstNode, AstNodes};
+pub use reference::Reference;
+pub use scope::ScopeTree;
+pub use stats::Stats;
+pub use symbol::{IsGlobalReference, SymbolTable};
 
-pub use crate::{
-    builder::{SemanticBuilder, SemanticBuilderReturn},
-    jsdoc::{JSDoc, JSDocFinder, JSDocTag},
-    node::{AstNode, AstNodes},
-    reference::Reference,
-    scope::ScopeTree,
-    stats::Stats,
-    symbol::{IsGlobalReference, SymbolTable},
-};
+use class::ClassTable;
 
 /// Semantic analysis of a JavaScript/TypeScript program.
 ///

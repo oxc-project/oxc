@@ -1,6 +1,9 @@
 use std::hash::Hash;
 
 use itertools::Itertools;
+use phf::phf_set;
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPatternKind,
@@ -15,8 +18,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
 use oxc_span::{Atom, GetSpan, Span};
-use phf::phf_set;
-use rustc_hash::FxHashSet;
 
 use crate::{
     ast_util::{
@@ -2114,11 +2115,11 @@ fn test() {
         "export function useCanvasZoomOrScroll() {
            useEffect(() => {
                let wheelStopTimeoutId: { current: number | undefined } = { current: undefined };
-       
+
                wheelStopTimeoutId = requestAnimationFrameTimeout(() => {
                    setLastInteraction?.(null);
                }, 300);
-       
+
                return () => {
                    if (wheelStopTimeoutId.current !== undefined) {
                        console.log('h1');

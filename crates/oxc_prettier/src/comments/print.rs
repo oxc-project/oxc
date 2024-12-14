@@ -1,8 +1,9 @@
 use oxc_allocator::Vec;
 use oxc_span::Span;
 
-use super::{CommentFlags, DanglingCommentsPrintOptions};
 use crate::{ir::Doc, Prettier};
+
+use super::{CommentFlags, DanglingCommentsPrintOptions};
 
 impl<'a> Prettier<'a> {
     #[must_use]

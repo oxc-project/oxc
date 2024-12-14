@@ -1,9 +1,10 @@
 use std::{borrow::Cow, ops::Deref, path::Path};
 
 use nonmax::NonMaxU32;
-use oxc_index::{Idx, IndexVec};
 use schemars::{gen, schema::Schema, JsonSchema};
 use serde::{de, ser, Deserialize, Serialize};
+
+use oxc_index::{Idx, IndexVec};
 
 use crate::{config::OxlintRules, LintPlugins};
 

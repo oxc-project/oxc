@@ -10,8 +10,9 @@ use oxc_ast::ast::{
 };
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use super::options::RewriteExtensionsMode;
 use crate::TypeScriptOptions;
+
+use super::options::RewriteExtensionsMode;
 
 pub struct TypeScriptRewriteExtensions {
     mode: RewriteExtensionsMode,

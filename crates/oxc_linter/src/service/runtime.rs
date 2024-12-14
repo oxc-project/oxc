@@ -7,24 +7,26 @@ use std::{
     sync::Arc,
 };
 
+use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
-use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
-use rustc_hash::FxHashSet;
 
-use super::{
-    module_cache::{ModuleCache, ModuleState},
-    LintServiceOptions,
-};
 use crate::{
     loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
     module_record::ModuleRecord,
     utils::read_to_string,
     Fixer, Linter, Message,
+};
+
+use super::{
+    module_cache::{ModuleCache, ModuleState},
+    LintServiceOptions,
 };
 
 pub struct Runtime {

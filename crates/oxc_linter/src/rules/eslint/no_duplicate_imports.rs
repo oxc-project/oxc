@@ -1,7 +1,8 @@
+use rustc_hash::FxHashMap;
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,

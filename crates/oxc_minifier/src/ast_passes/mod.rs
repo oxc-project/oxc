@@ -1,3 +1,7 @@
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
+use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+
 mod collapse_variable_declarations;
 mod exploit_assigns;
 mod peephole_fold_constants;
@@ -10,9 +14,6 @@ mod statement_fusion;
 
 pub use collapse_variable_declarations::CollapseVariableDeclarations;
 pub use exploit_assigns::ExploitAssigns;
-use oxc_allocator::Vec;
-use oxc_ast::ast::*;
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 pub use peephole_fold_constants::PeepholeFoldConstants;
 pub use peephole_minimize_conditions::PeepholeMinimizeConditions;
 pub use peephole_remove_dead_code::PeepholeRemoveDeadCode;

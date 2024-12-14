@@ -40,6 +40,7 @@
 //! * Class static initialization blocks TC39 proposal: <https://github.com/tc39/proposal-class-static-block>
 
 use itoa::Buffer as ItoaBuffer;
+
 use oxc_allocator::String as ArenaString;
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;

@@ -1,12 +1,12 @@
-mod async_to_generator;
-mod options;
-
-pub use async_to_generator::{AsyncGeneratorExecutor, AsyncToGenerator};
-pub use options::ES2017Options;
 use oxc_ast::ast::{Expression, Function, Statement};
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
+
+mod async_to_generator;
+mod options;
+pub use async_to_generator::{AsyncGeneratorExecutor, AsyncToGenerator};
+pub use options::ES2017Options;
 
 #[allow(dead_code)]
 pub struct ES2017<'a, 'ctx> {

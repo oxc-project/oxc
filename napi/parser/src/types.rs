@@ -1,6 +1,7 @@
 use std::mem;
 
 use napi_derive::napi;
+
 use oxc_napi::OxcError;
 
 use crate::magic_string::MagicString;

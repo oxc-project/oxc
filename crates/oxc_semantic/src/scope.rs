@@ -1,6 +1,8 @@
 use std::mem;
 
 use indexmap::IndexMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
+
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
 use oxc_syntax::{
@@ -9,7 +11,6 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
-use rustc_hash::{FxBuildHasher, FxHashMap};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 

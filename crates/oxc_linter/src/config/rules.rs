@@ -1,6 +1,5 @@
 use std::{borrow::Cow, fmt};
 
-use oxc_diagnostics::{Error, OxcDiagnostic};
 use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
 use serde::{
@@ -8,6 +7,8 @@ use serde::{
     ser::SerializeMap,
     Deserialize, Serialize,
 };
+
+use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use crate::{
     rules::{RuleEnum, RULES},
@@ -344,11 +345,12 @@ mod test {
     use serde::Deserialize;
     use serde_json::{json, Value};
 
-    use super::{OxlintRules, RuleSet};
     use crate::{
         rules::{RuleEnum, RULES},
         AllowWarnDeny, RuleWithSeverity,
     };
+
+    use super::{OxlintRules, RuleSet};
 
     #[test]
     fn test_parse_rules() {

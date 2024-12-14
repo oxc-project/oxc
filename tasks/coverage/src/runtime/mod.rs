@@ -1,9 +1,9 @@
-mod test262_status;
-
 use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
+
+use serde_json::json;
 
 use oxc::{
     allocator::Allocator,
@@ -15,14 +15,15 @@ use oxc::{
     transformer::{HelperLoaderMode, TransformOptions, Transformer},
 };
 use oxc_tasks_common::agent;
-use serde_json::json;
-use test262_status::get_v8_test262_failure_paths;
 
 use crate::{
     suite::{Case, TestResult},
     test262::{Test262Case, TestFlag},
     workspace_root,
 };
+
+mod test262_status;
+use test262_status::get_v8_test262_failure_paths;
 
 static SKIP_FEATURES: &[&str] = &[
     // Node's version of V8 doesn't implement these

@@ -1,15 +1,15 @@
-mod nullish_coalescing_operator;
-mod optional_chaining;
-mod options;
-
-use nullish_coalescing_operator::NullishCoalescingOperator;
-pub use optional_chaining::OptionalChaining;
-pub use options::ES2020Options;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
+
+mod nullish_coalescing_operator;
+mod optional_chaining;
+mod options;
+use nullish_coalescing_operator::NullishCoalescingOperator;
+pub use optional_chaining::OptionalChaining;
+pub use options::ES2020Options;
 
 pub struct ES2020<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,

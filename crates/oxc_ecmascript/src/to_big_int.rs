@@ -1,5 +1,6 @@
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
+
 use oxc_ast::ast::{BigIntLiteral, Expression};
 use oxc_syntax::operator::UnaryOperator;
 

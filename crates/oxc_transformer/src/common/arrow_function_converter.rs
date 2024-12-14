@@ -89,6 +89,8 @@
 
 use compact_str::CompactString;
 use indexmap::IndexMap;
+use rustc_hash::{FxBuildHasher, FxHashSet};
+
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
@@ -99,7 +101,6 @@ use oxc_syntax::{
     symbol::SymbolFlags,
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
-use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use crate::EnvOptions;
 

@@ -1,4 +1,6 @@
 use lazy_static::lazy_static;
+use phf::phf_map;
+
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
@@ -6,7 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_map;
 
 use crate::{
     context::LintContext,

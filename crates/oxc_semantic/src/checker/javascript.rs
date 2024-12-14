@@ -1,3 +1,6 @@
+use phf::{phf_set, Set};
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_ecmascript::{IsSimpleParameterList, PropName};
@@ -7,8 +10,6 @@ use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     scope::ScopeFlags,
 };
-use phf::{phf_set, Set};
-use rustc_hash::FxHashMap;
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration, AstNode};
 

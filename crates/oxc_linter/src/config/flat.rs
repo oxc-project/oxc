@@ -7,11 +7,12 @@ use std::{
 use dashmap::DashMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
+use crate::{rules::RULES, LintPlugins, RuleWithSeverity};
+
 use super::{
     overrides::{OverrideId, OxlintOverrides},
     LintConfig,
 };
-use crate::{rules::RULES, LintPlugins, RuleWithSeverity};
 
 type AppliedOverrideHash = u64;
 type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;

@@ -2,7 +2,6 @@ use convert_case::{Case, Casing};
 use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use super::define_generator;
 use crate::{
     output::Output,
     schema::{
@@ -11,6 +10,8 @@ use crate::{
     },
     Generator, TypeId,
 };
+
+use super::define_generator;
 
 const CUSTOM_TYPESCRIPT: &str = include_str!("../../../../crates/oxc_ast/custom_types.d.ts");
 

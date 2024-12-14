@@ -1,3 +1,5 @@
+use phf::{phf_set, Set};
+
 use oxc_ast::{
     ast::{
         Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, ObjectProperty,
@@ -8,7 +10,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::{phf_set, Set};
 
 use crate::{
     ast_util::is_method_call,

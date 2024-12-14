@@ -1,3 +1,8 @@
+use oxc_ast::ast::*;
+use oxc_traverse::{Traverse, TraverseCtx};
+
+use crate::context::TransformCtx;
+
 mod async_generator_functions;
 mod object_rest_spread;
 mod options;
@@ -5,10 +10,6 @@ mod options;
 pub use async_generator_functions::AsyncGeneratorFunctions;
 pub use object_rest_spread::{ObjectRestSpread, ObjectRestSpreadOptions};
 pub use options::ES2018Options;
-use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
-
-use crate::context::TransformCtx;
 
 pub struct ES2018<'a, 'ctx> {
     options: ES2018Options,

@@ -3,12 +3,13 @@ use itertools::Itertools;
 use quote::{format_ident, quote};
 use syn::{parse_quote, Arm, ImplItemFn, Variant};
 
-use super::define_generator;
 use crate::{
     output::{output_path, Output},
     schema::{GetIdent, Schema, ToType},
     Generator,
 };
+
+use super::define_generator;
 
 pub struct AstKindGenerator;
 

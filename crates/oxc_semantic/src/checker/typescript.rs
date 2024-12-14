@@ -1,10 +1,11 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, PropName};
 use oxc_span::{Atom, GetSpan, Span};
-use rustc_hash::FxHashMap;
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
 

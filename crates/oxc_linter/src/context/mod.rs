@@ -1,9 +1,7 @@
 #![allow(rustdoc::private_intra_doc_links)] // useful for intellisense
-mod host;
 
 use std::{ops::Deref, path::Path, rc::Rc};
 
-pub(crate) use host::ContextHost;
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::Semantic;
@@ -17,6 +15,9 @@ use crate::{
     javascript_globals::GLOBALS,
     AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
+
+mod host;
+pub(crate) use host::ContextHost;
 
 #[derive(Clone)]
 #[must_use]

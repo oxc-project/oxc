@@ -1,4 +1,5 @@
 use napi_derive::napi;
+
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};

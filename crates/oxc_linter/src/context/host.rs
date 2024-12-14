@@ -3,7 +3,6 @@ use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 use oxc_semantic::Semantic;
 use oxc_span::SourceType;
 
-use super::{plugin_name_to_prefix, LintContext};
 use crate::{
     config::{LintConfig, LintPlugins},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
@@ -13,6 +12,8 @@ use crate::{
     options::LintOptions,
     utils, FrameworkFlags, RuleWithSeverity,
 };
+
+use super::{plugin_name_to_prefix, LintContext};
 
 /// Stores shared information about a file being linted.
 ///

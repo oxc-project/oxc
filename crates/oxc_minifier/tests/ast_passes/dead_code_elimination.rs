@@ -1,4 +1,5 @@
 use cow_utils::CowUtils;
+
 use oxc_minifier::CompressOptions;
 
 fn test(source_text: &str, expected: &str) {

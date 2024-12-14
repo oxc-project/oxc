@@ -1,15 +1,18 @@
-mod is_literal_value;
-mod value;
-mod value_type;
-
 use std::{borrow::Cow, cmp::Ordering};
 
 use num_bigint::BigInt;
 use num_traits::Zero;
+
 use oxc_ast::ast::*;
 
-pub use self::{is_literal_value::IsLiteralValue, value::ConstantValue, value_type::ValueType};
 use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber};
+
+mod is_literal_value;
+mod value;
+mod value_type;
+pub use is_literal_value::IsLiteralValue;
+pub use value::ConstantValue;
+pub use value_type::ValueType;
 
 pub trait ConstantEvaluation<'a> {
     fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {

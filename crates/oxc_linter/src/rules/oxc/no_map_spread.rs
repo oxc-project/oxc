@@ -1,5 +1,7 @@
 use std::ops::Deref;
 
+use serde::{Deserialize, Serialize};
+
 use oxc_ast::{
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
@@ -11,7 +13,6 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
-use serde::{Deserialize, Serialize};
 
 use crate::{
     ast_util::{is_method_call, leftmost_identifier_reference},

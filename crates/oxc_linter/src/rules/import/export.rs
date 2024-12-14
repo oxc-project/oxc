@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 
+use rustc_hash::{FxHashMap, FxHashSet};
+
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{context::LintContext, rule::Rule, ModuleRecord};
 

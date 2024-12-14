@@ -4,6 +4,7 @@ use std::{
 };
 
 use cow_utils::CowUtils;
+
 use oxc::{
     allocator::Allocator,
     codegen::{CodeGenerator, CodegenOptions},

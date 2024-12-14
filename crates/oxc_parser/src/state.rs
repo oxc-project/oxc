@@ -1,5 +1,6 @@
-use oxc_ast::ast::{AssignmentExpression, Decorator};
 use rustc_hash::{FxHashMap, FxHashSet};
+
+use oxc_ast::ast::{AssignmentExpression, Decorator};
 
 #[derive(Default)]
 pub struct ParserState<'a> {

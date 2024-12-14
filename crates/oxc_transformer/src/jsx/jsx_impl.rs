@@ -100,15 +100,16 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
+use crate::{
+    es2018::{ObjectRestSpread, ObjectRestSpreadOptions},
+    TransformCtx,
+};
+
 use super::{
     diagnostics,
     jsx_self::JsxSelf,
     jsx_source::JsxSource,
     options::{JsxOptions, JsxRuntime},
-};
-use crate::{
-    es2018::{ObjectRestSpread, ObjectRestSpreadOptions},
-    TransformCtx,
 };
 
 pub struct JsxImpl<'a, 'ctx> {

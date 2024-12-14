@@ -1,5 +1,6 @@
-use oxc::syntax::module_record::{self, ModuleRecord};
 use rustc_hash::FxHashMap;
+
+use oxc::syntax::module_record::{self, ModuleRecord};
 
 use crate::types::{
     EcmaScriptModule, ExportExportName, ExportExportNameKind, ExportImportName,

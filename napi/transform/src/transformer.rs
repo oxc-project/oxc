@@ -8,6 +8,8 @@ use std::{
 
 use napi::Either;
 use napi_derive::napi;
+use rustc_hash::FxHashMap;
+
 use oxc::{
     codegen::CodegenReturn,
     diagnostics::OxcDiagnostic,
@@ -20,7 +22,6 @@ use oxc::{
 };
 use oxc_napi::OxcError;
 use oxc_sourcemap::napi::SourceMap;
-use rustc_hash::FxHashMap;
 
 use crate::IsolatedDeclarationsOptions;
 

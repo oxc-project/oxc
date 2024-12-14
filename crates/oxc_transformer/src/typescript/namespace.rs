@@ -1,3 +1,5 @@
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::BoundNames;
@@ -8,13 +10,13 @@ use oxc_syntax::{
     symbol::SymbolFlags,
 };
 use oxc_traverse::{Traverse, TraverseCtx};
-use rustc_hash::FxHashSet;
+
+use crate::TransformCtx;
 
 use super::{
     diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
     TypeScriptOptions,
 };
-use crate::TransformCtx;
 
 pub struct TypeScriptNamespace<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,

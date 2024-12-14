@@ -145,13 +145,14 @@
 //! * Class properties TC39 proposal: <https://github.com/tc39/proposal-class-fields>
 
 use indexmap::IndexMap;
+use rustc_hash::FxBuildHasher;
+use serde::Deserialize;
+
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_syntax::scope::ScopeId;
 use oxc_traverse::{Traverse, TraverseCtx};
-use rustc_hash::FxBuildHasher;
-use serde::Deserialize;
 
 use crate::TransformCtx;
 

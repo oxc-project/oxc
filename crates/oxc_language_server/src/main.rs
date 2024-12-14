@@ -1,5 +1,3 @@
-mod linter;
-
 use std::{fmt::Debug, path::PathBuf, str::FromStr};
 
 use dashmap::DashMap;
@@ -7,7 +5,6 @@ use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
 use log::{debug, error, info};
-use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
 use rustc_hash::FxBuildHasher;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
@@ -26,7 +23,11 @@ use tower_lsp::{
     Client, LanguageServer, LspService, Server,
 };
 
+use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
+
 use crate::linter::{DiagnosticReport, ServerLinter};
+
+mod linter;
 
 type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 
