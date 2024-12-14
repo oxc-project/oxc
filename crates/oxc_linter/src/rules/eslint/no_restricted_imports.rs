@@ -69,7 +69,7 @@ declare_oxc_lint!(
     /// export { foo } from "bar";
     /// ```
     NoRestrictedImports,
-    style,
+    nursery,
 );
 
 impl Rule for NoRestrictedImports {
