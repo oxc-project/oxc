@@ -237,6 +237,7 @@ console.log(
     );
 }
 
+#[cfg(not(miri))]
 #[test]
 fn test_sourcemap() {
     let config = ReplaceGlobalDefinesConfig::new(&[
