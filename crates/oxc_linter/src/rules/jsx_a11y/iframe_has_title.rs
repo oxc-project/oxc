@@ -66,9 +66,7 @@ impl Rule for IframeHasTitle {
             return;
         };
 
-        let Some(name) = get_element_type(ctx, jsx_el) else {
-            return;
-        };
+        let name = get_element_type(ctx, jsx_el);
 
         if name != "iframe" {
             return;

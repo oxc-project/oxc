@@ -3,7 +3,8 @@ use std::borrow::Cow;
 use oxc_ast::{
     ast::{
         CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXChild, JSXElement, JSXExpression, JSXOpeningElement, MemberExpression,
+        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXMemberExpression,
+        JSXMemberExpressionObject, JSXOpeningElement, MemberExpression,
     },
     match_member_expression, AstKind,
 };
@@ -65,14 +66,13 @@ pub fn is_hidden_from_screen_reader<'a>(
     ctx: &LintContext<'a>,
     node: &JSXOpeningElement<'a>,
 ) -> bool {
-    if let Some(name) = get_element_type(ctx, node) {
-        if name.eq_ignore_ascii_case("input") {
-            if let Some(item) = has_jsx_prop_ignore_case(node, "type") {
-                let hidden = get_string_literal_prop_value(item);
+    let name = get_element_type(ctx, node);
+    if name.eq_ignore_ascii_case("input") {
+        if let Some(item) = has_jsx_prop_ignore_case(node, "type") {
+            let hidden = get_string_literal_prop_value(item);
 
-                if hidden.is_some_and(|val| val.eq_ignore_ascii_case("hidden")) {
-                    return true;
-                }
+            if hidden.is_some_and(|val| val.eq_ignore_ascii_case("hidden")) {
+                return true;
             }
         }
     }
@@ -204,14 +204,34 @@ pub fn get_parent_component<'a, 'b>(
     None
 }
 
+fn get_jsx_mem_expr_name<'a>(jsx_mem_expr: &JSXMemberExpression) -> Cow<'a, str> {
+    let prefix = match &jsx_mem_expr.object {
+        JSXMemberExpressionObject::IdentifierReference(id) => Cow::Borrowed(id.name.as_str()),
+        JSXMemberExpressionObject::MemberExpression(mem_expr) => {
+            Cow::Owned(format!("{}.{}", get_jsx_mem_expr_name(mem_expr), mem_expr.property.name))
+        }
+        JSXMemberExpressionObject::ThisExpression(_) => Cow::Borrowed("this"),
+    };
+
+    Cow::Owned(format!("{}.{}", prefix, jsx_mem_expr.property.name))
+}
+
 /// Resolve element type(name) using jsx-a11y settings
 /// ref:
 /// <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/getElementType.js>
 pub fn get_element_type<'c, 'a>(
     context: &'c LintContext<'a>,
     element: &JSXOpeningElement<'a>,
-) -> Option<Cow<'c, str>> {
-    let name = element.name.get_identifier_name()?;
+) -> Cow<'c, str> {
+    let name = match &element.name {
+        JSXElementName::Identifier(id) => Cow::Borrowed(id.as_ref().name.as_str()),
+        JSXElementName::IdentifierReference(id) => Cow::Borrowed(id.as_ref().name.as_str()),
+        JSXElementName::NamespacedName(namespaced) => {
+            Cow::Owned(format!("{}:{}", namespaced.namespace.name, namespaced.property.name))
+        }
+        JSXElementName::MemberExpression(jsx_mem_expr) => get_jsx_mem_expr_name(jsx_mem_expr),
+        JSXElementName::ThisExpression(_) => Cow::Borrowed("this"),
+    };
 
     let OxlintSettings { jsx_a11y, .. } = context.settings();
 
@@ -225,10 +245,10 @@ pub fn get_element_type<'c, 'a>(
         .and_then(JSXAttributeValue::as_string_literal)
         .map(|s| s.value.as_str());
 
-    let raw_type = polymorphic_prop.unwrap_or_else(|| name.as_str());
-    match jsx_a11y.components.get(raw_type) {
-        Some(component) => Some(Cow::Borrowed(component)),
-        None => Some(Cow::Borrowed(raw_type)),
+    let raw_type = polymorphic_prop.map_or(name, Cow::Borrowed);
+    match jsx_a11y.components.get(raw_type.as_ref()) {
+        Some(component) => Cow::Borrowed(component),
+        None => raw_type,
     }
 }
 

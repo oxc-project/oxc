@@ -100,9 +100,8 @@ impl Rule for NoAutofocus {
         let Some(autofocus) = has_jsx_prop(&jsx_el.opening_element, "autoFocus") else {
             return;
         };
-        let Some(element_type) = get_element_type(ctx, &jsx_el.opening_element) else {
-            return;
-        };
+
+        let element_type = get_element_type(ctx, &jsx_el.opening_element);
 
         if self.ignore_non_dom {
             if HTML_TAG.contains(&element_type) {

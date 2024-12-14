@@ -110,9 +110,7 @@ impl Rule for MediaHasCaption {
             return;
         };
 
-        let Some(element_name) = get_element_type(ctx, jsx_el) else {
-            return;
-        };
+        let element_name = get_element_type(ctx, jsx_el);
 
         let is_audio_or_video =
             self.0.audio.contains(&element_name) || self.0.video.contains(&element_name);
@@ -158,9 +156,8 @@ impl Rule for MediaHasCaption {
         } else {
             parent.children.iter().any(|child| match child {
                 JSXChild::Element(child_el) => {
-                    let Some(child_name) = get_element_type(ctx, &child_el.opening_element) else {
-                        return false;
-                    };
+                    let child_name = get_element_type(ctx, &child_el.opening_element);
+
                     self.0.track.contains(&child_name)
                         && child_el.opening_element.attributes.iter().any(|attr| {
                             if let JSXAttributeItem::Attribute(attr) = attr {

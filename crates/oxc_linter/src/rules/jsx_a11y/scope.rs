@@ -65,9 +65,7 @@ impl Rule for Scope {
             }
         };
 
-        let Some(element_type) = get_element_type(ctx, jsx_el) else {
-            return;
-        };
+        let element_type = get_element_type(ctx, jsx_el);
 
         if element_type == "th" {
             return;
