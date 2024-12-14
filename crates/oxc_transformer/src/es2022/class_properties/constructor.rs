@@ -228,17 +228,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let has_super_class = class.super_class.is_some();
         let mut stmts = ctx.ast.vec_with_capacity(inits.len() + usize::from(has_super_class));
 
-        // Add `super(...args);` statement and `...args` param if class has a super class.
-        // `constructor(...args) { super(...args); /* prop initialization */ }`
-        // TODO: One of initializers could access a var called `args` from outer scope.
-        // Use a UID `_args` instead of `args` here.
+        // Add `super(..._args);` statement and `..._args` param if class has a super class.
+        // `constructor(..._args) { super(..._args); /* prop initialization */ }`
         let mut params_rest = None;
         if has_super_class {
-            let args_binding = ctx.generate_binding(
-                Atom::from("args"),
-                constructor_scope_id,
-                SymbolFlags::FunctionScopedVariable,
-            );
+            let args_binding =
+                ctx.generate_uid("args", constructor_scope_id, SymbolFlags::FunctionScopedVariable);
             params_rest = Some(
                 ctx.ast.alloc_binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx)),
             );
