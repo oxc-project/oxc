@@ -71,25 +71,46 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// `super.method()` -> `_superPropGet(_Class, "method", _Class, 2)([])`
     /// `super.method(1)` -> `_superPropGet(_Class, "method", _Class, 2)([1])`
     //
-    // `#[inline]` so that compiler sees that `expr` is an `Expression::CallExpression`.
+    // `#[inline]` so can bail out fast without a function call if `callee` is not a member expression
+    // with `super` as member expression object (fairly rare).
+    // Actual transform is broken out into separate functions.
     #[inline]
-    pub(super) fn transform_super_call_expression(
+    pub(super) fn transform_call_expression_for_super_member_expr(
         &mut self,
-        expr: &mut Expression<'a>,
+        call_expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::CallExpression(call) = expr else { unreachable!() };
-        let callee = &mut call.callee;
-        match callee {
+        match &call_expr.callee {
             Expression::StaticMemberExpression(member) if member.object.is_super() => {
-                *callee = self.transform_static_member_expression_impl(member, true, ctx);
+                self.transform_call_expression_for_super_static_member_expr(call_expr, ctx);
             }
             Expression::ComputedMemberExpression(member) if member.object.is_super() => {
-                *callee = self.transform_computed_member_expression_impl(member, true, ctx);
+                self.transform_call_expression_for_super_computed_member_expr(call_expr, ctx);
             }
-            _ => return,
+            _ => {}
         };
-        Self::transform_super_call_expression_arguments(&mut call.arguments, ctx);
+    }
+
+    fn transform_call_expression_for_super_static_member_expr(
+        &mut self,
+        call_expr: &mut CallExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let callee = &mut call_expr.callee;
+        let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
+        *callee = self.transform_static_member_expression_impl(member, true, ctx);
+        Self::transform_super_call_expression_arguments(&mut call_expr.arguments, ctx);
+    }
+
+    fn transform_call_expression_for_super_computed_member_expr(
+        &mut self,
+        call_expr: &mut CallExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let callee = &mut call_expr.callee;
+        let Expression::ComputedMemberExpression(member) = callee else { unreachable!() };
+        *callee = self.transform_computed_member_expression_impl(member, true, ctx);
+        Self::transform_super_call_expression_arguments(&mut call_expr.arguments, ctx);
     }
 
     /// [A, B, C] -> [[A, B, C]]

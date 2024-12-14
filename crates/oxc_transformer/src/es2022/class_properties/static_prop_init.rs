@@ -212,9 +212,10 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             Expression::PrivateFieldExpression(_) => {
                 self.class_properties.transform_private_field_expression(expr, self.ctx);
             }
-            // `object.#prop()`
-            Expression::CallExpression(_) => {
-                self.class_properties.transform_super_call_expression(expr, self.ctx);
+            // `super.prop()` or `object.#prop()`
+            Expression::CallExpression(call_expr) => {
+                self.class_properties
+                    .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
                 self.class_properties.transform_call_expression(expr, self.ctx);
             }
             // `object.#prop = value`, `object.#prop += value`, `object.#prop ??= value` etc
