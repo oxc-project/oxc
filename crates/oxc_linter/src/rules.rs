@@ -135,6 +135,7 @@ mod eslint {
     pub mod no_var;
     pub mod no_void;
     pub mod no_with;
+    pub mod order;
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
@@ -625,6 +626,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
+    eslint::order,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
     eslint::prefer_object_has_own,
