@@ -108,6 +108,24 @@ fn named() {
 }
 
 #[test]
+fn string() {
+    let config = InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
+        "jquery",
+        Some("😊"),
+        "$",
+    )]);
+    test(
+        "$",
+        "
+        import { '😊' as $ } from 'jquery';
+        $
+        ;
+        ",
+        config,
+    );
+}
+
+#[test]
 fn keypaths() {
     // overwrites keypaths
     let config = InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
