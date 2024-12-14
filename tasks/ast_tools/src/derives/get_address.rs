@@ -1,12 +1,11 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
+use super::{define_derive, Derive};
 use crate::{
     schema::{EnumDef, Schema, ToType, TypeDef},
     util::TypeWrapper,
 };
-
-use super::{define_derive, Derive};
 
 pub struct DeriveGetAddress;
 

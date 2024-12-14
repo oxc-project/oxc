@@ -280,8 +280,8 @@ impl<'a> AstNodes<'a> {
 }
 
 impl<'a, 'n> IntoIterator for &'n AstNodes<'a> {
-    type Item = &'n AstNode<'a>;
     type IntoIter = std::slice::Iter<'n, AstNode<'a>>;
+    type Item = &'n AstNode<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.nodes.iter()

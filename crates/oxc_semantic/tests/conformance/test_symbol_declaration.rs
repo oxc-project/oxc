@@ -1,5 +1,7 @@
-use oxc_ast::ast::BindingPattern;
-use oxc_ast::{ast::BindingIdentifier, AstKind};
+use oxc_ast::{
+    ast::{BindingIdentifier, BindingPattern},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::symbol::SymbolId;

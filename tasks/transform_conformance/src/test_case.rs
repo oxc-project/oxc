@@ -4,12 +4,11 @@ use std::{
 };
 
 use cow_utils::CowUtils;
-use oxc::parser::ParseOptions;
 use oxc::{
     allocator::Allocator,
     codegen::{CodeGenerator, CodegenOptions},
     diagnostics::{NamedSource, OxcDiagnostic},
-    parser::Parser,
+    parser::{ParseOptions, Parser},
     span::{SourceType, VALID_EXTENSIONS},
     transformer::{BabelOptions, HelperLoaderMode, TransformOptions},
 };

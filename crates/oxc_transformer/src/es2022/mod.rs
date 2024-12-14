@@ -10,7 +10,6 @@ mod options;
 use class_properties::ClassProperties;
 pub use class_properties::ClassPropertiesOptions;
 use class_static_block::ClassStaticBlock;
-
 pub use options::ES2022Options;
 
 pub struct ES2022<'a, 'ctx> {

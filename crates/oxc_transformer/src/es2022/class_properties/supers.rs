@@ -6,9 +6,8 @@ use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_traverse::TraverseCtx;
 
-use crate::Helper;
-
 use super::ClassProperties;
+use crate::Helper;
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform static member expression where object is `super`.

@@ -7,6 +7,7 @@ use quote::ToTokens;
 use rustc_hash::FxHashMap;
 use syn::Type;
 
+use super::{define_pass, Pass};
 use crate::{
     codegen::EarlyCtx,
     layout::{KnownLayout, Layout},
@@ -14,8 +15,6 @@ use crate::{
     util::{NormalizeError, TypeAnalysis, TypeExt, TypeWrapper},
     Result,
 };
-
-use super::{define_pass, Pass};
 
 /// We use compiler to infer 64bit type layouts.
 #[cfg(not(target_pointer_width = "64"))]

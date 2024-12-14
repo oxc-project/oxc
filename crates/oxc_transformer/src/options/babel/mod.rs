@@ -6,10 +6,9 @@ use std::path::{Path, PathBuf};
 
 use serde::{de::DeserializeOwned, Deserialize};
 
-use crate::CompilerAssumptions;
-
 pub use self::env::{BabelEnvOptions, BabelModule, BabelTargets};
 pub(crate) use self::{plugins::BabelPlugins, presets::BabelPresets};
+use crate::CompilerAssumptions;
 
 /// Babel options
 ///

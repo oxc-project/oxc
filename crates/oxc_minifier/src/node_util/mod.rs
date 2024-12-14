@@ -10,6 +10,7 @@ pub struct Ctx<'a, 'b>(pub &'b TraverseCtx<'a>);
 
 impl<'a, 'b> Deref for Ctx<'a, 'b> {
     type Target = &'b TraverseCtx<'a>;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }

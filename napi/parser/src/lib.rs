@@ -10,7 +10,6 @@ use std::mem;
 
 use napi::{bindgen_prelude::AsyncTask, Task};
 use napi_derive::napi;
-
 use oxc::{
     allocator::Allocator,
     ast::CommentKind,

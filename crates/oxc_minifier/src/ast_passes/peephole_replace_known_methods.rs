@@ -216,6 +216,7 @@ impl PeepholeReplaceKnownMethods {
         #[expect(clippy::cast_lossless)]
         Some(ctx.ast.expression_numeric_literal(span, result as f64, None, NumberBase::Decimal))
     }
+
     fn try_fold_string_replace_or_string_replace_all<'a>(
         span: Span,
         call_expr: &CallExpression<'a>,

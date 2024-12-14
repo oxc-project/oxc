@@ -1,9 +1,10 @@
-use oxc_ast::ast::{CallExpression, ChainElement, Expression};
-use oxc_ast::{ast::MemberExpression, AstKind};
+use oxc_ast::{
+    ast::{CallExpression, ChainElement, Expression, MemberExpression},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::cmp::ContentEq;
-use oxc_span::{CompactStr, GetSpan};
+use oxc_span::{cmp::ContentEq, CompactStr, GetSpan};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 

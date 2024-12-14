@@ -1,8 +1,9 @@
 use std::str::FromStr;
 
-use crate::{codegen, test};
 use oxc_span::SourceType;
 use oxc_transformer::{ESTarget, TransformOptions};
+
+use crate::{codegen, test};
 
 #[test]
 fn es_target() {
@@ -77,7 +78,10 @@ fn target_list_fail() {
         ("asdf", "Invalid target 'asdf'."),
         ("es2020,es2020", "'es2020' is already specified."),
         ("chrome1,chrome1", "'chrome1' is already specified."),
-        ("chromeXXX", "All version numbers must be in the format \"X\", \"X.Y\", or \"X.Y.Z\" where X, Y, and Z are non-negative integers."),
+        (
+            "chromeXXX",
+            "All version numbers must be in the format \"X\", \"X.Y\", or \"X.Y.Z\" where X, Y, and Z are non-negative integers.",
+        ),
     ];
 
     for (target, expected) in targets {

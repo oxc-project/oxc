@@ -329,9 +329,9 @@ impl<'a> Fixer<'a> {
 
 #[cfg(test)]
 mod test {
-    use cow_utils::CowUtils;
     use std::borrow::Cow;
 
+    use cow_utils::CowUtils;
     use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::Span;
 

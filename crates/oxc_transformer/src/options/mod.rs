@@ -10,6 +10,11 @@ mod module;
 
 use std::path::PathBuf;
 
+use self::babel::BabelOptions;
+pub use self::{
+    browserslist_query::BrowserslistQuery, engine::Engine, engine_targets::EngineTargets,
+    env::EnvOptions, es_features::ESFeature, es_target::ESTarget, module::Module,
+};
 use crate::{
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
@@ -26,13 +31,6 @@ use crate::{
     typescript::TypeScriptOptions,
     ReactRefreshOptions,
 };
-
-pub use self::{
-    browserslist_query::BrowserslistQuery, engine::Engine, engine_targets::EngineTargets,
-    env::EnvOptions, es_features::ESFeature, es_target::ESTarget, module::Module,
-};
-
-use self::babel::BabelOptions;
 
 /// <https://babel.dev/docs/options>
 #[derive(Debug, Default, Clone)]

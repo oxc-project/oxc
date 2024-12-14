@@ -1,7 +1,6 @@
 use cow_utils::CowUtils;
 use num_bigint::BigInt;
 use num_traits::Num;
-
 use oxc_allocator::Box;
 use oxc_span::{Atom, Span};
 use oxc_syntax::number::BigintBase;

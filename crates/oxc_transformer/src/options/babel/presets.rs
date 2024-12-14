@@ -1,7 +1,6 @@
 use serde::Deserialize;
 
 use super::PluginPresetEntries;
-
 use crate::{EnvOptions, JsxOptions, TypeScriptOptions};
 
 #[derive(Debug, Default, Clone, Deserialize)]

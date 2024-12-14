@@ -2,14 +2,13 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Type;
 
+use super::define_generator;
 use crate::{
     output::{output_path, Output},
     schema::{FieldDef, Schema, ToType, TypeDef},
     util::ToIdent,
     Generator,
 };
-
-use super::define_generator;
 
 pub struct AssertLayouts;
 

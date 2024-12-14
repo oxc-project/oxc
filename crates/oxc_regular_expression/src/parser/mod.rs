@@ -8,8 +8,9 @@ pub use parser_impl::{ConstructorParser, LiteralParser};
 
 #[cfg(test)]
 mod test {
-    use crate::{ConstructorParser, LiteralParser, Options};
     use oxc_allocator::Allocator;
+
+    use crate::{ConstructorParser, LiteralParser, Options};
 
     #[test]
     fn should_pass() {

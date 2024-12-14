@@ -212,9 +212,11 @@ impl JsonSchema for LintPlugins {
     fn schema_name() -> String {
         "LintPlugins".to_string()
     }
+
     fn schema_id() -> std::borrow::Cow<'static, str> {
         std::borrow::Cow::Borrowed("LintPlugins")
     }
+
     fn json_schema(gen: &mut SchemaGenerator) -> Schema {
         gen.subschema_for::<Vec<&str>>()
     }

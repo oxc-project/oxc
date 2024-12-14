@@ -1,6 +1,5 @@
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
-
 use oxc_ast::ast::{BigIntLiteral, Expression};
 use oxc_syntax::operator::UnaryOperator;
 
@@ -35,15 +34,8 @@ impl<'a> ToBigInt<'a> for Expression<'a> {
             }
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::LogicalNot => {
-                    self.to_boolean().map(
-                        |boolean| {
-                            if boolean {
-                                BigInt::one()
-                            } else {
-                                BigInt::zero()
-                            }
-                        },
-                    )
+                    self.to_boolean()
+                        .map(|boolean| if boolean { BigInt::one() } else { BigInt::zero() })
                 }
                 UnaryOperator::UnaryNegation => {
                     unary_expr.argument.to_big_int().map(std::ops::Neg::neg)

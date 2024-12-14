@@ -6,12 +6,10 @@ use std::{borrow::Cow, cmp::Ordering};
 
 use num_bigint::BigInt;
 use num_traits::Zero;
-
 use oxc_ast::ast::*;
 
-use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber};
-
 pub use self::{is_literal_value::IsLiteralValue, value::ConstantValue, value_type::ValueType};
+use crate::{side_effects::MayHaveSideEffects, ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber};
 
 pub trait ConstantEvaluation<'a> {
     fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {

@@ -2,7 +2,6 @@ mod linter;
 
 use std::{fmt::Debug, path::PathBuf, str::FromStr};
 
-use crate::linter::{DiagnosticReport, ServerLinter};
 use dashmap::DashMap;
 use futures::future::join_all;
 use globset::Glob;
@@ -12,7 +11,6 @@ use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
 use rustc_hash::FxBuildHasher;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
-use tower_lsp::lsp_types::{NumberOrString, Position, Range};
 use tower_lsp::{
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
@@ -20,13 +18,15 @@ use tower_lsp::{
         CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        InitializeParams, InitializeResult, InitializedParams, OneOf, ServerCapabilities,
-        ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind, TextEdit, Url,
-        WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
+        InitializeParams, InitializeResult, InitializedParams, NumberOrString, OneOf, Position,
+        Range, ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind,
+        TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
         WorkspaceServerCapabilities,
     },
     Client, LanguageServer, LspService, Server,
 };
+
+use crate::linter::{DiagnosticReport, ServerLinter};
 
 type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 

@@ -1,7 +1,6 @@
-use rustc_hash::FxHashMap;
-
 use oxc_ast::{Comment, CommentKind};
 use oxc_syntax::identifier::is_line_terminator;
+use rustc_hash::FxHashMap;
 
 use crate::{Codegen, LegalComment};
 

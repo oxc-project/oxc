@@ -4,7 +4,6 @@ mod source;
 use std::{error::Error, fmt, path::Path};
 
 use oxc_span::SourceType;
-
 pub use partial_loader::{PartialLoader, LINT_PARTIAL_LOADER_EXT};
 pub use source::JavaScriptSource;
 

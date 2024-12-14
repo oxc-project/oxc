@@ -8,9 +8,8 @@ use oxc_ast::{
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 
-use crate::TraverseCtx;
-
 use super::MaybeBoundIdentifier;
+use crate::TraverseCtx;
 
 /// Info about a binding, from which one can create a `BindingIdentifier` or `IdentifierReference`s.
 ///

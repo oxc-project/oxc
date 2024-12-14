@@ -2,8 +2,6 @@
 
 use std::cell::{Cell, RefCell};
 
-use rustc_hash::FxHashMap;
-
 use oxc_ast::{ast::*, AstKind, Visit};
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
@@ -11,6 +9,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
+use rustc_hash::FxHashMap;
 
 use crate::{
     binder::Binder,

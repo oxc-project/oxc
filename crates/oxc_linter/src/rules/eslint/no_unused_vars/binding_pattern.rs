@@ -2,7 +2,6 @@ use oxc_ast::ast::*;
 use oxc_semantic::{Semantic, SymbolId};
 
 use super::{symbol::Symbol, NoUnusedVars};
-
 use crate::ModuleRecord;
 
 #[derive(Clone, Copy)]

@@ -92,8 +92,6 @@ use std::{
 };
 
 use indexmap::IndexMap;
-use rustc_hash::FxBuildHasher;
-
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::{ast::*, visit::walk, Visit};
 use oxc_diagnostics::OxcDiagnostic;
@@ -104,6 +102,7 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
+use rustc_hash::FxBuildHasher;
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 

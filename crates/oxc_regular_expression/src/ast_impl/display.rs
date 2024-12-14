@@ -4,8 +4,10 @@ use std::{
     iter::Peekable,
 };
 
-use crate::ast::*;
-use crate::surrogate_pair::{combine_surrogate_pair, is_lead_surrogate, is_trail_surrogate};
+use crate::{
+    ast::*,
+    surrogate_pair::{combine_surrogate_pair, is_lead_surrogate, is_trail_surrogate},
+};
 
 impl Display for Pattern<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -410,8 +412,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{LiteralParser, Options};
     use oxc_allocator::Allocator;
+
+    use crate::{LiteralParser, Options};
 
     type Case<'a> = (
         &'a str,

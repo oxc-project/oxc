@@ -1,4 +1,3 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
 use oxc_ast::{
     ast::{
         BindingPatternKind, ChainElement, Expression, FormalParameter, TSLiteral, TSType,
@@ -8,8 +7,9 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::GetSpan;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
+
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_inferrable_types_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Type can be trivially inferred from the initializer")

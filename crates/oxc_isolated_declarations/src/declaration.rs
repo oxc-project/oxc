@@ -1,17 +1,15 @@
 use std::cell::Cell;
 
 use oxc_allocator::{Box, CloneIn, Vec};
-use oxc_ast::ast::*;
-use oxc_ast::visit::walk_mut::walk_ts_signatures;
-use oxc_ast::{Visit, VisitMut};
+use oxc_ast::{ast::*, visit::walk_mut::walk_ts_signatures, Visit, VisitMut};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::diagnostics::accessor_must_have_explicit_return_type;
 use crate::{
     diagnostics::{
-        binding_element_export, inferred_type_of_expression, signature_computed_property_name,
+        accessor_must_have_explicit_return_type, binding_element_export,
+        inferred_type_of_expression, signature_computed_property_name,
         variable_must_have_explicit_type,
     },
     IsolatedDeclarations,

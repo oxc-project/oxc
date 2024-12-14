@@ -2,7 +2,6 @@ use oxc_ast::{
     ast::{BinaryOperator, Expression, UnaryOperator, VariableDeclarationKind},
     AstKind,
 };
-
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;

@@ -3,7 +3,6 @@ mod targets;
 use serde::Deserialize;
 
 pub use self::targets::BabelTargets;
-
 use crate::{options::EngineTargets, Module};
 
 fn default_as_true() -> bool {

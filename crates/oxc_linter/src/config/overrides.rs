@@ -1,10 +1,9 @@
 use std::{borrow::Cow, ops::Deref, path::Path};
 
 use nonmax::NonMaxU32;
+use oxc_index::{Idx, IndexVec};
 use schemars::{gen, schema::Schema, JsonSchema};
 use serde::{de, ser, Deserialize, Serialize};
-
-use oxc_index::{Idx, IndexVec};
 
 use crate::{config::OxlintRules, LintPlugins};
 
@@ -30,6 +29,7 @@ pub struct OxlintOverrides(IndexVec<OverrideId, OxlintOverride>);
 
 impl Deref for OxlintOverrides {
     type Target = IndexVec<OverrideId, OxlintOverride>;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -155,8 +155,9 @@ impl JsonSchema for GlobSet {
 mod test {
     #[test]
     fn test_globset() {
-        use super::*;
         use serde_json::{from_value, json};
+
+        use super::*;
 
         let config: OxlintOverride = from_value(json!({
             "files": ["*.tsx",],
@@ -175,8 +176,9 @@ mod test {
 
     #[test]
     fn test_parsing_plugins() {
-        use super::*;
         use serde_json::{from_value, json};
+
+        use super::*;
 
         let config: OxlintOverride = from_value(json!({
             "files": ["*.tsx"],

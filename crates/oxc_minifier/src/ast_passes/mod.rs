@@ -10,6 +10,9 @@ mod statement_fusion;
 
 pub use collapse_variable_declarations::CollapseVariableDeclarations;
 pub use exploit_assigns::ExploitAssigns;
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
+use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 pub use peephole_fold_constants::PeepholeFoldConstants;
 pub use peephole_minimize_conditions::PeepholeMinimizeConditions;
 pub use peephole_remove_dead_code::PeepholeRemoveDeadCode;
@@ -17,10 +20,6 @@ pub use peephole_replace_known_methods::PeepholeReplaceKnownMethods;
 pub use peephole_substitute_alternate_syntax::PeepholeSubstituteAlternateSyntax;
 pub use remove_syntax::RemoveSyntax;
 pub use statement_fusion::StatementFusion;
-
-use oxc_allocator::Vec;
-use oxc_ast::ast::*;
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 pub trait CompressorPass<'a>: Traverse<'a> {
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>);

@@ -1,8 +1,9 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashMap;
+
 use super::{DiagnosticReporter, Info};
 use crate::{Error, Severity};
-use rustc_hash::FxHashMap;
 
 #[derive(Default)]
 pub struct CheckstyleReporter {

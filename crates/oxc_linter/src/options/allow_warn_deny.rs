@@ -78,6 +78,7 @@ fn invalid_int_severity<D: Display>(value: D) -> OxcDiagnostic {
 
 impl TryFrom<u64> for AllowWarnDeny {
     type Error = OxcDiagnostic;
+
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Self::Allow),

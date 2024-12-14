@@ -33,6 +33,8 @@ mod stats;
 mod symbol;
 mod unresolved_stack;
 
+use class::ClassTable;
+
 pub use crate::{
     builder::{SemanticBuilder, SemanticBuilderReturn},
     jsdoc::{JSDoc, JSDocFinder, JSDocTag},
@@ -42,7 +44,6 @@ pub use crate::{
     stats::Stats,
     symbol::{IsGlobalReference, SymbolTable},
 };
-use class::ClassTable;
 
 /// Semantic analysis of a JavaScript/TypeScript program.
 ///

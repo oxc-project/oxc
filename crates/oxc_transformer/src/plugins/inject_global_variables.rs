@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use cow_utils::CowUtils;
-
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_semantic::{ScopeTree, SymbolTable};

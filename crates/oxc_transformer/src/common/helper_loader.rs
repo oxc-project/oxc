@@ -67,9 +67,6 @@
 
 use std::{borrow::Cow, cell::RefCell};
 
-use rustc_hash::FxHashMap;
-use serde::Deserialize;
-
 use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
@@ -78,6 +75,8 @@ use oxc_ast::{
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
+use rustc_hash::FxHashMap;
+use serde::Deserialize;
 
 use crate::TransformCtx;
 

@@ -2,9 +2,8 @@ use oxc_ast::ast::{AssignmentTarget, Expression, IdentifierReference, SimpleAssi
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 
-use crate::TraverseCtx;
-
 use super::BoundIdentifier;
+use crate::TraverseCtx;
 
 /// A factory for generating `IdentifierReference`s.
 ///

@@ -1,5 +1,6 @@
-use crate::{snapshot, snapshot_options};
 use oxc_codegen::CodegenOptions;
+
+use crate::{snapshot, snapshot_options};
 
 #[test]
 fn ts() {
@@ -52,10 +53,10 @@ export type Component<
   | ConcreteComponent<Props, RawBindings, D, C, M, E, S>
   | ComponentPublicInstanceConstructor<Props>
 ",
-"(a || b) as any",
-"(a ** b) as any",
-"(function g() {}) as any",
-r#"
+        "(a || b) as any",
+        "(a ** b) as any",
+        "(function g() {}) as any",
+        r#"
 import defaultExport from "module-name";
 import * as name from "module-name";
 import { export1 } from "module-name";
@@ -88,7 +89,7 @@ export { name12, /* …, */ nameN } from "module-name";
 export { import1 as name13, import2 as name14, /* …, */ name15 } from "module-name";
 export { default, /* …, */ } from "module-name";
 export { default as name16 } from "module-name";
-"#
+"#,
     ];
 
     snapshot("ts", &cases);

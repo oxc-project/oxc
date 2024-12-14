@@ -37,11 +37,6 @@ impl<T> Default for SparseStack<T> {
 }
 
 impl<T> SparseStack<T> {
-    /// Maximum capacity for entries (either `Some` or `None`).
-    ///
-    /// Effectively unlimited on 64-bit systems.
-    pub const MAX_TOTAL_CAPACITY: usize = NonEmptyStack::<bool>::MAX_CAPACITY;
-
     /// Maximum capacity for filled entries (`Some`).
     ///
     /// Unless `size_of::<T>() == 1`, `MAX_FILLED_CAPACITY` is lower than [`MAX_TOTAL_CAPACITY`].
@@ -50,6 +45,10 @@ impl<T> SparseStack<T> {
     ///
     /// [`MAX_TOTAL_CAPACITY`]: Self::MAX_TOTAL_CAPACITY
     pub const MAX_FILLED_CAPACITY: usize = Stack::<T>::MAX_CAPACITY;
+    /// Maximum capacity for entries (either `Some` or `None`).
+    ///
+    /// Effectively unlimited on 64-bit systems.
+    pub const MAX_TOTAL_CAPACITY: usize = NonEmptyStack::<bool>::MAX_CAPACITY;
 
     /// Create new `SparseStack`.
     ///

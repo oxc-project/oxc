@@ -79,7 +79,6 @@ pub const IGNORE_TESTS: &[&str] = &[
     "typescript/as/as-const-embedded.ts",
     // Syntax recovery
     "typescript/error-recovery/",
-
     // + Not yet supported by OXC
     // Some items may be already declared in the above
     // ----------------------------------------------------------------------------------------------------------------------------------

@@ -368,8 +368,9 @@ impl EnablePlugins {
 
 #[cfg(test)]
 mod plugins {
-    use super::{EnablePlugins, OverrideToggle};
     use oxc_linter::LintPlugins;
+
+    use super::{EnablePlugins, OverrideToggle};
 
     #[test]
     fn test_override_default() {

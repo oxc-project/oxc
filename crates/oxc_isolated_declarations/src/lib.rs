@@ -27,8 +27,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, SourceType, SPAN};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::scope::ScopeTree;
-use diagnostics::function_with_assigning_properties;
+use crate::{diagnostics::function_with_assigning_properties, scope::ScopeTree};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct IsolatedDeclarationsOptions {

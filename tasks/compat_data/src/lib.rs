@@ -2,7 +2,6 @@ use std::{fs, str::FromStr};
 
 use oxc_tasks_common::project_root;
 use oxc_transformer::EngineTargets;
-
 use quote::quote;
 use serde::Deserialize;
 use syn::Ident;

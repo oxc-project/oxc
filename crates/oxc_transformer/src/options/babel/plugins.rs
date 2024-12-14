@@ -1,11 +1,10 @@
 use serde::Deserialize;
 
+use super::PluginPresetEntries;
 use crate::{
     es2015::ArrowFunctionsOptions, es2018::ObjectRestSpreadOptions, es2022::ClassPropertiesOptions,
     jsx::JsxOptions, TypeScriptOptions,
 };
-
-use super::PluginPresetEntries;
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 pub struct SyntaxTypeScriptOptions {

@@ -407,7 +407,12 @@ impl Tester {
         // If auto-fixes are reported, make sure some fix test cases are provided
         let rule = self.find_rule();
         let Some(fix_test_cases) = self.expect_fix.clone() else {
-            assert!(!rule.fix().has_fix(), "'{}/{}' reports that it can auto-fix violations, but no fix cases were provided. Please add fixer test cases with `tester.expect_fix()`", rule.plugin_name(), rule.name());
+            assert!(
+                !rule.fix().has_fix(),
+                "'{}/{}' reports that it can auto-fix violations, but no fix cases were provided. Please add fixer test cases with `tester.expect_fix()`",
+                rule.plugin_name(),
+                rule.name()
+            );
             return;
         };
 

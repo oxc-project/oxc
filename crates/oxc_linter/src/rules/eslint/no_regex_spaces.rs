@@ -143,6 +143,7 @@ impl<'a> Visit<'a> for ConsecutiveSpaceFinder {
             self.depth += 1;
         }
     }
+
     fn leave_node(&mut self, kind: RegExpAstKind<'a>) {
         if let RegExpAstKind::Quantifier(_) | RegExpAstKind::CharacterClass(_) = kind {
             self.depth -= 1;

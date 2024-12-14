@@ -1,7 +1,5 @@
 use std::{ops::ControlFlow, path::PathBuf};
 
-use rustc_hash::FxHashSet;
-
 use oxc::{
     allocator::Allocator,
     ast::{ast::Program, Comment},
@@ -16,6 +14,7 @@ use oxc::{
     CompilerInterface,
 };
 use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
+use rustc_hash::FxHashSet;
 
 use crate::suite::TestResult;
 

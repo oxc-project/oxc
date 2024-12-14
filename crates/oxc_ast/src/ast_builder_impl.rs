@@ -12,8 +12,7 @@ use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
-use crate::ast::*;
-use crate::AstBuilder;
+use crate::{ast::*, AstBuilder};
 
 /// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
 /// Pass `NONE` instead of `None::<Anything<'a>>`.

@@ -1,10 +1,8 @@
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
-use oxc_span::{GetSpan, Span};
-
-use crate::AstNode;
-
 use super::parser::JSDoc;
+use crate::AstNode;
 
 #[derive(Debug, Default)]
 pub struct JSDocFinder<'a> {

@@ -3,7 +3,6 @@
 
 use napi_derive::napi;
 use oxc_data_structures::rope::{get_line_column, Rope};
-
 // use oxc_sourcemap::napi::SourceMap;
 use self_cell::self_cell;
 use string_wizard::MagicString as MS;

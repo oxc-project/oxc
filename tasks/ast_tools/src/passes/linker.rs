@@ -2,9 +2,8 @@ use std::borrow::Cow;
 
 use syn::parse_quote;
 
-use crate::{codegen::EarlyCtx, rust_ast::Inherit, util::NormalizeError};
-
 use super::{define_pass, AstType, Pass, Result};
+use crate::{codegen::EarlyCtx, rust_ast::Inherit, util::NormalizeError};
 
 pub trait Unresolved {
     fn unresolved(&self) -> bool;

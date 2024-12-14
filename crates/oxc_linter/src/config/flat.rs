@@ -1,18 +1,17 @@
-use crate::LintPlugins;
-use crate::{rules::RULES, RuleWithSeverity};
-use rustc_hash::FxHashSet;
 use std::{
     hash::{BuildHasher, Hash, Hasher},
     path::Path,
     sync::Arc,
 };
 
+use dashmap::DashMap;
+use rustc_hash::{FxBuildHasher, FxHashSet};
+
 use super::{
     overrides::{OverrideId, OxlintOverrides},
     LintConfig,
 };
-use dashmap::DashMap;
-use rustc_hash::FxBuildHasher;
+use crate::{rules::RULES, LintPlugins, RuleWithSeverity};
 
 type AppliedOverrideHash = u64;
 type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;

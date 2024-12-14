@@ -1,5 +1,6 @@
-use crate::ToJsString;
 use oxc_ast::ast::*;
+
+use crate::ToJsString;
 
 pub trait ArrayJoin<'a> {
     /// `Array.prototype.join ( separator )`

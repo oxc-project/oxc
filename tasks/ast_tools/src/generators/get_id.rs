@@ -6,14 +6,13 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
+use super::define_generator;
 use crate::{
     output::{output_path, Output},
     schema::{Schema, TypeDef},
     util::ToIdent,
     Generator,
 };
-
-use super::define_generator;
 
 pub struct GetIdGenerator;
 

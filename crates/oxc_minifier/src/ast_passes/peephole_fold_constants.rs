@@ -260,7 +260,7 @@ impl<'a, 'b> PeepholeFoldConstants {
             | BinaryOperator::GreaterThan
             | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterEqualThan => {
-                return ctx.eval_binary_expression(e).map(|v| ctx.value_to_expr(e.span, v))
+                return ctx.eval_binary_expression(e).map(|v| ctx.value_to_expr(e.span, v));
             }
             BinaryOperator::Equality => Self::try_abstract_equality_comparison(left, right, ctx),
             BinaryOperator::Inequality => {

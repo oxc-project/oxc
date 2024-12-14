@@ -1,16 +1,22 @@
-use oxc_ast::ast::{
-    Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, ObjectProperty,
-    ObjectPropertyKind, StringLiteral,
+use oxc_ast::{
+    ast::{
+        Argument, Expression, JSXAttributeItem, JSXAttributeValue, JSXElementName, ObjectProperty,
+        ObjectPropertyKind, StringLiteral,
+    },
+    AstKind,
 };
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_set, Set};
 
-use crate::ast_util::is_method_call;
-use crate::utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call};
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    ast_util::is_method_call,
+    context::LintContext,
+    rule::Rule,
+    utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
+    AstNode,
+};
 
 fn missing_sandbox_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("An iframe element is missing a sandbox attribute")

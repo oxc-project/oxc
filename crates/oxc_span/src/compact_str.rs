@@ -281,9 +281,8 @@ macro_rules! format_compact_str {
 mod test {
     use compact_str::CompactString;
 
-    use crate::format_compact_str;
-
     use super::CompactStr;
+    use crate::format_compact_str;
 
     #[test]
     fn test_compactstr_eq() {

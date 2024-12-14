@@ -1,10 +1,11 @@
-use oxc_ast::{ast::BindingIdentifier, AstKind};
+use oxc_ast::{
+    ast::{BindingIdentifier, *},
+    AstKind,
+};
 use oxc_ecmascript::ToBoolean;
 use oxc_semantic::{AstNode, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
-
-use oxc_ast::ast::*;
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:

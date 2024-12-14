@@ -7,6 +7,7 @@ use quote::{format_ident, quote, ToTokens};
 use rustc_hash::FxHashMap;
 use syn::{parse_quote, Ident};
 
+use super::define_generator;
 use crate::{
     generators::ast_kind::BLACK_LIST as KIND_BLACK_LIST,
     markers::VisitArg,
@@ -15,8 +16,6 @@ use crate::{
     util::{StrExt, TokenStreamExt, TypeWrapper},
     Generator,
 };
-
-use super::define_generator;
 
 pub struct VisitGenerator;
 

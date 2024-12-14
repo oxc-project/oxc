@@ -8,8 +8,6 @@ use std::{
 
 use napi::Either;
 use napi_derive::napi;
-use rustc_hash::FxHashMap;
-
 use oxc::{
     codegen::CodegenReturn,
     diagnostics::OxcDiagnostic,
@@ -22,6 +20,7 @@ use oxc::{
 };
 use oxc_napi::OxcError;
 use oxc_sourcemap::napi::SourceMap;
+use rustc_hash::FxHashMap;
 
 use crate::IsolatedDeclarationsOptions;
 
@@ -629,7 +628,7 @@ pub fn transform(
             return TransformResult {
                 errors: vec![OxcError::new(format!("Incorrect lang '{lang}'"))],
                 ..Default::default()
-            }
+            };
         }
         None => {
             let mut source_type = SourceType::from_path(source_path).unwrap_or_default();
@@ -649,7 +648,7 @@ pub fn transform(
             return TransformResult {
                 errors: errors.into_iter().map(OxcError::from).collect(),
                 ..Default::default()
-            }
+            };
         }
     };
 

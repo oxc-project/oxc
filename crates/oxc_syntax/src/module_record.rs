@@ -2,7 +2,6 @@
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_span::{Atom, Span};
-
 use rustc_hash::FxHashMap;
 
 /// ESM Module Record

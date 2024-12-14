@@ -4,8 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::cmp::ContentEq;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{cmp::ContentEq, GetSpan, Span};
 use oxc_syntax::operator::LogicalOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};

@@ -583,7 +583,7 @@ fn test_functions() {
             console.log(message, interpolations);
         }
         ",
-        "declare function func(strings: any, ...values: any[]): object"
+        "declare function func(strings: any, ...values: any[]): object",
     ];
 
     let fail = vec![

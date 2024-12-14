@@ -11,8 +11,6 @@ use oxc_traverse::{
     ast_operations::get_var_name_from_node, Ancestor, BoundIdentifier, TraverseCtx,
 };
 
-use crate::{common::helper_loader::Helper, TransformCtx};
-
 use super::{
     private_props::ResolvedPrivateProp,
     utils::{
@@ -21,6 +19,7 @@ use super::{
     },
     ClassProperties,
 };
+use crate::{common::helper_loader::Helper, TransformCtx};
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform private field expression.

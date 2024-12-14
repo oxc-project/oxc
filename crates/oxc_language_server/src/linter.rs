@@ -8,23 +8,21 @@ use std::{
 
 use cow_utils::CowUtils;
 use log::debug;
-use rustc_hash::FxHashSet;
-use tower_lsp::lsp_types::{
-    self, CodeDescription, DiagnosticRelatedInformation, DiagnosticSeverity, NumberOrString,
-    Position, Range, Url,
-};
-
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{get_line_column, Rope};
 use oxc_diagnostics::{Error, NamedSource, Severity};
-use oxc_linter::loader::LINT_PARTIAL_LOADER_EXT;
 use oxc_linter::{
-    loader::{JavaScriptSource, Loader},
+    loader::{JavaScriptSource, Loader, LINT_PARTIAL_LOADER_EXT},
     FixKind, Linter, ModuleRecord,
 };
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::VALID_EXTENSIONS;
+use rustc_hash::FxHashSet;
+use tower_lsp::lsp_types::{
+    self, CodeDescription, DiagnosticRelatedInformation, DiagnosticSeverity, NumberOrString,
+    Position, Range, Url,
+};
 
 const LINT_DOC_LINK_PREFIX: &str = "https://oxc.rs/docs/guide/usage/linter/rules";
 #[derive(Debug)]

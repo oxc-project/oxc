@@ -18,8 +18,7 @@ pub use self::{
     overrides::OxlintOverrides,
     oxlintrc::Oxlintrc,
     plugins::LintPlugins,
-    rules::ESLintRule,
-    rules::OxlintRules,
+    rules::{ESLintRule, OxlintRules},
     settings::{jsdoc::JSDocPluginSettings, OxlintSettings},
 };
 

@@ -1,5 +1,3 @@
-use oxc_semantic::{ReferenceId, ScopeId, SymbolId};
-use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 
 use oxc_ast::{
@@ -11,7 +9,9 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::{ReferenceId, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     ast_util::{is_method_call, leftmost_identifier_reference},
@@ -726,8 +726,9 @@ where
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("let a = b.map(x => x)", None),

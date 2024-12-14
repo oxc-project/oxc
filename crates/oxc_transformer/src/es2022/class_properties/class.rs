@@ -12,18 +12,17 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
-use crate::common::helper_loader::Helper;
-
-use super::{super::ClassStaticBlock, ClassBindings};
 use super::{
+    super::ClassStaticBlock,
     constructor::InstanceInitsInsertLocation,
     private_props::{PrivateProp, PrivateProps},
     utils::{
         create_assignment, create_underscore_ident_name, create_variable_declaration,
         exprs_into_stmts,
     },
-    ClassProperties, FxIndexMap,
+    ClassBindings, ClassProperties, FxIndexMap,
 };
+use crate::common::helper_loader::Helper;
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform class expression.

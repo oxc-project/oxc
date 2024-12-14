@@ -1,11 +1,8 @@
-use std::cmp::Ordering;
-use std::str::Chars;
+use std::{cmp::Ordering, str::Chars};
 
 use cow_utils::CowUtils;
 use itertools::all;
-
-use oxc_ast::ast::ObjectPropertyKind;
-use oxc_ast::AstKind;
+use oxc_ast::{ast::ObjectPropertyKind, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -129,6 +126,7 @@ impl Rule for SortKeys {
             allow_line_separated_groups,
         }))
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ObjectExpression(dec) = node.kind() {
             if dec.properties.len() < self.min_keys {
@@ -220,18 +218,18 @@ fn natural_sort(arr: &mut [String]) {
                 (Some(a_char), Some(b_char))
                     if a_char.is_alphanumeric() && !b_char.is_alphanumeric() =>
                 {
-                    return Ordering::Greater
+                    return Ordering::Greater;
                 }
                 (Some(a_char), Some(b_char))
                     if !a_char.is_alphanumeric() && b_char.is_alphanumeric() =>
                 {
-                    return Ordering::Less
+                    return Ordering::Less;
                 }
                 (Some(a_char), Some(b_char)) if a_char == '[' && b_char.is_alphanumeric() => {
-                    return Ordering::Greater
+                    return Ordering::Greater;
                 }
                 (Some(a_char), Some(b_char)) if a_char.is_alphanumeric() && b_char == '[' => {
-                    return Ordering::Less
+                    return Ordering::Less;
                 }
                 (Some(a_char), Some(b_char)) => return a_char.cmp(&b_char),
                 (None, None) => return Ordering::Equal,

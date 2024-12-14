@@ -125,9 +125,8 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-arrow-functions>
 //! * Arrow function specification: <https://tc39.es/ecma262/#sec-arrow-function-definitions>
 
-use serde::Deserialize;
-
 use oxc_traverse::Traverse;
+use serde::Deserialize;
 
 use crate::context::TransformCtx;
 

@@ -341,14 +341,14 @@ impl ESLintRule {
 #[cfg(test)]
 #[allow(clippy::default_trait_access)]
 mod test {
-    use crate::{
-        rules::{RuleEnum, RULES},
-        AllowWarnDeny, RuleWithSeverity,
-    };
     use serde::Deserialize;
     use serde_json::{json, Value};
 
     use super::{OxlintRules, RuleSet};
+    use crate::{
+        rules::{RuleEnum, RULES},
+        AllowWarnDeny, RuleWithSeverity,
+    };
 
     #[test]
     fn test_parse_rules() {
@@ -425,10 +425,22 @@ mod test {
         rules.clear();
         r#override(&mut rules, &config);
 
-        assert_eq!(rules.len(), 1, "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}");
+        assert_eq!(
+            rules.len(),
+            1,
+            "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}"
+        );
         let rule = rules.iter().next().unwrap();
-        assert_eq!(rule.name(), "no-console", "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}");
-        assert_eq!(rule.severity, AllowWarnDeny::Deny, "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}");
+        assert_eq!(
+            rule.name(),
+            "no-console",
+            "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}"
+        );
+        assert_eq!(
+            rule.severity,
+            AllowWarnDeny::Deny,
+            "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}"
+        );
     }
 
     #[test]

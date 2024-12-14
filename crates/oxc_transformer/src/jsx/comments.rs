@@ -327,9 +327,10 @@ pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use oxc_ast::CommentPosition;
     use oxc_span::Span;
+
+    use super::*;
 
     static PRE_AND_POSTFIX: &[(&str, &str)] = &[
         ("", ""),

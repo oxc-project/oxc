@@ -103,5 +103,5 @@ pub const SKIP_TESTS: &[&str] = &[
     "babel-plugin-transform-object-rest-spread/test/fixtures/assumption",
     "babel-plugin-transform-object-rest-spread/test/fixtures/object-spread-loose",
     "babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/remove-unused-excluded-keys-loose",
-    "babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/regression/gh-8323"
+    "babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/regression/gh-8323",
 ];

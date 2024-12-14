@@ -7,11 +7,10 @@ use std::{
 };
 
 use dashmap::DashMap;
-use rustc_hash::{FxBuildHasher, FxHashMap};
-
 use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, Span};
 pub use oxc_syntax::module_record::RequestedModule;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 

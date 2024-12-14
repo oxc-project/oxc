@@ -44,4 +44,7 @@ macro_rules! log_result {
     };
 }
 
-pub(crate) use {log, log_failed, log_result, log_success};
+pub(crate) use log;
+pub(crate) use log_failed;
+pub(crate) use log_result;
+pub(crate) use log_success;

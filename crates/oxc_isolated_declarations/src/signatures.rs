@@ -1,8 +1,7 @@
-use rustc_hash::FxHashMap;
-
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::ast::{TSMethodSignatureKind, TSSignature};
 use oxc_span::GetSpan;
+use rustc_hash::FxHashMap;
 
 use crate::IsolatedDeclarations;
 

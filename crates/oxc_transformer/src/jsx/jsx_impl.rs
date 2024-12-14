@@ -100,17 +100,15 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{
-    es2018::{ObjectRestSpread, ObjectRestSpreadOptions},
-    TransformCtx,
-};
-
 use super::diagnostics;
-
 pub use super::{
     jsx_self::JsxSelf,
     jsx_source::JsxSource,
     options::{JsxOptions, JsxRuntime},
+};
+use crate::{
+    es2018::{ObjectRestSpread, ObjectRestSpreadOptions},
+    TransformCtx,
 };
 
 pub struct JsxImpl<'a, 'ctx> {
@@ -1112,9 +1110,8 @@ mod test {
     use oxc_syntax::{node::NodeId, scope::ScopeFlags};
     use oxc_traverse::ReusableTraverseCtx;
 
-    use crate::{TransformCtx, TransformOptions};
-
     use super::Pragma;
+    use crate::{TransformCtx, TransformOptions};
 
     macro_rules! setup {
         ($traverse_ctx:ident, $transform_ctx:ident) => {

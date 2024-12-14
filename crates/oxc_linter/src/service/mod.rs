@@ -8,10 +8,9 @@ use std::{
 
 use oxc_diagnostics::DiagnosticSender;
 use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
+use runtime::Runtime;
 
 use crate::Linter;
-
-use runtime::Runtime;
 
 pub struct LintServiceOptions {
     /// Current working directory

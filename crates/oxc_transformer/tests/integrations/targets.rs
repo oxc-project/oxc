@@ -1,6 +1,7 @@
-use crate::{codegen, test};
 use oxc_span::SourceType;
 use oxc_transformer::{ESTarget, EnvOptions, TransformOptions};
+
+use crate::{codegen, test};
 
 #[test]
 fn targets() {
