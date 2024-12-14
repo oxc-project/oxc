@@ -206,10 +206,12 @@ impl Rule for LabelHasAssociatedControl {
             return;
         };
 
-        if let Some(element_type) = get_element_type(ctx, &element.opening_element) {
-            if self.label_components.binary_search(&element_type.into()).is_err() {
-                return;
-            }
+        let Some(element_type) = get_element_type(ctx, &element.opening_element) else {
+            return;
+        };
+
+        if self.label_components.binary_search(&element_type.into()).is_err() {
+            return;
         }
 
         let has_html_for = has_jsx_prop(&element.opening_element, "htmlFor").is_some();
@@ -915,6 +917,8 @@ fn test() {
             }])),
             None,
         ),
+        // Issue: <https://github.com/oxc-project/oxc/issues/7849>
+        ("<FilesContext.Provider value={{ addAlert, cwdInfo }} />", None, None),
     ];
 
     let fail = vec![
