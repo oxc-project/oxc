@@ -362,6 +362,22 @@ impl TraverseScoping {
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
         self.delete_reference(ident.reference_id(), &ident.name);
     }
+
+    /// Rename symbol.
+    ///
+    /// Preserves original order of bindings for scope.
+    ///
+    /// The following must be true for successful operation:
+    /// * Binding exists in specified scope for `symbol_id`.
+    /// * No binding already exists in scope for `new_name`.
+    ///
+    /// Panics in debug mode if either of the above are not satisfied.
+    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
+        // Rename symbol
+        let old_name = self.symbols.set_name(symbol_id, new_name.clone());
+        // Rename binding
+        self.scopes.rename_binding(scope_id, symbol_id, &old_name, new_name);
+    }
 }
 
 // Methods used internally within crate
