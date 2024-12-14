@@ -94,7 +94,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 
     /// [A, B, C] -> [[A, B, C]]
-    pub(super) fn transform_super_call_expression_arguments(
+    fn transform_super_call_expression_arguments(
         arguments: &mut ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
