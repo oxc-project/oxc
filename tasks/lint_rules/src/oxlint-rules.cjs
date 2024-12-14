@@ -152,7 +152,7 @@ exports.syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
   // };
   // ```
   const vitestCompatibleRules = vitestCompatibleRulesFile.match(
-    /const VITEST_COMPATIBLE_JEST_RULES.+phf_set! {([^}]+)/s,
+    /const VITEST_COMPATIBLE_JEST_RULES[^.]+phf_set! {([^}]+)/s,
   )?.[1];
   if (!vitestCompatibleRules) {
     throw new Error('Failed to find the list of vitest-compatible rules');
