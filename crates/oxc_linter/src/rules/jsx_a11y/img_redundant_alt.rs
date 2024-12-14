@@ -125,9 +125,8 @@ impl Rule for ImgRedundantAlt {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
-        let Some(element_type) = get_element_type(ctx, jsx_el) else {
-            return;
-        };
+
+        let element_type = get_element_type(ctx, jsx_el);
 
         if !self.types_to_validate.iter().any(|comp| comp == &element_type) {
             return;

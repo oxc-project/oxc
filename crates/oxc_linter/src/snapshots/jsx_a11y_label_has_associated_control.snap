@@ -616,3 +616,10 @@ snapshot_kind: text
    · ────────────────────────────────────
    ╰────
   help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <FilesContext.Provider value={{ addAlert, cwdInfo }} />
+   · ───────────────────────────────────────────────────────
+   ╰────
+  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.

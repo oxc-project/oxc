@@ -129,9 +129,8 @@ impl Rule for AnchorIsValid {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
-            let Some(name) = &get_element_type(ctx, &jsx_el.opening_element) else {
-                return;
-            };
+            let name = get_element_type(ctx, &jsx_el.opening_element);
+
             if name != "a" {
                 return;
             };

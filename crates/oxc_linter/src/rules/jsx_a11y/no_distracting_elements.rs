@@ -58,9 +58,8 @@ impl Rule for NoDistractingElements {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
-        let Some(element_type) = get_element_type(ctx, jsx_el) else {
-            return;
-        };
+
+        let element_type = get_element_type(ctx, jsx_el);
 
         if let "marquee" | "blink" = element_type.as_ref() {
             ctx.diagnostic(no_distracting_elements_diagnostic(jsx_el.name.span()));

@@ -107,9 +107,7 @@ impl Rule for AnchorAmbiguousText {
             return;
         };
 
-        let Some(name) = get_element_type(ctx, &jsx_el.opening_element) else {
-            return;
-        };
+        let name = get_element_type(ctx, &jsx_el.opening_element);
 
         if name != "a" {
             return;
@@ -167,15 +165,14 @@ fn get_accessible_text<'a, 'b>(
         };
     }
 
-    if let Some(name) = get_element_type(ctx, &jsx_el.opening_element) {
-        if name == "img" {
-            if let Some(alt_text) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "alt") {
-                if let Some(text) = get_string_literal_prop_value(alt_text) {
-                    return Some(Cow::Borrowed(text));
-                };
+    let name = get_element_type(ctx, &jsx_el.opening_element);
+    if name == "img" {
+        if let Some(alt_text) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "alt") {
+            if let Some(text) = get_string_literal_prop_value(alt_text) {
+                return Some(Cow::Borrowed(text));
             };
-        }
-    };
+        };
+    }
 
     if is_hidden_from_screen_reader(ctx, &jsx_el.opening_element) {
         return None;

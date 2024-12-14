@@ -172,9 +172,8 @@ impl Rule for AltText {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
-        let Some(name) = &get_element_type(ctx, jsx_el) else {
-            return;
-        };
+
+        let name = &get_element_type(ctx, jsx_el);
 
         // <img>
         if let Some(custom_tags) = &self.img {
