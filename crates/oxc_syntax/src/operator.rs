@@ -1,8 +1,6 @@
 //! ECMAScript operators.
 //!
 //! Not all operators are punctuation - some, such as `delete`, are keywords.
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
 
 use oxc_allocator::CloneIn;
 use oxc_ast_macros::ast;
