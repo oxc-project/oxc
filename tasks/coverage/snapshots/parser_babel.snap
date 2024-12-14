@@ -3,7 +3,7 @@ commit: 54a8389f
 parser_babel Summary:
 AST Parsed     : 2205/2218 (99.41%)
 Positive Passed: 2190/2218 (98.74%)
-Negative Passed: 1516/1634 (92.78%)
+Negative Passed: 1520/1634 (93.02%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -115,10 +115,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration-error/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword-error/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/read-only-1/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/read-only-2/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/read-only-3/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/read-only-4/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled-invalid-optional/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-optional-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-required-after-labeled-optional/input.ts
@@ -12485,6 +12481,30 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/no-optional-in-destructuring-in-params/input.ts:1:14]
  1 │ function f([a: number]) {}
    ·              ────────
+   ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/read-only-1/input.ts:1:12]
+ 1 │ type T30 = readonly string;  // Error
+   ·            ────────
+   ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/read-only-2/input.ts:1:12]
+ 1 │ type T31 = readonly T;  // Error
+   ·            ────────
+   ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/read-only-3/input.ts:1:12]
+ 1 │ type T32 = readonly readonly string[];  // Error
+   ·            ────────
+   ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/read-only-4/input.ts:1:12]
+ 1 │ type T33 = readonly Array<string>;  // Error
+   ·            ────────
    ╰────
 
   × Expected `,` but found `:`

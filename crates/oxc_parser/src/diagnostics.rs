@@ -502,6 +502,13 @@ pub fn cannot_appear_on_an_index_signature(modifier: &Modifier) -> OxcDiagnostic
         .with_label(modifier.span)
 }
 
+/// TS(1354)
+#[cold]
+pub fn readonly_in_array_or_tuple_type(span: Span) -> OxcDiagnostic {
+    ts_error("1354", "'readonly' type modifier is only permitted on array and tuple literal types.")
+        .with_label(span)
+}
+
 /// TS(18010)
 #[cold]
 pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDiagnostic {
