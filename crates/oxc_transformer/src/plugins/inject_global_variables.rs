@@ -211,11 +211,11 @@ impl<'a> InjectGlobalVariables<'a> {
     fn inject_import_to_specifier(&self, inject: &InjectImport) -> ImportDeclarationSpecifier<'a> {
         match &inject.specifier {
             InjectImportSpecifier::Specifier { imported, local } => {
-                let imported = imported.as_deref().unwrap_or("default");
-                let imported = if identifier::is_identifier_name(imported) {
-                    self.ast.module_export_name_identifier_name(SPAN, imported)
+                let imported_name = imported.as_deref().unwrap_or("default");
+                let imported = if identifier::is_identifier_name(imported_name) {
+                    self.ast.module_export_name_identifier_name(SPAN, imported_name)
                 } else {
-                    self.ast.module_export_name_string_literal(SPAN, imported, None)
+                    self.ast.module_export_name_string_literal(SPAN, imported_name, None)
                 };
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();
                 self.ast.import_declaration_specifier_import_specifier(
