@@ -98,9 +98,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         arguments: &mut ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let owned_arguments = ctx.ast.move_vec(arguments);
-        let elements =
-            ctx.ast.vec_from_iter(owned_arguments.into_iter().map(ArrayExpressionElement::from));
+        let elements = arguments.drain(..).map(ArrayExpressionElement::from);
+        let elements = ctx.ast.vec_from_iter(elements);
         let array = ctx.ast.expression_array(SPAN, elements, None);
         arguments.push(Argument::from(array));
     }
