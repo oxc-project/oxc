@@ -1,3 +1,5 @@
+use std::mem;
+
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
@@ -101,9 +103,11 @@ impl SymbolTable {
     }
 
     /// Rename a symbol.
+    ///
+    /// Returns the old name.
     #[inline]
-    pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactStr) {
-        self.names[symbol_id] = name;
+    pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactStr) -> CompactStr {
+        mem::replace(&mut self.names[symbol_id], name)
     }
 
     /// Get the [`SymbolFlags`] for a symbol, which describe how the symbol is declared.
