@@ -906,7 +906,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     fn rename_arguments_symbol(symbol_id: SymbolId, name: CompactStr, ctx: &mut TraverseCtx<'a>) {
         let scope_id = ctx.symbols().get_scope_id(symbol_id);
         ctx.symbols_mut().set_name(symbol_id, name.clone());
-        ctx.scopes_mut().rename_binding(scope_id, "arguments", name);
+        ctx.scopes_mut().rename_binding(scope_id, symbol_id, "arguments", name);
     }
 
     /// Transform the identifier reference for `arguments` if it's affected after transformation.

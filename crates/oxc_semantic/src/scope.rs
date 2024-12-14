@@ -352,10 +352,31 @@ impl ScopeTree {
     }
 
     /// Rename a binding to a new name.
-    pub fn rename_binding(&mut self, scope_id: ScopeId, old_name: &str, new_name: CompactStr) {
-        if let Some(symbol_id) = self.bindings[scope_id].shift_remove(old_name) {
-            self.bindings[scope_id].insert(new_name, symbol_id);
-        }
+    ///
+    /// Preserves order of bindings.
+    ///
+    /// The following must be true for successful operation:
+    /// * Binding exists in specified scope for `old_name`.
+    /// * Existing binding is for specified `symbol_id`.
+    /// * No binding already exists for `new_name`.
+    ///
+    /// Panics in debug mode if any of the above are not true.
+    pub fn rename_binding(
+        &mut self,
+        scope_id: ScopeId,
+        symbol_id: SymbolId,
+        old_name: &str,
+        new_name: CompactStr,
+    ) {
+        let bindings = &mut self.bindings[scope_id];
+        // Insert on end
+        let existing_symbol_id = bindings.insert(new_name, symbol_id);
+        debug_assert!(existing_symbol_id.is_none());
+        // Remove old entry. `swap_remove` swaps the last entry into the place of removed entry.
+        // We just inserted the new entry as last, so the new entry takes the place of the old.
+        // Order of entries is same as before, only the key has changed.
+        let old_symbol_id = bindings.swap_remove(old_name);
+        debug_assert_eq!(old_symbol_id, Some(symbol_id));
     }
 
     /// Reserve memory for an `additional` number of scopes.
