@@ -86,28 +86,55 @@ pub struct ConstructorSuper;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// This rule checks whether or not there is a valid super() call.
     ///
     /// ### Why is this bad?
     ///
+    /// Constructors of derived classes must call super(). Constructors of non derived classes must not call super().
+    /// If this is not observed, the JavaScript engine will raise a runtime error.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// class A {
+    ///     constructor() {
+    ///         super(); // This is a syntax error because there is no extends clause in the class:
+    ///     }
+    /// }
+    ///
+    /// class A extends B {
+    ///     constructor() { }  // Would throw a ReferenceError.
+    /// }
+    ///
+    /// // Classes which inherits from a non constructor are always problems.
+    /// class C extends null {
+    ///     constructor() {
+    ///         super();  // Would throw a TypeError.
+    ///     }
+    /// }
+    ///
+    /// class D extends null {
+    ///     constructor() { }  // Would throw a ReferenceError.
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// class A {
+    ///     constructor() { }
+    /// }
+    ///
+    /// class B extends C {
+    ///     constructor() {
+    ///         super();
+    ///     }
+    /// }
     /// ```
     ConstructorSuper,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
+    nursery, // TODO: check for return, improve loop, switch statements with and without break
 
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    pending  // TODO: for invalid super call
 );
 
 impl Rule for ConstructorSuper {
