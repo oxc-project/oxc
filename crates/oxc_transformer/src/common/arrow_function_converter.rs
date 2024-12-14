@@ -586,8 +586,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Transforms a `MemberExpression` whose object is a `super` expression.
     ///
-    /// In the [`AsyncToGenerator`](crate::es2017::async_to_generator::AsyncToGenerator) and
-    /// [`AsyncGeneratorFunctions`](crate::es2018::async_generator_functions::AsyncGeneratorFunctions) plugins,
+    /// In the [`AsyncToGenerator`](crate::es2017::AsyncToGenerator) and
+    /// [`AsyncGeneratorFunctions`](crate::es2018::AsyncGeneratorFunctions) plugins,
     /// we move the body of an async method to a new generator function. This can cause
     /// `super` expressions to appear in unexpected places, leading to syntax errors.
     ///

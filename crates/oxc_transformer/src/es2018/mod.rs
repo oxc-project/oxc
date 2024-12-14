@@ -1,8 +1,8 @@
-pub(crate) mod async_generator_functions;
+mod async_generator_functions;
 mod object_rest_spread;
 mod options;
 
-use async_generator_functions::AsyncGeneratorFunctions;
+pub use async_generator_functions::AsyncGeneratorFunctions;
 pub use object_rest_spread::{ObjectRestSpread, ObjectRestSpreadOptions};
 pub use options::ES2018Options;
 use oxc_ast::ast::*;

@@ -2,7 +2,7 @@ mod nullish_coalescing_operator;
 mod optional_chaining;
 mod options;
 
-pub use nullish_coalescing_operator::NullishCoalescingOperator;
+use nullish_coalescing_operator::NullishCoalescingOperator;
 pub use optional_chaining::OptionalChaining;
 pub use options::ES2020Options;
 use oxc_ast::ast::*;

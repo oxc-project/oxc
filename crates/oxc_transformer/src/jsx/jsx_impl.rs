@@ -100,8 +100,8 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
-use super::diagnostics;
-pub use super::{
+use super::{
+    diagnostics,
     jsx_self::JsxSelf,
     jsx_source::JsxSource,
     options::{JsxOptions, JsxRuntime},
