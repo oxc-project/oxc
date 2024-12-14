@@ -15,7 +15,7 @@ on:
 
 jobs:
   zizmor:
-    name: zizmor latest via PyPI
+    name: zizmor
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -29,7 +29,7 @@ jobs:
         with:
           tool: zizmor
 
-      - name: Run zizmor 🌈
+      - name: Run zizmor
         run: zizmor --format sarif . > results.sarif
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
