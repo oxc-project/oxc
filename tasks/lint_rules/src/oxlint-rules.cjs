@@ -109,6 +109,42 @@ exports.updateNotSupportedStatus = (ruleEntries) => {
   }
 };
 
+/** 
+ * @param {string} constName
+ * @param {string} fileContent 
+ * 
+ */
+const getPhfSetEntries = (constName, fileContent) => {
+  // Find the start of the list
+  // ```
+  // const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
+  //   "consistent-test-it",
+  //   "expect-expect",
+  //   ...
+  // };
+  // ```
+  const regSearch = new RegExp(`const ${constName}[^.]+phf_set! {([^}]+)`, 's');
+  
+  const vitestCompatibleRules = fileContent.match(regSearch)?.[1];
+  if (!vitestCompatibleRules) {
+    throw new Error('Failed to find the list of vitest-compatible rules');
+  }
+
+  return new Set(
+    vitestCompatibleRules
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('//'))
+      .map((line) =>
+        line
+          .replace(/"/g, '')
+          .split(',')
+          .filter((s) => s !== '')
+      )
+      .flat(),
+  );
+}
+
 /**
  * Some typescript-eslint rules are re-implemented version of eslint rules.
  * e.g. no-array-constructor, max-params, etc...
@@ -117,18 +153,24 @@ exports.updateNotSupportedStatus = (ruleEntries) => {
  *
  * @param {RuleEntries} ruleEntries
  */
-exports.overrideTypeScriptPluginStatusWithEslintPluginStatus = (
+exports.overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
   ruleEntries,
 ) => {
-  for (const [name, rule] of ruleEntries) {
-    if (!name.startsWith('typescript/')) continue;
+  const typescriptCompatibleRulesFile = await readFile(
+    'crates/oxc_linter/src/utils/mod.rs',
+    'utf8',
+  );
+  const rules = getPhfSetEntries('TYPESCRIPT_COMPATIBLE_ESLINT_RULES', typescriptCompatibleRulesFile)
 
-    // This assumes that if the same name found, it implements the same rule.
-    const eslintRule = ruleEntries.get(name.replace('typescript/', 'eslint/'));
-    if (!eslintRule) continue;
-
-    rule.isImplemented = eslintRule.isImplemented;
-    rule.isNotSupported = eslintRule.isNotSupported;
+  for (const rule of rules) {
+    const typescriptRuleEntry = ruleEntries.get(`typescript/${rule}`);
+    const eslintRuleEntry = ruleEntries.get(`eslint/${rule}`);
+    if (typescriptRuleEntry && eslintRuleEntry) {
+      ruleEntries.set(`typescript/${rule}`, {
+        ...typescriptRuleEntry,
+        isImplemented: eslintRuleEntry.isImplemented,
+      });
+    }
   }
 };
 
@@ -142,35 +184,7 @@ exports.syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
     'crates/oxc_linter/src/utils/mod.rs',
     'utf8',
   );
-
-  // Find the start of the list of vitest-compatible rules
-  // ```
-  // const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
-  //   "consistent-test-it",
-  //   "expect-expect",
-  //   ...
-  // };
-  // ```
-  const vitestCompatibleRules = vitestCompatibleRulesFile.match(
-    /const VITEST_COMPATIBLE_JEST_RULES[^.]+phf_set! {([^}]+)/s,
-  )?.[1];
-  if (!vitestCompatibleRules) {
-    throw new Error('Failed to find the list of vitest-compatible rules');
-  }
-
-  const rules = new Set(
-    vitestCompatibleRules
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line && !line.startsWith('//'))
-      .map((line) =>
-        line
-          .replace(/"/g, '')
-          .split(',')
-          .filter((s) => s !== '')
-      )
-      .flat(),
-  );
+  const rules = getPhfSetEntries('VITEST_COMPATIBLE_JEST_RULES', vitestCompatibleRulesFile)
 
   for (const rule of rules) {
     const vitestRuleEntry = ruleEntries.get(`vitest/${rule}`);
