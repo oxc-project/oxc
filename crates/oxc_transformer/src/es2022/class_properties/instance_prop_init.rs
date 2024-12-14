@@ -3,7 +3,7 @@
 
 use std::cell::Cell;
 
-use oxc_ast::{ast::*, visit::VisitMut};
+use oxc_ast::{ast::*, visit::Visit};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::TraverseCtx;
 
@@ -45,7 +45,7 @@ impl<'a, 'v> InstanceInitializerVisitor<'a, 'v> {
     }
 }
 
-impl<'a, 'v> VisitMut<'a> for InstanceInitializerVisitor<'a, 'v> {
+impl<'a, 'v> Visit<'a> for InstanceInitializerVisitor<'a, 'v> {
     /// Update parent scope for first level of scopes.
     /// Convert scope to sloppy mode if `self.make_sloppy_mode == true`.
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
