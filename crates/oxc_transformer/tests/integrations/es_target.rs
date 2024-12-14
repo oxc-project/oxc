@@ -29,6 +29,7 @@ fn es_target() {
         assert_eq!(test(case, &options), Ok(codegen(case, SourceType::mjs())));
     }
 
+    #[cfg_attr(miri, expect(unused_variables))]
     let snapshot =
         cases.into_iter().enumerate().fold(String::new(), |mut w, (i, (target, case))| {
             let options = TransformOptions::from_target(target).unwrap();
