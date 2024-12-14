@@ -1,10 +1,8 @@
-pub use oxc_syntax::reference::{ReferenceFlags, ReferenceId};
+use oxc_syntax::{node::NodeId, reference::ReferenceFlags, symbol::SymbolId};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
-
-use crate::{symbol::SymbolId, NodeId};
 
 /// Describes where and how a Symbol is used in the AST.
 ///

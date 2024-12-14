@@ -5,12 +5,12 @@ use std::ptr;
 use oxc_ast::{ast::*, AstKind};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_span::{GetSpan, SourceType};
-
-use crate::{
+use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
-    SemanticBuilder,
 };
+
+use crate::SemanticBuilder;
 
 pub(crate) trait Binder<'a> {
     #[allow(unused_variables)]

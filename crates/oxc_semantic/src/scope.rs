@@ -3,11 +3,13 @@ use std::mem;
 use indexmap::IndexMap;
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
-use oxc_syntax::reference::ReferenceId;
-pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
+use oxc_syntax::{
+    node::NodeId,
+    reference::ReferenceId,
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolId,
+};
 use rustc_hash::{FxBuildHasher, FxHashMap};
-
-use crate::{symbol::SymbolId, NodeId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 

@@ -3,7 +3,9 @@ use std::mem;
 use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
-pub use oxc_syntax::{
+use oxc_syntax::{
+    node::NodeId,
+    reference::ReferenceId,
     scope::ScopeId,
     symbol::{RedeclarationId, SymbolFlags, SymbolId},
 };
@@ -12,10 +14,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-use crate::{
-    node::NodeId,
-    reference::{Reference, ReferenceId},
-};
+use crate::reference::Reference;
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]

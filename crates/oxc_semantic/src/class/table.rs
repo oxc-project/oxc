@@ -1,9 +1,10 @@
 use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
-use oxc_syntax::class::{ClassId, ElementId, ElementKind};
+use oxc_syntax::{
+    class::{ClassId, ElementId, ElementKind},
+    node::NodeId,
+};
 use rustc_hash::FxHashMap;
-
-use crate::node::NodeId;
 
 #[derive(Debug)]
 pub struct Element {

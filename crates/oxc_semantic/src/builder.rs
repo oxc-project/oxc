@@ -9,6 +9,12 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
+use oxc_syntax::{
+    node::{NodeFlags, NodeId},
+    reference::{ReferenceFlags, ReferenceId},
+    scope::{ScopeFlags, ScopeId},
+    symbol::{SymbolFlags, SymbolId},
+};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -18,11 +24,11 @@ use crate::{
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
     label::UnusedLabels,
-    node::{AstNodes, NodeFlags, NodeId},
-    reference::{Reference, ReferenceFlags, ReferenceId},
-    scope::{Bindings, ScopeFlags, ScopeId, ScopeTree},
+    node::AstNodes,
+    reference::Reference,
+    scope::{Bindings, ScopeTree},
     stats::Stats,
-    symbol::{SymbolFlags, SymbolId, SymbolTable},
+    symbol::SymbolTable,
     unresolved_stack::UnresolvedReferencesStack,
     JSDocFinder, Semantic,
 };
