@@ -27,6 +27,7 @@ impl<T: Case> Suite<T> for Test262Suite<T> {
 
     fn skip_test_path(&self, path: &Path) -> bool {
         let path = path.to_string_lossy();
+        path.contains("test262/test/staging") ||
         // ignore markdown files
         path.ends_with(".md") ||
         // ignore fixtures
@@ -104,12 +105,10 @@ impl Case for Test262Case {
     }
 
     fn skip_test_case(&self) -> bool {
-        [
-            // stage 3 https://github.com/tc39/proposal-source-phase-imports
-            "source-phase-imports",
-        ]
-        .iter()
-        .any(|feature| self.meta.features.iter().any(|f| **f == **feature))
+        false
+        // []
+        // .iter()
+        // .any(|feature| self.meta.features.iter().any(|f| **f == **feature))
     }
 
     // Unless configured otherwise (via the noStrict, onlyStrict, module, or raw flags),

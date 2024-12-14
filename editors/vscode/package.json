@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.14.0",
+  "version": "0.15.2",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -51,6 +51,11 @@
       {
         "command": "oxc.showOutputChannel",
         "title": "Show Output Channel",
+        "category": "Oxc"
+      },
+      {
+        "command": "oxc.applyAllFixesFile",
+        "title": "Fix all auto-fixable problems (file)",
         "category": "Oxc"
       }
     ],

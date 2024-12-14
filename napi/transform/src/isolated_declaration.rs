@@ -9,16 +9,14 @@ use oxc::{
     parser::Parser,
     span::SourceType,
 };
-
-use crate::errors::wrap_diagnostics;
-
+use oxc_napi::OxcError;
 use oxc_sourcemap::napi::SourceMap;
 
 #[napi(object)]
 pub struct IsolatedDeclarationsResult {
     pub code: String,
     pub map: Option<SourceMap>,
-    pub errors: Vec<String>,
+    pub errors: Vec<OxcError>,
 }
 
 #[napi(object)]
@@ -72,8 +70,7 @@ pub fn isolated_declaration(
         .with_options(CodegenOptions { source_map_path, ..CodegenOptions::default() })
         .build(&transformed_ret.program);
 
-    let errors = ret.errors.into_iter().chain(transformed_ret.errors).collect();
-    let errors = wrap_diagnostics(source_path, source_type, &source_text, errors);
+    let errors = ret.errors.into_iter().chain(transformed_ret.errors).map(OxcError::from).collect();
 
     IsolatedDeclarationsResult {
         code: codegen_ret.code,

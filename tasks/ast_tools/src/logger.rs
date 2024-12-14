@@ -11,25 +11,28 @@ pub(super) fn __internal_log_enable() -> bool {
 }
 
 macro_rules! log {
-        ($fmt:literal $(, $args:expr)*) => {
-            if $crate::logger::__internal_log_enable() {
-                print!($fmt$(, $args)*);
-                std::io::Write::flush(&mut std::io::stdout()).unwrap();
-            }
+    ($fmt:literal $(, $args:expr)*) => {
+        if $crate::logger::__internal_log_enable() {
+            print!($fmt$(, $args)*);
+            std::io::Write::flush(&mut std::io::stdout()).unwrap();
         }
     }
+}
+pub(crate) use log;
 
 macro_rules! log_success {
     () => {
         $crate::log!("Done!\n");
     };
 }
+pub(crate) use log_success;
 
 macro_rules! log_failed {
     () => {
         $crate::log!("FAILED\n");
     };
 }
+pub(crate) use log_failed;
 
 macro_rules! log_result {
     ($result:expr) => {
@@ -43,5 +46,4 @@ macro_rules! log_result {
         }
     };
 }
-
-pub(crate) use {log, log_failed, log_result, log_success};
+pub(crate) use log_result;

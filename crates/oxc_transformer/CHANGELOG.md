@@ -4,6 +4,106 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.41.0] - 2024-12-13
+
+- fb325dc ast: [**BREAKING**] `span` field must be the first element (#7821) (Boshen)
+
+### Features
+
+- e727ae9 transformer/class-properties: Transform super member expressions that are inside static prop initializer (#7815) (Dunqing)
+
+### Bug Fixes
+
+- 5b7e1ad transformer: Remove span of define value (#7811) (Hiroshi Ogawa)
+- 14896cb transformer/class-properties: Create temp vars in correct scope (#7824) (overlookmotel)
+- 25bb6da transformer/class-properties: Fix `ScopeId`s in instance prop initializers (#7823) (overlookmotel)
+- 65b109a transformer/class-properties: No `raw` for generated `StringLiteral` (#7825) (overlookmotel)
+- 2964a61 transformer/class-properties: Unwrap failed when private field expression doesn't contain optional expression in `ChainExpression` (#7798) (Dunqing)
+- 6fa6785 transformer/class-properties: Panic when the callee or member is `ParenthesisExpression` or TS-syntax expressions. (#7795) (Dunqing)
+- bb22c67 transformer/class-properties: Fix `ScopeId`s in static prop initializers (#7791) (overlookmotel)
+- caa57f1 transformer/class-properties: Fix scope flags in static prop initializers (#7786) (overlookmotel)
+
+### Refactor
+
+- b290ebd transformer: Handle `<CWD>` in test runner (#7799) (Dunqing)
+- e70deb9 transformer/class-properties: Locate instance props insertion location in separate step (#7819) (overlookmotel)
+- afc5f1e transformer/class-properties: De-deduplicate code (#7805) (overlookmotel)
+- 47a91d2 transformer/class-properties: Shorten code (#7804) (overlookmotel)
+- 54ef2b9 transformer/class-properties: Rename `debug_assert_expr_is_not_parenthesis_or_typescript_syntax` (#7803) (overlookmotel)
+- 3cdc47c transformer/class-properties: `#[inline(always)]` on `assert_expr_neither_parenthesis_nor_typescript_syntax` (#7802) (overlookmotel)
+
+### Testing
+
+- d72c888 transformer/replace-global-defines: Remove panicking test (#7838) (overlookmotel)
+
+## [0.40.0] - 2024-12-10
+
+- 5913200 transformer/class-properties: [**BREAKING**] Rename `ClassPropertiesOptions::loose` (#7716) (overlookmotel)
+
+- 72eab6c parser: [**BREAKING**] Stage 3 `import source` and `import defer` (#7706) (Boshen)
+
+- ebc80f6 ast: [**BREAKING**] Change 'raw' from &str to Option<Atom> (#7547) (Song Gao)
+
+### Features
+
+- 7dcf6b4 ast, transformer: Add `AstBuilder::use_strict_directive` method (#7770) (overlookmotel)
+- cf2ee06 data_structures: Add rope (#7764) (Boshen)
+- 2803aec napi/transform: Return helpers information (#7737) (Boshen)
+- c98457d napi/transformer: Add runtime helper mode (#7727) (Boshen)
+- 2e69720 transformer/class-properties: Support `private_fields_as_properties` assumption (#7717) (overlookmotel)
+- 86d4c90 transformer/class-properties: Support for transforming `AssignmentTarget` (#7697) (Dunqing)
+- c793d71 transformer/class-properties: Transform `ChainExpression` (#7575) (Dunqing)
+- e010b6a transformer/logical-assignment-operators: No temp vars for literals (#7759) (overlookmotel)
+- 8705a29 transformer/var-declaration: Add a series of `create_var*` methods (#7665) (Dunqing)
+- e8518e9 transformer/var-declarations: Add `insert_var_with_init` method (#7667) (Dunqing)
+
+### Bug Fixes
+
+- f7d41dd oxc_transform: Overlap replacement (#7621) (IWANABETHATGUY)
+- 245d7d9 oxc_transformer: Alias `es2015` to `es6` (#7673) (Kevin Deng 三咲智子)
+- f42dbdf transformer/class-properties: Output is not the same with Babel when PrivateFieldExpression is optional (#7762) (Dunqing)
+- f52b1db transformer/class-properties: Output is not the same with Babel when callee has optional (#7748) (Dunqing)
+- 97e4185 transformer/class-properties: Fix `SymbolFlags` for `_super` function (#7709) (overlookmotel)
+- de5b0b6 transformer/class-properties: Make `_super` function outside class strict mode (#7708) (overlookmotel)
+- 72b5d58 transformer/class-properties: Create temp var for `this` in computed key (#7686) (overlookmotel)
+- ad76d1d transformer/class-properties: Transform `delete` chain expression in static prop initializers (#7656) (overlookmotel)
+- e48769a transformer/logic-assignment-operator: Always create `IdentifierReference`s with `ReferenceId` (#7745) (overlookmotel)
+
+### Performance
+
+- 6c82589 transformer/class-properties: Replace recursion with loop (#7652) (overlookmotel)
+- 463fc5f transformer/logic-assignment-operator: Inline `enter_expression` visitor (#7744) (overlookmotel)
+
+### Documentation
+
+- 5806942 transformer/class-properties: Correct doc comment (#7741) (overlookmotel)
+- 583b36b transformer/class-properties: Remove oudated todo (#7669) (Dunqing)
+
+### Refactor
+
+- 9c2a1b6 transformer: `duplicate_expression` do not produce temp var for `super` (#7757) (overlookmotel)
+- a750ebc transformer: `duplicate_expression` take `mutated_symbol_needs_temp_var` param (#7756) (overlookmotel)
+- b500f55 transformer: Introduce `TransformCtx::duplicate_expression` (#7754) (overlookmotel)
+- 75ba4a9 transformer: Use `NONE` in AST builder calls (#7751) (overlookmotel)
+- 1925ddc transformer: Rename `VarDeclarationsStore` methods (#7682) (overlookmotel)
+- 0ca10e2 transformer: Use `ctx.var_declarations.create_var*` methods (#7666) (Dunqing)
+- 016ae92 transformer/class-properties: Rename file (#7767) (overlookmotel)
+- 9cacf64 transformer/class-properties: Transform the remaining PrivateFieldExpression in ChainExpression first (#7763) (Dunqing)
+- 7e0f7eb transformer/class-properties: Prefer `contains` to `intersects` for bitflags (#7747) (overlookmotel)
+- 7344d21 transformer/class-properties: TODO comments for future optimizations (#7711) (overlookmotel)
+- dd55b84 transformer/class-properties: Shorten output when `_super` function (#7710) (overlookmotel)
+- ac910ee transformer/class-properties: Move code out of `transform_assignment_target` (#7701) (overlookmotel)
+- e67e981 transformer/class-properties: Shorten code (#7700) (overlookmotel)
+- ab3e1c3 transformer/class-properties: Add TODO comments (#7702) (overlookmotel)
+- 28ce187 transformer/class-properties: `duplicate_object_twice` method (#7685) (overlookmotel)
+- 8883968 transformer/class-properties: Use `duplicate_object` in `transform_expression_to_wrap_nullish_check` (#7664) (Dunqing)
+- 44fe854 transformer/class-properties: Move logic for handling `delete` of chain expression into `transform_unary_expression` (#7655) (overlookmotel)
+- 3d593ec var-declarations: Remove unnecessary `init` parameter from `insert_var` (#7668) (Dunqing)
+
+### Styling
+
+- e5145b0 transformer/class-properties: Reformat doc comments (#7653) (overlookmotel)
+
 ## [0.39.0] - 2024-12-04
 
 - f2f31a8 traverse: [**BREAKING**] Remove unsound APIs (#7514) (overlookmotel)

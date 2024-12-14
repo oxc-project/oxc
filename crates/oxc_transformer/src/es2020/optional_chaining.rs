@@ -51,7 +51,6 @@ use std::mem;
 
 use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, NONE};
-use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
@@ -212,12 +211,8 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let null_check = self.wrap_null_check(left1, ctx);
-        if self.ctx.assumptions.no_document_all {
-            null_check
-        } else {
-            let void0_check = Self::wrap_void0_check(left2, ctx);
-            Self::create_logical_expression(null_check, void0_check, ctx)
-        }
+        let void0_check = Self::wrap_void0_check(left2, ctx);
+        Self::create_logical_expression(null_check, void0_check, ctx)
     }
 
     /// Return `left || right`
@@ -294,18 +289,6 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
             ChainElement::CallExpression(call) => Expression::CallExpression(call),
             ChainElement::TSNonNullExpression(non_null) => non_null.unbox().expression,
         }
-    }
-
-    /// Generate a binding based on the node and insert the binding at the top of the current block
-    fn generate_binding(
-        &mut self,
-        expr: &Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> BoundIdentifier<'a> {
-        let binding = ctx
-            .generate_uid_in_current_scope_based_on_node(expr, SymbolFlags::FunctionScopedVariable);
-        self.ctx.var_declarations.insert_var(&binding, None, ctx);
-        binding
     }
 
     /// Return `left = right`
@@ -409,7 +392,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                     .create_read_expression(ctx)
             } else {
                 // `foo.bar` -> `_foo$bar = foo.bar`
-                let binding = self.generate_binding(object, ctx);
+                let binding = self.ctx.var_declarations.create_uid_var_based_on_node(object, ctx);
                 *object = Self::create_assignment_expression(
                     binding.create_write_target(ctx),
                     ctx.ast.move_expression(object),
@@ -569,8 +552,6 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         // `foo` -> `foo === null || foo === void 0`
         if let Expression::Identifier(ident) = expr {
             if let Some(binding) = self.get_existing_binding_for_identifier(ident, ctx) {
-                let left1 = binding.create_read_expression(ctx);
-                let left2 = binding.create_read_expression(ctx);
                 if ident.name == "eval" {
                     // `eval?.()` is an indirect eval call transformed to `(0,eval)()`
                     let zero = ctx.ast.number_0();
@@ -578,13 +559,23 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                     let expressions = ctx.ast.vec_from_array([zero, original_callee]);
                     *expr = ctx.ast.expression_sequence(SPAN, expressions);
                 }
+
+                let left1 = binding.create_read_expression(ctx);
+                let replacement = if self.ctx.assumptions.no_document_all {
+                    // `foo === null`
+                    self.wrap_null_check(left1, ctx)
+                } else {
+                    // `foo === null || foo === void 0`
+                    let left2 = binding.create_read_expression(ctx);
+                    self.wrap_optional_check(left1, left2, ctx)
+                };
                 self.set_binding_context(binding);
-                return self.wrap_optional_check(left1, left2, ctx);
+                return replacement;
             }
         }
 
         // We should generate a temp binding for the expression first to avoid the next step changing the expression.
-        let temp_binding = self.generate_binding(expr, ctx);
+        let temp_binding = self.ctx.var_declarations.create_uid_var_based_on_node(expr, ctx);
         if is_call && !self.ctx.assumptions.pure_getters {
             if let Some(member) = expr.as_member_expression_mut() {
                 let object = member.object_mut();
@@ -593,7 +584,8 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                 if let Expression::Identifier(ident) = object {
                     let binding =
                         self.get_existing_binding_for_identifier(ident, ctx).unwrap_or_else(|| {
-                            let binding = self.generate_binding(object, ctx);
+                            let binding =
+                                self.ctx.var_declarations.create_uid_var_based_on_node(object, ctx);
                             // `(_foo = foo)`
                             *object = Self::create_assignment_expression(
                                 binding.create_write_target(ctx),
@@ -603,7 +595,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
                             binding.to_maybe_bound_identifier()
                         });
                     self.set_binding_context(binding);
-                } else if matches!(object, Expression::Super(_)) {
+                } else if object.is_super() {
                     self.set_this_context();
                 }
             }
@@ -614,12 +606,17 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
         // `(binding = expr)`
         let assignment_expression =
             Self::create_assignment_expression(temp_binding.create_write_target(ctx), expr, ctx);
-        // `(binding = expr) === null || binding === void 0`
-        let expr = self.wrap_optional_check(
-            assignment_expression,
-            temp_binding.create_read_expression(ctx),
-            ctx,
-        );
+        let expr = if self.ctx.assumptions.no_document_all {
+            // `(binding = expr) === null`
+            self.wrap_null_check(assignment_expression, ctx)
+        } else {
+            // `(binding = expr) === null || binding === void 0`
+            self.wrap_optional_check(
+                assignment_expression,
+                temp_binding.create_read_expression(ctx),
+                ctx,
+            )
+        };
 
         self.set_temp_binding(temp_binding);
         expr
@@ -650,7 +647,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
 
         let temp_binding = {
             if self.temp_binding.is_none() {
-                let binding = self.generate_binding(expr, ctx);
+                let binding = self.ctx.var_declarations.create_uid_var_based_on_node(expr, ctx);
                 self.set_temp_binding(binding);
             }
             self.temp_binding.as_ref().unwrap()

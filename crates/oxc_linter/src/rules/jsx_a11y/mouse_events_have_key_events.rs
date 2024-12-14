@@ -102,9 +102,7 @@ impl Rule for MouseEventsHaveKeyEvents {
             return;
         };
 
-        let Some(el_type) = get_element_type(ctx, jsx_opening_el) else {
-            return;
-        };
+        let el_type = get_element_type(ctx, jsx_opening_el);
 
         if !HTML_TAG.contains(&el_type) {
             return;

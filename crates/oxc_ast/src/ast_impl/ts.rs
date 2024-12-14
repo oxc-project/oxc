@@ -171,10 +171,9 @@ impl fmt::Display for TSAccessibility {
 }
 
 impl TSModuleDeclaration<'_> {
-    /// Returns `true` if this module's body exists and uses strict mode
-    /// semantics (as determined by [`TSModuleDeclarationBody::is_strict`]).
-    pub fn is_strict(&self) -> bool {
-        self.body.as_ref().is_some_and(TSModuleDeclarationBody::is_strict)
+    /// Returns `true` if this module's body exists and has a `"use strict"` directive.
+    pub fn has_use_strict_directive(&self) -> bool {
+        self.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive)
     }
 }
 
@@ -233,9 +232,9 @@ impl fmt::Display for TSModuleDeclarationName<'_> {
 }
 
 impl<'a> TSModuleDeclarationBody<'a> {
-    /// Does the body of this module use strict mode semantics?
-    pub fn is_strict(&self) -> bool {
-        matches!(self, Self::TSModuleBlock(block) if block.is_strict())
+    /// Returns `true` if this module has a `"use strict"` directive.
+    pub fn has_use_strict_directive(&self) -> bool {
+        matches!(self, Self::TSModuleBlock(block) if block.has_use_strict_directive())
     }
 
     /// Returns `true` if this module contains no statements.
@@ -260,7 +259,7 @@ impl<'a> TSModuleDeclarationBody<'a> {
 
 impl TSModuleBlock<'_> {
     /// Returns `true` if this module contains a `"use strict"` directive.
-    pub fn is_strict(&self) -> bool {
+    pub fn has_use_strict_directive(&self) -> bool {
         self.directives.iter().any(Directive::is_use_strict)
     }
 }

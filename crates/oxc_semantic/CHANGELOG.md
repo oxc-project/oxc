@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.41.0] - 2024-12-13
+
+- 96a26d3 ast: [**BREAKING**] Rename `is_strict` methods to `has_use_strict_directive` (#7783) (overlookmotel)
+
+### Bug Fixes
+
+- 9479e2b semantic: Missing references when `export {}` references a type-only binding and a normal (#7812) (Yunfei He)
+- 7a83230 semantic: Missing reference when `export default` references a type alias binding (#7813) (Dunqing)
+- 4a3bca8 semantic: Fix identifying strict mode arrow functions (#7785) (overlookmotel)
+
+### Refactor
+
+- 0f367e5 semantic: Improve the logic of resolving references to be cleaner (#7829) (Dunqing)
+- 5710950 semantic: Move export-related reference flags logic to visit functions (#7828) (Dunqing)
+
+## [0.40.0] - 2024-12-10
+
+- 72eab6c parser: [**BREAKING**] Stage 3 `import source` and `import defer` (#7706) (Boshen)
+
+- ebc80f6 ast: [**BREAKING**] Change 'raw' from &str to Option<Atom> (#7547) (Song Gao)
+
+### Features
+
+- 78dff7d semantic: Add `SymbolTable::symbol_is_mutated` method (#7755) (overlookmotel)
+
+### Refactor
+
+
 ## [0.39.0] - 2024-12-04
 
 - 0be5233 semantic: [**BREAKING**] Remove `ModuleRecord` from `Semantic` (#7548) (Boshen)

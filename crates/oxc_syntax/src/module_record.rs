@@ -1,9 +1,9 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::{Allocator, Vec};
 use oxc_span::{Atom, Span};
-
-use rustc_hash::FxHashMap;
 
 /// ESM Module Record
 ///
@@ -56,6 +56,9 @@ pub struct ModuleRecord<'a> {
 
     /// Local exported bindings
     pub exported_bindings: FxHashMap<Atom<'a>, Span>,
+
+    /// Span position of `import.meta`.
+    pub import_metas: Vec<'a, Span>,
 }
 
 impl<'a> ModuleRecord<'a> {
@@ -69,6 +72,7 @@ impl<'a> ModuleRecord<'a> {
             indirect_export_entries: Vec::new_in(allocator),
             star_export_entries: Vec::new_in(allocator),
             exported_bindings: FxHashMap::default(),
+            import_metas: Vec::new_in(allocator),
         }
     }
 }
@@ -229,6 +233,19 @@ pub struct ExportEntry<'a> {
     /// The name that is used to locally access the exported value from within the importing module.
     /// null if the exported value is not locally accessible from within the module.
     pub local_name: ExportLocalName<'a>,
+
+    /// Whether the export is a TypeScript `export type`.
+    ///
+    /// Examples:
+    ///
+    /// ```ts
+    /// export type * from 'mod'
+    /// export type * as ns from 'mod'
+    /// export type { foo }
+    /// export { type foo }
+    /// export type { foo } from 'mod'
+    /// ```
+    pub is_type: bool,
 }
 
 /// `ImportName` for `ExportEntry`

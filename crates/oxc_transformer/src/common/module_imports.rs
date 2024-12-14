@@ -215,6 +215,7 @@ impl<'a> ModuleImportsStore<'a> {
             SPAN,
             Some(specifiers),
             ctx.ast.string_literal(SPAN, source, None),
+            None,
             NONE,
             ImportOrExportKind::Value,
         ))

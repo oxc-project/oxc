@@ -5,6 +5,17 @@
 //! * <https://www.typescriptlang.org/tsconfig#isolatedDeclarations>
 //! * <https://github.com/microsoft/TypeScript/blob/v5.6.3/src/compiler/transformers/declarations.ts>
 
+use std::{cell::RefCell, mem};
+
+use rustc_hash::{FxHashMap, FxHashSet};
+
+use oxc_allocator::{Allocator, CloneIn};
+use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_span::{Atom, GetSpan, SourceType, SPAN};
+
+use crate::{diagnostics::function_with_assigning_properties, scope::ScopeTree};
+
 mod class;
 mod declaration;
 mod diagnostics;
@@ -18,17 +29,6 @@ mod return_type;
 mod scope;
 mod signatures;
 mod types;
-
-use std::{cell::RefCell, mem};
-
-use oxc_allocator::{Allocator, CloneIn};
-use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, GetSpan, SourceType, SPAN};
-use rustc_hash::{FxHashMap, FxHashSet};
-
-use crate::scope::ScopeTree;
-use diagnostics::function_with_assigning_properties;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct IsolatedDeclarationsOptions {

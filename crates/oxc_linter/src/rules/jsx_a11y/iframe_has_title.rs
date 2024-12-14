@@ -27,7 +27,7 @@ declare_oxc_lint!(
     ///
     /// Enforce iframe elements have a title attribute.
     ///
-    /// ### Why is this necessary?
+    /// ### Why is this bad?
     ///
     /// Screen reader users rely on a iframe title to describe the contents of the iframe.
     /// Navigating through iframe and iframe elements quickly becomes difficult and confusing for users of this technology if the markup does not contain a title attribute.
@@ -66,9 +66,7 @@ impl Rule for IframeHasTitle {
             return;
         };
 
-        let Some(name) = get_element_type(ctx, jsx_el) else {
-            return;
-        };
+        let name = get_element_type(ctx, jsx_el);
 
         if name != "iframe" {
             return;

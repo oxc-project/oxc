@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.41.0] - 2024-12-13
+
+- fb325dc ast: [**BREAKING**] `span` field must be the first element (#7821) (Boshen)
+
+- 96a26d3 ast: [**BREAKING**] Rename `is_strict` methods to `has_use_strict_directive` (#7783) (overlookmotel)
+
+### Features
+
+- 8991f33 ast: Add `visit_span` to `Visit` and `VisitMut` (#7816) (overlookmotel)
+- f7900ab ast: Add `ArrowFunctionExpression::has_use_strict_directive` method (#7784) (overlookmotel)
+
+### Refactor
+
+
+## [0.40.0] - 2024-12-10
+
+- 72eab6c parser: [**BREAKING**] Stage 3 `import source` and `import defer` (#7706) (Boshen)
+
+- ebc80f6 ast: [**BREAKING**] Change 'raw' from &str to Option<Atom> (#7547) (Song Gao)
+
+### Features
+
+- 7dcf6b4 ast, transformer: Add `AstBuilder::use_strict_directive` method (#7770) (overlookmotel)
+- bd9d38a linter: Implement eslint:yoda (#7559) (tbashiyy)
+
+### Bug Fixes
+
+- 2179b93 estree: Make type of `BigIntLiteral::raw` prop in ESTree AST optional (#7663) (overlookmotel)
+- cbba26c estree: `raw: null` in ESTree AST for generated `NullLiteral`s (#7662) (overlookmotel)
+- 1d59fc8 estree: `raw: null` in ESTree AST for generated `BooleanLiteral`s (#7661) (overlookmotel)
+
+### Refactor
+
+- 98afe65 ast: `AstBuilder` extra methods use `SPAN` (#7769) (overlookmotel)
+- 8993e89 ast: Shorten code (#7659) (overlookmotel)
+- 746c8aa ast: Rename vars (#7658) (overlookmotel)
+
+### Styling
+
+- 0c9cc48 ast: Import `Atom` (#7657) (overlookmotel)
+
 ## [0.39.0] - 2024-12-04
 
 - b0e1c03 ast: [**BREAKING**] Add `StringLiteral::raw` field (#7393) (Boshen)

@@ -92,9 +92,7 @@ fn is_aria_hidden_true(attr: &JSXAttributeItem) -> bool {
 ///
 /// `true` if the element is focusable, `false` otherwise.
 fn is_focusable<'a>(ctx: &LintContext<'a>, element: &JSXOpeningElement<'a>) -> bool {
-    let Some(tag_name) = get_element_type(ctx, element) else {
-        return false;
-    };
+    let tag_name = get_element_type(ctx, element);
 
     if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(element, "tabIndex") {
         if let Some(attr_value) = &attr.value {

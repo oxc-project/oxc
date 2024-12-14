@@ -192,17 +192,21 @@ fn is_overriding(params: &FormalParameters) -> bool {
     params.items.iter().any(|param| param.r#override)
 }
 
-/// Check if a function body only contains a single super call. Ignores directives.
+/// Check if a function body only contains a single `super()` call. Ignores directives.
 ///
-/// Returns the call expression if the body contains a single super call, otherwise [`None`].
-fn is_single_super_call<'f, 'a: 'f>(body: &'f FunctionBody<'a>) -> Option<&'f CallExpression<'a>> {
+/// Returns the call expression if the body contains a single `super()` call, otherwise [`None`].
+fn is_single_super_call<'a, 'f>(body: &'f FunctionBody<'a>) -> Option<&'f CallExpression<'a>> {
     if body.statements.len() != 1 {
         return None;
     }
     let Statement::ExpressionStatement(expr) = &body.statements[0] else { return None };
     let Expression::CallExpression(call) = &expr.expression else { return None };
 
-    matches!(call.callee, Expression::Super(_)).then(|| call.as_ref())
+    if call.callee.is_super() {
+        Some(call)
+    } else {
+        None
+    }
 }
 
 /// Returns `false` if any parameter is an array/object unpacking binding or an

@@ -65,7 +65,9 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
         // If it's a labeled statement, we need to wrap the ForStatement with a labeled statement.
         if let Some(label) = label {
             let Statement::TryStatement(try_statement) = &mut new_stmt else {
-                unreachable!("The last statement should be a try statement, please see the `build_for_await` function");
+                unreachable!(
+                    "The last statement should be a try statement, please see the `build_for_await` function"
+                );
             };
             let try_statement_block_body = &mut try_statement.block.body;
             let for_statement = try_statement_block_body.pop().unwrap();

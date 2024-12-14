@@ -23,10 +23,10 @@ jobs:
       version: ${{ env.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Check version changes
-        uses: EndBug/version-check@v2
+        uses: EndBug/version-check@36ff30f37c7deabe56a30caa043d127be658c425 # v2.1.5
         id: version
         with:
           static-checking: localIsNew
@@ -35,9 +35,12 @@ jobs:
 
       - name: Set version name
         if: steps.version.outputs.changed == 'true'
+        env:
+          VERSION_NUMBER: ${{ steps.version.outputs.version }}
+          VERSION_TYPE: ${{ steps.version.outputs.version_type }}
         run: |
-          echo "Version change found! New version: ${{ steps.version.outputs.version }} (${{ steps.version.outputs.version_type }})"
-          echo "version=${{ steps.version.outputs.version }}" >> $GITHUB_ENV
+          echo "Version change found! New version: ${VERSION_NUMBER} (${VERSION_NUMBER})"
+          echo "version=${VERSION_NUMBER}" >> $GITHUB_ENV
 
   build:
     needs: check
@@ -85,18 +88,18 @@ jobs:
     name: Package ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       ### install musl dependencies ###
 
-      - uses: goto-bus-stop/setup-zig@v2
+      - uses: goto-bus-stop/setup-zig@222d316fd35ce56a4141fe4a869e1aeefc7f3590 # v1.4.0
         if: ${{ contains(matrix.target, 'musl') }}
         with:
           version: 0.11.0
 
       - name: Install cargo-zigbuild
         if: ${{ contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@8c39981484df4e7ba41af8e8e078ac546d5e1b11 # v2.46.8
         with:
           tool: cargo-zigbuild
 
@@ -104,7 +107,9 @@ jobs:
 
       - name: Install cross
         if: ${{ !contains(matrix.target, 'musl') }}
-        uses: taiki-e/install-action@cross
+        uses: taiki-e/install-action@8c39981484df4e7ba41af8e8e078ac546d5e1b11 # v2.46.8
+        with:
+          tool: cross
 
       ### Build
 
@@ -149,7 +154,7 @@ jobs:
         run: tar czf ${{ matrix.code-target }}.tar.gz napi/transform/transform.${{ matrix.code-target }}.node
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
         with:
           if-no-files-found: error
           name: binaries-${{ matrix.code-target }}
@@ -165,17 +170,17 @@ jobs:
     needs:
       - build
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - uses: ./.github/actions/pnpm
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
         with:
           merge-multiple: true
 
       - name: Unzip
-        uses: montudor/action-zip@v1
+        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
         with:
           args: unzip -qq *.zip -d .
 

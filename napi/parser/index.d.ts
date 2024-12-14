@@ -2,6 +2,34 @@
 /* eslint-disable */
 
 export * from '@oxc-project/types';
+export declare class MagicString {
+  /** Get source text from utf8 offset. */
+  getSourceText(start: number, end: number): string
+  /** Get 0-based line and column number from utf8 offset. */
+  getLineColumnNumber(offset: number): LineColumn
+  /** Get UTF16 byte offset from UTF8 byte offset. */
+  getUtf16ByteOffset(offset: number): number
+  length(): number
+  toString(): string
+  append(input: string): this
+  appendLeft(index: number, input: string): this
+  appendRight(index: number, input: string): this
+  indent(): this
+  prepend(input: string): this
+  prependLeft(index: number, input: string): this
+  prependRight(index: number, input: string): this
+  relocate(start: number, end: number, to: number): this
+  remove(start: number, end: number): this
+}
+
+export declare class ParseResult {
+  get program(): import("@oxc-project/types").Program
+  get module(): EcmaScriptModule
+  get comments(): Array<Comment>
+  get errors(): Array<OxcError>
+  get magicString(): MagicString
+}
+
 export interface Comment {
   type: 'Line' | 'Block'
   value: string
@@ -22,6 +50,14 @@ export interface EcmaScriptModule {
   staticImports: Array<StaticImport>
   /** Export Statements. */
   staticExports: Array<StaticExport>
+  /** Span positions` of `import.meta` */
+  importMetas: Array<Span>
+}
+
+export interface ErrorLabel {
+  message?: string
+  start: number
+  end: number
 }
 
 export interface ExportExportName {
@@ -93,19 +129,28 @@ export declare const enum ImportNameKind {
   Default = 'Default'
 }
 
+export interface LineColumn {
+  line: number
+  column: number
+}
+
+export interface OverwriteOptions {
+  contentOnly: boolean
+}
+
+export interface OxcError {
+  severity: Severity
+  message: string
+  labels: Array<ErrorLabel>
+  helpMessage?: string
+}
+
 /**
  * Parse asynchronously.
  *
  * Note: This function can be slower than `parseSync` due to the overhead of spawning a thread.
  */
 export declare function parseAsync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
-
-export interface ParseResult {
-  program: import("@oxc-project/types").Program
-  module: EcmaScriptModule
-  comments: Array<Comment>
-  errors: Array<string>
-}
 
 export interface ParserOptions {
   sourceType?: 'script' | 'module' | 'unambiguous' | undefined
@@ -132,6 +177,23 @@ export declare function parseSync(filename: string, sourceText: string, options?
  * This is for benchmark purposes such as measuring napi communication overhead.
  */
 export declare function parseWithoutReturn(filename: string, sourceText: string, options?: ParserOptions | undefined | null): void
+
+export declare const enum Severity {
+  Error = 'Error',
+  Warning = 'Warning',
+  Advice = 'Advice'
+}
+
+export interface SourceMapOptions {
+  includeContent?: boolean
+  source?: string
+  hires?: boolean
+}
+
+export interface Span {
+  start: number
+  end: number
+}
 
 export interface StaticExport {
   start: number

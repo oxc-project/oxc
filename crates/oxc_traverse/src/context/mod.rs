@@ -427,6 +427,19 @@ impl<'a> TraverseCtx<'a> {
         self.generate_uid(name, self.current_hoist_scope_id(), SymbolFlags::FunctionScopedVariable)
     }
 
+    /// Generate UID in current hoist scope based on node.
+    ///
+    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
+    /// on how UIDs are generated. There are some potential "gotchas".
+    #[inline]
+    pub fn generate_uid_in_current_hoist_scope_based_on_node<N: GatherNodeParts<'a>>(
+        &mut self,
+        node: &N,
+    ) -> BoundIdentifier<'a> {
+        let name = get_var_name_from_node(node);
+        self.generate_uid_in_current_hoist_scope(&name)
+    }
+
     /// Create a reference bound to a `SymbolId`.
     ///
     /// This is a shortcut for `ctx.scoping.create_bound_reference`.
@@ -577,19 +590,19 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.delete_reference_for_identifier(ident);
     }
 
-    /// Determine whether evaluating the specific input `node` is a consequenceless reference.
+    /// Rename symbol.
     ///
-    /// i.e. evaluating it won't result in potentially arbitrary code from being run.
-    /// The following are allowed and determined not to cause side effects:
+    /// Preserves original order of bindings for scope.
     ///
-    /// - `this` expressions
-    /// - `super` expressions
-    /// - Bound identifiers which are not mutated
+    /// The following must be true for successful operation:
+    /// * Binding exists in specified scope for `symbol_id`.
+    /// * No binding already exists in scope for `new_name`.
     ///
-    /// This is a shortcut for `ctx.scoping.is_static`.
-    #[inline]
-    pub fn is_static(&self, expr: &Expression) -> bool {
-        self.scoping.is_static(expr)
+    /// Panics in debug mode if either of the above are not satisfied.
+    ///
+    /// This is a shortcut for `ctx.scoping.rename_symbol`.
+    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
+        self.scoping.rename_symbol(symbol_id, scope_id, new_name);
     }
 }
 

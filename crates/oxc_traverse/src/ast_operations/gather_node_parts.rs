@@ -466,7 +466,7 @@ impl<'a> GatherNodeParts<'a> for StringLiteral<'a> {
 
 impl<'a> GatherNodeParts<'a> for NumericLiteral<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        f(self.raw);
+        f(&self.raw_str());
     }
 }
 

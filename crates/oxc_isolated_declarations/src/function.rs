@@ -26,8 +26,8 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             let params = self.transform_formal_parameters(&func.params);
             Some(self.ast.alloc_function(
-                func.r#type,
                 func.span,
+                func.r#type,
                 func.id.clone_in(self.ast.allocator),
                 false,
                 false,

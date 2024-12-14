@@ -5,28 +5,28 @@ description: Clone submodules
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
         show-progress: false
         repository: tc39/test262
         path: tasks/coverage/test262
-        ref: fd979d85d4e4b74ef1ed097d25c71263417d5aad
+        ref: dc0082c5ea347e5ecb585c1d7ebf4555aa429528
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
         show-progress: false
         repository: babel/babel
         path: tasks/coverage/babel
         ref: 54a8389fa31ce4fd18b0335b05832dc1ad3cc21f
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
         show-progress: false
         repository: microsoft/TypeScript
         path: tasks/coverage/typescript
         ref: d85767abfd83880cea17cea70f9913e9c4496dcc
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
         show-progress: false
         repository: prettier/prettier

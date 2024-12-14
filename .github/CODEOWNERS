@@ -12,6 +12,7 @@ pnpm-lock.yaml
 /crates/oxc_prettier @leaysgur
 /crates/oxc_regular_expression @leaysgur
 /crates/oxc_semantic @Boshen @dunqing
+/crates/oxc_transformer/src/plugins @boshen
 /crates/oxc_transformer @overlookmotel @dunqing
 /crates/oxc_traverse @overlookmotel
 

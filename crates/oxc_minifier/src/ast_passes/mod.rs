@@ -1,3 +1,7 @@
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
+use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+
 mod collapse_variable_declarations;
 mod exploit_assigns;
 mod peephole_fold_constants;
@@ -17,10 +21,6 @@ pub use peephole_replace_known_methods::PeepholeReplaceKnownMethods;
 pub use peephole_substitute_alternate_syntax::PeepholeSubstituteAlternateSyntax;
 pub use remove_syntax::RemoveSyntax;
 pub use statement_fusion::StatementFusion;
-
-use oxc_allocator::Vec;
-use oxc_ast::ast::*;
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 pub trait CompressorPass<'a>: Traverse<'a> {
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>);

@@ -4,21 +4,21 @@ use std::{
 };
 
 use cow_utils::CowUtils;
-use oxc::parser::ParseOptions;
+
 use oxc::{
     allocator::Allocator,
     codegen::{CodeGenerator, CodegenOptions},
     diagnostics::{NamedSource, OxcDiagnostic},
-    parser::Parser,
+    parser::{ParseOptions, Parser},
     span::{SourceType, VALID_EXTENSIONS},
     transformer::{BabelOptions, HelperLoaderMode, TransformOptions},
 };
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 
 use crate::{
-    constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS, SNAPSHOT_TESTS},
+    constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
     driver::Driver,
-    fixture_root, oxc_test_root, packages_root, snap_root, TestRunnerOptions,
+    fixture_root, override_root, oxc_test_root, packages_root, TestRunnerOptions,
 };
 
 #[derive(Debug)]
@@ -29,18 +29,26 @@ pub struct TestCase {
     source_type: SourceType,
     transform_options: Result<TransformOptions, Vec<String>>,
     pub errors: Vec<OxcDiagnostic>,
+    pub transformed_code: String,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum TestCaseKind {
     Conformance,
     Exec,
-    Snapshot,
 }
 
 impl TestCase {
     pub fn new(cwd: &Path, path: &Path) -> Option<Self> {
-        let mut options = BabelOptions::from_test_path(path.parent().unwrap());
+        let mut options_directory_path = path.parent().unwrap().to_path_buf();
+        // Try to find the override options.json
+        if let Some(path) = Self::convert_to_override_path(options_directory_path.as_path()) {
+            if path.join("options.json").exists() {
+                options_directory_path = path;
+            }
+        }
+
+        let mut options = BabelOptions::from_test_path(options_directory_path.as_path());
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = TransformOptions::try_from(&options);
         let path = path.to_path_buf();
@@ -59,21 +67,22 @@ impl TestCase {
         else if path.file_stem().is_some_and(|name| name == "input" || name == "input.d")
             && path.extension().is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap()))
         {
-            if path
-                .strip_prefix(packages_root())
-                .is_ok_and(|p| SNAPSHOT_TESTS.iter().any(|t| p.to_string_lossy().starts_with(t)))
-            {
-                TestCaseKind::Snapshot
-            } else {
-                TestCaseKind::Conformance
-            }
+            TestCaseKind::Conformance
         } else {
             return None;
         };
 
         let source_type = Self::source_type(&path, &options);
 
-        Some(Self { kind, path, options, source_type, transform_options, errors })
+        Some(Self {
+            kind,
+            path,
+            options,
+            source_type,
+            transform_options,
+            errors,
+            transformed_code: String::new(),
+        })
     }
 
     fn source_type(path: &Path, options: &BabelOptions) -> SourceType {
@@ -94,6 +103,45 @@ impl TestCase {
             options.plugins.typescript.is_some() || options.plugins.syntax_typescript.is_some(),
         );
         source_type
+    }
+
+    fn convert_to_override_path(path: &Path) -> Option<PathBuf> {
+        path.strip_prefix(packages_root()).ok().map(|p| override_root().join(p))
+    }
+
+    fn get_output_path(&self) -> Option<PathBuf> {
+        let babel_output_path =
+            self.path.parent().unwrap().read_dir().unwrap().find_map(|entry| {
+                let path = entry.ok()?.path();
+                let file_stem = path.file_stem()?;
+                (file_stem == "output").then_some(path)
+            })?;
+
+        // Try to find the override output path
+        if let Some(output_path) = Self::convert_to_override_path(&babel_output_path) {
+            if output_path.exists() {
+                return Some(output_path);
+            }
+        }
+
+        Some(babel_output_path)
+    }
+
+    pub fn write_override_output(&self) {
+        let Some(output_path) = self.get_output_path() else {
+            return;
+        };
+
+        let override_output_path = if output_path.starts_with(override_root()) {
+            output_path
+        } else if let Some(output_path) = Self::convert_to_override_path(&output_path) {
+            output_path
+        } else {
+            return;
+        };
+        fs::create_dir_all(override_output_path.parent().unwrap()).unwrap();
+        let transformed_code = self.transformed_code.cow_replace("\t", "  ");
+        fs::write(&override_output_path, transformed_code.as_bytes()).unwrap();
     }
 
     pub fn skip_test_case(&self) -> bool {
@@ -170,11 +218,17 @@ impl TestCase {
         };
 
         let source_text = fs::read_to_string(path).unwrap();
-
         let project_root = project_root();
         let mut options = transform_options.clone();
         options.helper_loader.mode = mode;
-        let mut driver = Driver::new(false, options).execute(&source_text, self.source_type, path);
+        let cwd_path = self
+            .options
+            .cwd
+            .as_ref()
+            .and_then(|cwd| path.strip_prefix(cwd).ok().map(|p| Path::new("<CWD>").join(p)))
+            .unwrap_or(path.clone());
+        let mut driver =
+            Driver::new(false, options).execute(&source_text, self.source_type, cwd_path.as_path());
         let errors = driver.errors();
         if !errors.is_empty() {
             let source = NamedSource::new(
@@ -203,17 +257,12 @@ impl TestCase {
                     self.test_exec(filtered);
                 }
             }
-            TestCaseKind::Snapshot => self.test_snapshot(filtered),
         }
     }
 
     /// Test conformance by comparing the parsed babel code and transformed code.
     fn test_conformance(&mut self, filtered: bool) {
-        let output_path = self.path.parent().unwrap().read_dir().unwrap().find_map(|entry| {
-            let path = entry.ok()?.path();
-            let file_stem = path.file_stem()?;
-            (file_stem == "output").then_some(path)
-        });
+        let output_path = self.get_output_path();
 
         let allocator = Allocator::default();
         let input = fs::read_to_string(&self.path).unwrap();
@@ -223,7 +272,6 @@ impl TestCase {
             println!("output_path: {output_path:?}");
         }
 
-        let mut transformed_code = String::new();
         let mut actual_errors = None;
         let mut transform_options = None;
 
@@ -233,7 +281,7 @@ impl TestCase {
             }
             Ok(code) => {
                 transform_options.replace(self.transform_options.as_ref().unwrap().clone());
-                transformed_code = code;
+                self.transformed_code = code;
             }
         }
 
@@ -268,7 +316,7 @@ impl TestCase {
                 },
             );
 
-            if transformed_code == output {
+            if self.transformed_code == output {
                 actual_errors.is_none()
             } else {
                 if actual_errors.is_none() {
@@ -296,8 +344,10 @@ impl TestCase {
                 }
             } else {
                 println!("Expected:\n");
+                let output = output.cow_replace("\t", "  ");
                 println!("{output}\n");
                 println!("Transformed:\n");
+                let transformed_code = self.transformed_code.cow_replace("\t", "  ");
                 println!("{transformed_code}");
                 println!("Errors:\n");
                 if let Some(actual_errors) = &actual_errors {
@@ -385,29 +435,6 @@ test("exec", () => {{
 {code}
 }})"#
         )
-    }
-
-    fn test_snapshot(&self, filtered: bool) {
-        let result = match self.transform(HelperLoaderMode::Runtime) {
-            Ok(code) => code,
-            Err(error) => error,
-        };
-        let mut path = snap_root().join(self.path.strip_prefix(packages_root()).unwrap());
-        path.set_file_name("output");
-        let input_extension = self.path.extension().unwrap().to_str().unwrap();
-        let extension =
-            input_extension.chars().map(|c| if c == 't' { 'j' } else { c }).collect::<String>();
-        path.set_extension(extension);
-        if filtered {
-            println!("Input path: {:?}", &self.path);
-            println!("Output path: {path:?}");
-            println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
-            println!("Output:\n{result}\n");
-        }
-        if fs::write(&path, &result).is_err() {
-            fs::create_dir_all(path.parent().unwrap()).unwrap();
-            fs::write(path, &result).unwrap();
-        }
     }
 }
 

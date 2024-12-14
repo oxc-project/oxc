@@ -1,15 +1,16 @@
 use std::path::{Path, PathBuf};
 
-use oxc_diagnostics::OxcDiagnostic;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::utils::read_to_string;
 
 use super::{
     categories::OxlintCategories, env::OxlintEnv, globals::OxlintGlobals,
     overrides::OxlintOverrides, plugins::LintPlugins, rules::OxlintRules, settings::OxlintSettings,
 };
-
-use crate::utils::read_to_string;
 
 /// Oxlint Configuration File
 ///
@@ -137,8 +138,9 @@ impl Oxlintrc {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_oxlintrc_de_empty() {
@@ -171,7 +173,7 @@ mod test {
             serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn"] }"#).unwrap();
         assert_eq!(config.plugins, LintPlugins::TYPESCRIPT.union(LintPlugins::UNICORN));
         let config: Oxlintrc =
-            serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn", "react", "oxc", "import", "jsdoc", "jest", "vitest", "jsx-a11y", "nextjs", "react-perf", "promise", "node", "security"] }"#).unwrap();
+            serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn", "react", "oxc", "import", "jsdoc", "jest", "vitest", "jsx-a11y", "nextjs", "react-perf", "promise", "node"] }"#).unwrap();
         assert_eq!(config.plugins, LintPlugins::all());
 
         let config: Oxlintrc =

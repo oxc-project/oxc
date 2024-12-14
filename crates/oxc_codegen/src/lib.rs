@@ -104,6 +104,8 @@ pub struct Codegen<'a> {
 
     /// Fast path for [CodegenOptions::single_quote]
     quote: u8,
+    /// Fast path for if print comments
+    print_comments: bool,
 
     // Builders
     comments: CommentsMap,
@@ -151,8 +153,10 @@ impl<'a> Codegen<'a> {
     /// This is equivalent to [`Codegen::default`].
     #[must_use]
     pub fn new() -> Self {
+        let options = CodegenOptions::default();
+        let print_comments = options.print_comments();
         Self {
-            options: CodegenOptions::default(),
+            options,
             source_text: "",
             mangler: None,
             code: CodeBuffer::default(),
@@ -168,6 +172,7 @@ impl<'a> Codegen<'a> {
             start_of_default_export: 0,
             indent: 0,
             quote: b'"',
+            print_comments,
             comments: CommentsMap::default(),
             start_of_annotation_comment: None,
             legal_comments: vec![],
@@ -179,6 +184,7 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_options(mut self, options: CodegenOptions) -> Self {
         self.quote = if options.single_quote { b'\'' } else { b'"' };
+        self.print_comments = options.print_comments();
         self.options = options;
         self
     }
@@ -198,8 +204,12 @@ impl<'a> Codegen<'a> {
         self.quote = if self.options.single_quote { b'\'' } else { b'"' };
         self.source_text = program.source_text;
         self.code.reserve(program.source_text.len());
-        if self.options.print_comments() {
-            self.build_comments(&program.comments);
+        if self.print_comments {
+            if program.comments.is_empty() {
+                self.print_comments = false;
+            } else {
+                self.build_comments(&program.comments);
+            }
         }
         if let Some(path) = &self.options.source_map_path {
             self.sourcemap_builder = Some(SourcemapBuilder::new(path, program.source_text));
@@ -344,10 +354,7 @@ impl<'a> Codegen<'a> {
             self.print_next_indent_as_space = false;
             return;
         }
-        // SAFETY: this iterator only yields tabs, which are always valid ASCII characters.
-        unsafe {
-            self.code.print_bytes_unchecked(std::iter::repeat(b'\t').take(self.indent as usize));
-        }
+        self.code.print_indent(self.indent as usize);
     }
 
     #[inline]
@@ -380,13 +387,6 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn print_equal(&mut self) {
         self.print_ascii_byte(b'=');
-    }
-
-    fn print_sequence<T: Gen>(&mut self, items: &[T], ctx: Context) {
-        for item in items {
-            item.print(self, ctx);
-            self.print_comma();
-        }
     }
 
     fn print_curly_braces<F: FnOnce(&mut Self)>(&mut self, span: Span, single_line: bool, op: F) {
@@ -478,7 +478,7 @@ impl<'a> Codegen<'a> {
             if index != 0 {
                 self.print_comma();
             }
-            if self.has_non_annotation_comment(item.span().start) {
+            if self.print_comments && self.has_non_annotation_comment(item.span().start) {
                 self.print_expr_comments(item.span().start);
                 self.print_indent();
             } else {

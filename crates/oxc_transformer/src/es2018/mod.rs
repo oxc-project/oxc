@@ -1,13 +1,13 @@
-pub(crate) mod async_generator_functions;
-mod object_rest_spread;
-mod options;
-
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::TransformCtx;
 
-use async_generator_functions::AsyncGeneratorFunctions;
+mod async_generator_functions;
+mod object_rest_spread;
+mod options;
+
+pub use async_generator_functions::AsyncGeneratorFunctions;
 pub use object_rest_spread::{ObjectRestSpread, ObjectRestSpreadOptions};
 pub use options::ES2018Options;
 

@@ -363,30 +363,20 @@ impl TraverseScoping {
         self.delete_reference(ident.reference_id(), &ident.name);
     }
 
-    /// Determine whether evaluating the specific input `node` is a consequenceless reference.
+    /// Rename symbol.
     ///
-    /// i.e. evaluating it won't result in potentially arbitrary code from being run.
-    /// The following are allowed and determined not to cause side effects:
+    /// Preserves original order of bindings for scope.
     ///
-    /// - `this` expressions
-    /// - `super` expressions
-    /// - Bound identifiers which are not mutated
+    /// The following must be true for successful operation:
+    /// * Binding exists in specified scope for `symbol_id`.
+    /// * No binding already exists in scope for `new_name`.
     ///
-    /// Based on Babel's `scope.isStatic` logic.
-    /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L557>
-    #[inline]
-    pub fn is_static(&self, expr: &Expression) -> bool {
-        match expr {
-            Expression::ThisExpression(_) | Expression::Super(_) => true,
-            Expression::Identifier(ident) => {
-                self.symbols.get_reference(ident.reference_id()).symbol_id().is_some_and(
-                    |symbol_id| {
-                        self.symbols.get_resolved_references(symbol_id).all(|r| !r.is_write())
-                    },
-                )
-            }
-            _ => false,
-        }
+    /// Panics in debug mode if either of the above are not satisfied.
+    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
+        // Rename symbol
+        let old_name = self.symbols.set_name(symbol_id, new_name.clone());
+        // Rename binding
+        self.scopes.rename_binding(scope_id, symbol_id, &old_name, new_name);
     }
 }
 

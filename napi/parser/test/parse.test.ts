@@ -30,3 +30,23 @@ describe('parse', () => {
     expect(ret).toEqual(ret2);
   });
 });
+
+describe('error', () => {
+  const code = 'asdf asdf';
+
+  it('returns structured error', () => {
+    const ret = parseSync('test.js', code);
+    expect(ret.errors.length).toBe(1);
+    expect(ret.errors[0]).toStrictEqual({
+      'helpMessage': 'Try insert a semicolon here',
+      'labels': [
+        {
+          'end': 4,
+          'start': 4,
+        },
+      ],
+      'message': 'Expected a semicolon or an implicit semicolon after a statement, but found none',
+      'severity': 'Error',
+    });
+  });
+});

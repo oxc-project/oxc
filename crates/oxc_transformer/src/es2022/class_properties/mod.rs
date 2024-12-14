@@ -125,14 +125,16 @@
 //!
 //! Implementation is split into several files:
 //!
-//! * `mod.rs`:            Setup and visitor.
-//! * `class.rs`:          Transform of class body.
-//! * `constructor.rs`:    Insertion of property initializers into class constructor.
-//! * `private.rs`:        Transform of private property usages (`this.#prop`).
-//! * `private_props.rs`:  Structures storing details of private properties.
-//! * `static_prop.rs`:    Transform of static property initializers.
-//! * `class_bindings.rs`: Structure containing bindings for class name and temp var.
-//! * `utils.rs`:          Utility functions.
+//! * `mod.rs`:               Setup and visitor.
+//! * `class.rs`:             Transform of class body.
+//! * `constructor.rs`:       Insertion of property initializers into class constructor.
+//! * `private.rs`:           Transform of private property usages (`this.#prop`).
+//! * `private_props.rs`:     Structures storing details of private properties.
+//! * `instance_prop_init.rs`: Transform of instance property initializers.
+//! * `static_prop_init.rs`:  Transform of static property initializers.
+//! * `class_bindings.rs`:    Structure containing bindings for class name and temp var.
+//! * `super.rs`:             Transform `super` expressions.
+//! * `utils.rs`:             Utility functions.
 //!
 //! ## References
 //!
@@ -149,6 +151,7 @@ use serde::Deserialize;
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
+use oxc_syntax::scope::ScopeId;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
@@ -156,9 +159,11 @@ use crate::TransformCtx;
 mod class;
 mod class_bindings;
 mod constructor;
+mod instance_prop_init;
 mod private;
 mod private_props;
-mod static_prop;
+mod static_prop_init;
+mod supers;
 mod utils;
 use class_bindings::ClassBindings;
 use private_props::PrivatePropsStack;
@@ -168,8 +173,7 @@ type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ClassPropertiesOptions {
-    #[serde(alias = "loose")]
-    pub(crate) set_public_class_fields: bool,
+    pub(crate) loose: bool,
 }
 
 /// Class properties transform.
@@ -182,6 +186,8 @@ pub struct ClassProperties<'a, 'ctx> {
     //
     /// If `true`, set properties with `=`, instead of `_defineProperty` helper.
     set_public_class_fields: bool,
+    /// If `true`, record private properties as string keys
+    private_fields_as_properties: bool,
     /// If `true`, transform static blocks.
     transform_static_blocks: bool,
 
@@ -212,6 +218,8 @@ pub struct ClassProperties<'a, 'ctx> {
     class_bindings: ClassBindings<'a>,
     /// `true` if temp var for class has been inserted
     temp_var_is_created: bool,
+    /// Scope that instance init initializers will be inserted into
+    instance_inits_scope_id: ScopeId,
     /// Expressions to insert before class
     insert_before: Vec<Expression<'a>>,
     /// Expressions to insert after class expression
@@ -227,11 +235,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
         // TODO: Raise error if these 2 options are inconsistent
-        let set_public_class_fields =
-            options.set_public_class_fields || ctx.assumptions.set_public_class_fields;
+        let set_public_class_fields = options.loose || ctx.assumptions.set_public_class_fields;
+        // TODO: Raise error if these 2 options are inconsistent
+        let private_fields_as_properties =
+            options.loose || ctx.assumptions.private_fields_as_properties;
 
         Self {
             set_public_class_fields,
+            private_fields_as_properties,
             transform_static_blocks,
             ctx,
             private_props_stack: PrivatePropsStack::default(),
@@ -240,6 +251,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             is_declaration: false,
             class_bindings: ClassBindings::default(),
             temp_var_is_created: false,
+            instance_inits_scope_id: ScopeId::new(0),
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
             insert_before: vec![],
             insert_after_exprs: vec![],
@@ -252,7 +264,8 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
     // `#[inline]` because this is a hot path
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // Note: `delete this.#prop` is an early syntax error, so no need to handle transforming it
+        // IMPORTANT: If add any other visitors here to handle private fields,
+        // also need to add them to visitor in `static_prop.rs`.
         match expr {
             // `class {}`
             Expression::ClassExpression(_) => {
@@ -279,15 +292,11 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
                 self.transform_chain_expression(expr, ctx);
             }
             // `delete object?.#prop.xyz`
-            Expression::UnaryExpression(unary)
-                if unary.operator == UnaryOperator::Delete
-                    && matches!(unary.argument, Expression::ChainExpression(_)) =>
-            {
+            Expression::UnaryExpression(_) => {
                 self.transform_unary_expression(expr, ctx);
             }
             // "object.#prop`xyz`"
             Expression::TaggedTemplateExpression(_) => {
-                // TODO: `transform_tagged_template_expression` is no-op at present
                 self.transform_tagged_template_expression(expr, ctx);
             }
             _ => {}

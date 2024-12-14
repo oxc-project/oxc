@@ -48,10 +48,11 @@ use es2021::ES2021;
 use es2022::ES2022;
 use jsx::Jsx;
 use regexp::RegExp;
+use rustc_hash::FxHashMap;
 use typescript::TypeScript;
 
 pub use crate::{
-    common::helper_loader::HelperLoaderMode,
+    common::helper_loader::{Helper, HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
@@ -63,10 +64,14 @@ pub use crate::{
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
 
+#[non_exhaustive]
 pub struct TransformerReturn {
     pub errors: std::vec::Vec<OxcDiagnostic>,
     pub symbols: SymbolTable,
     pub scopes: ScopeTree,
+    /// Helpers used by this transform.
+    #[deprecated = "Internal usage only"]
+    pub helpers_used: FxHashMap<Helper, String>,
 }
 
 pub struct Transformer<'a> {
@@ -128,7 +133,9 @@ impl<'a> Transformer<'a> {
         };
 
         let (symbols, scopes) = traverse_mut(&mut transformer, allocator, program, symbols, scopes);
-        TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
+        let helpers_used = self.ctx.helper_loader.used_helpers.borrow_mut().drain().collect();
+        #[allow(deprecated)]
+        TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes, helpers_used }
     }
 }
 
@@ -310,6 +317,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_assignment_target(node, ctx);
         }
+        self.x2_es2022.enter_assignment_target(node, ctx);
     }
 
     fn enter_formal_parameters(

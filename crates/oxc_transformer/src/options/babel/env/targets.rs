@@ -1,9 +1,8 @@
 use std::str::FromStr;
 
+pub use browserslist::Version;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
-
-pub use browserslist::Version;
 
 use crate::options::{BrowserslistQuery, Engine, EngineTargets};
 
@@ -34,6 +33,7 @@ pub enum BabelTargetsValue {
 
 impl TryFrom<BabelTargets> for EngineTargets {
     type Error = String;
+
     fn try_from(value: BabelTargets) -> Result<Self, Self::Error> {
         match value {
             BabelTargets::String(s) => BrowserslistQuery::Single(s).exec(),
@@ -71,7 +71,7 @@ impl TryFrom<BabelTargets> for EngineTargets {
                             engine_targets.insert(engine, version);
                         }
                         Err(err) => {
-                            return Err(format!("Failed to parse `{v}` for `{key}`\n{err:?}"))
+                            return Err(format!("Failed to parse `{v}` for `{key}`\n{err:?}"));
                         }
                     }
                 }

@@ -10,7 +10,6 @@ mod options;
 use class_properties::ClassProperties;
 pub use class_properties::ClassPropertiesOptions;
 use class_static_block::ClassStaticBlock;
-
 pub use options::ES2022Options;
 
 pub struct ES2022<'a, 'ctx> {
@@ -59,6 +58,16 @@ impl<'a, 'ctx> Traverse<'a> for ES2022<'a, 'ctx> {
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_class(class, ctx);
+        }
+    }
+
+    fn enter_assignment_target(
+        &mut self,
+        node: &mut AssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_assignment_target(node, ctx);
         }
     }
 }

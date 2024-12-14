@@ -64,9 +64,7 @@ impl Rule for AriaActivedescendantHasTabindex {
             return;
         };
 
-        let Some(element_type) = get_element_type(ctx, jsx_opening_el) else {
-            return;
-        };
+        let element_type = get_element_type(ctx, jsx_opening_el);
 
         if !HTML_TAG.contains(&element_type) {
             return;

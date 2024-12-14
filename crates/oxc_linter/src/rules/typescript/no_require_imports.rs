@@ -1,12 +1,12 @@
+use regex::Regex;
+
 use oxc_ast::{
     ast::{Argument, TSModuleReference},
     AstKind,
 };
-use oxc_semantic::IsGlobalReference;
-use regex::Regex;
-
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};

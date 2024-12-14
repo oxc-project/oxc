@@ -1,5 +1,3 @@
-use cow_utils::CowUtils;
-use oxc_linter::loader::LINT_PARTIAL_LOADER_EXT;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -8,22 +6,24 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
+use cow_utils::CowUtils;
 use log::debug;
-use oxc_allocator::Allocator;
-use oxc_diagnostics::{Error, NamedSource, Severity};
-use oxc_linter::{
-    loader::{JavaScriptSource, Loader},
-    FixKind, Linter, ModuleRecord,
-};
-use oxc_parser::{ParseOptions, Parser};
-use oxc_semantic::SemanticBuilder;
-use oxc_span::VALID_EXTENSIONS;
-use ropey::Rope;
 use rustc_hash::FxHashSet;
 use tower_lsp::lsp_types::{
     self, CodeDescription, DiagnosticRelatedInformation, DiagnosticSeverity, NumberOrString,
     Position, Range, Url,
 };
+
+use oxc_allocator::Allocator;
+use oxc_data_structures::rope::{get_line_column, Rope};
+use oxc_diagnostics::{Error, NamedSource, Severity};
+use oxc_linter::{
+    loader::{JavaScriptSource, Loader, LINT_PARTIAL_LOADER_EXT},
+    FixKind, Linter, ModuleRecord,
+};
+use oxc_parser::{ParseOptions, Parser};
+use oxc_semantic::SemanticBuilder;
+use oxc_span::VALID_EXTENSIONS;
 
 const LINT_DOC_LINK_PREFIX: &str = "https://oxc.rs/docs/guide/usage/linter/rules";
 #[derive(Debug)]
@@ -53,13 +53,11 @@ impl ErrorWithPosition {
         let labels_with_pos: Vec<LabeledSpanWithPosition> = labels
             .iter()
             .map(|labeled_span| LabeledSpanWithPosition {
-                start_pos: offset_to_position(labeled_span.offset() + start, text)
-                    .unwrap_or_default(),
+                start_pos: offset_to_position(labeled_span.offset() + start, text),
                 end_pos: offset_to_position(
                     labeled_span.offset() + start + labeled_span.len(),
                     text,
-                )
-                .unwrap_or_default(),
+                ),
                 message: labeled_span.label().map(ToString::to_string),
             })
             .collect();
@@ -304,13 +302,11 @@ impl IsolatedLintHandler {
                             start: offset_to_position(
                                 (f.span.start + start) as usize,
                                 source_text.as_str(),
-                            )
-                            .unwrap_or_default(),
+                            ),
                             end: offset_to_position(
                                 (f.span.end + start) as usize,
                                 source_text.as_str(),
-                            )
-                            .unwrap_or_default(),
+                            ),
                         },
                     });
 
@@ -359,16 +355,11 @@ impl IsolatedLintHandler {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn offset_to_position(offset: usize, source_text: &str) -> Option<Position> {
+fn offset_to_position(offset: usize, source_text: &str) -> Position {
+    // TODO(perf): share a single instance of `Rope`
     let rope = Rope::from_str(source_text);
-    // Get line number and byte offset of start of line
-    let line_index = rope.try_byte_to_line(offset).ok()?;
-    let line_offset = rope.try_line_to_byte(line_index).ok()?;
-
-    // Get column number
-    let column_index = source_text[line_offset..offset].encode_utf16().count();
-
-    Some(Position::new(line_index as u32, column_index as u32))
+    let (line, column) = get_line_column(&rope, offset as u32, source_text);
+    Position::new(line, column)
 }
 
 pub struct ServerLinter {

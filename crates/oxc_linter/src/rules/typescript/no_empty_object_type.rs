@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
     ast::{TSInterfaceDeclaration, TSTypeLiteral},
     AstKind,
@@ -6,7 +8,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
-use std::borrow::Cow;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 

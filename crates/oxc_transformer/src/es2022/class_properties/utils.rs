@@ -1,6 +1,8 @@
 //! ES2022: Class Properties
 //! Utility functions.
 
+use std::path::PathBuf;
+
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
@@ -54,10 +56,18 @@ pub(super) fn create_underscore_ident_name<'a>(ctx: &mut TraverseCtx<'a>) -> Ide
     ctx.ast.identifier_name(SPAN, Atom::from("_"))
 }
 
-#[inline]
-pub(super) fn assert_expr_neither_parenthesis_nor_typescript_syntax(expr: &Expression) {
+/// Debug assert that an `Expression` is not `ParenthesizedExpression` or TS syntax
+/// (e.g. `TSAsExpression`).
+//
+// `#[inline(always)]` because this is a no-op in release mode
+#[expect(clippy::inline_always)]
+#[inline(always)]
+pub(super) fn debug_assert_expr_is_not_parenthesis_or_typescript_syntax(
+    expr: &Expression,
+    path: &PathBuf,
+) {
     debug_assert!(
         !(matches!(expr, Expression::ParenthesizedExpression(_)) || expr.is_typescript_syntax()),
-        "Should not be: {expr:?}",
+        "Should not be: {expr:?} in {path:?}",
     );
 }

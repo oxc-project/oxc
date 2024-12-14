@@ -129,6 +129,7 @@ impl RuleCategory {
 
 impl TryFrom<&str> for RuleCategory {
     type Error = ();
+
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
             "correctness" => Ok(Self::Correctness),

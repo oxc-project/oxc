@@ -3,10 +3,11 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_diagnostics::{OxcDiagnostic, Severity};
 use schemars::{schema::SchemaObject, JsonSchema};
 use serde::{de, Deserialize, Serialize};
 use serde_json::{Number, Value};
+
+use oxc_diagnostics::{OxcDiagnostic, Severity};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -78,6 +79,7 @@ fn invalid_int_severity<D: Display>(value: D) -> OxcDiagnostic {
 
 impl TryFrom<u64> for AllowWarnDeny {
     type Error = OxcDiagnostic;
+
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Self::Allow),

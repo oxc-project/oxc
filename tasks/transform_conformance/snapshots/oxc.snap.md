@@ -1,9 +1,10 @@
 commit: 54a8389f
 
-Passed: 93/104
+Passed: 109/123
 
 # All Passed:
 * babel-plugin-transform-class-static-block
+* babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-async-generator-functions
@@ -15,12 +16,24 @@ Passed: 93/104
 * regexp
 
 
+# babel-plugin-transform-class-properties (10/12)
+* typescript/optional-call/input.ts
+Symbol reference IDs mismatch for "X":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(16)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(8), ReferenceId(14)]
+
+* typescript/optional-member/input.ts
+Symbol reference IDs mismatch for "X":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(9), ReferenceId(12)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
+
+
 # babel-plugin-transform-async-to-generator (14/15)
 * super/nested/input.js
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (2/9)
+# babel-plugin-transform-typescript (2/10)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -130,6 +143,14 @@ rebuilt        : SymbolId(8): []
 Reference symbol mismatch for "Name":
 after transform: SymbolId(7) "Name"
 rebuilt        : SymbolId(5) "Name"
+
+* exports/type-and-non-type/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["ToastProps", "ToastViewport"]
+rebuilt        : ScopeId(0): ["ToastViewport"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
 
 * redeclarations/input.ts
 Scope children mismatch:

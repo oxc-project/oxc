@@ -12,7 +12,10 @@ use oxc_ast::{
 };
 use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
+// Re-export flags and ID types
 pub use oxc_syntax::{
+    node::{NodeFlags, NodeId},
+    reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -33,15 +36,14 @@ mod stats;
 mod symbol;
 mod unresolved_stack;
 
-pub use crate::{
-    builder::{SemanticBuilder, SemanticBuilderReturn},
-    jsdoc::{JSDoc, JSDocFinder, JSDocTag},
-    node::{AstNode, AstNodes, NodeId},
-    reference::{Reference, ReferenceFlags, ReferenceId},
-    scope::ScopeTree,
-    stats::Stats,
-    symbol::{IsGlobalReference, SymbolTable},
-};
+pub use builder::{SemanticBuilder, SemanticBuilderReturn};
+pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
+pub use node::{AstNode, AstNodes};
+pub use reference::Reference;
+pub use scope::ScopeTree;
+pub use stats::Stats;
+pub use symbol::{IsGlobalReference, SymbolTable};
+
 use class::ClassTable;
 
 /// Semantic analysis of a JavaScript/TypeScript program.

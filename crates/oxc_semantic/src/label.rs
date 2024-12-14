@@ -1,4 +1,4 @@
-use crate::NodeId;
+use oxc_syntax::node::NodeId;
 
 #[derive(Debug)]
 pub struct LabeledScope<'a> {

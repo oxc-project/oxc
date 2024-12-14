@@ -181,9 +181,8 @@ impl Rule for AutocompleteValid {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let Some(name) = &get_element_type(ctx, jsx_el) else {
-                return;
-            };
+            let name = &get_element_type(ctx, jsx_el);
+
             if !self.input_components.contains(name.as_ref()) {
                 return;
             }

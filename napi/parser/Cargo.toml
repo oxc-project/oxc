@@ -21,16 +21,22 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["serialize"] }
+oxc = { workspace = true }
+oxc_ast = { workspace = true, features = ["serialize"] } # enable feature only
+oxc_data_structures = { workspace = true }
+oxc_napi = { workspace = true }
 
 rustc-hash = { workspace = true }
+self_cell = { workspace = true }
 serde_json = { workspace = true }
+string_wizard = { workspace = true, features = ["sourcemap", "serde"] }
+# oxc_sourcemap = { workspace = true, features = ["napi"] }
 
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
 
 [package.metadata.cargo-shear]
-ignored = ["napi"]
+ignored = ["napi", "oxc_ast"]
 
 [build-dependencies]
 napi-build = { workspace = true }

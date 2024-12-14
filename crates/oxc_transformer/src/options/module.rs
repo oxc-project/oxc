@@ -34,6 +34,7 @@ impl Module {
 
 impl TryFrom<BabelModule> for Module {
     type Error = Error;
+
     fn try_from(value: BabelModule) -> Result<Self, Self::Error> {
         match value {
             BabelModule::Commonjs => Ok(Self::CommonJS),
@@ -45,6 +46,7 @@ impl TryFrom<BabelModule> for Module {
 
 impl TryFrom<&BabelPlugins> for Module {
     type Error = Error;
+
     fn try_from(value: &BabelPlugins) -> Result<Self, Self::Error> {
         if value.modules_commonjs {
             Ok(Self::CommonJS)

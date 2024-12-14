@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_same_expression, AstNode};
 
 fn double_comparisons_diagnostic(span: Span, operator: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected double comparisons.")
@@ -69,8 +69,8 @@ impl Rule for DoubleComparisons {
         };
 
         // check that (LLHS === RLHS && LRHS === RRHS) || (LLHS === RRHS && LRHS === RLHS)
-        if !((is_same_reference(llhs, rlhs, ctx) && is_same_reference(lrhs, rrhs, ctx))
-            || (is_same_reference(llhs, rrhs, ctx) && is_same_reference(lrhs, rlhs, ctx)))
+        if !((is_same_expression(llhs, rlhs, ctx) && is_same_expression(lrhs, rrhs, ctx))
+            || (is_same_expression(llhs, rrhs, ctx) && is_same_expression(lrhs, rlhs, ctx)))
         {
             return;
         }

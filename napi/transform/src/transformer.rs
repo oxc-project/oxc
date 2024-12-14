@@ -1,7 +1,10 @@
 // NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/b5dc32740d9b45d11cff9b025896dd333c795b39/types/babel__core/index.d.ts).
 #![allow(rustdoc::bare_urls)]
 
-use std::path::{Path, PathBuf};
+use std::{
+    ops::ControlFlow,
+    path::{Path, PathBuf},
+};
 
 use napi::Either;
 use napi_derive::napi;
@@ -12,14 +15,15 @@ use oxc::{
     diagnostics::OxcDiagnostic,
     span::SourceType,
     transformer::{
-        EnvOptions, InjectGlobalVariablesConfig, InjectImport, JsxRuntime,
-        ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
+        InjectImport, JsxRuntime, ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
     },
     CompilerInterface,
 };
+use oxc_napi::OxcError;
 use oxc_sourcemap::napi::SourceMap;
 
-use crate::{errors::wrap_diagnostics, IsolatedDeclarationsOptions};
+use crate::IsolatedDeclarationsOptions;
 
 #[derive(Default)]
 #[napi(object)]
@@ -49,12 +53,24 @@ pub struct TransformResult {
     /// {@link TransformOptions#sourcemap sourcemap} are set to `true`.
     pub declaration_map: Option<SourceMap>,
 
+    /// Helpers used.
+    ///
+    /// @internal
+    ///
+    /// Example:
+    ///
+    /// ```text
+    /// { "_objectSpread": "@babel/runtime/helpers/objectSpread2" }
+    /// ```
+    #[napi(ts_type = "Record<string, string>")]
+    pub helpers_used: FxHashMap<String, String>,
+
     /// Parse and transformation errors.
     ///
     /// Oxc's parser recovers from common syntax errors, meaning that
     /// transformed code may still be available even if there are errors in this
     /// list.
-    pub errors: Vec<String>,
+    pub errors: Vec<OxcError>,
 }
 
 /// Options for transforming a JavaScript or TypeScript file.
@@ -106,6 +122,9 @@ pub struct TransformOptions {
     /// @see [esbuild#target](https://esbuild.github.io/api/#target)
     pub target: Option<Either<String, Vec<String>>>,
 
+    /// Behaviour for runtime helpers.
+    pub helpers: Option<Helpers>,
+
     /// Define Plugin
     #[napi(ts_type = "Record<string, string>")]
     pub define: Option<FxHashMap<String, String>>,
@@ -133,7 +152,9 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 .unwrap_or_default(),
             jsx: options.jsx.map(Into::into).unwrap_or_default(),
             env,
-            ..Self::default()
+            helper_loader: options
+                .helpers
+                .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
         })
     }
 }
@@ -392,6 +413,53 @@ impl From<Es2015Options> for oxc::transformer::ES2015Options {
     }
 }
 
+#[napi(object)]
+#[derive(Default)]
+pub struct Helpers {
+    pub mode: Option<HelperMode>,
+}
+
+#[derive(Default, Clone, Copy)]
+#[napi(string_enum)]
+pub enum HelperMode {
+    /// Runtime mode (default): Helper functions are imported from a runtime package.
+    ///
+    /// Example:
+    ///
+    /// ```js
+    /// import helperName from "@babel/runtime/helpers/helperName";
+    /// helperName(...arguments);
+    /// ```
+    #[default]
+    Runtime,
+    /// External mode: Helper functions are accessed from a global `babelHelpers` object.
+    ///
+    /// Example:
+    ///
+    /// ```js
+    /// babelHelpers.helperName(...arguments);
+    /// ```
+    External,
+}
+
+impl From<Helpers> for HelperLoaderOptions {
+    fn from(value: Helpers) -> Self {
+        Self {
+            mode: value.mode.map(HelperLoaderMode::from).unwrap_or_default(),
+            ..HelperLoaderOptions::default()
+        }
+    }
+}
+
+impl From<HelperMode> for HelperLoaderMode {
+    fn from(value: HelperMode) -> Self {
+        match value {
+            HelperMode::Runtime => Self::Runtime,
+            HelperMode::External => Self::External,
+        }
+    }
+}
+
 #[derive(Default)]
 struct Compiler {
     transform_options: oxc::transformer::TransformOptions,
@@ -408,6 +476,7 @@ struct Compiler {
     define: Option<ReplaceGlobalDefinesConfig>,
     inject: Option<InjectGlobalVariablesConfig>,
 
+    helpers_used: FxHashMap<String, String>,
     errors: Vec<OxcDiagnostic>,
 }
 
@@ -474,6 +543,7 @@ impl Compiler {
             declaration_map: None,
             define,
             inject,
+            helpers_used: FxHashMap::default(),
             errors: vec![],
         })
     }
@@ -515,6 +585,20 @@ impl CompilerInterface for Compiler {
         self.declaration.replace(ret.code);
         self.declaration_map = ret.map.map(SourceMap::from);
     }
+
+    #[allow(deprecated)]
+    fn after_transform(
+        &mut self,
+        _program: &mut oxc::ast::ast::Program<'_>,
+        transformer_return: &mut oxc::transformer::TransformerReturn,
+    ) -> ControlFlow<()> {
+        self.helpers_used = transformer_return
+            .helpers_used
+            .drain()
+            .map(|(helper, source)| (helper.name().to_string(), source))
+            .collect();
+        ControlFlow::Continue(())
+    }
 }
 
 /// Transpile a JavaScript or TypeScript into a target ECMAScript version.
@@ -543,9 +627,9 @@ pub fn transform(
         Some("tsx") => SourceType::tsx(),
         Some(lang) => {
             return TransformResult {
-                errors: vec![format!("Incorrect lang '{lang}'")],
+                errors: vec![OxcError::new(format!("Incorrect lang '{lang}'"))],
                 ..Default::default()
-            }
+            };
         }
         None => {
             let mut source_type = SourceType::from_path(source_path).unwrap_or_default();
@@ -563,9 +647,9 @@ pub fn transform(
         Ok(compiler) => compiler,
         Err(errors) => {
             return TransformResult {
-                errors: wrap_diagnostics(source_path, source_type, &source_text, errors),
+                errors: errors.into_iter().map(OxcError::from).collect(),
                 ..Default::default()
-            }
+            };
         }
     };
 
@@ -576,6 +660,7 @@ pub fn transform(
         map: compiler.printed_sourcemap,
         declaration: compiler.declaration,
         declaration_map: compiler.declaration_map,
-        errors: wrap_diagnostics(source_path, source_type, &source_text, compiler.errors),
+        helpers_used: compiler.helpers_used,
+        errors: compiler.errors.into_iter().map(OxcError::from).collect(),
     }
 }

@@ -206,10 +206,10 @@ impl Rule for LabelHasAssociatedControl {
             return;
         };
 
-        if let Some(element_type) = get_element_type(ctx, &element.opening_element) {
-            if self.label_components.binary_search(&element_type.into()).is_err() {
-                return;
-            }
+        let element_type = get_element_type(ctx, &element.opening_element);
+
+        if self.label_components.binary_search(&element_type.into()).is_err() {
+            return;
         }
 
         let has_html_for = has_jsx_prop(&element.opening_element, "htmlFor").is_some();
@@ -293,10 +293,9 @@ impl LabelHasAssociatedControl {
         match node {
             JSXChild::ExpressionContainer(_) => true,
             JSXChild::Element(element) => {
-                if let Some(element_type) = get_element_type(ctx, &element.opening_element) {
-                    if self.control_components.is_match(element_type.to_string()) {
-                        return true;
-                    }
+                let element_type = get_element_type(ctx, &element.opening_element);
+                if self.control_components.is_match(element_type.to_string()) {
+                    return true;
                 }
 
                 for child in &element.children {
@@ -357,12 +356,11 @@ impl LabelHasAssociatedControl {
                 }
 
                 if element.children.is_empty() {
-                    if let Some(name) = get_element_type(ctx, &element.opening_element) {
-                        if is_react_component_name(&name)
-                            && !self.control_components.is_match(name.to_string())
-                        {
-                            return true;
-                        }
+                    let name = get_element_type(ctx, &element.opening_element);
+                    if is_react_component_name(&name)
+                        && !self.control_components.is_match(name.to_string())
+                    {
+                        return true;
                     }
                 }
 
@@ -915,6 +913,8 @@ fn test() {
             }])),
             None,
         ),
+        // Issue: <https://github.com/oxc-project/oxc/issues/7849>
+        ("<FilesContext.Provider value={{ addAlert, cwdInfo }} />", None, None),
     ];
 
     let fail = vec![
@@ -1582,6 +1582,13 @@ fn test() {
             Some(serde_json::json!([{
                 "assert": "either",
                 "labelComponents": ["ZZZLabelCustom", "LabelCustom", "CustomLabel"]
+            }])),
+            None,
+        ),
+        (
+            "<FilesContext.Provider value={{ addAlert, cwdInfo }} />",
+            Some(serde_json::json!([{
+                "labelComponents": ["FilesContext.Provider"],
             }])),
             None,
         ),

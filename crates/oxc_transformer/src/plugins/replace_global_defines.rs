@@ -1,12 +1,12 @@
 use std::{cmp::Ordering, sync::Arc};
 
 use lazy_static::lazy_static;
-use oxc_allocator::Allocator;
-use oxc_ast::ast::*;
+use oxc_allocator::{Address, Allocator, GetAddress};
+use oxc_ast::{ast::*, VisitMut};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
 use oxc_semantic::{IsGlobalReference, ScopeFlags, ScopeTree, SymbolTable};
-use oxc_span::{CompactStr, SourceType};
+use oxc_span::{CompactStr, SourceType, SPAN};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{traverse_mut, Ancestor, Traverse, TraverseCtx};
 use rustc_hash::FxHashSet;
@@ -220,12 +220,31 @@ pub struct ReplaceGlobalDefinesReturn {
 pub struct ReplaceGlobalDefines<'a> {
     allocator: &'a Allocator,
     config: ReplaceGlobalDefinesConfig,
+    /// Since `Traverse` did not provide a way to skipping visiting sub tree of the AstNode,
+    /// Use `Option<Address>` to lock the current node when it is `Some`.
+    /// during visiting sub tree, the `Lock` will always be `Some`, and we can early return, this
+    /// could acheieve same effect as skipping visiting sub tree.
+    /// When `exit` the node, reset the `Lock` to `None` to make sure not affect other
+    /// transformation.
+    ast_node_lock: Option<Address>,
 }
 
 impl<'a> Traverse<'a> for ReplaceGlobalDefines<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.replace_identifier_defines(expr, ctx);
-        self.replace_dot_defines(expr, ctx);
+        if self.ast_node_lock.is_some() {
+            return;
+        }
+        let is_replaced =
+            self.replace_identifier_defines(expr, ctx) || self.replace_dot_defines(expr, ctx);
+        if is_replaced {
+            self.ast_node_lock = Some(expr.address());
+        }
+    }
+
+    fn exit_expression(&mut self, node: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
+        if self.ast_node_lock == Some(node.address()) {
+            self.ast_node_lock = None;
+        }
     }
 
     fn enter_assignment_expression(
@@ -233,13 +252,30 @@ impl<'a> Traverse<'a> for ReplaceGlobalDefines<'a> {
         node: &mut AssignmentExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.replace_define_with_assignment_expr(node, ctx);
+        if self.ast_node_lock.is_some() {
+            return;
+        }
+        if self.replace_define_with_assignment_expr(node, ctx) {
+            // `AssignmentExpression` is stored in a `Box`, so we can use `from_ptr` to get
+            // the stable address
+            self.ast_node_lock = Some(Address::from_ptr(node));
+        }
+    }
+
+    fn exit_assignment_expression(
+        &mut self,
+        node: &mut AssignmentExpression<'a>,
+        _: &mut TraverseCtx<'a>,
+    ) {
+        if self.ast_node_lock == Some(Address::from_ptr(node)) {
+            self.ast_node_lock = None;
+        }
     }
 }
 
 impl<'a> ReplaceGlobalDefines<'a> {
     pub fn new(allocator: &'a Allocator, config: ReplaceGlobalDefinesConfig) -> Self {
-        Self { allocator, config }
+        Self { allocator, config, ast_node_lock: None }
     }
 
     pub fn build(
@@ -257,14 +293,25 @@ impl<'a> ReplaceGlobalDefines<'a> {
         // Allocate the string lazily because replacement happens rarely.
         let source_text = self.allocator.alloc_str(source_text);
         // Unwrapping here, it should already be checked by [ReplaceGlobalDefinesConfig::new].
-        Parser::new(self.allocator, source_text, SourceType::default()).parse_expression().unwrap()
+        let mut expr = Parser::new(self.allocator, source_text, SourceType::default())
+            .parse_expression()
+            .unwrap();
+
+        RemoveSpans.visit_expression(&mut expr);
+
+        expr
     }
 
-    fn replace_identifier_defines(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn replace_identifier_defines(
+        &self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
         match expr {
             Expression::Identifier(ident) => {
                 if let Some(new_expr) = self.replace_identifier_define_impl(ident, ctx) {
                     *expr = new_expr;
+                    return true;
                 }
             }
             Expression::ThisExpression(_)
@@ -275,12 +322,14 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     if key.as_str() == "this" {
                         let value = self.parse_value(value);
                         *expr = value;
-                        break;
+
+                        return true;
                     }
                 }
             }
             _ => {}
         }
+        false
     }
 
     fn replace_identifier_define_impl(
@@ -305,7 +354,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         &mut self,
         node: &mut AssignmentExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) {
+    ) -> bool {
         let new_left = node
             .left
             .as_simple_assignment_target_mut()
@@ -324,10 +373,16 @@ impl<'a> ReplaceGlobalDefines<'a> {
             .and_then(assignment_target_from_expr);
         if let Some(new_left) = new_left {
             node.left = new_left;
+            return true;
         }
+        false
     }
 
-    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn replace_dot_defines(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
         match expr {
             Expression::ChainExpression(chain) => {
                 let Some(new_expr) =
@@ -341,18 +396,21 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         MemberExpression::PrivateFieldExpression(_) => None,
                     })
                 else {
-                    return;
+                    return false;
                 };
                 *expr = new_expr;
+                return true;
             }
             Expression::StaticMemberExpression(member) => {
                 if let Some(new_expr) = self.replace_dot_static_member_expr(ctx, member) {
                     *expr = new_expr;
+                    return true;
                 }
             }
             Expression::ComputedMemberExpression(member) => {
                 if let Some(new_expr) = self.replace_dot_computed_member_expr(ctx, member) {
                     *expr = new_expr;
+                    return true;
                 }
             }
             Expression::MetaProperty(meta_property) => {
@@ -361,11 +419,13 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     {
                         let value = self.parse_value(replacement);
                         *expr = value;
+                        return true;
                     }
                 }
             }
             _ => {}
         }
+        false
     }
 
     fn replace_dot_computed_member_expr(
@@ -650,5 +710,13 @@ fn assignment_target_from_expr(expr: Expression) -> Option<AssignmentTarget> {
         }
         Expression::Identifier(ident) => Some(AssignmentTarget::AssignmentTargetIdentifier(ident)),
         _ => None,
+    }
+}
+
+struct RemoveSpans;
+
+impl<'ast> VisitMut<'ast> for RemoveSpans {
+    fn visit_span(&mut self, span: &mut Span) {
+        *span = SPAN;
     }
 }

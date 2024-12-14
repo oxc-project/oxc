@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useConditionalHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:18]
@@ -673,4 +674,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │                     useState(0);
    ·                     ───────────
  5 │                 }
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" is called in function "foo" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+   ╭─[rules_of_hooks.tsx:1:45]
+ 1 │ const MyComponent3 = makeComponent(function foo () { useHook(); });
+   ·                                             ───
    ╰────

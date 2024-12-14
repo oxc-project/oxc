@@ -17,6 +17,8 @@ use crate::{
 
 use super::define_generator;
 
+pub const BLACK_LIST: [&str; 1] = ["Span"];
+
 pub struct AstBuilderGenerator;
 
 define_generator!(AstBuilderGenerator);
@@ -26,7 +28,11 @@ impl Generator for AstBuilderGenerator {
         let fns = schema
             .defs
             .iter()
-            .filter(|it| it.is_visitable())
+            .filter(|def| {
+                let is_visitable = def.is_visitable();
+                let is_blacklisted = BLACK_LIST.contains(&def.name());
+                is_visitable && !is_blacklisted
+            })
             .map(|it| generate_builder_fn(it, schema))
             .collect_vec();
 

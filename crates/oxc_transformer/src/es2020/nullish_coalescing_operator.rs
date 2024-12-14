@@ -172,7 +172,7 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
-            self.ctx.var_declarations.insert_var(&binding, None, ctx);
+            self.ctx.var_declarations.insert_var(&binding, ctx);
         }
 
         new_expr

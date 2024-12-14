@@ -101,6 +101,10 @@ declare_oxc_lint!(
     /// - **it:** `it`, `xit`, `fit`, `it.only`, `it.skip`.
     /// - **test:** `test`, `xtest`, `test.only`, `test.skip`.
     ///
+    /// ### Why is this bad?
+    ///
+    /// It's a good practice to be consistent in your test suite, so that all tests are written in the same way.
+    ///
     /// ### Example
     ///
     /// ```javascript

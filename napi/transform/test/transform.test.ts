@@ -1,15 +1,16 @@
-import { assert, describe, it, test } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 
-import { transform } from '../index';
+import { HelperMode, transform } from '../index';
 
 describe('simple', () => {
   const code = 'export class A<T> {}';
 
   it('matches output', () => {
     const ret = transform('test.ts', code, { sourcemap: true });
-    assert.deepEqual(ret, {
+    expect(ret).toStrictEqual({
       code: 'export class A {}\n',
       errors: [],
+      helpersUsed: {},
       map: {
         mappings: 'AAAA,OAAO,MAAM,EAAK,CAAE',
         names: [],
@@ -22,17 +23,29 @@ describe('simple', () => {
 
   it('uses the `lang` option', () => {
     const ret = transform('test.vue', code, { lang: 'ts' });
-    assert.equal(ret.code, 'export class A {}\n');
+    expect(ret.code).toEqual('export class A {}\n');
   });
 
   it('uses the `declaration` option', () => {
     const ret = transform('test.ts', code, { typescript: { declaration: {} } });
-    assert.equal(ret.declaration, 'export declare class A<T> {}\n');
+    expect(ret.declaration).toEqual('export declare class A<T> {}\n');
   });
 
   it('uses the `sourcemap` option', () => {
     const ret = transform('test.ts', code, { typescript: { declaration: {} }, sourcemap: true });
-    assert(ret.declarationMap);
+    expect(ret.declarationMap).toStrictEqual(
+      {
+        'mappings': 'AAAA,OAAO,cAAM,EAAE,GAAG,CAAE',
+        'names': [],
+        'sources': [
+          'test.ts',
+        ],
+        'sourcesContent': [
+          'export class A<T> {}',
+        ],
+        'version': 3,
+      },
+    );
   });
 });
 
@@ -50,13 +63,15 @@ describe('transform', () => {
     ];
     for (const code of cases) {
       const ret = transform('test.ts', code);
-      assert.equal(ret.code.trim(), code);
+      expect(ret.code.trim()).toEqual(code);
     }
   });
 });
 
 describe('target', () => {
   const data = [
+    ['es5', '() => {};\n'],
+    ['es6', 'a ** b;\n'],
     ['es2015', 'a ** b;\n'],
     ['es2016', 'async function foo() {}\n'],
     ['es2017', '({ ...x });\n'],
@@ -69,24 +84,43 @@ describe('target', () => {
   test.each(data)('transform %s', (target, code) => {
     // Also test array syntax.
     const ret = transform('test.js', code, { target: [target] });
-    assert(ret.errors.length == 0);
-    assert(ret.code);
-    assert.notEqual(ret.code, code);
+    expect(ret.errors.length).toBe(0);
+    expect(ret.code).toBeDefined();
+    expect(ret.code).not.toEqual(code);
   });
 
   test.each(data)('no transform esnext: %s', (_target, code) => {
     const ret = transform('test.js', code, { target: 'esnext' });
-    assert(ret.errors.length == 0);
-    assert(ret.code);
-    assert.equal(ret.code, code);
+    expect(ret.errors.length).toBe(0);
+    expect(ret.code).toBeDefined();
+    expect(ret.code).toEqual(code);
   });
 
   it('should turn off class propertiers because plugin is not ready', () => {
     const code = 'class Foo {\n\t#a;\n}\n';
     const ret = transform('test.js', code, { target: 'es2015' });
-    assert(ret.errors.length == 0);
-    assert(ret.code);
-    assert.equal(ret.code, code);
+    expect(ret.errors.length).toBe(0);
+    expect(ret.code).toBeDefined();
+    expect(ret.code).toEqual(code);
+  });
+});
+
+describe('helpers', () => {
+  const data: Array<[HelperMode, string]> = [
+    [HelperMode.External, 'babelHelpers.objectSpread2({}, x);\n'],
+    [HelperMode.Runtime, 'import _objectSpread from "@babel/runtime/helpers/objectSpread2";\n_objectSpread({}, x);\n'],
+  ];
+
+  test.each(data)('%s', (mode, expected) => {
+    const code = `({ ...x })`;
+    const ret = transform('test.js', code, {
+      target: 'es2015',
+      helpers: { mode },
+    });
+    expect(ret.code).toEqual(expected);
+    expect(ret.helpersUsed).toStrictEqual({
+      objectSpread2: '@babel/runtime/helpers/objectSpread2',
+    });
   });
 });
 
@@ -101,11 +135,8 @@ import bar = require('bar')
         declaration: {},
       },
     });
-    assert.deepEqual(ret, {
-      code: 'module.exports = function foo() {};\nconst bar = require("bar");\n',
-      declaration: 'declare const _default: () => void;\nexport = _default;\n',
-      errors: [],
-    });
+    expect(ret.code).toEqual('module.exports = function foo() {};\nconst bar = require("bar");\n');
+    expect(ret.declaration).toEqual('declare const _default: () => void;\nexport = _default;\n');
   });
 });
 
@@ -118,8 +149,7 @@ describe('react refresh plugin', () => {
 
   it('matches output', () => {
     const ret = transform('test.tsx', code, { jsx: { refresh: {} } });
-    assert.equal(
-      ret.code,
+    expect(ret.code).toEqual(
       `import { useState } from "react";
 import { jsxs as _jsxs } from "react/jsx-runtime";
 var _s = $RefreshSig$();
@@ -148,7 +178,7 @@ describe('define plugin', () => {
         'process.env.NODE_ENV': '"development"',
       },
     });
-    assert.equal(ret.code, '');
+    expect(ret.code).toEqual('');
   });
 
   it('handles typescript declare global', () => {
@@ -158,7 +188,7 @@ describe('define plugin', () => {
         '__TEST_DEFINE__': '"replaced"',
       },
     });
-    assert.equal(ret.code, 'console.log({ __TEST_DEFINE__: "replaced" });\n');
+    expect(ret.code).toEqual('console.log({ __TEST_DEFINE__: "replaced" });\n');
   });
 });
 
@@ -171,6 +201,6 @@ describe('inject plugin', () => {
         'Object.assign': 'foo',
       },
     });
-    assert.equal(ret.code, 'import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n');
+    expect(ret.code).toEqual('import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n');
   });
 });

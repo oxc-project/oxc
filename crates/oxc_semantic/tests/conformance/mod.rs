@@ -3,11 +3,12 @@
 //! Since these cases are a contract-as-code, they _must be well documented_. When adding a new
 //! test, please describe what behavior it guarantees in as plain language as possible.
 
-use crate::TestContext;
 use std::{borrow::Cow, sync::Arc};
 
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcDiagnostic};
 use oxc_semantic::{AstNode, Semantic, SymbolId};
+
+use crate::TestContext;
 
 mod test_identifier_reference;
 mod test_symbol_declaration;

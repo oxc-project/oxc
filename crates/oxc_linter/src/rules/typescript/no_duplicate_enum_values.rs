@@ -105,7 +105,7 @@ impl Rule for NoDuplicateEnumValues {
                         ctx.diagnostic(no_duplicate_enum_values_diagnostic(
                             *old_span,
                             enum_member,
-                            num.raw,
+                            num.raw.as_ref().unwrap().as_str(),
                         ));
                     } else {
                         seen_number_values.push((num.value, num.span));

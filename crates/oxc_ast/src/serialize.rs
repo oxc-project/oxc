@@ -1,13 +1,14 @@
 use cow_utils::CowUtils;
 use num_bigint::BigInt;
 use num_traits::Num;
-use oxc_allocator::Box;
-use oxc_span::Span;
-use oxc_syntax::number::BigintBase;
 use serde::{
     ser::{SerializeSeq, Serializer},
     Serialize,
 };
+
+use oxc_allocator::Box;
+use oxc_span::{Atom, Span};
+use oxc_syntax::number::BigintBase;
 
 use crate::ast::{
     BigIntLiteral, BindingPatternKind, BooleanLiteral, Directive, Elision, FormalParameter,
@@ -30,29 +31,30 @@ pub struct ESTreeLiteral<'a, T> {
 }
 
 impl From<&BooleanLiteral> for ESTreeLiteral<'_, bool> {
-    fn from(value: &BooleanLiteral) -> Self {
-        Self {
-            span: value.span,
-            value: value.value,
-            raw: Some(if value.value { "true" } else { "false" }),
-            bigint: None,
-            regex: None,
-        }
+    fn from(lit: &BooleanLiteral) -> Self {
+        let raw = if lit.span.is_unspanned() {
+            None
+        } else {
+            Some(if lit.value { "true" } else { "false" })
+        };
+
+        Self { span: lit.span, value: lit.value, raw, bigint: None, regex: None }
     }
 }
 
 impl From<&NullLiteral> for ESTreeLiteral<'_, ()> {
-    fn from(value: &NullLiteral) -> Self {
-        Self { span: value.span, value: (), raw: Some("null"), bigint: None, regex: None }
+    fn from(lit: &NullLiteral) -> Self {
+        let raw = if lit.span.is_unspanned() { None } else { Some("null") };
+        Self { span: lit.span, value: (), raw, bigint: None, regex: None }
     }
 }
 
 impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
-    fn from(value: &'a NumericLiteral) -> Self {
+    fn from(lit: &'a NumericLiteral) -> Self {
         Self {
-            span: value.span,
-            value: value.value,
-            raw: Some(value.raw),
+            span: lit.span,
+            value: lit.value,
+            raw: lit.raw.as_ref().map(Atom::as_str),
             bigint: None,
             regex: None,
         }
@@ -60,20 +62,26 @@ impl<'a> From<&'a NumericLiteral<'a>> for ESTreeLiteral<'a, f64> {
 }
 
 impl<'a> From<&'a StringLiteral<'a>> for ESTreeLiteral<'a, &'a str> {
-    fn from(value: &'a StringLiteral) -> Self {
-        Self { span: value.span, value: &value.value, raw: None, bigint: None, regex: None }
+    fn from(lit: &'a StringLiteral) -> Self {
+        Self {
+            span: lit.span,
+            value: &lit.value,
+            raw: lit.raw.as_ref().map(Atom::as_str),
+            bigint: None,
+            regex: None,
+        }
     }
 }
 
 impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
-    fn from(value: &'a BigIntLiteral) -> Self {
-        let src = &value.raw.strip_suffix('n').unwrap().cow_replace('_', "");
+    fn from(lit: &'a BigIntLiteral) -> Self {
+        let src = &lit.raw.strip_suffix('n').unwrap().cow_replace('_', "");
 
-        let src = match value.base {
+        let src = match lit.base {
             BigintBase::Decimal => src,
             BigintBase::Binary | BigintBase::Octal | BigintBase::Hex => &src[2..],
         };
-        let radix = match value.base {
+        let radix = match lit.base {
             BigintBase::Decimal => 10,
             BigintBase::Binary => 2,
             BigintBase::Octal => 8,
@@ -82,10 +90,10 @@ impl<'a> From<&'a BigIntLiteral<'a>> for ESTreeLiteral<'a, ()> {
         let bigint = BigInt::from_str_radix(src, radix).unwrap();
 
         Self {
-            span: value.span,
+            span: lit.span,
             // BigInts can't be serialized to JSON
             value: (),
-            raw: Some(value.raw.as_str()),
+            raw: Some(lit.raw.as_str()),
             bigint: Some(bigint.to_string()),
             regex: None,
         }
@@ -104,18 +112,18 @@ pub struct SerRegExpValue {
 pub struct EmptyObject {}
 
 impl<'a> From<&'a RegExpLiteral<'a>> for ESTreeLiteral<'a, Option<EmptyObject>> {
-    fn from(value: &'a RegExpLiteral) -> Self {
+    fn from(lit: &'a RegExpLiteral) -> Self {
         Self {
-            span: value.span,
-            raw: Some(value.raw),
-            value: match &value.regex.pattern {
+            span: lit.span,
+            raw: lit.raw.as_ref().map(Atom::as_str),
+            value: match &lit.regex.pattern {
                 RegExpPattern::Pattern(_) => Some(EmptyObject {}),
                 _ => None,
             },
             bigint: None,
             regex: Some(SerRegExpValue {
-                pattern: value.regex.pattern.to_string(),
-                flags: value.regex.flags.to_string(),
+                pattern: lit.regex.pattern.to_string(),
+                flags: lit.regex.flags.to_string(),
             }),
         }
     }
@@ -142,8 +150,8 @@ impl Program<'_> {
     }
 
     /// # Panics
-    pub fn serializer(&self) -> serde_json::Serializer<std::vec::Vec<u8>, EcmaFormatter> {
-        let buf = std::vec::Vec::new();
+    pub fn serializer(&self) -> serde_json::Serializer<Vec<u8>, EcmaFormatter> {
+        let buf = Vec::new();
         let mut ser = serde_json::Serializer::with_formatter(buf, EcmaFormatter);
         self.serialize(&mut ser).unwrap();
         ser

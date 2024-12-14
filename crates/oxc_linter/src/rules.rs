@@ -104,6 +104,7 @@ mod eslint {
     pub mod no_redeclare;
     pub mod no_regex_spaces;
     pub mod no_restricted_globals;
+    pub mod no_restricted_imports;
     pub mod no_return_assign;
     pub mod no_script_url;
     pub mod no_self_assign;
@@ -442,10 +443,6 @@ mod oxc {
     pub mod uninvoked_array_callback;
 }
 
-mod security {
-    pub mod api_keys;
-}
-
 mod nextjs {
     pub mod google_font_display;
     pub mod google_font_preconnect;
@@ -536,6 +533,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_classes_per_file,
     eslint::max_lines,
     eslint::max_params,
+    eslint::no_restricted_imports,
     eslint::no_object_constructor,
     eslint::no_duplicate_imports,
     eslint::no_alert,
@@ -848,7 +846,6 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::jsx_no_new_array_as_prop,
     react_perf::jsx_no_new_function_as_prop,
     react_perf::jsx_no_new_object_as_prop,
-    security::api_keys,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
     typescript::ban_ts_comment,

@@ -206,15 +206,21 @@ impl SymbolFlags {
         self.contains(Self::TypeImport)
     }
 
-    /// If true, then the symbol can be referenced by a type
+    /// If true, then the symbol can be referenced by a type reference
     #[inline]
     pub fn can_be_referenced_by_type(&self) -> bool {
         self.intersects(Self::Type | Self::TypeImport | Self::Import)
     }
 
-    /// If true, then the symbol can be referenced by a value
+    /// If true, then the symbol can be referenced by a value reference
     #[inline]
     pub fn can_be_referenced_by_value(&self) -> bool {
         self.intersects(Self::Value | Self::Import | Self::Function)
+    }
+
+    /// If true, then the symbol can be referenced by a value_as_type reference
+    #[inline]
+    pub fn can_be_referenced_by_value_as_type(&self) -> bool {
+        self.intersects(Self::Value | Self::Import | Self::Function | Self::TypeImport)
     }
 }

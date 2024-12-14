@@ -8,9 +8,10 @@ use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
+    scope::ScopeFlags,
 };
 
-use crate::{builder::SemanticBuilder, diagnostics::redeclaration, scope::ScopeFlags, AstNode};
+use crate::{builder::SemanticBuilder, diagnostics::redeclaration, AstNode};
 
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
@@ -221,11 +222,13 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // NumericLiteral :: legacy_octalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
-    fn leading_zero(s: &str) -> bool {
-        let mut chars = s.bytes();
-        if let Some(first) = chars.next() {
-            if let Some(second) = chars.next() {
-                return first == b'0' && second.is_ascii_digit();
+    fn leading_zero(s: Option<&Atom>) -> bool {
+        if let Some(s) = s {
+            let mut chars = s.bytes();
+            if let Some(first) = chars.next() {
+                if let Some(second) = chars.next() {
+                    return first == b'0' && second.is_ascii_digit();
+                }
             }
         }
         false
@@ -233,10 +236,10 @@ pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
 
     if ctx.strict_mode() {
         match lit.base {
-            NumberBase::Octal if leading_zero(lit.raw) => {
+            NumberBase::Octal if leading_zero(lit.raw.as_ref()) => {
                 ctx.error(legacy_octal(lit.span));
             }
-            NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) => {
+            NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw.as_ref()) => {
                 ctx.error(leading_zero_decimal(lit.span));
             }
             _ => {}
@@ -363,30 +366,18 @@ fn new_target(span: Span) -> OxcDiagnostic {
 .with_label(span)
 }
 
-fn new_target_property(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("The only valid meta property for new is new.target").with_label(span)
-}
-
 fn import_meta(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected import.meta expression")
         .with_help("import.meta is only allowed in module code")
         .with_label(span)
 }
 
-fn import_meta_property(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("The only valid meta property for import is import.meta").with_label(span)
-}
-
 pub fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     match prop.meta.name.as_str() {
         "import" => {
-            if prop.property.name == "meta" {
-                if ctx.source_type.is_script() {
-                    return ctx.error(import_meta(prop.span));
-                }
-                return;
+            if prop.property.name == "meta" && ctx.source_type.is_script() {
+                ctx.error(import_meta(prop.span));
             }
-            ctx.error(import_meta_property(prop.span));
         }
         "new" => {
             if prop.property.name == "target" {
@@ -403,11 +394,9 @@ pub fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &Se
                     }
                 }
                 if !in_function_scope {
-                    return ctx.error(new_target(prop.span));
+                    ctx.error(new_target(prop.span));
                 }
-                return;
             }
-            ctx.error(new_target_property(prop.span));
         }
         _ => {}
     }
@@ -987,8 +976,8 @@ fn super_private(span: Span) -> OxcDiagnostic {
 
 pub fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBuilder<'_>) {
     if let MemberExpression::PrivateFieldExpression(private_expr) = member_expr {
-        // super.#m
-        if let Expression::Super(_) = &private_expr.object {
+        // `super.#m`
+        if private_expr.object.is_super() {
             ctx.error(super_private(private_expr.span));
         }
     }

@@ -25,6 +25,7 @@ pub struct PreferFunctionType;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce using function types instead of interfaces with call signatures.
     /// TypeScript allows for two common ways to declare a type for a function:
     ///

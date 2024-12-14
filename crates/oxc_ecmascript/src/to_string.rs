@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
-use crate::array_join::ArrayJoin;
-use crate::ToBoolean;
 use oxc_ast::ast::*;
 use oxc_syntax::operator::UnaryOperator;
+
+use crate::{array_join::ArrayJoin, ToBoolean};
 
 /// `ToString`
 ///

@@ -1,10 +1,8 @@
-use itertools::Itertools;
-use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
-use oxc_span::GetSpan;
-use rustc_hash::FxHashSet;
 use std::hash::Hash;
 
-use oxc_diagnostics::OxcDiagnostic;
+use itertools::Itertools;
+use phf::phf_set;
+use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     ast::{
@@ -16,9 +14,10 @@ use oxc_ast::{
     visit::walk::walk_function_body,
     AstKind, Visit,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
-use phf::phf_set;
+use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
+use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     ast_util::{
@@ -1001,6 +1000,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.stack.push(kind);
     }
+
     fn leave_node(&mut self, _kind: AstKind<'a>) {
         self.stack.pop();
     }
@@ -1008,9 +1008,11 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
     fn visit_ts_type_annotation(&mut self, _it: &oxc_ast::ast::TSTypeAnnotation<'a>) {
         // noop
     }
+
     fn visit_ts_type_reference(&mut self, _it: &oxc_ast::ast::TSTypeReference<'a>) {
         // noop
     }
+
     fn visit_ts_type_parameters(
         &mut self,
         _it: &oxc_allocator::Vec<'a, oxc_ast::ast::TSTypeParameter<'a>>,
@@ -2113,11 +2115,11 @@ fn test() {
         "export function useCanvasZoomOrScroll() {
            useEffect(() => {
                let wheelStopTimeoutId: { current: number | undefined } = { current: undefined };
-       
+
                wheelStopTimeoutId = requestAnimationFrameTimeout(() => {
                    setLastInteraction?.(null);
                }, 300);
-       
+
                return () => {
                    if (wheelStopTimeoutId.current !== undefined) {
                        console.log('h1');

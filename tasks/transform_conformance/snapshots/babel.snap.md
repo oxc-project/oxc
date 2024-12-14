@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 416/846
+Passed: 582/927
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (89/264)
+# babel-plugin-transform-class-properties (194/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -298,84 +298,10 @@ x Output mismatch
 * assumption-setPublicClassFields/constructor-collision/input.js
 x Output mismatch
 
-* assumption-setPublicClassFields/foobar/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-
-* assumption-setPublicClassFields/regression-T7364/input.mjs
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(7)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(7): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(8)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(5): [ScopeId(6)]
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(9)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(9): []
-rebuilt        : ScopeId(8): [ScopeId(9)]
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(5))
-rebuilt        : ScopeId(9): Some(ScopeId(8))
-
-* assumption-setPublicClassFields/static-class-binding/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(2): Some(ScopeId(0))
-
 * assumption-setPublicClassFields/static-infer-name/input.js
 x Output mismatch
 
-* assumption-setPublicClassFields/static-super/input.js
-x Output mismatch
-
 * assumption-setPublicClassFields/static-super-loose/input.js
-x Output mismatch
-
-* assumption-setPublicClassFields/static-this/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(2): Some(ScopeId(0))
-
-* assumption-setPublicClassFields/super-expression/input.js
 x Output mismatch
 
 * assumption-setPublicClassFields/super-with-collision/input.js
@@ -412,72 +338,14 @@ x Output mismatch
 * nested-class/super-property-in-decorator/input.js
 x Output mismatch
 
-* private/1-helpermemberexpressionfunction/input.js
-x Output mismatch
-
-* private/call/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
-Scope children mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-
 * private/class-shadow-builtins/input.mjs
 x Output mismatch
 
 * private/constructor-collision/input.js
 x Output mismatch
 
-* private/derived-multiple-supers/input.js
-x Output mismatch
-
-* private/destructuring-array-pattern/input.js
-x Output mismatch
-
-* private/destructuring-array-pattern-1/input.js
-x Output mismatch
-
-* private/destructuring-array-pattern-2/input.js
-x Output mismatch
-
-* private/destructuring-array-pattern-3/input.js
-x Output mismatch
-
-* private/destructuring-array-pattern-static/input.js
-x Output mismatch
-
-* private/destructuring-object-pattern/input.js
-x Output mismatch
-
-* private/destructuring-object-pattern-1/input.js
-x Output mismatch
-
-* private/destructuring-object-pattern-2/input.js
-x Output mismatch
-
-* private/destructuring-object-pattern-3/input.js
-x Output mismatch
-
-* private/destructuring-object-pattern-static/input.js
-x Output mismatch
-
 * private/extracted-this/input.js
 x Output mismatch
-
-* private/foobar/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 
 * private/nested-class-computed-redeclared/input.js
 x Output mismatch
@@ -486,18 +354,6 @@ x Output mismatch
 x Output mismatch
 
 * private/nested-class-extends-computed-redeclared/input.js
-x Output mismatch
-
-* private/optional-chain-before-member-call/input.js
-x Output mismatch
-
-* private/optional-chain-before-member-call-with-transform/input.js
-x Output mismatch
-
-* private/optional-chain-before-property/input.js
-x Output mismatch
-
-* private/optional-chain-before-property-with-transform/input.js
 x Output mismatch
 
 * private/optional-chain-cast-to-boolean/input.js
@@ -512,105 +368,19 @@ x Output mismatch
 * private/optional-chain-in-function-param-with-transform/input.js
 x Output mismatch
 
-* private/optional-chain-member-optional-call/input.js
-x Output mismatch
-
 * private/optional-chain-member-optional-call-spread-arguments/input.js
 x Output mismatch
 
 * private/optional-chain-member-optional-call-with-transform/input.js
 x Output mismatch
 
-* private/optional-chain-optional-member-call/input.js
-x Output mismatch
-
-* private/optional-chain-optional-member-call-with-transform/input.js
-x Output mismatch
-
-* private/optional-chain-optional-property/input.js
-x Output mismatch
-
-* private/optional-chain-optional-property-with-transform/input.js
-x Output mismatch
-
-* private/parenthesized-optional-member-call/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(5): Some(ScopeId(0))
-
 * private/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
-
-* private/regression-T7364/input.mjs
-x Output mismatch
-
-* private/static-call/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(3): ScopeFlags(Function)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(0))
-
-* private/static-class-binding/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(2): Some(ScopeId(0))
 
 * private/static-infer-name/input.js
 x Output mismatch
 
 * private/static-shadow/input.js
-x Output mismatch
-
-* private/static-this/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(2): Some(ScopeId(0))
-
-* private/super-expression/input.js
-x Output mismatch
-
-* private-loose/assignment/input.js
-x Output mismatch
-
-* private-loose/call/input.js
-x Output mismatch
-
-* private-loose/canonical/input.js
 x Output mismatch
 
 * private-loose/class-shadow-builtins/input.mjs
@@ -619,70 +389,7 @@ x Output mismatch
 * private-loose/constructor-collision/input.js
 x Output mismatch
 
-* private-loose/declaration-order/input.js
-x Output mismatch
-
-* private-loose/derived/input.js
-x Output mismatch
-
-* private-loose/derived-multiple-supers/input.js
-x Output mismatch
-
-* private-loose/destructuring-array-pattern/input.js
-x Output mismatch
-
-* private-loose/destructuring-array-pattern-1/input.js
-x Output mismatch
-
-* private-loose/destructuring-array-pattern-2/input.js
-x Output mismatch
-
-* private-loose/destructuring-array-pattern-3/input.js
-x Output mismatch
-
-* private-loose/destructuring-array-pattern-static/input.js
-x Output mismatch
-
-* private-loose/destructuring-object-pattern/input.js
-x Output mismatch
-
-* private-loose/destructuring-object-pattern-1/input.js
-x Output mismatch
-
-* private-loose/destructuring-object-pattern-2/input.js
-x Output mismatch
-
-* private-loose/destructuring-object-pattern-3/input.js
-x Output mismatch
-
-* private-loose/destructuring-object-pattern-static/input.js
-x Output mismatch
-
 * private-loose/extracted-this/input.js
-x Output mismatch
-
-* private-loose/foobar/input.js
-x Output mismatch
-
-* private-loose/instance/input.js
-x Output mismatch
-
-* private-loose/instance-undefined/input.js
-x Output mismatch
-
-* private-loose/logical-assignment/input.js
-x Output mismatch
-
-* private-loose/multiple/input.js
-x Output mismatch
-
-* private-loose/native-classes/input.js
-x Output mismatch
-
-* private-loose/nested-class/input.js
-x Output mismatch
-
-* private-loose/nested-class-computed/input.js
 x Output mismatch
 
 * private-loose/nested-class-computed-redeclared/input.js
@@ -692,16 +399,15 @@ x Output mismatch
 x Output mismatch
 
 * private-loose/nested-class-extends-computed-redeclared/input.js
-x Output mismatch
-
-* private-loose/nested-class-other-redeclared/input.js
-x Output mismatch
-
-* private-loose/nested-class-redeclared/input.js
-x Output mismatch
-
-* private-loose/non-block-arrow-func/input.mjs
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(2): ["Nested", "_foo2", "_foo3"]
+rebuilt        : ScopeId(3): ["Nested", "_foo2", "_foo3", "_this$foo"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_this$foo"]
+rebuilt        : ScopeId(4): []
+Symbol scope ID mismatch for "_this$foo":
+after transform: SymbolId(6): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(3)
 
 * private-loose/optional-chain-before-member-call/input.js
 x Output mismatch
@@ -718,9 +424,6 @@ x Output mismatch
 * private-loose/optional-chain-cast-to-boolean/input.js
 x Output mismatch
 
-* private-loose/optional-chain-delete-property/input.js
-x Output mismatch
-
 * private-loose/optional-chain-delete-property-with-transform/input.js
 x Output mismatch
 
@@ -733,9 +436,6 @@ x Output mismatch
 * private-loose/optional-chain-member-optional-call/input.js
 x Output mismatch
 
-* private-loose/optional-chain-member-optional-call-spread-arguments/input.js
-x Output mismatch
-
 * private-loose/optional-chain-member-optional-call-with-transform/input.js
 x Output mismatch
 
@@ -743,9 +443,6 @@ x Output mismatch
 x Output mismatch
 
 * private-loose/optional-chain-optional-member-call-with-transform/input.js
-x Output mismatch
-
-* private-loose/optional-chain-optional-property/input.js
 x Output mismatch
 
 * private-loose/optional-chain-optional-property-with-transform/input.js
@@ -757,75 +454,13 @@ x Output mismatch
 * private-loose/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
 
-* private-loose/preserve-comments/input.js
-x Output mismatch
-
-* private-loose/private-in-derived/input.js
-x Output mismatch
-
-* private-loose/reevaluated/input.js
-x Output mismatch
-
-* private-loose/reference-in-other-property/input.js
-x Output mismatch
-
-* private-loose/static/input.js
-x Output mismatch
-
-* private-loose/static-call/input.js
-x Output mismatch
-
-* private-loose/static-class-binding/input.js
-x Output mismatch
-
-* private-loose/static-export/input.mjs
-x Output mismatch
-
 * private-loose/static-infer-name/input.js
 x Output mismatch
-
-* private-loose/static-inherited/input.js
-x Output mismatch
-
-* private-loose/static-shadow/input.js
-x Output mismatch
-
-* private-loose/static-this/input.js
-x Output mismatch
-
-* private-loose/static-undefined/input.js
-x Output mismatch
-
-* private-loose/super-expression/input.js
-x Output mismatch
-
-* private-loose/super-statement/input.js
-x Output mismatch
-
-* private-loose/update/input.js
-x Output mismatch
-
-* public/arrow-static-this-without-transform/input.js
-x Output mismatch
-
-* public/call/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
-Scope children mismatch:
-after transform: ScopeId(4): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
 
 * public/class-shadow-builtins/input.mjs
 x Output mismatch
 
 * public/computed/input.js
-x Output mismatch
-
-* public/computed-toPrimitive/input.js
 x Output mismatch
 
 * public/constructor-collision/input.js
@@ -834,102 +469,13 @@ x Output mismatch
 * public/delete-super-property/input.js
 x Output mismatch
 
-* public/derived-multiple-supers/input.js
-x Output mismatch
-
-* public/derived-super-in-default-params/input.js
-x Output mismatch
-
-* public/derived-super-in-default-params-complex/input.js
-x Output mismatch
-
-* public/derived-super-in-default-params-in-arrow/input.js
-x Output mismatch
-
 * public/extracted-this/input.js
 x Output mismatch
-
-* public/foobar/input.js
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(3): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-
-* public/regression-T7364/input.mjs
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(7)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(7): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(8)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(5): [ScopeId(6)]
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(9)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(9): []
-rebuilt        : ScopeId(8): [ScopeId(9)]
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(5))
-rebuilt        : ScopeId(9): Some(ScopeId(8))
-
-* public/static-class-binding/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(2): Some(ScopeId(0))
 
 * public/static-infer-name/input.js
 x Output mismatch
 
-* public/static-super/input.js
-x Output mismatch
-
-* public/static-this/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(2): Some(ScopeId(0))
-
-* public/super-expression/input.js
-x Output mismatch
-
 * public/super-with-collision/input.js
-x Output mismatch
-
-* public-loose/arrow-static-this-without-transform/input.js
 x Output mismatch
 
 * public-loose/class-shadow-builtins/input.mjs
@@ -941,134 +487,16 @@ x Output mismatch
 * public-loose/constructor-collision/input.js
 x Output mismatch
 
-* public-loose/foobar/input.js
-x Output mismatch
-
-* public-loose/regression-T7364/input.mjs
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(7)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(7): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(8)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(5): [ScopeId(6)]
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(9)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(9): []
-rebuilt        : ScopeId(8): [ScopeId(9)]
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(5))
-rebuilt        : ScopeId(9): Some(ScopeId(8))
-
-* public-loose/static-class-binding/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(2): Some(ScopeId(0))
-
 * public-loose/static-infer-name/input.js
 x Output mismatch
 
 * public-loose/static-super/input.js
 x Output mismatch
 
-* public-loose/static-this/input.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(2): Some(ScopeId(0))
-
-* public-loose/super-expression/input.js
-x Output mismatch
-
 * public-loose/super-with-collision/input.js
 x Output mismatch
 
 * regression/6153/input.js
-x Output mismatch
-
-* regression/6154/input.js
-x Output mismatch
-
-* regression/7371/input.js
-x Output mismatch
-
-* regression/7951/input.mjs
-x Output mismatch
-
-* regression/8882/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["classes"]
-rebuilt        : ScopeId(0): ["_A", "_bar", "classes"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_A", "_bar", "_i"]
-rebuilt        : ScopeId(2): ["_i"]
-Symbol scope ID mismatch for "_A":
-after transform: SymbolId(4): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(0)
-Symbol scope ID mismatch for "_bar":
-after transform: SymbolId(3): ScopeId(2)
-rebuilt        : SymbolId(3): ScopeId(0)
-
-* regression/T7364/input.mjs
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(7)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Scope children mismatch:
-after transform: ScopeId(7): []
-rebuilt        : ScopeId(2): [ScopeId(3)]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(1))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4), ScopeId(8)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(8): []
-rebuilt        : ScopeId(5): [ScopeId(6)]
-Scope parent mismatch:
-after transform: ScopeId(4): Some(ScopeId(3))
-rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(9)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(9): []
-rebuilt        : ScopeId(8): [ScopeId(9)]
-Scope parent mismatch:
-after transform: ScopeId(6): Some(ScopeId(5))
-rebuilt        : ScopeId(9): Some(ScopeId(8))
-
-* regression/multiple-super-in-termary/input.js
 x Output mismatch
 
 
@@ -1093,6 +521,581 @@ x Output mismatch
 
 * nullish-coalescing/transform-loose/input.js
 x Output mismatch
+
+
+# babel-plugin-transform-optional-chaining (33/45)
+* assumption-noDocumentAll/assignment/input.js
+Symbol reference IDs mismatch for "_obj$a":
+after transform: SymbolId(5): [ReferenceId(7), ReferenceId(8), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(5)]
+Symbol reference IDs mismatch for "_obj$b":
+after transform: SymbolId(6): [ReferenceId(11), ReferenceId(12), ReferenceId(13)]
+rebuilt        : SymbolId(1): [ReferenceId(7), ReferenceId(9)]
+Symbol reference IDs mismatch for "_obj$a2":
+after transform: SymbolId(7): [ReferenceId(15), ReferenceId(16), ReferenceId(17)]
+rebuilt        : SymbolId(2): [ReferenceId(12), ReferenceId(14)]
+
+* assumption-noDocumentAll/cast-to-boolean/input.js
+Bindings mismatch:
+after transform: ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+rebuilt        : ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+Bindings mismatch:
+after transform: ScopeId(26): ["_o$a$b$c$non_existent2"]
+rebuilt        : ScopeId(26): []
+Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
+after transform: SymbolId(31): ScopeId(26)
+rebuilt        : SymbolId(33): ScopeId(25)
+
+* assumption-noDocumentAll/in-function-params/input.js
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9)]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "a"]
+rebuilt        : ScopeId(2): ["_x"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Bindings mismatch:
+after transform: ScopeId(2): ["a", "b"]
+rebuilt        : ScopeId(4): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(0))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Bindings mismatch:
+after transform: ScopeId(3): ["_a$b", "a", "b"]
+rebuilt        : ScopeId(6): ["_a$b"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(0))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Bindings mismatch:
+after transform: ScopeId(4): ["_a$b2", "a", "b"]
+rebuilt        : ScopeId(8): ["_a$b2"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(Function)
+rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(0))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+Bindings mismatch:
+after transform: ScopeId(5): ["_a$b3", "a", "b"]
+rebuilt        : ScopeId(10): ["_a$b3"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(Function)
+rebuilt        : ScopeId(10): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(0))
+rebuilt        : ScopeId(10): Some(ScopeId(9))
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(3)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(3)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(6): ScopeId(3)
+rebuilt        : SymbolId(7): ScopeId(5)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(7): ScopeId(3)
+rebuilt        : SymbolId(8): ScopeId(5)
+Symbol reference IDs mismatch for "_a$b":
+after transform: SymbolId(15): [ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
+rebuilt        : SymbolId(9): [ReferenceId(5), ReferenceId(7), ReferenceId(8), ReferenceId(9)]
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(9): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(7)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(10): ScopeId(4)
+rebuilt        : SymbolId(12): ScopeId(7)
+Symbol reference IDs mismatch for "_a$b2":
+after transform: SymbolId(16): [ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17)]
+rebuilt        : SymbolId(13): [ReferenceId(10), ReferenceId(12), ReferenceId(13), ReferenceId(14)]
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(9)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(13): ScopeId(5)
+rebuilt        : SymbolId(16): ScopeId(9)
+Symbol reference IDs mismatch for "_a$b3":
+after transform: SymbolId(17): [ReferenceId(19), ReferenceId(20), ReferenceId(21)]
+rebuilt        : SymbolId(17): [ReferenceId(16), ReferenceId(18)]
+
+* assumption-noDocumentAll/memoize/input.js
+Symbol reference IDs mismatch for "_foo$bar":
+after transform: SymbolId(2): [ReferenceId(27), ReferenceId(28), ReferenceId(29)]
+rebuilt        : SymbolId(2): [ReferenceId(3), ReferenceId(5)]
+Symbol reference IDs mismatch for "_foo$bar5":
+after transform: SymbolId(9): [ReferenceId(46), ReferenceId(47), ReferenceId(48)]
+rebuilt        : SymbolId(9): [ReferenceId(35), ReferenceId(37)]
+Symbol reference IDs mismatch for "_foo$bar7":
+after transform: SymbolId(11): [ReferenceId(53), ReferenceId(54), ReferenceId(55)]
+rebuilt        : SymbolId(11): [ReferenceId(45), ReferenceId(47)]
+Symbol reference IDs mismatch for "_foo$bar8$baz":
+after transform: SymbolId(13): [ReferenceId(58), ReferenceId(59), ReferenceId(60)]
+rebuilt        : SymbolId(13): [ReferenceId(51), ReferenceId(53)]
+Symbol reference IDs mismatch for "_foo$bar9":
+after transform: SymbolId(14): [ReferenceId(63), ReferenceId(64), ReferenceId(65), ReferenceId(69)]
+rebuilt        : SymbolId(14): [ReferenceId(57), ReferenceId(60), ReferenceId(62)]
+Symbol reference IDs mismatch for "_foo$bar9$baz":
+after transform: SymbolId(15): [ReferenceId(66), ReferenceId(67), ReferenceId(68)]
+rebuilt        : SymbolId(15): [ReferenceId(59), ReferenceId(61)]
+
+* general/cast-to-boolean/input.js
+Bindings mismatch:
+after transform: ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+rebuilt        : ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+Bindings mismatch:
+after transform: ScopeId(26): ["_o$a$b$c$non_existent2"]
+rebuilt        : ScopeId(26): []
+Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
+after transform: SymbolId(31): ScopeId(26)
+rebuilt        : SymbolId(33): ScopeId(25)
+
+* general/delete-in-function-params/input.js
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Bindings mismatch:
+after transform: ScopeId(1): ["_a", "x"]
+rebuilt        : ScopeId(2): ["_a"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
+
+* general/in-function-params/input.js
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9)]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "a"]
+rebuilt        : ScopeId(2): ["_x"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Bindings mismatch:
+after transform: ScopeId(2): ["a", "b"]
+rebuilt        : ScopeId(4): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(0))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Bindings mismatch:
+after transform: ScopeId(3): ["_a$b", "a", "b"]
+rebuilt        : ScopeId(6): ["_a$b"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(0))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Bindings mismatch:
+after transform: ScopeId(4): ["_a$b2", "a", "b"]
+rebuilt        : ScopeId(8): ["_a$b2"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(Function)
+rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(0))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+Bindings mismatch:
+after transform: ScopeId(5): ["_a$b3", "a", "b"]
+rebuilt        : ScopeId(10): ["_a$b3"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(Function)
+rebuilt        : ScopeId(10): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(0))
+rebuilt        : ScopeId(10): Some(ScopeId(9))
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(3)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(3)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(6): ScopeId(3)
+rebuilt        : SymbolId(7): ScopeId(5)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(7): ScopeId(3)
+rebuilt        : SymbolId(8): ScopeId(5)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(9): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(7)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(10): ScopeId(4)
+rebuilt        : SymbolId(12): ScopeId(7)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(9)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(13): ScopeId(5)
+rebuilt        : SymbolId(16): ScopeId(9)
+
+* general/in-function-params-loose/input.js
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9)]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "a"]
+rebuilt        : ScopeId(2): ["_x"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(1): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Bindings mismatch:
+after transform: ScopeId(2): ["a", "b"]
+rebuilt        : ScopeId(4): []
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(0))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Bindings mismatch:
+after transform: ScopeId(3): ["_a$b", "a", "b"]
+rebuilt        : ScopeId(6): ["_a$b"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(3): Some(ScopeId(0))
+rebuilt        : ScopeId(6): Some(ScopeId(5))
+Bindings mismatch:
+after transform: ScopeId(4): ["_a$b2", "a", "b"]
+rebuilt        : ScopeId(8): ["_a$b2"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(Function)
+rebuilt        : ScopeId(8): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(0))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+Bindings mismatch:
+after transform: ScopeId(5): ["_a$b3", "a", "b"]
+rebuilt        : ScopeId(10): ["_a$b3"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(Function)
+rebuilt        : ScopeId(10): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(5): Some(ScopeId(0))
+rebuilt        : ScopeId(10): Some(ScopeId(9))
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(1)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(3)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(4): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(3)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(6): ScopeId(3)
+rebuilt        : SymbolId(7): ScopeId(5)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(7): ScopeId(3)
+rebuilt        : SymbolId(8): ScopeId(5)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(9): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(7)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(10): ScopeId(4)
+rebuilt        : SymbolId(12): ScopeId(7)
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(12): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(9)
+Symbol scope ID mismatch for "b":
+after transform: SymbolId(13): ScopeId(5)
+rebuilt        : SymbolId(16): ScopeId(9)
+
+* loose/cast-to-boolean/input.js
+Bindings mismatch:
+after transform: ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+rebuilt        : ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
+Bindings mismatch:
+after transform: ScopeId(26): ["_o$a$b$c$non_existent2"]
+rebuilt        : ScopeId(26): []
+Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
+after transform: SymbolId(31): ScopeId(26)
+rebuilt        : SymbolId(33): ScopeId(25)
+
+* transparent-expr-wrappers/ts-as-function-call-loose/input.ts
+Unresolved references mismatch:
+after transform: ["A", "B", "foo"]
+rebuilt        : ["foo"]
+
+* transparent-expr-wrappers/ts-as-member-expression/input.ts
+Unresolved references mismatch:
+after transform: ["ExampleType", "ExampleType2", "a"]
+rebuilt        : ["a"]
+
+* transparent-expr-wrappers/ts-parenthesized-expression-member-call/input.ts
+Unresolved references mismatch:
+after transform: ["ExampleType", "o"]
+rebuilt        : ["o"]
+
+
+# babel-plugin-transform-object-rest-spread (28/36)
+* object-rest/for-x/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_ref", "a", "b"]
+rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_ref", "_ref2", "_ref3", "a"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["a", "b"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_ref2"]
+rebuilt        : ScopeId(3): []
+Bindings mismatch:
+after transform: ScopeId(4): ["_ref3"]
+rebuilt        : ScopeId(4): []
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(5): ["_ref4", "_ref5"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_ref4"]
+rebuilt        : ScopeId(6): []
+Bindings mismatch:
+after transform: ScopeId(7): ["_ref5"]
+rebuilt        : ScopeId(7): []
+Symbol flags mismatch for "a":
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
+rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "a":
+after transform: SymbolId(0): Span { start: 27, end: 28 }
+rebuilt        : SymbolId(8): Span { start: 86, end: 87 }
+Symbol scope ID mismatch for "a":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(8): ScopeId(0)
+Symbol redeclarations mismatch for "a":
+after transform: SymbolId(0): [Span { start: 86, end: 87 }, Span { start: 189, end: 190 }, Span { start: 274, end: 275 }]
+rebuilt        : SymbolId(8): [Span { start: 189, end: 190 }, Span { start: 274, end: 275 }]
+Symbol reference IDs mismatch for "b":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3)]
+rebuilt        : SymbolId(5): []
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(4): ScopeId(3)
+rebuilt        : SymbolId(6): ScopeId(0)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(5): ScopeId(4)
+rebuilt        : SymbolId(7): ScopeId(0)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(7): ScopeId(6)
+rebuilt        : SymbolId(9): ScopeId(5)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(8): ScopeId(7)
+rebuilt        : SymbolId(10): ScopeId(5)
+Reference symbol mismatch for "b":
+after transform: SymbolId(1) "b"
+rebuilt        : <None>
+Reference symbol mismatch for "b":
+after transform: SymbolId(1) "b"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["babelHelpers"]
+rebuilt        : ["b", "babelHelpers"]
+
+* object-rest/for-x-array-pattern/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "a"]
+rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_ref2", "_ref3", "_ref4", "a"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_ref2"]
+rebuilt        : ScopeId(3): []
+Bindings mismatch:
+after transform: ScopeId(4): ["_ref3", "_ref4"]
+rebuilt        : ScopeId(4): []
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(5): ["_ref5", "_ref6", "_ref7"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_ref5"]
+rebuilt        : ScopeId(6): []
+Bindings mismatch:
+after transform: ScopeId(7): ["_ref6", "_ref7"]
+rebuilt        : ScopeId(7): []
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(5): ScopeId(3)
+rebuilt        : SymbolId(6): ScopeId(0)
+Symbol scope ID mismatch for "_ref3":
+after transform: SymbolId(6): ScopeId(4)
+rebuilt        : SymbolId(7): ScopeId(0)
+Symbol scope ID mismatch for "_ref4":
+after transform: SymbolId(7): ScopeId(4)
+rebuilt        : SymbolId(8): ScopeId(0)
+Symbol scope ID mismatch for "_ref5":
+after transform: SymbolId(9): ScopeId(6)
+rebuilt        : SymbolId(10): ScopeId(5)
+Symbol scope ID mismatch for "_ref6":
+after transform: SymbolId(10): ScopeId(7)
+rebuilt        : SymbolId(11): ScopeId(5)
+Symbol scope ID mismatch for "_ref7":
+after transform: SymbolId(11): ScopeId(7)
+rebuilt        : SymbolId(12): ScopeId(5)
+
+* object-rest/for-x-completion-record/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_excluded"]
+rebuilt        : ScopeId(0): ["_excluded", "_ref", "_ref2"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_ref"]
+rebuilt        : ScopeId(1): []
+Bindings mismatch:
+after transform: ScopeId(2): ["_ref2"]
+rebuilt        : ScopeId(2): []
+Symbol scope ID mismatch for "_ref":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+Symbol scope ID mismatch for "_ref2":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(0)
+
+* object-rest/nested-computed-key/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_ref3", "a", "c"]
+rebuilt        : ScopeId(0): ["a", "c"]
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["babelHelpers", "d"]
+rebuilt        : ["_ref3", "babelHelpers", "d"]
+
+* object-rest/nested-default-value/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_ref3", "a", "c"]
+rebuilt        : ScopeId(0): ["a", "c"]
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["babelHelpers", "d"]
+rebuilt        : ["_ref3", "babelHelpers", "d"]
+
+* object-rest/parameters-object-rest-used-in-default/input.js
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(3): []
+Symbol reference IDs mismatch for "Y":
+after transform: SymbolId(2): [ReferenceId(1)]
+rebuilt        : SymbolId(6): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(6): [ReferenceId(2)]
+rebuilt        : SymbolId(10): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(7): [ReferenceId(3)]
+rebuilt        : SymbolId(16): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(13): [ReferenceId(6)]
+rebuilt        : SymbolId(20): []
+Symbol reference IDs mismatch for "R":
+after transform: SymbolId(15): [ReferenceId(7)]
+rebuilt        : SymbolId(23): []
+Reference symbol mismatch for "R":
+after transform: SymbolId(0) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "Y":
+after transform: SymbolId(2) "Y"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(6) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(7) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(13) "R"
+rebuilt        : <None>
+Reference symbol mismatch for "R":
+after transform: SymbolId(15) "R"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["b", "babelHelpers", "f", "q"]
+rebuilt        : ["R", "Y", "b", "babelHelpers", "f", "q"]
+
+* object-rest/symbol/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["_Symbol$for", "_Symbol$for2", "_Symbol$for3", "_ref", "_ref2", "_ref3", "foo", "rest"]
+rebuilt        : ScopeId(0): ["_Symbol$for", "_Symbol$for2", "_ref", "_ref2", "foo", "rest"]
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_Symbol$for3":
+after transform: SymbolId(7) "_Symbol$for3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Reference symbol mismatch for "_Symbol$for3":
+after transform: SymbolId(7) "_Symbol$for3"
+rebuilt        : <None>
+Reference symbol mismatch for "_ref3":
+after transform: SymbolId(6) "_ref3"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Symbol", "babelHelpers"]
+rebuilt        : ["Symbol", "_Symbol$for3", "_ref3", "babelHelpers"]
+Unresolved reference IDs mismatch for "Symbol":
+after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
+rebuilt        : [ReferenceId(0), ReferenceId(7)]
+
+* regression/gh-8323/input.js
+
+  x Option `loose` is not implemented for object-rest-spread.
+
 
 
 # babel-plugin-transform-async-to-generator (10/28)

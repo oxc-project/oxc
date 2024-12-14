@@ -40,6 +40,10 @@ declare_oxc_lint!(
     ///
     /// Enforce `key` prop for elements in array
     ///
+    /// ### Why is this bad?
+    ///
+    /// React requires a `key` prop for elements in an array to help identify which items have changed, are added, or are removed.
+    ///
     /// ### Example
     ///
     /// Examples of **incorrect** code for this rule:

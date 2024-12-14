@@ -1,11 +1,7 @@
-#![allow(
-    clippy::needless_pass_by_value // Napi value need to be passed as value
-)]
+// Napi value need to be passed as value
+#![expect(clippy::needless_pass_by_value)]
 
-mod convert;
-mod types;
-
-use std::sync::Arc;
+use std::mem;
 
 use napi::{bindgen_prelude::AsyncTask, Task};
 use napi_derive::napi;
@@ -13,12 +9,16 @@ use napi_derive::napi;
 use oxc::{
     allocator::Allocator,
     ast::CommentKind,
-    diagnostics::{Error, NamedSource},
     parser::{ParseOptions, Parser, ParserReturn},
     span::SourceType,
 };
+use oxc_napi::OxcError;
 
-pub use crate::types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
+mod convert;
+mod magic_string;
+mod types;
+pub use magic_string::MagicString;
+pub use types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
 
 fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
     match options.lang.as_deref() {
@@ -64,22 +64,13 @@ pub fn parse_without_return(filename: String, source_text: String, options: Opti
     parse(&allocator, source_type, &source_text, &options);
 }
 
-fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions) -> ParseResult {
+fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
     let source_type = get_source_type(filename, options);
-    let ret = parse(&allocator, source_type, source_text, options);
+    let ret = parse(&allocator, source_type, &source_text, options);
     let program = serde_json::to_string(&ret.program).unwrap();
 
-    let errors = if ret.errors.is_empty() {
-        vec![]
-    } else {
-        let source = Arc::new(NamedSource::new(filename, source_text.to_string()));
-        ret.errors
-            .into_iter()
-            .map(|diagnostic| Error::from(diagnostic).with_source_code(Arc::clone(&source)))
-            .map(|error| format!("{error:?}"))
-            .collect()
-    };
+    let errors = ret.errors.into_iter().map(OxcError::from).collect::<Vec<_>>();
 
     let comments = ret
         .program
@@ -90,14 +81,14 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
                 CommentKind::Line => String::from("Line"),
                 CommentKind::Block => String::from("Block"),
             },
-            value: comment.content_span().source_text(source_text).to_string(),
+            value: comment.content_span().source_text(&source_text).to_string(),
             start: comment.span.start,
             end: comment.span.end,
         })
         .collect::<Vec<Comment>>();
 
     let module = EcmaScriptModule::from(&ret.module_record);
-    ParseResult { program, module, comments, errors }
+    ParseResult { source_text, program, module, comments, errors }
 }
 
 /// Parse synchronously.
@@ -108,7 +99,7 @@ pub fn parse_sync(
     options: Option<ParserOptions>,
 ) -> ParseResult {
     let options = options.unwrap_or_default();
-    parse_with_return(&filename, &source_text, &options)
+    parse_with_return(&filename, source_text, &options)
 }
 
 pub struct ResolveTask {
@@ -123,7 +114,8 @@ impl Task for ResolveTask {
     type Output = ParseResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
-        Ok(parse_with_return(&self.filename, &self.source_text, &self.options))
+        let source_text = mem::take(&mut self.source_text);
+        Ok(parse_with_return(&self.filename, source_text, &self.options))
     }
 
     fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {

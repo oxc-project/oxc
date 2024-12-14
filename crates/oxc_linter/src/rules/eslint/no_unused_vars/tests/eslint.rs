@@ -52,10 +52,7 @@ fn test() {
 			}",
             None,
         ),
-        (
-            "for (let prop in box) { box[prop] = parseInt(box[prop]); }",
-            None,
-        ), // { "ecmaVersion": 6 },
+        ("for (let prop in box) { box[prop] = parseInt(box[prop]); }", None), // { "ecmaVersion": 6 },
         (
             "var box = {a: 2};
             for (var prop in box) {

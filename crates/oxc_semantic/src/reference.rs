@@ -1,14 +1,9 @@
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-pub use oxc_syntax::reference::{ReferenceFlags, ReferenceId};
-
-use crate::{symbol::SymbolId, NodeId};
+use oxc_syntax::{node::NodeId, reference::ReferenceFlags, symbol::SymbolId};
 
 /// Describes where and how a Symbol is used in the AST.
 ///

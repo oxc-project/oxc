@@ -214,7 +214,6 @@ impl<'a> ParserImpl<'a> {
         F: Fn(&mut Self) -> Result<TSType<'a>>,
     {
         let span = self.start_span();
-        // let is_union_type = kind == Kind::Pipe;
         let has_leading_operator = self.eat(kind);
         /* hasLeadingOperator && parseFunctionOrConstructorTypeToError(isUnionType) ||*/
         let mut ty = parse_constituent_type(self)?;
@@ -253,8 +252,15 @@ impl<'a> ParserImpl<'a> {
     fn parse_type_operator(&mut self, operator: TSTypeOperatorOperator) -> Result<TSType<'a>> {
         let span = self.start_span();
         self.bump_any(); // bump operator
-        let type_annotation = self.parse_type_operator_or_higher()?;
-        Ok(self.ast.ts_type_type_operator(self.end_span(span), operator, type_annotation))
+        let operator_span = self.end_span(span);
+        let ty = self.parse_type_operator_or_higher()?;
+        if operator == TSTypeOperatorOperator::Readonly
+            && !matches!(ty, TSType::TSArrayType(_))
+            && !matches!(ty, TSType::TSTupleType(_))
+        {
+            self.error(diagnostics::readonly_in_array_or_tuple_type(operator_span));
+        }
+        Ok(self.ast.ts_type_type_operator(self.end_span(span), operator, ty))
     }
 
     fn parse_infer_type(&mut self) -> Result<TSType<'a>> {

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 mod categories;
 mod env;
 mod flat;
@@ -7,21 +9,15 @@ mod oxlintrc;
 mod plugins;
 mod rules;
 mod settings;
-
-use std::path::PathBuf;
-
-pub(crate) use self::flat::ResolvedLinterState;
-pub use self::{
-    env::OxlintEnv,
-    flat::ConfigStore,
-    globals::OxlintGlobals,
-    overrides::OxlintOverrides,
-    oxlintrc::Oxlintrc,
-    plugins::LintPlugins,
-    rules::ESLintRule,
-    rules::OxlintRules,
-    settings::{jsdoc::JSDocPluginSettings, OxlintSettings},
-};
+pub use env::OxlintEnv;
+pub use flat::ConfigStore;
+pub(crate) use flat::ResolvedLinterState;
+pub use globals::OxlintGlobals;
+pub use overrides::OxlintOverrides;
+pub use oxlintrc::Oxlintrc;
+pub use plugins::LintPlugins;
+pub use rules::{ESLintRule, OxlintRules};
+pub use settings::{jsdoc::JSDocPluginSettings, OxlintSettings};
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct LintConfig {

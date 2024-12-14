@@ -5,7 +5,7 @@ use oxc_ecmascript::{
 };
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
-    number::{NumberBase, ToJsString},
+    number::NumberBase,
     operator::{BinaryOperator, LogicalOperator},
 };
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
@@ -260,7 +260,7 @@ impl<'a, 'b> PeepholeFoldConstants {
             | BinaryOperator::GreaterThan
             | BinaryOperator::LessEqualThan
             | BinaryOperator::GreaterEqualThan => {
-                return ctx.eval_binary_expression(e).map(|v| ctx.value_to_expr(e.span, v))
+                return ctx.eval_binary_expression(e).map(|v| ctx.value_to_expr(e.span, v));
             }
             BinaryOperator::Equality => Self::try_abstract_equality_comparison(left, right, ctx),
             BinaryOperator::Inequality => {
@@ -310,7 +310,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                     let number_literal_expr = ctx.ast.expression_numeric_literal(
                         right_expr.span(),
                         num,
-                        num.to_js_string(),
+                        None,
                         if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
 
@@ -333,7 +333,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                     let number_literal_expr = ctx.ast.expression_numeric_literal(
                         left_expr.span(),
                         num,
-                        num.to_js_string(),
+                        None,
                         if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
 

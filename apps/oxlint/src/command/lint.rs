@@ -283,10 +283,6 @@ pub struct EnablePlugins {
     /// Enable the node plugin and detect node usage problems
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub node_plugin: OverrideToggle,
-
-    /// Enable the security plugin and detect security problems
-    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
-    pub security_plugin: OverrideToggle,
 }
 
 /// Enables or disables a boolean option, or leaves it unset.
@@ -362,7 +358,6 @@ impl EnablePlugins {
         self.react_perf_plugin.inspect(|yes| plugins.set(LintPlugins::REACT_PERF, yes));
         self.promise_plugin.inspect(|yes| plugins.set(LintPlugins::PROMISE, yes));
         self.node_plugin.inspect(|yes| plugins.set(LintPlugins::NODE, yes));
-        self.security_plugin.inspect(|yes| plugins.set(LintPlugins::SECURITY, yes));
 
         // Without this, jest plugins adapted to vitest will not be enabled.
         if self.vitest_plugin.is_enabled() && self.jest_plugin.is_not_set() {
@@ -373,8 +368,9 @@ impl EnablePlugins {
 
 #[cfg(test)]
 mod plugins {
-    use super::{EnablePlugins, OverrideToggle};
     use oxc_linter::LintPlugins;
+
+    use super::{EnablePlugins, OverrideToggle};
 
     #[test]
     fn test_override_default() {

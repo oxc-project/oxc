@@ -8,7 +8,7 @@ use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_reference, AstNode,
+    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_expression, AstNode,
 };
 
 fn prefer_math_abs(span: Span) -> OxcDiagnostic {
@@ -249,7 +249,7 @@ fn is_pow_2_expression(expression: &Expression, ctx: &LintContext<'_>) -> bool {
                 }
             }
             BinaryOperator::Multiplication => {
-                is_same_reference(&bin_expr.left, &bin_expr.right, ctx)
+                is_same_expression(&bin_expr.left, &bin_expr.right, ctx)
             }
             _ => false,
         }

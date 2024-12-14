@@ -1,5 +1,3 @@
-use aho_corasick::AhoCorasick;
-use lazy_static::lazy_static;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
     ast::{Argument, CallExpression, NewExpression, RegExpLiteral},
@@ -47,11 +45,6 @@ declare_oxc_lint!(
     restriction,
     pending // TODO: This is somewhat autofixable, but the fixer does not exist yet.
 );
-
-lazy_static! {
-    static ref DOUBLE_SPACE: AhoCorasick =
-        AhoCorasick::new(["  "]).expect("no-regex-spaces: Unable to build AhoCorasick");
-}
 
 impl Rule for NoRegexSpaces {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -127,7 +120,7 @@ impl NoRegexSpaces {
     // For skipping if there aren't any consecutive spaces in the source, to avoid reporting cases
     // where the space is explicitly escaped, like: `RegExp(' \ ')``.
     fn has_double_space(input: &str) -> bool {
-        DOUBLE_SPACE.is_match(input)
+        input.contains("  ")
     }
 }
 
@@ -150,6 +143,7 @@ impl<'a> Visit<'a> for ConsecutiveSpaceFinder {
             self.depth += 1;
         }
     }
+
     fn leave_node(&mut self, kind: RegExpAstKind<'a>) {
         if let RegExpAstKind::Quantifier(_) | RegExpAstKind::CharacterClass(_) = kind {
             self.depth -= 1;

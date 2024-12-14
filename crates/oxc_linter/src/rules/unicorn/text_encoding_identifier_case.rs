@@ -29,7 +29,14 @@ declare_oxc_lint!(
     /// Enforces `'utf8'` for UTF-8 encoding
     /// Enforces `'ascii'` for ASCII encoding.
     ///
+    /// ### Why is this bad?
+    ///
+    /// - Inconsistency in text encoding identifiers can make the code harder to read and understand.
+    /// - The ECMAScript specification does not define the case sensitivity of text encoding identifiers, but it is common practice to use lowercase.
+    ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// import fs from 'node:fs/promises';
     /// async function bad() {
@@ -39,7 +46,10 @@ declare_oxc_lint!(
     ///
     ///     const string = buffer.toString('utf-8');
     /// }
+    /// ```
     ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// async function good() {
     ///     await fs.readFile(file, 'utf8');
     ///
@@ -47,7 +57,6 @@ declare_oxc_lint!(
     ///
     ///     const string = buffer.toString('utf8');
     /// }
-    ///
     /// ```
     TextEncodingIdentifierCase,
     style,

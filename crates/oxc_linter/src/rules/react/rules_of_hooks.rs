@@ -104,7 +104,7 @@ declare_oxc_lint!(
     /// <https://reactjs.org/docs/hooks-rules.html>
     ///
     RulesOfHooks,
-    correctness
+    pedantic
 );
 
 impl Rule for RulesOfHooks {
@@ -943,7 +943,11 @@ fn test() {
 
         const useSWRFn = immutable ? useSWRImutable : useSWR;
         return useSWRFn(options ? () => ['cloud', options.query.id, options.variables] : null, options ? () => fetcher(options) : null, configWithSuspense);
-    };"
+    };",
+    // https://github.com/oxc-project/oxc/issues/6651
+    r"const MyComponent = makeComponent(() => { useHook(); });",
+    r"const MyComponent2 = makeComponent(function () { useHook(); });",
+    r"const MyComponent4 = makeComponent(function InnerComponent() { useHook(); });"
     ];
 
     let fail = vec![
@@ -1577,6 +1581,8 @@ fn test() {
         //         });
         //     }
         // " ,
+        // https://github.com/oxc-project/oxc/issues/6651
+        r"const MyComponent3 = makeComponent(function foo () { useHook(); });",
     ];
 
     Tester::new(RulesOfHooks::NAME, RulesOfHooks::CATEGORY, pass, fail).test_and_snapshot();

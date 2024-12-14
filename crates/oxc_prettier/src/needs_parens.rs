@@ -394,7 +394,7 @@ impl<'a> Prettier<'a> {
         let parent_kind = self.parent_kind();
         match parent_kind {
             AstKind::TSAsExpression(_) | AstKind::TSSatisfiesExpression(_) => {
-                return !self.is_binary_cast_expression(span)
+                return !self.is_binary_cast_expression(span);
             }
             AstKind::ConditionalExpression(_) => return self.is_binary_cast_expression(span),
             AstKind::NewExpression(new_expr) => return new_expr.callee.span() == span,

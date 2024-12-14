@@ -1,13 +1,13 @@
-mod fix;
-
 use std::borrow::Cow;
 
-pub use fix::{CompositeFix, Fix, FixKind, RuleFix};
 use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
 use crate::LintContext;
+
+mod fix;
+pub use fix::{CompositeFix, Fix, FixKind, RuleFix};
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
@@ -329,9 +329,9 @@ impl<'a> Fixer<'a> {
 
 #[cfg(test)]
 mod test {
-    use cow_utils::CowUtils;
     use std::borrow::Cow;
 
+    use cow_utils::CowUtils;
     use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::Span;
 

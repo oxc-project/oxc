@@ -1,12 +1,11 @@
-pub(crate) mod async_to_generator;
-mod options;
-
 use oxc_ast::ast::{Expression, Function, Statement};
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{es2017::async_to_generator::AsyncToGenerator, TransformCtx};
-pub use async_to_generator::AsyncGeneratorExecutor;
+use crate::TransformCtx;
 
+mod async_to_generator;
+mod options;
+pub use async_to_generator::{AsyncGeneratorExecutor, AsyncToGenerator};
 pub use options::ES2017Options;
 
 #[allow(dead_code)]

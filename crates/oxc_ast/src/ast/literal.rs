@@ -20,7 +20,7 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "raw: string")]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "raw: string | null")]
 pub struct BooleanLiteral {
     /// Node location in source code
     pub span: Span,
@@ -34,7 +34,7 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, raw: \"null\"")]
+#[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, raw: \"null\" | null")]
 pub struct NullLiteral {
     /// Node location in source code
     pub span: Span,
@@ -53,7 +53,9 @@ pub struct NumericLiteral<'a> {
     /// The value of the number, converted into base 10
     pub value: f64,
     /// The number as it appears in source code
-    pub raw: &'a str,
+    ///
+    /// `None` when this ast node is not constructed from the parser.
+    pub raw: Option<Atom<'a>>,
     /// The base representation used by the literal in source code
     #[estree(skip)]
     pub base: NumberBase,
@@ -89,6 +91,7 @@ pub struct BigIntLiteral<'a> {
     /// Node location in source code
     pub span: Span,
     /// The bigint as it appears in source code
+    #[estree(type = "string | null")]
     pub raw: Atom<'a>,
     /// The base representation used by the literal in source code
     #[estree(skip)]
@@ -114,7 +117,9 @@ pub struct RegExpLiteral<'a> {
     #[estree(skip)]
     pub regex: RegExp<'a>,
     /// The regular expression as it appears in source code
-    pub raw: &'a str,
+    ///
+    /// `None` when this ast node is not constructed from the parser.
+    pub raw: Option<Atom<'a>>,
 }
 
 /// A regular expression

@@ -29,7 +29,8 @@ pub struct ExpectExpect(Box<ExpectExpectConfig>);
 
 #[derive(Debug, Clone)]
 pub struct ExpectExpectConfig {
-    assert_function_names: Vec<CompactStr>,
+    assert_function_names_jest: Vec<CompactStr>,
+    assert_function_names_vitest: Vec<CompactStr>,
     additional_test_block_functions: Vec<CompactStr>,
 }
 
@@ -44,7 +45,13 @@ impl std::ops::Deref for ExpectExpect {
 impl Default for ExpectExpectConfig {
     fn default() -> Self {
         Self {
-            assert_function_names: vec!["expect".into()],
+            assert_function_names_jest: vec!["expect".into()],
+            assert_function_names_vitest: vec![
+                "expect".into(),
+                "expectTypeOf".into(),
+                "assert".into(),
+                "assertType".into(),
+            ],
             additional_test_block_functions: vec![],
         }
     }
@@ -84,15 +91,25 @@ declare_oxc_lint!(
 
 impl Rule for ExpectExpect {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let default_assert_function_names = vec!["expect".into()];
+        let default_assert_function_names_jest = vec!["expect".into()];
+        let default_assert_function_names_vitest =
+            vec!["expect".into(), "expectTypeOf".into(), "assert".into(), "assertType".into()];
         let config = value.get(0);
 
         let assert_function_names = config
             .and_then(|config| config.get("assertFunctionNames"))
             .and_then(serde_json::Value::as_array)
-            .map_or(default_assert_function_names, |v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(convert_pattern).collect()
+            .map(|v| {
+                v.iter()
+                    .filter_map(serde_json::Value::as_str)
+                    .map(convert_pattern)
+                    .collect::<Vec<_>>()
             });
+
+        let assert_function_names_jest =
+            assert_function_names.clone().unwrap_or(default_assert_function_names_jest);
+        let assert_function_names_vitest =
+            assert_function_names.unwrap_or(default_assert_function_names_vitest);
 
         let additional_test_block_functions = config
             .and_then(|config| config.get("additionalTestBlockFunctions"))
@@ -101,7 +118,8 @@ impl Rule for ExpectExpect {
             .unwrap_or_default();
 
         Self(Box::new(ExpectExpectConfig {
-            assert_function_names,
+            assert_function_names_jest,
+            assert_function_names_vitest,
             additional_test_block_functions,
         }))
     }
@@ -145,8 +163,11 @@ fn run<'a>(
             // Record visited nodes to avoid infinite loop.
             let mut visited: FxHashSet<Span> = FxHashSet::default();
 
-            let has_assert_function =
-                check_arguments(call_expr, &rule.assert_function_names, &mut visited, ctx);
+            let has_assert_function = if ctx.frameworks().is_vitest() {
+                check_arguments(call_expr, &rule.assert_function_names_vitest, &mut visited, ctx)
+            } else {
+                check_arguments(call_expr, &rule.assert_function_names_jest, &mut visited, ctx)
+            };
 
             if !has_assert_function {
                 ctx.diagnostic(expect_expect_diagnostic(call_expr.callee.span()));
@@ -711,6 +732,41 @@ fn test() {
                 });
             ",
             None
+        ),
+        (
+            "
+                import { assert, it } from 'vitest';
+
+                it('test', () => {
+                    assert.throws(() => {
+                        throw Error('Invalid value');
+                    });
+                });
+            ",
+            Some(serde_json::json!([{ "assertFunctionNames": ["assert"] }])),
+        ),
+        (
+            "
+                import { expectTypeOf } from 'vitest'
+
+                expectTypeOf({ a: 1 }).toEqualTypeOf<{ a: number }>()
+            ",
+            Some(serde_json::json!([{ "assertFunctionNames": ["expectTypeOf"] }])),
+        ),
+        (
+            "
+                import { assertType } from 'vitest'
+
+                function concat(a: string, b: string): string
+                function concat(a: number, b: number): number
+                function concat(a: string | number, b: string | number): string | number
+
+                assertType<string>(concat('a', 'b'))
+                assertType<number>(concat(1, 2))
+                // @ts-expect-error wrong types
+                assertType(concat('a', 2))
+            ",
+            Some(serde_json::json!([{ "assertFunctionNames": ["assertType"] }])),
         ),
     ];
 

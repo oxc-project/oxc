@@ -507,7 +507,10 @@ mod test {
                 builder
                     .with_filters([LintFilter::new(AllowWarnDeny::Deny, filter_string).unwrap()]);
             let rule_count_after_deny = builder.rules.len();
-            assert_eq!(initial_rule_count, rule_count_after_deny, "Changing a single rule from warn to deny should not add a new one, just modify what's already there.");
+            assert_eq!(
+                initial_rule_count, rule_count_after_deny,
+                "Changing a single rule from warn to deny should not add a new one, just modify what's already there."
+            );
 
             let no_const_assign = builder
                 .rules
@@ -571,7 +574,11 @@ mod test {
         let initial_rule_count = builder.rules.len();
 
         let builder = builder.and_plugins(LintPlugins::IMPORT, true);
-        assert_eq!(initial_rule_count, builder.rules.len(), "Enabling a plugin should not add any rules, since we don't know which categories to turn on.");
+        assert_eq!(
+            initial_rule_count,
+            builder.rules.len(),
+            "Enabling a plugin should not add any rules, since we don't know which categories to turn on."
+        );
     }
 
     #[test]

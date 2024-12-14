@@ -501,6 +501,7 @@ fn parse_unicode_rule(value: Option<&Value>, name: &str) -> IgnorePattern<Regex>
 
 impl TryFrom<Value> for NoUnusedVarsOptions {
     type Error = OxcDiagnostic;
+
     fn try_from(value: Value) -> Result<Self, Self::Error> {
         let Some(config) = value.get(0) else { return Ok(Self::default()) };
         match config {
@@ -509,36 +510,24 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                 Ok(Self { vars, ..Default::default() })
             }
             Value::Object(config) => {
-                let vars = config
-                    .get("vars")
-                    .map(|vars| {
-                        vars.try_into()
-                    })
-                    .transpose()?
-                    .unwrap_or_default();
+                let vars =
+                    config.get("vars").map(TryInto::try_into).transpose()?.unwrap_or_default();
 
                 // NOTE: when a configuration object is provided, do not provide
                 // a default ignore pattern here. They've opted into configuring
                 // this rule, and we'll give them full control over it.
-                let vars_ignore_pattern=
+                let vars_ignore_pattern =
                     parse_unicode_rule(config.get("varsIgnorePattern"), "varsIgnorePattern");
 
-                let args: ArgsOption = config
-                    .get("args")
-                    .map(|args| {
-                        args.try_into()
-                    })
-                    .transpose()?
-                    .unwrap_or_default();
+                let args: ArgsOption =
+                    config.get("args").map(TryInto::try_into).transpose()?.unwrap_or_default();
 
-                let args_ignore_pattern  =
+                let args_ignore_pattern =
                     parse_unicode_rule(config.get("argsIgnorePattern"), "argsIgnorePattern");
 
                 let caught_errors: CaughtErrors = config
                     .get("caughtErrors")
-                    .map(|caught_errors| {
-                        caught_errors.try_into()
-                    })
+                    .map(TryInto::try_into)
                     .transpose()?
                     .unwrap_or_default();
 
@@ -582,7 +571,7 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
             }
             Value::Null => Ok(Self::default()),
             _ => Err(OxcDiagnostic::error(
-                "Invalid 'vars' option for no-unused-vars: Expected a string or an object, got {config}"
+                "Invalid 'vars' option for no-unused-vars: Expected a string or an object, got {config}",
             )),
         }
     }

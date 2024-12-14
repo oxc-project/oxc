@@ -1,14 +1,18 @@
-use crate::context::ContextHost;
-use crate::{context::LintContext, rule::Rule, AstNode};
 use lazy_static::lazy_static;
-use oxc_ast::ast::JSXAttributeItem;
-use oxc_ast::AstKind;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
 use regex::Regex;
 use rustc_hash::FxHashMap;
 use serde_json::Value;
+
+use oxc_ast::{ast::JSXAttributeItem, AstKind};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::{CompactStr, GetSpan, Span};
+
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn jsx_no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details

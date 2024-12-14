@@ -86,13 +86,14 @@ impl Rule for NumericSeparatorsStyle {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::NumericLiteral(number) => {
-                if self.only_if_contains_separator && !number.raw.contains('_') {
+                let raw = number.raw.as_ref().unwrap().as_str();
+                if self.only_if_contains_separator && !raw.contains('_') {
                     return;
                 }
 
                 let formatted = self.format_number(number);
 
-                if formatted != number.raw {
+                if formatted != raw {
                     ctx.diagnostic_with_fix(
                         numeric_separators_style_diagnostic(number.span),
                         |fixer| fixer.replace(number.span, formatted),
@@ -100,13 +101,11 @@ impl Rule for NumericSeparatorsStyle {
                 }
             }
             AstKind::BigIntLiteral(number) => {
-                let raw = number.span.source_text(ctx.source_text());
-
-                if self.only_if_contains_separator && !raw.contains('_') {
+                if self.only_if_contains_separator && !number.raw.contains('_') {
                     return;
                 }
 
-                let formatted = self.format_bigint(number, raw);
+                let formatted = self.format_bigint(number, &number.raw);
 
                 if formatted.len() != number.span.size() as usize {
                     ctx.diagnostic_with_fix(
@@ -151,11 +150,12 @@ impl NumericSeparatorsStyle {
     fn format_number(&self, number: &NumericLiteral) -> String {
         use oxc_syntax::number::NumberBase;
 
+        let raw = number.raw.as_ref().unwrap();
         match number.base {
-            NumberBase::Binary => self.format_binary(number.raw),
-            NumberBase::Decimal | NumberBase::Float => self.format_decimal(number.raw),
-            NumberBase::Hex => self.format_hex(number.raw),
-            NumberBase::Octal => self.format_octal(number.raw),
+            NumberBase::Binary => self.format_binary(raw),
+            NumberBase::Decimal | NumberBase::Float => self.format_decimal(raw),
+            NumberBase::Hex => self.format_hex(raw),
+            NumberBase::Octal => self.format_octal(raw),
         }
     }
 

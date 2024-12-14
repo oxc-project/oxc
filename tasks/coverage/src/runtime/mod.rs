@@ -1,9 +1,9 @@
-mod test262_status;
-
 use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
+
+use serde_json::json;
 
 use oxc::{
     allocator::Allocator,
@@ -15,7 +15,6 @@ use oxc::{
     transformer::{HelperLoaderMode, TransformOptions, Transformer},
 };
 use oxc_tasks_common::agent;
-use serde_json::json;
 
 use crate::{
     suite::{Case, TestResult},
@@ -23,6 +22,7 @@ use crate::{
     workspace_root,
 };
 
+mod test262_status;
 use test262_status::get_v8_test262_failure_paths;
 
 static SKIP_FEATURES: &[&str] = &[
@@ -57,6 +57,8 @@ static SKIP_FEATURES: &[&str] = &[
     // stage 3
     "decorators",
     "explicit-resource-management",
+    "source-phase-imports",
+    "import-defer",
 ];
 
 static SKIP_INCLUDES: &[&str] = &[
@@ -205,15 +207,9 @@ impl Test262RuntimeCase {
     async fn run_test_code(&self, case: &'static str, code: String) -> TestResult {
         let is_async = self.base.meta().flags.contains(&TestFlag::Async);
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
-        let mut is_raw = self.base.meta().flags.contains(&TestFlag::Raw);
+        let is_raw = self.base.meta().flags.contains(&TestFlag::Raw);
         let import_dir =
             self.test_root.join(self.base.path().parent().unwrap()).to_string_lossy().to_string();
-
-        // Tests for --> in the first line should not have raw flag
-        // https://github.com/tc39/test262/issues/4020
-        if self.base.path().to_string_lossy().contains("single-line-html-close-first-line-") {
-            is_raw = false;
-        }
 
         let result = request_run_code(json!({
             "code": code,

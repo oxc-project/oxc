@@ -247,13 +247,13 @@ impl InternConfig<'_> {
                     InternConfig {
                         node: parent_node,
                         value: NoMagicNumbersNumber::Float(0.0 - numeric.value),
-                        raw: format!("-{}", numeric.raw),
+                        raw: format!("-{}", numeric.raw.as_ref().unwrap()),
                     }
                 } else {
                     InternConfig {
                         node: if is_unary { parent_node } else { node },
                         value: NoMagicNumbersNumber::Float(numeric.value),
-                        raw: numeric.raw.into(),
+                        raw: numeric.raw.as_ref().unwrap().as_str().into(),
                     }
                 }
             }
@@ -289,6 +289,7 @@ impl Rule for NoMagicNumbers {
     fn from_configuration(value: serde_json::Value) -> Self {
         Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()))
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if !matches!(node.kind(), AstKind::NumericLiteral(_) | AstKind::BigIntLiteral(_)) {
             return;

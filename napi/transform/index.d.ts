@@ -20,9 +20,43 @@ export interface CompilerAssumptions {
   setPublicClassFields?: boolean
 }
 
+export interface ErrorLabel {
+  message?: string
+  start: number
+  end: number
+}
+
 export interface Es2015Options {
   /** Transform arrow functions into function expressions. */
   arrowFunction?: ArrowFunctionsOptions
+}
+
+export declare const enum HelperMode {
+  /**
+   * Runtime mode (default): Helper functions are imported from a runtime package.
+   *
+   * Example:
+   *
+   * ```js
+   * import helperName from "@babel/runtime/helpers/helperName";
+   * helperName(...arguments);
+   * ```
+   */
+  Runtime = 'Runtime',
+  /**
+   * External mode: Helper functions are accessed from a global `babelHelpers` object.
+   *
+   * Example:
+   *
+   * ```js
+   * babelHelpers.helperName(...arguments);
+   * ```
+   */
+  External = 'External'
+}
+
+export interface Helpers {
+  mode?: HelperMode
 }
 
 /** TypeScript Isolated Declarations for Standalone DTS Emit */
@@ -44,7 +78,7 @@ export interface IsolatedDeclarationsOptions {
 export interface IsolatedDeclarationsResult {
   code: string
   map?: SourceMap
-  errors: Array<string>
+  errors: Array<OxcError>
 }
 
 /**
@@ -142,6 +176,13 @@ export interface JsxOptions {
   refresh?: boolean | ReactRefreshOptions
 }
 
+export interface OxcError {
+  severity: Severity
+  message: string
+  labels: Array<ErrorLabel>
+  helpMessage?: string
+}
+
 export interface ReactRefreshOptions {
   /**
    * Specify the identifier of the refresh registration variable.
@@ -156,6 +197,12 @@ export interface ReactRefreshOptions {
    */
   refreshSig?: string
   emitFullSignatures?: boolean
+}
+
+export declare const enum Severity {
+  Error = 'Error',
+  Warning = 'Warning',
+  Advice = 'Advice'
 }
 
 export interface SourceMap {
@@ -228,6 +275,8 @@ export interface TransformOptions {
    * @see [esbuild#target](https://esbuild.github.io/api/#target)
    */
   target?: string | Array<string>
+  /** Behaviour for runtime helpers. */
+  helpers?: Helpers
   /** Define Plugin */
   define?: Record<string, string>
   /** Inject Plugin */
@@ -265,13 +314,25 @@ export interface TransformResult {
    */
   declarationMap?: SourceMap
   /**
+   * Helpers used.
+   *
+   * @internal
+   *
+   * Example:
+   *
+   * ```text
+   * { "_objectSpread": "@babel/runtime/helpers/objectSpread2" }
+   * ```
+   */
+  helpersUsed: Record<string, string>
+  /**
    * Parse and transformation errors.
    *
    * Oxc's parser recovers from common syntax errors, meaning that
    * transformed code may still be available even if there are errors in this
    * list.
    */
-  errors: Array<string>
+  errors: Array<OxcError>
 }
 
 export interface TypeScriptOptions {

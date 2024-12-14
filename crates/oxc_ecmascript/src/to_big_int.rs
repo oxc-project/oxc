@@ -35,15 +35,8 @@ impl<'a> ToBigInt<'a> for Expression<'a> {
             }
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::LogicalNot => {
-                    self.to_boolean().map(
-                        |boolean| {
-                            if boolean {
-                                BigInt::one()
-                            } else {
-                                BigInt::zero()
-                            }
-                        },
-                    )
+                    self.to_boolean()
+                        .map(|boolean| if boolean { BigInt::one() } else { BigInt::zero() })
                 }
                 UnaryOperator::UnaryNegation => {
                     unary_expr.argument.to_big_int().map(std::ops::Neg::neg)

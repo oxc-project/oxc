@@ -56,7 +56,7 @@ use oxc_estree::ESTree;
 ///
 /// [`expand`]: Span::expand
 /// [`shrink`]: Span::shrink
-#[ast]
+#[ast(visit)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[generate_derive(ESTree)]
 #[non_exhaustive] // Disallow struct expression constructor `Span {}`

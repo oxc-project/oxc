@@ -15,7 +15,8 @@ pub struct AstKindGenerator;
 
 define_generator!(AstKindGenerator);
 
-pub const BLACK_LIST: [&str; 61] = [
+pub const BLACK_LIST: [&str; 62] = [
+    "Span",
     "Expression",
     "ObjectPropertyKind",
     "TemplateElement",

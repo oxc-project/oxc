@@ -14,10 +14,9 @@ impl Program<'_> {
         self.body.is_empty() && self.directives.is_empty()
     }
 
-    /// Returns `true` if this program uses strict mode semantics. Both source
-    /// type and `"use strict"` directives are considered.
-    pub fn is_strict(&self) -> bool {
-        self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)
+    /// Returns `true` if this program has a `"use strict"` directive.
+    pub fn has_use_strict_directive(&self) -> bool {
+        self.directives.iter().any(Directive::is_use_strict)
     }
 }
 
@@ -135,7 +134,7 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given numeral literal's raw value is exactly val
     pub fn is_specific_raw_number_literal(&self, val: &str) -> bool {
-        matches!(self, Self::NumericLiteral(lit) if lit.raw == val)
+        matches!(self, Self::NumericLiteral(lit) if lit.raw.as_ref().is_some_and(|raw| raw == val))
     }
 
     /// Determines whether the given expr evaluate to `undefined`
@@ -164,7 +163,7 @@ impl<'a> Expression<'a> {
         expr
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is an [`IdentifierReference`] with specified `name`.
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self.get_inner_expression() {
             Expression::Identifier(ident) => ident.name == name,
@@ -222,7 +221,7 @@ impl<'a> Expression<'a> {
         expr
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is an [`IdentifierReference`].
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))
     }
@@ -235,28 +234,35 @@ impl<'a> Expression<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a function
+    /// (either [`Function`] or [`ArrowFunctionExpression`]).
     pub fn is_function(&self) -> bool {
         matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a [`CallExpression`].
     pub fn is_call_expression(&self) -> bool {
         matches!(self, Expression::CallExpression(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a [`Super`].
+    pub fn is_super(&self) -> bool {
+        matches!(self, Expression::Super(_))
+    }
+
+    /// Returns `true` if this [`Expression`] is a [`CallExpression`] with [`Super`] as callee.
     pub fn is_super_call_expression(&self) -> bool {
         matches!(self, Expression::CallExpression(expr) if matches!(&expr.callee, Expression::Super(_)))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a [`CallExpression`], [`NewExpression`],
+    /// or [`ImportExpression`].
     pub fn is_call_like_expression(&self) -> bool {
         self.is_call_expression()
             && matches!(self, Expression::NewExpression(_) | Expression::ImportExpression(_))
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a [`BinaryExpression`] or [`LogicalExpression`].
     pub fn is_binaryish(&self) -> bool {
         matches!(self, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
     }
@@ -269,7 +275,9 @@ impl<'a> Expression<'a> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`Expression`] is a `require` call.
+    ///
+    /// See [`CallExpression::is_require_call`] for details of the exact patterns that match.
     pub fn is_require_call(&self) -> bool {
         if let Self::CallExpression(call_expr) = self {
             call_expr.is_require_call()
@@ -308,6 +316,15 @@ impl ArrayExpressionElement<'_> {
     #[allow(missing_docs)]
     pub fn is_elision(&self) -> bool {
         matches!(self, Self::Elision(_))
+    }
+}
+
+impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
+    fn from(argument: Argument<'a>) -> Self {
+        match argument {
+            Argument::SpreadElement(spread) => Self::SpreadElement(spread),
+            match_expression!(Argument) => Self::from(argument.into_expression()),
+        }
     }
 }
 
@@ -502,7 +519,7 @@ impl<'a> ComputedMemberExpression<'a> {
             {
                 Some(lit.quasis[0].value.raw.clone())
             }
-            Expression::RegExpLiteral(lit) => Some(Atom::from(lit.raw)),
+            Expression::RegExpLiteral(lit) => lit.raw.clone(),
             _ => None,
         }
     }
@@ -554,7 +571,12 @@ impl CallExpression<'_> {
         }
     }
 
-    #[allow(missing_docs)]
+    /// Returns `true` if this [`CallExpression`] matches one of these patterns:
+    /// ```js
+    /// require('string')
+    /// require(`string`)
+    /// require(`foo${bar}qux`) // Any number of expressions and quasis
+    /// ```
     pub fn is_require_call(&self) -> bool {
         if self.arguments.len() != 1 {
             return false;
@@ -757,6 +779,7 @@ impl<'a> Declaration<'a> {
             _ => true,
         }
     }
+
     /// Get the identifier bound by this declaration.
     ///
     /// ## Example
@@ -996,8 +1019,8 @@ impl<'a> Function<'a> {
         matches!(self.r#type, FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction)
     }
 
-    /// `true` if this function's body has a `"use strict"` directive.
-    pub fn is_strict(&self) -> bool {
+    /// Returns `true` if this function's body has a `"use strict"` directive.
+    pub fn has_use_strict_directive(&self) -> bool {
         self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())
     }
 }
@@ -1080,7 +1103,6 @@ impl FunctionBody<'_> {
     }
 
     /// `true` if this function body contains a `"use strict"` directive.
-    #[allow(missing_docs)]
     pub fn has_use_strict_directive(&self) -> bool {
         self.directives.iter().any(Directive::is_use_strict)
     }
@@ -1095,6 +1117,11 @@ impl<'a> ArrowFunctionExpression<'a> {
             }
         }
         None
+    }
+
+    /// Returns `true` if this arrow function's body has a `"use strict"` directive.
+    pub fn has_use_strict_directive(&self) -> bool {
+        self.body.has_use_strict_directive()
     }
 }
 
@@ -1475,6 +1502,16 @@ impl<'a> ModuleExportName<'a> {
             Self::IdentifierName(identifier) => Some(identifier.name.clone()),
             Self::IdentifierReference(identifier) => Some(identifier.name.clone()),
             Self::StringLiteral(_) => None,
+        }
+    }
+}
+
+impl ImportPhase {
+    #[allow(missing_docs)]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Source => "source",
+            Self::Defer => "defer",
         }
     }
 }

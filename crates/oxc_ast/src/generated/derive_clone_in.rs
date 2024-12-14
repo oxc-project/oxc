@@ -1903,8 +1903,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for Function<'_> {
     type Cloned = Function<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Function {
-            r#type: CloneIn::clone_in(&self.r#type, allocator),
             span: CloneIn::clone_in(&self.span, allocator),
+            r#type: CloneIn::clone_in(&self.r#type, allocator),
             id: CloneIn::clone_in(&self.id, allocator),
             generator: CloneIn::clone_in(&self.generator, allocator),
             r#async: CloneIn::clone_in(&self.r#async, allocator),
@@ -2011,8 +2011,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for Class<'_> {
     type Cloned = Class<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Class {
-            r#type: CloneIn::clone_in(&self.r#type, allocator),
             span: CloneIn::clone_in(&self.span, allocator),
+            r#type: CloneIn::clone_in(&self.r#type, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
             id: CloneIn::clone_in(&self.id, allocator),
             type_parameters: CloneIn::clone_in(&self.type_parameters, allocator),
@@ -2072,8 +2072,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for MethodDefinition<'_> {
     type Cloned = MethodDefinition<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         MethodDefinition {
-            r#type: CloneIn::clone_in(&self.r#type, allocator),
             span: CloneIn::clone_in(&self.span, allocator),
+            r#type: CloneIn::clone_in(&self.r#type, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
             key: CloneIn::clone_in(&self.key, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
@@ -2101,8 +2101,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyDefinition<'_> {
     type Cloned = PropertyDefinition<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         PropertyDefinition {
-            r#type: CloneIn::clone_in(&self.r#type, allocator),
             span: CloneIn::clone_in(&self.span, allocator),
+            r#type: CloneIn::clone_in(&self.r#type, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
             key: CloneIn::clone_in(&self.key, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
@@ -2204,8 +2204,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for AccessorProperty<'_> {
     type Cloned = AccessorProperty<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         AccessorProperty {
-            r#type: CloneIn::clone_in(&self.r#type, allocator),
             span: CloneIn::clone_in(&self.span, allocator),
+            r#type: CloneIn::clone_in(&self.r#type, allocator),
             decorators: CloneIn::clone_in(&self.decorators, allocator),
             key: CloneIn::clone_in(&self.key, allocator),
             value: CloneIn::clone_in(&self.value, allocator),
@@ -2225,6 +2225,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ImportExpression<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             source: CloneIn::clone_in(&self.source, allocator),
             arguments: CloneIn::clone_in(&self.arguments, allocator),
+            phase: CloneIn::clone_in(&self.phase, allocator),
         }
     }
 }
@@ -2236,8 +2237,19 @@ impl<'new_alloc> CloneIn<'new_alloc> for ImportDeclaration<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             specifiers: CloneIn::clone_in(&self.specifiers, allocator),
             source: CloneIn::clone_in(&self.source, allocator),
+            phase: CloneIn::clone_in(&self.phase, allocator),
             with_clause: CloneIn::clone_in(&self.with_clause, allocator),
             import_kind: CloneIn::clone_in(&self.import_kind, allocator),
+        }
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for ImportPhase {
+    type Cloned = ImportPhase;
+    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Source => ImportPhase::Source,
+            Self::Defer => ImportPhase::Defer,
         }
     }
 }

@@ -1,4 +1,4 @@
-use oxc_syntax::symbol::{SymbolFlags, SymbolId};
+use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 /// Store for bindings for class.
@@ -98,6 +98,6 @@ impl<'a> ClassBindings<'a> {
         // TODO(improve-on-babel): If class name var isn't mutated, no need for temp var for
         // class declaration. Can just use class binding.
         let name = name_binding.map_or("Class", |binding| binding.name.as_str());
-        ctx.generate_uid_in_current_scope(name, SymbolFlags::FunctionScopedVariable)
+        ctx.generate_uid_in_current_hoist_scope(name)
     }
 }

@@ -558,14 +558,14 @@ impl<'a> ArrowFunctionConverter<'a> {
         }
 
         Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
-            FunctionType::FunctionExpression,
             arrow_function_expr.span,
+            FunctionType::FunctionExpression,
             None,
             false,
             arrow_function_expr.r#async,
             false,
             arrow_function_expr.type_parameters,
-            None::<TSThisParameter<'a>>,
+            NONE,
             arrow_function_expr.params,
             arrow_function_expr.return_type,
             Some(body),
@@ -587,8 +587,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Transforms a `MemberExpression` whose object is a `super` expression.
     ///
-    /// In the [`AsyncToGenerator`](crate::es2017::async_to_generator::AsyncToGenerator) and
-    /// [`AsyncGeneratorFunctions`](crate::es2018::async_generator_functions::AsyncGeneratorFunctions) plugins,
+    /// In the [`AsyncToGenerator`](crate::es2017::AsyncToGenerator) and
+    /// [`AsyncGeneratorFunctions`](crate::es2018::AsyncGeneratorFunctions) plugins,
     /// we move the body of an async method to a new generator function. This can cause
     /// `super` expressions to appear in unexpected places, leading to syntax errors.
     ///
@@ -630,16 +630,17 @@ impl<'a> ArrowFunctionConverter<'a> {
         let mut property = "";
         let init = match expr.to_member_expression_mut() {
             MemberExpression::ComputedMemberExpression(computed_member) => {
-                if !matches!(computed_member.object, Expression::Super(_)) {
+                if !computed_member.object.is_super() {
                     return None;
                 }
+
                 // The property will as a parameter to pass to the new arrow function.
                 // `super[property]` to `_superprop_get(property)`
                 argument = Some(ctx.ast.move_expression(&mut computed_member.expression));
                 ctx.ast.move_expression(&mut computed_member.object)
             }
             MemberExpression::StaticMemberExpression(static_member) => {
-                if !matches!(static_member.object, Expression::Super(_)) {
+                if !static_member.object.is_super() {
                     return None;
                 }
 
@@ -741,10 +742,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     ) -> Option<Expression<'a>> {
         // Check if the left of the assignment is a `super` member expression.
         if self.super_methods.is_none()
-            || !assignment
-                .left
-                .as_member_expression()
-                .is_some_and(|m| matches!(m.object(), Expression::Super(_)))
+            || !assignment.left.as_member_expression().is_some_and(|m| m.object().is_super())
         {
             return None;
         }
@@ -907,8 +905,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     /// Rename the `arguments` symbol to a new name.
     fn rename_arguments_symbol(symbol_id: SymbolId, name: CompactStr, ctx: &mut TraverseCtx<'a>) {
         let scope_id = ctx.symbols().get_scope_id(symbol_id);
-        ctx.symbols_mut().rename(symbol_id, name.clone());
-        ctx.scopes_mut().rename_binding(scope_id, "arguments", name);
+        ctx.rename_symbol(symbol_id, scope_id, name);
     }
 
     /// Transform the identifier reference for `arguments` if it's affected after transformation.

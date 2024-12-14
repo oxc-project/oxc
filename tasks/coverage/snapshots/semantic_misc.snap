@@ -55,12 +55,6 @@ tasks/coverage/misc/pass/oxc-3948-1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["BrowserWorkingCopyBackupTracker", "CancellationToken", "DisposableStore", "EditorPart", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "IInstantiationService", "ILifecycleService", "ILogService", "IUntitledTextResourceEditorInput", "IWorkingCopyBackup", "IWorkingCopyBackupService", "IWorkingCopyEditorHandler", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
 rebuilt        : ScopeId(0): ["BrowserWorkingCopyBackupTracker", "DisposableStore", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "ILifecycleService", "ILogService", "IWorkingCopyBackupService", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
-Bindings mismatch:
-after transform: ScopeId(13): ["_await$accessor$edito", "accessor", "untitled", "untitledTextEditor", "untitledTextModel", "workingCopyBackupService"]
-rebuilt        : ScopeId(20): ["_await$accessor$edito", "_untitledTextModel$te", "accessor", "untitled", "untitledTextEditor", "untitledTextModel", "workingCopyBackupService"]
-Bindings mismatch:
-after transform: ScopeId(14): ["_untitledTextModel$te"]
-rebuilt        : ScopeId(21): []
 Symbol reference IDs mismatch for "URI":
 after transform: SymbolId(1): [ReferenceId(109), ReferenceId(117), ReferenceId(156), ReferenceId(158), ReferenceId(160), ReferenceId(162)]
 rebuilt        : SymbolId(1): [ReferenceId(158), ReferenceId(160), ReferenceId(162), ReferenceId(164)]
@@ -103,9 +97,6 @@ rebuilt        : SymbolId(26): [ReferenceId(16)]
 Symbol reference IDs mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(39): [ReferenceId(42), ReferenceId(74), ReferenceId(154), ReferenceId(215)]
 rebuilt        : SymbolId(34): [ReferenceId(65), ReferenceId(216)]
-Symbol scope ID mismatch for "_untitledTextModel$te":
-after transform: SymbolId(138): ScopeId(14)
-rebuilt        : SymbolId(63): ScopeId(20)
 Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(36), ReferenceId(39), ReferenceId(82), ReferenceId(114), ReferenceId(153), ReferenceId(282)]
 rebuilt        : [ReferenceId(289)]

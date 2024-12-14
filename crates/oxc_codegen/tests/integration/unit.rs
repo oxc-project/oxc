@@ -1,11 +1,13 @@
-use crate::tester::{test, test_minify, test_without_source};
+use oxc_codegen::CodegenOptions;
+
+use crate::tester::{test, test_minify, test_minify_same, test_options};
 
 #[test]
 fn module_decl() {
     test("export * as foo from 'foo'", "export * as foo from \"foo\";\n");
-    test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {\n};\n");
-    test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {\n};\n");
-    test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {\n};\n");
+    test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
+    test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
+    test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
 }
 
 #[test]
@@ -15,6 +17,18 @@ fn expr() {
 
     test("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);\n");
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
+
+    test_minify("throw 'foo'", "throw\"foo\";");
+    test_minify("return 'foo'", "return\"foo\";");
+    test_minify("return class {}", "return class{};");
+    test_minify("return async function foo() {}", "return async function foo(){};");
+    test_minify_same("return super();");
+    test_minify_same("return new.target;");
+    test_minify_same("throw await 1;");
+    test_minify_same("await import(\"\");");
+
+    test("delete 2e308", "delete (0, Infinity);\n");
+    test_minify("delete 2e308", "delete (1/0);");
 }
 
 #[test]
@@ -46,11 +60,19 @@ fn for_stmt() {
     test("for (;;i++) {}", "for (;; i++) {}\n");
 
     test("for (using x = 1;;) {}", "for (using x = 1;;) {}\n");
-    // TODO
-    // test(
-    // "for (var a = 1 || (2 in {}) in { x: 1 }) count++;",
-    // "for (var a = 1 || (2 in {}) in {x: 1}) count++;\n",
-    // );
+
+    //  `in` expression
+    test("for (x = (y in z) || y;;);", "for (x = (y in z) || y;;);\n");
+    test("for (x = (y in z) || y || y;;);", "for (x = (y in z) || y || y;;);\n");
+    test("for (x = y || y || (y in z);;);", "for (x = y || y || (y in z);;);\n");
+    test(
+        "for (x = (y in z) || y || (y in z) || y || (y in z);;);",
+        "for (x = (y in z) || y || (y in z) || y || (y in z);;);\n",
+    );
+    test(
+        "for (var a = 1 || (2 in {}) in { x: 1 }) count++;",
+        "for (var a = 1 || (2 in {}) in { x: 1 }) count++;\n",
+    );
 }
 
 #[test]
@@ -77,7 +99,6 @@ fn regex() {
     fn test_all(source: &str, expect: &str, minify: &str) {
         test(source, expect);
         test_minify(source, minify);
-        test_without_source(source, expect);
     }
     test_all("/regex/giv", "/regex/giv;\n", "/regex/giv;");
     test_all(
@@ -121,7 +142,7 @@ fn assignment() {
     test_minify("({a,b} = (1, 2))", "({a,b}=(1,2));");
     test_minify("a *= yield b", "a*=yield b;");
     test_minify("a /= () => {}", "a/=()=>{};");
-    test_minify("a %= async () => {}", "a%=async ()=>{};");
+    test_minify("a %= async () => {}", "a%=async()=>{};");
     test_minify("a -= (1, 2)", "a-=(1,2);");
     test_minify("a >>= b >>= c", "a>>=b>>=c;");
 }
@@ -132,11 +153,11 @@ fn r#yield() {
     test_minify("function *foo() { yield * a ? b : c }", "function*foo(){yield*a?b:c}");
     test_minify("function *foo() { yield * yield * a }", "function*foo(){yield*yield*a}");
     test_minify("function *foo() { yield * () => {} }", "function*foo(){yield*()=>{}}");
-    test_minify("function *foo() { yield * async () => {} }", "function*foo(){yield*async ()=>{}}");
+    test_minify("function *foo() { yield * async () => {} }", "function*foo(){yield*async()=>{}}");
     test_minify("function *foo() { yield a ? b : c }", "function*foo(){yield a?b:c}");
     test_minify("function *foo() { yield yield a }", "function*foo(){yield yield a}");
     test_minify("function *foo() { yield () => {} }", "function*foo(){yield ()=>{}}");
-    test_minify("function *foo() { yield async () => {} }", "function*foo(){yield async ()=>{}}");
+    test_minify("function *foo() { yield async () => {} }", "function*foo(){yield async()=>{}}");
     test_minify(
         "function *foo() { yield { a } = [ b ] = c ? b : d }",
         "function*foo(){yield {a}=[b]=c?b:d}",
@@ -365,4 +386,15 @@ fn big_int_minify() {
     test_minify("0xfabn", "4011n;");
     test_minify("0xaef_en;", "44798n;");
     test_minify("0xaefen;", "44798n;");
+}
+
+#[test]
+fn directive() {
+    let single_quote = CodegenOptions { single_quote: true, ..CodegenOptions::default() };
+    test_options("\"'\"", "\"'\";\n", single_quote.clone());
+    test_options("'\"'", "'\"';\n", single_quote);
+    let double_quote = CodegenOptions { single_quote: false, ..CodegenOptions::default() };
+    test_options("\"'\"", "\"'\";\n", double_quote.clone());
+    test_options("'\"'", "'\"';\n", double_quote.clone());
+    test_options(r#""'\"""#, "\"'\\\"\";\n", double_quote);
 }

@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
 ---
   ⚠ eslint-plugin-react(jsx-no-script-url): A future version of React will block javascript: URLs as a security precaution.
    ╭─[jsx_no_script_url.tsx:1:4]

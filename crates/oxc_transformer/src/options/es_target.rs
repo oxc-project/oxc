@@ -27,7 +27,7 @@ impl FromStr for ESTarget {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.cow_to_lowercase().as_ref() {
             "es5" => Ok(Self::ES5),
-            "es2015" => Ok(Self::ES2015),
+            "es6" | "es2015" => Ok(Self::ES2015),
             "es2016" => Ok(Self::ES2016),
             "es2017" => Ok(Self::ES2017),
             "es2018" => Ok(Self::ES2018),

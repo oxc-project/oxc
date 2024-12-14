@@ -100,7 +100,6 @@ pub struct BinaryExpressionVisitor<'a> {
     pub ctx: Context,
 
     pub left_precedence: Precedence,
-    pub left_ctx: Context,
 
     pub operator: BinaryishOperator,
     pub wrap: bool,
@@ -124,7 +123,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
             };
 
             let Some(left_binary) = left_binary else {
-                left.gen_expr(p, v.left_precedence, v.left_ctx);
+                left.gen_expr(p, v.left_precedence, v.ctx);
                 v.visit_right_and_finish(p);
                 break;
             };
@@ -133,9 +132,8 @@ impl<'a> BinaryExpressionVisitor<'a> {
             v = BinaryExpressionVisitor {
                 e: left_binary,
                 precedence: v.left_precedence,
-                ctx: v.left_ctx,
+                ctx: v.ctx,
                 left_precedence: Precedence::Lowest,
-                left_ctx: Context::empty(),
                 operator: v.operator,
                 wrap: false,
                 right_precedence: Precedence::Lowest,
@@ -168,6 +166,9 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
         if self.wrap {
             p.print_ascii_byte(b'(');
+            // `for (1 * (x == a in b);;);`
+            //           ^^^^^^^^^^^^ has been wrapped in parens, so it doesn't need to
+            //                        print parens for `a in b` again.
             self.ctx &= Context::FORBID_IN.not();
         }
 
@@ -221,7 +222,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
         p.print_soft_space();
         self.operator.gen(p);
         p.print_soft_space();
-        self.e.right().gen_expr(p, self.right_precedence, self.ctx & Context::FORBID_IN);
+        self.e.right().gen_expr(p, self.right_precedence, self.ctx);
         if self.wrap {
             p.print_ascii_byte(b')');
         }

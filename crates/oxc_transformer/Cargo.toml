@@ -1,6 +1,6 @@
 [package]
 name = "oxc_transformer"
-version = "0.39.0"
+version = "0.41.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -41,7 +41,6 @@ dashmap = { workspace = true }
 indexmap = { workspace = true }
 itoa = { workspace = true }
 lazy_static = { workspace = true }
-ropey = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -51,6 +50,7 @@ sha1 = { workspace = true }
 insta = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_parser = { workspace = true }
+oxc_sourcemap = { workspace = true }
 pico-args = { workspace = true }
 
 [features]

@@ -20,7 +20,9 @@ use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{
+    ast_operations::GatherNodeParts, Ancestor, BoundIdentifier, Traverse, TraverseCtx,
+};
 
 use crate::TransformCtx;
 
@@ -86,14 +88,60 @@ impl<'a> VarDeclarationsStore<'a> {
 
     /// Add a `var` declaration to be inserted at top of current enclosing statement block,
     /// given a `BoundIdentifier`.
-    pub fn insert_var(
+    #[inline]
+    pub fn insert_var(&self, binding: &BoundIdentifier<'a>, ctx: &TraverseCtx<'a>) {
+        let pattern = binding.create_binding_pattern(ctx);
+        self.insert_var_binding_pattern(pattern, None, ctx);
+    }
+
+    /// Add a `var` declaration with the given init expression to be inserted at top of
+    /// current enclosing statement block, given a `BoundIdentifier`.
+    #[inline]
+    pub fn insert_var_with_init(
         &self,
         binding: &BoundIdentifier<'a>,
-        init: Option<Expression<'a>>,
+        init: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) {
         let pattern = binding.create_binding_pattern(ctx);
-        self.insert_var_binding_pattern(pattern, init, ctx);
+        self.insert_var_binding_pattern(pattern, Some(init), ctx);
+    }
+
+    /// Create a new UID based on `name`, add a `var` declaration to be inserted at the top of
+    /// the current enclosing statement block, and return the [`BoundIdentifier`].
+    #[inline]
+    pub fn create_uid_var(&self, name: &str, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
+        let binding = ctx.generate_uid_in_current_hoist_scope(name);
+        self.insert_var(&binding, ctx);
+        binding
+    }
+
+    /// Create a new UID based on `name`, add a `var` declaration with the given init expression
+    /// to be inserted at the top of the current enclosing statement block, and return the
+    /// [`BoundIdentifier`].
+    #[inline]
+    pub fn create_uid_var_with_init(
+        &self,
+        name: &str,
+        expression: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> BoundIdentifier<'a> {
+        let binding = ctx.generate_uid_in_current_hoist_scope(name);
+        self.insert_var_with_init(&binding, expression, ctx);
+        binding
+    }
+
+    /// Create a new UID with name based on `node`, add a `var` declaration to be inserted
+    /// at the top of the current enclosing statement block, and return the [`BoundIdentifier`].
+    #[inline]
+    pub fn create_uid_var_based_on_node<N: GatherNodeParts<'a>>(
+        &self,
+        node: &N,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> BoundIdentifier<'a> {
+        let binding = ctx.generate_uid_in_current_hoist_scope_based_on_node(node);
+        self.insert_var(&binding, ctx);
+        binding
     }
 
     /// Add a `let` declaration to be inserted at top of current enclosing statement block,

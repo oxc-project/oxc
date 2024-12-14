@@ -10,11 +10,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  pull-requests: write
-  contents: write
-  actions: write
-
 jobs:
   prepare:
     name: Prepare Release Oxlint
@@ -28,17 +23,20 @@ jobs:
     needs: prepare
     name: Trigger Ecosystem CI
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
     steps:
-      - uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: peter-evans/create-or-update-comment@v4
+      - uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
         id: comment
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ needs.prepare.outputs.pull-request-number }}
           body: Triggering Ecosystem CI https://github.com/oxc-project/oxlint-ecosystem-ci/actions/workflows/ci.yml
 
-      - uses: benc-uk/workflow-dispatch@v1
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/oxlint-ecosystem-ci
           workflow: ci.yml
@@ -50,9 +48,11 @@ jobs:
     needs: prepare
     name: Update oxc.rs
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
-      - uses: taiki-e/checkout-action@v1
-      - uses: benc-uk/workflow-dispatch@v1
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/oxc-project.github.io
           workflow: release.yml

@@ -101,7 +101,7 @@ fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> &'a str {
         PropertyKey::StaticIdentifier(ident) => ident.name.as_str(),
         PropertyKey::PrivateIdentifier(ident) => ident.name.as_str(),
         PropertyKey::StringLiteral(lit) => lit.value.as_str(),
-        PropertyKey::NumericLiteral(lit) => lit.raw,
+        PropertyKey::NumericLiteral(lit) => lit.raw.as_ref().unwrap().as_str(),
         _ => ctx.source_range(key.span()),
     }
 }

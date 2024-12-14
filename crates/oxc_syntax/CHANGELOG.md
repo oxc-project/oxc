@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.41.0] - 2024-12-13
+
+### Refactor
+
+- 0f367e5 semantic: Improve the logic of resolving references to be cleaner (#7829) (Dunqing)
+
+## [0.40.0] - 2024-12-10
+
+### Features
+
+- 00fea92 napi/parser: Expose span positions of `import.meta` (#7677) (Boshen)
+- b8dc333 syntax: Add `ExportEntry::is_type` (#7676) (Boshen)
+
+### Refactor
+
+- c6a19aa linter: Remove unused `serde` features (#7738) (Boshen)
+
 ## [0.39.0] - 2024-12-04
 
 - c2ced15 parser,linter: [**BREAKING**] Use a different `ModuleRecord` for linter (#7554) (Boshen)

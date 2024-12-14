@@ -1,4 +1,6 @@
-use aho_corasick::AhoCorasick;
+use std::borrow::Cow;
+
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
     AstKind,
@@ -28,7 +30,7 @@ pub struct ImgRedundantAlt(Box<ImgRedundantAltConfig>);
 #[derive(Debug, Clone)]
 pub struct ImgRedundantAltConfig {
     types_to_validate: Vec<CompactStr>,
-    redundant_words: AhoCorasick,
+    redundant_words: Vec<Cow<'static, str>>,
 }
 
 impl std::ops::Deref for ImgRedundantAlt {
@@ -45,24 +47,19 @@ impl Default for ImgRedundantAltConfig {
     fn default() -> Self {
         Self {
             types_to_validate: vec![CompactStr::new("img")],
-            redundant_words: AhoCorasick::builder()
-                .ascii_case_insensitive(true)
-                .build(REDUNDANT_WORDS)
-                .expect("Could not build AhoCorasick"),
+            redundant_words: vec!["image".into(), "photo".into(), "picture".into()],
         }
     }
 }
 impl ImgRedundantAltConfig {
-    fn new(
-        types_to_validate: Vec<&str>,
-        redundant_words: &[&str],
-    ) -> Result<Self, aho_corasick::BuildError> {
-        Ok(Self {
+    fn new(types_to_validate: Vec<&str>, redundant_words: &[&str]) -> Self {
+        Self {
             types_to_validate: types_to_validate.into_iter().map(Into::into).collect(),
-            redundant_words: AhoCorasick::builder()
-                .ascii_case_insensitive(true)
-                .build(redundant_words)?,
-        })
+            redundant_words: redundant_words
+                .iter()
+                .map(|w| Cow::Owned(w.cow_to_ascii_lowercase().to_string()))
+                .collect::<Vec<_>>(),
+        }
     }
 }
 
@@ -121,16 +118,15 @@ impl Rule for ImgRedundantAlt {
                 v.iter().filter_map(Value::as_str).chain(REDUNDANT_WORDS).collect::<Vec<_>>()
             });
 
-        Self(Box::new(ImgRedundantAltConfig::new(components, words.as_slice()).unwrap()))
+        Self(Box::new(ImgRedundantAltConfig::new(components, words.as_slice())))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
-        let Some(element_type) = get_element_type(ctx, jsx_el) else {
-            return;
-        };
+
+        let element_type = get_element_type(ctx, jsx_el);
 
         if !self.types_to_validate.iter().any(|comp| comp == &element_type) {
             return;
@@ -195,10 +191,15 @@ impl Rule for ImgRedundantAlt {
 impl ImgRedundantAlt {
     #[inline]
     fn is_redundant_alt_text(&self, alt_text: &str) -> bool {
-        for mat in self.redundant_words.find_iter(alt_text) {
-            // check if followed by space or is whole text
-            if mat.end() == alt_text.len() || alt_text.as_bytes()[mat.end()] == b' ' {
-                return true;
+        let alt_text = alt_text.cow_to_ascii_lowercase();
+        for word in &self.redundant_words {
+            if let Some(index) = alt_text.find(word.as_ref()) {
+                // check if followed by space or is whole text
+                if index + word.len() == alt_text.len()
+                    || alt_text.as_bytes().get(index + word.len()) == Some(&b' ')
+                {
+                    return true;
+                }
             }
         }
         false

@@ -3,22 +3,19 @@ commit: 54a8389f
 parser_babel Summary:
 AST Parsed     : 2205/2218 (99.41%)
 Positive Passed: 2190/2218 (98.74%)
-Negative Passed: 1511/1634 (92.47%)
+Negative Passed: 1520/1634 (93.02%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-specified/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/escape-string/non-octal-eight-and-nine/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-func/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-func-var-sloppy/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class-methods/direct-super-in-object-method/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/destructuring/error-operator-for-default/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-let-as-identifier/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/object/disallow-duplicate-method-params/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/297/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/335/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/async-await-as-arrow-binding-identifier/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js
@@ -33,9 +30,7 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/invalid-decorators/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-module/inside-class-property/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/invalid-param-strict-mode/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0101/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0276/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/flow/expect-plugin/export-interface/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/flow/expect-plugin/export-type/input.js
@@ -120,10 +115,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration-error/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword-error/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/read-only-1/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/read-only-2/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/read-only-3/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/read-only-4/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled-invalid-optional/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-optional-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-required-after-labeled-optional/input.ts
@@ -850,6 +841,60 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  21 │ }
     ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × Invalid escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/non-octal-eight-and-nine/input.js:4:3]
+ 3 │   "use strict";
+ 4 │   "\8";"\9";
+   ·   ────
+ 5 │ }
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/non-octal-eight-and-nine/input.js:4:8]
+ 3 │   "use strict";
+ 4 │   "\8";"\9";
+   ·        ────
+ 5 │ }
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:2:3]
+ 1 │ () => {
+ 2 │   "\8";"\9";
+   ·   ────
+ 3 │   "use strict";
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:2:8]
+ 1 │ () => {
+ 2 │   "\8";"\9";
+   ·        ────
+ 3 │   "use strict";
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:4:3]
+ 3 │   "use strict";
+ 4 │   "\8";"\9";
+   ·   ────
+ 5 │ }
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+   ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:4:8]
+ 3 │   "use strict";
+ 4 │   "\8";"\9";
+   ·        ────
+ 5 │ }
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[babel/packages/babel-parser/test/fixtures/core/escape-string/numeric-escape-in-directive/input.js:1:53]
@@ -4216,6 +4261,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                ────
    ╰────
 
+  × Cannot assign to 'eval' in strict mode
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/297/input.js:1:2]
+ 1 │ (eval) => { "use strict"; 42 }
+   ·  ────
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/298/input.js:1:21]
  1 │ ({ get test() { } }) => 42
@@ -5680,10 +5731,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                           ╰── `)` expected
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/no-args/input.js:1:8]
+  × import() requires a specifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/no-args/input.js:1:1]
  1 │ import();
-   ·        ─
+   · ────────
    ╰────
 
   × The only valid meta property for import is import.meta
@@ -5719,10 +5770,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                           ╰── `)` expected
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/no-args/input.js:1:8]
+  × import() requires a specifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/no-args/input.js:1:1]
  1 │ import();
-   ·        ─
+   · ────────
    ╰────
 
   × Unexpected import.meta expression
@@ -8455,6 +8506,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ──
    ╰────
 
+  × Cannot assign to 'eval' in strict mode
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/invalid-param-strict-mode/input.js:1:1]
+ 1 │ eval => {"use strict"};
+   · ────
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/non-arrow-param-followed-by-arrow/input.js:1:6]
  1 │ ((a)) => 0
@@ -8929,10 +8986,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ─────────
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-meta-property/invalid-dots/input.js:1:30]
+  × The only valid meta property for new is new.target
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-meta-property/invalid-dots/input.js:1:26]
  1 │ var x = function() { y = new..target; }
-   ·                              ─
+   ·                          ─────
    ╰────
 
   × Unexpected new.target expression
@@ -10036,6 +10093,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0100/input.js:1:16]
  1 │ "use strict"; (eval) => 42
    ·                ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0101/input.js:1:2]
+ 1 │ (eval) => { "use strict"; 42 }
+   ·  ────
    ╰────
 
   × Expected `,` but found `/`
@@ -12418,6 +12481,30 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/no-optional-in-destructuring-in-params/input.ts:1:14]
  1 │ function f([a: number]) {}
    ·              ────────
+   ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/read-only-1/input.ts:1:12]
+ 1 │ type T30 = readonly string;  // Error
+   ·            ────────
+   ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/read-only-2/input.ts:1:12]
+ 1 │ type T31 = readonly T;  // Error
+   ·            ────────
+   ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/read-only-3/input.ts:1:12]
+ 1 │ type T32 = readonly readonly string[];  // Error
+   ·            ────────
+   ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/read-only-4/input.ts:1:12]
+ 1 │ type T33 = readonly Array<string>;  // Error
+   ·            ────────
    ╰────
 
   × Expected `,` but found `:`

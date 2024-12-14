@@ -1,4 +1,4 @@
-#![allow(non_snake_case)] // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+use std::mem;
 
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -8,15 +8,14 @@ use tsify::Tsify;
 use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
-pub use oxc_syntax::{
+use oxc_syntax::{
+    node::NodeId,
+    reference::ReferenceId,
     scope::ScopeId,
     symbol::{RedeclarationId, SymbolFlags, SymbolId},
 };
 
-use crate::{
-    node::NodeId,
-    reference::{Reference, ReferenceId},
-};
+use crate::reference::Reference;
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -103,14 +102,11 @@ impl SymbolTable {
     }
 
     /// Rename a symbol.
+    ///
+    /// Returns the old name.
     #[inline]
-    pub fn rename(&mut self, symbol_id: SymbolId, new_name: CompactStr) {
-        self.names[symbol_id] = new_name;
-    }
-
-    #[inline]
-    pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactStr) {
-        self.names[symbol_id] = name;
+    pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactStr) -> CompactStr {
+        mem::replace(&mut self.names[symbol_id], name)
     }
 
     /// Get the [`SymbolFlags`] for a symbol, which describe how the symbol is declared.
@@ -236,6 +232,18 @@ impl SymbolTable {
         self.resolved_references[symbol_id]
             .iter()
             .map(|&reference_id| &self.references[reference_id])
+    }
+
+    /// Get whether a symbol is mutated (i.e. assigned to).
+    ///
+    /// If symbol is `const`, always returns `false`.
+    /// Otherwise, returns `true` if the symbol is assigned to somewhere in AST.
+    pub fn symbol_is_mutated(&self, symbol_id: SymbolId) -> bool {
+        if self.flags[symbol_id].contains(SymbolFlags::ConstVariable) {
+            false
+        } else {
+            self.get_resolved_references(symbol_id).any(Reference::is_write)
+        }
     }
 
     /// Add a reference to a symbol.

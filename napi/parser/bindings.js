@@ -361,6 +361,8 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
+module.exports.MagicString = nativeBinding.MagicString
+module.exports.ParseResult = nativeBinding.ParseResult
 module.exports.ExportExportNameKind = nativeBinding.ExportExportNameKind
 module.exports.ExportImportNameKind = nativeBinding.ExportImportNameKind
 module.exports.ExportLocalNameKind = nativeBinding.ExportLocalNameKind
@@ -368,3 +370,4 @@ module.exports.ImportNameKind = nativeBinding.ImportNameKind
 module.exports.parseAsync = nativeBinding.parseAsync
 module.exports.parseSync = nativeBinding.parseSync
 module.exports.parseWithoutReturn = nativeBinding.parseWithoutReturn
+module.exports.Severity = nativeBinding.Severity

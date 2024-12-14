@@ -80,17 +80,14 @@ impl<'a> AstBuilder<'a> {
     /// - raw: The number as it appears in source code
     /// - base: The base representation used by the literal in source code
     #[inline]
-    pub fn numeric_literal<S>(
+    pub fn numeric_literal(
         self,
         span: Span,
         value: f64,
-        raw: S,
+        raw: Option<Atom<'a>>,
         base: NumberBase,
-    ) -> NumericLiteral<'a>
-    where
-        S: IntoIn<'a, &'a str>,
-    {
-        NumericLiteral { span, value, raw: raw.into_in(self.allocator), base }
+    ) -> NumericLiteral<'a> {
+        NumericLiteral { span, value, raw, base }
     }
 
     /// Build a [`NumericLiteral`], and store it in the memory arena.
@@ -103,16 +100,13 @@ impl<'a> AstBuilder<'a> {
     /// - raw: The number as it appears in source code
     /// - base: The base representation used by the literal in source code
     #[inline]
-    pub fn alloc_numeric_literal<S>(
+    pub fn alloc_numeric_literal(
         self,
         span: Span,
         value: f64,
-        raw: S,
+        raw: Option<Atom<'a>>,
         base: NumberBase,
-    ) -> Box<'a, NumericLiteral<'a>>
-    where
-        S: IntoIn<'a, &'a str>,
-    {
+    ) -> Box<'a, NumericLiteral<'a>> {
         Box::new_in(self.numeric_literal(span, value, raw, base), self.allocator)
     }
 
@@ -199,11 +193,13 @@ impl<'a> AstBuilder<'a> {
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
     /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn reg_exp_literal<S>(self, span: Span, regex: RegExp<'a>, raw: S) -> RegExpLiteral<'a>
-    where
-        S: IntoIn<'a, &'a str>,
-    {
-        RegExpLiteral { span, regex, raw: raw.into_in(self.allocator) }
+    pub fn reg_exp_literal(
+        self,
+        span: Span,
+        regex: RegExp<'a>,
+        raw: Option<Atom<'a>>,
+    ) -> RegExpLiteral<'a> {
+        RegExpLiteral { span, regex, raw }
     }
 
     /// Build a [`RegExpLiteral`], and store it in the memory arena.
@@ -215,15 +211,12 @@ impl<'a> AstBuilder<'a> {
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
     /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn alloc_reg_exp_literal<S>(
+    pub fn alloc_reg_exp_literal(
         self,
         span: Span,
         regex: RegExp<'a>,
-        raw: S,
-    ) -> Box<'a, RegExpLiteral<'a>>
-    where
-        S: IntoIn<'a, &'a str>,
-    {
+        raw: Option<Atom<'a>>,
+    ) -> Box<'a, RegExpLiteral<'a>> {
         Box::new_in(self.reg_exp_literal(span, regex, raw), self.allocator)
     }
 
@@ -413,16 +406,13 @@ impl<'a> AstBuilder<'a> {
     /// - raw: The number as it appears in source code
     /// - base: The base representation used by the literal in source code
     #[inline]
-    pub fn expression_numeric_literal<S>(
+    pub fn expression_numeric_literal(
         self,
         span: Span,
         value: f64,
-        raw: S,
+        raw: Option<Atom<'a>>,
         base: NumberBase,
-    ) -> Expression<'a>
-    where
-        S: IntoIn<'a, &'a str>,
-    {
+    ) -> Expression<'a> {
         Expression::NumericLiteral(self.alloc(self.numeric_literal(span, value, raw, base)))
     }
 
@@ -456,15 +446,12 @@ impl<'a> AstBuilder<'a> {
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
     /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn expression_reg_exp_literal<S>(
+    pub fn expression_reg_exp_literal(
         self,
         span: Span,
         regex: RegExp<'a>,
-        raw: S,
-    ) -> Expression<'a>
-    where
-        S: IntoIn<'a, &'a str>,
-    {
+        raw: Option<Atom<'a>>,
+    ) -> Expression<'a> {
         Expression::RegExpLiteral(self.alloc(self.reg_exp_literal(span, regex, raw)))
     }
 
@@ -717,8 +704,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`Class`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the class.
     /// - id: Class identifier, AKA the name
     /// - type_parameters
@@ -731,8 +718,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn expression_class<T1, T2, T3>(
         self,
-        r#type: ClassType,
         span: Span,
+        r#type: ClassType,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -749,8 +736,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
         Expression::ClassExpression(self.alloc(self.class(
-            r#type,
             span,
+            r#type,
             decorators,
             id,
             type_parameters,
@@ -790,8 +777,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`Function`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - id: The function identifier. [`None`] for anonymous function expressions.
     /// - generator: Is this a generator function?
     /// - r#async
@@ -804,8 +791,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn expression_function<T1, T2, T3, T4, T5>(
         self,
-        r#type: FunctionType,
         span: Span,
+        r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
@@ -824,8 +811,8 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Expression::FunctionExpression(self.alloc(self.function(
-            r#type,
             span,
+            r#type,
             id,
             generator,
             r#async,
@@ -846,14 +833,18 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - source
     /// - arguments
+    /// - phase
     #[inline]
     pub fn expression_import(
         self,
         span: Span,
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
+        phase: Option<ImportPhase>,
     ) -> Expression<'a> {
-        Expression::ImportExpression(self.alloc(self.import_expression(span, source, arguments)))
+        Expression::ImportExpression(
+            self.alloc(self.import_expression(span, source, arguments, phase)),
+        )
     }
 
     /// Build an [`Expression::LogicalExpression`]
@@ -3618,8 +3609,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`Function`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - id: The function identifier. [`None`] for anonymous function expressions.
     /// - generator: Is this a generator function?
     /// - r#async
@@ -3632,8 +3623,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn declaration_function<T1, T2, T3, T4, T5>(
         self,
-        r#type: FunctionType,
         span: Span,
+        r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
@@ -3652,8 +3643,8 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Declaration::FunctionDeclaration(self.alloc(self.function(
-            r#type,
             span,
+            r#type,
             id,
             generator,
             r#async,
@@ -3671,8 +3662,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`Class`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the class.
     /// - id: Class identifier, AKA the name
     /// - type_parameters
@@ -3685,8 +3676,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn declaration_class<T1, T2, T3>(
         self,
-        r#type: ClassType,
         span: Span,
+        r#type: ClassType,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -3703,8 +3694,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
         Declaration::ClassDeclaration(self.alloc(self.class(
-            r#type,
             span,
+            r#type,
             decorators,
             id,
             type_parameters,
@@ -5271,8 +5262,8 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_function`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - id: The function identifier. [`None`] for anonymous function expressions.
     /// - generator: Is this a generator function?
     /// - r#async
@@ -5285,8 +5276,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn function<T1, T2, T3, T4, T5>(
         self,
-        r#type: FunctionType,
         span: Span,
+        r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
@@ -5305,8 +5296,8 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Function {
-            r#type,
             span,
+            r#type,
             id,
             generator,
             r#async,
@@ -5325,8 +5316,8 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::function`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - id: The function identifier. [`None`] for anonymous function expressions.
     /// - generator: Is this a generator function?
     /// - r#async
@@ -5339,8 +5330,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_function<T1, T2, T3, T4, T5>(
         self,
-        r#type: FunctionType,
         span: Span,
+        r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
@@ -5360,8 +5351,8 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.function(
-                r#type,
                 span,
+                r#type,
                 id,
                 generator,
                 r#async,
@@ -5381,8 +5372,8 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_function_with_scope_id`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - id: The function identifier. [`None`] for anonymous function expressions.
     /// - generator: Is this a generator function?
     /// - r#async
@@ -5396,8 +5387,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn function_with_scope_id<T1, T2, T3, T4, T5>(
         self,
-        r#type: FunctionType,
         span: Span,
+        r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
@@ -5417,8 +5408,8 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Function {
-            r#type,
             span,
+            r#type,
             id,
             generator,
             r#async,
@@ -5437,8 +5428,8 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - id: The function identifier. [`None`] for anonymous function expressions.
     /// - generator: Is this a generator function?
     /// - r#async
@@ -5452,8 +5443,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_function_with_scope_id<T1, T2, T3, T4, T5>(
         self,
-        r#type: FunctionType,
         span: Span,
+        r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
@@ -5474,8 +5465,8 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.function_with_scope_id(
-                r#type,
                 span,
+                r#type,
                 id,
                 generator,
                 r#async,
@@ -5838,8 +5829,8 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the class.
     /// - id: Class identifier, AKA the name
     /// - type_parameters
@@ -5852,8 +5843,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn class<T1, T2, T3>(
         self,
-        r#type: ClassType,
         span: Span,
+        r#type: ClassType,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -5870,8 +5861,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
         Class {
-            r#type,
             span,
+            r#type,
             decorators,
             id,
             type_parameters: type_parameters.into_in(self.allocator),
@@ -5890,8 +5881,8 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the class.
     /// - id: Class identifier, AKA the name
     /// - type_parameters
@@ -5904,8 +5895,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_class<T1, T2, T3>(
         self,
-        r#type: ClassType,
         span: Span,
+        r#type: ClassType,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -5923,8 +5914,8 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.class(
-                r#type,
                 span,
+                r#type,
                 decorators,
                 id,
                 type_parameters,
@@ -5944,8 +5935,8 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_class_with_scope_id`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the class.
     /// - id: Class identifier, AKA the name
     /// - type_parameters
@@ -5959,8 +5950,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn class_with_scope_id<T1, T2, T3>(
         self,
-        r#type: ClassType,
         span: Span,
+        r#type: ClassType,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -5978,8 +5969,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
         Class {
-            r#type,
             span,
+            r#type,
             decorators,
             id,
             type_parameters: type_parameters.into_in(self.allocator),
@@ -5998,8 +5989,8 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::class_with_scope_id`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the class.
     /// - id: Class identifier, AKA the name
     /// - type_parameters
@@ -6013,8 +6004,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_class_with_scope_id<T1, T2, T3>(
         self,
-        r#type: ClassType,
         span: Span,
+        r#type: ClassType,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -6033,8 +6024,8 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.class_with_scope_id(
-                r#type,
                 span,
+                r#type,
                 decorators,
                 id,
                 type_parameters,
@@ -6099,8 +6090,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`MethodDefinition`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type: Method definition type
     /// - span: The [`Span`] covering this node
+    /// - r#type: Method definition type
     /// - decorators
     /// - key
     /// - value
@@ -6113,8 +6104,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn class_element_method_definition<T1>(
         self,
-        r#type: MethodDefinitionType,
         span: Span,
+        r#type: MethodDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: T1,
@@ -6129,8 +6120,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, Function<'a>>>,
     {
         ClassElement::MethodDefinition(self.alloc(self.method_definition(
-            r#type,
             span,
+            r#type,
             decorators,
             key,
             value,
@@ -6148,8 +6139,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`PropertyDefinition`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the property.
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration.
@@ -6165,8 +6156,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn class_element_property_definition<T1>(
         self,
-        r#type: PropertyDefinitionType,
         span: Span,
+        r#type: PropertyDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: Option<Expression<'a>>,
@@ -6184,8 +6175,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         ClassElement::PropertyDefinition(self.alloc(self.property_definition(
-            r#type,
             span,
+            r#type,
             decorators,
             key,
             value,
@@ -6206,8 +6197,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains an [`AccessorProperty`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the accessor property.
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
@@ -6219,8 +6210,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn class_element_accessor_property<T1>(
         self,
-        r#type: AccessorPropertyType,
         span: Span,
+        r#type: AccessorPropertyType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: Option<Expression<'a>>,
@@ -6234,8 +6225,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         ClassElement::AccessorProperty(self.alloc(self.accessor_property(
-            r#type,
             span,
+            r#type,
             decorators,
             key,
             value,
@@ -6283,8 +6274,8 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_method_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type: Method definition type
     /// - span: The [`Span`] covering this node
+    /// - r#type: Method definition type
     /// - decorators
     /// - key
     /// - value
@@ -6297,8 +6288,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn method_definition<T1>(
         self,
-        r#type: MethodDefinitionType,
         span: Span,
+        r#type: MethodDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: T1,
@@ -6313,8 +6304,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, Function<'a>>>,
     {
         MethodDefinition {
-            r#type,
             span,
+            r#type,
             decorators,
             key,
             value: value.into_in(self.allocator),
@@ -6332,8 +6323,8 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::method_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type: Method definition type
     /// - span: The [`Span`] covering this node
+    /// - r#type: Method definition type
     /// - decorators
     /// - key
     /// - value
@@ -6346,8 +6337,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_method_definition<T1>(
         self,
-        r#type: MethodDefinitionType,
         span: Span,
+        r#type: MethodDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: T1,
@@ -6363,8 +6354,8 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.method_definition(
-                r#type,
                 span,
+                r#type,
                 decorators,
                 key,
                 value,
@@ -6384,8 +6375,8 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_property_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the property.
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration.
@@ -6401,8 +6392,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn property_definition<T1>(
         self,
-        r#type: PropertyDefinitionType,
         span: Span,
+        r#type: PropertyDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: Option<Expression<'a>>,
@@ -6420,8 +6411,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         PropertyDefinition {
-            r#type,
             span,
+            r#type,
             decorators,
             key,
             value,
@@ -6442,8 +6433,8 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::property_definition`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the property.
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration.
@@ -6459,8 +6450,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_property_definition<T1>(
         self,
-        r#type: PropertyDefinitionType,
         span: Span,
+        r#type: PropertyDefinitionType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: Option<Expression<'a>>,
@@ -6479,8 +6470,8 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.property_definition(
-                r#type,
                 span,
+                r#type,
                 decorators,
                 key,
                 value,
@@ -6600,6 +6591,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - specifiers: `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     /// - source
+    /// - phase
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
@@ -6608,6 +6600,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> ModuleDeclaration<'a>
@@ -6618,6 +6611,7 @@ impl<'a> AstBuilder<'a> {
             span,
             specifiers,
             source,
+            phase,
             with_clause,
             import_kind,
         )))
@@ -6751,8 +6745,8 @@ impl<'a> AstBuilder<'a> {
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_accessor_property`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the accessor property.
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
@@ -6764,8 +6758,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn accessor_property<T1>(
         self,
-        r#type: AccessorPropertyType,
         span: Span,
+        r#type: AccessorPropertyType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: Option<Expression<'a>>,
@@ -6779,8 +6773,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         AccessorProperty {
-            r#type,
             span,
+            r#type,
             decorators,
             key,
             value,
@@ -6797,8 +6791,8 @@ impl<'a> AstBuilder<'a> {
     /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::accessor_property`] instead.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the accessor property.
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
@@ -6810,8 +6804,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_accessor_property<T1>(
         self,
-        r#type: AccessorPropertyType,
         span: Span,
+        r#type: AccessorPropertyType,
         decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: Option<Expression<'a>>,
@@ -6826,8 +6820,8 @@ impl<'a> AstBuilder<'a> {
     {
         Box::new_in(
             self.accessor_property(
-                r#type,
                 span,
+                r#type,
                 decorators,
                 key,
                 value,
@@ -6849,14 +6843,16 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - source
     /// - arguments
+    /// - phase
     #[inline]
     pub fn import_expression(
         self,
         span: Span,
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
+        phase: Option<ImportPhase>,
     ) -> ImportExpression<'a> {
-        ImportExpression { span, source, arguments }
+        ImportExpression { span, source, arguments, phase }
     }
 
     /// Build an [`ImportExpression`], and store it in the memory arena.
@@ -6867,14 +6863,16 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - source
     /// - arguments
+    /// - phase
     #[inline]
     pub fn alloc_import_expression(
         self,
         span: Span,
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
+        phase: Option<ImportPhase>,
     ) -> Box<'a, ImportExpression<'a>> {
-        Box::new_in(self.import_expression(span, source, arguments), self.allocator)
+        Box::new_in(self.import_expression(span, source, arguments, phase), self.allocator)
     }
 
     /// Build an [`ImportDeclaration`].
@@ -6885,6 +6883,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - specifiers: `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     /// - source
+    /// - phase
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
@@ -6893,6 +6892,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> ImportDeclaration<'a>
@@ -6903,6 +6903,7 @@ impl<'a> AstBuilder<'a> {
             span,
             specifiers,
             source,
+            phase,
             with_clause: with_clause.into_in(self.allocator),
             import_kind,
         }
@@ -6916,6 +6917,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - specifiers: `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     /// - source
+    /// - phase
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
@@ -6924,6 +6926,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
+        phase: Option<ImportPhase>,
         with_clause: T1,
         import_kind: ImportOrExportKind,
     ) -> Box<'a, ImportDeclaration<'a>>
@@ -6931,7 +6934,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
         Box::new_in(
-            self.import_declaration(span, specifiers, source, with_clause, import_kind),
+            self.import_declaration(span, specifiers, source, phase, with_clause, import_kind),
             self.allocator,
         )
     }
@@ -7420,8 +7423,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`Function`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - id: The function identifier. [`None`] for anonymous function expressions.
     /// - generator: Is this a generator function?
     /// - r#async
@@ -7434,8 +7437,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn export_default_declaration_kind_function<T1, T2, T3, T4, T5>(
         self,
-        r#type: FunctionType,
         span: Span,
+        r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
@@ -7454,8 +7457,8 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         ExportDefaultDeclarationKind::FunctionDeclaration(self.alloc(self.function(
-            r#type,
             span,
+            r#type,
             id,
             generator,
             r#async,
@@ -7473,8 +7476,8 @@ impl<'a> AstBuilder<'a> {
     /// This node contains a [`Class`] that will be stored in the memory arena.
     ///
     /// ## Parameters
-    /// - r#type
     /// - span: The [`Span`] covering this node
+    /// - r#type
     /// - decorators: Decorators applied to the class.
     /// - id: Class identifier, AKA the name
     /// - type_parameters
@@ -7487,8 +7490,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn export_default_declaration_kind_class<T1, T2, T3>(
         self,
-        r#type: ClassType,
         span: Span,
+        r#type: ClassType,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: T1,
@@ -7505,8 +7508,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
         ExportDefaultDeclarationKind::ClassDeclaration(self.alloc(self.class(
-            r#type,
             span,
+            r#type,
             decorators,
             id,
             type_parameters,
@@ -7911,16 +7914,13 @@ impl<'a> AstBuilder<'a> {
     /// - raw: The number as it appears in source code
     /// - base: The base representation used by the literal in source code
     #[inline]
-    pub fn ts_literal_numeric_literal<S>(
+    pub fn ts_literal_numeric_literal(
         self,
         span: Span,
         value: f64,
-        raw: S,
+        raw: Option<Atom<'a>>,
         base: NumberBase,
-    ) -> TSLiteral<'a>
-    where
-        S: IntoIn<'a, &'a str>,
-    {
+    ) -> TSLiteral<'a> {
         TSLiteral::NumericLiteral(self.alloc(self.numeric_literal(span, value, raw, base)))
     }
 
@@ -7954,15 +7954,12 @@ impl<'a> AstBuilder<'a> {
     /// - regex: The parsed regular expression. See [`oxc_regular_expression`] for more
     /// - raw: The regular expression as it appears in source code
     #[inline]
-    pub fn ts_literal_reg_exp_literal<S>(
+    pub fn ts_literal_reg_exp_literal(
         self,
         span: Span,
         regex: RegExp<'a>,
-        raw: S,
-    ) -> TSLiteral<'a>
-    where
-        S: IntoIn<'a, &'a str>,
-    {
+        raw: Option<Atom<'a>>,
+    ) -> TSLiteral<'a> {
         TSLiteral::RegExpLiteral(self.alloc(self.reg_exp_literal(span, regex, raw)))
     }
 

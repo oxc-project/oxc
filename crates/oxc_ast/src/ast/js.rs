@@ -25,7 +25,7 @@ use super::{macros::inherit_variants, *};
 #[ast(visit)]
 #[scope(
     flags(ScopeFlags::Top),
-    strict_if(self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)),
+    strict_if(self.source_type.is_strict() || self.has_use_strict_directive()),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
@@ -1565,13 +1565,13 @@ pub struct BindingRestElement<'a> {
 #[scope(
     // `flags` passed in to visitor via parameter defined by `#[visit(args(flags = ...))]` on parents
     flags(flags),
-    strict_if(self.is_strict()),
+    strict_if(self.has_use_strict_directive()),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct Function<'a> {
-    pub r#type: FunctionType,
     pub span: Span,
+    pub r#type: FunctionType,
     /// The function identifier. [`None`] for anonymous function expressions.
     pub id: Option<BindingIdentifier<'a>>,
     /// Is this a generator function?
@@ -1701,7 +1701,7 @@ pub struct FunctionBody<'a> {
 #[ast(visit)]
 #[scope(
     flags(ScopeFlags::Function | ScopeFlags::Arrow),
-    strict_if(self.body.has_use_strict_directive()),
+    strict_if(self.has_use_strict_directive()),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
@@ -1738,8 +1738,8 @@ pub struct YieldExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct Class<'a> {
-    pub r#type: ClassType,
     pub span: Span,
+    pub r#type: ClassType,
     /// Decorators applied to the class.
     ///
     /// Decorators are currently a stage 3 proposal. Oxc handles both TC39 and
@@ -1879,11 +1879,11 @@ pub enum ClassElement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct MethodDefinition<'a> {
+    pub span: Span,
     /// Method definition type
     ///
     /// This will always be true when an `abstract` modifier is used on the method.
     pub r#type: MethodDefinitionType,
-    pub span: Span,
     #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
@@ -1918,8 +1918,8 @@ pub enum MethodDefinitionType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct PropertyDefinition<'a> {
-    pub r#type: PropertyDefinitionType,
     pub span: Span,
+    pub r#type: PropertyDefinitionType,
     /// Decorators applied to the property.
     ///
     /// See [`Decorator`] for more information.
@@ -2140,8 +2140,8 @@ pub enum AccessorPropertyType {
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 pub struct AccessorProperty<'a> {
-    pub r#type: AccessorPropertyType,
     pub span: Span,
+    pub r#type: AccessorPropertyType,
     /// Decorators applied to the accessor property.
     ///
     /// See [`Decorator`] for more information.
@@ -2188,6 +2188,7 @@ pub struct ImportExpression<'a> {
     pub span: Span,
     pub source: Expression<'a>,
     pub arguments: Vec<'a, Expression<'a>>,
+    pub phase: Option<ImportPhase>,
 }
 
 #[ast(visit)]
@@ -2198,12 +2199,26 @@ pub struct ImportDeclaration<'a> {
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
+    pub phase: Option<ImportPhase>,
     /// Some(vec![]) for empty assertion
     #[ts]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
     /// `import type { foo } from 'bar'`
     #[ts]
     pub import_kind: ImportOrExportKind,
+}
+
+/// Import Phase
+///
+/// <https://github.com/tc39/proposal-defer-import-eval>
+/// <https://github.com/tc39/proposal-source-phase-imports>
+/// <https://github.com/estree/estree/blob/2b48e56efc223ea477a45b5e034039934c5791fa/stage3/source-phase-imports.md>
+#[ast]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+pub enum ImportPhase {
+    Source = 0,
+    Defer = 1,
 }
 
 #[ast(visit)]

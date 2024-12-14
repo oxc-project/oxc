@@ -1,5 +1,4 @@
 #![allow(rustdoc::private_intra_doc_links)] // useful for intellisense
-mod host;
 
 use std::{ops::Deref, path::Path, rc::Rc};
 
@@ -17,6 +16,7 @@ use crate::{
     AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
+mod host;
 pub(crate) use host::ContextHost;
 
 #[derive(Clone)]
@@ -350,5 +350,4 @@ const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "unicorn" => "eslint-plugin-unicorn",
     "vitest" => "eslint-plugin-vitest",
     "node" => "eslint-plugin-node",
-    "security" => "oxc-security",
 };

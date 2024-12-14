@@ -1,7 +1,9 @@
 //! <https://github.com/microsoft/TypeScript/blob/6f06eb1b27a6495b209e8be79036f3b2ea92cd0b/src/harness/harnessIO.ts#L1237>
 
-use rustc_hash::FxHashMap;
 use std::{fs, path::Path, sync::Arc};
+
+use regex::Regex;
+use rustc_hash::FxHashMap;
 
 use oxc::{
     allocator::Allocator,
@@ -10,7 +12,6 @@ use oxc::{
     parser::Parser,
     span::SourceType,
 };
-use regex::Regex;
 
 use crate::workspace_root;
 

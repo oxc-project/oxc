@@ -66,7 +66,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             self.ast.expression_numeric_literal(
                                 SPAN,
                                 value,
-                                value.to_string(),
+                                None,
                                 NumberBase::Decimal,
                             )
                         };

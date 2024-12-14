@@ -1,6 +1,6 @@
 use fast_glob::glob_match;
-use oxc_diagnostics::OxcDiagnostic;
 
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 

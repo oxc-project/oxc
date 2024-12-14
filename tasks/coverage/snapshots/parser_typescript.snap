@@ -1,9 +1,9 @@
 commit: d85767ab
 
 parser_typescript Summary:
-AST Parsed     : 6495/6503 (99.88%)
+AST Parsed     : 6494/6503 (99.86%)
 Positive Passed: 6483/6503 (99.69%)
-Negative Passed: 1239/5747 (21.56%)
+Negative Passed: 1240/5747 (21.58%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -4330,7 +4330,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tup
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/indexerWithTuple.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/optionalTupleElements1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/readonlyArraysAndTuples.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/restTupleElements1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/strictTupleLength.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/tupleLengthCheck.ts
@@ -4763,13 +4762,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2019/import
  2 │ export let y = import.metal;
    ·                ────────────
  3 │ export let z = import.import.import.malkovich;
-   ╰────
-
-  × The only valid meta property for import is import.meta
-   ╭─[typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts:3:16]
- 2 │ export let y = import.metal;
- 3 │ export let z = import.import.import.malkovich;
-   ·                ─────────────
    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts
 
@@ -24790,6 +24782,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
      ·                              ────
  166 │ 
      ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+    ╭─[typescript/tests/cases/conformance/types/tuple/readonlyArraysAndTuples.ts:9:12]
+  8 │ 
+  9 │ type T30 = readonly string;  // Error
+    ·            ────────
+ 10 │ type T31<T> = readonly T;  // Error
+    ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+    ╭─[typescript/tests/cases/conformance/types/tuple/readonlyArraysAndTuples.ts:10:15]
+  9 │ type T30 = readonly string;  // Error
+ 10 │ type T31<T> = readonly T;  // Error
+    ·               ────────
+ 11 │ type T32 = readonly readonly string[];  // Error
+    ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+    ╭─[typescript/tests/cases/conformance/types/tuple/readonlyArraysAndTuples.ts:11:12]
+ 10 │ type T31<T> = readonly T;  // Error
+ 11 │ type T32 = readonly readonly string[];  // Error
+    ·            ────────
+ 12 │ type T33 = readonly Array<string>;  // Error
+    ╰────
+
+  × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
+    ╭─[typescript/tests/cases/conformance/types/tuple/readonlyArraysAndTuples.ts:12:12]
+ 11 │ type T32 = readonly readonly string[];  // Error
+ 12 │ type T33 = readonly Array<string>;  // Error
+    ·            ────────
+ 13 │ 
+    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/types/typeAliases/reservedNamesInAliases.ts:6:5]

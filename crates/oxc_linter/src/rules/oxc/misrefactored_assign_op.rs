@@ -11,7 +11,7 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_same_member_expression, is_same_reference},
+    utils::{is_same_expression, is_same_member_expression},
     AstNode,
 };
 
@@ -121,19 +121,19 @@ fn assignment_target_eq_expr<'a>(
                 }
             }
             SimpleAssignmentTarget::TSAsExpression(ts_expr) => {
-                is_same_reference(&ts_expr.expression, right_expr, ctx)
+                is_same_expression(&ts_expr.expression, right_expr, ctx)
             }
             SimpleAssignmentTarget::TSSatisfiesExpression(ts_expr) => {
-                is_same_reference(&ts_expr.expression, right_expr, ctx)
+                is_same_expression(&ts_expr.expression, right_expr, ctx)
             }
             SimpleAssignmentTarget::TSNonNullExpression(ts_expr) => {
-                is_same_reference(&ts_expr.expression, right_expr, ctx)
+                is_same_expression(&ts_expr.expression, right_expr, ctx)
             }
             SimpleAssignmentTarget::TSTypeAssertion(ts_expr) => {
-                is_same_reference(&ts_expr.expression, right_expr, ctx)
+                is_same_expression(&ts_expr.expression, right_expr, ctx)
             }
             SimpleAssignmentTarget::TSInstantiationExpression(ts_expr) => {
-                is_same_reference(&ts_expr.expression, right_expr, ctx)
+                is_same_expression(&ts_expr.expression, right_expr, ctx)
             }
         };
     }

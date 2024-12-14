@@ -89,9 +89,7 @@ impl Rule for HeadingHasContent {
         // };
 
         // let name = iden.name.as_str();
-        let Some(name) = &get_element_type(ctx, jsx_el) else {
-            return;
-        };
+        let name = &get_element_type(ctx, jsx_el);
 
         if !DEFAULT_COMPONENTS.iter().any(|&comp| comp == name)
             && !self

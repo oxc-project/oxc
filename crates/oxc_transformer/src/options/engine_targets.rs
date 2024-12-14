@@ -22,6 +22,7 @@ pub struct EngineTargets(FxHashMap<Engine, Version>);
 
 impl Deref for EngineTargets {
     type Target = FxHashMap<Engine, Version>;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -37,6 +38,7 @@ impl EngineTargets {
     pub fn new(map: FxHashMap<Engine, Version>) -> Self {
         Self(map)
     }
+
     /// # Errors
     ///
     /// * Query is invalid.

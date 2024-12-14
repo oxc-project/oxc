@@ -23,6 +23,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true }
+oxc_data_structures = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_parser = { workspace = true }
@@ -36,7 +37,6 @@ futures = { workspace = true }
 globset = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 log = { workspace = true }
-ropey = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

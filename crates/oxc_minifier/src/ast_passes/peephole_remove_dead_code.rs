@@ -4,8 +4,7 @@ use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsLiteralValue};
 use oxc_span::SPAN;
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::node_util::Ctx;
-use crate::{keep_var::KeepVar, CompressorPass};
+use crate::{keep_var::KeepVar, node_util::Ctx, CompressorPass};
 
 /// Remove Dead Code from the AST.
 ///

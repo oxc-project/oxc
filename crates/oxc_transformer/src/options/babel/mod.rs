@@ -1,15 +1,15 @@
-mod env;
-mod plugins;
-mod presets;
-
 use std::path::{Path, PathBuf};
 
 use serde::{de::DeserializeOwned, Deserialize};
 
 use crate::CompilerAssumptions;
 
-pub use self::env::{BabelEnvOptions, BabelModule, BabelTargets};
-pub(crate) use self::{plugins::BabelPlugins, presets::BabelPresets};
+mod env;
+mod plugins;
+mod presets;
+pub use env::{BabelEnvOptions, BabelModule, BabelTargets};
+pub(crate) use plugins::BabelPlugins;
+pub(crate) use presets::BabelPresets;
 
 /// Babel options
 ///

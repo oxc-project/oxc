@@ -4,19 +4,19 @@
 export interface BooleanLiteral extends Span {
   type: 'Literal';
   value: boolean;
-  raw: string;
+  raw: string | null;
 }
 
 export interface NullLiteral extends Span {
   type: 'Literal';
   value: null;
-  raw: 'null';
+  raw: 'null' | null;
 }
 
 export interface NumericLiteral extends Span {
   type: 'Literal';
   value: number;
-  raw: string;
+  raw: string | null;
 }
 
 export interface StringLiteral extends Span {
@@ -27,14 +27,14 @@ export interface StringLiteral extends Span {
 
 export interface BigIntLiteral extends Span {
   type: 'Literal';
-  raw: string;
+  raw: string | null;
   value: null;
   bigint: string;
 }
 
 export interface RegExpLiteral extends Span {
   type: 'Literal';
-  raw: string;
+  raw: string | null;
   value: {} | null;
   regex: { pattern: string; flags: string };
 }
@@ -905,15 +905,19 @@ export interface ImportExpression extends Span {
   type: 'ImportExpression';
   source: Expression;
   arguments: Array<Expression>;
+  phase: ImportPhase | null;
 }
 
 export interface ImportDeclaration extends Span {
   type: 'ImportDeclaration';
   specifiers: Array<ImportDeclarationSpecifier> | null;
   source: StringLiteral;
+  phase: ImportPhase | null;
   withClause: WithClause | null;
   importKind: ImportOrExportKind;
 }
+
+export type ImportPhase = 'source' | 'defer';
 
 export type ImportDeclarationSpecifier = ImportSpecifier | ImportDefaultSpecifier | ImportNamespaceSpecifier;
 

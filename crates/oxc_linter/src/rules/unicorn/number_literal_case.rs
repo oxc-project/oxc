@@ -80,7 +80,7 @@ declare_oxc_lint!(
 impl Rule for NumberLiteralCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (raw_literal, raw_span) = match node.kind() {
-            AstKind::NumericLiteral(number) => (number.raw, number.span),
+            AstKind::NumericLiteral(number) => (number.raw.as_ref().unwrap().as_str(), number.span),
             AstKind::BigIntLiteral(number) => {
                 let span = number.span;
                 (span.source_text(ctx.source_text()), span)

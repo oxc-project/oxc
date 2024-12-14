@@ -52,19 +52,26 @@ impl Runtime {
         }
     }
 
-    fn get_resolver(tsconfig: Option<PathBuf>) -> Resolver {
+    fn get_resolver(tsconfig_path: Option<PathBuf>) -> Resolver {
         use oxc_resolver::{ResolveOptions, TsconfigOptions, TsconfigReferences};
-        let tsconfig = tsconfig.and_then(|path| {
-            if path.is_file() {
-                Some(TsconfigOptions { config_file: path, references: TsconfigReferences::Auto })
-            } else {
-                None
-            }
+        let tsconfig = tsconfig_path.and_then(|path| {
+            path.is_file().then_some(TsconfigOptions {
+                config_file: path,
+                references: TsconfigReferences::Auto,
+            })
         });
-
+        let extension_alias = tsconfig.as_ref().map_or_else(Vec::new, |_| {
+            vec![
+                (".js".into(), vec![".js".into(), ".ts".into()]),
+                (".mjs".into(), vec![".mjs".into(), ".mts".into()]),
+                (".cjs".into(), vec![".cjs".into(), ".cts".into()]),
+            ]
+        });
         Resolver::new(ResolveOptions {
             extensions: VALID_EXTENSIONS.iter().map(|ext| format!(".{ext}")).collect(),
-            condition_names: vec!["module".into(), "require".into()],
+            main_fields: vec!["module".into(), "main".into()],
+            condition_names: vec!["module".into(), "import".into()],
+            extension_alias,
             tsconfig,
             ..ResolveOptions::default()
         })

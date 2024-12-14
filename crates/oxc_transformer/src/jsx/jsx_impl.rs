@@ -105,9 +105,8 @@ use crate::{
     TransformCtx,
 };
 
-use super::diagnostics;
-
-pub use super::{
+use super::{
+    diagnostics,
     jsx_self::JsxSelf,
     jsx_source::JsxSource,
     options::{JsxOptions, JsxRuntime},
@@ -1112,9 +1111,8 @@ mod test {
     use oxc_syntax::{node::NodeId, scope::ScopeFlags};
     use oxc_traverse::ReusableTraverseCtx;
 
-    use crate::{TransformCtx, TransformOptions};
-
     use super::Pragma;
+    use crate::{TransformCtx, TransformOptions};
 
     macro_rules! setup {
         ($traverse_ctx:ident, $transform_ctx:ident) => {

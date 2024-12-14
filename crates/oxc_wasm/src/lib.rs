@@ -1,14 +1,13 @@
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
-mod options;
-
 use std::{
     cell::{Cell, RefCell},
     path::{Path, PathBuf},
     rc::Rc,
     sync::Arc,
 };
+
+use serde::Serialize;
+use tsify::Tsify;
+use wasm_bindgen::prelude::*;
 
 use oxc::{
     allocator::Allocator,
@@ -26,11 +25,10 @@ use oxc::{
 use oxc_index::Idx;
 use oxc_linter::{Linter, ModuleRecord};
 use oxc_prettier::{Prettier, PrettierOptions};
-use serde::Serialize;
-use tsify::Tsify;
-use wasm_bindgen::prelude::*;
 
 use crate::options::{OxcOptions, OxcRunOptions};
+
+mod options;
 
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"

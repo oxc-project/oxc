@@ -11,15 +11,12 @@ mod jsx_self;
 mod jsx_source;
 mod options;
 mod refresh;
-mod utils;
-use refresh::ReactRefresh;
-
-pub use display_name::ReactDisplayName;
-pub use jsx_impl::JsxImpl;
+pub(crate) use comments::update_options_with_comments;
+use display_name::ReactDisplayName;
+use jsx_impl::JsxImpl;
 use jsx_self::JsxSelf;
 pub use options::{JsxOptions, JsxRuntime, ReactRefreshOptions};
-
-pub(crate) use comments::update_options_with_comments;
+use refresh::ReactRefresh;
 
 /// [Preset React](https://babel.dev/docs/babel-preset-react)
 ///

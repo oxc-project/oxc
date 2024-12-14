@@ -1,14 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>Boshen/renovate"],
+  "extends": ["github>Boshen/renovate", "helpers:pinGitHubActionDigests"],
   "ignorePaths": [
     "crates/oxc_linter/fixtures/**"
-  ],
-  "packageRules": [
-    {
-      "groupName": "rust crates",
-      "matchManagers": ["cargo"],
-      "ignoreDeps": ["syn", "ureq"]
-    }
   ]
 }

@@ -23,8 +23,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptModule<'a, 'ctx> {
         if self.ctx.module.is_commonjs() {
             let has_use_strict = program.directives.iter().any(Directive::is_use_strict);
             if !has_use_strict {
-                let use_strict = ctx.ast.string_literal(SPAN, "use strict", None);
-                program.directives.insert(0, ctx.ast.directive(SPAN, use_strict, "use strict"));
+                program.directives.insert(0, ctx.ast.use_strict_directive());
             }
         }
     }

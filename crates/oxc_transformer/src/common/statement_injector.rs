@@ -14,11 +14,11 @@
 
 use std::cell::RefCell;
 
-use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
+use rustc_hash::FxHashMap;
 
+use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
-use rustc_hash::FxHashMap;
 
 use crate::TransformCtx;
 

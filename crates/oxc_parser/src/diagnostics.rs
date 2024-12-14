@@ -456,6 +456,16 @@ pub fn duplicate_export(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     ])
 }
 
+#[cold]
+pub fn import_meta(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("The only valid meta property for import is import.meta").with_label(span)
+}
+
+#[cold]
+pub fn new_target(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("The only valid meta property for new is new.target").with_label(span)
+}
+
 // ================================= MODIFIERS =================================
 
 #[cold]
@@ -490,6 +500,13 @@ pub fn cannot_appear_on_a_parameter(modifier: &Modifier) -> OxcDiagnostic {
 pub fn cannot_appear_on_an_index_signature(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1071", format!("'{}' modifier cannot appear on an index signature.", modifier.kind))
         .with_label(modifier.span)
+}
+
+/// TS(1354)
+#[cold]
+pub fn readonly_in_array_or_tuple_type(span: Span) -> OxcDiagnostic {
+    ts_error("1354", "'readonly' type modifier is only permitted on array and tuple literal types.")
+        .with_label(span)
 }
 
 /// TS(18010)

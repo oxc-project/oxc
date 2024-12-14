@@ -5,7 +5,10 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_traverse::ReusableTraverseCtx;
 
-use crate::{ast_passes::CompressorPass, ast_passes::RemoveSyntax, CompressOptions};
+use crate::{
+    ast_passes::{CompressorPass, RemoveSyntax},
+    CompressOptions,
+};
 
 pub fn test<'a, P: CompressorPass<'a>>(
     allocator: &'a Allocator,

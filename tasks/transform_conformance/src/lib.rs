@@ -27,6 +27,9 @@ pub struct TestRunnerOptions {
     pub debug: bool,
     pub filter: Option<String>,
     pub exec: bool,
+    /// If it's true, will override the output of dismatch test cases,
+    /// and write it down to `overrides` folder
+    pub r#override: bool,
 }
 
 /// The test runner which walks the babel repository and searches for transformation tests.
@@ -49,6 +52,10 @@ fn conformance_root() -> PathBuf {
 
 fn snap_root() -> PathBuf {
     conformance_root().join("snapshots")
+}
+
+fn override_root() -> PathBuf {
+    conformance_root().join("overrides")
 }
 
 fn oxc_test_root() -> PathBuf {
@@ -151,6 +158,9 @@ impl TestRunner {
                 snapshot.push_str(&case);
                 snapshot.push_str(&format!(" ({}/{})\n", passed.len(), num_of_tests));
                 for test_case in failed {
+                    if self.options.r#override {
+                        test_case.write_override_output();
+                    }
                     snapshot.push_str("* ");
                     snapshot.push_str(&normalize_path(
                         test_case.path.strip_prefix(&case_root).unwrap(),

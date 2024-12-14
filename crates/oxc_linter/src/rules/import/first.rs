@@ -1,3 +1,5 @@
+use std::convert::From;
+
 use oxc_ast::{
     ast::{Statement, TSModuleReference},
     AstKind,
@@ -5,7 +7,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use std::convert::From;
 
 use crate::{context::LintContext, rule::Rule};
 

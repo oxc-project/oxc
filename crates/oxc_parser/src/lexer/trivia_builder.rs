@@ -132,10 +132,11 @@ impl TriviaBuilder {
 
 #[cfg(test)]
 mod test {
-    use crate::Parser;
     use oxc_allocator::Allocator;
     use oxc_ast::{Comment, CommentKind, CommentPosition};
     use oxc_span::{SourceType, Span};
+
+    use crate::Parser;
 
     fn get_comments(source_text: &str) -> Vec<Comment> {
         let allocator = Allocator::default();

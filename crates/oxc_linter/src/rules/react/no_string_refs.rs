@@ -38,6 +38,10 @@ declare_oxc_lint!(
     ///
     /// This rule prevents using string literals in ref attributes.
     ///
+    /// ### Why is this bad?
+    ///
+    /// Using string literals in ref attributes is deprecated in React.
+    ///
     /// ### Example
     ///
     /// Examples of **incorrect** code for this rule:

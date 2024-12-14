@@ -1,11 +1,11 @@
 use std::{fs, str::FromStr};
 
-use oxc_tasks_common::project_root;
-use oxc_transformer::EngineTargets;
-
 use quote::quote;
 use serde::Deserialize;
 use syn::Ident;
+
+use oxc_tasks_common::project_root;
+use oxc_transformer::EngineTargets;
 
 #[derive(Debug, Deserialize)]
 struct Item {
@@ -53,9 +53,10 @@ pub fn generate() {
     let code = quote! {
         #![allow(clippy::enum_glob_use, clippy::match_same_arms)]
 
+        use std::sync::OnceLock;
+
         use browserslist::Version;
         use rustc_hash::FxHashMap;
-        use std::sync::OnceLock;
 
         use super::{Engine, EngineTargets};
 

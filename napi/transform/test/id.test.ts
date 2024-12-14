@@ -1,4 +1,4 @@
-import { assert, describe, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import oxc from '../index';
 
@@ -17,7 +17,7 @@ describe('isolated declaration', () => {
 
   it('matches output', () => {
     const ret = oxc.isolatedDeclaration('test.ts', code, { sourcemap: true });
-    assert.deepEqual(ret, {
+    expect(ret).toStrictEqual({
       code: '/**\n' +
         '* jsdoc 1\n' +
         '*/\n' +

@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_reference, AstNode,
+    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_expression, AstNode,
 };
 
 fn no_length_as_slice_end_diagnostic(call_span: Span, arg_span: Span) -> OxcDiagnostic {
@@ -72,7 +72,7 @@ impl Rule for NoLengthAsSliceEnd {
             return;
         }
 
-        if !is_same_reference(
+        if !is_same_expression(
             call_expr.callee.as_member_expression().unwrap().object(),
             &second_argument.object,
             ctx,

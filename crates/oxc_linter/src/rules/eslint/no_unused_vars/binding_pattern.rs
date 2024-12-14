@@ -1,9 +1,9 @@
 use oxc_ast::ast::*;
 use oxc_semantic::{Semantic, SymbolId};
 
-use super::{symbol::Symbol, NoUnusedVars};
-
 use crate::ModuleRecord;
+
+use super::{symbol::Symbol, NoUnusedVars};
 
 #[derive(Clone, Copy)]
 pub(super) struct BindingContext<'s, 'a> {
