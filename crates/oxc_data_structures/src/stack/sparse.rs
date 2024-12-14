@@ -45,6 +45,7 @@ impl<T> SparseStack<T> {
     ///
     /// [`MAX_TOTAL_CAPACITY`]: Self::MAX_TOTAL_CAPACITY
     pub const MAX_FILLED_CAPACITY: usize = Stack::<T>::MAX_CAPACITY;
+
     /// Maximum capacity for entries (either `Some` or `None`).
     ///
     /// Effectively unlimited on 64-bit systems.
