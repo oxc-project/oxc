@@ -140,7 +140,8 @@ impl TestCase {
             return;
         };
         fs::create_dir_all(override_output_path.parent().unwrap()).unwrap();
-        fs::write(&override_output_path, self.transformed_code.clone()).unwrap();
+        let transformed_code = self.transformed_code.cow_replace("\t", "  ");
+        fs::write(&override_output_path, transformed_code.as_bytes()).unwrap();
     }
 
     pub fn skip_test_case(&self) -> bool {
