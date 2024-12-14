@@ -504,6 +504,7 @@ mod promise {
 
 mod vitest {
     pub mod no_conditional_tests;
+    pub mod no_identical_title;
     pub mod no_import_node_test;
     pub mod prefer_each;
     pub mod prefer_to_be_falsy;
@@ -978,6 +979,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
+    vitest::no_identical_title,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
     vitest::prefer_each,

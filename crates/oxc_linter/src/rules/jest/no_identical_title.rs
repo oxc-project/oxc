@@ -169,7 +169,7 @@ fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<NodeId> {
 fn test() {
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         ("it(); it();", None),
         ("describe(); describe();", None),
         ("describe('foo', () => {}); it('foo', () => {});", None),
@@ -371,7 +371,7 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         (
             "
               describe('foo', () => {
@@ -473,63 +473,7 @@ fn test() {
         // ),
     ];
 
-    let pass_vitest = vec![
-        "
-            suite('parent', () => {
-                suite('child 1', () => {
-                    test('grand child 1', () => {})
-                })
-                suite('child 2', () => {
-                    test('grand child 1', () => {})
-                })
-            })
-        ",
-        "it(); it();",
-        r#"test("two", () => {});"#,
-        "
-            fdescribe('a describe', () => {
-                test('a test', () => {
-                    expect(true).toBe(true);
-                });
-            });
-            fdescribe('another describe', () => {
-                test('a test', () => {
-                    expect(true).toBe(true);
-                });
-            });
-        ",
-        "
-            suite('parent', () => {
-                suite('child 1', () => {
-                    test('grand child 1', () => {})
-                })
-                suite('child 2', () => {
-                    test('grand child 1', () => {})
-                })
-            })
-        ",
-    ];
-
-    let fail_vitest = vec![
-        "
-            describe('foo', () => {
-                it('works', () => {});
-                it('works', () => {});
-            });
-        ",
-        "
-            xdescribe('foo', () => {
-                it('works', () => {});
-                it('works', () => {});
-            });
-        ",
-    ];
-
-    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
-    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
-
     Tester::new(NoIdenticalTitle::NAME, NoIdenticalTitle::CATEGORY, pass, fail)
         .with_jest_plugin(true)
-        .with_vitest_plugin(true)
         .test_and_snapshot();
 }
