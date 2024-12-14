@@ -33,7 +33,7 @@ bb6: {
 }
 
 bb7: {
-
+	statement
 }
 
 bb8: {
@@ -172,7 +172,8 @@ ExpressionStatement" shape = box]
     5 [ label = "bb5" shape = box]
     6 [ label = "bb6
 return" shape = box]
-    7 [ label = "bb7" shape = box]
+    7 [ label = "bb7
+ExportDefaultDeclaration" shape = box]
     8 [ label = "bb8" shape = box]
     9 [ label = "bb9
 return" shape = box]
