@@ -12,7 +12,10 @@ use oxc_ast::{
 };
 use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
+// Re-export flags and ID types
 pub use oxc_syntax::{
+    node::{NodeFlags, NodeId},
+    reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -38,8 +41,8 @@ use class::ClassTable;
 pub use crate::{
     builder::{SemanticBuilder, SemanticBuilderReturn},
     jsdoc::{JSDoc, JSDocFinder, JSDocTag},
-    node::{AstNode, AstNodes, NodeId},
-    reference::{Reference, ReferenceFlags, ReferenceId},
+    node::{AstNode, AstNodes},
+    reference::Reference,
     scope::ScopeTree,
     stats::Stats,
     symbol::{IsGlobalReference, SymbolTable},
