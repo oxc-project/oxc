@@ -42,6 +42,7 @@ impl Minifier {
 
     pub fn build<'a>(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
         Compressor::new(allocator, self.options.compress).build(program);
+        // TODO: pass top_level to mangler
         let mangler = self.options.mangle.then(|| Mangler::default().build(program));
         MinifierReturn { mangler }
     }

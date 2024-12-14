@@ -8,6 +8,7 @@ type Slot = usize;
 
 #[derive(Default)]
 pub struct MangleOptions {
+    pub top_level: bool,
     pub debug: bool,
 }
 
@@ -124,7 +125,7 @@ impl Mangler {
         }
 
         let frequencies =
-            Self::tally_slot_frequencies(&symbol_table, &scope_tree, total_number_of_slots, &slots);
+            self.tally_slot_frequencies(&symbol_table, &scope_tree, total_number_of_slots, &slots);
 
         let root_unresolved_references = scope_tree.root_unresolved_references();
         let root_bindings = scope_tree.get_bindings(scope_tree.root_scope_id());
@@ -142,7 +143,7 @@ impl Mangler {
                 if !is_keyword(n)
                     && !is_special_name(n)
                     && !root_unresolved_references.contains_key(n)
-                    && !root_bindings.contains_key(n)
+                    && (self.options.top_level || !root_bindings.contains_key(n))
                 {
                     break name;
                 }
@@ -201,6 +202,7 @@ impl Mangler {
     }
 
     fn tally_slot_frequencies(
+        &self,
         symbol_table: &SymbolTable,
         scope_tree: &ScopeTree,
         total_number_of_slots: usize,
@@ -209,7 +211,7 @@ impl Mangler {
         let root_scope_id = scope_tree.root_scope_id();
         let mut frequencies = vec![SlotFrequency::default(); total_number_of_slots];
         for (symbol_id, slot) in slots.iter_enumerated() {
-            if symbol_table.get_scope_id(symbol_id) == root_scope_id {
+            if !self.options.top_level && symbol_table.get_scope_id(symbol_id) == root_scope_id {
                 continue;
             }
             if is_special_name(symbol_table.get_name(symbol_id)) {
