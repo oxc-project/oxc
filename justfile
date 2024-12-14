@@ -137,7 +137,7 @@ test-transform *args='':
 # `just submodules` also does this, but this runs faster. Useful when working on transformer.
 update-transformer-fixtures:
   cd tasks/coverage/babel && git reset --hard HEAD && git clean -f -q
-  node tasks/transform_conformance/update_fixtures.js
+  node tasks/transform_conformance/update_fixtures.mjs
 
 # Install wasm-pack
 install-wasm:
