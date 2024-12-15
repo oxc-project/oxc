@@ -235,17 +235,45 @@ impl<'a, 'b> PeepholeFoldConstants {
                 ctx.eval_binary_expression(e).map(|v| ctx.value_to_expr(e.span, v))
             }
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
-                // TODO:
-                // self.try_fold_arithmetic_op(e.span, &e.left, &e.right, ctx)
-                // if (result != subtree) {
-                // return result;
-                // }
-                // return tryFoldLeftChildOp(subtree, left, right);
-                None
+                if let Some(v) = ctx.eval_binary_expression(e) {
+                    return Some(ctx.value_to_expr(e.span, v));
+                }
+                Self::try_fold_left_child_op(e, ctx)
             }
             op if op.is_equality() || op.is_compare() => Self::try_fold_comparison(e, ctx),
             _ => None,
         }
+    }
+
+    fn try_fold_left_child_op(
+        e: &mut BinaryExpression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        let op = e.operator;
+        debug_assert!(matches!(
+            op,
+            BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR
+        ));
+
+        let Expression::BinaryExpression(left) = &mut e.left else {
+            return None;
+        };
+
+        let (v, expr_to_move);
+        if let Some(result) = ctx.eval_binary_operation(op, &left.left, &e.right) {
+            (v, expr_to_move) = (result, &mut left.right);
+        } else if let Some(result) = ctx.eval_binary_operation(op, &left.right, &e.right) {
+            (v, expr_to_move) = (result, &mut left.left);
+        } else {
+            return None;
+        }
+
+        Some(ctx.ast.expression_binary(
+            e.span,
+            ctx.ast.move_expression(expr_to_move),
+            op,
+            ctx.value_to_expr(Span::new(left.right.span().start, e.right.span().end), v),
+        ))
     }
 
     fn try_fold_comparison(e: &BinaryExpression<'a>, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
@@ -1116,6 +1144,133 @@ mod test {
         test("void 1", "void 0");
         test_same("void x");
         test_same("void x()");
+    }
+
+    #[test]
+    fn test_fold_bitwise_op() {
+        test("x = 1 & 1", "x = 1");
+        test("x = 1 & 2", "x = 0");
+        test("x = 3 & 1", "x = 1");
+        test("x = 3 & 3", "x = 3");
+
+        test("x = 1 | 1", "x = 1");
+        test("x = 1 | 2", "x = 3");
+        test("x = 3 | 1", "x = 3");
+        test("x = 3 | 3", "x = 3");
+
+        test("x = 1 ^ 1", "x = 0");
+        test("x = 1 ^ 2", "x = 3");
+        test("x = 3 ^ 1", "x = 2");
+        test("x = 3 ^ 3", "x = 0");
+
+        test("x = -1 & 0", "x = 0");
+        test("x = 0 & -1", "x = 0");
+        test("x = 1 & 4", "x = 0");
+        test("x = 2 & 3", "x = 2");
+
+        // make sure we fold only when we are supposed to -- not when doing so would
+        // lose information or when it is performed on nonsensical arguments.
+        test("x = 1 & 1.1", "x = 1");
+        test("x = 1.1 & 1", "x = 1");
+        test("x = 1 & 3000000000", "x = 0");
+        test("x = 3000000000 & 1", "x = 0");
+
+        // Try some cases with | as well
+        test("x = 1 | 4", "x = 5");
+        test("x = 1 | 3", "x = 3");
+        test("x = 1 | 1.1", "x = 1");
+        // test_same("x = 1 | 3e9");
+
+        // these cases look strange because bitwise OR converts unsigned numbers to be signed
+        test("x = 1 | 3000000001", "x = -1294967295");
+        test("x = 4294967295 | 0", "x = -1");
+    }
+
+    #[test]
+    fn test_fold_bitwise_op2() {
+        test("x = y & 1 & 1", "x = y & 1");
+        test("x = y & 1 & 2", "x = y & 0");
+        test("x = y & 3 & 1", "x = y & 1");
+        test("x = 3 & y & 1", "x = y & 1");
+        test("x = y & 3 & 3", "x = y & 3");
+        test("x = 3 & y & 3", "x = y & 3");
+
+        test("x = y | 1 | 1", "x = y | 1");
+        test("x = y | 1 | 2", "x = y | 3");
+        test("x = y | 3 | 1", "x = y | 3");
+        test("x = 3 | y | 1", "x = y | 3");
+        test("x = y | 3 | 3", "x = y | 3");
+        test("x = 3 | y | 3", "x = y | 3");
+
+        test("x = y ^ 1 ^ 1", "x = y ^ 0");
+        test("x = y ^ 1 ^ 2", "x = y ^ 3");
+        test("x = y ^ 3 ^ 1", "x = y ^ 2");
+        test("x = 3 ^ y ^ 1", "x = y ^ 2");
+        test("x = y ^ 3 ^ 3", "x = y ^ 0");
+        test("x = 3 ^ y ^ 3", "x = y ^ 0");
+
+        test("x = Infinity | NaN", "x=0");
+        test("x = 12 | NaN", "x=12");
+    }
+
+    #[test]
+    fn test_fold_bitwise_op_with_big_int() {
+        test("x = 1n & 1n", "x = 1n");
+        test("x = 1n & 2n", "x = 0n");
+        test("x = 3n & 1n", "x = 1n");
+        test("x = 3n & 3n", "x = 3n");
+
+        test("x = 1n | 1n", "x = 1n");
+        test("x = 1n | 2n", "x = 3n");
+        test("x = 1n | 3n", "x = 3n");
+        test("x = 3n | 1n", "x = 3n");
+        test("x = 3n | 3n", "x = 3n");
+        test("x = 1n | 4n", "x = 5n");
+
+        test("x = 1n ^ 1n", "x = 0n");
+        test("x = 1n ^ 2n", "x = 3n");
+        test("x = 3n ^ 1n", "x = 2n");
+        test("x = 3n ^ 3n", "x = 0n");
+
+        test("x = -1n & 0n", "x = 0n");
+        test("x = 0n & -1n", "x = 0n");
+        test("x = 1n & 4n", "x = 0n");
+        test("x = 2n & 3n", "x = 2n");
+
+        test("x = 1n & 3000000000n", "x = 0n");
+        test("x = 3000000000n & 1n", "x = 0n");
+
+        // bitwise OR does not affect the sign of a bigint
+        test("x = 1n | 3000000001n", "x = 3000000001n");
+        test("x = 4294967295n | 0n", "x = 4294967295n");
+
+        test("x = y & 1n & 1n", "x = y & 1n");
+        test("x = y & 1n & 2n", "x = y & 0n");
+        test("x = y & 3n & 1n", "x = y & 1n");
+        test("x = 3n & y & 1n", "x = y & 1n");
+        test("x = y & 3n & 3n", "x = y & 3n");
+        test("x = 3n & y & 3n", "x = y & 3n");
+
+        test("x = y | 1n | 1n", "x = y | 1n");
+        test("x = y | 1n | 2n", "x = y | 3n");
+        test("x = y | 3n | 1n", "x = y | 3n");
+        test("x = 3n | y | 1n", "x = y | 3n");
+        test("x = y | 3n | 3n", "x = y | 3n");
+        test("x = 3n | y | 3n", "x = y | 3n");
+
+        test("x = y ^ 1n ^ 1n", "x = y ^ 0n");
+        test("x = y ^ 1n ^ 2n", "x = y ^ 3n");
+        test("x = y ^ 3n ^ 1n", "x = y ^ 2n");
+        test("x = 3n ^ y ^ 1n", "x = y ^ 2n");
+        test("x = y ^ 3n ^ 3n", "x = y ^ 0n");
+        test("x = 3n ^ y ^ 3n", "x = y ^ 0n");
+    }
+
+    #[test]
+    fn test_fold_bitwise_op_additional() {
+        test("x = null & 1", "x = 0");
+        test("x = (2 ** 31 - 1) | 1", "x = 2147483647");
+        test("x = (2 ** 31) | 1", "x = -2147483647");
     }
 
     #[test]

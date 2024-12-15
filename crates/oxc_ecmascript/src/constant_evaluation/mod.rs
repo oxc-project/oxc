@@ -198,9 +198,16 @@ pub trait ConstantEvaluation<'a> {
     }
 
     fn eval_binary_expression(&self, e: &BinaryExpression<'a>) -> Option<ConstantValue<'a>> {
-        let left = &e.left;
-        let right = &e.right;
-        match e.operator {
+        self.eval_binary_operation(e.operator, &e.left, &e.right)
+    }
+
+    fn eval_binary_operation(
+        &self,
+        operator: BinaryOperator,
+        left: &Expression<'a>,
+        right: &Expression<'a>,
+    ) -> Option<ConstantValue<'a>> {
+        match operator {
             BinaryOperator::Addition => {
                 if left.may_have_side_effects() || right.may_have_side_effects() {
                     return None;
@@ -230,7 +237,7 @@ pub trait ConstantEvaluation<'a> {
             | BinaryOperator::Exponential => {
                 let lval = self.eval_to_number(left)?;
                 let rval = self.eval_to_number(right)?;
-                let val = match e.operator {
+                let val = match operator {
                     BinaryOperator::Subtraction => lval - rval,
                     BinaryOperator::Division => lval / rval,
                     BinaryOperator::Remainder => {
@@ -264,7 +271,7 @@ pub trait ConstantEvaluation<'a> {
                     let right_val_int = right_val as u32;
                     let bits = left_val.to_int_32();
 
-                    let result_val: f64 = match e.operator {
+                    let result_val: f64 = match operator {
                         BinaryOperator::ShiftLeft => f64::from(bits.wrapping_shl(right_val_int)),
                         BinaryOperator::ShiftRight => f64::from(bits.wrapping_shr(right_val_int)),
                         BinaryOperator::ShiftRightZeroFill => {
@@ -309,6 +316,34 @@ pub trait ConstantEvaluation<'a> {
                     ConstantValue::Boolean(false) => ConstantValue::Boolean(true),
                     _ => unreachable!(),
                 })
+            }
+            BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
+                let left_num = self.get_side_free_number_value(left);
+                let right_num = self.get_side_free_number_value(right);
+                if let (Some(left_val), Some(right_val)) = (left_num, right_num) {
+                    let left_val_int = left_val.to_int_32();
+                    let right_val_int = right_val.to_int_32();
+
+                    let result_val: f64 = match operator {
+                        BinaryOperator::BitwiseAnd => f64::from(left_val_int & right_val_int),
+                        BinaryOperator::BitwiseOR => f64::from(left_val_int | right_val_int),
+                        BinaryOperator::BitwiseXOR => f64::from(left_val_int ^ right_val_int),
+                        _ => unreachable!(),
+                    };
+                    return Some(ConstantValue::Number(result_val));
+                }
+                let left_bitint = self.get_side_free_bigint_value(left);
+                let right_bitint = self.get_side_free_bigint_value(right);
+                if let (Some(left_val), Some(right_val)) = (left_bitint, right_bitint) {
+                    let result_val: BigInt = match operator {
+                        BinaryOperator::BitwiseAnd => left_val & right_val,
+                        BinaryOperator::BitwiseOR => left_val | right_val,
+                        BinaryOperator::BitwiseXOR => left_val ^ right_val,
+                        _ => unreachable!(),
+                    };
+                    return Some(ConstantValue::BigInt(result_val));
+                }
+                None
             }
             _ => None,
         }
