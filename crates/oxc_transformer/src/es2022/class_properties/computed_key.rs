@@ -72,7 +72,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             | Expression::StringLiteral(_) => true,
             Expression::Identifier(ident) => {
                 // Cannot have side effects if is bound.
-                // Additional check that the var is not mutated is required for cases like
+                // Check that the var is not mutated is required for cases like
                 // `let x = 1; class { [x] = 1; [++x] = 2; }`
                 // `++x` is hoisted to before class in output, so `x` in 1st key would get the wrong
                 // value unless it's hoisted out too.
@@ -80,14 +80,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // TODO(improve-on-babel): That case is rare.
                 // Test for it in first pass over class elements, and avoid temp vars where possible.
                 match ctx.symbols().get_reference(ident.reference_id()).symbol_id() {
-                    Some(symbol_id) => {
-                        // TODO: Use `SymbolTable::symbol_is_mutated`
-                        ctx.symbols().get_flags(symbol_id).contains(SymbolFlags::ConstVariable)
-                            || ctx
-                                .symbols()
-                                .get_resolved_references(symbol_id)
-                                .all(|reference| !reference.is_write())
-                    }
+                    Some(symbol_id) => !ctx.symbols().symbol_is_mutated(symbol_id),
                     None => false,
                 }
             }
