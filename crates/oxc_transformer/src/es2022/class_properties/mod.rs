@@ -127,9 +127,12 @@
 //!
 //! * `mod.rs`:                Setup and visitor.
 //! * `class.rs`:              Transform of class body.
+//! * `prop_decl.rs`:          Transform of property declarations (instance and static).
 //! * `constructor.rs`:        Insertion of property initializers into class constructor.
 //! * `instance_prop_init.rs`: Transform of instance property initializers.
 //! * `static_prop_init.rs`:   Transform of static property initializers.
+//! * `static_block.rs`:       Transform of static blocks.
+//! * `computed_key.rs`:       Transform of property/method computed keys.
 //! * `private_field.rs`:      Transform of private fields (`this.#prop`).
 //! * `super.rs`:              Transform `super` expressions.
 //! * `class_bindings.rs`:     Structure containing bindings for class name and temp var.
@@ -159,10 +162,13 @@ use crate::TransformCtx;
 
 mod class;
 mod class_bindings;
+mod computed_key;
 mod constructor;
 mod instance_prop_init;
 mod private_field;
 mod private_props;
+mod prop_decl;
+mod static_block;
 mod static_prop_init;
 mod supers;
 mod utils;
