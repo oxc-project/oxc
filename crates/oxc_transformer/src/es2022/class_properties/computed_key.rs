@@ -116,7 +116,7 @@ fn key_needs_temp_var(key: &Expression, ctx: &TraverseCtx) -> bool {
         // If it *does* have expressions, but they're all literals, then also cannot have side effects,
         // but don't bother checking for that as it shouldn't occur in real world code.
         // Why would you write "`x${9}z`" when you can just write "`x9z`"?
-        // Note: "`x${foo}`" *can* have side effects if `foo` is an object with a `valueOf` method.
+        // Note: "`x${foo}`" *can* have side effects if `foo` is an object with a `toString` method.
         Expression::TemplateLiteral(lit) => !lit.expressions.is_empty(),
         // `IdentifierReference`s can have side effects if is unbound.
         //

@@ -126,7 +126,7 @@ impl<'a> TransformCtx<'a> {
             // If it *does* have expressions, but they're all literals, then also cannot have side effects,
             // but don't bother checking for that as it shouldn't occur in real world code.
             // Why would you write "`x${9}z`" when you can just write "`x9z`"?
-            // Note: "`x${foo}`" *can* have side effects if `foo` is an object with a `valueOf` method.
+            // Note: "`x${foo}`" *can* have side effects if `foo` is an object with a `toString` method.
             Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
                 let references = create_array(|| {
                     ctx.ast.expression_template_literal(
