@@ -65,16 +65,6 @@ mod test {
 
     use super::Capabilities;
 
-    /// this is from build (see help, about):
-    /// Version: 1.95.3 (user setup)
-    /// Commit: f1a4fb101478ce6ec82fe9627c43efbf9e98c813
-    /// Date: 2024-11-13T14:50:04.152Z
-    /// Electron: 32.2.1
-    /// ElectronBuildId: 10427718
-    /// Chromium: 128.0.6613.186
-    /// Node.js: 20.18.0
-    /// V8: 12.8.374.38-electron.0
-    /// OS: Windows_NT x64 10.0.19045
     #[test]
     fn test_code_action_provider_vscode() {
         let client_capabilities = ClientCapabilities {
@@ -82,6 +72,9 @@ mod test {
                 code_action: Some(CodeActionClientCapabilities {
                     code_action_literal_support: Some(CodeActionLiteralSupport {
                         code_action_kind: CodeActionKindLiteralSupport {
+                            // this is from build (see help, about):
+                            // Version: 1.95.3 (user setup)
+                            // Commit: f1a4fb101478ce6ec82fe9627c43efbf9e98c813
                             value_set: vec![
                                 #[allow(clippy::manual_string_new)]
                                 "".into(),
@@ -114,6 +107,8 @@ mod test {
                 code_action: Some(CodeActionClientCapabilities {
                     code_action_literal_support: Some(CodeActionLiteralSupport {
                         code_action_kind: CodeActionKindLiteralSupport {
+                            // this is from build (see help, about):
+                            // Build #IU-243.22562.145, built on December 8, 2024
                             value_set: vec![
                                 "quickfix".into(),
                                 #[allow(clippy::manual_string_new)]
