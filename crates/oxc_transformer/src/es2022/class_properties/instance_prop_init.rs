@@ -26,13 +26,17 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         value: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let mut updater = InstanceInitializerVisitor::new(self, ctx);
-        updater.visit_expression(value);
+        if let Some(constructor_scope_id) = self.instance_inits_constructor_scope_id {
+            // Re-parent first-level scopes, and check for symbol clashes
+            let mut updater = InstanceInitializerVisitor::new(constructor_scope_id, self, ctx);
+            updater.visit_expression(value);
+        } else {
+            // No symbol clashes possible. Just re-parent first-level scopes (faster).
+            let mut updater = FastInstanceInitializerVisitor::new(self, ctx);
+            updater.visit_expression(value);
+        };
     }
 }
-
-// TODO: If no `constructor_scope_id`, then don't need to traverse beyond first-level scope,
-// as all we need to do is update scopes. Add a faster visitor for this more limited traversal.
 
 /// Visitor to change parent scope of first-level scopes in instance property initializer,
 /// and find any `IdentifierReference`s which would be shadowed by bindings in constructor,
@@ -43,10 +47,8 @@ struct InstanceInitializerVisitor<'a, 'v> {
     scope_ids_stack: Stack<ScopeId>,
     /// New parent scope for first-level scopes in initializer
     parent_scope_id: ScopeId,
-    /// Constructor scope, if need to check for clashing bindings with constructor.
-    /// `None` if constructor is newly created, or inits are being inserted in `_super` function
-    /// outside class, because in those cases there are no bindings which can clash.
-    constructor_scope_id: Option<ScopeId>,
+    /// Constructor's scope, for checking symbol clashes against
+    constructor_scope_id: ScopeId,
     /// Clashing symbols
     clashing_symbols: &'v mut FxHashMap<SymbolId, Atom<'a>>,
     /// `TraverseCtx` object.
@@ -55,6 +57,7 @@ struct InstanceInitializerVisitor<'a, 'v> {
 
 impl<'a, 'v> InstanceInitializerVisitor<'a, 'v> {
     fn new(
+        constructor_scope_id: ScopeId,
         class_properties: &'v mut ClassProperties<'a, '_>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
@@ -63,7 +66,7 @@ impl<'a, 'v> InstanceInitializerVisitor<'a, 'v> {
             // to avoid an allocation in most cases
             scope_ids_stack: Stack::new(),
             parent_scope_id: class_properties.instance_inits_scope_id,
-            constructor_scope_id: class_properties.instance_inits_constructor_scope_id,
+            constructor_scope_id,
             clashing_symbols: &mut class_properties.clashing_constructor_symbols,
             ctx,
         }
@@ -90,12 +93,10 @@ impl<'a, 'v> Visit<'a> for InstanceInitializerVisitor<'a, 'v> {
         self.scope_ids_stack.pop();
     }
 
-    // `#[inline]` because this is a hot path
+    // `#[inline]` because this function just delegates to `check_for_symbol_clash`
     #[inline]
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        let Some(constructor_scope_id) = self.constructor_scope_id else { return };
-
-        self.check_for_symbol_clash(ident, constructor_scope_id);
+        self.check_for_symbol_clash(ident);
     }
 }
 
@@ -106,17 +107,13 @@ impl<'a, 'v> InstanceInitializerVisitor<'a, 'v> {
     }
 
     /// Check if symbol referenced by `ident` is shadowed by a binding in constructor's scope.
-    fn check_for_symbol_clash(
-        &mut self,
-        ident: &IdentifierReference<'a>,
-        constructor_scope_id: ScopeId,
-    ) {
+    fn check_for_symbol_clash(&mut self, ident: &IdentifierReference<'a>) {
         // TODO: It would be ideal if could get reference `&Bindings` for constructor
         // in `InstanceInitializerVisitor::new` rather than indexing into `ScopeTree::bindings`
         // with same `ScopeId` every time here, but `ScopeTree` doesn't allow that, and we also
         // take a `&mut ScopeTree` in `reparent_scope`, so borrow-checker doesn't allow that.
         let Some(constructor_symbol_id) =
-            self.ctx.scopes().get_binding(constructor_scope_id, &ident.name)
+            self.ctx.scopes().get_binding(self.constructor_scope_id, &ident.name)
         else {
             return;
         };
@@ -136,5 +133,87 @@ impl<'a, 'v> InstanceInitializerVisitor<'a, 'v> {
 
         // Record the symbol clash. Symbol in constructor needs to be renamed.
         self.clashing_symbols.entry(constructor_symbol_id).or_insert(ident.name.clone());
+    }
+}
+
+/// Visitor to change parent scope of first-level scopes in instance property initializer.
+///
+/// Unlike `InstanceInitializerVisitor`, does not check for symbol clashes.
+///
+/// Therefore only needs to walk until find a node which has a scope. No point continuing to traverse
+/// inside that scope, as by definition and nested scopes can't be first level.
+///
+/// The visitors here are for the only types which can be the first scope reached when starting
+/// traversal from an `Expression`.
+struct FastInstanceInitializerVisitor<'a, 'v> {
+    /// Parent scope
+    parent_scope_id: ScopeId,
+    /// `TraverseCtx` object.
+    ctx: &'v mut TraverseCtx<'a>,
+}
+
+impl<'a, 'v> FastInstanceInitializerVisitor<'a, 'v> {
+    fn new(
+        class_properties: &'v mut ClassProperties<'a, '_>,
+        ctx: &'v mut TraverseCtx<'a>,
+    ) -> Self {
+        Self { parent_scope_id: class_properties.instance_inits_scope_id, ctx }
+    }
+}
+
+impl<'a, 'v> Visit<'a> for FastInstanceInitializerVisitor<'a, 'v> {
+    #[inline]
+    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
+        self.reparent_scope(&func.scope_id);
+    }
+
+    #[inline]
+    fn visit_arrow_function_expression(&mut self, func: &ArrowFunctionExpression<'a>) {
+        self.reparent_scope(&func.scope_id);
+    }
+
+    #[inline]
+    fn visit_class(&mut self, class: &Class<'a>) {
+        // `decorators` is outside `Class`'s scope and can contain scopes itself
+        self.visit_decorators(&class.decorators);
+
+        self.reparent_scope(&class.scope_id);
+    }
+
+    #[inline]
+    fn visit_ts_conditional_type(&mut self, conditional: &TSConditionalType<'a>) {
+        // `check_type` is outside `TSConditionalType`'s scope and can contain scopes itself
+        self.visit_ts_type(&conditional.check_type);
+
+        self.reparent_scope(&conditional.scope_id);
+
+        // `false_type` is outside `TSConditionalType`'s scope and can contain scopes itself
+        self.visit_ts_type(&conditional.false_type);
+    }
+
+    #[inline]
+    fn visit_ts_method_signature(&mut self, signature: &TSMethodSignature<'a>) {
+        self.reparent_scope(&signature.scope_id);
+    }
+
+    #[inline]
+    fn visit_ts_construct_signature_declaration(
+        &mut self,
+        signature: &TSConstructSignatureDeclaration<'a>,
+    ) {
+        self.reparent_scope(&signature.scope_id);
+    }
+
+    #[inline]
+    fn visit_ts_mapped_type(&mut self, mapped: &TSMappedType<'a>) {
+        self.reparent_scope(&mapped.scope_id);
+    }
+}
+
+impl<'a, 'v> FastInstanceInitializerVisitor<'a, 'v> {
+    /// Update parent of scope.
+    fn reparent_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
+        let scope_id = scope_id.get().unwrap();
+        self.ctx.scopes_mut().change_parent_id(scope_id, Some(self.parent_scope_id));
     }
 }
