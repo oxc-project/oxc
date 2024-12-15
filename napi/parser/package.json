@@ -1,11 +1,6 @@
 {
   "name": "@oxc-parser/binding",
   "private": true,
-  "scripts": {
-    "build-dev": "napi build --platform --js bindings.js",
-    "build": "napi build --platform --js bindings.js --release",
-    "test": "vitest --typecheck run ./test"
-  },
   "napi": {
     "binaryName": "parser",
     "targets": [
@@ -22,5 +17,38 @@
   },
   "dependencies": {
     "@oxc-project/types": "workspace:^"
+  },
+  "scripts": {
+    "build-dev": "napi build --platform --js bindings.js",
+    "build": "napi build --platform --js bindings.js --release",
+    "test": "vitest --typecheck run ./test"
+  },
+  "nx": {
+    "targets": {
+      "build-dev": {
+        "inputs": [
+          "rust",
+          "{workspaceRoot}/**/*.rs",
+          "{projectRoot}/src/**/*.rs",
+          "{projectRoot}/tsconfig.json"
+        ],
+        "outputs": [
+          "{projectRoot}/index.d.ts",
+          "{projectRoot}/bindings.js",
+          "{projectRoot}/*.node"
+        ],
+        "cache": true
+      },
+      "test": {
+        "dependsOn": ["build-dev"],
+        "inputs": [
+          "rust",
+          "^rust",
+          "{projectRoot}/test/**",
+          "{projectRoot}/tsconfig.json"
+        ],
+        "cache": true
+      }
+    }
   }
 }

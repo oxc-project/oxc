@@ -6,12 +6,13 @@
     "node": "22.12.0"
   },
   "scripts": {
-    "build": "pnpm --workspace-concurrency=1 --filter './napi/*' build",
-    "build-dev": "pnpm --workspace-concurrency=1 --filter './napi/*' build-dev",
-    "test": "pnpm --workspace-concurrency=1 --filter './napi/*' test"
+    "build": "nx run-many --target build",
+    "build-dev": "nx run-many --target build-dev",
+    "test": "nx run-many --target test"
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
+    "nx": "^20.2.2",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

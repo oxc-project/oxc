@@ -1,11 +1,6 @@
 {
   "name": "@oxc-transform/binding",
   "private": true,
-  "scripts": {
-    "build-dev": "napi build --platform",
-    "build": "napi build --platform --release",
-    "test": "vitest --typecheck run ./test"
-  },
   "napi": {
     "binaryName": "transform",
     "targets": [
@@ -18,5 +13,35 @@
       "x86_64-apple-darwin",
       "aarch64-apple-darwin"
     ]
+  },
+  "scripts": {
+    "build-dev": "napi build --platform",
+    "build": "napi build --platform --release",
+    "test": "vitest --typecheck run ./test"
+  },
+  "nx": {
+    "targets": {
+      "build-dev": {
+        "inputs": [
+          "rust",
+          "{projectRoot}/tsconfig.json",
+          "{workspaceRoot}/crates/**/*.rs"
+        ],
+        "outputs": [
+          "{projectRoot}/index.d.ts",
+          "{projectRoot}/bindings.js",
+          "{projectRoot}/*.node"
+        ],
+        "cache": true
+      },
+      "test": {
+        "dependsOn": ["build-dev"],
+        "inputs": [
+          "{projectRoot}/test/**",
+          "{projectRoot}/tsconfig.json"
+        ],
+        "cache": true
+      }
+    }
   }
 }

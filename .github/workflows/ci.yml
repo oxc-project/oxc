@@ -313,9 +313,7 @@ jobs:
           cache-key: warm
       - uses: ./.github/actions/pnpm
         if: steps.filter.outputs.src == 'true'
-      - run: pnpm run build-dev
-        if: steps.filter.outputs.src == 'true'
-      - run: pnpm run test
+      - run: pnpm nx run-many -t test
         if: steps.filter.outputs.src == 'true'
       - run: git diff --exit-code # Must commit everything
         if: steps.filter.outputs.src == 'true'

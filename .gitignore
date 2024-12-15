@@ -5,6 +5,10 @@ target/
 # Wasm
 **/*.wasm
 
+# nx
+.nx/cache
+.nx/workspace-data
+
 # node_modules
 /node_modules/
 /website/node_modules/
