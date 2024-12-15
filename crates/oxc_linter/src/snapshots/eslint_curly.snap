@@ -1,0 +1,1091 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) bar()
+   ·          ─────
+   ╰────
+  help: Replace `bar()` with `{bar()}`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:2:5]
+ 1 │ if (foo)
+ 2 │              bar()
+   ·              ─────
+   ╰────
+  help: Replace `bar()` with `{bar()}`.
+
+  ⚠ eslint(curly): Expected { after 'else'.
+   ╭─[curly.tsx:1:25]
+ 1 │ if (foo) { bar() } else baz()
+   ·                         ─────
+   ╰────
+  help: Replace `baz()` with `{baz()}`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:34]
+ 1 │ if (foo) { bar() } else if (faa) baz()
+   ·                                  ─────
+   ╰────
+  help: Replace `baz()` with `{baz()}`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:34]
+ 1 │ if (foo) { bar() } else if (faa) baz()
+   ·                                  ─────
+   ╰────
+  help: Replace `baz()` with `{baz()}`.
+
+  ⚠ eslint(curly): Expected { after 'while' condition.
+   ╭─[curly.tsx:1:13]
+ 1 │ while (foo) bar()
+   ·             ─────
+   ╰────
+  help: Replace `bar()` with `{bar()}`.
+
+  ⚠ eslint(curly): Expected { after 'while' condition.
+   ╭─[curly.tsx:2:5]
+ 1 │ while (foo)
+ 2 │              bar()
+   ·              ─────
+   ╰────
+  help: Replace `bar()` with `{bar()}`.
+
+  ⚠ eslint(curly): Expected { after 'do'.
+   ╭─[curly.tsx:1:4]
+ 1 │ do bar(); while (foo)
+   ·    ──────
+   ╰────
+  help: Replace `bar();` with `{bar();}`.
+
+  ⚠ eslint(curly): Expected { after 'do'.
+   ╭─[curly.tsx:2:5]
+ 1 │ do
+ 2 │              bar(); while (foo)
+   ·              ──────
+   ╰────
+  help: Replace `bar();` with `{bar();}`.
+
+  ⚠ eslint(curly): Expected { after 'for' condition.
+   ╭─[curly.tsx:1:13]
+ 1 │ for (;foo;) bar()
+   ·             ─────
+   ╰────
+  help: Replace `bar()` with `{bar()}`.
+
+  ⚠ eslint(curly): Expected { after 'for-in'.
+   ╭─[curly.tsx:1:22]
+ 1 │ for (var foo in bar) console.log(foo)
+   ·                      ────────────────
+   ╰────
+  help: Replace `console.log(foo)` with `{console.log(foo)}`.
+
+  ⚠ eslint(curly): Expected { after 'for-of'.
+   ╭─[curly.tsx:1:22]
+ 1 │ for (var foo of bar) console.log(foo)
+   ·                      ────────────────
+   ╰────
+  help: Replace `console.log(foo)` with `{console.log(foo)}`.
+
+  ⚠ eslint(curly): Expected { after 'for-of'.
+   ╭─[curly.tsx:2:5]
+ 1 │ for (var foo of bar)
+ 2 │              console.log(foo)
+   ·              ────────────────
+   ╰────
+  help: Replace `console.log(foo)` with `{console.log(foo)}`.
+
+  ⚠ eslint(curly): Expected { after 'for' condition.
+   ╭─[curly.tsx:1:11]
+ 1 │ for (a;;) console.log(foo)
+   ·           ────────────────
+   ╰────
+  help: Replace `console.log(foo)` with `{console.log(foo)}`.
+
+  ⚠ eslint(curly): Expected { after 'for' condition.
+   ╭─[curly.tsx:2:5]
+ 1 │ for (a;;)
+ 2 │              console.log(foo)
+   ·              ────────────────
+   ╰────
+  help: Replace `console.log(foo)` with `{console.log(foo)}`.
+
+  ⚠ eslint(curly): Unexpected { after 'for-of'.
+   ╭─[curly.tsx:1:22]
+ 1 │ for (var foo of bar) {console.log(foo)}
+   ·                      ──────────────────
+   ╰────
+  help: Replace `{console.log(foo)}` with `console.log(foo)`.
+
+  ⚠ eslint(curly): Unexpected { after 'do'.
+   ╭─[curly.tsx:1:3]
+ 1 │ do{foo();} while(bar);
+   ·   ────────
+   ╰────
+  help: Replace `{foo();}` with ` foo();`.
+
+  ⚠ eslint(curly): Unexpected { after 'for' condition.
+   ╭─[curly.tsx:1:13]
+ 1 │ for (;foo;) { bar() }
+   ·             ─────────
+   ╰────
+  help: Replace `{ bar() }` with ` bar() `.
+
+  ⚠ eslint(curly): Expected { after 'for' condition.
+   ╭─[curly.tsx:2:5]
+ 1 │ for (;foo;)
+ 2 │              bar()
+   ·              ─────
+   ╰────
+  help: Replace `bar()` with `{bar()}`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { bar() }
+   ·          ─────────
+   ╰────
+  help: Replace `{ bar() }` with ` bar() `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:19]
+ 1 │ if (foo) if (bar) { baz() }
+   ·                   ─────────
+   ╰────
+  help: Replace `{ baz() }` with ` baz() `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:41]
+ 1 │ if (foo) if (bar) baz(); else if (quux) { quuux(); }
+   ·                                         ────────────
+   ╰────
+  help: Replace `{ quuux(); }` with ` quuux(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:41]
+ 1 │ if (foo) if (bar) baz(); else if (quux) { quuux(); }
+   ·                                         ────────────
+   ╰────
+  help: Replace `{ quuux(); }` with ` quuux(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'while' condition.
+   ╭─[curly.tsx:1:13]
+ 1 │ while (foo) { bar() }
+   ·             ─────────
+   ╰────
+  help: Replace `{ bar() }` with ` bar() `.
+
+  ⚠ eslint(curly): Unexpected { after 'else'.
+   ╭─[curly.tsx:1:22]
+ 1 │ if (foo) baz(); else { bar() }
+   ·                      ─────────
+   ╰────
+  help: Replace `{ bar() }` with ` bar() `.
+
+  ⚠ eslint(curly): Unexpected { after 'else'.
+   ╭─[curly.tsx:1:25]
+ 1 │ if (foo) if (bar); else { baz() }
+   ·                         ─────────
+   ╰────
+  help: Replace `{ baz() }` with ` baz() `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:11]
+ 1 │ if (true) { if (false) console.log(1) }
+   ·           ─────────────────────────────
+   ╰────
+  help: Replace `{ if (false) console.log(1) }` with ` if (false) console.log(1) `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { if (b) console.log(1); else console.log(2) } else console.log(3)
+   ·        ──────────────────────────────────────────────
+   ╰────
+  help: Replace `{ if (b) console.log(1); else console.log(2) }` with ` if (b) console.log(1); else console.log(2) `.
+
+  ⚠ eslint(curly): Unexpected { after 'else'.
+    ╭─[curly.tsx:6:11]
+  5 │                     console.log(1)
+  6 │ ╭─▶             } else {
+  7 │ │                   if (2)
+  8 │ │                       console.log(2)
+  9 │ │                   else
+ 10 │ │                       console.log(3)
+ 11 │ ╰─▶             }
+    ╰────
+  help: Replace `{
+        			    if (2)
+        			        console.log(2)
+        			    else
+        			        console.log(3)
+        			}` with `
+        			    if (2)
+        			        console.log(2)
+        			    else
+        			        console.log(3)
+        			`.
+
+  ⚠ eslint(curly): Unexpected { after 'else'.
+    ╭─[curly.tsx:6:11]
+  5 │                     console.log(1)
+  6 │ ╭─▶             } else {
+  7 │ │                   if (2)
+  8 │ │                       console.log(2)
+  9 │ │                   else
+ 10 │ │                       console.log(3)
+ 11 │ ╰─▶             }
+    ╰────
+  help: Replace `{
+        			    if (2)
+        			        console.log(2)
+        			    else
+        			        console.log(3)
+        			}` with `
+        			    if (2)
+        			        console.log(2)
+        			    else
+        			        console.log(3)
+        			`.
+
+  ⚠ eslint(curly): Unexpected { after 'for-in'.
+   ╭─[curly.tsx:1:22]
+ 1 │ for (var foo in bar) { console.log(foo) }
+   ·                      ────────────────────
+   ╰────
+  help: Replace `{ console.log(foo) }` with ` console.log(foo) `.
+
+  ⚠ eslint(curly): Unexpected { after 'for-of'.
+   ╭─[curly.tsx:1:22]
+ 1 │ for (var foo of bar) { console.log(foo) }
+   ·                      ────────────────────
+   ╰────
+  help: Replace `{ console.log(foo) }` with ` console.log(foo) `.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:2:5]
+ 1 │ if (foo)
+ 2 │              baz()
+   ·              ─────
+   ╰────
+  help: Replace `baz()` with `{baz()}`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) baz()
+   ·          ─────
+   ╰────
+  help: Replace `baz()` with `{baz()}`.
+
+  ⚠ eslint(curly): Expected { after 'while' condition.
+   ╭─[curly.tsx:2:5]
+ 1 │ while (foo)
+ 2 │              baz()
+   ·              ─────
+   ╰────
+  help: Replace `baz()` with `{baz()}`.
+
+  ⚠ eslint(curly): Expected { after 'for' condition.
+   ╭─[curly.tsx:2:5]
+ 1 │ for (;foo;)
+ 2 │              bar()
+   ·              ─────
+   ╰────
+  help: Replace `bar()` with `{bar()}`.
+
+  ⚠ eslint(curly): Expected { after 'while' condition.
+   ╭─[curly.tsx:3:5]
+ 2 │              baz)
+ 3 │              foo()
+   ·              ─────
+   ╰────
+  help: Replace `foo()` with `{foo()}`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ ╭─▶ if (foo) bar(baz,
+ 2 │ ╰─▶              baz)
+   ╰────
+  help: Replace `bar(baz,
+        			 baz)` with `{bar(baz,
+        			 baz)}`.
+
+  ⚠ eslint(curly): Expected { after 'do'.
+   ╭─[curly.tsx:1:4]
+ 1 │ do foo(); while (bar)
+   ·    ──────
+   ╰────
+  help: Replace `foo();` with `{foo();}`.
+
+  ⚠ eslint(curly): Expected { after 'do'.
+   ╭─[curly.tsx:2:5]
+ 1 │ do
+ 2 │              foo();
+   ·              ──────
+ 3 │              while (bar)
+   ╰────
+  help: Replace `foo();` with `{foo();}`.
+
+  ⚠ eslint(curly): Unexpected { after 'for-in'.
+   ╭─[curly.tsx:1:22]
+ 1 │ for (var foo in bar) {console.log(foo)}
+   ·                      ──────────────────
+   ╰────
+  help: Replace `{console.log(foo)}` with `console.log(foo)`.
+
+  ⚠ eslint(curly): Expected { after 'for-in'.
+   ╭─[curly.tsx:2:5]
+ 1 │ for (var foo in bar)
+ 2 │              console.log(foo)
+   ·              ────────────────
+   ╰────
+  help: Replace `console.log(foo)` with `{console.log(foo)}`.
+
+  ⚠ eslint(curly): Expected { after 'for-in'.
+   ╭─[curly.tsx:2:5]
+ 1 │ for (var foo in bar)
+ 2 │              console.log(1);
+   ·              ───────────────
+ 3 │              console.log(2)
+   ╰────
+  help: Replace `console.log(1);` with `{console.log(1);}`.
+
+  ⚠ eslint(curly): Expected { after 'for-of'.
+   ╭─[curly.tsx:2:5]
+ 1 │ for (var foo of bar)
+ 2 │              console.log(foo)
+   ·              ────────────────
+   ╰────
+  help: Replace `console.log(foo)` with `{console.log(foo)}`.
+
+  ⚠ eslint(curly): Expected { after 'for-of'.
+   ╭─[curly.tsx:2:5]
+ 1 │ for (var foo of bar)
+ 2 │              console.log(1);
+   ·              ───────────────
+ 3 │              console.log(2)
+   ╰────
+  help: Replace `console.log(1);` with `{console.log(1);}`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:2:5]
+ 1 │     if (foo)
+ 2 │ ╭─▶              quz = {
+ 3 │ │                bar: baz,
+ 4 │ │                qux: foo
+ 5 │ ╰─▶              };
+   ╰────
+  help: Replace `quz = {
+        			 bar: baz,
+        			 qux: foo
+        			 };` with `{quz = {
+        			 bar: baz,
+        			 qux: foo
+        			 };}`.
+
+  ⚠ eslint(curly): Expected { after 'while' condition.
+   ╭─[curly.tsx:2:5]
+ 1 │     while (true)
+ 2 │ ╭─▶              if (foo)
+ 3 │ │                doSomething();
+ 4 │ │                else
+ 5 │ ╰─▶              doSomethingElse();
+ 6 │                 
+   ╰────
+  help: Replace `if (foo)
+        			 doSomething();
+        			 else
+        			 doSomethingElse();` with `{if (foo)
+        			 doSomething();
+        			 else
+        			 doSomethingElse();}`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ ╭─▶ if (foo) {
+ 2 │ │                quz = true;
+ 3 │ ╰─▶              }
+   ╰────
+  help: Replace `{
+        			 quz = true;
+        			 }` with `
+        			 quz = true;
+        			 `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { var bar = 'baz'; }
+   ·          ────────────────────
+   ╰────
+  help: Replace `{ var bar = 'baz'; }` with ` var bar = 'baz'; `.
+
+  ⚠ eslint(curly): Expected { after 'else'.
+   ╭─[curly.tsx:1:28]
+ 1 │ if (foo) { let bar; } else baz();
+   ·                            ──────
+   ╰────
+  help: Replace `baz();` with `{baz();}`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) bar(); else { const baz = 'quux' }
+   ·          ──────
+   ╰────
+  help: Replace `bar();` with `{bar();}`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ ╭─▶ if (foo) {
+ 2 │ │                var bar = 'baz';
+ 3 │ ╰─▶              }
+   ╰────
+  help: Replace `{
+        			 var bar = 'baz';
+        			 }` with `
+        			 var bar = 'baz';
+        			 `.
+
+  ⚠ eslint(curly): Unexpected { after 'while' condition.
+   ╭─[curly.tsx:1:14]
+ 1 │ ╭─▶ while (true) {
+ 2 │ │                doSomething();
+ 3 │ ╰─▶              }
+   ╰────
+  help: Replace `{
+        			 doSomething();
+        			 }` with `
+        			 doSomething();
+        			 `.
+
+  ⚠ eslint(curly): Unexpected { after 'for' condition.
+   ╭─[curly.tsx:1:27]
+ 1 │ ╭─▶ for (var i = 0; foo; i++) {
+ 2 │ │                doSomething();
+ 3 │ ╰─▶              }
+   ╰────
+  help: Replace `{
+        			 doSomething();
+        			 }` with `
+        			 doSomething();
+        			 `.
+
+  ⚠ eslint(curly): Expected { after 'for-in'.
+   ╭─[curly.tsx:1:22]
+ 1 │ for (var foo in bar) if (foo) console.log(1); else console.log(2);
+   ·                      ─────────────────────────────────────────────
+   ╰────
+  help: Replace `if (foo) console.log(1); else console.log(2);` with `{if (foo) console.log(1); else console.log(2);}`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:31]
+ 1 │ for (var foo in bar) if (foo) console.log(1); else console.log(2);
+   ·                               ───────────────
+   ╰────
+  help: Replace `console.log(1);` with `{console.log(1);}`.
+
+  ⚠ eslint(curly): Expected { after 'else'.
+   ╭─[curly.tsx:1:52]
+ 1 │ for (var foo in bar) if (foo) console.log(1); else console.log(2);
+   ·                                                    ───────────────
+   ╰────
+  help: Replace `console.log(2);` with `{console.log(2);}`.
+
+  ⚠ eslint(curly): Expected { after 'for-in'.
+   ╭─[curly.tsx:2:5]
+ 1 │     for (var foo in bar)
+ 2 │ ╭─▶              if (foo) console.log(1);
+ 3 │ ╰─▶              else console.log(2);
+   ╰────
+  help: Replace `if (foo) console.log(1);
+        			 else console.log(2);` with `{if (foo) console.log(1);
+        			 else console.log(2);}`.
+
+  ⚠ eslint(curly): Unexpected { after 'for-in'.
+   ╭─[curly.tsx:1:22]
+ 1 │ for (var foo in bar) { if (foo) console.log(1) }
+   ·                      ───────────────────────────
+   ╰────
+  help: Replace `{ if (foo) console.log(1) }` with ` if (foo) console.log(1) `.
+
+  ⚠ eslint(curly): Expected { after 'for-of'.
+   ╭─[curly.tsx:2:5]
+ 1 │     for (var foo of bar)
+ 2 │ ╭─▶              if (foo) console.log(1);
+ 3 │ ╰─▶              else console.log(2);
+   ╰────
+  help: Replace `if (foo) console.log(1);
+        			 else console.log(2);` with `{if (foo) console.log(1);
+        			 else console.log(2);}`.
+
+  ⚠ eslint(curly): Unexpected { after 'for-of'.
+   ╭─[curly.tsx:1:22]
+ 1 │ for (var foo of bar) { if (foo) console.log(1) }
+   ·                      ───────────────────────────
+   ╰────
+  help: Replace `{ if (foo) console.log(1) }` with ` if (foo) console.log(1) `.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:11]
+ 1 │ if (true) foo();
+   ·           ──────
+ 2 │              else {
+   ╰────
+  help: Replace `foo();` with `{foo();}`.
+
+  ⚠ eslint(curly): Expected { after 'else'.
+   ╭─[curly.tsx:2:10]
+ 1 │ if (true) { foo(); faa(); }
+ 2 │              else bar();
+   ·                   ──────
+   ╰────
+  help: Replace `bar();` with `{bar();}`.
+
+  ⚠ eslint(curly): Unexpected { after 'else'.
+   ╭─[curly.tsx:1:23]
+ 1 │ if (true) foo(); else { baz(); }
+   ·                       ──────────
+   ╰────
+  help: Replace `{ baz(); }` with ` baz(); `.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:11]
+ 1 │ if (true) foo(); else if (true) faa(); else { bar(); baz(); }
+   ·           ──────
+   ╰────
+  help: Replace `foo();` with `{foo();}`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:33]
+ 1 │ if (true) foo(); else if (true) faa(); else { bar(); baz(); }
+   ·                                 ──────
+   ╰────
+  help: Replace `faa();` with `{faa();}`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:33]
+ 1 │ if (true) foo(); else if (true) faa(); else { bar(); baz(); }
+   ·                                 ──────
+   ╰────
+  help: Replace `faa();` with `{faa();}`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:21]
+ 1 │ if (true) if (true) foo(); else { bar(); baz(); }
+   ·                     ──────
+   ╰────
+  help: Replace `foo();` with `{foo();}`.
+
+  ⚠ eslint(curly): Unexpected { after 'do'.
+   ╭─[curly.tsx:1:3]
+ 1 │ do{foo();} while (bar)
+   ·   ────────
+   ╰────
+  help: Replace `{foo();}` with ` foo();`.
+
+  ⚠ eslint(curly): Unexpected { after 'do'.
+   ╭─[curly.tsx:2:4]
+ 1 │ do
+ 2 │             {foo();} while (bar)
+   ·             ────────
+   ╰────
+  help: Replace `{foo();}` with ` foo();`.
+
+  ⚠ eslint(curly): Unexpected { after 'while' condition.
+   ╭─[curly.tsx:1:13]
+ 1 │ while (bar) { foo(); }
+   ·             ──────────
+   ╰────
+  help: Replace `{ foo(); }` with ` foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'while' condition.
+   ╭─[curly.tsx:2:4]
+ 1 │     while (bar)
+ 2 │ ╭─▶             {
+ 3 │ ╰─▶              foo(); }
+   ╰────
+  help: Replace `{
+        			 foo(); }` with `
+        			 foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'for' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ for (;;) { foo(); }
+   ·          ──────────
+   ╰────
+  help: Replace `{ foo(); }` with ` foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'do'.
+   ╭─[curly.tsx:1:3]
+ 1 │ do{[1, 2, 3].map(bar);} while (bar)
+   ·   ─────────────────────
+   ╰────
+  help: Replace `{[1, 2, 3].map(bar);}` with ` [1, 2, 3].map(bar);`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) {bar()} baz()
+   ·          ───────
+   ╰────
+  help: Replace `{bar()}` with `bar()`.
+
+  ⚠ eslint(curly): Unexpected { after 'do'.
+   ╭─[curly.tsx:1:4]
+ 1 │ do {foo();} while (bar)
+   ·    ────────
+   ╰────
+  help: Replace `{foo();}` with ` foo();`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { bar }
+   ·          ───────
+ 2 │             ++baz;
+   ╰────
+  help: Replace `{ bar }` with ` bar `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { bar; }
+   ·          ────────
+ 2 │             ++baz;
+   ╰────
+  help: Replace `{ bar; }` with ` bar; `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { bar++ }
+   ·          ─────────
+ 2 │             baz;
+   ╰────
+  help: Replace `{ bar++ }` with ` bar++ `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { bar }
+   ·          ───────
+ 2 │             [1, 2, 3].map(foo);
+   ╰────
+  help: Replace `{ bar }` with ` bar `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { bar }
+   ·          ───────
+ 2 │             (1).toString();
+   ╰────
+  help: Replace `{ bar }` with ` bar `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { bar }
+   ·          ───────
+ 2 │             /regex/.test('foo');
+   ╰────
+  help: Replace `{ bar }` with ` bar `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { bar }
+   ·          ───────
+ 2 │             Baz();
+   ╰────
+  help: Replace `{ bar }` with ` bar `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { while (bar) {} } else {}
+   ·          ──────────────────
+   ╰────
+  help: Replace `{ while (bar) {} }` with ` while (bar) {} `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { var foo = () => {} } else {}
+   ·          ──────────────────────
+   ╰────
+  help: Replace `{ var foo = () => {} }` with ` var foo = () => {} `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { var foo = function() {} } else {}
+   ·          ───────────────────────────
+   ╰────
+  help: Replace `{ var foo = function() {} }` with ` var foo = function() {} `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ if (foo) { var foo = function*() {} } else {}
+   ·          ────────────────────────────
+   ╰────
+  help: Replace `{ var foo = function*() {} }` with ` var foo = function*() {} `.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:2:4]
+ 1 │     if (true)
+ 2 │ ╭─▶             foo()
+ 3 │ ╰─▶             ;[1, 2, 3].bar()
+   ╰────
+  help: Replace `foo()
+        			;` with `{foo()
+        			;}`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:10]
+ 1 │ ╭─▶ if (foo) {
+ 2 │ │               doSomething()
+ 3 │ │               ;
+ 4 │ ╰─▶             }
+   ╰────
+  help: Replace `{
+        			doSomething()
+        			;
+        			}` with `
+        			doSomething()
+        			;
+        			`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:2:18]
+ 1 │     if (foo) doSomething();
+ 2 │ ╭─▶             else if (bar) {
+ 3 │ │               doSomethingElse()
+ 4 │ │               ;
+ 5 │ ╰─▶             }
+   ╰────
+  help: Replace `{
+        			doSomethingElse()
+        			;
+        			}` with `
+        			doSomethingElse()
+        			;
+        			`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:2:18]
+ 1 │     if (foo) doSomething();
+ 2 │ ╭─▶             else if (bar) {
+ 3 │ │               doSomethingElse()
+ 4 │ │               ;
+ 5 │ ╰─▶             }
+   ╰────
+  help: Replace `{
+        			doSomethingElse()
+        			;
+        			}` with `
+        			doSomethingElse()
+        			;
+        			`.
+
+  ⚠ eslint(curly): Unexpected { after 'else'.
+   ╭─[curly.tsx:2:9]
+ 1 │     if (foo) doSomething();
+ 2 │ ╭─▶             else {
+ 3 │ │               doSomethingElse()
+ 4 │ │               ;
+ 5 │ ╰─▶             }
+   ╰────
+  help: Replace `{
+        			doSomethingElse()
+        			;
+        			}` with `
+        			doSomethingElse()
+        			;
+        			`.
+
+  ⚠ eslint(curly): Unexpected { after 'for' condition.
+   ╭─[curly.tsx:1:27]
+ 1 │ ╭─▶ for (var i = 0; foo; i++) {
+ 2 │ │               doSomething()
+ 3 │ │               ;
+ 4 │ ╰─▶             }
+   ╰────
+  help: Replace `{
+        			doSomething()
+        			;
+        			}` with `
+        			doSomething()
+        			;
+        			`.
+
+  ⚠ eslint(curly): Unexpected { after 'for-in'.
+   ╭─[curly.tsx:1:22]
+ 1 │ ╭─▶ for (var foo in bar) {
+ 2 │ │               doSomething()
+ 3 │ │               ;
+ 4 │ ╰─▶             }
+   ╰────
+  help: Replace `{
+        			doSomething()
+        			;
+        			}` with `
+        			doSomething()
+        			;
+        			`.
+
+  ⚠ eslint(curly): Unexpected { after 'for-of'.
+   ╭─[curly.tsx:1:22]
+ 1 │ ╭─▶ for (var foo of bar) {
+ 2 │ │               doSomething()
+ 3 │ │               ;
+ 4 │ ╰─▶             }
+   ╰────
+  help: Replace `{
+        			doSomething()
+        			;
+        			}` with `
+        			doSomething()
+        			;
+        			`.
+
+  ⚠ eslint(curly): Unexpected { after 'while' condition.
+   ╭─[curly.tsx:1:13]
+ 1 │ ╭─▶ while (foo) {
+ 2 │ │               doSomething()
+ 3 │ │               ;
+ 4 │ ╰─▶             }
+   ╰────
+  help: Replace `{
+        			doSomething()
+        			;
+        			}` with `
+        			doSomething()
+        			;
+        			`.
+
+  ⚠ eslint(curly): Unexpected { after 'do'.
+   ╭─[curly.tsx:1:4]
+ 1 │ ╭─▶ do {
+ 2 │ │               doSomething()
+ 3 │ │               ;
+ 4 │ ╰─▶             } while (foo)
+   ╰────
+  help: Replace `{
+        			doSomething()
+        			;
+        			}` with `
+        			doSomething()
+        			;
+        			`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { if (b) foo(); }
+   ·        ─────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); }` with ` if (b) foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { if (b) foo(); else bar(); }
+   ·        ─────────────────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); else bar(); }` with ` if (b) foo(); else bar(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { if (b) foo(); else bar(); } baz();
+   ·        ─────────────────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); else bar(); }` with ` if (b) foo(); else bar(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { while (cond) if (b) foo(); }
+   ·        ──────────────────────────────
+   ╰────
+  help: Replace `{ while (cond) if (b) foo(); }` with ` while (cond) if (b) foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'while' condition.
+   ╭─[curly.tsx:1:21]
+ 1 │ if (a) while (cond) { if (b) foo(); }
+   ·                     ─────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); }` with ` if (b) foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'while' condition.
+   ╭─[curly.tsx:1:21]
+ 1 │ if (a) while (cond) { if (b) foo(); else bar(); }
+   ·                     ─────────────────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); else bar(); }` with ` if (b) foo(); else bar(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'while' condition.
+   ╭─[curly.tsx:1:23]
+ 1 │ if (a) { while (cond) { if (b) foo(); } bar(); baz() } else quux();
+   ·                       ─────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); }` with ` if (b) foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { if (b) foo(); } bar();
+   ·        ─────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); }` with ` if (b) foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:7]
+ 1 │ if(a) { if (b) foo(); } if (c) bar(); else baz();
+   ·       ─────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); }` with ` if (b) foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { do if (b) foo(); while (cond); } else bar();
+   ·        ──────────────────────────────────
+   ╰────
+  help: Replace `{ do if (b) foo(); while (cond); }` with ` do if (b) foo(); while (cond); `.
+
+  ⚠ eslint(curly): Unexpected { after 'do'.
+   ╭─[curly.tsx:1:11]
+ 1 │ if (a) do { if (b) foo(); } while (cond); else bar();
+   ·           ─────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); }` with `  if (b) foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { if (b) foo(); else bar(); } else baz();
+   ·        ─────────────────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); else bar(); }` with ` if (b) foo(); else bar(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'while' condition.
+   ╭─[curly.tsx:1:21]
+ 1 │ if (a) while (cond) { bar(); } else baz();
+   ·                     ──────────
+   ╰────
+  help: Replace `{ bar(); }` with ` bar(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { for (;;); } else bar();
+   ·        ─────────────
+   ╰────
+  help: Replace `{ for (;;); }` with ` for (;;); `.
+
+  ⚠ eslint(curly): Expected { after 'else'.
+   ╭─[curly.tsx:1:43]
+ 1 │ if (a) { while (cond) if (b) foo() } else bar();
+   ·                                           ──────
+   ╰────
+  help: Replace `bar();` with `{bar();}`.
+
+  ⚠ eslint(curly): Unexpected { after 'else'.
+   ╭─[curly.tsx:3:5]
+ 2 │             else
+ 3 │              {bar();}
+   ·              ────────
+   ╰────
+  help: Replace `{bar();}` with `bar();`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) foo()
+   ·        ─────
+ 2 │             else
+   ╰────
+  help: Replace `foo()` with `{foo()}`.
+
+  ⚠ eslint(curly): Expected { after 'else'.
+   ╭─[curly.tsx:3:5]
+ 2 │             else
+ 3 │              bar();
+   ·              ──────
+   ╰────
+  help: Replace `bar();` with `{bar();}`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { while (cond) if (b) foo() } 
+   ·        ─────────────────────────────
+   ╰────
+  help: Replace `{ while (cond) if (b) foo() }` with ` while (cond) if (b) foo() `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:7]
+ 1 │ if(a) { if (b) foo(); } if (c) bar(); else if(foo){bar();}
+   ·       ─────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); }` with ` if (b) foo(); `.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:51]
+ 1 │ if(a) { if (b) foo(); } if (c) bar(); else if(foo){bar();}
+   ·                                                   ────────
+   ╰────
+  help: Replace `{bar();}` with `bar();`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:51]
+ 1 │ if(a) { if (b) foo(); } if (c) bar(); else if(foo){bar();}
+   ·                                                   ────────
+   ╰────
+  help: Replace `{bar();}` with `bar();`.
+
+  ⚠ eslint(curly): Expected { after 'if' condition.
+   ╭─[curly.tsx:1:11]
+ 1 │ ╭─▶ if (true) [1, 2, 3]
+ 2 │ ╰─▶             .bar()
+   ╰────
+  help: Replace `[1, 2, 3]
+        			.bar()` with `{[1, 2, 3]
+        			.bar()}`.
+
+  ⚠ eslint(curly): Unexpected { after 'for' condition.
+   ╭─[curly.tsx:4:6]
+ 3 │             ;
+ 4 │             ) {foo()}
+   ·               ───────
+   ╰────
+  help: Replace `{foo()}` with `foo()`.
+
+  ⚠ eslint(curly): Expected { after 'for' condition.
+   ╭─[curly.tsx:5:4]
+ 4 │             )
+ 5 │             foo()
+   ·             ─────
+ 6 │             
+   ╰────
+  help: Replace `foo()` with `{foo()}`.
+
+  ⚠ eslint(curly): Unexpected { after 'if' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ if (a) { while (cond) { if (b) foo(); } } else bar();
+   ·        ──────────────────────────────────
+   ╰────
+  help: Replace `{ while (cond) { if (b) foo(); } }` with ` while (cond) { if (b) foo(); } `.
+
+  ⚠ eslint(curly): Unexpected { after 'while' condition.
+   ╭─[curly.tsx:1:23]
+ 1 │ if (a) { while (cond) { if (b) foo(); } } else bar();
+   ·                       ─────────────────
+   ╰────
+  help: Replace `{ if (b) foo(); }` with ` if (b) foo(); `.
+
+  ⚠ eslint(curly): Expected { after 'for' condition.
+   ╭─[curly.tsx:1:8]
+ 1 │ for(;;)foo()
+   ·        ─────
+ 2 │             
+   ╰────
+  help: Replace `foo()` with `{foo()}`.
+
+  ⚠ eslint(curly): Expected { after 'for-in'.
+   ╭─[curly.tsx:4:7]
+ 3 │              in
+ 4 │              z)foo()
+   ·                ─────
+ 5 │             
+   ╰────
+  help: Replace `foo()` with `{foo()}`.
+
+  ⚠ eslint(curly): Expected { after 'for-of'.
+   ╭─[curly.tsx:3:4]
+ 2 │              z)
+ 3 │             foo()
+   ·             ─────
+ 4 │             
+   ╰────
+  help: Replace `foo()` with `{foo()}`.
