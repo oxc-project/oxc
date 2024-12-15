@@ -11,7 +11,8 @@ fn mangle(source_text: &str, top_level: bool) -> String {
     let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = ret.program;
-    let mangler = Mangler::new().with_options(MangleOptions { debug: false, top_level }).build(&program);
+    let mangler =
+        Mangler::new().with_options(MangleOptions { debug: false, top_level }).build(&program);
     CodeGenerator::new().with_mangler(Some(mangler)).build(&program).code
 }
 
@@ -25,9 +26,7 @@ fn mangler() {
         "import { x } from 's'; export { x }",
         "function _ (exports) { Object.defineProperty(exports, '__esModule', { value: true }) }",
     ];
-    let top_level_cases = [
-        "function foo(a) {a}",
-    ];
+    let top_level_cases = ["function foo(a) {a}"];
 
     let mut snapshot = String::new();
     cases.into_iter().fold(&mut snapshot, |w, case| {
