@@ -13,6 +13,7 @@ use oxc::{
     allocator::Allocator,
     ast::{ast::Program, Comment as OxcComment, CommentKind, Visit},
     codegen::{CodeGenerator, CodegenOptions},
+    mangler::MangleOptions,
     minifier::{CompressOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
@@ -269,7 +270,7 @@ impl Oxc {
         {
             let compress_options = minifier_options.compress_options.unwrap_or_default();
             let options = MinifierOptions {
-                mangle: minifier_options.mangle.unwrap_or_default(),
+                mangle: minifier_options.mangle.unwrap_or_default().then(MangleOptions::default),
                 compress: if minifier_options.compress.unwrap_or_default() {
                     CompressOptions {
                         drop_console: compress_options.drop_console,

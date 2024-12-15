@@ -14,16 +14,17 @@ use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;
 
 pub use crate::{ast_passes::CompressorPass, compressor::Compressor, options::CompressOptions};
+pub use oxc_mangler::MangleOptions;
 
 #[derive(Debug, Clone, Copy)]
 pub struct MinifierOptions {
-    pub mangle: bool,
+    pub mangle: Option<MangleOptions>,
     pub compress: CompressOptions,
 }
 
 impl Default for MinifierOptions {
     fn default() -> Self {
-        Self { mangle: true, compress: CompressOptions::default() }
+        Self { mangle: Some(MangleOptions::default()), compress: CompressOptions::default() }
     }
 }
 
@@ -42,8 +43,10 @@ impl Minifier {
 
     pub fn build<'a>(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
         Compressor::new(allocator, self.options.compress).build(program);
-        // TODO: pass top_level to mangler
-        let mangler = self.options.mangle.then(|| Mangler::default().build(program));
+        let mangler = self
+            .options
+            .mangle
+            .map(|options| Mangler::default().with_options(options).build(program));
         MinifierReturn { mangler }
     }
 }

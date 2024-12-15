@@ -8,7 +8,7 @@ use flate2::{write::GzEncoder, Compression};
 use humansize::{format_size, DECIMAL};
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_tasks_common::{project_root, TestFile, TestFiles};
@@ -115,7 +115,10 @@ pub fn run() -> Result<(), io::Error> {
 
 fn minify_twice(file: &TestFile) -> String {
     let source_type = SourceType::from_path(&file.file_name).unwrap();
-    let options = MinifierOptions { mangle: true, compress: CompressOptions::default() };
+    let options = MinifierOptions {
+        mangle: Some(MangleOptions::default()),
+        compress: CompressOptions::default(),
+    };
     let source_text1 = minify(&file.source_text, source_type, options);
     let source_text2 = minify(&source_text1, source_type, options);
     assert!(source_text1 == source_text2, "Minification failed for {}", &file.file_name);

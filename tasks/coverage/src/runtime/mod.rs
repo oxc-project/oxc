@@ -183,7 +183,7 @@ impl Test262RuntimeCase {
         }
 
         let mangler = if minify {
-            Minifier::new(MinifierOptions { mangle: false, ..MinifierOptions::default() })
+            Minifier::new(MinifierOptions { mangle: None, ..MinifierOptions::default() })
                 .build(&allocator, &mut program)
                 .mangler
         } else {

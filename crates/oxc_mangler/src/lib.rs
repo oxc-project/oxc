@@ -6,7 +6,7 @@ use oxc_span::CompactStr;
 
 type Slot = usize;
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
     pub top_level: bool,
     pub debug: bool,
