@@ -2,7 +2,7 @@ commit: 54a8389f
 
 node: v22.12.0
 
-Passed: 189 of 215 (87.91%)
+Passed: 191 of 215 (88.84%)
 
 Failures:
 
@@ -23,14 +23,6 @@ Unexpected token `[`. Expected * for generator, private key, identifier or async
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js
 AssertionError: expected undefined to be 'hello' // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js:22:28
-
-./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-constructor-collision-exec.test.js
-AssertionError: expected undefined to be 'bar' // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-constructor-collision-exec.test.js:18:19
-
-./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-loose-constructor-collision-exec.test.js
-AssertionError: expected undefined to be 'bar' // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-loose-constructor-collision-exec.test.js:21:19
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-loose-nested-class-computed-redeclared-exec.test.js
 Private field '#foo' must be declared in an enclosing class

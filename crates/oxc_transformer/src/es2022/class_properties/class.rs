@@ -411,12 +411,23 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // Existing constructor
             let constructor = constructor.value.as_mut();
             if class.super_class.is_some() {
-                let (instance_inits_scope_id, insert_location) =
+                let (insert_scopes, insert_location) =
                     Self::replace_super_in_constructor(constructor, ctx);
-                self.instance_inits_scope_id = instance_inits_scope_id;
+                self.instance_inits_scope_id = insert_scopes.insert_in_scope_id;
+                self.instance_inits_constructor_scope_id = insert_scopes.constructor_scope_id;
                 Some(insert_location)
             } else {
-                self.instance_inits_scope_id = constructor.scope_id();
+                let constructor_scope_id = constructor.scope_id();
+                self.instance_inits_scope_id = constructor_scope_id;
+                // Only record `constructor_scope_id` if constructor's scope has some bindings.
+                // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
+                // because no bindings to clash with.
+                self.instance_inits_constructor_scope_id =
+                    if ctx.scopes().get_bindings(constructor_scope_id).is_empty() {
+                        None
+                    } else {
+                        Some(constructor_scope_id)
+                    };
                 Some(InstanceInitsInsertLocation::ExistingConstructor(0))
             }
         } else {
@@ -427,6 +438,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 ScopeFlags::Function | ScopeFlags::Constructor | ScopeFlags::StrictMode,
             );
             self.instance_inits_scope_id = constructor_scope_id;
+            self.instance_inits_constructor_scope_id = None;
             Some(InstanceInitsInsertLocation::NewConstructor)
         };
 

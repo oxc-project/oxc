@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 582/927
+Passed: 593/927
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (194/264)
+# babel-plugin-transform-class-properties (205/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -295,16 +295,10 @@ x Output mismatch
 * assumption-setPublicClassFields/computed/input.js
 x Output mismatch
 
-* assumption-setPublicClassFields/constructor-collision/input.js
-x Output mismatch
-
 * assumption-setPublicClassFields/static-infer-name/input.js
 x Output mismatch
 
 * assumption-setPublicClassFields/static-super-loose/input.js
-x Output mismatch
-
-* assumption-setPublicClassFields/super-with-collision/input.js
 x Output mismatch
 
 * class-name-tdz/general/input.js
@@ -339,12 +333,6 @@ x Output mismatch
 x Output mismatch
 
 * private/class-shadow-builtins/input.mjs
-x Output mismatch
-
-* private/constructor-collision/input.js
-x Output mismatch
-
-* private/extracted-this/input.js
 x Output mismatch
 
 * private/nested-class-computed-redeclared/input.js
@@ -384,12 +372,6 @@ x Output mismatch
 x Output mismatch
 
 * private-loose/class-shadow-builtins/input.mjs
-x Output mismatch
-
-* private-loose/constructor-collision/input.js
-x Output mismatch
-
-* private-loose/extracted-this/input.js
 x Output mismatch
 
 * private-loose/nested-class-computed-redeclared/input.js
@@ -463,19 +445,10 @@ x Output mismatch
 * public/computed/input.js
 x Output mismatch
 
-* public/constructor-collision/input.js
-x Output mismatch
-
 * public/delete-super-property/input.js
 x Output mismatch
 
-* public/extracted-this/input.js
-x Output mismatch
-
 * public/static-infer-name/input.js
-x Output mismatch
-
-* public/super-with-collision/input.js
 x Output mismatch
 
 * public-loose/class-shadow-builtins/input.mjs
@@ -484,16 +457,10 @@ x Output mismatch
 * public-loose/computed/input.js
 x Output mismatch
 
-* public-loose/constructor-collision/input.js
-x Output mismatch
-
 * public-loose/static-infer-name/input.js
 x Output mismatch
 
 * public-loose/static-super/input.js
-x Output mismatch
-
-* public-loose/super-with-collision/input.js
 x Output mismatch
 
 * regression/6153/input.js

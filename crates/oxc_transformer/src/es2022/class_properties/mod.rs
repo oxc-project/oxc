@@ -145,13 +145,14 @@
 //! * Class properties TC39 proposal: <https://github.com/tc39/proposal-class-fields>
 
 use indexmap::IndexMap;
-use rustc_hash::FxBuildHasher;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 use serde::Deserialize;
 
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_syntax::scope::ScopeId;
+use oxc_span::Atom;
+use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TransformCtx;
@@ -220,6 +221,12 @@ pub struct ClassProperties<'a, 'ctx> {
     temp_var_is_created: bool,
     /// Scope that instance init initializers will be inserted into
     instance_inits_scope_id: ScopeId,
+    /// `ScopeId` of class constructor, if instance init initializers will be inserted into constructor.
+    /// Used for checking for variable name clashes.
+    /// e.g. `let x; class C { prop = x; constructor(x) {} }` - `x` in constructor needs to be renamed
+    instance_inits_constructor_scope_id: Option<ScopeId>,
+    /// `SymbolId`s in constructor which clash with instance prop initializers
+    clashing_constructor_symbols: FxHashMap<SymbolId, Atom<'a>>,
     /// Expressions to insert before class
     insert_before: Vec<Expression<'a>>,
     /// Expressions to insert after class expression
@@ -252,7 +259,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             class_bindings: ClassBindings::default(),
             temp_var_is_created: false,
             instance_inits_scope_id: ScopeId::new(0),
+            instance_inits_constructor_scope_id: None,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
+            clashing_constructor_symbols: FxHashMap::default(),
             insert_before: vec![],
             insert_after_exprs: vec![],
             insert_after_stmts: vec![],
