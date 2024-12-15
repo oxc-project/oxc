@@ -16,7 +16,7 @@ use super::{
 // Instance properties
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Convert instance property to initialization expression.
-    /// Property `foo = 123;` -> Expression `this.foo = 123` or `_defineProperty(this, "foo", 123)`.
+    /// Property `prop = 123;` -> Expression `this.prop = 123` or `_defineProperty(this, "prop", 123)`.
     pub(super) fn convert_instance_property(
         &mut self,
         prop: &mut PropertyDefinition<'a>,
@@ -82,14 +82,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 // Static properties
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Convert static property to initialization expression.
-    /// Property `static foo = 123;` -> Expression `C.foo = 123` or `_defineProperty(C, "foo", 123)`.
+    /// Property `static prop = 123;` -> Expression `C.prop = 123` or `_defineProperty(C, "prop", 123)`.
     pub(super) fn convert_static_property(
         &mut self,
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Get value, and transform it to replace `this` with reference to class name,
-        // and transform class property accesses (`object.#prop`)
+        // and transform class fields (`object.#prop`)
         let value = match &mut prop.value {
             Some(value) => {
                 self.transform_static_initializer(value, ctx);
@@ -201,7 +201,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
 // Used for both instance and static properties
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
-    /// `assignee.foo = value` or `_defineProperty(assignee, "foo", value)`
+    /// `assignee.prop = value` or `_defineProperty(assignee, "prop", value)`
     fn create_init_assignment(
         &mut self,
         prop: &mut PropertyDefinition<'a>,
@@ -211,15 +211,15 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         if self.set_public_class_fields {
-            // `assignee.foo = value`
+            // `assignee.prop = value`
             self.create_init_assignment_loose(prop, value, assignee, is_static, ctx)
         } else {
-            // `_defineProperty(assignee, "foo", value)`
+            // `_defineProperty(assignee, "prop", value)`
             self.create_init_assignment_not_loose(prop, value, assignee, ctx)
         }
     }
 
-    /// `this.foo = value` or `_Class.foo = value`
+    /// `this.prop = value` or `_Class.prop = value`
     fn create_init_assignment_loose(
         &mut self,
         prop: &mut PropertyDefinition<'a>,
@@ -261,7 +261,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         )
     }
 
-    /// `_defineProperty(this, "foo", value)` or `_defineProperty(_Class, "foo", value)`
+    /// `_defineProperty(this, "prop", value)` or `_defineProperty(_Class, "prop", value)`
     fn create_init_assignment_not_loose(
         &mut self,
         prop: &mut PropertyDefinition<'a>,
