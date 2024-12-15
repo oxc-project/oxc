@@ -13,7 +13,7 @@ use oxc::{
     allocator::Allocator,
     ast::{ast::Program, Comment as OxcComment, CommentKind, Visit},
     codegen::{CodeGenerator, CodegenOptions},
-    minifier::{CompressOptions, Minifier, MinifierOptions, MangleOptions},
+    minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
         dot::{DebugDot, DebugDotContext},
