@@ -128,7 +128,7 @@
 //! * `mod.rs`:                Setup and visitor.
 //! * `class.rs`:              Transform of class body.
 //! * `constructor.rs`:        Insertion of property initializers into class constructor.
-//! * `private.rs`:            Transform of private property usages (`this.#prop`).
+//! * `private_field.rs`:      Transform of private fields (`this.#prop`).
 //! * `private_props.rs`:      Structures storing details of private properties.
 //! * `instance_prop_init.rs`: Transform of instance property initializers.
 //! * `static_prop_init.rs`:   Transform of static property initializers.
@@ -161,7 +161,7 @@ mod class;
 mod class_bindings;
 mod constructor;
 mod instance_prop_init;
-mod private;
+mod private_field;
 mod private_props;
 mod static_prop_init;
 mod supers;
