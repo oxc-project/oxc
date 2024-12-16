@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::String;
 use oxc_span::Span;
 
-use crate::{Prettier, ir::Doc, dynamic_text};
+use crate::{dynamic_text, ir::Doc, Prettier};
 
 pub fn print_string<'a>(p: &Prettier<'a>, raw_text: &str, prefer_single_quote: bool) -> &'a str {
     let enclosing_quote = get_preferred_quote(raw_text, prefer_single_quote);
@@ -70,14 +70,14 @@ pub fn print_number<'a>(p: &Prettier<'a>, raw_text: &str) -> Doc<'a> {
     dynamic_text!(p, &string)
 }
 
-fn get_preferred_quote(raw: &str, prefer_single_quote: bool) -> char {
+pub fn get_preferred_quote(not_quoted_raw_text: &str, prefer_single_quote: bool) -> char {
     let (preferred_quote_char, alternate_quote_char) =
         if prefer_single_quote { ('\'', '"') } else { ('"', '\'') };
 
     let mut preferred_quote_count = 0;
     let mut alternate_quote_count = 0;
 
-    for character in raw.chars() {
+    for character in not_quoted_raw_text.chars() {
         if character == preferred_quote_char {
             preferred_quote_count += 1;
         } else if character == alternate_quote_char {
@@ -92,12 +92,17 @@ fn get_preferred_quote(raw: &str, prefer_single_quote: bool) -> char {
     }
 }
 
-fn make_string<'a>(p: &Prettier<'a>, raw_text: &str, enclosing_quote: char) -> String<'a> {
+fn make_string<'a>(
+    p: &Prettier<'a>,
+    not_quoted_raw_text: &str,
+    enclosing_quote: char,
+) -> String<'a> {
     let other_quote = if enclosing_quote == '"' { '\'' } else { '"' };
     let mut result = String::new_in(p.allocator);
     result.push(enclosing_quote);
 
-    let mut chars = raw_text.chars().peekable();
+    // TODO: Need to handle useless escape
+    let mut chars = not_quoted_raw_text.chars().peekable();
     while let Some(c) = chars.next() {
         match c {
             '\\' => {
