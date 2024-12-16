@@ -71,6 +71,10 @@ pub struct SourcemapBuilder {
     sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
     generated_column: u32,
+    /// Tracks the last accessed line index to optimize sequential lookups in `search_original_line_and_column`.
+    /// Most calls to this method access positions in increasing order (e.g., when mapping source tokens linearly),
+    /// so we can avoid unnecessary binary searches by advancing linearly from this cached index.
+    last_line_lookup: usize,
 }
 
 impl SourcemapBuilder {
@@ -88,6 +92,7 @@ impl SourcemapBuilder {
             sourcemap_builder,
             generated_line: 0,
             generated_column: 0,
+            last_line_lookup: 0,
         }
     }
 
@@ -131,12 +136,22 @@ impl SourcemapBuilder {
 
     #[allow(clippy::cast_possible_truncation)]
     fn search_original_line_and_column(&mut self, position: u32) -> (u32, u32) {
-        let result = self
-            .line_offset_tables
-            .lines
-            .partition_point(|table| table.byte_offset_to_start_of_line <= position);
-        let original_line = if result > 0 { result - 1 } else { 0 };
-        let line = &self.line_offset_tables.lines[original_line];
+        let lines = &self.line_offset_tables.lines;
+        let mut idx = self.last_line_lookup;
+
+        if position >= lines[idx].byte_offset_to_start_of_line {
+            while idx + 1 < lines.len() && lines[idx + 1].byte_offset_to_start_of_line <= position {
+                idx += 1;
+            }
+        } else {
+            while idx > 0 && lines[idx].byte_offset_to_start_of_line > position {
+                idx -= 1;
+            }
+        }
+
+        self.last_line_lookup = idx;
+
+        let line = &lines[idx];
         let mut original_column = position - line.byte_offset_to_start_of_line;
         if let Some(column_offsets_id) = line.column_offsets_id {
             let column_offsets = &self.line_offset_tables.column_offsets[column_offsets_id];
@@ -145,7 +160,7 @@ impl SourcemapBuilder {
                     [(original_column - column_offsets.byte_offset_to_first) as usize];
             }
         }
-        (original_line as u32, original_column)
+        (idx as u32, original_column)
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -462,5 +477,53 @@ mod test {
         builder.add_source_mapping(output, 0, None);
         let sm = builder.into_sourcemap();
         assert_eq!(sm.get_tokens().count(), 2);
+    }
+
+    static SOURCE: &str = "a\nbc\ndef";
+    static MAPPINGS: &[(u32, u32)] = &[
+        (0, 0), // 'a'
+        (0, 1), // '\n'
+        (1, 0), // 'b'
+        (1, 1), // 'c'
+        (1, 2), // '\n'
+        (2, 0), // 'd'
+        (2, 1), // 'e'
+        (2, 2), // 'f'
+        (2, 3), // EOF
+    ];
+
+    #[test]
+    fn test_search_original_line_and_column_sequential() {
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), SOURCE);
+
+        #[expect(clippy::cast_possible_truncation)]
+        for (pos, (expected_line, expected_col)) in MAPPINGS.iter().copied().enumerate() {
+            let (line, col) = builder.search_original_line_and_column(pos as u32);
+            assert_eq!((line, col), (expected_line, expected_col), "Mismatch at position {pos}");
+        }
+    }
+
+    #[test]
+    fn test_search_original_line_and_column_reverse_sequential() {
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), SOURCE);
+
+        #[expect(clippy::cast_possible_truncation)]
+        for (pos, (expected_line, expected_col)) in MAPPINGS.iter().copied().enumerate().rev() {
+            let (line, col) = builder.search_original_line_and_column(pos as u32);
+            assert_eq!((line, col), (expected_line, expected_col), "Mismatch at position {pos}");
+        }
+    }
+
+    #[test]
+    fn test_search_original_line_and_column_non_sequential() {
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), SOURCE);
+
+        let indexes = [8, 0, 7, 1, 6, 2, 5, 3, 4];
+
+        for pos in indexes {
+            let (expected_line, expected_col) = MAPPINGS[pos as usize];
+            let (line, col) = builder.search_original_line_and_column(pos);
+            assert_eq!((line, col), (expected_line, expected_col), "Mismatch at position {pos}");
+        }
     }
 }
