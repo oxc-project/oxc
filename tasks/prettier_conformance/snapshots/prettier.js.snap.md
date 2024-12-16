@@ -1,4 +1,4 @@
-js compatibility: 241/641 (37.60%)
+js compatibility: 242/641 (37.75%)
 
 # Failed
 
@@ -442,7 +442,6 @@ js compatibility: 241/641 (37.60%)
 * js/strings/escaped.js
 * js/strings/multiline-literal.js
 * js/strings/non-octal-eight-and-nine.js
-* js/strings/strings.js
 * js/strings/template-literals.js
 
 ### js/switch

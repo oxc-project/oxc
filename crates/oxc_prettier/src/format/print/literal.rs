@@ -12,8 +12,8 @@ pub fn print_string<'a>(
     prefer_single_quote: bool,
 ) -> &'a str {
     debug_assert!(
-        quoted_raw_text.starts_with("'") && quoted_raw_text.ends_with("'")
-            || quoted_raw_text.starts_with("\"") && quoted_raw_text.ends_with("\"")
+        quoted_raw_text.starts_with('\'') && quoted_raw_text.ends_with('\'')
+            || quoted_raw_text.starts_with('"') && quoted_raw_text.ends_with('"')
     );
     let original_quote = quoted_raw_text.chars().next().unwrap();
     let not_quoted_raw_text = &quoted_raw_text[1..quoted_raw_text.len() - 1];
@@ -125,29 +125,32 @@ fn make_string<'a>(
     enclosing_quote: char,
 ) -> String<'a> {
     let other_quote = if enclosing_quote == '"' { '\'' } else { '"' };
+
     let mut result = String::new_in(p.allocator);
     result.push(enclosing_quote);
 
-    // TODO: Need to handle useless escape
     let mut chars = not_quoted_raw_text.chars().peekable();
     while let Some(c) = chars.next() {
-        match c {
-            '\\' => {
-                if let Some(&next_char) = chars.peek() {
-                    if next_char != other_quote {
-                        result.push('\\');
-                    }
-                    result.push(next_char);
+        if c == '\\' {
+            if let Some(&nc) = chars.peek() {
+                if nc == other_quote {
+                    // Skip(remove) useless escape
                     chars.next();
+                    result.push(nc);
                 } else {
                     result.push('\\');
+                    if let Some(nc) = chars.next() {
+                        result.push(nc);
+                    }
                 }
-            }
-            _ if c == enclosing_quote => {
+            } else {
                 result.push('\\');
-                result.push(c);
             }
-            _ => result.push(c),
+        } else if c == enclosing_quote {
+            result.push('\\');
+            result.push(c);
+        } else {
+            result.push(c);
         }
     }
 
