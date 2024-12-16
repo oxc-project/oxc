@@ -1,3 +1,5 @@
+use std::sync::LazyLock;
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
@@ -27,7 +29,7 @@ struct OrderConfig {
 
 #[derive(Debug, Clone, Deserialize)]
 struct PathGroup {
-    pattern: String,
+    pattern: CompactStr,
     #[serde(rename = "patternOptions")]
     pattern_options: Option<PatternOptions>,
     group: String,
@@ -85,9 +87,42 @@ struct ImportSpecifier {
 #[derive(Debug, PartialEq)]
 enum ImportKind {
     Import,
-    Require,
     ExportFrom,
 }
+
+static BUILTIN_MODULES: LazyLock<rustc_hash::FxHashSet<&'static str>> = LazyLock::new(|| {
+    let mut set = rustc_hash::FxHashSet::default();
+    set.extend([
+        "assert",
+        "buffer",
+        "child_process",
+        "cluster",
+        "crypto",
+        "dgram",
+        "dns",
+        "domain",
+        "events",
+        "fs",
+        "http",
+        "https",
+        "net",
+        "os",
+        "path",
+        "punycode",
+        "querystring",
+        "readline",
+        "stream",
+        "string_decoder",
+        "tls",
+        "tty",
+        "url",
+        "util",
+        "v8",
+        "vm",
+        "zlib",
+    ]);
+    set
+});
 
 declare_oxc_lint!(
     /// ### What it does
@@ -155,6 +190,16 @@ impl Rule for Order {
     }
 }
 
+fn compare_sources(a: &str, b: &str, case_insensitive: bool) -> std::cmp::Ordering {
+    if case_insensitive {
+        let a_chars = a.chars().map(|c| c.to_ascii_lowercase());
+        let b_chars = b.chars().map(|c| c.to_ascii_lowercase());
+        a_chars.cmp(b_chars)
+    } else {
+        a.cmp(b)
+    }
+}
+
 impl Order {
     fn collect_imports(&self, ctx: &LintContext) -> Vec<ImportInfo> {
         let mut imports = Vec::new();
@@ -211,36 +256,6 @@ impl Order {
     }
 
     fn is_builtin_module(&self, source: &str) -> bool {
-        // List of Node.js builtin modules
-        static BUILTIN_MODULES: &[&str] = &[
-            "assert",
-            "buffer",
-            "child_process",
-            "cluster",
-            "crypto",
-            "dgram",
-            "dns",
-            "domain",
-            "events",
-            "fs",
-            "http",
-            "https",
-            "net",
-            "os",
-            "path",
-            "punycode",
-            "querystring",
-            "readline",
-            "stream",
-            "string_decoder",
-            "tls",
-            "tty",
-            "url",
-            "util",
-            "v8",
-            "vm",
-            "zlib",
-        ];
         BUILTIN_MODULES.contains(&source)
     }
 
@@ -305,7 +320,6 @@ impl Order {
                 });
             }
             ImportImportName::NamespaceObject => {
-                // Handle namespace imports (* as name)
                 specifiers.push(ImportSpecifier {
                     name: CompactStr::new(entry.local_name.name()),
                     span: entry.local_name.span(),
@@ -411,15 +425,11 @@ impl Order {
                 continue;
             }
 
-            let prev_source =
-                if case_insensitive { prev.source.to_lowercase() } else { prev.source.to_string() };
-
-            let curr_source =
-                if case_insensitive { curr.source.to_lowercase() } else { curr.source.to_string() };
+            let ordering = compare_sources(&prev.source, &curr.source, case_insensitive);
 
             let is_wrong_order = match order {
-                "asc" => prev_source > curr_source,
-                "desc" => prev_source < curr_source,
+                "asc" => ordering == std::cmp::Ordering::Greater,
+                "desc" => ordering == std::cmp::Ordering::Less,
                 _ => false,
             };
 
