@@ -139,13 +139,28 @@ impl SourcemapBuilder {
         let lines = &self.line_offset_tables.lines;
         let mut idx = self.last_line_lookup;
 
+        // This is a hot path. When building sourcemaps, typically, positions are accessed in increasing order.
+        // e.g. if the last call to this function looked at position `n`, the next call will likely be for `n+1`.
         if position >= lines[idx].byte_offset_to_start_of_line {
-            while idx + 1 < lines.len() && lines[idx + 1].byte_offset_to_start_of_line <= position {
+            let cap = (idx + 20).min(lines.len() - 1);
+            while idx + 1 < cap && lines[idx + 1].byte_offset_to_start_of_line <= position {
                 idx += 1;
             }
+            if lines[idx].byte_offset_to_start_of_line <= position {
+                idx = lines
+                    .partition_point(|table| table.byte_offset_to_start_of_line <= position)
+                    .saturating_sub(1);
+            }
         } else {
-            while idx > 0 && lines[idx].byte_offset_to_start_of_line > position {
+            let cap = idx.saturating_sub(20);
+            while idx > cap && lines[idx].byte_offset_to_start_of_line > position {
                 idx -= 1;
+            }
+
+            if lines[idx].byte_offset_to_start_of_line > position {
+                idx = lines
+                    .partition_point(|table| table.byte_offset_to_start_of_line <= position)
+                    .saturating_sub(1);
             }
         }
 
