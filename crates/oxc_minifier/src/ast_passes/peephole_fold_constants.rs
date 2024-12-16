@@ -1264,6 +1264,11 @@ mod test {
         test("x = 3n ^ y ^ 1n", "x = y ^ 2n");
         test("x = y ^ 3n ^ 3n", "x = y ^ 0n");
         test("x = 3n ^ y ^ 3n", "x = y ^ 0n");
+
+        // TypeError: Cannot mix BigInt and other types
+        test_same("1n & 1");
+        test_same("1n | 1");
+        test_same("1n ^ 1");
     }
 
     #[test]
