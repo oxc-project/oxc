@@ -343,7 +343,8 @@ impl SourcemapBuilder {
 
         if position >= lines[idx].byte_offset_to_start_of_line {
             let cap = (idx + 16).min(lines.len() - 1);
-            while idx + 1 < cap && lines[idx + 1].byte_offset_to_start_of_line <= position {
+            idx = (idx + 1).min(cap);
+            while idx < cap && lines[idx].byte_offset_to_start_of_line <= position {
                 idx += 1;
             }
             if lines[idx].byte_offset_to_start_of_line > position {
@@ -353,6 +354,7 @@ impl SourcemapBuilder {
             }
         } else {
             let cap = idx.saturating_sub(16);
+            idx = idx.saturating_sub(1).max(cap);
             while idx > cap && lines[idx].byte_offset_to_start_of_line > position {
                 idx -= 1;
             }
