@@ -1,8 +1,8 @@
 #![allow(clippy::print_stdout)]
-use std::path::Path;
+use std::{hint::black_box, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
+use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -19,7 +19,7 @@ fn main() {
         args.opt_value_from_str("--babel-options").unwrap_or(None);
     let targets: Option<String> = args.opt_value_from_str("--targets").unwrap_or(None);
     let target: Option<String> = args.opt_value_from_str("--target").unwrap_or(None);
-    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
+    let name = args.free_from_str().unwrap_or_else(|_| "checker.ts".to_string());
 
     let path = Path::new(&name);
     let source_text =
@@ -37,8 +37,8 @@ fn main() {
         }
     }
 
-    println!("Original:\n");
-    println!("{source_text}\n");
+    //println!("Original:\n");
+    //println!("{source_text}\n");
 
     let mut program = ret.program;
 
@@ -72,6 +72,8 @@ fn main() {
         TransformOptions::enable_all()
     };
 
+    //    dbg!(&transform_options);
+
     transform_options.helper_loader.mode = HelperLoaderMode::External;
 
     let ret = Transformer::new(&allocator, path, &transform_options).build_with_symbols_and_scopes(
@@ -87,8 +89,17 @@ fn main() {
             println!("{error:?}");
         }
     }
+    let start = std::time::Instant::now();
 
-    let printed = CodeGenerator::new().build(&program).code;
-    println!("Transformed:\n");
-    println!("{printed}");
+    let printed = CodeGenerator::new()
+        .with_options(CodegenOptions {
+            source_map_path: Some(path.to_path_buf()),
+            ..CodegenOptions::default()
+        })
+        .build(&program)
+        .code;
+
+    black_box(printed);
+
+    println!("Time: {:?}", start.elapsed());
 }
