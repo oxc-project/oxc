@@ -25,3 +25,11 @@ snapshot_kind: text
    ·                           ───
  4 │             
    ╰────
+
+  ⚠ eslint-plugin-import(order): Import from 'lodash' should occur before import from '~/components/MyComponent'
+   ╭─[order.tsx:3:27]
+ 2 │             import MyComponent from '~/components/MyComponent';
+ 3 │             import _ from 'lodash';
+   ·                           ────────
+ 4 │             
+   ╰────

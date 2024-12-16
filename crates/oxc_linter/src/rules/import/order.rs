@@ -13,47 +13,34 @@ struct OrderConfig {
     groups: Option<Vec<CompactStr>>,
     #[serde(rename = "pathGroups")]
     path_groups: Option<Vec<PathGroup>>,
-    #[serde(rename = "pathGroupsExcludedImportTypes")]
-    path_groups_excluded_import_types: Option<Vec<CompactStr>>,
     #[serde(rename = "newlines-between")]
     newlines_between: Option<CompactStr>,
-    named: Option<NamedOrder>,
     alphabetize: Option<Alphabetize>,
-    #[serde(rename = "warnOnUnassignedImports")]
-    warn_on_unassigned_imports: Option<bool>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum PredefinedGroup {
+    Builtin,
+    External,
+    Internal,
+    Parent,
+    Sibling,
+    Index,
+    Object,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 struct PathGroup {
     pattern: CompactStr,
-    #[serde(rename = "patternOptions")]
-    pattern_options: Option<PatternOptions>,
-    group: String,
+    #[serde(rename = "group")]
+    group: PredefinedGroup,
     position: Option<CompactStr>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct PatternOptions {
-    #[serde(rename = "nocomment")]
-    no_comment: Option<bool>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct NamedOrder {
-    enabled: Option<bool>,
-    import: Option<bool>,
-    export: Option<bool>,
-    require: Option<bool>,
-    #[serde(rename = "cjsExports")]
-    cjs_exports: Option<bool>,
-    types: Option<CompactStr>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 struct Alphabetize {
     order: Option<CompactStr>,
-    #[serde(rename = "orderImportKind")]
-    order_import_kind: Option<CompactStr>,
     #[serde(rename = "caseInsensitive")]
     case_insensitive: Option<bool>,
 }
@@ -240,31 +227,116 @@ impl Order {
         config: &OrderConfig,
     ) {
         self.assign_ranks(imports, config);
-
-        if let Some(alphabetize) = &config.alphabetize {
-            self.check_alphabetical_order(ctx, imports, alphabetize);
-        }
-
-        if let Some(newlines_between) = &config.newlines_between {
-            self.check_newlines_between(ctx, imports, newlines_between);
-        }
-
-        self.check_order_violations(ctx, imports);
+        self.check_all_rules(ctx, imports, config);
     }
 
-    fn check_order_violations(&self, ctx: &LintContext, imports: &[ImportInfo]) {
+    fn check_all_rules(&self, ctx: &LintContext, imports: &[ImportInfo], config: &OrderConfig) {
+        if imports.len() <= 1 {
+            return;
+        }
+
+        let source_code = ctx.source_text();
+        let alphabetize = &config.alphabetize;
+        let newlines_setting = config.newlines_between.as_deref();
+
+        // Get alphabetization settings if enabled
+        let (check_alpha, alpha_case_insensitive, alpha_order) = if let Some(alpha) = alphabetize {
+            (
+                alpha.order.as_deref() != Some("ignore"),
+                alpha.case_insensitive.unwrap_or(false),
+                alpha.order.as_deref().unwrap_or("ignore"),
+            )
+        } else {
+            (false, false, "ignore")
+        };
+
+        // Single pass through imports checking all rules
         for i in 1..imports.len() {
             let prev = &imports[i - 1];
             let curr = &imports[i];
 
+            // Check order violations
             if curr.rank < prev.rank {
-                ctx.diagnostic(
-                    OxcDiagnostic::warn(format!(
+                let message = if curr.rank % 100 != 0 {
+                    format!(
+                        "Import from '{}' should occur {} import from '{}'",
+                        curr.source,
+                        if curr.rank % 100 == 50 { "after" } else { "before" },
+                        prev.source
+                    )
+                } else {
+                    format!(
                         "Import from '{}' should occur before import from '{}'",
                         curr.source, prev.source
-                    ))
-                    .with_label(curr.span),
-                );
+                    )
+                };
+                ctx.diagnostic(OxcDiagnostic::warn(message).with_label(curr.span));
+            }
+
+            // Check alphabetical order within same group
+            if check_alpha && prev.rank == curr.rank {
+                let ordering = compare_sources(&prev.source, &curr.source, alpha_case_insensitive);
+                let is_wrong_order = match alpha_order {
+                    "asc" => ordering == std::cmp::Ordering::Greater,
+                    "desc" => ordering == std::cmp::Ordering::Less,
+                    _ => false,
+                };
+
+                if is_wrong_order {
+                    ctx.diagnostic(
+                        OxcDiagnostic::warn(format!(
+                            "Imports must be sorted in {} order. '{}' should be before '{}'.",
+                            alpha_order, curr.source, prev.source
+                        ))
+                        .with_label(curr.span),
+                    );
+                }
+            }
+
+            // Check newlines between imports
+            if let Some(newlines_setting) = newlines_setting {
+                if newlines_setting != "ignore" {
+                    let lines_between = self.count_newlines_between(
+                        source_code,
+                        prev.span.end.try_into().unwrap(),
+                        curr.span.start.try_into().unwrap(),
+                    );
+                    let is_different_group = prev.group != curr.group;
+
+                    match newlines_setting {
+                        "always" => {
+                            if is_different_group && lines_between == 0 {
+                                ctx.diagnostic(
+                                        OxcDiagnostic::warn(
+                                            "There should be at least one empty line between import groups",
+                                        )
+                                        .with_label(curr.span),
+                                    );
+                            }
+                        }
+                        "never" => {
+                            if lines_between > 0 {
+                                ctx.diagnostic(
+                                    OxcDiagnostic::warn(
+                                        "There should be no empty lines between imports",
+                                    )
+                                    .with_label(curr.span),
+                                );
+                            }
+                        }
+                        "always-and-inside-groups" => {
+                            if lines_between == 0 {
+                                ctx.diagnostic(
+                                    OxcDiagnostic::warn(
+                                        "There should be at least one empty line between imports",
+                                    )
+                                    .with_label(curr.span),
+                                );
+                            }
+                        }
+                        _ => {}
+                    }
+                }
             }
         }
     }
@@ -274,7 +346,6 @@ impl Order {
 
         for import in imports.iter_mut() {
             import.rank = self.calculate_rank(&import.group, &group_ranks);
-
             if let Some(path_groups) = &config.path_groups {
                 if let Some(path_group_rank) = self.get_path_group_rank(&import.source, path_groups)
                 {
@@ -307,17 +378,26 @@ impl Order {
     }
 
     fn calculate_rank(&self, group: &str, group_ranks: &FxHashMap<CompactStr, usize>) -> usize {
-        *group_ranks.get(group).unwrap_or(&usize::MAX)
+        match group {
+            "builtin" => 0 * 100,
+            "external" => 1 * 100,
+            "internal" => 2 * 100,
+            "parent" => 3 * 100,
+            "sibling" => 4 * 100,
+            "index" => 5 * 100,
+            _ => *group_ranks.get(group).unwrap_or(&(usize::MAX / 100)) * 100,
+        }
     }
 
     fn get_path_group_rank(&self, source: &str, path_groups: &[PathGroup]) -> Option<usize> {
-        for (index, path_group) in path_groups.iter().enumerate() {
+        for (_, path_group) in path_groups.iter().enumerate() {
             if self.matches_pattern(source, &path_group.pattern) {
-                let base_rank = index * 100;
+                let target_group_rank = self.get_predefined_group_rank(&path_group.group);
+                let base_rank = target_group_rank * 100; // Multiply by 100 to leave space for positioning
 
                 match path_group.position.as_deref() {
-                    Some("before") => return Some(base_rank.saturating_sub(50)),
-                    Some("after") => return Some(base_rank + 50),
+                    Some("before") => return Some(base_rank - 10),
+                    Some("after") => return Some(base_rank + 110), // Add more than 100 to ensure it's after the next group
                     _ => return Some(base_rank),
                 }
             }
@@ -325,122 +405,33 @@ impl Order {
         None
     }
 
+    fn get_predefined_group_rank(&self, group: &PredefinedGroup) -> usize {
+        match group {
+            PredefinedGroup::Builtin => 0,
+            PredefinedGroup::External => 1,
+            PredefinedGroup::Internal => 2,
+            PredefinedGroup::Parent => 3,
+            PredefinedGroup::Sibling => 4,
+            PredefinedGroup::Index => 5,
+            PredefinedGroup::Object => 6,
+        }
+    }
+
     fn matches_pattern(&self, source: &str, pattern: &str) -> bool {
-        // Simple pattern matching implementation
-        // Could be enhanced with proper glob matching
+        // Handle regular glob patterns
         if pattern.contains('*') {
-            let pattern = pattern.replace('*', ".*");
-            regex::Regex::new(&pattern).map(|re| re.is_match(source)).unwrap_or(false)
-        } else {
-            source == pattern
-        }
-    }
-
-    fn check_alphabetical_order(
-        &self,
-        ctx: &LintContext,
-        imports: &[ImportInfo],
-        alphabetize: &Alphabetize,
-    ) {
-        let case_insensitive = alphabetize.case_insensitive.unwrap_or(false);
-        let order = alphabetize.order.as_deref().unwrap_or("ignore");
-
-        if order == "ignore" {
-            return;
+            let regex_pattern = pattern
+                .replace(".", "\\.") // Escape dots
+                .replace("**", "__DOUBLE_STAR__") // Preserve ** pattern
+                .replace('*', "[^/]*") // Single * doesn't match across directories
+                .replace("__DOUBLE_STAR__", ".*"); // ** matches across directories
+            return regex::Regex::new(&format!("^{}$", regex_pattern))
+                .map(|re| re.is_match(source))
+                .unwrap_or(false);
         }
 
-        for window in imports.windows(2) {
-            let prev = &window[0];
-            let curr = &window[1];
-
-            // Only compare imports within the same group
-            if prev.rank != curr.rank {
-                continue;
-            }
-
-            let ordering = compare_sources(&prev.source, &curr.source, case_insensitive);
-
-            let is_wrong_order = match order {
-                "asc" => ordering == std::cmp::Ordering::Greater,
-                "desc" => ordering == std::cmp::Ordering::Less,
-                _ => false,
-            };
-
-            if is_wrong_order {
-                ctx.diagnostic(
-                    OxcDiagnostic::warn(format!(
-                        "Imports must be sorted in {} order. '{}' should be before '{}'.",
-                        order, curr.source, prev.source
-                    ))
-                    .with_label(curr.span),
-                );
-            }
-        }
-    }
-
-    fn check_newlines_between(
-        &self,
-        ctx: &LintContext,
-        imports: &[ImportInfo],
-        newlines_setting: &str,
-    ) {
-        if newlines_setting == "ignore" {
-            return;
-        }
-
-        let source_code = ctx.source_text();
-
-        for window in imports.windows(2) {
-            let prev = &window[0];
-            let curr = &window[1];
-
-            let lines_between = self.count_newlines_between(
-                source_code,
-                prev.span.end.try_into().unwrap(),
-                curr.span.start.try_into().unwrap(),
-            );
-
-            // Only check for newlines when transitioning between different groups
-            let is_different_group = self.is_different_group(prev, curr);
-
-            match newlines_setting {
-                "always" => {
-                    if is_different_group && lines_between == 0 {
-                        ctx.diagnostic(
-                            OxcDiagnostic::warn(
-                                "There should be at least one empty line between import groups",
-                            )
-                            .with_label(curr.span),
-                        );
-                    }
-                }
-                "never" => {
-                    if lines_between > 0 {
-                        ctx.diagnostic(
-                            OxcDiagnostic::warn("There should be no empty lines between imports")
-                                .with_label(curr.span),
-                        );
-                    }
-                }
-                "always-and-inside-groups" => {
-                    if lines_between == 0 {
-                        ctx.diagnostic(
-                            OxcDiagnostic::warn(
-                                "There should be at least one empty line between imports",
-                            )
-                            .with_label(curr.span),
-                        );
-                    }
-                }
-                _ => {}
-            }
-        }
-    }
-
-    fn is_different_group(&self, prev: &ImportInfo, curr: &ImportInfo) -> bool {
-        // Compare the base group names rather than ranks
-        // This ensures we only require newlines between actual different groups
-        prev.group != curr.group
+        // Exact match
+        source == pattern
     }
 
     fn count_newlines_between(&self, source: &str, start: usize, end: usize) -> usize {
@@ -502,6 +493,23 @@ fn test() {
                 "newlines-between": "always"
             })),
         ),
+        // Test with pathGroups
+        (
+            r"
+            import fs from 'fs';
+            import _ from 'lodash';
+            import MyComponent from '~/components/MyComponent';
+            import utils from './utils';
+            ",
+            Some(serde_json::json!({
+                "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+                "pathGroups": [{
+                    "pattern": "~/components/**",
+                    "group": "internal",
+                    "position": "after"
+                }]
+            })),
+        ),
     ];
 
     let fail = vec![
@@ -538,7 +546,40 @@ fn test() {
                 }
             })),
         ),
+        (
+            r"
+            import MyComponent from '~/components/MyComponent';
+            import _ from 'lodash';
+            ",
+            Some(serde_json::json!({
+                "groups": ["builtin", "external", "internal"],
+                "pathGroups": [{
+                    "pattern": "~/components/**",
+                    "group": "internal",
+                    "position": "after"
+                }]
+            })),
+        ),
     ];
 
     Tester::new(Order::NAME, Order::CATEGORY, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn test_matches_pattern() {
+    let order = Order::default();
+
+    // Root-relative paths
+    assert!(order.matches_pattern("~/components/Button", "~/components/**"));
+    assert!(order.matches_pattern("~/components/forms/Input", "~/components/**"));
+    assert!(!order.matches_pattern("other/Button", "~/components/**"));
+
+    // Regular glob patterns
+    assert!(order.matches_pattern("@org/utils", "@org/*"));
+    assert!(order.matches_pattern("@org/deep/nested/util", "@org/**"));
+    assert!(!order.matches_pattern("@org/deep/util", "@org/*"));
+
+    // Exact matches
+    assert!(order.matches_pattern("exact-match", "exact-match"));
+    assert!(!order.matches_pattern("not-exact", "exact-match"));
 }
