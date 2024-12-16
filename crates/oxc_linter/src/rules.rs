@@ -27,6 +27,7 @@ mod import {
     pub mod no_namespace;
     pub mod no_self_import;
     pub mod no_webpack_loader_syntax;
+    pub mod order;
     pub mod unambiguous;
 }
 
@@ -146,7 +147,6 @@ mod eslint {
     pub mod no_var;
     pub mod no_void;
     pub mod no_with;
-    pub mod order;
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
@@ -689,6 +689,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_named_as_default_member,
     import::no_self_import,
     import::no_webpack_loader_syntax,
+    import::order,
     import::unambiguous,
     jest::consistent_test_it,
     jest::expect_expect,
