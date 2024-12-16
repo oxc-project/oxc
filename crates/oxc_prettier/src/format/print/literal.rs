@@ -6,9 +6,36 @@ use oxc_span::Span;
 
 use crate::{dynamic_text, ir::Doc, Prettier};
 
-pub fn print_string<'a>(p: &Prettier<'a>, raw_text: &str, prefer_single_quote: bool) -> &'a str {
-    let enclosing_quote = get_preferred_quote(raw_text, prefer_single_quote);
-    make_string(p, raw_text, enclosing_quote).into_bump_str()
+pub fn print_string<'a>(
+    p: &Prettier<'a>,
+    quoted_raw_text: &'a str,
+    prefer_single_quote: bool,
+) -> &'a str {
+    debug_assert!(
+        quoted_raw_text.starts_with("'") && quoted_raw_text.ends_with("'")
+            || quoted_raw_text.starts_with("\"") && quoted_raw_text.ends_with("\"")
+    );
+    let original_quote = quoted_raw_text.chars().next().unwrap();
+    let not_quoted_raw_text = &quoted_raw_text[1..quoted_raw_text.len() - 1];
+
+    let enclosing_quote = get_preferred_quote(not_quoted_raw_text, prefer_single_quote);
+
+    // This keeps useless escape as-is
+    if original_quote == enclosing_quote {
+        return quoted_raw_text;
+    }
+
+    make_string(p, not_quoted_raw_text, enclosing_quote).into_bump_str()
+}
+
+// TODO: Can this be removed?
+pub fn print_string_from_not_quoted_raw_text<'a>(
+    p: &Prettier<'a>,
+    not_quoted_raw_text: &str,
+    prefer_single_quote: bool,
+) -> &'a str {
+    let enclosing_quote = get_preferred_quote(not_quoted_raw_text, prefer_single_quote);
+    make_string(p, not_quoted_raw_text, enclosing_quote).into_bump_str()
 }
 
 // See https://github.com/prettier/prettier/blob/3.3.3/src/utils/print-number.js

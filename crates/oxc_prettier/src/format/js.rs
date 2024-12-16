@@ -62,7 +62,11 @@ impl<'a> Format<'a> for Directive<'a> {
         let mut parts = Vec::new_in(p.allocator);
         parts.push(dynamic_text!(
             p,
-            literal::print_string(p, self.directive.as_str(), p.options.single_quote,)
+            literal::print_string_from_not_quoted_raw_text(
+                p,
+                self.directive.as_str(),
+                p.options.single_quote,
+            )
         ));
         if let Some(semi) = p.semi() {
             parts.push(semi);
@@ -928,9 +932,15 @@ impl<'a> Format<'a> for RegExpLiteral<'a> {
 impl<'a> Format<'a> for StringLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, StringLiteral, {
-            let raw = &p.source_text[(self.span.start + 1) as usize..(self.span.end - 1) as usize];
-            // TODO: implement `makeString` from prettier/src/utils/print-string.js
-            dynamic_text!(p, literal::print_string(p, raw, p.options.single_quote))
+            dynamic_text!(
+                p,
+                // TODO: `replaceEndOfLine()` to handle line continuation
+                literal::print_string(
+                    p,
+                    self.span.source_text(p.source_text),
+                    p.options.single_quote,
+                )
+            )
         })
     }
 }
@@ -1155,7 +1165,11 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                     if need_quote {
                         dynamic_text!(
                             p,
-                            literal::print_string(p, &ident.name, p.options.single_quote)
+                            literal::print_string_from_not_quoted_raw_text(
+                                p,
+                                &ident.name,
+                                p.options.single_quote
+                            )
                         )
                     } else {
                         ident.format(p)
@@ -1174,7 +1188,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                     } else {
                         dynamic_text!(
                             p,
-                            literal::print_string(
+                            literal::print_string_from_not_quoted_raw_text(
                                 p,
                                 literal.value.as_str(),
                                 p.options.single_quote,
@@ -1186,7 +1200,11 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                     if need_quote {
                         dynamic_text!(
                             p,
-                            literal::print_string(p, &literal.raw_str(), p.options.single_quote)
+                            literal::print_string_from_not_quoted_raw_text(
+                                p,
+                                &literal.raw_str(),
+                                p.options.single_quote
+                            )
                         )
                     } else {
                         literal.format(p)
