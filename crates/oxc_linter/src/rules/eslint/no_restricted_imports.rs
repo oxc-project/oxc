@@ -36,6 +36,8 @@ struct RestrictedPath {
     name: CompactStr,
     #[serde(rename = "importNames")]
     import_names: Option<Box<[CompactStr]>>,
+    #[serde(rename = "allowTypeImports")]
+    allow_type_imports: Option<bool>,
     message: Option<CompactStr>,
 }
 
@@ -83,6 +85,7 @@ impl Rule for NoRestrictedImports {
                             name: CompactStr::new(module_name),
                             import_names: None,
                             message: None,
+                            allow_type_imports: None,
                         });
                     }
                 }
@@ -92,6 +95,7 @@ impl Rule for NoRestrictedImports {
                     name: CompactStr::new(module_name.as_str()),
                     import_names: None,
                     message: None,
+                    allow_type_imports: None,
                 });
             }
             Value::Object(obj) => {
@@ -128,6 +132,10 @@ impl Rule for NoRestrictedImports {
 
         for path in &self.paths.paths {
             for entry in &module_record.import_entries {
+                if path.allow_type_imports.is_some_and(|x| x) && entry.is_type {
+                    continue;
+                }
+
                 let source = entry.module_request.name();
                 let span = entry.module_request.span();
 
@@ -213,7 +221,7 @@ impl Rule for NoRestrictedImports {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         // Basic cases - no matches
         (
             r#"import os from "os";"#,
@@ -266,7 +274,308 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let pass_typescript = vec![
+        ("import foo from 'foo';", None),
+        ("import foo = require('foo');", None),
+        ("import 'foo';", None),
+        ("import foo from 'foo';", Some(serde_json::json!(["import1", "import2"]))),
+        ("import foo = require('foo');", Some(serde_json::json!(["import1", "import2"]))),
+        ("export { foo } from 'foo';", Some(serde_json::json!(["import1", "import2"]))),
+        ("import foo from 'foo';", Some(serde_json::json!([{ "paths": ["import1", "import2"] }]))),
+        (
+            "export { foo } from 'foo';",
+            Some(serde_json::json!([{ "paths": ["import1", "import2"] }])),
+        ),
+        ("import 'foo';", Some(serde_json::json!(["import1", "import2"]))),
+        (
+            "import foo from 'foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": ["import1", "import2"],
+                    "patterns": ["import1/private/*", "import2/*", "!import2/good"],
+                },
+            ])),
+        ),
+        (
+            "export { foo } from 'foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": ["import1", "import2"],
+                    "patterns": ["import1/private/*", "import2/*", "!import2/good"],
+                },
+            ])),
+        ),
+        (
+            "import foo from 'foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "message": "Please use import-bar instead.",
+                            "name": "import-foo",
+                        },
+                        {
+                            "message": "Please use import-quux instead.",
+                            "name": "import-baz",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export { foo } from 'foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "message": "Please use import-bar instead.",
+                            "name": "import-foo",
+                        },
+                        {
+                            "message": "Please use import-quux instead.",
+                            "name": "import-baz",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import foo from 'foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "importNames": ["Bar"],
+                            "message": "Please use Bar from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export { foo } from 'foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "importNames": ["Bar"],
+                            "message": "Please use Bar from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import foo from 'foo';",
+            Some(serde_json::json!([
+                {
+                    "patterns": [
+                        {
+                            "group": ["import1/private/*"],
+                            "message": "usage of import1 private modules not allowed.",
+                        },
+                        {
+                            "group": ["import2/*", "!import2/good"],
+                            "message":"import2 is deprecated, except the modules in import2/good.",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export { foo } from 'foo';",
+            Some(serde_json::json!([
+                {
+                    "patterns": [
+                        {
+                            "group": ["import1/private/*"],
+                            "message": "usage of import1 private modules not allowed.",
+                        },
+                        {
+                            "group": ["import2/*", "!import2/good"],
+                            "message":"import2 is deprecated, except the modules in import2/good.",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import foo = require('foo');",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "importNames": ["foo"],
+                            "message": "Please use Bar from /import-bar/baz/ instead.",
+                            "name": "foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import type foo from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "message": "Please use import-bar instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import type _ = require('import-foo');",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "message": "Please use import-bar instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import type { Bar } from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "importNames": ["Bar"],
+                            "message": "Please use Bar from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export type { Bar } from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "importNames": ["Bar"],
+                            "message": "Please use Bar from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import type foo from 'import1/private/bar';",
+            Some(serde_json::json!([
+                {
+                    "patterns": [
+                        {
+                            "allowTypeImports": true,
+                            "group": ["import1/private/*"],
+                            "message": "usage of import1 private modules not allowed.",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export type { foo } from 'import1/private/bar';",
+            Some(serde_json::json!([
+                {
+                    "patterns": [
+                        {
+                            "allowTypeImports": true,
+                            "group": ["import1/private/*"],
+                            "message": "usage of import1 private modules not allowed.",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        ("export * from 'foo';", Some(serde_json::json!(["import1"]))),
+        (
+            "import type { MyType } from './types';",
+            Some(serde_json::json!([
+                 {
+                     "patterns": [
+                     {
+                         "allowTypeImports": true,
+                         "group": ["fail"],
+                         "message": "Please do not load from \"fail\".",
+                     },
+                 ],
+             },
+            ])),
+        ),
+        // Uncommented because of: × Identifier `foo` has already been declared
+        // (
+        //     "
+        // 	import type { foo } from 'import1/private/bar';
+        // 	import type { foo } from 'import2/private/bar';
+        // 	      ",
+        //     Some(serde_json::json!([
+        //         {
+        //             "patterns": [
+        //                 {
+        //                     "allowTypeImports": true,
+        //                     "group": ["import1/private/*"],
+        //                     "message": "usage of import1 private modules not allowed.",
+        //                 },
+        //                 {
+        //                     "allowTypeImports": true,
+        //                     "group": ["import2/private/*"],
+        //                     "message": "usage of import2 private modules not allowed.",
+        //                 },
+        //             ],
+        //         },
+        //     ])),
+        // ),
+        (
+            "import { type Bar } from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "importNames": ["Bar"],
+                            "message": "Please use Bar from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export { type Bar } from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "importNames": ["Bar"],
+                            "message": "Please use Bar from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        ("import foo from 'foo';", Some(serde_json::json!([]))),
+        ("import foo from 'foo';", Some(serde_json::json!([{"paths": [],},]))),
+        ("import foo from 'foo';", Some(serde_json::json!([{"patterns": [],},]))),
+        ("import foo from 'foo';", Some(serde_json::json!([{"paths": [], "patterns": [],},]))),
+    ];
+
+    let mut fail = vec![
         // Basic restrictions
         (
             r#"import "fs""#,
@@ -332,6 +641,270 @@ fn test() {
             })),
         ),
     ];
+
+    let fail_typescript = vec![
+        ("import foo from 'import1';", Some(serde_json::json!(["import1", "import2"]))),
+        // ("import foo = require('import1');", Some(serde_json::json!(["import1", "import2"]))),
+        ("export { foo } from 'import1';", Some(serde_json::json!(["import1", "import2"]))),
+        (
+            "import foo from 'import1';",
+            Some(serde_json::json!([{ "paths": ["import1", "import2"] }])),
+        ),
+        (
+            "export { foo } from 'import1';",
+            Some(serde_json::json!([{ "paths": ["import1", "import2"] }])),
+        ),
+        (
+            "import foo from 'import1/private/foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": ["import1", "import2"],
+                    "patterns": ["import1/private/*", "import2/*", "!import2/good"],
+                },
+            ])),
+        ),
+        (
+            "export { foo } from 'import1/private/foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": ["import1", "import2"],
+                    "patterns": ["import1/private/*", "import2/*", "!import2/good"],
+                },
+            ])),
+        ),
+        (
+            "import foo from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "message": "Please use import-bar instead.",
+                            "name": "import-foo",
+                        },
+                        {
+                            "message": "Please use import-quux instead.",
+                            "name": "import-baz",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export { foo } from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "message": "Please use import-bar instead.",
+                            "name": "import-foo",
+                        },
+                        {
+                            "message": "Please use import-quux instead.",
+                            "name": "import-baz",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import { Bar } from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "importNames": ["Bar"],
+                            "message": "Please use Bar from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export { Bar } from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "importNames": ["Bar"],
+                            "message": "Please use Bar from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import foo from 'import1/private/foo';",
+            Some(serde_json::json!([
+                {
+                    "patterns": [
+                        {
+                            "group": ["import1/private/*"],
+                            "message": "usage of import1 private modules not allowed.",
+                        },
+                        {
+                            "group": ["import2/*", "!import2/good"],
+                            "message":
+                            "import2 is deprecated, except the modules in import2/good.",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export { foo } from 'import1/private/foo';",
+            Some(serde_json::json!([
+            {
+                "patterns": [
+                    {
+                        "group": ["import1/private/*"],
+                        "message": "usage of import1 private modules not allowed.",
+                    },
+                    {
+                        "group": ["import2/*", "!import2/good"],
+                        "message":
+                        "import2 is deprecated, except the modules in import2/good.",
+                    },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import 'import-foo';",
+            Some(serde_json::json!([{"paths": [{"name": "import-foo",},],},])),
+        ),
+        (
+            "import 'import-foo';",
+            Some(
+                serde_json::json!([{"paths": [{"allowTypeImports": true, "name": "import-foo"}]}]),
+            ),
+        ),
+        (
+            "import foo from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "message": "Please use import-bar instead.",
+                            "name": "import-foo",
+                    },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import foo = require('import-foo');",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "message": "Please use import-bar instead.",
+                            "name": "import-foo",
+                    },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import { Bar } from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "importNames": ["Bar"],
+                            "message": "Please use Bar from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export { Bar } from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "importNames": ["Bar"],
+                            "message": "Please use Bar from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "import foo from 'import1/private/bar';",
+            Some(serde_json::json!([
+                {
+                    "patterns": [
+                        {
+                            "allowTypeImports": true,
+                            "group": ["import1/private/*"],
+                            "message": "usage of import1 private modules not allowed.",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export { foo } from 'import1/private/bar';",
+            Some(serde_json::json!([
+                {
+                    "patterns": [
+                        {
+                            "allowTypeImports": true,
+                            "group": ["import1/private/*"],
+                            "message": "usage of import1 private modules not allowed.",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        ("export * from 'import1';", Some(serde_json::json!(["import1"]))),
+        (
+            "import type { InvalidTestCase } from '@typescript-eslint/utils/dist/ts-eslint';",
+            Some(serde_json::json!([{"patterns": ["@typescript-eslint/utils/dist/*"]}])),
+        ),
+        (
+            "import { Bar, type Baz } from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "importNames": ["Bar", "Baz"],
+                            "message": "Please use Bar and Baz from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+        (
+            "export { Bar, type Baz } from 'import-foo';",
+            Some(serde_json::json!([
+                {
+                    "paths": [
+                        {
+                            "allowTypeImports": true,
+                            "importNames": ["Bar", "Baz"],
+                            "message": "Please use Bar and Baz from /import-bar/baz/ instead.",
+                            "name": "import-foo",
+                        },
+                    ],
+                },
+            ])),
+        ),
+    ];
+
+    pass.extend(pass_typescript);
+    fail.extend(fail_typescript);
 
     Tester::new(NoRestrictedImports::NAME, NoRestrictedImports::CATEGORY, pass, fail)
         .test_and_snapshot();
