@@ -12,13 +12,13 @@ use crate::{
 
 #[derive(Debug, Clone, Deserialize)]
 struct OrderConfig {
-    groups: Option<Vec<String>>,
+    groups: Option<Vec<CompactStr>>,
     #[serde(rename = "pathGroups")]
     path_groups: Option<Vec<PathGroup>>,
     #[serde(rename = "pathGroupsExcludedImportTypes")]
-    path_groups_excluded_import_types: Option<Vec<String>>,
+    path_groups_excluded_import_types: Option<Vec<CompactStr>>,
     #[serde(rename = "newlines-between")]
-    newlines_between: Option<String>,
+    newlines_between: Option<CompactStr>,
     named: Option<NamedOrder>,
     alphabetize: Option<Alphabetize>,
     #[serde(rename = "warnOnUnassignedImports")]
@@ -31,7 +31,7 @@ struct PathGroup {
     #[serde(rename = "patternOptions")]
     pattern_options: Option<PatternOptions>,
     group: String,
-    position: Option<String>,
+    position: Option<CompactStr>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -48,14 +48,14 @@ struct NamedOrder {
     require: Option<bool>,
     #[serde(rename = "cjsExports")]
     cjs_exports: Option<bool>,
-    types: Option<String>,
+    types: Option<CompactStr>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 struct Alphabetize {
-    order: Option<String>,
+    order: Option<CompactStr>,
     #[serde(rename = "orderImportKind")]
-    order_import_kind: Option<String>,
+    order_import_kind: Option<CompactStr>,
     #[serde(rename = "caseInsensitive")]
     case_insensitive: Option<bool>,
 }
@@ -70,7 +70,7 @@ struct ImportInfo {
     source: CompactStr,
     span: Span,
     kind: ImportKind,
-    group: String,
+    group: CompactStr,
     rank: usize,
     specifiers: Vec<ImportSpecifier>,
 }
@@ -169,7 +169,7 @@ impl Order {
                 source: CompactStr::new(source),
                 span,
                 kind: ImportKind::Import,
-                group: self.get_import_group(source),
+                group: CompactStr::new(&self.get_import_group(source).as_str()),
                 rank: 0,
                 specifiers: self.collect_import_specifiers(entry),
             });
@@ -183,7 +183,7 @@ impl Order {
                     source: CompactStr::new(source),
                     span: entry.span,
                     kind: ImportKind::ExportFrom,
-                    group: self.get_import_group(source),
+                    group: CompactStr::new(&self.get_import_group(source).as_str()),
                     rank: 0,
                     specifiers: vec![],
                 });
@@ -334,16 +334,19 @@ impl Order {
         }
     }
 
-    fn get_group_ranks(&self, config: &OrderConfig) -> FxHashMap<String, usize> {
-        let default_groups = vec![
-            "builtin".to_string(),
-            "external".to_string(),
-            "parent".to_string(),
-            "sibling".to_string(),
-            "index".to_string(),
-        ];
+    fn get_group_ranks(&self, config: &OrderConfig) -> FxHashMap<CompactStr, usize> {
+        let mut default_groups = FxHashMap::default();
+        default_groups.insert(CompactStr::new("builtin"), 0);
+        default_groups.insert(CompactStr::new("external"), 1);
+        default_groups.insert(CompactStr::new("parent"), 2);
+        default_groups.insert(CompactStr::new("sibling"), 3);
+        default_groups.insert(CompactStr::new("index"), 4);
 
-        let groups = config.groups.as_ref().unwrap_or(&default_groups);
+        if config.groups.is_none() {
+            return default_groups;
+        }
+
+        let groups = config.groups.as_ref().unwrap();
         let mut ranks = FxHashMap::default();
 
         for (index, group) in groups.iter().enumerate() {
@@ -353,7 +356,7 @@ impl Order {
         ranks
     }
 
-    fn calculate_rank(&self, group: &str, group_ranks: &FxHashMap<String, usize>) -> usize {
+    fn calculate_rank(&self, group: &str, group_ranks: &FxHashMap<CompactStr, usize>) -> usize {
         *group_ranks.get(group).unwrap_or(&usize::MAX)
     }
 
