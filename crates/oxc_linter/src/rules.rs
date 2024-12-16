@@ -35,6 +35,7 @@ mod import {
     pub mod no_unassigned_import;
     pub mod no_webpack_loader_syntax;
     pub mod prefer_default_export;
+    pub mod order;
     pub mod unambiguous;
 }
 
@@ -751,6 +752,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_self_import,
     import::no_webpack_loader_syntax,
     import::prefer_default_export,
+    import::order,
     import::unambiguous,
     jest::consistent_test_it,
     jest::expect_expect,
