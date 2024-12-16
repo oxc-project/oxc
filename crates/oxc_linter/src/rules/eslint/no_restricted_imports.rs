@@ -81,7 +81,9 @@ fn add_configuration_from_object(
     obj: &serde_json::Map<String, serde_json::Value>,
 ) {
     let Some(paths_value) = obj.get("paths") else {
-        if let Ok(path) = serde_json::from_value::<RestrictedPath>(serde_json::Value::Object(obj.clone())) {
+        if let Ok(path) =
+            serde_json::from_value::<RestrictedPath>(serde_json::Value::Object(obj.clone()))
+        {
             paths.push(path);
         }
         return;
@@ -90,7 +92,6 @@ fn add_configuration_from_object(
     let Some(paths_array) = paths_value.as_array() else {
         return;
     };
-
 
     for path_value in paths_array {
         match path_value {
