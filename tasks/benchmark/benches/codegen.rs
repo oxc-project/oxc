@@ -16,41 +16,36 @@ fn bench_codegen(criterion: &mut Criterion) {
         let allocator = Allocator::default();
         let source_text = &file.source_text;
 
-        let mut parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+        // Codegen
+        let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(parser_ret.errors.is_empty());
+        let mut program = parser_ret.program;
 
         let mut group = criterion.benchmark_group("codegen");
-        group.bench_with_input(id.clone(), &parser_ret.program, |b, program| {
-            b.iter_with_large_drop(|| CodeGenerator::new().build(program).map);
+        group.bench_function(id.clone(), |b| {
+            b.iter_with_large_drop(|| CodeGenerator::new().build(&program).map);
         });
         group.finish();
 
-        let transformed_program = {
-            let transform_options = TransformOptions::enable_all();
-            let (symbols, scopes) = SemanticBuilder::new()
-                // Estimate transformer will triple scopes, symbols, references
-                .with_excess_capacity(2.0)
-                .build(&parser_ret.program)
-                .semantic
-                .into_symbol_table_and_scope_tree();
+        // Codegen sourcemap
+        let (symbols, scopes) =
+            SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
 
-            let transformer_ret =
-                Transformer::new(&allocator, Path::new(&file.file_name), &transform_options)
-                    .build_with_symbols_and_scopes(symbols, scopes, &mut parser_ret.program);
-
-            assert!(transformer_ret.errors.is_empty());
-            parser_ret.program
-        };
+        let transform_options = TransformOptions::enable_all();
+        let transformer_ret =
+            Transformer::new(&allocator, Path::new(&file.file_name), &transform_options)
+                .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+        assert!(transformer_ret.errors.is_empty());
 
         let mut group = criterion.benchmark_group("codegen_sourcemap");
-        group.bench_with_input(id, &transformed_program, |b, program| {
+        group.bench_function(id, |b| {
             b.iter_with_large_drop(|| {
                 CodeGenerator::new()
                     .with_options(CodegenOptions {
                         source_map_path: Some(PathBuf::from(&file.file_name)),
                         ..CodegenOptions::default()
                     })
-                    .build(program)
+                    .build(&program)
             });
         });
         group.finish();
