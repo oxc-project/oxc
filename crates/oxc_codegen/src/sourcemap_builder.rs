@@ -136,35 +136,11 @@ impl SourcemapBuilder {
 
     #[allow(clippy::cast_possible_truncation)]
     fn search_original_line_and_column(&mut self, position: u32) -> (u32, u32) {
-        let lines = &self.line_offset_tables.lines;
-        let mut idx = self.last_line_lookup;
-
-        // This is a hot path. When building sourcemaps, typically, positions are accessed in increasing order.
-        // e.g. if the last call to this function looked at position `n`, the next call will likely be for `n+1`.
-        if position >= lines[idx].byte_offset_to_start_of_line {
-            let cap = (idx + 16).min(lines.len() - 1);
-            while idx + 1 < cap && lines[idx + 1].byte_offset_to_start_of_line <= position {
-                idx += 1;
-            }
-            if lines[idx].byte_offset_to_start_of_line <= position {
-                idx = lines
-                    .partition_point(|table| table.byte_offset_to_start_of_line <= position)
-                    .saturating_sub(1);
-            }
-        } else {
-            let cap = idx.saturating_sub(16);
-            while idx > cap && lines[idx].byte_offset_to_start_of_line > position {
-                idx -= 1;
-            }
-
-            if lines[idx].byte_offset_to_start_of_line > position {
-                idx = lines
-                    .partition_point(|table| table.byte_offset_to_start_of_line <= position)
-                    .saturating_sub(1);
-            }
-        }
+        let idx = self.search_line_index(position);
 
         self.last_line_lookup = idx;
+
+        let lines = &self.line_offset_tables.lines;
 
         let line = &lines[idx];
         let mut original_column = position - line.byte_offset_to_start_of_line;
@@ -359,6 +335,35 @@ impl SourcemapBuilder {
         }
 
         LineOffsetTables { lines, column_offsets }
+    }
+
+    fn search_line_index(&mut self, position: u32) -> usize {
+        let lines = &self.line_offset_tables.lines;
+        let mut idx = self.last_line_lookup;
+
+        if position >= lines[idx].byte_offset_to_start_of_line {
+            let cap = (idx + 16).min(lines.len() - 1);
+            while idx + 1 < cap && lines[idx + 1].byte_offset_to_start_of_line <= position {
+                idx += 1;
+            }
+            if lines[idx].byte_offset_to_start_of_line > position {
+                idx = lines
+                    .partition_point(|table| table.byte_offset_to_start_of_line <= position)
+                    .saturating_sub(1);
+            }
+        } else {
+            let cap = idx.saturating_sub(16);
+            while idx > cap && lines[idx].byte_offset_to_start_of_line > position {
+                idx -= 1;
+            }
+            if lines[idx].byte_offset_to_start_of_line < position {
+                idx = lines
+                    .partition_point(|table| table.byte_offset_to_start_of_line <= position)
+                    .saturating_sub(1);
+            }
+        }
+
+        idx
     }
 }
 
