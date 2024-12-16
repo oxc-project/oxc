@@ -31,7 +31,7 @@ The progress of all rule implementations is tracked [here](https://github.com/ox
 - 💡: a suggestion is available for this rule
 - ⚠️🛠️: a dangerous auto-fix is available for this rule
 - ⚠️💡: a dangerous suggestion is available for this rule
-- 🚧: a auto-fix or suggestion is possible, but currently not implemented
+- 🚧: an auto-fix or suggestion is possible, but currently not implemented
 
 {body}
 ")
