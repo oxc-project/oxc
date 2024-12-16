@@ -6,11 +6,7 @@ use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use crate::{
-    context::LintContext,
-    module_record::{ImportEntry, ImportImportName},
-    rule::Rule,
-};
+use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Clone, Deserialize)]
 struct OrderConfig {
@@ -71,23 +67,8 @@ pub struct Order {
 struct ImportInfo {
     source: CompactStr,
     span: Span,
-    kind: ImportKind,
     group: CompactStr,
     rank: usize,
-    specifiers: Vec<ImportSpecifier>,
-}
-
-#[derive(Debug)]
-struct ImportSpecifier {
-    name: CompactStr,
-    span: Span,
-    is_type: bool,
-}
-
-#[derive(Debug, PartialEq)]
-enum ImportKind {
-    Import,
-    ExportFrom,
 }
 
 static BUILTIN_MODULES: LazyLock<rustc_hash::FxHashSet<&'static str>> = LazyLock::new(|| {
@@ -213,10 +194,8 @@ impl Order {
             imports.push(ImportInfo {
                 source: CompactStr::new(source),
                 span,
-                kind: ImportKind::Import,
-                group: CompactStr::new(&self.get_import_group(source).as_str()),
+                group: CompactStr::new(self.get_import_group(source).as_str()),
                 rank: 0,
-                specifiers: self.collect_import_specifiers(entry),
             });
         }
 
@@ -227,10 +206,8 @@ impl Order {
                 imports.push(ImportInfo {
                     source: CompactStr::new(source),
                     span: entry.span,
-                    kind: ImportKind::ExportFrom,
-                    group: CompactStr::new(&self.get_import_group(source).as_str()),
+                    group: CompactStr::new(self.get_import_group(source).as_str()),
                     rank: 0,
-                    specifiers: vec![],
                 });
             }
         }
@@ -297,38 +274,6 @@ impl Order {
                 );
             }
         }
-    }
-
-    // Helper methods
-    // 1. Helper functions for import collection and processing
-    fn collect_import_specifiers(&self, entry: &ImportEntry) -> Vec<ImportSpecifier> {
-        let mut specifiers = Vec::new();
-
-        match &entry.import_name {
-            ImportImportName::Name(import) => {
-                specifiers.push(ImportSpecifier {
-                    name: CompactStr::new(import.name()),
-                    span: import.span(),
-                    is_type: entry.is_type,
-                });
-            }
-            ImportImportName::Default(span) => {
-                specifiers.push(ImportSpecifier {
-                    name: CompactStr::new(entry.local_name.name()),
-                    span: *span,
-                    is_type: entry.is_type,
-                });
-            }
-            ImportImportName::NamespaceObject => {
-                specifiers.push(ImportSpecifier {
-                    name: CompactStr::new(entry.local_name.name()),
-                    span: entry.local_name.span(),
-                    is_type: entry.is_type,
-                });
-            }
-        }
-
-        specifiers
     }
 
     // 3. Functions for ranking and group assignment
