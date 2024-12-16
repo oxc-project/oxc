@@ -54767,7 +54767,7 @@ Bindings mismatch:
 after transform: ScopeId(32): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(24): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(32): ScopeFlags(StrictMode | Constructor)
+after transform: ScopeId(32): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(24): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(34): ["C", "E"]
@@ -54785,7 +54785,7 @@ Bindings mismatch:
 after transform: ScopeId(38): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(30): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(38): ScopeFlags(StrictMode | GetAccessor)
+after transform: ScopeId(38): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(30): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
