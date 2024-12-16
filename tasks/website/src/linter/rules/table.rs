@@ -26,6 +26,13 @@ The progress of all rule implementations is tracked [here](https://github.com/ox
 - Total number of rules: {total}
 - Rules turned on by default: {turned_on_by_default_count}
 
+**Legend for 'Fixable?' column:**
+- 🛠️: an auto-fix is available for this rule
+- 💡: a suggestion is available for this rule
+- ⚠️🛠️: a dangerous auto-fix is available for this rule
+- ⚠️💡: a dangerous suggestion is available for this rule
+- 🚧: a auto-fix or suggestion is possible, but currently not implemented
+
 {body}
 ")
 }
