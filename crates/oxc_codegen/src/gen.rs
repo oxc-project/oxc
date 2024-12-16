@@ -38,6 +38,8 @@ pub trait GenExpr: GetSpan {
 
 impl Gen for Program<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
+        p.is_jsx = self.source_type.is_jsx();
+
         if let Some(hashbang) = &self.hashbang {
             hashbang.print(p, ctx);
         }
@@ -2976,6 +2978,10 @@ impl Gen for TSTypeParameterDeclaration<'_> {
             p.print_soft_newline();
             p.dedent();
             p.print_indent();
+        } else if p.is_jsx {
+            // `<T,>() => {}`
+            //    ^ We need a comma here, otherwise it will be regarded as a JSX element.
+            p.print_str(",");
         }
         p.print_ascii_byte(b'>');
     }
