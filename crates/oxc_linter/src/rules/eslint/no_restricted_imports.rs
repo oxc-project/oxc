@@ -81,6 +81,9 @@ fn add_configuration_from_object(
     obj: &serde_json::Map<String, serde_json::Value>,
 ) {
     let Some(paths_value) = obj.get("paths") else {
+        if let Ok(path) = serde_json::from_value::<RestrictedPath>(serde_json::Value::Object(obj.clone())) {
+            paths.push(path);
+        }
         return;
     };
 
@@ -88,20 +91,12 @@ fn add_configuration_from_object(
         return;
     };
 
+
     for path_value in paths_array {
         match path_value {
             Value::String(module_name) => add_configuration_from_string(paths, module_name),
             Value::Object(_) => {
-                if let Ok(mut path) = serde_json::from_value::<RestrictedPath>(path_value.clone()) {
-                    if let Some(import_names) = path.import_names {
-                        path.import_names = Some(
-                            import_names
-                                .iter()
-                                .map(|s| CompactStr::new(s))
-                                .collect::<Vec<_>>()
-                                .into_boxed_slice(),
-                        );
-                    }
+                if let Ok(path) = serde_json::from_value::<RestrictedPath>(path_value.clone()) {
                     paths.push(path);
                 }
             }
@@ -775,33 +770,33 @@ fn test() {
         //         }]
         //     }])),
         // ),
-        // (
-        //     r#"import withGitignores from "foo";"#,
-        //     Some(serde_json::json!([{
-        //         "name": "foo",
-        //         "message": r#"Please import from "bar" instead."#
-        //     }])),
-        // ),
-        // (
-        //     r#"import withGitignores from "bar";"#,
-        //     Some(serde_json::json!([
-        //         "foo",
-        //         {
-        //             "name": "bar",
-        //             "message": r#"Please import from "baz" instead."#
-        //         },
-        //         "baz"
-        //     ])),
-        // ),
-        // (
-        //     r#"import withGitignores from "foo";"#,
-        //     Some(serde_json::json!([{
-        //         "paths": [{
-        //             "name": "foo",
-        //             "message": r#"Please import from "bar" instead."#
-        //         }]
-        //     }])),
-        // ),
+        (
+            r#"import withGitignores from "foo";"#,
+            Some(serde_json::json!([{
+                "name": "foo",
+                "message": r#"Please import from "bar" instead."#
+            }])),
+        ),
+        (
+            r#"import withGitignores from "bar";"#,
+            Some(serde_json::json!([
+                "foo",
+                {
+                    "name": "bar",
+                    "message": r#"Please import from "baz" instead."#
+                },
+                "baz"
+            ])),
+        ),
+        (
+            r#"import withGitignores from "foo";"#,
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "message": r#"Please import from "bar" instead."#
+                }]
+            }])),
+        ),
         // (
         //     r#"import DisallowedObject from "foo";"#,
         //     Some(serde_json::json!([{

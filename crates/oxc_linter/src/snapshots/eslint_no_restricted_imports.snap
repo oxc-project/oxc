@@ -79,6 +79,27 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
+  ⚠ eslint(no-restricted-imports): Please import from "bar" instead.
+   ╭─[no_restricted_imports.tsx:1:28]
+ 1 │ import withGitignores from "foo";
+   ·                            ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Please import from "baz" instead.
+   ╭─[no_restricted_imports.tsx:1:28]
+ 1 │ import withGitignores from "bar";
+   ·                            ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Please import from "bar" instead.
+   ╭─[no_restricted_imports.tsx:1:28]
+ 1 │ import withGitignores from "foo";
+   ·                            ─────
+   ╰────
+  help: Remove the import statement.
+
   ⚠ eslint(no-restricted-imports): Please import "DisallowedObject" from /bar/ instead.
    ╭─[no_restricted_imports.tsx:1:34]
  1 │ import { DisallowedObject } from "foo";
