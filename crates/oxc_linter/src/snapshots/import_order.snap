@@ -1,0 +1,27 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint-plugin-import(order): Import from 'fs' should occur before import from 'lodash'
+   ╭─[order.tsx:3:28]
+ 2 │             import _ from 'lodash';
+ 3 │             import fs from 'fs';
+   ·                            ────
+ 4 │             
+   ╰────
+
+  ⚠ eslint-plugin-import(order): There should be at least one empty line between import groups
+   ╭─[order.tsx:3:27]
+ 2 │             import fs from 'fs';
+ 3 │             import _ from 'lodash';  // Should have newline before this
+   ·                           ────────
+ 4 │             
+   ╰────
+
+  ⚠ eslint-plugin-import(order): Imports must be sorted in asc order. 'a' should be before 'b'.
+   ╭─[order.tsx:3:27]
+ 2 │             import b from 'b';
+ 3 │             import a from 'a';
+   ·                           ───
+ 4 │             
+   ╰────

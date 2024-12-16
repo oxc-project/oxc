@@ -186,7 +186,6 @@ impl Order {
         let mut imports = Vec::new();
         let module_record = ctx.module_record();
 
-        // Collect import declarations
         for entry in &module_record.import_entries {
             let source = entry.module_request.name();
             let span = entry.module_request.span();
@@ -199,7 +198,6 @@ impl Order {
             });
         }
 
-        // Collect export from declarations
         for entry in &module_record.indirect_export_entries {
             if let Some(module_request) = &entry.module_request {
                 let source = module_request.name();
@@ -216,7 +214,6 @@ impl Order {
     }
 
     fn get_import_group(&self, source: &str) -> String {
-        // Default groups: builtin, external, parent, sibling, index
         if source.starts_with('.') {
             if source == "." || source == ".." {
                 "parent".into()
@@ -242,20 +239,16 @@ impl Order {
         imports: &mut [ImportInfo],
         config: &OrderConfig,
     ) {
-        // Assign ranks based on groups
         self.assign_ranks(imports, config);
 
-        // Check alphabetical order if configured
         if let Some(alphabetize) = &config.alphabetize {
             self.check_alphabetical_order(ctx, imports, alphabetize);
         }
 
-        // Check newlines between imports if configured
         if let Some(newlines_between) = &config.newlines_between {
             self.check_newlines_between(ctx, imports, newlines_between);
         }
 
-        // Check for out of order imports
         self.check_order_violations(ctx, imports);
     }
 
@@ -276,14 +269,12 @@ impl Order {
         }
     }
 
-    // 3. Functions for ranking and group assignment
     fn assign_ranks(&self, imports: &mut [ImportInfo], config: &OrderConfig) {
         let group_ranks = self.get_group_ranks(config);
 
         for import in imports.iter_mut() {
             import.rank = self.calculate_rank(&import.group, &group_ranks);
 
-            // Apply path group rankings if configured
             if let Some(path_groups) = &config.path_groups {
                 if let Some(path_group_rank) = self.get_path_group_rank(&import.source, path_groups)
                 {
@@ -319,13 +310,11 @@ impl Order {
         *group_ranks.get(group).unwrap_or(&usize::MAX)
     }
 
-    // 4. Functions for path group handling
     fn get_path_group_rank(&self, source: &str, path_groups: &[PathGroup]) -> Option<usize> {
         for (index, path_group) in path_groups.iter().enumerate() {
             if self.matches_pattern(source, &path_group.pattern) {
-                let base_rank = index * 100; // Use multiplier to leave room for position adjustments
+                let base_rank = index * 100;
 
-                // Adjust rank based on position if specified
                 match path_group.position.as_deref() {
                     Some("before") => return Some(base_rank.saturating_sub(50)),
                     Some("after") => return Some(base_rank + 50),
@@ -347,7 +336,6 @@ impl Order {
         }
     }
 
-    // 5. Functions for alphabetical ordering
     fn check_alphabetical_order(
         &self,
         ctx: &LintContext,
@@ -390,7 +378,6 @@ impl Order {
         }
     }
 
-    // 6. Functions for newlines checking
     fn check_newlines_between(
         &self,
         ctx: &LintContext,
@@ -469,7 +456,7 @@ fn test() {
     let pass = vec![
         // Basic sorting
         (
-            r#"
+            r"
             import fs from 'fs';
             import path from 'path';
 
@@ -479,7 +466,7 @@ fn test() {
             import foo from '../foo';
 
             import bar from './bar';
-            "#,
+            ",
             Some(serde_json::json!({
                 "groups": ["builtin", "external", "parent", "sibling", "index"],
                 "newlines-between": "always"
@@ -487,11 +474,11 @@ fn test() {
         ),
         // Alphabetical order
         (
-            r#"
+            r"
             import a from 'a';
             import b from 'b';
             import c from 'c';
-            "#,
+            ",
             Some(serde_json::json!({
                 "alphabetize": {
                     "order": "asc",
@@ -501,7 +488,7 @@ fn test() {
         ),
         // Mixed groups with correct newlines
         (
-            r#"
+            r"
             import path from 'path';
             import fs from 'fs';
 
@@ -509,7 +496,7 @@ fn test() {
 
             import foo from '../foo';
             import bar from './bar';
-            "#,
+            ",
             Some(serde_json::json!({
                 "groups": ["builtin", "external", ["parent", "sibling"]],
                 "newlines-between": "always"
@@ -520,20 +507,20 @@ fn test() {
     let fail = vec![
         // Wrong order
         (
-            r#"
+            r"
             import _ from 'lodash';
             import fs from 'fs';
-            "#,
+            ",
             Some(serde_json::json!({
                 "groups": ["builtin", "external"]
             })),
         ),
         // Missing newline between groups
         (
-            r#"
+            r"
             import fs from 'fs';
             import _ from 'lodash';  // Should have newline before this
-            "#,
+            ",
             Some(serde_json::json!({
                 "groups": ["builtin", "external"],
                 "newlines-between": "always"
@@ -541,10 +528,10 @@ fn test() {
         ),
         // Wrong alphabetical order
         (
-            r#"
+            r"
             import b from 'b';
             import a from 'a';
-            "#,
+            ",
             Some(serde_json::json!({
                 "alphabetize": {
                     "order": "asc"
