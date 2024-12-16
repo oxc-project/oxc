@@ -1868,12 +1868,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(declaration) = &it.declaration {
             self.visit_declaration(declaration);
         }
-        let prev_reference_flags = self.current_reference_flags;
+        // let prev_reference_flags = self.current_reference_flags;
         if it.export_kind.is_type() {
             self.current_reference_flags = ReferenceFlags::Type;
         }
         self.visit_export_specifiers(&it.specifiers);
-        self.current_reference_flags = prev_reference_flags;
+        // self.current_reference_flags = prev_reference_flags;
 
         if let Some(source) = &it.source {
             self.visit_string_literal(source);
