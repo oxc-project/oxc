@@ -2,6 +2,11 @@ use oxc_allocator::String;
 
 use crate::Prettier;
 
+pub fn print_string<'a>(p: &Prettier<'a>, raw_text: &str, prefer_single_quote: bool) -> &'a str {
+    let enclosing_quote = get_preferred_quote(raw_text, prefer_single_quote);
+    make_string(p, raw_text, enclosing_quote).into_bump_str()
+}
+
 fn get_preferred_quote(raw: &str, prefer_single_quote: bool) -> char {
     let (preferred_quote_char, alternate_quote_char) =
         if prefer_single_quote { ('\'', '"') } else { ('"', '\'') };
@@ -53,9 +58,4 @@ fn make_string<'a>(p: &Prettier<'a>, raw_text: &str, enclosing_quote: char) -> S
 
     result.push(enclosing_quote);
     result
-}
-
-pub fn print_string<'a>(p: &Prettier<'a>, raw_text: &str, prefer_single_quote: bool) -> &'a str {
-    let enclosing_quote = get_preferred_quote(raw_text, prefer_single_quote);
-    make_string(p, raw_text, enclosing_quote).into_bump_str()
 }

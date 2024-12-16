@@ -13,6 +13,6 @@ pub mod module;
 pub mod object;
 pub mod property;
 pub mod statement;
-pub mod string;
+pub mod literal;
 pub mod template_literal;
 pub mod ternary;
