@@ -23,6 +23,7 @@ mod import {
     pub mod no_dynamic_require;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
+    pub mod no_named_default;
     pub mod no_namespace;
     pub mod no_self_import;
     pub mod no_webpack_loader_syntax;
@@ -643,6 +644,7 @@ oxc_macros::declare_all_lint_rules! {
     import::default,
     import::export,
     import::first,
+    import::no_named_default,
     import::no_namespace,
     import::max_dependencies,
     import::named,
