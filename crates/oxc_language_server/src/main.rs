@@ -11,22 +11,21 @@ use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
-        CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
-        CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
-        DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
-        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        InitializeParams, InitializeResult, InitializedParams, NumberOrString, OneOf, Position,
-        Range, ServerCapabilities, ServerInfo, TextDocumentSyncCapability, TextDocumentSyncKind,
-        TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit, WorkspaceFoldersServerCapabilities,
-        WorkspaceServerCapabilities,
+        CodeAction, CodeActionKind, CodeActionOrCommand, CodeActionParams, CodeActionResponse,
+        ConfigurationItem, Diagnostic, DidChangeConfigurationParams, DidChangeTextDocumentParams,
+        DidChangeWatchedFilesParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+        DidSaveTextDocumentParams, InitializeParams, InitializeResult, InitializedParams,
+        NumberOrString, Position, Range, ServerInfo, TextEdit, Url, WorkspaceEdit,
     },
     Client, LanguageServer, LspService, Server,
 };
 
 use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
 
+use crate::capabilities::{Capabilities, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC};
 use crate::linter::{DiagnosticReport, ServerLinter};
 
+mod capabilities;
 mod linter;
 
 type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
@@ -88,9 +87,6 @@ enum SyntheticRunLevel {
     OnType,
 }
 
-const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
-    CodeActionKind::new("source.fixAll.oxc");
-
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
@@ -106,45 +102,12 @@ impl LanguageServer for Backend {
             *self.options.lock().await = value;
         }
 
-        // check if the client support some code action literal support
-        let code_action_provider = if params.capabilities.text_document.is_some_and(|capability| {
-            capability.code_action.is_some_and(|code_action| {
-                code_action.code_action_literal_support.is_some_and(|literal_support| {
-                    !literal_support.code_action_kind.value_set.is_empty()
-                })
-            })
-        }) {
-            Some(CodeActionProviderCapability::Options(CodeActionOptions {
-                code_action_kinds: Some(vec![
-                    CodeActionKind::QUICKFIX,
-                    CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
-                ]),
-                work_done_progress_options: WorkDoneProgressOptions { work_done_progress: None },
-                resolve_provider: None,
-            }))
-        } else {
-            None
-        };
-
         let oxlintrc = self.init_linter_config().await;
         self.init_ignore_glob(oxlintrc).await;
         Ok(InitializeResult {
             server_info: Some(ServerInfo { name: "oxc".into(), version: None }),
             offset_encoding: None,
-            capabilities: ServerCapabilities {
-                text_document_sync: Some(TextDocumentSyncCapability::Kind(
-                    TextDocumentSyncKind::FULL,
-                )),
-                workspace: Some(WorkspaceServerCapabilities {
-                    workspace_folders: Some(WorkspaceFoldersServerCapabilities {
-                        supported: Some(true),
-                        change_notifications: Some(OneOf::Left(true)),
-                    }),
-                    file_operations: None,
-                }),
-                code_action_provider,
-                ..ServerCapabilities::default()
-            },
+            capabilities: Capabilities::from(params.capabilities).into(),
         })
     }
 

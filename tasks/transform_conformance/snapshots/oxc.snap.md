@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 110/125
+Passed: 111/125
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,24 +16,7 @@ Passed: 110/125
 * regexp
 
 
-# babel-plugin-transform-class-properties (11/14)
-* instance-prop-initializer-no-existing-constructor/input.js
-Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(13): ScopeFlags(StrictMode | Constructor)
-Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(14): ScopeFlags(StrictMode | Constructor)
-Scope flags mismatch:
-after transform: ScopeId(14): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(15): ScopeFlags(StrictMode | Constructor)
-Scope flags mismatch:
-after transform: ScopeId(15): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(16): ScopeFlags(StrictMode | Constructor)
-Scope flags mismatch:
-after transform: ScopeId(20): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(21): ScopeFlags(StrictMode | Constructor)
-
+# babel-plugin-transform-class-properties (12/14)
 * typescript/optional-call/input.ts
 Symbol reference IDs mismatch for "X":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(16)]

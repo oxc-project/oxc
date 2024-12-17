@@ -89,6 +89,9 @@ pub struct Codegen<'a> {
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
     binary_expr_stack: Vec<BinaryExpressionVisitor<'a>>,
+    /// Indicates the output is JSX type, it is set in [`Program::gen`] and the result
+    /// is obtained by [`oxc_span::SourceType::is_jsx`]
+    is_jsx: bool,
 
     /// For avoiding `;` if the previous statement ends with `}`.
     needs_semicolon: bool,
@@ -170,6 +173,7 @@ impl<'a> Codegen<'a> {
             start_of_stmt: 0,
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
+            is_jsx: false,
             indent: 0,
             quote: b'"',
             print_comments,

@@ -1,6 +1,9 @@
 //! Semantic Builder
 
-use std::cell::{Cell, RefCell};
+use std::{
+    cell::{Cell, RefCell},
+    mem,
+};
 
 use rustc_hash::FxHashMap;
 
@@ -1789,7 +1792,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
         let kind = AstKind::SimpleAssignmentTarget(self.alloc(it));
         self.enter_node(kind);
-        let prev_reference_flags = self.current_reference_flags;
         // Except that the read-write flags has been set in visit_assignment_expression
         // and visit_update_expression, this is always a write-only reference here.
         if !self.current_reference_flags.is_write() {
@@ -1819,7 +1821,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 self.visit_member_expression(it.to_member_expression());
             }
         }
-        self.current_reference_flags = prev_reference_flags;
         self.leave_node(kind);
     }
 
@@ -1828,10 +1829,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         it: &AssignmentTargetPropertyIdentifier<'a>,
     ) {
         // NOTE: AstKind doesn't exists!
-        let prev_reference_flags = self.current_reference_flags;
         self.current_reference_flags = ReferenceFlags::Write;
         self.visit_identifier_reference(&it.binding);
-        self.current_reference_flags = prev_reference_flags;
         if let Some(init) = &it.init {
             self.visit_expression(init);
         }
@@ -1850,10 +1849,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             ExportDefaultDeclarationKind::Identifier(it) => {
                 // `export default ident`
                 //                 ^^^^^ -> can reference both type/value symbols
-                let prev_reference_flags = self.current_reference_flags;
                 self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
                 self.visit_identifier_reference(it);
-                self.current_reference_flags = prev_reference_flags;
             }
             match_expression!(ExportDefaultDeclarationKind) => {
                 self.visit_expression(it.to_expression());
@@ -1868,12 +1865,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(declaration) = &it.declaration {
             self.visit_declaration(declaration);
         }
-        let prev_reference_flags = self.current_reference_flags;
-        if it.export_kind.is_type() {
-            self.current_reference_flags = ReferenceFlags::Type;
+
+        for specifier in &it.specifiers {
+            // `export type { a }` or `export { type a }` -> `a` is a type reference
+            if it.export_kind.is_type() || specifier.export_kind.is_type() {
+                self.current_reference_flags = ReferenceFlags::Type;
+            } else {
+                // If the export specifier is not a explicit type export, we consider it as a potential
+                // type and value reference. If it references to a value in the end, we would delete the
+                // `ReferenceFlags::Type` flag in `fn resolve_references_for_current_scope`.
+                self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
+            }
+            self.visit_export_specifier(specifier);
         }
-        self.visit_export_specifiers(&it.specifiers);
-        self.current_reference_flags = prev_reference_flags;
 
         if let Some(source) = &it.source {
             self.visit_string_literal(source);
@@ -1890,21 +1894,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&it.span);
 
         self.current_node_flags |= NodeFlags::ExportSpecifier;
-        let prev_reference_flags = self.current_reference_flags;
-        // `export type { a }` or `export { type a }` -> `a` is a type reference
-        if prev_reference_flags.is_type() || it.export_kind.is_type() {
-            self.current_reference_flags = ReferenceFlags::Type;
-        } else {
-            // If the export specifier is not a explicit type export, we consider it as a potential
-            // type and value reference. If it references to a value in the end, we would delete the
-            // `ReferenceFlags::Type` flag in `fn resolve_references_for_current_scope`.
-            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
-        }
 
         self.visit_module_export_name(&it.local);
         self.visit_module_export_name(&it.exported);
 
-        self.current_reference_flags = prev_reference_flags;
         self.current_node_flags -= NodeFlags::ExportSpecifier;
 
         self.leave_node(kind);
@@ -1914,14 +1907,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::TSExportAssignment(self.alloc(it));
         self.enter_node(kind);
         self.visit_span(&it.span);
-        let prev_reference_flags = self.current_reference_flags;
         // export = a;
         //          ^ can reference type/value symbols
         if it.expression.is_identifier_reference() {
             self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
         }
         self.visit_expression(&it.expression);
-        self.current_reference_flags = prev_reference_flags;
         self.leave_node(kind);
     }
 }
@@ -2140,11 +2131,12 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Resolve reference flags for the current ast node.
     #[inline]
-    fn resolve_reference_usages(&self) -> ReferenceFlags {
+    fn resolve_reference_usages(&mut self) -> ReferenceFlags {
         if self.current_reference_flags.is_empty() {
             ReferenceFlags::Read
         } else {
-            self.current_reference_flags
+            // Take the current reference flags so that we can reset it to empty
+            mem::take(&mut self.current_reference_flags)
         }
     }
 }

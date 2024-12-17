@@ -36818,9 +36818,6 @@ rebuilt        : ScopeId(19): ["key", "obj"]
 Bindings mismatch:
 after transform: ScopeId(26): ["T", "a"]
 rebuilt        : ScopeId(21): ["a"]
-Reference flags mismatch for "Monkey":
-after transform: ReferenceId(7): ReferenceFlags(Type)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Partial", "Readonly"]
 rebuilt        : []
@@ -40376,9 +40373,6 @@ rebuilt        : SymbolId(0): Span { start: 62, end: 63 }
 Symbol redeclarations mismatch for "B":
 after transform: SymbolId(1): [Span { start: 62, end: 63 }]
 rebuilt        : SymbolId(0): []
-Reference flags mismatch for "B":
-after transform: ReferenceId(1): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty8.ts
 semantic error: Bindings mismatch:
@@ -54773,7 +54767,7 @@ Bindings mismatch:
 after transform: ScopeId(32): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(24): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(32): ScopeFlags(StrictMode | Constructor)
+after transform: ScopeId(32): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(24): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(34): ["C", "E"]
@@ -54791,7 +54785,7 @@ Bindings mismatch:
 after transform: ScopeId(38): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(30): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(38): ScopeFlags(StrictMode | GetAccessor)
+after transform: ScopeId(38): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(30): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "E":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)

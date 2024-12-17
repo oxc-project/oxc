@@ -378,8 +378,9 @@ impl Oxc {
         }
 
         impl Visit<'_> for ScopesTextWriter<'_> {
-            fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+            fn enter_scope(&mut self, _: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
                 let scope_id = scope_id.get().unwrap();
+                let flags = self.scopes.get_flags(scope_id);
                 self.write_line(format!("Scope {} ({flags:?}) {{", scope_id.index()));
                 self.indent_in();
 

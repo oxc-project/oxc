@@ -41,8 +41,19 @@ impl Rule for NoSetterReturn {
         let AstKind::ReturnStatement(stmt) = node.kind() else {
             return;
         };
-        if stmt.argument.is_some() && ctx.scopes().get_flags(node.scope_id()).is_set_accessor() {
-            ctx.diagnostic(no_setter_return_diagnostic(stmt.span));
+        if stmt.argument.is_none() {
+            return;
+        }
+
+        for scope_id in ctx.scopes().ancestors(node.scope_id()) {
+            let flags = ctx.scopes().get_flags(scope_id);
+            if flags.is_set_accessor() {
+                ctx.diagnostic(no_setter_return_diagnostic(stmt.span));
+            } else if flags.is_function() {
+                break;
+            } else {
+                continue;
+            }
         }
     }
 }

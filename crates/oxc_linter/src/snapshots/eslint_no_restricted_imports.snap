@@ -9,37 +9,233 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): Please import from 'bar' instead.
-   ╭─[no_restricted_imports.tsx:1:28]
- 1 │ import withGitignores from "foo";
-   ·                            ─────
+  ⚠ eslint(no-restricted-imports): 'os' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:16]
+ 1 │ import os from "os";
+   ·                ────
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): Please import the default import of 'foo' from /bar/ instead.
-   ╭─[no_restricted_imports.tsx:1:30]
- 1 │ import DisallowedObject from "foo";
-   ·                              ─────
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:8]
+ 1 │ import "foo/bar";
+   ·        ─────────
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): Please import 'DisallowedObject' from /bar/ instead.
-   ╭─[no_restricted_imports.tsx:1:22]
- 1 │ import * as All from "foo";
-   ·                      ─────
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:23]
+ 1 │ import withPaths from "foo/bar";
+   ·                       ─────────
    ╰────
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:10]
- 1 │ export { something } from "fs";
-   ·          ─────────
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ export * as ns from "fs";
+   · ─────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ export {a} from "fs";
+   ·         ─
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Don"t import "foo".
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ export {foo as b} from "fs";
+   ·         ────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Don"t import "foo".
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ export {"foo" as b} from "fs";
+   ·         ──────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Don"t import "foo".
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ export {"foo"} from "fs";
+   ·         ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Don"t import "👍".
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ export {'👍'} from "fs";
+   ·         ────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Don"t import "".
+   ╭─[no_restricted_imports.tsx:1:9]
+ 1 │ export {''} from "fs";
+   ·         ──
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Please import "DisallowedObject" from /bar/ instead.
+   ╭─[no_restricted_imports.tsx:1:34]
+ 1 │ import { DisallowedObject } from "foo";
+   ·                                  ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Please import "DisallowedObject" from /bar/ instead.
+   ╭─[no_restricted_imports.tsx:1:51]
+ 1 │ import { DisallowedObject as AllowedObject } from "foo";
+   ·                                                   ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Please import "DisallowedObject" from /bar/ instead.
+   ╭─[no_restricted_imports.tsx:1:53]
+ 1 │ import { 'DisallowedObject' as AllowedObject } from "foo";
+   ·                                                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:31]
+ 1 │ import { '👍' as bar } from "foo";
+   ·                             ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:27]
+ 1 │ import { '' as bar } from "foo";
+   ·                           ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Please import "DisallowedObject" from /bar/ instead.
+   ╭─[no_restricted_imports.tsx:1:49]
+ 1 │ import { AllowedObject, DisallowedObject } from "foo";
+   ·                                                 ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Please import "DisallowedObject" from /bar/ instead.
+   ╭─[no_restricted_imports.tsx:1:69]
+ 1 │ import { AllowedObject, DisallowedObject as AllowedObjectTwo } from "foo";
+   ·                                                                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Please import "DisallowedObject" and "DisallowedObjectTwo" from /bar/ instead.
+   ╭─[no_restricted_imports.tsx:1:69]
+ 1 │ import { AllowedObject, DisallowedObject as AllowedObjectTwo } from "foo";
+   ·                                                                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Please import "DisallowedObject" and "DisallowedObjectTwo" from /bar/ instead.
+   ╭─[no_restricted_imports.tsx:1:69]
+ 1 │ import { AllowedObject, DisallowedObject as AllowedObjectTwo } from "foo";
+   ·                                                                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): import Text from ui/_components instead
+   ╭─[no_restricted_imports.tsx:1:41]
+ 1 │ import { Image, Text, ScrollView } from 'react-native'
+   ·                                         ──────────────
    ╰────
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): Import foo from qux instead.
    ╭─[no_restricted_imports.tsx:1:31]
- 1 │ import { foo, bar, baz } from "mod"
+ 1 │ import { foo, bar, baz } from 'mod'
    ·                               ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Use `barbaz` instead of `bar`.
+   ╭─[no_restricted_imports.tsx:1:36]
+ 1 │ import { foo, bar, baz, qux } from 'mod'
+   ·                                    ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Don"t use "foo" or "baz" from "mod".
+   ╭─[no_restricted_imports.tsx:1:36]
+ 1 │ import { foo, bar, baz, qux } from 'mod'
+   ·                                    ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ import { foo } from 'mod'
+   ·                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ import { bar } from 'mod'
+   ·                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Import bar from qux instead.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ import { bar } from 'mod'
+   ·                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:22]
+ 1 │ import * as bar from 'foo';
+   ·                      ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:27]
+ 1 │ import { a, a as b } from 'mod';
+   ·                           ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:10]
+ 1 │ export { x as y, x as z } from 'mod';
+   ·          ──────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:22]
+ 1 │ import relative from '../foo';
+   ·                      ────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:31]
+ 1 │ import relativeWithPaths from '../foo';
+   ·                               ────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '/foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:22]
+ 1 │ import absolute from '/foo';
+   ·                      ──────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '/foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:31]
+ 1 │ import absoluteWithPaths from '/foo';
+   ·                               ──────
    ╰────
   help: Remove the import statement.
