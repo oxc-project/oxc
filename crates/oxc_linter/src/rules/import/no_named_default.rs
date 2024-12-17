@@ -36,9 +36,6 @@ declare_oxc_lint!(
     /// ```
     NoNamedDefault,
     style,
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
 );
 
 impl Rule for NoNamedDefault {
@@ -48,7 +45,7 @@ impl Rule for NoNamedDefault {
                 return;
             };
             if import_name.name() == "default" && !entry.is_type {
-                ctx.diagnostic(no_named_default_diagnostic(entry.module_request.span()));
+                ctx.diagnostic(no_named_default_diagnostic(import_name.span()));
             }
         });
     }
