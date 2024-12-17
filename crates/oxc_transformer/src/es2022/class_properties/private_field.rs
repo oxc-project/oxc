@@ -14,12 +14,11 @@ use oxc_traverse::{
 use crate::{common::helper_loader::Helper, TransformCtx};
 
 use super::{
-    private_props::ResolvedPrivateProp,
     utils::{
         create_assignment, create_underscore_ident_name,
         debug_assert_expr_is_not_parenthesis_or_typescript_syntax,
     },
-    ClassProperties,
+    ClassProperties, ResolvedPrivateProp,
 };
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
@@ -49,7 +48,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         is_assignment: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let prop_details = self.private_props_stack.find(&field_expr.field);
+        let prop_details = self.classes_stack.find_private_prop(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
         let Some(prop_details) = prop_details else {
             return Expression::PrivateFieldExpression(field_expr);
@@ -179,7 +178,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         if self.private_fields_as_properties {
             // `object.#prop(arg)` -> `_classPrivateFieldLooseBase(object, _prop)[_prop](arg)`
-            let prop_details = self.private_props_stack.find(&field_expr.field);
+            let prop_details = self.classes_stack.find_private_prop(&field_expr.field);
             // TODO: Should never be `None` - only because implementation is incomplete.
             let Some(ResolvedPrivateProp { prop_binding, .. }) = prop_details else { return };
 
@@ -252,7 +251,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) -> Option<(Expression<'a>, Expression<'a>)> {
         // TODO: Should never be `None` - only because implementation is incomplete.
         let ResolvedPrivateProp { prop_binding, class_bindings, is_static, is_declaration } =
-            self.private_props_stack.find(&field_expr.field)?;
+            self.classes_stack.find_private_prop(&field_expr.field)?;
         let prop_ident = prop_binding.create_read_expression(ctx);
 
         // `(object.#method)()`
@@ -346,7 +345,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             unreachable!()
         };
 
-        let prop_details = self.private_props_stack.find(&field_expr.field);
+        let prop_details = self.classes_stack.find_private_prop(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
         let Some(prop_details) = prop_details else { return };
         let ResolvedPrivateProp { prop_binding, class_bindings, is_static, is_declaration } =
@@ -726,7 +725,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             _ => unreachable!(),
         };
 
-        let prop_details = self.private_props_stack.find(&field_expr.field);
+        let prop_details = self.classes_stack.find_private_prop(&field_expr.field);
         // TODO: Should never be `None` - only because implementation is incomplete.
         let Some(prop_details) = prop_details else { return };
         let ResolvedPrivateProp { prop_binding, class_bindings, is_static, is_declaration } =
@@ -1520,7 +1519,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             //
             // TODO: Should never be `None` - only because implementation is incomplete.
             let ResolvedPrivateProp { prop_binding, .. } =
-                self.private_props_stack.find(&field_expr.field)?;
+                self.classes_stack.find_private_prop(&field_expr.field)?;
 
             let object = ctx.ast.move_expression(&mut field_expr.object);
             let replacement = Self::create_private_field_member_expr_loose(

@@ -8,7 +8,7 @@ use oxc_ast::{
     visit::{walk_mut, VisitMut},
 };
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
-use oxc_traverse::{BoundIdentifier, TraverseCtx};
+use oxc_traverse::TraverseCtx;
 
 use super::ClassProperties;
 
@@ -43,11 +43,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     fn set_is_transforming_static_property_initializers(&mut self, is_it: bool) {
         #[cfg(debug_assertions)]
         {
-            self.class_bindings.currently_transforming_static_property_initializers = is_it;
-            if let Some(private_props) = self.private_props_stack.last_mut() {
-                private_props.class_bindings.currently_transforming_static_property_initializers =
-                    is_it;
-            }
+            let class_details = self.current_class_mut();
+            class_details.bindings.currently_transforming_static_property_initializers = is_it;
         }
     }
 }
@@ -139,16 +136,14 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
         let make_sloppy_mode = !ctx.current_scope_flags().is_strict_mode();
-        Self {
-            walk_deep: make_sloppy_mode
-                || class_properties.class_bindings.name.is_some()
-                || class_properties.private_props_stack.last().is_some(),
-            make_sloppy_mode,
-            this_depth: 0,
-            scope_depth: 0,
-            class_properties,
-            ctx,
-        }
+        let walk_deep = if make_sloppy_mode {
+            true
+        } else {
+            let class_details = class_properties.current_class();
+            class_details.bindings.name.is_some() || class_details.private_props.is_some()
+        };
+
+        Self { walk_deep, make_sloppy_mode, this_depth: 0, scope_depth: 0, class_properties, ctx }
     }
 }
 
@@ -475,7 +470,8 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
     /// Replace `this` with reference to temp var for class.
     fn replace_this_with_temp_var(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {
-            let temp_binding = self.class_properties.get_temp_binding(self.ctx);
+            let class_details = self.class_properties.current_class_mut();
+            let temp_binding = class_details.bindings.get_or_init_temp_binding(self.ctx);
             *expr = temp_binding.create_spanned_read_expression(span, self.ctx);
         }
     }
@@ -483,7 +479,8 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
     /// Replace reference to class name with reference to temp var for class.
     fn replace_class_name_with_temp_var(&mut self, ident: &mut IdentifierReference<'a>) {
         // Check identifier is reference to class name
-        let class_name_symbol_id = self.class_properties.class_bindings.name_symbol_id();
+        let class_details = self.class_properties.current_class_mut();
+        let class_name_symbol_id = class_details.bindings.name_symbol_id();
         let Some(class_name_symbol_id) = class_name_symbol_id else { return };
 
         let reference_id = ident.reference_id();
@@ -495,7 +492,7 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
         }
 
         // Identifier is reference to class name. Rename it.
-        let temp_binding = self.class_properties.get_temp_binding(self.ctx);
+        let temp_binding = class_details.bindings.get_or_init_temp_binding(self.ctx);
         ident.name = temp_binding.name.clone();
 
         let symbols = self.ctx.symbols_mut();
@@ -518,19 +515,5 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
             let current_scope_id = self.ctx.current_scope_id();
             self.ctx.scopes_mut().change_parent_id(scope_id, Some(current_scope_id));
         }
-    }
-}
-
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
-    pub(super) fn get_temp_binding(&mut self, ctx: &mut TraverseCtx<'a>) -> &BoundIdentifier<'a> {
-        // `PrivateProps` is the source of truth for bindings if class has private props
-        // because other visitors which transform private fields may create a temp binding
-        // and store it on `PrivateProps`
-        let class_bindings = match self.private_props_stack.last_mut() {
-            Some(private_props) => &mut private_props.class_bindings,
-            None => &mut self.class_bindings,
-        };
-
-        class_bindings.get_or_init_temp_binding(ctx)
     }
 }

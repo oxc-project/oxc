@@ -135,8 +135,8 @@
 //! * `computed_key.rs`:       Transform of property/method computed keys.
 //! * `private_field.rs`:      Transform of private fields (`this.#prop`).
 //! * `super.rs`:              Transform `super` expressions.
+//! * `class_details.rs`:      Structures containing details of classes and private properties.
 //! * `class_bindings.rs`:     Structure containing bindings for class name and temp var.
-//! * `private_props.rs`:      Structures storing details of private properties.
 //! * `utils.rs`:              Utility functions.
 //!
 //! ## References
@@ -162,18 +162,18 @@ use crate::TransformCtx;
 
 mod class;
 mod class_bindings;
+mod class_details;
 mod computed_key;
 mod constructor;
 mod instance_prop_init;
 mod private_field;
-mod private_props;
 mod prop_decl;
 mod static_block;
 mod static_prop_init;
 mod supers;
 mod utils;
 use class_bindings::ClassBindings;
-use private_props::PrivatePropsStack;
+use class_details::{ClassDetails, ClassesStack, PrivateProp, ResolvedPrivateProp};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
@@ -202,16 +202,15 @@ pub struct ClassProperties<'a, 'ctx> {
 
     // State during whole AST
     //
-    /// Stack of private props.
-    /// Pushed to when entering a class (`None` if class has no private props, `Some` if it does).
-    /// Entries are a mapping from private prop name to binding for temp var.
-    /// This is then used as lookup when transforming e.g. `this.#x`.
+    /// Stack of classes.
+    /// Pushed to when entering a class, popped when exiting.
     // TODO: The way stack is used is not perfect, because pushing to/popping from it in
     // `enter_expression` / `exit_expression`. If another transform replaces the class,
     // then stack will get out of sync.
     // TODO: Should push to the stack only when entering class body, because `#x` in class `extends`
     // clause resolves to `#x` in *outer* class, not the current class.
-    private_props_stack: PrivatePropsStack<'a>,
+    classes_stack: ClassesStack<'a>,
+
     /// Addresses of class expressions being processed, to prevent same class being visited twice.
     /// Have to use a stack because the revisit doesn't necessarily happen straight after the first visit.
     /// e.g. `c = class C { [class D {}] = 1; }` -> `c = (_D = class D {}, class C { ... })`
@@ -221,8 +220,6 @@ pub struct ClassProperties<'a, 'ctx> {
     //
     /// `true` for class declaration, `false` for class expression
     is_declaration: bool,
-    /// Bindings for class name and temp var for class
-    class_bindings: ClassBindings<'a>,
     /// `true` if temp var for class has been inserted
     temp_var_is_created: bool,
     /// Scope that instance init initializers will be inserted into
@@ -258,11 +255,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             private_fields_as_properties,
             transform_static_blocks,
             ctx,
-            private_props_stack: PrivatePropsStack::default(),
+            classes_stack: ClassesStack::default(),
             class_expression_addresses_stack: NonEmptyStack::new(Address::DUMMY),
             // Temporary values - overwritten when entering class
             is_declaration: false,
-            class_bindings: ClassBindings::default(),
             temp_var_is_created: false,
             instance_inits_scope_id: ScopeId::new(0),
             instance_inits_constructor_scope_id: None,

@@ -7,6 +7,7 @@ use oxc_traverse::{BoundIdentifier, TraverseCtx};
 /// 2. Temp var `_Class`, which may or may not be required.
 ///
 /// Temp var is required in the following circumstances:
+///
 /// * Class expression has static properties.
 ///   e.g. `C = class { x = 1; }`
 /// * Class declaration has static properties and one of the static prop's initializers contains:
@@ -16,11 +17,6 @@ use oxc_traverse::{BoundIdentifier, TraverseCtx};
 ///      e.g. `class C { x = C; }`
 ///   c. A private field referring to one of the class's static private props.
 ///      e.g. `class C { static #x; static y = obj.#x; }`
-///
-/// An instance of `ClassBindings` is stored in main `ClassProperties` transform, and a 2nd is stored
-/// in `PrivateProps` for the class, if the class has any private properties.
-/// If the class has private props, the instance of `ClassBindings` in `PrivateProps` is the source
-/// of truth.
 ///
 /// The logic for when transpiled private fields use a reference to class name or class temp var
 /// is unfortunately rather complicated.
@@ -34,12 +30,12 @@ use oxc_traverse::{BoundIdentifier, TraverseCtx};
 ///   e.g. `class C { static #x; y = obj.#x; }`
 ///
 /// To cover all these cases, the meaning of `temp` binding here changes while traversing the class body.
-/// [`ClassProperties::transform_class`] sets `temp` binding to be a copy of the `name` binding before
-/// that traversal begins. So the name `temp` is misleading at that point.
+/// [`ClassProperties::transform_class_declaration`] sets `temp` binding to be a copy of the
+/// `name` binding before that traversal begins. So the name `temp` is misleading at that point.
 ///
 /// Debug assertions are used to make sure this complex logic is correct.
 ///
-/// [`ClassProperties::transform_class`]: super::ClassProperties::transform_class
+/// [`ClassProperties::transform_class_declaration`]: super::ClassProperties::transform_class_declaration
 #[derive(Default, Clone)]
 pub(super) struct ClassBindings<'a> {
     /// Binding for class name, if class has name

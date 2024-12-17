@@ -12,13 +12,12 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
-use crate::common::helper_loader::Helper;
+use crate::{common::helper_loader::Helper, TransformCtx};
 
 use super::{
     constructor::InstanceInitsInsertLocation,
-    private_props::{PrivateProp, PrivateProps},
     utils::{create_assignment, create_variable_declaration, exprs_into_stmts},
-    ClassBindings, ClassProperties, FxIndexMap,
+    ClassBindings, ClassDetails, ClassProperties, FxIndexMap, PrivateProp,
 };
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
@@ -63,10 +62,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // Return number of expressions to be inserted before/after the class
         let mut expr_count = self.insert_before.len() + self.insert_after_exprs.len();
-
-        let private_props = self.private_props_stack.last();
-        if let Some(private_props) = private_props {
-            expr_count += private_props.props.len();
+        if let Some(private_props) = &self.current_class().private_props {
+            expr_count += private_props.len();
         }
 
         if expr_count > 0 {
@@ -99,7 +96,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // TODO: Deduct static private props from `expr_count`.
         // Or maybe should store count and increment it when create private static props?
         // They're probably pretty rare, so it'll be rarely used.
-        expr_count += 1 + usize::from(self.class_bindings.temp.is_some());
+        let class_details = self.classes_stack.last();
+        expr_count += 1 + usize::from(class_details.bindings.temp.is_some());
 
         let mut exprs = ctx.ast.vec_with_capacity(expr_count);
 
@@ -107,24 +105,23 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // (or `_prop = _classPrivateFieldLooseKey("prop")` if loose mode).
         // Babel has these always go first, regardless of order of class elements.
         // Also insert `var _prop;` temp var declarations for private static props.
-        let private_props = self.private_props_stack.last();
-        if let Some(private_props) = private_props {
+        if let Some(private_props) = &class_details.private_props {
             // Insert `var _prop;` declarations here rather than when binding was created to maintain
             // same order of `var` declarations as Babel.
             // `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`
             // TODO(improve-on-babel): Simplify this.
             if self.private_fields_as_properties {
-                exprs.extend(private_props.props.iter().map(|(name, prop)| {
+                exprs.extend(private_props.iter().map(|(name, prop)| {
                     // Insert `var _prop;` declaration
                     self.ctx.var_declarations.insert_var(&prop.binding, ctx);
 
                     // `_prop = _classPrivateFieldLooseKey("prop")`
-                    let value = self.create_private_prop_key_loose(name, ctx);
+                    let value = Self::create_private_prop_key_loose(name, self.ctx, ctx);
                     create_assignment(&prop.binding, value, ctx)
                 }));
             } else {
                 let mut weakmap_symbol_id = None;
-                exprs.extend(private_props.props.values().filter_map(|prop| {
+                exprs.extend(private_props.values().filter_map(|prop| {
                     // Insert `var _prop;` declaration
                     self.ctx.var_declarations.insert_var(&prop.binding, ctx);
 
@@ -144,7 +141,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // Insert class + static property assignments + static blocks
         let class_expr = ctx.ast.move_expression(expr);
-        if let Some(binding) = &self.class_bindings.temp {
+        if let Some(binding) = &class_details.bindings.temp {
             // Insert `var _Class` statement, if it wasn't already in `transform_class`
             if !self.temp_var_is_created {
                 self.ctx.var_declarations.insert_var(binding, ctx);
@@ -193,7 +190,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // TODO: Run other transforms on inserted statements. How?
 
-        if let Some(temp_binding) = &self.class_bindings.temp {
+        let class_details = self.classes_stack.last_mut();
+        if let Some(temp_binding) = &class_details.bindings.temp {
             // Binding for class name is required
             if let Some(ident) = &class.id {
                 // Insert `var _Class` statement, if it wasn't already in `transform_class`
@@ -225,13 +223,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             );
         }
 
-        if let Some(private_props) = self.private_props_stack.last() {
+        if let Some(private_props) = &class_details.private_props {
             if self.private_fields_as_properties {
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
-                    private_props.props.iter().map(|(name, prop)| {
+                    private_props.iter().map(|(name, prop)| {
                         // `var _prop = _classPrivateFieldLooseKey("prop");`
-                        let value = self.create_private_prop_key_loose(name, ctx);
+                        let value = Self::create_private_prop_key_loose(name, self.ctx, ctx);
                         create_variable_declaration(&prop.binding, value, ctx)
                     }),
                 );
@@ -240,7 +238,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 let mut weakmap_symbol_id = None;
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
-                    private_props.props.values().filter_map(|prop| {
+                    private_props.values().filter_map(|prop| {
                         if prop.is_static {
                             return None;
                         }
@@ -258,15 +256,27 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 .statement_injector
                 .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
         }
+
+        // Update class bindings prior to traversing class body and insertion of statements/expressions
+        // before/after the class. See comments on `ClassBindings`.
+        // Static private fields reference class name (not temp var) in class declarations.
+        // `class Class { static #prop; method() { return obj.#prop; } }`
+        // -> `method() { return _assertClassBrand(Class, obj, _prop)._; }`
+        // (note `Class` in `_assertClassBrand(Class, ...)`, not `_Class`)
+        // So set "temp" binding to actual class name while visiting class body.
+        // Note: If declaration is `export default class {}` with no name, and class has static props,
+        // then class has had name binding created already in `transform_class`.
+        // So name binding is always `Some`.
+        class_details.bindings.temp = class_details.bindings.name.clone();
     }
 
     /// `_classPrivateFieldLooseKey("prop")`
     fn create_private_prop_key_loose(
-        &self,
         name: &Atom<'a>,
+        transform_ctx: &TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        self.ctx.helper_call_expr(
+        transform_ctx.helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
             SPAN,
             ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(
@@ -349,7 +359,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // Exit if nothing to transform
         if instance_prop_count == 0 && !has_static_prop && !has_static_block {
-            self.private_props_stack.push(None);
+            self.classes_stack.push(ClassDetails::default());
             return;
         }
 
@@ -379,25 +389,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             None
         };
 
-        self.class_bindings = ClassBindings::new(class_name_binding, class_temp_binding);
+        let class_bindings = ClassBindings::new(class_name_binding, class_temp_binding);
 
-        // Add entry to `private_props_stack`
-        if private_props.is_empty() {
-            self.private_props_stack.push(None);
-        } else {
-            // `class_bindings.temp` in the `PrivateProps` entry is the temp var (if one has been created).
-            // Private fields in static prop initializers use the temp var in the transpiled output
-            // e.g. `_assertClassBrand(_Class, obj, _prop)`.
-            // At end of this function, if it's a class declaration, we set `class_bindings.temp` to be
-            // the binding for the class name, for when the class body is visited, because in the class
-            // body, private fields use the class name
-            // e.g. `_assertClassBrand(Class, obj, _prop)` (note `Class` not `_Class`).
-            self.private_props_stack.push(Some(PrivateProps {
-                props: private_props,
-                class_bindings: self.class_bindings.clone(),
-                is_declaration: self.is_declaration,
-            }));
-        }
+        // Add entry to `classes_stack`
+        self.classes_stack.push(ClassDetails {
+            is_declaration: self.is_declaration,
+            private_props: if private_props.is_empty() { None } else { Some(private_props) },
+            bindings: class_bindings,
+        });
 
         // Determine where to insert instance property initializers in constructor
         let instance_inits_insert_location = if instance_prop_count == 0 {
@@ -488,29 +487,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 ctx,
             );
         }
-
-        // Update class bindings prior to traversing class body and insertion of statements/expressions
-        // before/after the class. See comments on `ClassBindings`.
-        if let Some(private_props) = self.private_props_stack.last_mut() {
-            // Transfer state of `temp` binding from `private_props_stack` to `self`.
-            // A temp binding may have been created while transpiling private fields in
-            // static prop initializers.
-            // TODO: Do this where `class_bindings.temp` is consumed instead?
-            if let Some(temp_binding) = &private_props.class_bindings.temp {
-                self.class_bindings.temp = Some(temp_binding.clone());
-            }
-
-            // Static private fields reference class name (not temp var) in class declarations.
-            // `class Class { static #prop; method() { return obj.#prop; } }`
-            // -> `method() { return _assertClassBrand(Class, obj, _prop)._; }`
-            // (note `Class` in `_assertClassBrand(Class, ...)`, not `_Class`)
-            // So set "temp" binding to actual class name while visiting class body.
-            // Note: If declaration is `export default class {}` with no name, and class has static props,
-            // then class has had name binding created already above. So name binding is always `Some`.
-            if self.is_declaration {
-                private_props.class_bindings.temp = private_props.class_bindings.name.clone();
-            }
-        }
     }
 
     /// Pop from private props stack.
@@ -523,7 +499,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             return;
         }
 
-        self.private_props_stack.pop();
+        self.classes_stack.pop();
     }
 
     /// Insert an expression after the class.

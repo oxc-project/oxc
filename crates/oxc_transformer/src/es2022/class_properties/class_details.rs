@@ -1,0 +1,120 @@
+use oxc_ast::ast::*;
+use oxc_data_structures::stack::NonEmptyStack;
+use oxc_span::Atom;
+use oxc_traverse::BoundIdentifier;
+
+use super::{ClassBindings, ClassProperties, FxIndexMap};
+
+/// Details of a class.
+///
+/// These are stored in `ClassesStack`.
+#[derive(Default)]
+pub(super) struct ClassDetails<'a> {
+    /// `true` for class declaration, `false` for class expression
+    pub is_declaration: bool,
+    /// Private properties.
+    /// Mapping private prop name to binding for temp var.
+    /// This is then used as lookup when transforming e.g. `this.#x`.
+    /// `None` if class has no private properties.
+    pub private_props: Option<FxIndexMap<Atom<'a>, PrivateProp<'a>>>,
+    /// Bindings for class name and temp var for class
+    pub bindings: ClassBindings<'a>,
+}
+
+/// Details of a private property.
+pub(super) struct PrivateProp<'a> {
+    pub binding: BoundIdentifier<'a>,
+    pub is_static: bool,
+}
+
+/// Stack of `ClassDetails`.
+/// Pushed to when entering a class, popped when exiting.
+///
+/// We use a `NonEmptyStack` to make `last` and `last_mut` cheap (these are used a lot).
+/// The first entry is a dummy.
+///
+/// This is a separate structure, rather than just storing stack as a property of `ClassProperties`
+/// to work around borrow-checker. You can call `find_private_prop` and retain the return value
+/// without holding a mut borrow of the whole of `&mut ClassProperties`. This allows accessing other
+/// properties of `ClassProperties` while that borrow is held.
+#[derive(Default)]
+pub(super) struct ClassesStack<'a> {
+    stack: NonEmptyStack<ClassDetails<'a>>,
+}
+
+impl<'a> ClassesStack<'a> {
+    /// Push an entry to stack.
+    #[inline]
+    pub fn push(&mut self, class: ClassDetails<'a>) {
+        self.stack.push(class);
+    }
+
+    /// Push last entry from stack.
+    #[inline]
+    pub fn pop(&mut self) -> ClassDetails<'a> {
+        self.stack.pop()
+    }
+
+    /// Get details of current class.
+    #[inline]
+    pub fn last(&self) -> &ClassDetails<'a> {
+        self.stack.last()
+    }
+
+    /// Get details of current class as `&mut` reference.
+    #[inline]
+    pub fn last_mut(&mut self) -> &mut ClassDetails<'a> {
+        self.stack.last_mut()
+    }
+
+    /// Lookup details of private property referred to by `ident`.
+    pub fn find_private_prop<'b>(
+        &'b mut self,
+        ident: &PrivateIdentifier<'a>,
+    ) -> Option<ResolvedPrivateProp<'a, 'b>> {
+        // Check for binding in closest class first, then enclosing classes.
+        // We skip the first, because this is a `NonEmptyStack` with dummy first entry.
+        // TODO: Check there are tests for bindings in enclosing classes.
+        for class in self.stack[1..].iter_mut().rev() {
+            if let Some(private_props) = &mut class.private_props {
+                if let Some(prop) = private_props.get(&ident.name) {
+                    return Some(ResolvedPrivateProp {
+                        prop_binding: &prop.binding,
+                        class_bindings: &mut class.bindings,
+                        is_static: prop.is_static,
+                        is_declaration: class.is_declaration,
+                    });
+                }
+            }
+        }
+        // TODO: This should be unreachable. Only returning `None` because implementation is incomplete.
+        None
+    }
+}
+
+/// Details of a private property resolved for a private field.
+///
+/// This is the return value of [`ClassesStack::find_private_prop`].
+pub(super) struct ResolvedPrivateProp<'a, 'b> {
+    /// Binding for temp var representing the property
+    pub prop_binding: &'b BoundIdentifier<'a>,
+    /// Bindings for class name and temp var for class
+    pub class_bindings: &'b mut ClassBindings<'a>,
+    /// `true` if is a static property
+    pub is_static: bool,
+    /// `true` if class which defines this property is a class declaration
+    pub is_declaration: bool,
+}
+
+// Shortcut methods to get current class
+impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+    /// Get details of current class.
+    pub(super) fn current_class(&self) -> &ClassDetails<'a> {
+        self.classes_stack.last()
+    }
+
+    /// Get details of current class as `&mut` reference.
+    pub(super) fn current_class_mut(&mut self) -> &mut ClassDetails<'a> {
+        self.classes_stack.last_mut()
+    }
+}
