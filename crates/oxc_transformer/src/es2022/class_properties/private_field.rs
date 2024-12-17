@@ -396,16 +396,18 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 ctx,
             );
         } else {
-            let getter = |object: Expression<'a>, span: Span, ctx: &mut TraverseCtx<'a>| {
-                let ident = prop_binding.create_read_expression(ctx);
-                self.create_private_field_get(ident, object, span, ctx)
-            };
-            let setter = |object: Expression<'a>,
+            let getter =
+                |s: &mut Self, object: Expression<'a>, span: Span, ctx: &mut TraverseCtx<'a>| {
+                    let ident = prop_binding.create_read_expression(ctx);
+                    s.create_private_field_get(ident, object, span, ctx)
+                };
+            let setter = |s: &mut Self,
+                          object: Expression<'a>,
                           value: Expression<'a>,
                           span: Span,
                           ctx: &mut TraverseCtx<'a>| {
                 let ident = prop_binding.create_read_expression(ctx);
-                self.create_private_field_set(ident, object, value, span, ctx)
+                s.create_private_field_set(ident, object, value, span, ctx)
             };
             self.transform_instance_assignment_expression(expr, getter, setter, ctx);
         }
@@ -589,11 +591,17 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     // `AssignmentTarget::PrivateFieldExpression` on left, and that clones in
     // `transform_assignment_expression` can be elided.
     #[inline]
-    fn transform_instance_assignment_expression<
-        Getter: FnOnce(Expression<'a>, Span, &mut TraverseCtx<'a>) -> Expression<'a>,
-        Setter: FnOnce(Expression<'a>, Expression<'a>, Span, &mut TraverseCtx<'a>) -> Expression<'a>,
+    pub(super) fn transform_instance_assignment_expression<
+        Getter: FnOnce(&mut Self, Expression<'a>, Span, &mut TraverseCtx<'a>) -> Expression<'a>,
+        Setter: FnOnce(
+            &mut Self,
+            Expression<'a>,
+            Expression<'a>,
+            Span,
+            &mut TraverseCtx<'a>,
+        ) -> Expression<'a>,
     >(
-        &self,
+        &mut self,
         expr: &mut Expression<'a>,
         getter: Getter,
         setter: Setter,
@@ -611,7 +619,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         if operator == AssignmentOperator::Assign {
             // `object.#prop = value` -> `_classPrivateFieldSet2(_prop, object, value)`
-            *expr = setter(object, value, span, ctx);
+            *expr = setter(self, object, value, span, ctx);
         } else {
             // Make 2 copies of `object`
             let (object1, object2) = self.duplicate_object(object, ctx);
@@ -621,22 +629,22 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // -> `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
 
                 // `_classPrivateFieldGet2(_prop, object)`
-                let get_call = getter(object2, SPAN, ctx);
+                let get_call = getter(self, object2, SPAN, ctx);
 
                 // `_classPrivateFieldGet2(_prop, object) + value`
                 let value = ctx.ast.expression_binary(SPAN, get_call, operator, value);
 
                 // `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
-                *expr = setter(object1, value, span, ctx);
+                *expr = setter(self, object1, value, span, ctx);
             } else if let Some(operator) = operator.to_logical_operator() {
                 // `object.#prop &&= value`
                 // -> `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
 
                 // `_classPrivateFieldGet2(_prop, object)`
-                let get_call = getter(object1, SPAN, ctx);
+                let get_call = getter(self, object1, SPAN, ctx);
 
                 // `_classPrivateFieldSet2(_prop, object, value)`
-                let set_call = setter(object2, value, SPAN, ctx);
+                let set_call = setter(self, object2, value, SPAN, ctx);
                 // `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
                 *expr = ctx.ast.expression_logical(span, get_call, operator, set_call);
             } else {
