@@ -389,14 +389,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
             self.transform_static_assignment_expression(
                 expr,
-                prop_binding,
-                class_binding,
+                &prop_binding,
+                &class_binding,
                 class_symbol_id,
                 is_declaration,
                 ctx,
             );
         } else {
-            self.transform_instance_assignment_expression(expr, prop_binding, ctx);
+            self.transform_instance_assignment_expression(expr, &prop_binding, ctx);
         }
     }
 
@@ -416,12 +416,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     // `AssignmentTarget::PrivateFieldExpression` on left, and that clones in
     // `transform_assignment_expression` can be elided.
     #[inline]
-    #[expect(clippy::needless_pass_by_value)]
     fn transform_static_assignment_expression(
         &self,
         expr: &mut Expression<'a>,
-        prop_binding: BoundIdentifier<'a>,
-        class_binding: BoundIdentifier<'a>,
+        prop_binding: &BoundIdentifier<'a>,
+        class_binding: &BoundIdentifier<'a>,
         class_symbol_id: Option<SymbolId>,
         is_declaration: bool,
         ctx: &mut TraverseCtx<'a>,
@@ -575,11 +574,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     // `AssignmentTarget::PrivateFieldExpression` on left, and that clones in
     // `transform_assignment_expression` can be elided.
     #[inline]
-    #[expect(clippy::needless_pass_by_value)]
     fn transform_instance_assignment_expression(
         &self,
         expr: &mut Expression<'a>,
-        prop_binding: BoundIdentifier<'a>,
+        prop_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let assign_expr = match ctx.ast.move_expression(expr) {
