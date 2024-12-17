@@ -138,9 +138,9 @@ const server = createServer((req, res) => {
           // The error is caught by `process.on('unhandledRejection'` at the bottom of this script.
           // Log the error there and use `--filter file` to see what's thrown.
           new Promise((_resolve, reject) => {
-            setTimeout(() => reject("Timed out."), 1000);
+            setTimeout(() => reject('Timed out.'), 1000);
           }),
-        ])
+        ]);
       } catch (err) {
         if (parseInt(process.version.split('.')[0].replace('v', '')) < 22) {
           return res.end('Please upgrade the Node.js version to 22 or later.');
