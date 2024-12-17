@@ -153,7 +153,7 @@ impl SourcemapBuilder {
         (original_line as u32, original_column)
     }
 
-    fn search_original_line(&mut self, position: u32) -> usize {
+    fn search_original_line(&self, position: u32) -> usize {
         let lines = &self.line_offset_tables.lines;
         let mut idx = self.last_line_lookup;
 
