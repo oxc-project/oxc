@@ -614,7 +614,16 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let AssignmentExpression { span, operator, right: value, left } = assign_expr;
         let object = match left {
             AssignmentTarget::PrivateFieldExpression(field_expr) => field_expr.unbox().object,
-            _ => unreachable!(),
+            // For super assignment expression
+            AssignmentTarget::StaticMemberExpression(member_expr) => Expression::StringLiteral(
+                ctx.ast.alloc(StringLiteral::from(member_expr.property.clone())),
+            ),
+            AssignmentTarget::ComputedMemberExpression(member_expr) => {
+                member_expr.unbox().expression
+            }
+            _ => {
+                unreachable!();
+            }
         };
 
         if operator == AssignmentOperator::Assign {

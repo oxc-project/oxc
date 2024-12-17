@@ -1515,3 +1515,9 @@ impl ImportPhase {
         }
     }
 }
+
+impl<'a> From<IdentifierName<'a>> for StringLiteral<'a> {
+    fn from(ident: IdentifierName<'a>) -> Self {
+        Self { span: ident.span, value: ident.name.clone(), raw: None }
+    }
+}

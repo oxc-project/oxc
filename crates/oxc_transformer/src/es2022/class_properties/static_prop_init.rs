@@ -221,6 +221,7 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             // `object.#prop = value`, `object.#prop += value`, `object.#prop ??= value` etc
             Expression::AssignmentExpression(_) => {
                 self.class_properties.transform_assignment_expression(expr, self.ctx);
+                self.class_properties.transform_super_assignment_expression(expr, self.ctx);
             }
             // `object.#prop++`, `--object.#prop`
             Expression::UpdateExpression(_) => {
