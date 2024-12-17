@@ -221,13 +221,13 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_export_namespace(
         &mut self,
+        start_span: Span,
     ) -> Result<Box<'a, TSNamespaceExportDeclaration<'a>>> {
-        let span = self.start_span();
         self.expect(Kind::As)?;
         self.expect(Kind::Namespace)?;
         let id = self.parse_identifier_name()?;
         self.asi()?;
-        Ok(self.ast.alloc_ts_namespace_export_declaration(self.end_span(span), id))
+        Ok(self.ast.alloc_ts_namespace_export_declaration(self.end_span(start_span), id))
     }
 
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
@@ -240,7 +240,7 @@ impl<'a> ParserImpl<'a> {
                 .parse_ts_export_assignment_declaration(span)
                 .map(ModuleDeclaration::TSExportAssignment),
             Kind::As if self.peek_at(Kind::Namespace) && self.is_ts => self
-                .parse_ts_export_namespace()
+                .parse_ts_export_namespace(span)
                 .map(ModuleDeclaration::TSNamespaceExportDeclaration),
             Kind::Default => self
                 .parse_export_default_declaration(span)
