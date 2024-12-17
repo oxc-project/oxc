@@ -1,6 +1,19 @@
 use cow_utils::CowUtils;
 
+use oxc_allocator::Allocator;
+use oxc_codegen::Codegen;
 use oxc_minifier::CompressOptions;
+use oxc_minifier::Compressor;
+use oxc_parser::Parser;
+use oxc_span::SourceType;
+
+fn run(source_text: &str, source_type: SourceType) -> String {
+    let allocator = Allocator::default();
+    let mut ret = Parser::new(&allocator, source_text, source_type).parse();
+    let program = &mut ret.program;
+    Compressor::new(&allocator, CompressOptions::default()).dead_code_elimination(program);
+    Codegen::new().build(program).code
+}
 
 fn test(source_text: &str, expected: &str) {
     let t = "('production' == 'production')";
@@ -8,8 +21,10 @@ fn test(source_text: &str, expected: &str) {
     let source_text = source_text.cow_replace("true", t);
     let source_text = source_text.cow_replace("false", f);
 
-    let options = CompressOptions::dead_code_elimination();
-    crate::test(&source_text, expected, options);
+    let source_type = SourceType::default();
+    let result = run(&source_text, source_type);
+    let expected = run(expected, source_type);
+    assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
 fn test_same(source_text: &str) {
