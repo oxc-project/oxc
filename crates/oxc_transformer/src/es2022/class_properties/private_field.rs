@@ -409,8 +409,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// * `object.#prop &&= value`
     ///   -> `_assertClassBrand(Class, object, _prop)._ && (_prop._ = _assertClassBrand(Class, object, value))`
     ///
-    /// Output in all cases contains an `AssignmentExpression`, so mutate existing `AssignmentExpression`
-    /// rather than creating a new one.
+    /// Output in some cases contains an `AssignmentExpression`, so mutate existing `AssignmentExpression`
+    /// rather than creating a new one when possible.
     //
     // `#[inline]` so that compiler sees `expr` is an `Expression::AssignmentExpression` with
     // `AssignmentTarget::PrivateFieldExpression` on left, and that clones in
@@ -570,9 +570,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ///   -> `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
     /// * `object.#prop &&= value`
     ///   -> `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
-    ///
-    /// Output in all cases contains an `AssignmentExpression`, so mutate existing `AssignmentExpression`
-    /// rather than creating a new one.
     //
     // `#[inline]` so that compiler sees `expr` is an `Expression::AssignmentExpression` with
     // `AssignmentTarget::PrivateFieldExpression` on left, and that clones in
