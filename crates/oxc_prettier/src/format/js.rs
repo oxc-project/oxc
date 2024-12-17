@@ -929,8 +929,15 @@ impl<'a> Format<'a> for RegExpLiteral<'a> {
 impl<'a> Format<'a> for StringLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, StringLiteral, {
-            // TODO: `replaceEndOfLine()` to handle line continuation
-            literal::print_string(p, self.span.source_text(p.source_text), p.options.single_quote)
+            literal::replace_end_of_line(
+                p,
+                literal::print_string(
+                    p,
+                    self.span.source_text(p.source_text),
+                    p.options.single_quote,
+                ),
+                JoinSeparator::Literalline,
+            )
         })
     }
 }

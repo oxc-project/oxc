@@ -4,7 +4,11 @@ use cow_utils::CowUtils;
 use oxc_allocator::String;
 use oxc_span::Span;
 
-use crate::{dynamic_text, ir::Doc, Prettier};
+use crate::{
+    dynamic_text,
+    ir::{Doc, JoinSeparator},
+    join, Prettier,
+};
 
 /// Print quoted string.
 /// Quotes are automatically chosen based on the content of the string and option.
@@ -161,4 +165,19 @@ fn make_string<'a>(
 
     result.push(enclosing_quote);
     result
+}
+
+/// Handle line continuation.
+/// This does not recursively handle the doc, expects single `Doc::Str`.
+pub fn replace_end_of_line<'a>(
+    p: &Prettier<'a>,
+    doc: Doc<'a>,
+    replacement: JoinSeparator,
+) -> Doc<'a> {
+    let Doc::Str(text) = doc else {
+        return doc;
+    };
+
+    let lines = text.split('\n').map(|line| dynamic_text!(p, line)).collect::<Vec<_>>();
+    join!(p, replacement, lines)
 }
