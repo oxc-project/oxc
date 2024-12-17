@@ -258,6 +258,9 @@ impl<'a, 'b> PeepholeFoldConstants {
         let Expression::BinaryExpression(left) = &mut e.left else {
             return None;
         };
+        if left.operator != op {
+            return None;
+        }
 
         let (v, expr_to_move);
         if let Some(result) = ctx.eval_binary_operation(op, &left.left, &e.right) {
@@ -1276,6 +1279,13 @@ mod test {
         test("x = null & 1", "x = 0");
         test("x = (2 ** 31 - 1) | 1", "x = 2147483647");
         test("x = (2 ** 31) | 1", "x = -2147483647");
+
+        // https://github.com/oxc-project/oxc/issues/7944
+        test_same("(x - 1) & 1");
+        test_same("(y >> 3) & 7");
+        test("(y & 3) & 7", "y & 3");
+        test_same("(y | 3) & 7");
+        test("y | 3 & 7", "y | 3");
     }
 
     #[test]
@@ -1364,6 +1374,7 @@ mod test {
         test_same("z = x * y");
         test_same("x = y * 5");
         // test("x = y + (z * 24 * 60 * 60 * 1000)", "x = y + z * 864E5");
+        test("x = y + (z & 24 & 60 & 60 & 1000)", "x = y + (z & 8)");
     }
 
     #[test]
@@ -1391,6 +1402,52 @@ mod test {
         test("x = Infinity % Infinity", "x = NaN");
         test("x = Infinity / 0", "x = Infinity");
         test("x = Infinity % 0", "x = NaN");
+    }
+
+    #[test]
+    fn test_fold_left() {
+        test_same("(+x - 1) + 2"); // not yet
+        test("(+x & 1) & 2", "+x & 0");
+    }
+
+    #[test]
+    fn test_fold_left_child_op() {
+        test_same("x & infinity & 2"); // FIXME: want x & 0
+        test_same("x - infinity - 2"); // FIXME: want "x-infinity"
+        test_same("x - 1 + infinity");
+        test_same("x - 2 + 1");
+        test_same("x - 2 + 3");
+        test_same("1 + x - 2 + 1");
+        test_same("1 + x - 2 + 3");
+        test_same("1 + x - 2 + 3 - 1");
+        test_same("f(x)-0");
+        test_same("x-0-0"); // FIXME: want x - 0
+        test_same("x+2-2+2");
+        test_same("x+2-2+2-2");
+        test_same("x-2+2");
+        test_same("x-2+2-2");
+        test_same("x-2+2-2+2");
+
+        test_same("1+x-0-na_n");
+        test_same("1+f(x)-0-na_n");
+        test_same("1+x-0+na_n");
+        test_same("1+f(x)-0+na_n");
+
+        test_same("1+x+na_n"); // unfoldable
+        test_same("x+2-2"); // unfoldable
+        test_same("x+2"); // nothing to do
+        test_same("x-2"); // nothing to do
+    }
+
+    #[test]
+    fn test_associative_fold_constants_with_variables() {
+        // mul and add should not fold
+        test_same("alert(x * 12 * 20);");
+        test_same("alert(12 * x * 20);");
+        test_same("alert(x + 12 + 20);");
+        test_same("alert(12 + x + 20);");
+        test("alert(x & 12 & 20);", "alert(x & 4);");
+        test("alert(12 & x & 20);", "alert(x & 4);");
     }
 
     #[test]
