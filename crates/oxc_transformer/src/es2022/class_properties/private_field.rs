@@ -597,8 +597,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         let prop_ident = prop_binding.create_read_expression(ctx);
 
-        // TODO: Different output in for statements e.g. `private/1-helpermemberexpressionfunction/input.js`
-
         if operator == AssignmentOperator::Assign {
             // `object.#prop = value` -> `_classPrivateFieldSet2(_prop, object, value)`
             *expr = self.create_private_field_set(prop_ident, object, value, span, ctx);
