@@ -1,8 +1,4 @@
-use std::{
-    cmp::{max, min},
-    path::Path,
-    sync::Arc,
-};
+use std::{cmp::max, path::Path, sync::Arc};
 
 use nonmax::NonMaxU32;
 use oxc_index::{Idx, IndexVec};
@@ -14,6 +10,9 @@ const LS_OR_PS_FIRST: u8 = 0xE2;
 const LS_OR_PS_SECOND: u8 = 0x80;
 const LS_THIRD: u8 = 0xA8;
 const PS_THIRD: u8 = 0xA9;
+
+/// Number of lines to check with linear search when translating byte position to line index
+const LINE_SEARCH_LINEAR_ITERATIONS: usize = 16;
 
 /// Index into vec of `ColumnOffsets`
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -175,23 +174,61 @@ impl SourcemapBuilder {
         }
     }
 
+    /// Find line index for byte index `position`, starting search at `last_line_lookup`,
+    /// and working forwards.
+    ///
+    /// Search forwards, looking for first line which starts *after* `position`.
+    /// `position` then must be on the line before that one.
     fn search_original_line_forwards(&self, position: u32) -> usize {
         let lines = &self.line_offset_tables.lines;
-        let mut idx = self.last_line_lookup as usize;
+        let last_idx = self.last_line_lookup as usize;
 
-        let cap = min(idx + 16, lines.len() - 1);
-        idx = min(idx + 1, cap);
-        while idx < cap && lines[idx].byte_offset_to_start_of_line <= position {
-            idx += 1;
+        let start_idx = last_idx + 1;
+        let end_idx = start_idx + LINE_SEARCH_LINEAR_ITERATIONS;
+
+        // We have a fast path for when there are more than `LINE_SEARCH_LINEAR_ITERATIONS` lines
+        // to search (common case unless file is very short).
+        // Fast path is do linear search on first `LINE_SEARCH_LINEAR_ITERATIONS` lines,
+        // then fallback to binary search over remaining lines.
+        // If less than `LINE_SEARCH_LINEAR_ITERATIONS` lines to search, just do linear search,
+        // but that's slower as number of lines being searched is not constant, so loop cannot be unrolled.
+        if end_idx > lines.len() {
+            // Less than `LINE_SEARCH_LINEAR_ITERATIONS` lines to search. Take slow path.
+            // Unless file is very short, this branch is rarely taken.
+            return self.search_original_line_forwards_when_few_lines(position);
         }
 
-        if lines[idx].byte_offset_to_start_of_line > position {
-            idx = lines
-                .partition_point(|table| table.byte_offset_to_start_of_line <= position)
-                .saturating_sub(1);
+        // Linear search for `LINE_SEARCH_LINEAR_ITERATIONS` lines.
+        // Compiler should unroll this loop as it has constant number of iterations.
+        // https://godbolt.org/z/heh1cnYa4
+        for (line_idx, line) in lines[start_idx..end_idx].iter().enumerate() {
+            if line.byte_offset_to_start_of_line > position {
+                // This line starts after `position`. `position` must be on previous line.
+                return start_idx + line_idx - 1;
+            }
         }
 
-        idx
+        // Line not found yet. Binary search over remaining lines.
+        lines[end_idx..].partition_point(|line| line.byte_offset_to_start_of_line <= position)
+            + end_idx
+            - 1
+    }
+
+    #[cold]
+    fn search_original_line_forwards_when_few_lines(&self, position: u32) -> usize {
+        let lines = &self.line_offset_tables.lines;
+        let last_idx = self.last_line_lookup as usize;
+        let start_idx = last_idx + 1;
+
+        for (line_idx, line) in lines[start_idx..].iter().enumerate() {
+            if line.byte_offset_to_start_of_line > position {
+                // This line starts after `position`. `position` must be on previous line.
+                return start_idx + line_idx - 1;
+            }
+        }
+
+        // No line starts after `position`. `position` must be on last line.
+        lines.len() - 1
     }
 
     fn search_original_line_backwards(&self, position: u32) -> usize {
