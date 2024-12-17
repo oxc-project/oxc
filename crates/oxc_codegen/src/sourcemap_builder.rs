@@ -155,30 +155,48 @@ impl SourcemapBuilder {
 
     fn search_original_line(&self, position: u32) -> usize {
         let lines = &self.line_offset_tables.lines;
-        let mut idx = self.last_line_lookup;
+        let idx = self.last_line_lookup;
 
         if position >= lines[idx].byte_offset_to_start_of_line {
-            let cap = (idx + 16).min(lines.len() - 1);
-            idx = (idx + 1).min(cap);
-            while idx < cap && lines[idx].byte_offset_to_start_of_line <= position {
-                idx += 1;
-            }
-            if lines[idx].byte_offset_to_start_of_line > position {
-                idx = lines
-                    .partition_point(|table| table.byte_offset_to_start_of_line <= position)
-                    .saturating_sub(1);
-            }
+            self.search_original_line_forwards(position)
         } else {
-            let cap = idx.saturating_sub(16);
-            idx = idx.saturating_sub(1).max(cap);
-            while idx > cap && lines[idx].byte_offset_to_start_of_line > position {
-                idx -= 1;
-            }
-            if lines[idx].byte_offset_to_start_of_line < position {
-                idx = lines
-                    .partition_point(|table| table.byte_offset_to_start_of_line <= position)
-                    .saturating_sub(1);
-            }
+            self.search_original_line_backwards(position)
+        }
+    }
+
+    fn search_original_line_forwards(&self, position: u32) -> usize {
+        let lines = &self.line_offset_tables.lines;
+        let mut idx = self.last_line_lookup;
+
+        let cap = (idx + 16).min(lines.len() - 1);
+        idx = (idx + 1).min(cap);
+        while idx < cap && lines[idx].byte_offset_to_start_of_line <= position {
+            idx += 1;
+        }
+
+        if lines[idx].byte_offset_to_start_of_line > position {
+            idx = lines
+                .partition_point(|table| table.byte_offset_to_start_of_line <= position)
+                .saturating_sub(1);
+        }
+
+        idx
+    }
+
+    fn search_original_line_backwards(&self, position: u32) -> usize {
+        let lines = &self.line_offset_tables.lines;
+        let mut idx = self.last_line_lookup;
+
+        let cap = idx.saturating_sub(16);
+        idx = idx.saturating_sub(1).max(cap);
+        while idx > cap && lines[idx].byte_offset_to_start_of_line > position {
+            idx -= 1;
+        }
+
+        if lines[idx].byte_offset_to_start_of_line < position {
+            idx = lines
+                .partition_point(|table| table.byte_offset_to_start_of_line <= position)
+                .saturating_sub(1);
         }
 
         idx
