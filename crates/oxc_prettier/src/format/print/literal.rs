@@ -6,15 +6,18 @@ use oxc_span::Span;
 
 use crate::{dynamic_text, ir::Doc, Prettier};
 
+/// Print quoted string.
+/// Quotes are automatically chosen based on the content of the string and option.
 pub fn print_string<'a>(
     p: &Prettier<'a>,
     quoted_raw_text: &'a str,
     prefer_single_quote: bool,
-) -> &'a str {
+) -> Doc<'a> {
     debug_assert!(
         quoted_raw_text.starts_with('\'') && quoted_raw_text.ends_with('\'')
             || quoted_raw_text.starts_with('"') && quoted_raw_text.ends_with('"')
     );
+
     let original_quote = quoted_raw_text.chars().next().unwrap();
     let not_quoted_raw_text = &quoted_raw_text[1..quoted_raw_text.len() - 1];
 
@@ -22,20 +25,22 @@ pub fn print_string<'a>(
 
     // This keeps useless escape as-is
     if original_quote == enclosing_quote {
-        return quoted_raw_text;
+        return dynamic_text!(p, quoted_raw_text);
     }
 
-    make_string(p, not_quoted_raw_text, enclosing_quote).into_bump_str()
+    dynamic_text!(p, make_string(p, not_quoted_raw_text, enclosing_quote).into_bump_str())
 }
 
-// TODO: Can this be removed?
+// TODO: Can this be removed? It does not exist in Prettier
+/// Print quoted string from not quoted text.
+/// Mainly this is used to add quotes for object property keys.
 pub fn print_string_from_not_quoted_raw_text<'a>(
     p: &Prettier<'a>,
     not_quoted_raw_text: &str,
     prefer_single_quote: bool,
-) -> &'a str {
+) -> Doc<'a> {
     let enclosing_quote = get_preferred_quote(not_quoted_raw_text, prefer_single_quote);
-    make_string(p, not_quoted_raw_text, enclosing_quote).into_bump_str()
+    dynamic_text!(p, make_string(p, not_quoted_raw_text, enclosing_quote).into_bump_str())
 }
 
 // See https://github.com/prettier/prettier/blob/3.3.3/src/utils/print-number.js

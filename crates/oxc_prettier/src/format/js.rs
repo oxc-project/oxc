@@ -60,13 +60,10 @@ impl<'a> Format<'a> for Hashbang<'a> {
 impl<'a> Format<'a> for Directive<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
-        parts.push(dynamic_text!(
+        parts.push(literal::print_string_from_not_quoted_raw_text(
             p,
-            literal::print_string_from_not_quoted_raw_text(
-                p,
-                self.directive.as_str(),
-                p.options.single_quote,
-            )
+            self.directive.as_str(),
+            p.options.single_quote,
         ));
         if let Some(semi) = p.semi() {
             parts.push(semi);
@@ -932,15 +929,8 @@ impl<'a> Format<'a> for RegExpLiteral<'a> {
 impl<'a> Format<'a> for StringLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, StringLiteral, {
-            dynamic_text!(
-                p,
-                // TODO: `replaceEndOfLine()` to handle line continuation
-                literal::print_string(
-                    p,
-                    self.span.source_text(p.source_text),
-                    p.options.single_quote,
-                )
-            )
+            // TODO: `replaceEndOfLine()` to handle line continuation
+            literal::print_string(p, self.span.source_text(p.source_text), p.options.single_quote)
         })
     }
 }
@@ -1163,13 +1153,10 @@ impl<'a> Format<'a> for PropertyKey<'a> {
             match self {
                 PropertyKey::StaticIdentifier(ident) => {
                     if need_quote {
-                        dynamic_text!(
+                        literal::print_string_from_not_quoted_raw_text(
                             p,
-                            literal::print_string_from_not_quoted_raw_text(
-                                p,
-                                &ident.name,
-                                p.options.single_quote
-                            )
+                            &ident.name,
+                            p.options.single_quote,
                         )
                     } else {
                         ident.format(p)
@@ -1186,25 +1173,19 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                     {
                         dynamic_text!(p, literal.value.as_str())
                     } else {
-                        dynamic_text!(
+                        literal::print_string_from_not_quoted_raw_text(
                             p,
-                            literal::print_string_from_not_quoted_raw_text(
-                                p,
-                                literal.value.as_str(),
-                                p.options.single_quote,
-                            )
+                            literal.value.as_str(),
+                            p.options.single_quote,
                         )
                     }
                 }
                 PropertyKey::NumericLiteral(literal) => {
                     if need_quote {
-                        dynamic_text!(
+                        literal::print_string_from_not_quoted_raw_text(
                             p,
-                            literal::print_string_from_not_quoted_raw_text(
-                                p,
-                                &literal.raw_str(),
-                                p.options.single_quote
-                            )
+                            &literal.raw_str(),
+                            p.options.single_quote,
                         )
                     } else {
                         literal.format(p)
