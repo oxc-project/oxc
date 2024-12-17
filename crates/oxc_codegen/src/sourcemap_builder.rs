@@ -157,6 +157,13 @@ impl SourcemapBuilder {
         (original_line as u32, original_column)
     }
 
+    /// Find line index for byte index `position`, using line offset table.
+    ///
+    /// Usually output code is roughly in same order as it was in original source,
+    /// so line will be close to the line found in last call to this function.
+    ///
+    /// So do fast linear search first over a few lines, and fallback to slower binary search
+    /// if this doesn't find the line.
     fn search_original_line(&self, position: u32) -> usize {
         let lines = &self.line_offset_tables.lines;
         let idx = self.last_line_lookup;
