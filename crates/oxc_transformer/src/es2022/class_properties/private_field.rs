@@ -471,7 +471,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     assign_expr.operator = AssignmentOperator::Assign;
                     assign_expr.right = ctx.ast.expression_binary(SPAN, prop_obj, operator, value);
                 } else if let Some(operator) = operator.to_logical_operator() {
-                    // `Class.#prop &&= value` -> `_prop._ && (_prop._ = 1)`
+                    // `Class.#prop &&= value` -> `_prop._ && (_prop._ = value)`
                     let span = assign_expr.span;
                     assign_expr.span = SPAN;
                     assign_expr.operator = AssignmentOperator::Assign;
@@ -518,6 +518,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     // `object.#prop += value`
                     // -> `_prop._ = _assertClassBrand(Class, object, _assertClassBrand(Class, object, _prop)._ + value)`
 
+                    // TODO(improve-on-babel): Are 2 x `_assertClassBrand` calls required?
+                    // Wouldn't `_prop._ = _assertClassBrand(Class, object, _prop)._ + value` do the same?
+
                     // `_assertClassBrand(Class, object, _prop)._`
                     let get_expr = self.create_assert_class_brand_underscore(
                         class_ident,
@@ -534,6 +537,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 } else if let Some(operator) = operator.to_logical_operator() {
                     // `object.#prop &&= value`
                     // -> `_assertClassBrand(Class, object, _prop)._ && (_prop._ = _assertClassBrand(Class, object, value))`
+
+                    // TODO(improve-on-babel): Are 2 x `_assertClassBrand` calls required?
+                    // Wouldn't `_assertClassBrand(Class, object, _prop)._ && _prop._ = value` do the same?
 
                     // `_assertClassBrand(Class, object, _prop)._`
                     let left = self.create_assert_class_brand_underscore(
@@ -748,9 +754,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let object = ctx.ast.move_expression(&mut field_expr.object);
 
         if is_static {
-            // TODO: If `object` is reference to class name, and class is declaration, use shortcuts:
+            // If `object` is reference to class name, and class is declaration, use shortcuts:
             // `++Class.#prop` -> `_prop._ = ((_Class$prop = _prop._), ++_Class$prop)`
             // `Class.#prop++` -> `_prop._ = (_Class$prop = _prop._, _Class$prop2 = _Class$prop++, _Class$prop), _Class$prop2`
+
             // TODO(improve-on-babel): These shortcuts could be shorter - just `_prop._++` / `++_prop._`.
             // Or does that behave slightly differently if `Class.#prop` is an object with `valueOf` method?
             // TODO(improve-on-babel): No reason not to apply these shortcuts for class expressions too.
@@ -761,6 +768,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             //   (_object$prop = _assertClassBrand(Class, object, _prop)._, ++_object$prop)
             // )
             // ```
+
+            // TODO(improve-on-babel): Are 2 x `_assertClassBrand` calls required?
+            // Wouldn't `++_assertClassBrand(C, object, _prop)._` do the same?
 
             // Check if object (`object` in `object.#prop`) is a reference to class name
             // TODO: Combine this check with `duplicate_object`. Both check if `object` is an identifier,
