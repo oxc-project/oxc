@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.3] - 2024-12-17
+
+### Features
+
+- 25ddb35 linter: Add the import/no_named_default rule (#7902) (Guillaume Piedigrossi)
+- ee26b44 linter: Enhance `get_element_type` to resolve more element types (#7885) (dalaoshu)
+
+### Bug Fixes
+
+- 6f41d92 linter: False positive in `unicorn/no-useless-spread` (#7940) (dalaoshu)
+- 0867b40 linter: Fix configuration parser for `no-restricted-imports` (#7921) (Alexander S.)
+- 9c9b73d linter: Fix incorrect fixer for `prefer-regexp-test` (#7898) (Cameron)
+- 32935e6 linter: False positive in `jsx-a11y/label-has-associated-control` (#7881) (dalaoshu)
+- 14c51ff semantic: Remove inherting `ScopeFlags::Modifier` from parent scope (#7932) (Dunqing)
+
+### Refactor
+
+- 3858221 global: Sort imports (#7883) (overlookmotel)
+- b99ee37 linter: Move rule "no-restricted-imports" to nursery (#7897) (Alexander S.)
+- ff2a68f linter/yoda: Simplify code (#7941) (overlookmotel)
+
+### Styling
+
+- 7fb9d47 rust: `cargo +nightly fmt` (#7877) (Boshen)
+
 ## [0.15.2] - 2024-12-14
 
 ### Refactor
