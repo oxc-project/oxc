@@ -78,7 +78,7 @@ pub struct SourcemapBuilder {
     /// Tracks the last accessed line index to optimize sequential lookups in `search_original_line_and_column`.
     /// Most calls to this method access positions in increasing order (e.g., when mapping source tokens linearly),
     /// so we can avoid unnecessary binary searches by advancing linearly from this cached index.
-    last_line_lookup: usize,
+    last_line_lookup: u32,
 }
 
 impl SourcemapBuilder {
@@ -138,12 +138,12 @@ impl SourcemapBuilder {
         self.last_position = Some(position);
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn search_original_line_and_column(&mut self, position: u32) -> (u32, u32) {
         let original_line = self.search_original_line(position);
 
         // Store line index as starting point for next search
-        self.last_line_lookup = original_line;
+        self.last_line_lookup = original_line as u32;
 
         let line = &self.line_offset_tables.lines[original_line];
         let mut original_column = position - line.byte_offset_to_start_of_line;
@@ -166,7 +166,7 @@ impl SourcemapBuilder {
     /// if this doesn't find the line.
     fn search_original_line(&self, position: u32) -> usize {
         let lines = &self.line_offset_tables.lines;
-        let idx = self.last_line_lookup;
+        let idx = self.last_line_lookup as usize;
 
         if position >= lines[idx].byte_offset_to_start_of_line {
             self.search_original_line_forwards(position)
@@ -177,7 +177,7 @@ impl SourcemapBuilder {
 
     fn search_original_line_forwards(&self, position: u32) -> usize {
         let lines = &self.line_offset_tables.lines;
-        let mut idx = self.last_line_lookup;
+        let mut idx = self.last_line_lookup as usize;
 
         let cap = min(idx + 16, lines.len() - 1);
         idx = min(idx + 1, cap);
@@ -196,7 +196,7 @@ impl SourcemapBuilder {
 
     fn search_original_line_backwards(&self, position: u32) -> usize {
         let lines = &self.line_offset_tables.lines;
-        let mut idx = self.last_line_lookup;
+        let mut idx = self.last_line_lookup as usize;
 
         let cap = idx.saturating_sub(16);
         idx = max(idx.saturating_sub(1), cap);
