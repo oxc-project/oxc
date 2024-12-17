@@ -136,13 +136,12 @@ impl SourcemapBuilder {
 
     #[allow(clippy::cast_possible_truncation)]
     fn search_original_line_and_column(&mut self, position: u32) -> (u32, u32) {
-        let idx = self.search_line_index(position);
+        let original_line = self.search_line_index(position);
 
-        self.last_line_lookup = idx;
+        // Store line index as starting point for next search
+        self.last_line_lookup = original_line;
 
-        let lines = &self.line_offset_tables.lines;
-
-        let line = &lines[idx];
+        let line = &self.line_offset_tables.lines[original_line];
         let mut original_column = position - line.byte_offset_to_start_of_line;
         if let Some(column_offsets_id) = line.column_offsets_id {
             let column_offsets = &self.line_offset_tables.column_offsets[column_offsets_id];
@@ -151,7 +150,7 @@ impl SourcemapBuilder {
                     [(original_column - column_offsets.byte_offset_to_first) as usize];
             }
         }
-        (idx as u32, original_column)
+        (original_line as u32, original_column)
     }
 
     #[allow(clippy::cast_possible_truncation)]
