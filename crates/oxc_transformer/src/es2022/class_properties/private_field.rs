@@ -418,7 +418,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     #[inline]
     #[expect(clippy::needless_pass_by_value)]
     fn transform_static_assignment_expression(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         prop_binding: BoundIdentifier<'a>,
         class_binding: BoundIdentifier<'a>,
@@ -577,7 +577,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     #[inline]
     #[expect(clippy::needless_pass_by_value)]
     fn transform_instance_assignment_expression(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         prop_binding: BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
