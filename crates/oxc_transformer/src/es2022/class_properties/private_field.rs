@@ -396,7 +396,18 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 ctx,
             );
         } else {
-            self.transform_instance_assignment_expression(expr, prop_binding, ctx);
+            let getter = |object: Expression<'a>, span: Span, ctx: &mut TraverseCtx<'a>| {
+                let ident = prop_binding.create_read_expression(ctx);
+                self.create_private_field_get(ident, object, span, ctx)
+            };
+            let setter = |object: Expression<'a>,
+                          value: Expression<'a>,
+                          span: Span,
+                          ctx: &mut TraverseCtx<'a>| {
+                let ident = prop_binding.create_read_expression(ctx);
+                self.create_private_field_set(ident, object, value, span, ctx)
+            };
+            self.transform_instance_assignment_expression(expr, getter, setter, ctx);
         }
     }
 
@@ -578,11 +589,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     // `AssignmentTarget::PrivateFieldExpression` on left, and that clones in
     // `transform_assignment_expression` can be elided.
     #[inline]
-    #[expect(clippy::needless_pass_by_value)]
-    fn transform_instance_assignment_expression(
-        &mut self,
+    fn transform_instance_assignment_expression<
+        Getter: FnOnce(Expression<'a>, Span, &mut TraverseCtx<'a>) -> Expression<'a>,
+        Setter: FnOnce(Expression<'a>, Expression<'a>, Span, &mut TraverseCtx<'a>) -> Expression<'a>,
+    >(
+        &self,
         expr: &mut Expression<'a>,
-        prop_binding: BoundIdentifier<'a>,
+        getter: Getter,
+        setter: Setter,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let assign_expr = match ctx.ast.move_expression(expr) {
@@ -595,46 +609,41 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             _ => unreachable!(),
         };
 
-        let prop_ident = prop_binding.create_read_expression(ctx);
-
         if operator == AssignmentOperator::Assign {
             // `object.#prop = value` -> `_classPrivateFieldSet2(_prop, object, value)`
-            *expr = self.create_private_field_set(prop_ident, object, value, span, ctx);
+            *expr = setter(object, value, span, ctx);
         } else {
             // Make 2 copies of `object`
             let (object1, object2) = self.duplicate_object(object, ctx);
-
-            let prop_ident2 = prop_binding.create_read_expression(ctx);
 
             if let Some(operator) = operator.to_binary_operator() {
                 // `object.#prop += value`
                 // -> `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
 
                 // `_classPrivateFieldGet2(_prop, object)`
-                let get_call = self.create_private_field_get(prop_ident, object2, SPAN, ctx);
+                let get_call = getter(object2, SPAN, ctx);
 
                 // `_classPrivateFieldGet2(_prop, object) + value`
                 let value = ctx.ast.expression_binary(SPAN, get_call, operator, value);
 
                 // `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
-                *expr = self.create_private_field_set(prop_ident2, object1, value, span, ctx);
+                *expr = setter(object1, value, span, ctx);
             } else if let Some(operator) = operator.to_logical_operator() {
                 // `object.#prop &&= value`
                 // -> `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
 
                 // `_classPrivateFieldGet2(_prop, object)`
-                let get_call = self.create_private_field_get(prop_ident, object1, SPAN, ctx);
+                let get_call = getter(object1, SPAN, ctx);
 
                 // `_classPrivateFieldSet2(_prop, object, value)`
-                let set_call =
-                    self.create_private_field_set(prop_ident2, object2, value, SPAN, ctx);
+                let set_call = setter(object2, value, SPAN, ctx);
                 // `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
                 *expr = ctx.ast.expression_logical(span, get_call, operator, set_call);
             } else {
                 // The above covers all types of `AssignmentOperator`
                 unreachable!();
             }
-        }
+        };
     }
 
     /// Transform update expression (`++` or `--`) where argument is private field.
