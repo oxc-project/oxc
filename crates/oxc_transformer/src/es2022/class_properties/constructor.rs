@@ -208,14 +208,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 
     /// Insert instance property initializers.
-    ///
-    /// `scope_id` has different meaning depending on type of `insertion_location`.
     pub(super) fn insert_instance_inits(
         &mut self,
         class: &mut Class<'a>,
         inits: Vec<Expression<'a>>,
         insertion_location: &InstanceInitsInsertLocation<'a>,
-        scope_id: ScopeId,
         constructor_index: usize,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -223,7 +220,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         match insertion_location {
             InstanceInitsInsertLocation::NewConstructor => {
-                Self::insert_constructor(class, scope_id, inits, ctx);
+                self.insert_constructor(class, inits, ctx);
             }
             InstanceInitsInsertLocation::ExistingConstructor(stmt_index) => {
                 self.insert_inits_into_constructor_as_statements(
@@ -239,21 +236,20 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     class,
                     inits,
                     super_binding,
-                    scope_id,
                     constructor_index,
                     ctx,
                 );
             }
             InstanceInitsInsertLocation::SuperFnOutsideClass(super_binding) => {
-                self.create_super_function_outside_constructor(inits, super_binding, scope_id, ctx);
+                self.create_super_function_outside_constructor(inits, super_binding, ctx);
             }
         }
     }
 
     /// Add a constructor to class containing property initializers.
     fn insert_constructor(
+        &self,
         class: &mut Class<'a>,
-        constructor_scope_id: ScopeId,
         inits: Vec<Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -263,6 +259,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // Add `super(..._args);` statement and `..._args` param if class has a super class.
         // `constructor(..._args) { super(..._args); /* prop initialization */ }`
+        let constructor_scope_id = self.instance_inits_scope_id;
         let mut params_rest = None;
         if has_super_class {
             let args_binding =
@@ -339,7 +336,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         class: &mut Class<'a>,
         inits: Vec<Expression<'a>>,
         super_binding: &BoundIdentifier<'a>,
-        super_func_scope_id: ScopeId,
         constructor_index: usize,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -354,6 +350,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // rather than an additional `return this` statement.
         // Actually this wouldn't work at present, as `_classPrivateFieldInitSpec(this, _prop, value)`
         // does not return `this`. We could alter it so it does when we have our own helper package.
+        let super_func_scope_id = self.instance_inits_scope_id;
         let args_binding =
             ctx.generate_uid("args", super_func_scope_id, SymbolFlags::FunctionScopedVariable);
         let super_call = create_super_call(&args_binding, ctx);
@@ -412,7 +409,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         &mut self,
         inits: Vec<Expression<'a>>,
         super_binding: &BoundIdentifier<'a>,
-        super_func_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Add `"use strict"` directive if outer scope is not strict mode
@@ -427,6 +423,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // `<inits>; return this;`
         let body_stmts = ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx).chain([return_stmt]));
         // `function() { <inits>; return this; }`
+        let super_func_scope_id = self.instance_inits_scope_id;
         let super_func = Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
             SPAN,
             FunctionType::FunctionExpression,
