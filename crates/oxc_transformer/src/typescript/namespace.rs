@@ -315,8 +315,6 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
-    //                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    #[allow(clippy::needless_pass_by_value, clippy::too_many_arguments)]
     fn transform_namespace(
         arg_name: Atom<'a>,
         real_name: Atom<'a>,
@@ -355,7 +353,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
         //                                                   Nested namespace arguments         Normal namespace arguments
         let arguments = {
             // M
-            let logical_left = ctx.ast.expression_identifier_reference(SPAN, &real_name);
+            let logical_left = ctx.ast.expression_identifier_reference(SPAN, real_name.clone());
 
             // (_N.M = {}) or (N = {})
             let mut logical_right = {
@@ -387,9 +385,9 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
             // (M = _N.M || (_N.M = {}))
             if let Some(parent_export) = parent_export {
                 let assign_left =
-                    ctx.ast.simple_assignment_target_identifier_reference(SPAN, &real_name);
+                    ctx.ast.simple_assignment_target_identifier_reference(SPAN, real_name.clone());
                 let assign_right = {
-                    let property = ctx.ast.identifier_name(SPAN, real_name.clone());
+                    let property = ctx.ast.identifier_name(SPAN, real_name);
                     let logical_left =
                         ctx.ast.member_expression_static(SPAN, parent_export, property, false);
                     let op = LogicalOperator::Or;
@@ -446,7 +444,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
     }
 
     /// Convert `export const foo = 1` to `Namespace.foo = 1`;
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value)]
     fn handle_variable_declaration(
         mut var_decl: ArenaBox<'a, VariableDeclaration<'a>>,
         name: Atom<'a>,
@@ -471,7 +469,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
                             AssignmentOperator::Assign,
                             SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
                                 SPAN,
-                                ctx.ast.expression_identifier_reference(SPAN, &name),
+                                ctx.ast.expression_identifier_reference(SPAN, name.clone()),
                                 ctx.ast.identifier_name(SPAN, property_name),
                                 false,
                             ))
