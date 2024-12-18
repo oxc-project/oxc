@@ -75,7 +75,6 @@ pub struct SemanticBuilder<'a> {
     // states
     pub(crate) current_node_id: NodeId,
     pub(crate) current_node_flags: NodeFlags,
-    pub(crate) current_symbol_flags: SymbolFlags,
     pub(crate) current_scope_id: ScopeId,
     /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
     pub(crate) function_stack: Stack<NodeId>,
@@ -135,7 +134,6 @@ impl<'a> SemanticBuilder<'a> {
             errors: RefCell::new(vec![]),
             current_node_id: NodeId::new(0),
             current_node_flags: NodeFlags::empty(),
-            current_symbol_flags: SymbolFlags::empty(),
             current_reference_flags: ReferenceFlags::empty(),
             current_scope_id,
             function_stack: Stack::with_capacity(16),
@@ -401,7 +399,6 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
         let symbol_id = self.symbols.create_symbol(
             span,
@@ -469,7 +466,6 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
-        let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
         let symbol_id = self.symbols.create_symbol(
             span,
