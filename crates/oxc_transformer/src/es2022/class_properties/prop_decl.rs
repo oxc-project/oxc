@@ -24,10 +24,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Get value
-        let value = match &mut prop.value {
-            Some(value) => {
-                self.transform_instance_initializer(value, ctx);
-                ctx.ast.move_expression(value)
+        let value = match prop.value.take() {
+            Some(mut value) => {
+                self.transform_instance_initializer(&mut value, ctx);
+                value
             }
             None => ctx.ast.void_0(SPAN),
         };
@@ -90,10 +90,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) {
         // Get value, and transform it to replace `this` with reference to class name,
         // and transform class fields (`object.#prop`)
-        let value = match &mut prop.value {
-            Some(value) => {
-                self.transform_static_initializer(value, ctx);
-                ctx.ast.move_expression(value)
+        let value = match prop.value.take() {
+            Some(mut value) => {
+                self.transform_static_initializer(&mut value, ctx);
+                value
             }
             None => ctx.ast.void_0(SPAN),
         };
