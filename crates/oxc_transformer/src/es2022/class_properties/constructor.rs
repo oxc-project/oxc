@@ -219,8 +219,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         constructor_index: usize,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // TODO: Handle where vars used in property init clash with vars in top scope of constructor.
-        // (or maybe do that earlier?)
         // TODO: Handle private props in constructor params `class C { #x; constructor(x = this.#x) {} }`.
 
         match insertion_location {
