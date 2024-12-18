@@ -240,6 +240,51 @@ impl Rule for NoRestrictedImports {
                                     source,
                                 );
                             }
+                            ExportImportName::All | ExportImportName::AllButDefault => {
+                                no_restricted_imports_diagnostic(
+                                    ctx,
+                                    span,
+                                    path.message.clone(),
+                                    source,
+                                );
+                            }
+                            _ => (),
+                        }
+                    } else {
+                        no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
+                    }
+                }
+            }
+
+            for entry in &module_record.star_export_entries {
+                if let Some(module_request) = &entry.module_request {
+                    let source = module_request.name();
+                    let span = entry.span;
+
+                    if source != path.name.as_str() {
+                        continue;
+                    }
+
+                    if let Some(import_names) = &path.import_names {
+                        match &entry.import_name {
+                            ExportImportName::Name(import_name)
+                                if import_names.contains(&import_name.name) =>
+                            {
+                                no_restricted_imports_diagnostic(
+                                    ctx,
+                                    span,
+                                    path.message.clone(),
+                                    source,
+                                );
+                            }
+                            ExportImportName::All | ExportImportName::AllButDefault => {
+                                no_restricted_imports_diagnostic(
+                                    ctx,
+                                    span,
+                                    path.message.clone(),
+                                    source,
+                                );
+                            }
                             _ => (),
                         }
                     } else {
@@ -713,7 +758,7 @@ fn test() {
         //     r#"import withGitignores from "foo/bar";"#,
         //     Some(serde_json::json!([{ "patterns": ["foo/*", "!foo/baz"] }])),
         // ),
-        // (r#"export * from "fs";"#, Some(serde_json::json!(["fs"]))),
+        (r#"export * from "fs";"#, Some(serde_json::json!(["fs"]))),
         (r#"export * as ns from "fs";"#, Some(serde_json::json!(["fs"]))),
         (r#"export {a} from "fs";"#, Some(serde_json::json!(["fs"]))),
         (
@@ -766,16 +811,16 @@ fn test() {
                  }]
             }])),
         ),
-        // (
-        //     r#"export * as ns from "fs";"#,
-        //     Some(serde_json::json!([{
-        //         "paths": [{
-        //             "name": "fs",
-        //             "importNames": ["foo"],
-        //             "message": r#"Don"t import "foo"."#
-        //         }]
-        //     }])),
-        // ),
+        (
+            r#"export * as ns from "fs";"#,
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "fs",
+                    "importNames": ["foo"],
+                    "message": r#"Don"t import "foo"."#
+                }]
+            }])),
+        ),
         (
             r#"import withGitignores from "foo";"#,
             Some(serde_json::json!([{
@@ -823,23 +868,23 @@ fn test() {
                 }]
             }])),
         ),
-        // (
-        //     r#"export * from "foo";"#,
-        //     Some(serde_json::json!([{
-        //         "paths": [{
-        //             "name": "foo",
-        //             "importNames": ["DisallowedObject"],
-        //             "message": r#"Please import "DisallowedObject" from /bar/ instead."#
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     r#"export * from "foo";"#,
-        //     Some(serde_json::json!([{
-        //             "name": "",
-        //             "importNames": ["DisallowedObject1, DisallowedObject2"]
-        //     }])),
-        // ),
+        (
+            r#"export * from "foo";"#,
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "importNames": ["DisallowedObject"],
+                    "message": r#"Please import "DisallowedObject" from /bar/ instead."#
+                }]
+            }])),
+        ),
+        (
+            r#"export * from "foo";"#,
+            Some(serde_json::json!([{
+                    "name": "foo",
+                    "importNames": ["DisallowedObject1, DisallowedObject2"]
+            }])),
+        ),
         (
             r#"import { DisallowedObject } from "foo";"#,
             Some(serde_json::json!([{

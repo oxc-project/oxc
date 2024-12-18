@@ -32,6 +32,13 @@ snapshot_kind: text
 
   ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ export * from "fs";
+   · ───────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
  1 │ export * as ns from "fs";
    · ─────────────────────────
    ╰────
@@ -79,6 +86,13 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
+  ⚠ eslint(no-restricted-imports): Don"t import "foo".
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ export * as ns from "fs";
+   · ─────────────────────────
+   ╰────
+  help: Remove the import statement.
+
   ⚠ eslint(no-restricted-imports): Please import from "bar" instead.
    ╭─[no_restricted_imports.tsx:1:28]
  1 │ import withGitignores from "foo";
@@ -111,6 +125,20 @@ snapshot_kind: text
    ╭─[no_restricted_imports.tsx:1:22]
  1 │ import * as All from "foo";
    ·                      ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Please import "DisallowedObject" from /bar/ instead.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ export * from "foo";
+   · ────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ export * from "foo";
+   · ────────────────────
    ╰────
   help: Remove the import statement.
 
