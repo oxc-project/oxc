@@ -141,7 +141,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let class_expr = ctx.ast.move_expression(expr);
         if let Some(binding) = &class_details.bindings.temp {
             // Insert `var _Class` statement, if it wasn't already in `transform_class`
-            if !self.temp_var_is_created {
+            if !class_details.bindings.temp_var_is_created {
                 self.ctx.var_declarations.insert_var(binding, ctx);
             }
 
@@ -191,7 +191,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // Binding for class name is required
             if let Some(ident) = &class.id {
                 // Insert `var _Class` statement, if it wasn't already in `transform_class`
-                if !self.temp_var_is_created {
+                if !class_details.bindings.temp_var_is_created {
                     self.ctx.var_declarations.insert_var(temp_binding, ctx);
                 }
 
@@ -373,7 +373,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let mut class_name_binding = class.id.as_ref().map(BoundIdentifier::from_binding_ident);
 
         let need_temp_var = has_static_prop && (!is_declaration || class.id.is_none());
-        self.temp_var_is_created = need_temp_var;
 
         let class_temp_binding = if need_temp_var {
             let temp_binding = ClassBindings::create_temp_binding(class_name_binding.as_ref(), ctx);
@@ -393,7 +392,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             None
         };
 
-        let class_bindings = ClassBindings::new(class_name_binding, class_temp_binding);
+        let class_bindings =
+            ClassBindings::new(class_name_binding, class_temp_binding, need_temp_var);
 
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {

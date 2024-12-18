@@ -45,6 +45,8 @@ pub(super) struct ClassBindings<'a> {
     /// `true` if should use temp binding for references to class in transpiled static private fields,
     /// `false` if can use name binding
     pub static_private_fields_use_temp: bool,
+    /// `true` if temp var for class has been inserted
+    pub temp_var_is_created: bool,
 }
 
 impl<'a> ClassBindings<'a> {
@@ -52,8 +54,14 @@ impl<'a> ClassBindings<'a> {
     pub fn new(
         name_binding: Option<BoundIdentifier<'a>>,
         temp_binding: Option<BoundIdentifier<'a>>,
+        temp_var_is_created: bool,
     ) -> Self {
-        Self { name: name_binding, temp: temp_binding, static_private_fields_use_temp: true }
+        Self {
+            name: name_binding,
+            temp: temp_binding,
+            static_private_fields_use_temp: true,
+            temp_var_is_created,
+        }
     }
 
     /// Get `SymbolId` of name binding.
