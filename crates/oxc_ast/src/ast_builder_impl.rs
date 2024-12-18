@@ -6,7 +6,7 @@
 )]
 #![warn(missing_docs)]
 
-use std::mem;
+use std::{borrow::Cow, mem};
 
 use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
@@ -85,6 +85,20 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn atom(self, value: &str) -> Atom<'a> {
         Atom::from_in(value, self.allocator)
+    }
+
+    /// Convert a [`Cow<'a, str>`] to an [`Atom<'a>`].
+    ///
+    /// If the `Cow` borrows a string from arena, returns an `Atom` which references that same string,
+    /// without allocating a new one.
+    ///
+    /// If the `Cow` is owned, allocates the string into arena to generate a new `Atom`.
+    #[inline]
+    pub fn atom_from_cow(self, value: &Cow<'a, str>) -> Atom<'a> {
+        match value {
+            Cow::Borrowed(s) => Atom::from(*s),
+            Cow::Owned(s) => self.atom(s),
+        }
     }
 
     /// # SAFETY
