@@ -137,7 +137,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         is_callee: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let temp_binding = self.current_class_mut().bindings.get_or_init_temp_binding(ctx);
+        let temp_binding = self.current_class_mut().bindings.get_or_init_static_binding(ctx);
 
         let ident1 = Argument::from(temp_binding.create_read_expression(ctx));
         let ident2 = Argument::from(temp_binding.create_read_expression(ctx));

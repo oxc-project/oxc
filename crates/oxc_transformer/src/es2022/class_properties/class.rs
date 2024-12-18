@@ -257,17 +257,20 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
         }
 
-        // Update class bindings prior to traversing class body and insertion of statements/expressions
-        // before/after the class. See comments on `ClassBindings`.
+        // Flag that static private fields should be transpiled using name binding,
+        // while traversing class body.
+        //
         // Static private fields reference class name (not temp var) in class declarations.
         // `class Class { static #prop; method() { return obj.#prop; } }`
         // -> `method() { return _assertClassBrand(Class, obj, _prop)._; }`
         // (note `Class` in `_assertClassBrand(Class, ...)`, not `_Class`)
-        // So set "temp" binding to actual class name while visiting class body.
+        //
+        // Also see comments on `ClassBindings`.
+        //
         // Note: If declaration is `export default class {}` with no name, and class has static props,
         // then class has had name binding created already in `transform_class`.
         // So name binding is always `Some`.
-        class_details.bindings.temp = class_details.bindings.name.clone();
+        class_details.bindings.static_private_fields_use_temp = false;
     }
 
     /// `_classPrivateFieldLooseKey("prop")`

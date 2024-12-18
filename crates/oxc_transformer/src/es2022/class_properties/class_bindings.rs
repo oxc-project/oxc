@@ -22,20 +22,19 @@ use oxc_traverse::{BoundIdentifier, TraverseCtx};
 /// is unfortunately rather complicated.
 ///
 /// Transpiled private fields referring to a static private prop use:
-/// * Class name when field is within class body and class has a name
+///
+/// * Class name when field is within body of class declaration
 ///   e.g. `class C { static #x; method() { return obj.#x; } }`
-/// * Temp var when field is within class body and class has no name
-///   e.g. `C = class { static #x; method() { return obj.#x; } }`
-/// * Temp var when field is within a static prop initializer.
-///   e.g. `class C { static #x; y = obj.#x; }`
+///   -> `_assertClassBrand(C, obj, _x)._`
+/// * Temp var when field is within body of class expression
+///   e.g. `C = class C { static #x; method() { return obj.#x; } }`
+///   -> `_assertClassBrand(_C, obj, _x)._`
+/// * Temp var when field is within a static prop initializer
+///   e.g. `class C { static #x; static y = obj.#x; }`
+///   -> `_assertClassBrand(_C, obj, _x)._`
 ///
-/// To cover all these cases, the meaning of `temp` binding here changes while traversing the class body.
-/// [`ClassProperties::transform_class_declaration`] sets `temp` binding to be a copy of the
-/// `name` binding before that traversal begins. So the name `temp` is misleading at that point.
-///
-/// Debug assertions are used to make sure this complex logic is correct.
-///
-/// [`ClassProperties::transform_class_declaration`]: super::ClassProperties::transform_class_declaration
+/// `static_private_fields_use_temp` is updated as transform moves through the class,
+/// to indicate which binding to use.
 #[derive(Default, Clone)]
 pub(super) struct ClassBindings<'a> {
     /// Binding for class name, if class has name
@@ -43,10 +42,9 @@ pub(super) struct ClassBindings<'a> {
     /// Temp var for class.
     /// e.g. `_Class` in `_Class = class {}, _Class.x = 1, _Class`
     pub temp: Option<BoundIdentifier<'a>>,
-    /// `true` if currently transforming static property initializers.
-    /// Only used in debug builds to check logic is correct.
-    #[cfg(debug_assertions)]
-    pub currently_transforming_static_property_initializers: bool,
+    /// `true` if should use temp binding for references to class in transpiled static private fields,
+    /// `false` if can use name binding
+    pub static_private_fields_use_temp: bool,
 }
 
 impl<'a> ClassBindings<'a> {
@@ -55,12 +53,7 @@ impl<'a> ClassBindings<'a> {
         name_binding: Option<BoundIdentifier<'a>>,
         temp_binding: Option<BoundIdentifier<'a>>,
     ) -> Self {
-        Self {
-            name: name_binding,
-            temp: temp_binding,
-            #[cfg(debug_assertions)]
-            currently_transforming_static_property_initializers: false,
-        }
+        Self { name: name_binding, temp: temp_binding, static_private_fields_use_temp: true }
     }
 
     /// Get `SymbolId` of name binding.
@@ -68,24 +61,35 @@ impl<'a> ClassBindings<'a> {
         self.name.as_ref().map(|binding| binding.symbol_id)
     }
 
-    /// Create a binding for temp var, if there isn't one already.
-    pub fn get_or_init_temp_binding(&mut self, ctx: &mut TraverseCtx<'a>) -> &BoundIdentifier<'a> {
-        if self.temp.is_none() {
-            // This should only be possible if we are currently transforming static prop initializers
-            #[cfg(debug_assertions)]
-            {
-                assert!(
-                    self.currently_transforming_static_property_initializers,
-                    "Should be unreachable"
-                );
-            }
-
-            self.temp = Some(Self::create_temp_binding(self.name.as_ref(), ctx));
+    /// Get binding to use for referring to class in transpiled static private fields.
+    ///
+    /// e.g. `Class` in `_assertClassBrand(Class, object, _prop)._` (class name)
+    /// or `_Class` in `_assertClassBrand(_Class, object, _prop)._` (temp var)
+    ///
+    /// * In class expressions, this is always be temp binding.
+    /// * In class declarations, it's the name binding when code is inside class body,
+    ///   and temp binding when code is outside class body.
+    ///
+    /// `static_private_fields_use_temp` is set accordingly at the right moments
+    /// elsewhere in this transform.
+    ///
+    /// If a temp binding is required, and one doesn't already exist, a temp binding is created.
+    pub fn get_or_init_static_binding(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> &BoundIdentifier<'a> {
+        if self.static_private_fields_use_temp {
+            // Create temp binding if doesn't already exist
+            self.temp.get_or_insert_with(|| Self::create_temp_binding(self.name.as_ref(), ctx))
+        } else {
+            // `static_private_fields_use_temp` is always `true` for class expressions.
+            // Class declarations always have a name binding if they have any static props.
+            // So `unwrap` here cannot panic.
+            self.name.as_ref().unwrap()
         }
-        self.temp.as_ref().unwrap()
     }
 
-    /// Generate a binding for temp var.
+    /// Generate binding for temp var.
     pub fn create_temp_binding(
         name_binding: Option<&BoundIdentifier<'a>>,
         ctx: &mut TraverseCtx<'a>,

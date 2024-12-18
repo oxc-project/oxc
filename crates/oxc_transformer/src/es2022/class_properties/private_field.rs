@@ -88,7 +88,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 Self::create_underscore_member_expression(prop_ident, span, ctx)
             } else {
                 // `_assertClassBrand(Class, object, _prop)._`
-                let class_binding = class_bindings.get_or_init_temp_binding(ctx);
+                let class_binding = class_bindings.get_or_init_static_binding(ctx);
                 let class_ident = class_binding.create_read_expression(ctx);
 
                 self.create_assert_class_brand_underscore(
@@ -282,7 +282,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     Self::create_underscore_member_expression(prop_ident, field_expr.span, ctx);
                 (callee, object)
             } else {
-                let class_binding = class_bindings.get_or_init_temp_binding(ctx);
+                let class_binding = class_bindings.get_or_init_static_binding(ctx);
                 let class_ident = class_binding.create_read_expression(ctx);
 
                 // Make 2 copies of `object`
@@ -383,7 +383,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // for shortcut/no shortcut and do the "can we shortcut?" check here.
             // Then only create temp var for the "no shortcut" branch, and clone the resulting binding
             // before passing it to the "no shortcut" method. What a palaver!
-            let class_binding = class_bindings.get_or_init_temp_binding(ctx);
+            let class_binding = class_bindings.get_or_init_static_binding(ctx);
             let class_binding = class_binding.clone();
             let class_symbol_id = class_bindings.name_symbol_id();
 
@@ -792,7 +792,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 let get_expr = Self::create_underscore_member_expression(prop_ident, SPAN, ctx);
                 (get_expr, object, None)
             } else {
-                let class_binding = class_bindings.get_or_init_temp_binding(ctx);
+                let class_binding = class_bindings.get_or_init_static_binding(ctx);
                 let class_ident = class_binding.create_read_expression(ctx);
                 let class_ident2 = class_binding.create_read_expression(ctx);
 

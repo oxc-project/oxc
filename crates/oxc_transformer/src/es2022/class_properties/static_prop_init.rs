@@ -22,30 +22,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         value: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.set_is_transforming_static_property_initializers(true);
-
         let mut replacer = StaticInitializerVisitor::new(self, ctx);
         replacer.visit_expression(value);
-
-        self.set_is_transforming_static_property_initializers(false);
-    }
-
-    /// Set flag on `ClassBindings` that we are/are not currently transforming static prop initializers.
-    ///
-    /// The logic around which bindings are used for transforming private fields is complex,
-    /// so we use this to make sure the logic is correct.
-    ///
-    /// In debug builds, `ClassBindings::get_or_init_temp_binding` will panic if we end up transforming
-    /// a static private field, and there's no `temp` binding - which should be impossible.
-    #[inline(always)] // `#[inline(always)]` because is no-op in release builds
-    #[allow(clippy::inline_always)]
-    #[cfg_attr(not(debug_assertions), expect(unused_variables, clippy::unused_self))]
-    fn set_is_transforming_static_property_initializers(&mut self, is_it: bool) {
-        #[cfg(debug_assertions)]
-        {
-            let class_details = self.current_class_mut();
-            class_details.bindings.currently_transforming_static_property_initializers = is_it;
-        }
     }
 }
 
@@ -470,7 +448,7 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
     fn replace_this_with_temp_var(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {
             let class_details = self.class_properties.current_class_mut();
-            let temp_binding = class_details.bindings.get_or_init_temp_binding(self.ctx);
+            let temp_binding = class_details.bindings.get_or_init_static_binding(self.ctx);
             *expr = temp_binding.create_spanned_read_expression(span, self.ctx);
         }
     }
@@ -491,7 +469,7 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
         }
 
         // Identifier is reference to class name. Rename it.
-        let temp_binding = class_details.bindings.get_or_init_temp_binding(self.ctx);
+        let temp_binding = class_details.bindings.get_or_init_static_binding(self.ctx);
         ident.name = temp_binding.name.clone();
 
         let symbols = self.ctx.symbols_mut();
