@@ -854,8 +854,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.visit_assignment_target(&expr.left);
 
-        self.current_reference_flags = ReferenceFlags::empty();
-
         /* cfg  */
         let cfg_ixs = control_flow!(self, |cfg| {
             if expr.operator.is_logical() {
@@ -1764,7 +1762,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         //    ^      ^ We always treat `a` as Read and Write reference,
         self.current_reference_flags = ReferenceFlags::read_write();
         self.visit_simple_assignment_target(&it.argument);
-        self.current_reference_flags = ReferenceFlags::empty();
         self.leave_node(kind);
     }
 
