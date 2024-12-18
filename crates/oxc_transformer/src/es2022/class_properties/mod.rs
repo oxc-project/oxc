@@ -218,8 +218,6 @@ pub struct ClassProperties<'a, 'ctx> {
 
     // State during transform of class
     //
-    /// `true` for class declaration, `false` for class expression
-    is_declaration: bool,
     /// `true` if temp var for class has been inserted
     temp_var_is_created: bool,
     /// Scope that instance init initializers will be inserted into
@@ -258,7 +256,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             classes_stack: ClassesStack::default(),
             class_expression_addresses_stack: NonEmptyStack::new(Address::DUMMY),
             // Temporary values - overwritten when entering class
-            is_declaration: false,
             temp_var_is_created: false,
             instance_inits_scope_id: ScopeId::new(0),
             instance_inits_constructor_scope_id: None,

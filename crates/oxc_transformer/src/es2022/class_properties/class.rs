@@ -56,9 +56,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             return 0;
         }
 
-        self.is_declaration = false;
-
-        self.transform_class(class, ctx);
+        self.transform_class(class, false, ctx);
 
         // Return number of expressions to be inserted before/after the class
         let mut expr_count = self.insert_before.len() + self.insert_after_exprs.len();
@@ -184,9 +182,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             return;
         }
 
-        self.is_declaration = true;
-
-        self.transform_class(class, ctx);
+        self.transform_class(class, true, ctx);
 
         // TODO: Run other transforms on inserted statements. How?
 
@@ -292,7 +288,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 
     /// Main guts of the transform.
-    fn transform_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn transform_class(
+        &mut self,
+        class: &mut Class<'a>,
+        is_declaration: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         // TODO(improve-on-babel): If outer scope is sloppy mode, all code which is moved to outside
         // the class should be wrapped in an IIFE with `'use strict'` directive. Babel doesn't do this.
 
@@ -371,12 +372,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // temp var for class. Static prop in class declaration doesn't.
         let mut class_name_binding = class.id.as_ref().map(BoundIdentifier::from_binding_ident);
 
-        let need_temp_var = has_static_prop && (!self.is_declaration || class.id.is_none());
+        let need_temp_var = has_static_prop && (!is_declaration || class.id.is_none());
         self.temp_var_is_created = need_temp_var;
 
         let class_temp_binding = if need_temp_var {
             let temp_binding = ClassBindings::create_temp_binding(class_name_binding.as_ref(), ctx);
-            if self.is_declaration {
+            if is_declaration {
                 // Anonymous `export default class {}`. Set class name binding to temp var.
                 // Actual class name will be set to this later.
                 class_name_binding = Some(temp_binding.clone());
@@ -396,7 +397,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // Add entry to `classes_stack`
         self.classes_stack.push(ClassDetails {
-            is_declaration: self.is_declaration,
+            is_declaration,
             private_props: if private_props.is_empty() { None } else { Some(private_props) },
             bindings: class_bindings,
         });
@@ -511,7 +512,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         expr: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.is_declaration {
+        if self.current_class().is_declaration {
             self.insert_after_stmts.push(ctx.ast.statement_expression(SPAN, expr));
         } else {
             self.insert_after_exprs.push(expr);

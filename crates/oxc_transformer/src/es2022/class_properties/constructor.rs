@@ -455,7 +455,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // TODO: If static block transform is not enabled, it's possible to construct the class
         // within the static block `class C { static { new C() } }` and that'd run before `_super`
         // is defined. So it needs to go before the class, not after, in that case.
-        let init = if self.is_declaration {
+        let init = if self.current_class().is_declaration {
             Some(super_func)
         } else {
             let assignment = create_assignment(super_binding, super_func, ctx);
