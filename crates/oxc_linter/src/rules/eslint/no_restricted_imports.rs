@@ -36,10 +36,11 @@ struct NoRestrictedImportsConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct RestrictedPath {
     name: CompactStr,
-    #[serde(rename = "importNames")]
     import_names: Option<Box<[CompactStr]>>,
+    allow_import_names: Option<Box<[CompactStr]>>,
     message: Option<CompactStr>,
 }
 
@@ -110,6 +111,7 @@ fn add_configuration_from_string(paths: &mut Vec<RestrictedPath>, module_name: &
     paths.push(RestrictedPath {
         name: CompactStr::new(module_name),
         import_names: None,
+        allow_import_names: None,
         message: None,
     });
 }
@@ -155,42 +157,11 @@ impl Rule for NoRestrictedImports {
                     continue;
                 }
 
-                if let Some(import_names) = &path.import_names {
-                    match &entry.import_name {
-                        ImportImportName::Name(import) => {
-                            let name = CompactStr::new(import.name());
-
-                            if import_names.contains(&name) {
-                                no_restricted_imports_diagnostic(
-                                    ctx,
-                                    span,
-                                    path.message.clone(),
-                                    source,
-                                );
-                            }
-                        }
-                        ImportImportName::Default(_) => {
-                            if import_names.contains(&CompactStr::new("default")) {
-                                no_restricted_imports_diagnostic(
-                                    ctx,
-                                    span,
-                                    path.message.clone(),
-                                    source,
-                                );
-                            }
-                        }
-                        ImportImportName::NamespaceObject => {
-                            no_restricted_imports_diagnostic(
-                                ctx,
-                                span,
-                                path.message.clone(),
-                                source,
-                            );
-                        }
-                    }
-                } else {
-                    no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
+                if is_import_name_allowed(&entry.import_name, path) {
+                    continue;
                 }
+
+                no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
             }
 
             for (source, requests) in &module_record.requested_modules {
@@ -228,31 +199,11 @@ impl Rule for NoRestrictedImports {
                         continue;
                     }
 
-                    if let Some(import_names) = &path.import_names {
-                        match &entry.import_name {
-                            ExportImportName::Name(import_name)
-                                if import_names.contains(&import_name.name) =>
-                            {
-                                no_restricted_imports_diagnostic(
-                                    ctx,
-                                    span,
-                                    path.message.clone(),
-                                    source,
-                                );
-                            }
-                            ExportImportName::All | ExportImportName::AllButDefault => {
-                                no_restricted_imports_diagnostic(
-                                    ctx,
-                                    span,
-                                    path.message.clone(),
-                                    source,
-                                );
-                            }
-                            _ => (),
-                        }
-                    } else {
-                        no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
+                    if is_export_name_allowed(&entry.import_name, path) {
+                        continue;
                     }
+
+                    no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
                 }
             }
 
@@ -265,34 +216,92 @@ impl Rule for NoRestrictedImports {
                         continue;
                     }
 
-                    if let Some(import_names) = &path.import_names {
-                        match &entry.import_name {
-                            ExportImportName::Name(import_name)
-                                if import_names.contains(&import_name.name) =>
-                            {
-                                no_restricted_imports_diagnostic(
-                                    ctx,
-                                    span,
-                                    path.message.clone(),
-                                    source,
-                                );
-                            }
-                            ExportImportName::All | ExportImportName::AllButDefault => {
-                                no_restricted_imports_diagnostic(
-                                    ctx,
-                                    span,
-                                    path.message.clone(),
-                                    source,
-                                );
-                            }
-                            _ => (),
-                        }
-                    } else {
-                        no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
+                    if is_export_name_allowed(&entry.import_name, path) {
+                        continue;
                     }
+
+                    no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
                 }
             }
         }
+    }
+}
+
+fn is_import_name_allowed(name: &ImportImportName, path: &RestrictedPath) -> bool {
+    match &name {
+        ImportImportName::Name(import) => {
+            // fast check if this name is allowed
+            if path
+                .allow_import_names
+                .as_ref()
+                .is_some_and(|allowed| allowed.contains(&import.name))
+            {
+                return true;
+            }
+
+            // when no importNames option is provided, no import in general is allowed
+            if path.import_names.as_ref().is_none() {
+                return false;
+            }
+
+            // the name is found is the importNames list
+            if path
+                .import_names
+                .as_ref()
+                .is_some_and(|disallowed| disallowed.contains(&import.name))
+            {
+                return false;
+            }
+
+            // we allow it
+            true
+        }
+        ImportImportName::Default(_) => {
+            if path
+                .import_names
+                .as_ref()
+                .is_some_and(|disallowed| disallowed.contains(&CompactStr::new("default")))
+                || path.import_names.as_ref().is_none()
+            {
+                return false;
+            }
+
+            true
+        }
+        ImportImportName::NamespaceObject => false,
+    }
+}
+
+fn is_export_name_allowed(name: &ExportImportName, path: &RestrictedPath) -> bool {
+    match &name {
+        ExportImportName::Name(import_name) => {
+            // fast check if this name is allowed
+            if path
+                .allow_import_names
+                .as_ref()
+                .is_some_and(|allowed| allowed.contains(&import_name.name))
+            {
+                return true;
+            }
+
+            // when no importNames option is provided, no import in general is allowed
+            if path.import_names.as_ref().is_none() {
+                return false;
+            }
+
+            // the name is found is the importNames list
+            if path
+                .import_names
+                .as_ref()
+                .is_some_and(|disallowed| disallowed.contains(&import_name.name))
+            {
+                return false;
+            }
+
+            true
+        }
+        ExportImportName::All | ExportImportName::AllButDefault => false,
+        ExportImportName::Null => true,
     }
 }
 
@@ -627,25 +636,25 @@ fn test() {
                 }]
             }])),
         ),
-        // (
-        //     r#"import { AllowedObject } from "foo";"#,
-        //     Some(serde_json::json!([{
-        //         "paths": [{
-        //             "name": "foo",
-        //             "allowImportNames": ["AllowedObject"],
-        //             "message": r#"Please import anything except "AllowedObject" from /bar/ instead."#
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     "import { foo } from 'foo';",
-        //     Some(serde_json::json!([{
-        //         "paths": [{
-        //             "name": "foo",
-        //             "allowImportNames": ["foo"]
-        //         }]
-        //     }])),
-        // ),
+        (
+            r#"import { AllowedObject } from "foo";"#,
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowImportNames": ["AllowedObject"],
+                    "message": r#"Please import anything except "AllowedObject" from /bar/ instead."#
+                }]
+            }])),
+        ),
+        (
+            "import { foo } from 'foo';",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowImportNames": ["foo"]
+                }]
+            }])),
+        ),
         // (
         //     "import { foo } from 'foo';",
         //     Some(serde_json::json!([{
@@ -655,15 +664,15 @@ fn test() {
         //         }]
         //     }])),
         // ),
-        // (
-        //     "export { bar } from 'foo';",
-        //     Some(serde_json::json!([{
-        //         "paths": [{
-        //             "name": "foo",
-        //             "allowImportNames": ["bar"]
-        //         }]
-        //     }])),
-        // ),
+        (
+            "export { bar } from 'foo';",
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowImportNames": ["bar"]
+                }]
+            }])),
+        ),
         // (
         //     "export { bar } from 'foo';",
         //     Some(serde_json::json!([{
@@ -1507,22 +1516,31 @@ fn test() {
         //         }]
         //     }])),
         // ),
+        (
+            r#"import { AllowedObject, DisallowedObject } from "foo";"#,
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowImportNames": ["AllowedObject"]
+                }]
+            }])),
+        ),
+        (
+            r#"import { AllowedObject, DisallowedObject } from "foo";"#,
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowImportNames": ["AllowedObject"],
+                    "message": r#"Only "AllowedObject" is allowed to be imported from "foo"."#
+                }]
+            }])),
+        ),
         // (
         //     r#"import { AllowedObject, DisallowedObject } from "foo";"#,
         //     Some(serde_json::json!([{
-        //         "paths": [{
-        //             "name": "foo",
+        //         "patterns": [{
+        //             "group": ["foo"],
         //             "allowImportNames": ["AllowedObject"]
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     r#"import { AllowedObject, DisallowedObject } from "foo";"#,
-        //     Some(serde_json::json!([{
-        //         "paths": [{
-        //             "name": "foo",
-        //             "allowImportNames": ["AllowedObject"],
-        //             "message": r#"Only "AllowedObject" is allowed to be imported from "foo"."#
         //         }]
         //     }])),
         // ),
@@ -1531,39 +1549,30 @@ fn test() {
         //     Some(serde_json::json!([{
         //         "patterns": [{
         //             "group": ["foo"],
-        //             "allowImportNames": ["AllowedObject"]
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     r#"import { AllowedObject, DisallowedObject } from "foo";"#,
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo"],
         //             "allowImportNames": ["AllowedObject"],
         //             "message": r#"Only "AllowedObject" is allowed to be imported from "foo"."#
         //         }]
         //     }])),
         // ),
-        // (
-        //     r#"import * as AllowedObject from "foo";"#,
-        //     Some(serde_json::json!([{
-        //         "paths": [{
-        //             "name": "foo",
-        //             "allowImportNames": ["AllowedObject"]
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     r#"import * as AllowedObject from "foo";"#,
-        //     Some(serde_json::json!([{
-        //         "paths": [{
-        //             "name": "foo",
-        //             "allowImportNames": ["AllowedObject"],
-        //             "message": r#"Only "AllowedObject" is allowed to be imported from "foo"."#
-        //         }]
-        //     }])),
-        // ),
+        (
+            r#"import * as AllowedObject from "foo";"#,
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowImportNames": ["AllowedObject"]
+                }]
+            }])),
+        ),
+        (
+            r#"import * as AllowedObject from "foo";"#,
+            Some(serde_json::json!([{
+                "paths": [{
+                    "name": "foo",
+                    "allowImportNames": ["AllowedObject"],
+                    "message": r#"Only "AllowedObject" is allowed to be imported from "foo"."#
+                }]
+            }])),
+        ),
         // (
         //     r#"import * as AllowedObject from "foo/bar";"#,
         //     Some(serde_json::json!([{
