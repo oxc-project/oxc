@@ -134,6 +134,12 @@ impl<'a> AstBuilder<'a> {
         mem::replace(target, dummy.into())
     }
 
+    /// Moves the property key out by replacing it with a [`PropertyKey::NullLiteral`].
+    pub fn move_property_key(self, key: &mut PropertyKey<'a>) -> PropertyKey<'a> {
+        let null_expr = PropertyKey::from(self.expression_null_literal(SPAN));
+        mem::replace(key, null_expr)
+    }
+
     /// Move a declaration out by replacing it with an empty [`Declaration::VariableDeclaration`].
     #[inline]
     pub fn move_declaration(self, decl: &mut Declaration<'a>) -> Declaration<'a> {
