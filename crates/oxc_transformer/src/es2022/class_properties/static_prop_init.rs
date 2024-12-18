@@ -528,6 +528,9 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
         }
     }
 
+    // `#[inline]` into visitor to keep common path where assignment expression isn't
+    // `super.prop += 1` fast
+    #[inline]
     fn transform_assignment_expression_if_super_member_assignment_target(
         &mut self,
         expr: &mut Expression<'a>,
