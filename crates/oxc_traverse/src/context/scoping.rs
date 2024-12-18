@@ -303,7 +303,7 @@ impl TraverseScoping {
     ) -> ReferenceId {
         let reference = Reference::new_with_symbol_id(NodeId::DUMMY, symbol_id, flags);
         let reference_id = self.symbols.create_reference(reference);
-        self.symbols.resolved_references[symbol_id].push(reference_id);
+        self.symbols.add_resolved_reference(symbol_id, reference_id);
         reference_id
     }
 
@@ -422,7 +422,7 @@ impl TraverseScoping {
         self.scopes
             .root_unresolved_references()
             .keys()
-            .chain(self.symbols.names.iter())
+            .chain(self.symbols.names())
             .filter_map(|name| {
                 if name.as_bytes().first() == Some(&b'_') {
                     Some(name.clone())

@@ -34,12 +34,12 @@ export type CompactStr = string;
 #[derive(Debug, Default)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(rename_all = "camelCase"))]
 pub struct SymbolTable {
-    pub spans: IndexVec<SymbolId, Span>,
-    pub names: IndexVec<SymbolId, CompactStr>,
-    pub flags: IndexVec<SymbolId, SymbolFlags>,
-    pub scope_ids: IndexVec<SymbolId, ScopeId>,
+    pub(crate) spans: IndexVec<SymbolId, Span>,
+    pub(crate) names: IndexVec<SymbolId, CompactStr>,
+    pub(crate) flags: IndexVec<SymbolId, SymbolFlags>,
+    pub(crate) scope_ids: IndexVec<SymbolId, ScopeId>,
     /// Pointer to the AST Node where this symbol is declared
-    pub declarations: IndexVec<SymbolId, NodeId>,
+    pub(crate) declarations: IndexVec<SymbolId, NodeId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
     redeclarations: IndexVec<SymbolId, Option<RedeclarationId>>,
 
@@ -59,6 +59,14 @@ impl SymbolTable {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.spans.is_empty()
+    }
+
+    pub fn names(&self) -> impl Iterator<Item = &CompactStr> + '_ {
+        self.names.iter()
+    }
+
+    pub fn resolved_references(&self) -> impl Iterator<Item = &Vec<ReferenceId>> + '_ {
+        self.resolved_references.iter()
     }
 
     /// Iterate over all symbol IDs in this table.

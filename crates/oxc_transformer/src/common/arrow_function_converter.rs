@@ -946,7 +946,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             let reference = ctx.symbols_mut().get_reference_mut(reference_id);
             reference.set_symbol_id(binding.symbol_id);
             ctx.scopes_mut().delete_root_unresolved_reference(&ident.name, reference_id);
-            ctx.symbols_mut().resolved_references[binding.symbol_id].push(reference_id);
+            ctx.symbols_mut().add_resolved_reference(binding.symbol_id, reference_id);
         }
 
         ident.name = binding.name.clone();

@@ -7,7 +7,8 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_semantic::{AstNode, ReferenceId, Semantic};
+use oxc_index::Idx;
+use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
 use oxc_span::CompactStr;
 use phf::phf_set;
 
@@ -201,9 +202,10 @@ fn collect_ids_referenced_to_import<'a, 'c>(
 ) -> impl Iterator<Item = (ReferenceId, Option<&'a str>)> + 'c {
     semantic
         .symbols()
-        .resolved_references
-        .iter_enumerated()
+        .resolved_references()
+        .enumerate()
         .filter_map(|(symbol_id, reference_ids)| {
+            let symbol_id = SymbolId::from_usize(symbol_id);
             if semantic.symbols().get_flags(symbol_id).is_import() {
                 let id = semantic.symbols().get_declaration(symbol_id);
                 let Some(AstKind::ImportDeclaration(import_decl)) =

@@ -80,7 +80,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                         if index != 0 {
                             result.push(',');
                         }
-                        let reference = &semantic.symbols().references[reference_id];
+                        let reference = &semantic.symbols().get_reference(reference_id);
                         result.push('{');
                         result
                             .push_str(format!("\"flags\": \"{:?}\",", reference.flags()).as_str());
