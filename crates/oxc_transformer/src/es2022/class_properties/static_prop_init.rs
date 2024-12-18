@@ -207,7 +207,12 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             }
             // `object.#prop++`, `--object.#prop`
             Expression::UpdateExpression(_) => {
-                self.class_properties.transform_update_expression(expr, self.ctx);
+                self.transform_update_expression_if_super_member_assignment_target(expr);
+                // Check again if it's an update expression, because it could have been transformed
+                // to other expression.
+                if matches!(expr, Expression::UpdateExpression(_)) {
+                    self.class_properties.transform_update_expression(expr, self.ctx);
+                }
             }
             // `object?.#prop`
             Expression::ChainExpression(_) => {
@@ -538,6 +543,19 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
         if self.this_depth == 0 {
             self.class_properties
                 .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
+        }
+    }
+
+    // `#[inline]` into visitor to keep common path where assignment expression isn't
+    // `super.prop++` fast
+    #[inline]
+    fn transform_update_expression_if_super_member_assignment_target(
+        &mut self,
+        expr: &mut Expression<'a>,
+    ) {
+        if self.this_depth == 0 {
+            self.class_properties
+                .transform_update_expression_for_super_assignment_target(expr, self.ctx);
         }
     }
 }

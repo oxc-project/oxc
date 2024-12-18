@@ -1,14 +1,14 @@
 //! ES2022: Class Properties
 //! Transform of `super` expressions.
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 use crate::Helper;
 
-use super::ClassProperties;
+use super::{utils::create_assignment, ClassProperties};
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform static member expression where object is `super`.
@@ -268,6 +268,244 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // The above covers all types of `AssignmentOperator`
                 unreachable!();
             }
+        }
+    }
+
+    /// Transform update expression where the argument is a member expression with `super`.
+    ///
+    /// * `++super.prop` or `super.prop--`
+    /// See [`Self::transform_update_expression_for_super_static_member_expr`]
+    ///
+    /// * `++super[prop]` or `super[prop]--`
+    /// See [`Self::transform_update_expression_for_super_computed_member_expr`]
+    //
+    // `#[inline]` so can bail out fast without a function call if `argument` is not a member expression
+    // with `super` as member expression object (fairly rare).
+    // Actual transform is broken out into separate functions.
+    pub(super) fn transform_update_expression_for_super_assignment_target(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::UpdateExpression(update_expr) = expr else { unreachable!() };
+
+        match &update_expr.argument {
+            SimpleAssignmentTarget::StaticMemberExpression(member) if member.object.is_super() => {
+                self.transform_update_expression_for_super_static_member_expr(expr, ctx);
+            }
+            SimpleAssignmentTarget::ComputedMemberExpression(member)
+                if member.object.is_super() =>
+            {
+                self.transform_update_expression_for_super_computed_member_expr(expr, ctx);
+            }
+            _ => {}
+        };
+    }
+
+    /// Transform update expression (`++` or `--`) where argument is a static member expression
+    /// with `super`.
+    ///
+    /// * `++super.prop` ->
+    /// ```js
+    /// _superPropSet(
+    ///   _Outer,
+    ///   "prop",
+    ///   (
+    ///     _super$prop = _superPropGet(_Outer, "prop", _Outer),
+    ///     ++_super$prop
+    ///   ),
+    ///   _Outer,
+    ///   1
+    /// )
+    /// ```
+    ///
+    /// * `super.prop--` ->
+    /// ```js
+    /// (
+    ///   _superPropSet(
+    ///     _Outer,
+    ///     "prop",
+    ///     (
+    ///       _super$prop = _superPropGet(_Outer, "prop", _Outer),
+    ///       _super$prop2 = _super$prop--,
+    ///       _super$prop
+    ///     ),
+    ///     _Outer,
+    ///     1
+    ///   ),
+    ///   _super$prop2
+    /// )
+    /// ```
+    ///
+    // `#[inline]` so that compiler sees that `expr` is an `Expression::UpdateExpression`.
+    #[inline]
+    fn transform_update_expression_for_super_static_member_expr(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::UpdateExpression(mut update_expr) = ctx.ast.move_expression(expr) else {
+            unreachable!()
+        };
+        let SimpleAssignmentTarget::StaticMemberExpression(member) = &mut update_expr.argument
+        else {
+            unreachable!()
+        };
+
+        let temp_binding =
+            self.ctx.var_declarations.create_uid_var_based_on_node(member.as_ref(), ctx);
+        let property = ctx.ast.expression_string_literal(
+            member.property.span,
+            member.property.name.clone(),
+            None,
+        );
+        *expr =
+            self.transform_super_update_expression_impl(&temp_binding, update_expr, property, ctx);
+    }
+
+    /// Transform update expression (`++` or `--`) where argument is a computed member expression
+    /// with `super`.
+    ///
+    /// * `++super[prop]` ->
+    /// ```js
+    /// _superPropSet(
+    ///   _Outer,
+    ///   prop,
+    ///   (
+    ///     _super$prop = _superPropGet(_Outer, prop, _Outer),
+    ///     ++_super$prop
+    ///   ),
+    ///   _Outer,
+    ///   1
+    /// )
+    /// ```
+    ///
+    /// * `super[prop]--` ->
+    /// ```js
+    /// (
+    ///   _superPropSet(
+    ///     _Outer,
+    ///     prop,
+    ///     (
+    ///       _super$prop = _superPropGet(_Outer, prop, _Outer),
+    ///       _super$prop2 = _super$prop--,
+    ///       _super$prop
+    ///     ),
+    ///     _Outer,
+    ///     1
+    ///   ),
+    ///   _super$prop2
+    /// )
+    /// ```
+    //
+    // `#[inline]` so that compiler sees that `expr` is an `Expression::UpdateExpression`.
+    #[inline]
+    fn transform_update_expression_for_super_computed_member_expr(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::UpdateExpression(mut update_expr) = ctx.ast.move_expression(expr) else {
+            unreachable!()
+        };
+        let SimpleAssignmentTarget::ComputedMemberExpression(member) = &mut update_expr.argument
+        else {
+            unreachable!()
+        };
+        let temp_binding =
+            self.ctx.var_declarations.create_uid_var_based_on_node(member.as_ref(), ctx);
+        let property = ctx.ast.move_expression(&mut member.expression);
+        *expr =
+            self.transform_super_update_expression_impl(&temp_binding, update_expr, property, ctx);
+    }
+
+    /// Transform update expression (`++` or `--`) where argument is a member expression with `super`.
+    ///
+    /// * `++super[prop]` ->
+    /// ```js
+    /// _superPropSet(
+    ///   _Outer,
+    ///   prop,
+    ///   (
+    ///     _super$prop = _superPropGet(_Outer, prop, _Outer),
+    ///     ++_super$prop
+    ///   ),
+    ///   _Outer,
+    ///   1
+    /// )
+    /// ```
+    ///
+    /// * `super[prop]--` ->
+    /// ```js
+    /// (
+    ///   _superPropSet(
+    ///     _Outer,
+    ///     prop,
+    ///     (
+    ///       _super$prop = _superPropGet(_Outer, prop, _Outer),
+    ///       _super$prop2 = _super$prop--,
+    ///       _super$prop
+    ///     ),
+    ///     _Outer,
+    ///     1
+    ///   ),
+    ///   _super$prop2
+    /// )
+    /// ```
+    fn transform_super_update_expression_impl(
+        &mut self,
+        temp_binding: &BoundIdentifier<'a>,
+        mut update_expr: ArenaBox<'a, UpdateExpression<'a>>,
+        property: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        // Make 2 copies of `property`
+        let (property1, property2) = self.duplicate_object(property, ctx);
+
+        // `_superPropGet(_Class, prop, _Class)`
+        let get_call = self.create_super_prop_get(SPAN, property2, false, ctx);
+
+        // `_super$prop = _superPropGet(_Class, prop, _Class)`
+        let assignment = create_assignment(temp_binding, get_call, ctx);
+
+        // `++_super$prop` / `_super$prop++` (reusing existing `UpdateExpression`)
+        let span = update_expr.span;
+        let prefix = update_expr.prefix;
+        update_expr.span = SPAN;
+        update_expr.argument = temp_binding.create_read_write_simple_target(ctx);
+        let update_expr = Expression::UpdateExpression(update_expr);
+
+        if prefix {
+            // Source = `++super$prop` (prefix `++`)
+            // `(_super$prop = _superPropGet(_Class, prop, _Class), ++_super$prop)`
+            let value = ctx
+                .ast
+                .expression_sequence(SPAN, ctx.ast.vec_from_array([assignment, update_expr]));
+            // `_superPropSet(_Class, prop, value, _Class, 1)`
+            self.create_super_prop_set(span, property1, value, ctx)
+        } else {
+            // Source = `super.prop++` (postfix `++`)
+            // `_super$prop2 = _super$prop++`
+            let temp_binding2 = self.ctx.var_declarations.create_uid_var(&temp_binding.name, ctx);
+            let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
+
+            // `(_super$prop = _superPropGet(_Class, prop, _Class), _super$prop2 = _super$prop++, _super$prop)`
+            let value = ctx.ast.expression_sequence(
+                SPAN,
+                ctx.ast.vec_from_array([
+                    assignment,
+                    assignment2,
+                    temp_binding.create_read_expression(ctx),
+                ]),
+            );
+
+            // `_superPropSet(_Class, prop, value, _Class, 1)`
+            let set_call = self.create_super_prop_set(span, property1, value, ctx);
+            // `(_superPropSet(_Class, prop, value, _Class, 1), _super$prop2)`
+            ctx.ast.expression_sequence(
+                span,
+                ctx.ast.vec_from_array([set_call, temp_binding2.create_read_expression(ctx)]),
+            )
         }
     }
 

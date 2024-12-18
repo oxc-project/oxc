@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 113/128
+Passed: 114/129
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,7 +16,7 @@ Passed: 113/128
 * regexp
 
 
-# babel-plugin-transform-class-properties (14/17)
+# babel-plugin-transform-class-properties (15/18)
 * static-super-tagged-template/input.js
 x Output mismatch
 
