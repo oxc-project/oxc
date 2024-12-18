@@ -112,42 +112,37 @@ impl<'a> AstBuilder<'a> {
         unsafe { std::mem::transmute_copy(src) }
     }
 
-    /// Moves the expression out by replacing it with a [null
-    /// expression](Expression::NullLiteral).
+    /// Moves the expression out by replacing it with an [`Expression::NullLiteral`].
     #[inline]
     pub fn move_expression(self, expr: &mut Expression<'a>) -> Expression<'a> {
         let null_expr = self.expression_null_literal(expr.span());
         mem::replace(expr, null_expr)
     }
 
-    /// Moves the statement out by replacing it with an [empty
-    /// statement](Statement::EmptyStatement).
+    /// Moves the statement out by replacing it with a [`Statement::EmptyStatement`].
     #[inline]
     pub fn move_statement(self, stmt: &mut Statement<'a>) -> Statement<'a> {
         let empty_stmt = self.empty_statement(stmt.span());
         mem::replace(stmt, Statement::EmptyStatement(self.alloc(empty_stmt)))
     }
 
-    /// Moves the assignment target out by replacing it with a dummy target with
-    /// no name and an empty [`Span`].
+    /// Moves the assignment target out by replacing it with a dummy
+    /// [`AssignmentTarget::AssignmentTargetIdentifier`] with no name and an empty [`Span`].
     #[inline]
     pub fn move_assignment_target(self, target: &mut AssignmentTarget<'a>) -> AssignmentTarget<'a> {
         let dummy = self.simple_assignment_target_identifier_reference(SPAN, Atom::from(""));
         mem::replace(target, dummy.into())
     }
 
-    /// Move a declaration out by replacing it with an empty [variable
-    /// declaration](Declaration::VariableDeclaration).
+    /// Move a declaration out by replacing it with an empty [`Declaration::VariableDeclaration`].
     #[inline]
     pub fn move_declaration(self, decl: &mut Declaration<'a>) -> Declaration<'a> {
         let empty_decl =
-            self.variable_declaration(SPAN, VariableDeclarationKind::Var, self.vec(), false);
-        let empty_decl = Declaration::VariableDeclaration(self.alloc(empty_decl));
+            self.declaration_variable(SPAN, VariableDeclarationKind::Var, self.vec(), false);
         mem::replace(decl, empty_decl)
     }
 
-    /// Move a variable declaration out by replacing it with an empty [variable
-    /// declaration](VariableDeclaration).
+    /// Move a variable declaration out by replacing it with an empty [`VariableDeclaration`].
     #[inline]
     pub fn move_variable_declaration(
         self,
@@ -172,7 +167,7 @@ impl<'a> AstBuilder<'a> {
         mem::replace(body, empty_body)
     }
 
-    /// Move a function out by replacing it with an empty [`Function`]
+    /// Move a function out by replacing it with an empty [`Function`].
     #[inline]
     pub fn move_function(self, function: &mut Function<'a>) -> Function<'a> {
         let params =
@@ -193,18 +188,17 @@ impl<'a> AstBuilder<'a> {
         mem::replace(function, empty_function)
     }
 
-    /// Move an array element out by replacing it with an
-    /// [elision](ArrayExpressionElement::Elision).
+    /// Move an array element out by replacing it with an [`ArrayExpressionElement::Elision`].
     pub fn move_array_expression_element(
         self,
         element: &mut ArrayExpressionElement<'a>,
     ) -> ArrayExpressionElement<'a> {
-        let empty_element = self.array_expression_element_elision(SPAN);
-        mem::replace(element, empty_element)
+        let elision = self.array_expression_element_elision(SPAN);
+        mem::replace(element, elision)
     }
 
-    /// Take the contents of a arena-allocated [`Vec`], leaving an empty vec in
-    /// its place. This is akin to [`std::mem::take`].
+    /// Take the contents of a arena-allocated [`Vec`], leaving an empty [`Vec`] in its place.
+    /// This is akin to [`std::mem::take`].
     #[inline]
     pub fn move_vec<T>(self, vec: &mut Vec<'a, T>) -> Vec<'a, T> {
         mem::replace(vec, self.vec())
