@@ -655,15 +655,15 @@ fn test() {
                 }]
             }])),
         ),
-        // (
-        //     "import { foo } from 'foo';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo"],
-        //             "allowImportNames": ["foo"]
-        //         }]
-        //     }])),
-        // ),
+        (
+            "import { foo } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNames": ["foo"]
+                }]
+            }])),
+        ),
         (
             "export { bar } from 'foo';",
             Some(serde_json::json!([{
@@ -673,15 +673,15 @@ fn test() {
                 }]
             }])),
         ),
-        // (
-        //     "export { bar } from 'foo';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo"],
-        //             "allowImportNames": ["bar"]
-        //         }]
-        //     }])),
-        // ),
+        (
+            "export { bar } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNames": ["bar"]
+                }]
+            }])),
+        ),
         (
             "import { Foo } from 'foo';",
             Some(serde_json::json!([{
