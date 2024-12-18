@@ -1920,6 +1920,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_cfg",
+ "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_ecmascript",
  "oxc_index",

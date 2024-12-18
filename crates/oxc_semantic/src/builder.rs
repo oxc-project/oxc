@@ -5,6 +5,7 @@ use std::{
     mem,
 };
 
+use oxc_data_structures::stack::Stack;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{ast::*, AstKind, Visit};
@@ -77,7 +78,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_symbol_flags: SymbolFlags,
     pub(crate) current_scope_id: ScopeId,
     /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
-    pub(crate) function_stack: Vec<NodeId>,
+    pub(crate) function_stack: Stack<NodeId>,
     // To make a namespace/module value like
     // we need the to know the modules we are inside
     // and when we reach a value declaration we set it
@@ -137,7 +138,7 @@ impl<'a> SemanticBuilder<'a> {
             current_symbol_flags: SymbolFlags::empty(),
             current_reference_flags: ReferenceFlags::empty(),
             current_scope_id,
-            function_stack: vec![],
+            function_stack: Stack::with_capacity(16),
             namespace_stack: vec![],
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
