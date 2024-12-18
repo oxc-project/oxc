@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.42.0] - 2024-12-18
+
+### Features
+
+- 46e2e27 data_structures: Implement `Default` for `NonEmptyStack` (#7946) (overlookmotel)
+
+### Styling
+
+- fb897f6 data_structures: Add line break (#7882) (overlookmotel)
+- 7fb9d47 rust: `cargo +nightly fmt` (#7877) (Boshen)
+
 ## [0.40.0] - 2024-12-10
 
 ### Features

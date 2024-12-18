@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.42.0] - 2024-12-18
+
+### Refactor
+
+- 1314c97 minifier: Expose dce as an API instead of an option (#7957) (Boshen)
+
 ## [0.39.0] - 2024-12-04
 
 - 8a788b8 parser: [**BREAKING**] Build `ModuleRecord` directly in parser (#7546) (Boshen)

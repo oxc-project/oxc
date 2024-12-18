@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.42.0] - 2024-12-18
+
+- c071494 semantic: [**BREAKING**] Remove `SymbolTable::rename` method (#7868) (overlookmotel)
+
+### Features
+
+- b9322c6 semantic: Re-export all flags and ID types (#7886) (overlookmotel)
+
+### Bug Fixes
+
+- 3659e6d cfg: Include export default code in CFG instructions (#7862) (Jan Olaf Martin)
+- 14c51ff semantic: Remove inherting `ScopeFlags::Modifier` from parent scope (#7932) (Dunqing)
+- 596aead semantic: Reset references flags when resolved (#7923) (Dunqing)
+- 4924073 semantic: `ScopeTree::rename_binding` preserve order of bindings (#7870) (overlookmotel)
+
+### Refactor
+
+- 3858221 global: Sort imports (#7883) (overlookmotel)
+- 6551dfe semantic: Pass `&str` instead of `Cow` (#7972) (overlookmotel)
+- b8d2bd2 semantic: Move determining references flags for export specifier to `visit_export_named_declaration` (#7924) (Dunqing)
+- 98d7946 semantic: Import flags and ID types from `oxc_syntax` (#7887) (overlookmotel)
+- 1cf8f8f semantic: `SymbolTable::set_name` return old name (#7869) (overlookmotel)
+- 5d42df8 semantic: Use `Expression::is_super` (#7851) (overlookmotel)
+- 8cf9766 semantic, syntax, wasm: Remove `#![allow(non_snake_case)]` (#7863) (overlookmotel)
+
+### Styling
+
+- 7fb9d47 rust: `cargo +nightly fmt` (#7877) (Boshen)
+
+### Testing
+
+- 523d48c transformer: Move named test to exports folder (#7922) (Dunqing)
+
 ## [0.41.0] - 2024-12-13
 
 - 96a26d3 ast: [**BREAKING**] Rename `is_strict` methods to `has_use_strict_directive` (#7783) (overlookmotel)

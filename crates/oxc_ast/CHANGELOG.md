@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.42.0] - 2024-12-18
+
+### Features
+
+- 8b7c5ae ast: Add `AstBuilder::atom_from_cow` (#7974) (overlookmotel)
+- c30a982 span: Add `impl From<ArenaString> for Atom` (#7973) (overlookmotel)
+- 6bc530d transformer/class-properties: Transform super call expression that is inside static prop initializer (#7831) (Dunqing)
+
+### Bug Fixes
+
+- 3659e6d cfg: Include export default code in CFG instructions (#7862) (Jan Olaf Martin)
+
+### Performance
+
+- a5f04a7 ast: Faster `Comment::is_jsdoc` (#7905) (overlookmotel)
+
+### Documentation
+
+- e49de81 ast: Document `Expression::is_*` methods (#7853) (overlookmotel)
+
+### Refactor
+
+- beb982a ast: Use exhaustive match for `Argument` to `ArrayExpressionElement` conversion (#7848) (overlookmotel)
+- 3858221 global: Sort imports (#7883) (overlookmotel)
+
+### Styling
+
+- 7fb9d47 rust: `cargo +nightly fmt` (#7877) (Boshen)
+
 ## [0.41.0] - 2024-12-13
 
 - fb325dc ast: [**BREAKING**] `span` field must be the first element (#7821) (Boshen)
