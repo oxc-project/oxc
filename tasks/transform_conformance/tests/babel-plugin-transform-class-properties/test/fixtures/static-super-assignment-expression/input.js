@@ -1,4 +1,4 @@
-const ident = "A";
+let bound = "A";
 
 class Outer {
   static B = () => {
@@ -9,11 +9,17 @@ class Outer {
     super.A &&= 1;
     super.A ||= 1;
 
-    super[ident] = 1;
-    super[ident] += 1;
-    super[ident] -= 1;
-    super[ident] &&= 1;
-    super[ident] ||= 1;
+    super[bound] = 1;
+    super[bound] += 1;
+    super[bound] -= 1;
+    super[bound] &&= 1;
+    super[bound] ||= 1;
+
+    super[unbound] = 1;
+    super[unbound] += 1;
+    super[unbound] -= 1;
+    super[unbound] &&= 1;
+    super[unbound] ||= 1;
 
     class Inner {
       method() {
@@ -24,11 +30,17 @@ class Outer {
         super.A &&= 1;
         super.A ||= 1;
 
-        super[ident] = 1;
-        super[ident] += 1;
-        super[ident] -= 1;
-        super[ident] &&= 1;
-        super[ident] ||= 1;
+        super[bound] = 1;
+        super[bound] += 1;
+        super[bound] -= 1;
+        super[bound] &&= 1;
+        super[bound] ||= 1;
+
+        super[unbound] = 1;
+        super[unbound] += 1;
+        super[unbound] -= 1;
+        super[unbound] &&= 1;
+        super[unbound] ||= 1;
       }
 
       static staticMethod() {
@@ -39,11 +51,17 @@ class Outer {
         super.A &&= 1;
         super.A ||= 1;
 
-        super[ident] = 1;
-        super[ident] += 1;
-        super[ident] -= 1;
-        super[ident] &&= 1;
-        super[ident] ||= 1;
+        super[bound] = 1;
+        super[bound] += 1;
+        super[bound] -= 1;
+        super[bound] &&= 1;
+        super[bound] ||= 1;
+
+        super[unbound] = 1;
+        super[unbound] += 1;
+        super[unbound] -= 1;
+        super[unbound] &&= 1;
+        super[unbound] ||= 1;
       }
     }
   };
