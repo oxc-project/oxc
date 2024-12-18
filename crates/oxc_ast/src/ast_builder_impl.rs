@@ -84,7 +84,7 @@ impl<'a> AstBuilder<'a> {
     /// Allocate an [`Atom`] from a string slice.
     #[inline]
     pub fn atom(self, value: &str) -> Atom<'a> {
-        Atom::from(String::from_str_in(value, self.allocator).into_bump_str())
+        Atom::from_in(value, self.allocator)
     }
 
     /// # SAFETY

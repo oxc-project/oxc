@@ -298,7 +298,7 @@ impl<'a> HelperLoaderStore<'a> {
         source.push_str(&self.module_name);
         source.push_str("/helpers/");
         source.push_str(helper_name);
-        Atom::from(source.into_bump_str())
+        Atom::from(source)
     }
 
     fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
