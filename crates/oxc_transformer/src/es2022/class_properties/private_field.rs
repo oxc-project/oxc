@@ -1608,7 +1608,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// * Anything else `foo()` -> `_foo = foo()`, `_foo`
     ///
     /// Returns 2 `Expression`s. The first must be inserted into output first.
-    fn duplicate_object(
+    pub(super) fn duplicate_object(
         &self,
         object: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,

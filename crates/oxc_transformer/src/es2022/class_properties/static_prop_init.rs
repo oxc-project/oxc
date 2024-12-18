@@ -195,9 +195,15 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
                 self.transform_call_expression_if_super_member_expression(call_expr);
                 self.class_properties.transform_call_expression(expr, self.ctx);
             }
+            // `super.prop = value`, `super.prop += value`, `super.prop ??= value` or
             // `object.#prop = value`, `object.#prop += value`, `object.#prop ??= value` etc
             Expression::AssignmentExpression(_) => {
-                self.class_properties.transform_assignment_expression(expr, self.ctx);
+                self.transform_assignment_expression_if_super_member_assignment_target(expr);
+                // Check again if it's an assignment expression, because it could have been transformed
+                // to other expression.
+                if matches!(expr, Expression::AssignmentExpression(_)) {
+                    self.class_properties.transform_assignment_expression(expr, self.ctx);
+                }
             }
             // `object.#prop++`, `--object.#prop`
             Expression::UpdateExpression(_) => {
@@ -519,6 +525,16 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
         if self.this_depth == 0 {
             self.class_properties
                 .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
+        }
+    }
+
+    fn transform_assignment_expression_if_super_member_assignment_target(
+        &mut self,
+        expr: &mut Expression<'a>,
+    ) {
+        if self.this_depth == 0 {
+            self.class_properties
+                .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
         }
     }
 }

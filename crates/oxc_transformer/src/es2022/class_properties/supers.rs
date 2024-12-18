@@ -125,6 +125,152 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         arguments.push(Argument::from(array));
     }
 
+    /// Transform assignment expression where the left-hand side is a member expression with `super`.
+    ///
+    /// * `super.prop = value`
+    ///   -> `_superPropSet(_Class, "prop", value, _Class, 1)`
+    /// * `super.prop += value`
+    ///   -> `_superPropSet(_Class, "prop", _superPropGet(_Class, "prop", _Class) + value, _Class, 1)`
+    /// * `super.prop &&= value`
+    ///   -> `_superPropGet(_Class, "prop", _Class) && _superPropSet(_Class, "prop", value, _Class, 1)`
+    ///
+    /// * `super[prop] = value`
+    ///   -> `_superPropSet(_Class, prop, value, _Class, 1)`
+    /// * `super[prop] += value`
+    ///   -> `_superPropSet(_Class, prop, _superPropGet(_Class, prop, _Class) + value, _Class, 1)`
+    /// * `super[prop] &&= value`
+    ///   -> `_superPropGet(_Class, prop, _Class) && _superPropSet(_Class, prop, value, _Class, 1)`
+    //
+    // `#[inline]` so can bail out fast without a function call if `left` is not a member expression
+    // with `super` as member expression object (fairly rare).
+    // Actual transform is broken out into separate functions.
+    pub(super) fn transform_assignment_expression_for_super_assignment_target(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::AssignmentExpression(assign_expr) = expr else { unreachable!() };
+        match &assign_expr.left {
+            AssignmentTarget::StaticMemberExpression(member) if member.object.is_super() => {
+                self.transform_assignment_expression_for_super_static_member_expr(expr, ctx);
+            }
+            AssignmentTarget::ComputedMemberExpression(member) if member.object.is_super() => {
+                self.transform_assignment_expression_for_super_computed_member_expr(expr, ctx);
+            }
+            _ => {}
+        };
+    }
+
+    /// Transform assignment expression where the left-hand side is a static member expression
+    /// with `super`.
+    ///
+    /// * `super.prop = value`
+    ///   -> `_superPropSet(_Class, "prop", value, _Class, 1)`
+    /// * `super.prop += value`
+    ///   -> `_superPropSet(_Class, "prop", _superPropGet(_Class, "prop", _Class) + value, _Class, 1)`
+    /// * `super.prop &&= value`
+    ///   -> `_superPropGet(_Class, "prop", _Class) && _superPropSet(_Class, "prop", value, _Class, 1)`
+    //
+    // `#[inline]` so that compiler sees that `expr` is an `Expression::AssignmentExpression`.
+    #[inline]
+    fn transform_assignment_expression_for_super_static_member_expr(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::AssignmentExpression(assign_expr) = ctx.ast.move_expression(expr) else {
+            unreachable!()
+        };
+        let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
+        let AssignmentTarget::StaticMemberExpression(member) = left else { unreachable!() };
+        let property = ctx.ast.expression_string_literal(
+            member.property.span,
+            member.property.name.clone(),
+            None,
+        );
+        *expr =
+            self.transform_super_assignment_expression_impl(span, operator, property, value, ctx);
+    }
+
+    /// Transform assignment expression where the left-hand side is a computed member expression
+    /// with `super` as member expr object.
+    ///
+    /// * `super[prop] = value`
+    ///   -> `_superPropSet(_Class, prop, value, _Class, 1)`
+    /// * `super[prop] += value`
+    ///   -> `_superPropSet(_Class, prop, _superPropGet(_Class, prop, _Class) + value, _Class, 1)`
+    /// * `super[prop] &&= value`
+    ///   -> `_superPropGet(_Class, prop, _Class) && _superPropSet(_Class, prop, value, _Class, 1)`
+    ///
+    // `#[inline]` so that compiler sees that `expr` is an `Expression::AssignmentExpression`.
+    #[inline]
+    fn transform_assignment_expression_for_super_computed_member_expr(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::AssignmentExpression(assign_expr) = ctx.ast.move_expression(expr) else {
+            unreachable!()
+        };
+        let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
+        let AssignmentTarget::ComputedMemberExpression(member) = left else { unreachable!() };
+        let property = member.unbox().expression;
+        *expr =
+            self.transform_super_assignment_expression_impl(span, operator, property, value, ctx);
+    }
+
+    /// Transform assignment expression where the left-hand side is a member expression with `super`
+    /// as member expr object.
+    ///
+    /// * `=` -> `_superPropSet(_Class, <prop>, <value>, _Class, 1)`
+    /// * `+=` -> `_superPropSet(_Class, <prop>, _superPropGet(_Class, <prop>, _Class) + <value>, 1)`
+    /// * `&&=` -> `_superPropGet(_Class, <prop>, _Class) && _superPropSet(_Class, <prop>, <value>, _Class, 1)`
+    fn transform_super_assignment_expression_impl(
+        &mut self,
+        span: Span,
+        operator: AssignmentOperator,
+        property: Expression<'a>,
+        value: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        if operator == AssignmentOperator::Assign {
+            // `super[prop] = value` -> `_superPropSet(_Class, prop, value, _Class, 1)`
+            self.create_super_prop_set(span, property, value, ctx)
+        } else {
+            // Make 2 copies of `object`
+            let (property1, property2) = self.duplicate_object(property, ctx);
+
+            if let Some(operator) = operator.to_binary_operator() {
+                // `super[prop] += value`
+                // -> `_superPropSet(_Class, prop, _superPropGet(_Class, prop, _Class) + value, _Class, 1)`
+
+                // `_superPropGet(_Class, prop, _Class)`
+                let get_call = self.create_super_prop_get(SPAN, property2, false, ctx);
+
+                // `_superPropGet(_Class, prop, _Class) + value`
+                let value = ctx.ast.expression_binary(SPAN, get_call, operator, value);
+
+                // `_superPropSet(_Class, prop, _superPropGet(_Class, prop, _Class) + value, 1)`
+                self.create_super_prop_set(span, property1, value, ctx)
+            } else if let Some(operator) = operator.to_logical_operator() {
+                // `super[prop] &&= value`
+                // -> `_superPropGet(_Class, prop, _Class) && _superPropSet(_Class, prop, value, _Class, 1)`
+
+                // `_superPropGet(_Class, prop, _Class)`
+                let get_call = self.create_super_prop_get(SPAN, property1, false, ctx);
+
+                // `_superPropSet(_Class, prop, value, _Class, 1)`
+                let set_call = self.create_super_prop_set(span, property2, value, ctx);
+
+                // `_superPropGet(_Class, prop, _Class) && _superPropSet(_Class, prop, value, _Class, 1)`
+                ctx.ast.expression_logical(span, get_call, operator, set_call)
+            } else {
+                // The above covers all types of `AssignmentOperator`
+                unreachable!();
+            }
+        }
+    }
+
     /// Member:
     ///  `_superPropGet(_Class, prop, _Class)`
     ///
@@ -154,5 +300,29 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // `_superPropGet(_Class, prop, _Class)` or `_superPropGet(_Class, prop, _Class, 2)`
         self.ctx.helper_call_expr(Helper::SuperPropGet, span, arguments, ctx)
+    }
+
+    /// `_superPropSet(_Class, prop, value, _Class, 1)`
+    fn create_super_prop_set(
+        &mut self,
+        span: Span,
+        property: Expression<'a>,
+        value: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let temp_binding = self.current_class_mut().bindings.get_or_init_static_binding(ctx);
+        let arguments = ctx.ast.vec_from_array([
+            Argument::from(temp_binding.create_read_expression(ctx)),
+            Argument::from(property),
+            Argument::from(value),
+            Argument::from(temp_binding.create_read_expression(ctx)),
+            Argument::from(ctx.ast.expression_numeric_literal(
+                SPAN,
+                1.0,
+                None,
+                NumberBase::Decimal,
+            )),
+        ]);
+        self.ctx.helper_call_expr(Helper::SuperPropSet, span, arguments, ctx)
     }
 }

@@ -159,6 +159,7 @@ pub enum Helper {
     ClassPrivateFieldLooseKey,
     ClassPrivateFieldLooseBase,
     SuperPropGet,
+    SuperPropSet,
 }
 
 impl Helper {
@@ -183,6 +184,7 @@ impl Helper {
             Self::ClassPrivateFieldLooseKey => "classPrivateFieldLooseKey",
             Self::ClassPrivateFieldLooseBase => "classPrivateFieldLooseBase",
             Self::SuperPropGet => "superPropGet",
+            Self::SuperPropSet => "superPropSet",
         }
     }
 }
