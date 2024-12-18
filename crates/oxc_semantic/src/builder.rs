@@ -1989,11 +1989,10 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::TSModuleDeclaration(module_declaration) => {
                 module_declaration.bind(self);
-                let symbol_id = self
-                    .scope
-                    .get_bindings(self.current_scope_id)
-                    .get(module_declaration.id.name().as_str())
-                    .copied();
+                let symbol_id = match &module_declaration.id {
+                    TSModuleDeclarationName::Identifier(ident) => ident.symbol_id.get(),
+                    TSModuleDeclarationName::StringLiteral(_) => None,
+                };
                 self.namespace_stack.push(symbol_id);
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
@@ -2086,7 +2085,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::CatchParameter(_) => {
                 self.resolve_references_for_current_scope();
             }
-            AstKind::TSModuleBlock(_) => {
+            AstKind::TSModuleDeclaration(_) => {
                 self.namespace_stack.pop();
             }
             AstKind::TSTypeName(_) => {
@@ -2103,7 +2102,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn make_all_namespaces_valuelike(&mut self) {
-        for &symbol_id in &self.namespace_stack {
+        for symbol_id in self.namespace_stack.iter().copied() {
             let Some(symbol_id) = symbol_id else {
                 continue;
             };
