@@ -262,10 +262,12 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.enter_static_block(block, ctx);
+        self.x2_es2022.enter_static_block(block, ctx);
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.exit_static_block(block, ctx);
+        self.x2_es2022.exit_static_block(block, ctx);
     }
 
     fn enter_ts_module_declaration(
@@ -294,6 +296,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_jsx.exit_expression(expr, ctx);
+        self.x2_es2022.exit_expression(expr, ctx);
         self.x2_es2018.exit_expression(expr, ctx);
         self.x2_es2017.exit_expression(expr, ctx);
         self.common.exit_expression(expr, ctx);
@@ -438,6 +441,15 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_property_definition(def, ctx);
         }
+        self.x2_es2022.enter_property_definition(def, ctx);
+    }
+
+    fn exit_property_definition(
+        &mut self,
+        def: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x2_es2022.exit_property_definition(def, ctx);
     }
 
     fn enter_accessor_property(
@@ -518,7 +530,6 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statement(stmt, ctx);
         }
-        self.x2_es2022.enter_statement(stmt, ctx);
         self.x2_es2018.enter_statement(stmt, ctx);
     }
 
