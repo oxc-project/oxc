@@ -1,6 +1,9 @@
 use std::collections::hash_map::Entry;
 
-use base64::prelude::{Engine, BASE64_STANDARD};
+use base64::{
+    encoded_len as base64_encoded_len,
+    prelude::{Engine, BASE64_STANDARD},
+};
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
@@ -532,18 +535,31 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         body: &mut FunctionBody<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<(BindingIdentifier<'a>, ArenaVec<'a, Argument<'a>>)> {
-        let mut key = self.function_signature_keys.remove(&scope_id)?;
+        let key = self.function_signature_keys.remove(&scope_id)?;
 
-        if !self.emit_full_signatures {
+        let key = if self.emit_full_signatures {
+            ctx.ast.atom(&key)
+        } else {
             // Prefer to hash when we can (e.g. outside of ASTExplorer).
             // This makes it deterministically compact, even if there's
             // e.g. a useState initializer with some code inside.
             // We also need it for www that has transforms like cx()
             // that don't understand if something is part of a string.
+            const SHA1_HASH_LEN: usize = 20;
+            const ENCODED_LEN: usize = base64_encoded_len(SHA1_HASH_LEN, true).unwrap();
+
             let mut hasher = Sha1::new();
-            hasher.update(key);
-            key = BASE64_STANDARD.encode(hasher.finalize());
-        }
+            hasher.update(&key);
+            let hash = hasher.finalize();
+            debug_assert_eq!(hash.len(), SHA1_HASH_LEN);
+
+            // Encode to base64 string directly in arena, without an intermediate string allocation
+            let mut hashed_key = ArenaVec::from_array_in([0; ENCODED_LEN], ctx.ast.allocator);
+            let encoded_bytes = BASE64_STANDARD.encode_slice(hash, &mut hashed_key).unwrap();
+            debug_assert_eq!(encoded_bytes, ENCODED_LEN);
+            let hashed_key = hashed_key.into_string().unwrap();
+            Atom::from(hashed_key)
+        };
 
         let callee_list = self.non_builtin_hooks_callee.remove(&scope_id).unwrap_or_default();
         let callee_len = callee_list.len();
@@ -554,11 +570,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let force_reset = custom_hooks_in_scope.len() != callee_len;
 
         let mut arguments = ctx.ast.vec();
-        arguments.push(Argument::from(ctx.ast.expression_string_literal(
-            SPAN,
-            ctx.ast.atom(&key),
-            None,
-        )));
+        arguments.push(Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)));
 
         if force_reset || !custom_hooks_in_scope.is_empty() {
             arguments.push(Argument::from(ctx.ast.expression_boolean_literal(SPAN, force_reset)));
