@@ -202,11 +202,11 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             }
             // `super.prop`
             Expression::StaticMemberExpression(_) => {
-                self.class_properties.transform_static_member_expression(expr, self.ctx);
+                self.transform_static_member_expression_if_super(expr);
             }
             // `super[prop]`
             Expression::ComputedMemberExpression(_) => {
-                self.class_properties.transform_computed_member_expression(expr, self.ctx);
+                self.transform_computed_member_expression_if_super(expr);
             }
             // `object.#prop`
             Expression::PrivateFieldExpression(_) => {
@@ -214,8 +214,7 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             }
             // `super.prop()` or `object.#prop()`
             Expression::CallExpression(call_expr) => {
-                self.class_properties
-                    .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
+                self.transform_call_expression_if_super_member_expression(call_expr);
                 self.class_properties.transform_call_expression(expr, self.ctx);
             }
             // `object.#prop = value`, `object.#prop += value`, `object.#prop ??= value` etc
@@ -514,6 +513,34 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
             let scope_id = scope_id.get().unwrap();
             let current_scope_id = self.ctx.current_scope_id();
             self.ctx.scopes_mut().change_parent_id(scope_id, Some(current_scope_id));
+        }
+    }
+
+    // `#[inline]` into visitor to keep common path where member expression isn't `super.prop` fast
+    #[inline]
+    fn transform_static_member_expression_if_super(&mut self, expr: &mut Expression<'a>) {
+        if self.this_depth == 0 {
+            self.class_properties.transform_static_member_expression(expr, self.ctx);
+        }
+    }
+
+    // `#[inline]` into visitor to keep common path where member expression isn't `super.prop` fast
+    #[inline]
+    fn transform_computed_member_expression_if_super(&mut self, expr: &mut Expression<'a>) {
+        if self.this_depth == 0 {
+            self.class_properties.transform_computed_member_expression(expr, self.ctx);
+        }
+    }
+
+    // `#[inline]` into visitor to keep common path where call expression isn't `super.prop()` fast
+    #[inline]
+    fn transform_call_expression_if_super_member_expression(
+        &mut self,
+        call_expr: &mut CallExpression<'a>,
+    ) {
+        if self.this_depth == 0 {
+            self.class_properties
+                .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
         }
     }
 }
