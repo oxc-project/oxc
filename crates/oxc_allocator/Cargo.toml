@@ -21,6 +21,7 @@ doctest = false
 [dependencies]
 allocator-api2 = { workspace = true }
 bumpalo = { workspace = true, features = ["allocator-api2", "collections"] }
+simdutf8 = { workspace = true }
 
 serde = { workspace = true, optional = true }
 
