@@ -394,8 +394,6 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
             Entry::Vacant(entry) => entry.insert(String::with_capacity(key_len)),
         };
 
-        // Dummy comment to re-run benchmark
-
         // `hook_name{{declarator_id(args_key)}}` or `hook_name{{declarator_id}}`
         let old_len = string.len();
 
