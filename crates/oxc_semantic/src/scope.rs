@@ -1,7 +1,6 @@
 use std::mem;
 
-use indexmap::IndexMap;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::FxHashMap;
 
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
@@ -12,9 +11,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 
-type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
-
-pub(crate) type Bindings = FxIndexMap<CompactStr, SymbolId>;
+pub(crate) type Bindings = Vec<(CompactStr, SymbolId)>;
 pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
 
 /// Scope Tree
@@ -203,7 +200,7 @@ impl ScopeTree {
 
     /// Check if a symbol is declared in a certain scope.
     pub fn has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
-        self.bindings[scope_id].get(name).is_some()
+        self.bindings[scope_id].iter().any(|v| v.0 == name)
     }
 
     /// Get the symbol bound to an identifier name in a scope.
@@ -215,7 +212,7 @@ impl ScopeTree {
     ///
     /// [`find_binding`]: ScopeTree::find_binding
     pub fn get_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
-        self.bindings[scope_id].get(name).copied()
+        self.bindings[scope_id].iter().find_map(|v| (v.0 == name).then_some(v.1))
     }
 
     /// Find a binding by name in a scope or its ancestors.
@@ -224,7 +221,7 @@ impl ScopeTree {
     /// found. If no binding is found, [`None`] is returned.
     pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
         for scope_id in self.ancestors(scope_id) {
-            if let Some(&symbol_id) = self.bindings[scope_id].get(name) {
+            if let Some(symbol_id) = self.get_binding(scope_id, name) {
                 return Some(symbol_id);
             }
         }
@@ -251,15 +248,15 @@ impl ScopeTree {
     ///
     /// [`iter_bindings_in`]: ScopeTree::iter_bindings_in
     pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, &'_ CompactStr)> + '_ {
-        self.bindings.iter_enumerated().flat_map(|(scope_id, bindings)| {
-            bindings.iter().map(move |(name, &symbol_id)| (scope_id, symbol_id, name))
-        })
+        self.bindings
+            .iter_enumerated()
+            .flat_map(|(scope_id, bindings)| bindings.iter().map(move |v| (scope_id, v.1, &v.0)))
     }
 
     /// Iterate over bindings declared inside a scope.
     #[inline]
     pub fn iter_bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
-        self.bindings[scope_id].values().copied()
+        self.bindings[scope_id].iter().map(|v| v.1)
     }
 
     #[inline]
@@ -325,19 +322,23 @@ impl ScopeTree {
     ///
     /// [`binding`]: Bindings
     pub fn add_binding(&mut self, scope_id: ScopeId, name: CompactStr, symbol_id: SymbolId) {
-        self.bindings[scope_id].insert(name, symbol_id);
+        if let Some((_, sid)) = self.bindings[scope_id].iter_mut().find(|(n, _s)| *n == name) {
+            *sid = symbol_id;
+        } else {
+            self.bindings[scope_id].push((name, symbol_id));
+        }
     }
 
     /// Remove an existing binding from a scope.
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
-        self.bindings[scope_id].shift_remove(name);
+        self.bindings[scope_id].retain(|(n, _)| n != name);
     }
 
     /// Move a binding from one scope to another.
     pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: &str) {
-        let from_map = &mut self.bindings[from];
-        if let Some((name, symbol_id)) = from_map.swap_remove_entry(name) {
-            self.bindings[to].insert(name, symbol_id);
+        if let Some(index) = self.bindings[from].iter().position(|(n, _)| n == name) {
+            let (_, symbol_id) = self.bindings[from].remove(index);
+            self.add_binding(to, name.into(), symbol_id);
         }
     }
 
@@ -358,15 +359,13 @@ impl ScopeTree {
         old_name: &str,
         new_name: CompactStr,
     ) {
-        let bindings = &mut self.bindings[scope_id];
-        // Insert on end
-        let existing_symbol_id = bindings.insert(new_name, symbol_id);
-        debug_assert!(existing_symbol_id.is_none());
-        // Remove old entry. `swap_remove` swaps the last entry into the place of removed entry.
-        // We just inserted the new entry as last, so the new entry takes the place of the old.
-        // Order of entries is same as before, only the key has changed.
-        let old_symbol_id = bindings.swap_remove(old_name);
-        debug_assert_eq!(old_symbol_id, Some(symbol_id));
+        if let Some((name, _)) =
+            self.bindings[scope_id].iter_mut().find(|(n, s)| *s == symbol_id && n == old_name)
+        {
+            *name = new_name;
+        } else {
+            debug_assert!(false, "Invalid conditions.");
+        }
     }
 
     /// Reserve memory for an `additional` number of scopes.

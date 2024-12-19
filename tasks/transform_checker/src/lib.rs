@@ -336,8 +336,12 @@ impl PostTransformChecker<'_, '_> {
         for scope_ids in self.scope_ids_map.pairs() {
             // Check bindings are the same
             fn get_sorted_binding_names(scoping: &Scoping, scope_id: ScopeId) -> Vec<CompactStr> {
-                let mut binding_names =
-                    scoping.scopes.get_bindings(scope_id).keys().cloned().collect::<Vec<_>>();
+                let mut binding_names = scoping
+                    .scopes
+                    .get_bindings(scope_id)
+                    .iter()
+                    .map(|(n, _)| n.clone())
+                    .collect::<Vec<_>>();
                 binding_names.sort_unstable();
                 binding_names
             }
@@ -347,7 +351,12 @@ impl PostTransformChecker<'_, '_> {
                 self.errors.push_mismatch("Bindings mismatch", scope_ids, binding_names);
             } else {
                 let symbol_ids = self.get_pair(scope_ids, |scoping, scope_id| {
-                    scoping.scopes.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
+                    scoping
+                        .scopes
+                        .get_bindings(scope_id)
+                        .iter()
+                        .map(|(_, s)| *s)
+                        .collect::<Vec<_>>()
                 });
                 if self.remap_symbol_ids_sets(&symbol_ids).is_mismatch() {
                     self.errors.push_mismatch("Binding symbols mismatch", scope_ids, symbol_ids);

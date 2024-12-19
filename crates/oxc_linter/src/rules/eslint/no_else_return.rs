@@ -189,7 +189,8 @@ fn is_safe_from_name_collisions(
             let parent_bindings = scopes.get_bindings(parent_scope_id);
 
             if bindings.iter().any(|(name, symbol_id)| {
-                let Some((parent_name, parent_symbol_id)) = parent_bindings.get_key_value(name)
+                let Some((parent_name, parent_symbol_id)) =
+                    parent_bindings.iter().find(|(n, _)| n == name)
                 else {
                     return false;
                 };
@@ -495,41 +496,41 @@ fn test() {
         ),
         ("function foo10() { if (foo) return bar; else (foo).bar(); }", None),
         (
-            "function foo11() { if (foo) return bar 
+            "function foo11() { if (foo) return bar
 			else { [1, 2, 3].map(foo) } }",
             None,
         ),
         (
-            "function foo12() { if (foo) return bar 
-			else { baz() } 
+            "function foo12() { if (foo) return bar
+			else { baz() }
 			[1, 2, 3].map(foo) }",
             None,
         ),
         (
-            "function foo13() { if (foo) return bar; 
+            "function foo13() { if (foo) return bar;
 			else { [1, 2, 3].map(foo) } }",
             None,
         ),
         (
-            "function foo14() { if (foo) return bar 
-			else { baz(); } 
+            "function foo14() { if (foo) return bar
+			else { baz(); }
 			[1, 2, 3].map(foo) }",
             None,
         ),
         ("function foo15() { if (foo) return bar; else { baz() } qaz() }", None),
         (
-            "function foo16() { if (foo) return bar 
+            "function foo16() { if (foo) return bar
 			else { baz() } qaz() }",
             None,
         ),
         (
-            "function foo17() { if (foo) return bar 
-			else { baz() } 
+            "function foo17() { if (foo) return bar
+			else { baz() }
 			qaz() }",
             None,
         ),
         (
-            "function foo18() { if (foo) return function() {} 
+            "function foo18() { if (foo) return function() {}
 			else [1, 2, 3].map(bar) }",
             None,
         ),
@@ -730,24 +731,24 @@ fn test() {
             None,
         ),
         (
-            "function foo13() { if (foo) return bar; 
+            "function foo13() { if (foo) return bar;
 			else { [1, 2, 3].map(foo) } }",
             "function foo13() { if (foo) return bar; [1, 2, 3].map(foo) }",
             None,
         ),
         (
-            "function foo14() { if (foo) return bar 
-			else { baz(); } 
+            "function foo14() { if (foo) return bar
+			else { baz(); }
 			[1, 2, 3].map(foo) }",
-            "function foo14() { if (foo) return bar\n baz(); 
+            "function foo14() { if (foo) return bar\n baz();
 			[1, 2, 3].map(foo) }",
             None,
         ),
         (
-            "function foo17() { if (foo) return bar 
-			else { baz() } 
+            "function foo17() { if (foo) return bar
+			else { baz() }
 			qaz() }",
-            "function foo17() { if (foo) return bar\n baz() 
+            "function foo17() { if (foo) return bar\n baz()
 			qaz() }",
             None,
         ),

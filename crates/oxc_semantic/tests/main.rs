@@ -48,7 +48,8 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
         result.push_str("\"symbols\": ");
         let bindings = scope_tree.get_bindings(scope_id);
         result.push('[');
-        bindings.iter().enumerate().for_each(|(index, (name, &symbol_id))| {
+        bindings.iter().enumerate().for_each(|(index, (name, symbol_id))| {
+            let symbol_id = *symbol_id;
             if index != 0 {
                 result.push(',');
             }

@@ -111,8 +111,8 @@ impl Mangler {
 
             if !bindings.is_empty() {
                 // `bindings` are stored in order, traverse and increment slot
-                for symbol_id in bindings.values().copied() {
-                    slots[symbol_id] = slot;
+                for (_, symbol_id) in bindings {
+                    slots[*symbol_id] = slot;
                     slot += 1;
                 }
             }
@@ -143,7 +143,7 @@ impl Mangler {
                 if !is_keyword(n)
                     && !is_special_name(n)
                     && !root_unresolved_references.contains_key(n)
-                    && (self.options.top_level || !root_bindings.contains_key(n))
+                    && (self.options.top_level || !root_bindings.iter().any(|(name, _)| name == n))
                 {
                     break name;
                 }

@@ -23,19 +23,10 @@ use oxc_syntax::{
 };
 
 use crate::{
-    binder::Binder,
-    checker,
-    class::ClassTableBuilder,
-    diagnostics::redeclaration,
-    jsdoc::JSDocBuilder,
-    label::UnusedLabels,
-    node::AstNodes,
-    reference::Reference,
-    scope::{Bindings, ScopeTree},
-    stats::Stats,
-    symbol::SymbolTable,
-    unresolved_stack::UnresolvedReferencesStack,
-    JSDocFinder, Semantic,
+    binder::Binder, checker, class::ClassTableBuilder, diagnostics::redeclaration,
+    jsdoc::JSDocBuilder, label::UnusedLabels, node::AstNodes, reference::Reference,
+    scope::ScopeTree, stats::Stats, symbol::SymbolTable,
+    unresolved_stack::UnresolvedReferencesStack, JSDocFinder, Semantic,
 };
 
 macro_rules! control_flow {
@@ -474,7 +465,12 @@ impl<'a> SemanticBuilder<'a> {
             self.current_scope_id,
             self.current_node_id,
         );
-        self.scope.get_bindings_mut(scope_id).insert(name, symbol_id);
+        let bindings_mut = self.scope.get_bindings_mut(scope_id);
+        if let Some((_, sid)) = bindings_mut.iter_mut().find(|(n, _)| *n == name) {
+            *sid = symbol_id;
+        } else {
+            bindings_mut.push((name, symbol_id));
+        };
         symbol_id
     }
 
@@ -489,7 +485,9 @@ impl<'a> SemanticBuilder<'a> {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
             let bindings = self.scope.get_bindings(self.current_scope_id);
-            if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
+            if let Some((_, symbol_id)) = bindings.iter().find(|(n, _)| n.as_str() == name.as_str())
+            {
+                let symbol_id = *symbol_id;
                 let symbol_flags = self.symbols.get_flags(symbol_id);
                 references.retain(|&reference_id| {
                     let reference = &mut self.symbols.references[reference_id];
@@ -714,10 +712,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
             let parent_bindings = self.scope.get_bindings_mut(parent_scope_id);
             if !parent_bindings.is_empty() {
-                let parent_bindings = parent_bindings.drain(..).collect::<Bindings>();
-                parent_bindings.values().for_each(|&symbol_id| {
-                    self.symbols.set_scope_id(symbol_id, self.current_scope_id);
-                });
+                let parent_bindings = std::mem::take(parent_bindings);
+                for (_, symbol_id) in &parent_bindings {
+                    self.symbols.set_scope_id(*symbol_id, self.current_scope_id);
+                }
                 *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
             }
         }
