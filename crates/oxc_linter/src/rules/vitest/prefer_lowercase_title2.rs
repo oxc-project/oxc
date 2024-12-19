@@ -7,7 +7,6 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{parse_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
-    AstNode,
 };
 
 fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
@@ -24,7 +23,7 @@ pub struct PreferLowercaseTitleConfig {
     lowercase_first_character_only: bool,
 }
 
-impl std::ops::Deref for PreferLowercaseTitle {
+impl std::ops::Deref for PreferLowercaseTitle2 {
     type Target = PreferLowercaseTitleConfig;
 
     fn deref(&self) -> &Self::Target {
@@ -33,7 +32,7 @@ impl std::ops::Deref for PreferLowercaseTitle {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct PreferLowercaseTitle(Box<PreferLowercaseTitleConfig>);
+pub struct PreferLowercaseTitle2(Box<PreferLowercaseTitleConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -61,12 +60,12 @@ declare_oxc_lint!(
     ///     ...
     /// })
     /// ```
-    PreferLowercaseTitle,
+    PreferLowercaseTitle2,
     style,
-    fix
+    pending
 );
 
-impl Rule for PreferLowercaseTitle {
+impl Rule for PreferLowercaseTitle2 {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
         let ignore_top_level_describe = obj
@@ -102,49 +101,51 @@ impl Rule for PreferLowercaseTitle {
         ctx: &'c LintContext<'a>,
     ) {
         let node = possible_vitest_node.node;
-    let AstKind::CallExpression(call_expr) = node.kind() else {
-        return;
-    };
-    let Some(vitest_fn_call) =
-        parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
-    else {
-        return;
-    };
 
-    let scopes = ctx.scopes();
+        println!("node: {node:?}");
 
-    // TODO: populate ignores
-    // let ignores = Self::populate_ignores(&self.ignore);
-
-    // if ignores.contains(&vitest_fn_call.name.as_ref()) {
-    //     return;
-    // }
-
-    if matches!(vitest_fn_call.kind(), JestFnKind::General(JestGeneralFnKind::Describe)) {
-        if self.ignore_top_level_describe && scopes.get_flags(node.scope_id()).is_top() {
-            return;
-        }
-    } else if !matches!(vitest_fn_call.kind(), JestFnKind::General(JestGeneralFnKind::Test)) {
-        return;
-    }
-
-    let Some(arg) = call_expr.arguments.first() else {
-        return;
-    };
-
-    if let Argument::StringLiteral(string_expr) = arg {
-        self.lint_string(ctx, string_expr.value.as_str(), string_expr.span);
-    } else if let Argument::TemplateLiteral(template_expr) = arg {
-        let Some(template_string) = template_expr.quasi() else {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        self.lint_string(ctx, template_string.as_str(), template_expr.span);
+        let Some(vitest_fn_call) =
+            parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
+        else {
+            return;
+        };
+
+        let scopes = ctx.scopes();
+
+        // TODO: populate ignores
+        // let ignores = Self::populate_ignores(&self.ignore);
+
+        // if ignores.contains(&vitest_fn_call.name.as_ref()) {
+        //     return;
+        // }
+
+        if matches!(vitest_fn_call.kind(), JestFnKind::General(JestGeneralFnKind::Describe)) {
+            if self.ignore_top_level_describe && scopes.get_flags(node.scope_id()).is_top() {
+                return;
+            }
+        } else if !matches!(vitest_fn_call.kind(), JestFnKind::General(JestGeneralFnKind::Test)) {
+            return;
+        }
+
+        let Some(arg) = call_expr.arguments.first() else {
+            return;
+        };
+
+        if let Argument::StringLiteral(string_expr) = arg {
+            self.lint_string(ctx, string_expr.value.as_str(), string_expr.span);
+        } else if let Argument::TemplateLiteral(template_expr) = arg {
+            let Some(template_string) = template_expr.quasi() else {
+                return;
+            };
+            self.lint_string(ctx, template_string.as_str(), template_expr.span);
+        }
     }
-    }
-    
 }
 
-impl PreferLowercaseTitle {
+impl PreferLowercaseTitle2 {
     fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
         println!("literal: {literal}");
 
@@ -163,30 +164,28 @@ impl PreferLowercaseTitle {
             return;
         }
 
-        let mut span_offset: u32 = 0;
+        // let mut span_offset: u32 = 0;
 
-        if !self.lowercase_first_character_only {
-            for n in 1..literal.chars().count() {
-                println!("n: {n}");
-                let Some(next_char) = literal.chars().nth(n) else {
-                    return;
-                };
+        // if !self.lowercase_first_character_only {
+        //     for n in 1..literal.chars().count() {
+        //         println!("n: {n}");
+        //         let Some(next_char) = literal.chars().nth(n) else {
+        //             return;
+        //         };
 
-                println!("next_char: {next_char}");
+        //         println!("next_char: {next_char}");
 
-                let next_lower = next_char.to_ascii_lowercase();
+        //         let next_lower = next_char.to_ascii_lowercase();
 
-                if next_char != next_lower {
-                    span_offset = n as u32;
-                    lower = next_lower;
-                    break;
-                }
-            }
-        }
+        //         if next_char != next_lower {
+        //             span_offset = n as u32;
+        //             lower = next_lower;
+        //             break;
+        //         }
+        //     }
+        // }
 
-        ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {
-            fixer.replace(Span::sized(span.start + span_offset + 1, 1), lower.to_string())
-        });
+        ctx.diagnostic(prefer_lowercase_title_diagnostic(literal, span));
     }
 }
 
@@ -215,19 +214,20 @@ fn test() {
         // ("bench(`Foo MM mm`, function () {})", None),
     ];
 
-    let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
-        (r#"it("Foo MM mm", function () {})"#, r#"it("foo MM mm", function () {})"#, None),
-        ("test(`Foo MM mm`, function () {})", "test(`foo MM mm`, function () {})", None),
-        (
-            "test(`SFC Compile`, function () {})",
-            "test(`sfc compile`, function () {})",
-            Some(
-                serde_json::json!([        {          "lowercaseFirstCharacterOnly": false        }      ]),
-            ),
-        ),
-        ("bench(`Foo MM mm`, function () {})", "bench(`foo MM mm`, function () {})", None),
-    ];
-    Tester::new(PreferLowercaseTitle::NAME, PreferLowercaseTitle::CATEGORY, pass, fail)
-        .expect_fix(fix)
+    // let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
+    //     (r#"it("Foo MM mm", function () {})"#, r#"it("foo MM mm", function () {})"#, None),
+    //     ("test(`Foo MM mm`, function () {})", "test(`foo MM mm`, function () {})", None),
+    //     (
+    //         "test(`SFC Compile`, function () {})",
+    //         "test(`sfc compile`, function () {})",
+    //         Some(
+    //             serde_json::json!([        {          "lowercaseFirstCharacterOnly": false        }      ]),
+    //         ),
+    //     ),
+    //     ("bench(`Foo MM mm`, function () {})", "bench(`foo MM mm`, function () {})", None),
+    // ];
+    Tester::new(PreferLowercaseTitle2::NAME, PreferLowercaseTitle2::CATEGORY, pass, fail)
+        // .expect_fix(fix)
+        .with_vitest_plugin(true)
         .test_and_snapshot();
 }

@@ -507,7 +507,7 @@ mod vitest {
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_each;
-    pub mod prefer_lowercase_title;
+    pub mod prefer_lowercase_title2;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
@@ -983,7 +983,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::throw_new_error,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
-    vitest::prefer_lowercase_title,
+    vitest::prefer_lowercase_title2,
     vitest::prefer_each,
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_object,
