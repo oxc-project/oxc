@@ -23,7 +23,8 @@ use tower_lsp::{
 use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
 
 use crate::capabilities::{Capabilities, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC};
-use crate::linter::{DiagnosticReport, ServerLinter};
+use crate::linter::error_with_position::DiagnosticReport;
+use crate::linter::server_linter::ServerLinter;
 
 mod capabilities;
 mod linter;
