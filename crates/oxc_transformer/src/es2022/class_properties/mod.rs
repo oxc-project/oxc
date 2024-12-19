@@ -115,13 +115,25 @@
 //!
 //! Transform happens in 3 phases:
 //!
-//! 1. Check if class contains properties or static blocks, to determine if any transform is necessary
-//!    (in [`ClassProperties::transform_class`]).
-//! 2. Extract class property declarations and static blocks from class and insert in class constructor
-//!    (instance properties) or before/after the class (static properties + static blocks)
-//!    (in [`ClassProperties::transform_class`]).
-//! 3. Transform private property usages (`this.#prop`)
-//!    (in [`ClassProperties::transform_private_field_expression`] and other visitors).
+//! 1. On entering class:
+//!    ([`ClassProperties::transform_class_body_on_enter`])
+//!    * Check if class contains properties or static blocks, to determine if any transform is necessary.
+//!    * Build a hashmap of private property keys.
+//!    * Extract instance property declarations (public of private) from class body and insert
+//!      in class constructor.
+//!    * Temporarily replace computed keys of instance properties with assignments to temp vars.
+//!      `class C { [foo()] = 123; }` -> `class C { [_foo = foo()]; }`
+//!
+//! 2. During traversal of class body:
+//!    ([`ClassProperties::transform_private_field_expression`] and other visitors)
+//!    * Transform private fields (`this.#foo`).
+//!
+//! 3. On exiting class:
+//!    ([`ClassProperties::transform_class_on_exit`] and [`ClassProperties::transform_class_expression_on_exit`])
+//!    * Transform static properties, and static blocks.
+//!    * Move assignments to temp vars which were inserted in computed keys for in phase 1 to before class.
+//!    * Create temp vars for computed method keys if required.
+//!    * Insert statements before/after class declaration / expressions before/after class expression.
 //!
 //! Implementation is split into several files:
 //!
@@ -151,9 +163,7 @@ use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use serde::Deserialize;
 
-use oxc_allocator::{Address, GetAddress};
 use oxc_ast::ast::*;
-use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::Atom;
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -211,11 +221,6 @@ pub struct ClassProperties<'a, 'ctx> {
     // clause resolves to `#x` in *outer* class, not the current class.
     classes_stack: ClassesStack<'a>,
 
-    /// Addresses of class expressions being processed, to prevent same class being visited twice.
-    /// Have to use a stack because the revisit doesn't necessarily happen straight after the first visit.
-    /// e.g. `c = class C { [class D {}] = 1; }` -> `c = (_D = class D {}, class C { ... })`
-    class_expression_addresses_stack: NonEmptyStack<Address>,
-
     // State during transform of class
     //
     /// Scope that instance init initializers will be inserted into
@@ -252,7 +257,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             transform_static_blocks,
             ctx,
             classes_stack: ClassesStack::default(),
-            class_expression_addresses_stack: NonEmptyStack::new(Address::DUMMY),
             // Temporary values - overwritten when entering class
             instance_inits_scope_id: ScopeId::new(0),
             instance_inits_constructor_scope_id: None,
@@ -266,16 +270,26 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
+    fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.transform_class_body_on_enter(body, ctx);
+    }
+
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.transform_class_on_exit(class, ctx);
+    }
+
+    // `#[inline]` for fast exit for expressions which are not `Class`es
+    #[inline]
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if matches!(expr, Expression::ClassExpression(_)) {
+            self.transform_class_expression_on_exit(expr, ctx);
+        }
+    }
+
     // `#[inline]` because this is a hot path
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // IMPORTANT: If add any other visitors here to handle private fields,
-        // also need to add them to visitor in `static_prop.rs`.
         match expr {
-            // `class {}`
-            Expression::ClassExpression(_) => {
-                self.transform_class_expression(expr, ctx);
-            }
             // `object.#prop`
             Expression::PrivateFieldExpression(_) => {
                 self.transform_private_field_expression(expr, ctx);
@@ -318,37 +332,31 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
         self.transform_assignment_target(target, ctx);
     }
 
-    // `#[inline]` because this is a hot path
-    #[inline]
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        match stmt {
-            // `class C {}`
-            Statement::ClassDeclaration(class) => {
-                let stmt_address = class.address();
-                self.transform_class_declaration(class, stmt_address, ctx);
-            }
-            // `export class C {}`
-            Statement::ExportNamedDeclaration(decl) => {
-                let stmt_address = decl.address();
-                if let Some(Declaration::ClassDeclaration(class)) = &mut decl.declaration {
-                    self.transform_class_declaration(class, stmt_address, ctx);
-                }
-            }
-            // `export default class {}`
-            Statement::ExportDefaultDeclaration(decl) => {
-                let stmt_address = decl.address();
-                if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut decl.declaration
-                {
-                    self.transform_class_declaration(class, stmt_address, ctx);
-                }
-            }
-            _ => {}
+    fn enter_property_definition(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if prop.r#static {
+            self.flag_entering_static_prop_or_block();
         }
     }
 
-    // `#[inline]` because `transform_class_on_exit` is so small
-    #[inline]
-    fn exit_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.transform_class_on_exit(class);
+    fn exit_property_definition(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if prop.r#static {
+            self.flag_exiting_static_prop_or_block();
+        }
+    }
+
+    fn enter_static_block(&mut self, _block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.flag_entering_static_prop_or_block();
+    }
+
+    fn exit_static_block(&mut self, _block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.flag_exiting_static_prop_or_block();
     }
 }

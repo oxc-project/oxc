@@ -1439,8 +1439,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         }
     }
 
-    // Note: This is also called by visitor in `static_prop.rs`
-    pub(super) fn transform_unary_expression_impl(
+    fn transform_unary_expression_impl(
         &mut self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,

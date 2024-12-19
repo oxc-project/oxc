@@ -12,6 +12,8 @@ use super::{ClassBindings, ClassProperties, FxIndexMap};
 pub(super) struct ClassDetails<'a> {
     /// `true` for class declaration, `false` for class expression
     pub is_declaration: bool,
+    /// `true` if class requires no transformation
+    pub transform_required: bool,
     /// Private properties.
     /// Mapping private prop name to binding for temp var.
     /// This is then used as lookup when transforming e.g. `this.#x`.

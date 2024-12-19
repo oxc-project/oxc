@@ -10,7 +10,7 @@ use oxc_syntax::{
     scope::ScopeFlags,
     symbol::{SymbolFlags, SymbolId},
 };
-use oxc_traverse::{BoundIdentifier, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, TraverseCtx};
 
 use crate::{common::helper_loader::Helper, TransformCtx};
 
@@ -20,74 +20,392 @@ use super::{
     ClassBindings, ClassDetails, ClassProperties, FxIndexMap, PrivateProp,
 };
 
+// TODO(improve-on-babel): If outer scope is sloppy mode, all code which is moved to outside
+// the class should be wrapped in an IIFE with `'use strict'` directive. Babel doesn't do this.
+
+// TODO: If static blocks transform is disabled, it's possible to get incorrect execution order.
+// ```js
+// class C {
+//     static x = console.log('x');
+//     static {
+//         console.log('block');
+//     }
+//     static y = console.log('y');
+// }
+// ```
+// This logs "x", "block", "y". But in transformed output it'd be "block", "x", "y".
+// Maybe force transform of static blocks if any static properties?
+// Or alternatively could insert static property initializers into static blocks.
+
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
-    /// Transform class expression.
-    // `#[inline]` so that compiler sees that `expr` is an `Expression::ClassExpression`.
-    // Main guts of transform is broken out into `transform_class_expression_start` and
-    // `transform_class_expression_finish` to keep this function as small as possible.
-    // Want it to be inlined into `enter_expression` and for `enter_expression` to be inlined into parent.
-    #[inline]
-    pub(super) fn transform_class_expression(
+    pub(super) fn transform_class_body_on_enter(
+        &mut self,
+        body: &mut ClassBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Ignore TS class declarations
+        // TODO: Is this correct?
+        let Ancestor::ClassBody(class) = ctx.parent() else { unreachable!() };
+        if *class.declare() {
+            return;
+        }
+
+        // Get details about class
+        let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
+        let class_scope_id = class.scope_id().get().unwrap();
+        let has_super_class = class.super_class().is_some();
+
+        // Check if class has any properties and get index of constructor (if class has one)
+        let mut instance_prop_count = 0;
+        let mut has_static_prop = false;
+        let mut has_static_block = false;
+        // TODO: Store `FxIndexMap`s in a pool and re-use them
+        let mut private_props = FxIndexMap::default();
+        let mut constructor = None;
+        for element in body.body.iter_mut() {
+            match element {
+                ClassElement::PropertyDefinition(prop) => {
+                    // TODO: Throw error if property has decorators
+
+                    // Create binding for private property key
+                    if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
+                        // Note: Current scope is outside class.
+                        let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
+                        private_props.insert(
+                            ident.name.clone(),
+                            PrivateProp { binding, is_static: prop.r#static },
+                        );
+                    }
+
+                    if prop.r#static {
+                        has_static_prop = true;
+                    } else {
+                        instance_prop_count += 1;
+                    }
+
+                    continue;
+                }
+                ClassElement::StaticBlock(_) => {
+                    // Static block only necessitates transforming class if it's being transformed
+                    if self.transform_static_blocks {
+                        has_static_block = true;
+                        continue;
+                    }
+                }
+                ClassElement::MethodDefinition(method) => {
+                    if method.kind == MethodDefinitionKind::Constructor
+                        && method.value.body.is_some()
+                    {
+                        constructor = Some(method);
+                    }
+                }
+                ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
+                    // TODO: Need to handle these?
+                }
+            }
+        }
+
+        // Determine if is a class declaration
+        let is_declaration = match ctx.ancestor(1) {
+            Ancestor::ExportDefaultDeclarationDeclaration(_)
+            | Ancestor::ExportNamedDeclarationDeclaration(_) => true,
+            grandparent => grandparent.is_via_statement(),
+        };
+
+        // Exit if nothing to transform
+        if instance_prop_count == 0 && !has_static_prop && !has_static_block {
+            self.classes_stack.push(ClassDetails {
+                is_declaration,
+                transform_required: false,
+                private_props: None,
+                bindings: ClassBindings::default(),
+            });
+            return;
+        }
+
+        // Initialize class binding vars.
+        // Static prop in class expression or anonymous `export default class {}` always require
+        // temp var for class. Static prop in class declaration doesn't.
+        let need_temp_var = has_static_prop && (!is_declaration || class_name_binding.is_none());
+
+        let outer_hoist_scope_id = ctx.current_hoist_scope_id();
+        let class_temp_binding = if need_temp_var {
+            let temp_binding = ClassBindings::create_temp_binding(
+                class_name_binding.as_ref(),
+                outer_hoist_scope_id,
+                ctx,
+            );
+            if is_declaration {
+                // Anonymous `export default class {}`. Set class name binding to temp var.
+                // Actual class name will be set to this later.
+                class_name_binding = Some(temp_binding.clone());
+            } else {
+                // Create temp var `var _Class;` statement.
+                // TODO(improve-on-babel): Inserting the temp var `var _Class` statement here is only
+                // to match Babel's output. It'd be simpler just to insert it at the end and get rid of
+                // `temp_var_is_created` that tracks whether it's done already or not.
+                self.ctx.var_declarations.insert_var(&temp_binding, ctx);
+            }
+            Some(temp_binding)
+        } else {
+            None
+        };
+
+        let static_private_fields_use_temp = !is_declaration;
+        let class_bindings = ClassBindings::new(
+            class_name_binding,
+            class_temp_binding,
+            outer_hoist_scope_id,
+            static_private_fields_use_temp,
+            need_temp_var,
+        );
+
+        // Add entry to `classes_stack`
+        self.classes_stack.push(ClassDetails {
+            is_declaration,
+            transform_required: true,
+            private_props: if private_props.is_empty() { None } else { Some(private_props) },
+            bindings: class_bindings,
+        });
+
+        // Exit if no instance properties (public or private)
+        if instance_prop_count == 0 {
+            return;
+        }
+
+        // Determine where to insert instance property initializers in constructor
+        let instance_inits_insert_location = if let Some(constructor) = constructor {
+            // Existing constructor
+            let constructor = constructor.value.as_mut();
+            if has_super_class {
+                let (insert_scopes, insert_location) =
+                    Self::replace_super_in_constructor(constructor, ctx);
+                self.instance_inits_scope_id = insert_scopes.insert_in_scope_id;
+                self.instance_inits_constructor_scope_id = insert_scopes.constructor_scope_id;
+                insert_location
+            } else {
+                let constructor_scope_id = constructor.scope_id();
+                self.instance_inits_scope_id = constructor_scope_id;
+                // Only record `constructor_scope_id` if constructor's scope has some bindings.
+                // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
+                // because no bindings to clash with.
+                self.instance_inits_constructor_scope_id =
+                    if ctx.scopes().get_bindings(constructor_scope_id).is_empty() {
+                        None
+                    } else {
+                        Some(constructor_scope_id)
+                    };
+                InstanceInitsInsertLocation::ExistingConstructor(0)
+            }
+        } else {
+            // No existing constructor - create scope for one
+            let constructor_scope_id = ctx.scopes_mut().add_scope(
+                Some(class_scope_id),
+                NodeId::DUMMY,
+                ScopeFlags::Function | ScopeFlags::Constructor | ScopeFlags::StrictMode,
+            );
+            self.instance_inits_scope_id = constructor_scope_id;
+            self.instance_inits_constructor_scope_id = None;
+            InstanceInitsInsertLocation::NewConstructor
+        };
+
+        // Extract instance properties initializers
+        let mut instance_inits = Vec::with_capacity(instance_prop_count);
+        let mut constructor = None;
+        for element in body.body.iter_mut() {
+            #[expect(clippy::match_same_arms)]
+            match element {
+                ClassElement::PropertyDefinition(prop) => {
+                    if !prop.r#static {
+                        self.convert_instance_property(prop, &mut instance_inits, ctx);
+                    }
+                }
+                ClassElement::MethodDefinition(method) => {
+                    if method.kind == MethodDefinitionKind::Constructor
+                        && method.value.body.is_some()
+                    {
+                        constructor = Some(method.value.as_mut());
+                    }
+                }
+                ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
+                    // TODO: Need to handle these?
+                }
+                ClassElement::StaticBlock(_) => {}
+            }
+        }
+
+        // Insert instance initializers into constructor, or create constructor if there is none
+        match instance_inits_insert_location {
+            InstanceInitsInsertLocation::NewConstructor => {
+                self.insert_constructor(body, instance_inits, has_super_class, ctx);
+            }
+            InstanceInitsInsertLocation::ExistingConstructor(stmt_index) => {
+                self.insert_inits_into_constructor_as_statements(
+                    constructor.as_mut().unwrap(),
+                    instance_inits,
+                    stmt_index,
+                    ctx,
+                );
+            }
+            InstanceInitsInsertLocation::SuperFnInsideConstructor(super_binding) => {
+                self.create_super_function_inside_constructor(
+                    constructor.as_mut().unwrap(),
+                    instance_inits,
+                    &super_binding,
+                    ctx,
+                );
+            }
+            InstanceInitsInsertLocation::SuperFnOutsideClass(super_binding) => {
+                self.create_super_function_outside_constructor(instance_inits, &super_binding, ctx);
+            }
+        }
+    }
+
+    /// Transform class declaration on exit.
+    pub(super) fn transform_class_on_exit(
+        &mut self,
+        class: &mut Class<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Ignore TS class declarations
+        // TODO: Is this correct?
+        if class.declare {
+            return;
+        }
+
+        // Deal with exit from class expression in `transform_class_expression_on_exit`
+        let class_details = self.current_class_mut();
+        if !class_details.is_declaration {
+            return;
+        }
+
+        // TODO: Refactor
+        if !class_details.transform_required {
+            debug_assert!(class_details.bindings.temp.is_none());
+            self.classes_stack.pop();
+            return;
+        }
+
+        // TODO: Comment explaining why
+        class_details.bindings.static_private_fields_use_temp = true;
+
+        // Transform static properties, remove static and instance properties, and move computed keys
+        // to before class
+        self.transform_class_on_exit_impl(class, ctx);
+
+        // Insert temp var for class if required. Name class if required.
+        let class_details = self.classes_stack.last_mut();
+        if let Some(temp_binding) = &class_details.bindings.temp {
+            // Binding for class name is required
+            if let Some(ident) = &class.id {
+                // Insert `var _Class` statement, if it wasn't already in `transform_class`
+                if !class_details.bindings.temp_var_is_created {
+                    self.ctx.var_declarations.insert_var(temp_binding, ctx);
+                }
+
+                // Insert `_Class = Class` after class.
+                // TODO(improve-on-babel): Could just insert `var _Class = Class;` after class,
+                // rather than separate `var _Class` declaration.
+                let class_name =
+                    BoundIdentifier::from_binding_ident(ident).create_read_expression(ctx);
+                let expr = create_assignment(temp_binding, class_name, ctx);
+                let stmt = ctx.ast.statement_expression(SPAN, expr);
+                self.insert_after_stmts.insert(0, stmt);
+            } else {
+                // Class must be default export `export default class {}`, as all other class declarations
+                // always have a name. Set class name.
+                *ctx.symbols_mut().get_flags_mut(temp_binding.symbol_id) = SymbolFlags::Class;
+                class.id = Some(temp_binding.create_binding_identifier(ctx));
+            }
+        }
+
+        // Insert statements before/after class
+        let stmt_address = match ctx.parent() {
+            parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
+            | Ancestor::ExportNamedDeclarationDeclaration(_)) => parent.address(),
+            // `Class` is always stored in a `Box`, so has a stable memory location
+            _ => Address::from_ptr(class),
+        };
+
+        if !self.insert_before.is_empty() {
+            self.ctx.statement_injector.insert_many_before(
+                &stmt_address,
+                exprs_into_stmts(self.insert_before.drain(..), ctx),
+            );
+        }
+
+        if let Some(private_props) = &class_details.private_props {
+            if self.private_fields_as_properties {
+                self.ctx.statement_injector.insert_many_before(
+                    &stmt_address,
+                    private_props.iter().map(|(name, prop)| {
+                        // `var _prop = _classPrivateFieldLooseKey("prop");`
+                        let value = Self::create_private_prop_key_loose(name, self.ctx, ctx);
+                        create_variable_declaration(&prop.binding, value, ctx)
+                    }),
+                );
+            } else {
+                // TODO: Only call `insert_many_before` if some private *instance* props
+                let mut weakmap_symbol_id = None;
+                self.ctx.statement_injector.insert_many_before(
+                    &stmt_address,
+                    private_props.values().filter_map(|prop| {
+                        if prop.is_static {
+                            return None;
+                        }
+
+                        // `var _prop = new WeakMap();`
+                        let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
+                        Some(create_variable_declaration(&prop.binding, value, ctx))
+                    }),
+                );
+            }
+        }
+
+        if !self.insert_after_stmts.is_empty() {
+            self.ctx
+                .statement_injector
+                .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
+        }
+
+        // Exit class
+        self.classes_stack.pop();
+    }
+
+    /// Transform class expression on exit.
+    pub(super) fn transform_class_expression_on_exit(
         &mut self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ClassExpression(class) = expr else { unreachable!() };
 
-        let class_address = class.address();
-        let expr_count = self.transform_class_expression_start(class, class_address, ctx);
-        if expr_count > 0 {
-            self.transform_class_expression_finish(expr, expr_count, ctx);
-        }
-    }
-
-    fn transform_class_expression_start(
-        &mut self,
-        class: &mut Class<'a>,
-        class_address: Address,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> usize {
-        // Check this class isn't being visited twice
-        if *self.class_expression_addresses_stack.last() == class_address {
-            // This class has already been transformed, and we're now encountering it again
-            // in the sequence expression which was substituted for it. So don't transform it again!
-            // Returning 0 tells `enter_expression` not to call `transform_class_expression_finish` either.
-            self.class_expression_addresses_stack.pop();
-            return 0;
+        // Ignore TS class declarations
+        // TODO: Is this correct?
+        if class.declare {
+            return;
         }
 
-        self.transform_class(class, false, ctx);
-
-        // Return number of expressions to be inserted before/after the class
-        let mut expr_count = self.insert_before.len() + self.insert_after_exprs.len();
-        if let Some(private_props) = &self.current_class().private_props {
-            expr_count += private_props.len();
+        let class_details = self.current_class();
+        if !class_details.transform_required {
+            debug_assert!(class_details.bindings.temp.is_none());
+            self.classes_stack.pop();
+            return;
         }
 
-        if expr_count > 0 {
-            // We're going to replace class expression with a sequence expression
-            // `(..., _C = class C {}, ..., _C)`, so this class will be visited again.
-            // Store the `Address` of class in stack. This will cause bail-out when we re-visit it.
-            self.class_expression_addresses_stack.push(class_address);
-        }
+        // Transform static properties, remove static and instance properties, and move computed keys
+        // to before class
+        self.transform_class_on_exit_impl(class, ctx);
 
-        expr_count
-    }
+        // Insert expressions before / after class.
+        // `C = class { [x()] = 1; static y = 2 };`
+        // -> `C = (_x = x(), _Class = class C { constructor() { this[_x] = 1; } }, _Class.y = 2, _Class)`
 
-    /// Insert expressions before/after the class.
-    /// `C = class { [x()] = 1; static y = 2 };`
-    /// -> `C = (_x = x(), _Class = class C { constructor() { this[_x] = 1; } }, _Class.y = 2, _Class)`
-    fn transform_class_expression_finish(
-        &mut self,
-        expr: &mut Expression<'a>,
-        mut expr_count: usize,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
         // TODO: Name class if had no name, and name is statically knowable (as in example above).
         // If class name shadows var which is referenced within class, rename that var.
         // `var C = class { prop = C }; var C2 = C;`
         // -> `var _C = class C { constructor() { this.prop = _C; } }; var C2 = _C;`
-        // This is really difficult as need to rename all references too to that binding too,
+        // This is really difficult as need to rename all references to that binding too,
         // which can be very far above the class in AST, when it's a `var`.
         // Maybe for now only add class name if it doesn't shadow a var used within class?
 
@@ -95,6 +413,19 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // Or maybe should store count and increment it when create private static props?
         // They're probably pretty rare, so it'll be rarely used.
         let class_details = self.classes_stack.last();
+
+        let mut expr_count = self.insert_before.len() + self.insert_after_exprs.len();
+        if let Some(private_props) = &class_details.private_props {
+            expr_count += private_props.len();
+        }
+
+        // TODO: Refactor
+        if expr_count == 0 {
+            debug_assert!(class_details.bindings.temp.is_none());
+            self.classes_stack.pop();
+            return;
+        }
+
         expr_count += 1 + usize::from(class_details.bindings.temp.is_some());
 
         let mut exprs = ctx.ast.vec_with_capacity(expr_count);
@@ -165,108 +496,72 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             exprs.push(class_expr);
         }
 
+        debug_assert!(exprs.len() <= expr_count);
+
         *expr = ctx.ast.expression_sequence(SPAN, exprs);
+
+        // Exit class
+        self.classes_stack.pop();
     }
 
-    /// Transform class declaration.
-    pub(super) fn transform_class_declaration(
-        &mut self,
-        class: &mut Class<'a>,
-        stmt_address: Address,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        // Ignore TS class declarations
-        // TODO: Is this correct?
-        // TODO: If remove this check, remove from `transform_class_on_exit` too.
-        if class.declare {
-            return;
-        }
-
-        self.transform_class(class, true, ctx);
-
-        // TODO: Run other transforms on inserted statements. How?
-
-        let class_details = self.classes_stack.last_mut();
-        if let Some(temp_binding) = &class_details.bindings.temp {
-            // Binding for class name is required
-            if let Some(ident) = &class.id {
-                // Insert `var _Class` statement, if it wasn't already in `transform_class`
-                if !class_details.bindings.temp_var_is_created {
-                    self.ctx.var_declarations.insert_var(temp_binding, ctx);
+    // TODO: Rename this method
+    fn transform_class_on_exit_impl(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        class.body.body.retain_mut(|element| {
+            match element {
+                ClassElement::PropertyDefinition(prop) => {
+                    if prop.r#static {
+                        self.convert_static_property(prop, ctx);
+                    } else if prop.computed {
+                        self.extract_instance_prop_computed_key(prop, ctx);
+                    }
+                    return false;
                 }
-
-                // Insert `_Class = Class` after class.
-                // TODO(improve-on-babel): Could just insert `var _Class = Class;` after class,
-                // rather than separate `var _Class` declaration.
-                let class_name =
-                    BoundIdentifier::from_binding_ident(ident).create_read_expression(ctx);
-                let expr = create_assignment(temp_binding, class_name, ctx);
-                let stmt = ctx.ast.statement_expression(SPAN, expr);
-                self.insert_after_stmts.insert(0, stmt);
-            } else {
-                // Class must be default export `export default class {}`, as all other class declarations
-                // always have a name. Set class name.
-                *ctx.symbols_mut().get_flags_mut(temp_binding.symbol_id) = SymbolFlags::Class;
-                class.id = Some(temp_binding.create_binding_identifier(ctx));
+                ClassElement::StaticBlock(block) => {
+                    if self.transform_static_blocks {
+                        self.convert_static_block(block, ctx);
+                        return false;
+                    }
+                }
+                ClassElement::MethodDefinition(method) => {
+                    self.substitute_temp_var_for_method_computed_key(method, ctx);
+                }
+                ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
+                    // TODO: Need to handle these?
+                }
             }
+
+            true
+        });
+    }
+
+    // TODO: Move these 2 methods to another file?
+    // TODO: Update comment below
+
+    /// Flag that static private fields should be transpiled using temp binding,
+    /// while in this static property or static block.
+    ///
+    /// Static private fields reference class name (not temp var) in class declarations.
+    /// `class Class { static #prop; method() { return obj.#prop; } }`
+    /// -> `method() { return _assertClassBrand(Class, obj, _prop)._; }`
+    /// (note `Class` in `_assertClassBrand(Class, ...)`, not `_Class`)
+    ///
+    /// Also see comments on `ClassBindings`.
+    ///
+    /// Note: If declaration is `export default class {}` with no name, and class has static props,
+    /// then class has had name binding created already in `transform_class`.
+    /// So name binding is always `Some`.
+    pub(super) fn flag_entering_static_prop_or_block(&mut self) {
+        // No need to check if class is a declaration, because `static_private_fields_use_temp`
+        // is always `true` for expressions anyway
+        self.current_class_mut().bindings.static_private_fields_use_temp = true;
+    }
+
+    pub(super) fn flag_exiting_static_prop_or_block(&mut self) {
+        // Flag that transpiled static private props use name binding in class declarations
+        let class_details = self.current_class_mut();
+        if class_details.is_declaration {
+            class_details.bindings.static_private_fields_use_temp = false;
         }
-
-        // Insert expressions before/after class
-        if !self.insert_before.is_empty() {
-            self.ctx.statement_injector.insert_many_before(
-                &stmt_address,
-                exprs_into_stmts(self.insert_before.drain(..), ctx),
-            );
-        }
-
-        if let Some(private_props) = &class_details.private_props {
-            if self.private_fields_as_properties {
-                self.ctx.statement_injector.insert_many_before(
-                    &stmt_address,
-                    private_props.iter().map(|(name, prop)| {
-                        // `var _prop = _classPrivateFieldLooseKey("prop");`
-                        let value = Self::create_private_prop_key_loose(name, self.ctx, ctx);
-                        create_variable_declaration(&prop.binding, value, ctx)
-                    }),
-                );
-            } else {
-                // TODO: Only call `insert_many_before` if some private *instance* props
-                let mut weakmap_symbol_id = None;
-                self.ctx.statement_injector.insert_many_before(
-                    &stmt_address,
-                    private_props.values().filter_map(|prop| {
-                        if prop.is_static {
-                            return None;
-                        }
-
-                        // `var _prop = new WeakMap();`
-                        let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
-                        Some(create_variable_declaration(&prop.binding, value, ctx))
-                    }),
-                );
-            }
-        }
-
-        if !self.insert_after_stmts.is_empty() {
-            self.ctx
-                .statement_injector
-                .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
-        }
-
-        // Flag that static private fields should be transpiled using name binding,
-        // while traversing class body.
-        //
-        // Static private fields reference class name (not temp var) in class declarations.
-        // `class Class { static #prop; method() { return obj.#prop; } }`
-        // -> `method() { return _assertClassBrand(Class, obj, _prop)._; }`
-        // (note `Class` in `_assertClassBrand(Class, ...)`, not `_Class`)
-        //
-        // Also see comments on `ClassBindings`.
-        //
-        // Note: If declaration is `export default class {}` with no name, and class has static props,
-        // then class has had name binding created already in `transform_class`.
-        // So name binding is always `Some`.
-        class_details.bindings.static_private_fields_use_temp = false;
     }
 
     /// `_classPrivateFieldLooseKey("prop")`
@@ -285,224 +580,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             ))),
             ctx,
         )
-    }
-
-    /// Main guts of the transform.
-    fn transform_class(
-        &mut self,
-        class: &mut Class<'a>,
-        is_declaration: bool,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        // TODO(improve-on-babel): If outer scope is sloppy mode, all code which is moved to outside
-        // the class should be wrapped in an IIFE with `'use strict'` directive. Babel doesn't do this.
-
-        // TODO: If static blocks transform is disabled, it's possible to get incorrect execution order.
-        // ```js
-        // class C {
-        //     static x = console.log('x');
-        //     static {
-        //         console.log('block');
-        //     }
-        //     static y = console.log('y');
-        // }
-        // ```
-        // This logs "x", "block", "y". But in transformed output it'd be "block", "x", "y".
-        // Maybe force transform of static blocks if any static properties?
-        // Or alternatively could insert static property initializers into static blocks.
-
-        // Check if class has any properties and get index of constructor (if class has one)
-        let mut instance_prop_count = 0;
-        let mut has_static_prop = false;
-        let mut has_static_block = false;
-        // TODO: Store `FxIndexMap`s in a pool and re-use them
-        let mut private_props = FxIndexMap::default();
-        let mut constructor = None;
-        for element in class.body.body.iter_mut() {
-            match element {
-                ClassElement::PropertyDefinition(prop) => {
-                    // TODO: Throw error if property has decorators
-
-                    // Create binding for private property key
-                    if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
-                        // Note: Current scope is outside class.
-                        let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
-                        private_props.insert(
-                            ident.name.clone(),
-                            PrivateProp { binding, is_static: prop.r#static },
-                        );
-                    }
-
-                    if prop.r#static {
-                        has_static_prop = true;
-                    } else {
-                        instance_prop_count += 1;
-                    }
-
-                    continue;
-                }
-                ClassElement::StaticBlock(_) => {
-                    // Static block only necessitates transforming class if it's being transformed
-                    if self.transform_static_blocks {
-                        has_static_block = true;
-                        continue;
-                    }
-                }
-                ClassElement::MethodDefinition(method) => {
-                    if method.kind == MethodDefinitionKind::Constructor
-                        && method.value.body.is_some()
-                    {
-                        constructor = Some(method);
-                    }
-                }
-                ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
-                    // TODO: Need to handle these?
-                }
-            }
-        }
-
-        // Exit if nothing to transform
-        if instance_prop_count == 0 && !has_static_prop && !has_static_block {
-            self.classes_stack.push(ClassDetails::default());
-            return;
-        }
-
-        // Initialize class binding vars.
-        // Static prop in class expression or anonymous `export default class {}` always require
-        // temp var for class. Static prop in class declaration doesn't.
-        let mut class_name_binding = class.id.as_ref().map(BoundIdentifier::from_binding_ident);
-
-        let need_temp_var = has_static_prop && (!is_declaration || class.id.is_none());
-
-        let class_temp_binding = if need_temp_var {
-            let temp_binding = ClassBindings::create_temp_binding(class_name_binding.as_ref(), ctx);
-            if is_declaration {
-                // Anonymous `export default class {}`. Set class name binding to temp var.
-                // Actual class name will be set to this later.
-                class_name_binding = Some(temp_binding.clone());
-            } else {
-                // Create temp var `var _Class;` statement.
-                // TODO(improve-on-babel): Inserting the temp var `var _Class` statement here is only
-                // to match Babel's output. It'd be simpler just to insert it at the end and get rid of
-                // `temp_var_is_created` that tracks whether it's done already or not.
-                self.ctx.var_declarations.insert_var(&temp_binding, ctx);
-            }
-            Some(temp_binding)
-        } else {
-            None
-        };
-
-        let class_bindings =
-            ClassBindings::new(class_name_binding, class_temp_binding, need_temp_var);
-
-        // Add entry to `classes_stack`
-        self.classes_stack.push(ClassDetails {
-            is_declaration,
-            private_props: if private_props.is_empty() { None } else { Some(private_props) },
-            bindings: class_bindings,
-        });
-
-        // Determine where to insert instance property initializers in constructor
-        let instance_inits_insert_location = if instance_prop_count == 0 {
-            // No instance prop initializers to insert
-            None
-        } else if let Some(constructor) = constructor {
-            // Existing constructor
-            let constructor = constructor.value.as_mut();
-            if class.super_class.is_some() {
-                let (insert_scopes, insert_location) =
-                    Self::replace_super_in_constructor(constructor, ctx);
-                self.instance_inits_scope_id = insert_scopes.insert_in_scope_id;
-                self.instance_inits_constructor_scope_id = insert_scopes.constructor_scope_id;
-                Some(insert_location)
-            } else {
-                let constructor_scope_id = constructor.scope_id();
-                self.instance_inits_scope_id = constructor_scope_id;
-                // Only record `constructor_scope_id` if constructor's scope has some bindings.
-                // If it doesn't, no need to check for shadowed symbols in instance prop initializers,
-                // because no bindings to clash with.
-                self.instance_inits_constructor_scope_id =
-                    if ctx.scopes().get_bindings(constructor_scope_id).is_empty() {
-                        None
-                    } else {
-                        Some(constructor_scope_id)
-                    };
-                Some(InstanceInitsInsertLocation::ExistingConstructor(0))
-            }
-        } else {
-            // No existing constructor - create scope for one
-            let constructor_scope_id = ctx.scopes_mut().add_scope(
-                Some(class.scope_id()),
-                NodeId::DUMMY,
-                ScopeFlags::Function | ScopeFlags::Constructor | ScopeFlags::StrictMode,
-            );
-            self.instance_inits_scope_id = constructor_scope_id;
-            self.instance_inits_constructor_scope_id = None;
-            Some(InstanceInitsInsertLocation::NewConstructor)
-        };
-
-        // Extract properties and static blocks from class body + substitute computed method keys
-        let mut instance_inits = Vec::with_capacity(instance_prop_count);
-        let mut constructor_index = 0;
-        let mut index_not_including_removed = 0;
-        class.body.body.retain_mut(|element| {
-            match element {
-                ClassElement::PropertyDefinition(prop) => {
-                    if prop.r#static {
-                        self.convert_static_property(prop, ctx);
-                    } else {
-                        self.convert_instance_property(prop, &mut instance_inits, ctx);
-                    }
-                    return false;
-                }
-                ClassElement::StaticBlock(block) => {
-                    if self.transform_static_blocks {
-                        self.convert_static_block(block, ctx);
-                        return false;
-                    }
-                }
-                ClassElement::MethodDefinition(method) => {
-                    if method.kind == MethodDefinitionKind::Constructor {
-                        if method.value.body.is_some() {
-                            constructor_index = index_not_including_removed;
-                        }
-                    } else {
-                        self.substitute_temp_var_for_method_computed_key(method, ctx);
-                    }
-                }
-                ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
-                    // TODO: Need to handle these?
-                }
-            }
-
-            index_not_including_removed += 1;
-
-            true
-        });
-
-        // Insert instance initializers into constructor, or create constructor if there is none
-        if let Some(instance_inits_insert_location) = instance_inits_insert_location {
-            self.insert_instance_inits(
-                class,
-                instance_inits,
-                &instance_inits_insert_location,
-                constructor_index,
-                ctx,
-            );
-        }
-    }
-
-    /// Pop from private props stack.
-    // `#[inline]` because this is function is so small
-    #[inline]
-    pub(super) fn transform_class_on_exit(&mut self, class: &Class) {
-        // Ignore TS class declarations
-        // TODO: Is this correct?
-        if class.declare {
-            return;
-        }
-
-        self.classes_stack.pop();
     }
 
     /// Insert an expression after the class.
