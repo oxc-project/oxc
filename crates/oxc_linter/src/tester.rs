@@ -10,8 +10,9 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    fixer::FixKind, rules::RULES, AllowWarnDeny, Fixer, LintPlugins, LintService,
-    LintServiceOptions, LinterBuilder, Oxlintrc, RuleCategory, RuleEnum, RuleWithSeverity,
+    fixer::FixKind, options::LintOptions, rules::RULES, AllowWarnDeny, ConfigStoreBuilder, Fixer,
+    LintPlugins, LintService, LintServiceOptions, Linter, Oxlintrc, RuleCategory, RuleEnum,
+    RuleWithSeverity,
 };
 
 #[derive(Eq, PartialEq)]
@@ -441,15 +442,19 @@ impl Tester {
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
-        let linter = eslint_config
-            .as_ref()
-            .map_or_else(LinterBuilder::empty, |v| {
-                LinterBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
-            })
-            .with_fix(fix.into())
-            .with_plugins(self.plugins)
-            .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))
-            .build();
+        let linter = Linter::new(
+            LintOptions::default(),
+            eslint_config
+                .as_ref()
+                .map_or_else(ConfigStoreBuilder::empty, |v| {
+                    ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
+                })
+                .with_plugins(self.plugins)
+                .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))
+                .build()
+                .unwrap(),
+        )
+        .with_fix(fix.into());
 
         let path_to_lint = if self.plugins.has_import() {
             assert!(path.is_none(), "import plugin does not support path");
