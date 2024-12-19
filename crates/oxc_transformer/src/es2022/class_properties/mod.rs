@@ -113,6 +113,8 @@
 //!
 //! ### High level overview
 //!
+//! TODO: Update this description.
+//!
 //! Transform happens in 3 phases:
 //!
 //! 1. Check if class contains properties or static blocks, to determine if any transform is necessary
