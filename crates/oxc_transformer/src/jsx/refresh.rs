@@ -1,5 +1,6 @@
+use std::collections::hash_map::Entry;
+
 use base64::prelude::{Engine, BASE64_STANDARD};
-use compact_str::{CompactString, CompactStringExt};
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
@@ -111,8 +112,8 @@ pub struct ReactRefresh<'a, 'ctx> {
     /// Used to wrap call expression with signature.
     /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
     last_signature: Option<(BindingIdentifier<'a>, ArenaVec<'a, Argument<'a>>)>,
-    // (function_scope_id, (hook_name, hook_key, custom_hook_callee)
-    hook_calls: FxHashMap<ScopeId, Vec<CompactString>>,
+    // (function_scope_id, key)
+    function_signature_keys: FxHashMap<ScopeId, String>,
     non_builtin_hooks_callee: FxHashMap<ScopeId, Vec<Option<Expression<'a>>>>,
 }
 
@@ -129,7 +130,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             registrations: Vec::default(),
             ctx,
             last_signature: None,
-            hook_calls: FxHashMap::default(),
+            function_signature_keys: FxHashMap::default(),
             non_builtin_hooks_callee: FxHashMap::default(),
         }
     }
@@ -378,19 +379,31 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         } else {
             ""
         };
+
         let is_empty = args_key.is_empty();
         // `hook_name{{declarator_id(args_key)}}` or `hook_name{{declarator_id}}`
-        let key = [
-            hook_name.as_str(),
-            "{",
-            declarator_id,
-            if is_empty { "" } else { "(" },
-            args_key,
-            if is_empty { "" } else { ")" },
-            "}",
-        ]
-        .concat_compact();
-        self.hook_calls.entry(current_scope_id).or_default().push(key);
+        let push_key_to_string = |string: &mut String| {
+            string.push_str(hook_name.as_str());
+            string.push('{');
+            string.push_str(declarator_id);
+            string.push_str(if is_empty { "" } else { "(" });
+            string.push_str(args_key);
+            string.push_str(if is_empty { "" } else { ")" });
+            string.push('}');
+        };
+
+        match self.function_signature_keys.entry(current_scope_id) {
+            Entry::Occupied(mut entry) => {
+                let string = entry.get_mut();
+                string.push_str("\\n");
+                push_key_to_string(string);
+            }
+            Entry::Vacant(entry) => {
+                let mut string = String::new();
+                push_key_to_string(&mut string);
+                entry.insert(string);
+            }
+        };
     }
 }
 
@@ -515,9 +528,8 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         body: &mut FunctionBody<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<(BindingIdentifier<'a>, ArenaVec<'a, Argument<'a>>)> {
-        let fn_hook_calls = self.hook_calls.remove(&scope_id)?;
+        let mut key = self.function_signature_keys.remove(&scope_id)?;
 
-        let mut key = fn_hook_calls.join("\\n");
         if !self.emit_full_signatures {
             // Prefer to hash when we can (e.g. outside of ASTExplorer).
             // This makes it deterministically compact, even if there's
