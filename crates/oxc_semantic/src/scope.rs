@@ -340,8 +340,6 @@ impl ScopeTree {
 
     /// Rename a binding to a new name.
     ///
-    /// Preserves order of bindings.
-    ///
     /// The following must be true for successful operation:
     /// * Binding exists in specified scope for `old_name`.
     /// * Existing binding is for specified `symbol_id`.
@@ -356,14 +354,10 @@ impl ScopeTree {
         new_name: CompactStr,
     ) {
         let bindings = &mut self.bindings[scope_id];
-        // Insert on end
-        let existing_symbol_id = bindings.insert(new_name, symbol_id);
-        debug_assert!(existing_symbol_id.is_none());
-        // Remove old entry. `swap_remove` swaps the last entry into the place of removed entry.
-        // We just inserted the new entry as last, so the new entry takes the place of the old.
-        // Order of entries is same as before, only the key has changed.
         let old_symbol_id = bindings.remove(old_name);
         debug_assert_eq!(old_symbol_id, Some(symbol_id));
+        let existing_symbol_id = bindings.insert(new_name, symbol_id);
+        debug_assert!(existing_symbol_id.is_none());
     }
 
     /// Reserve memory for an `additional` number of scopes.
