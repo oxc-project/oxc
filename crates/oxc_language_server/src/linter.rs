@@ -232,10 +232,7 @@ impl IsolatedLintHandler {
             debug!("extension not supported yet.");
             return None;
         }
-        let source_text = source_text.map_or_else(
-            || fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}")),
-            |source_text| source_text,
-        );
+        let source_text = source_text.or_else(|| fs::read_to_string(path).ok())?;
         let javascript_sources = match self.loader.load_str(path, &source_text) {
             Ok(s) => s,
             Err(e) => {
