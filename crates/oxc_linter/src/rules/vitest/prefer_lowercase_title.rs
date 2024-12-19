@@ -4,7 +4,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{
-    context::LintContext, rule::Rule, utils::{parse_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode}, AstNode
+    context::LintContext,
+    rule::Rule,
+    utils::{parse_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+    AstNode,
 };
 
 fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
@@ -34,13 +37,13 @@ pub struct PreferLowercaseTitle(Box<PreferLowercaseTitleConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
-    /// 
+    ///
     /// Enforce `it`, `test`, and `describe` to have descriptions that begin with a
-    /// lowercase letter. 
+    /// lowercase letter.
     ///
     /// ### Why is this bad?
-    /// 
-    /// Capitalized `it`, `test`, and `describe` descriptions may result in less 
+    ///
+    /// Capitalized `it`, `test`, and `describe` descriptions may result in less
     /// readable test failures.
     ///
     /// ### Examples
@@ -48,14 +51,14 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// test('It works', () => {
-	///     ...
+    ///     ...
     /// })
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
     /// test('it works', () => {
-	///     ...
+    ///     ...
     /// })
     /// ```
     PreferLowercaseTitle,
@@ -91,7 +94,7 @@ impl Rule for PreferLowercaseTitle {
             allowed_prefixes,
             ignore,
             ignore_top_level_describe,
-            lowercase_first_character_only
+            lowercase_first_character_only,
         }))
     }
 
@@ -203,7 +206,7 @@ fn test() {
         // ("bench(`Foo MM mm`, function () {})", None),
     ];
 
-    let fix: Vec<(&str, &str, Option<serde_json::Value>)>  = vec![
+    let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
         // (r#"it("Foo MM mm", function () {})"#, r#"it("foo MM mm", function () {})"#, None),
         // ("test(`Foo MM mm`, function () {})", "test(`foo MM mm`, function () {})", None),
         // (
