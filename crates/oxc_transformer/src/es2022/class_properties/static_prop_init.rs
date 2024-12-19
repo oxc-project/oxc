@@ -15,7 +15,7 @@ use super::ClassProperties;
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform static property initializer.
     ///
-    /// Replace `this`, and references to class name, with temp var for class. Transform private fields.
+    /// Replace `this`, and references to class name, with temp var for class.
     /// See below for full details of transforms.
     pub(super) fn transform_static_initializer(
         &mut self,
@@ -126,30 +126,6 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
 }
 
 impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
-    // TODO: Also need to call class visitors so private props stack is in correct state.
-    // Otherwise, in this example, `#x` in `getInnerX` is resolved incorrectly
-    // and `getInnerX()` will return 1 instead of 2.
-    // We have to visit the inner class now rather than later after exiting outer class so that
-    // `#y` in `getOuterY` resolves correctly too.
-    // ```js
-    // class Outer {
-    //   #x = 1;
-    //   #y = 1;
-    //   static inner = class Inner {
-    //     #x = 2;
-    //     getInnerX() {
-    //       return this.#x; // Should equal 2
-    //     }
-    //     getOuterY() {
-    //       return this.#y; // Should equal 1
-    //     }
-    //   };
-    // }
-    // ```
-    //
-    // Need to save all per-class state (`insert_before` etc), and restore it again after.
-    // Using a stack would be overkill because nested classes in static blocks will be rare.
-
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
@@ -159,23 +135,14 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
                 self.replace_this_with_temp_var(expr, span);
                 return;
             }
-            // `delete this` / `delete object?.#prop.xyz`
+            // `delete this`
             Expression::UnaryExpression(unary_expr) => {
-                if unary_expr.operator == UnaryOperator::Delete {
-                    match &unary_expr.argument {
-                        Expression::ThisExpression(_) => {
-                            let span = unary_expr.span;
-                            self.replace_delete_this_with_true(expr, span);
-                            return;
-                        }
-                        Expression::ChainExpression(_) => {
-                            // Call directly into `transform_unary_expression_impl` rather than
-                            // main entry point `transform_unary_expression`. We already checked that
-                            // `expr` is `delete <chain expression>`, so can avoid checking that again.
-                            self.class_properties.transform_unary_expression_impl(expr, self.ctx);
-                        }
-                        _ => {}
-                    }
+                if unary_expr.operator == UnaryOperator::Delete
+                    && matches!(&unary_expr.argument, Expression::ThisExpression(_))
+                {
+                    let span = unary_expr.span;
+                    self.replace_delete_this_with_true(expr, span);
+                    return;
                 }
             }
             // `super.prop`
@@ -186,41 +153,17 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
             Expression::ComputedMemberExpression(_) => {
                 self.transform_computed_member_expression_if_super(expr);
             }
-            // `object.#prop`
-            Expression::PrivateFieldExpression(_) => {
-                self.class_properties.transform_private_field_expression(expr, self.ctx);
-            }
-            // `super.prop()` or `object.#prop()`
+            // `super.prop()`
             Expression::CallExpression(call_expr) => {
                 self.transform_call_expression_if_super_member_expression(call_expr);
-                self.class_properties.transform_call_expression(expr, self.ctx);
             }
-            // `super.prop = value`, `super.prop += value`, `super.prop ??= value` or
-            // `object.#prop = value`, `object.#prop += value`, `object.#prop ??= value` etc
+            // `super.prop = value`, `super.prop += value`, `super.prop ??= value`
             Expression::AssignmentExpression(_) => {
                 self.transform_assignment_expression_if_super_member_assignment_target(expr);
-                // Check again if it's an assignment expression, because it could have been transformed
-                // to other expression.
-                if matches!(expr, Expression::AssignmentExpression(_)) {
-                    self.class_properties.transform_assignment_expression(expr, self.ctx);
-                }
             }
-            // `object.#prop++`, `--object.#prop`
+            // `super.prop++`, `--super.prop`
             Expression::UpdateExpression(_) => {
                 self.transform_update_expression_if_super_member_assignment_target(expr);
-                // Check again if it's an update expression, because it could have been transformed
-                // to other expression.
-                if matches!(expr, Expression::UpdateExpression(_)) {
-                    self.class_properties.transform_update_expression(expr, self.ctx);
-                }
-            }
-            // `object?.#prop`
-            Expression::ChainExpression(_) => {
-                self.class_properties.transform_chain_expression(expr, self.ctx);
-            }
-            // "object.#prop`xyz`"
-            Expression::TaggedTemplateExpression(_) => {
-                self.class_properties.transform_tagged_template_expression(expr, self.ctx);
             }
             _ => {}
         }

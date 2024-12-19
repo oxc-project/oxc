@@ -277,8 +277,6 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
     // `#[inline]` because this is a hot path
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // IMPORTANT: If add any other visitors here to handle private fields,
-        // also need to add them to visitor in `static_prop.rs`.
         match expr {
             // `object.#prop`
             Expression::PrivateFieldExpression(_) => {
