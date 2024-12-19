@@ -89,9 +89,9 @@
 
 use compact_str::CompactString;
 use indexmap::IndexMap;
-use rustc_hash::{FxBuildHasher, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{Address, Box as ArenaBox, GetAddress, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
@@ -102,7 +102,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::EnvOptions;
+use crate::{context::TransformCtx, EnvOptions};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
@@ -135,9 +135,12 @@ struct SuperMethodInfo<'a> {
     is_computed: bool,
 }
 
-pub struct ArrowFunctionConverter<'a> {
+pub struct ArrowFunctionConverter<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
     mode: ArrowFunctionConverterMode,
     this_var_stack: SparseStack<BoundIdentifier<'a>>,
+    /// Stores the address of statement of containing `super()` expression
+    super_call_addresses: FxHashMap<ScopeId, Address>,
     arguments_var_stack: SparseStack<BoundIdentifier<'a>>,
     arguments_needs_transform_stack: NonEmptyStack<bool>,
     renamed_arguments_symbol_ids: FxHashSet<SymbolId>,
@@ -146,8 +149,8 @@ pub struct ArrowFunctionConverter<'a> {
     super_methods: Option<FxIndexMap<SuperMethodKey<'a>, SuperMethodInfo<'a>>>,
 }
 
-impl<'a> ArrowFunctionConverter<'a> {
-    pub fn new(env: &EnvOptions) -> Self {
+impl<'a, 'ctx> ArrowFunctionConverter<'a, 'ctx> {
+    pub fn new(env: &EnvOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         let mode = if env.es2015.arrow_function.is_some() {
             ArrowFunctionConverterMode::Enabled
         } else if env.es2017.async_to_generator || env.es2018.async_generator_functions {
@@ -157,8 +160,10 @@ impl<'a> ArrowFunctionConverter<'a> {
         };
         // `SparseStack`s are created with 1 empty entry, for `Program`
         Self {
+            ctx,
             mode,
             this_var_stack: SparseStack::new(),
+            super_call_addresses: FxHashMap::default(),
             arguments_var_stack: SparseStack::new(),
             arguments_needs_transform_stack: NonEmptyStack::new(false),
             renamed_arguments_symbol_ids: FxHashSet::default(),
@@ -167,7 +172,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     }
 }
 
-impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
+impl<'a, 'ctx> Traverse<'a> for ArrowFunctionConverter<'a, 'ctx> {
     // Note: No visitors for `TSModuleBlock` because `this` is not legal in TS module blocks.
     // <https://www.typescriptlang.org/play/?#code/HYQwtgpgzgDiDGEAEAxA9mpBvAsAKCSXjWCgBckANJAXiQAoBKWgPiTIAsBLKAbnwC++fGDQATAK4AbZACEQAJ2z5CxUhWp0mrdtz6D8QA>
 
@@ -397,7 +402,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
     }
 }
 
-impl<'a> ArrowFunctionConverter<'a> {
+impl<'a, 'ctx> ArrowFunctionConverter<'a, 'ctx> {
     /// Check if arrow function conversion is disabled
     fn is_disabled(&self) -> bool {
         self.mode == ArrowFunctionConverterMode::Disabled
@@ -436,6 +441,26 @@ impl<'a> ArrowFunctionConverter<'a> {
                 .unwrap();
             ctx.generate_uid("this", target_scope_id, SymbolFlags::FunctionScopedVariable)
         });
+
+        if !self.super_call_addresses.is_empty() {
+            let address = ctx
+                .scopes()
+                .get_parent_id(arrow_scope_id)
+                .and_then(|scope_id| self.super_call_addresses.remove(&scope_id));
+            if let Some(address) = address {
+                // Insert a dummy address to indicate that should inserting `var _this;`
+                // without `init` at the top of the statements.
+                self.super_call_addresses.insert(arrow_scope_id, Address::DUMMY);
+                let assignment = ctx.ast.expression_assignment(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    this_var.create_write_target(ctx),
+                    ctx.ast.expression_this(SPAN),
+                );
+                let statement = ctx.ast.statement_expression(SPAN, assignment);
+                self.ctx.statement_injector.insert_after(&address, statement);
+            }
+        }
         Some(ctx.ast.alloc(this_var.create_spanned_read_reference(span, ctx)))
     }
 
@@ -703,6 +728,25 @@ impl<'a> ArrowFunctionConverter<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if self.super_methods.is_none() || !call.callee.is_member_expression() {
+            // `super()`
+            // Store the address in case we need to insert `var _this;` after it.
+            if call.callee.is_super() {
+                let scope_id = ctx.current_scope_id();
+                self.super_call_addresses.entry(scope_id).or_insert_with(|| {
+                    ctx.ancestors()
+                        .find(|ancestor| {
+                            matches!(
+                                ancestor,
+                                // const A = super():
+                                Ancestor::VariableDeclarationDeclarations(_)
+                                // super();
+                                | Ancestor::ExpressionStatementExpression(_)
+                            )
+                        })
+                        .unwrap()
+                        .address()
+                });
+            }
             return None;
         }
 
@@ -1070,12 +1114,19 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         // `_this = this;`
         if let Some(this_var) = this_var {
+            let init = if self.super_call_addresses.is_empty() {
+                Some(ctx.ast.expression_this(SPAN))
+            } else {
+                // Clear the dummy address.
+                self.super_call_addresses.clear();
+                None
+            };
             Self::adjust_binding_scope(target_scope_id, &this_var, ctx);
             let variable_declarator = ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
                 this_var.create_binding_pattern(ctx),
-                Some(ctx.ast.expression_this(SPAN)),
+                init,
                 false,
             );
             declarations.push(variable_declarator);
