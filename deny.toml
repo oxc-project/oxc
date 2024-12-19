@@ -65,7 +65,6 @@ confidence-threshold = 0.8
 # Allow 1 or more licenses on a per-crate basis, so that particular licenses
 # aren't accepted for every possible crate as with the normal allow list
 exceptions = [
-
   # Each entry is the crate and version constraint, and its specific allow
   # list
   { allow = ["Zlib"], name = "foldhash", version = "*" },
