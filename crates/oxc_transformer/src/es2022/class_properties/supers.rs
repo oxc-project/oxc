@@ -4,7 +4,7 @@
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_traverse::{BoundIdentifier, TraverseCtx};
+use oxc_traverse::{ast_operations::get_var_name_from_node, TraverseCtx};
 
 use crate::Helper;
 
@@ -352,15 +352,20 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             unreachable!()
         };
 
-        let temp_binding =
-            self.ctx.var_declarations.create_uid_var_based_on_node(member.as_ref(), ctx);
+        let temp_var_name_base = get_var_name_from_node(member.as_ref());
+
         let property = ctx.ast.expression_string_literal(
             member.property.span,
             member.property.name.clone(),
             None,
         );
-        *expr =
-            self.transform_super_update_expression_impl(&temp_binding, update_expr, property, ctx);
+
+        *expr = self.transform_super_update_expression_impl(
+            &temp_var_name_base,
+            update_expr,
+            property,
+            ctx,
+        );
     }
 
     /// Transform update expression (`++` or `--`) where argument is a computed member expression
@@ -412,11 +417,17 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         else {
             unreachable!()
         };
-        let temp_binding =
-            self.ctx.var_declarations.create_uid_var_based_on_node(member.as_ref(), ctx);
+
+        let temp_var_name_base = get_var_name_from_node(member.as_ref());
+
         let property = ctx.ast.move_expression(&mut member.expression);
-        *expr =
-            self.transform_super_update_expression_impl(&temp_binding, update_expr, property, ctx);
+
+        *expr = self.transform_super_update_expression_impl(
+            &temp_var_name_base,
+            update_expr,
+            property,
+            ctx,
+        );
     }
 
     /// Transform update expression (`++` or `--`) where argument is a member expression with `super`.
@@ -454,7 +465,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// ```
     fn transform_super_update_expression_impl(
         &mut self,
-        temp_binding: &BoundIdentifier<'a>,
+        temp_var_name_base: &str,
         mut update_expr: ArenaBox<'a, UpdateExpression<'a>>,
         property: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -466,7 +477,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let get_call = self.create_super_prop_get(SPAN, property2, false, ctx);
 
         // `_super$prop = _superPropGet(_Class, prop, _Class)`
-        let assignment = create_assignment(temp_binding, get_call, ctx);
+        let temp_binding = self.ctx.var_declarations.create_uid_var(temp_var_name_base, ctx);
+        let assignment = create_assignment(&temp_binding, get_call, ctx);
 
         // `++_super$prop` / `_super$prop++` (reusing existing `UpdateExpression`)
         let span = update_expr.span;
@@ -486,7 +498,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         } else {
             // Source = `super.prop++` (postfix `++`)
             // `_super$prop2 = _super$prop++`
-            let temp_binding2 = self.ctx.var_declarations.create_uid_var(&temp_binding.name, ctx);
+            let temp_binding2 = self.ctx.var_declarations.create_uid_var(temp_var_name_base, ctx);
             let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
 
             // `(_super$prop = _superPropGet(_Class, prop, _Class), _super$prop2 = _super$prop++, _super$prop)`
