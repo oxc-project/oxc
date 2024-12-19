@@ -63,9 +63,7 @@ declare_oxc_lint!(
     /// ```
     PreferLowercaseTitle,
     style,
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    fix
 );
 
 impl Rule for PreferLowercaseTitle {
@@ -98,50 +96,58 @@ impl Rule for PreferLowercaseTitle {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-        let Some(vitest_fn_call) =
-            parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
-        else {
-            return;
-        };
+    fn run_on_jest_node<'a, 'c>(
+        &self,
+        possible_vitest_nodegi: &PossibleJestNode<'a, 'c>,
+        ctx: &'c LintContext<'a>,
+    ) {
+        let node = possible_vitest_node.node;
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
+    let Some(vitest_fn_call) =
+        parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
+    else {
+        return;
+    };
 
-        let scopes = ctx.scopes();
+    let scopes = ctx.scopes();
 
-        // TODO: populate ignores
-        // let ignores = Self::populate_ignores(&self.ignore);
+    // TODO: populate ignores
+    // let ignores = Self::populate_ignores(&self.ignore);
 
-        // if ignores.contains(&vitest_fn_call.name.as_ref()) {
-        //     return;
-        // }
+    // if ignores.contains(&vitest_fn_call.name.as_ref()) {
+    //     return;
+    // }
 
-        if matches!(vitest_fn_call.kind(), JestFnKind::General(JestGeneralFnKind::Describe)) {
-            if self.ignore_top_level_describe && scopes.get_flags(node.scope_id()).is_top() {
-                return;
-            }
-        } else if !matches!(vitest_fn_call.kind(), JestFnKind::General(JestGeneralFnKind::Test)) {
+    if matches!(vitest_fn_call.kind(), JestFnKind::General(JestGeneralFnKind::Describe)) {
+        if self.ignore_top_level_describe && scopes.get_flags(node.scope_id()).is_top() {
             return;
         }
-
-        let Some(arg) = call_expr.arguments.first() else {
-            return;
-        };
-
-        if let Argument::StringLiteral(string_expr) = arg {
-            self.lint_string(ctx, string_expr.value.as_str(), string_expr.span);
-        } else if let Argument::TemplateLiteral(template_expr) = arg {
-            let Some(template_string) = template_expr.quasi() else {
-                return;
-            };
-            self.lint_string(ctx, template_string.as_str(), template_expr.span);
-        }
+    } else if !matches!(vitest_fn_call.kind(), JestFnKind::General(JestGeneralFnKind::Test)) {
+        return;
     }
+
+    let Some(arg) = call_expr.arguments.first() else {
+        return;
+    };
+
+    if let Argument::StringLiteral(string_expr) = arg {
+        self.lint_string(ctx, string_expr.value.as_str(), string_expr.span);
+    } else if let Argument::TemplateLiteral(template_expr) = arg {
+        let Some(template_string) = template_expr.quasi() else {
+            return;
+        };
+        self.lint_string(ctx, template_string.as_str(), template_expr.span);
+    }
+    }
+    
 }
 
 impl PreferLowercaseTitle {
     fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
+        println!("literal: {literal}");
+
         if literal.is_empty()
             || self.allowed_prefixes.iter().any(|name| literal.starts_with(name.as_str()))
         {
@@ -161,9 +167,12 @@ impl PreferLowercaseTitle {
 
         if !self.lowercase_first_character_only {
             for n in 1..literal.chars().count() {
+                println!("n: {n}");
                 let Some(next_char) = literal.chars().nth(n) else {
                     return;
                 };
+
+                println!("next_char: {next_char}");
 
                 let next_lower = next_char.to_ascii_lowercase();
 
@@ -186,16 +195,16 @@ fn test() {
     use crate::tester::Tester;
 
     let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
-        // ("it.each()", None),
-        // ("it.each()(1)", None),
-        // ("it.todo();", None),
-        // (r#"describe("oo", function () {})"#, None),
-        // (r#"test("foo", function () {})"#, None),
-        // ("test(`123`, function () {})", None),
+        ("it.each()", None),
+        ("it.each()(1)", None),
+        ("it.todo();", None),
+        (r#"describe("oo", function () {})"#, None),
+        (r#"test("foo", function () {})"#, None),
+        ("test(`123`, function () {})", None),
     ];
 
     let fail: Vec<(&str, Option<serde_json::Value>)> = vec![
-        (r#"it("Foo MM mm", function () {})"#, None),
+        // (r#"it("Foo MM mm", function () {})"#, None),
         // ("test(`Foo MM mm`, function () {})", None),
         // (
         //     "test(`SFC Compile`, function () {})",
@@ -207,18 +216,18 @@ fn test() {
     ];
 
     let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
-        // (r#"it("Foo MM mm", function () {})"#, r#"it("foo MM mm", function () {})"#, None),
-        // ("test(`Foo MM mm`, function () {})", "test(`foo MM mm`, function () {})", None),
-        // (
-        //     "test(`SFC Compile`, function () {})",
-        //     "test(`sfc compile`, function () {})",
-        //     Some(
-        //         serde_json::json!([        {          "lowercaseFirstCharacterOnly": false        }      ]),
-        //     ),
-        // ),
-        // ("bench(`Foo MM mm`, function () {})", "bench(`foo MM mm`, function () {})", None),
+        (r#"it("Foo MM mm", function () {})"#, r#"it("foo MM mm", function () {})"#, None),
+        ("test(`Foo MM mm`, function () {})", "test(`foo MM mm`, function () {})", None),
+        (
+            "test(`SFC Compile`, function () {})",
+            "test(`sfc compile`, function () {})",
+            Some(
+                serde_json::json!([        {          "lowercaseFirstCharacterOnly": false        }      ]),
+            ),
+        ),
+        ("bench(`Foo MM mm`, function () {})", "bench(`foo MM mm`, function () {})", None),
     ];
     Tester::new(PreferLowercaseTitle::NAME, PreferLowercaseTitle::CATEGORY, pass, fail)
-        // .expect_fix(fix)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
