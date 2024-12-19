@@ -1,7 +1,6 @@
 use std::mem;
 
-use indexmap::IndexMap;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::FxHashMap;
 
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
@@ -12,9 +11,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 
-type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
-
-pub(crate) type Bindings = FxIndexMap<CompactStr, SymbolId>;
+pub(crate) type Bindings = FxHashMap<CompactStr, SymbolId>;
 pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
 
 /// Scope Tree
@@ -203,7 +200,7 @@ impl ScopeTree {
 
     /// Check if a symbol is declared in a certain scope.
     pub fn has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
-        self.bindings[scope_id].get(name).is_some()
+        self.bindings[scope_id].contains_key(name)
     }
 
     /// Get the symbol bound to an identifier name in a scope.
@@ -330,13 +327,13 @@ impl ScopeTree {
 
     /// Remove an existing binding from a scope.
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
-        self.bindings[scope_id].shift_remove(name);
+        self.bindings[scope_id].remove(name);
     }
 
     /// Move a binding from one scope to another.
     pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: &str) {
         let from_map = &mut self.bindings[from];
-        if let Some((name, symbol_id)) = from_map.swap_remove_entry(name) {
+        if let Some((name, symbol_id)) = from_map.remove_entry(name) {
             self.bindings[to].insert(name, symbol_id);
         }
     }
@@ -365,7 +362,7 @@ impl ScopeTree {
         // Remove old entry. `swap_remove` swaps the last entry into the place of removed entry.
         // We just inserted the new entry as last, so the new entry takes the place of the old.
         // Order of entries is same as before, only the key has changed.
-        let old_symbol_id = bindings.swap_remove(old_name);
+        let old_symbol_id = bindings.remove(old_name);
         debug_assert_eq!(old_symbol_id, Some(symbol_id));
     }
 

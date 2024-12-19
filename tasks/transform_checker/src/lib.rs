@@ -346,10 +346,12 @@ impl PostTransformChecker<'_, '_> {
             if binding_names.is_mismatch() {
                 self.errors.push_mismatch("Bindings mismatch", scope_ids, binding_names);
             } else {
-                let symbol_ids = self.get_pair(scope_ids, |scoping, scope_id| {
+                let mut symbol_ids = self.get_pair(scope_ids, |scoping, scope_id| {
                     scoping.scopes.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
                 });
                 if self.remap_symbol_ids_sets(&symbol_ids).is_mismatch() {
+                    symbol_ids.after_transform.sort_unstable();
+                    symbol_ids.rebuilt.sort_unstable();
                     self.errors.push_mismatch("Binding symbols mismatch", scope_ids, symbol_ids);
                 }
             }

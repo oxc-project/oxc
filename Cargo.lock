@@ -1914,7 +1914,6 @@ name = "oxc_semantic"
 version = "0.42.0"
 dependencies = [
  "assert-unchecked",
- "indexmap",
  "insta",
  "itertools",
  "oxc_allocator",
