@@ -1,12 +1,11 @@
-
 use std::{path::PathBuf, str::FromStr};
 
 use tower_lsp::lsp_types::{
     self, CodeDescription, DiagnosticRelatedInformation, NumberOrString, Position, Range, Url,
 };
 
-use oxc_diagnostics::{Error, Severity};
 use cow_utils::CowUtils;
+use oxc_diagnostics::{Error, Severity};
 
 use crate::linter::offset_to_position;
 
@@ -27,7 +26,6 @@ pub struct LabeledSpanWithPosition {
     pub end_pos: Position,
     pub message: Option<String>,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct DiagnosticReport {

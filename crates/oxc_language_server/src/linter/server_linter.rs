@@ -4,8 +4,8 @@ use tower_lsp::lsp_types::Url;
 
 use oxc_linter::{FixKind, Linter};
 
-use crate::linter::isolated_lint_handler::IsolatedLintHandler;
 use crate::linter::error_with_position::DiagnosticReport;
+use crate::linter::isolated_lint_handler::IsolatedLintHandler;
 
 pub struct ServerLinter {
     linter: Arc<Linter>,
