@@ -93,7 +93,6 @@ impl IsolatedLintHandler {
             return None;
         }
         let source_text = source_text.or_else(|| fs::read_to_string(path).ok())?;
-
         let javascript_sources = match self.loader.load_str(path, &source_text) {
             Ok(s) => s,
             Err(e) => {
