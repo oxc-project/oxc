@@ -1,6 +1,6 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 use crate::{
     context::LintContext,
@@ -17,36 +17,87 @@ fn prefer_lowercase_title_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct PreferLowercaseTitle;
+pub struct PreferLowercaseTitleConfig {
+    allowed_prefixes: Vec<CompactStr>,
+    ignore: Vec<CompactStr>,
+    ignore_top_level_describe: bool,
+    lowercase_first_character_only: bool,
+}
+
+impl std::ops::Deref for PreferLowercaseTitle {
+    type Target = PreferLowercaseTitleConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct PreferLowercaseTitle(Box<PreferLowercaseTitleConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
-    ///
+    /// 
+    /// Enforce `it`, `test`, and `describe` to have descriptions that begin with a
+    /// lowercase letter. 
     ///
     /// ### Why is this bad?
-    ///
+    /// 
+    /// Capitalized `it`, `test`, and `describe` descriptions may result in less 
+    /// readable test failures.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// test('It works', () => {
+	///     ...
+    /// })
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// test('it works', () => {
+	///     ...
+    /// })
     /// ```
     PreferLowercaseTitle,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
+    style,
     pending  // TODO: describe fix capabilities. Remove if no fix can be done,
              // keep at 'pending' if you think one could be added but don't know how.
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
 );
 
 impl Rule for PreferLowercaseTitle {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let obj = value.get(0);
+        let ignore_top_level_describe = obj
+            .and_then(|config| config.get("ignoreTopLevelDescribe"))
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false);
+        let lowercase_first_character_only = obj
+            .and_then(|config| config.get("lowercaseFirstCharacterOnly"))
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false);
+        let ignore = obj
+            .and_then(|config| config.get("ignore"))
+            .and_then(serde_json::Value::as_array)
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
+            .unwrap_or_default();
+        let allowed_prefixes = obj
+            .and_then(|config| config.get("allowedPrefixes"))
+            .and_then(serde_json::Value::as_array)
+            .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
+            .unwrap_or_default();
+
+        Self(Box::new(PreferLowercaseTitleConfig {
+            allowed_prefixes,
+            ignore,
+            ignore_top_level_describe,
+            lowercase_first_character_only
+        }))
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
 }
 
