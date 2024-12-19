@@ -1929,10 +1929,8 @@ dependencies = [
  "oxc_syntax",
  "phf",
  "rustc-hash",
- "serde",
+ "self_cell",
  "serde_json",
- "tsify",
- "wasm-bindgen",
 ]
 
 [[package]]

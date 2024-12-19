@@ -1,8 +1,3 @@
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
-
 use oxc_syntax::{node::NodeId, reference::ReferenceFlags, symbol::SymbolId};
 
 /// Describes where and how a Symbol is used in the AST.
@@ -26,8 +21,6 @@ use oxc_syntax::{node::NodeId, reference::ReferenceFlags, symbol::SymbolId};
 ///
 /// [`IdentifierReference`]: oxc_ast::ast::IdentifierReference
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct Reference {
     /// The AST node making the reference.
     node_id: NodeId,
