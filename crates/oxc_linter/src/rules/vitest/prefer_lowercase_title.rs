@@ -98,7 +98,7 @@ impl Rule for PreferLowercaseTitle {
 
     fn run_on_jest_node<'a, 'c>(
         &self,
-        possible_vitest_nodegi: &PossibleJestNode<'a, 'c>,
+        possible_vitest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
         let node = possible_vitest_node.node;
