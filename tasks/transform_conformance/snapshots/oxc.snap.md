@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 114/130
+Passed: 116/132
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -34,7 +34,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-async-to-generator (14/15)
+# babel-plugin-transform-async-to-generator (16/17)
 * super/nested/input.js
 x Output mismatch
 
