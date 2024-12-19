@@ -1,9 +1,9 @@
 use std::mem;
 
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, FromIn, Vec as ArenaVec};
 use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_index::{Idx, IndexVec};
-use oxc_span::{CompactStr, Span};
+use oxc_span::{Atom, Span};
 use oxc_syntax::{
     node::NodeId,
     reference::ReferenceId,
@@ -22,7 +22,6 @@ use crate::reference::Reference;
 /// That ID indexes into `redeclarations` where the actual `Vec<Span>` is stored.
 pub struct SymbolTable {
     pub(crate) spans: IndexVec<SymbolId, Span>,
-    pub(crate) names: IndexVec<SymbolId, CompactStr>,
     pub(crate) flags: IndexVec<SymbolId, SymbolFlags>,
     pub(crate) scope_ids: IndexVec<SymbolId, ScopeId>,
     /// Pointer to the AST Node where this symbol is declared
@@ -39,13 +38,13 @@ impl Default for SymbolTable {
         let allocator = Allocator::default();
         Self {
             spans: IndexVec::new(),
-            names: IndexVec::new(),
             flags: IndexVec::new(),
             scope_ids: IndexVec::new(),
             declarations: IndexVec::new(),
             redeclarations: IndexVec::new(),
             references: IndexVec::new(),
             inner: SymbolTableCell::new(allocator, |allocator| SymbolTableInner {
+                names: ArenaVec::new_in(allocator),
                 resolved_references: ArenaVec::new_in(allocator),
                 redeclaration_spans: ArenaVec::new_in(allocator),
             }),
@@ -61,9 +60,10 @@ self_cell::self_cell!(
     }
 );
 
-struct SymbolTableInner<'a> {
-    resolved_references: ArenaVec<'a, ArenaVec<'a, ReferenceId>>,
-    redeclaration_spans: ArenaVec<'a, ArenaVec<'a, Span>>,
+struct SymbolTableInner<'cell> {
+    names: ArenaVec<'cell, Atom<'cell>>,
+    resolved_references: ArenaVec<'cell, ArenaVec<'cell, ReferenceId>>,
+    redeclaration_spans: ArenaVec<'cell, ArenaVec<'cell, Span>>,
 }
 
 impl SymbolTable {
@@ -79,8 +79,8 @@ impl SymbolTable {
         self.spans.is_empty()
     }
 
-    pub fn names(&self) -> impl Iterator<Item = &CompactStr> + '_ {
-        self.names.iter()
+    pub fn names(&self) -> impl Iterator<Item = &str> + '_ {
+        self.inner.borrow_dependent().names.iter().map(|name| name.as_str())
     }
 
     pub fn resolved_references(&self) -> impl Iterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
@@ -124,15 +124,19 @@ impl SymbolTable {
     /// Get the identifier name a symbol is bound to.
     #[inline]
     pub fn get_name(&self, symbol_id: SymbolId) -> &str {
-        &self.names[symbol_id]
+        &self.inner.borrow_dependent().names[symbol_id.index()]
     }
 
     /// Rename a symbol.
     ///
     /// Returns the old name.
     #[inline]
-    pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactStr) -> CompactStr {
-        mem::replace(&mut self.names[symbol_id], name)
+    pub fn set_name(&mut self, symbol_id: SymbolId, name: &str) -> &str {
+        self.inner
+            .with_dependent_mut(|allocator, inner| {
+                mem::replace(&mut inner.names[symbol_id.index()], Atom::from_in(name, allocator))
+            })
+            .as_str()
     }
 
     /// Get the [`SymbolFlags`] for a symbol, which describe how the symbol is declared.
@@ -192,17 +196,17 @@ impl SymbolTable {
     pub fn create_symbol(
         &mut self,
         span: Span,
-        name: CompactStr,
+        name: &str,
         flags: SymbolFlags,
         scope_id: ScopeId,
         node_id: NodeId,
     ) -> SymbolId {
         self.spans.push(span);
-        self.names.push(name);
         self.flags.push(flags);
         self.scope_ids.push(scope_id);
         self.declarations.push(node_id);
         self.inner.with_dependent_mut(|allocator, inner| {
+            inner.names.push(Atom::from_in(name, allocator));
             inner.resolved_references.push(ArenaVec::new_in(allocator));
         });
         self.redeclarations.push(None)
@@ -303,11 +307,11 @@ impl SymbolTable {
 
     pub fn reserve(&mut self, additional_symbols: usize, additional_references: usize) {
         self.spans.reserve(additional_symbols);
-        self.names.reserve(additional_symbols);
         self.flags.reserve(additional_symbols);
         self.scope_ids.reserve(additional_symbols);
         self.declarations.reserve(additional_symbols);
         self.inner.with_dependent_mut(|_allocator, inner| {
+            inner.names.reserve(additional_symbols);
             inner.resolved_references.reserve(additional_symbols);
         });
         self.references.reserve(additional_references);

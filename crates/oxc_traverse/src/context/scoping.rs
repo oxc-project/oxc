@@ -176,7 +176,7 @@ impl TraverseScoping {
         flags: SymbolFlags,
     ) -> SymbolId {
         let symbol_id =
-            self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id, NodeId::DUMMY);
+            self.symbols.create_symbol(SPAN, name.as_str(), flags, scope_id, NodeId::DUMMY);
         self.scopes.add_binding(scope_id, name, symbol_id);
 
         symbol_id
@@ -374,7 +374,7 @@ impl TraverseScoping {
     /// Panics in debug mode if either of the above are not satisfied.
     pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
         // Rename symbol
-        let old_name = self.symbols.set_name(symbol_id, new_name.clone());
+        let old_name = self.symbols.set_name(symbol_id, new_name.as_str());
         // Rename binding
         self.scopes.rename_binding(scope_id, symbol_id, &old_name, new_name);
     }
@@ -422,14 +422,18 @@ impl TraverseScoping {
         self.scopes
             .root_unresolved_references()
             .keys()
+            .map(CompactStr::as_str)
             .chain(self.symbols.names())
-            .filter_map(|name| {
-                if name.as_bytes().first() == Some(&b'_') {
-                    Some(name.clone())
-                } else {
-                    None
-                }
-            })
+            .filter_map(
+                |name| {
+                    if name.as_bytes().first() == Some(&b'_') {
+                        Some(name)
+                    } else {
+                        None
+                    }
+                },
+            )
+            .map(CompactStr::from)
             .collect()
     }
 }
