@@ -17,9 +17,10 @@ use oxc::{
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
         dot::{DebugDot, DebugDotContext},
-        ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable,
+        ReferenceId, ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolFlags, SymbolTable,
     },
-    span::SourceType,
+    span::{SourceType, Span},
+    syntax::reference::Reference,
     transformer::{TransformOptions, Transformer},
 };
 use oxc_index::Idx;
@@ -51,7 +52,7 @@ pub struct Oxc {
     pub control_flow_graph: String,
 
     #[wasm_bindgen(readonly, skip_typescript)]
-    #[tsify(type = "SymbolTable")]
+    #[tsify(type = "any")]
     pub symbols: JsValue,
 
     #[wasm_bindgen(readonly, skip_typescript, js_name = "scopeText")]
@@ -239,7 +240,7 @@ impl Oxc {
                 self.scope_text = Self::get_scope_text(&program, &symbols, &scopes);
             }
             if run_options.symbol.unwrap_or_default() {
-                self.symbols = symbols.serialize(&self.serializer)?;
+                self.symbols = self.get_symbols_text(&symbols)?;
             }
         }
 
@@ -403,6 +404,39 @@ impl Oxc {
         let mut writer = ScopesTextWriter::new(symbols, scopes);
         writer.visit_program(program);
         writer.scope_text
+    }
+
+    fn get_symbols_text(
+        &self,
+        symbols: &SymbolTable,
+    ) -> Result<JsValue, serde_wasm_bindgen::Error> {
+        #[derive(Serialize)]
+        struct Data {
+            span: Span,
+            name: String,
+            flags: SymbolFlags,
+            scope_id: ScopeId,
+            resolved_references: Vec<ReferenceId>,
+            references: Vec<Reference>,
+        }
+
+        let data = symbols
+            .symbol_ids()
+            .map(|symbol_id| Data {
+                span: symbols.get_span(symbol_id),
+                name: symbols.get_name(symbol_id).into(),
+                flags: symbols.get_flags(symbol_id),
+                scope_id: symbols.get_scope_id(symbol_id),
+                resolved_references: symbols.get_resolved_reference_ids(symbol_id).clone(),
+                references: symbols
+                    .get_resolved_reference_ids(symbol_id)
+                    .iter()
+                    .map(|reference_id| symbols.get_reference(*reference_id).clone())
+                    .collect::<Vec<_>>(),
+            })
+            .collect::<Vec<_>>();
+
+        data.serialize(&self.serializer)
     }
 
     fn save_diagnostics(&self, diagnostics: Vec<oxc::diagnostics::OxcDiagnostic>) {

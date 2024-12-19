@@ -1,28 +1,14 @@
 use std::mem;
 
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
-
 use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
 use oxc_syntax::{
     node::NodeId,
-    reference::ReferenceId,
+    reference::{Reference, ReferenceId},
     scope::ScopeId,
     symbol::{RedeclarationId, SymbolFlags, SymbolId},
 };
-
-use crate::reference::Reference;
-
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type IndexVec<I, T> = Array<T>;
-export type CompactStr = string;
-"#;
 
 /// Symbol Table
 ///
@@ -32,7 +18,6 @@ export type CompactStr = string;
 /// `redeclare_variables` (32 bytes per symbol), store `Option<RedeclarationId>` (4 bytes).
 /// That ID indexes into `redeclarations` where the actual `Vec<Span>` is stored.
 #[derive(Debug, Default)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(rename_all = "camelCase"))]
 pub struct SymbolTable {
     pub(crate) spans: IndexVec<SymbolId, Span>,
     pub(crate) names: IndexVec<SymbolId, CompactStr>,

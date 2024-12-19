@@ -1929,10 +1929,7 @@ dependencies = [
  "oxc_syntax",
  "phf",
  "rustc-hash",
- "serde",
  "serde_json",
- "tsify",
- "wasm-bindgen",
 ]
 
 [[package]]

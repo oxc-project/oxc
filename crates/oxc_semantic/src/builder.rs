@@ -17,7 +17,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
-    reference::{ReferenceFlags, ReferenceId},
+    reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -30,7 +30,6 @@ use crate::{
     jsdoc::JSDocBuilder,
     label::UnusedLabels,
     node::AstNodes,
-    reference::Reference,
     scope::{Bindings, ScopeTree},
     stats::Stats,
     symbol::SymbolTable,

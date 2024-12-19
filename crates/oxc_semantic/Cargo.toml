@@ -35,10 +35,6 @@ itertools = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 
-serde = { workspace = true, features = ["derive"], optional = true }
-tsify = { workspace = true, optional = true }
-wasm-bindgen = { workspace = true, optional = true }
-
 [dev-dependencies]
 oxc_parser = { workspace = true }
 
@@ -50,4 +46,4 @@ serde_json = { workspace = true }
 
 [features]
 default = []
-serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_span/serialize", "oxc_syntax/serialize"]
+serialize = ["oxc_span/serialize", "oxc_syntax/serialize"]
