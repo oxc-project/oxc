@@ -234,13 +234,11 @@ impl Oxc {
 
         let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
 
-        if !source_type.is_typescript_definition() {
-            if run_options.scope.unwrap_or_default() {
-                self.scope_text = Self::get_scope_text(&program, &symbols, &scopes);
-            }
-            if run_options.symbol.unwrap_or_default() {
-                self.symbols = symbols.serialize(&self.serializer)?;
-            }
+        if !source_type.is_typescript_definition() && run_options.scope.unwrap_or_default() {
+            self.scope_text = Self::get_scope_text(&program, &symbols, &scopes);
+            // if run_options.symbol.unwrap_or_default() {
+            // self.symbols = symbols.serialize(&self.serializer)?;
+            // }
         }
 
         if run_options.transform.unwrap_or_default() {

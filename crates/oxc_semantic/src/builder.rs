@@ -524,7 +524,7 @@ impl<'a> SemanticBuilder<'a> {
                         *flags = ReferenceFlags::Type;
                     }
                     reference.set_symbol_id(symbol_id);
-                    self.symbols.resolved_references[symbol_id].push(reference_id);
+                    self.symbols.add_resolved_reference(symbol_id, reference_id);
 
                     false
                 });
