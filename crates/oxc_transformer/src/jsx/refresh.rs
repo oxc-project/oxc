@@ -372,38 +372,42 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         };
 
         let args = &call_expr.arguments;
-        let args_key = if hook_name == "useState" && args.len() > 0 {
-            args[0].span().source_text(self.ctx.source_text)
+        let (args_key, mut key_len) = if hook_name == "useState" && !args.is_empty() {
+            let args_key = args[0].span().source_text(self.ctx.source_text);
+            (args_key, args_key.len() + 4)
         } else if hook_name == "useReducer" && args.len() > 1 {
-            args[1].span().source_text(self.ctx.source_text)
+            let args_key = args[1].span().source_text(self.ctx.source_text);
+            (args_key, args_key.len() + 4)
         } else {
-            ""
+            ("", 2)
         };
 
-        let is_empty = args_key.is_empty();
-        // `hook_name{{declarator_id(args_key)}}` or `hook_name{{declarator_id}}`
-        let push_key_to_string = |string: &mut String| {
-            string.push_str(hook_name.as_str());
-            string.push('{');
-            string.push_str(declarator_id);
-            string.push_str(if is_empty { "" } else { "(" });
-            string.push_str(args_key);
-            string.push_str(if is_empty { "" } else { ")" });
-            string.push('}');
-        };
+        key_len += hook_name.len() + declarator_id.len();
 
-        match self.function_signature_keys.entry(current_scope_id) {
-            Entry::Occupied(mut entry) => {
-                let string = entry.get_mut();
+        let string = match self.function_signature_keys.entry(current_scope_id) {
+            Entry::Occupied(entry) => {
+                let string = entry.into_mut();
+                string.reserve(key_len + 2);
                 string.push_str("\\n");
-                push_key_to_string(string);
+                string
             }
-            Entry::Vacant(entry) => {
-                let mut string = String::new();
-                push_key_to_string(&mut string);
-                entry.insert(string);
-            }
+            Entry::Vacant(entry) => entry.insert(String::with_capacity(key_len)),
         };
+
+        // `hook_name{{declarator_id(args_key)}}` or `hook_name{{declarator_id}}`
+        let old_len = string.len();
+
+        string.push_str(&hook_name);
+        string.push('{');
+        string.push_str(declarator_id);
+        if !args_key.is_empty() {
+            string.push('(');
+            string.push_str(args_key);
+            string.push(')');
+        }
+        string.push('}');
+
+        debug_assert_eq!(key_len, string.len() - old_len);
     }
 }
 
