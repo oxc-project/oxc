@@ -484,15 +484,20 @@ impl<'a> SemanticBuilder<'a> {
     /// This gets called every time [`SemanticBuilder`] exits a scope.
     fn resolve_references_for_current_scope(&mut self) {
         let (current_refs, parent_refs) = self.unresolved_references.current_and_parent_mut();
+        let bindings = self.scope.get_bindings(self.current_scope_id);
 
         for (name, mut references) in current_refs.drain() {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
-            let bindings = self.scope.get_bindings(self.current_scope_id);
             if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
                 let symbol_flags = self.symbols.get_flags(symbol_id);
+                let references_len = references.len();
+
                 references.retain(|&reference_id| {
                     let reference = &mut self.symbols.references[reference_id];
+                    if references_len > 64 {
+                        self.symbols.resolved_references.reserve(references_len);
+                    }
 
                     let flags = reference.flags_mut();
 
