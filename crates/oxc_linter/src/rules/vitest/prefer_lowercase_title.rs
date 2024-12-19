@@ -5,7 +5,7 @@ use oxc_span::{CompactStr, Span};
 use serde_json::Value;
 
 use crate::{
-    context::LintContext, fixer::{RuleFix, RuleFixer}, rule::Rule, utils::{parse_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode}, AstNode
+    context::LintContext, rule::Rule, utils::{parse_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode}, AstNode
 };
 
 fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
