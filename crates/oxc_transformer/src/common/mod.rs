@@ -25,7 +25,7 @@ pub struct Common<'a, 'ctx> {
     var_declarations: VarDeclarations<'a, 'ctx>,
     statement_injector: StatementInjector<'a, 'ctx>,
     top_level_statements: TopLevelStatements<'a, 'ctx>,
-    arrow_function_converter: ArrowFunctionConverter<'a>,
+    arrow_function_converter: ArrowFunctionConverter<'a, 'ctx>,
 }
 
 impl<'a, 'ctx> Common<'a, 'ctx> {
@@ -35,7 +35,7 @@ impl<'a, 'ctx> Common<'a, 'ctx> {
             var_declarations: VarDeclarations::new(ctx),
             statement_injector: StatementInjector::new(ctx),
             top_level_statements: TopLevelStatements::new(ctx),
-            arrow_function_converter: ArrowFunctionConverter::new(options),
+            arrow_function_converter: ArrowFunctionConverter::new(options, ctx),
         }
     }
 }
