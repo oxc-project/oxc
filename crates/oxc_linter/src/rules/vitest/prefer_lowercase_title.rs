@@ -23,7 +23,7 @@ pub struct PreferLowercaseTitleConfig {
     lowercase_first_character_only: bool,
 }
 
-impl std::ops::Deref for PreferLowercaseTitle2 {
+impl std::ops::Deref for PreferLowercaseTitle {
     type Target = PreferLowercaseTitleConfig;
 
     fn deref(&self) -> &Self::Target {
@@ -32,7 +32,7 @@ impl std::ops::Deref for PreferLowercaseTitle2 {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct PreferLowercaseTitle2(Box<PreferLowercaseTitleConfig>);
+pub struct PreferLowercaseTitle(Box<PreferLowercaseTitleConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -60,12 +60,12 @@ declare_oxc_lint!(
     ///     ...
     /// })
     /// ```
-    PreferLowercaseTitle2,
+    PreferLowercaseTitle,
     style,
     pending
 );
 
-impl Rule for PreferLowercaseTitle2 {
+impl Rule for PreferLowercaseTitle {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
         let ignore_top_level_describe = obj
@@ -145,7 +145,7 @@ impl Rule for PreferLowercaseTitle2 {
     }
 }
 
-impl PreferLowercaseTitle2 {
+impl PreferLowercaseTitle {
     fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
         println!("literal: {literal}");
 
@@ -159,7 +159,7 @@ impl PreferLowercaseTitle2 {
             return;
         };
 
-        let mut lower = first_char.to_ascii_lowercase();
+        let lower = first_char.to_ascii_lowercase();
         if first_char == lower {
             return;
         }
@@ -226,8 +226,9 @@ fn test() {
     //     ),
     //     ("bench(`Foo MM mm`, function () {})", "bench(`foo MM mm`, function () {})", None),
     // ];
-    Tester::new(PreferLowercaseTitle2::NAME, PreferLowercaseTitle2::CATEGORY, pass, fail)
+    Tester::new(PreferLowercaseTitle::NAME, PreferLowercaseTitle::CATEGORY, pass, fail)
         // .expect_fix(fix)
         .with_vitest_plugin(true)
+        .with_snapshot_suffix("vitest")
         .test_and_snapshot();
 }
