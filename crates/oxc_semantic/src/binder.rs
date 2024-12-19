@@ -68,10 +68,9 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     builder.add_redeclare_variable(symbol_id, span);
                     declared_symbol_id = Some(symbol_id);
 
-                    let name = name.to_compact_str();
                     // remove current scope binding and add to target scope
                     // avoid same symbols appear in multi-scopes
-                    builder.scope.remove_binding(scope_id, &name);
+                    builder.scope.remove_binding(scope_id, name);
                     builder.scope.add_binding(target_scope_id, name, symbol_id);
                     builder.symbols.scope_ids[symbol_id] = target_scope_id;
                     break;

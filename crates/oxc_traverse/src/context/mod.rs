@@ -358,7 +358,7 @@ impl<'a> TraverseCtx<'a> {
         // Get name for UID
         let name = self.generate_uid_name(name);
         let name_atom = self.ast.atom(&name);
-        let symbol_id = self.scoping.add_binding(name, scope_id, flags);
+        let symbol_id = self.scoping.add_binding(&name, scope_id, flags);
         BoundIdentifier::new(name_atom, symbol_id)
     }
 

@@ -336,8 +336,12 @@ impl PostTransformChecker<'_, '_> {
         for scope_ids in self.scope_ids_map.pairs() {
             // Check bindings are the same
             fn get_sorted_binding_names(scoping: &Scoping, scope_id: ScopeId) -> Vec<CompactStr> {
-                let mut binding_names =
-                    scoping.scopes.get_bindings(scope_id).keys().cloned().collect::<Vec<_>>();
+                let mut binding_names = scoping
+                    .scopes
+                    .get_bindings(scope_id)
+                    .keys()
+                    .map(|k| CompactStr::new(k))
+                    .collect::<Vec<_>>();
                 binding_names.sort_unstable();
                 binding_names
             }

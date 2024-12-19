@@ -171,12 +171,12 @@ impl TraverseScoping {
     #[inline]
     pub(crate) fn add_binding(
         &mut self,
-        name: CompactStr,
+        name: &str,
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> SymbolId {
         let symbol_id =
-            self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id, NodeId::DUMMY);
+            self.symbols.create_symbol(SPAN, name.into(), flags, scope_id, NodeId::DUMMY);
         self.scopes.add_binding(scope_id, name, symbol_id);
 
         symbol_id
@@ -191,7 +191,7 @@ impl TraverseScoping {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        let symbol_id = self.add_binding(name.to_compact_str(), scope_id, flags);
+        let symbol_id = self.add_binding(name.as_str(), scope_id, flags);
         BoundIdentifier::new(name, symbol_id)
     }
 
@@ -372,11 +372,12 @@ impl TraverseScoping {
     /// * No binding already exists in scope for `new_name`.
     ///
     /// Panics in debug mode if either of the above are not satisfied.
+    #[expect(clippy::needless_pass_by_value)]
     pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
         // Rename symbol
         let old_name = self.symbols.set_name(symbol_id, new_name.clone());
         // Rename binding
-        self.scopes.rename_binding(scope_id, symbol_id, &old_name, new_name);
+        self.scopes.rename_binding(scope_id, symbol_id, &old_name, new_name.as_str());
     }
 }
 
