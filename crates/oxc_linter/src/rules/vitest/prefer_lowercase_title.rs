@@ -2,7 +2,6 @@ use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use serde_json::Value;
 
 use crate::{
     context::LintContext, rule::Rule, utils::{parse_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode}, AstNode
@@ -183,7 +182,7 @@ impl PreferLowercaseTitle {
 fn test() {
     use crate::tester::Tester;
 
-    let pass: Vec<(&str, Option<Value>)> = vec![
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
         // ("it.each()", None),
         // ("it.each()(1)", None),
         // ("it.todo();", None),
@@ -192,7 +191,7 @@ fn test() {
         // ("test(`123`, function () {})", None),
     ];
 
-    let fail: Vec<(&str, Option<Value>)> = vec![
+    let fail: Vec<(&str, Option<serde_json::Value>)> = vec![
         (r#"it("Foo MM mm", function () {})"#, None),
         // ("test(`Foo MM mm`, function () {})", None),
         // (
@@ -204,7 +203,7 @@ fn test() {
         // ("bench(`Foo MM mm`, function () {})", None),
     ];
 
-    let fix: Vec<(&str, &str, Option<Value>)>  = vec![
+    let fix: Vec<(&str, &str, Option<serde_json::Value>)>  = vec![
         // (r#"it("Foo MM mm", function () {})"#, r#"it("foo MM mm", function () {})"#, None),
         // ("test(`Foo MM mm`, function () {})", "test(`foo MM mm`, function () {})", None),
         // (
