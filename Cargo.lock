@@ -1441,6 +1441,7 @@ dependencies = [
  "bumpalo",
  "serde",
  "serde_json",
+ "simdutf8",
 ]
 
 [[package]]
