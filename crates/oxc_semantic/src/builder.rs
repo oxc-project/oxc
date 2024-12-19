@@ -481,12 +481,10 @@ impl<'a> SemanticBuilder<'a> {
     fn resolve_references_for_current_scope(&mut self) {
         let (current_refs, parent_refs) = self.unresolved_references.current_and_parent_mut();
 
-        for (name, mut references) in current_refs.drain() {
-            // Try to resolve a reference.
-            // If unresolved, transfer it to parent scope's unresolved references.
-            let bindings = self.scope.get_bindings(self.current_scope_id);
-            if let Some((_, symbol_id)) = bindings.iter().find(|(n, _)| n.as_str() == name.as_str())
-            {
+        let bindings = self.scope.get_bindings(self.current_scope_id);
+
+        for (binding_name, symbol_id) in bindings {
+            if let Some((name, mut references)) = current_refs.remove_entry(binding_name.as_str()) {
                 let symbol_id = *symbol_id;
                 let symbol_flags = self.symbols.get_flags(symbol_id);
                 references.retain(|&reference_id| {
@@ -530,8 +528,16 @@ impl<'a> SemanticBuilder<'a> {
                 if references.is_empty() {
                     continue;
                 }
-            }
 
+                if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
+                    parent_reference_ids.extend(references);
+                } else {
+                    parent_refs.insert(name, references);
+                }
+            }
+        }
+
+        for (name, references) in current_refs.drain() {
             if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
                 parent_reference_ids.extend(references);
             } else {
