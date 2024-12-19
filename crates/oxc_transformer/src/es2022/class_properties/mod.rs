@@ -113,17 +113,27 @@
 //!
 //! ### High level overview
 //!
-//! TODO: Update this description.
-//!
 //! Transform happens in 3 phases:
 //!
-//! 1. Check if class contains properties or static blocks, to determine if any transform is necessary
-//!    (in [`ClassProperties::transform_class`]).
-//! 2. Extract class property declarations and static blocks from class and insert in class constructor
-//!    (instance properties) or before/after the class (static properties + static blocks)
-//!    (in [`ClassProperties::transform_class`]).
-//! 3. Transform private property usages (`this.#prop`)
-//!    (in [`ClassProperties::transform_private_field_expression`] and other visitors).
+//! 1. On entering class:
+//!    ([`ClassProperties::transform_class_body_on_enter`])
+//!    * Check if class contains properties or static blocks, to determine if any transform is necessary.
+//!    * Build a hashmap of private property keys.
+//!    * Extract instance property declarations (public of private) from class body and insert
+//!      in class constructor.
+//!    * Temporarily replace computed keys of instance properties with assignments to temp vars.
+//!      `class C { [foo()] = 123; }` -> `class C { [_foo = foo()]; }`
+//!
+//! 2. During traversal of class body:
+//!    ([`ClassProperties::transform_private_field_expression`] and other visitors)
+//!    * Transform private fields (`this.#foo`).
+//!
+//! 3. On exiting class:
+//!    ([`ClassProperties::transform_class_on_exit`] and [`ClassProperties::transform_class_expression_on_exit`])
+//!    * Transform static properties, and static blocks.
+//!    * Move assignments to temp vars which were inserted in computed keys for in phase 1 to before class.
+//!    * Create temp vars for computed method keys if required.
+//!    * Insert statements before/after class declaration / expressions before/after class expression.
 //!
 //! Implementation is split into several files:
 //!
