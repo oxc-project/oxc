@@ -486,7 +486,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 class,
                 instance_inits,
                 &instance_inits_insert_location,
-                self.instance_inits_scope_id,
                 constructor_index,
                 ctx,
             );
