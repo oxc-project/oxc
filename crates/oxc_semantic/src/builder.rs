@@ -23,9 +23,18 @@ use oxc_syntax::{
 };
 
 use crate::{
-    binder::Binder, checker, class::ClassTableBuilder, diagnostics::redeclaration,
-    jsdoc::JSDocBuilder, label::UnusedLabels, node::AstNodes, scope::ScopeTree, stats::Stats,
-    symbol::SymbolTable, unresolved_stack::UnresolvedReferencesStack, JSDocFinder, Semantic,
+    binder::Binder,
+    checker,
+    class::ClassTableBuilder,
+    diagnostics::redeclaration,
+    jsdoc::JSDocBuilder,
+    label::UnusedLabels,
+    node::AstNodes,
+    scope::{Bindings, ScopeTree},
+    stats::Stats,
+    symbol::SymbolTable,
+    unresolved_stack::UnresolvedReferencesStack,
+    JSDocFinder, Semantic,
 };
 
 macro_rules! control_flow {
@@ -389,10 +398,9 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        let name = CompactStr::new(name);
         let symbol_id = self.symbols.create_symbol(
             span,
-            name.clone(),
+            CompactStr::new(name),
             includes,
             scope_id,
             self.current_node_id,
@@ -456,15 +464,14 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
-        let name = CompactStr::new(name);
         let symbol_id = self.symbols.create_symbol(
             span,
-            name.clone(),
+            CompactStr::new(name),
             includes,
             self.current_scope_id,
             self.current_node_id,
         );
-        self.scope.get_bindings_mut(scope_id).insert(name, symbol_id);
+        self.scope.insert_binding(scope_id, name, symbol_id);
         symbol_id
     }
 
@@ -702,14 +709,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Move all bindings from catch clause param scope to catch clause body scope
         // to make it easier to resolve references and check redeclare errors
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
-            let parent_bindings = self.scope.get_bindings_mut(parent_scope_id);
-            if !parent_bindings.is_empty() {
-                let parent_bindings = mem::take(parent_bindings);
-                for &symbol_id in parent_bindings.values() {
-                    self.symbols.set_scope_id(symbol_id, self.current_scope_id);
+            self.scope.cell.with_dependent_mut(|allocator, inner| {
+                if !inner.bindings[parent_scope_id].is_empty() {
+                    let mut parent_bindings =
+                        Bindings::with_hasher_in(rustc_hash::FxBuildHasher, allocator);
+                    mem::swap(&mut inner.bindings[parent_scope_id], &mut parent_bindings);
+                    for &symbol_id in parent_bindings.values() {
+                        self.symbols.set_scope_id(symbol_id, self.current_scope_id);
+                    }
+                    inner.bindings[self.current_scope_id] = parent_bindings;
                 }
-                *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
-            }
+            });
         }
 
         self.visit_statements(&it.body);

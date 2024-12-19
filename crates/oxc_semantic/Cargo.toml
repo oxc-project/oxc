@@ -30,9 +30,12 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 assert-unchecked = { workspace = true }
+bumpalo = { workspace = true, features = ["allocator-api2"] }
+hashbrown = { workspace = true, features = ["allocator-api2"] }
 itertools = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
+self_cell = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true, features = ["glob"] }
