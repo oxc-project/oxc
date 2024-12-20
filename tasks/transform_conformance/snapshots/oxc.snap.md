@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 117/135
+Passed: 118/137
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,7 +16,7 @@ Passed: 117/135
 * regexp
 
 
-# babel-plugin-transform-class-properties (18/24)
+# babel-plugin-transform-class-properties (19/26)
 * interaction-with-other-transforms/input.js
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "C2", "_ref", "_ref2"]
@@ -33,6 +33,9 @@ rebuilt        : SymbolId(1): ScopeId(0)
 Symbol scope ID mismatch for "_g":
 after transform: SymbolId(6): ScopeId(1)
 rebuilt        : SymbolId(2): ScopeId(0)
+
+* private-field-resolve-to-method-in-computed-key/input.js
+x Output mismatch
 
 * static-block-this-and-class-name/input.js
 Symbol flags mismatch for "inner":
