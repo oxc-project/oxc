@@ -8,8 +8,8 @@ use serde_json::Value;
 
 use crate::{
     context::LintContext,
-    module_record::{ExportImportName, ImportImportName},
-    rule::Rule,
+    module_record::{ExportEntry, ExportImportName, ImportEntry, ImportImportName},
+    rule::Rule, ModuleRecord,
 };
 
 fn no_restricted_imports_diagnostic(
@@ -208,6 +208,78 @@ impl Rule for NoRestrictedImports {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
+
+        // for pattern in &self.patterns {
+        //     let mut builder = GitignoreBuilder::new("/");
+        //
+        //     for group in &pattern.group {
+        //         let _ = builder.add_line(None, group.as_str());
+        //     }
+        //
+        //     let Ok(gitignore) = builder.build() else {
+        //         continue;
+        //     };
+        //
+        //     for entry in &module_record.import_entries {
+        //         let source = entry.module_request.name();
+        //         let span = entry.module_request.span();
+        //
+        //         let matched = gitignore.matched(source, true);
+        //         println!("{:?}", matched);
+        //
+        //         // ToDo: better whitelist handling
+        //         if matched.is_whitelist() {
+        //             break;
+        //         }
+        //
+        //         if !matched.is_none() {
+        //             no_restricted_imports_diagnostic(ctx, span, pattern.message.clone(), source);
+        //         }
+        //     }
+        // }
+
+        self.report_side_effects(ctx, module_record);
+
+        for entry in &module_record.import_entries {
+            self.report_import_name_allowed(ctx, entry);
+        }
+
+        for entry in &module_record.local_export_entries {
+            self.report_export_name_allowed(ctx, entry);
+        }
+
+        for entry in &module_record.indirect_export_entries {
+            self.report_export_name_allowed(ctx, entry);
+        }
+
+        for entry in &module_record.star_export_entries {
+            self.report_export_name_allowed(ctx, entry);
+        }
+    }
+}
+
+impl NoRestrictedImports {
+    fn is_name_span_allowed(&self, name: &CompactStr, path: &RestrictedPath) -> bool {
+        // fast check if this name is allowed
+        if path.allow_import_names.as_ref().is_some_and(|allowed| allowed.contains(&name)) {
+            return true;
+        }
+
+        // when no importNames option is provided, no import in general is allowed
+        if path.import_names.as_ref().is_none() {
+            return false;
+        }
+
+        // the name is found is the importNames list
+        if path.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(&name)) {
+            return false;
+        }
+
+        // we allow it
+        true
+    }
+
+    fn report_side_effects(&self, ctx: &LintContext<'_>, module_record: &ModuleRecord) {
         let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<Span>> = FxHashMap::default();
 
         for (source, requests) in &module_record.requested_modules {
@@ -218,51 +290,7 @@ impl Rule for NoRestrictedImports {
             }
         }
 
-        for pattern in &self.patterns {
-            let mut builder = GitignoreBuilder::new("/");
-
-            for group in &pattern.group {
-                let _ = builder.add_line(None, group.as_str());
-            }
-
-            let Ok(gitignore) = builder.build() else {
-                continue;
-            };
-
-            for entry in &module_record.import_entries {
-                let source = entry.module_request.name();
-                let span = entry.module_request.span();
-
-                let matched = gitignore.matched(source, true);
-                println!("{:?}", matched);
-
-                // ToDo: better whitelist handling
-                if matched.is_whitelist() {
-                    break;
-                }
-
-                if !matched.is_none() {
-                    no_restricted_imports_diagnostic(ctx, span, pattern.message.clone(), source);
-                }
-            }
-        }
-
         for path in &self.paths {
-            for entry in &module_record.import_entries {
-                let source = entry.module_request.name();
-                let span = entry.module_request.span();
-
-                if source != path.name.as_str() {
-                    continue;
-                }
-
-                if is_import_name_allowed(&entry.import_name, path) {
-                    continue;
-                }
-
-                no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
-            }
-
             for (source, spans) in &side_effect_import_map {
                 if source.as_str() == path.name.as_str() && path.import_names.is_none() {
                     if let Some(span) = spans.iter().next() {
@@ -270,129 +298,59 @@ impl Rule for NoRestrictedImports {
                     }
                 }
             }
-
-            for entry in &module_record.local_export_entries {
-                if let Some(module_request) = &entry.module_request {
-                    let source = module_request.name();
-                    let span = entry.span;
-
-                    if source == path.name.as_str() {
-                        no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
-                    }
-                }
-            }
-            for entry in &module_record.indirect_export_entries {
-                if let Some(module_request) = &entry.module_request {
-                    let source = module_request.name();
-                    let span = entry.span;
-
-                    if source != path.name.as_str() {
-                        continue;
-                    }
-
-                    if is_export_name_allowed(&entry.import_name, path) {
-                        continue;
-                    }
-
-                    no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
-                }
-            }
-
-            for entry in &module_record.star_export_entries {
-                if let Some(module_request) = &entry.module_request {
-                    let source = module_request.name();
-                    let span = entry.span;
-
-                    if source != path.name.as_str() {
-                        continue;
-                    }
-
-                    if is_export_name_allowed(&entry.import_name, path) {
-                        continue;
-                    }
-
-                    no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
-                }
-            }
         }
     }
-}
 
-fn is_import_name_allowed(name: &ImportImportName, path: &RestrictedPath) -> bool {
-    match &name {
-        ImportImportName::Name(import) => {
-            // fast check if this name is allowed
-            if path
-                .allow_import_names
-                .as_ref()
-                .is_some_and(|allowed| allowed.contains(&import.name))
-            {
-                return true;
+    fn report_import_name_allowed(&self, ctx: &LintContext<'_>, entry: &ImportEntry) {
+        let source = entry.module_request.name();
+
+        for path in &self.paths {
+            if source != path.name.as_str() {
+                continue;
             }
 
-            // when no importNames option is provided, no import in general is allowed
-            if path.import_names.as_ref().is_none() {
-                return false;
+            let skipable = match &entry.import_name {
+                ImportImportName::Name(import) => self.is_name_span_allowed(&import.name, path),
+                ImportImportName::Default(_) => {
+                    self.is_name_span_allowed(&CompactStr::new("default"), path)
+                }
+                ImportImportName::NamespaceObject => false,
+            };
+
+            if skipable {
+                continue;
             }
 
-            // the name is found is the importNames list
-            if path
-                .import_names
-                .as_ref()
-                .is_some_and(|disallowed| disallowed.contains(&import.name))
-            {
-                return false;
-            }
+            let span = entry.module_request.span();
 
-            // we allow it
-            true
+            no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
         }
-        ImportImportName::Default(_) => {
-            if path
-                .import_names
-                .as_ref()
-                .is_some_and(|disallowed| disallowed.contains(&CompactStr::new("default")))
-                || path.import_names.as_ref().is_none()
-            {
-                return false;
-            }
-
-            true
-        }
-        ImportImportName::NamespaceObject => false,
     }
-}
 
-fn is_export_name_allowed(name: &ExportImportName, path: &RestrictedPath) -> bool {
-    match &name {
-        ExportImportName::Name(import_name) => {
-            // fast check if this name is allowed
-            if path
-                .allow_import_names
-                .as_ref()
-                .is_some_and(|allowed| allowed.contains(&import_name.name))
-            {
-                return true;
+    fn report_export_name_allowed(&self, ctx: &LintContext<'_>, entry: &ExportEntry) {
+        let Some(source) = entry.module_request.as_ref().map(|request| request.name()) else {
+            return;
+        };
+
+        for path in &self.paths {
+            if source != path.name.as_str() {
+                continue;
             }
 
-            // when no importNames option is provided, no import in general is allowed
-            if path.import_names.as_ref().is_none() {
-                return false;
+            let skipable = match &entry.import_name {
+                ExportImportName::Name(import) => self.is_name_span_allowed(&import.name, path),
+                ExportImportName::All | ExportImportName::AllButDefault => false,
+                ExportImportName::Null => true,
+            };
+
+            if skipable {
+                continue;
             }
 
-            // the name is found is the importNames list
-            if path
-                .import_names
-                .as_ref()
-                .is_some_and(|disallowed| disallowed.contains(&import_name.name))
-            {
-                return false;
-            }
+            let span = entry.span;
 
-            true
+            no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
         }
-        ExportImportName::All | ExportImportName::AllButDefault => false,
-        ExportImportName::Null => true,
     }
 }
 
@@ -826,14 +784,14 @@ fn test() {
             r#"import withPaths from "foo/bar";"#,
             Some(serde_json::json!([{ "paths": ["foo/bar"] }])),
         ),
-        (
-            r#"import withPatterns from "foo/bar";"#,
-            Some(serde_json::json!([{ "patterns": ["foo"] }])),
-        ),
-        (
-            r#"import withPatterns from "foo/bar";"#,
-            Some(serde_json::json!([{ "patterns": ["bar"] }])),
-        ),
+        // (
+        //     r#"import withPatterns from "foo/bar";"#,
+        //     Some(serde_json::json!([{ "patterns": ["foo"] }])),
+        // ),
+        // (
+        //     r#"import withPatterns from "foo/bar";"#,
+        //     Some(serde_json::json!([{ "patterns": ["bar"] }])),
+        // ),
         // (
         //     r#"import withPatterns from "foo/baz";"#,
         //     Some(

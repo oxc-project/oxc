@@ -275,6 +275,13 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
+  ⚠ eslint(no-restricted-imports): import Image from ui/_components instead
+   ╭─[no_restricted_imports.tsx:1:41]
+ 1 │ import { Image, Text, ScrollView } from 'react-native'
+   ·                                         ──────────────
+   ╰────
+  help: Remove the import statement.
+
   ⚠ eslint(no-restricted-imports): import Text from ui/_components instead
    ╭─[no_restricted_imports.tsx:1:41]
  1 │ import { Image, Text, ScrollView } from 'react-native'
@@ -283,13 +290,6 @@ snapshot_kind: text
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): import ScrollView from ui/_components instead
-   ╭─[no_restricted_imports.tsx:1:41]
- 1 │ import { Image, Text, ScrollView } from 'react-native'
-   ·                                         ──────────────
-   ╰────
-  help: Remove the import statement.
-
-  ⚠ eslint(no-restricted-imports): import Image from ui/_components instead
    ╭─[no_restricted_imports.tsx:1:41]
  1 │ import { Image, Text, ScrollView } from 'react-native'
    ·                                         ──────────────
@@ -310,6 +310,13 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
+  ⚠ eslint(no-restricted-imports): Don"t use "foo" and `qux` from "mod".
+   ╭─[no_restricted_imports.tsx:1:36]
+ 1 │ import { foo, bar, baz, qux } from 'mod'
+   ·                                    ─────
+   ╰────
+  help: Remove the import statement.
+
   ⚠ eslint(no-restricted-imports): Use `barbaz` instead of `bar`.
    ╭─[no_restricted_imports.tsx:1:36]
  1 │ import { foo, bar, baz, qux } from 'mod'
@@ -324,20 +331,6 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): Don"t use "foo" and `qux` from "mod".
-   ╭─[no_restricted_imports.tsx:1:36]
- 1 │ import { foo, bar, baz, qux } from 'mod'
-   ·                                    ─────
-   ╰────
-  help: Remove the import statement.
-
-  ⚠ eslint(no-restricted-imports): Don"t use "foo" or "baz" from "mod".
-   ╭─[no_restricted_imports.tsx:1:36]
- 1 │ import { foo, bar, baz, qux } from 'mod'
-   ·                                    ─────
-   ╰────
-  help: Remove the import statement.
-
   ⚠ eslint(no-restricted-imports): Don"t use "foo" or "baz" from "mod".
    ╭─[no_restricted_imports.tsx:1:36]
  1 │ import { foo, bar, baz, qux } from 'mod'
@@ -346,6 +339,13 @@ snapshot_kind: text
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): Use "b" or `bar` from "quux/mod" instead.
+   ╭─[no_restricted_imports.tsx:1:36]
+ 1 │ import { foo, bar, baz, qux } from 'mod'
+   ·                                    ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Don"t use "foo" or "baz" from "mod".
    ╭─[no_restricted_imports.tsx:1:36]
  1 │ import { foo, bar, baz, qux } from 'mod'
    ·                                    ─────
