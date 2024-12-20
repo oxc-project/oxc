@@ -2,7 +2,7 @@ use std::mem;
 
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
-use bumpalo::Bump;
+use oxc_allocator::Allocator;
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
 use oxc_syntax::{
@@ -12,7 +12,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 
-pub(crate) type Bindings<'a> = hashbrown::HashMap<&'a str, SymbolId, FxBuildHasher, &'a Bump>;
+pub(crate) type Bindings<'a> = hashbrown::HashMap<&'a str, SymbolId, FxBuildHasher, &'a Allocator>;
 pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
 
 /// Scope Tree
@@ -54,7 +54,7 @@ impl Default for ScopeTree {
             node_ids: IndexVec::new(),
             flags: IndexVec::new(),
             root_unresolved_references: UnresolvedReferences::default(),
-            cell: ScopeTreeCell::new(Bump::new(), |_bump| ScopeTreeInner {
+            cell: ScopeTreeCell::new(Allocator::default(), |_bump| ScopeTreeInner {
                 bindings: IndexVec::new(),
             }),
         }
@@ -63,7 +63,7 @@ impl Default for ScopeTree {
 
 self_cell::self_cell!(
     pub(crate) struct ScopeTreeCell {
-        owner: Bump,
+        owner: Allocator,
         #[covariant]
         dependent: ScopeTreeInner,
     }

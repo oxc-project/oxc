@@ -48,6 +48,7 @@ pub use bumpalo::collections::String;
 use bumpalo::Bump;
 
 mod address;
+mod allocator_api2;
 mod boxed;
 mod clone_in;
 mod convert;
