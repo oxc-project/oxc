@@ -1758,6 +1758,7 @@ dependencies = [
  "oxc_index",
  "oxc_semantic",
  "oxc_span",
+ "rustc-hash",
 ]
 
 [[package]]
