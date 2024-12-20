@@ -4,6 +4,7 @@ use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::Value;
+use ignore::gitignore::GitignoreBuilder;
 
 use crate::{
     context::LintContext,
@@ -213,6 +214,35 @@ impl Rule for NoRestrictedImports {
             for request in requests {
                 if request.is_import && module_record.import_entries.is_empty() {
                     side_effect_import_map.entry(source).or_default().push(request.span);
+                }
+            }
+        }
+
+        for pattern in &self.patterns {
+            let mut builder = GitignoreBuilder::new("/");
+
+            for group in &pattern.group {
+                let _ = builder.add_line(None, group.as_str());
+            }
+
+            let Ok(gitignore) = builder.build() else {
+                continue;
+            };
+
+            for entry in &module_record.import_entries {
+                let source = entry.module_request.name();
+                let span = entry.module_request.span();
+
+                let matched = gitignore.matched(source, true);
+                println!("{:?}", matched);
+
+                // ToDo: better whitelist handling
+                if matched.is_whitelist() {
+                    break;
+                }
+
+                if !matched.is_none() {
+                    no_restricted_imports_diagnostic(ctx, span, pattern.message.clone(), source);
                 }
             }
         }
