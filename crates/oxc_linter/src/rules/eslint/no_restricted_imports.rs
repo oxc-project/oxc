@@ -1,10 +1,10 @@
+use ignore::gitignore::GitignoreBuilder;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::Value;
-use ignore::gitignore::GitignoreBuilder;
 
 use crate::{
     context::LintContext,
