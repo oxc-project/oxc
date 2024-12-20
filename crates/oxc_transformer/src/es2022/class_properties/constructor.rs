@@ -682,30 +682,43 @@ impl<'a, 'c> ConstructorBodySuperReplacer<'a, 'c> {
         mut self,
         constructor: &mut Function<'a>,
     ) -> (ScopeId, InstanceInitsInsertLocation<'a>) {
-        let body_stmts = &mut constructor.body.as_mut().unwrap().statements;
-        let mut body_stmts_iter = body_stmts.iter_mut();
-
-        loop {
-            let mut body_stmts_iter_enumerated = body_stmts_iter.by_ref().enumerate();
-            if let Some((index, stmt)) = body_stmts_iter_enumerated.next() {
+        // This is not a real loop. It always breaks on 1st iteration.
+        // Only here so that can break out of it from within inner `for` loop.
+        #[expect(clippy::never_loop)]
+        'outer: loop {
+            let body_stmts = &mut constructor.body.as_mut().unwrap().statements;
+            for (index, stmt) in body_stmts.iter_mut().enumerate() {
                 // If statement is standalone `super()`, insert inits after `super()`.
                 // We can avoid a `_super` function for this common case.
-                if let Statement::ExpressionStatement(expr_stmt) = &*stmt {
-                    if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
-                        if call_expr.callee.is_super() {
-                            let insert_location =
-                                InstanceInitsInsertLocation::ExistingConstructor(index + 1);
-                            return (self.constructor_scope_id, insert_location);
+                if let Statement::ExpressionStatement(expr_stmt) = stmt {
+                    if let Expression::CallExpression(call_expr) = &mut expr_stmt.expression {
+                        if let Expression::Super(super_) = &call_expr.callee {
+                            // Found `super()` as top-level statement
+                            if self.super_binding.is_none() {
+                                // This is the first `super()` found.
+                                // So can just insert initializers after it - no need for `_super` function.
+                                let insert_location =
+                                    InstanceInitsInsertLocation::ExistingConstructor(index + 1);
+                                return (self.constructor_scope_id, insert_location);
+                            }
+
+                            // `super()` was previously found in nested position before this.
+                            // So we do need a `_super` function.
+                            // But we don't need to look any further for any other `super()` calls,
+                            // because calling `super()` after this would be an immediate error.
+                            let span = super_.span;
+                            self.replace_super(call_expr, span);
+
+                            break 'outer;
                         }
                     }
                 }
 
                 // Traverse statement looking for `super()` deeper in the statement
                 self.visit_statement(stmt);
-                if self.super_binding.is_some() {
-                    break;
-                }
-            } else {
+            }
+
+            if self.super_binding.is_none() {
                 // No `super()` anywhere in constructor.
                 // This is weird, but legal code. It would be a runtime error if the class is constructed
                 // (unless the constructor returns early).
@@ -716,34 +729,23 @@ impl<'a, 'c> ConstructorBodySuperReplacer<'a, 'c> {
                 // What we get is completely legal output and correct `Semantic`, just longer than it
                 // could be. But this should very rarely happen in practice, and minifier will delete
                 // the `_super` function as dead code.
+                // So set `super_binding` and exit the loop, so it's treated as if `super()` was found
+                // in a nested position.
                 // TODO: Delete the initializers instead.
-                let super_func_scope_id = self.create_super_func_scope();
-                let super_binding = self.create_super_binding();
-                let insert_location =
-                    InstanceInitsInsertLocation::SuperFnInsideConstructor(super_binding);
-                return (super_func_scope_id, insert_location);
+                self.super_binding = Some(self.create_super_binding());
             }
+
+            break;
         }
 
-        // `super()` found in nested position. There may be more `super()`s in constructor.
-        // Convert them all to `_super()`.
-        for stmt in body_stmts_iter {
-            self.visit_statement(stmt);
-        }
-
-        let super_func_scope_id = self.create_super_func_scope();
-        let super_binding = self.super_binding.unwrap();
-        let insert_location = InstanceInitsInsertLocation::SuperFnInsideConstructor(super_binding);
-        (super_func_scope_id, insert_location)
-    }
-
-    /// Create scope for `_super` function inside constructor body
-    fn create_super_func_scope(&mut self) -> ScopeId {
-        self.ctx.scopes_mut().add_scope(
+        let super_func_scope_id = self.ctx.scopes_mut().add_scope(
             Some(self.constructor_scope_id),
             NodeId::DUMMY,
             ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode,
-        )
+        );
+        let super_binding = self.super_binding.unwrap();
+        let insert_location = InstanceInitsInsertLocation::SuperFnInsideConstructor(super_binding);
+        (super_func_scope_id, insert_location)
     }
 }
 
