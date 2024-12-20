@@ -1,5 +1,5 @@
 //! ES2022: Class Properties
-//! Transform of static property initializers.
+//! Transform of static property initializers and static blocks.
 
 use std::cell::Cell;
 
@@ -10,47 +10,130 @@ use oxc_ast::{
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::TraverseCtx;
 
+use super::super::ClassStaticBlock;
 use super::ClassProperties;
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform static property initializer.
     ///
-    /// Replace `this`, and references to class name, with temp var for class.
+    /// Replace `this`, and references to class name, with temp var for class. Transform `super`.
     /// See below for full details of transforms.
     pub(super) fn transform_static_initializer(
         &mut self,
         value: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let mut replacer = StaticInitializerVisitor::new(self, ctx);
+        let make_sloppy_mode = !ctx.current_scope_flags().is_strict_mode();
+        let mut replacer = StaticVisitor::new(make_sloppy_mode, true, self, ctx);
         replacer.visit_expression(value);
+    }
+
+    /// Transform static block.
+    ///
+    /// Transform to an `Expression` and insert after class body.
+    ///
+    /// `static { x = 1; }` -> `x = 1`
+    /// `static { x = 1; y = 2; } -> `(() => { x = 1; y = 2; })()`
+    ///
+    /// Replace `this`, and references to class name, with temp var for class. Transform `super`.
+    /// See below for full details of transforms.
+    ///
+    /// TODO: Add tests for this if there aren't any already.
+    /// Include tests for evaluation order inc that static block goes before class expression
+    /// unless also static properties, or static block uses class name.
+    pub(super) fn convert_static_block(
+        &mut self,
+        block: &mut StaticBlock<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let replacement = self.convert_static_block_to_expression(block, ctx);
+        self.insert_expr_after_class(replacement, ctx);
+    }
+
+    fn convert_static_block_to_expression(
+        &mut self,
+        block: &mut StaticBlock<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let scope_id = block.scope_id();
+        let outer_scope_strict_flag = ctx.current_scope_flags() & ScopeFlags::StrictMode;
+        let make_sloppy_mode = outer_scope_strict_flag == ScopeFlags::empty();
+
+        // If block contains only a single `ExpressionStatement`, no need to wrap in an IIFE.
+        // `static { foo }` -> `foo`
+        // TODO(improve-on-babel): If block has no statements, could remove it entirely.
+        let stmts = &mut block.body;
+        if stmts.len() == 1 {
+            if let Statement::ExpressionStatement(stmt) = stmts.first_mut().unwrap() {
+                return self.convert_static_block_with_single_expression_to_expression(
+                    &mut stmt.expression,
+                    scope_id,
+                    make_sloppy_mode,
+                    ctx,
+                );
+            }
+        }
+
+        // Wrap statements in an IIFE.
+        // Note: Do not reparent scopes.
+        let mut replacer = StaticVisitor::new(make_sloppy_mode, false, self, ctx);
+        replacer.visit_statements(stmts);
+
+        let scope_flags = outer_scope_strict_flag | ScopeFlags::Function | ScopeFlags::Arrow;
+        *ctx.scopes_mut().get_flags_mut(scope_id) = scope_flags;
+
+        let outer_scope_id = ctx.current_scope_id();
+        ctx.scopes_mut().change_parent_id(scope_id, Some(outer_scope_id));
+
+        ClassStaticBlock::wrap_statements_in_iife(stmts, scope_id, ctx)
+    }
+
+    fn convert_static_block_with_single_expression_to_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        scope_id: ScopeId,
+        make_sloppy_mode: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        // Note: Reparent scopes
+        let mut replacer = StaticVisitor::new(make_sloppy_mode, true, self, ctx);
+        replacer.visit_expression(expr);
+
+        // Delete scope for static block
+        ctx.scopes_mut().delete_scope(scope_id);
+
+        ctx.ast.move_expression(expr)
     }
 }
 
 /// Visitor to transform:
 ///
 /// 1. `this` to class temp var.
-///    * Class declaration: `class C { static x = this.y; }`
-///      -> `var _C; class C {}; _C = C; C.x = _C.y;`
-///    * Class expression: `x = class C { static x = this.y; }`
-///      -> `var _C; x = (_C = class C {}, _C.x = _C.y, _C)`
+///    * Class declaration:
+///      * `class C { static x = this.y; }` -> `var _C; class C {}; _C = C; C.x = _C.y;`
+///      * `class C { static { this.x(); } }` -> `var _C; class C {}; _C = C; _C.x();`
+///    * Class expression:
+///      * `x = class C { static x = this.y; }` -> `var _C; x = (_C = class C {}, _C.x = _C.y, _C)`
+///      * `C = class C { static { this.x(); } }` -> `var _C; C = (_C = class C {}, _C.x(), _C)`
 /// 2. Reference to class name to class temp var.
-///    * Class declaration: `class C { static x = C.y; }`
-///      -> `var _C; class C {}; _C = C; C.x = _C.y;`
-///    * Class expression: `x = class C { static x = C.y; }`
-///      -> `var _C; x = (_C = class C {}, _C.x = _C.y, _C)`
+///    * Class declaration:
+///      * `class C { static x = C.y; }` -> `var _C; class C {}; _C = C; C.x = _C.y;`
+///      * `class C { static { C.x(); } }` -> `var _C; class C {}; _C = C; _C.x();`
+///    * Class expression:
+///      * `x = class C { static x = C.y; }` -> `var _C; x = (_C = class C {}, _C.x = _C.y, _C)`
+///      * `x = class C { static { C.x(); } }` -> `var _C; x = (_C = class C {}, _C.x(), _C)`
 ///
 /// Also:
-/// * Update parent `ScopeId` of first level of scopes in initializer.
+/// * Update parent `ScopeId` of first level of scopes, if `reparent_scopes == true`.
 /// * Set `ScopeFlags` of scopes to sloppy mode if code outside the class is sloppy mode.
 ///
-/// Reason we need to transform `this` is because the initializer is being moved from inside the class
-/// to outside. `this` outside the class refers to a different `this`. So we need to transform it.
+/// Reason we need to transform `this` is because the initializer/block is being moved from inside
+/// the class to outside. `this` outside the class refers to a different `this`. So we need to transform it.
 ///
 /// Note that for class declarations, assignments are made to properties of original class name `C`,
 /// but temp var `_C` is used in replacements for `this` or class name.
-/// This is because class binding `C` could be mutated, and the initializer may contain functions which
-/// are not executed immediately, so the mutation occurs before that initializer code runs.
+/// This is because class binding `C` could be mutated, and the initializer/block may contain functions
+/// which are not executed immediately, so the mutation occurs before that code runs.
 ///
 /// ```js
 /// class C {
@@ -73,9 +156,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 //    code runs immediately, before any mutation of the class name binding can occur.
 //
 // TODO(improve-on-babel): Updating `ScopeFlags` for strict mode makes semantic correctly for the output,
-// but actually the transform isn't right. Should wrap initializer in a strict mode IIFE so that
-// initializer code runs in strict mode, as it was before within class body.
-struct StaticInitializerVisitor<'a, 'ctx, 'v> {
+// but actually the transform isn't right. Should wrap initializer/block in a strict mode IIFE so that
+// code runs in strict mode, as it was before within class body.
+struct StaticVisitor<'a, 'ctx, 'v> {
     /// `true` if class has name, or `ScopeFlags` need updating.
     /// Either of these neccesitates walking the whole tree. If neither applies, we only need to walk
     /// as far as functions and other constructs which define a `this`.
@@ -90,8 +173,11 @@ struct StaticInitializerVisitor<'a, 'ctx, 'v> {
     /// Note: `scope_depth` does not aim to track scope depth completely accurately.
     /// Only requirement is to ensure that `scope_depth == 0` only when we're in first-level scope.
     /// So we don't bother incrementing + decrementing for scopes which are definitely not first level.
-    /// e.g. `BlockStatement` or `ForStatement` must be in a function, and therefore we're already in a
-    /// nested scope.
+    /// In a static property initializer, e.g. `BlockStatement` or `ForStatement` must be in a function,
+    /// and therefore we're already in a nested scope.
+    /// In a static block which contains statements, we're wrapping it in an IIFE which takes on
+    /// the `ScopeId` of the old static block, so we don't need to reparent scopes anyway,
+    /// so `scope_depth` is ignored.
     scope_depth: u32,
     /// Main transform instance.
     class_properties: &'v mut ClassProperties<'a, 'ctx>,
@@ -99,20 +185,26 @@ struct StaticInitializerVisitor<'a, 'ctx, 'v> {
     ctx: &'v mut TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
+impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
     fn new(
+        make_sloppy_mode: bool,
+        reparent_scopes: bool,
         class_properties: &'v mut ClassProperties<'a, 'ctx>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
-        let make_sloppy_mode = !ctx.current_scope_flags().is_strict_mode();
         let walk_deep =
             make_sloppy_mode || class_properties.current_class().bindings.name.is_some();
 
-        Self { walk_deep, make_sloppy_mode, this_depth: 0, scope_depth: 0, class_properties, ctx }
+        // Set `scope_depth` to 1 initially if don't need to reparent scopes
+        // (static block where converting to IIFE)
+        #[expect(clippy::bool_to_int_with_if)]
+        let scope_depth = if reparent_scopes { 0 } else { 1 };
+
+        Self { walk_deep, make_sloppy_mode, this_depth: 0, scope_depth, class_properties, ctx }
     }
 }
 
-impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
+impl<'a, 'ctx, 'v> VisitMut<'a> for StaticVisitor<'a, 'ctx, 'v> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
@@ -324,8 +416,12 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
 
     // Remaining visitors are the only other types which have a scope which can be first-level
     // when starting traversal from an `Expression`.
-    // `BlockStatement` and all other statements would need to be within a function,
-    // and that function would be the first-level scope.
+    //
+    // In a static property initializer, `BlockStatement` and all other statements would need to be
+    // within a function, and that function would be the first-level scope.
+    //
+    // In a static block which contains statements, we're wrapping it in an IIFE which takes on
+    // the `ScopeId` of the old static block, so we don't need to reparent scopes anyway.
 
     #[inline]
     fn visit_ts_conditional_type(&mut self, conditional: &mut TSConditionalType<'a>) {
@@ -376,7 +472,7 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
     }
 }
 
-impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
+impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
     /// Replace `this` with reference to temp var for class.
     fn replace_this_with_temp_var(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {
