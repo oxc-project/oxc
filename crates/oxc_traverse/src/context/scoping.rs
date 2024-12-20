@@ -365,8 +365,6 @@ impl TraverseScoping {
 
     /// Rename symbol.
     ///
-    /// Preserves original order of bindings for scope.
-    ///
     /// The following must be true for successful operation:
     /// * Binding exists in specified scope for `symbol_id`.
     /// * No binding already exists in scope for `new_name`.
