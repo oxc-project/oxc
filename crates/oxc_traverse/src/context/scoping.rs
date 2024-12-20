@@ -182,8 +182,7 @@ impl TraverseScoping {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> SymbolId {
-        let symbol_id =
-            self.symbols.create_symbol(SPAN, name.into(), flags, scope_id, NodeId::DUMMY);
+        let symbol_id = self.symbols.create_symbol(SPAN, name, flags, scope_id, NodeId::DUMMY);
         self.scopes.add_binding(scope_id, name, symbol_id);
 
         symbol_id
@@ -380,9 +379,9 @@ impl TraverseScoping {
     #[expect(clippy::needless_pass_by_value)]
     pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
         // Rename symbol
-        let old_name = self.symbols.set_name(symbol_id, new_name.clone());
+        let old_name = self.symbols.set_name(symbol_id, new_name.as_str());
         // Rename binding
-        self.scopes.rename_binding(scope_id, symbol_id, &old_name, new_name.as_str());
+        self.scopes.rename_binding(scope_id, symbol_id, old_name, new_name.as_str());
     }
 }
 
@@ -435,14 +434,10 @@ impl TraverseScoping {
         self.scopes
             .root_unresolved_references()
             .keys()
+            .map(CompactStr::as_str)
             .chain(self.symbols.names())
-            .filter_map(|name| {
-                if name.as_bytes().first() == Some(&b'_') {
-                    Some(name.clone())
-                } else {
-                    None
-                }
-            })
+            .filter(|name| name.as_bytes().first() == Some(&b'_'))
+            .map(CompactStr::from)
             .collect()
     }
 }

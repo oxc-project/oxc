@@ -1,4 +1,4 @@
-use std::mem;
+use std::{fmt, mem};
 
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
@@ -43,6 +43,12 @@ pub struct ScopeTree {
     pub(crate) root_unresolved_references: UnresolvedReferences,
 
     pub(crate) cell: ScopeTreeCell,
+}
+
+impl fmt::Debug for ScopeTree {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        f.debug_struct("ScopeTree").finish()
+    }
 }
 
 impl Default for ScopeTree {
