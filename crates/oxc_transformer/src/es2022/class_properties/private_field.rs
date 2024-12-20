@@ -523,7 +523,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 AssignmentTarget::PrivateFieldExpression(field_expr) => field_expr.unbox(),
                 _ => unreachable!(),
             };
-            let object = field_expr.object;
+            let object = field_expr.object.into_inner_expression();
 
             let class_ident = class_binding.create_read_expression(ctx);
             let value = ctx.ast.move_expression(&mut assign_expr.right);
@@ -621,7 +621,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         };
         let AssignmentExpression { span, operator, right: value, left } = assign_expr;
         let object = match left {
-            AssignmentTarget::PrivateFieldExpression(field_expr) => field_expr.unbox().object,
+            AssignmentTarget::PrivateFieldExpression(field_expr) => {
+                field_expr.unbox().object.into_inner_expression()
+            }
             _ => unreachable!(),
         };
 
@@ -787,7 +789,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // TODO(improve-on-babel): Could avoid `move_expression` here and replace `update_expr.argument` instead.
         // Only doing this first to match the order Babel creates temp vars.
-        let object = ctx.ast.move_expression(&mut field_expr.object);
+        let object = ctx.ast.move_expression(field_expr.object.get_inner_expression_mut());
 
         if is_static {
             // If `object` is reference to class name, and class is declaration, use shortcuts:
