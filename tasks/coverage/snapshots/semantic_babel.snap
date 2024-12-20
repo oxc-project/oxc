@@ -2,7 +2,7 @@ commit: 54a8389f
 
 semantic_babel Summary:
 AST Parsed     : 2218/2218 (100.00%)
-Positive Passed: 1849/2218 (83.36%)
+Positive Passed: 1848/2218 (83.32%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -31,6 +31,17 @@ semantic error: Expected a semicolon or an implicit semicolon after a statement,
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
 semantic error: 'arguments' is not allowed in class field initializer
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-inside-params-of-function-inside-params-of-async-function/input.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["_asyncToGenerator", "_defineProperty"]
+rebuilt        : ScopeId(0): ["_asyncToGenerator", "_await", "_defineProperty"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_await", "f", "x"]
+rebuilt        : ScopeId(2): ["f", "x"]
+Symbol scope ID mismatch for "_await":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(0)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js
 semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -80,8 +91,8 @@ rebuilt        : ScopeId(1): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript/input.js
 semantic error: Unresolved references mismatch:
-after transform: ["Array", "foo"]
-rebuilt        : ["foo"]
+after transform: ["Array", "WeakMap", "foo", "require"]
+rebuilt        : ["WeakMap", "foo", "require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/enum/input.js
 semantic error: Bindings mismatch:
@@ -122,16 +133,16 @@ rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/loc-index-property/input.js
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["AssertsFoo", "Foo"]
-rebuilt        : ScopeId(0): ["AssertsFoo"]
+after transform: ScopeId(0): ["AssertsFoo", "Foo", "_defineProperty"]
+rebuilt        : ScopeId(0): ["AssertsFoo", "_defineProperty"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/loc-index-property-babel-7/input.js
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["AssertsFoo", "Foo"]
-rebuilt        : ScopeId(0): ["AssertsFoo"]
+after transform: ScopeId(0): ["AssertsFoo", "Foo", "_defineProperty"]
+rebuilt        : ScopeId(0): ["AssertsFoo", "_defineProperty"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
@@ -231,7 +242,7 @@ rebuilt        : []
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-this-with-predicate/input.ts
 semantic error: Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
-rebuilt        : SymbolId(0): []
+rebuilt        : SymbolId(1): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-var/input.ts
 semantic error: Scope children mismatch:
@@ -253,22 +264,22 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["M"]
 rebuilt        : ScopeId(1): []
 Symbol reference IDs mismatch for "AbstractClass":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2)]
 Symbol reference IDs mismatch for "ConcreteClass":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
-rebuilt        : SymbolId(1): [ReferenceId(1)]
+rebuilt        : SymbolId(2): [ReferenceId(3)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/TSTypeParameterInstantiation-babel-7/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["M"]
 rebuilt        : ScopeId(1): []
 Symbol reference IDs mismatch for "AbstractClass":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2)]
 Symbol reference IDs mismatch for "ConcreteClass":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
-rebuilt        : SymbolId(1): [ReferenceId(1)]
+rebuilt        : SymbolId(2): [ReferenceId(3)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/as/input.ts
 semantic error: Unresolved references mismatch:
@@ -315,8 +326,8 @@ rebuilt        : ScopeId(5): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-named-properties/input.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-optional-method/input.js
 semantic error: Scope children mismatch:
@@ -430,13 +441,13 @@ rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): []
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names-babel-7/input.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): []
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-reserved-names/input.ts
 semantic error: Scope children mismatch:
@@ -1447,18 +1458,18 @@ rebuilt        : ScopeId(0): []
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/async-arrow-generic-9560/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["T"]
-rebuilt        : ScopeId(2): []
+rebuilt        : ScopeId(3): []
 Bindings mismatch:
 after transform: ScopeId(3): ["T"]
-rebuilt        : ScopeId(3): []
+rebuilt        : ScopeId(4): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/async-arrow-generic-9560-babel-7/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["T"]
-rebuilt        : ScopeId(2): []
+rebuilt        : ScopeId(3): []
 Bindings mismatch:
 after transform: ScopeId(3): ["T"]
-rebuilt        : ScopeId(3): []
+rebuilt        : ScopeId(4): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/destructuring-in-function-type/input.ts
 semantic error: Bindings mismatch:
@@ -2264,11 +2275,11 @@ rebuilt        : ["f"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-asi/input.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["C", "C1", "C2", "C3", "C4", "I", "bar", "x10", "x11", "x12", "x13", "x14", "x5", "x6", "yy"]
-rebuilt        : ScopeId(0): ["C", "C1", "C2", "C3", "C4", "bar", "x10", "x11", "x12", "x13", "x14", "x5", "x6", "yy"]
+after transform: ScopeId(0): ["C", "C1", "C2", "C3", "C4", "I", "_defineProperty", "bar", "x10", "x11", "x12", "x13", "x14", "x5", "x6", "yy"]
+rebuilt        : ScopeId(0): ["C", "C1", "C2", "C3", "C4", "_defineProperty", "bar", "x10", "x11", "x12", "x13", "x14", "x5", "x6", "yy"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(8)]
 Unresolved references mismatch:
 after transform: ["f", "true"]
 rebuilt        : ["f"]
