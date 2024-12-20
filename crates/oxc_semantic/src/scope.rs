@@ -2,8 +2,8 @@ use std::{fmt, mem};
 
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
-use oxc_allocator::Allocator;
-use oxc_index::IndexVec;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_index::{Idx, IndexVec};
 use oxc_span::CompactStr;
 use oxc_syntax::{
     node::NodeId,
@@ -29,9 +29,6 @@ pub struct ScopeTree {
     /// Maps a scope to the parent scope it belongs in.
     parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
 
-    /// Maps a scope to direct children scopes.
-    child_ids: IndexVec<ScopeId, Vec<ScopeId>>,
-
     /// Runtime flag for constructing child_ids.
     pub(crate) build_child_ids: bool,
 
@@ -55,13 +52,13 @@ impl Default for ScopeTree {
     fn default() -> Self {
         Self {
             parent_ids: IndexVec::new(),
-            child_ids: IndexVec::new(),
             build_child_ids: false,
             node_ids: IndexVec::new(),
             flags: IndexVec::new(),
             root_unresolved_references: UnresolvedReferences::default(),
-            cell: ScopeTreeCell::new(Allocator::default(), |_bump| ScopeTreeInner {
+            cell: ScopeTreeCell::new(Allocator::default(), |allocator| ScopeTreeInner {
                 bindings: IndexVec::new(),
+                child_ids: ArenaVec::new_in(allocator),
             }),
         }
     }
@@ -80,6 +77,9 @@ pub(crate) struct ScopeTreeInner<'cell> {
     ///
     /// A binding is a mapping from an identifier name to its [`SymbolId`]
     pub(crate) bindings: IndexVec<ScopeId, Bindings<'cell>>,
+
+    /// Maps a scope to direct children scopes.
+    child_ids: ArenaVec<'cell, ArenaVec<'cell, ScopeId>>,
 }
 
 impl ScopeTree {
@@ -189,7 +189,9 @@ impl ScopeTree {
         if self.build_child_ids {
             // Set this scope as child of parent scope
             if let Some(parent_id) = parent_id {
-                self.child_ids[parent_id].push(scope_id);
+                self.cell.with_dependent_mut(|_allocator, inner| {
+                    inner.child_ids[parent_id.index()].push(scope_id);
+                });
             }
         }
     }
@@ -200,25 +202,29 @@ impl ScopeTree {
     pub fn change_parent_id(&mut self, scope_id: ScopeId, new_parent_id: Option<ScopeId>) {
         let old_parent_id = mem::replace(&mut self.parent_ids[scope_id], new_parent_id);
         if self.build_child_ids {
-            // Remove this scope from old parent scope
-            if let Some(old_parent_id) = old_parent_id {
-                self.child_ids[old_parent_id].retain(|&child_id| child_id != scope_id);
-            }
-            // And add it to new parent scope
-            if let Some(parent_id) = new_parent_id {
-                self.child_ids[parent_id].push(scope_id);
-            }
+            self.cell.with_dependent_mut(|_allocator, inner| {
+                // Remove this scope from old parent scope
+                if let Some(old_parent_id) = old_parent_id {
+                    inner.child_ids[old_parent_id.index()].retain(|&child_id| child_id != scope_id);
+                }
+                // And add it to new parent scope
+                if let Some(parent_id) = new_parent_id {
+                    inner.child_ids[parent_id.index()].push(scope_id);
+                }
+            });
         }
     }
 
     /// Delete a scope.
     pub fn delete_scope(&mut self, scope_id: ScopeId) {
         if self.build_child_ids {
-            self.child_ids[scope_id].clear();
-            let parent_id = self.parent_ids[scope_id];
-            if let Some(parent_id) = parent_id {
-                self.child_ids[parent_id].retain(|&child_id| child_id != scope_id);
-            }
+            self.cell.with_dependent_mut(|_allocator, inner| {
+                inner.child_ids[scope_id.index()].clear();
+                let parent_id = self.parent_ids[scope_id];
+                if let Some(parent_id) = parent_id {
+                    inner.child_ids[parent_id.index()].retain(|&child_id| child_id != scope_id);
+                }
+            });
         }
     }
 
@@ -310,15 +316,18 @@ impl ScopeTree {
     /// Get the child scopes of a scope
     #[inline]
     pub fn get_child_ids(&self, scope_id: ScopeId) -> &[ScopeId] {
-        &self.child_ids[scope_id]
+        &self.cell.borrow_dependent().child_ids[scope_id.index()]
     }
 
     pub fn iter_all_child_ids(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
-        let mut stack = self.child_ids[scope_id].clone();
-        let child_ids: &IndexVec<ScopeId, Vec<ScopeId>> = &self.child_ids;
+        let mut stack = self.cell.borrow_dependent().child_ids[scope_id.index()]
+            .iter()
+            .copied()
+            .collect::<Vec<_>>();
+        let child_ids = &self.cell.borrow_dependent().child_ids;
         std::iter::from_fn(move || {
             if let Some(scope_id) = stack.pop() {
-                if let Some(children) = child_ids.get(scope_id) {
+                if let Some(children) = child_ids.get(scope_id.index()) {
                     stack.extend(children.iter().copied());
                 }
                 Some(scope_id)
@@ -328,10 +337,11 @@ impl ScopeTree {
         })
     }
 
-    /// Get a mutable reference to a scope's children
-    #[inline]
-    pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> &mut Vec<ScopeId> {
-        &mut self.child_ids[scope_id]
+    pub fn remove_child_scopes(&mut self, scope_id: ScopeId, child_scope_ids: &[ScopeId]) {
+        self.cell.with_dependent_mut(|_allocator, inner| {
+            inner.child_ids[scope_id.index()]
+                .retain(|scope_id| !child_scope_ids.contains(scope_id));
+        });
     }
 
     /// Create a scope.
@@ -349,10 +359,12 @@ impl ScopeTree {
         });
         self.node_ids.push(node_id);
         if self.build_child_ids {
-            self.child_ids.push(vec![]);
-            if let Some(parent_id) = parent_id {
-                self.child_ids[parent_id].push(scope_id);
-            }
+            self.cell.with_dependent_mut(|allocator, inner| {
+                inner.child_ids.push(ArenaVec::new_in(allocator));
+                if let Some(parent_id) = parent_id {
+                    inner.child_ids[parent_id.index()].push(scope_id);
+                }
+            });
         }
         scope_id
     }
@@ -418,7 +430,9 @@ impl ScopeTree {
         });
         self.node_ids.reserve(additional);
         if self.build_child_ids {
-            self.child_ids.reserve(additional);
+            self.cell.with_dependent_mut(|_allocator, inner| {
+                inner.child_ids.reserve(additional);
+            });
         }
     }
 }
