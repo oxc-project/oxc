@@ -342,7 +342,7 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let mut builder = GitignoreBuilder::new("/");
+            let mut builder = GitignoreBuilder::new("");
             let _ = builder.case_insensitive(!pattern.case_sensitive.unwrap_or(false));
 
             for group in &pattern.group {
@@ -356,7 +356,7 @@ impl NoRestrictedImports {
             let source = entry.module_request.name();
             let span = entry.module_request.span();
 
-            let matched = gitignore.matched(source, true);
+            let matched = gitignore.matched(source, false);
             // println!("{:?}", matched);
 
             if matched.is_whitelist() {
@@ -840,10 +840,10 @@ fn test() {
         //     r#"import withPatterns from "foo/bar";"#,
         //     Some(serde_json::json!([{ "patterns": ["foo"] }])),
         // ),
-        // (
-        //     r#"import withPatterns from "foo/bar";"#,
-        //     Some(serde_json::json!([{ "patterns": ["bar"] }])),
-        // ),
+        (
+            r#"import withPatterns from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": ["bar"] }])),
+        ),
         (
             r#"import withPatterns from "foo/baz";"#,
             Some(

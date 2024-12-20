@@ -30,6 +30,13 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:26]
+ 1 │ import withPatterns from "foo/bar";
+   ·                          ─────────
+   ╰────
+  help: Remove the import statement.
+
   ⚠ eslint(no-restricted-imports): foo is forbidden, use foo/bar instead
    ╭─[no_restricted_imports.tsx:1:26]
  1 │ import withPatterns from "foo/baz";
