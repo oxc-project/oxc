@@ -1,4 +1,7 @@
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::{
+    scope::ScopeId,
+    symbol::{SymbolFlags, SymbolId},
+};
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
 /// Store for bindings for class.
@@ -9,12 +12,12 @@ use oxc_traverse::{BoundIdentifier, TraverseCtx};
 /// Temp var is required in the following circumstances:
 ///
 /// * Class expression has static properties.
-///   e.g. `C = class { x = 1; }`
+///   e.g. `C = class { static x = 1; }`
 /// * Class declaration has static properties and one of the static prop's initializers contains:
 ///   a. `this`
-///      e.g. `class C { x = this; }`
+///      e.g. `class C { static x = this; }`
 ///   b. Reference to class name
-///      e.g. `class C { x = C; }`
+///      e.g. `class C { static x = C; }`
 ///   c. A private field referring to one of the class's static private props.
 ///      e.g. `class C { static #x; static y = obj.#x; }`
 ///
@@ -35,13 +38,14 @@ use oxc_traverse::{BoundIdentifier, TraverseCtx};
 ///
 /// `static_private_fields_use_temp` is updated as transform moves through the class,
 /// to indicate which binding to use.
-#[derive(Default, Clone)]
 pub(super) struct ClassBindings<'a> {
     /// Binding for class name, if class has name
     pub name: Option<BoundIdentifier<'a>>,
     /// Temp var for class.
     /// e.g. `_Class` in `_Class = class {}, _Class.x = 1, _Class`
     pub temp: Option<BoundIdentifier<'a>>,
+    /// `ScopeId` of hoist scope outside class (which temp `var` binding would be created in)
+    pub outer_hoist_scope_id: ScopeId,
     /// `true` if should use temp binding for references to class in transpiled static private fields,
     /// `false` if can use name binding
     pub static_private_fields_use_temp: bool,
@@ -50,18 +54,28 @@ pub(super) struct ClassBindings<'a> {
 }
 
 impl<'a> ClassBindings<'a> {
-    /// Create `ClassBindings`.
+    /// Create new `ClassBindings`.
     pub fn new(
         name_binding: Option<BoundIdentifier<'a>>,
         temp_binding: Option<BoundIdentifier<'a>>,
+        outer_scope_id: ScopeId,
+        static_private_fields_use_temp: bool,
         temp_var_is_created: bool,
     ) -> Self {
         Self {
             name: name_binding,
             temp: temp_binding,
-            static_private_fields_use_temp: true,
+            outer_hoist_scope_id: outer_scope_id,
+            static_private_fields_use_temp,
             temp_var_is_created,
         }
+    }
+
+    /// Create dummy `ClassBindings`.
+    ///
+    /// Used when class needs no transform, and for dummy entry at top of `ClassesStack`.
+    pub fn dummy() -> Self {
+        Self::new(None, None, ScopeId::new(0), false, false)
     }
 
     /// Get `SymbolId` of name binding.
@@ -88,7 +102,9 @@ impl<'a> ClassBindings<'a> {
     ) -> &BoundIdentifier<'a> {
         if self.static_private_fields_use_temp {
             // Create temp binding if doesn't already exist
-            self.temp.get_or_insert_with(|| Self::create_temp_binding(self.name.as_ref(), ctx))
+            self.temp.get_or_insert_with(|| {
+                Self::create_temp_binding(self.name.as_ref(), self.outer_hoist_scope_id, ctx)
+            })
         } else {
             // `static_private_fields_use_temp` is always `true` for class expressions.
             // Class declarations always have a name binding if they have any static props.
@@ -100,12 +116,13 @@ impl<'a> ClassBindings<'a> {
     /// Generate binding for temp var.
     pub fn create_temp_binding(
         name_binding: Option<&BoundIdentifier<'a>>,
+        outer_hoist_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         // Base temp binding name on class name, or "Class" if no name.
         // TODO(improve-on-babel): If class name var isn't mutated, no need for temp var for
         // class declaration. Can just use class binding.
         let name = name_binding.map_or("Class", |binding| binding.name.as_str());
-        ctx.generate_uid_in_current_hoist_scope(name)
+        ctx.generate_uid(name, outer_hoist_scope_id, SymbolFlags::FunctionScopedVariable)
     }
 }

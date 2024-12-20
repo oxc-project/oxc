@@ -8,10 +8,11 @@ use super::{ClassBindings, ClassProperties, FxIndexMap};
 /// Details of a class.
 ///
 /// These are stored in `ClassesStack`.
-#[derive(Default)]
 pub(super) struct ClassDetails<'a> {
     /// `true` for class declaration, `false` for class expression
     pub is_declaration: bool,
+    /// `true` if class requires no transformation
+    pub is_transform_required: bool,
     /// Private properties.
     /// Mapping private prop name to binding for temp var.
     /// This is then used as lookup when transforming e.g. `this.#x`.
@@ -21,6 +22,20 @@ pub(super) struct ClassDetails<'a> {
     pub bindings: ClassBindings<'a>,
 }
 
+impl<'a> ClassDetails<'a> {
+    /// Create empty `ClassDetails`.
+    ///
+    /// Used when class needs no transform, and for dummy entry at top of `ClassesStack`.
+    pub fn empty(is_declaration: bool) -> Self {
+        Self {
+            is_declaration,
+            is_transform_required: false,
+            private_props: None,
+            bindings: ClassBindings::dummy(),
+        }
+    }
+}
+
 /// Details of a private property.
 pub(super) struct PrivateProp<'a> {
     pub binding: BoundIdentifier<'a>,
@@ -28,6 +43,7 @@ pub(super) struct PrivateProp<'a> {
 }
 
 /// Stack of `ClassDetails`.
+///
 /// Pushed to when entering a class, popped when exiting.
 ///
 /// We use a `NonEmptyStack` to make `last` and `last_mut` cheap (these are used a lot).
@@ -37,12 +53,17 @@ pub(super) struct PrivateProp<'a> {
 /// to work around borrow-checker. You can call `find_private_prop` and retain the return value
 /// without holding a mut borrow of the whole of `&mut ClassProperties`. This allows accessing other
 /// properties of `ClassProperties` while that borrow is held.
-#[derive(Default)]
 pub(super) struct ClassesStack<'a> {
     stack: NonEmptyStack<ClassDetails<'a>>,
 }
 
 impl<'a> ClassesStack<'a> {
+    /// Create new `ClassesStack`.
+    pub fn new() -> Self {
+        // Default stack capacity is 4. That's is probably good. More than 4 nested classes is rare.
+        Self { stack: NonEmptyStack::new(ClassDetails::empty(false)) }
+    }
+
     /// Push an entry to stack.
     #[inline]
     pub fn push(&mut self, class: ClassDetails<'a>) {

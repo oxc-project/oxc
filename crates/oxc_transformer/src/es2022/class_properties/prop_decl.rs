@@ -218,7 +218,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             self.create_init_assignment_loose(prop, value, assignee, is_static, ctx)
         } else {
             // `_defineProperty(assignee, "prop", value)`
-            self.create_init_assignment_not_loose(prop, value, assignee, ctx)
+            self.create_init_assignment_not_loose(prop, value, assignee, is_static, ctx)
         }
     }
 
@@ -237,12 +237,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let left = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
                 if needs_define(&ident.name) {
-                    return self.create_init_assignment_not_loose(prop, value, assignee, ctx);
+                    return self
+                        .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
                 }
                 ctx.ast.member_expression_static(SPAN, assignee, ident.as_ref().clone(), false)
             }
             PropertyKey::StringLiteral(str_lit) if needs_define(&str_lit.value) => {
-                return self.create_init_assignment_not_loose(prop, value, assignee, ctx);
+                return self
+                    .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
             }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();
@@ -250,7 +252,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
                 // TODO: Any other possible static key types?
-                let key = self.create_computed_key_temp_var_if_required(key, ctx);
+                let key = self.create_computed_key_temp_var_if_required(key, is_static, ctx);
                 ctx.ast.member_expression_computed(SPAN, assignee, key, false)
             }
             PropertyKey::PrivateIdentifier(_) => {
@@ -274,6 +276,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         prop: &mut PropertyDefinition<'a>,
         value: Expression<'a>,
         assignee: Expression<'a>,
+        is_static: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let key = match &mut prop.key {
@@ -286,7 +289,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
                 // TODO: Any other possible static key types?
-                self.create_computed_key_temp_var_if_required(key, ctx)
+                self.create_computed_key_temp_var_if_required(key, is_static, ctx)
             }
             PropertyKey::PrivateIdentifier(_) => {
                 // Handled in `convert_instance_property` and `convert_static_property`

@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 116/132
+Passed: 116/133
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,7 +16,36 @@ Passed: 116/132
 * regexp
 
 
-# babel-plugin-transform-class-properties (17/21)
+# babel-plugin-transform-class-properties (17/22)
+* interaction-with-other-transforms/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "C2", "_ref", "_ref2"]
+rebuilt        : ScopeId(0): ["C", "C2", "_a", "_e", "_g", "_ref", "_ref2"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+Bindings mismatch:
+after transform: ScopeId(1): ["_a", "_e", "_g"]
+rebuilt        : ScopeId(1): []
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(6)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(3): ScopeFlags(Function | Arrow)
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(3): Some(ScopeId(0))
+Symbol scope ID mismatch for "_a":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_e":
+after transform: SymbolId(5): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+Symbol scope ID mismatch for "_g":
+after transform: SymbolId(6): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(0)
+
 * static-super-assignment-target/input.js
 x Output mismatch
 

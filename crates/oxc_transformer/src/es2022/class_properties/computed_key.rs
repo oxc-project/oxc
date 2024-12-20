@@ -34,8 +34,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // 3. At least one property satisfying the above is after this method,
         //    or class contains a static block which is being transformed
         //    (static blocks are always evaluated after computed keys, regardless of order)
-        let key = ctx.ast.move_expression(key);
-        let temp_var = self.create_computed_key_temp_var(key, ctx);
+        let original_key = ctx.ast.move_expression(key);
+        let (assignment, temp_var) = self.create_computed_key_temp_var(original_key, ctx);
+        self.insert_before.push(assignment);
         method.key = PropertyKey::from(temp_var);
     }
 
@@ -52,43 +53,89 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// This function:
     /// * Creates the `let _x;` statement and inserts it.
     /// * Creates the `_x = x()` assignment.
-    /// * Inserts assignment before class.
+    /// * If static prop, inserts assignment before class.
+    /// * If instance prop, replaces existing key with assignment (it'll be moved to before class later).
     /// * Returns `_x`.
     pub(super) fn create_computed_key_temp_var_if_required(
         &mut self,
         key: &mut Expression<'a>,
+        is_static: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let key = ctx.ast.move_expression(key);
-        if key_needs_temp_var(&key, ctx) {
-            self.create_computed_key_temp_var(key, ctx)
+        let original_key = ctx.ast.move_expression(key);
+        if key_needs_temp_var(&original_key, ctx) {
+            let (assignment, ident) = self.create_computed_key_temp_var(original_key, ctx);
+            if is_static {
+                self.insert_before.push(assignment);
+            } else {
+                *key = assignment;
+            }
+            ident
         } else {
-            key
+            original_key
         }
     }
 
-    /// * Create `let _x;` statement and insert it.
-    /// * Create `_x = x()` assignment.
-    /// * Insert assignment before class.
-    /// * Return `_x`.
+    /// Create `let _x;` statement and insert it.
+    /// Return `_x = x()` assignment, and `_x` identifier referencing same temp var.
     fn create_computed_key_temp_var(
         &mut self,
         key: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        // We entered transform via `enter_expression` or `enter_statement`,
-        // so `ctx.current_scope_id()` is the scope outside the class
-        let parent_scope_id = ctx.current_scope_id();
+    ) -> (/* assignment */ Expression<'a>, /* identifier */ Expression<'a>) {
+        let outer_scope_id = ctx.current_block_scope_id();
         // TODO: Handle if is a class expression defined in a function's params.
         let binding =
-            ctx.generate_uid_based_on_node(&key, parent_scope_id, SymbolFlags::BlockScopedVariable);
+            ctx.generate_uid_based_on_node(&key, outer_scope_id, SymbolFlags::BlockScopedVariable);
 
         self.ctx.var_declarations.insert_let(&binding, None, ctx);
 
         let assignment = create_assignment(&binding, key, ctx);
-        self.insert_before.push(assignment);
+        let ident = binding.create_read_expression(ctx);
 
-        binding.create_read_expression(ctx)
+        (assignment, ident)
+    }
+
+    /// Extract computed key if it's an assignment, and replace with identifier.
+    ///
+    /// In entry phase, computed keys for instance properties are converted to assignments to temp vars.
+    /// `class C { [foo()] = 123 }`
+    /// -> `class C { [_foo = foo()]; constructor() { this[_foo] = 123; } }`
+    ///
+    /// Now in exit phase, extract this assignment and move it to before class.
+    ///
+    /// `class C { [_foo = foo()]; constructor() { this[_foo] = 123; } }`
+    /// -> `_foo = foo(); class C { [null]; constructor() { this[_foo] = 123; } }`
+    /// (`[null]` property will be removed too by caller)
+    ///
+    /// We do this process in 2 passes so that the computed key is still present within the class during
+    /// traversal of the class body, so any other transforms can run on it.
+    /// Now that we're exiting the class, we can move the assignment `_foo = foo()` out of the class
+    /// to where it needs to be.
+    pub(super) fn extract_instance_prop_computed_key(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        // Exit if computed key is not an assignment (wasn't processed in 1st pass).
+        let PropertyKey::AssignmentExpression(assign_expr) = &prop.key else { return };
+
+        // Debug checks that we're removing what we think we are
+        #[cfg(debug_assertions)]
+        {
+            assert!(assign_expr.span.is_empty());
+            let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign_expr.left else {
+                unreachable!();
+            };
+            assert!(ident.name.starts_with('_'));
+            assert!(ctx.symbols().get_reference(ident.reference_id()).symbol_id().is_some());
+            assert!(ident.span.is_empty());
+            assert!(prop.value.is_none());
+        }
+
+        // Extract assignment from computed key and insert before class
+        let assignment = ctx.ast.move_property_key(&mut prop.key).into_expression();
+        self.insert_before.push(assignment);
     }
 }
 

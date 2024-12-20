@@ -207,54 +207,17 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         (insert_scopes, insert_location)
     }
 
-    /// Insert instance property initializers.
-    pub(super) fn insert_instance_inits(
-        &mut self,
-        class: &mut Class<'a>,
-        inits: Vec<Expression<'a>>,
-        insertion_location: &InstanceInitsInsertLocation<'a>,
-        constructor_index: usize,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        // TODO: Handle private props in constructor params `class C { #x; constructor(x = this.#x) {} }`.
-
-        match insertion_location {
-            InstanceInitsInsertLocation::NewConstructor => {
-                self.insert_constructor(class, inits, ctx);
-            }
-            InstanceInitsInsertLocation::ExistingConstructor(stmt_index) => {
-                self.insert_inits_into_constructor_as_statements(
-                    class,
-                    inits,
-                    constructor_index,
-                    *stmt_index,
-                    ctx,
-                );
-            }
-            InstanceInitsInsertLocation::SuperFnInsideConstructor(super_binding) => {
-                self.create_super_function_inside_constructor(
-                    class,
-                    inits,
-                    super_binding,
-                    constructor_index,
-                    ctx,
-                );
-            }
-            InstanceInitsInsertLocation::SuperFnOutsideClass(super_binding) => {
-                self.create_super_function_outside_constructor(inits, super_binding, ctx);
-            }
-        }
-    }
+    // TODO: Handle private props in constructor params `class C { #x; constructor(x = this.#x) {} }`.
 
     /// Add a constructor to class containing property initializers.
-    fn insert_constructor(
+    pub(super) fn insert_constructor(
         &self,
-        class: &mut Class<'a>,
+        body: &mut ClassBody<'a>,
         inits: Vec<Expression<'a>>,
+        has_super_class: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // Create statements to go in function body.
-        let has_super_class = class.super_class.is_some();
+        // Create statements to go in function body
         let mut stmts = ctx.ast.vec_with_capacity(inits.len() + usize::from(has_super_class));
 
         // Add `super(..._args);` statement and `..._args` param if class has a super class.
@@ -307,20 +270,18 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ));
 
         // TODO(improve-on-babel): Could push constructor onto end of elements, instead of inserting as first
-        class.body.body.insert(0, ctor);
+        body.body.insert(0, ctor);
     }
 
     /// Insert instance property initializers into constructor body at `insertion_index`.
-    fn insert_inits_into_constructor_as_statements(
+    pub(super) fn insert_inits_into_constructor_as_statements(
         &mut self,
-        class: &mut Class<'a>,
+        constructor: &mut Function<'a>,
         inits: Vec<Expression<'a>>,
-        constructor_index: usize,
         insertion_index: usize,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Rename any symbols in constructor which clash with references in inits
-        let constructor = Self::get_constructor(class, constructor_index);
         self.rename_clashing_symbols(constructor, ctx);
 
         // Insert inits into constructor body
@@ -331,16 +292,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Create `_super` function containing instance property initializers,
     /// and insert at top of constructor body.
     /// `var _super = (..._args) => (super(..._args), <inits>, this);`
-    fn create_super_function_inside_constructor(
+    pub(super) fn create_super_function_inside_constructor(
         &mut self,
-        class: &mut Class<'a>,
+        constructor: &mut Function<'a>,
         inits: Vec<Expression<'a>>,
         super_binding: &BoundIdentifier<'a>,
-        constructor_index: usize,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Rename any symbols in constructor which clash with references in inits
-        let constructor = Self::get_constructor(class, constructor_index);
         self.rename_clashing_symbols(constructor, ctx);
 
         // `(super(..._args), <inits>, this)`
@@ -405,14 +364,16 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Create `_super` function containing instance property initializers,
     /// and insert it outside class.
     /// `let _super = function() { <inits>; return this; }`
-    fn create_super_function_outside_constructor(
+    pub(super) fn create_super_function_outside_constructor(
         &mut self,
         inits: Vec<Expression<'a>>,
         super_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Add `"use strict"` directive if outer scope is not strict mode
-        let directives = if ctx.current_scope_flags().is_strict_mode() {
+        // TODO: This should be parent scope if insert `_super` function as expression before class expression.
+        let outer_scope_id = ctx.current_block_scope_id();
+        let directives = if ctx.scopes().get_flags(outer_scope_id).is_strict_mode() {
             ctx.ast.vec()
         } else {
             ctx.ast.vec1(ctx.ast.use_strict_directive())
@@ -445,8 +406,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ));
 
         // Insert `_super` function after class.
-        // Note: Inserting it after class not before, so that other transforms run on it.
-        // TODO: That doesn't work - other transforms do not run on it.
+        // TODO: Need to add `_super` function to class as a static method, and then remove it again
+        // in exit phase - so other transforms run on it in between.
+        // TODO: Need to transform `super` and references to class name in initializers.
         // TODO: If static block transform is not enabled, it's possible to construct the class
         // within the static block `class C { static { new C() } }` and that'd run before `_super`
         // is defined. So it needs to go before the class, not after, in that case.
@@ -455,6 +417,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         } else {
             let assignment = create_assignment(super_binding, super_func, ctx);
             // TODO: Why does this end up before class, not after?
+            // TODO: This isn't right. Should not be adding to `insert_after_exprs` in entry phase.
             self.insert_after_exprs.push(assignment);
             None
         };
@@ -489,20 +452,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // Empty `clashing_constructor_symbols` hashmap for reuse on next class
         clashing_symbols.clear();
-    }
-
-    /// Get `Function` for constructor, given constructor's index within class elements.
-    fn get_constructor<'b>(
-        class: &'b mut Class<'a>,
-        constructor_index: usize,
-    ) -> &'b mut Function<'a> {
-        let Some(ClassElement::MethodDefinition(method)) =
-            class.body.body.get_mut(constructor_index)
-        else {
-            unreachable!()
-        };
-        debug_assert!(method.kind == MethodDefinitionKind::Constructor);
-        &mut method.value
     }
 }
 
@@ -550,7 +499,7 @@ impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
         let insert_location = InstanceInitsInsertLocation::SuperFnOutsideClass(super_binding);
 
         // Create scope for `_super` function
-        let outer_scope_id = self.ctx.current_scope_id();
+        let outer_scope_id = self.ctx.current_block_scope_id();
         let super_func_scope_id = self.ctx.scopes_mut().add_scope(
             Some(outer_scope_id),
             NodeId::DUMMY,
@@ -631,7 +580,7 @@ impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
         let super_binding = self.super_binding.get_or_insert_with(|| {
             self.ctx.generate_uid(
                 "super",
-                self.ctx.current_scope_id(),
+                self.ctx.current_block_scope_id(),
                 SymbolFlags::BlockScopedVariable,
             )
         });
