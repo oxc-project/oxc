@@ -789,40 +789,40 @@ fn test() {
         //         }]
         //     }])),
         // ),
-        // (
-        //     r#"import withPatterns from "foo/bar";"#,
-        //     Some(
-        //         serde_json::json!([{ "patterns": [{ "regex": "foo/(?!bar)", "message": "foo is forbidden, use bar instead" }] }]),
-        //     ),
-        // ),
-        // (
-        //     "import withPatternsCaseSensitive from 'foo';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "regex": "FOO",
-        //             "message": "foo is forbidden, use bar instead",
-        //             "caseSensitive": true
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     "import Foo from '../../my/relative-module';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "regex": "my/relative-module",
-        //             "importNamePattern": "^Foo"
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     "import { Bar } from '../../my/relative-module';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "regex": "my/relative-module",
-        //             "importNamePattern": "^Foo"
-        //         }]
-        //     }])),
-        // ),
+        (
+            r#"import withPatterns from "foo/bar";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "regex": "foo/(?!bar)", "message": "foo is forbidden, use bar instead" }] }]),
+            ),
+        ),
+        (
+            "import withPatternsCaseSensitive from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "regex": "FOO",
+                    "message": "foo is forbidden, use bar instead",
+                    "caseSensitive": true
+                }]
+            }])),
+        ),
+        (
+            "import Foo from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "regex": "my/relative-module",
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "import { Bar } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "regex": "my/relative-module",
+                    "importNamePattern": "^Foo"
+                }]
+            }])),
+        ),
     ];
 
     let fail = vec![
@@ -1633,25 +1633,25 @@ fn test() {
                 }]
             }])),
         ),
-        // (
-        //     r#"import { AllowedObject, DisallowedObject } from "foo";"#,
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo"],
-        //             "allowImportNames": ["AllowedObject"]
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     r#"import { AllowedObject, DisallowedObject } from "foo";"#,
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo"],
-        //             "allowImportNames": ["AllowedObject"],
-        //             "message": r#"Only "AllowedObject" is allowed to be imported from "foo"."#
-        //         }]
-        //     }])),
-        // ),
+        (
+            r#"import { AllowedObject, DisallowedObject } from "foo";"#,
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNames": ["AllowedObject"]
+                }]
+            }])),
+        ),
+        (
+            r#"import { AllowedObject, DisallowedObject } from "foo";"#,
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNames": ["AllowedObject"],
+                    "message": r#"Only "AllowedObject" is allowed to be imported from "foo"."#
+                }]
+            }])),
+        ),
         (
             r#"import * as AllowedObject from "foo";"#,
             Some(serde_json::json!([{
@@ -1671,25 +1671,25 @@ fn test() {
                 }]
             }])),
         ),
-        // (
-        //     r#"import * as AllowedObject from "foo/bar";"#,
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo/*"],
-        //             "allowImportNames": ["AllowedObject"]
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     r#"import * as AllowedObject from "foo/bar";"#,
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo/*"],
-        //             "allowImportNames": ["AllowedObject"],
-        //             "message": r#"Only "AllowedObject" is allowed to be imported from "foo"."#
-        //         }]
-        //     }])),
-        // ),
+        (
+            r#"import * as AllowedObject from "foo/bar";"#,
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo/*"],
+                    "allowImportNames": ["AllowedObject"]
+                }]
+            }])),
+        ),
+        (
+            r#"import * as AllowedObject from "foo/bar";"#,
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo/*"],
+                    "allowImportNames": ["AllowedObject"],
+                    "message": r#"Only "AllowedObject" is allowed to be imported from "foo"."#
+                }]
+            }])),
+        ),
         // (
         //     r#"import * as AllowedObject from "foo/bar";"#,
         //     Some(serde_json::json!([{
