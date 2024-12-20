@@ -37,10 +37,9 @@ function a(b) {
 }
 
 export function foo() {}; foo()
-function a() {}
+export function foo() {}
 ;
-a();
-export { a as foo };
+foo();
 
 export default function foo() {}; foo()
 export default function a() {}
@@ -48,9 +47,8 @@ export default function a() {}
 a();
 
 export const foo = 1; foo
-export const a = 1;
-a;
-export { a as foo };
+export const foo = 1;
+foo;
 
 const foo = 1; foo; export { foo }
 const a = 1;

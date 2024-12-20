@@ -1,8 +1,9 @@
 use itertools::Itertools;
-use oxc_ast::ast::Program;
+use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_index::{index_vec, Idx, IndexVec};
 use oxc_semantic::{ReferenceId, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::CompactStr;
+use rustc_hash::FxHashSet;
 
 type Slot = usize;
 
@@ -85,6 +86,28 @@ impl Mangler {
     pub fn build<'a>(mut self, program: &'a Program<'a>) -> Mangler {
         let semantic = SemanticBuilder::new().build(program).semantic;
 
+        let (exported_names, exported_symbols): (FxHashSet<CompactStr>, FxHashSet<SymbolId>) =
+            program
+                .body
+                .iter()
+                .filter_map(|statement| {
+                    let Statement::ExportNamedDeclaration(v) = statement else { return None };
+                    v.declaration.as_ref()
+                })
+                .flat_map(|decl| {
+                    if let Declaration::VariableDeclaration(decl) = decl {
+                        itertools::Either::Left(
+                            decl.declarations
+                                .iter()
+                                .filter_map(|decl| decl.id.get_binding_identifier()),
+                        )
+                    } else {
+                        itertools::Either::Right(decl.id().into_iter())
+                    }
+                })
+                .map(|id| (id.name.to_compact_str(), id.symbol_id()))
+                .collect();
+
         // Mangle the symbol table by computing slots from the scope tree.
         // A slot is the occurrence index of a binding identifier inside a scope.
         let (mut symbol_table, scope_tree) = semantic.into_symbol_table_and_scope_tree();
@@ -126,8 +149,13 @@ impl Mangler {
             }
         }
 
-        let frequencies =
-            self.tally_slot_frequencies(&symbol_table, &scope_tree, total_number_of_slots, &slots);
+        let frequencies = self.tally_slot_frequencies(
+            &symbol_table,
+            &exported_symbols,
+            &scope_tree,
+            total_number_of_slots,
+            &slots,
+        );
 
         let root_unresolved_references = scope_tree.root_unresolved_references();
         let root_bindings = scope_tree.get_bindings(scope_tree.root_scope_id());
@@ -145,7 +173,8 @@ impl Mangler {
                 if !is_keyword(n)
                     && !is_special_name(n)
                     && !root_unresolved_references.contains_key(n)
-                    && (self.options.top_level || !root_bindings.contains_key(n))
+                    && !(root_bindings.contains_key(n)
+                        && (!self.options.top_level || exported_names.contains(n)))
                 {
                     break name;
                 }
@@ -206,6 +235,7 @@ impl Mangler {
     fn tally_slot_frequencies(
         &self,
         symbol_table: &SymbolTable,
+        exported_symbols: &FxHashSet<SymbolId>,
         scope_tree: &ScopeTree,
         total_number_of_slots: usize,
         slots: &IndexVec<SymbolId, Slot>,
@@ -213,7 +243,9 @@ impl Mangler {
         let root_scope_id = scope_tree.root_scope_id();
         let mut frequencies = vec![SlotFrequency::default(); total_number_of_slots];
         for (symbol_id, slot) in slots.iter_enumerated() {
-            if !self.options.top_level && symbol_table.get_scope_id(symbol_id) == root_scope_id {
+            if symbol_table.get_scope_id(symbol_id) == root_scope_id
+                && (!self.options.top_level || exported_symbols.contains(&symbol_id))
+            {
                 continue;
             }
             if is_special_name(symbol_table.get_name(symbol_id)) {

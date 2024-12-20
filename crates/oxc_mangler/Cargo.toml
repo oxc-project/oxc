@@ -26,3 +26,4 @@ oxc_ast = { workspace = true }
 oxc_index = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
+rustc-hash = { workspace = true }
