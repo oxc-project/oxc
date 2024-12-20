@@ -87,11 +87,6 @@ fn add_configuration_from_object(
         {
             paths.push(path);
         }
-        if let Ok(path) =
-            serde_json::from_value::<RestrictedPath>(serde_json::Value::Object(obj.clone()))
-        {
-            paths.push(path);
-        }
         return;
     };
 
@@ -103,7 +98,6 @@ fn add_configuration_from_object(
         match path_value {
             Value::String(module_name) => add_configuration_from_string(paths, module_name),
             Value::Object(_) => {
-                if let Ok(path) = serde_json::from_value::<RestrictedPath>(path_value.clone()) {
                 if let Ok(path) = serde_json::from_value::<RestrictedPath>(path_value.clone()) {
                     paths.push(path);
                 }
@@ -485,13 +479,6 @@ fn test() {
                     "message": r#"Please import "DisallowedObject" from /bar/ instead."#
                 }]
             }])),
-            Some(serde_json::json!([{
-                "paths": [{
-                    "name": "bar",
-                    "importNames": ["DisallowedObject"],
-                    "message": r#"Please import "DisallowedObject" from /bar/ instead."#
-                }]
-            }])),
         ),
         (
             r#"import "foo";"#,
@@ -781,7 +768,6 @@ fn test() {
         //     Some(serde_json::json!([{ "patterns": ["foo/*", "!foo/baz"] }])),
         // ),
         (r#"export * from "fs";"#, Some(serde_json::json!(["fs"]))),
-        (r#"export * from "fs";"#, Some(serde_json::json!(["fs"]))),
         (r#"export * as ns from "fs";"#, Some(serde_json::json!(["fs"]))),
         (r#"export {a} from "fs";"#, Some(serde_json::json!(["fs"]))),
         (
@@ -832,80 +818,6 @@ fn test() {
                     "importNames":[""],
                      "message": r#"Don"t import ""."#
                  }]
-            }])),
-        ),
-        (
-            r#"export * as ns from "fs";"#,
-            Some(serde_json::json!([{
-                "paths": [{
-                    "name": "fs",
-                    "importNames": ["foo"],
-                    "message": r#"Don"t import "foo"."#
-                }]
-            }])),
-        ),
-        (
-            r#"import withGitignores from "foo";"#,
-            Some(serde_json::json!([{
-                "name": "foo",
-                "message": r#"Please import from "bar" instead."#
-            }])),
-        ),
-        (
-            r#"import withGitignores from "bar";"#,
-            Some(serde_json::json!([
-                "foo",
-                {
-                    "name": "bar",
-                    "message": r#"Please import from "baz" instead."#
-                },
-                "baz"
-            ])),
-        ),
-        (
-            r#"import withGitignores from "foo";"#,
-            Some(serde_json::json!([{
-                "paths": [{
-                    "name": "foo",
-                    "message": r#"Please import from "bar" instead."#
-                }]
-            }])),
-        ),
-        (
-            r#"import DisallowedObject from "foo";"#,
-            Some(serde_json::json!([{
-                "paths": [{
-                    "name": "foo",
-                    "importNames": ["default"],
-                    "message": r#"Please import the default import of "foo" from /bar/ instead."#
-                }]
-            }])),
-        ),
-        (
-            r#"import * as All from "foo";"#,
-            Some(serde_json::json!([{
-                "paths": [{
-                    "name": "foo",
-                    "importNames": ["DisallowedObject"],
-                    "message": r#"Please import "DisallowedObject" from /bar/ instead."#
-                }]
-            }])),
-        ),
-        (
-            r#"export * from "foo";"#,
-            Some(serde_json::json!([{
-                "paths": [{
-                    "name": "foo",
-                    "importNames": ["DisallowedObject"],
-                    "message": r#"Please import "DisallowedObject" from /bar/ instead."#
-                }]
-            }])),
-        ),
-        (
-            r#"export * from "foo";"#,
-            Some(serde_json::json!([{
-                    "name": "foo",
-                    "importNames": ["DisallowedObject1, DisallowedObject2"]
             }])),
         ),
         (
@@ -1319,20 +1231,6 @@ fn test() {
             }])),
         ),
         (
-            "import * as mod from 'mod'",
-            Some(serde_json::json!([{
-                "paths": [{
-                    "name": "mod",
-                    "importNames": ["foo"],
-                    "message": "Import foo from qux instead."
-                }, {
-                    "name": "mod",
-                    "importNames": ["bar"],
-                    "message": "Import bar from qux instead."
-                }]
-            }])),
-        ),
-        (
             "import { foo } from 'mod'",
             Some(serde_json::json!([{
                 "paths": [
@@ -1384,24 +1282,6 @@ fn test() {
                 }]
             }])),
         ),
-        (
-            "import foo, { bar } from 'mod';",
-            Some(serde_json::json!([{
-                "paths": [{
-                    "name": "mod",
-                    "importNames": ["default"]
-                }]
-            }])),
-        ),
-        (
-            "import foo, * as bar from 'mod';",
-            Some(serde_json::json!([{
-                "paths": [{
-                    "name": "mod",
-                    "importNames": ["default"]
-                }]
-            }])),
-        ),
         ("import * as bar from 'foo';", Some(serde_json::json!(["foo"]))),
         (
             "import { a, a as b } from 'mod';",
@@ -1418,15 +1298,6 @@ fn test() {
                 "paths": [{
                     "name": "mod",
                     "importNames": ["x"]
-                }]
-            }])),
-        ),
-        (
-            "import foo, { default as bar } from 'mod';",
-            Some(serde_json::json!([{
-                "paths": [{
-                    "name": "mod",
-                    "importNames": ["default"]
                 }]
             }])),
         ),
