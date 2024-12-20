@@ -27,6 +27,7 @@ pub struct TraverseScoping {
     uid_names: Option<FxHashSet<CompactStr>>,
     current_scope_id: ScopeId,
     current_hoist_scope_id: ScopeId,
+    current_block_scope_id: ScopeId,
 }
 
 // Public methods
@@ -41,6 +42,12 @@ impl TraverseScoping {
     #[inline]
     pub(crate) fn current_hoist_scope_id(&self) -> ScopeId {
         self.current_hoist_scope_id
+    }
+
+    /// Get current block scope ID
+    #[inline]
+    pub(crate) fn current_block_scope_id(&self) -> ScopeId {
+        self.current_block_scope_id
     }
 
     /// Get current scope flags
@@ -390,6 +397,7 @@ impl TraverseScoping {
             // Dummy values. Both immediately overwritten in `walk_program`.
             current_scope_id: ScopeId::new(0),
             current_hoist_scope_id: ScopeId::new(0),
+            current_block_scope_id: ScopeId::new(0),
         }
     }
 
@@ -408,6 +416,12 @@ impl TraverseScoping {
     #[inline]
     pub(crate) fn set_current_hoist_scope_id(&mut self, scope_id: ScopeId) {
         self.current_hoist_scope_id = scope_id;
+    }
+
+    /// Set current block scope ID
+    #[inline]
+    pub(crate) fn set_current_block_scope_id(&mut self, scope_id: ScopeId) {
+        self.current_block_scope_id = scope_id;
     }
 
     /// Get `uid_names`.
