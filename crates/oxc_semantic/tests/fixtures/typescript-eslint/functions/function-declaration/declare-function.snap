@@ -1,0 +1,45 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+assertion_line: 147
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/function-declaration/declare-function.ts
+snapshot_kind: text
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "node": "Function(A)",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode | Function)",
+        "id": 2,
+        "node": "Function(B)",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "A",
+        "node": "Function(A)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 1,
+        "name": "B",
+        "node": "Function(B)",
+        "references": []
+      }
+    ]
+  }
+]

@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
+assertion_line: 147
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/literal-type3.ts
 snapshot_kind: text
 ---
@@ -28,7 +29,7 @@ snapshot_kind: text
         "symbols": [
           {
             "flags": "SymbolFlags(FunctionScopedVariable)",
-            "id": 2,
+            "id": 3,
             "name": "value",
             "node": "FormalParameter(value)",
             "references": []
@@ -67,6 +68,13 @@ snapshot_kind: text
             "node_id": 31
           }
         ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 2,
+        "name": "setAlignment",
+        "node": "Function(setAlignment)",
+        "references": []
       }
     ]
   }

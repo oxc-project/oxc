@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
+assertion_line: 147
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/class-deco-with-object-param.ts
 snapshot_kind: text
 ---
@@ -14,7 +15,7 @@ snapshot_kind: text
         "symbols": [
           {
             "flags": "SymbolFlags(FunctionScopedVariable)",
-            "id": 0,
+            "id": 1,
             "name": "param",
             "node": "BindingRestElement",
             "references": []
@@ -34,8 +35,22 @@ snapshot_kind: text
     "node": "Program",
     "symbols": [
       {
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "deco",
+        "node": "Function(deco)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 0,
+            "name": "deco",
+            "node_id": 19
+          }
+        ]
+      },
+      {
         "flags": "SymbolFlags(Class)",
-        "id": 1,
+        "id": 2,
         "name": "Foo",
         "node": "Class(Foo)",
         "references": []
