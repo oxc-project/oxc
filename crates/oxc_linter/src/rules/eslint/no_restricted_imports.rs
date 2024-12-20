@@ -833,38 +833,38 @@ fn test() {
             r#"import withPaths from "foo/bar";"#,
             Some(serde_json::json!([{ "paths": ["foo/bar"] }])),
         ),
-        (
-            r#"import withPatterns from "foo/bar";"#,
-            Some(serde_json::json!([{ "patterns": ["foo"] }])),
-        ),
-        (
-            r#"import withPatterns from "foo/bar";"#,
-            Some(serde_json::json!([{ "patterns": ["bar"] }])),
-        ),
         // (
-        //     r#"import withPatterns from "foo/baz";"#,
-        //     Some(
-        //         serde_json::json!([{ "patterns": [{ "group": ["foo/*", "!foo/bar"], "message": "foo is forbidden, use foo/bar instead" }] }]),
-        //     ),
-        // ),
-        // (
-        //     r#"import withPatterns from "foo/baz";"#,
-        //     Some(
-        //         serde_json::json!([{ "patterns": [{ "group": ["foo/bar", "foo/baz"], "message": "some foo subimports are restricted" }] }]),
-        //     ),
+        //     r#"import withPatterns from "foo/bar";"#,
+        //     Some(serde_json::json!([{ "patterns": ["foo"] }])),
         // ),
         // (
         //     r#"import withPatterns from "foo/bar";"#,
-        //     Some(serde_json::json!([{ "patterns": [{ "group": ["foo/bar"] }] }])),
+        //     Some(serde_json::json!([{ "patterns": ["bar"] }])),
         // ),
+        (
+            r#"import withPatterns from "foo/baz";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo/*", "!foo/bar"], "message": "foo is forbidden, use foo/bar instead" }] }]),
+            ),
+        ),
+        (
+            r#"import withPatterns from "foo/baz";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo/bar", "foo/baz"], "message": "some foo subimports are restricted" }] }]),
+            ),
+        ),
+        (
+            r#"import withPatterns from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": [{ "group": ["foo/bar"] }] }])),
+        ),
         // (
         //     "import withPatternsCaseInsensitive from 'foo';",
         //     Some(serde_json::json!([{ "patterns": [{ "group": ["FOO"] }] }])),
         // ),
-        // (
-        //     r#"import withGitignores from "foo/bar";"#,
-        //     Some(serde_json::json!([{ "patterns": ["foo/*", "!foo/baz"] }])),
-        // ),
+        (
+            r#"import withGitignores from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": ["foo/*", "!foo/baz"] }])),
+        ),
         (r#"export * from "fs";"#, Some(serde_json::json!(["fs"]))),
         (r#"export * as ns from "fs";"#, Some(serde_json::json!(["fs"]))),
         (r#"export {a} from "fs";"#, Some(serde_json::json!(["fs"]))),
@@ -1336,76 +1336,76 @@ fn test() {
             "import relativeWithPaths from '../foo';",
             Some(serde_json::json!([{ "paths": ["../foo"] }])),
         ),
-        // (
-        //     "import relativeWithPatterns from '../foo';",
-        //     Some(serde_json::json!([{ "patterns": ["../foo"] }])),
-        // ),
+        (
+            "import relativeWithPatterns from '../foo';",
+            Some(serde_json::json!([{ "patterns": ["../foo"] }])),
+        ),
         ("import absolute from '/foo';", Some(serde_json::json!(["/foo"]))),
         ("import absoluteWithPaths from '/foo';", Some(serde_json::json!([{ "paths": ["/foo"] }]))),
-        // (
-        //     "import absoluteWithPatterns from '/foo';",
-        //     Some(serde_json::json!([{ "patterns": ["foo"] }])),
-        // ),
+        (
+            "import absoluteWithPatterns from '/foo';",
+            Some(serde_json::json!([{ "patterns": ["foo"] }])),
+        ),
         // (
         //     "import absoluteWithPatterns from '#foo/bar';",
         //     Some(serde_json::json!([{ "patterns": ["\\#foo"] }])),
         // ),
-        // (
-        //     "import { Foo } from '../../my/relative-module';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["**/my/relative-module"],
-        //             "importNames": ["Foo"]
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     "import { Foo, Bar } from '../../my/relative-module';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["**/my/relative-module"],
-        //             "importNames": ["Foo", "Bar"],
-        //             "message": "Import from @/utils instead."
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     "import * as All from '../../my/relative-module';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["**/my/relative-module"],
-        //             "importNames": ["Foo"]
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     "import * as AllWithCustomMessage from '../../my/relative-module';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["**/my/relative-module"],
-        //             "importNames": ["Foo"],
-        //             "message": "Import from @/utils instead."
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     "import def, * as ns from 'mod';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["mod"],
-        //             "importNames": ["default"]
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     "import Foo from 'mod';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["mod"],
-        //             "importNames": ["default"]
-        //         }]
-        //     }])),
-        // ),
+        (
+            "import { Foo } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNames": ["Foo"]
+                }]
+            }])),
+        ),
+        (
+            "import { Foo, Bar } from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNames": ["Foo", "Bar"],
+                    "message": "Import from @/utils instead."
+                }]
+            }])),
+        ),
+        (
+            "import * as All from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNames": ["Foo"]
+                }]
+            }])),
+        ),
+        (
+            "import * as AllWithCustomMessage from '../../my/relative-module';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["**/my/relative-module"],
+                    "importNames": ["Foo"],
+                    "message": "Import from @/utils instead."
+                }]
+            }])),
+        ),
+        (
+            "import def, * as ns from 'mod';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["mod"],
+                    "importNames": ["default"]
+                }]
+            }])),
+        ),
+        (
+            "import Foo from 'mod';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["mod"],
+                    "importNames": ["default"]
+                }]
+            }])),
+        ),
         // (
         //     "import { Foo } from 'foo';",
         //     Some(serde_json::json!([{
