@@ -41,11 +41,17 @@ pub(super) struct PrivateProp<'a> {
     pub binding: BoundIdentifier<'a>,
     pub is_static: bool,
     pub is_method: bool,
+    pub is_accessor: bool,
 }
 
 impl<'a> PrivateProp<'a> {
-    pub fn new(binding: BoundIdentifier<'a>, is_static: bool, is_method: bool) -> Self {
-        Self { binding, is_static, is_method }
+    pub fn new(
+        binding: BoundIdentifier<'a>,
+        is_static: bool,
+        is_method: bool,
+        is_accessor: bool,
+    ) -> Self {
+        Self { binding, is_static, is_method, is_accessor }
     }
 }
 
@@ -111,6 +117,7 @@ impl<'a> ClassesStack<'a> {
                         class_bindings: &mut class.bindings,
                         is_static: prop.is_static,
                         is_method: prop.is_method,
+                        is_accessor: prop.is_accessor,
                         is_declaration: class.is_declaration,
                     };
                 }
@@ -133,6 +140,8 @@ pub(super) struct ResolvedPrivateProp<'a, 'b> {
     pub is_static: bool,
     /// `true` if is a private method
     pub is_method: bool,
+    /// `true` if is a private accessor property
+    pub is_accessor: bool,
     /// `true` if class which defines this property is a class declaration
     pub is_declaration: bool,
 }
