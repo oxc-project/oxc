@@ -24,10 +24,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Get value
-        let value = match &mut prop.value {
-            Some(value) => {
-                self.transform_instance_initializer(value, ctx);
-                ctx.ast.move_expression(value)
+        let value = match prop.value.take() {
+            Some(mut value) => {
+                self.transform_instance_initializer(&mut value, ctx);
+                value
             }
             None => ctx.ast.void_0(SPAN),
         };
@@ -67,8 +67,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let private_props = self.private_props_stack.last().unwrap();
-        let prop = &private_props.props[&ident.name];
+        let private_props = self.current_class().private_props.as_ref().unwrap();
+        let prop = &private_props[&ident.name];
         let arguments = ctx.ast.vec_from_array([
             Argument::from(ctx.ast.expression_this(SPAN)),
             Argument::from(prop.binding.create_read_expression(ctx)),
@@ -90,10 +90,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ) {
         // Get value, and transform it to replace `this` with reference to class name,
         // and transform class fields (`object.#prop`)
-        let value = match &mut prop.value {
-            Some(value) => {
-                self.transform_static_initializer(value, ctx);
-                ctx.ast.move_expression(value)
+        let value = match prop.value.take() {
+            Some(mut value) => {
+                self.transform_static_initializer(&mut value, ctx);
+                value
             }
             None => ctx.ast.void_0(SPAN),
         };
@@ -102,13 +102,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             self.insert_private_static_init_assignment(ident, value, ctx);
         } else {
             // Convert to assignment or `_defineProperty` call, depending on `loose` option
-            let class_binding = if self.is_declaration {
+            let class_details = self.current_class();
+            let class_binding = if class_details.is_declaration {
                 // Class declarations always have a name except `export default class {}`.
                 // For default export, binding is created when static prop found in 1st pass.
-                self.class_bindings.name.as_ref().unwrap()
+                class_details.bindings.name.as_ref().unwrap()
             } else {
                 // Binding is created when static prop found in 1st pass.
-                self.class_bindings.temp.as_ref().unwrap()
+                class_details.bindings.temp.as_ref().unwrap()
             };
 
             let assignee = class_binding.create_read_expression(ctx);
@@ -147,13 +148,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // TODO: This logic appears elsewhere. De-duplicate it.
-        let class_binding = if self.is_declaration {
+        let class_details = self.current_class();
+        let class_binding = if class_details.is_declaration {
             // Class declarations always have a name except `export default class {}`.
             // For default export, binding is created when static prop found in 1st pass.
-            self.class_bindings.name.as_ref().unwrap()
+            class_details.bindings.name.as_ref().unwrap()
         } else {
             // Binding is created when static prop found in 1st pass.
-            self.class_bindings.temp.as_ref().unwrap()
+            class_details.bindings.temp.as_ref().unwrap()
         };
 
         let assignee = class_binding.create_read_expression(ctx);
@@ -184,16 +186,17 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec1(property), None);
 
         // Insert after class
-        let private_props = self.private_props_stack.last().unwrap();
-        let prop = &private_props.props[&ident.name];
+        let class_details = self.current_class();
+        let private_props = class_details.private_props.as_ref().unwrap();
+        let prop_binding = &private_props[&ident.name].binding;
 
-        if self.is_declaration {
+        if class_details.is_declaration {
             // `var _prop = {_: value};`
-            let var_decl = create_variable_declaration(&prop.binding, obj, ctx);
+            let var_decl = create_variable_declaration(prop_binding, obj, ctx);
             self.insert_after_stmts.push(var_decl);
         } else {
             // `_prop = {_: value}`
-            let assignment = create_assignment(&prop.binding, obj, ctx);
+            let assignment = create_assignment(prop_binding, obj, ctx);
             self.insert_after_exprs.push(assignment);
         }
     }
@@ -215,7 +218,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             self.create_init_assignment_loose(prop, value, assignee, is_static, ctx)
         } else {
             // `_defineProperty(assignee, "prop", value)`
-            self.create_init_assignment_not_loose(prop, value, assignee, ctx)
+            self.create_init_assignment_not_loose(prop, value, assignee, is_static, ctx)
         }
     }
 
@@ -234,12 +237,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let left = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
                 if needs_define(&ident.name) {
-                    return self.create_init_assignment_not_loose(prop, value, assignee, ctx);
+                    return self
+                        .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
                 }
                 ctx.ast.member_expression_static(SPAN, assignee, ident.as_ref().clone(), false)
             }
             PropertyKey::StringLiteral(str_lit) if needs_define(&str_lit.value) => {
-                return self.create_init_assignment_not_loose(prop, value, assignee, ctx);
+                return self
+                    .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
             }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();
@@ -247,7 +252,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
                 // TODO: Any other possible static key types?
-                let key = self.create_computed_key_temp_var_if_required(key, ctx);
+                let key = self.create_computed_key_temp_var_if_required(key, is_static, ctx);
                 ctx.ast.member_expression_computed(SPAN, assignee, key, false)
             }
             PropertyKey::PrivateIdentifier(_) => {
@@ -271,6 +276,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         prop: &mut PropertyDefinition<'a>,
         value: Expression<'a>,
         assignee: Expression<'a>,
+        is_static: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let key = match &mut prop.key {
@@ -283,7 +289,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // `class C { 'x' = true; 123 = false; }`
                 // No temp var is created for these.
                 // TODO: Any other possible static key types?
-                self.create_computed_key_temp_var_if_required(key, ctx)
+                self.create_computed_key_temp_var_if_required(key, is_static, ctx)
             }
             PropertyKey::PrivateIdentifier(_) => {
                 // Handled in `convert_instance_property` and `convert_static_property`
@@ -346,11 +352,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             None,
         );
 
-        let private_props = self.private_props_stack.last().unwrap();
-        let prop = &private_props.props[&ident.name];
+        let private_props = self.current_class().private_props.as_ref().unwrap();
+        let prop_binding = &private_props[&ident.name].binding;
         let arguments = ctx.ast.vec_from_array([
             Argument::from(assignee),
-            Argument::from(prop.binding.create_read_expression(ctx)),
+            Argument::from(prop_binding.create_read_expression(ctx)),
             Argument::from(prop_def),
         ]);
         // TODO: Should this have span of original `PropertyDefinition`?

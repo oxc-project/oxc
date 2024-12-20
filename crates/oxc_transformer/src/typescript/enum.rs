@@ -174,7 +174,6 @@ impl<'a> TypeScriptEnum<'a> {
         Some(stmt)
     }
 
-    #[allow(clippy::needless_pass_by_value)]
     fn transform_ts_enum_members(
         &mut self,
         members: &mut ArenaVec<'a, TSEnumMember<'a>>,

@@ -1,5 +1,5 @@
 //! ES2022: Class Properties
-//! Transform of static property initializers.
+//! Transform of static property initializers and static blocks.
 
 use std::cell::Cell;
 
@@ -8,80 +8,132 @@ use oxc_ast::{
     visit::{walk_mut, VisitMut},
 };
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
-use oxc_traverse::{BoundIdentifier, TraverseCtx};
+use oxc_traverse::TraverseCtx;
 
+use super::super::ClassStaticBlock;
 use super::ClassProperties;
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform static property initializer.
     ///
-    /// Replace `this`, and references to class name, with temp var for class. Transform private fields.
+    /// Replace `this`, and references to class name, with temp var for class. Transform `super`.
     /// See below for full details of transforms.
     pub(super) fn transform_static_initializer(
         &mut self,
         value: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.set_is_transforming_static_property_initializers(true);
-
-        let mut replacer = StaticInitializerVisitor::new(self, ctx);
+        let make_sloppy_mode = !ctx.current_scope_flags().is_strict_mode();
+        let mut replacer = StaticVisitor::new(make_sloppy_mode, true, self, ctx);
         replacer.visit_expression(value);
-
-        self.set_is_transforming_static_property_initializers(false);
     }
 
-    /// Set flag on `ClassBindings` that we are/are not currently transforming static prop initializers.
+    /// Transform static block.
     ///
-    /// The logic around which bindings are used for transforming private fields is complex,
-    /// so we use this to make sure the logic is correct.
+    /// Transform to an `Expression` and insert after class body.
     ///
-    /// In debug builds, `ClassBindings::get_or_init_temp_binding` will panic if we end up transforming
-    /// a static private field, and there's no `temp` binding - which should be impossible.
-    #[inline(always)] // `#[inline(always)]` because is no-op in release builds
-    #[allow(clippy::inline_always)]
-    #[cfg_attr(not(debug_assertions), expect(unused_variables, clippy::unused_self))]
-    fn set_is_transforming_static_property_initializers(&mut self, is_it: bool) {
-        #[cfg(debug_assertions)]
-        {
-            self.class_bindings.currently_transforming_static_property_initializers = is_it;
-            if let Some(private_props) = self.private_props_stack.last_mut() {
-                private_props.class_bindings.currently_transforming_static_property_initializers =
-                    is_it;
+    /// `static { x = 1; }` -> `x = 1`
+    /// `static { x = 1; y = 2; } -> `(() => { x = 1; y = 2; })()`
+    ///
+    /// Replace `this`, and references to class name, with temp var for class. Transform `super`.
+    /// See below for full details of transforms.
+    ///
+    /// TODO: Add tests for this if there aren't any already.
+    /// Include tests for evaluation order inc that static block goes before class expression
+    /// unless also static properties, or static block uses class name.
+    pub(super) fn convert_static_block(
+        &mut self,
+        block: &mut StaticBlock<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let replacement = self.convert_static_block_to_expression(block, ctx);
+        self.insert_expr_after_class(replacement, ctx);
+    }
+
+    fn convert_static_block_to_expression(
+        &mut self,
+        block: &mut StaticBlock<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let scope_id = block.scope_id();
+        let outer_scope_strict_flag = ctx.current_scope_flags() & ScopeFlags::StrictMode;
+        let make_sloppy_mode = outer_scope_strict_flag == ScopeFlags::empty();
+
+        // If block contains only a single `ExpressionStatement`, no need to wrap in an IIFE.
+        // `static { foo }` -> `foo`
+        // TODO(improve-on-babel): If block has no statements, could remove it entirely.
+        let stmts = &mut block.body;
+        if stmts.len() == 1 {
+            if let Statement::ExpressionStatement(stmt) = stmts.first_mut().unwrap() {
+                return self.convert_static_block_with_single_expression_to_expression(
+                    &mut stmt.expression,
+                    scope_id,
+                    make_sloppy_mode,
+                    ctx,
+                );
             }
         }
+
+        // Wrap statements in an IIFE.
+        // Note: Do not reparent scopes.
+        let mut replacer = StaticVisitor::new(make_sloppy_mode, false, self, ctx);
+        replacer.visit_statements(stmts);
+
+        let scope_flags = outer_scope_strict_flag | ScopeFlags::Function | ScopeFlags::Arrow;
+        *ctx.scopes_mut().get_flags_mut(scope_id) = scope_flags;
+
+        let outer_scope_id = ctx.current_scope_id();
+        ctx.scopes_mut().change_parent_id(scope_id, Some(outer_scope_id));
+
+        ClassStaticBlock::wrap_statements_in_iife(stmts, scope_id, ctx)
+    }
+
+    fn convert_static_block_with_single_expression_to_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        scope_id: ScopeId,
+        make_sloppy_mode: bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        // Note: Reparent scopes
+        let mut replacer = StaticVisitor::new(make_sloppy_mode, true, self, ctx);
+        replacer.visit_expression(expr);
+
+        // Delete scope for static block
+        ctx.scopes_mut().delete_scope(scope_id);
+
+        ctx.ast.move_expression(expr)
     }
 }
 
 /// Visitor to transform:
 ///
 /// 1. `this` to class temp var.
-///    * Class declaration: `class C { static x = this.y; }`
-///      -> `var _C; class C {}; _C = C; C.x = _C.y;`
-///    * Class expression: `x = class C { static x = this.y; }`
-///      -> `var _C; x = (_C = class C {}, _C.x = _C.y, _C)`
+///    * Class declaration:
+///      * `class C { static x = this.y; }` -> `var _C; class C {}; _C = C; C.x = _C.y;`
+///      * `class C { static { this.x(); } }` -> `var _C; class C {}; _C = C; _C.x();`
+///    * Class expression:
+///      * `x = class C { static x = this.y; }` -> `var _C; x = (_C = class C {}, _C.x = _C.y, _C)`
+///      * `C = class C { static { this.x(); } }` -> `var _C; C = (_C = class C {}, _C.x(), _C)`
 /// 2. Reference to class name to class temp var.
-///    * Class declaration: `class C { static x = C.y; }`
-///      -> `var _C; class C {}; _C = C; C.x = _C.y;`
-///    * Class expression: `x = class C { static x = C.y; }`
-///      -> `var _C; x = (_C = class C {}, _C.x = _C.y, _C)`
-/// 3. Private fields which refer to private props of this class.
-///    * Class declaration: `class C { static #x = 123; static y = this.#x; }`
-///      -> `var _C; class C {}; _C = C; var _x = { _: 123 }; C.y = _assertClassBrand(_C, _C, _x)._;`
-///    * Class expression: `x = class C { static #x = 123; static y = this.#x; }`
-///      -> `var _C, _x; x = (_C = class C {}, _x = { _: 123 }, _C.y = _assertClassBrand(_C, _C, _x)._), _C)`
+///    * Class declaration:
+///      * `class C { static x = C.y; }` -> `var _C; class C {}; _C = C; C.x = _C.y;`
+///      * `class C { static { C.x(); } }` -> `var _C; class C {}; _C = C; _C.x();`
+///    * Class expression:
+///      * `x = class C { static x = C.y; }` -> `var _C; x = (_C = class C {}, _C.x = _C.y, _C)`
+///      * `x = class C { static { C.x(); } }` -> `var _C; x = (_C = class C {}, _C.x(), _C)`
 ///
 /// Also:
-/// * Updates parent `ScopeId` of first level of scopes in initializer.
-/// * Sets `ScopeFlags` of scopes to sloppy mode if code outside the class is sloppy mode.
+/// * Update parent `ScopeId` of first level of scopes, if `reparent_scopes == true`.
+/// * Set `ScopeFlags` of scopes to sloppy mode if code outside the class is sloppy mode.
 ///
-/// Reason we need to transform `this` is because the initializer is being moved from inside the class
-/// to outside. `this` outside the class refers to a different `this`, and private fields are only valid
-/// within the class body. So we need to transform them.
+/// Reason we need to transform `this` is because the initializer/block is being moved from inside
+/// the class to outside. `this` outside the class refers to a different `this`. So we need to transform it.
 ///
 /// Note that for class declarations, assignments are made to properties of original class name `C`,
-/// but temp var `_C` is used in replacements for `this` or class name, and private fields.
-/// This is because class binding `C` could be mutated, and the initializer may contain functions which
-/// are not executed immediately, so the mutation occurs before that initializer code runs.
+/// but temp var `_C` is used in replacements for `this` or class name.
+/// This is because class binding `C` could be mutated, and the initializer/block may contain functions
+/// which are not executed immediately, so the mutation occurs before that code runs.
 ///
 /// ```js
 /// class C {
@@ -94,12 +146,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 /// assert(C2.getSelf2() === C); // Would fail if `C` in `getSelf2` was not replaced with temp var
 /// ```
 ///
-/// If this class defines no private properties, class has no name, and no `ScopeFlags` need updating,
-/// then we only need to transform `this`, and re-parent first-level scopes. So can skip traversing
-/// into functions and other contexts which have their own `this`.
-///
-/// Note: Those functions could contain private fields referring to a *parent* class's private props,
-/// but we don't need to transform them here as they remain in same class scope.
+/// If this class has no name, and no `ScopeFlags` need updating, then we only need to transform `this`,
+/// and re-parent first-level scopes. So can skip traversing into functions and other contexts which have
+/// their own `this`.
 //
 // TODO(improve-on-babel): Unnecessary to create temp var for class declarations if either:
 // 1. Class name binding is not mutated.
@@ -107,12 +156,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 //    code runs immediately, before any mutation of the class name binding can occur.
 //
 // TODO(improve-on-babel): Updating `ScopeFlags` for strict mode makes semantic correctly for the output,
-// but actually the transform isn't right. Should wrap initializer in a strict mode IIFE so that
-// initializer code runs in strict mode, as it was before within class body.
-struct StaticInitializerVisitor<'a, 'ctx, 'v> {
-    /// `true` if class has name, or class has private properties, or `ScopeFlags` need updating.
-    /// Any of these neccesitates walking the whole tree. If none of those apply, we only need to
-    /// walk as far as functions and other constructs which define a `this`.
+// but actually the transform isn't right. Should wrap initializer/block in a strict mode IIFE so that
+// code runs in strict mode, as it was before within class body.
+struct StaticVisitor<'a, 'ctx, 'v> {
+    /// `true` if class has name, or `ScopeFlags` need updating.
+    /// Either of these neccesitates walking the whole tree. If neither applies, we only need to walk
+    /// as far as functions and other constructs which define a `this`.
     walk_deep: bool,
     /// `true` if should make scopes sloppy mode
     make_sloppy_mode: bool,
@@ -124,8 +173,11 @@ struct StaticInitializerVisitor<'a, 'ctx, 'v> {
     /// Note: `scope_depth` does not aim to track scope depth completely accurately.
     /// Only requirement is to ensure that `scope_depth == 0` only when we're in first-level scope.
     /// So we don't bother incrementing + decrementing for scopes which are definitely not first level.
-    /// e.g. `BlockStatement` or `ForStatement` must be in a function, and therefore we're already in a
-    /// nested scope.
+    /// In a static property initializer, e.g. `BlockStatement` or `ForStatement` must be in a function,
+    /// and therefore we're already in a nested scope.
+    /// In a static block which contains statements, we're wrapping it in an IIFE which takes on
+    /// the `ScopeId` of the old static block, so we don't need to reparent scopes anyway,
+    /// so `scope_depth` is ignored.
     scope_depth: u32,
     /// Main transform instance.
     class_properties: &'v mut ClassProperties<'a, 'ctx>,
@@ -133,50 +185,26 @@ struct StaticInitializerVisitor<'a, 'ctx, 'v> {
     ctx: &'v mut TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
+impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
     fn new(
+        make_sloppy_mode: bool,
+        reparent_scopes: bool,
         class_properties: &'v mut ClassProperties<'a, 'ctx>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
-        let make_sloppy_mode = !ctx.current_scope_flags().is_strict_mode();
-        Self {
-            walk_deep: make_sloppy_mode
-                || class_properties.class_bindings.name.is_some()
-                || class_properties.private_props_stack.last().is_some(),
-            make_sloppy_mode,
-            this_depth: 0,
-            scope_depth: 0,
-            class_properties,
-            ctx,
-        }
+        let walk_deep =
+            make_sloppy_mode || class_properties.current_class().bindings.name.is_some();
+
+        // Set `scope_depth` to 1 initially if don't need to reparent scopes
+        // (static block where converting to IIFE)
+        #[expect(clippy::bool_to_int_with_if)]
+        let scope_depth = if reparent_scopes { 0 } else { 1 };
+
+        Self { walk_deep, make_sloppy_mode, this_depth: 0, scope_depth, class_properties, ctx }
     }
 }
 
-impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
-    // TODO: Also need to call class visitors so private props stack is in correct state.
-    // Otherwise, in this example, `#x` in `getInnerX` is resolved incorrectly
-    // and `getInnerX()` will return 1 instead of 2.
-    // We have to visit the inner class now rather than later after exiting outer class so that
-    // `#y` in `getOuterY` resolves correctly too.
-    // ```js
-    // class Outer {
-    //   #x = 1;
-    //   #y = 1;
-    //   static inner = class Inner {
-    //     #x = 2;
-    //     getInnerX() {
-    //       return this.#x; // Should equal 2
-    //     }
-    //     getOuterY() {
-    //       return this.#y; // Should equal 1
-    //     }
-    //   };
-    // }
-    // ```
-    //
-    // Need to save all per-class state (`insert_before` etc), and restore it again after.
-    // Using a stack would be overkill because nested classes in static blocks will be rare.
-
+impl<'a, 'ctx, 'v> VisitMut<'a> for StaticVisitor<'a, 'ctx, 'v> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
@@ -186,70 +214,40 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
                 self.replace_this_with_temp_var(expr, span);
                 return;
             }
-            // `delete this` / `delete object?.#prop.xyz`
+            // `delete this`
             Expression::UnaryExpression(unary_expr) => {
-                if unary_expr.operator == UnaryOperator::Delete {
-                    match &unary_expr.argument {
-                        Expression::ThisExpression(_) => {
-                            let span = unary_expr.span;
-                            self.replace_delete_this_with_true(expr, span);
-                            return;
-                        }
-                        Expression::ChainExpression(_) => {
-                            // Call directly into `transform_unary_expression_impl` rather than
-                            // main entry point `transform_unary_expression`. We already checked that
-                            // `expr` is `delete <chain expression>`, so can avoid checking that again.
-                            self.class_properties.transform_unary_expression_impl(expr, self.ctx);
-                        }
-                        _ => {}
-                    }
+                if unary_expr.operator == UnaryOperator::Delete
+                    && matches!(&unary_expr.argument, Expression::ThisExpression(_))
+                {
+                    let span = unary_expr.span;
+                    self.replace_delete_this_with_true(expr, span);
+                    return;
                 }
             }
             // `super.prop`
             Expression::StaticMemberExpression(_) => {
-                self.class_properties.transform_static_member_expression(expr, self.ctx);
+                self.transform_static_member_expression_if_super(expr);
             }
             // `super[prop]`
             Expression::ComputedMemberExpression(_) => {
-                self.class_properties.transform_computed_member_expression(expr, self.ctx);
+                self.transform_computed_member_expression_if_super(expr);
             }
-            // `object.#prop`
-            Expression::PrivateFieldExpression(_) => {
-                self.class_properties.transform_private_field_expression(expr, self.ctx);
-            }
-            // `super.prop()` or `object.#prop()`
+            // `super.prop()`
             Expression::CallExpression(call_expr) => {
-                self.class_properties
-                    .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
-                self.class_properties.transform_call_expression(expr, self.ctx);
+                self.transform_call_expression_if_super_member_expression(call_expr);
             }
-            // `object.#prop = value`, `object.#prop += value`, `object.#prop ??= value` etc
+            // `super.prop = value`, `super.prop += value`, `super.prop ??= value`
             Expression::AssignmentExpression(_) => {
-                self.class_properties.transform_assignment_expression(expr, self.ctx);
+                self.transform_assignment_expression_if_super_member_assignment_target(expr);
             }
-            // `object.#prop++`, `--object.#prop`
+            // `super.prop++`, `--super.prop`
             Expression::UpdateExpression(_) => {
-                self.class_properties.transform_update_expression(expr, self.ctx);
-            }
-            // `object?.#prop`
-            Expression::ChainExpression(_) => {
-                self.class_properties.transform_chain_expression(expr, self.ctx);
-            }
-            // "object.#prop`xyz`"
-            Expression::TaggedTemplateExpression(_) => {
-                self.class_properties.transform_tagged_template_expression(expr, self.ctx);
+                self.transform_update_expression_if_super_member_assignment_target(expr);
             }
             _ => {}
         }
 
         walk_mut::walk_expression(self, expr);
-    }
-
-    #[inline]
-    fn visit_assignment_target(&mut self, target: &mut AssignmentTarget<'a>) {
-        // `[object.#prop] = []`
-        self.class_properties.transform_assignment_target(target, self.ctx);
-        walk_mut::walk_assignment_target(self, target);
     }
 
     /// Transform reference to class name to temp var
@@ -271,9 +269,8 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
     // from `this` within this class, and decrement it when exiting.
     // Therefore `this_depth == 0` when `this` refers to the `this` which needs to be transformed.
     //
-    // Or, if class has no name, class has no private properties, and `ScopeFlags` don't need updating,
-    // stop traversing entirely. No private field accesses need to be transformed, and no scopes need
-    // flags updating, so no point searching for them.
+    // Or, if class has no name, and `ScopeFlags` don't need updating, stop traversing entirely.
+    // No scopes need flags updating, so no point searching for them.
     //
     // Also set `make_sloppy_mode = false` while traversing a construct which is strict mode.
 
@@ -374,7 +371,7 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
         //   static prop = class Inner { [this] = 1; };
         // }
         // ```
-        // Don't visit `type_annotation` field because can't contain `this` or private props.
+        // Don't visit `type_annotation` field because can't contain `this`.
 
         // Not possible that `self.scope_depth == 0` here, because a `PropertyDefinition`
         // can only be in a class, and that class would be the first-level scope.
@@ -419,8 +416,12 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
 
     // Remaining visitors are the only other types which have a scope which can be first-level
     // when starting traversal from an `Expression`.
-    // `BlockStatement` and all other statements would need to be within a function,
-    // and that function would be the first-level scope.
+    //
+    // In a static property initializer, `BlockStatement` and all other statements would need to be
+    // within a function, and that function would be the first-level scope.
+    //
+    // In a static block which contains statements, we're wrapping it in an IIFE which takes on
+    // the `ScopeId` of the old static block, so we don't need to reparent scopes anyway.
 
     #[inline]
     fn visit_ts_conditional_type(&mut self, conditional: &mut TSConditionalType<'a>) {
@@ -471,11 +472,12 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticInitializerVisitor<'a, 'ctx, 'v> {
     }
 }
 
-impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
+impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
     /// Replace `this` with reference to temp var for class.
     fn replace_this_with_temp_var(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {
-            let temp_binding = self.class_properties.get_temp_binding(self.ctx);
+            let class_details = self.class_properties.current_class_mut();
+            let temp_binding = class_details.bindings.get_or_init_static_binding(self.ctx);
             *expr = temp_binding.create_spanned_read_expression(span, self.ctx);
         }
     }
@@ -483,7 +485,8 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
     /// Replace reference to class name with reference to temp var for class.
     fn replace_class_name_with_temp_var(&mut self, ident: &mut IdentifierReference<'a>) {
         // Check identifier is reference to class name
-        let class_name_symbol_id = self.class_properties.class_bindings.name_symbol_id();
+        let class_details = self.class_properties.current_class_mut();
+        let class_name_symbol_id = class_details.bindings.name_symbol_id();
         let Some(class_name_symbol_id) = class_name_symbol_id else { return };
 
         let reference_id = ident.reference_id();
@@ -495,7 +498,7 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
         }
 
         // Identifier is reference to class name. Rename it.
-        let temp_binding = self.class_properties.get_temp_binding(self.ctx);
+        let temp_binding = class_details.bindings.get_or_init_static_binding(self.ctx);
         ident.name = temp_binding.name.clone();
 
         let symbols = self.ctx.symbols_mut();
@@ -519,18 +522,58 @@ impl<'a, 'ctx, 'v> StaticInitializerVisitor<'a, 'ctx, 'v> {
             self.ctx.scopes_mut().change_parent_id(scope_id, Some(current_scope_id));
         }
     }
-}
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
-    pub(super) fn get_temp_binding(&mut self, ctx: &mut TraverseCtx<'a>) -> &BoundIdentifier<'a> {
-        // `PrivateProps` is the source of truth for bindings if class has private props
-        // because other visitors which transform private fields may create a temp binding
-        // and store it on `PrivateProps`
-        let class_bindings = match self.private_props_stack.last_mut() {
-            Some(private_props) => &mut private_props.class_bindings,
-            None => &mut self.class_bindings,
-        };
+    // `#[inline]` into visitor to keep common path where member expression isn't `super.prop` fast
+    #[inline]
+    fn transform_static_member_expression_if_super(&mut self, expr: &mut Expression<'a>) {
+        if self.this_depth == 0 {
+            self.class_properties.transform_static_member_expression(expr, self.ctx);
+        }
+    }
 
-        class_bindings.get_or_init_temp_binding(ctx)
+    // `#[inline]` into visitor to keep common path where member expression isn't `super.prop` fast
+    #[inline]
+    fn transform_computed_member_expression_if_super(&mut self, expr: &mut Expression<'a>) {
+        if self.this_depth == 0 {
+            self.class_properties.transform_computed_member_expression(expr, self.ctx);
+        }
+    }
+
+    // `#[inline]` into visitor to keep common path where call expression isn't `super.prop()` fast
+    #[inline]
+    fn transform_call_expression_if_super_member_expression(
+        &mut self,
+        call_expr: &mut CallExpression<'a>,
+    ) {
+        if self.this_depth == 0 {
+            self.class_properties
+                .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
+        }
+    }
+
+    // `#[inline]` into visitor to keep common path where assignment expression isn't
+    // `super.prop += 1` fast
+    #[inline]
+    fn transform_assignment_expression_if_super_member_assignment_target(
+        &mut self,
+        expr: &mut Expression<'a>,
+    ) {
+        if self.this_depth == 0 {
+            self.class_properties
+                .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
+        }
+    }
+
+    // `#[inline]` into visitor to keep common path where assignment expression isn't
+    // `super.prop++` fast
+    #[inline]
+    fn transform_update_expression_if_super_member_assignment_target(
+        &mut self,
+        expr: &mut Expression<'a>,
+    ) {
+        if self.this_depth == 0 {
+            self.class_properties
+                .transform_update_expression_for_super_assignment_target(expr, self.ctx);
+        }
     }
 }

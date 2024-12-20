@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 593/927
+Passed: 599/927
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (205/264)
+# babel-plugin-transform-class-properties (211/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -335,15 +335,6 @@ x Output mismatch
 * private/class-shadow-builtins/input.mjs
 x Output mismatch
 
-* private/nested-class-computed-redeclared/input.js
-x Output mismatch
-
-* private/nested-class-extends-computed/input.js
-x Output mismatch
-
-* private/nested-class-extends-computed-redeclared/input.js
-x Output mismatch
-
 * private/optional-chain-cast-to-boolean/input.js
 x Output mismatch
 
@@ -373,23 +364,6 @@ x Output mismatch
 
 * private-loose/class-shadow-builtins/input.mjs
 x Output mismatch
-
-* private-loose/nested-class-computed-redeclared/input.js
-x Output mismatch
-
-* private-loose/nested-class-extends-computed/input.js
-x Output mismatch
-
-* private-loose/nested-class-extends-computed-redeclared/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["Nested", "_foo2", "_foo3"]
-rebuilt        : ScopeId(3): ["Nested", "_foo2", "_foo3", "_this$foo"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_this$foo"]
-rebuilt        : ScopeId(4): []
-Symbol scope ID mismatch for "_this$foo":
-after transform: SymbolId(6): ScopeId(3)
-rebuilt        : SymbolId(3): ScopeId(3)
 
 * private-loose/optional-chain-before-member-call/input.js
 x Output mismatch

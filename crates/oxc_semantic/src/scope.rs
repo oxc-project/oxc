@@ -1,8 +1,8 @@
 use std::mem;
 
-use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
+use bumpalo::Bump;
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
 use oxc_syntax::{
@@ -12,9 +12,7 @@ use oxc_syntax::{
     symbol::SymbolId,
 };
 
-type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
-
-pub(crate) type Bindings = FxIndexMap<CompactStr, SymbolId>;
+pub(crate) type Bindings<'a> = hashbrown::HashMap<&'a str, SymbolId, FxBuildHasher, &'a Bump>;
 pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
 
 /// Scope Tree
@@ -27,7 +25,6 @@ pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
 /// - Nodes that create a scope store the [`ScopeId`] of the scope they create.
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.
-#[derive(Debug, Default)]
 pub struct ScopeTree {
     /// Maps a scope to the parent scope it belongs in.
     parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
@@ -43,12 +40,40 @@ pub struct ScopeTree {
 
     flags: IndexVec<ScopeId, ScopeFlags>,
 
+    pub(crate) root_unresolved_references: UnresolvedReferences,
+
+    pub(crate) cell: ScopeTreeCell,
+}
+
+impl Default for ScopeTree {
+    fn default() -> Self {
+        Self {
+            parent_ids: IndexVec::new(),
+            child_ids: IndexVec::new(),
+            build_child_ids: false,
+            node_ids: IndexVec::new(),
+            flags: IndexVec::new(),
+            root_unresolved_references: UnresolvedReferences::default(),
+            cell: ScopeTreeCell::new(Bump::new(), |_bump| ScopeTreeInner {
+                bindings: IndexVec::new(),
+            }),
+        }
+    }
+}
+
+self_cell::self_cell!(
+    pub(crate) struct ScopeTreeCell {
+        owner: Bump,
+        #[covariant]
+        dependent: ScopeTreeInner,
+    }
+);
+
+pub(crate) struct ScopeTreeInner<'cell> {
     /// Symbol bindings in a scope.
     ///
     /// A binding is a mapping from an identifier name to its [`SymbolId`]
-    bindings: IndexVec<ScopeId, Bindings>,
-
-    pub(crate) root_unresolved_references: UnresolvedReferences,
+    pub(crate) bindings: IndexVec<ScopeId, Bindings<'cell>>,
 }
 
 impl ScopeTree {
@@ -203,7 +228,7 @@ impl ScopeTree {
 
     /// Check if a symbol is declared in a certain scope.
     pub fn has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
-        self.bindings[scope_id].get(name).is_some()
+        self.cell.borrow_dependent().bindings[scope_id].contains_key(name)
     }
 
     /// Get the symbol bound to an identifier name in a scope.
@@ -215,7 +240,7 @@ impl ScopeTree {
     ///
     /// [`find_binding`]: ScopeTree::find_binding
     pub fn get_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
-        self.bindings[scope_id].get(name).copied()
+        self.cell.borrow_dependent().bindings[scope_id].get(name).copied()
     }
 
     /// Find a binding by name in a scope or its ancestors.
@@ -224,7 +249,7 @@ impl ScopeTree {
     /// found. If no binding is found, [`None`] is returned.
     pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
         for scope_id in self.ancestors(scope_id) {
-            if let Some(&symbol_id) = self.bindings[scope_id].get(name) {
+            if let Some(symbol_id) = self.get_binding(scope_id, name) {
                 return Some(symbol_id);
             }
         }
@@ -234,7 +259,7 @@ impl ScopeTree {
     /// Get all bound identifiers in a scope.
     #[inline]
     pub fn get_bindings(&self, scope_id: ScopeId) -> &Bindings {
-        &self.bindings[scope_id]
+        &self.cell.borrow_dependent().bindings[scope_id]
     }
 
     /// Get the ID of the [`AstNode`] that created a scope.
@@ -250,21 +275,24 @@ impl ScopeTree {
     /// If you only want bindings in a specific scope, use [`iter_bindings_in`].
     ///
     /// [`iter_bindings_in`]: ScopeTree::iter_bindings_in
-    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, &'_ CompactStr)> + '_ {
-        self.bindings.iter_enumerated().flat_map(|(scope_id, bindings)| {
-            bindings.iter().map(move |(name, &symbol_id)| (scope_id, symbol_id, name))
+    pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, &str)> + '_ {
+        self.cell.borrow_dependent().bindings.iter_enumerated().flat_map(|(scope_id, bindings)| {
+            bindings.iter().map(move |(&name, &symbol_id)| (scope_id, symbol_id, name))
         })
     }
 
     /// Iterate over bindings declared inside a scope.
     #[inline]
     pub fn iter_bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
-        self.bindings[scope_id].values().copied()
+        self.cell.borrow_dependent().bindings[scope_id].values().copied()
     }
 
     #[inline]
-    pub(crate) fn get_bindings_mut(&mut self, scope_id: ScopeId) -> &mut Bindings {
-        &mut self.bindings[scope_id]
+    pub(crate) fn insert_binding(&mut self, scope_id: ScopeId, name: &str, symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|allocator, inner| {
+            let name = allocator.alloc_str(name);
+            inner.bindings[scope_id].insert(name, symbol_id);
+        });
     }
 
     /// Return whether this `ScopeTree` has child IDs recorded
@@ -310,7 +338,9 @@ impl ScopeTree {
     ) -> ScopeId {
         let scope_id = self.parent_ids.push(parent_id);
         self.flags.push(flags);
-        self.bindings.push(Bindings::default());
+        self.cell.with_dependent_mut(|allocator, inner| {
+            inner.bindings.push(Bindings::with_hasher_in(FxBuildHasher, allocator));
+        });
         self.node_ids.push(node_id);
         if self.build_child_ids {
             self.child_ids.push(vec![]);
@@ -324,26 +354,31 @@ impl ScopeTree {
     /// Add a binding to a scope.
     ///
     /// [`binding`]: Bindings
-    pub fn add_binding(&mut self, scope_id: ScopeId, name: CompactStr, symbol_id: SymbolId) {
-        self.bindings[scope_id].insert(name, symbol_id);
+    pub fn add_binding(&mut self, scope_id: ScopeId, name: &str, symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|allocator, inner| {
+            let name = allocator.alloc_str(name);
+            inner.bindings[scope_id].insert(name, symbol_id);
+        });
     }
 
     /// Remove an existing binding from a scope.
-    pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
-        self.bindings[scope_id].shift_remove(name);
+    pub fn remove_binding(&mut self, scope_id: ScopeId, name: &str) {
+        self.cell.with_dependent_mut(|_allocator, inner| {
+            inner.bindings[scope_id].remove(name);
+        });
     }
 
     /// Move a binding from one scope to another.
     pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: &str) {
-        let from_map = &mut self.bindings[from];
-        if let Some((name, symbol_id)) = from_map.swap_remove_entry(name) {
-            self.bindings[to].insert(name, symbol_id);
-        }
+        self.cell.with_dependent_mut(|_allocator, inner| {
+            let from_map = &mut inner.bindings[from];
+            if let Some((name, symbol_id)) = from_map.remove_entry(name) {
+                inner.bindings[to].insert(name, symbol_id);
+            }
+        });
     }
 
     /// Rename a binding to a new name.
-    ///
-    /// Preserves order of bindings.
     ///
     /// The following must be true for successful operation:
     /// * Binding exists in specified scope for `old_name`.
@@ -356,24 +391,25 @@ impl ScopeTree {
         scope_id: ScopeId,
         symbol_id: SymbolId,
         old_name: &str,
-        new_name: CompactStr,
+        new_name: &str,
     ) {
-        let bindings = &mut self.bindings[scope_id];
-        // Insert on end
-        let existing_symbol_id = bindings.insert(new_name, symbol_id);
-        debug_assert!(existing_symbol_id.is_none());
-        // Remove old entry. `swap_remove` swaps the last entry into the place of removed entry.
-        // We just inserted the new entry as last, so the new entry takes the place of the old.
-        // Order of entries is same as before, only the key has changed.
-        let old_symbol_id = bindings.swap_remove(old_name);
-        debug_assert_eq!(old_symbol_id, Some(symbol_id));
+        self.cell.with_dependent_mut(|allocator, inner| {
+            let bindings = &mut inner.bindings[scope_id];
+            let old_symbol_id = bindings.remove(old_name);
+            debug_assert_eq!(old_symbol_id, Some(symbol_id));
+            let new_name = allocator.alloc_str(new_name);
+            let existing_symbol_id = bindings.insert(new_name, symbol_id);
+            debug_assert!(existing_symbol_id.is_none());
+        });
     }
 
     /// Reserve memory for an `additional` number of scopes.
     pub fn reserve(&mut self, additional: usize) {
         self.parent_ids.reserve(additional);
         self.flags.reserve(additional);
-        self.bindings.reserve(additional);
+        self.cell.with_dependent_mut(|_allocator, inner| {
+            inner.bindings.reserve(additional);
+        });
         self.node_ids.reserve(additional);
         if self.build_child_ids {
             self.child_ids.reserve(additional);

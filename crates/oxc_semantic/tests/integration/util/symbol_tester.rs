@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_semantic::{Reference, ScopeFlags, ScopeId, Semantic, SymbolFlags, SymbolId};
-use oxc_span::CompactStr;
 
 use super::{Expect, SemanticTester};
 
@@ -66,11 +65,8 @@ impl<'a> SymbolTester<'a> {
         semantic: Semantic<'a>,
         target: &str,
     ) -> Self {
-        let symbols_with_target_name: Vec<_> = semantic
-            .scopes()
-            .iter_bindings()
-            .filter(|(_, _, name)| name.as_str() == target)
-            .collect();
+        let symbols_with_target_name: Vec<_> =
+            semantic.scopes().iter_bindings().filter(|(_, _, name)| *name == target).collect();
         let data = match symbols_with_target_name.len() {
             0 => Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
             1 => Ok(symbols_with_target_name
@@ -102,8 +98,8 @@ impl<'a> SymbolTester<'a> {
         semantic: Semantic<'a>,
         target: &str,
     ) -> Self {
-        let symbols_with_target_name: Option<(ScopeId, SymbolId, &CompactStr)> =
-            semantic.scopes().iter_bindings().find(|(_, _, name)| name.as_str() == target);
+        let symbols_with_target_name: Option<(ScopeId, SymbolId, &str)> =
+            semantic.scopes().iter_bindings().find(|(_, _, name)| *name == target);
 
         let data = match symbols_with_target_name {
             Some((_, symbol_id, _)) => Ok(symbol_id),

@@ -336,8 +336,12 @@ impl PostTransformChecker<'_, '_> {
         for scope_ids in self.scope_ids_map.pairs() {
             // Check bindings are the same
             fn get_sorted_binding_names(scoping: &Scoping, scope_id: ScopeId) -> Vec<CompactStr> {
-                let mut binding_names =
-                    scoping.scopes.get_bindings(scope_id).keys().cloned().collect::<Vec<_>>();
+                let mut binding_names = scoping
+                    .scopes
+                    .get_bindings(scope_id)
+                    .keys()
+                    .map(|k| CompactStr::new(k))
+                    .collect::<Vec<_>>();
                 binding_names.sort_unstable();
                 binding_names
             }
@@ -346,10 +350,12 @@ impl PostTransformChecker<'_, '_> {
             if binding_names.is_mismatch() {
                 self.errors.push_mismatch("Bindings mismatch", scope_ids, binding_names);
             } else {
-                let symbol_ids = self.get_pair(scope_ids, |scoping, scope_id| {
+                let mut symbol_ids = self.get_pair(scope_ids, |scoping, scope_id| {
                     scoping.scopes.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
                 });
                 if self.remap_symbol_ids_sets(&symbol_ids).is_mismatch() {
+                    symbol_ids.after_transform.sort_unstable();
+                    symbol_ids.rebuilt.sort_unstable();
                     self.errors.push_mismatch("Binding symbols mismatch", scope_ids, symbol_ids);
                 }
             }
@@ -394,31 +400,31 @@ impl PostTransformChecker<'_, '_> {
         for symbol_ids in self.symbol_ids_map.pairs() {
             // Check names match
             let names = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                scoping.symbols.names[symbol_id].clone()
+                scoping.symbols.get_name(symbol_id).to_string()
             });
             if names.is_mismatch() {
                 self.errors.push_mismatch("Symbol name mismatch", symbol_ids, &names);
             }
-            let symbol_name = names.rebuilt.as_str();
+            let symbol_name = names.rebuilt;
             let mismatch_title = |field| format!("Symbol {field} mismatch for {symbol_name:?}");
 
             // Check flags match
-            let flags =
-                self.get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.flags[symbol_id]);
+            let flags = self
+                .get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.get_flags(symbol_id));
             if flags.is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("flags"), symbol_ids, flags);
             }
 
             // Check spans match
             let spans =
-                self.get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.spans[symbol_id]);
+                self.get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.get_span(symbol_id));
             if spans.is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("span"), symbol_ids, spans);
             }
 
             // Check scope IDs match
             let scope_ids = self
-                .get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.scope_ids[symbol_id]);
+                .get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.get_scope_id(symbol_id));
             if self.remap_scope_ids(scope_ids).is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("scope ID"), symbol_ids, scope_ids);
             }
@@ -427,7 +433,7 @@ impl PostTransformChecker<'_, '_> {
 
             // Check resolved references match
             let reference_ids = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                scoping.symbols.resolved_references[symbol_id].clone()
+                scoping.symbols.get_resolved_reference_ids(symbol_id).clone()
             });
             if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
                 self.errors.push_mismatch(
@@ -457,7 +463,7 @@ impl PostTransformChecker<'_, '_> {
         for (reference_ids, name) in self.reference_ids_map.pairs().zip(&self.reference_names) {
             // Check symbol IDs match
             let symbol_ids = self.get_pair(reference_ids, |scoping, reference_id| {
-                scoping.symbols.references[reference_id].symbol_id()
+                scoping.symbols.get_reference(reference_id).symbol_id()
             });
             let symbol_ids_remapped = Pair::new(
                 symbol_ids.after_transform.map(|symbol_id| self.symbol_ids_map.get(symbol_id)),
@@ -465,9 +471,9 @@ impl PostTransformChecker<'_, '_> {
             );
             if symbol_ids_remapped.is_mismatch() {
                 let mismatch_strs = self.get_pair(reference_ids, |scoping, reference_id| {
-                    match scoping.symbols.references[reference_id].symbol_id() {
+                    match scoping.symbols.get_reference(reference_id).symbol_id() {
                         Some(symbol_id) => {
-                            let symbol_name = &scoping.symbols.names[symbol_id];
+                            let symbol_name = scoping.symbols.get_name(symbol_id);
                             format!("{symbol_id:?} {symbol_name:?}")
                         }
                         None => "<None>".to_string(),
@@ -481,7 +487,7 @@ impl PostTransformChecker<'_, '_> {
 
             // Check flags match
             let flags = self.get_pair(reference_ids, |scoping, reference_id| {
-                scoping.symbols.references[reference_id].flags()
+                scoping.symbols.get_reference(reference_id).flags()
             });
             if flags.is_mismatch() {
                 self.errors.push_mismatch(

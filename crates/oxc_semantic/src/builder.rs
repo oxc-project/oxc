@@ -5,6 +5,7 @@ use std::{
     mem,
 };
 
+use oxc_data_structures::stack::Stack;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{ast::*, AstKind, Visit};
@@ -16,7 +17,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
-    reference::{ReferenceFlags, ReferenceId},
+    reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -29,7 +30,6 @@ use crate::{
     jsdoc::JSDocBuilder,
     label::UnusedLabels,
     node::AstNodes,
-    reference::Reference,
     scope::{Bindings, ScopeTree},
     stats::Stats,
     symbol::SymbolTable,
@@ -74,10 +74,9 @@ pub struct SemanticBuilder<'a> {
     // states
     pub(crate) current_node_id: NodeId,
     pub(crate) current_node_flags: NodeFlags,
-    pub(crate) current_symbol_flags: SymbolFlags,
     pub(crate) current_scope_id: ScopeId,
     /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
-    pub(crate) function_stack: Vec<NodeId>,
+    pub(crate) function_stack: Stack<NodeId>,
     // To make a namespace/module value like
     // we need the to know the modules we are inside
     // and when we reach a value declaration we set it
@@ -134,10 +133,9 @@ impl<'a> SemanticBuilder<'a> {
             errors: RefCell::new(vec![]),
             current_node_id: NodeId::new(0),
             current_node_flags: NodeFlags::empty(),
-            current_symbol_flags: SymbolFlags::empty(),
             current_reference_flags: ReferenceFlags::empty(),
             current_scope_id,
-            function_stack: vec![],
+            function_stack: Stack::with_capacity(16),
             namespace_stack: vec![],
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
@@ -400,11 +398,9 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        let includes = includes | self.current_symbol_flags;
-        let name = CompactStr::new(name);
         let symbol_id = self.symbols.create_symbol(
             span,
-            name.clone(),
+            CompactStr::new(name),
             includes,
             scope_id,
             self.current_node_id,
@@ -468,16 +464,14 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
-        let includes = includes | self.current_symbol_flags;
-        let name = CompactStr::new(name);
         let symbol_id = self.symbols.create_symbol(
             span,
-            name.clone(),
+            CompactStr::new(name),
             includes,
             self.current_scope_id,
             self.current_node_id,
         );
-        self.scope.get_bindings_mut(scope_id).insert(name, symbol_id);
+        self.scope.insert_binding(scope_id, name, symbol_id);
         symbol_id
     }
 
@@ -715,14 +709,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Move all bindings from catch clause param scope to catch clause body scope
         // to make it easier to resolve references and check redeclare errors
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
-            let parent_bindings = self.scope.get_bindings_mut(parent_scope_id);
-            if !parent_bindings.is_empty() {
-                let parent_bindings = parent_bindings.drain(..).collect::<Bindings>();
-                parent_bindings.values().for_each(|&symbol_id| {
-                    self.symbols.set_scope_id(symbol_id, self.current_scope_id);
-                });
-                *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
-            }
+            self.scope.cell.with_dependent_mut(|allocator, inner| {
+                if !inner.bindings[parent_scope_id].is_empty() {
+                    let mut parent_bindings =
+                        Bindings::with_hasher_in(rustc_hash::FxBuildHasher, allocator);
+                    mem::swap(&mut inner.bindings[parent_scope_id], &mut parent_bindings);
+                    for &symbol_id in parent_bindings.values() {
+                        self.symbols.set_scope_id(symbol_id, self.current_scope_id);
+                    }
+                    inner.bindings[self.current_scope_id] = parent_bindings;
+                }
+            });
         }
 
         self.visit_statements(&it.body);
@@ -856,8 +853,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         self.visit_assignment_target(&expr.left);
-
-        self.current_reference_flags = ReferenceFlags::empty();
 
         /* cfg  */
         let cfg_ixs = control_flow!(self, |cfg| {
@@ -1767,7 +1762,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         //    ^      ^ We always treat `a` as Read and Write reference,
         self.current_reference_flags = ReferenceFlags::read_write();
         self.visit_simple_assignment_target(&it.argument);
-        self.current_reference_flags = ReferenceFlags::empty();
         self.leave_node(kind);
     }
 
@@ -1995,11 +1989,10 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::TSModuleDeclaration(module_declaration) => {
                 module_declaration.bind(self);
-                let symbol_id = self
-                    .scope
-                    .get_bindings(self.current_scope_id)
-                    .get(module_declaration.id.name().as_str())
-                    .copied();
+                let symbol_id = match &module_declaration.id {
+                    TSModuleDeclarationName::Identifier(ident) => ident.symbol_id.get(),
+                    TSModuleDeclarationName::StringLiteral(_) => None,
+                };
                 self.namespace_stack.push(symbol_id);
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
@@ -2092,7 +2085,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::CatchParameter(_) => {
                 self.resolve_references_for_current_scope();
             }
-            AstKind::TSModuleBlock(_) => {
+            AstKind::TSModuleDeclaration(_) => {
                 self.namespace_stack.pop();
             }
             AstKind::TSTypeName(_) => {
@@ -2109,7 +2102,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn make_all_namespaces_valuelike(&mut self) {
-        for &symbol_id in &self.namespace_stack {
+        for symbol_id in self.namespace_stack.iter().copied() {
             let Some(symbol_id) = symbol_id else {
                 continue;
             };

@@ -1,6 +1,6 @@
 [package]
 name = "oxc_semantic"
-version = "0.41.0"
+version = "0.42.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -22,6 +22,7 @@ doctest = false
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_cfg = { workspace = true }
+oxc_data_structures = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
@@ -29,24 +30,20 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 assert-unchecked = { workspace = true }
-indexmap = { workspace = true }
+bumpalo = { workspace = true, features = ["allocator-api2"] }
+hashbrown = { workspace = true, features = ["allocator-api2"] }
 itertools = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
-
-serde = { workspace = true, features = ["derive"], optional = true }
-tsify = { workspace = true, optional = true }
-wasm-bindgen = { workspace = true, optional = true }
+self_cell = { workspace = true }
 
 [dev-dependencies]
-oxc_parser = { workspace = true }
-
-indexmap = { workspace = true }
 insta = { workspace = true, features = ["glob"] }
+oxc_parser = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
 default = []
-serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_span/serialize", "oxc_syntax/serialize"]
+serialize = ["oxc_span/serialize", "oxc_syntax/serialize"]

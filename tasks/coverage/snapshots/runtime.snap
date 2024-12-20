@@ -100,7 +100,7 @@ tasks/coverage/test262/test/language/expressions/async-generator/named-yield-sta
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -109,7 +109,7 @@ tasks/coverage/test262/test/language/expressions/async-generator/named-yield-sta
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/async-generator/named-yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -130,7 +130,7 @@ tasks/coverage/test262/test/language/expressions/async-generator/yield-star-asyn
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/expressions/async-generator/yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/async-generator/yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -139,7 +139,7 @@ tasks/coverage/test262/test/language/expressions/async-generator/yield-star-next
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/expressions/async-generator/yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/async-generator/yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -163,7 +163,7 @@ tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-st
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -172,7 +172,7 @@ tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-st
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/class/async-gen-method/yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -193,7 +193,7 @@ tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/y
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -202,7 +202,7 @@ tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/y
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -241,7 +241,7 @@ tasks/coverage/test262/test/language/expressions/class/elements/async-gen-privat
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -250,7 +250,7 @@ tasks/coverage/test262/test/language/expressions/class/elements/async-gen-privat
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -271,7 +271,7 @@ tasks/coverage/test262/test/language/expressions/class/elements/async-gen-privat
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -280,7 +280,7 @@ tasks/coverage/test262/test/language/expressions/class/elements/async-gen-privat
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method-static/yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -313,7 +313,7 @@ tasks/coverage/test262/test/language/expressions/object/method-definition/async-
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -322,7 +322,7 @@ tasks/coverage/test262/test/language/expressions/object/method-definition/async-
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -388,7 +388,7 @@ tasks/coverage/test262/test/language/statements/async-generator/yield-star-async
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -397,7 +397,7 @@ tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -406,13 +406,13 @@ tasks/coverage/test262/test/language/statements/async-generator/yield-star-next-
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/statements/async-generator/yield-star-normal-notdone-iter-value-throws.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/async-generator/yield-star-promise-not-unwrapped.js
 transform error: Test262Error: .throw should not be accessed
 
 tasks/coverage/test262/test/language/statements/async-generator/yield-star-return-notdone-iter-value-throws.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/async-generator/yield-star-return-then-getter-ticks.js
 transform error: Test262Error: Actual [start, get return, tick 1, get then, tick 2, tick 3] and expected [start, tick 1, get then, tick 2, get return, get then, tick 3] should have the same contents. Ticks for return with thenable getter
@@ -421,7 +421,7 @@ tasks/coverage/test262/test/language/statements/async-generator/yield-star-sync-
 transform error: throw-arg-1
 
 tasks/coverage/test262/test/language/statements/async-generator/yield-star-throw-notdone-iter-value-throws.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-async-next.js
 transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
@@ -433,7 +433,7 @@ tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-sta
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -442,7 +442,7 @@ tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-sta
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/class/async-gen-method/yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -463,7 +463,7 @@ tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yi
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -472,7 +472,7 @@ tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yi
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -514,7 +514,7 @@ tasks/coverage/test262/test/language/statements/class/elements/async-gen-private
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -523,7 +523,7 @@ tasks/coverage/test262/test/language/statements/class/elements/async-gen-private
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -544,7 +544,7 @@ tasks/coverage/test262/test/language/statements/class/elements/async-gen-private
 transform error: Test262Error: Expected SameValue(«"get throw"», «"get next"») to be true
 
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-next-call-done-get-abrupt.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-next-call-returns-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
@@ -553,7 +553,7 @@ tasks/coverage/test262/test/language/statements/class/elements/async-gen-private
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true
 
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-next-non-object-ignores-then.js
-transform error: http://localhost:32055/run: Network Error: Unexpected EOF
+transform error: Timed out.
 
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method-static/yield-star-next-then-get-abrupt.js
 transform error: Test262Error: reject reason Expected SameValue(«TypeError: The iterator does not provide a 'throw' method.», «[object Object]») to be true

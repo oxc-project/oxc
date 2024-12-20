@@ -188,6 +188,14 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.current_hoist_scope_id()
     }
 
+    /// Get current block scope ID.
+    ///
+    /// Shortcut for `ctx.scoping.current_block_scope_id`.
+    #[inline]
+    pub fn current_block_scope_id(&self) -> ScopeId {
+        self.scoping.current_block_scope_id()
+    }
+
     /// Get current scope flags.
     ///
     /// Shortcut for `ctx.scoping.current_scope_flags`.
@@ -358,7 +366,7 @@ impl<'a> TraverseCtx<'a> {
         // Get name for UID
         let name = self.generate_uid_name(name);
         let name_atom = self.ast.atom(&name);
-        let symbol_id = self.scoping.add_binding(name, scope_id, flags);
+        let symbol_id = self.scoping.add_binding(&name, scope_id, flags);
         BoundIdentifier::new(name_atom, symbol_id)
     }
 
@@ -658,5 +666,11 @@ impl<'a> TraverseCtx<'a> {
     #[inline]
     pub(crate) fn set_current_hoist_scope_id(&mut self, scope_id: ScopeId) {
         self.scoping.set_current_hoist_scope_id(scope_id);
+    }
+
+    /// Shortcut for `ctx.scoping.set_current_block_scope_id`, to make `walk_*` methods less verbose.
+    #[inline]
+    pub(crate) fn set_current_block_scope_id(&mut self, scope_id: ScopeId) {
+        self.scoping.set_current_block_scope_id(scope_id);
     }
 }

@@ -70,13 +70,6 @@ impl ConfigStore {
         Self { cache, base, overrides }
     }
 
-    /// Set the base rules, replacing all existing rules.
-    #[cfg(test)]
-    #[inline]
-    pub fn set_rules(&mut self, new_rules: Vec<RuleWithSeverity>) {
-        self.base.rules = Arc::from(new_rules.into_boxed_slice());
-    }
-
     pub fn number_of_rules(&self) -> usize {
         self.base.rules.len()
     }

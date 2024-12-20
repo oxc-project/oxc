@@ -27,6 +27,7 @@ pub struct TraverseScoping {
     uid_names: Option<FxHashSet<CompactStr>>,
     current_scope_id: ScopeId,
     current_hoist_scope_id: ScopeId,
+    current_block_scope_id: ScopeId,
 }
 
 // Public methods
@@ -41,6 +42,12 @@ impl TraverseScoping {
     #[inline]
     pub(crate) fn current_hoist_scope_id(&self) -> ScopeId {
         self.current_hoist_scope_id
+    }
+
+    /// Get current block scope ID
+    #[inline]
+    pub(crate) fn current_block_scope_id(&self) -> ScopeId {
+        self.current_block_scope_id
     }
 
     /// Get current scope flags
@@ -171,12 +178,12 @@ impl TraverseScoping {
     #[inline]
     pub(crate) fn add_binding(
         &mut self,
-        name: CompactStr,
+        name: &str,
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> SymbolId {
         let symbol_id =
-            self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id, NodeId::DUMMY);
+            self.symbols.create_symbol(SPAN, name.into(), flags, scope_id, NodeId::DUMMY);
         self.scopes.add_binding(scope_id, name, symbol_id);
 
         symbol_id
@@ -191,7 +198,7 @@ impl TraverseScoping {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        let symbol_id = self.add_binding(name.to_compact_str(), scope_id, flags);
+        let symbol_id = self.add_binding(name.as_str(), scope_id, flags);
         BoundIdentifier::new(name, symbol_id)
     }
 
@@ -303,7 +310,7 @@ impl TraverseScoping {
     ) -> ReferenceId {
         let reference = Reference::new_with_symbol_id(NodeId::DUMMY, symbol_id, flags);
         let reference_id = self.symbols.create_reference(reference);
-        self.symbols.resolved_references[symbol_id].push(reference_id);
+        self.symbols.add_resolved_reference(symbol_id, reference_id);
         reference_id
     }
 
@@ -365,18 +372,17 @@ impl TraverseScoping {
 
     /// Rename symbol.
     ///
-    /// Preserves original order of bindings for scope.
-    ///
     /// The following must be true for successful operation:
     /// * Binding exists in specified scope for `symbol_id`.
     /// * No binding already exists in scope for `new_name`.
     ///
     /// Panics in debug mode if either of the above are not satisfied.
+    #[expect(clippy::needless_pass_by_value)]
     pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
         // Rename symbol
         let old_name = self.symbols.set_name(symbol_id, new_name.clone());
         // Rename binding
-        self.scopes.rename_binding(scope_id, symbol_id, &old_name, new_name);
+        self.scopes.rename_binding(scope_id, symbol_id, &old_name, new_name.as_str());
     }
 }
 
@@ -391,6 +397,7 @@ impl TraverseScoping {
             // Dummy values. Both immediately overwritten in `walk_program`.
             current_scope_id: ScopeId::new(0),
             current_hoist_scope_id: ScopeId::new(0),
+            current_block_scope_id: ScopeId::new(0),
         }
     }
 
@@ -411,6 +418,12 @@ impl TraverseScoping {
         self.current_hoist_scope_id = scope_id;
     }
 
+    /// Set current block scope ID
+    #[inline]
+    pub(crate) fn set_current_block_scope_id(&mut self, scope_id: ScopeId) {
+        self.current_block_scope_id = scope_id;
+    }
+
     /// Get `uid_names`.
     ///
     /// Iterate through all symbols and unresolved references in AST and identify any var names
@@ -422,7 +435,7 @@ impl TraverseScoping {
         self.scopes
             .root_unresolved_references()
             .keys()
-            .chain(self.symbols.names.iter())
+            .chain(self.symbols.names())
             .filter_map(|name| {
                 if name.as_bytes().first() == Some(&b'_') {
                     Some(name.clone())

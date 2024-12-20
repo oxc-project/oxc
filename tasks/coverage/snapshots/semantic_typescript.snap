@@ -35516,7 +35516,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Symbol flags mismatch for "createElement":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
 Symbol redeclarations mismatch for "createElement":
 after transform: SymbolId(2): [Span { start: 243, end: 256 }]

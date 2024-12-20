@@ -110,8 +110,10 @@ impl Mangler {
             let mut slot = parent_max_slot;
 
             if !bindings.is_empty() {
-                // `bindings` are stored in order, traverse and increment slot
-                for symbol_id in bindings.values().copied() {
+                // Sort `bindings` in declaration order.
+                let mut bindings = bindings.values().copied().collect::<Vec<_>>();
+                bindings.sort_unstable();
+                for symbol_id in bindings {
                     slots[symbol_id] = slot;
                     slot += 1;
                 }

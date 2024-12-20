@@ -1,28 +1,14 @@
 use std::mem;
 
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
-
 use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
 use oxc_syntax::{
     node::NodeId,
-    reference::ReferenceId,
+    reference::{Reference, ReferenceId},
     scope::ScopeId,
     symbol::{RedeclarationId, SymbolFlags, SymbolId},
 };
-
-use crate::reference::Reference;
-
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type IndexVec<I, T> = Array<T>;
-export type CompactStr = string;
-"#;
 
 /// Symbol Table
 ///
@@ -32,14 +18,13 @@ export type CompactStr = string;
 /// `redeclare_variables` (32 bytes per symbol), store `Option<RedeclarationId>` (4 bytes).
 /// That ID indexes into `redeclarations` where the actual `Vec<Span>` is stored.
 #[derive(Debug, Default)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(rename_all = "camelCase"))]
 pub struct SymbolTable {
-    pub spans: IndexVec<SymbolId, Span>,
-    pub names: IndexVec<SymbolId, CompactStr>,
-    pub flags: IndexVec<SymbolId, SymbolFlags>,
-    pub scope_ids: IndexVec<SymbolId, ScopeId>,
+    pub(crate) spans: IndexVec<SymbolId, Span>,
+    pub(crate) names: IndexVec<SymbolId, CompactStr>,
+    pub(crate) flags: IndexVec<SymbolId, SymbolFlags>,
+    pub(crate) scope_ids: IndexVec<SymbolId, ScopeId>,
     /// Pointer to the AST Node where this symbol is declared
-    pub declarations: IndexVec<SymbolId, NodeId>,
+    pub(crate) declarations: IndexVec<SymbolId, NodeId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
     redeclarations: IndexVec<SymbolId, Option<RedeclarationId>>,
 
@@ -59,6 +44,14 @@ impl SymbolTable {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.spans.is_empty()
+    }
+
+    pub fn names(&self) -> impl Iterator<Item = &CompactStr> + '_ {
+        self.names.iter()
+    }
+
+    pub fn resolved_references(&self) -> impl Iterator<Item = &Vec<ReferenceId>> + '_ {
+        self.resolved_references.iter()
     }
 
     /// Iterate over all symbol IDs in this table.

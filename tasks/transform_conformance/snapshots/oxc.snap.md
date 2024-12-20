@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 111/125
+Passed: 117/135
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,7 +16,35 @@ Passed: 111/125
 * regexp
 
 
-# babel-plugin-transform-class-properties (12/14)
+# babel-plugin-transform-class-properties (18/24)
+* interaction-with-other-transforms/input.js
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "C2", "_ref", "_ref2"]
+rebuilt        : ScopeId(0): ["C", "C2", "_a", "_e", "_g", "_ref", "_ref2"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_a", "_e", "_g"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_a":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
+Symbol scope ID mismatch for "_e":
+after transform: SymbolId(5): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+Symbol scope ID mismatch for "_g":
+after transform: SymbolId(6): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(0)
+
+* static-block-this-and-class-name/input.js
+Symbol flags mismatch for "inner":
+after transform: SymbolId(8): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
+
+* static-super-assignment-target/input.js
+x Output mismatch
+
+* static-super-tagged-template/input.js
+x Output mismatch
+
 * typescript/optional-call/input.ts
 Symbol reference IDs mismatch for "X":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(16)]
