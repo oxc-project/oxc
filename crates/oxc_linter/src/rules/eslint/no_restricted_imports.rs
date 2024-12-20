@@ -59,6 +59,7 @@ struct RestrictedPattern {
     group: Vec<CompactStr>,
     import_names: Option<Box<[CompactStr]>>,
     allow_import_names: Option<Box<[CompactStr]>>,
+    case_sensitive: Option<bool>,
     message: Option<CompactStr>,
 }
 
@@ -153,6 +154,7 @@ fn add_configuration_patterns_from_string(paths: &mut Vec<RestrictedPattern>, mo
         group: vec![CompactStr::new(module_name)],
         import_names: None,
         allow_import_names: None,
+        case_sensitive: None,
         message: None,
     });
 }
@@ -341,6 +343,7 @@ impl NoRestrictedImports {
             }
 
             let mut builder = GitignoreBuilder::new("/");
+            let _ = builder.case_insensitive(!pattern.case_sensitive.unwrap_or(false));
 
             for group in &pattern.group {
                 let _ = builder.add_line(None, group.as_str());
@@ -857,10 +860,10 @@ fn test() {
             r#"import withPatterns from "foo/bar";"#,
             Some(serde_json::json!([{ "patterns": [{ "group": ["foo/bar"] }] }])),
         ),
-        // (
-        //     "import withPatternsCaseInsensitive from 'foo';",
-        //     Some(serde_json::json!([{ "patterns": [{ "group": ["FOO"] }] }])),
-        // ),
+        (
+            "import withPatternsCaseInsensitive from 'foo';",
+            Some(serde_json::json!([{ "patterns": [{ "group": ["FOO"] }] }])),
+        ),
         (
             r#"import withGitignores from "foo/bar";"#,
             Some(serde_json::json!([{ "patterns": ["foo/*", "!foo/baz"] }])),
@@ -1734,16 +1737,16 @@ fn test() {
         //         }]
         //     }])),
         // ),
-        // (
-        //     "import withPatternsCaseSensitive from 'foo';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["FOO"],
-        //             "message": "foo is forbidden, use bar instead",
-        //             "caseSensitive": false
-        //         }]
-        //     }])),
-        // ),
+        (
+            "import withPatternsCaseSensitive from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["FOO"],
+                    "message": "foo is forbidden, use bar instead",
+                    "caseSensitive": false
+                }]
+            }])),
+        ),
         // (
         //     "
         // 	        // error
