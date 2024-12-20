@@ -26,19 +26,35 @@ fn no_restricted_imports_diagnostic(
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct NoRestrictedImports {
-    paths: Box<NoRestrictedImportsConfig>,
+pub struct NoRestrictedImports(Box<NoRestrictedImportsConfig>);
+
+impl std::ops::Deref for NoRestrictedImports {
+    type Target = NoRestrictedImportsConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 #[derive(Debug, Default, Clone)]
-struct NoRestrictedImportsConfig {
-    paths: Box<[RestrictedPath]>,
+pub struct NoRestrictedImportsConfig {
+    paths: Vec<RestrictedPath>,
+    patterns: Vec<RestrictedPattern>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct RestrictedPath {
     name: CompactStr,
+    import_names: Option<Box<[CompactStr]>>,
+    allow_import_names: Option<Box<[CompactStr]>>,
+    message: Option<CompactStr>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RestrictedPattern {
+    group: Vec<CompactStr>,
     import_names: Option<Box<[CompactStr]>>,
     allow_import_names: Option<Box<[CompactStr]>>,
     message: Option<CompactStr>,
@@ -77,26 +93,17 @@ declare_oxc_lint!(
     nursery,
 );
 
-fn add_configuration_from_object(
+fn add_configuration_path_from_object(
     paths: &mut Vec<RestrictedPath>,
-    obj: &serde_json::Map<String, serde_json::Value>,
+    paths_value: &serde_json::Value,
 ) {
-    let Some(paths_value) = obj.get("paths") else {
-        if let Ok(path) =
-            serde_json::from_value::<RestrictedPath>(serde_json::Value::Object(obj.clone()))
-        {
-            paths.push(path);
-        }
-        return;
-    };
-
     let Some(paths_array) = paths_value.as_array() else {
         return;
     };
 
     for path_value in paths_array {
         match path_value {
-            Value::String(module_name) => add_configuration_from_string(paths, module_name),
+            Value::String(module_name) => add_configuration_path_from_string(paths, module_name),
             Value::Object(_) => {
                 if let Ok(path) = serde_json::from_value::<RestrictedPath>(path_value.clone()) {
                     paths.push(path);
@@ -107,7 +114,7 @@ fn add_configuration_from_object(
     }
 }
 
-fn add_configuration_from_string(paths: &mut Vec<RestrictedPath>, module_name: &str) {
+fn add_configuration_path_from_string(paths: &mut Vec<RestrictedPath>, module_name: &str) {
     paths.push(RestrictedPath {
         name: CompactStr::new(module_name),
         import_names: None,
@@ -116,39 +123,101 @@ fn add_configuration_from_string(paths: &mut Vec<RestrictedPath>, module_name: &
     });
 }
 
+fn add_configuration_patterns_from_object(
+    patterns: &mut Vec<RestrictedPattern>,
+    patterns_value: &serde_json::Value,
+) {
+    let Some(paths_array) = patterns_value.as_array() else {
+        return;
+    };
+
+    for path_value in paths_array {
+        match path_value {
+            Value::String(module_name) => {
+                add_configuration_patterns_from_string(patterns, module_name);
+            }
+            Value::Object(_) => {
+                if let Ok(path) = serde_json::from_value::<RestrictedPattern>(path_value.clone()) {
+                    patterns.push(path);
+                }
+            }
+            _ => (),
+        }
+    }
+}
+
+fn add_configuration_patterns_from_string(paths: &mut Vec<RestrictedPattern>, module_name: &str) {
+    paths.push(RestrictedPattern {
+        group: vec![CompactStr::new(module_name)],
+        import_names: None,
+        allow_import_names: None,
+        message: None,
+    });
+}
+
 impl Rule for NoRestrictedImports {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut paths = Vec::new();
+        let mut paths: Vec<RestrictedPath> = Vec::new();
+        let mut patterns: Vec<RestrictedPattern> = Vec::new();
 
         match &value {
             Value::Array(module_names) => {
                 for module_name in module_names {
                     match module_name {
                         Value::String(module_string) => {
-                            add_configuration_from_string(&mut paths, module_string);
+                            add_configuration_path_from_string(&mut paths, module_string);
                         }
-                        Value::Object(obj) => add_configuration_from_object(&mut paths, obj),
+                        Value::Object(obj) => {
+                            if let Some(paths_value) = obj.get("paths") {
+                                add_configuration_path_from_object(&mut paths, paths_value);
+                            } else if let Some(patterns_value) = obj.get("patterns") {
+                                add_configuration_patterns_from_object(
+                                    &mut patterns,
+                                    patterns_value,
+                                );
+                            } else if let Ok(path) = serde_json::from_value::<RestrictedPath>(
+                                serde_json::Value::Object(obj.clone()),
+                            ) {
+                                paths.push(path);
+                            };
+                        }
                         _ => (),
                     };
                 }
             }
             Value::String(module_name) => {
-                add_configuration_from_string(&mut paths, module_name);
+                add_configuration_path_from_string(&mut paths, module_name);
             }
             Value::Object(obj) => {
-                add_configuration_from_object(&mut paths, obj);
+                if let Some(paths_value) = obj.get("paths") {
+                    add_configuration_path_from_object(&mut paths, paths_value);
+                } else if let Some(patterns_value) = obj.get("patterns") {
+                    add_configuration_patterns_from_object(&mut patterns, patterns_value);
+                } else if let Ok(path) =
+                    serde_json::from_value::<RestrictedPath>(serde_json::Value::Object(obj.clone()))
+                {
+                    paths.push(path);
+                }
             }
             _ => {}
         }
 
-        Self { paths: Box::new(NoRestrictedImportsConfig { paths: paths.into_boxed_slice() }) }
+        Self(Box::new(NoRestrictedImportsConfig { paths, patterns }))
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
         let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<Span>> = FxHashMap::default();
 
-        for path in &self.paths.paths {
+        for (source, requests) in &module_record.requested_modules {
+            for request in requests {
+                if request.is_import && module_record.import_entries.is_empty() {
+                    side_effect_import_map.entry(source).or_default().push(request.span);
+                }
+            }
+        }
+
+        for path in &self.paths {
             for entry in &module_record.import_entries {
                 let source = entry.module_request.name();
                 let span = entry.module_request.span();
@@ -162,14 +231,6 @@ impl Rule for NoRestrictedImports {
                 }
 
                 no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
-            }
-
-            for (source, requests) in &module_record.requested_modules {
-                for request in requests {
-                    if request.is_import && module_record.import_entries.is_empty() {
-                        side_effect_import_map.entry(source).or_default().push(request.span);
-                    }
-                }
             }
 
             for (source, spans) in &side_effect_import_map {
@@ -735,14 +796,14 @@ fn test() {
             r#"import withPaths from "foo/bar";"#,
             Some(serde_json::json!([{ "paths": ["foo/bar"] }])),
         ),
-        // (
-        //     r#"import withPatterns from "foo/bar";"#,
-        //     Some(serde_json::json!([{ "patterns": ["foo"] }])),
-        // ),
-        // (
-        //     r#"import withPatterns from "foo/bar";"#,
-        //     Some(serde_json::json!([{ "patterns": ["bar"] }])),
-        // ),
+        (
+            r#"import withPatterns from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": ["foo"] }])),
+        ),
+        (
+            r#"import withPatterns from "foo/bar";"#,
+            Some(serde_json::json!([{ "patterns": ["bar"] }])),
+        ),
         // (
         //     r#"import withPatterns from "foo/baz";"#,
         //     Some(
