@@ -105,7 +105,7 @@ export default function generateAncestorsCode(types) {
   for (const [typeName, variantNames] of Object.entries(variantNamesForEnums)) {
     isFunctions += `
       #[inline]
-      pub fn is_via_${camelToSnake(typeName)}(self) -> bool {
+      pub fn is_parent_of_${camelToSnake(typeName)}(self) -> bool {
         matches!(self, ${variantNames.map(name => `Self::${name}(_)`).join(' | ')})
       }
     `;
