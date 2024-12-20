@@ -488,11 +488,7 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// This is a shortcut for `ctx.scoping.create_unbound_reference`.
     #[inline]
-    pub fn create_unbound_reference(
-        &mut self,
-        name: CompactStr,
-        flags: ReferenceFlags,
-    ) -> ReferenceId {
+    pub fn create_unbound_reference(&mut self, name: &str, flags: ReferenceFlags) -> ReferenceId {
         self.scoping.create_unbound_reference(name, flags)
     }
 
@@ -503,7 +499,7 @@ impl<'a> TraverseCtx<'a> {
         name: Atom<'a>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_unbound_reference(name.to_compact_str(), flags);
+        let reference_id = self.create_unbound_reference(name.as_str(), flags);
         self.ast.identifier_reference_with_reference_id(span, name, reference_id)
     }
 
@@ -527,7 +523,7 @@ impl<'a> TraverseCtx<'a> {
     #[inline]
     pub fn create_reference(
         &mut self,
-        name: CompactStr,
+        name: &str,
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> ReferenceId {
@@ -576,7 +572,7 @@ impl<'a> TraverseCtx<'a> {
     #[inline]
     pub fn create_reference_in_current_scope(
         &mut self,
-        name: CompactStr,
+        name: &str,
         flags: ReferenceFlags,
     ) -> ReferenceId {
         self.scoping.create_reference_in_current_scope(name, flags)

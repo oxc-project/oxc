@@ -1,10 +1,9 @@
 use std::{fmt, mem};
 
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::FxBuildHasher;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_index::{Idx, IndexVec};
-use oxc_span::CompactStr;
 use oxc_syntax::{
     node::NodeId,
     reference::ReferenceId,
@@ -13,7 +12,8 @@ use oxc_syntax::{
 };
 
 pub(crate) type Bindings<'a> = hashbrown::HashMap<&'a str, SymbolId, FxBuildHasher, &'a Allocator>;
-pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
+pub type UnresolvedReferences<'a> =
+    hashbrown::HashMap<&'a str, ArenaVec<'a, ReferenceId>, FxBuildHasher, &'a Allocator>;
 
 /// Scope Tree
 ///
@@ -37,8 +37,6 @@ pub struct ScopeTree {
 
     flags: IndexVec<ScopeId, ScopeFlags>,
 
-    pub(crate) root_unresolved_references: UnresolvedReferences,
-
     pub(crate) cell: ScopeTreeCell,
 }
 
@@ -55,10 +53,13 @@ impl Default for ScopeTree {
             build_child_ids: false,
             node_ids: IndexVec::new(),
             flags: IndexVec::new(),
-            root_unresolved_references: UnresolvedReferences::default(),
             cell: ScopeTreeCell::new(Allocator::default(), |allocator| ScopeTreeInner {
                 bindings: IndexVec::new(),
                 child_ids: ArenaVec::new_in(allocator),
+                root_unresolved_references: UnresolvedReferences::with_hasher_in(
+                    FxBuildHasher,
+                    allocator,
+                ),
             }),
         }
     }
@@ -80,6 +81,8 @@ pub(crate) struct ScopeTreeInner<'cell> {
 
     /// Maps a scope to direct children scopes.
     child_ids: ArenaVec<'cell, ArenaVec<'cell, ScopeId>>,
+
+    pub(crate) root_unresolved_references: UnresolvedReferences<'cell>,
 }
 
 impl ScopeTree {
@@ -131,13 +134,28 @@ impl ScopeTree {
 
     #[inline]
     pub fn root_unresolved_references(&self) -> &UnresolvedReferences {
-        &self.root_unresolved_references
+        &self.cell.borrow_dependent().root_unresolved_references
     }
 
     pub fn root_unresolved_references_ids(
         &self,
     ) -> impl Iterator<Item = impl Iterator<Item = ReferenceId> + '_> + '_ {
-        self.root_unresolved_references.values().map(|v| v.iter().copied())
+        self.cell.borrow_dependent().root_unresolved_references.values().map(|v| v.iter().copied())
+    }
+
+    pub(crate) fn set_root_unresolved_references<'a>(
+        &mut self,
+        entries: impl Iterator<Item = (&'a str, Vec<ReferenceId>)>,
+    ) {
+        self.cell.with_dependent_mut(|allocator, inner| {
+            for (k, v) in entries {
+                let k = allocator.alloc_str(k);
+                let v = ArenaVec::from_iter_in(v, allocator);
+                inner.root_unresolved_references.insert(k, v);
+            }
+            // =
+            // .extend_from(entries.map(|(k, v)| (allocator.alloc(k),)))
+        });
     }
 
     /// Delete an unresolved reference.
@@ -153,14 +171,16 @@ impl ScopeTree {
         // but `map.entry` requires an owned key to be provided. Currently we use `CompactStr`s as keys
         // which are not cheap to construct, so this is best we can do at present.
         // TODO: Switch to `Entry` API once we use `&str`s or `Atom`s as keys.
-        let reference_ids = self.root_unresolved_references.get_mut(name).unwrap();
-        if reference_ids.len() == 1 {
-            assert!(reference_ids[0] == reference_id);
-            self.root_unresolved_references.remove(name);
-        } else {
-            let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
-            reference_ids.swap_remove(index);
-        }
+        self.cell.with_dependent_mut(|_allocator, inner| {
+            let reference_ids = inner.root_unresolved_references.get_mut(name).unwrap();
+            if reference_ids.len() == 1 {
+                assert!(reference_ids[0] == reference_id);
+                inner.root_unresolved_references.remove(name);
+            } else {
+                let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
+                reference_ids.swap_remove(index);
+            }
+        });
     }
 
     #[inline]
@@ -234,8 +254,15 @@ impl ScopeTree {
         self.get_binding(self.root_scope_id(), name)
     }
 
-    pub fn add_root_unresolved_reference(&mut self, name: CompactStr, reference_id: ReferenceId) {
-        self.root_unresolved_references.entry(name).or_default().push(reference_id);
+    pub fn add_root_unresolved_reference(&mut self, name: &str, reference_id: ReferenceId) {
+        self.cell.with_dependent_mut(|allocator, inner| {
+            let name = allocator.alloc_str(name);
+            inner
+                .root_unresolved_references
+                .entry(name)
+                .or_insert_with(|| ArenaVec::new_in(allocator))
+                .push(reference_id);
+        });
     }
 
     /// Check if a symbol is declared in a certain scope.

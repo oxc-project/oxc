@@ -279,12 +279,9 @@ impl<'a> SemanticBuilder<'a> {
         if self.check_syntax_error && !self.source_type.is_typescript() {
             checker::check_unresolved_exports(&self);
         }
-        self.scope.root_unresolved_references = self
-            .unresolved_references
-            .into_root()
-            .into_iter()
-            .map(|(k, v)| (k.into(), v))
-            .collect();
+        self.scope.set_root_unresolved_references(
+            self.unresolved_references.into_root().into_iter().map(|(k, v)| (k.as_str(), v)),
+        );
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 

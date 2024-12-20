@@ -181,7 +181,7 @@ impl<'a> InjectGlobalVariables<'a> {
                 } else if self.replaced_dot_defines.iter().any(|d| d.0 == i.specifier.local()) {
                     false
                 } else {
-                    scopes.root_unresolved_references().contains_key(i.specifier.local())
+                    scopes.root_unresolved_references().contains_key(i.specifier.local().as_str())
                 }
             })
             .cloned()

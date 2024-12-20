@@ -313,11 +313,7 @@ impl TraverseScoping {
     }
 
     /// Create an unbound reference
-    pub fn create_unbound_reference(
-        &mut self,
-        name: CompactStr,
-        flags: ReferenceFlags,
-    ) -> ReferenceId {
+    pub fn create_unbound_reference(&mut self, name: &str, flags: ReferenceFlags) -> ReferenceId {
         let reference = Reference::new(NodeId::DUMMY, flags);
         let reference_id = self.symbols.create_reference(reference);
         self.scopes.add_root_unresolved_reference(name, reference_id);
@@ -330,7 +326,7 @@ impl TraverseScoping {
     /// or `TraverseCtx::create_unbound_reference`.
     pub fn create_reference(
         &mut self,
-        name: CompactStr,
+        name: &str,
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> ReferenceId {
@@ -344,10 +340,10 @@ impl TraverseScoping {
     /// Create reference in current scope, looking up binding for `name`
     pub fn create_reference_in_current_scope(
         &mut self,
-        name: CompactStr,
+        name: &str,
         flags: ReferenceFlags,
     ) -> ReferenceId {
-        let symbol_id = self.scopes.find_binding(self.current_scope_id, name.as_str());
+        let symbol_id = self.scopes.find_binding(self.current_scope_id, name);
         self.create_reference(name, symbol_id, flags)
     }
 
@@ -433,7 +429,7 @@ impl TraverseScoping {
         self.scopes
             .root_unresolved_references()
             .keys()
-            .map(CompactStr::as_str)
+            .copied()
             .chain(self.symbols.names())
             .filter(|name| name.as_bytes().first() == Some(&b'_'))
             .map(CompactStr::from)
