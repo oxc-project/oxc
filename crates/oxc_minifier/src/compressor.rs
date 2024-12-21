@@ -54,6 +54,7 @@ impl<'a> Compressor<'a> {
         program: &mut Program<'a>,
     ) {
         let mut ctx = ReusableTraverseCtx::new(scopes, symbols, self.allocator);
+        RemoveSyntax::new(self.options).build(program, &mut ctx);
         DeadCodeElimination::new().build(program, &mut ctx);
     }
 }
