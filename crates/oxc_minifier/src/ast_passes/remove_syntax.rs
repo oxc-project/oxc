@@ -21,7 +21,7 @@ impl<'a> CompressorPass<'a> for RemoveSyntax {
 }
 
 impl<'a> Traverse<'a> for RemoveSyntax {
-    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
         stmts.retain(|stmt| {
             !(matches!(stmt, Statement::EmptyStatement(_))
                 || self.drop_debugger(stmt)
@@ -29,11 +29,8 @@ impl<'a> Traverse<'a> for RemoveSyntax {
         });
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.compress_console(expr, ctx);
-    }
-
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.compress_console(expr, ctx);
         Self::strip_parenthesized_expression(expr, ctx);
     }
 
@@ -114,7 +111,7 @@ mod test {
 
     #[test]
     fn drop_console() {
-        test("console.log()", "");
+        test("console.log()", "void 0;\n");
     }
 
     #[test]

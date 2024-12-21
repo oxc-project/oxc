@@ -44,7 +44,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.compress_return_statement(stmt);
     }
 
-    fn enter_variable_declaration(
+    fn exit_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -77,7 +77,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.in_define_export = false;
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx(ctx);
         if let Expression::AssignmentExpression(assignment_expr) = expr {
             if let Some(new_expr) = Self::try_compress_assignment_expression(assignment_expr, ctx) {
@@ -85,10 +85,6 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                 self.changed = true;
             }
         }
-    }
-
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let ctx = Ctx(ctx);
         self.try_compress_boolean(expr, ctx);
         self.try_compress_undefined(expr, ctx);
         match expr {
@@ -138,16 +134,11 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                     }
                 }
             }
+            Expression::BinaryExpression(expr) => {
+                self.compress_typeof_undefined(expr, ctx);
+            }
             _ => {}
         }
-    }
-
-    fn enter_binary_expression(
-        &mut self,
-        expr: &mut BinaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.compress_typeof_undefined(expr, Ctx(ctx));
     }
 }
 
