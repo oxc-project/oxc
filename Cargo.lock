@@ -1691,6 +1691,7 @@ dependencies = [
  "dashmap 6.1.0",
  "fast-glob",
  "globset",
+ "ignore",
  "insta",
  "itertools",
  "json-strip-comments",

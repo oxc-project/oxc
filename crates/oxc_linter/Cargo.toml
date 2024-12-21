@@ -42,6 +42,7 @@ cow-utils = { workspace = true }
 dashmap = { workspace = true }
 fast-glob = { workspace = true }
 globset = { workspace = true }
+ignore = { workspace = true }
 itertools = { workspace = true }
 json-strip-comments = { workspace = true }
 language-tags = { workspace = true }
