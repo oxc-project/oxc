@@ -1,11 +1,9 @@
-commit: dc0082c5
+commit: c4317b0c
 
 parser_test262 Summary:
-AST Parsed     : 44095/44096 (100.00%)
-Positive Passed: 44095/44096 (100.00%)
-Negative Passed: 4454/4456 (99.96%)
-Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-invalid.js
-Expect Syntax Error: tasks/coverage/test262/test/language/import/import-attributes/json-named-bindings.js
+AST Parsed     : 44100/44101 (100.00%)
+Positive Passed: 44100/44101 (100.00%)
+Negative Passed: 4454/4454 (100.00%)
 Expect to Parse: tasks/coverage/test262/test/language/module-code/source-phase-import/import-source-binding-name-2.js
 
   × Unexpected token
