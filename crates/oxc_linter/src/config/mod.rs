@@ -1,17 +1,17 @@
 use std::path::PathBuf;
 
 mod categories;
+mod config_store;
 mod env;
-mod flat;
 mod globals;
 mod overrides;
 mod oxlintrc;
 mod plugins;
 mod rules;
 mod settings;
+pub use config_store::ConfigStore;
+pub(crate) use config_store::ResolvedLinterState;
 pub use env::OxlintEnv;
-pub use flat::ConfigStore;
-pub(crate) use flat::ResolvedLinterState;
 pub use globals::OxlintGlobals;
 pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
