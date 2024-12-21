@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.43.0] - 2024-12-21
+
+- ed75e42 semantic: [**BREAKING**] Make SymbolTable fields `pub(crate)` instead of `pub` (#7999) (Boshen)
+
+### Features
+
+- 8547e02 ast: Implement `allocator_api2` for `Allocator` (#8043) (Boshen)
+
+### Performance
+
+- 2736657 semantic: Allocate `UnresolvedReferences` in allocator (#8046) (Boshen)
+- 2e8872c semantic: Allocate child scope in allocator (#8045) (Boshen)
+- 414e828 semantic: Allocate symbol data in Allocator (#8012) (Boshen)
+- 7aebed0 semantic: Allocate `Bindings` in allocator (#8021) (Boshen)
+
+### Refactor
+
+- f1adf9f semantic: `ScopeTree::rename_binding` remove old binding first (#8020) (overlookmotel)
+- 02f968d semantic: Change `Bindings` to a plain `FxHashMap` (#8019) (Boshen)
+- e7476a1 semantic: Remove `serialize` (#8015) (Boshen)
+- 1cf7b83 semantic: Simplify handling namespace stack (#7987) (Dunqing)
+- 48cb52b semantic: Remove resetting `current_reference_flags` in visit functions (#7986) (Dunqing)
+- 3250a47 semantic: Remove unused current_symbol_flags (#7985) (Dunqing)
+- efe96ec semantic: Use `Stack` for function stack node ids (#7984) (Dunqing)
+
+### Testing
+
+- bcb33c0 semantic: Add a test for catch parameters reference (#7988) (Dunqing)
+
 ## [0.42.0] - 2024-12-18
 
 - c071494 semantic: [**BREAKING**] Remove `SymbolTable::rename` method (#7868) (overlookmotel)
