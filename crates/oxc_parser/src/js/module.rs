@@ -60,9 +60,7 @@ impl<'a> ParserImpl<'a> {
         let mut phase = None;
         match self.cur_kind() {
             Kind::Source => {
-                let peek_kind = self.peek_kind();
-                // Allow `import source from 'mod'`
-                if peek_kind.is_binding_identifier() && peek_kind != Kind::From {
+                if self.peek_kind().is_binding_identifier() && self.nth_kind(2) == Kind::From {
                     self.bump_any();
                     phase = Some(ImportPhase::Source);
                 }

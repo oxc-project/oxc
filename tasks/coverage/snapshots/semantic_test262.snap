@@ -2,7 +2,7 @@ commit: c4317b0c
 
 semantic_test262 Summary:
 AST Parsed     : 44101/44101 (100.00%)
-Positive Passed: 43582/44101 (98.82%)
+Positive Passed: 43583/44101 (98.83%)
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(3): ScopeId(4294967294)
@@ -3632,9 +3632,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["$DONE", "Object", "assert", "require"]
 rebuilt        : ["$DONE", "Object", "_superprop_getMethod", "assert", "require"]
-
-tasks/coverage/test262/test/language/module-code/source-phase-import/import-source-binding-name-2.js
-semantic error: Unexpected token
 
 tasks/coverage/test262/test/language/module-code/top-level-await/syntax/for-await-await-expr-func-expression.js
 semantic error: Scope children mismatch:
