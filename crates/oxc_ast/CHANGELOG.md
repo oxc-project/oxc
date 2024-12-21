@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.43.0] - 2024-12-21
+
+### Features
+
+- 63a95e4 ast: Add `AstBulder::move_property_key` (#7998) (overlookmotel)
+
+### Performance
+
+- c0dd3f8 ast: `move_expression` and `move_statement` produce dummy with no span (#7995) (overlookmotel)
+
+### Documentation
+
+- df5c341 ast: Improve docs for `AstBuilder::move_*` methods (#7994) (overlookmotel)
+
 ## [0.42.0] - 2024-12-18
 
 ### Features
