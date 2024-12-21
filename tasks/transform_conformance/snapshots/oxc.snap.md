@@ -1,11 +1,10 @@
 commit: 54a8389f
 
-Passed: 117/135
+Passed: 117/136
 
 # All Passed:
 * babel-plugin-transform-class-static-block
 * babel-plugin-transform-logical-assignment-operators
-* babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-async-generator-functions
 * babel-plugin-transform-object-rest-spread
@@ -54,6 +53,19 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(8), R
 Symbol reference IDs mismatch for "X":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(9), ReferenceId(12)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
+
+
+# babel-plugin-transform-nullish-coalescing-operator (2/3)
+* in-nested-block/input.js
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["_x"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(0): ScopeId(0)
 
 
 # babel-plugin-transform-async-to-generator (14/15)
