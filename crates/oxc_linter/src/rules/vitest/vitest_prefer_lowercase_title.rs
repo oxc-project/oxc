@@ -6,7 +6,7 @@ use oxc_span::{CompactStr, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+    utils::{parse_expect_and_typeof_vitest_fn_call, parse_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
 };
 
 fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
@@ -106,10 +106,10 @@ impl Rule for VitestPreferLowercaseTitle {
             return;
         };
         let Some(vitest_fn_call) =
-            parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
-        else {
-            return;
-        };
+        parse_expect_and_typeof_vitest_fn_call(call_expr, possible_vitest_node, ctx)
+    else {
+        return;
+    };
 
         let scopes = ctx.scopes();
 
@@ -120,11 +120,11 @@ impl Rule for VitestPreferLowercaseTitle {
         //     return;
         // }
 
-        if matches!(vitest_fn_call.kind(), JestFnKind::General(JestGeneralFnKind::Describe)) {
+        if matches!(vitest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
             if self.ignore_top_level_describe && scopes.get_flags(node.scope_id()).is_top() {
                 return;
             }
-        } else if !matches!(vitest_fn_call.kind(), JestFnKind::General(JestGeneralFnKind::Test) | JestFnKind::General(JestGeneralFnKind::VitestBench)) {
+        } else if !matches!(vitest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test) | JestFnKind::General(JestGeneralFnKind::VitestBench)) {
             return;
         }
 
