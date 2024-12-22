@@ -356,9 +356,7 @@ fn check_binding_exported(
     if module.exported_bindings.contains_key(name)
         || (name == "default" && module.export_default.is_some())
         || module
-            .exported_bindings_from_star_export
-            .read()
-            .unwrap()
+            .exported_bindings_from_star_export()
             .iter()
             .any(|(_, value)| value.iter().any(|s| s.as_str() == name))
     {

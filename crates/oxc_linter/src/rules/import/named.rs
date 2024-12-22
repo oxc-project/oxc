@@ -117,9 +117,7 @@ impl Rule for Named {
             }
             // check re-export
             if remote_module_record
-                .exported_bindings_from_star_export
-                .read()
-                .unwrap()
+                .exported_bindings_from_star_export()
                 .iter()
                 .any(|(_, value)| value.contains(&import_name.name))
             {
