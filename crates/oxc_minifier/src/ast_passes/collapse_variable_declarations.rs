@@ -20,7 +20,7 @@ impl<'a> CompressorPass<'a> for CollapseVariableDeclarations {
 }
 
 impl<'a> Traverse<'a> for CollapseVariableDeclarations {
-    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.join_vars(stmts, ctx);
     }
 }

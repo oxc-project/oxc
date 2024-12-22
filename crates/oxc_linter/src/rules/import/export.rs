@@ -55,6 +55,7 @@ impl Rule for Export {
         let mut all_export_names = FxHashMap::default();
         let mut visited = FxHashSet::default();
 
+        let loaded_modules = module_record.loaded_modules.read().unwrap();
         module_record.star_export_entries.iter().for_each(|star_export_entry| {
             if star_export_entry.is_type {
                 return;
@@ -64,17 +65,11 @@ impl Rule for Export {
             let Some(module_request) = &star_export_entry.module_request else {
                 return;
             };
-            let Some(remote_module_record_ref) =
-                module_record.loaded_modules.get(module_request.name())
-            else {
+            let Some(remote_module_record) = loaded_modules.get(module_request.name()) else {
                 return;
             };
 
-            walk_exported_recursive(
-                remote_module_record_ref.value(),
-                &mut export_names,
-                &mut visited,
-            );
+            walk_exported_recursive(remote_module_record, &mut export_names, &mut visited);
 
             if export_names.is_empty() {
                 ctx.diagnostic(no_named_export(module_request.name(), module_request.span()));
@@ -126,16 +121,15 @@ fn walk_exported_recursive(
     for name in module_record.exported_bindings.keys() {
         result.insert(name.clone());
     }
+    let loaded_modules = module_record.loaded_modules.read().unwrap();
     for export_entry in &module_record.star_export_entries {
         let Some(module_request) = &export_entry.module_request else {
             continue;
         };
-        let Some(remote_module_record_ref) =
-            module_record.loaded_modules.get(module_request.name())
-        else {
+        let Some(remote_module_record) = loaded_modules.get(module_request.name()) else {
             continue;
         };
-        walk_exported_recursive(remote_module_record_ref.value(), result, visited);
+        walk_exported_recursive(remote_module_record, result, visited);
     }
 }
 

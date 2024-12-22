@@ -32,6 +32,11 @@ use crate::{Allocator, Box, String};
 #[derive(PartialEq, Eq)]
 pub struct Vec<'alloc, T>(ManuallyDrop<vec::Vec<T, &'alloc Bump>>);
 
+/// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
+unsafe impl<T> Send for Vec<'_, T> {}
+/// SAFETY: Not actually safe, but for enabling `Sync` for downstream crates.
+unsafe impl<T> Sync for Vec<'_, T> {}
+
 impl<'alloc, T> Vec<'alloc, T> {
     /// Constructs a new, empty `Vec<T>`.
     ///

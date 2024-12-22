@@ -14,7 +14,7 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, CompactStr, SourceType, Span};
+use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -279,12 +279,9 @@ impl<'a> SemanticBuilder<'a> {
         if self.check_syntax_error && !self.source_type.is_typescript() {
             checker::check_unresolved_exports(&self);
         }
-        self.scope.root_unresolved_references = self
-            .unresolved_references
-            .into_root()
-            .into_iter()
-            .map(|(k, v)| (k.into(), v))
-            .collect();
+        self.scope.set_root_unresolved_references(
+            self.unresolved_references.into_root().into_iter().map(|(k, v)| (k.as_str(), v)),
+        );
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
@@ -398,13 +395,9 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        let symbol_id = self.symbols.create_symbol(
-            span,
-            CompactStr::new(name),
-            includes,
-            scope_id,
-            self.current_node_id,
-        );
+        let symbol_id =
+            self.symbols.create_symbol(span, name, includes, scope_id, self.current_node_id);
+
         self.scope.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
@@ -466,7 +459,7 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         let symbol_id = self.symbols.create_symbol(
             span,
-            CompactStr::new(name),
+            name,
             includes,
             self.current_scope_id,
             self.current_node_id,
@@ -521,7 +514,7 @@ impl<'a> SemanticBuilder<'a> {
                         *flags = ReferenceFlags::Type;
                     }
                     reference.set_symbol_id(symbol_id);
-                    self.symbols.resolved_references[symbol_id].push(reference_id);
+                    self.symbols.add_resolved_reference(symbol_id, reference_id);
 
                     false
                 });

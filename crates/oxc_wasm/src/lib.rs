@@ -427,7 +427,11 @@ impl Oxc {
                 name: symbols.get_name(symbol_id).into(),
                 flags: symbols.get_flags(symbol_id),
                 scope_id: symbols.get_scope_id(symbol_id),
-                resolved_references: symbols.get_resolved_reference_ids(symbol_id).clone(),
+                resolved_references: symbols
+                    .get_resolved_reference_ids(symbol_id)
+                    .iter()
+                    .copied()
+                    .collect::<Vec<_>>(),
                 references: symbols
                     .get_resolved_reference_ids(symbol_id)
                     .iter()

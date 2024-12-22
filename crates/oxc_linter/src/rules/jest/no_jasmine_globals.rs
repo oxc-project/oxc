@@ -49,7 +49,7 @@ impl Rule for NoJasmineGlobals {
             .scopes()
             .root_unresolved_references()
             .iter()
-            .filter(|(key, _)| NON_JASMINE_PROPERTY_NAMES.contains(&key.as_str()));
+            .filter(|(key, _)| NON_JASMINE_PROPERTY_NAMES.contains(key));
 
         for (name, reference_ids) in jasmine_references {
             for &reference_id in reference_ids {

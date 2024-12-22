@@ -22,6 +22,8 @@ pub use peephole_substitute_alternate_syntax::PeepholeSubstituteAlternateSyntax;
 pub use remove_syntax::RemoveSyntax;
 pub use statement_fusion::StatementFusion;
 
+use crate::CompressOptions;
+
 pub trait CompressorPass<'a>: Traverse<'a> {
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>);
 }
@@ -56,8 +58,8 @@ impl<'a> CompressorPass<'a> for CollapsePass {
 }
 
 impl<'a> Traverse<'a> for CollapsePass {
-    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        self.x1_collapse_variable_declarations.enter_statements(stmts, ctx);
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.x1_collapse_variable_declarations.exit_statements(stmts, ctx);
     }
 }
 
@@ -132,10 +134,6 @@ impl<'a> CompressorPass<'a> for LatePeepholeOptimizations {
 }
 
 impl<'a> Traverse<'a> for LatePeepholeOptimizations {
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x1_peephole_remove_dead_code.enter_statement(stmt, ctx);
-    }
-
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_peephole_remove_dead_code.exit_statement(stmt, ctx);
         self.x2_peephole_minimize_conditions.exit_statement(stmt, ctx);
@@ -162,23 +160,19 @@ impl<'a> Traverse<'a> for LatePeepholeOptimizations {
         self.x3_peephole_substitute_alternate_syntax.exit_return_statement(stmt, ctx);
     }
 
-    fn enter_variable_declaration(
+    fn exit_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x3_peephole_substitute_alternate_syntax.enter_variable_declaration(decl, ctx);
-    }
-
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_peephole_substitute_alternate_syntax.enter_expression(expr, ctx);
-        self.x4_peephole_replace_known_methods.enter_expression(expr, ctx);
+        self.x3_peephole_substitute_alternate_syntax.exit_variable_declaration(decl, ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_peephole_remove_dead_code.exit_expression(expr, ctx);
         self.x2_peephole_minimize_conditions.exit_expression(expr, ctx);
         self.x3_peephole_substitute_alternate_syntax.exit_expression(expr, ctx);
+        self.x4_peephole_replace_known_methods.exit_expression(expr, ctx);
         self.x5_peephole_fold_constants.exit_expression(expr, ctx);
     }
 
@@ -188,14 +182,6 @@ impl<'a> Traverse<'a> for LatePeepholeOptimizations {
 
     fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x3_peephole_substitute_alternate_syntax.exit_call_expression(expr, ctx);
-    }
-
-    fn enter_binary_expression(
-        &mut self,
-        expr: &mut BinaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.x3_peephole_substitute_alternate_syntax.enter_binary_expression(expr, ctx);
     }
 }
 
@@ -230,10 +216,6 @@ impl<'a> CompressorPass<'a> for PeepholeOptimizations {
 }
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x5_peephole_remove_dead_code.enter_statement(stmt, ctx);
-    }
-
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x2_peephole_minimize_conditions.exit_statement(stmt, ctx);
         self.x5_peephole_remove_dead_code.exit_statement(stmt, ctx);
@@ -251,22 +233,18 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.x3_peephole_substitute_alternate_syntax.exit_return_statement(stmt, ctx);
     }
 
-    fn enter_variable_declaration(
+    fn exit_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x3_peephole_substitute_alternate_syntax.enter_variable_declaration(decl, ctx);
-    }
-
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_peephole_substitute_alternate_syntax.enter_expression(expr, ctx);
-        self.x4_peephole_replace_known_methods.enter_expression(expr, ctx);
+        self.x3_peephole_substitute_alternate_syntax.exit_variable_declaration(decl, ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x2_peephole_minimize_conditions.exit_expression(expr, ctx);
         self.x3_peephole_substitute_alternate_syntax.exit_expression(expr, ctx);
+        self.x4_peephole_replace_known_methods.exit_expression(expr, ctx);
         self.x5_peephole_remove_dead_code.exit_expression(expr, ctx);
         self.x6_peephole_fold_constants.exit_expression(expr, ctx);
     }
@@ -278,12 +256,46 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x3_peephole_substitute_alternate_syntax.exit_call_expression(expr, ctx);
     }
+}
 
-    fn enter_binary_expression(
-        &mut self,
-        expr: &mut BinaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.x3_peephole_substitute_alternate_syntax.enter_binary_expression(expr, ctx);
+pub struct DeadCodeElimination {
+    x0_remove_syntax: RemoveSyntax,
+    x1_peephole_fold_constants: PeepholeFoldConstants,
+    x2_peephole_remove_dead_code: PeepholeRemoveDeadCode,
+}
+
+impl DeadCodeElimination {
+    pub fn new() -> Self {
+        Self {
+            x0_remove_syntax: RemoveSyntax::new(CompressOptions::all_false()),
+            x1_peephole_fold_constants: PeepholeFoldConstants::new(),
+            x2_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
+        }
+    }
+}
+
+impl<'a> CompressorPass<'a> for DeadCodeElimination {
+    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+        traverse_mut_with_ctx(self, program, ctx);
+    }
+}
+
+impl<'a> Traverse<'a> for DeadCodeElimination {
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_peephole_remove_dead_code.exit_statement(stmt, ctx);
+    }
+
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_peephole_remove_dead_code.exit_program(program, ctx);
+    }
+
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_peephole_remove_dead_code.exit_statements(stmts, ctx);
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_remove_syntax.exit_expression(expr, ctx);
+        self.x1_peephole_fold_constants.exit_expression(expr, ctx);
+        self.x2_peephole_remove_dead_code.exit_expression(expr, ctx);
     }
 }

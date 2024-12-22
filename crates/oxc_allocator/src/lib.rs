@@ -72,6 +72,11 @@ pub struct Allocator {
     bump: Bump,
 }
 
+/// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
+unsafe impl Send for Allocator {}
+/// SAFETY: Not actually safe, but for enabling `Sync` for downstream crates.
+unsafe impl Sync for Allocator {}
+
 impl From<Bump> for Allocator {
     fn from(bump: Bump) -> Self {
         Self { bump }

@@ -116,7 +116,7 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
         let current_scope_id = if is_parent_formal_parameter {
             ctx.create_child_scope_of_current(ScopeFlags::Arrow | ScopeFlags::Function)
         } else {
-            ctx.current_scope_id()
+            ctx.current_hoist_scope_id()
         };
 
         // Add `var _name` to scope

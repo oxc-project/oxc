@@ -310,7 +310,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         }
 
         // Leave class expressions to `transform_class_expression_on_exit`
-        let class_details = self.current_class_mut();
+        let class_details = self.current_class();
         if !class_details.is_declaration {
             return;
         }

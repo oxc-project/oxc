@@ -63,7 +63,7 @@ impl Rule for NoGlobalAssign {
             for &reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
                 if reference.is_write()
-                    && !self.excludes.contains(name)
+                    && !self.excludes.iter().any(|n| n == name)
                     && ctx.env_contains_var(name)
                 {
                     ctx.diagnostic(no_global_assign_diagnostic(

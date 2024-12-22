@@ -133,8 +133,7 @@ impl TraverseScoping {
     fn insert_scope_below(&mut self, child_scope_ids: &[ScopeId], flags: ScopeFlags) -> ScopeId {
         // Remove these scopes from parent's children
         if self.scopes.has_child_ids() {
-            let current_child_scope_ids = self.scopes.get_child_ids_mut(self.current_scope_id);
-            current_child_scope_ids.retain(|scope_id| !child_scope_ids.contains(scope_id));
+            self.scopes.remove_child_scopes(self.current_scope_id, child_scope_ids);
         }
 
         // Create new scope as child of parent
@@ -182,8 +181,7 @@ impl TraverseScoping {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> SymbolId {
-        let symbol_id =
-            self.symbols.create_symbol(SPAN, name.into(), flags, scope_id, NodeId::DUMMY);
+        let symbol_id = self.symbols.create_symbol(SPAN, name, flags, scope_id, NodeId::DUMMY);
         self.scopes.add_binding(scope_id, name, symbol_id);
 
         symbol_id
@@ -315,11 +313,7 @@ impl TraverseScoping {
     }
 
     /// Create an unbound reference
-    pub fn create_unbound_reference(
-        &mut self,
-        name: CompactStr,
-        flags: ReferenceFlags,
-    ) -> ReferenceId {
+    pub fn create_unbound_reference(&mut self, name: &str, flags: ReferenceFlags) -> ReferenceId {
         let reference = Reference::new(NodeId::DUMMY, flags);
         let reference_id = self.symbols.create_reference(reference);
         self.scopes.add_root_unresolved_reference(name, reference_id);
@@ -332,7 +326,7 @@ impl TraverseScoping {
     /// or `TraverseCtx::create_unbound_reference`.
     pub fn create_reference(
         &mut self,
-        name: CompactStr,
+        name: &str,
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> ReferenceId {
@@ -346,10 +340,10 @@ impl TraverseScoping {
     /// Create reference in current scope, looking up binding for `name`
     pub fn create_reference_in_current_scope(
         &mut self,
-        name: CompactStr,
+        name: &str,
         flags: ReferenceFlags,
     ) -> ReferenceId {
-        let symbol_id = self.scopes.find_binding(self.current_scope_id, name.as_str());
+        let symbol_id = self.scopes.find_binding(self.current_scope_id, name);
         self.create_reference(name, symbol_id, flags)
     }
 
@@ -380,9 +374,9 @@ impl TraverseScoping {
     #[expect(clippy::needless_pass_by_value)]
     pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
         // Rename symbol
-        let old_name = self.symbols.set_name(symbol_id, new_name.clone());
+        let old_name = self.symbols.set_name(symbol_id, new_name.as_str());
         // Rename binding
-        self.scopes.rename_binding(scope_id, symbol_id, &old_name, new_name.as_str());
+        self.scopes.rename_binding(scope_id, symbol_id, old_name, new_name.as_str());
     }
 }
 
@@ -435,14 +429,10 @@ impl TraverseScoping {
         self.scopes
             .root_unresolved_references()
             .keys()
+            .copied()
             .chain(self.symbols.names())
-            .filter_map(|name| {
-                if name.as_bytes().first() == Some(&b'_') {
-                    Some(name.clone())
-                } else {
-                    None
-                }
-            })
+            .filter(|name| name.as_bytes().first() == Some(&b'_'))
+            .map(CompactStr::from)
             .collect()
     }
 }
