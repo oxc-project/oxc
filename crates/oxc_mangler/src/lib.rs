@@ -86,27 +86,11 @@ impl Mangler {
     pub fn build<'a>(mut self, program: &'a Program<'a>) -> Mangler {
         let semantic = SemanticBuilder::new().build(program).semantic;
 
-        let (exported_names, exported_symbols): (FxHashSet<CompactStr>, FxHashSet<SymbolId>) =
-            program
-                .body
-                .iter()
-                .filter_map(|statement| {
-                    let Statement::ExportNamedDeclaration(v) = statement else { return None };
-                    v.declaration.as_ref()
-                })
-                .flat_map(|decl| {
-                    if let Declaration::VariableDeclaration(decl) = decl {
-                        itertools::Either::Left(
-                            decl.declarations
-                                .iter()
-                                .filter_map(|decl| decl.id.get_binding_identifier()),
-                        )
-                    } else {
-                        itertools::Either::Right(decl.id().into_iter())
-                    }
-                })
-                .map(|id| (id.name.to_compact_str(), id.symbol_id()))
-                .collect();
+        let (exported_names, exported_symbols) = if self.options.top_level {
+            Mangler::collect_exported_symbols(program)
+        } else {
+            Default::default()
+        };
 
         // Mangle the symbol table by computing slots from the scope tree.
         // A slot is the occurrence index of a binding identifier inside a scope.
@@ -259,6 +243,29 @@ impl Mangler {
         }
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
         frequencies
+    }
+
+    fn collect_exported_symbols(program: &Program) -> (FxHashSet<CompactStr>, FxHashSet<SymbolId>) {
+        program
+            .body
+            .iter()
+            .filter_map(|statement| {
+                let Statement::ExportNamedDeclaration(v) = statement else { return None };
+                v.declaration.as_ref()
+            })
+            .flat_map(|decl| {
+                if let Declaration::VariableDeclaration(decl) = decl {
+                    itertools::Either::Left(
+                        decl.declarations
+                            .iter()
+                            .filter_map(|decl| decl.id.get_binding_identifier()),
+                    )
+                } else {
+                    itertools::Either::Right(decl.id().into_iter())
+                }
+            })
+            .map(|id| (id.name.to_compact_str(), id.symbol_id()))
+            .collect()
     }
 }
 
