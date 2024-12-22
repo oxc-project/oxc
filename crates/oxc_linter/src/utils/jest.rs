@@ -55,6 +55,7 @@ impl JestFnKind {
             "expect" => Self::Expect,
             "expectTypeOf" => Self::ExpectTypeOf,
             "vi" => Self::General(JestGeneralFnKind::Vitest),
+            "bench" => Self::General(JestGeneralFnKind::VitestBench),
             "jest" => Self::General(JestGeneralFnKind::Jest),
             "describe" | "fdescribe" | "xdescribe" => Self::General(JestGeneralFnKind::Describe),
             "fit" | "it" | "test" | "xit" | "xtest" => Self::General(JestGeneralFnKind::Test),
@@ -80,6 +81,7 @@ pub enum JestGeneralFnKind {
     Test,
     Jest,
     Vitest,
+    VitestBench,
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>
