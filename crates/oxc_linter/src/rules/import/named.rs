@@ -91,6 +91,7 @@ impl Rule for Named {
 
         let module_record = ctx.module_record();
 
+        let loaded_modules = module_record.loaded_modules.read().unwrap();
         for import_entry in &module_record.import_entries {
             // Get named import
             let ImportImportName::Name(import_name) = &import_entry.import_name else {
@@ -98,10 +99,9 @@ impl Rule for Named {
             };
             let specifier = import_entry.module_request.name();
             // Get remote module record
-            let Some(remote_module_record_ref) = module_record.loaded_modules.get(specifier) else {
+            let Some(remote_module_record) = loaded_modules.get(specifier) else {
                 continue;
             };
-            let remote_module_record = remote_module_record_ref.value();
             if !remote_module_record.has_module_syntax {
                 continue;
             }
@@ -118,8 +118,10 @@ impl Rule for Named {
             // check re-export
             if remote_module_record
                 .exported_bindings_from_star_export
+                .read()
+                .unwrap()
                 .iter()
-                .any(|entry| entry.value().contains(&import_name.name))
+                .any(|(_, value)| value.contains(&import_name.name))
             {
                 continue;
             }
@@ -127,6 +129,7 @@ impl Rule for Named {
             ctx.diagnostic(named_diagnostic(name, specifier, import_span));
         }
 
+        let loaded_modules = module_record.loaded_modules.read().unwrap();
         for export_entry in &module_record.indirect_export_entries {
             let Some(module_request) = &export_entry.module_request else {
                 continue;
@@ -136,10 +139,9 @@ impl Rule for Named {
             };
             let specifier = module_request.name();
             // Get remote module record
-            let Some(remote_module_record_ref) = module_record.loaded_modules.get(specifier) else {
+            let Some(remote_module_record) = loaded_modules.get(specifier) else {
                 continue;
             };
-            let remote_module_record = remote_module_record_ref.value();
             if !remote_module_record.has_module_syntax {
                 continue;
             }

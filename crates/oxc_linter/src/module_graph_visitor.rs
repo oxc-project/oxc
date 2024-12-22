@@ -200,29 +200,29 @@ impl ModuleGraphVisitor {
                 }
             };
         }
-        for module_record_ref in &module_record.loaded_modules {
+        for pair in module_record.loaded_modules.read().unwrap().iter() {
             if self.depth > self.max_depth {
                 return VisitFoldWhile::Stop(accumulator.into_inner());
             }
 
-            let path = &module_record_ref.resolved_absolute_path;
+            let path = &pair.1.resolved_absolute_path;
             if !self.traversed.insert(path.clone()) {
                 continue;
             }
 
-            if !filter(module_record_ref.pair(), module_record) {
+            if !filter(pair, module_record) {
                 continue;
             }
 
             self.depth += 1;
 
-            event(ModuleGraphVisitorEvent::Enter, module_record_ref.pair(), module_record);
-            enter(module_record_ref.pair(), module_record);
+            event(ModuleGraphVisitorEvent::Enter, pair, module_record);
+            enter(pair, module_record);
 
-            accumulate!(fold(accumulator.into_inner(), module_record_ref.pair(), module_record));
+            accumulate!(fold(accumulator.into_inner(), pair, module_record));
             accumulate!(self.filter_fold_recursive(
                 accumulator,
-                module_record_ref.value(),
+                pair.1,
                 filter,
                 fold,
                 event,
@@ -230,8 +230,8 @@ impl ModuleGraphVisitor {
                 leave
             ));
 
-            event(ModuleGraphVisitorEvent::Leave, module_record_ref.pair(), module_record);
-            leave(module_record_ref.pair(), module_record);
+            event(ModuleGraphVisitorEvent::Leave, pair, module_record);
+            leave(pair, module_record);
 
             self.depth -= 1;
         }

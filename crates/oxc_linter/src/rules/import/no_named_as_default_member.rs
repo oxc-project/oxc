@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use oxc_ast::{
     ast::{BindingPatternKind, Expression, IdentifierReference, MemberExpression},
     AstKind,
@@ -82,11 +84,12 @@ impl Rule for NoNamedAsDefaultMember {
             };
 
             let specifier = import_entry.module_request.name();
-            let Some(remote_module_record_ref) = module_record.loaded_modules.get(specifier) else {
+            let remote_module_record = module_record.loaded_modules.read().unwrap();
+            let Some(remote_module_record) = remote_module_record.get(specifier) else {
                 continue;
             };
 
-            if remote_module_record_ref.exported_bindings.is_empty() {
+            if remote_module_record.exported_bindings.is_empty() {
                 continue;
             }
 
@@ -95,8 +98,10 @@ impl Rule for NoNamedAsDefaultMember {
                 return;
             };
 
-            has_members_map
-                .insert(symbol_id, (remote_module_record_ref, import_entry.module_request.clone()));
+            has_members_map.insert(
+                symbol_id,
+                (Arc::clone(remote_module_record), import_entry.module_request.clone()),
+            );
         }
 
         if has_members_map.is_empty() {

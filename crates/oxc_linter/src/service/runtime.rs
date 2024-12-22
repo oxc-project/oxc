@@ -255,6 +255,8 @@ impl Runtime {
                         if let ModuleState::Resolved(target_module_record) = target_ref.value() {
                             module_record
                                 .loaded_modules
+                                .write()
+                                .unwrap()
                                 .insert(specifier.clone(), Arc::clone(target_module_record));
                         }
                     };
@@ -264,19 +266,20 @@ impl Runtime {
 
             // Resolve and append `star_export_bindings`
             for export_entry in &module_record.star_export_entries {
-                let Some(remote_module_record_ref) =
-                    export_entry.module_request.as_ref().and_then(|module_request| {
-                        module_record.loaded_modules.get(module_request.name())
-                    })
-                else {
+                let Some(module_request) = &export_entry.module_request else {
                     continue;
                 };
-                let remote_module_record = remote_module_record_ref.value();
+                let loaded_modules = module_record.loaded_modules.read().unwrap();
+                let Some(remote_module_record) = loaded_modules.get(module_request.name()) else {
+                    continue;
+                };
                 // Append both remote `bindings` and `exported_bindings_from_star_export`
-                let remote_exported_bindings_from_star_export = remote_module_record
-                    .exported_bindings_from_star_export
-                    .iter()
-                    .flat_map(|r| r.value().clone());
+                let remote_exported_bindings_from_star_export =
+                    remote_module_record.exported_bindings_from_star_export.read().unwrap();
+                let remote_exported_bindings_from_star_export =
+                    remote_exported_bindings_from_star_export
+                        .iter()
+                        .flat_map(|(_, value)| value.clone());
                 let remote_bindings = remote_module_record
                     .exported_bindings
                     .keys()
@@ -285,9 +288,10 @@ impl Runtime {
                     .collect::<Vec<_>>();
                 module_record
                     .exported_bindings_from_star_export
+                    .write()
+                    .unwrap()
                     .entry(remote_module_record.resolved_absolute_path.clone())
                     .or_default()
-                    .value_mut()
                     .extend(remote_bindings);
             }
 
