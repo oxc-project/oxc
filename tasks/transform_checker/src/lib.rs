@@ -336,8 +336,12 @@ impl PostTransformChecker<'_, '_> {
         for scope_ids in self.scope_ids_map.pairs() {
             // Check bindings are the same
             fn get_sorted_binding_names(scoping: &Scoping, scope_id: ScopeId) -> Vec<CompactStr> {
-                let mut binding_names =
-                    scoping.scopes.get_bindings(scope_id).keys().cloned().collect::<Vec<_>>();
+                let mut binding_names = scoping
+                    .scopes
+                    .get_bindings(scope_id)
+                    .keys()
+                    .map(|k| CompactStr::new(k))
+                    .collect::<Vec<_>>();
                 binding_names.sort_unstable();
                 binding_names
             }
@@ -346,10 +350,12 @@ impl PostTransformChecker<'_, '_> {
             if binding_names.is_mismatch() {
                 self.errors.push_mismatch("Bindings mismatch", scope_ids, binding_names);
             } else {
-                let symbol_ids = self.get_pair(scope_ids, |scoping, scope_id| {
+                let mut symbol_ids = self.get_pair(scope_ids, |scoping, scope_id| {
                     scoping.scopes.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
                 });
                 if self.remap_symbol_ids_sets(&symbol_ids).is_mismatch() {
+                    symbol_ids.after_transform.sort_unstable();
+                    symbol_ids.rebuilt.sort_unstable();
                     self.errors.push_mismatch("Binding symbols mismatch", scope_ids, symbol_ids);
                 }
             }
@@ -427,7 +433,12 @@ impl PostTransformChecker<'_, '_> {
 
             // Check resolved references match
             let reference_ids = self.get_pair(symbol_ids, |scoping, symbol_id| {
-                scoping.symbols.get_resolved_reference_ids(symbol_id).clone()
+                scoping
+                    .symbols
+                    .get_resolved_reference_ids(symbol_id)
+                    .iter()
+                    .copied()
+                    .collect::<Vec<_>>()
             });
             if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
                 self.errors.push_mismatch(
@@ -495,8 +506,12 @@ impl PostTransformChecker<'_, '_> {
 
     fn check_unresolved_references(&mut self) {
         let unresolved_names = self.get_static_pair(|scoping| {
-            let mut names =
-                scoping.scopes.root_unresolved_references().keys().cloned().collect::<Vec<_>>();
+            let mut names = scoping
+                .scopes
+                .root_unresolved_references()
+                .keys()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>();
             names.sort_unstable();
             names
         });
@@ -510,6 +525,10 @@ impl PostTransformChecker<'_, '_> {
             if let Some(reference_ids_rebuilt) =
                 self.scoping_rebuilt.scopes.root_unresolved_references().get(name)
             {
+                let reference_ids_after_transform =
+                    reference_ids_after_transform.iter().copied().collect::<Vec<_>>();
+                let reference_ids_rebuilt =
+                    reference_ids_rebuilt.iter().copied().collect::<Vec<_>>();
                 let reference_ids = Pair::new(reference_ids_after_transform, reference_ids_rebuilt);
                 if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
                     self.errors.push_mismatch_single(

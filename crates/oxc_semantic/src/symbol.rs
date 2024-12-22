@@ -1,28 +1,15 @@
-use std::mem;
+use std::{fmt, mem};
 
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
-
+use oxc_allocator::{Allocator, FromIn, Vec as ArenaVec};
 use oxc_ast::ast::{Expression, IdentifierReference};
-use oxc_index::IndexVec;
-use oxc_span::{CompactStr, Span};
+use oxc_index::{Idx, IndexVec};
+use oxc_span::{Atom, Span};
 use oxc_syntax::{
     node::NodeId,
-    reference::ReferenceId,
+    reference::{Reference, ReferenceId},
     scope::ScopeId,
     symbol::{RedeclarationId, SymbolFlags, SymbolId},
 };
-
-use crate::reference::Reference;
-
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type IndexVec<I, T> = Array<T>;
-export type CompactStr = string;
-"#;
 
 /// Symbol Table
 ///
@@ -31,21 +18,56 @@ export type CompactStr = string;
 /// Most symbols won't have redeclarations, so instead of storing `Vec<Span>` directly in
 /// `redeclare_variables` (32 bytes per symbol), store `Option<RedeclarationId>` (4 bytes).
 /// That ID indexes into `redeclarations` where the actual `Vec<Span>` is stored.
-#[derive(Debug, Default)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(rename_all = "camelCase"))]
 pub struct SymbolTable {
     pub(crate) spans: IndexVec<SymbolId, Span>,
-    pub(crate) names: IndexVec<SymbolId, CompactStr>,
     pub(crate) flags: IndexVec<SymbolId, SymbolFlags>,
     pub(crate) scope_ids: IndexVec<SymbolId, ScopeId>,
     /// Pointer to the AST Node where this symbol is declared
     pub(crate) declarations: IndexVec<SymbolId, NodeId>,
-    pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
     redeclarations: IndexVec<SymbolId, Option<RedeclarationId>>,
 
-    redeclaration_spans: IndexVec<RedeclarationId, Vec<Span>>,
-
     pub references: IndexVec<ReferenceId, Reference>,
+
+    inner: SymbolTableCell,
+}
+
+impl fmt::Debug for SymbolTable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        f.debug_struct("SymbolTable").finish()
+    }
+}
+
+impl Default for SymbolTable {
+    fn default() -> Self {
+        let allocator = Allocator::default();
+        Self {
+            spans: IndexVec::new(),
+            flags: IndexVec::new(),
+            scope_ids: IndexVec::new(),
+            declarations: IndexVec::new(),
+            redeclarations: IndexVec::new(),
+            references: IndexVec::new(),
+            inner: SymbolTableCell::new(allocator, |allocator| SymbolTableInner {
+                names: ArenaVec::new_in(allocator),
+                resolved_references: ArenaVec::new_in(allocator),
+                redeclaration_spans: ArenaVec::new_in(allocator),
+            }),
+        }
+    }
+}
+
+self_cell::self_cell!(
+    struct SymbolTableCell {
+        owner: Allocator,
+        #[covariant]
+        dependent: SymbolTableInner,
+    }
+);
+
+struct SymbolTableInner<'cell> {
+    names: ArenaVec<'cell, Atom<'cell>>,
+    resolved_references: ArenaVec<'cell, ArenaVec<'cell, ReferenceId>>,
+    redeclaration_spans: ArenaVec<'cell, ArenaVec<'cell, Span>>,
 }
 
 impl SymbolTable {
@@ -61,12 +83,12 @@ impl SymbolTable {
         self.spans.is_empty()
     }
 
-    pub fn names(&self) -> impl Iterator<Item = &CompactStr> + '_ {
-        self.names.iter()
+    pub fn names(&self) -> impl Iterator<Item = &str> + '_ {
+        self.inner.borrow_dependent().names.iter().map(Atom::as_str)
     }
 
-    pub fn resolved_references(&self) -> impl Iterator<Item = &Vec<ReferenceId>> + '_ {
-        self.resolved_references.iter()
+    pub fn resolved_references(&self) -> impl Iterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
+        self.inner.borrow_dependent().resolved_references.iter()
     }
 
     /// Iterate over all symbol IDs in this table.
@@ -106,15 +128,19 @@ impl SymbolTable {
     /// Get the identifier name a symbol is bound to.
     #[inline]
     pub fn get_name(&self, symbol_id: SymbolId) -> &str {
-        &self.names[symbol_id]
+        &self.inner.borrow_dependent().names[symbol_id.index()]
     }
 
     /// Rename a symbol.
     ///
     /// Returns the old name.
     #[inline]
-    pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactStr) -> CompactStr {
-        mem::replace(&mut self.names[symbol_id], name)
+    pub fn set_name(&mut self, symbol_id: SymbolId, name: &str) -> &str {
+        self.inner
+            .with_dependent_mut(|allocator, inner| {
+                mem::replace(&mut inner.names[symbol_id.index()], Atom::from_in(name, allocator))
+            })
+            .as_str()
     }
 
     /// Get the [`SymbolFlags`] for a symbol, which describe how the symbol is declared.
@@ -134,7 +160,7 @@ impl SymbolTable {
     #[inline]
     pub fn get_redeclarations(&self, symbol_id: SymbolId) -> &[Span] {
         if let Some(redeclaration_id) = self.redeclarations[symbol_id] {
-            &self.redeclaration_spans[redeclaration_id]
+            &self.inner.borrow_dependent().redeclaration_spans[redeclaration_id.index()]
         } else {
             static EMPTY: &[Span] = &[];
             EMPTY
@@ -174,26 +200,36 @@ impl SymbolTable {
     pub fn create_symbol(
         &mut self,
         span: Span,
-        name: CompactStr,
+        name: &str,
         flags: SymbolFlags,
         scope_id: ScopeId,
         node_id: NodeId,
     ) -> SymbolId {
         self.spans.push(span);
-        self.names.push(name);
         self.flags.push(flags);
         self.scope_ids.push(scope_id);
         self.declarations.push(node_id);
-        self.resolved_references.push(vec![]);
+        self.inner.with_dependent_mut(|allocator, inner| {
+            inner.names.push(Atom::from_in(name, allocator));
+            inner.resolved_references.push(ArenaVec::new_in(allocator));
+        });
         self.redeclarations.push(None)
     }
 
     pub fn add_redeclaration(&mut self, symbol_id: SymbolId, span: Span) {
         if let Some(redeclaration_id) = self.redeclarations[symbol_id] {
-            self.redeclaration_spans[redeclaration_id].push(span);
+            self.inner.with_dependent_mut(|_, inner| {
+                inner.redeclaration_spans[redeclaration_id.index()].push(span);
+            });
         } else {
-            let redeclaration_id = self.redeclaration_spans.push(vec![span]);
-            self.redeclarations[symbol_id] = Some(redeclaration_id);
+            self.inner.with_dependent_mut(|allocator, inner| {
+                let mut v = ArenaVec::new_in(allocator);
+                v.push(span);
+                let redeclaration_id = inner.redeclaration_spans.len();
+                inner.redeclaration_spans.push(v);
+                self.redeclarations[symbol_id] =
+                    Some(RedeclarationId::from_usize(redeclaration_id));
+            });
         };
     }
 
@@ -228,8 +264,8 @@ impl SymbolTable {
     /// If you want direct access to a symbol's [`Reference`]s, use
     /// [`SymbolTable::get_resolved_references`].
     #[inline]
-    pub fn get_resolved_reference_ids(&self, symbol_id: SymbolId) -> &Vec<ReferenceId> {
-        &self.resolved_references[symbol_id]
+    pub fn get_resolved_reference_ids(&self, symbol_id: SymbolId) -> &ArenaVec<'_, ReferenceId> {
+        &self.inner.borrow_dependent().resolved_references[symbol_id.index()]
     }
 
     /// Find [`Reference`]s resolved to a symbol.
@@ -237,7 +273,7 @@ impl SymbolTable {
         &self,
         symbol_id: SymbolId,
     ) -> impl DoubleEndedIterator<Item = &Reference> + '_ {
-        self.resolved_references[symbol_id]
+        self.get_resolved_reference_ids(symbol_id)
             .iter()
             .map(|&reference_id| &self.references[reference_id])
     }
@@ -256,8 +292,9 @@ impl SymbolTable {
 
     /// Add a reference to a symbol.
     pub fn add_resolved_reference(&mut self, symbol_id: SymbolId, reference_id: ReferenceId) {
-        let reference_ids = &mut self.resolved_references[symbol_id];
-        reference_ids.push(reference_id);
+        self.inner.with_dependent_mut(|_allocator, inner| {
+            inner.resolved_references[symbol_id.index()].push(reference_id);
+        });
     }
 
     /// Delete a reference to a symbol.
@@ -265,20 +302,22 @@ impl SymbolTable {
     /// # Panics
     /// Panics if provided `reference_id` is not a resolved reference for `symbol_id`.
     pub fn delete_resolved_reference(&mut self, symbol_id: SymbolId, reference_id: ReferenceId) {
-        let reference_ids = &mut self.resolved_references[symbol_id];
-        let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
-        reference_ids.swap_remove(index);
+        self.inner.with_dependent_mut(|_allocator, inner| {
+            let reference_ids = &mut inner.resolved_references[symbol_id.index()];
+            let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
+            reference_ids.swap_remove(index);
+        });
     }
 
     pub fn reserve(&mut self, additional_symbols: usize, additional_references: usize) {
         self.spans.reserve(additional_symbols);
-        self.names.reserve(additional_symbols);
         self.flags.reserve(additional_symbols);
         self.scope_ids.reserve(additional_symbols);
         self.declarations.reserve(additional_symbols);
-        self.resolved_references.reserve(additional_symbols);
-        self.redeclarations.reserve(additional_symbols);
-
+        self.inner.with_dependent_mut(|_allocator, inner| {
+            inner.names.reserve(additional_symbols);
+            inner.resolved_references.reserve(additional_symbols);
+        });
         self.references.reserve(additional_references);
     }
 }

@@ -3,17 +3,14 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, RwLock},
 };
 
-use dashmap::DashMap;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::FxHashMap;
 
 use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, Span};
 pub use oxc_syntax::module_record::RequestedModule;
-
-type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 
 /// ESM Module Record
 ///
@@ -49,7 +46,7 @@ pub struct ModuleRecord {
     ///
     /// Note that Oxc does not support cross-file analysis, so this map will be empty after
     /// [`ModuleRecord`] is created. You must link the module records yourself.
-    pub loaded_modules: FxDashMap<CompactStr, Arc<ModuleRecord>>,
+    pub loaded_modules: RwLock<FxHashMap<CompactStr, Arc<ModuleRecord>>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -81,7 +78,7 @@ pub struct ModuleRecord {
 
     /// Reexported bindings from `export * from 'specifier'`
     /// Keyed by resolved path
-    pub exported_bindings_from_star_export: FxDashMap<PathBuf, Vec<CompactStr>>,
+    pub exported_bindings_from_star_export: RwLock<FxHashMap<PathBuf, Vec<CompactStr>>>,
 
     /// `export default name`
     ///         ^^^^^^^ span
@@ -93,8 +90,10 @@ impl fmt::Debug for ModuleRecord {
         // recursively formatting loaded modules can crash when the module graph is cyclic
         let loaded_modules = self
             .loaded_modules
+            .read()
+            .unwrap()
             .iter()
-            .map(|entry| (entry.key().to_string()))
+            .map(|(key, _)| (key.to_string()))
             .reduce(|acc, key| format!("{acc}, {key}"))
             .unwrap_or_default();
         let loaded_modules = format!("{{ {loaded_modules} }}");

@@ -1,7 +1,8 @@
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 use std::{
-    fs::File,
+    fs::{self, File},
     io::{self, Write},
+    path::Path,
 };
 
 use flate2::{write::GzEncoder, Compression};
@@ -23,6 +24,7 @@ use rustc_hash::FxHashMap;
 /// # Panics
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
+    let marker = std::env::args().nth(1).unwrap_or_else(|| String::from("default"));
     let files = TestFiles::minifier();
 
     let path = project_root().join("tasks/minsize/minsize.snap");
@@ -90,8 +92,14 @@ pub fn run() -> Result<(), io::Error> {
     out.push_str(&str::repeat("-", width * 5 + fixture_width + 15));
     out.push('\n');
 
+    let save_path = Path::new("./target/minifier").join(marker);
+
     for file in files.files() {
         let minified = minify_twice(file);
+
+        fs::create_dir_all(&save_path).unwrap();
+        fs::write(save_path.join(&file.file_name), &minified).unwrap();
+
         let s = format!(
             "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$}\n\n",
             format_size(file.source_text.len(), DECIMAL),

@@ -1,5 +1,9 @@
-use base64::prelude::{Engine, BASE64_STANDARD};
-use compact_str::{CompactString, CompactStringExt};
+use std::collections::hash_map::Entry;
+
+use base64::{
+    encoded_len as base64_encoded_len,
+    prelude::{Engine, BASE64_STANDARD},
+};
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
@@ -64,8 +68,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
     pub fn to_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match self {
             Self::Identifier(ident) => {
-                let reference_id =
-                    ctx.create_unbound_reference(ident.name.to_compact_str(), ReferenceFlags::Read);
+                let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
                 Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
                     ident.span,
                     ident.name.clone(),
@@ -73,8 +76,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
                 ))
             }
             Self::Member((ident, property)) => {
-                let reference_id =
-                    ctx.create_unbound_reference(ident.name.to_compact_str(), ReferenceFlags::Read);
+                let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
                 let ident =
                     Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
                         ident.span,
@@ -111,8 +113,8 @@ pub struct ReactRefresh<'a, 'ctx> {
     /// Used to wrap call expression with signature.
     /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
     last_signature: Option<(BindingIdentifier<'a>, ArenaVec<'a, Argument<'a>>)>,
-    // (function_scope_id, (hook_name, hook_key, custom_hook_callee)
-    hook_calls: FxHashMap<ScopeId, Vec<CompactString>>,
+    // (function_scope_id, key)
+    function_signature_keys: FxHashMap<ScopeId, String>,
     non_builtin_hooks_callee: FxHashMap<ScopeId, Vec<Option<Expression<'a>>>>,
 }
 
@@ -129,7 +131,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             registrations: Vec::default(),
             ctx,
             last_signature: None,
-            hook_calls: FxHashMap::default(),
+            function_signature_keys: FxHashMap::default(),
             non_builtin_hooks_callee: FxHashMap::default(),
         }
     }
@@ -371,26 +373,42 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
         };
 
         let args = &call_expr.arguments;
-        let args_key = if hook_name == "useState" && args.len() > 0 {
-            args[0].span().source_text(self.ctx.source_text)
+        let (args_key, mut key_len) = if hook_name == "useState" && !args.is_empty() {
+            let args_key = args[0].span().source_text(self.ctx.source_text);
+            (args_key, args_key.len() + 4)
         } else if hook_name == "useReducer" && args.len() > 1 {
-            args[1].span().source_text(self.ctx.source_text)
+            let args_key = args[1].span().source_text(self.ctx.source_text);
+            (args_key, args_key.len() + 4)
         } else {
-            ""
+            ("", 2)
         };
-        let is_empty = args_key.is_empty();
+
+        key_len += hook_name.len() + declarator_id.len();
+
+        let string = match self.function_signature_keys.entry(current_scope_id) {
+            Entry::Occupied(entry) => {
+                let string = entry.into_mut();
+                string.reserve(key_len + 2);
+                string.push_str("\\n");
+                string
+            }
+            Entry::Vacant(entry) => entry.insert(String::with_capacity(key_len)),
+        };
+
         // `hook_name{{declarator_id(args_key)}}` or `hook_name{{declarator_id}}`
-        let key = [
-            hook_name.as_str(),
-            "{",
-            declarator_id,
-            if is_empty { "" } else { "(" },
-            args_key,
-            if is_empty { "" } else { ")" },
-            "}",
-        ]
-        .concat_compact();
-        self.hook_calls.entry(current_scope_id).or_default().push(key);
+        let old_len = string.len();
+
+        string.push_str(&hook_name);
+        string.push('{');
+        string.push_str(declarator_id);
+        if !args_key.is_empty() {
+            string.push('(');
+            string.push_str(args_key);
+            string.push(')');
+        }
+        string.push('}');
+
+        debug_assert_eq!(key_len, string.len() - old_len);
     }
 }
 
@@ -515,19 +533,31 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         body: &mut FunctionBody<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<(BindingIdentifier<'a>, ArenaVec<'a, Argument<'a>>)> {
-        let fn_hook_calls = self.hook_calls.remove(&scope_id)?;
+        let key = self.function_signature_keys.remove(&scope_id)?;
 
-        let mut key = fn_hook_calls.join("\\n");
-        if !self.emit_full_signatures {
+        let key = if self.emit_full_signatures {
+            ctx.ast.atom(&key)
+        } else {
             // Prefer to hash when we can (e.g. outside of ASTExplorer).
             // This makes it deterministically compact, even if there's
             // e.g. a useState initializer with some code inside.
             // We also need it for www that has transforms like cx()
             // that don't understand if something is part of a string.
+            const SHA1_HASH_LEN: usize = 20;
+            const ENCODED_LEN: usize = base64_encoded_len(SHA1_HASH_LEN, true).unwrap();
+
             let mut hasher = Sha1::new();
-            hasher.update(key);
-            key = BASE64_STANDARD.encode(hasher.finalize());
-        }
+            hasher.update(&key);
+            let hash = hasher.finalize();
+            debug_assert_eq!(hash.len(), SHA1_HASH_LEN);
+
+            // Encode to base64 string directly in arena, without an intermediate string allocation
+            let mut hashed_key = ArenaVec::from_array_in([0; ENCODED_LEN], ctx.ast.allocator);
+            let encoded_bytes = BASE64_STANDARD.encode_slice(hash, &mut hashed_key).unwrap();
+            debug_assert_eq!(encoded_bytes, ENCODED_LEN);
+            let hashed_key = hashed_key.into_string().unwrap();
+            Atom::from(hashed_key)
+        };
 
         let callee_list = self.non_builtin_hooks_callee.remove(&scope_id).unwrap_or_default();
         let callee_len = callee_list.len();
@@ -538,11 +568,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
         let force_reset = custom_hooks_in_scope.len() != callee_len;
 
         let mut arguments = ctx.ast.vec();
-        arguments.push(Argument::from(ctx.ast.expression_string_literal(
-            SPAN,
-            ctx.ast.atom(&key),
-            None,
-        )));
+        arguments.push(Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)));
 
         if force_reset || !custom_hooks_in_scope.is_empty() {
             arguments.push(Argument::from(ctx.ast.expression_boolean_literal(SPAN, force_reset)));

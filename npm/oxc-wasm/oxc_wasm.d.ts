@@ -71,7 +71,7 @@ export interface Oxc {
     ast: Program;
     ir: string;
     controlFlowGraph: string;
-    symbols: SymbolTable;
+    symbols: any;
     scopeText: string;
     codegenText: string;
     formattedText: string;
@@ -89,29 +89,6 @@ export interface Comment {
 export type CommentType = "Line" | "Block";
 
 
-export type IndexVec<I, T> = Array<T>;
-export type CompactStr = string;
-
-
-export interface SymbolTable {
-    spans: IndexVec<SymbolId, Span>;
-    names: IndexVec<SymbolId, CompactStr>;
-    flags: IndexVec<SymbolId, SymbolFlags>;
-    scopeIds: IndexVec<SymbolId, ScopeId>;
-    declarations: IndexVec<SymbolId, NodeId>;
-    resolvedReferences: IndexVec<SymbolId, ReferenceId[]>;
-    redeclarations: IndexVec<SymbolId, RedeclarationId | null>;
-    redeclarationSpans: IndexVec<RedeclarationId, Span[]>;
-    references: IndexVec<ReferenceId, Reference>;
-}
-
-export interface Reference {
-    nodeId: NodeId;
-    symbolId: SymbolId | null;
-    flags: ReferenceFlags;
-}
-
-
 export type NodeId = number;
 export type NodeFlags = {
     JSDoc: 1,
@@ -119,6 +96,16 @@ export type NodeFlags = {
     HasYield: 4
     Parameter: 8
 };
+
+
+
+export type SymbolId = number;
+export type SymbolFlags = unknown;
+export type RedeclarationId = unknown;
+
+
+
+export type ScopeId = number;
 
 
 
@@ -130,16 +117,6 @@ export type ReferenceFlags = {
     Type: 0b100,
     Value: 0b11
 }
-
-
-
-export type ScopeId = number;
-
-
-
-export type SymbolId = number;
-export type SymbolFlags = unknown;
-export type RedeclarationId = unknown;
 
 
 export class Oxc {

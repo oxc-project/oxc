@@ -13,8 +13,9 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;
 
-pub use crate::{ast_passes::CompressorPass, compressor::Compressor, options::CompressOptions};
 pub use oxc_mangler::MangleOptions;
+
+pub use crate::{ast_passes::CompressorPass, compressor::Compressor, options::CompressOptions};
 
 #[derive(Debug, Clone, Copy)]
 pub struct MinifierOptions {

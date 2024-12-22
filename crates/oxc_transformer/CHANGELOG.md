@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.43.0] - 2024-12-21
+
+- de4c772 traverse: [**BREAKING**] Rename `Ancestor::is_via_*` methods to `is_parent_of_*` (#8031) (overlookmotel)
+
+- ed75e42 semantic: [**BREAKING**] Make SymbolTable fields `pub(crate)` instead of `pub` (#7999) (Boshen)
+
+### Features
+
+- 897a1a8 transformer/class-properties: Exit faster from super replacement visitor (#8028) (overlookmotel)
+- 3ea4109 transformer/class-properties: Transform super update expressions within static prop initializer (#7997) (Dunqing)
+- cc57db3 transformer/class-properties: Transform super assignment expressions within static prop initializer (#7991) (Dunqing)
+
+### Bug Fixes
+
+- 043252d transformer/class-properties: Replace `this` and class name in static blocks (#8035) (overlookmotel)
+- 273795d transformer/class-properties: Run other transforms on static properties, static blocks, and computed keys (#7982) (overlookmotel)
+
+### Performance
+
+- 2736657 semantic: Allocate `UnresolvedReferences` in allocator (#8046) (Boshen)
+- 0f9308f transformer/react-refresh: Reduce allocations (#8018) (overlookmotel)
+- 0deb9e6 transformer/react-refresh: Reserve capacity in hook key string (#8016) (overlookmotel)
+- 7b70347 transformer/react-refresh: Avoid allocating string in each hook call (#8013) (Dunqing)
+
+### Refactor
+
+- ac097e9 transformer/class-properties: Rename file (#8036) (overlookmotel)
+- 059a5dd transformer/class-properties: Do not pass `ScopeId` into `insert_instance_inits` (#8001) (overlookmotel)
+- 0a38eea transformer/class-properties: Use `temp_var_name_base` to generate temp var names for `super` transform (#8004) (overlookmotel)
+- d1b7181 transformer/class-properties: Rename var (#8006) (overlookmotel)
+- 5a23d72 transformer/class-properties: Remove outdated comment (#8000) (overlookmotel)
+- b3a5f3e transformer/class-properties: Mark `transform_assignment_expression_if_super_member_assignment_target` as inline (#7993) (Dunqing)
+
 ## [0.42.0] - 2024-12-18
 
 - c071494 semantic: [**BREAKING**] Remove `SymbolTable::rename` method (#7868) (overlookmotel)

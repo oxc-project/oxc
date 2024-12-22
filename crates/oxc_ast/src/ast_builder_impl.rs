@@ -9,7 +9,7 @@
 use std::{borrow::Cow, mem};
 
 use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
-use oxc_span::{Atom, GetSpan, Span, SPAN};
+use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
 use crate::{ast::*, AstBuilder};
@@ -115,14 +115,14 @@ impl<'a> AstBuilder<'a> {
     /// Moves the expression out by replacing it with an [`Expression::NullLiteral`].
     #[inline]
     pub fn move_expression(self, expr: &mut Expression<'a>) -> Expression<'a> {
-        let null_expr = self.expression_null_literal(expr.span());
+        let null_expr = self.expression_null_literal(SPAN);
         mem::replace(expr, null_expr)
     }
 
     /// Moves the statement out by replacing it with a [`Statement::EmptyStatement`].
     #[inline]
     pub fn move_statement(self, stmt: &mut Statement<'a>) -> Statement<'a> {
-        let empty_stmt = self.empty_statement(stmt.span());
+        let empty_stmt = self.empty_statement(SPAN);
         mem::replace(stmt, Statement::EmptyStatement(self.alloc(empty_stmt)))
     }
 

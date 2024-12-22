@@ -14,10 +14,10 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, CompactStr, SourceType, Span};
+use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
-    reference::{ReferenceFlags, ReferenceId},
+    reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -30,7 +30,6 @@ use crate::{
     jsdoc::JSDocBuilder,
     label::UnusedLabels,
     node::AstNodes,
-    reference::Reference,
     scope::{Bindings, ScopeTree},
     stats::Stats,
     symbol::SymbolTable,
@@ -280,12 +279,9 @@ impl<'a> SemanticBuilder<'a> {
         if self.check_syntax_error && !self.source_type.is_typescript() {
             checker::check_unresolved_exports(&self);
         }
-        self.scope.root_unresolved_references = self
-            .unresolved_references
-            .into_root()
-            .into_iter()
-            .map(|(k, v)| (k.into(), v))
-            .collect();
+        self.scope.set_root_unresolved_references(
+            self.unresolved_references.into_root().into_iter().map(|(k, v)| (k.as_str(), v)),
+        );
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
@@ -399,14 +395,9 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        let name = CompactStr::new(name);
-        let symbol_id = self.symbols.create_symbol(
-            span,
-            name.clone(),
-            includes,
-            scope_id,
-            self.current_node_id,
-        );
+        let symbol_id =
+            self.symbols.create_symbol(span, name, includes, scope_id, self.current_node_id);
+
         self.scope.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
@@ -466,15 +457,14 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
-        let name = CompactStr::new(name);
         let symbol_id = self.symbols.create_symbol(
             span,
-            name.clone(),
+            name,
             includes,
             self.current_scope_id,
             self.current_node_id,
         );
-        self.scope.get_bindings_mut(scope_id).insert(name, symbol_id);
+        self.scope.insert_binding(scope_id, name, symbol_id);
         symbol_id
     }
 
@@ -524,7 +514,7 @@ impl<'a> SemanticBuilder<'a> {
                         *flags = ReferenceFlags::Type;
                     }
                     reference.set_symbol_id(symbol_id);
-                    self.symbols.resolved_references[symbol_id].push(reference_id);
+                    self.symbols.add_resolved_reference(symbol_id, reference_id);
 
                     false
                 });
@@ -712,14 +702,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Move all bindings from catch clause param scope to catch clause body scope
         // to make it easier to resolve references and check redeclare errors
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
-            let parent_bindings = self.scope.get_bindings_mut(parent_scope_id);
-            if !parent_bindings.is_empty() {
-                let parent_bindings = parent_bindings.drain(..).collect::<Bindings>();
-                parent_bindings.values().for_each(|&symbol_id| {
-                    self.symbols.set_scope_id(symbol_id, self.current_scope_id);
-                });
-                *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
-            }
+            self.scope.cell.with_dependent_mut(|allocator, inner| {
+                if !inner.bindings[parent_scope_id].is_empty() {
+                    let mut parent_bindings =
+                        Bindings::with_hasher_in(rustc_hash::FxBuildHasher, allocator);
+                    mem::swap(&mut inner.bindings[parent_scope_id], &mut parent_bindings);
+                    for &symbol_id in parent_bindings.values() {
+                        self.symbols.set_scope_id(symbol_id, self.current_scope_id);
+                    }
+                    inner.bindings[self.current_scope_id] = parent_bindings;
+                }
+            });
         }
 
         self.visit_statements(&it.body);

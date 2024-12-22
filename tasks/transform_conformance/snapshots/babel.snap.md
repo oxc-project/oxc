@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 593/927
+Passed: 602/927
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -276,7 +276,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (205/264)
+# babel-plugin-transform-class-properties (211/264)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -335,15 +335,6 @@ x Output mismatch
 * private/class-shadow-builtins/input.mjs
 x Output mismatch
 
-* private/nested-class-computed-redeclared/input.js
-x Output mismatch
-
-* private/nested-class-extends-computed/input.js
-x Output mismatch
-
-* private/nested-class-extends-computed-redeclared/input.js
-x Output mismatch
-
 * private/optional-chain-cast-to-boolean/input.js
 x Output mismatch
 
@@ -373,23 +364,6 @@ x Output mismatch
 
 * private-loose/class-shadow-builtins/input.mjs
 x Output mismatch
-
-* private-loose/nested-class-computed-redeclared/input.js
-x Output mismatch
-
-* private-loose/nested-class-extends-computed/input.js
-x Output mismatch
-
-* private-loose/nested-class-extends-computed-redeclared/input.js
-Bindings mismatch:
-after transform: ScopeId(2): ["Nested", "_foo2", "_foo3"]
-rebuilt        : ScopeId(3): ["Nested", "_foo2", "_foo3", "_this$foo"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_this$foo"]
-rebuilt        : ScopeId(4): []
-Symbol scope ID mismatch for "_this$foo":
-after transform: SymbolId(6): ScopeId(3)
-rebuilt        : SymbolId(3): ScopeId(3)
 
 * private-loose/optional-chain-before-member-call/input.js
 x Output mismatch
@@ -490,7 +464,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-optional-chaining (33/45)
+# babel-plugin-transform-optional-chaining (36/45)
 * assumption-noDocumentAll/assignment/input.js
 Symbol reference IDs mismatch for "_obj$a":
 after transform: SymbolId(5): [ReferenceId(7), ReferenceId(8), ReferenceId(9)]
@@ -501,17 +475,6 @@ rebuilt        : SymbolId(1): [ReferenceId(7), ReferenceId(9)]
 Symbol reference IDs mismatch for "_obj$a2":
 after transform: SymbolId(7): [ReferenceId(15), ReferenceId(16), ReferenceId(17)]
 rebuilt        : SymbolId(2): [ReferenceId(12), ReferenceId(14)]
-
-* assumption-noDocumentAll/cast-to-boolean/input.js
-Bindings mismatch:
-after transform: ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
-rebuilt        : ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
-Bindings mismatch:
-after transform: ScopeId(26): ["_o$a$b$c$non_existent2"]
-rebuilt        : ScopeId(26): []
-Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
-after transform: SymbolId(31): ScopeId(26)
-rebuilt        : SymbolId(33): ScopeId(25)
 
 * assumption-noDocumentAll/in-function-params/input.js
 Scope children mismatch:
@@ -618,17 +581,6 @@ rebuilt        : SymbolId(14): [ReferenceId(57), ReferenceId(60), ReferenceId(62
 Symbol reference IDs mismatch for "_foo$bar9$baz":
 after transform: SymbolId(15): [ReferenceId(66), ReferenceId(67), ReferenceId(68)]
 rebuilt        : SymbolId(15): [ReferenceId(59), ReferenceId(61)]
-
-* general/cast-to-boolean/input.js
-Bindings mismatch:
-after transform: ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
-rebuilt        : ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
-Bindings mismatch:
-after transform: ScopeId(26): ["_o$a$b$c$non_existent2"]
-rebuilt        : ScopeId(26): []
-Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
-after transform: SymbolId(31): ScopeId(26)
-rebuilt        : SymbolId(33): ScopeId(25)
 
 * general/delete-in-function-params/input.js
 Scope children mismatch:
@@ -800,17 +752,6 @@ rebuilt        : SymbolId(15): ScopeId(9)
 Symbol scope ID mismatch for "b":
 after transform: SymbolId(13): ScopeId(5)
 rebuilt        : SymbolId(16): ScopeId(9)
-
-* loose/cast-to-boolean/input.js
-Bindings mismatch:
-after transform: ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
-rebuilt        : ScopeId(25): ["_o$a$b$c$non_existent", "_o$a$b$c$non_existent2", "_o$a$b$c$non_existent3", "_o$a$b10", "_o$a$b6", "_o$a$b7", "_o$a$b8", "_o$a$b9", "o"]
-Bindings mismatch:
-after transform: ScopeId(26): ["_o$a$b$c$non_existent2"]
-rebuilt        : ScopeId(26): []
-Symbol scope ID mismatch for "_o$a$b$c$non_existent2":
-after transform: SymbolId(31): ScopeId(26)
-rebuilt        : SymbolId(33): ScopeId(25)
 
 * transparent-expr-wrappers/ts-as-function-call-loose/input.ts
 Unresolved references mismatch:

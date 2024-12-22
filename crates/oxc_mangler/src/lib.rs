@@ -110,8 +110,10 @@ impl Mangler {
             let mut slot = parent_max_slot;
 
             if !bindings.is_empty() {
-                // `bindings` are stored in order, traverse and increment slot
-                for symbol_id in bindings.values().copied() {
+                // Sort `bindings` in declaration order.
+                let mut bindings = bindings.values().copied().collect::<Vec<_>>();
+                bindings.sort_unstable();
+                for symbol_id in bindings {
                     slots[symbol_id] = slot;
                     slot += 1;
                 }
@@ -192,7 +194,7 @@ impl Mangler {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for &symbol_id in &symbol_to_rename.symbol_ids {
-                    symbol_table.set_name(symbol_id, new_name.clone());
+                    symbol_table.set_name(symbol_id, new_name.as_str());
                 }
             }
         }

@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 114/130
+Passed: 119/136
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,7 +16,12 @@ Passed: 114/130
 * regexp
 
 
-# babel-plugin-transform-class-properties (15/19)
+# babel-plugin-transform-class-properties (19/24)
+* static-block-this-and-class-name/input.js
+Symbol flags mismatch for "inner":
+after transform: SymbolId(8): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
+
 * static-super-assignment-target/input.js
 x Output mismatch
 

@@ -2040,7 +2040,7 @@ impl Gen for AssignmentTargetProperty<'_> {
 
 impl Gen for AssignmentTargetPropertyIdentifier<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        let ident_name = p.get_identifier_reference_name(&self.binding).to_owned();
+        let ident_name = p.get_identifier_reference_name(&self.binding);
         if ident_name == self.binding.name.as_str() {
             self.binding.print(p, ctx);
         } else {
@@ -2048,7 +2048,7 @@ impl Gen for AssignmentTargetPropertyIdentifier<'_> {
             p.print_str(self.binding.name.as_str());
             p.print_colon();
             p.print_soft_space();
-            p.print_str(&ident_name);
+            p.print_str(ident_name);
         }
         if let Some(expr) = &self.init {
             p.print_soft_space();

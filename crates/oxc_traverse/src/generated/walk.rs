@@ -39,6 +39,8 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
     ctx.set_current_scope_id(current_scope_id);
     let previous_hoist_scope_id = ctx.current_hoist_scope_id();
     ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
     let pop_token = ctx
         .push_stack(Ancestor::ProgramHashbang(ancestor::ProgramWithoutHashbang(node, PhantomData)));
     if let Some(field) =
@@ -62,6 +64,7 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
     ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
     traverser.exit_program(&mut *node, ctx);
 }
 
@@ -1425,6 +1428,8 @@ pub(crate) unsafe fn walk_block_statement<'a, Tr: Traverse<'a>>(
         .get()
         .unwrap();
     ctx.set_current_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::BlockStatementBody(
         ancestor::BlockStatementWithoutBody(node, PhantomData),
     ));
@@ -1435,6 +1440,7 @@ pub(crate) unsafe fn walk_block_statement<'a, Tr: Traverse<'a>>(
     );
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
     traverser.exit_block_statement(&mut *node, ctx);
 }
 
@@ -2267,6 +2273,8 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
     ctx.set_current_scope_id(current_scope_id);
     let previous_hoist_scope_id = ctx.current_hoist_scope_id();
     ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
     let pop_token =
         ctx.push_stack(Ancestor::FunctionId(ancestor::FunctionWithoutId(node, PhantomData)));
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_ID)
@@ -2308,6 +2316,7 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
     ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
     traverser.exit_function(&mut *node, ctx);
 }
 
@@ -2401,6 +2410,8 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
     ctx.set_current_scope_id(current_scope_id);
     let previous_hoist_scope_id = ctx.current_hoist_scope_id();
     ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::ArrowFunctionExpressionTypeParameters(
         ancestor::ArrowFunctionExpressionWithoutTypeParameters(node, PhantomData),
     ));
@@ -2434,6 +2445,7 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
     ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
     traverser.exit_arrow_function_expression(&mut *node, ctx);
 }
 
@@ -2655,6 +2667,8 @@ pub(crate) unsafe fn walk_static_block<'a, Tr: Traverse<'a>>(
     ctx.set_current_scope_id(current_scope_id);
     let previous_hoist_scope_id = ctx.current_hoist_scope_id();
     ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
     let pop_token = ctx
         .push_stack(Ancestor::StaticBlockBody(ancestor::StaticBlockWithoutBody(node, PhantomData)));
     walk_statements(
@@ -2665,6 +2679,7 @@ pub(crate) unsafe fn walk_static_block<'a, Tr: Traverse<'a>>(
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
     ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
     traverser.exit_static_block(&mut *node, ctx);
 }
 
@@ -4917,6 +4932,8 @@ pub(crate) unsafe fn walk_ts_module_declaration<'a, Tr: Traverse<'a>>(
     ctx.set_current_scope_id(current_scope_id);
     let previous_hoist_scope_id = ctx.current_hoist_scope_id();
     ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_BODY)
         as *mut Option<TSModuleDeclarationBody>)
     {
@@ -4926,6 +4943,7 @@ pub(crate) unsafe fn walk_ts_module_declaration<'a, Tr: Traverse<'a>>(
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
     ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
     traverser.exit_ts_module_declaration(&mut *node, ctx);
 }
 
