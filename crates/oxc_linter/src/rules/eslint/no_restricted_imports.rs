@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use crate::{
     context::LintContext,
-    module_record::{ExportEntry, ExportImportName, ImportEntry, ImportImportName},
+    module_record::{ExportEntry, ExportImportName, ImportEntry, ImportImportName, NameSpan},
     rule::Rule,
     ModuleRecord,
 };
@@ -61,6 +61,13 @@ struct RestrictedPattern {
     allow_import_names: Option<Box<[CompactStr]>>,
     case_sensitive: Option<bool>,
     message: Option<CompactStr>,
+}
+
+#[derive(Debug)]
+enum GlobResult {
+    Found,
+    Whitelist,
+    None,
 }
 
 declare_oxc_lint!(
@@ -159,6 +166,115 @@ fn add_configuration_patterns_from_string(paths: &mut Vec<RestrictedPattern>, mo
     });
 }
 
+fn is_name_span_allowed_in_path(name: &CompactStr, path: &RestrictedPath) -> bool {
+    // fast check if this name is allowed
+    if path.allow_import_names.as_ref().is_some_and(|allowed| allowed.contains(name)) {
+        return true;
+    }
+
+    // when no importNames option is provided, no import in general is allowed
+    if path.import_names.as_ref().is_none() {
+        return false;
+    }
+
+    // the name is found is the importNames list
+    if path.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(name)) {
+        return false;
+    }
+
+    // we allow it
+    true
+}
+
+fn is_name_span_allowed_in_pattern(name: &CompactStr, pattern: &RestrictedPattern) -> bool {
+    // fast check if this name is allowed
+    if pattern.allow_import_names.as_ref().is_some_and(|allowed| allowed.contains(name)) {
+        return true;
+    }
+
+    // when no importNames option is provided, no import in general is allowed
+    if pattern.import_names.as_ref().is_none() {
+        return false;
+    }
+
+    // the name is found is the importNames list
+    if pattern.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(name)) {
+        return false;
+    }
+
+    // we allow it
+    true
+}
+
+impl RestrictedPath {
+    fn is_skip_able_import(&self, name: &ImportImportName) -> bool {
+        match &name {
+            ImportImportName::Name(import) => is_name_span_allowed_in_path(&import.name, self),
+            ImportImportName::Default(_) => {
+                is_name_span_allowed_in_path(&CompactStr::new("default"), self)
+            }
+            ImportImportName::NamespaceObject => false,
+        }
+    }
+
+    fn is_skip_able_export(&self, name: &ExportImportName) -> bool {
+        match &name {
+            ExportImportName::Name(import) => is_name_span_allowed_in_path(&import.name, self),
+            ExportImportName::All | ExportImportName::AllButDefault => false,
+            ExportImportName::Null => true,
+        }
+    }
+}
+
+impl RestrictedPattern {
+    fn is_skip_able_import(&self, name: &ImportImportName) -> bool {
+        match &name {
+            ImportImportName::Name(import) => is_name_span_allowed_in_pattern(&import.name, self),
+            ImportImportName::Default(_) => {
+                is_name_span_allowed_in_pattern(&CompactStr::new("default"), self)
+            }
+            ImportImportName::NamespaceObject => false,
+        }
+    }
+
+    fn is_skip_able_export(&self, name: &ExportImportName) -> bool {
+        match &name {
+            ExportImportName::Name(import) => is_name_span_allowed_in_pattern(&import.name, self),
+            ExportImportName::All | ExportImportName::AllButDefault => false,
+            ExportImportName::Null => true,
+        }
+    }
+
+    fn get_gitignore_glob_result(&self, name: &NameSpan) -> GlobResult {
+        let mut builder = GitignoreBuilder::new("");
+        // returns always OK, will be fixed in the next version
+        let _ = builder.case_insensitive(!self.case_sensitive.unwrap_or(false));
+
+        for group in &self.group {
+            // returns always OK
+            let _ = builder.add_line(None, group.as_str());
+        }
+
+        let Ok(gitignore) = builder.build() else {
+            return GlobResult::None;
+        };
+
+        let source = name.name();
+
+        let matched = gitignore.matched(source, false);
+
+        if matched.is_whitelist() {
+            return GlobResult::Whitelist;
+        }
+
+        if matched.is_none() {
+            return GlobResult::None;
+        }
+
+        GlobResult::Found
+    }
+}
+
 impl Rule for NoRestrictedImports {
     fn from_configuration(value: serde_json::Value) -> Self {
         let mut paths: Vec<RestrictedPath> = Vec::new();
@@ -233,46 +349,6 @@ impl Rule for NoRestrictedImports {
 }
 
 impl NoRestrictedImports {
-    fn is_name_span_allowed_in_path(name: &CompactStr, path: &RestrictedPath) -> bool {
-        // fast check if this name is allowed
-        if path.allow_import_names.as_ref().is_some_and(|allowed| allowed.contains(name)) {
-            return true;
-        }
-
-        // when no importNames option is provided, no import in general is allowed
-        if path.import_names.as_ref().is_none() {
-            return false;
-        }
-
-        // the name is found is the importNames list
-        if path.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(name)) {
-            return false;
-        }
-
-        // we allow it
-        true
-    }
-
-    fn is_name_span_allowed_in_pattern(name: &CompactStr, path: &RestrictedPattern) -> bool {
-        // fast check if this name is allowed
-        if path.allow_import_names.as_ref().is_some_and(|allowed| allowed.contains(name)) {
-            return true;
-        }
-
-        // when no importNames option is provided, no import in general is allowed
-        if path.import_names.as_ref().is_none() {
-            return false;
-        }
-
-        // the name is found is the importNames list
-        if path.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(name)) {
-            return false;
-        }
-
-        // we allow it
-        true
-    }
-
     fn report_side_effects(&self, ctx: &LintContext<'_>, module_record: &ModuleRecord) {
         let mut side_effect_import_map: FxHashMap<&CompactStr, Vec<Span>> = FxHashMap::default();
 
@@ -303,17 +379,7 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let skipable = match &entry.import_name {
-                ImportImportName::Name(import) => {
-                    Self::is_name_span_allowed_in_path(&import.name, path)
-                }
-                ImportImportName::Default(_) => {
-                    Self::is_name_span_allowed_in_path(&CompactStr::new("default"), path)
-                }
-                ImportImportName::NamespaceObject => false,
-            };
-
-            if skipable {
+            if path.is_skip_able_import(&entry.import_name) {
                 continue;
             }
 
@@ -322,51 +388,26 @@ impl NoRestrictedImports {
             no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
         }
 
-        // println!("{:?}", self.patterns);
-
         let mut whitelist_found = false;
         let mut found_errors = vec![];
 
         for pattern in &self.patterns {
-            let skipable = match &entry.import_name {
-                ImportImportName::Name(import) => {
-                    Self::is_name_span_allowed_in_pattern(&import.name, pattern)
-                }
-                ImportImportName::Default(_) => {
-                    Self::is_name_span_allowed_in_pattern(&CompactStr::new("default"), pattern)
-                }
-                ImportImportName::NamespaceObject => false,
-            };
-
-            if skipable {
+            if pattern.is_skip_able_import(&entry.import_name) {
                 continue;
             }
 
-            let mut builder = GitignoreBuilder::new("");
-            let _ = builder.case_insensitive(!pattern.case_sensitive.unwrap_or(false));
+            match pattern.get_gitignore_glob_result(&entry.module_request) {
+                GlobResult::Whitelist => {
+                    whitelist_found = true;
+                    break;
+                }
+                GlobResult::Found => {
+                    let span = entry.module_request.span();
 
-            for group in &pattern.group {
-                let _ = builder.add_line(None, group.as_str());
-            }
-
-            let Ok(gitignore) = builder.build() else {
-                continue;
+                    found_errors.push((span, pattern));
+                }
+                GlobResult::None => (),
             };
-
-            let source = entry.module_request.name();
-            let span = entry.module_request.span();
-
-            let matched = gitignore.matched(source, false);
-            // println!("{:?}", matched);
-
-            if matched.is_whitelist() {
-                whitelist_found = true;
-                break;
-            }
-
-            if !matched.is_none() {
-                found_errors.push((span, pattern));
-            }
         }
 
         if !whitelist_found && !found_errors.is_empty() {
@@ -387,21 +428,45 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let skipable = match &entry.import_name {
-                ExportImportName::Name(import) => {
-                    Self::is_name_span_allowed_in_path(&import.name, path)
-                }
-                ExportImportName::All | ExportImportName::AllButDefault => false,
-                ExportImportName::Null => true,
-            };
-
-            if skipable {
+            if path.is_skip_able_export(&entry.import_name) {
                 continue;
             }
 
             let span = entry.span;
 
             no_restricted_imports_diagnostic(ctx, span, path.message.clone(), source);
+        }
+
+        let mut whitelist_found = false;
+        let mut found_errors = vec![];
+
+        for pattern in &self.patterns {
+            if pattern.is_skip_able_export(&entry.import_name) {
+                continue;
+            }
+
+            let Some(module_request) = &entry.module_request else {
+                continue;
+            };
+
+            match pattern.get_gitignore_glob_result(module_request) {
+                GlobResult::Whitelist => {
+                    whitelist_found = true;
+                    break;
+                }
+                GlobResult::Found => {
+                    let span = module_request.span();
+
+                    found_errors.push((span, pattern));
+                }
+                GlobResult::None => (),
+            };
+        }
+
+        if !whitelist_found && !found_errors.is_empty() {
+            for (span, pattern) in found_errors {
+                no_restricted_imports_diagnostic(ctx, span, pattern.message.clone(), source);
+            }
         }
     }
 }
