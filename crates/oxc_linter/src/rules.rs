@@ -507,11 +507,11 @@ mod vitest {
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_each;
-    pub mod vitest_prefer_lowercase_title;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
     pub mod require_local_test_context_for_concurrent_snapshots;
+    pub mod vitest_prefer_lowercase_title;
 }
 
 mod node {
