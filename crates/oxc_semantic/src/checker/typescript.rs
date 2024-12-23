@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use itertools::Itertools;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{ast::*, AstKind};
@@ -330,12 +331,31 @@ fn abstract_elem_in_concrete_class(is_property: bool, span: Span) -> OxcDiagnost
         .with_label(span)
 }
 
+fn constructor_implementation_missing(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Constructor implementation is missing.").with_label(span)
+}
+
 pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
     if !class.r#abstract {
         for elem in &class.body.body {
             if elem.is_abstract() {
                 let span = elem.property_key().map_or_else(|| elem.span(), GetSpan::span);
                 ctx.error(abstract_elem_in_concrete_class(elem.is_property(), span));
+            }
+        }
+    }
+
+    if !class.r#declare && !ctx.in_declare_scope() {
+        for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
+            if let Some(ClassElement::MethodDefinition(a)) = a {
+                if a.kind.is_constructor()
+                    && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
+                    && b.map_or(true, |b| {
+                        b.method_definition_kind().map_or(true, |kind| !kind.is_constructor())
+                    })
+                {
+                    ctx.error(constructor_implementation_missing(a.key.span()));
+                }
             }
         }
     }
