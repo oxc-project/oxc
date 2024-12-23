@@ -1414,9 +1414,33 @@ impl Gen for StringLiteral<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         let s = self.value.as_str();
-        p.wrap_quote(|p, quote| {
-            print_unquoted_str(s, quote, p);
-        });
+
+        let quote = if p.options.minify {
+            let mut single_cost: u32 = 0;
+            let mut double_cost: u32 = 0;
+            for b in s.as_bytes() {
+                match b {
+                    b'\'' => {
+                        single_cost += 1;
+                    }
+                    b'"' => {
+                        double_cost += 1;
+                    }
+                    _ => {}
+                }
+            }
+            if double_cost > single_cost {
+                b'\''
+            } else {
+                b'"'
+            }
+        } else {
+            p.quote
+        };
+
+        p.print_ascii_byte(quote);
+        print_unquoted_str(s, quote, p);
+        p.print_ascii_byte(quote);
     }
 }
 

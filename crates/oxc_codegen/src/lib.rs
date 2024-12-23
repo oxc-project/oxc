@@ -636,13 +636,6 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    #[inline]
-    fn wrap_quote<F: FnMut(&mut Self, u8)>(&mut self, mut f: F) {
-        self.print_ascii_byte(self.quote);
-        f(self, self.quote);
-        self.print_ascii_byte(self.quote);
-    }
-
     fn add_source_mapping(&mut self, span: Span) {
         if span == SPAN {
             return;
