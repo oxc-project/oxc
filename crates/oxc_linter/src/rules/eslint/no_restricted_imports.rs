@@ -158,11 +158,11 @@ fn add_configuration_patterns_from_object(
                     }
 
                     // allowImportNames cannot be used in combination with importNames, importNamePattern or allowImportNamePattern.
-                    if pattern.allow_import_names.is_some() && (
-                        pattern.import_names.is_some()
-                        || pattern.import_name_pattern.is_some()
-                        || pattern.allow_import_name_pattern.is_some()
-                    ) {
+                    if pattern.allow_import_names.is_some()
+                        && (pattern.import_names.is_some()
+                            || pattern.import_name_pattern.is_some()
+                            || pattern.allow_import_name_pattern.is_some())
+                    {
                         // ToDo: not allowed
                     }
 
