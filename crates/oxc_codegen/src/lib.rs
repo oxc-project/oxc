@@ -600,22 +600,27 @@ impl<'a> Codegen<'a> {
             candidates.push(format!("0x{:x}", num as u128));
         }
 
+        // create `1e-2`
         if s.starts_with(".0") {
-            // create `1e-2`
             if let Some((i, _)) = s[1..].bytes().enumerate().find(|(_, c)| *c != b'0') {
                 let len = i + 1; // `+1` to include the dot.
                 let digits = &s[len..];
                 candidates.push(format!("{digits}e-{}", digits.len() + len - 1));
             }
-        } else if s.ends_with('0') {
-            // create 1e2
+        }
+
+        // create 1e2
+        if s.ends_with('0') {
             if let Some((len, _)) = s.bytes().rev().enumerate().find(|(_, c)| *c != b'0') {
                 candidates.push(format!("{}e{len}", &s[0..s.len() - len]));
             }
-        } else if let Some((integer, point, exponent)) =
+        }
+
+        // `1.2e101` -> ("1", "2", "101")
+        // `1.3415205933077406e300` -> `13415205933077406e284;`
+        if let Some((integer, point, exponent)) =
             s.split_once('.').and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
         {
-            // `1.2e101` -> ("1", "2", "101")
             candidates.push(format!(
                 "{integer}{point}e{}",
                 exponent.parse::<isize>().unwrap() - point.len() as isize

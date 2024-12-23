@@ -298,6 +298,8 @@ fn test_call() {
 fn test_member() {
     test("x.y[z]", "x.y[z];\n");
     test("((x+1).y+1)[z]", "((x + 1).y + 1)[z];\n");
+
+    test_minify("1.3415205933077406e300", "13415205933077406e284;");
 }
 
 #[test]
