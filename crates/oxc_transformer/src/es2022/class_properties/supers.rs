@@ -214,7 +214,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         };
         let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
         let AssignmentTarget::ComputedMemberExpression(member) = left else { unreachable!() };
-        let property = member.unbox().expression;
+        let property = member.unbox().expression.into_inner_expression();
         *expr =
             self.transform_super_assignment_expression_impl(span, operator, property, value, ctx);
     }
@@ -420,7 +420,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         let temp_var_name_base = get_var_name_from_node(member.as_ref());
 
-        let property = ctx.ast.move_expression(&mut member.expression);
+        let property = ctx.ast.move_expression(member.expression.get_inner_expression_mut());
 
         *expr = self.transform_super_update_expression_impl(
             &temp_var_name_base,
