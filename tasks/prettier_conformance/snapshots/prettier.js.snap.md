@@ -1,4 +1,4 @@
-js compatibility: 242/641 (37.75%)
+js compatibility: 246/641 (38.38%)
 
 # Failed
 
@@ -213,11 +213,7 @@ js compatibility: 242/641 (37.75%)
 ### js/directives
 * js/directives/escaped.js
 * js/directives/issue-7346.js
-* js/directives/last-line-0.js
-* js/directives/last-line-1.js
-* js/directives/last-line-2.js
 * js/directives/newline.js
-* js/directives/test.js
 
 ### js/empty-paren-comment
 * js/empty-paren-comment/class-property.js
