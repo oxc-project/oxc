@@ -3,6 +3,13 @@ use oxc_codegen::CodegenOptions;
 use crate::tester::{test, test_minify, test_minify_same, test_options};
 
 #[test]
+fn decl() {
+    test_minify("const [foo] = bar", "const[foo]=bar;");
+    test_minify("const {foo} = bar", "const{foo}=bar;");
+    test_minify("const foo = bar", "const foo=bar;");
+}
+
+#[test]
 fn module_decl() {
     test("export * as foo from 'foo'", "export * as foo from \"foo\";\n");
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");

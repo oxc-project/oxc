@@ -684,7 +684,7 @@ impl Gen for VariableDeclaration<'_> {
             VariableDeclarationKind::AwaitUsing => "await using",
         });
         if !self.declarations.is_empty() {
-            p.print_hard_space();
+            p.print_soft_space();
         }
         p.print_list(&self.declarations, ctx);
     }
@@ -1228,6 +1228,7 @@ impl Gen for IdentifierName<'_> {
 impl Gen for BindingIdentifier<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         let name = p.get_binding_identifier_name(self);
+        p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
         p.print_str(name);
     }
