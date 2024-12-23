@@ -349,6 +349,11 @@ pub fn ts_constructor_this_parameter(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn ts_constructor_type_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("1092", "Type parameters cannot appear on a constructor declaration").with_label(span)
+}
+
+#[cold]
 pub fn ts_arrow_function_this_parameter(span: Span) -> OxcDiagnostic {
     ts_error("2730", "An arrow function cannot have a `this` parameter.").with_label(span)
 }

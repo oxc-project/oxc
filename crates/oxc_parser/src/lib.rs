@@ -638,6 +638,16 @@ mod test {
     }
 
     #[test]
+    fn ts_constructor_type_param() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::from_path(Path::new("class.ts")).unwrap();
+        let source = "class A { constructor<T>() {} }\n";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert_eq!(ret.errors.len(), 1);
+        assert_eq!(ret.errors.first().unwrap().to_string(), "Type parameters cannot appear on a constructor declaration");
+    }
+
+    #[test]
     fn directives() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
