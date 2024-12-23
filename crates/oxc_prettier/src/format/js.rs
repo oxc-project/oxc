@@ -45,14 +45,14 @@ impl<'a> Format<'a> for Program<'a> {
 impl<'a> Format<'a> for Hashbang<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
+
         parts.push(dynamic_text!(p, self.span.source_text(p.source_text)));
         parts.extend(hardline!());
         // Preserve original newline
-        if let Some(c) = p.source_text[self.span.end as usize..].chars().nth(1) {
-            if is_line_terminator(c) {
-                parts.extend(hardline!());
-            }
+        if p.is_next_line_empty(self.span) {
+            parts.extend(hardline!());
         }
+
         array!(p, parts)
     }
 }
