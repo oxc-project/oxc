@@ -644,7 +644,10 @@ mod test {
         let source = "class A { constructor<T>() {} }\n";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert_eq!(ret.errors.len(), 1);
-        assert_eq!(ret.errors.first().unwrap().to_string(), "Type parameters cannot appear on a constructor declaration");
+        assert_eq!(
+            ret.errors.first().unwrap().to_string(),
+            "Type parameters cannot appear on a constructor declaration"
+        );
     }
 
     #[test]
