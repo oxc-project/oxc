@@ -62,6 +62,7 @@ struct RestrictedPattern {
     import_names: Option<Vec<CompactStr>>,
     import_name_pattern: Option<CompactStr>,
     allow_import_names: Option<Vec<CompactStr>>,
+    allow_import_name_pattern: Option<CompactStr>,
     case_sensitive: Option<bool>,
     message: Option<CompactStr>,
 }
@@ -150,11 +151,31 @@ fn add_configuration_patterns_from_object(
                 add_configuration_patterns_from_string(patterns, module_name);
             }
             Value::Object(_) => {
-                if let Ok(path) = serde_json::from_value::<RestrictedPattern>(path_value.clone()) {
-                    if path.group.is_some() && path.regex.is_some() {
+                if let Ok(pattern) = serde_json::from_value::<RestrictedPattern>(path_value.clone())
+                {
+                    if pattern.group.is_some() && pattern.regex.is_some() {
                         // ToDo: not allowed
                     }
-                    patterns.push(path);
+
+                    // allowImportNames cannot be used in combination with importNames, importNamePattern or allowImportNamePattern.
+                    if pattern.allow_import_names.is_some() && (
+                        pattern.import_names.is_some()
+                        || pattern.import_name_pattern.is_some()
+                        || pattern.allow_import_name_pattern.is_some()
+                    ) {
+                        // ToDo: not allowed
+                    }
+
+                    // allowImportNamePattern cannot be used in combination with importNames, importNamePattern or allowImportNames.
+                    if pattern.allow_import_name_pattern.is_some()
+                        && (pattern.import_names.is_some()
+                            || pattern.import_name_pattern.is_some()
+                            || pattern.allow_import_names.is_some())
+                    {
+                        // ToDo: not allowed
+                    }
+
+                    patterns.push(pattern);
                 }
             }
             _ => (),
@@ -169,6 +190,7 @@ fn add_configuration_patterns_from_string(paths: &mut Vec<RestrictedPattern>, mo
         import_names: None,
         import_name_pattern: None,
         allow_import_names: None,
+        allow_import_name_pattern: None,
         case_sensitive: None,
         message: None,
     });
@@ -197,6 +219,11 @@ fn is_name_span_allowed_in_path(name: &CompactStr, path: &RestrictedPath) -> boo
 fn is_name_span_allowed_in_pattern(name: &CompactStr, pattern: &RestrictedPattern) -> bool {
     // fast check if this name is allowed
     if pattern.allow_import_names.as_ref().is_some_and(|allowed| allowed.contains(name)) {
+        return true;
+    }
+
+    // fast check if this name is allowed
+    if pattern.get_allow_import_name_pattern_result(name) {
         return true;
     }
 
@@ -313,12 +340,19 @@ impl RestrictedPattern {
             return false;
         };
 
-        let flags = match self.case_sensitive {
-            Some(case_sensitive) if case_sensitive => "u",
-            _ => "iu",
+        let Ok(reg_exp) = Regex::with_flags(import_name_pattern.as_str(), "u") else {
+            return false;
         };
 
-        let Ok(reg_exp) = Regex::with_flags(import_name_pattern.as_str(), flags) else {
+        reg_exp.find(name).is_some()
+    }
+
+    fn get_allow_import_name_pattern_result(&self, name: &CompactStr) -> bool {
+        let Some(allow_import_names) = &self.allow_import_name_pattern else {
+            return false;
+        };
+
+        let Ok(reg_exp) = Regex::with_flags(allow_import_names.as_str(), "u") else {
             return false;
         };
 
@@ -911,15 +945,15 @@ fn test() {
                 }]
             }])),
         ),
-        // (
-        //     "import { Foo } from 'foo';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo"],
-        //             "allowImportNamePattern": "^Foo"
-        //         }]
-        //     }])),
-        // ),
+        (
+            "import { Foo } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNamePattern": "^Foo"
+                }]
+            }])),
+        ),
         (
             r#"import withPatterns from "foo/bar";"#,
             Some(
@@ -1726,25 +1760,25 @@ fn test() {
                 }]
             }])),
         ),
-        // (
-        //     "export { Bar } from 'foo';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo"],
-        //             "allowImportNamePattern": "^Foo"
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     "export { Bar } from 'foo';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo"],
-        //             "allowImportNamePattern": "^Foo",
-        //             "message": r#"Only imports that match the pattern "/^Foo/u" are allowed to be imported from "foo"."#
-        //         }]
-        //     }])),
-        // ),
+        (
+            "export { Bar } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNamePattern": "^Foo"
+                }]
+            }])),
+        ),
+        (
+            "export { Bar } from 'foo';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo"],
+                    "allowImportNamePattern": "^Foo",
+                    "message": r#"Only imports that match the pattern "/^Foo/u" are allowed to be imported from "foo"."#
+                }]
+            }])),
+        ),
         (
             r#"import { AllowedObject, DisallowedObject } from "foo";"#,
             Some(serde_json::json!([{
@@ -1821,25 +1855,25 @@ fn test() {
                 }]
             }])),
         ),
-        // (
-        //     r#"import * as AllowedObject from "foo/bar";"#,
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo/*"],
-        //             "allowImportNamePattern": "^Allow"
-        //         }]
-        //     }])),
-        // ),
-        // (
-        //     r#"import * as AllowedObject from "foo/bar";"#,
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "group": ["foo/*"],
-        //             "allowImportNamePattern": "^Allow",
-        //             "message": r#"Only import names starting with "Allow" are allowed to be imported from "foo"."#
-        //         }]
-        //     }])),
-        // ),
+        (
+            r#"import * as AllowedObject from "foo/bar";"#,
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo/*"],
+                    "allowImportNamePattern": "^Allow"
+                }]
+            }])),
+        ),
+        (
+            r#"import * as AllowedObject from "foo/bar";"#,
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "group": ["foo/*"],
+                    "allowImportNamePattern": "^Allow",
+                    "message": r#"Only import names starting with "Allow" are allowed to be imported from "foo"."#
+                }]
+            }])),
+        ),
         (
             r#"import withPatterns from "foo/baz";"#,
             Some(
