@@ -1494,7 +1494,7 @@ impl GenExpr for StaticMemberExpression<'_> {
 
 impl GenExpr for PrivateFieldExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
-        self.object.print_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
+        self.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         if self.optional {
             p.print_str("?");
         }
@@ -2240,23 +2240,29 @@ impl GenExpr for NewExpression<'_> {
             p.print_annotation_comments(self.span.start);
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
-            p.print_str("new ");
+            p.print_str("new");
+            p.print_soft_space();
             self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
-            p.print_ascii_byte(b'(');
-            let has_comment = (self.span.end > 0 && p.has_comment(self.span.end - 1))
-                || self.arguments.iter().any(|item| p.has_comment(item.span().start));
-            if has_comment {
-                p.indent();
-                p.print_list_with_comments(&self.arguments, ctx);
-                // Handle `/* comment */);`
-                if self.span.end > 0 && !p.print_expr_comments(self.span.end - 1) {
-                    p.print_soft_newline();
+
+            // Omit the "()" when minifying, but only when safe to do so
+            if !p.options.minify || !self.arguments.is_empty() || precedence >= Precedence::Postfix
+            {
+                p.print_ascii_byte(b'(');
+                let has_comment = (self.span.end > 0 && p.has_comment(self.span.end - 1))
+                    || self.arguments.iter().any(|item| p.has_comment(item.span().start));
+                if has_comment {
+                    p.indent();
+                    p.print_list_with_comments(&self.arguments, ctx);
+                    // Handle `/* comment */);`
+                    if self.span.end > 0 && !p.print_expr_comments(self.span.end - 1) {
+                        p.print_soft_newline();
+                    }
+                    p.dedent();
+                } else {
+                    p.print_list(&self.arguments, ctx);
                 }
-                p.dedent();
-            } else {
-                p.print_list(&self.arguments, ctx);
+                p.print_ascii_byte(b')');
             }
-            p.print_ascii_byte(b')');
         });
     }
 }

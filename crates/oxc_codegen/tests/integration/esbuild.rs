@@ -178,12 +178,12 @@ fn test_new() {
     test("new (import('foo')[bar])", "new (import(\"foo\"))[bar]();\n");
     test("new (import('foo'))[bar]", "new (import(\"foo\"))[bar]();\n");
 
-    // test_minify("new x", "new x;");
-    // test_minify("new x.y", "new x.y;");
-    // test_minify("(new x).y", "new x().y;");
-    // test_minify("new x().y", "new x().y;");
-    // test_minify("new x() + y", "new x+y;");
-    // test_minify("new x() ** 2", "new x**2;");
+    test_minify("new x", "new x;");
+    test_minify("new x.y", "new x.y;");
+    test_minify("(new x).y", "new x().y;");
+    test_minify("new x().y", "new x().y;");
+    test_minify("new x() + y", "new x+y;");
+    test_minify("new x() ** 2", "new x**2;");
 
     // Test preservation of Webpack-specific comments
     test(

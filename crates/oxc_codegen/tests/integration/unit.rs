@@ -13,7 +13,7 @@ fn module_decl() {
 #[test]
 fn expr() {
     test("new (foo()).bar();", "new (foo()).bar();\n");
-    test_minify("x in new Error()", "x in new Error();");
+    test_minify("x in new Error()", "x in new Error;");
 
     test("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);\n");
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
