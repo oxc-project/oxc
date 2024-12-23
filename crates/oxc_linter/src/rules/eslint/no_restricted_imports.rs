@@ -294,9 +294,7 @@ impl RestrictedPattern {
             _ => "iu",
         };
 
-        let reg_string = format!("{}", regex.as_str());
-
-        let Ok(reg_exp) = Regex::with_flags(&reg_string, flags) else {
+        let Ok(reg_exp) = Regex::with_flags(regex.as_str(), flags) else {
             return false;
         };
 
@@ -497,7 +495,7 @@ impl NoRestrictedImports {
                 GlobResult::None => (),
             };
 
-            if pattern.get_regex_result(&module_request) {
+            if pattern.get_regex_result(module_request) {
                 let span = module_request.span();
 
                 no_restricted_imports_diagnostic(ctx, span, pattern.message.clone(), source);
