@@ -684,7 +684,7 @@ impl Gen for VariableDeclaration<'_> {
             VariableDeclarationKind::AwaitUsing => "await using",
         });
         if !self.declarations.is_empty() {
-            p.print_hard_space();
+            p.print_soft_space();
         }
         p.print_list(&self.declarations, ctx);
     }
@@ -1228,6 +1228,7 @@ impl Gen for IdentifierName<'_> {
 impl Gen for BindingIdentifier<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         let name = p.get_binding_identifier_name(self);
+        p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
         p.print_str(name);
     }
@@ -1414,9 +1415,33 @@ impl Gen for StringLiteral<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         let s = self.value.as_str();
-        p.wrap_quote(|p, quote| {
-            print_unquoted_str(s, quote, p);
-        });
+
+        let quote = if p.options.minify {
+            let mut single_cost: u32 = 0;
+            let mut double_cost: u32 = 0;
+            for b in s.as_bytes() {
+                match b {
+                    b'\'' => {
+                        single_cost += 1;
+                    }
+                    b'"' => {
+                        double_cost += 1;
+                    }
+                    _ => {}
+                }
+            }
+            if double_cost > single_cost {
+                b'\''
+            } else {
+                b'"'
+            }
+        } else {
+            p.quote
+        };
+
+        p.print_ascii_byte(quote);
+        print_unquoted_str(s, quote, p);
+        p.print_ascii_byte(quote);
     }
 }
 
@@ -1470,7 +1495,7 @@ impl GenExpr for StaticMemberExpression<'_> {
 
 impl GenExpr for PrivateFieldExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
-        self.object.print_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
+        self.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         if self.optional {
             p.print_str("?");
         }
@@ -1640,18 +1665,22 @@ impl Gen for ObjectProperty<'_> {
                 PropertyKind::Init => false,
                 PropertyKind::Get => {
                     p.add_source_mapping(self.span);
-                    p.print_str("get ");
+                    p.print_str("get");
+                    p.print_soft_space();
                     true
                 }
                 PropertyKind::Set => {
                     p.add_source_mapping(self.span);
-                    p.print_str("set ");
+                    p.print_str("set");
+                    p.print_soft_space();
                     true
                 }
             };
             if self.method || is_accessor {
                 if func.r#async {
-                    p.print_str("async ");
+                    p.print_space_before_identifier();
+                    p.print_str("async");
+                    p.print_soft_space();
                 }
                 if func.generator {
                     p.print_str("*");
@@ -2216,23 +2245,29 @@ impl GenExpr for NewExpression<'_> {
             p.print_annotation_comments(self.span.start);
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
-            p.print_str("new ");
+            p.print_str("new");
+            p.print_soft_space();
             self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
-            p.print_ascii_byte(b'(');
-            let has_comment = (self.span.end > 0 && p.has_comment(self.span.end - 1))
-                || self.arguments.iter().any(|item| p.has_comment(item.span().start));
-            if has_comment {
-                p.indent();
-                p.print_list_with_comments(&self.arguments, ctx);
-                // Handle `/* comment */);`
-                if self.span.end > 0 && !p.print_expr_comments(self.span.end - 1) {
-                    p.print_soft_newline();
+
+            // Omit the "()" when minifying, but only when safe to do so
+            if !p.options.minify || !self.arguments.is_empty() || precedence >= Precedence::Postfix
+            {
+                p.print_ascii_byte(b'(');
+                let has_comment = (self.span.end > 0 && p.has_comment(self.span.end - 1))
+                    || self.arguments.iter().any(|item| p.has_comment(item.span().start));
+                if has_comment {
+                    p.indent();
+                    p.print_list_with_comments(&self.arguments, ctx);
+                    // Handle `/* comment */);`
+                    if self.span.end > 0 && !p.print_expr_comments(self.span.end - 1) {
+                        p.print_soft_newline();
+                    }
+                    p.dedent();
+                } else {
+                    p.print_list(&self.arguments, ctx);
                 }
-                p.dedent();
-            } else {
-                p.print_list(&self.arguments, ctx);
+                p.print_ascii_byte(b')');
             }
-            p.print_ascii_byte(b')');
         });
     }
 }

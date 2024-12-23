@@ -3,6 +3,13 @@ use oxc_codegen::CodegenOptions;
 use crate::tester::{test, test_minify, test_minify_same, test_options};
 
 #[test]
+fn decl() {
+    test_minify("const [foo] = bar", "const[foo]=bar;");
+    test_minify("const {foo} = bar", "const{foo}=bar;");
+    test_minify("const foo = bar", "const foo=bar;");
+}
+
+#[test]
 fn module_decl() {
     test("export * as foo from 'foo'", "export * as foo from \"foo\";\n");
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
@@ -13,7 +20,7 @@ fn module_decl() {
 #[test]
 fn expr() {
     test("new (foo()).bar();", "new (foo()).bar();\n");
-    test_minify("x in new Error()", "x in new Error();");
+    test_minify("x in new Error()", "x in new Error;");
 
     test("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);\n");
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
@@ -397,4 +404,10 @@ fn directive() {
     test_options("\"'\"", "\"'\";\n", double_quote.clone());
     test_options("'\"'", "'\"';\n", double_quote.clone());
     test_options(r#""'\"""#, "\"'\\\"\";\n", double_quote);
+}
+
+#[test]
+fn getter_setter() {
+    test_minify("({ get [foo]() {} })", "({get[foo](){}});");
+    test_minify("({ set [foo]() {} })", "({set[foo](){}});");
 }
