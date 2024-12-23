@@ -3,7 +3,6 @@
 
 use std::mem;
 
-use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
@@ -37,17 +36,21 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let owned_expr = ctx.ast.move_expression(expr);
-        let Expression::PrivateFieldExpression(field_expr) = owned_expr else { unreachable!() };
-        *expr = self.transform_private_field_expression_impl(field_expr, false, ctx);
+        let Expression::PrivateFieldExpression(field_expr) = expr else { unreachable!() };
+
+        if let Some(replacement) =
+            self.transform_private_field_expression_impl(field_expr, false, ctx)
+        {
+            *expr = replacement;
+        }
     }
 
     fn transform_private_field_expression_impl(
         &mut self,
-        field_expr: ArenaBox<'a, PrivateFieldExpression<'a>>,
+        field_expr: &mut PrivateFieldExpression<'a>,
         is_assignment: bool,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
+    ) -> Option<Expression<'a>> {
         let ResolvedPrivateProp {
             prop_binding,
             class_bindings,
@@ -58,28 +61,26 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         } = self.classes_stack.find_private_prop(&field_expr.field);
 
         if is_method || is_accessor {
-            // TODO: Should not consume existing `PrivateFieldExpression` and then create a new one
-            // which is identical to the original
-            return Expression::PrivateFieldExpression(field_expr);
+            return None;
         };
 
-        // TODO: Move this to top of function once `lookup_private_property` does not return `Option`
-        let PrivateFieldExpression { span, object, .. } = field_expr.unbox();
+        let span = field_expr.span;
+        let object = ctx.ast.move_expression(&mut field_expr.object);
 
         if self.private_fields_as_properties {
             // `_classPrivateFieldLooseBase(object, _prop)[_prop]`
-            return Expression::from(Self::create_private_field_member_expr_loose(
+            return Some(Expression::from(Self::create_private_field_member_expr_loose(
                 object,
                 prop_binding,
                 span,
                 self.ctx,
                 ctx,
-            ));
+            )));
         }
 
         let prop_ident = prop_binding.create_read_expression(ctx);
 
-        if is_static {
+        let replacement = if is_static {
             // TODO: Ensure there are tests for nested classes with references to private static props
             // of outer class inside inner class, to make sure we're getting the right `class_bindings`.
 
@@ -112,7 +113,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         } else {
             // `_classPrivateFieldGet2(_prop, object)`
             self.create_private_field_get(prop_ident, object, span, ctx)
-        }
+        };
+
+        Some(replacement)
     }
 
     /// Check if can use shorter version of static private prop transform.
@@ -1623,13 +1626,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         target: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let AssignmentTarget::PrivateFieldExpression(private_field) =
-            ctx.ast.move_assignment_target(target)
-        else {
+        let AssignmentTarget::PrivateFieldExpression(private_field) = target else {
             unreachable!()
         };
-        let expr = self.transform_private_field_expression_impl(private_field, true, ctx);
-        *target = AssignmentTarget::from(expr.into_member_expression());
+        if let Some(replacement) =
+            self.transform_private_field_expression_impl(private_field, true, ctx)
+        {
+            *target = AssignmentTarget::from(replacement.into_member_expression());
+        }
     }
 
     /// Duplicate object to be used in get/set pair.
