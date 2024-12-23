@@ -45,14 +45,14 @@ impl<'a> Format<'a> for Program<'a> {
 impl<'a> Format<'a> for Hashbang<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
+
         parts.push(dynamic_text!(p, self.span.source_text(p.source_text)));
         parts.extend(hardline!());
         // Preserve original newline
-        if let Some(c) = p.source_text[self.span.end as usize..].chars().nth(1) {
-            if is_line_terminator(c) {
-                parts.extend(hardline!());
-            }
+        if p.is_next_line_empty(self.span) {
+            parts.extend(hardline!());
         }
+
         array!(p, parts)
     }
 }
@@ -60,15 +60,21 @@ impl<'a> Format<'a> for Hashbang<'a> {
 impl<'a> Format<'a> for Directive<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
-        parts.push(literal::print_string_from_not_quoted_raw_text(
-            p,
-            self.directive.as_str(),
-            p.options.single_quote,
-        ));
+
+        let not_quoted_raw_text = &self.directive.as_str();
+        // If quote is used, don't replace enclosing quotes, keep as is
+        if not_quoted_raw_text.contains('"') || not_quoted_raw_text.contains('\'') {
+            parts.push(dynamic_text!(p, &self.span.source_text(p.source_text)));
+        } else {
+            let enclosing_quote = || text!(if p.options.single_quote { "'" } else { "\"" });
+            parts.push(enclosing_quote());
+            parts.push(dynamic_text!(p, &not_quoted_raw_text));
+            parts.push(enclosing_quote());
+        }
         if let Some(semi) = p.semi() {
             parts.push(semi);
         }
-        parts.extend(hardline!());
+
         array!(p, parts)
     }
 }
