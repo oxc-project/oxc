@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 602/927
+Passed: 604/927
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -1111,7 +1111,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-preset-typescript (10/17)
+# babel-preset-typescript (11/17)
 * jsx-compat/ts-invalid/input.ts
 
   x Expected `>` but found `/`
@@ -1130,11 +1130,6 @@ Unresolved references mismatch:
 after transform: ["T", "x"]
 rebuilt        : ["x"]
 
-* node-extensions/type-param-arrow-in-ts/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["T"]
-rebuilt        : ScopeId(1): []
-
 * opts/optimizeConstEnums/input.ts
 x Output mismatch
 
@@ -1145,7 +1140,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (46/156)
+# babel-plugin-transform-typescript (47/156)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1181,9 +1176,6 @@ rebuilt        : ["x"]
 
 
 * class/head/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["T"]
-rebuilt        : ScopeId(1): []
 Unresolved references mismatch:
 after transform: ["D", "I"]
 rebuilt        : ["D"]
@@ -1208,7 +1200,7 @@ rebuilt        : ScopeId(0): []
 
 * declarations/erased/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["E", "I", "M", "N", "T", "m", "x"]
+after transform: ScopeId(0): ["E", "M", "N", "m", "x"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
@@ -1509,9 +1501,6 @@ after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
 rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 
 * exports/export-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -1530,9 +1519,6 @@ rebuilt        : ScopeId(0): ["C"]
 x Output mismatch
 
 * exports/issue-9916-1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
-rebuilt        : ScopeId(0): ["a"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
@@ -1541,9 +1527,6 @@ after transform: ["PromiseLike"]
 rebuilt        : []
 
 * exports/issue-9916-2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb"]
-rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
@@ -1552,9 +1535,6 @@ after transform: ["PromiseLike"]
 rebuilt        : []
 
 * exports/issue-9916-3/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
-rebuilt        : ScopeId(0): ["a"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
@@ -1576,11 +1556,6 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-
-* function/parameters/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["T", "x", "y"]
-rebuilt        : ScopeId(1): ["x", "y"]
 
 * imports/elide-preact/input.ts
 Bindings mismatch:
@@ -1626,7 +1601,7 @@ rebuilt        : ScopeId(0): ["A", "B"]
 
 * imports/elision-locations/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G", "H", "Iface", "x", "y"]
+after transform: ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G", "H", "x", "y"]
 rebuilt        : ScopeId(0): ["A", "Class", "x", "y"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -1750,9 +1725,6 @@ rebuilt        : ScopeId(0): []
 x Output mismatch
 
 * lvalues/TSTypeParameterInstantiation/input.ts
-Bindings mismatch:
-after transform: ScopeId(1): ["M"]
-rebuilt        : ScopeId(1): []
 Symbol reference IDs mismatch for "AbstractClass":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]

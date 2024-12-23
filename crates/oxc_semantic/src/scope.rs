@@ -8,8 +8,10 @@ use oxc_syntax::{
     node::NodeId,
     reference::ReferenceId,
     scope::{ScopeFlags, ScopeId},
-    symbol::SymbolId,
+    symbol::{SymbolFlags, SymbolId},
 };
+
+use crate::SymbolTable;
 
 pub(crate) type Bindings<'a> = hashbrown::HashMap<&'a str, SymbolId, FxBuildHasher, &'a Allocator>;
 pub type UnresolvedReferences<'a> =
@@ -461,5 +463,20 @@ impl ScopeTree {
                 inner.child_ids.reserve(additional);
             });
         }
+    }
+
+    pub fn delete_typescript_bindings(&mut self, symbol_table: &SymbolTable) {
+        self.cell.with_dependent_mut(|_allocator, inner| {
+            for bindings in &mut inner.bindings {
+                bindings.retain(|_name, symbol_id| {
+                    let flags = symbol_table.get_flags(*symbol_id);
+                    !flags.intersects(
+                        SymbolFlags::TypeAlias
+                            | SymbolFlags::Interface
+                            | SymbolFlags::TypeParameter,
+                    )
+                });
+            }
+        });
     }
 }
