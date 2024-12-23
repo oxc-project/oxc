@@ -1665,18 +1665,22 @@ impl Gen for ObjectProperty<'_> {
                 PropertyKind::Init => false,
                 PropertyKind::Get => {
                     p.add_source_mapping(self.span);
-                    p.print_str("get ");
+                    p.print_str("get");
+                    p.print_soft_space();
                     true
                 }
                 PropertyKind::Set => {
                     p.add_source_mapping(self.span);
-                    p.print_str("set ");
+                    p.print_str("set");
+                    p.print_soft_space();
                     true
                 }
             };
             if self.method || is_accessor {
                 if func.r#async {
-                    p.print_str("async ");
+                    p.print_space_before_identifier();
+                    p.print_str("async");
+                    p.print_soft_space();
                 }
                 if func.generator {
                     p.print_str("*");

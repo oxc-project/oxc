@@ -405,3 +405,9 @@ fn directive() {
     test_options("'\"'", "'\"';\n", double_quote.clone());
     test_options(r#""'\"""#, "\"'\\\"\";\n", double_quote);
 }
+
+#[test]
+fn getter_setter() {
+    test_minify("({ get [foo]() {} })", "({get[foo](){}});");
+    test_minify("({ set [foo]() {} })", "({set[foo](){}});");
+}
