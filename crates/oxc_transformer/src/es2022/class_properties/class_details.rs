@@ -23,10 +23,10 @@ pub(super) struct ClassDetails<'a> {
 }
 
 impl<'a> ClassDetails<'a> {
-    /// Create empty `ClassDetails`.
+    /// Create dummy `ClassDetails`.
     ///
-    /// Used when class needs no transform, and for dummy entry at top of `ClassesStack`.
-    pub fn empty(is_declaration: bool) -> Self {
+    /// Used for dummy entry at top of `ClassesStack`.
+    pub fn dummy(is_declaration: bool) -> Self {
         Self {
             is_declaration,
             is_transform_required: false,
@@ -40,6 +40,13 @@ impl<'a> ClassDetails<'a> {
 pub(super) struct PrivateProp<'a> {
     pub binding: BoundIdentifier<'a>,
     pub is_static: bool,
+    pub is_method: bool,
+}
+
+impl<'a> PrivateProp<'a> {
+    pub fn new(binding: BoundIdentifier<'a>, is_static: bool, is_method: bool) -> Self {
+        Self { binding, is_static, is_method }
+    }
 }
 
 /// Stack of `ClassDetails`.
@@ -61,7 +68,7 @@ impl<'a> ClassesStack<'a> {
     /// Create new `ClassesStack`.
     pub fn new() -> Self {
         // Default stack capacity is 4. That's is probably good. More than 4 nested classes is rare.
-        Self { stack: NonEmptyStack::new(ClassDetails::empty(false)) }
+        Self { stack: NonEmptyStack::new(ClassDetails::dummy(false)) }
     }
 
     /// Push an entry to stack.
@@ -92,24 +99,25 @@ impl<'a> ClassesStack<'a> {
     pub fn find_private_prop<'b>(
         &'b mut self,
         ident: &PrivateIdentifier<'a>,
-    ) -> Option<ResolvedPrivateProp<'a, 'b>> {
+    ) -> ResolvedPrivateProp<'a, 'b> {
         // Check for binding in closest class first, then enclosing classes.
         // We skip the first, because this is a `NonEmptyStack` with dummy first entry.
         // TODO: Check there are tests for bindings in enclosing classes.
         for class in self.stack[1..].iter_mut().rev() {
             if let Some(private_props) = &mut class.private_props {
                 if let Some(prop) = private_props.get(&ident.name) {
-                    return Some(ResolvedPrivateProp {
+                    return ResolvedPrivateProp {
                         prop_binding: &prop.binding,
                         class_bindings: &mut class.bindings,
                         is_static: prop.is_static,
+                        is_method: prop.is_method,
                         is_declaration: class.is_declaration,
-                    });
+                    };
                 }
             }
         }
-        // TODO: This should be unreachable. Only returning `None` because implementation is incomplete.
-        None
+
+        unreachable!();
     }
 }
 
@@ -123,6 +131,8 @@ pub(super) struct ResolvedPrivateProp<'a, 'b> {
     pub class_bindings: &'b mut ClassBindings<'a>,
     /// `true` if is a static property
     pub is_static: bool,
+    /// `true` if is a private method
+    pub is_method: bool,
     /// `true` if class which defines this property is a class declaration
     pub is_declaration: bool,
 }
