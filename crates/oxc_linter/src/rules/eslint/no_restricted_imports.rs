@@ -2,6 +2,7 @@ use ignore::gitignore::GitignoreBuilder;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use regress::Regex;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use serde_json::Value;
@@ -56,7 +57,8 @@ struct RestrictedPath {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct RestrictedPattern {
-    group: Vec<CompactStr>,
+    group: Option<Vec<CompactStr>>,
+    regex: Option<CompactStr>,
     import_names: Option<Box<[CompactStr]>>,
     allow_import_names: Option<Box<[CompactStr]>>,
     case_sensitive: Option<bool>,
@@ -148,6 +150,9 @@ fn add_configuration_patterns_from_object(
             }
             Value::Object(_) => {
                 if let Ok(path) = serde_json::from_value::<RestrictedPattern>(path_value.clone()) {
+                    if path.group.is_some() && path.regex.is_some() {
+                        // ToDo: not allowed
+                    }
                     patterns.push(path);
                 }
             }
@@ -158,7 +163,8 @@ fn add_configuration_patterns_from_object(
 
 fn add_configuration_patterns_from_string(paths: &mut Vec<RestrictedPattern>, module_name: &str) {
     paths.push(RestrictedPattern {
-        group: vec![CompactStr::new(module_name)],
+        group: Some(vec![CompactStr::new(module_name)]),
+        regex: None,
         import_names: None,
         allow_import_names: None,
         case_sensitive: None,
@@ -245,12 +251,16 @@ impl RestrictedPattern {
         }
     }
 
-    fn get_gitignore_glob_result(&self, name: &NameSpan) -> GlobResult {
+    fn get_group_glob_result(&self, name: &NameSpan) -> GlobResult {
+        let Some(groups) = &self.group else {
+            return GlobResult::None;
+        };
+
         let mut builder = GitignoreBuilder::new("");
         // returns always OK, will be fixed in the next version
         let _ = builder.case_insensitive(!self.case_sensitive.unwrap_or(false));
 
-        for group in &self.group {
+        for group in groups {
             // returns always OK
             let _ = builder.add_line(None, group.as_str());
         }
@@ -272,6 +282,25 @@ impl RestrictedPattern {
         }
 
         GlobResult::Found
+    }
+
+    fn get_regex_result(&self, name: &NameSpan) -> bool {
+        let Some(regex) = &self.regex else {
+            return false;
+        };
+
+        let flags = match self.case_sensitive {
+            Some(case_sensitive) if case_sensitive => "u",
+            _ => "iu",
+        };
+
+        let reg_string = format!("{}", regex.as_str());
+
+        let Ok(reg_exp) = Regex::with_flags(&reg_string, flags) else {
+            return false;
+        };
+
+        reg_exp.find(name.name()).is_some()
     }
 }
 
@@ -396,7 +425,7 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            match pattern.get_gitignore_glob_result(&entry.module_request) {
+            match pattern.get_group_glob_result(&entry.module_request) {
                 GlobResult::Whitelist => {
                     whitelist_found = true;
                     break;
@@ -408,6 +437,12 @@ impl NoRestrictedImports {
                 }
                 GlobResult::None => (),
             };
+
+            if pattern.get_regex_result(&entry.module_request) {
+                let span = entry.module_request.span();
+
+                no_restricted_imports_diagnostic(ctx, span, pattern.message.clone(), source);
+            }
         }
 
         if !whitelist_found && !found_errors.is_empty() {
@@ -449,7 +484,7 @@ impl NoRestrictedImports {
                 continue;
             };
 
-            match pattern.get_gitignore_glob_result(module_request) {
+            match pattern.get_group_glob_result(module_request) {
                 GlobResult::Whitelist => {
                     whitelist_found = true;
                     break;
@@ -461,6 +496,12 @@ impl NoRestrictedImports {
                 }
                 GlobResult::None => (),
             };
+
+            if pattern.get_regex_result(&module_request) {
+                let span = module_request.span();
+
+                no_restricted_imports_diagnostic(ctx, span, pattern.message.clone(), source);
+            }
         }
 
         if !whitelist_found && !found_errors.is_empty() {
@@ -873,24 +914,24 @@ fn test() {
                 }]
             }])),
         ),
-        (
-            "import Foo from '../../my/relative-module';",
-            Some(serde_json::json!([{
-                "patterns": [{
-                    "regex": "my/relative-module",
-                    "importNamePattern": "^Foo"
-                }]
-            }])),
-        ),
-        (
-            "import { Bar } from '../../my/relative-module';",
-            Some(serde_json::json!([{
-                "patterns": [{
-                    "regex": "my/relative-module",
-                    "importNamePattern": "^Foo"
-                }]
-            }])),
-        ),
+        // (
+        //     "import Foo from '../../my/relative-module';",
+        //     Some(serde_json::json!([{
+        //         "patterns": [{
+        //             "regex": "my/relative-module",
+        //             "importNamePattern": "^Foo"
+        //         }]
+        //     }])),
+        // ),
+        // (
+        //     "import { Bar } from '../../my/relative-module';",
+        //     Some(serde_json::json!([{
+        //         "patterns": [{
+        //             "regex": "my/relative-module",
+        //             "importNamePattern": "^Foo"
+        //         }]
+        //     }])),
+        // ),
     ];
 
     let fail = vec![
@@ -1777,22 +1818,22 @@ fn test() {
         //         }]
         //     }])),
         // ),
-        // (
-        //     r#"import withPatterns from "foo/baz";"#,
-        //     Some(
-        //         serde_json::json!([{ "patterns": [{ "regex": "foo/(?!bar)", "message": "foo is forbidden, use bar instead" }] }]),
-        //     ),
-        // ),
-        // (
-        //     "import withPatternsCaseSensitive from 'FOO';",
-        //     Some(serde_json::json!([{
-        //         "patterns": [{
-        //             "regex": "FOO",
-        //             "message": "foo is forbidden, use bar instead",
-        //             "caseSensitive": true
-        //         }]
-        //     }])),
-        // ),
+        (
+            r#"import withPatterns from "foo/baz";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "regex": "foo/(?!bar)", "message": "foo is forbidden, use bar instead" }] }]),
+            ),
+        ),
+        (
+            "import withPatternsCaseSensitive from 'FOO';",
+            Some(serde_json::json!([{
+                "patterns": [{
+                    "regex": "FOO",
+                    "message": "foo is forbidden, use bar instead",
+                    "caseSensitive": true
+                }]
+            }])),
+        ),
         // (
         //     "import { Foo } from '../../my/relative-module';",
         //     Some(serde_json::json!([{

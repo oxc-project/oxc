@@ -1082,7 +1082,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc2f4eb4bc735547cfed7c0a4922cbd04a4655978c09b54f1f7b228750664c34"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -1719,6 +1719,7 @@ dependencies = [
  "project-root",
  "rayon",
  "regex",
+ "regress",
  "rust-lapper",
  "rustc-hash",
  "schemars",
@@ -2405,6 +2406,16 @@ name = "regex-syntax"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
+
+[[package]]
+name = "regress"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1541daf4e4ed43a0922b7969bdc2170178bcacc5dabf7e39bc508a9fa3953a7a"
+dependencies = [
+ "hashbrown 0.14.5",
+ "memchr",
+]
 
 [[package]]
 name = "ring"

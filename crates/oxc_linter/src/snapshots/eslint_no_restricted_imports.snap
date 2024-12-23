@@ -654,6 +654,20 @@ snapshot_kind: text
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): foo is forbidden, use bar instead
+   ╭─[no_restricted_imports.tsx:1:26]
+ 1 │ import withPatterns from "foo/baz";
+   ·                          ─────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): foo is forbidden, use bar instead
+   ╭─[no_restricted_imports.tsx:1:39]
+ 1 │ import withPatternsCaseSensitive from 'FOO';
+   ·                                       ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): foo is forbidden, use bar instead
    ╭─[no_restricted_imports.tsx:1:39]
  1 │ import withPatternsCaseSensitive from 'foo';
    ·                                       ─────
