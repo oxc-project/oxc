@@ -3,7 +3,7 @@ commit: 54a8389f
 parser_babel Summary:
 AST Parsed     : 2205/2218 (99.41%)
 Positive Passed: 2190/2218 (98.74%)
-Negative Passed: 1520/1634 (93.02%)
+Negative Passed: 1522/1634 (93.15%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -44,8 +44,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-1/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-2/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-3/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-type-parameters/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-type-parameters-babel-7/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-field-initializer/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-initializer/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-method/input.ts
@@ -11573,6 +11571,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │   accessor #d?;
    ·              ─
  8 │   abstract accessor f = 1;
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-type-parameters/input.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<T>(foo: T) {}
+   ·              ───
+ 3 │ }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-type-parameters-babel-7/input.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<T>(foo: T) {}
+   ·              ───
+ 3 │ }
    ╰────
 
   × Getters and setters must have an implementation.
