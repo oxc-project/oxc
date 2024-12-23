@@ -92,7 +92,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                         let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
                         private_props.insert(
                             ident.name.clone(),
-                            PrivateProp::new(binding, prop.r#static, false),
+                            PrivateProp::new(binding, prop.r#static, false, false),
                         );
                     }
 
@@ -120,12 +120,23 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                         let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
                         private_props.insert(
                             ident.name.clone(),
-                            PrivateProp::new(dummy_binding, method.r#static, true),
+                            PrivateProp::new(dummy_binding, method.r#static, true, false),
                         );
                     }
                 }
-                ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
-                    // TODO: Need to handle these?
+                ClassElement::AccessorProperty(prop) => {
+                    // TODO: Not sure what we should do here.
+                    // Only added this to prevent panics in TS conformance tests.
+                    if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
+                        let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
+                        private_props.insert(
+                            ident.name.clone(),
+                            PrivateProp::new(dummy_binding, prop.r#static, true, true),
+                        );
+                    }
+                }
+                ClassElement::TSIndexSignature(_) => {
+                    // TODO: Need to handle this?
                 }
             }
         }
@@ -396,7 +407,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
                     private_props.iter().filter_map(|(name, prop)| {
-                        if prop.is_method {
+                        if prop.is_method || prop.is_accessor {
                             return None;
                         }
 
@@ -411,7 +422,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
                     private_props.values().filter_map(|prop| {
-                        if prop.is_static || prop.is_method {
+                        if prop.is_static || prop.is_method || prop.is_accessor {
                             return None;
                         }
 
@@ -528,7 +539,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // TODO(improve-on-babel): Simplify this.
             if self.private_fields_as_properties {
                 exprs.extend(private_props.iter().filter_map(|(name, prop)| {
-                    if prop.is_method {
+                    if prop.is_method || prop.is_accessor {
                         return None;
                     }
 
@@ -542,7 +553,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             } else {
                 let mut weakmap_symbol_id = None;
                 exprs.extend(private_props.values().filter_map(|prop| {
-                    if prop.is_method {
+                    if prop.is_method || prop.is_accessor {
                         return None;
                     }
 

@@ -53,10 +53,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             class_bindings,
             is_static,
             is_method,
+            is_accessor,
             is_declaration,
         } = self.classes_stack.find_private_prop(&field_expr.field);
 
-        if is_method {
+        if is_method || is_accessor {
             // TODO: Should not consume existing `PrivateFieldExpression` and then create a new one
             // which is identical to the original
             return Expression::PrivateFieldExpression(field_expr);
@@ -184,10 +185,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         if self.private_fields_as_properties {
             // `object.#prop(arg)` -> `_classPrivateFieldLooseBase(object, _prop)[_prop](arg)`
-            let ResolvedPrivateProp { prop_binding, is_method, .. } =
+            let ResolvedPrivateProp { prop_binding, is_method, is_accessor, .. } =
                 self.classes_stack.find_private_prop(&field_expr.field);
 
-            if is_method {
+            if is_method || is_accessor {
                 return;
             }
 
@@ -262,10 +263,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             class_bindings,
             is_static,
             is_method,
+            is_accessor,
             is_declaration,
         } = self.classes_stack.find_private_prop(&field_expr.field);
 
-        if is_method {
+        if is_method || is_accessor {
             return None;
         };
 
@@ -367,10 +369,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             class_bindings,
             is_static,
             is_method,
+            is_accessor,
             is_declaration,
         } = self.classes_stack.find_private_prop(&field_expr.field);
 
-        if is_method {
+        if is_method || is_accessor {
             return;
         };
 
@@ -752,10 +755,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             class_bindings,
             is_static,
             is_method,
+            is_accessor,
             is_declaration,
         } = self.classes_stack.find_private_prop(&field_expr.field);
 
-        if is_method {
+        if is_method || is_accessor {
             return;
         };
 
@@ -1547,10 +1551,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // //                                               ^^^^^^^^^^^^^
             // ```
             // But this is not needed, so we omit it.
-            let ResolvedPrivateProp { prop_binding, is_method, .. } =
+            let ResolvedPrivateProp { prop_binding, is_method, is_accessor, .. } =
                 self.classes_stack.find_private_prop(&field_expr.field);
 
-            if is_method {
+            if is_method || is_accessor {
                 return None;
             }
 
