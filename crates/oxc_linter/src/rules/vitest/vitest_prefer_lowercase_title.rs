@@ -218,15 +218,15 @@ fn test() {
     ];
 
     let fail: Vec<(&str, Option<serde_json::Value>)> = vec![
-        // (r#"it("Foo MM mm", function () {})"#, None),
-        // ("test(`Foo MM mm`, function () {})", None),
-        // (
-        //     "test(`SFC Compile`, function () {})",
-        //     Some(
-        //         serde_json::json!([        {          "lowercaseFirstCharacterOnly": false        }      ]),
-        //     ),
-        // ),
-        // ("bench(`Foo MM mm`, function () {})", None),
+        (r#"it("Foo MM mm", function () {})"#, None),
+        ("test(`Foo MM mm`, function () {})", None),
+        (
+            "test(`SFC Compile`, function () {})",
+            Some(
+                serde_json::json!([        {          "lowercaseFirstCharacterOnly": false        }      ]),
+            ),
+        ),
+        ("bench(`Foo MM mm`, function () {})", None),
     ];
 
     let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
@@ -241,6 +241,7 @@ fn test() {
         ),
         ("bench(`Foo MM mm`, function () {})", "bench(`foo MM mm`, function () {})", None),
     ];
+
     // TODO: figure out how to prefix this name.
     Tester::new(VitestPreferLowercaseTitle::NAME, VitestPreferLowercaseTitle::CATEGORY, pass, fail)
         .expect_fix(fix)
