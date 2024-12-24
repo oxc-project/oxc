@@ -254,8 +254,17 @@ impl<'a, 'b> PeepholeFoldConstants {
             | BinaryOperator::Multiplication
             | BinaryOperator::Exponential => match (&e.left, &e.right) {
                 (Expression::NumericLiteral(left), Expression::NumericLiteral(right)) => {
+                    // Do not fold any division unless rhs is 0.
+                    if e.operator == BinaryOperator::Division
+                        && right.value != 0.0
+                        && !right.value.is_nan()
+                        && !right.value.is_infinite()
+                    {
+                        return None;
+                    }
                     let value = ctx.eval_binary_expression(e)?;
                     let ConstantValue::Number(num) = value else { return None };
+                    Self::approximate_printed_int_char_count(num);
                     (num.is_nan()
                         || num.is_infinite()
                         || (num.abs() <= f64::powf(2.0, 53.0)
@@ -263,7 +272,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                                 <= Self::approximate_printed_int_char_count(left.value)
                                     + Self::approximate_printed_int_char_count(right.value)
                                     + e.operator.as_str().len()))
-                    .then(|| value)
+                    .then_some(value)
                 }
                 _ => ctx.eval_binary_expression(e),
             }
@@ -280,6 +289,7 @@ impl<'a, 'b> PeepholeFoldConstants {
     }
 
     // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1128
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn approximate_printed_int_char_count(value: f64) -> usize {
         let mut count = if value.is_infinite() {
             "Infinity".len()
@@ -1407,7 +1417,7 @@ mod test {
     #[test]
     fn test_fold_arithmetic() {
         test("x = 10 + 20", "x = 30");
-        test("x = 2 / 4", "x = 0.5");
+        test_same("x = 2 / 4");
         test("x = 2.25 * 3", "x = 6.75");
         test_same("z = x * y");
         test_same("x = y * 5");
