@@ -38,6 +38,11 @@ fn expr() {
 
     test("delete 2e308", "delete (0, Infinity);\n");
     test_minify("delete 2e308", "delete(1/0);");
+
+    test_minify(
+        r#";'eval("\'\\vstr\\ving\\v\'") === "\\vstr\\ving\\v"'"#,
+        r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
+    );
 }
 
 #[test]
