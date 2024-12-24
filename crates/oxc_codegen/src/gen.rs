@@ -1375,31 +1375,27 @@ fn print_unquoted_str(s: &str, quote: u8, p: &mut Codegen) {
             }
             '\'' => {
                 if quote == b'\'' {
-                    p.print_str("\\'");
-                } else {
-                    p.print_str("'");
+                    p.print_ascii_byte(b'\\');
                 }
+                p.print_ascii_byte(b'\'');
             }
             '\"' => {
                 if quote == b'"' {
-                    p.print_str("\\\"");
-                } else {
-                    p.print_str("\"");
+                    p.print_ascii_byte(b'\\');
                 }
+                p.print_ascii_byte(b'"');
             }
             '`' => {
                 if quote == b'`' {
-                    p.print_str("\\`");
-                } else {
-                    p.print_str("`");
+                    p.print_ascii_byte(b'\\');
                 }
+                p.print_ascii_byte(b'`');
             }
             '$' => {
-                if chars.peek().is_some_and(|&next| next == '{') {
-                    p.print_str("\\$");
-                } else {
-                    p.print_str("$");
+                if chars.peek() == Some(&'{') {
+                    p.print_ascii_byte(b'\\');
                 }
+                p.print_ascii_byte(b'$');
             }
             // Allow `U+2028` and `U+2029` in string literals
             // <https://tc39.es/proposal-json-superset>
@@ -1424,22 +1420,40 @@ impl Gen for StringLiteral<'_> {
         let quote = if p.options.minify {
             let mut single_cost: u32 = 0;
             let mut double_cost: u32 = 0;
-            for b in s.as_bytes() {
+            let mut backtick_cost: u32 = 0;
+            let mut bytes = s.as_bytes().iter().peekable();
+            while let Some(b) = bytes.next() {
                 match b {
+                    b'\n' if p.options.minify => {
+                        backtick_cost = backtick_cost.saturating_sub(1);
+                    }
                     b'\'' => {
                         single_cost += 1;
                     }
                     b'"' => {
                         double_cost += 1;
                     }
+                    b'`' => {
+                        backtick_cost += 1;
+                    }
+                    b'$' => {
+                        if bytes.peek() == Some(&&b'{') {
+                            backtick_cost += 1;
+                        }
+                    }
                     _ => {}
                 }
             }
+            let mut quote = b'"';
             if double_cost > single_cost {
-                b'\''
-            } else {
-                b'"'
+                quote = b'\'';
+                if single_cost > backtick_cost {
+                    quote = b'`';
+                }
+            } else if double_cost > backtick_cost {
+                quote = b'`';
             }
+            quote
         } else {
             p.quote
         };
