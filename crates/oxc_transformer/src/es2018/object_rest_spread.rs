@@ -29,6 +29,8 @@
 
 use std::mem;
 
+use serde::Deserialize;
+
 use oxc_allocator::{CloneIn, GetAddress, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::OxcDiagnostic;
@@ -36,7 +38,6 @@ use oxc_ecmascript::{BoundNames, ToJsString};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse, TraverseCtx};
-use serde::Deserialize;
 
 use crate::{common::helper_loader::Helper, TransformCtx};
 

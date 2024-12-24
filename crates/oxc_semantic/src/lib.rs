@@ -12,7 +12,10 @@ use oxc_ast::{
 };
 use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
+// Re-export flags and ID types
 pub use oxc_syntax::{
+    node::{NodeFlags, NodeId},
+    reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -27,23 +30,19 @@ mod diagnostics;
 mod jsdoc;
 mod label;
 mod node;
-mod reference;
 mod scope;
 mod stats;
 mod symbol;
 mod unresolved_stack;
 
-use class::ClassTable;
+pub use builder::{SemanticBuilder, SemanticBuilderReturn};
+pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
+pub use node::{AstNode, AstNodes};
+pub use scope::ScopeTree;
+pub use stats::Stats;
+pub use symbol::{IsGlobalReference, SymbolTable};
 
-pub use crate::{
-    builder::{SemanticBuilder, SemanticBuilderReturn},
-    jsdoc::{JSDoc, JSDocFinder, JSDocTag},
-    node::{AstNode, AstNodes, NodeId},
-    reference::{Reference, ReferenceFlags, ReferenceId},
-    scope::ScopeTree,
-    stats::Stats,
-    symbol::{IsGlobalReference, SymbolTable},
-};
+use class::ClassTable;
 
 /// Semantic analysis of a JavaScript/TypeScript program.
 ///
@@ -283,7 +282,7 @@ mod tests {
         let top_level_a = semantic
             .scopes()
             .iter_bindings()
-            .find(|(_scope_id, _symbol_id, name)| name.as_str() == "Fn")
+            .find(|(_scope_id, _symbol_id, name)| *name == "Fn")
             .unwrap();
         assert_eq!(semantic.symbols.get_scope_id(top_level_a.1), top_level_a.0);
     }

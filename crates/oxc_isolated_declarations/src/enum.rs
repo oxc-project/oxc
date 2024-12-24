@@ -1,3 +1,5 @@
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::ToInt32;
@@ -6,7 +8,6 @@ use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{BinaryOperator, UnaryOperator},
 };
-use rustc_hash::FxHashMap;
 
 use crate::{diagnostics::enum_member_initializers, IsolatedDeclarations};
 

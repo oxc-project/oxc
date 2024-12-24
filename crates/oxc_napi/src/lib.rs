@@ -1,4 +1,5 @@
 use napi_derive::napi;
+
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 
 #[napi(object)]

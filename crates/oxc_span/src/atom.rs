@@ -73,7 +73,7 @@ impl<'alloc> FromIn<'alloc, &Atom<'alloc>> for Atom<'alloc> {
 
 impl<'alloc> FromIn<'alloc, &str> for Atom<'alloc> {
     fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
-        Self::from(oxc_allocator::String::from_str_in(s, allocator).into_bump_str())
+        Self::from(oxc_allocator::String::from_str_in(s, allocator))
     }
 }
 
@@ -98,6 +98,12 @@ impl<'alloc> FromIn<'alloc, Cow<'_, str>> for Atom<'alloc> {
 impl<'a> From<&'a str> for Atom<'a> {
     fn from(s: &'a str) -> Self {
         Self(s)
+    }
+}
+
+impl<'alloc> From<oxc_allocator::String<'alloc>> for Atom<'alloc> {
+    fn from(s: oxc_allocator::String<'alloc>) -> Self {
+        Self::from(s.into_bump_str())
     }
 }
 

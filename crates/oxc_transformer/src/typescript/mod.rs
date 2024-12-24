@@ -79,6 +79,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScript<'a, 'ctx> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.annotations.exit_program(program, ctx);
         self.module.exit_program(program, ctx);
+        ctx.scoping.delete_typescript_bindings();
     }
 
     fn enter_arrow_function_expression(

@@ -3,10 +3,11 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_diagnostics::{OxcDiagnostic, Severity};
 use schemars::{schema::SchemaObject, JsonSchema};
 use serde::{de, Deserialize, Serialize};
 use serde_json::{Number, Value};
+
+use oxc_diagnostics::{OxcDiagnostic, Severity};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]

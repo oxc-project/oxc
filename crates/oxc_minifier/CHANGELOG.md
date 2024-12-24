@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.42.0] - 2024-12-18
+
+### Features
+
+- db9e93b mangler: Mangle top level variables (#7907) (翠 / green)
+- 075bd16 minifier: Fold bitwise operation (#7908) (翠 / green)
+
+### Bug Fixes
+
+- 4799471 minfier: Bigint bitwise operation only works with bigint (#7937) (Boshen)
+- de8a86e minifier: Incorrect minification in `try_fold_left_child_op` (#7949) (翠 / green)
+
+### Refactor
+
+- 3858221 global: Sort imports (#7883) (overlookmotel)
+- 1314c97 minifier: Expose dce as an API instead of an option (#7957) (Boshen)
+
+### Styling
+
+- 7fb9d47 rust: `cargo +nightly fmt` (#7877) (Boshen)
+
 ## [0.40.0] - 2024-12-10
 
 - ebc80f6 ast: [**BREAKING**] Change 'raw' from &str to Option<Atom> (#7547) (Song Gao)

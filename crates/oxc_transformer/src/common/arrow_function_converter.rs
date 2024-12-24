@@ -89,6 +89,8 @@
 
 use compact_str::CompactString;
 use indexmap::IndexMap;
+use rustc_hash::{FxBuildHasher, FxHashSet};
+
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
@@ -99,7 +101,6 @@ use oxc_syntax::{
     symbol::SymbolFlags,
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
-use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use crate::EnvOptions;
 
@@ -586,8 +587,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
     /// Transforms a `MemberExpression` whose object is a `super` expression.
     ///
-    /// In the [`AsyncToGenerator`](crate::es2017::async_to_generator::AsyncToGenerator) and
-    /// [`AsyncGeneratorFunctions`](crate::es2018::async_generator_functions::AsyncGeneratorFunctions) plugins,
+    /// In the [`AsyncToGenerator`](crate::es2017::AsyncToGenerator) and
+    /// [`AsyncGeneratorFunctions`](crate::es2018::AsyncGeneratorFunctions) plugins,
     /// we move the body of an async method to a new generator function. This can cause
     /// `super` expressions to appear in unexpected places, leading to syntax errors.
     ///
@@ -945,7 +946,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             let reference = ctx.symbols_mut().get_reference_mut(reference_id);
             reference.set_symbol_id(binding.symbol_id);
             ctx.scopes_mut().delete_root_unresolved_reference(&ident.name, reference_id);
-            ctx.symbols_mut().resolved_references[binding.symbol_id].push(reference_id);
+            ctx.symbols_mut().add_resolved_reference(binding.symbol_id, reference_id);
         }
 
         ident.name = binding.name.clone();

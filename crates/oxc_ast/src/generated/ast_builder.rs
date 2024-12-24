@@ -2871,15 +2871,17 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - name
     /// - binding
+    /// - computed: Property was declared with a computed key
     #[inline]
     pub fn assignment_target_property_assignment_target_property_property(
         self,
         span: Span,
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
+        computed: bool,
     ) -> AssignmentTargetProperty<'a> {
         AssignmentTargetProperty::AssignmentTargetPropertyProperty(
-            self.alloc(self.assignment_target_property_property(span, name, binding)),
+            self.alloc(self.assignment_target_property_property(span, name, binding, computed)),
         )
     }
 
@@ -2927,14 +2929,16 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - name
     /// - binding
+    /// - computed: Property was declared with a computed key
     #[inline]
     pub fn assignment_target_property_property(
         self,
         span: Span,
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
+        computed: bool,
     ) -> AssignmentTargetPropertyProperty<'a> {
-        AssignmentTargetPropertyProperty { span, name, binding }
+        AssignmentTargetPropertyProperty { span, name, binding, computed }
     }
 
     /// Build an [`AssignmentTargetPropertyProperty`], and store it in the memory arena.
@@ -2945,14 +2949,19 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     /// - name
     /// - binding
+    /// - computed: Property was declared with a computed key
     #[inline]
     pub fn alloc_assignment_target_property_property(
         self,
         span: Span,
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
+        computed: bool,
     ) -> Box<'a, AssignmentTargetPropertyProperty<'a>> {
-        Box::new_in(self.assignment_target_property_property(span, name, binding), self.allocator)
+        Box::new_in(
+            self.assignment_target_property_property(span, name, binding, computed),
+            self.allocator,
+        )
     }
 
     /// Build a [`SequenceExpression`].

@@ -61,7 +61,7 @@ Plugins: ${Array.from(ALL_TARGET_PLUGINS.keys()).join(', ')}
   const ruleEntries = createRuleEntries(linter.getRules());
   await updateImplementedStatus(ruleEntries);
   updateNotSupportedStatus(ruleEntries);
-  syncTypeScriptPluginStatusWithEslintPluginStatus(ruleEntries);
+  await syncTypeScriptPluginStatusWithEslintPluginStatus(ruleEntries);
   await syncVitestPluginStatusWithJestPluginStatus(ruleEntries);
 
   //

@@ -1,9 +1,9 @@
-mod targets;
-
 use serde::Deserialize;
 
-pub use self::targets::BabelTargets;
 use crate::{options::EngineTargets, Module};
+
+mod targets;
+pub use targets::BabelTargets;
 
 fn default_as_true() -> bool {
     true

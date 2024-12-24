@@ -1,9 +1,11 @@
-use oxc_ast::{ast::Comment, AstKind};
-use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
-use super::parser::JSDoc;
+use oxc_ast::{ast::Comment, AstKind};
+use oxc_span::{GetSpan, Span};
+
 use crate::jsdoc::JSDocFinder;
+
+use super::parser::JSDoc;
 
 #[derive(Default)]
 pub struct JSDocBuilder<'a> {

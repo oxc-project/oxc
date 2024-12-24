@@ -79,13 +79,6 @@ impl Linter {
         Self { options, config }
     }
 
-    #[cfg(test)]
-    #[must_use]
-    pub fn with_rules(mut self, rules: Vec<RuleWithSeverity>) -> Self {
-        self.config.set_rules(rules);
-        self
-    }
-
     /// Set the kind of auto fixes to apply.
     ///
     /// # Example

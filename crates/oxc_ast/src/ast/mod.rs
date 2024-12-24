@@ -173,14 +173,6 @@
 //!
 //! If you are seeing compile-time errors in `src/ast/macros.rs`, this will be the cause.
 
-pub(crate) mod comment;
-pub(crate) mod js;
-pub(crate) mod jsx;
-pub(crate) mod literal;
-pub(crate) mod macros;
-pub(crate) mod ts;
-
-use macros::inherit_variants;
 // Re-export AST types from other crates
 pub use oxc_span::{Atom, Language, LanguageVariant, ModuleKind, SourceType, Span};
 pub use oxc_syntax::{
@@ -190,4 +182,17 @@ pub use oxc_syntax::{
     },
 };
 
-pub use self::{comment::*, js::*, jsx::*, literal::*, ts::*};
+pub(crate) mod comment;
+pub(crate) mod js;
+pub(crate) mod jsx;
+pub(crate) mod literal;
+pub(crate) mod macros;
+pub(crate) mod ts;
+
+pub use comment::*;
+pub use js::*;
+pub use jsx::*;
+pub use literal::*;
+pub use ts::*;
+
+use macros::inherit_variants;

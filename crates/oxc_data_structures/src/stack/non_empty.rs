@@ -366,6 +366,12 @@ impl<T> DerefMut for NonEmptyStack<T> {
     }
 }
 
+impl<T: Default> Default for NonEmptyStack<T> {
+    fn default() -> Self {
+        Self::new(T::default())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

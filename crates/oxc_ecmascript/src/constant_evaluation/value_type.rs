@@ -17,20 +17,28 @@ pub enum ValueType {
 }
 
 impl ValueType {
+    pub fn is_undefined(self) -> bool {
+        self == Self::Undefined
+    }
+
+    pub fn is_null(self) -> bool {
+        self == Self::Null
+    }
+
     pub fn is_string(self) -> bool {
-        matches!(self, Self::String)
+        self == Self::String
     }
 
     pub fn is_number(self) -> bool {
-        matches!(self, Self::Number)
+        self == Self::Number
     }
 
     pub fn is_bigint(self) -> bool {
-        matches!(self, Self::BigInt)
+        self == Self::BigInt
     }
 
     pub fn is_boolean(self) -> bool {
-        matches!(self, Self::Boolean)
+        self == Self::Boolean
     }
 }
 

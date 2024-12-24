@@ -2,6 +2,7 @@ use std::{cmp::Ordering, str::Chars};
 
 use cow_utils::CowUtils;
 use itertools::all;
+
 use oxc_ast::{ast::ObjectPropertyKind, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;

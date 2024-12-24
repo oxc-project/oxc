@@ -1,5 +1,5 @@
 use oxc_ast::{ast::*, NONE};
-use oxc_span::{CompactStr, SPAN};
+use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::{Traverse, TraverseCtx};
 
@@ -58,8 +58,8 @@ impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
 
         // module.exports
         let module_exports = {
-            let reference_id = ctx
-                .create_reference_in_current_scope(CompactStr::new("module"), ReferenceFlags::Read);
+            let reference_id =
+                ctx.create_reference_in_current_scope("module", ReferenceFlags::Read);
             let reference =
                 ctx.ast.alloc_identifier_reference_with_reference_id(SPAN, "module", reference_id);
             let object = Expression::Identifier(reference);

@@ -104,9 +104,10 @@ impl Comment {
     /// Returns `true` if this comment is a JSDoc comment. Implies `is_leading`
     /// and `is_block`.
     pub fn is_jsdoc(&self, source_text: &str) -> bool {
-        self.is_leading()
-            && self.is_block()
-            && self.content_span().source_text(source_text).starts_with('*')
+        self.is_leading() && self.is_block() && {
+            let span = self.content_span();
+            !span.is_empty() && source_text.as_bytes()[span.start as usize] == b'*'
+        }
     }
 
     /// Legal comments

@@ -2,7 +2,6 @@ use std::str::FromStr;
 
 use serde::Deserialize;
 
-use super::{babel::BabelEnvOptions, ESFeature, ESTarget, Engine, Module};
 use crate::{
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
@@ -15,6 +14,8 @@ use crate::{
     regexp::RegExpOptions,
     EngineTargets,
 };
+
+use super::{babel::BabelEnvOptions, ESFeature, ESTarget, Engine, Module};
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(try_from = "BabelEnvOptions")]

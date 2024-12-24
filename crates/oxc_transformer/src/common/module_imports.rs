@@ -35,6 +35,7 @@
 use std::cell::RefCell;
 
 use indexmap::{map::Entry as IndexMapEntry, IndexMap};
+
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};

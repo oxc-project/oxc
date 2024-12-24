@@ -140,6 +140,31 @@ import bar = require('bar')
   });
 });
 
+describe('jsx', () => {
+  const code = `const foo: Foo = <div/>`;
+
+  it('enables jsx transform by default', () => {
+    const ret = transform('test.tsx', code);
+    expect(ret.code).toEqual('import { jsx as _jsx } from "react/jsx-runtime";\nconst foo = _jsx("div", {});\n');
+  });
+
+  it('configures jsx', () => {
+    const ret = transform('test.tsx', code, {
+      jsx: {
+        importSource: 'xxx',
+      },
+    });
+    expect(ret.code).toEqual('import { jsx as _jsx } from "xxx/jsx-runtime";\nconst foo = _jsx("div", {});\n');
+  });
+
+  it('can preserve jsx transform', () => {
+    const ret = transform('test.tsx', code, {
+      jsx: 'preserve',
+    });
+    expect(ret.code).toEqual('const foo = <div />;\n');
+  });
+});
+
 describe('react refresh plugin', () => {
   const code = `import { useState } from "react";
   export const App = () => {

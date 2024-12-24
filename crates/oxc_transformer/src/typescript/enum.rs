@@ -1,3 +1,5 @@
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
 use oxc_ecmascript::ToInt32;
@@ -9,7 +11,6 @@ use oxc_syntax::{
     symbol::SymbolFlags,
 };
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
-use rustc_hash::FxHashMap;
 
 pub struct TypeScriptEnum<'a> {
     enums: FxHashMap<Atom<'a>, FxHashMap<Atom<'a>, ConstantValue>>,
@@ -173,7 +174,6 @@ impl<'a> TypeScriptEnum<'a> {
         Some(stmt)
     }
 
-    #[allow(clippy::needless_pass_by_value)]
     fn transform_ts_enum_members(
         &mut self,
         members: &mut ArenaVec<'a, TSEnumMember<'a>>,

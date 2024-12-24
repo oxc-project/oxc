@@ -22,7 +22,6 @@ yanked = "warn"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
-  "RUSTSEC-2024-0399",
   # "RUSTSEC-0000-0000",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
@@ -66,10 +65,9 @@ confidence-threshold = 0.8
 # Allow 1 or more licenses on a per-crate basis, so that particular licenses
 # aren't accepted for every possible crate as with the normal allow list
 exceptions = [
-
   # Each entry is the crate and version constraint, and its specific allow
   # list
-  # { allow = ["Zlib"], name = "adler32", version = "*" },
+  { allow = ["Zlib"], name = "foldhash", version = "*" },
 ]
 
 # Some crates don't have (easily) machine readable licensing information,

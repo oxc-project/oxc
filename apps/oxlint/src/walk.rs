@@ -55,9 +55,7 @@ impl ignore::ParallelVisitor for WalkCollector {
     fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
-                if entry.file_type().is_some_and(|ft| !ft.is_dir())
-                    && Walk::is_wanted_entry(&entry, &self.extensions)
-                {
+                if Walk::is_wanted_entry(&entry, &self.extensions) {
                     self.paths.push(entry.path().to_path_buf().into_boxed_path());
                 }
                 ignore::WalkState::Continue

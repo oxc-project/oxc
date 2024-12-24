@@ -1,10 +1,11 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, PropName};
 use oxc_span::{Atom, GetSpan, Span};
-use rustc_hash::FxHashMap;
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
 
@@ -25,12 +26,11 @@ pub fn check_ts_type_parameter_declaration(
     }
 }
 /// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
-#[allow(clippy::needless_pass_by_value)]
 fn jsdoc_type_in_annotation(
     modifier: char,
     is_start: bool,
     span: Span,
-    suggested_type: Cow<str>,
+    suggested_type: &str,
 ) -> OxcDiagnostic {
     let (code, start_or_end) = if is_start { ("17020", "start") } else { ("17019", "end") };
 
@@ -57,13 +57,19 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
         span_with_illegal_modifier.shrink_right(1)
     };
 
+    let suggestion = &ctx.source_text[valid_type_span];
     let suggestion = if modifier == '?' {
-        Cow::Owned(format!("{} | null | undefined", &ctx.source_text[valid_type_span]))
+        Cow::Owned(format!("{suggestion} | null | undefined"))
     } else {
-        Cow::Borrowed(&ctx.source_text[valid_type_span])
+        Cow::Borrowed(suggestion)
     };
 
-    ctx.error(jsdoc_type_in_annotation(modifier, is_start, span_with_illegal_modifier, suggestion));
+    ctx.error(jsdoc_type_in_annotation(
+        modifier,
+        is_start,
+        span_with_illegal_modifier,
+        &suggestion,
+    ));
 }
 
 /// Initializers are not allowed in ambient contexts. ts(1039)

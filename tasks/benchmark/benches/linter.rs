@@ -24,27 +24,24 @@ fn bench_linter(criterion: &mut Criterion) {
     }
 
     for file in test_files {
+        let id = BenchmarkId::from_parameter(&file.file_name);
+        let source_text = file.source_text.as_str();
         let source_type = SourceType::from_path(&file.file_name).unwrap();
-        group.bench_with_input(
-            BenchmarkId::from_parameter(&file.file_name),
-            &file.source_text,
-            |b, source_text| {
-                let allocator = Allocator::default();
-                let ret = Parser::new(&allocator, source_text, source_type).parse();
-                let path = Path::new("");
-                let semantic_ret = SemanticBuilder::new()
-                    .with_build_jsdoc(true)
-                    .with_scope_tree_child_ids(true)
-                    .with_cfg(true)
-                    .build(&ret.program);
-                let semantic = semantic_ret.semantic;
-                let module_record =
-                    Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
-                let semantic = Rc::new(semantic);
-                let linter = LinterBuilder::all().with_fix(FixKind::All).build();
-                b.iter(|| linter.run(path, Rc::clone(&semantic), Arc::clone(&module_record)));
-            },
-        );
+        group.bench_function(id, |b| {
+            let allocator = Allocator::default();
+            let ret = Parser::new(&allocator, source_text, source_type).parse();
+            let path = Path::new("");
+            let semantic_ret = SemanticBuilder::new()
+                .with_build_jsdoc(true)
+                .with_scope_tree_child_ids(true)
+                .with_cfg(true)
+                .build(&ret.program);
+            let semantic = semantic_ret.semantic;
+            let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
+            let semantic = Rc::new(semantic);
+            let linter = LinterBuilder::all().with_fix(FixKind::All).build();
+            b.iter(|| linter.run(path, Rc::clone(&semantic), Arc::clone(&module_record)));
+        });
     }
     group.finish();
 }

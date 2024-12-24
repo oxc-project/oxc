@@ -791,6 +791,7 @@ impl Serialize for AssignmentTargetPropertyProperty<'_> {
         self.span.serialize(serde::__private::ser::FlatMapSerializer(&mut map))?;
         map.serialize_entry("name", &self.name)?;
         map.serialize_entry("binding", &self.binding)?;
+        map.serialize_entry("computed", &self.computed)?;
         map.end()
     }
 }

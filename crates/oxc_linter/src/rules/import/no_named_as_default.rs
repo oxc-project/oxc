@@ -66,12 +66,13 @@ impl Rule for NoNamedAsDefault {
             };
 
             let specifier = import_entry.module_request.name();
-            let Some(remote_module_record_ref) = module_record.loaded_modules.get(specifier) else {
+            let remote_module_record = module_record.loaded_modules.read().unwrap();
+            let Some(remote_module_record) = remote_module_record.get(specifier) else {
                 continue;
             };
 
             let import_name = import_entry.local_name.name();
-            if remote_module_record_ref.exported_bindings.contains_key(import_name) {
+            if remote_module_record.exported_bindings.contains_key(import_name) {
                 ctx.diagnostic(no_named_as_default_diagnostic(
                     *import_span,
                     import_name,

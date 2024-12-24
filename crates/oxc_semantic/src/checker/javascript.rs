@@ -1,3 +1,6 @@
+use phf::{phf_set, Set};
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_ecmascript::{IsSimpleParameterList, PropName};
@@ -5,11 +8,10 @@ use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
+    scope::ScopeFlags,
 };
-use phf::{phf_set, Set};
-use rustc_hash::FxHashMap;
 
-use crate::{builder::SemanticBuilder, diagnostics::redeclaration, scope::ScopeFlags, AstNode};
+use crate::{builder::SemanticBuilder, diagnostics::redeclaration, AstNode};
 
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;

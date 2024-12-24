@@ -1,20 +1,5 @@
-pub mod babel;
-
-mod browserslist_query;
-mod engine;
-mod engine_targets;
-mod env;
-mod es_features;
-mod es_target;
-mod module;
-
 use std::path::PathBuf;
 
-use self::babel::BabelOptions;
-pub use self::{
-    browserslist_query::BrowserslistQuery, engine::Engine, engine_targets::EngineTargets,
-    env::EnvOptions, es_features::ESFeature, es_target::ESTarget, module::Module,
-};
 use crate::{
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
@@ -31,6 +16,24 @@ use crate::{
     typescript::TypeScriptOptions,
     ReactRefreshOptions,
 };
+
+pub mod babel;
+mod browserslist_query;
+mod engine;
+mod engine_targets;
+mod env;
+mod es_features;
+mod es_target;
+mod module;
+
+use babel::BabelOptions;
+pub use browserslist_query::BrowserslistQuery;
+pub use engine::Engine;
+pub use engine_targets::EngineTargets;
+pub use env::EnvOptions;
+pub use es_features::ESFeature;
+pub use es_target::ESTarget;
+pub use module::Module;
 
 /// <https://babel.dev/docs/options>
 #[derive(Debug, Default, Clone)]

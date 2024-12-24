@@ -89,7 +89,7 @@ impl ConstEval for Argument<'_> {
 
 impl ConstEval for NewExpression<'_> {
     fn const_eval(&self) -> ValueHint {
-        if is_new_array(self) || is_new_typed_array(self) {
+        if is_new_array(self) {
             ValueHint::NewArray
         } else if is_new_map_or_set(self) {
             ValueHint::NewIterable

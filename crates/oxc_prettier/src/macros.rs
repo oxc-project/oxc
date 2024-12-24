@@ -210,6 +210,7 @@ macro_rules! join {
                     $crate::ir::JoinSeparator::CommaLine => {
                         parts.extend([$crate::text!(","), $crate::line!()]);
                     }
+                    $crate::ir::JoinSeparator::Literalline => parts.extend($crate::literalline!()),
                 }
             }
             parts.push(doc);
@@ -255,6 +256,25 @@ macro_rules! hardline {
     () => {{
         let hardline = $crate::ir::Doc::Line($crate::ir::Line { hard: true, ..Default::default() });
         [hardline, $crate::ir::Doc::BreakParent]
+    }};
+}
+
+/// Specify a line break that is always included in the output and doesn't indent the next line.
+/// Also, unlike hardline, this kind of line break preserves trailing whitespace on the line it ends.
+/// This is used for template literals.
+/// <https://github.com/prettier/prettier/blob/3.4.1/commands.md#literalline>
+/// ```
+/// literalline!();
+/// ```
+#[macro_export]
+macro_rules! literalline {
+    () => {{
+        let literalline = $crate::ir::Doc::Line($crate::ir::Line {
+            hard: true,
+            literal: true,
+            ..Default::default()
+        });
+        [literalline, $crate::ir::Doc::BreakParent]
     }};
 }
 

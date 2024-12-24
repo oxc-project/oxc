@@ -2,6 +2,9 @@
 
 use std::{fs, path::Path, sync::Arc};
 
+use regex::Regex;
+use rustc_hash::FxHashMap;
+
 use oxc::{
     allocator::Allocator,
     codegen::CodeGenerator,
@@ -9,8 +12,6 @@ use oxc::{
     parser::Parser,
     span::SourceType,
 };
-use regex::Regex;
-use rustc_hash::FxHashMap;
 
 use crate::workspace_root;
 

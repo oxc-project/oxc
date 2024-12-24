@@ -1,7 +1,6 @@
 use serde::Serialize;
 use syn::Ident;
 
-use super::TypeName;
 use crate::{
     markers::{
         DeriveAttributes, ESTreeEnumAttribute, ESTreeStructAttribute, ScopeAttribute, ScopeMarkers,
@@ -10,6 +9,8 @@ use crate::{
     util::{ToIdent, TypeAnalysis, TypeWrapper},
     TypeId,
 };
+
+use super::TypeName;
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]

@@ -129,7 +129,11 @@ impl Rule for MaxLines {
         if lines_in_file.saturating_sub(blank_lines).saturating_sub(comment_lines) > self.max {
             // Point to end of the file for `eslint-disable max-lines` to work.
             let end = ctx.source_text().len().saturating_sub(1) as u32;
-            ctx.diagnostic(max_lines_diagnostic(lines_in_file, self.max, Span::new(end, end)));
+            ctx.diagnostic(max_lines_diagnostic(
+                lines_in_file.saturating_sub(blank_lines).saturating_sub(comment_lines),
+                self.max,
+                Span::new(end, end),
+            ));
         }
     }
 }

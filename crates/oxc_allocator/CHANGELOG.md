@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.43.0] - 2024-12-21
+
+### Features
+
+- 75b775c allocator: `Vec<u8>::into_string` (#8017) (overlookmotel)
+- 8547e02 ast: Implement `allocator_api2` for `Allocator` (#8043) (Boshen)
+
+### Performance
+
+- 414e828 semantic: Allocate symbol data in Allocator (#8012) (Boshen)
+
 ## [0.39.0] - 2024-12-04
 
 ### Bug Fixes

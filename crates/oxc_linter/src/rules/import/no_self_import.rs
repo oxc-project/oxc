@@ -45,10 +45,11 @@ impl Rule for NoSelfImport {
         let module_record = ctx.module_record();
         let resolved_absolute_path = &module_record.resolved_absolute_path;
         for (request, requested_modules) in &module_record.requested_modules {
-            let Some(remote_module_record_ref) = module_record.loaded_modules.get(request) else {
+            let remote_module_record = module_record.loaded_modules.read().unwrap();
+            let Some(remote_module_record) = remote_module_record.get(request) else {
                 continue;
             };
-            if remote_module_record_ref.value().resolved_absolute_path == *resolved_absolute_path {
+            if remote_module_record.resolved_absolute_path == *resolved_absolute_path {
                 for requested_module in requested_modules {
                     ctx.diagnostic(no_self_import_diagnostic(requested_module.span));
                 }

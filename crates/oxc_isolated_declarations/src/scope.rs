@@ -1,10 +1,11 @@
 use std::cell::Cell;
 
 use bitflags::bitflags;
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{ast::*, visit::walk::*, Visit};
 use oxc_span::Atom;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
-use rustc_hash::FxHashMap;
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

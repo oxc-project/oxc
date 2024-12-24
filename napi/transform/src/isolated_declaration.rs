@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use napi_derive::napi;
+
 use oxc::{
     allocator::Allocator,
     codegen::{CodeGenerator, CodegenOptions},

@@ -1,7 +1,8 @@
 use assert_unchecked::assert_unchecked;
+use rustc_hash::FxHashMap;
+
 use oxc_span::Atom;
 use oxc_syntax::reference::ReferenceId;
-use rustc_hash::FxHashMap;
 
 /// The difference with Scope's `UnresolvedReferences` is that this type uses Atom as the key. its clone is very cheap!
 type TempUnresolvedReferences<'a> = FxHashMap<Atom<'a>, Vec<ReferenceId>>;

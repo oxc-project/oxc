@@ -1,15 +1,11 @@
-#![allow(
-    clippy::needless_pass_by_value // Napi value need to be passed as value
-)]
-
-mod convert;
-mod magic_string;
-mod types;
+// Napi value need to be passed as value
+#![expect(clippy::needless_pass_by_value)]
 
 use std::mem;
 
 use napi::{bindgen_prelude::AsyncTask, Task};
 use napi_derive::napi;
+
 use oxc::{
     allocator::Allocator,
     ast::CommentKind,
@@ -18,10 +14,11 @@ use oxc::{
 };
 use oxc_napi::OxcError;
 
-pub use crate::{
-    magic_string::MagicString,
-    types::{Comment, EcmaScriptModule, ParseResult, ParserOptions},
-};
+mod convert;
+mod magic_string;
+mod types;
+pub use magic_string::MagicString;
+pub use types::{Comment, EcmaScriptModule, ParseResult, ParserOptions};
 
 fn get_source_type(filename: &str, options: &ParserOptions) -> SourceType {
     match options.lang.as_deref() {

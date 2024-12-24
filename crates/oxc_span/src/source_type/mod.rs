@@ -1,13 +1,13 @@
-mod error;
-
 use std::{hash::Hash, path::Path};
 
-pub use error::UnknownExtension;
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
 use crate::{cmp::ContentEq, hash::ContentHash};
+
+mod error;
+pub use error::UnknownExtension;
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[ast]

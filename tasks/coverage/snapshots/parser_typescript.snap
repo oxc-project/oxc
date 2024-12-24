@@ -3,7 +3,7 @@ commit: d85767ab
 parser_typescript Summary:
 AST Parsed     : 6494/6503 (99.86%)
 Positive Passed: 6483/6503 (99.69%)
-Negative Passed: 1240/5747 (21.58%)
+Negative Passed: 1241/5747 (21.59%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -3756,7 +3756,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration7.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration3.d.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic1.ts
@@ -10601,6 +10600,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ @<[[import(obju2c77,
    ·  ─
    ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<>() { }
+   ·              ──
+ 3 │   constructor<> () { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:3:14]
+ 2 │   constructor<>() { }
+ 3 │   constructor<> () { }
+   ·              ──
+ 4 │   constructor <>() { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:4:15]
+ 3 │   constructor<> () { }
+ 4 │   constructor <>() { }
+   ·               ──
+ 5 │   constructor <> () { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:5:15]
+ 4 │   constructor <>() { }
+ 5 │   constructor <> () { }
+   ·               ──
+ 6 │   constructor< >() { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:6:14]
+ 5 │   constructor <> () { }
+ 6 │   constructor< >() { }
+   ·              ───
+ 7 │   constructor< > () { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:7:14]
+ 6 │   constructor< >() { }
+ 7 │   constructor< > () { }
+   ·              ───
+ 8 │   constructor < >() { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:8:15]
+ 7 │   constructor< > () { }
+ 8 │   constructor < >() { }
+   ·               ───
+ 9 │   constructor < > () { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:9:15]
+  8 │   constructor < >() { }
+  9 │   constructor < > () { }
+    ·               ───
+ 10 │ }
+    ╰────
 
   × Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:14]
@@ -20194,6 +20257,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<>() { }
+   ·              ──
+ 3 │ }
+   ╰────
+
   × Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
  1 │ class C {
@@ -20226,6 +20297,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │   public constructor;
    ·          ───────────
  4 │ }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration9.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<T>() { }
+   ·              ───
+ 3 │ }
    ╰────
 
   × Unexpected token

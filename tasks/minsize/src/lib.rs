@@ -1,14 +1,15 @@
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 use std::{
-    fs::File,
+    fs::{self, File},
     io::{self, Write},
+    path::Path,
 };
 
 use flate2::{write::GzEncoder, Compression};
 use humansize::{format_size, DECIMAL};
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_tasks_common::{project_root, TestFile, TestFiles};
@@ -23,6 +24,7 @@ use rustc_hash::FxHashMap;
 /// # Panics
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
+    let marker = std::env::args().nth(1).unwrap_or_else(|| String::from("default"));
     let files = TestFiles::minifier();
 
     let path = project_root().join("tasks/minsize/minsize.snap");
@@ -90,8 +92,14 @@ pub fn run() -> Result<(), io::Error> {
     out.push_str(&str::repeat("-", width * 5 + fixture_width + 15));
     out.push('\n');
 
+    let save_path = Path::new("./target/minifier").join(marker);
+
     for file in files.files() {
         let minified = minify_twice(file);
+
+        fs::create_dir_all(&save_path).unwrap();
+        fs::write(save_path.join(&file.file_name), &minified).unwrap();
+
         let s = format!(
             "{:width$} | {:width$} | {:width$} | {:width$} | {:width$} | {:width$}\n\n",
             format_size(file.source_text.len(), DECIMAL),
@@ -115,7 +123,10 @@ pub fn run() -> Result<(), io::Error> {
 
 fn minify_twice(file: &TestFile) -> String {
     let source_type = SourceType::from_path(&file.file_name).unwrap();
-    let options = MinifierOptions { mangle: true, compress: CompressOptions::default() };
+    let options = MinifierOptions {
+        mangle: Some(MangleOptions::default()),
+        compress: CompressOptions::default(),
+    };
     let source_text1 = minify(&file.source_text, source_type, options);
     let source_text2 = minify(&source_text1, source_type, options);
     assert!(source_text1 == source_text2, "Minification failed for {}", &file.file_name);

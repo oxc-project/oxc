@@ -1,11 +1,12 @@
 use lazy_static::lazy_static;
+use regex::Regex;
+use rustc_hash::FxHashMap;
+use serde_json::Value;
+
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
-use regex::Regex;
-use rustc_hash::FxHashMap;
-use serde_json::Value;
 
 use crate::{
     context::{ContextHost, LintContext},

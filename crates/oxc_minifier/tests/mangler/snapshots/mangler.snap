@@ -30,3 +30,8 @@ function _ (exports) { Object.defineProperty(exports, '__esModule', { value: tru
 function _(exports) {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }
+
+function foo(a) {a}
+function a(b) {
+	b;
+}

@@ -259,7 +259,7 @@ export interface TransformOptions {
   /** Configure how TypeScript is transformed. */
   typescript?: TypeScriptOptions
   /** Configure how TSX and JSX are transformed. */
-  jsx?: JsxOptions
+  jsx?: 'preserve' | JsxOptions
   /**
    * Sets the target environment for the generated JavaScript.
    *

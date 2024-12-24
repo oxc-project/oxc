@@ -1,9 +1,10 @@
 use oxc_span::Span;
 
+use crate::jsdoc::parser::utils;
+
 use super::jsdoc_parts::{
     JSDocCommentPart, JSDocTagKindPart, JSDocTagTypeNamePart, JSDocTagTypePart,
 };
-use crate::jsdoc::parser::utils;
 
 // Initially, I attempted to parse into specific structures such as:
 // - `@param {type} name comment`: `JSDocParameterTag { type, name, comment }`

@@ -1,16 +1,17 @@
-mod module_cache;
-mod runtime;
-
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
 
-use oxc_diagnostics::DiagnosticSender;
 use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
 use runtime::Runtime;
 
+use oxc_diagnostics::DiagnosticSender;
+
 use crate::Linter;
+
+mod module_cache;
+mod runtime;
 
 pub struct LintServiceOptions {
     /// Current working directory

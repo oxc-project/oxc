@@ -22,7 +22,7 @@ impl<'a> CompressorPass<'a> for PeepholeReplaceKnownMethods {
 }
 
 impl<'a> Traverse<'a> for PeepholeReplaceKnownMethods {
-    fn enter_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.try_fold_known_string_methods(node, ctx);
     }
 }

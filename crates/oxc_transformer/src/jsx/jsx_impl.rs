@@ -100,15 +100,16 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
-use super::diagnostics;
-pub use super::{
-    jsx_self::JsxSelf,
-    jsx_source::JsxSource,
-    options::{JsxOptions, JsxRuntime},
-};
 use crate::{
     es2018::{ObjectRestSpread, ObjectRestSpreadOptions},
     TransformCtx,
+};
+
+use super::{
+    diagnostics,
+    jsx_self::JsxSelf,
+    jsx_source::JsxSource,
+    options::{JsxOptions, JsxRuntime},
 };
 
 pub struct JsxImpl<'a, 'ctx> {
@@ -1080,8 +1081,7 @@ fn get_read_identifier_reference<'a>(
     name: Atom<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let reference_id =
-        ctx.create_reference_in_current_scope(name.to_compact_str(), ReferenceFlags::Read);
+    let reference_id = ctx.create_reference_in_current_scope(name.as_str(), ReferenceFlags::Read);
     let ident = ctx.ast.alloc_identifier_reference_with_reference_id(span, name, reference_id);
     Expression::Identifier(ident)
 }

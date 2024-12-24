@@ -8,7 +8,24 @@ pub fn test(source_text: &str, expected: &str) {
 }
 
 pub fn test_options(source_text: &str, expected: &str, options: CodegenOptions) {
-    let source_type = SourceType::jsx();
+    test_options_with_source_type(source_text, expected, SourceType::jsx(), options);
+}
+
+pub fn test_tsx(source_text: &str, expected: &str) {
+    test_options_with_source_type(
+        source_text,
+        expected,
+        SourceType::tsx(),
+        CodegenOptions::default(),
+    );
+}
+
+pub fn test_options_with_source_type(
+    source_text: &str,
+    expected: &str,
+    source_type: SourceType,
+    options: CodegenOptions,
+) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let result = CodeGenerator::new().with_options(options).build(&ret.program).code;

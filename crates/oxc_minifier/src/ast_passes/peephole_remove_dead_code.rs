@@ -24,7 +24,8 @@ impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {
 }
 
 impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.compress_block(stmt, Ctx(ctx));
         let ctx = Ctx(ctx);
         if let Some(new_stmt) = match stmt {
             Statement::IfStatement(if_stmt) => self.try_fold_if(if_stmt, ctx),
@@ -38,10 +39,6 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
             *stmt = new_stmt;
             self.changed = true;
         }
-    }
-
-    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.compress_block(stmt, Ctx(ctx));
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
@@ -159,22 +156,26 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         ctx: Ctx<'a, 'b>,
     ) -> Option<Statement<'a>> {
         // Descend and remove `else` blocks first.
-        if let Some(Statement::IfStatement(alternate)) = &mut if_stmt.alternate {
-            if let Some(new_stmt) = self.try_fold_if(alternate, ctx) {
-                if matches!(new_stmt, Statement::EmptyStatement(_)) {
-                    if_stmt.alternate = None;
+        match &mut if_stmt.alternate {
+            Some(Statement::IfStatement(alternate)) => {
+                if let Some(new_stmt) = self.try_fold_if(alternate, ctx) {
+                    if matches!(new_stmt, Statement::EmptyStatement(_)) {
+                        if_stmt.alternate = None;
+                    } else {
+                        if_stmt.alternate = Some(new_stmt);
+                    }
                     self.changed = true;
-                } else {
-                    if_stmt.alternate = Some(new_stmt);
                 }
             }
+            Some(Statement::EmptyStatement(_)) => {
+                if_stmt.alternate = None;
+                self.changed = true;
+            }
+            _ => {}
         }
 
         match ctx.get_boolean_value(&if_stmt.test) {
-            Some(true) => {
-                // self.changed = true;
-                Some(ctx.ast.move_statement(&mut if_stmt.consequent))
-            }
+            Some(true) => Some(ctx.ast.move_statement(&mut if_stmt.consequent)),
             Some(false) => {
                 Some(if let Some(alternate) = &mut if_stmt.alternate {
                     ctx.ast.move_statement(alternate)
@@ -186,7 +187,6 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                         .get_variable_declaration_statement()
                         .unwrap_or_else(|| ctx.ast.statement_empty(SPAN))
                 })
-                // self.changed = true;
             }
             None => None,
         }

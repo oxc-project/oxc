@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ValueType},
+    constant_evaluation::{ConstantEvaluation, ConstantValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{GetSpan, SPAN};
@@ -53,6 +53,7 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
             }
             // TODO: return tryFoldGetProp(subtree);
             Expression::LogicalExpression(e) => Self::try_fold_logical_expression(e, ctx),
+            Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
             // TODO: tryFoldGetElem
             // TODO: tryFoldAssign
             _ => None,
@@ -104,6 +105,20 @@ impl<'a, 'b> PeepholeFoldConstants {
             LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(logical_expr, ctx),
             LogicalOperator::Coalesce => Self::try_fold_coalesce(logical_expr, ctx),
         }
+    }
+
+    fn try_fold_optional_chain(
+        chain_expr: &mut ChainExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        let member_expr = chain_expr.expression.as_member_expression()?;
+        if !member_expr.optional() {
+            return None;
+        }
+        let object = member_expr.object();
+        let ty = ValueType::from(object);
+        (ty.is_null() || ty.is_undefined())
+            .then(|| ctx.value_to_expr(chain_expr.span, ConstantValue::Undefined))
     }
 
     /// Try to fold a AND / OR node.
@@ -235,17 +250,48 @@ impl<'a, 'b> PeepholeFoldConstants {
                 ctx.eval_binary_expression(e).map(|v| ctx.value_to_expr(e.span, v))
             }
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
-                // TODO:
-                // self.try_fold_arithmetic_op(e.span, &e.left, &e.right, ctx)
-                // if (result != subtree) {
-                // return result;
-                // }
-                // return tryFoldLeftChildOp(subtree, left, right);
-                None
+                if let Some(v) = ctx.eval_binary_expression(e) {
+                    return Some(ctx.value_to_expr(e.span, v));
+                }
+                Self::try_fold_left_child_op(e, ctx)
             }
             op if op.is_equality() || op.is_compare() => Self::try_fold_comparison(e, ctx),
             _ => None,
         }
+    }
+
+    fn try_fold_left_child_op(
+        e: &mut BinaryExpression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        let op = e.operator;
+        debug_assert!(matches!(
+            op,
+            BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR
+        ));
+
+        let Expression::BinaryExpression(left) = &mut e.left else {
+            return None;
+        };
+        if left.operator != op {
+            return None;
+        }
+
+        let (v, expr_to_move);
+        if let Some(result) = ctx.eval_binary_operation(op, &left.left, &e.right) {
+            (v, expr_to_move) = (result, &mut left.right);
+        } else if let Some(result) = ctx.eval_binary_operation(op, &left.right, &e.right) {
+            (v, expr_to_move) = (result, &mut left.left);
+        } else {
+            return None;
+        }
+
+        Some(ctx.ast.expression_binary(
+            e.span,
+            ctx.ast.move_expression(expr_to_move),
+            op,
+            ctx.value_to_expr(Span::new(left.right.span().start, e.right.span().end), v),
+        ))
     }
 
     fn try_fold_comparison(e: &BinaryExpression<'a>, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
@@ -406,14 +452,8 @@ impl<'a, 'b> PeepholeFoldConstants {
                     let left_string = ctx.get_side_free_string_value(left_expr);
                     let right_string = ctx.get_side_free_string_value(right_expr);
                     if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
-                        // In JS, browsers parse \v differently. So do not compare strings if one contains \v.
-                        if left_string.contains('\u{000B}') || right_string.contains('\u{000B}') {
-                            return None;
-                        }
-
                         return Some(left_string == right_string);
                     }
-
                     None
                 }
                 ValueType::Undefined | ValueType::Null => Some(true),
@@ -766,6 +806,8 @@ mod test {
         test_same("'' + x <= '' + x"); // potentially foldable
         test_same("'' + x != '' + x"); // potentially foldable
         test_same("'' + x === '' + x"); // potentially foldable
+
+        test(r#"if ("string" !== "\u000Bstr\u000Bing\u000B") {}"#, "if (false) {}\n");
     }
 
     #[test]
@@ -1119,6 +1161,163 @@ mod test {
     }
 
     #[test]
+    fn test_fold_opt_chain() {
+        // can't fold when optional part may execute
+        test_same("a = x?.y");
+        test_same("a = x?.()");
+
+        // fold args of optional call
+        test("x = foo() ?. (true && bar())", "x = foo() ?.(bar())");
+        test("a() ?. (1 ?? b())", "a() ?. (1)");
+
+        // test("({a})?.a.b.c.d()?.x.y.z", "a.b.c.d()?.x.y.z");
+
+        test("x = undefined?.y", "x = void 0");
+        test("x = null?.y", "x = void 0");
+        test("x = undefined?.[foo]", "x = void 0");
+        test("x = null?.[foo]", "x = void 0");
+    }
+
+    #[test]
+    fn test_fold_bitwise_op() {
+        test("x = 1 & 1", "x = 1");
+        test("x = 1 & 2", "x = 0");
+        test("x = 3 & 1", "x = 1");
+        test("x = 3 & 3", "x = 3");
+
+        test("x = 1 | 1", "x = 1");
+        test("x = 1 | 2", "x = 3");
+        test("x = 3 | 1", "x = 3");
+        test("x = 3 | 3", "x = 3");
+
+        test("x = 1 ^ 1", "x = 0");
+        test("x = 1 ^ 2", "x = 3");
+        test("x = 3 ^ 1", "x = 2");
+        test("x = 3 ^ 3", "x = 0");
+
+        test("x = -1 & 0", "x = 0");
+        test("x = 0 & -1", "x = 0");
+        test("x = 1 & 4", "x = 0");
+        test("x = 2 & 3", "x = 2");
+
+        // make sure we fold only when we are supposed to -- not when doing so would
+        // lose information or when it is performed on nonsensical arguments.
+        test("x = 1 & 1.1", "x = 1");
+        test("x = 1.1 & 1", "x = 1");
+        test("x = 1 & 3000000000", "x = 0");
+        test("x = 3000000000 & 1", "x = 0");
+
+        // Try some cases with | as well
+        test("x = 1 | 4", "x = 5");
+        test("x = 1 | 3", "x = 3");
+        test("x = 1 | 1.1", "x = 1");
+        // test_same("x = 1 | 3e9");
+
+        // these cases look strange because bitwise OR converts unsigned numbers to be signed
+        test("x = 1 | 3000000001", "x = -1294967295");
+        test("x = 4294967295 | 0", "x = -1");
+    }
+
+    #[test]
+    fn test_fold_bitwise_op2() {
+        test("x = y & 1 & 1", "x = y & 1");
+        test("x = y & 1 & 2", "x = y & 0");
+        test("x = y & 3 & 1", "x = y & 1");
+        test("x = 3 & y & 1", "x = y & 1");
+        test("x = y & 3 & 3", "x = y & 3");
+        test("x = 3 & y & 3", "x = y & 3");
+
+        test("x = y | 1 | 1", "x = y | 1");
+        test("x = y | 1 | 2", "x = y | 3");
+        test("x = y | 3 | 1", "x = y | 3");
+        test("x = 3 | y | 1", "x = y | 3");
+        test("x = y | 3 | 3", "x = y | 3");
+        test("x = 3 | y | 3", "x = y | 3");
+
+        test("x = y ^ 1 ^ 1", "x = y ^ 0");
+        test("x = y ^ 1 ^ 2", "x = y ^ 3");
+        test("x = y ^ 3 ^ 1", "x = y ^ 2");
+        test("x = 3 ^ y ^ 1", "x = y ^ 2");
+        test("x = y ^ 3 ^ 3", "x = y ^ 0");
+        test("x = 3 ^ y ^ 3", "x = y ^ 0");
+
+        test("x = Infinity | NaN", "x=0");
+        test("x = 12 | NaN", "x=12");
+    }
+
+    #[test]
+    fn test_fold_bitwise_op_with_big_int() {
+        test("x = 1n & 1n", "x = 1n");
+        test("x = 1n & 2n", "x = 0n");
+        test("x = 3n & 1n", "x = 1n");
+        test("x = 3n & 3n", "x = 3n");
+
+        test("x = 1n | 1n", "x = 1n");
+        test("x = 1n | 2n", "x = 3n");
+        test("x = 1n | 3n", "x = 3n");
+        test("x = 3n | 1n", "x = 3n");
+        test("x = 3n | 3n", "x = 3n");
+        test("x = 1n | 4n", "x = 5n");
+
+        test("x = 1n ^ 1n", "x = 0n");
+        test("x = 1n ^ 2n", "x = 3n");
+        test("x = 3n ^ 1n", "x = 2n");
+        test("x = 3n ^ 3n", "x = 0n");
+
+        test("x = -1n & 0n", "x = 0n");
+        test("x = 0n & -1n", "x = 0n");
+        test("x = 1n & 4n", "x = 0n");
+        test("x = 2n & 3n", "x = 2n");
+
+        test("x = 1n & 3000000000n", "x = 0n");
+        test("x = 3000000000n & 1n", "x = 0n");
+
+        // bitwise OR does not affect the sign of a bigint
+        test("x = 1n | 3000000001n", "x = 3000000001n");
+        test("x = 4294967295n | 0n", "x = 4294967295n");
+
+        test("x = y & 1n & 1n", "x = y & 1n");
+        test("x = y & 1n & 2n", "x = y & 0n");
+        test("x = y & 3n & 1n", "x = y & 1n");
+        test("x = 3n & y & 1n", "x = y & 1n");
+        test("x = y & 3n & 3n", "x = y & 3n");
+        test("x = 3n & y & 3n", "x = y & 3n");
+
+        test("x = y | 1n | 1n", "x = y | 1n");
+        test("x = y | 1n | 2n", "x = y | 3n");
+        test("x = y | 3n | 1n", "x = y | 3n");
+        test("x = 3n | y | 1n", "x = y | 3n");
+        test("x = y | 3n | 3n", "x = y | 3n");
+        test("x = 3n | y | 3n", "x = y | 3n");
+
+        test("x = y ^ 1n ^ 1n", "x = y ^ 0n");
+        test("x = y ^ 1n ^ 2n", "x = y ^ 3n");
+        test("x = y ^ 3n ^ 1n", "x = y ^ 2n");
+        test("x = 3n ^ y ^ 1n", "x = y ^ 2n");
+        test("x = y ^ 3n ^ 3n", "x = y ^ 0n");
+        test("x = 3n ^ y ^ 3n", "x = y ^ 0n");
+
+        // TypeError: Cannot mix BigInt and other types
+        test_same("1n & 1");
+        test_same("1n | 1");
+        test_same("1n ^ 1");
+    }
+
+    #[test]
+    fn test_fold_bitwise_op_additional() {
+        test("x = null & 1", "x = 0");
+        test("x = (2 ** 31 - 1) | 1", "x = 2147483647");
+        test("x = (2 ** 31) | 1", "x = -2147483647");
+
+        // https://github.com/oxc-project/oxc/issues/7944
+        test_same("(x - 1) & 1");
+        test_same("(y >> 3) & 7");
+        test("(y & 3) & 7", "y & 3");
+        test_same("(y | 3) & 7");
+        test("y | 3 & 7", "y | 3");
+    }
+
+    #[test]
     fn test_fold_bit_shift() {
         test("x = 1 << 0", "x=1");
         test("x = -1 << 0", "x=-1");
@@ -1204,6 +1403,7 @@ mod test {
         test_same("z = x * y");
         test_same("x = y * 5");
         // test("x = y + (z * 24 * 60 * 60 * 1000)", "x = y + z * 864E5");
+        test("x = y + (z & 24 & 60 & 60 & 1000)", "x = y + (z & 8)");
     }
 
     #[test]
@@ -1231,6 +1431,52 @@ mod test {
         test("x = Infinity % Infinity", "x = NaN");
         test("x = Infinity / 0", "x = Infinity");
         test("x = Infinity % 0", "x = NaN");
+    }
+
+    #[test]
+    fn test_fold_left() {
+        test_same("(+x - 1) + 2"); // not yet
+        test("(+x & 1) & 2", "+x & 0");
+    }
+
+    #[test]
+    fn test_fold_left_child_op() {
+        test_same("x & infinity & 2"); // FIXME: want x & 0
+        test_same("x - infinity - 2"); // FIXME: want "x-infinity"
+        test_same("x - 1 + infinity");
+        test_same("x - 2 + 1");
+        test_same("x - 2 + 3");
+        test_same("1 + x - 2 + 1");
+        test_same("1 + x - 2 + 3");
+        test_same("1 + x - 2 + 3 - 1");
+        test_same("f(x)-0");
+        test_same("x-0-0"); // FIXME: want x - 0
+        test_same("x+2-2+2");
+        test_same("x+2-2+2-2");
+        test_same("x-2+2");
+        test_same("x-2+2-2");
+        test_same("x-2+2-2+2");
+
+        test_same("1+x-0-na_n");
+        test_same("1+f(x)-0-na_n");
+        test_same("1+x-0+na_n");
+        test_same("1+f(x)-0+na_n");
+
+        test_same("1+x+na_n"); // unfoldable
+        test_same("x+2-2"); // unfoldable
+        test_same("x+2"); // nothing to do
+        test_same("x-2"); // nothing to do
+    }
+
+    #[test]
+    fn test_associative_fold_constants_with_variables() {
+        // mul and add should not fold
+        test_same("alert(x * 12 * 20);");
+        test_same("alert(12 * x * 20);");
+        test_same("alert(x + 12 + 20);");
+        test_same("alert(12 + x + 20);");
+        test("alert(x & 12 & 20);", "alert(x & 4);");
+        test("alert(12 & x & 20);", "alert(x & 4);");
     }
 
     #[test]

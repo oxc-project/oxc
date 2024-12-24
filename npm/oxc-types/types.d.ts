@@ -431,6 +431,7 @@ export interface AssignmentTargetPropertyProperty extends Span {
   type: 'AssignmentTargetPropertyProperty';
   name: PropertyKey;
   binding: AssignmentTargetMaybeDefault;
+  computed: boolean;
 }
 
 export interface SequenceExpression extends Span {

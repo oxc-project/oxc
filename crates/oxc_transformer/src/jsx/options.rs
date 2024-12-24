@@ -109,6 +109,20 @@ pub struct JsxOptions {
 
 impl Default for JsxOptions {
     fn default() -> Self {
+        Self::enable()
+    }
+}
+
+impl JsxOptions {
+    pub fn conform(&mut self) {
+        if self.development {
+            self.jsx_plugin = true;
+            self.jsx_self_plugin = true;
+            self.jsx_source_plugin = true;
+        }
+    }
+
+    pub fn enable() -> Self {
         Self {
             jsx_plugin: true,
             display_name_plugin: true,
@@ -126,14 +140,23 @@ impl Default for JsxOptions {
             refresh: None,
         }
     }
-}
 
-impl JsxOptions {
-    pub fn conform(&mut self) {
-        if self.development {
-            self.jsx_plugin = true;
-            self.jsx_self_plugin = true;
-            self.jsx_source_plugin = true;
+    pub fn disable() -> Self {
+        Self {
+            jsx_plugin: false,
+            display_name_plugin: false,
+            jsx_self_plugin: false,
+            jsx_source_plugin: false,
+            runtime: JsxRuntime::default(),
+            development: false,
+            throw_if_namespace: false,
+            pure: false,
+            import_source: None,
+            pragma: None,
+            pragma_frag: None,
+            use_built_ins: None,
+            use_spread: None,
+            refresh: None,
         }
     }
 }

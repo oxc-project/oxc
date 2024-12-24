@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(max-lines): File has too many lines (3).
    ╭─[max_lines.tsx:3:8]
@@ -34,7 +33,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (8).
+  ⚠ eslint(max-lines): File has too many lines (4).
    ╭─[max_lines.tsx:8:18]
  7 │              really really
  8 │              long comment*/
@@ -50,7 +49,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (4).
+  ⚠ eslint(max-lines): File has too many lines (3).
    ╭─[max_lines.tsx:4:9]
  3 │             var y;
  4 │             var z;
@@ -58,7 +57,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (8).
+  ⚠ eslint(max-lines): File has too many lines (6).
    ╭─[max_lines.tsx:8:18]
  7 │              really really
  8 │              long comment*/
@@ -149,7 +148,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (6).
+  ⚠ eslint(max-lines): File has too many lines (3).
    ╭─[max_lines.tsx:6:3]
  5 │             x;
  6 │             
@@ -157,7 +156,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (6).
+  ⚠ eslint(max-lines): File has too many lines (4).
    ╭─[max_lines.tsx:6:14]
  5 │             // some block
  6 │             // comments
@@ -165,7 +164,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (5).
+  ⚠ eslint(max-lines): File has too many lines (4).
    ╭─[max_lines.tsx:5:23]
  4 │             console.log
  5 │             /* block comments */
@@ -173,7 +172,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (6).
+  ⚠ eslint(max-lines): File has too many lines (5).
    ╭─[max_lines.tsx:6:3]
  5 │             /* block comments */
  6 │             
@@ -181,7 +180,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (7).
+  ⚠ eslint(max-lines): File has too many lines (4).
    ╭─[max_lines.tsx:7:15]
  6 │ 
  7 │              comments */
@@ -189,7 +188,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (4).
+  ⚠ eslint(max-lines): File has too many lines (3).
    ╭─[max_lines.tsx:4:13]
  3 │ 
  4 │             // comment
@@ -197,7 +196,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (8).
+  ⚠ eslint(max-lines): File has too many lines (4).
    ╭─[max_lines.tsx:8:3]
  7 │ 
  8 │             
@@ -205,7 +204,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (8).
+  ⚠ eslint(max-lines): File has too many lines (4).
    ╭─[max_lines.tsx:8:3]
  7 │ 
  8 │             
@@ -213,7 +212,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (6).
+  ⚠ eslint(max-lines): File has too many lines (4).
    ╭─[max_lines.tsx:6:5]
  5 │             console.log
  6 │             //
@@ -221,7 +220,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (9).
+  ⚠ eslint(max-lines): File has too many lines (5).
    ╭─[max_lines.tsx:9:5]
  8 │             e,
  9 │             f;
@@ -229,7 +228,7 @@ snapshot_kind: text
    ╰────
   help: Maximum allowed is 2.
 
-  ⚠ eslint(max-lines): File has too many lines (11).
+  ⚠ eslint(max-lines): File has too many lines (5).
     ╭─[max_lines.tsx:11:13]
  10 │ 
  11 │             // comment

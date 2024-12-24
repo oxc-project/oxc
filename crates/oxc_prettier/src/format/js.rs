@@ -11,7 +11,8 @@ use crate::{
     format::{
         print::{
             array, arrow_function, assignment, binaryish, block, call_expression, class, function,
-            function_parameters, misc, module, object, property, string, template_literal, ternary,
+            function_parameters, literal, misc, module, object, property, template_literal,
+            ternary,
         },
         Format,
     },
@@ -44,14 +45,14 @@ impl<'a> Format<'a> for Program<'a> {
 impl<'a> Format<'a> for Hashbang<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
+
         parts.push(dynamic_text!(p, self.span.source_text(p.source_text)));
         parts.extend(hardline!());
         // Preserve original newline
-        if let Some(c) = p.source_text[self.span.end as usize..].chars().nth(1) {
-            if is_line_terminator(c) {
-                parts.extend(hardline!());
-            }
+        if p.is_next_line_empty(self.span) {
+            parts.extend(hardline!());
         }
+
         array!(p, parts)
     }
 }
@@ -59,14 +60,21 @@ impl<'a> Format<'a> for Hashbang<'a> {
 impl<'a> Format<'a> for Directive<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
-        parts.push(dynamic_text!(
-            p,
-            string::print_string(p, self.directive.as_str(), p.options.single_quote,)
-        ));
+
+        let not_quoted_raw_text = &self.directive.as_str();
+        // If quote is used, don't replace enclosing quotes, keep as is
+        if not_quoted_raw_text.contains('"') || not_quoted_raw_text.contains('\'') {
+            parts.push(dynamic_text!(p, &self.span.source_text(p.source_text)));
+        } else {
+            let enclosing_quote = || text!(if p.options.single_quote { "'" } else { "\"" });
+            parts.push(enclosing_quote());
+            parts.push(dynamic_text!(p, &not_quoted_raw_text));
+            parts.push(enclosing_quote());
+        }
         if let Some(semi) = p.semi() {
             parts.push(semi);
         }
-        parts.extend(hardline!());
+
         array!(p, parts)
     }
 }
@@ -905,64 +913,7 @@ impl<'a> Format<'a> for NullLiteral {
 
 impl<'a> Format<'a> for NumericLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, NumericLiteral, {
-            // See https://github.com/prettier/prettier/blob/3.3.3/src/utils/print-number.js
-            // Perf: the regexes from prettier code above are ported to manual search for performance reasons.
-            let mut string = self.span.source_text(p.source_text).cow_to_ascii_lowercase();
-
-            // Remove unnecessary plus and zeroes from scientific notation.
-            if let Some((head, tail)) = string.split_once('e') {
-                let negative = if tail.starts_with('-') { "-" } else { "" };
-                let trimmed = tail.trim_start_matches(['+', '-']).trim_start_matches('0');
-                if trimmed.starts_with(|c: char| c.is_ascii_digit()) {
-                    string = Cow::Owned(std::format!("{head}e{negative}{trimmed}"));
-                }
-            }
-
-            // Remove unnecessary scientific notation (1e0).
-            if let Some((head, tail)) = string.split_once('e') {
-                if tail.trim_start_matches(['+', '-']).trim_start_matches('0').is_empty() {
-                    string = Cow::Owned(head.to_string());
-                }
-            }
-
-            // Make sure numbers always start with a digit.
-            if string.starts_with('.') {
-                string = Cow::Owned(std::format!("0{string}"));
-            }
-
-            // Remove extraneous trailing decimal zeroes.
-            if let Some((head, tail)) = string.split_once('.') {
-                if let Some((head_e, tail_e)) = tail.split_once('e') {
-                    if !head_e.is_empty() {
-                        let trimmed = head_e.trim_end_matches('0');
-                        if trimmed.is_empty() {
-                            string = Cow::Owned(std::format!("{head}.0e{tail_e}"));
-                        } else {
-                            string = Cow::Owned(std::format!("{head}.{trimmed}e{tail_e}"));
-                        }
-                    }
-                } else if !tail.is_empty() {
-                    let trimmed = tail.trim_end_matches('0');
-                    if trimmed.is_empty() {
-                        string = Cow::Owned(std::format!("{head}.0"));
-                    } else {
-                        string = Cow::Owned(std::format!("{head}.{trimmed}"));
-                    }
-                }
-            }
-
-            // Remove trailing dot.
-            if let Some((head, tail)) = string.split_once('.') {
-                if tail.is_empty() {
-                    string = Cow::Owned(head.to_string());
-                } else if tail.starts_with('e') {
-                    string = Cow::Owned(std::format!("{head}{tail}"));
-                }
-            }
-
-            dynamic_text!(p, &string)
-        })
+        literal::print_number(p, self.span.source_text(p.source_text))
     }
 }
 
@@ -977,22 +928,17 @@ impl<'a> Format<'a> for BigIntLiteral<'a> {
 
 impl<'a> Format<'a> for RegExpLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(text!("/"));
-        parts.push(dynamic_text!(p, self.regex.pattern.source_text(p.source_text).as_ref()));
-        parts.push(text!("/"));
-        parts.push(self.regex.flags.format(p));
-        array!(p, parts)
+        dynamic_text!(p, &self.regex.to_string())
     }
 }
 
 impl<'a> Format<'a> for StringLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, StringLiteral, {
-            let raw = &p.source_text[(self.span.start + 1) as usize..(self.span.end - 1) as usize];
-            // TODO: implement `makeString` from prettier/src/utils/print-string.js
-            dynamic_text!(p, string::print_string(p, raw, p.options.single_quote))
-        })
+        literal::replace_end_of_line(
+            p,
+            literal::print_string(p, self.span.source_text(p.source_text), p.options.single_quote),
+            JoinSeparator::Literalline,
+        )
     }
 }
 
@@ -1214,9 +1160,10 @@ impl<'a> Format<'a> for PropertyKey<'a> {
             match self {
                 PropertyKey::StaticIdentifier(ident) => {
                     if need_quote {
-                        dynamic_text!(
+                        literal::print_string_from_not_quoted_raw_text(
                             p,
-                            string::print_string(p, &ident.name, p.options.single_quote)
+                            &ident.name,
+                            p.options.single_quote,
                         )
                     } else {
                         ident.format(p)
@@ -1233,17 +1180,19 @@ impl<'a> Format<'a> for PropertyKey<'a> {
                     {
                         dynamic_text!(p, literal.value.as_str())
                     } else {
-                        dynamic_text!(
+                        literal::print_string_from_not_quoted_raw_text(
                             p,
-                            string::print_string(p, literal.value.as_str(), p.options.single_quote,)
+                            literal.value.as_str(),
+                            p.options.single_quote,
                         )
                     }
                 }
                 PropertyKey::NumericLiteral(literal) => {
                     if need_quote {
-                        dynamic_text!(
+                        literal::print_string_from_not_quoted_raw_text(
                             p,
-                            string::print_string(p, &literal.raw_str(), p.options.single_quote)
+                            &literal.raw_str(),
+                            p.options.single_quote,
                         )
                     } else {
                         literal.format(p)
@@ -1721,37 +1670,5 @@ impl<'a> Format<'a> for AssignmentPattern<'a> {
             let right_doc = self.right.format(p);
             array!(p, [left_doc, text!(" = "), right_doc])
         })
-    }
-}
-
-impl<'a> Format<'a> for RegExpFlags {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut string = std::vec::Vec::with_capacity(self.iter().count());
-        if self.contains(Self::D) {
-            string.push('d');
-        }
-        if self.contains(Self::G) {
-            string.push('g');
-        }
-        if self.contains(Self::I) {
-            string.push('i');
-        }
-        if self.contains(Self::M) {
-            string.push('m');
-        }
-        if self.contains(Self::S) {
-            string.push('s');
-        }
-        if self.contains(Self::U) {
-            string.push('u');
-        }
-        if self.contains(Self::V) {
-            string.push('v');
-        }
-        if self.contains(Self::Y) {
-            string.push('y');
-        }
-        let sorted = string.iter().collect::<String>();
-        dynamic_text!(p, &sorted)
     }
 }

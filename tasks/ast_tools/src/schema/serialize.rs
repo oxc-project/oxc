@@ -1,8 +1,9 @@
 use convert_case::{Case, Casing};
 use rustc_hash::FxHashSet;
 
-use super::{EnumDef, StructDef, TypeDef, VariantDef};
 use crate::{markers::ESTreeStructTagMode, schema::GetIdent, Schema, TypeId};
+
+use super::{EnumDef, StructDef, TypeDef, VariantDef};
 
 pub fn enum_variant_name(var: &VariantDef, enm: &EnumDef) -> String {
     match var.markers.derive_attributes.estree.rename.as_ref() {

@@ -1,8 +1,9 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
+use rustc_hash::FxHashMap;
+
 use oxc_allocator::{Allocator, Vec};
 use oxc_span::{Atom, Span};
-use rustc_hash::FxHashMap;
 
 /// ESM Module Record
 ///

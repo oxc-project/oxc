@@ -18,18 +18,21 @@ macro_rules! log {
         }
     }
 }
+pub(crate) use log;
 
 macro_rules! log_success {
     () => {
         $crate::log!("Done!\n");
     };
 }
+pub(crate) use log_success;
 
 macro_rules! log_failed {
     () => {
         $crate::log!("FAILED\n");
     };
 }
+pub(crate) use log_failed;
 
 macro_rules! log_result {
     ($result:expr) => {
@@ -43,8 +46,4 @@ macro_rules! log_result {
         }
     };
 }
-
-pub(crate) use log;
-pub(crate) use log_failed;
 pub(crate) use log_result;
-pub(crate) use log_success;

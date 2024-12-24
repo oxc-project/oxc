@@ -11,43 +11,43 @@ function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): 
 	return x;
 }
 ----------
-function foo<T extends string>(x:T,y:string,...restOfParams:Omit<T,'x'>): T{return x}
+function foo<T extends string>(x:T,y:string,...restOfParams:Omit<T,"x">): T{return x}
 ########## 2
 let x: string[] = ['abc', 'def', 'ghi'];
 ----------
-let x:string[]=['abc','def','ghi'];
+let x:string[]=["abc","def","ghi"];
 ########## 3
 let x: Array<string> = ['abc', 'def', 'ghi',];
 ----------
-let x:Array<string>=['abc','def','ghi'];
+let x:Array<string>=["abc","def","ghi"];
 ########## 4
 let x: [string, number] = ['abc', 123];
 ----------
-let x:[string,number]=['abc',123];
+let x:[string,number]=["abc",123];
 ########## 5
 let x: string | number = 'abc';
 ----------
-let x:string|number='abc';
+let x:string|number="abc";
 ########## 6
 let x: string & number = 'abc';
 ----------
-let x:string&number='abc';
+let x:string&number="abc";
 ########## 7
 let x: typeof String = 'string';
 ----------
-let x:typeof String='string';
+let x:typeof String="string";
 ########## 8
 let x: keyof string = 'length';
 ----------
-let x:keyof string='length';
+let x:keyof string="length";
 ########## 9
 let x: keyof typeof String = 'length';
 ----------
-let x:keyof typeof String='length';
+let x:keyof typeof String="length";
 ########## 10
 let x: string['length'] = 123;
 ----------
-let x:string['length']=123;
+let x:string["length"]=123;
 ########## 11
 function isString(value: unknown): asserts value is string {
             if (typeof value !== 'string') {
@@ -55,19 +55,19 @@ function isString(value: unknown): asserts value is string {
             }
         }
 ----------
-function isString(value:unknown): asserts value is string{if(typeof value!=='string'){throw new Error('Not a string')}}
+function isString(value:unknown): asserts value is string{if(typeof value!=="string"){throw new Error("Not a string")}}
 ########## 12
 import type { Foo } from 'foo';
 ----------
-import type{Foo}from'foo';
+import type{Foo}from"foo";
 ########## 13
 import { Foo, type Bar } from 'foo';
 ----------
-import{Foo,type Bar}from'foo';
+import{Foo,type Bar}from"foo";
 ########## 14
 export { Foo, type Bar } from 'foo';
 ----------
-export{Foo,type Bar}from'foo';
+export{Foo,type Bar}from"foo";
 ########## 15
 type A<T> = { [K in keyof T as K extends string ? B<K> : K ]: T[K] }
 ----------
@@ -75,7 +75,7 @@ type A<T>={[K in keyof T as K extends string ? B<K> : K]:T[K]};
 ########## 16
 class A {readonly type = 'frame'}
 ----------
-class A{readonly type='frame'}
+class A{readonly type="frame"}
 ########## 17
 let foo: { <T>(t: T): void }
 ----------
@@ -196,4 +196,4 @@ export { default, /* …, */ } from "module-name";
 export { default as name16 } from "module-name";
 
 ----------
-import defaultExport from'module-name';import*as name from'module-name';import{export1}from'module-name';import{export1 as alias1}from'module-name';import{default as alias}from'module-name';import{export1,export2}from'module-name';import{export1,export2 as alias2}from'module-name';import{'string name' as alias}from'module-name';import defaultExport,{export1}from'module-name';import defaultExport,*as name from'module-name';import'module-name';import{}from"mod";export let name1,name2;export const name3=1,name4=2;export function functionName(){}export class ClassName{}export function*generatorFunctionName(){}export const {name5,name2:bar}=o;export const [name6,name7]=array;export{name8,name81};export{variable1 as name9,variable2 as name10,name82};export{variable1 as 'string name'};export{name1 as default1};export*from'module-name';export*as name11 from'module-name';export{name12,nameN}from'module-name';export{import1 as name13,import2 as name14,name15}from'module-name';export{default}from'module-name';export{default as name16}from'module-name';
+import defaultExport from"module-name";import*as name from"module-name";import{export1}from"module-name";import{export1 as alias1}from"module-name";import{default as alias}from"module-name";import{export1,export2}from"module-name";import{export1,export2 as alias2}from"module-name";import{"string name" as alias}from"module-name";import defaultExport,{export1}from"module-name";import defaultExport,*as name from"module-name";import"module-name";import{}from"mod";export let name1,name2;export const name3=1,name4=2;export function functionName(){}export class ClassName{}export function*generatorFunctionName(){}export const{name5,name2:bar}=o;export const[name6,name7]=array;export{name8,name81};export{variable1 as name9,variable2 as name10,name82};export{variable1 as "string name"};export{name1 as default1};export*from"module-name";export*as name11 from"module-name";export{name12,nameN}from"module-name";export{import1 as name13,import2 as name14,name15}from"module-name";export{default}from"module-name";export{default as name16}from"module-name";

@@ -169,6 +169,7 @@ impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
                 property.span,
                 property.key,
                 binding,
+                property.computed,
             ))
         }
     }

@@ -198,8 +198,12 @@ pub trait CompilerInterface {
         if let Some(options) = define_options {
             let ret =
                 ReplaceGlobalDefines::new(&allocator, options).build(symbols, scopes, &mut program);
-            Compressor::new(&allocator, CompressOptions::dead_code_elimination())
-                .build_with_symbols_and_scopes(ret.symbols, ret.scopes, &mut program);
+            Compressor::new(&allocator, CompressOptions::default())
+                .dead_code_elimination_with_symbols_and_scopes(
+                    ret.symbols,
+                    ret.scopes,
+                    &mut program,
+                );
             // symbols = ret.symbols;
             // scopes = ret.scopes;
         }

@@ -6,7 +6,6 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident, Type};
 
-use super::define_generator;
 use crate::{
     output::{output_path, Output},
     schema::{
@@ -15,6 +14,8 @@ use crate::{
     util::{TypeAnalysis, TypeWrapper},
     Generator,
 };
+
+use super::define_generator;
 
 pub const BLACK_LIST: [&str; 1] = ["Span"];
 

@@ -67,6 +67,9 @@
 
 use std::{borrow::Cow, cell::RefCell};
 
+use rustc_hash::FxHashMap;
+use serde::Deserialize;
+
 use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
@@ -75,8 +78,6 @@ use oxc_ast::{
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
-use rustc_hash::FxHashMap;
-use serde::Deserialize;
 
 use crate::TransformCtx;
 
@@ -158,6 +159,7 @@ pub enum Helper {
     ClassPrivateFieldLooseKey,
     ClassPrivateFieldLooseBase,
     SuperPropGet,
+    SuperPropSet,
 }
 
 impl Helper {
@@ -182,6 +184,7 @@ impl Helper {
             Self::ClassPrivateFieldLooseKey => "classPrivateFieldLooseKey",
             Self::ClassPrivateFieldLooseBase => "classPrivateFieldLooseBase",
             Self::SuperPropGet => "superPropGet",
+            Self::SuperPropSet => "superPropSet",
         }
     }
 }
@@ -297,7 +300,7 @@ impl<'a> HelperLoaderStore<'a> {
         source.push_str(&self.module_name);
         source.push_str("/helpers/");
         source.push_str(helper_name);
-        Atom::from(source.into_bump_str())
+        Atom::from(source)
     }
 
     fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {

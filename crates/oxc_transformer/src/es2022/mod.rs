@@ -43,14 +43,16 @@ impl<'a, 'ctx> Traverse<'a> for ES2022<'a, 'ctx> {
         }
     }
 
-    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
-            class_properties.enter_statement(stmt, ctx);
+            class_properties.exit_expression(expr, ctx);
         }
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(class_static_block) = &mut self.class_static_block {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_class_body(body, ctx);
+        } else if let Some(class_static_block) = &mut self.class_static_block {
             class_static_block.enter_class_body(body, ctx);
         }
     }
@@ -63,11 +65,43 @@ impl<'a, 'ctx> Traverse<'a> for ES2022<'a, 'ctx> {
 
     fn enter_assignment_target(
         &mut self,
-        node: &mut AssignmentTarget<'a>,
+        target: &mut AssignmentTarget<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(class_properties) = &mut self.class_properties {
-            class_properties.enter_assignment_target(node, ctx);
+            class_properties.enter_assignment_target(target, ctx);
+        }
+    }
+
+    fn enter_property_definition(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_property_definition(prop, ctx);
+        }
+    }
+
+    fn exit_property_definition(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.exit_property_definition(prop, ctx);
+        }
+    }
+
+    fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.enter_static_block(block, ctx);
+        }
+    }
+
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.exit_static_block(block, ctx);
         }
     }
 }
