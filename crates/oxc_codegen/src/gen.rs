@@ -2664,7 +2664,7 @@ impl Gen for MethodDefinition<'_> {
         p.add_source_mapping(self.span);
         for decorator in &self.decorators {
             decorator.print(p, ctx);
-            p.print_hard_space();
+            p.print_soft_space();
         }
         if let Some(accessibility) = &self.accessibility {
             p.print_space_before_identifier();
@@ -2742,23 +2742,33 @@ impl Gen for PropertyDefinition<'_> {
         p.add_source_mapping(self.span);
         for decorator in &self.decorators {
             decorator.print(p, ctx);
-            p.print_hard_space();
+            p.print_soft_space();
         }
         if self.declare {
-            p.print_str("declare ");
+            p.print_space_before_identifier();
+            p.print_str("declare");
+            p.print_soft_space();
         }
         if let Some(accessibility) = self.accessibility {
+            p.print_space_before_identifier();
             p.print_str(accessibility.as_str());
-            p.print_hard_space();
+            p.print_soft_space();
         }
         if self.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition {
-            p.print_str("abstract ");
+            p.print_space_before_identifier();
+            p.print_str("abstract");
+            p.print_soft_space();
         }
         if self.r#static {
-            p.print_str("static ");
+            p.print_space_before_identifier();
+            p.add_source_mapping(self.span);
+            p.print_str("static");
+            p.print_soft_space();
         }
         if self.readonly {
-            p.print_str("readonly ");
+            p.print_space_before_identifier();
+            p.print_str("readonly");
+            p.print_soft_space();
         }
         if self.computed {
             p.print_ascii_byte(b'[');
@@ -2789,18 +2799,26 @@ impl Gen for AccessorProperty<'_> {
         p.add_source_mapping(self.span);
         for decorator in &self.decorators {
             decorator.print(p, ctx);
-            p.print_hard_space();
+            p.print_soft_space();
         }
         if self.r#type.is_abstract() {
-            p.print_str("abstract ");
+            p.print_space_before_identifier();
+            p.add_source_mapping(self.span);
+            p.print_str("abstract");
+            p.print_soft_space();
         }
         if let Some(accessibility) = self.accessibility {
+            p.print_space_before_identifier();
             p.print_str(accessibility.as_str());
-            p.print_hard_space();
+            p.print_soft_space();
         }
         if self.r#static {
-            p.print_str("static ");
+            p.print_space_before_identifier();
+            p.add_source_mapping(self.span);
+            p.print_str("static");
+            p.print_soft_space();
         }
+        p.print_space_before_identifier();
         p.print_str("accessor");
         if self.computed {
             p.print_soft_space();

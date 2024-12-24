@@ -56,7 +56,7 @@ fn class() {
         "export default class Foo { @x @y accessor #aDef = 1 }",
         "export default class Foo {\n\t@x @y accessor #aDef = 1;\n}\n",
     );
-    test_minify("class F { static async * foo () {} }", "class F{static async*foo(){}}");
+    test_minify("class { static [computed] }", "class{static[computed]}");
 }
 
 #[test]
