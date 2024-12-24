@@ -1220,6 +1220,7 @@ impl Gen for IdentifierReference<'_> {
 
 impl Gen for IdentifierName<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.print_space_before_identifier();
         p.add_source_mapping(self.span);
         p.print_str(self.name.as_str());
     }
@@ -2665,36 +2666,47 @@ impl Gen for MethodDefinition<'_> {
             decorator.print(p, ctx);
             p.print_hard_space();
         }
-
         if let Some(accessibility) = &self.accessibility {
+            p.print_space_before_identifier();
             p.print_str(accessibility.as_str());
-            p.print_hard_space();
+            p.print_soft_space();
         }
         if self.r#type == MethodDefinitionType::TSAbstractMethodDefinition {
-            p.print_str("abstract ");
+            p.print_space_before_identifier();
+            p.print_str("abstract");
+            p.print_soft_space();
         }
         if self.r#static {
-            p.print_str("static ");
+            p.print_space_before_identifier();
+            p.add_source_mapping(self.span);
+            p.print_str("static");
+            p.print_soft_space();
         }
-
         match &self.kind {
             MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
             MethodDefinitionKind::Get => {
-                p.print_str("get ");
+                p.print_space_before_identifier();
+                p.add_source_mapping(self.span);
+                p.print_str("get");
+                p.print_soft_space();
             }
             MethodDefinitionKind::Set => {
-                p.print_str("set ");
+                p.print_space_before_identifier();
+                p.add_source_mapping(self.span);
+                p.print_str("set");
+                p.print_soft_space();
             }
         }
-
         if self.value.r#async {
-            p.print_str("async ");
+            p.print_space_before_identifier();
+            p.add_source_mapping(self.span);
+            p.print_str("async");
+            p.print_soft_space();
         }
-
         if self.value.generator {
+            p.add_source_mapping(self.span);
             p.print_str("*");
         }
-
         if self.computed {
             p.print_ascii_byte(b'[');
         }

@@ -51,11 +51,12 @@ fn private_in() {
 }
 
 #[test]
-fn access_property() {
+fn class() {
     test(
         "export default class Foo { @x @y accessor #aDef = 1 }",
         "export default class Foo {\n\t@x @y accessor #aDef = 1;\n}\n",
     );
+    test_minify("class F { static async * foo () {} }", "class F{static async*foo(){}}");
 }
 
 #[test]
