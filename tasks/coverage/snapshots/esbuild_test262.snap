@@ -2,7 +2,7 @@ commit: c4317b0c
 
 esbuild_test262 Summary:
 AST Parsed     : 44101/44101 (100.00%)
-Positive Passed: 44016/44101 (99.81%)
+Positive Passed: 44037/44101 (99.85%)
 tasks/coverage/test262/test/built-ins/DataView/prototype/getBigInt64/return-values-custom-offset.js
 whitespace error: 4
 
@@ -102,21 +102,6 @@ whitespace error: 41
 tasks/coverage/test262/test/language/expressions/arrow-function/prototype-rules.js
 whitespace error: 3
 
-tasks/coverage/test262/test/language/expressions/assignment/dstr/array-rest-nested-obj-null.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/expressions/assignment/dstr/array-rest-nested-obj-undefined-hole.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/expressions/assignment/dstr/array-rest-nested-obj-undefined-own.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/expressions/assignment/dstr/array-rest-nested-obj-undefined.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/expressions/assignment/dstr/array-rest-nested-obj.js
-whitespace error: 1
-
 tasks/coverage/test262/test/language/expressions/concatenation/S9.8_A1_T2.js
 whitespace error: 38
 
@@ -207,54 +192,6 @@ whitespace error: 3
 tasks/coverage/test262/test/language/statements/block/tco-stmt-list.js
 whitespace error: 6
 
-tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-null.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-undefined-hole.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-undefined-own.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-undefined.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj-null.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj-undefined-hole.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj-undefined-own.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj-undefined.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-of/dstr/array-rest-nested-obj-null.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-of/dstr/array-rest-nested-obj-undefined-hole.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-of/dstr/array-rest-nested-obj-undefined-own.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-of/dstr/array-rest-nested-obj-undefined.js
-whitespace error: 1
-
-tasks/coverage/test262/test/language/statements/for-of/dstr/array-rest-nested-obj.js
-whitespace error: 1
-
 tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.js
 whitespace error: 3
-
-tasks/coverage/test262/test/language/white-space/S7.2_A2.2_T2.js
-whitespace error: 24
 
