@@ -534,7 +534,6 @@ impl Gen for SwitchStatement<'_> {
         p.print_soft_space();
         p.print_curly_braces(self.span, self.cases.is_empty(), |p| {
             for case in &self.cases {
-                p.add_source_mapping(case.span);
                 case.print(p, ctx);
             }
         });
@@ -547,9 +546,11 @@ impl Gen for SwitchCase<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_semicolon_if_needed();
         p.print_indent();
+        p.add_source_mapping(self.span);
         match &self.test {
             Some(test) => {
-                p.print_str("case ");
+                p.print_str("case");
+                p.print_soft_space();
                 p.print_expression(test);
             }
             None => p.print_str("default"),
