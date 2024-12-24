@@ -452,14 +452,8 @@ impl<'a, 'b> PeepholeFoldConstants {
                     let left_string = ctx.get_side_free_string_value(left_expr);
                     let right_string = ctx.get_side_free_string_value(right_expr);
                     if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
-                        // In JS, browsers parse \v differently. So do not compare strings if one contains \v.
-                        if left_string.contains('\u{000B}') || right_string.contains('\u{000B}') {
-                            return None;
-                        }
-
                         return Some(left_string == right_string);
                     }
-
                     None
                 }
                 ValueType::Undefined | ValueType::Null => Some(true),
@@ -812,6 +806,8 @@ mod test {
         test_same("'' + x <= '' + x"); // potentially foldable
         test_same("'' + x != '' + x"); // potentially foldable
         test_same("'' + x === '' + x"); // potentially foldable
+
+        test(r#"if ("string" !== "\u000Bstr\u000Bing\u000B") {}"#, "if (false) {}\n");
     }
 
     #[test]
