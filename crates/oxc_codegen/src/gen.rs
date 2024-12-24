@@ -1807,9 +1807,7 @@ impl GenExpr for YieldExpression<'_> {
                 p.print_soft_space();
             }
             if let Some(argument) = self.argument.as_ref() {
-                if !self.delegate {
-                    p.print_hard_space();
-                }
+                p.print_soft_space();
                 argument.print_expr(p, Precedence::Yield, Context::empty());
             }
         });

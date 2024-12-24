@@ -164,14 +164,13 @@ fn r#yield() {
     test_minify("function *foo() { yield * async () => {} }", "function*foo(){yield*async()=>{}}");
     test_minify("function *foo() { yield a ? b : c }", "function*foo(){yield a?b:c}");
     test_minify("function *foo() { yield yield a }", "function*foo(){yield yield a}");
-    test_minify("function *foo() { yield () => {} }", "function*foo(){yield ()=>{}}");
+    test_minify("function *foo() { yield () => {} }", "function*foo(){yield()=>{}}");
     test_minify("function *foo() { yield async () => {} }", "function*foo(){yield async()=>{}}");
     test_minify(
         "function *foo() { yield { a } = [ b ] = c ? b : d }",
-        "function*foo(){yield {a}=[b]=c?b:d}",
+        "function*foo(){yield{a}=[b]=c?b:d}",
     );
-    // TODO: remove the extra space in `yield (a,b)`
-    test_minify("function *foo() { yield (a, b) }", "function*foo(){yield (a,b)}");
+    test_minify("function *foo() { yield (a, b) }", "function*foo(){yield(a,b)}");
     test_minify("function *foo() { yield a, b }", "function*foo(){yield a,b}");
 }
 
