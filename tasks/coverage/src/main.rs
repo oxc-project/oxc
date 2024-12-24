@@ -28,6 +28,7 @@ fn main() {
         "minifier" => args.run_minifier(),
         "runtime" => args.run_runtime(),
         "estree" => args.run_estree(),
+        "esbuild" => args.run_esbuild(),
         "all" => {
             args.run_default();
             args.run_runtime();
