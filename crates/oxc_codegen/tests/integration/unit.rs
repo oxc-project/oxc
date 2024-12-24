@@ -155,6 +155,11 @@ fn assignment() {
     test_minify("a %= async () => {}", "a%=async()=>{};");
     test_minify("a -= (1, 2)", "a-=(1,2);");
     test_minify("({ x: x = flag1 = true } = {})", "({x=flag1=true}={});");
+
+    test_minify("({ 0: x } = foo);", "({0:x}=foo);");
+    test_minify("({ [0]: x } = foo);", "({[0]:x}=foo);");
+    test_minify("({ a: x } = foo);", "({a:x}=foo);");
+    test_minify("({ [a.b]: x } = foo);", "({[a.b]:x}=foo);");
 }
 
 #[test]
