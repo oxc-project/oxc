@@ -2112,9 +2112,13 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
                     ident.print(p, ctx);
                 }
                 key @ match_expression!(PropertyKey) => {
-                    p.print_ascii_byte(b'[');
+                    if self.computed {
+                        p.print_ascii_byte(b'[');
+                    }
                     key.to_expression().print_expr(p, Precedence::Comma, Context::empty());
-                    p.print_ascii_byte(b']');
+                    if self.computed {
+                        p.print_ascii_byte(b']');
+                    }
                 }
             }
             p.print_colon();
