@@ -1791,9 +1791,22 @@ impl GenExpr for ArrowFunctionExpression<'_> {
                 type_parameters.print(p, ctx);
             }
             p.add_source_mapping(self.span);
-            p.print_ascii_byte(b'(');
-            self.params.print(p, ctx);
-            p.print_ascii_byte(b')');
+            let remove_params_wrap = p.options.minify
+                && self.params.items.len() == 1
+                && self.params.rest.is_none()
+                && self.type_parameters.is_none()
+                && self.return_type.is_none()
+                && {
+                    let param = &self.params.items[0];
+                    param.decorators.is_empty()
+                        && !param.has_modifier()
+                        && param.pattern.kind.is_binding_identifier()
+                        && param.pattern.type_annotation.is_none()
+                        && !param.pattern.optional
+                };
+            p.wrap(!remove_params_wrap, |p| {
+                self.params.print(p, ctx);
+            });
             if let Some(return_type) = &self.return_type {
                 p.print_str(":");
                 p.print_soft_space();

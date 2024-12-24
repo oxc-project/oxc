@@ -189,14 +189,14 @@ fn r#yield() {
 
 #[test]
 fn arrow() {
-    test_minify("x => a, b", "(x)=>a,b;");
-    test_minify("x => (a, b)", "(x)=>(a,b);");
-    test_minify("x => (a => b)", "(x)=>(a)=>b;");
-    test_minify("x => y => a, b", "(x)=>(y)=>a,b;");
-    test_minify("x => y => (a = b)", "(x)=>(y)=>a=b;");
-    test_minify("x => y => z => a = b, c", "(x)=>(y)=>(z)=>a=b,c;");
-    test_minify("x => y => z => a = (b, c)", "(x)=>(y)=>(z)=>a=(b,c);");
-    test_minify("x => ({} + 0)", "(x)=>({})+0;");
+    test_minify("x => a, b", "x=>a,b;");
+    test_minify("x => (a, b)", "x=>(a,b);");
+    test_minify("x => (a => b)", "x=>a=>b;");
+    test_minify("x => y => a, b", "x=>y=>a,b;");
+    test_minify("x => y => (a = b)", "x=>y=>a=b;");
+    test_minify("x => y => z => a = b, c", "x=>y=>z=>a=b,c;");
+    test_minify("x => y => z => a = (b, c)", "x=>y=>z=>a=(b,c);");
+    test_minify("x => ({} + 0)", "x=>({})+0;");
 }
 
 #[test]
