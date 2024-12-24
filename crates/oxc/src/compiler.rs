@@ -220,6 +220,8 @@ pub trait CompilerInterface {
 
         /* Codegen */
 
+        Compressor::new(&allocator, CompressOptions::all_false())
+            .dead_code_elimination(&mut program);
         if let Some(options) = self.codegen_options() {
             let ret = self.codegen(&program, source_path, mangler, options);
             self.after_codegen(ret);

@@ -24,6 +24,7 @@ use crate::{
     test262::{Test262Case, Test262Suite},
     tools::{
         codegen::{CodegenBabelCase, CodegenMiscCase, CodegenTest262Case, CodegenTypeScriptCase},
+        esbuild::EsbuildTest262Case,
         minifier::{MinifierBabelCase, MinifierTest262Case},
         prettier::{
             PrettierBabelCase, PrettierMiscCase, PrettierTest262Case, PrettierTypeScriptCase,
@@ -125,6 +126,10 @@ impl AppArgs {
     pub fn run_minifier(&self) {
         Test262Suite::<MinifierTest262Case>::new().run("minifier_test262", self);
         BabelSuite::<MinifierBabelCase>::new().run("minifier_babel", self);
+    }
+
+    pub fn run_esbuild(&self) {
+        Test262Suite::<EsbuildTest262Case>::new().run("esbuild_test262", self);
     }
 }
 

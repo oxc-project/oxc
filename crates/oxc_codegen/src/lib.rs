@@ -512,7 +512,11 @@ impl<'a> Codegen<'a> {
                 }
             }
         }
-        reference.name.as_str()
+        if reference.name == "undefined" {
+            "void 0"
+        } else {
+            reference.name.as_str()
+        }
     }
 
     fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {

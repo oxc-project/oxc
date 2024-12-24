@@ -1,0 +1,260 @@
+commit: c4317b0c
+
+esbuild_test262 Summary:
+AST Parsed     : 44101/44101 (100.00%)
+Positive Passed: 44016/44101 (99.81%)
+tasks/coverage/test262/test/built-ins/DataView/prototype/getBigInt64/return-values-custom-offset.js
+whitespace error: 4
+
+tasks/coverage/test262/test/built-ins/DataView/prototype/getBigInt64/return-values.js
+whitespace error: 4
+
+tasks/coverage/test262/test/built-ins/DataView/prototype/setBigInt64/set-values-little-endian-order.js
+whitespace error: 3
+
+tasks/coverage/test262/test/built-ins/Date/prototype/toISOString/15.9.5.43-0-13.js
+whitespace error: 7
+
+tasks/coverage/test262/test/built-ins/JSON/parse/15.12.2-2-10.js
+whitespace error: 1
+
+tasks/coverage/test262/test/built-ins/JSON/parse/15.12.2-2-2.js
+whitespace error: 1
+
+tasks/coverage/test262/test/built-ins/JSON/parse/15.12.2-2-5.js
+whitespace error: 1
+
+tasks/coverage/test262/test/built-ins/JSON/parse/15.12.2-2-7.js
+whitespace error: 1
+
+tasks/coverage/test262/test/built-ins/RegExp/escape/escaped-surrogates.js
+whitespace error: 515
+
+tasks/coverage/test262/test/built-ins/String/prototype/at/returns-code-unit.js
+whitespace error: 1
+
+tasks/coverage/test262/test/built-ins/String/prototype/codePointAt/return-first-code-unit.js
+whitespace error: 25
+
+tasks/coverage/test262/test/built-ins/StringIteratorPrototype/next/next-iteration-surrogate-pairs.js
+whitespace error: 1
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/roundingincrement-non-integer.js
+whitespace error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/roundingincrement-non-integer.js
+whitespace error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/roundingincrement-non-integer.js
+whitespace error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/roundingincrement-non-integer.js
+whitespace error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/roundingincrement-non-integer.js
+whitespace error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/roundingincrement-addition-out-of-range.js
+whitespace error: 7
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/roundingincrement-addition-out-of-range.js
+whitespace error: 7
+
+tasks/coverage/test262/test/built-ins/global/S10.2.3_A2.3_T1.js
+whitespace error: 9
+
+tasks/coverage/test262/test/built-ins/global/S10.2.3_A2.3_T2.js
+whitespace error: 21
+
+tasks/coverage/test262/test/built-ins/global/S10.2.3_A2.3_T3.js
+whitespace error: 33
+
+tasks/coverage/test262/test/built-ins/global/S10.2.3_A2.3_T4.js
+whitespace error: 5
+
+tasks/coverage/test262/test/intl402/DateTimeFormat/required-date-time-formats.js
+whitespace error: 1
+
+tasks/coverage/test262/test/intl402/DurationFormat/constructor-options-style-conflict.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/comments/multi-line-asi-carriage-return.js
+whitespace error: 2
+
+tasks/coverage/test262/test/language/comments/multi-line-asi-line-feed.js
+whitespace error: 2
+
+tasks/coverage/test262/test/language/comments/multi-line-asi-line-separator.js
+whitespace error: 2
+
+tasks/coverage/test262/test/language/comments/multi-line-asi-paragraph-separator.js
+whitespace error: 2
+
+tasks/coverage/test262/test/language/directive-prologue/14.1-4-s.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/directive-prologue/14.1-5-s.js
+whitespace error: 4
+
+tasks/coverage/test262/test/language/expressions/addition/S11.6.1_A3.2_T2.3.js
+whitespace error: 41
+
+tasks/coverage/test262/test/language/expressions/arrow-function/prototype-rules.js
+whitespace error: 3
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/array-rest-nested-obj-null.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/array-rest-nested-obj-undefined-hole.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/array-rest-nested-obj-undefined-own.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/array-rest-nested-obj-undefined.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/expressions/assignment/dstr/array-rest-nested-obj.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/expressions/concatenation/S9.8_A1_T2.js
+whitespace error: 38
+
+tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-bigint.js
+whitespace error: 52
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/new-covered-expression-is-valid.js
+whitespace error: 3
+
+tasks/coverage/test262/test/language/expressions/equals/bigint-and-bigint.js
+whitespace error: 53
+
+tasks/coverage/test262/test/language/expressions/greater-than/bigint-and-bigint.js
+whitespace error: 9
+
+tasks/coverage/test262/test/language/expressions/greater-than-or-equal/bigint-and-bigint.js
+whitespace error: 9
+
+tasks/coverage/test262/test/language/expressions/left-shift/bigint.js
+whitespace error: 82
+
+tasks/coverage/test262/test/language/expressions/less-than/bigint-and-bigint.js
+whitespace error: 9
+
+tasks/coverage/test262/test/language/expressions/less-than-or-equal/bigint-and-bigint.js
+whitespace error: 9
+
+tasks/coverage/test262/test/language/expressions/multiplication/S11.5.1_A4_T8.js
+whitespace error: 6
+
+tasks/coverage/test262/test/language/expressions/optional-chaining/optional-call-preserves-this.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/expressions/optional-chaining/optional-chain-async-optional-chain-square-brackets.js
+whitespace error: 52
+
+tasks/coverage/test262/test/language/expressions/optional-chaining/short-circuiting.js
+whitespace error: 25
+
+tasks/coverage/test262/test/language/expressions/postfix-decrement/S11.3.2_A3_T2.js
+whitespace error: 9
+
+tasks/coverage/test262/test/language/expressions/postfix-decrement/bigint.js
+whitespace error: 2
+
+tasks/coverage/test262/test/language/expressions/postfix-increment/S11.3.1_A3_T2.js
+whitespace error: 9
+
+tasks/coverage/test262/test/language/expressions/postfix-increment/bigint.js
+whitespace error: 2
+
+tasks/coverage/test262/test/language/expressions/prefix-decrement/bigint.js
+whitespace error: 2
+
+tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A3_T2.js
+whitespace error: 9
+
+tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A4_T2.js
+whitespace error: 9
+
+tasks/coverage/test262/test/language/expressions/prefix-increment/bigint.js
+whitespace error: 2
+
+tasks/coverage/test262/test/language/expressions/right-shift/bigint.js
+whitespace error: 82
+
+tasks/coverage/test262/test/language/expressions/strict-does-not-equals/bigint-and-bigint.js
+whitespace error: 57
+
+tasks/coverage/test262/test/language/expressions/strict-equals/bigint-and-bigint.js
+whitespace error: 58
+
+tasks/coverage/test262/test/language/expressions/void/S11.4.2_A4_T1.js
+whitespace error: 13
+
+tasks/coverage/test262/test/language/expressions/void/S11.4.2_A4_T2.js
+whitespace error: 13
+
+tasks/coverage/test262/test/language/expressions/void/S11.4.2_A4_T3.js
+whitespace error: 10
+
+tasks/coverage/test262/test/language/expressions/void/S11.4.2_A4_T4.js
+whitespace error: 3
+
+tasks/coverage/test262/test/language/literals/regexp/named-groups/invalid-lone-surrogate-groupname.js
+whitespace error: 3
+
+tasks/coverage/test262/test/language/statements/block/tco-stmt-list.js
+whitespace error: 6
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-null.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-undefined-hole.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-undefined-own.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj-undefined.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-array-rest-nested-obj.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj-null.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj-undefined-hole.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj-undefined-own.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj-undefined.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-array-rest-nested-obj.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/array-rest-nested-obj-null.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/array-rest-nested-obj-undefined-hole.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/array-rest-nested-obj-undefined-own.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/array-rest-nested-obj-undefined.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-of/dstr/array-rest-nested-obj.js
+whitespace error: 1
+
+tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.js
+whitespace error: 3
+
+tasks/coverage/test262/test/language/white-space/S7.2_A2.2_T2.js
+whitespace error: 24
+
