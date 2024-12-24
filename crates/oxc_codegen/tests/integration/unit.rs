@@ -15,6 +15,8 @@ fn module_decl() {
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
     test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
+    test_minify("export { '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
+    test_minify("export { '☿' as '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
 }
 
 #[test]

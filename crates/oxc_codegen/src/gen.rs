@@ -914,7 +914,7 @@ impl Gen for ImportDeclaration<'_> {
                         spec.imported.print(p, ctx);
                         let local_name = p.get_binding_identifier_name(&spec.local);
                         let imported_name = get_module_export_name(&spec.imported, p);
-                        if imported_name.is_none() || imported_name != Some(local_name) {
+                        if imported_name != local_name {
                             p.print_str(" as ");
                             spec.local.print(p, ctx);
                         }
@@ -1060,13 +1060,11 @@ impl Gen for TSNamespaceExportDeclaration<'_> {
 fn get_module_export_name<'a>(
     module_export_name: &ModuleExportName<'a>,
     p: &Codegen<'a>,
-) -> Option<&'a str> {
+) -> &'a str {
     match module_export_name {
-        ModuleExportName::IdentifierName(ident) => Some(ident.name.as_str()),
-        ModuleExportName::IdentifierReference(ident) => {
-            Some(p.get_identifier_reference_name(ident))
-        }
-        ModuleExportName::StringLiteral(_) => None,
+        ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
+        ModuleExportName::IdentifierReference(ident) => p.get_identifier_reference_name(ident),
+        ModuleExportName::StringLiteral(s) => s.value.as_str(),
     }
 }
 
@@ -1078,7 +1076,7 @@ impl Gen for ExportSpecifier<'_> {
         self.local.print(p, ctx);
         let local_name = get_module_export_name(&self.local, p);
         let exported_name = get_module_export_name(&self.exported, p);
-        if exported_name.is_none() || local_name != exported_name {
+        if local_name != exported_name {
             p.print_str(" as ");
             self.exported.print(p, ctx);
         }
