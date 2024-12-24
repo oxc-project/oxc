@@ -18,6 +18,7 @@ import { extname, join as pathJoin } from 'path';
 
 const PACKAGES = [
   'babel-plugin-transform-class-properties',
+  'babel-plugin-transform-private-methods',
   'babel-plugin-transform-logical-assignment-operators',
 ];
 const FILTER_OUT_PRESETS = ['env'];
