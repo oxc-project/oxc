@@ -169,6 +169,7 @@ fn assignment() {
 
 #[test]
 fn r#yield() {
+    test("function * foo() { yield * 1 }", "function* foo() {\n\tyield* 1;\n}\n");
     test_minify("function *foo() { yield }", "function*foo(){yield}");
     test_minify("function *foo() { yield * a ? b : c }", "function*foo(){yield*a?b:c}");
     test_minify("function *foo() { yield * yield * a }", "function*foo(){yield*yield*a}");

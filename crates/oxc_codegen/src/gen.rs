@@ -1822,7 +1822,6 @@ impl GenExpr for YieldExpression<'_> {
             p.print_str("yield");
             if self.delegate {
                 p.print_ascii_byte(b'*');
-                p.print_soft_space();
             }
             if let Some(argument) = self.argument.as_ref() {
                 p.print_soft_space();
