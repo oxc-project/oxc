@@ -46,7 +46,7 @@ struct Alphabetize {
 
 #[derive(Debug, Default, Clone)]
 pub struct Order {
-    config: Option<OrderConfig>,
+    config: Option<Box<OrderConfig>>,
 }
 
 #[derive(Debug)]
@@ -105,15 +105,13 @@ declare_oxc_lint!(
     /// var path = require('path');
     /// ```
     Order,
-    style,
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    nursery,
+    pending
 );
 
 impl Rule for Order {
     fn from_configuration(value: serde_json::Value) -> Self {
-        Self { config: serde_json::from_value(value).ok() }
+        Self { config: serde_json::from_value(value).ok().map(Box::new) }
     }
     fn run_once(&self, ctx: &LintContext) {
         if let Some(config) = &self.config {
