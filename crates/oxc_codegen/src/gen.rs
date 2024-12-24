@@ -416,7 +416,8 @@ impl Gen for ForOfStatement<'_> {
         self.left.print(p, ctx);
         p.print_soft_space();
         p.print_space_before_identifier();
-        p.print_str("of ");
+        p.print_str("of");
+        p.print_soft_space();
         self.right.print_expr(p, Precedence::Comma, Context::empty());
         p.print_ascii_byte(b')');
         p.print_body(&self.body, false, ctx);
