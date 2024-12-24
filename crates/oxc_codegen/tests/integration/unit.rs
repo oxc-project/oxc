@@ -37,7 +37,7 @@ fn expr() {
     test_minify_same("await import(\"\");");
 
     test("delete 2e308", "delete (0, Infinity);\n");
-    test_minify("delete 2e308", "delete (1/0);");
+    test_minify("delete 2e308", "delete(1/0);");
 }
 
 #[test]
@@ -154,7 +154,7 @@ fn assignment() {
     test_minify("a /= () => {}", "a/=()=>{};");
     test_minify("a %= async () => {}", "a%=async()=>{};");
     test_minify("a -= (1, 2)", "a-=(1,2);");
-    test_minify("a >>= b >>= c", "a>>=b>>=c;");
+    test_minify("({ x: x = flag1 = true } = {})", "({x=flag1=true}={});");
 }
 
 #[test]

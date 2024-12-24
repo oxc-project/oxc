@@ -396,7 +396,7 @@ impl Gen for ForInStatement<'_> {
         p.print_soft_space();
         p.print_space_before_identifier();
         p.print_str("in");
-        p.print_hard_space();
+        p.print_soft_space();
         p.print_expression(&self.right);
         p.print_ascii_byte(b')');
         p.print_body(&self.body, false, ctx);
@@ -503,7 +503,7 @@ impl Gen for ContinueStatement<'_> {
         p.print_indent();
         p.print_str("continue");
         if let Some(label) = &self.label {
-            p.print_hard_space();
+            p.print_soft_space();
             label.print(p, ctx);
         }
         p.print_semicolon_after_statement();
@@ -516,7 +516,7 @@ impl Gen for BreakStatement<'_> {
         p.print_indent();
         p.print_str("break");
         if let Some(label) = &self.label {
-            p.print_hard_space();
+            p.print_soft_space();
             label.print(p, ctx);
         }
         p.print_semicolon_after_statement();
@@ -800,14 +800,17 @@ impl Gen for FormalParameter<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         for decorator in &self.decorators {
             decorator.print(p, ctx);
-            p.print_hard_space();
+            p.print_soft_space();
         }
         if let Some(accessibility) = self.accessibility {
+            p.print_space_before_identifier();
             p.print_str(accessibility.as_str());
-            p.print_hard_space();
+            p.print_soft_space();
         }
         if self.readonly {
-            p.print_str("readonly ");
+            p.print_space_before_identifier();
+            p.print_str("readonly");
+            p.print_soft_space();
         }
         self.pattern.print(p, ctx);
     }
@@ -1237,6 +1240,7 @@ impl Gen for BindingIdentifier<'_> {
 
 impl Gen for LabelIdentifier<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, &self.name);
         p.print_str(self.name.as_str());
     }
@@ -1843,7 +1847,7 @@ impl GenExpr for UnaryExpression<'_> {
             if self.operator.is_keyword() {
                 p.print_space_before_identifier();
                 p.print_str(operator);
-                p.print_hard_space();
+                p.print_soft_space();
             } else {
                 p.print_space_before_operator(self.operator.into());
                 p.print_str(operator);
@@ -2089,21 +2093,33 @@ impl Gen for AssignmentTargetPropertyIdentifier<'_> {
 
 impl Gen for AssignmentTargetPropertyProperty<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        match &self.name {
-            PropertyKey::StaticIdentifier(ident) => {
-                ident.print(p, ctx);
+        let omit_key = if p.options.minify {
+            let key_name = match &self.name {
+                PropertyKey::StaticIdentifier(ident) => Some(&ident.name),
+                _ => None,
+            };
+            let value_name = self.binding.name();
+            key_name.is_some() && value_name.is_some() && key_name == value_name.as_ref()
+        } else {
+            false
+        };
+        if !omit_key {
+            match &self.name {
+                PropertyKey::StaticIdentifier(ident) => {
+                    ident.print(p, ctx);
+                }
+                PropertyKey::PrivateIdentifier(ident) => {
+                    ident.print(p, ctx);
+                }
+                key @ match_expression!(PropertyKey) => {
+                    p.print_ascii_byte(b'[');
+                    key.to_expression().print_expr(p, Precedence::Comma, Context::empty());
+                    p.print_ascii_byte(b']');
+                }
             }
-            PropertyKey::PrivateIdentifier(ident) => {
-                ident.print(p, ctx);
-            }
-            key @ match_expression!(PropertyKey) => {
-                p.print_ascii_byte(b'[');
-                key.to_expression().print_expr(p, Precedence::Comma, Context::empty());
-                p.print_ascii_byte(b']');
-            }
+            p.print_colon();
+            p.print_soft_space();
         }
-        p.print_colon();
-        p.print_soft_space();
         self.binding.print(p, ctx);
     }
 }
