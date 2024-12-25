@@ -488,6 +488,11 @@ impl UnaryOperator {
         self == Self::BitwiseNot
     }
 
+    /// Returns `true` if this is the [`void`](UnaryOperator::Typeof) operator.
+    pub fn is_typeof(self) -> bool {
+        self == Self::Typeof
+    }
+
     /// Returns `true` if this is the [`void`](UnaryOperator::Void) operator.
     pub fn is_void(self) -> bool {
         self == Self::Void
