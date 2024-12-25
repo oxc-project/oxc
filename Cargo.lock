@@ -1793,8 +1793,10 @@ dependencies = [
  "oxc_codegen",
  "oxc_minifier",
  "oxc_parser",
+ "oxc_semantic",
  "oxc_span",
  "oxc_tasks_common",
+ "oxc_transformer",
  "rustc-hash",
 ]
 
