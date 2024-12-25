@@ -587,7 +587,7 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn print_quoted_utf16(&mut self, s: &str) {
+    fn print_quoted_utf16(&mut self, s: &str, allow_backtick: bool) {
         let quote = if self.options.minify {
             let mut single_cost: u32 = 0;
             let mut double_cost: u32 = 0;
@@ -595,18 +595,10 @@ impl<'a> Codegen<'a> {
             let mut bytes = s.as_bytes().iter().peekable();
             while let Some(b) = bytes.next() {
                 match b {
-                    b'\n' if self.options.minify => {
-                        backtick_cost = backtick_cost.saturating_sub(1);
-                    }
-                    b'\'' => {
-                        single_cost += 1;
-                    }
-                    b'"' => {
-                        double_cost += 1;
-                    }
-                    b'`' => {
-                        backtick_cost += 1;
-                    }
+                    b'\n' if self.options.minify => backtick_cost = backtick_cost.saturating_sub(1),
+                    b'\'' => single_cost += 1,
+                    b'"' => double_cost += 1,
+                    b'`' => backtick_cost += 1,
                     b'$' => {
                         if bytes.peek() == Some(&&b'{') {
                             backtick_cost += 1;
@@ -618,10 +610,10 @@ impl<'a> Codegen<'a> {
             let mut quote = b'"';
             if double_cost > single_cost {
                 quote = b'\'';
-                if single_cost > backtick_cost {
+                if single_cost > backtick_cost && allow_backtick {
                     quote = b'`';
                 }
-            } else if double_cost > backtick_cost {
+            } else if double_cost > backtick_cost && allow_backtick {
                 quote = b'`';
             }
             quote

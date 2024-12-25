@@ -1337,7 +1337,7 @@ impl Gen for StringLiteral<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         let s = self.value.as_str();
-        p.print_quoted_utf16(s);
+        p.print_quoted_utf16(s, /* allow_backtick */ true);
     }
 }
 
@@ -1647,6 +1647,9 @@ impl Gen for PropertyKey<'_> {
         match self {
             Self::StaticIdentifier(ident) => ident.print(p, ctx),
             Self::PrivateIdentifier(ident) => ident.print(p, ctx),
+            Self::StringLiteral(s) => {
+                p.print_quoted_utf16(s.value.as_str(), /* allow_backtick */ false);
+            }
             match_expression!(Self) => {
                 self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
             }

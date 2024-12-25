@@ -43,6 +43,8 @@ fn expr() {
         r#";'eval("\'\\vstr\\ving\\v\'") === "\\vstr\\ving\\v"'"#,
         r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
     );
+
+    test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
 }
 
 #[test]
