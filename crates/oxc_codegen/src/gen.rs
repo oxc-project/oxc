@@ -4,7 +4,6 @@ use cow_utils::CowUtils;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::{
-    identifier::{LS, PS},
     operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
 };
@@ -1334,133 +1333,11 @@ impl Gen for RegExpLiteral<'_> {
     }
 }
 
-fn print_unquoted_str(s: &str, quote: u8, p: &mut Codegen) {
-    let mut chars = s.chars().peekable();
-
-    while let Some(c) = chars.next() {
-        match c {
-            '\x00' => {
-                if chars.peek().is_some_and(|&next| next.is_ascii_digit()) {
-                    p.print_str("\\x00");
-                } else {
-                    p.print_str("\\0");
-                }
-            }
-            '\x07' => {
-                p.print_str("\\x07");
-            }
-            // \b
-            '\u{8}' => {
-                p.print_str("\\b");
-            }
-            // \v
-            '\u{b}' => {
-                p.print_str("\\v");
-            }
-            // \f
-            '\u{c}' => {
-                p.print_str("\\f");
-            }
-            '\n' => {
-                p.print_str("\\n");
-            }
-            '\r' => {
-                p.print_str("\\r");
-            }
-            '\x1B' => {
-                p.print_str("\\x1B");
-            }
-            '\\' => {
-                p.print_str("\\\\");
-            }
-            '\'' => {
-                if quote == b'\'' {
-                    p.print_ascii_byte(b'\\');
-                }
-                p.print_ascii_byte(b'\'');
-            }
-            '\"' => {
-                if quote == b'"' {
-                    p.print_ascii_byte(b'\\');
-                }
-                p.print_ascii_byte(b'"');
-            }
-            '`' => {
-                if quote == b'`' {
-                    p.print_ascii_byte(b'\\');
-                }
-                p.print_ascii_byte(b'`');
-            }
-            '$' => {
-                if chars.peek() == Some(&'{') {
-                    p.print_ascii_byte(b'\\');
-                }
-                p.print_ascii_byte(b'$');
-            }
-            // Allow `U+2028` and `U+2029` in string literals
-            // <https://tc39.es/proposal-json-superset>
-            // <https://github.com/tc39/proposal-json-superset>
-            LS => p.print_str("\\u2028"),
-            PS => p.print_str("\\u2029"),
-            '\u{a0}' => {
-                p.print_str("\\xA0");
-            }
-            _ => {
-                p.print_str(c.encode_utf8([0; 4].as_mut()));
-            }
-        }
-    }
-}
-
 impl Gen for StringLiteral<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         let s = self.value.as_str();
-
-        let quote = if p.options.minify {
-            let mut single_cost: u32 = 0;
-            let mut double_cost: u32 = 0;
-            let mut backtick_cost: u32 = 0;
-            let mut bytes = s.as_bytes().iter().peekable();
-            while let Some(b) = bytes.next() {
-                match b {
-                    b'\n' if p.options.minify => {
-                        backtick_cost = backtick_cost.saturating_sub(1);
-                    }
-                    b'\'' => {
-                        single_cost += 1;
-                    }
-                    b'"' => {
-                        double_cost += 1;
-                    }
-                    b'`' => {
-                        backtick_cost += 1;
-                    }
-                    b'$' => {
-                        if bytes.peek() == Some(&&b'{') {
-                            backtick_cost += 1;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            let mut quote = b'"';
-            if double_cost > single_cost {
-                quote = b'\'';
-                if single_cost > backtick_cost {
-                    quote = b'`';
-                }
-            } else if double_cost > backtick_cost {
-                quote = b'`';
-            }
-            quote
-        } else {
-            p.quote
-        };
-
-        p.print_ascii_byte(quote);
-        print_unquoted_str(s, quote, p);
-        p.print_ascii_byte(quote);
+        p.print_quoted_utf16(s);
     }
 }
 

@@ -21,7 +21,7 @@ use oxc_ast::ast::{
 use oxc_mangler::Mangler;
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
-    identifier::{is_identifier_part, is_identifier_part_ascii},
+    identifier::{is_identifier_part, is_identifier_part_ascii, LS, PS},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
@@ -349,6 +349,17 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
+    fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
+        if wrap {
+            self.print_ascii_byte(b'(');
+        }
+        f(self);
+        if wrap {
+            self.print_ascii_byte(b')');
+        }
+    }
+
+    #[inline]
     fn print_indent(&mut self) {
         if self.options.minify {
             return;
@@ -576,6 +587,108 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    fn print_quoted_utf16(&mut self, s: &str) {
+        let quote = if self.options.minify {
+            let mut single_cost: u32 = 0;
+            let mut double_cost: u32 = 0;
+            let mut backtick_cost: u32 = 0;
+            let mut bytes = s.as_bytes().iter().peekable();
+            while let Some(b) = bytes.next() {
+                match b {
+                    b'\n' if self.options.minify => {
+                        backtick_cost = backtick_cost.saturating_sub(1);
+                    }
+                    b'\'' => {
+                        single_cost += 1;
+                    }
+                    b'"' => {
+                        double_cost += 1;
+                    }
+                    b'`' => {
+                        backtick_cost += 1;
+                    }
+                    b'$' => {
+                        if bytes.peek() == Some(&&b'{') {
+                            backtick_cost += 1;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            let mut quote = b'"';
+            if double_cost > single_cost {
+                quote = b'\'';
+                if single_cost > backtick_cost {
+                    quote = b'`';
+                }
+            } else if double_cost > backtick_cost {
+                quote = b'`';
+            }
+            quote
+        } else {
+            self.quote
+        };
+
+        self.print_ascii_byte(quote);
+        self.print_unquoted_utf16(s, quote);
+        self.print_ascii_byte(quote);
+    }
+
+    fn print_unquoted_utf16(&mut self, s: &str, quote: u8) {
+        let mut chars = s.chars().peekable();
+
+        while let Some(c) = chars.next() {
+            match c {
+                '\x00' => {
+                    if chars.peek().is_some_and(|&next| next.is_ascii_digit()) {
+                        self.print_str("\\x00");
+                    } else {
+                        self.print_str("\\0");
+                    }
+                }
+                '\x07' => self.print_str("\\x07"),
+                '\u{8}' => self.print_str("\\b"), // \b
+                '\u{b}' => self.print_str("\\v"), // \v
+                '\u{c}' => self.print_str("\\f"), // \f
+                '\n' => self.print_str("\\n"),
+                '\r' => self.print_str("\\r"),
+                '\x1B' => self.print_str("\\x1B"),
+                '\\' => self.print_str("\\\\"),
+                // Allow `U+2028` and `U+2029` in string literals
+                // <https://tc39.es/proposal-json-superset>
+                // <https://github.com/tc39/proposal-json-superset>
+                LS => self.print_str("\\u2028"),
+                PS => self.print_str("\\u2029"),
+                '\u{a0}' => self.print_str("\\xA0"),
+                '\'' => {
+                    if quote == b'\'' {
+                        self.print_ascii_byte(b'\\');
+                    }
+                    self.print_ascii_byte(b'\'');
+                }
+                '\"' => {
+                    if quote == b'"' {
+                        self.print_ascii_byte(b'\\');
+                    }
+                    self.print_ascii_byte(b'"');
+                }
+                '`' => {
+                    if quote == b'`' {
+                        self.print_ascii_byte(b'\\');
+                    }
+                    self.print_ascii_byte(b'`');
+                }
+                '$' => {
+                    if chars.peek() == Some(&'{') {
+                        self.print_ascii_byte(b'\\');
+                    }
+                    self.print_ascii_byte(b'$');
+                }
+                _ => self.print_str(c.encode_utf8([0; 4].as_mut())),
+            }
+        }
+    }
+
     // `get_minified_number` from terser
     // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
@@ -628,17 +741,6 @@ impl<'a> Codegen<'a> {
         }
 
         candidates.into_iter().min_by_key(String::len).unwrap()
-    }
-
-    #[inline]
-    fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
-        if wrap {
-            self.print_ascii_byte(b'(');
-        }
-        f(self);
-        if wrap {
-            self.print_ascii_byte(b')');
-        }
     }
 
     fn add_source_mapping(&mut self, span: Span) {
