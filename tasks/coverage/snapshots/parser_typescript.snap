@@ -2,7 +2,7 @@ commit: d85767ab
 
 parser_typescript Summary:
 AST Parsed     : 6494/6503 (99.86%)
-Positive Passed: 6481/6503 (99.66%)
+Positive Passed: 6483/6503 (99.69%)
 Negative Passed: 1275/5747 (22.19%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -4765,24 +4765,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/moduleResolut
    ·     ▲
    ╰────
   help: Try insert a semicolon here
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFileForHtmlFileWithinDeclarationFile.ts
-
-  × Function implementation is missing or not immediately following the declaration.
-    ╭─[typescript/tests/cases/conformance/nonjsExtensions/declarationFileForHtmlFileWithinDeclarationFile.ts:11:5]
- 10 │ export class HTML5Element extends HTMLElement {
- 11 │     connectedCallback(): void;
-    ·     ─────────────────
- 12 │ }
-    ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFileForHtmlImport.ts
-
-  × Function implementation is missing or not immediately following the declaration.
-    ╭─[typescript/tests/cases/conformance/nonjsExtensions/declarationFileForHtmlImport.ts:11:5]
- 10 │ export class HTML5Element extends HTMLElement {
- 11 │     connectedCallback(): void;
-    ·     ─────────────────
- 12 │ }
-    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSRedeclare3.ts
 
   × Identifier `orbitol` has already been declared

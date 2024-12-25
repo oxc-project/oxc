@@ -468,25 +468,35 @@ impl SourceType {
                 )
             })?;
 
-        let (language, module_kind) = match extension {
-            "js" | "mjs" | "jsx" => (Language::JavaScript, ModuleKind::Module),
-            "cjs" => (Language::JavaScript, ModuleKind::Script),
-            "ts" if file_name.ends_with(".d.ts") => {
-                (Language::TypeScriptDefinition, ModuleKind::Module)
+        let module_kind = match extension {
+            "js" | "tsx" | "ts" | "jsx" | "mts" | "mjs" => ModuleKind::Module,
+            "cjs" | "cts" => ModuleKind::Script,
+            _ => unreachable!(),
+        };
+
+        let language = match extension {
+            // https://www.typescriptlang.org/tsconfig/#allowArbitraryExtensions
+            // `{file basename}.d.{extension}.ts`
+            // https://github.com/microsoft/TypeScript/issues/50133
+            "ts" => {
+                if file_name[..file_name.len() - 3].split('.').rev().take(2).any(|c| c == "d") {
+                    Language::TypeScriptDefinition
+                } else {
+                    Language::TypeScript
+                }
             }
-            "mts" if file_name.ends_with(".d.mts") => {
-                (Language::TypeScriptDefinition, ModuleKind::Module)
+            "js" | "cjs" | "mjs" | "jsx" => Language::JavaScript,
+            "tsx" => Language::TypeScript,
+            #[allow(clippy::case_sensitive_file_extension_comparisons)]
+            "mts" | "cts" => {
+                if file_name[..file_name.len() - 4].ends_with(".d") {
+                    Language::TypeScriptDefinition
+                } else {
+                    Language::TypeScript
+                }
             }
-            "cts" if file_name.ends_with(".d.cts") => {
-                (Language::TypeScriptDefinition, ModuleKind::Script)
-            }
-            "ts" | "mts" | "tsx" => (Language::TypeScript, ModuleKind::Module),
-            "cts" => (Language::TypeScript, ModuleKind::Script),
             _ => {
-                #[cfg(debug_assertions)]
                 unreachable!();
-                #[cfg(not(debug_assertions))]
-                return Err(UnknownExtension(format!("Unknown extension: {extension}").into()));
             }
         };
 
@@ -547,14 +557,12 @@ mod tests {
     #[test]
     #[allow(clippy::similar_names)]
     fn test_d_ts_from_path() {
-        let dts = SourceType::from_path("foo.d.ts")
-            .expect("foo.d.ts should be a valid TypeScript definition file path.");
-        let dmts = SourceType::from_path("foo.d.mts")
-            .expect("foo.d.mts should be a valid TypeScript definition file path.");
-        let dcts = SourceType::from_path("foo.d.cts")
-            .expect("foo.d.cts should be a valid TypeScript definition file path.");
+        let dts = SourceType::from_path("foo.d.ts").unwrap();
+        let dmts = SourceType::from_path("foo.d.mts").unwrap();
+        let dcts = SourceType::from_path("foo.d.cts").unwrap();
+        let arbitrary = SourceType::from_path("foo.d.ext.ts").unwrap();
 
-        for ty in &[dts, dmts, dcts] {
+        for ty in &[dts, dmts, dcts, arbitrary] {
             assert!(ty.is_typescript());
             assert!(ty.is_typescript_definition());
             assert!(!ty.is_javascript());
