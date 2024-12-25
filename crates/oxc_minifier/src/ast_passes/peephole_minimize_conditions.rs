@@ -11,6 +11,10 @@ use crate::CompressorPass;
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 pub struct PeepholeMinimizeConditions {
+    /// Do not compress syntaxes that are hard to analyze inside the fixed loop.
+    #[allow(unused)]
+    in_fixed_loop: bool,
+
     pub(crate) changed: bool,
 }
 
@@ -24,7 +28,7 @@ impl<'a> CompressorPass<'a> for PeepholeMinimizeConditions {
 impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
-            Expression::UnaryExpression(e) if e.operator.is_not() => Self::try_minimize_not(e, ctx),
+            Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -34,8 +38,8 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
 }
 
 impl<'a> PeepholeMinimizeConditions {
-    pub fn new() -> Self {
-        Self { changed: false }
+    pub fn new(in_fixed_loop: bool) -> Self {
+        Self { in_fixed_loop, changed: false }
     }
 
     /// Try to minimize NOT nodes such as `!(x==y)`.
@@ -43,14 +47,14 @@ impl<'a> PeepholeMinimizeConditions {
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        debug_assert!(expr.operator.is_not());
-        if let Expression::BinaryExpression(binary_expr) = &mut expr.argument {
-            if let Some(new_op) = binary_expr.operator.equality_inverse_operator() {
-                binary_expr.operator = new_op;
-                return Some(ctx.ast.move_expression(&mut expr.argument));
-            }
+        // TODO: tryMinimizeCondition(node.getFirstChild());
+        if !expr.operator.is_not() {
+            return None;
         }
-        None
+        let Expression::BinaryExpression(binary_expr) = &mut expr.argument else { return None };
+        let new_op = binary_expr.operator.equality_inverse_operator()?;
+        binary_expr.operator = new_op;
+        Some(ctx.ast.move_expression(&mut expr.argument))
     }
 }
 
@@ -63,7 +67,7 @@ mod test {
 
     fn test(source_text: &str, positive: &str) {
         let allocator = Allocator::default();
-        let mut pass = super::PeepholeMinimizeConditions::new();
+        let mut pass = super::PeepholeMinimizeConditions::new(true);
         tester::test(&allocator, source_text, positive, &mut pass);
     }
 
@@ -951,7 +955,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_remove_else_cause3() {
         test_same("function f() { a:{if (x) break a; else f() } }");
         test_same("function f() { if (x) { a:{ break a } } else f() }");
@@ -959,7 +962,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_remove_else_cause4() {
         test_same("function f() { if (x) { if (y) { return 1; } } else f() }");
     }
@@ -1000,7 +1002,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_disabled() {
         // enableTypeCheck();
         test_same("var x = {}; if (x != null) throw 'a';");
@@ -1011,14 +1012,12 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_boolean_result0() {
         // enableTypeCheck();
         test_same("var x = {}; var y = x != null;");
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_boolean_result1() {
         // enableTypeCheck();
         test_same("var x = {}; var y = x == null;");
@@ -1060,7 +1059,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_expression() {
         // enableTypeCheck();
         test_same("var x = {}; x != null && alert('b');");
@@ -1068,7 +1066,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_hook() {
         // enableTypeCheck();
         test_same(concat!("var x = {};", "var y = x != null ? 1 : 2;"));
@@ -1087,7 +1084,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_while() {
         // enableTypeCheck();
         test_same("var x = {}; while (x != null) throw 'a';");
@@ -1095,7 +1091,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_unknown_type() {
         // enableTypeCheck();
         test_same("var x = /** @type {?} */ ({});\nif (x != null) throw 'a';\n");
@@ -1103,7 +1098,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_all_type() {
         // enableTypeCheck();
         test_same("var x = /** @type {*} */ ({});\nif (x != null) throw 'a';\n");
@@ -1111,7 +1105,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_primitives_vs_null() {
         // enableTypeCheck();
         test_same("var x = 0;\nif (x != null) throw 'a';\n");
@@ -1120,7 +1113,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_non_number_vs_zero() {
         // enableTypeCheck();
         test_same("var x = {};\nif (x != 0) throw 'a';\n");
@@ -1129,14 +1121,12 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_boxed_number_vs_zero() {
         // enableTypeCheck();
         test_same("var x = new Number(0);\nif (x != 0) throw 'a';\n");
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_boxed_primitives() {
         // enableTypeCheck();
         test_same("var x = new Number(); if (x != null) throw 'a';");

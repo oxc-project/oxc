@@ -74,12 +74,13 @@ pub struct LatePeepholeOptimizations {
 
 impl LatePeepholeOptimizations {
     pub fn new() -> Self {
+        let in_fixed_loop = true;
         Self {
             x0_statement_fusion: StatementFusion::new(),
             x1_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
-            x2_peephole_minimize_conditions: PeepholeMinimizeConditions::new(),
+            x2_peephole_minimize_conditions: PeepholeMinimizeConditions::new(in_fixed_loop),
             x3_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax::new(
-                /* in_fixed_loop */ true,
+                in_fixed_loop,
             ),
             x4_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
             x5_peephole_fold_constants: PeepholeFoldConstants::new(),
@@ -195,10 +196,11 @@ pub struct PeepholeOptimizations {
 
 impl PeepholeOptimizations {
     pub fn new() -> Self {
+        let in_fixed_loop = false;
         Self {
-            x2_peephole_minimize_conditions: PeepholeMinimizeConditions::new(),
+            x2_peephole_minimize_conditions: PeepholeMinimizeConditions::new(in_fixed_loop),
             x3_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax::new(
-                /* in_fixed_loop */ false,
+                in_fixed_loop,
             ),
             x4_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
             x5_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
