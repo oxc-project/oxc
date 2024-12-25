@@ -46350,38 +46350,10 @@ after transform: ["const"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFileForHtmlFileWithinDeclarationFile.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["HTML5Element", "blogPost", "doc"]
-rebuilt        : ScopeId(0): ["HTML5Element", "blogPost"]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Reference symbol mismatch for "doc":
-after transform: SymbolId(0) "doc"
-rebuilt        : <None>
-Reference flags mismatch for "doc":
-after transform: ReferenceId(1): ReferenceFlags(Read)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: ["Document", "Element", "HTMLElement"]
-rebuilt        : ["HTMLElement", "doc"]
+semantic error: Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFileForHtmlImport.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["HTML5Element", "blogPost", "doc"]
-rebuilt        : ScopeId(0): ["HTML5Element", "blogPost"]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Reference symbol mismatch for "doc":
-after transform: SymbolId(0) "doc"
-rebuilt        : <None>
-Reference flags mismatch for "doc":
-after transform: ReferenceId(1): ReferenceFlags(Read)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: ["Document", "Element", "HTMLElement"]
-rebuilt        : ["HTMLElement", "doc"]
+semantic error: Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFileForJsonImport.ts
 semantic error: Bindings mismatch:

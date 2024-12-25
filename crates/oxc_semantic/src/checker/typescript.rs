@@ -335,6 +335,13 @@ fn constructor_implementation_missing(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Constructor implementation is missing.").with_label(span)
 }
 
+fn function_implementation_missing(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "Function implementation is missing or not immediately following the declaration.",
+    )
+    .with_label(span)
+}
+
 pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
     if !class.r#abstract {
         for elem in &class.body.body {
@@ -348,13 +355,24 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
     if !class.r#declare && !ctx.in_declare_scope() {
         for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
             if let Some(ClassElement::MethodDefinition(a)) = a {
-                if a.kind.is_constructor()
+                if !a.r#type.is_abstract()
+                    && !a.optional
                     && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
-                    && b.map_or(true, |b| {
-                        b.method_definition_kind().map_or(true, |kind| !kind.is_constructor())
+                    && b.map_or(true, |b| match b {
+                        ClassElement::StaticBlock(_)
+                        | ClassElement::PropertyDefinition(_)
+                        | ClassElement::AccessorProperty(_)
+                        | ClassElement::TSIndexSignature(_) => true,
+                        ClassElement::MethodDefinition(b) => {
+                            b.key.static_name() != a.key.static_name()
+                        }
                     })
                 {
-                    ctx.error(constructor_implementation_missing(a.key.span()));
+                    if a.kind.is_constructor() {
+                        ctx.error(constructor_implementation_missing(a.key.span()));
+                    } else {
+                        ctx.error(function_implementation_missing(a.key.span()));
+                    };
                 }
             }
         }
