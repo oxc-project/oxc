@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+### Features
+
+- e632a7b transformer: Remove typescript symbols after transform (#8069) (Boshen)
+
+### Bug Fixes
+
+- 3057686 transformer/class-properties: Unwrap parenthesised expressions (#8049) (overlookmotel)
+- e67cd05 transformer/class-properties: Correctly resolve private fields pointing to private accessors (#8047) (overlookmotel)
+- 6b08c6e transformer/class-properties: Correctly resolve private fields pointing to private methods (#8042) (overlookmotel)
+- 274f117 transformer/nullish-coalescing: Use correct scope id for binding (#8053) (camc314)
+
+### Refactor
+
+- cbd5169 transformer/class-properties: Do not recreate private field if not transforming it (#8044) (overlookmotel)
+- 98e8a72 transformer/class-properties: Do not take mut ref when immut ref will do (#8040) (overlookmotel)
+
 ## [0.43.0] - 2024-12-21
 
 - de4c772 traverse: [**BREAKING**] Rename `Ancestor::is_via_*` methods to `is_parent_of_*` (#8031) (overlookmotel)

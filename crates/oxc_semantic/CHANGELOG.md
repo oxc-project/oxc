@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+### Features
+
+- e632a7b transformer: Remove typescript symbols after transform (#8069) (Boshen)
+
+### Bug Fixes
+
+- de82492 parser: Report syntax errors for missing constructor implementations (#8081) (camc314)
+- 708e9cf semantic: Report errors for missing class method impls (#8082) (camc314)
+
 ## [0.43.0] - 2024-12-21
 
 - ed75e42 semantic: [**BREAKING**] Make SymbolTable fields `pub(crate)` instead of `pub` (#7999) (Boshen)

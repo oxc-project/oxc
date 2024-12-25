@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+- ad2a620 ast: [**BREAKING**] Add missing `AssignmentTargetProperty::computed` (#8097) (Boshen)
+
+### Bug Fixes
+
+- 55d6eb9 parser: Disallow type parameters on class constructors (#8071) (injuly)
+- be2c60d parser: Parse `import source from from 'mod'` (#8056) (Boshen)
+
 ## [0.42.0] - 2024-12-18
 
 ### Features
