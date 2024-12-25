@@ -3,17 +3,13 @@ commit: d85767ab
 parser_typescript Summary:
 AST Parsed     : 6494/6503 (99.86%)
 Positive Passed: 6483/6503 (99.69%)
-Negative Passed: 1241/5747 (21.59%)
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
+Negative Passed: 1249/5747 (21.73%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration14.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration15.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration21.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration22.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration25.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -3723,11 +3719,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClass1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClass2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration10.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration12.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration13.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration14.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration15.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration18.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration2.ts
@@ -3740,7 +3733,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName10.ts
@@ -4826,6 +4818,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·          ────────────────
    ╰────
 
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration10.ts:2:4]
+ 1 │ class C {
+ 2 │    constructor();
+   ·    ───────────
+ 3 │    foo();
+   ╰────
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration11.ts:2:4]
+ 1 │ class C {
+ 2 │    constructor();
+   ·    ───────────
+ 3 │    foo() { }
+   ╰────
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration14.ts:3:4]
+ 2 │    foo();
+ 3 │    constructor();
+   ·    ───────────
+ 4 │ }
+   ╰────
+
   × TS(1248): A class member cannot have the 'const' keyword.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration26.ts:2:18]
  1 │ class C {
@@ -4843,6 +4859,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ 
    ╰────
   help: Try insert a semicolon here
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration8.ts:2:3]
+ 1 │ class C {
+ 2 │   constructor();
+   ·   ───────────
+ 3 │ }
+   ╰────
 
   × TS(1248): A class member cannot have the 'const' keyword.
    ╭─[typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts:2:16]
@@ -20247,6 +20271,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ a = (() => { } || a)
    ·                ─┬
    ·                 ╰── `,` expected
+   ╰────
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration10.ts:2:4]
+ 1 │ class C {
+ 2 │    constructor();
+   ·    ───────────
+ 3 │    foo();
+   ╰────
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration11.ts:2:4]
+ 1 │ class C {
+ 2 │    constructor();
+   ·    ───────────
+ 3 │    foo() { }
+   ╰────
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration14.ts:3:4]
+ 2 │    foo();
+ 3 │    constructor();
+   ·    ───────────
+ 4 │ }
+   ╰────
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration8.ts:2:3]
+ 1 │ class C {
+ 2 │   constructor();
+   ·   ───────────
+ 3 │ }
    ╰────
 
   × TS(1164): Computed property names are not allowed in enums.

@@ -306,6 +306,14 @@ impl<'a> SemanticBuilder<'a> {
         self.errors.borrow_mut().push(error);
     }
 
+    pub(crate) fn in_declare_scope(&self) -> bool {
+        self.source_type.is_typescript_definition()
+            || self
+                .scope
+                .ancestors(self.current_scope_id)
+                .any(|scope_id| self.scope.get_flags(scope_id).is_ts_module_block())
+    }
+
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         let mut flags = self.current_node_flags;
         if self.build_jsdoc && self.jsdoc.retrieve_attached_jsdoc(&kind) {
