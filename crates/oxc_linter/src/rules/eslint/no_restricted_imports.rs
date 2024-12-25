@@ -391,7 +391,7 @@ impl RestrictedPath {
                     }
                     x => x,
                 }
-            },
+            }
             ImportImportName::Default(span) => {
                 let name = CompactStr::new("default");
                 match is_name_span_allowed_in_path(&name, self) {
@@ -640,12 +640,14 @@ impl NoRestrictedImports {
                 NameSpanAllowedResult::GeneralDisallowed => {
                     ctx.diagnostic(diagnostic_path(span, path.message.clone(), source))
                 }
-                NameSpanAllowedResult::NameDisallowed(name_span) => ctx.diagnostic(diagnostic_import_name(
-                    name_span.clone().unwrap().span(),
-                    path.message.clone(),
-                    name_span.unwrap().name(),
-                    source,
-                )),
+                NameSpanAllowedResult::NameDisallowed(name_span) => {
+                    ctx.diagnostic(diagnostic_import_name(
+                        name_span.clone().unwrap().span(),
+                        path.message.clone(),
+                        name_span.unwrap().name(),
+                        source,
+                    ))
+                }
                 NameSpanAllowedResult::Allowed => (),
             }
         }
@@ -701,12 +703,14 @@ impl NoRestrictedImports {
                     let span = entry.span;
                     ctx.diagnostic(diagnostic_path(span, path.message.clone(), source))
                 }
-                NameSpanAllowedResult::NameDisallowed(name_span) => ctx.diagnostic(diagnostic_import_name(
-                    name_span.clone().unwrap().span(),
-                    path.message.clone(),
-                    name_span.unwrap().name(),
-                    source,
-                )),
+                NameSpanAllowedResult::NameDisallowed(name_span) => {
+                    ctx.diagnostic(diagnostic_import_name(
+                        name_span.clone().unwrap().span(),
+                        path.message.clone(),
+                        name_span.unwrap().name(),
+                        source,
+                    ))
+                }
                 NameSpanAllowedResult::Allowed => (),
             }
         }
