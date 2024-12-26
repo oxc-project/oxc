@@ -7,7 +7,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        parse_expect_and_typeof_vitest_fn_call, parse_jest_fn_call, parse_vitest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode
+        parse_vitest_fn_call, JestGeneralFnKind, PossibleJestNode
     },
 };
 

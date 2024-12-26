@@ -1,7 +1,7 @@
 use oxc_ast::ast::CallExpression;
 
 use super::{parse_jest_fn_call, JestGeneralFnKind, ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode};
-use crate::{utils::{JestFnKind, ParsedGeneralJestFnCall}, LintContext};
+use crate::{utils::JestFnKind, LintContext};
 
 mod valid_vitest_fn;
 pub use crate::utils::vitest::valid_vitest_fn::VALID_VITEST_FN_CALL_CHAINS;
