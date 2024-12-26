@@ -117,7 +117,7 @@ snapshot_kind: text
    ╰────
   help: Don"t import "".
 
-  ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
+  ⚠ eslint(no-restricted-imports): * import is invalid because 'foo' from 'fs' is restricted.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ export * as ns from "fs";
    · ─────────────────────────
@@ -159,14 +159,14 @@ snapshot_kind: text
    ╰────
   help: Please import "DisallowedObject" from /bar/ instead.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+  ⚠ eslint(no-restricted-imports): * import is invalid because 'DisallowedObject' from 'foo' is restricted.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ export * from "foo";
    · ────────────────────
    ╰────
   help: Please import "DisallowedObject" from /bar/ instead.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+  ⚠ eslint(no-restricted-imports): * import is invalid because 'DisallowedObject1, DisallowedObject2' from 'foo' is restricted.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ export * from "foo";
    · ────────────────────
@@ -729,13 +729,13 @@ snapshot_kind: text
    ╰────
   help: Only "AllowedObject" is allowed to be imported from "foo".
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+  ⚠ eslint(no-restricted-imports): '* import is invalid because only 'AllowedObject' from 'foo' is/are allowed.
    ╭─[no_restricted_imports.tsx:1:32]
  1 │ import * as AllowedObject from "foo";
    ·                                ─────
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+  ⚠ eslint(no-restricted-imports): * import is invalid because only 'AllowedObject' from 'foo' is/are allowed.
    ╭─[no_restricted_imports.tsx:1:32]
  1 │ import * as AllowedObject from "foo";
    ·                                ─────
