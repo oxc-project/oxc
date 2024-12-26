@@ -182,15 +182,12 @@ impl VitestPreferLowercaseTitle {
         }
 
         let replacement = if self.lowercase_first_character_only {
-            // safety: we know this is a valid char because we checked it above.
-            literal.chars().nth(0).unwrap().to_ascii_lowercase().to_string()
+            literal.chars().next().unwrap().to_ascii_lowercase().to_string()
         } else {
             literal.to_ascii_lowercase()
         };
 
         let replacement_len = replacement.len() as u32;
-
-        // dbg!("replacement: {replacement}");
 
         ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {
             fixer.replace(Span::sized(span.start + 1, replacement_len), replacement)

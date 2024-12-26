@@ -31,12 +31,10 @@ pub fn parse_vitest_fn_call<'a>(
     let jest_fn_call = parse_jest_fn_call(call_expr, possible_jest_node, ctx)?;
 
     match jest_fn_call {
-        ParsedJestFnCallNew::GeneralJest(jest_fn_call) => {
-            match jest_fn_call.kind {
-                JestFnKind::General(kind) => Some(kind),
-                _ => None,
-            }
-        }
+        ParsedJestFnCallNew::GeneralJest(jest_fn_call) => match jest_fn_call.kind {
+            JestFnKind::General(kind) => Some(kind),
+            _ => None,
+        },
         _ => None,
     }
 }
