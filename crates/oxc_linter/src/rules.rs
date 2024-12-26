@@ -89,6 +89,7 @@ mod eslint {
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
     pub mod no_label_var;
+    pub mod no_labels;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_multi_str;
@@ -534,6 +535,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_classes_per_file,
     eslint::max_lines,
     eslint::max_params,
+    eslint::no_labels,
     eslint::no_restricted_imports,
     eslint::no_object_constructor,
     eslint::no_duplicate_imports,
