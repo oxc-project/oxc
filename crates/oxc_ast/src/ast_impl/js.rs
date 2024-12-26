@@ -886,6 +886,11 @@ impl fmt::Display for VariableDeclarationKind {
 }
 
 impl ForStatementInit<'_> {
+    /// Is `var` declaration
+    pub fn is_var_declaration(&self) -> bool {
+        matches!(self, Self::VariableDeclaration(decl) if decl.kind.is_var())
+    }
+
     /// LexicalDeclaration[In, Yield, Await] :
     ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
     pub fn is_lexical_declaration(&self) -> bool {
