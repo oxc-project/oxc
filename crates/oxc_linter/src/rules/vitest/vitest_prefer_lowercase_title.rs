@@ -155,77 +155,55 @@ impl Rule for VitestPreferLowercaseTitle {
 
 impl VitestPreferLowercaseTitle {
     fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
-        // dbg!("literal: {literal}");
+        dbg!("literal: {literal}");
 
-        // if literal.is_empty()
-        //     || self.allowed_prefixes.iter().any(|name| literal.starts_with(name.as_str()))
-        // {
-        //     return;
-        // }
-
-        // // if self.lowercase_first_character_only {
-        //     let Some(first_char) = literal.chars().next() else {
-        //         return;
-        //     };
-
-        //     let lower = first_char.to_ascii_lowercase();
-        //     if first_char == lower {
-        //         return;
-        //     }
-        // // } else {
-        // //     for n in 0..literal.chars().count() {
-        // //         dbg!("n: {n}");
-        // //         let Some(next_char) = literal.chars().nth(n) else {
-        // //             return;
-        // //         };
-
-        // //         dbg!("next_char: {next_char}");
-
-        // //         let next_lower = next_char.to_ascii_lowercase();
-
-        // //         if next_char != next_lower {
-        // //             break;
-        // //         }
-        // //     }
-        // // }
-
-        // let replacement = literal.chars().nth(0).unwrap().to_ascii_lowercase().to_string();
-
-        // // let replacement = if self.lowercase_first_character_only {
-        // //     // safety: we know this is a valid char because we checked it above.
-        // //     literal.chars().nth(0).unwrap().to_ascii_lowercase().to_string()
-        // // } else {
-        // //     literal.to_ascii_lowercase()
-        // // };
-
-        // // let replacement_len = replacement.len() as u32;
-
-        // dbg!("replacement: {replacement}");
-
-        // ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {
-        //     fixer.replace(Span::sized(span.start + 1, 1), replacement)
-        // });
         if literal.is_empty()
             || self.allowed_prefixes.iter().any(|name| literal.starts_with(name.as_str()))
         {
             return;
         }
 
-        let Some(first_char) = literal.chars().next() else {
-            return;
-        };
+        if self.lowercase_first_character_only {
+            let Some(first_char) = literal.chars().next() else {
+                return;
+            };
 
-        let lower = first_char.to_ascii_lowercase();
-        if first_char == lower {
-            return;
+            let lower = first_char.to_ascii_lowercase();
+            if first_char == lower {
+                return;
+            }
+        } else {
+            for n in 0..literal.chars().count() {
+                dbg!("n: {n}");
+                let Some(next_char) = literal.chars().nth(n) else {
+                    return;
+                };
+
+                dbg!("next_char: {next_char}");
+
+                let next_lower = next_char.to_ascii_lowercase();
+
+                if next_char != next_lower {
+                    break;
+                }
+            }
         }
 
-    ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {
-            fixer.replace(Span::sized(span.start + 1, 1), lower.to_string())
-        });
+        let replacement = if self.lowercase_first_character_only {
+            // safety: we know this is a valid char because we checked it above.
+            literal.chars().nth(0).unwrap().to_ascii_lowercase().to_string()
+        } else {
+            literal.to_ascii_lowercase()
+        };
 
-        // ctx.diagnostic(prefer_lowercase_title_diagnostic(literal, span));
-    }
+        let replacement_len = replacement.len() as u32;
+
+        // dbg!("replacement: {replacement}");
+
+        ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {
+            fixer.replace(Span::sized(span.start + 1, replacement_len), replacement)
+        });
+            }
 }
 
 #[test]
