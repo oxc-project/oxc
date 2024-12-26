@@ -28,9 +28,6 @@ pub fn parse_jest_fn_call<'a>(
     let node = possible_jest_node.node;
     let callee = &call_expr.callee;
 
-    println!("is_jest: {}", ctx.frameworks().is_jest());
-
-    println!("is_vitest: {}", ctx.frameworks().is_vitest());
     // If bailed out, we're not jest function
 
     let resolved = resolve_to_jest_fn(call_expr, original)?;
@@ -108,10 +105,6 @@ pub fn parse_jest_fn_call<'a>(
 
         let mut call_chains = Vec::from([Cow::Borrowed(name)]);
         call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
-
-        println!("is_valid_jest_call: {}", is_valid_jest_call(&call_chains));
-        println!("is_valid_vitest_call: {}", is_valid_vitest_call(&call_chains));
-
 
         if ctx.frameworks().is_jest() && !is_valid_jest_call(&call_chains) {
             return None;
@@ -300,19 +293,12 @@ pub struct ExpectFnCallOptions<'a, 'b> {
 
 // If find a match in `VALID_JEST_FN_CALL_CHAINS`, return true.
 fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
-    println!("members: {:?}", members);
-
-
     VALID_JEST_FN_CALL_CHAINS
         .binary_search_by(|chain| {
-            println!("chain_outer: {:?}", chain);
             chain
                 .iter()
                 .zip(members.iter())
                 .find_map(|(&chain, member)| {
-                    println!("chain: {:?}", chain);
-                    println!("member: {:?}", member);
-
                     let ordering = chain.cmp(member.as_ref());
                     if ordering != Ordering::Equal {
                         return Some(ordering);

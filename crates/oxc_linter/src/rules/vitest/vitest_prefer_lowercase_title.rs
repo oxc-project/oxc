@@ -6,9 +6,7 @@ use oxc_span::{CompactStr, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{
-        parse_vitest_fn_call, JestGeneralFnKind, PossibleJestNode
-    },
+    utils::{parse_vitest_fn_call, JestGeneralFnKind, PossibleJestNode},
 };
 
 fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
@@ -103,18 +101,13 @@ impl Rule for VitestPreferLowercaseTitle {
         ctx: &'c LintContext<'a>,
     ) {
         let node = possible_vitest_node.node;
-        println!("node: {node:?}");
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        println!("call_expr: {call_expr:?}");
-        let Some(vitest_fn_call) =
-            parse_vitest_fn_call(call_expr, possible_vitest_node, ctx)
+        let Some(vitest_fn_call) = parse_vitest_fn_call(call_expr, possible_vitest_node, ctx)
         else {
             return;
         };
-
-        println!("vitest_fn_call: {vitest_fn_call:?}");
 
         let scopes = ctx.scopes();
 
@@ -125,7 +118,6 @@ impl Rule for VitestPreferLowercaseTitle {
         //     return;
         // }
 
-        
         if matches!(vitest_fn_call, JestGeneralFnKind::Describe) {
             if self.ignore_top_level_describe && scopes.get_flags(node.scope_id()).is_top() {
                 return;
@@ -203,7 +195,7 @@ impl VitestPreferLowercaseTitle {
         ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {
             fixer.replace(Span::sized(span.start + 1, replacement_len), replacement)
         });
-            }
+    }
 }
 
 #[test]
