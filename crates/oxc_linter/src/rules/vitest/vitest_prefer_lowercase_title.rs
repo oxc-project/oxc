@@ -124,7 +124,7 @@ impl Rule for VitestPreferLowercaseTitle {
             }
         } else if !matches!(
             vitest_fn_call.kind,
-            JestFnKind::General(JestGeneralFnKind::Test) | JestFnKind::General(JestGeneralFnKind::VitestBench)
+            JestFnKind::General(JestGeneralFnKind::Test | JestGeneralFnKind::VitestBench)
         ) {
             return;
         }

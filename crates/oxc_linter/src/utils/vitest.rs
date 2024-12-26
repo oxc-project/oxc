@@ -1,7 +1,8 @@
 use oxc_ast::ast::CallExpression;
 
 use super::{
-    parse_jest_fn_call, ParsedExpectFnCall, ParsedGeneralJestFnCall, ParsedJestFnCallNew, PossibleJestNode
+    parse_jest_fn_call, ParsedExpectFnCall, ParsedGeneralJestFnCall, ParsedJestFnCallNew,
+    PossibleJestNode,
 };
 use crate::{utils::JestFnKind, LintContext};
 
