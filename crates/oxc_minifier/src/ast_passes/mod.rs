@@ -4,6 +4,7 @@ use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, Travers
 
 mod collapse_variable_declarations;
 mod exploit_assigns;
+mod normalize;
 mod peephole_fold_constants;
 mod peephole_minimize_conditions;
 mod peephole_remove_dead_code;
@@ -14,6 +15,7 @@ mod statement_fusion;
 
 pub use collapse_variable_declarations::CollapseVariableDeclarations;
 pub use exploit_assigns::ExploitAssigns;
+pub use normalize::Normalize;
 pub use peephole_fold_constants::PeepholeFoldConstants;
 pub use peephole_minimize_conditions::PeepholeMinimizeConditions;
 pub use peephole_remove_dead_code::PeepholeRemoveDeadCode;
