@@ -4,8 +4,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use regex::Regex;
 use rustc_hash::FxHashMap;
-use serde::Deserialize;
+use serde::{de::Error, Deserialize, Deserializer};
 use serde_json::Value;
+use std::borrow::Cow;
 
 use crate::{
     context::LintContext,
@@ -58,13 +59,40 @@ struct RestrictedPath {
 #[serde(rename_all = "camelCase")]
 struct RestrictedPattern {
     group: Option<Vec<CompactStr>>,
-    regex: Option<CompactStr>,
+    regex: Option<SerdeRegexWrapper<Regex>>,
     import_names: Option<Vec<CompactStr>>,
-    import_name_pattern: Option<CompactStr>,
+    import_name_pattern: Option<SerdeRegexWrapper<Regex>>,
     allow_import_names: Option<Vec<CompactStr>>,
-    allow_import_name_pattern: Option<CompactStr>,
+    allow_import_name_pattern: Option<SerdeRegexWrapper<Regex>>,
     case_sensitive: Option<bool>,
     message: Option<CompactStr>,
+}
+
+/// A wrapper type which implements `Serialize` and `Deserialize` for
+/// types involving `Regex`
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+pub struct SerdeRegexWrapper<T>(pub T);
+
+impl std::ops::Deref for SerdeRegexWrapper<Regex> {
+    type Target = Regex;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'de> Deserialize<'de> for SerdeRegexWrapper<Regex> {
+    fn deserialize<D>(d: D) -> Result<SerdeRegexWrapper<Regex>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = <Cow<str>>::deserialize(d)?;
+
+        match s.parse() {
+            Ok(regex) => Ok(SerdeRegexWrapper(regex)),
+            Err(err) => Err(D::Error::custom(err)),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -323,11 +351,7 @@ impl RestrictedPattern {
             return false;
         };
 
-        let Ok(reg_exp) = Regex::new(regex.as_str()) else {
-            return false;
-        };
-
-        reg_exp.find(name.name()).is_some()
+        regex.find(name.name()).is_some()
     }
 
     fn get_import_name_pattern_result(&self, name: &CompactStr) -> bool {
@@ -335,11 +359,7 @@ impl RestrictedPattern {
             return false;
         };
 
-        let Ok(reg_exp) = Regex::new(import_name_pattern.as_str()) else {
-            return false;
-        };
-
-        reg_exp.find(name).is_some()
+        import_name_pattern.find(name).is_some()
     }
 
     fn get_allow_import_name_pattern_result(&self, name: &CompactStr) -> bool {
@@ -347,11 +367,7 @@ impl RestrictedPattern {
             return false;
         };
 
-        let Ok(reg_exp) = Regex::new(allow_import_names.as_str()) else {
-            return false;
-        };
-
-        reg_exp.find(name).is_some()
+        allow_import_names.find(name).is_some()
     }
 }
 
