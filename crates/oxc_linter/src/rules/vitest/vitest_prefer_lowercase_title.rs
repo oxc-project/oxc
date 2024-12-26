@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
