@@ -312,7 +312,7 @@ mod tests {
         let allocator = Allocator::default();
         let source_type: SourceType = SourceType::default().with_typescript(true);
         let semantic = get_semantic(&allocator, source, source_type);
-        assert!(semantic.symbols().references.len() == 1);
+        assert_eq!(semantic.symbols().references.len(), 1);
     }
 
     #[test]
