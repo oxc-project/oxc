@@ -751,45 +751,45 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:21]
+  ⚠ eslint(no-restricted-imports): 'Bar' import from 'foo' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ export { Bar } from 'foo';
-   ·                     ─────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): Only imports that match the pattern "/^Foo/u" are allowed to be imported from "foo".
-   ╭─[no_restricted_imports.tsx:1:21]
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ export { Bar } from 'foo';
-   ·                     ─────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:49]
+  ⚠ eslint(no-restricted-imports): 'DisallowedObject' import from 'foo' is restricted because only AllowedObject import(s) is/are allowed.
+   ╭─[no_restricted_imports.tsx:1:25]
  1 │ import { AllowedObject, DisallowedObject } from "foo";
-   ·                                                 ─────
-   ╰────
-  help: Remove the import statement.
-
-  ⚠ eslint(no-restricted-imports): Only "AllowedObject" is allowed to be imported from "foo".
-   ╭─[no_restricted_imports.tsx:1:49]
- 1 │ import { AllowedObject, DisallowedObject } from "foo";
-   ·                                                 ─────
-   ╰────
-  help: Remove the import statement.
-
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:49]
- 1 │ import { AllowedObject, DisallowedObject } from "foo";
-   ·                                                 ─────
+   ·                         ────────────────
    ╰────
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): Only "AllowedObject" is allowed to be imported from "foo".
-   ╭─[no_restricted_imports.tsx:1:49]
+   ╭─[no_restricted_imports.tsx:1:25]
  1 │ import { AllowedObject, DisallowedObject } from "foo";
-   ·                                                 ─────
+   ·                         ────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'DisallowedObject' import from 'foo' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:25]
+ 1 │ import { AllowedObject, DisallowedObject } from "foo";
+   ·                         ────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Only "AllowedObject" is allowed to be imported from "foo".
+   ╭─[no_restricted_imports.tsx:1:25]
+ 1 │ import { AllowedObject, DisallowedObject } from "foo";
+   ·                         ────────────────
    ╰────
   help: Remove the import statement.
 

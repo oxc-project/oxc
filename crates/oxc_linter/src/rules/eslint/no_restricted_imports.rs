@@ -44,7 +44,7 @@ fn diagnostic_pattern_and_import_name(
     OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span)
 }
 
-fn _diagnostic_pattern_and_everything(
+fn diagnostic_pattern_and_everything(
     span: Span,
     message: Option<CompactStr>,
     name: &str,
@@ -57,7 +57,7 @@ fn _diagnostic_pattern_and_everything(
     OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span)
 }
 
-fn _diagnostic_pattern_and_everything_with_regex_import_name(
+fn diagnostic_pattern_and_everything_with_regex_import_name(
     span: Span,
     message: Option<CompactStr>,
     name: &str,
@@ -70,7 +70,7 @@ fn _diagnostic_pattern_and_everything_with_regex_import_name(
     OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span)
 }
 
-fn _diagnostic_everything(
+fn diagnostic_everything(
     span: Span,
     message: Option<CompactStr>,
     name: &str,
@@ -98,7 +98,7 @@ fn diagnostic_import_name(
     OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span)
 }
 
-fn _diagnostic_allowed_import_name(
+fn diagnostic_allowed_import_name(
     span: Span,
     message: Option<CompactStr>,
     name: &str,
@@ -326,7 +326,7 @@ fn add_configuration_patterns_from_string(paths: &mut Vec<RestrictedPattern>, mo
 enum NameSpanAllowedResult {
     Allowed,
     GeneralDisallowed,
-    NameDisallowed(Option<NameSpan>),
+    NameDisallowed,
 }
 
 fn is_name_span_allowed_in_path(name: &CompactStr, path: &RestrictedPath) -> NameSpanAllowedResult {
@@ -335,14 +335,18 @@ fn is_name_span_allowed_in_path(name: &CompactStr, path: &RestrictedPath) -> Nam
         return NameSpanAllowedResult::Allowed;
     }
 
-    // when no importNames option is provided, no import in general is allowed
     if path.import_names.as_ref().is_none() {
+        // when no importNames and no allowImportNames option is provided, no import in general is allowed
+        if path.allow_import_names.is_some() {
+            return NameSpanAllowedResult::NameDisallowed;
+        }
+
         return NameSpanAllowedResult::GeneralDisallowed;
     }
 
     // the name is found is the importNames list
     if path.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(name)) {
-        return NameSpanAllowedResult::NameDisallowed(None);
+        return NameSpanAllowedResult::NameDisallowed;
     }
 
     // we allow it
@@ -365,103 +369,130 @@ fn is_name_span_allowed_in_pattern(
 
     // when no importNames or importNamePattern option is provided, no import in general is allowed
     if pattern.import_names.as_ref().is_none() && pattern.import_name_pattern.is_none() {
+        if pattern.allow_import_names.is_some() || pattern.allow_import_name_pattern.is_some() {
+            return NameSpanAllowedResult::NameDisallowed;
+        }
+
         return NameSpanAllowedResult::GeneralDisallowed;
     }
 
     // the name is found is the importNames list
     if pattern.import_names.as_ref().is_some_and(|disallowed| disallowed.contains(name)) {
-        return NameSpanAllowedResult::NameDisallowed(None);
+        return NameSpanAllowedResult::NameDisallowed;
     }
 
     // the name is found is the importNamePattern
     if pattern.get_import_name_pattern_result(name) {
-        return NameSpanAllowedResult::NameDisallowed(None);
+        return NameSpanAllowedResult::NameDisallowed;
     }
 
     // we allow it
     NameSpanAllowedResult::Allowed
 }
 
+#[derive(PartialEq, Debug)]
+enum IsSkipAbleResult {
+    Allowed,
+    GeneralDisallowed(NameSpan),
+    GeneralDisallowedWithoutSpan,
+    NameDisallowed(NameSpan),
+}
+
 impl RestrictedPath {
-    fn is_skip_able_import(&self, name: &ImportImportName) -> NameSpanAllowedResult {
+    fn is_skip_able_import(&self, name: &ImportImportName) -> IsSkipAbleResult {
         match &name {
             ImportImportName::Name(import) => {
                 match is_name_span_allowed_in_path(&import.name, self) {
-                    NameSpanAllowedResult::NameDisallowed(_) => {
-                        NameSpanAllowedResult::NameDisallowed(Some(import.clone()))
+                    NameSpanAllowedResult::NameDisallowed => {
+                        IsSkipAbleResult::NameDisallowed(import.clone())
                     }
-                    x => x,
+                    NameSpanAllowedResult::GeneralDisallowed => {
+                        IsSkipAbleResult::GeneralDisallowed(import.clone())
+                    }
+                    NameSpanAllowedResult::Allowed => IsSkipAbleResult::Allowed,
                 }
             }
-            ImportImportName::Default(_) => {
+            ImportImportName::Default(span) => {
                 let name = CompactStr::new("default");
+
                 match is_name_span_allowed_in_path(&name, self) {
-                    NameSpanAllowedResult::NameDisallowed(_) => {
-                        NameSpanAllowedResult::GeneralDisallowed
+                    NameSpanAllowedResult::NameDisallowed
+                    | NameSpanAllowedResult::GeneralDisallowed => {
+                        IsSkipAbleResult::GeneralDisallowed(NameSpan::new(name, *span))
                     }
-                    x => x,
+                    NameSpanAllowedResult::Allowed => IsSkipAbleResult::Allowed,
                 }
             }
-            ImportImportName::NamespaceObject => NameSpanAllowedResult::GeneralDisallowed,
+            ImportImportName::NamespaceObject => IsSkipAbleResult::GeneralDisallowedWithoutSpan,
         }
     }
 
-    fn is_skip_able_export(&self, name: &ExportImportName) -> NameSpanAllowedResult {
+    fn is_skip_able_export(&self, name: &ExportImportName) -> IsSkipAbleResult {
         match &name {
             ExportImportName::Name(import) => {
                 match is_name_span_allowed_in_path(&import.name, self) {
-                    NameSpanAllowedResult::NameDisallowed(_) => {
-                        NameSpanAllowedResult::NameDisallowed(Some(import.clone()))
+                    NameSpanAllowedResult::NameDisallowed => {
+                        IsSkipAbleResult::NameDisallowed(import.clone())
                     }
-                    x => x,
+                    NameSpanAllowedResult::GeneralDisallowed => {
+                        IsSkipAbleResult::GeneralDisallowed(import.clone())
+                    }
+                    NameSpanAllowedResult::Allowed => IsSkipAbleResult::Allowed,
                 }
             }
             ExportImportName::All | ExportImportName::AllButDefault => {
-                NameSpanAllowedResult::GeneralDisallowed
+                IsSkipAbleResult::GeneralDisallowedWithoutSpan
             }
-            ExportImportName::Null => NameSpanAllowedResult::Allowed,
+            ExportImportName::Null => IsSkipAbleResult::Allowed,
         }
     }
 }
 
 impl RestrictedPattern {
-    fn is_skip_able_import(&self, name: &ImportImportName) -> NameSpanAllowedResult {
+    fn is_skip_able_import(&self, name: &ImportImportName) -> IsSkipAbleResult {
         match &name {
             ImportImportName::Name(import) => {
                 match is_name_span_allowed_in_pattern(&import.name, self) {
-                    NameSpanAllowedResult::NameDisallowed(_) => {
-                        NameSpanAllowedResult::NameDisallowed(Some(import.clone()))
+                    NameSpanAllowedResult::NameDisallowed => {
+                        IsSkipAbleResult::NameDisallowed(import.clone())
                     }
-                    x => x,
+                    NameSpanAllowedResult::GeneralDisallowed => {
+                        IsSkipAbleResult::GeneralDisallowed(import.clone())
+                    }
+                    NameSpanAllowedResult::Allowed => IsSkipAbleResult::Allowed,
                 }
             }
-            ImportImportName::Default(_) => {
-                let name = CompactStr::new("default");
+            ImportImportName::Default(span) => {
+                let name: CompactStr = CompactStr::new("default");
                 match is_name_span_allowed_in_pattern(&name, self) {
-                    NameSpanAllowedResult::NameDisallowed(_) => {
-                        NameSpanAllowedResult::GeneralDisallowed
+                    NameSpanAllowedResult::NameDisallowed
+                    | NameSpanAllowedResult::GeneralDisallowed => {
+                        IsSkipAbleResult::GeneralDisallowed(NameSpan::new(name, *span))
                     }
-                    x => x,
+                    NameSpanAllowedResult::Allowed => IsSkipAbleResult::Allowed,
                 }
             }
-            ImportImportName::NamespaceObject => NameSpanAllowedResult::GeneralDisallowed,
+            ImportImportName::NamespaceObject => IsSkipAbleResult::GeneralDisallowedWithoutSpan,
         }
     }
 
-    fn is_skip_able_export(&self, name: &ExportImportName) -> NameSpanAllowedResult {
+    fn is_skip_able_export(&self, name: &ExportImportName) -> IsSkipAbleResult {
         match &name {
             ExportImportName::Name(import) => {
                 match is_name_span_allowed_in_pattern(&import.name, self) {
-                    NameSpanAllowedResult::NameDisallowed(_) => {
-                        NameSpanAllowedResult::NameDisallowed(Some(import.clone()))
+                    NameSpanAllowedResult::NameDisallowed => {
+                        IsSkipAbleResult::NameDisallowed(import.clone())
                     }
-                    x => x,
+                    NameSpanAllowedResult::GeneralDisallowed => {
+                        IsSkipAbleResult::GeneralDisallowed(import.clone())
+                    }
+                    NameSpanAllowedResult::Allowed => IsSkipAbleResult::Allowed,
                 }
             }
             ExportImportName::All | ExportImportName::AllButDefault => {
-                NameSpanAllowedResult::GeneralDisallowed
+                IsSkipAbleResult::GeneralDisallowedWithoutSpan
             }
-            ExportImportName::Null => NameSpanAllowedResult::Allowed,
+            ExportImportName::Null => IsSkipAbleResult::Allowed,
         }
     }
 
@@ -645,20 +676,33 @@ impl NoRestrictedImports {
             }
 
             match path.is_skip_able_import(&entry.import_name) {
-                NameSpanAllowedResult::GeneralDisallowed => {
-                    let span = entry.module_request.span();
-
-                    ctx.diagnostic(diagnostic_path(span, path.message.clone(), source));
-                }
-                NameSpanAllowedResult::NameDisallowed(name_span) => {
-                    ctx.diagnostic(diagnostic_import_name(
-                        name_span.clone().unwrap().span(),
+                IsSkipAbleResult::GeneralDisallowed(_)
+                | IsSkipAbleResult::GeneralDisallowedWithoutSpan => {
+                    ctx.diagnostic(diagnostic_path(
+                        entry.module_request.span(),
                         path.message.clone(),
-                        name_span.unwrap().name(),
                         source,
                     ));
                 }
-                NameSpanAllowedResult::Allowed => (),
+                IsSkipAbleResult::NameDisallowed(name_span) => {
+                    if let Some(import_names) = &path.allow_import_names {
+                        ctx.diagnostic(diagnostic_allowed_import_name(
+                            name_span.clone().span(),
+                            path.message.clone(),
+                            name_span.name(),
+                            source,
+                            import_names.join(", ").as_str(),
+                        ));
+                    } else {
+                        ctx.diagnostic(diagnostic_import_name(
+                            name_span.clone().span(),
+                            path.message.clone(),
+                            name_span.name(),
+                            source,
+                        ));
+                    };
+                }
+                IsSkipAbleResult::Allowed => (),
             }
         }
 
@@ -668,7 +712,7 @@ impl NoRestrictedImports {
         for pattern in &self.patterns {
             let result = pattern.is_skip_able_import(&entry.import_name);
 
-            if result == NameSpanAllowedResult::Allowed {
+            if result == IsSkipAbleResult::Allowed {
                 continue;
             }
 
@@ -678,21 +722,36 @@ impl NoRestrictedImports {
                     break;
                 }
                 GlobResult::Found => {
-                    let span = entry.module_request.span();
+                    let diagnostic: OxcDiagnostic = match result {
+                        IsSkipAbleResult::GeneralDisallowed(_)
+                        | IsSkipAbleResult::GeneralDisallowedWithoutSpan => diagnostic_pattern(
+                            entry.module_request.span(),
+                            pattern.message.clone(),
+                            source,
+                        ),
+                        IsSkipAbleResult::NameDisallowed(name_span) => {
+                            let diagnostic = if let Some(allow_import_name_pattern) =
+                                &pattern.allow_import_name_pattern
+                            {
+                                diagnostic_allowed_import_name_pattern(
+                                    name_span.clone().span(),
+                                    pattern.message.clone(),
+                                    name_span.name(),
+                                    source,
+                                    allow_import_name_pattern.as_str(),
+                                )
+                            } else {
+                                diagnostic_pattern_and_import_name(
+                                    name_span.clone().span(),
+                                    pattern.message.clone(),
+                                    name_span.name(),
+                                    source,
+                                )
+                            };
 
-                    let diagnostic = match result {
-                        NameSpanAllowedResult::GeneralDisallowed => {
-                            diagnostic_pattern(span, pattern.message.clone(), source)
+                            diagnostic
                         }
-                        NameSpanAllowedResult::NameDisallowed(name_span) => {
-                            diagnostic_pattern_and_import_name(
-                                name_span.clone().unwrap().span(),
-                                pattern.message.clone(),
-                                name_span.unwrap().name(),
-                                source,
-                            )
-                        }
-                        NameSpanAllowedResult::Allowed => panic!("unreachable"),
+                        IsSkipAbleResult::Allowed => panic!("unreachable"),
                     };
 
                     found_errors.push(diagnostic);
@@ -726,19 +785,29 @@ impl NoRestrictedImports {
             }
 
             match path.is_skip_able_export(&entry.import_name) {
-                NameSpanAllowedResult::GeneralDisallowed => {
-                    let span = entry.span;
-                    ctx.diagnostic(diagnostic_path(span, path.message.clone(), source));
+                IsSkipAbleResult::GeneralDisallowed(_)
+                | IsSkipAbleResult::GeneralDisallowedWithoutSpan => {
+                    ctx.diagnostic(diagnostic_path(entry.span, path.message.clone(), source));
                 }
-                NameSpanAllowedResult::NameDisallowed(name_span) => {
-                    ctx.diagnostic(diagnostic_import_name(
-                        name_span.clone().unwrap().span(),
-                        path.message.clone(),
-                        name_span.unwrap().name(),
-                        source,
-                    ));
+                IsSkipAbleResult::NameDisallowed(name_span) => {
+                    if let Some(allow_import_names) = &path.allow_import_names {
+                        ctx.diagnostic(diagnostic_allowed_import_name(
+                            name_span.clone().span(),
+                            path.message.clone(),
+                            name_span.name(),
+                            source,
+                            allow_import_names.join(", ").as_str(),
+                        ));
+                    } else {
+                        ctx.diagnostic(diagnostic_import_name(
+                            name_span.clone().span(),
+                            path.message.clone(),
+                            name_span.name(),
+                            source,
+                        ));
+                    };
                 }
-                NameSpanAllowedResult::Allowed => (),
+                IsSkipAbleResult::Allowed => (),
             }
         }
 
@@ -748,7 +817,7 @@ impl NoRestrictedImports {
         for pattern in &self.patterns {
             let result = pattern.is_skip_able_export(&entry.import_name);
 
-            if result == NameSpanAllowedResult::Allowed {
+            if result == IsSkipAbleResult::Allowed {
                 continue;
             }
 
@@ -765,18 +834,19 @@ impl NoRestrictedImports {
                     let span = module_request.span();
 
                     let diagnostic = match result {
-                        NameSpanAllowedResult::GeneralDisallowed => {
+                        IsSkipAbleResult::GeneralDisallowed(_)
+                        | IsSkipAbleResult::GeneralDisallowedWithoutSpan => {
                             diagnostic_pattern(span, pattern.message.clone(), source)
                         }
-                        NameSpanAllowedResult::NameDisallowed(name_span) => {
+                        IsSkipAbleResult::NameDisallowed(name_span) => {
                             diagnostic_pattern_and_import_name(
-                                name_span.clone().unwrap().span(),
+                                name_span.clone().span(),
                                 pattern.message.clone(),
-                                name_span.unwrap().name(),
+                                name_span.name(),
                                 source,
                             )
                         }
-                        NameSpanAllowedResult::Allowed => panic!("unreachable"),
+                        IsSkipAbleResult::Allowed => panic!("unreachable"),
                     };
 
                     found_errors.push(diagnostic);
