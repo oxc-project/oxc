@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -176,11 +178,12 @@ impl VitestPreferLowercaseTitle {
         }
 
         let replacement = if self.lowercase_first_character_only {
-            literal.chars().next().unwrap().to_ascii_lowercase().to_string()
+            cow_utils::CowUtils::cow_to_ascii_lowercase(&literal.chars().as_str()[0..1])
         } else {
-            literal.to_ascii_lowercase()
+            cow_utils::CowUtils::cow_to_ascii_lowercase(literal)
         };
 
+        #[allow(clippy::cast_possible_truncation)]
         let replacement_len = replacement.len() as u32;
 
         ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {
