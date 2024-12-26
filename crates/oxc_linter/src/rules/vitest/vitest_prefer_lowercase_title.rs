@@ -143,7 +143,7 @@ impl Rule for VitestPreferLowercaseTitle {
             let Some(template_string) = template_expr.quasi() else {
                 return;
             };
-            println!("template_string: {template_string}");
+            dbg!("template_string: {template_string}");
             self.lint_string(ctx, template_string.as_str(), template_expr.span);
         }
     }
@@ -151,7 +151,7 @@ impl Rule for VitestPreferLowercaseTitle {
 
 impl VitestPreferLowercaseTitle {
     fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
-        println!("literal: {literal}");
+        dbg!("literal: {literal}");
 
         if literal.is_empty()
             || self.allowed_prefixes.iter().any(|name| literal.starts_with(name.as_str()))
@@ -170,12 +170,12 @@ impl VitestPreferLowercaseTitle {
             }
         } else {
             for n in 0..literal.chars().count() {
-                println!("n: {n}");
+                dbg!("n: {n}");
                 let Some(next_char) = literal.chars().nth(n) else {
                     return;
                 };
 
-                println!("next_char: {next_char}");
+                dbg!("next_char: {next_char}");
 
                 let next_lower = next_char.to_ascii_lowercase();
 
@@ -187,14 +187,14 @@ impl VitestPreferLowercaseTitle {
 
         let replacement = if self.lowercase_first_character_only {
             // safety: we know this is a valid char because we checked it above.
-            literal.chars().next().unwrap().to_ascii_lowercase().to_string()
+            literal.chars().nth(0).unwrap().to_ascii_lowercase().to_string()
         } else {
             literal.to_ascii_lowercase()
         };
 
         let replacement_len = replacement.len() as u32;
 
-        println!("replacement: {replacement}");
+        dbg!("replacement: {replacement}");
 
         ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {
             fixer.replace(Span::sized(span.start + 1, replacement_len), replacement)
