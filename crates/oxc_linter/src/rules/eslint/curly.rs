@@ -109,73 +109,88 @@ impl Rule for Curly {
 
         match node.kind() {
             AstKind::IfStatement(stmt) => {
-                let mut statements_are_else = vec![false];
-                let mut statements = vec![&stmt.consequent];
-                let mut should_have_braces_list =
-                    vec![should_have_braces(root_node, &self.0.options, &stmt.consequent, ctx)];
-                let mut has_braces_list = vec![has_braces(&stmt.consequent)];
+                struct StatementInfo<'a> {
+                    statement: &'a Statement<'a>,
+                    is_else: bool,
+                    should_have_braces: Option<bool>,
+                    has_braces: bool,
+                }
+
+                let mut infos = vec![StatementInfo {
+                    statement: &stmt.consequent,
+                    is_else: false,
+                    should_have_braces: should_have_braces(
+                        root_node,
+                        &self.0.options,
+                        &stmt.consequent,
+                        ctx,
+                    ),
+                    has_braces: has_braces(&stmt.consequent),
+                }];
+
                 let mut current_statement = &stmt.alternate;
 
                 while let Some(statement) = current_statement {
-                    let (consequent, alternate) = if let Statement::IfStatement(node) = statement {
-                        (&node.consequent, &node.alternate)
+                    if let Statement::IfStatement(node) = statement {
+                        infos.push(StatementInfo {
+                            statement: &node.consequent,
+                            is_else: false,
+                            should_have_braces: should_have_braces(
+                                root_node,
+                                &self.0.options,
+                                &node.consequent,
+                                ctx,
+                            ),
+                            has_braces: has_braces(&node.consequent),
+                        });
+                        current_statement = &node.alternate;
                     } else {
-                        statements_are_else.push(true);
-                        statements.push(statement);
-                        should_have_braces_list.push(should_have_braces(
-                            root_node,
-                            &self.0.options,
+                        infos.push(StatementInfo {
                             statement,
-                            ctx,
-                        ));
-                        has_braces_list.push(has_braces(statement));
+                            is_else: true,
+                            should_have_braces: should_have_braces(
+                                root_node,
+                                &self.0.options,
+                                statement,
+                                ctx,
+                            ),
+                            has_braces: has_braces(statement),
+                        });
                         break;
-                    };
-
-                    statements_are_else.push(false);
-                    statements.push(consequent);
-                    should_have_braces_list.push(should_have_braces(
-                        root_node,
-                        &self.0.options,
-                        consequent,
-                        ctx,
-                    ));
-                    has_braces_list.push(has_braces(consequent));
-                    current_statement = alternate;
+                    }
                 }
+
+                let keyword = |is_else: bool| if is_else { "else" } else { "if" };
 
                 if self.0.options.contains(&CurlyType::Consistent) {
                     let mut expected = Some(false);
-                    for (&should_have_braces, &has_braces) in
-                        should_have_braces_list.iter().zip(&has_braces_list)
-                    {
-                        expected = Some(should_have_braces.unwrap_or(has_braces));
+
+                    for info in &infos {
+                        expected = Some(info.should_have_braces.unwrap_or(info.has_braces));
                         if expected == Some(true) {
                             break;
                         }
                     }
 
-                    statements.iter().zip(&has_braces_list).zip(&statements_are_else).for_each(
-                        |((statement, &has_braces), is_else)| {
-                            let keyword = if *is_else { "else" } else { "if" };
-                            report_if_needed(ctx, statement, keyword, has_braces, expected);
-                        },
-                    );
+                    for info in &infos {
+                        report_if_needed(
+                            ctx,
+                            info.statement,
+                            keyword(info.is_else),
+                            info.has_braces,
+                            expected,
+                        );
+                    }
                 } else {
-                    statements
-                        .iter()
-                        .zip(should_have_braces_list.iter().zip(&has_braces_list))
-                        .zip(&statements_are_else)
-                        .for_each(|((statement, (&should_have_braces, &has_braces)), is_else)| {
-                            let keyword = if *is_else { "else" } else { "if" };
-                            report_if_needed(
-                                ctx,
-                                statement,
-                                keyword,
-                                has_braces,
-                                should_have_braces,
-                            );
-                        });
+                    for info in &infos {
+                        report_if_needed(
+                            ctx,
+                            info.statement,
+                            keyword(info.is_else),
+                            info.has_braces,
+                            info.should_have_braces,
+                        );
+                    }
                 }
             }
             AstKind::ForStatement(stmt) => {
