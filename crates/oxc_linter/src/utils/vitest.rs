@@ -1,8 +1,7 @@
 use oxc_ast::ast::CallExpression;
 
 use super::{
-    parse_jest_fn_call, JestGeneralFnKind, ParsedExpectFnCall, ParsedJestFnCallNew,
-    PossibleJestNode,
+    parse_jest_fn_call, ParsedExpectFnCall, ParsedGeneralJestFnCall, ParsedJestFnCallNew, PossibleJestNode
 };
 use crate::{utils::JestFnKind, LintContext};
 
@@ -27,12 +26,12 @@ pub fn parse_vitest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
-) -> Option<JestGeneralFnKind> {
+) -> Option<ParsedGeneralJestFnCall<'a>> {
     let jest_fn_call = parse_jest_fn_call(call_expr, possible_jest_node, ctx)?;
 
     match jest_fn_call {
         ParsedJestFnCallNew::GeneralJest(jest_fn_call) => match jest_fn_call.kind {
-            JestFnKind::General(kind) => Some(kind),
+            JestFnKind::General(_) => Some(jest_fn_call),
             _ => None,
         },
         _ => None,

@@ -6,7 +6,7 @@ use oxc_span::{CompactStr, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_vitest_fn_call, JestGeneralFnKind, PossibleJestNode},
+    utils::{parse_vitest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
 };
 
 fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
@@ -112,19 +112,19 @@ impl Rule for VitestPreferLowercaseTitle {
         let scopes = ctx.scopes();
 
         // TODO: populate ignores
-        // let ignores = Self::populate_ignores(&self.ignore);
+        let ignores = Self::populate_ignores(&self.ignore);
 
-        // if ignores.contains(&vitest_fn_call.name.as_ref()) {
-        //     return;
-        // }
+        if ignores.contains(&vitest_fn_call.name.as_ref()) {
+            return;
+        }
 
-        if matches!(vitest_fn_call, JestGeneralFnKind::Describe) {
+        if matches!(vitest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
             if self.ignore_top_level_describe && scopes.get_flags(node.scope_id()).is_top() {
                 return;
             }
         } else if !matches!(
-            vitest_fn_call,
-            JestGeneralFnKind::Test | JestGeneralFnKind::VitestBench
+            vitest_fn_call.kind,
+            JestFnKind::General(JestGeneralFnKind::Test) | JestFnKind::General(JestGeneralFnKind::VitestBench)
         ) {
             return;
         }
@@ -187,6 +187,28 @@ impl VitestPreferLowercaseTitle {
         ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {
             fixer.replace(Span::sized(span.start + 1, replacement_len), replacement)
         });
+    }
+
+    fn populate_ignores(ignore: &[CompactStr]) -> Vec<&str> {
+        let mut ignores: Vec<&str> = vec![];
+        let test_case_name = ["fit", "it", "xit", "test", "xtest"];
+        let describe_alias = ["describe", "fdescribe", "xdescribe"];
+        let test_name = "test";
+        let it_name = "it";
+
+        if ignore.iter().any(|alias| alias == "describe") {
+            ignores.extend(describe_alias.iter());
+        }
+
+        if ignore.iter().any(|alias| alias == test_name) {
+            ignores.extend(test_case_name.iter().filter(|alias| alias.ends_with(test_name)));
+        }
+
+        if ignore.iter().any(|alias| alias == it_name) {
+            ignores.extend(test_case_name.iter().filter(|alias| alias.ends_with(it_name)));
+        }
+
+        ignores
     }
 }
 
