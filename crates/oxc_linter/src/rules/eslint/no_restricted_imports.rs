@@ -14,176 +14,129 @@ use crate::{
     ModuleRecord,
 };
 
-fn diagnostic_path(span: Span, message: Option<CompactStr>, source: &str) -> OxcDiagnostic {
-    if let Some(message) = message {
-        return OxcDiagnostic::warn(format!("'{source}' import is restricted from being used."))
-            .with_help(message)
-            .with_label(span);
+fn diagnostic_with_maybe_help(span: Span, msg: String, help: Option<CompactStr>) -> OxcDiagnostic {
+    if let Some(help) = help {
+        return OxcDiagnostic::warn(msg).with_help(help).with_label(span);
     }
 
-    OxcDiagnostic::warn(format!("'{source}' import is restricted from being used."))
-        .with_label(span)
+    OxcDiagnostic::warn(msg).with_label(span)
 }
 
-fn diagnostic_pattern(span: Span, message: Option<CompactStr>, source: &str) -> OxcDiagnostic {
-    if let Some(message) = message {
-        return OxcDiagnostic::warn(format!(
-            "'{source}' import is restricted from being used by a pattern."
-        ))
-        .with_help(message)
-        .with_label(span);
-    }
+fn diagnostic_path(span: Span, help: Option<CompactStr>, source: &str) -> OxcDiagnostic {
+    let msg = format!("'{source}' import is restricted from being used.");
 
-    OxcDiagnostic::warn(format!("'{source}' import is restricted from being used by a pattern."))
-        .with_label(span)
+    diagnostic_with_maybe_help(span, msg, help)
+}
+
+fn diagnostic_pattern(span: Span, help: Option<CompactStr>, source: &str) -> OxcDiagnostic {
+    let msg = format!("'{source}' import is restricted from being used by a pattern.");
+
+    diagnostic_with_maybe_help(span, msg, help)
 }
 
 fn diagnostic_pattern_and_import_name(
     span: Span,
-    message: Option<CompactStr>,
+    help: Option<CompactStr>,
     name: &str,
     source: &str,
 ) -> OxcDiagnostic {
-    if let Some(message) = message {
-        return OxcDiagnostic::warn(format!(
-            "'{name}' import from '{source}' is restricted from being used by a pattern."
-        ))
-        .with_help(message)
-        .with_label(span);
-    }
+    let msg =
+        format!("'{name}' import from '{source}' is restricted from being used by a pattern.");
 
-    OxcDiagnostic::warn(format!(
-        "'{name}' import from '{source}' is restricted from being used by a pattern."
-    ))
-    .with_label(span)
+    diagnostic_with_maybe_help(span, msg, help)
 }
 
 fn diagnostic_pattern_and_everything(
     span: Span,
-    message: Option<CompactStr>,
+    help: Option<CompactStr>,
     name: &str,
     source: &str,
 ) -> OxcDiagnostic {
-    let msg = message.unwrap_or_else(|| {
-        CompactStr::new(&format!("* import is invalid because '{name}' from '{source}' is restricted from being used by a pattern."))
-    });
+    let msg =
+    format!("* import is invalid because '{name}' from '{source}' is restricted from being used by a pattern.");
 
-    OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span)
+    diagnostic_with_maybe_help(span, msg, help)
 }
 
 fn diagnostic_pattern_and_everything_with_regex_import_name(
     span: Span,
-    message: Option<CompactStr>,
+    help: Option<CompactStr>,
     name: &str,
     source: &str,
 ) -> OxcDiagnostic {
-    let msg = message.unwrap_or_else(|| {
-        CompactStr::new(&format!("* import is invalid because import name matching '{name}' pattern from '{source}' is restricted from being used."))
-    });
+    let msg =
+    format!("* import is invalid because import name matching '{name}' pattern from '{source}' is restricted from being used.");
 
-    OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span)
+    diagnostic_with_maybe_help(span, msg, help)
 }
 
 fn diagnostic_everything(
     span: Span,
-    message: Option<CompactStr>,
+    help: Option<CompactStr>,
     name: &str,
     source: &str,
 ) -> OxcDiagnostic {
-    if let Some(message) = message {
-        return OxcDiagnostic::warn(format!(
-            "* import is invalid because '{name}' from '{source}' is restricted."
-        ))
-        .with_help(message)
-        .with_label(span);
-    }
+    let msg = format!("* import is invalid because '{name}' from '{source}' is restricted.");
 
-    OxcDiagnostic::warn(format!(
-        "* import is invalid because '{name}' from '{source}' is restricted."
-    ))
-    .with_label(span)
+    diagnostic_with_maybe_help(span, msg, help)
 }
 
 fn diagnostic_import_name(
     span: Span,
-    message: Option<CompactStr>,
+    help: Option<CompactStr>,
     name: &str,
     source: &str,
 ) -> OxcDiagnostic {
-    if let Some(message) = message {
-        return OxcDiagnostic::warn(format!("'{name}' import from '{source}' is restricted."))
-            .with_help(message)
-            .with_label(span);
-    }
+    let msg = format!("'{name}' import from '{source}' is restricted.");
 
-    OxcDiagnostic::warn(format!("'{name}' import from '{source}' is restricted.")).with_label(span)
+    diagnostic_with_maybe_help(span, msg, help)
 }
 
 fn diagnostic_allowed_import_name(
     span: Span,
-    message: Option<CompactStr>,
+    help: Option<CompactStr>,
     name: &str,
     source: &str,
     allowed: &str,
 ) -> OxcDiagnostic {
-    if let Some(message) = message {
-        return OxcDiagnostic::warn(format!("'{name}' import from '{source}' is restricted because only {allowed} import(s) is/are allowed."))
-            .with_help(message)
-            .with_label(span);
-    }
+    let msg = format!("'{name}' import from '{source}' is restricted because only {allowed} import(s) is/are allowed.");
 
-    OxcDiagnostic::warn(format!("'{name}' import from '{source}' is restricted because only {allowed} import(s) is/are allowed."))
-        .with_label(span)
+    diagnostic_with_maybe_help(span, msg, help)
 }
 
 fn diagnostic_everything_with_allowed_import_name(
     span: Span,
-    message: Option<CompactStr>,
+    help: Option<CompactStr>,
     source: &str,
     allowed: &str,
 ) -> OxcDiagnostic {
-    if let Some(message) = message {
-        return OxcDiagnostic::warn(format!(
-            "* import is invalid because only '{allowed}' from '{source}' is/are allowed."
-        ))
-        .with_help(message)
-        .with_label(span);
-    }
+    let msg =
+        format!("* import is invalid because only '{allowed}' from '{source}' is/are allowed.");
 
-    OxcDiagnostic::warn(format!(
-        "'* import is invalid because only '{allowed}' from '{source}' is/are allowed."
-    ))
-    .with_label(span)
+    diagnostic_with_maybe_help(span, msg, help)
 }
 
 fn diagnostic_allowed_import_name_pattern(
     span: Span,
-    message: Option<CompactStr>,
+    help: Option<CompactStr>,
     name: &str,
     source: &str,
     allowed_pattern: &str,
 ) -> OxcDiagnostic {
-    if let Some(message) = message {
-        return OxcDiagnostic::warn(format!("'{name}' import from '{source}' is restricted because only imports that match the pattern '{allowed_pattern}' are allowed from '{source}'."))
-            .with_help(message)
-            .with_label(span);
-    }
+    let msg = format!("'{name}' import from '{source}' is restricted because only imports that match the pattern '{allowed_pattern}' are allowed from '{source}'.");
 
-    OxcDiagnostic::warn(format!("'{name}' import from '{source}' is restricted because only imports that match the pattern '{allowed_pattern}' are allowed from '{source}'."))
-        .with_label(span)
+    diagnostic_with_maybe_help(span, msg, help)
 }
 
 fn diagnostic_everything_with_allowed_import_name_pattern(
     span: Span,
-    message: Option<CompactStr>,
+    help: Option<CompactStr>,
     source: &str,
     allowed_pattern: &str,
 ) -> OxcDiagnostic {
-    let msg = message.unwrap_or_else(|| {
-        CompactStr::new(&format!("* import is invalid because only imports that match the pattern '{allowed_pattern}' from '{source}' are allowed."))
-    });
+    let msg = format!("* import is invalid because only imports that match the pattern '{allowed_pattern}' from '{source}' are allowed.");
 
-    OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span)
+    diagnostic_with_maybe_help(span, msg, help)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -777,12 +730,36 @@ impl NoRestrictedImports {
                 }
                 GlobResult::Found => {
                     let diagnostic: OxcDiagnostic = match result {
-                        IsSkipAbleResult::GeneralDisallowed(_)
-                        | IsSkipAbleResult::DefaultDisallowed => diagnostic_pattern(
+                        IsSkipAbleResult::GeneralDisallowed(_) => diagnostic_pattern(
                             entry.module_request.span(),
                             pattern.message.clone(),
                             source,
                         ),
+                        IsSkipAbleResult::DefaultDisallowed => {
+                            let diagnostic = if let Some(import_names) = &pattern.import_names {
+                                diagnostic_pattern_and_everything(
+                                    entry.module_request.span(),
+                                    pattern.message.clone(),
+                                    import_names.join(", ").as_str(),
+                                    source,
+                                )
+                            } else if let Some(allowed_import_names) = &pattern.allow_import_names {
+                                diagnostic_everything_with_allowed_import_name(
+                                    entry.module_request.span(),
+                                    pattern.message.clone(),
+                                    source,
+                                    allowed_import_names.join(", ").as_str(),
+                                )
+                            } else {
+                                diagnostic_pattern(
+                                    entry.module_request.span(),
+                                    pattern.message.clone(),
+                                    source,
+                                )
+                            };
+
+                            diagnostic
+                        }
                         IsSkipAbleResult::NameDisallowed(name_span) => {
                             let diagnostic = if let Some(allow_import_name_pattern) =
                                 &pattern.allow_import_name_pattern
@@ -906,9 +883,29 @@ impl NoRestrictedImports {
                     let span = module_request.span();
 
                     let diagnostic = match result {
-                        IsSkipAbleResult::GeneralDisallowed(_)
-                        | IsSkipAbleResult::DefaultDisallowed => {
+                        IsSkipAbleResult::GeneralDisallowed(_) => {
                             diagnostic_pattern(span, pattern.message.clone(), source)
+                        }
+                        IsSkipAbleResult::DefaultDisallowed => {
+                            let diagnostic = if let Some(import_names) = &pattern.import_names {
+                                diagnostic_pattern_and_everything(
+                                    span,
+                                    pattern.message.clone(),
+                                    import_names.join(", ").as_str(),
+                                    source,
+                                )
+                            } else if let Some(allowed_import_names) = &pattern.allow_import_names {
+                                diagnostic_everything_with_allowed_import_name(
+                                    span,
+                                    pattern.message.clone(),
+                                    source,
+                                    allowed_import_names.join(", ").as_str(),
+                                )
+                            } else {
+                                diagnostic_pattern(span, pattern.message.clone(), source)
+                            };
+
+                            diagnostic
                         }
                         IsSkipAbleResult::NameDisallowed(name_span) => {
                             diagnostic_pattern_and_import_name(

@@ -525,13 +525,13 @@ snapshot_kind: text
    ╰────
   help: Import from @/utils instead.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because 'Foo' from '../../my/relative-module' is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:22]
  1 │ import * as All from '../../my/relative-module';
    ·                      ──────────────────────────
    ╰────
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because 'Foo' from '../../my/relative-module' is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:39]
  1 │ import * as AllWithCustomMessage from '../../my/relative-module';
    ·                                       ──────────────────────────
@@ -544,7 +544,7 @@ snapshot_kind: text
    ·                          ─────
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because 'default' from 'mod' is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:26]
  1 │ import def, * as ns from 'mod';
    ·                          ─────
@@ -623,7 +623,7 @@ snapshot_kind: text
    ╰────
   help: Import from @/utils instead.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because 'Foo' from '../../my/relative-module' is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:39]
  1 │ import * as AllWithCustomMessage from '../../my/relative-module';
    ·                                       ──────────────────────────
@@ -729,7 +729,7 @@ snapshot_kind: text
    ╰────
   help: Only "AllowedObject" is allowed to be imported from "foo".
 
-  ⚠ eslint(no-restricted-imports): '* import is invalid because only 'AllowedObject' from 'foo' is/are allowed.
+  ⚠ eslint(no-restricted-imports): * import is invalid because only 'AllowedObject' from 'foo' is/are allowed.
    ╭─[no_restricted_imports.tsx:1:32]
  1 │ import * as AllowedObject from "foo";
    ·                                ─────
@@ -742,13 +742,13 @@ snapshot_kind: text
    ╰────
   help: Only "AllowedObject" is allowed to be imported from "foo".
 
-  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because only 'AllowedObject' from 'foo/bar' is/are allowed.
    ╭─[no_restricted_imports.tsx:1:32]
  1 │ import * as AllowedObject from "foo/bar";
    ·                                ─────────
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because only 'AllowedObject' from 'foo/bar' is/are allowed.
    ╭─[no_restricted_imports.tsx:1:32]
  1 │ import * as AllowedObject from "foo/bar";
    ·                                ─────────
