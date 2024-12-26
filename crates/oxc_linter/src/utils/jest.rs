@@ -24,6 +24,7 @@ pub use crate::utils::jest::parse_jest_fn::{
 pub const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
     "afterAll",
     "afterEach",
+    "bench",
     "beforeAll",
     "beforeEach",
     "describe",

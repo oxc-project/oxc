@@ -229,6 +229,10 @@ impl<'a> ContextHost<'a> {
             let vitest_like = frameworks::has_vitest_imports(self.module_record());
             let jest_like = frameworks::is_jestlike_file(&self.file_path)
                 || frameworks::has_jest_imports(self.module_record());
+            
+            println!("has_vitest_imports: {}", frameworks::has_vitest_imports(self.module_record()));
+            println!("is_jestlike_file: {}", frameworks::is_jestlike_file(&self.file_path));
+            println!("has_jest_imports: {}", frameworks::has_jest_imports(&self.module_record()));
 
             self.frameworks.set(FrameworkFlags::Vitest, vitest_like);
             self.frameworks.set(FrameworkFlags::Jest, jest_like);
