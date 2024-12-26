@@ -155,14 +155,17 @@ impl Rule for Curly {
                         }
                     }
 
-                    statements.iter().zip(&has_braces_list).zip(&statements_are_else).for_each(|((statement, &has_braces), is_else)| {
-                        let keyword = if *is_else { "else" } else { "if" };
-                        report_if_needed(ctx, statement, keyword, has_braces, expected);
-                    });
+                    statements.iter().zip(&has_braces_list).zip(&statements_are_else).for_each(
+                        |((statement, &has_braces), is_else)| {
+                            let keyword = if *is_else { "else" } else { "if" };
+                            report_if_needed(ctx, statement, keyword, has_braces, expected);
+                        },
+                    );
                 } else {
                     statements
                         .iter()
-                        .zip(should_have_braces_list.iter().zip(&has_braces_list)).zip(&statements_are_else)
+                        .zip(should_have_braces_list.iter().zip(&has_braces_list))
+                        .zip(&statements_are_else)
                         .for_each(|((statement, (&should_have_braces, &has_braces)), is_else)| {
                             let keyword = if *is_else { "else" } else { "if" };
                             report_if_needed(
