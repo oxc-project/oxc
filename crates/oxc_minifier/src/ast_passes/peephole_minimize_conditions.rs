@@ -26,6 +26,17 @@ impl<'a> CompressorPass<'a> for PeepholeMinimizeConditions {
 }
 
 impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(folded_stmt) = match stmt {
+            // If the condition is a literal, we'll let other optimizations try to remove useless code.
+            Statement::IfStatement(s) if !s.test.is_literal() => Self::try_minimize_if(stmt, ctx),
+            _ => None,
+        } {
+            *stmt = folded_stmt;
+            self.changed = true;
+        };
+    }
+
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
             Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
@@ -56,6 +67,40 @@ impl<'a> PeepholeMinimizeConditions {
         binary_expr.operator = new_op;
         Some(ctx.ast.move_expression(&mut expr.argument))
     }
+
+    fn try_minimize_if(
+        stmt: &mut Statement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
+        if if_stmt.alternate.is_none() {
+            // `if(x)foo();` -> `x&&foo();`
+            if let Some(right) = Self::is_foldable_express_block(&mut if_stmt.consequent, ctx) {
+                let left = ctx.ast.move_expression(&mut if_stmt.test);
+                let logical_expr =
+                    ctx.ast.expression_logical(if_stmt.span, left, LogicalOperator::And, right);
+                return Some(ctx.ast.statement_expression(if_stmt.span, logical_expr));
+            }
+        }
+        None
+    }
+
+    fn is_foldable_express_block(
+        stmt: &mut Statement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        match stmt {
+            Statement::BlockStatement(block_stmt) if block_stmt.body.len() == 1 => {
+                if let Statement::ExpressionStatement(s) = &mut block_stmt.body[0] {
+                    Some(ctx.ast.move_expression(&mut s.expression))
+                } else {
+                    None
+                }
+            }
+            Statement::ExpressionStatement(s) => Some(ctx.ast.move_expression(&mut s.expression)),
+            _ => None,
+        }
+    }
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeMinimizeConditionsTest.java>
@@ -85,7 +130,6 @@ mod test {
 
     /** Check that removing blocks with 1 child works */
     #[test]
-    #[ignore]
     fn test_fold_one_child_blocks() {
         // late = false;
         fold("function f(){if(x)a();x=3}", "function f(){x&&a();x=3}");
@@ -94,13 +138,13 @@ mod test {
         fold("function f(){if(x){a()}x=3}", "function f(){x&&a();x=3}");
         fold("function f(){if(x){a?.()}x=3}", "function f(){x&&a?.();x=3}");
 
-        fold("function f(){if(x){return 3}}", "function f(){if(x)return 3}");
+        // fold("function f(){if(x){return 3}}", "function f(){if(x)return 3}");
         fold("function f(){if(x){a()}}", "function f(){x&&a()}");
-        fold("function f(){if(x){throw 1}}", "function f(){if(x)throw 1;}");
+        // fold("function f(){if(x){throw 1}}", "function f(){if(x)throw 1;}");
 
         // Try it out with functions
         fold("function f(){if(x){foo()}}", "function f(){x&&foo()}");
-        fold("function f(){if(x){foo()}else{bar()}}", "function f(){x?foo():bar()}");
+        // fold("function f(){if(x){foo()}else{bar()}}", "function f(){x?foo():bar()}");
 
         // Try it out with properties and methods
         fold("function f(){if(x){a.b=1}}", "function f(){x&&(a.b=1)}");
@@ -122,35 +166,35 @@ mod test {
         // fold("if(x){do{foo()}while(y)}else bar()", "if(x){do foo();while(y)}else bar()");
 
         // Play with nested IFs
-        fold("function f(){if(x){if(y)foo()}}", "function f(){x && (y && foo())}");
-        fold("function f(){if(x){if(y)foo();else bar()}}", "function f(){x&&(y?foo():bar())}");
-        fold("function f(){if(x){if(y)foo()}else bar()}", "function f(){x?y&&foo():bar()}");
-        fold(
-            "function f(){if(x){if(y)foo();else bar()}else{baz()}}",
-            "function f(){x?y?foo():bar():baz()}",
-        );
+        // fold("function f(){if(x){if(y)foo()}}", "function f(){x && (y && foo())}");
+        // fold("function f(){if(x){if(y)foo();else bar()}}", "function f(){x&&(y?foo():bar())}");
+        // fold("function f(){if(x){if(y)foo()}else bar()}", "function f(){x?y&&foo():bar()}");
+        // fold(
+        // "function f(){if(x){if(y)foo();else bar()}else{baz()}}",
+        // "function f(){x?y?foo():bar():baz()}",
+        // );
 
         // fold("if(e1){while(e2){if(e3){foo()}}}else{bar()}", "if(e1)while(e2)e3&&foo();else bar()");
 
         // fold("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
 
-        fold("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
-        fold("if(x){ if(y){var x;}else{var z;} }", "if(x)if(y)var x;else var z");
+        // fold("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
+        // fold("if(x){ if(y){var x;}else{var z;} }", "if(x)if(y)var x;else var z");
 
         // NOTE - technically we can remove the blocks since both the parent
         // and child have elses. But we don't since it causes ambiguities in
         // some cases where not all descendent ifs having elses
-        fold(
-            "if(x){ if(y){var x;}else{var z;} }else{var w}",
-            "if(x)if(y)var x;else var z;else var w",
-        );
-        fold("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
+        // fold(
+        // "if(x){ if(y){var x;}else{var z;} }else{var w}",
+        // "if(x)if(y)var x;else var z;else var w",
+        // );
+        // fold("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
 
         // Here's some of the ambiguous cases
-        fold(
-            "if(a){if(b){f1();f2();}else if(c){f3();}}else {if(d){f4();}}",
-            "if(a)if(b){f1();f2()}else c&&f3();else d&&f4()",
-        );
+        // fold(
+        // "if(a){if(b){f1();f2();}else if(c){f3();}}else {if(d){f4();}}",
+        // "if(a)if(b){f1();f2()}else c&&f3();else d&&f4()",
+        // );
 
         fold_same("function f(){foo()}");
         fold_same("switch(x){case y: foo()}");
@@ -160,10 +204,10 @@ mod test {
         // Lexical declaration cannot appear in a single-statement context.
         fold_same("if (foo) { const bar = 1 } else { const baz = 1 }");
         fold_same("if (foo) { let bar = 1 } else { let baz = 1 }");
-        fold(
-            "if (foo) { var bar = 1 } else { var baz = 1 }",
-            "if (foo) var bar = 1; else var baz = 1;",
-        );
+        // fold(
+        // "if (foo) { var bar = 1 } else { var baz = 1 }",
+        // "if (foo) var bar = 1; else var baz = 1;",
+        // );
     }
 
     /** Try to minimize returns */
