@@ -109,27 +109,30 @@ impl Rule for Curly {
 
         match node.kind() {
             AstKind::IfStatement(stmt) => {
+                let mut statements_are_else = vec![false];
                 let mut statements = vec![&stmt.consequent];
                 let mut should_have_braces_list =
                     vec![should_have_braces(root_node, &self.0.options, &stmt.consequent, ctx)];
                 let mut has_braces_list = vec![has_braces(&stmt.consequent)];
-                let mut current_node = &stmt.alternate;
+                let mut current_statement = &stmt.alternate;
 
-                while let Some(node) = current_node {
-                    let (consequent, alternate) = if let Statement::IfStatement(node) = node {
+                while let Some(statement) = current_statement {
+                    let (consequent, alternate) = if let Statement::IfStatement(node) = statement {
                         (&node.consequent, &node.alternate)
                     } else {
-                        statements.push(node);
+                        statements_are_else.push(true);
+                        statements.push(statement);
                         should_have_braces_list.push(should_have_braces(
                             root_node,
                             &self.0.options,
-                            node,
+                            statement,
                             ctx,
                         ));
-                        has_braces_list.push(has_braces(node));
+                        has_braces_list.push(has_braces(statement));
                         break;
                     };
 
+                    statements_are_else.push(false);
                     statements.push(consequent);
                     should_have_braces_list.push(should_have_braces(
                         root_node,
@@ -138,7 +141,7 @@ impl Rule for Curly {
                         ctx,
                     ));
                     has_braces_list.push(has_braces(consequent));
-                    current_node = alternate;
+                    current_statement = alternate;
                 }
 
                 if self.0.options.contains(&CurlyType::Consistent) {
@@ -152,22 +155,22 @@ impl Rule for Curly {
                         }
                     }
 
-                    statements.iter().zip(&has_braces_list).for_each(|(statement, &has_braces)| {
-                        let keyword = get_if_or_else(statement, ctx);
+                    statements.iter().zip(&has_braces_list).zip(&statements_are_else).for_each(|((statement, &has_braces), is_else)| {
+                        let keyword = if *is_else { "else" } else { "if" };
                         report_if_needed(ctx, statement, keyword, has_braces, expected);
                     });
                 } else {
                     statements
                         .iter()
-                        .zip(should_have_braces_list.iter().zip(&has_braces_list))
-                        .for_each(|(statement, (should_have_braces, &has_braces))| {
-                            let keyword = get_if_or_else(statement, ctx);
+                        .zip(should_have_braces_list.iter().zip(&has_braces_list)).zip(&statements_are_else)
+                        .for_each(|((statement, (&should_have_braces, &has_braces)), is_else)| {
+                            let keyword = if *is_else { "else" } else { "if" };
                             report_if_needed(
                                 ctx,
                                 statement,
                                 keyword,
                                 has_braces,
-                                *should_have_braces,
+                                should_have_braces,
                             );
                         });
                 }
@@ -220,25 +223,6 @@ impl Rule for Curly {
             _ => {}
         }
     }
-}
-
-fn get_if_or_else<'a>(statement: &Statement, ctx: &LintContext) -> &'a str {
-    let node = get_node_by_statement(statement, ctx);
-    ctx.nodes()
-        .parent_node(node.id())
-        .filter(|parent| is_else_branch(node, parent))
-        .map_or("if", |_| "else")
-}
-
-fn is_else_branch(node: &AstNode, parent_node: &AstNode) -> bool {
-    if let AstKind::IfStatement(parent_statement) = parent_node.kind() {
-        if let Some(alternate) = &parent_statement.alternate {
-            let node_span = node.span();
-            let alternate_span = alternate.span();
-            return node_span.start == alternate_span.start && node_span.end == alternate_span.end;
-        }
-    }
-    false
 }
 
 fn get_root_node<'a, 'b>(mut node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> &'a AstNode<'b> {
