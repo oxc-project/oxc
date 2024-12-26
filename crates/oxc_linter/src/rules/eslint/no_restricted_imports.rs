@@ -44,7 +44,7 @@ fn diagnostic_pattern_and_import_name(
     OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span)
 }
 
-fn diagnostic_pattern_and_everything(
+fn _diagnostic_pattern_and_everything(
     span: Span,
     message: Option<CompactStr>,
     name: &str,
@@ -57,7 +57,7 @@ fn diagnostic_pattern_and_everything(
     OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span)
 }
 
-fn diagnostic_pattern_and_everything_with_regex_import_name(
+fn _diagnostic_pattern_and_everything_with_regex_import_name(
     span: Span,
     message: Option<CompactStr>,
     name: &str,
@@ -70,7 +70,7 @@ fn diagnostic_pattern_and_everything_with_regex_import_name(
     OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span)
 }
 
-fn diagnostic_everything(
+fn _diagnostic_everything(
     span: Span,
     message: Option<CompactStr>,
     name: &str,
@@ -98,7 +98,7 @@ fn diagnostic_import_name(
     OxcDiagnostic::warn(msg).with_help("Remove the import statement.").with_label(span)
 }
 
-fn diagnostic_allowed_import_name(
+fn _diagnostic_allowed_import_name(
     span: Span,
     message: Option<CompactStr>,
     name: &str,
@@ -322,6 +322,7 @@ fn add_configuration_patterns_from_string(paths: &mut Vec<RestrictedPattern>, mo
     });
 }
 
+#[derive(PartialEq)]
 enum NameSpanAllowedResult {
     Allowed,
     GeneralDisallowed,
@@ -392,11 +393,11 @@ impl RestrictedPath {
                     x => x,
                 }
             }
-            ImportImportName::Default(span) => {
+            ImportImportName::Default(_) => {
                 let name = CompactStr::new("default");
                 match is_name_span_allowed_in_path(&name, self) {
                     NameSpanAllowedResult::NameDisallowed(_) => {
-                        NameSpanAllowedResult::NameDisallowed(Some(NameSpan::new(name, *span)))
+                        NameSpanAllowedResult::GeneralDisallowed
                     }
                     x => x,
                 }
@@ -424,34 +425,43 @@ impl RestrictedPath {
 }
 
 impl RestrictedPattern {
-    fn is_skip_able_import(&self, name: &ImportImportName) -> bool {
+    fn is_skip_able_import(&self, name: &ImportImportName) -> NameSpanAllowedResult {
         match &name {
             ImportImportName::Name(import) => {
                 match is_name_span_allowed_in_pattern(&import.name, self) {
-                    NameSpanAllowedResult::Allowed => true,
-                    _ => false,
+                    NameSpanAllowedResult::NameDisallowed(_) => {
+                        NameSpanAllowedResult::NameDisallowed(Some(import.clone()))
+                    }
+                    x => x,
                 }
             }
             ImportImportName::Default(_) => {
-                match is_name_span_allowed_in_pattern(&CompactStr::new("default"), self) {
-                    NameSpanAllowedResult::Allowed => true,
-                    _ => false,
+                let name = CompactStr::new("default");
+                match is_name_span_allowed_in_pattern(&name, self) {
+                    NameSpanAllowedResult::NameDisallowed(_) => {
+                        NameSpanAllowedResult::GeneralDisallowed
+                    }
+                    x => x,
                 }
             }
-            ImportImportName::NamespaceObject => false,
+            ImportImportName::NamespaceObject => NameSpanAllowedResult::GeneralDisallowed,
         }
     }
 
-    fn is_skip_able_export(&self, name: &ExportImportName) -> bool {
+    fn is_skip_able_export(&self, name: &ExportImportName) -> NameSpanAllowedResult {
         match &name {
             ExportImportName::Name(import) => {
                 match is_name_span_allowed_in_pattern(&import.name, self) {
-                    NameSpanAllowedResult::Allowed => true,
-                    _ => false,
+                    NameSpanAllowedResult::NameDisallowed(_) => {
+                        NameSpanAllowedResult::NameDisallowed(Some(import.clone()))
+                    }
+                    x => x,
                 }
             }
-            ExportImportName::All | ExportImportName::AllButDefault => false,
-            ExportImportName::Null => true,
+            ExportImportName::All | ExportImportName::AllButDefault => {
+                NameSpanAllowedResult::GeneralDisallowed
+            }
+            ExportImportName::Null => NameSpanAllowedResult::Allowed,
         }
     }
 
@@ -634,11 +644,11 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let span = entry.module_request.span();
-
             match path.is_skip_able_import(&entry.import_name) {
                 NameSpanAllowedResult::GeneralDisallowed => {
-                    ctx.diagnostic(diagnostic_path(span, path.message.clone(), source))
+                    let span = entry.module_request.span();
+
+                    ctx.diagnostic(diagnostic_path(span, path.message.clone(), source));
                 }
                 NameSpanAllowedResult::NameDisallowed(name_span) => {
                     ctx.diagnostic(diagnostic_import_name(
@@ -646,7 +656,7 @@ impl NoRestrictedImports {
                         path.message.clone(),
                         name_span.unwrap().name(),
                         source,
-                    ))
+                    ));
                 }
                 NameSpanAllowedResult::Allowed => (),
             }
@@ -656,7 +666,9 @@ impl NoRestrictedImports {
         let mut found_errors = vec![];
 
         for pattern in &self.patterns {
-            if pattern.is_skip_able_import(&entry.import_name) {
+            let result = pattern.is_skip_able_import(&entry.import_name);
+
+            if result == NameSpanAllowedResult::Allowed {
                 continue;
             }
 
@@ -668,7 +680,22 @@ impl NoRestrictedImports {
                 GlobResult::Found => {
                     let span = entry.module_request.span();
 
-                    found_errors.push((span, pattern));
+                    let diagnostic = match result {
+                        NameSpanAllowedResult::GeneralDisallowed => {
+                            diagnostic_pattern(span, pattern.message.clone(), source)
+                        }
+                        NameSpanAllowedResult::NameDisallowed(name_span) => {
+                            diagnostic_pattern_and_import_name(
+                                name_span.clone().unwrap().span(),
+                                pattern.message.clone(),
+                                name_span.unwrap().name(),
+                                source,
+                            )
+                        }
+                        NameSpanAllowedResult::Allowed => panic!("unreachable"),
+                    };
+
+                    found_errors.push(diagnostic);
                 }
                 GlobResult::None => (),
             };
@@ -681,8 +708,8 @@ impl NoRestrictedImports {
         }
 
         if !whitelist_found && !found_errors.is_empty() {
-            for (span, pattern) in found_errors {
-                ctx.diagnostic(diagnostic_pattern(span, pattern.message.clone(), source));
+            for diagnostic in found_errors {
+                ctx.diagnostic(diagnostic);
             }
         }
     }
@@ -701,7 +728,7 @@ impl NoRestrictedImports {
             match path.is_skip_able_export(&entry.import_name) {
                 NameSpanAllowedResult::GeneralDisallowed => {
                     let span = entry.span;
-                    ctx.diagnostic(diagnostic_path(span, path.message.clone(), source))
+                    ctx.diagnostic(diagnostic_path(span, path.message.clone(), source));
                 }
                 NameSpanAllowedResult::NameDisallowed(name_span) => {
                     ctx.diagnostic(diagnostic_import_name(
@@ -709,7 +736,7 @@ impl NoRestrictedImports {
                         path.message.clone(),
                         name_span.unwrap().name(),
                         source,
-                    ))
+                    ));
                 }
                 NameSpanAllowedResult::Allowed => (),
             }
@@ -719,7 +746,9 @@ impl NoRestrictedImports {
         let mut found_errors = vec![];
 
         for pattern in &self.patterns {
-            if pattern.is_skip_able_export(&entry.import_name) {
+            let result = pattern.is_skip_able_export(&entry.import_name);
+
+            if result == NameSpanAllowedResult::Allowed {
                 continue;
             }
 
@@ -735,7 +764,22 @@ impl NoRestrictedImports {
                 GlobResult::Found => {
                     let span = module_request.span();
 
-                    found_errors.push((span, pattern));
+                    let diagnostic = match result {
+                        NameSpanAllowedResult::GeneralDisallowed => {
+                            diagnostic_pattern(span, pattern.message.clone(), source)
+                        }
+                        NameSpanAllowedResult::NameDisallowed(name_span) => {
+                            diagnostic_pattern_and_import_name(
+                                name_span.clone().unwrap().span(),
+                                pattern.message.clone(),
+                                name_span.unwrap().name(),
+                                source,
+                            )
+                        }
+                        NameSpanAllowedResult::Allowed => panic!("unreachable"),
+                    };
+
+                    found_errors.push(diagnostic);
                 }
                 GlobResult::None => (),
             };
@@ -743,13 +787,13 @@ impl NoRestrictedImports {
             if pattern.get_regex_result(module_request) {
                 let span = module_request.span();
 
-                ctx.diagnostic(diagnostic_path(span, pattern.message.clone(), source));
+                ctx.diagnostic(diagnostic_pattern(span, pattern.message.clone(), source));
             }
         }
 
         if !whitelist_found && !found_errors.is_empty() {
-            for (span, pattern) in found_errors {
-                ctx.diagnostic(diagnostic_path(span, pattern.message.clone(), source));
+            for diagnostic in found_errors {
+                ctx.diagnostic(diagnostic);
             }
         }
     }

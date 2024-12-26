@@ -157,9 +157,9 @@ snapshot_kind: text
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): Please import the default import of "foo" from /bar/ instead.
-   ╭─[no_restricted_imports.tsx:1:8]
+   ╭─[no_restricted_imports.tsx:1:30]
  1 │ import DisallowedObject from "foo";
-   ·        ────────────────
+   ·                              ─────
    ╰────
   help: Remove the import statement.
 
@@ -248,9 +248,9 @@ snapshot_kind: text
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): Please import the default import of "foo" from /bar/ instead.
-   ╭─[no_restricted_imports.tsx:1:8]
+   ╭─[no_restricted_imports.tsx:1:69]
  1 │ import DisallowedObject, { AllowedObject as AllowedObjectTwo } from "foo";
-   ·        ────────────────
+   ·                                                                     ─────
    ╰────
   help: Remove the import statement.
 
@@ -429,17 +429,17 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted.
-   ╭─[no_restricted_imports.tsx:1:8]
+  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:26]
  1 │ import foo, { bar } from 'mod';
-   ·        ───
+   ·                          ─────
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted.
-   ╭─[no_restricted_imports.tsx:1:8]
+  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:27]
  1 │ import foo, * as bar from 'mod';
-   ·        ───
+   ·                           ─────
    ╰────
   help: Remove the import statement.
 
@@ -485,10 +485,10 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted.
-   ╭─[no_restricted_imports.tsx:1:8]
+  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:37]
  1 │ import foo, { default as bar } from 'mod';
-   ·        ───
+   ·                                     ─────
    ╰────
   help: Remove the import statement.
 
@@ -541,24 +541,24 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:21]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo } from '../../my/relative-module';
-   ·                     ──────────────────────────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): Import from @/utils instead.
-   ╭─[no_restricted_imports.tsx:1:26]
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo, Bar } from '../../my/relative-module';
-   ·                          ──────────────────────────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): Import from @/utils instead.
-   ╭─[no_restricted_imports.tsx:1:26]
+   ╭─[no_restricted_imports.tsx:1:15]
  1 │ import { Foo, Bar } from '../../my/relative-module';
-   ·                          ──────────────────────────
+   ·               ───
    ╰────
   help: Remove the import statement.
 
@@ -597,59 +597,59 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:21]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from 'foo' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo } from 'foo';
-   ·                     ─────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:28]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from 'foo' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo as Bar } from 'foo';
-   ·                            ─────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:26]
+  ⚠ eslint(no-restricted-imports): 'Bar' import from 'foo' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:15]
  1 │ import Foo, { Bar } from 'foo';
-   ·                          ─────
+   ·               ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:21]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo } from '../../my/relative-module';
-   ·                     ──────────────────────────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:24]
+  ⚠ eslint(no-restricted-imports): 'FooBar' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { FooBar } from '../../my/relative-module';
-   ·                        ──────────────────────────
+   ·          ──────
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:26]
+  ⚠ eslint(no-restricted-imports): 'Bar' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:15]
  1 │ import Foo, { Bar } from '../../my/relative-module';
-   ·                          ──────────────────────────
+   ·               ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:26]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo, Bar } from '../../my/relative-module';
-   ·                          ──────────────────────────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:26]
+  ⚠ eslint(no-restricted-imports): 'Bar' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:15]
  1 │ import { Foo, Bar } from '../../my/relative-module';
-   ·                          ──────────────────────────
+   ·               ───
    ╰────
   help: Remove the import statement.
 
@@ -681,77 +681,77 @@ snapshot_kind: text
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:21]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo } from '../../my/relative-module';
-   ·                     ──────────────────────────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:21]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo } from '../../my/relative-module';
-   ·                     ──────────────────────────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:21]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo } from '../../my/relative-module';
-   ·                     ──────────────────────────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:21]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo } from '../../my/relative-module';
-   ·                     ──────────────────────────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:26]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo, Bar } from '../../my/relative-module';
-   ·                          ──────────────────────────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:26]
+  ⚠ eslint(no-restricted-imports): 'Bar' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:15]
  1 │ import { Foo, Bar } from '../../my/relative-module';
-   ·                          ──────────────────────────
+   ·               ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:21]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from 'foo' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ export { Foo } from 'foo';
-   ·                     ─────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:28]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from 'foo' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ export { Foo as Bar } from 'foo';
-   ·                            ─────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:21]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from 'foo' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ export { Foo } from 'foo';
-   ·                     ─────
+   ·          ───
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:15]
  1 │ export * from 'foo';
    ·               ─────
    ╰────
   help: Remove the import statement.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:21]
  1 │ export { Bar } from 'foo';
    ·                     ─────
