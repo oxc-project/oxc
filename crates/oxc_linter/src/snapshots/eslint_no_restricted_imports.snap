@@ -755,13 +755,13 @@ snapshot_kind: text
    ╰────
   help: Only "AllowedObject" is allowed to be imported from "foo".
 
-  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because only imports that match the pattern '^Allow' from 'foo/bar' are allowed.
    ╭─[no_restricted_imports.tsx:1:32]
  1 │ import * as AllowedObject from "foo/bar";
    ·                                ─────────
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because only imports that match the pattern '^Allow' from 'foo/bar' are allowed.
    ╭─[no_restricted_imports.tsx:1:32]
  1 │ import * as AllowedObject from "foo/bar";
    ·                                ─────────

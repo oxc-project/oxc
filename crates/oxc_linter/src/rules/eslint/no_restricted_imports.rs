@@ -750,6 +750,15 @@ impl NoRestrictedImports {
                                     source,
                                     allowed_import_names.join(", ").as_str(),
                                 )
+                            } else if let Some(allow_import_name_pattern) =
+                                &pattern.allow_import_name_pattern
+                            {
+                                diagnostic_everything_with_allowed_import_name_pattern(
+                                    entry.module_request.span(),
+                                    pattern.message.clone(),
+                                    source,
+                                    allow_import_name_pattern.as_str(),
+                                )
                             } else {
                                 diagnostic_pattern(
                                     entry.module_request.span(),
@@ -893,6 +902,15 @@ impl NoRestrictedImports {
                                     pattern.message.clone(),
                                     import_names.join(", ").as_str(),
                                     source,
+                                )
+                            } else if let Some(allow_import_name_pattern) =
+                                &pattern.allow_import_name_pattern
+                            {
+                                diagnostic_everything_with_allowed_import_name_pattern(
+                                    span,
+                                    pattern.message.clone(),
+                                    source,
+                                    allow_import_name_pattern.as_str(),
                                 )
                             } else if let Some(allowed_import_names) = &pattern.allow_import_names {
                                 diagnostic_everything_with_allowed_import_name(
