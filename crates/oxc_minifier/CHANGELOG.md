@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+### Features
+
+- 5397fe9 minifier: Constant fold `undefined?.bar` -> `undefined` (#8075) (Boshen)
+- 1932f1e minifier: Fold `foo === undefined || foo === null` (#8063) (翠 / green)
+
+### Bug Fixes
+
+- b605baa minifier: Constant fold strings with tab char (#8096) (Boshen)
+
+### Refactor
+
+- 8b54d89 minifier: Remove parens must happen on enter (#8060) (Boshen)
+- 7cb84f3 minifier: Only minify on ast node exit (#8059) (Boshen)
+- 77d845a minifier: Fuse DCE AST passes (#8058) (Boshen)
+- 6123f5e minifier: Fold statements on exit (#8057) (Boshen)
+
 ## [0.42.0] - 2024-12-18
 
 ### Features

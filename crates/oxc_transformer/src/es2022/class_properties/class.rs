@@ -92,7 +92,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                         let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
                         private_props.insert(
                             ident.name.clone(),
-                            PrivateProp { binding, is_static: prop.r#static },
+                            PrivateProp::new(binding, prop.r#static, false, false),
                         );
                     }
 
@@ -112,21 +112,43 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     }
                 }
                 ClassElement::MethodDefinition(method) => {
-                    if method.kind == MethodDefinitionKind::Constructor
-                        && method.value.body.is_some()
-                    {
-                        constructor = Some(method);
+                    if method.kind == MethodDefinitionKind::Constructor {
+                        if method.value.body.is_some() {
+                            constructor = Some(method);
+                        }
+                    } else if let PropertyKey::PrivateIdentifier(ident) = &method.key {
+                        let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
+                        private_props.insert(
+                            ident.name.clone(),
+                            PrivateProp::new(dummy_binding, method.r#static, true, false),
+                        );
                     }
                 }
-                ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
-                    // TODO: Need to handle these?
+                ClassElement::AccessorProperty(prop) => {
+                    // TODO: Not sure what we should do here.
+                    // Only added this to prevent panics in TS conformance tests.
+                    if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
+                        let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
+                        private_props.insert(
+                            ident.name.clone(),
+                            PrivateProp::new(dummy_binding, prop.r#static, true, true),
+                        );
+                    }
+                }
+                ClassElement::TSIndexSignature(_) => {
+                    // TODO: Need to handle this?
                 }
             }
         }
 
         // Exit if nothing to transform
         if instance_prop_count == 0 && !has_static_prop && !has_static_block {
-            self.classes_stack.push(ClassDetails::empty(is_declaration));
+            self.classes_stack.push(ClassDetails {
+                is_declaration,
+                is_transform_required: false,
+                private_props: if private_props.is_empty() { None } else { Some(private_props) },
+                bindings: ClassBindings::dummy(),
+            });
             return;
         }
 
@@ -381,12 +403,17 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         if let Some(private_props) = &class_details.private_props {
             if self.private_fields_as_properties {
+                // TODO: Only call `insert_many_before` if some private *props*
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
-                    private_props.iter().map(|(name, prop)| {
+                    private_props.iter().filter_map(|(name, prop)| {
+                        if prop.is_method || prop.is_accessor {
+                            return None;
+                        }
+
                         // `var _prop = _classPrivateFieldLooseKey("prop");`
                         let value = Self::create_private_prop_key_loose(name, self.ctx, ctx);
-                        create_variable_declaration(&prop.binding, value, ctx)
+                        Some(create_variable_declaration(&prop.binding, value, ctx))
                     }),
                 );
             } else {
@@ -395,7 +422,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
                     private_props.values().filter_map(|prop| {
-                        if prop.is_static {
+                        if prop.is_static || prop.is_method || prop.is_accessor {
                             return None;
                         }
 
@@ -482,8 +509,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // which can be very far above the class in AST, when it's a `var`.
         // Maybe for now only add class name if it doesn't shadow a var used within class?
 
-        // TODO: Deduct static private props from `expr_count`.
-        // Or maybe should store count and increment it when create private static props?
+        // TODO: Deduct static private props and private methods from `expr_count`.
+        // Or maybe should store count and increment it when create private static props or private methods?
         // They're probably pretty rare, so it'll be rarely used.
         let class_details = self.classes_stack.last();
 
@@ -511,17 +538,25 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`
             // TODO(improve-on-babel): Simplify this.
             if self.private_fields_as_properties {
-                exprs.extend(private_props.iter().map(|(name, prop)| {
+                exprs.extend(private_props.iter().filter_map(|(name, prop)| {
+                    if prop.is_method || prop.is_accessor {
+                        return None;
+                    }
+
                     // Insert `var _prop;` declaration
                     self.ctx.var_declarations.insert_var(&prop.binding, ctx);
 
                     // `_prop = _classPrivateFieldLooseKey("prop")`
                     let value = Self::create_private_prop_key_loose(name, self.ctx, ctx);
-                    create_assignment(&prop.binding, value, ctx)
+                    Some(create_assignment(&prop.binding, value, ctx))
                 }));
             } else {
                 let mut weakmap_symbol_id = None;
                 exprs.extend(private_props.values().filter_map(|prop| {
+                    if prop.is_method || prop.is_accessor {
+                        return None;
+                    }
+
                     // Insert `var _prop;` declaration
                     self.ctx.var_declarations.insert_var(&prop.binding, ctx);
 
@@ -540,7 +575,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         exprs.extend(self.insert_before.drain(..));
 
         // Insert class + static property assignments + static blocks
-        let class_expr = ctx.ast.move_expression(expr);
         if let Some(binding) = &class_details.bindings.temp {
             // Insert `var _Class` statement, if it wasn't already in entry phase
             if !class_details.bindings.temp_var_is_created {
@@ -548,6 +582,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             }
 
             // `_Class = class {}`
+            let class_expr = ctx.ast.move_expression(expr);
             let assignment = create_assignment(binding, class_expr, ctx);
             exprs.push(assignment);
             // Add static property assignments + static blocks
@@ -564,6 +599,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // -> `let C = ((x = 1), class C extends Bound {});`
             exprs.extend(self.insert_after_exprs.drain(..));
 
+            if exprs.is_empty() {
+                return;
+            }
+
+            let class_expr = ctx.ast.move_expression(expr);
             exprs.push(class_expr);
         }
 

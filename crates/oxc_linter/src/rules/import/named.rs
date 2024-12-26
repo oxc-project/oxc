@@ -77,7 +77,8 @@ declare_oxc_lint!(
     /// import { SomeNonsenseThatDoesntExist } from 'react'
     /// ```
     Named,
-    correctness
+    nursery // There are race conditions in the runtime which may cause the module to
+            // not find any exports from `exported_bindings_from_star_export`.
 );
 
 impl Rule for Named {
@@ -117,9 +118,7 @@ impl Rule for Named {
             }
             // check re-export
             if remote_module_record
-                .exported_bindings_from_star_export
-                .read()
-                .unwrap()
+                .exported_bindings_from_star_export()
                 .iter()
                 .any(|(_, value)| value.contains(&import_name.name))
             {

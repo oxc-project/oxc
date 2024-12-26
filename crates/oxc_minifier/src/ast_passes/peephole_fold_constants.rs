@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ValueType},
+    constant_evaluation::{ConstantEvaluation, ConstantValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{GetSpan, SPAN};
@@ -53,6 +53,7 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
             }
             // TODO: return tryFoldGetProp(subtree);
             Expression::LogicalExpression(e) => Self::try_fold_logical_expression(e, ctx),
+            Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
             // TODO: tryFoldGetElem
             // TODO: tryFoldAssign
             _ => None,
@@ -104,6 +105,20 @@ impl<'a, 'b> PeepholeFoldConstants {
             LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(logical_expr, ctx),
             LogicalOperator::Coalesce => Self::try_fold_coalesce(logical_expr, ctx),
         }
+    }
+
+    fn try_fold_optional_chain(
+        chain_expr: &mut ChainExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        let member_expr = chain_expr.expression.as_member_expression()?;
+        if !member_expr.optional() {
+            return None;
+        }
+        let object = member_expr.object();
+        let ty = ValueType::from(object);
+        (ty.is_null() || ty.is_undefined())
+            .then(|| ctx.value_to_expr(chain_expr.span, ConstantValue::Undefined))
     }
 
     /// Try to fold a AND / OR node.
@@ -437,14 +452,8 @@ impl<'a, 'b> PeepholeFoldConstants {
                     let left_string = ctx.get_side_free_string_value(left_expr);
                     let right_string = ctx.get_side_free_string_value(right_expr);
                     if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
-                        // In JS, browsers parse \v differently. So do not compare strings if one contains \v.
-                        if left_string.contains('\u{000B}') || right_string.contains('\u{000B}') {
-                            return None;
-                        }
-
                         return Some(left_string == right_string);
                     }
-
                     None
                 }
                 ValueType::Undefined | ValueType::Null => Some(true),
@@ -797,6 +806,8 @@ mod test {
         test_same("'' + x <= '' + x"); // potentially foldable
         test_same("'' + x != '' + x"); // potentially foldable
         test_same("'' + x === '' + x"); // potentially foldable
+
+        test(r#"if ("string" !== "\u000Bstr\u000Bing\u000B") {}"#, "if (false) {}\n");
     }
 
     #[test]
@@ -1147,6 +1158,24 @@ mod test {
         test("void 1", "void 0");
         test_same("void x");
         test_same("void x()");
+    }
+
+    #[test]
+    fn test_fold_opt_chain() {
+        // can't fold when optional part may execute
+        test_same("a = x?.y");
+        test_same("a = x?.()");
+
+        // fold args of optional call
+        test("x = foo() ?. (true && bar())", "x = foo() ?.(bar())");
+        test("a() ?. (1 ?? b())", "a() ?. (1)");
+
+        // test("({a})?.a.b.c.d()?.x.y.z", "a.b.c.d()?.x.y.z");
+
+        test("x = undefined?.y", "x = void 0");
+        test("x = null?.y", "x = void 0");
+        test("x = undefined?.[foo]", "x = void 0");
+        test("x = null?.[foo]", "x = void 0");
     }
 
     #[test]

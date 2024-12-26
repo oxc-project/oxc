@@ -64,7 +64,25 @@ pub fn print_block_body<'a>(
 
     if has_directives {
         if let Some(directives) = directives {
-            parts.extend(directives.iter().map(|d| d.format(p)));
+            let mut last_directive = &directives[0];
+            for (idx, directive) in directives.iter().enumerate() {
+                parts.push(directive.format(p));
+                if idx != directives.len() - 1 {
+                    parts.extend(hardline!());
+                    if p.is_next_line_empty(directive.span) {
+                        parts.extend(hardline!());
+                    }
+                }
+
+                last_directive = directive;
+            }
+
+            if has_body {
+                parts.extend(hardline!());
+                if p.is_next_line_empty(last_directive.span) {
+                    parts.extend(hardline!());
+                }
+            }
         }
     }
 

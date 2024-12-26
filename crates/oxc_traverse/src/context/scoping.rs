@@ -435,6 +435,10 @@ impl TraverseScoping {
             .map(CompactStr::from)
             .collect()
     }
+
+    pub fn delete_typescript_bindings(&mut self) {
+        self.scopes.delete_typescript_bindings(&self.symbols);
+    }
 }
 
 /// Create base for UID name based on provided `name`.

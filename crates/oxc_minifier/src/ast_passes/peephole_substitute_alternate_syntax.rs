@@ -79,65 +79,34 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx(ctx);
-        if let Expression::AssignmentExpression(assignment_expr) = expr {
-            if let Some(new_expr) = Self::try_compress_assignment_expression(assignment_expr, ctx) {
-                *expr = new_expr;
-                self.changed = true;
-            }
-        }
-        self.try_compress_boolean(expr, ctx);
-        self.try_compress_undefined(expr, ctx);
-        match expr {
-            Expression::NewExpression(new_expr) => {
-                if let Some(new_expr) = Self::try_fold_new_expression(new_expr, ctx) {
-                    *expr = new_expr;
-                    self.changed = true;
-                }
-            }
-            Expression::CallExpression(call_expr) => {
-                if let Some(new_expr) =
-                    Self::try_fold_literal_constructor_call_expression(call_expr, ctx)
-                        .or_else(|| Self::try_fold_simple_function_call(call_expr, ctx))
-                {
-                    *expr = new_expr;
-                    self.changed = true;
-                }
-            }
-            Expression::ChainExpression(chain_expr) => {
-                if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
-                    self.try_fold_chain_call_expression(call_expr, ctx);
-                }
-            }
-            Expression::TemplateLiteral(_) => {
-                if let Some(val) = expr.to_js_string() {
-                    *expr = ctx.ast.expression_string_literal(expr.span(), val, None);
-                    self.changed = true;
-                }
-            }
-            // `() => { return foo })` -> `() => foo`
-            Expression::ArrowFunctionExpression(arrow_expr) => {
-                if !arrow_expr.expression
-                    && arrow_expr.body.directives.is_empty()
-                    && arrow_expr.body.statements.len() == 1
-                {
-                    if let Some(body) = arrow_expr.body.statements.first_mut() {
-                        if let Statement::ReturnStatement(ret_stmt) = body {
-                            let return_stmt_arg =
-                                ret_stmt.argument.as_mut().map(|arg| ctx.ast.move_expression(arg));
 
-                            if let Some(return_stmt_arg) = return_stmt_arg {
-                                *body = ctx.ast.statement_expression(SPAN, return_stmt_arg);
-                                arrow_expr.expression = true;
-                                self.changed = true;
-                            }
-                        }
-                    }
-                }
+        // Change syntax
+        match expr {
+            Expression::ArrowFunctionExpression(arrow_expr) => {
+                self.try_compress_arrow_expression(arrow_expr, ctx);
             }
-            Expression::BinaryExpression(expr) => {
-                self.compress_typeof_undefined(expr, ctx);
-            }
+            Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
+            Expression::BinaryExpression(e) => self.try_compress_type_of_equal_string(e, ctx),
             _ => {}
+        }
+
+        // Fold
+        if let Some(folded_expr) = match expr {
+            Expression::Identifier(ident) => self.try_compress_undefined(ident, ctx),
+            Expression::BooleanLiteral(_) => self.try_compress_boolean(expr, ctx),
+            Expression::AssignmentExpression(e) => Self::try_compress_assignment_expression(e, ctx),
+            Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx),
+            Expression::NewExpression(e) => Self::try_fold_new_expression(e, ctx),
+            Expression::CallExpression(e) => {
+                Self::try_fold_literal_constructor_call_expression(e, ctx)
+                    .or_else(|| Self::try_fold_simple_function_call(e, ctx))
+            }
+            Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
+            Expression::BinaryExpression(e) => Self::try_compress_typeof_undefined(e, ctx),
+            _ => None,
+        } {
+            *expr = folded_expr;
+            self.changed = true;
         }
     }
 }
@@ -150,14 +119,18 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     /* Utilities */
 
     /// Transforms `undefined` => `void 0`
-    fn try_compress_undefined(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, 'b>) {
+    fn try_compress_undefined(
+        &self,
+        ident: &IdentifierReference<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
         if self.in_fixed_loop {
-            return;
+            return None;
         }
-        if ctx.is_expression_undefined(expr) {
-            *expr = ctx.ast.void_0(expr.span());
-            self.changed = true;
+        if !ctx.is_identifier_undefined(ident) {
+            return None;
         }
+        Some(ctx.ast.void_0(ident.span))
     }
 
     /// Test `Object.defineProperty(exports, ...)`
@@ -196,48 +169,80 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
     /// Do not compress `true` in `Object.defineProperty(exports, 'Foo', {enumerable: true, ...})`.
-    fn try_compress_boolean(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, 'b>) {
+    fn try_compress_boolean(
+        &self,
+        expr: &mut Expression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
         if self.in_fixed_loop {
-            return;
+            return None;
         }
-        let Expression::BooleanLiteral(lit) = expr else { return };
-        if !self.in_define_export {
-            let parent = ctx.ancestry.parent();
-            let no_unary = {
-                if let Ancestor::BinaryExpressionRight(u) = parent {
-                    !matches!(
-                        u.operator(),
-                        BinaryOperator::Addition // Other effect, like string concatenation.
+        let Expression::BooleanLiteral(lit) = expr else { return None };
+        if self.in_define_export {
+            return None;
+        }
+        let parent = ctx.ancestry.parent();
+        let no_unary = {
+            if let Ancestor::BinaryExpressionRight(u) = parent {
+                !matches!(
+                    u.operator(),
+                    BinaryOperator::Addition // Other effect, like string concatenation.
                             | BinaryOperator::Instanceof // Relational operator.
                             | BinaryOperator::In
                             | BinaryOperator::StrictEquality // It checks type, so we should not fold.
                             | BinaryOperator::StrictInequality
-                    )
-                } else {
-                    false
-                }
-            };
-            // XOR: We should use `!neg` when it is not in binary expression.
-            let num = ctx.ast.expression_numeric_literal(
-                SPAN,
-                if lit.value ^ no_unary { 0.0 } else { 1.0 },
-                None,
-                NumberBase::Decimal,
-            );
-            *expr = if no_unary {
-                num
+                )
             } else {
-                ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num)
-            };
-            self.changed = true;
+                false
+            }
+        };
+        // XOR: We should use `!neg` when it is not in binary expression.
+        let num = ctx.ast.expression_numeric_literal(
+            SPAN,
+            if lit.value ^ no_unary { 0.0 } else { 1.0 },
+            None,
+            NumberBase::Decimal,
+        );
+        Some(if no_unary {
+            num
+        } else {
+            ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num)
+        })
+    }
+
+    /// `() => { return foo })` -> `() => foo`
+    fn try_compress_arrow_expression(
+        &mut self,
+        arrow_expr: &mut ArrowFunctionExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) {
+        if !arrow_expr.expression
+            && arrow_expr.body.directives.is_empty()
+            && arrow_expr.body.statements.len() == 1
+        {
+            if let Some(body) = arrow_expr.body.statements.first_mut() {
+                if let Statement::ReturnStatement(ret_stmt) = body {
+                    let return_stmt_arg =
+                        ret_stmt.argument.as_mut().map(|arg| ctx.ast.move_expression(arg));
+
+                    if let Some(return_stmt_arg) = return_stmt_arg {
+                        *body = ctx.ast.statement_expression(SPAN, return_stmt_arg);
+                        arrow_expr.expression = true;
+                        self.changed = true;
+                    }
+                }
+            }
         }
     }
 
     /// Compress `typeof foo == "undefined"` into `typeof foo > "u"`
     /// Enabled by `compress.typeofs`
-    fn compress_typeof_undefined(&mut self, expr: &mut BinaryExpression<'a>, ctx: Ctx<'a, 'b>) {
+    fn try_compress_typeof_undefined(
+        expr: &mut BinaryExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
         if !matches!(expr.operator, BinaryOperator::Equality | BinaryOperator::StrictEquality) {
-            return;
+            return None;
         }
         let pair = Self::commutative_pair(
             (&expr.left, &expr.right),
@@ -253,16 +258,121 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 None
             },
         );
-        let Some((_void_exp, id_ref)) = pair else {
-            return;
-        };
+        let (_void_exp, id_ref) = pair?;
         let argument = Expression::Identifier(ctx.alloc(id_ref));
         let left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
         let right = ctx.ast.expression_string_literal(SPAN, "u", None);
-        let binary_expr =
-            ctx.ast.binary_expression(expr.span, left, BinaryOperator::GreaterThan, right);
-        *expr = binary_expr;
-        self.changed = true;
+        Some(ctx.ast.expression_binary(expr.span, left, BinaryOperator::GreaterThan, right))
+    }
+
+    /// Compress `foo === null || foo === undefined` into `foo == null`.
+    ///
+    /// `foo === null || foo === undefined` => `foo == null`
+    /// `foo !== null && foo !== undefined` => `foo != null`
+    ///
+    /// This compression assumes that `document.all` is a normal object.
+    /// If that assumption does not hold, this compression is not allowed.
+    /// - `document.all === null || document.all === undefined` is `false`
+    /// - `document.all == null` is `true`
+    fn try_compress_is_null_or_undefined(
+        expr: &mut LogicalExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        let op = expr.operator;
+        let target_ops = match op {
+            LogicalOperator::Or => (BinaryOperator::StrictEquality, BinaryOperator::Equality),
+            LogicalOperator::And => (BinaryOperator::StrictInequality, BinaryOperator::Inequality),
+            LogicalOperator::Coalesce => return None,
+        };
+        if let Some(new_expr) = Self::try_compress_is_null_or_undefined_for_left_and_right(
+            &expr.left,
+            &expr.right,
+            expr.span,
+            target_ops,
+            ctx,
+        ) {
+            return Some(new_expr);
+        }
+        let Expression::LogicalExpression(left) = &mut expr.left else {
+            return None;
+        };
+        if left.operator != op {
+            return None;
+        }
+        Self::try_compress_is_null_or_undefined_for_left_and_right(
+            &left.right,
+            &expr.right,
+            Span::new(left.right.span().start, expr.span.end),
+            target_ops,
+            ctx,
+        )
+        .map(|new_expr| {
+            ctx.ast.expression_logical(
+                expr.span,
+                ctx.ast.move_expression(&mut left.left),
+                expr.operator,
+                new_expr,
+            )
+        })
+    }
+
+    fn try_compress_is_null_or_undefined_for_left_and_right(
+        left: &Expression<'a>,
+        right: &Expression<'a>,
+        span: Span,
+        (find_op, replace_op): (BinaryOperator, BinaryOperator),
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        let pair = Self::commutative_pair(
+            (&left, &right),
+            |a| {
+                if let Expression::BinaryExpression(op) = a {
+                    if op.operator == find_op {
+                        return Self::commutative_pair(
+                            (&op.left, &op.right),
+                            |a_a| a_a.is_null().then_some(a_a.span()),
+                            |a_b| {
+                                if let Expression::Identifier(id) = a_b {
+                                    Some((a_b.span(), (*id).clone()))
+                                } else {
+                                    None
+                                }
+                            },
+                        );
+                    }
+                }
+                None
+            },
+            |b| {
+                if let Expression::BinaryExpression(op) = b {
+                    if op.operator == find_op {
+                        return Self::commutative_pair(
+                            (&op.left, &op.right),
+                            |b_a| b_a.evaluate_to_undefined().then_some(()),
+                            |b_b| {
+                                if let Expression::Identifier(id) = b_b {
+                                    Some((*id).clone())
+                                } else {
+                                    None
+                                }
+                            },
+                        )
+                        .map(|v| v.1);
+                    }
+                }
+                None
+            },
+        );
+        let ((null_expr_span, (left_id_expr_span, left_id_ref)), right_id_ref) = pair?;
+        if left_id_ref.name != right_id_ref.name {
+            return None;
+        }
+
+        let left_id_expr =
+            ctx.ast.expression_identifier_reference(left_id_expr_span, left_id_ref.name);
+        let null_expr = ctx.ast.expression_null_literal(null_expr_span);
+
+        Some(ctx.ast.expression_binary(span, left_id_expr, replace_op, null_expr))
     }
 
     fn commutative_pair<A, F, G, RetF: 'a, RetG: 'a>(
@@ -317,36 +427,32 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         let target = expr.left.as_simple_assignment_target_mut()?;
-        if matches!(expr.operator, AssignmentOperator::Subtraction) {
-            match &expr.right {
-                Expression::NumericLiteral(num) if num.value.to_int_32() == 1 => {
+        if !matches!(expr.operator, AssignmentOperator::Subtraction) {
+            return None;
+        }
+        match &expr.right {
+            Expression::NumericLiteral(num) if num.value.to_int_32() == 1 => {
+                // The `_` will not be placed to the target code.
+                let target = std::mem::replace(
+                    target,
+                    ctx.ast.simple_assignment_target_identifier_reference(SPAN, "_"),
+                );
+                Some(ctx.ast.expression_update(SPAN, UpdateOperator::Decrement, true, target))
+            }
+            Expression::UnaryExpression(un)
+                if matches!(un.operator, UnaryOperator::UnaryNegation) =>
+            {
+                let Expression::NumericLiteral(num) = &un.argument else { return None };
+                (num.value.to_int_32() == 1).then(|| {
                     // The `_` will not be placed to the target code.
                     let target = std::mem::replace(
                         target,
                         ctx.ast.simple_assignment_target_identifier_reference(SPAN, "_"),
                     );
-                    Some(ctx.ast.expression_update(SPAN, UpdateOperator::Decrement, true, target))
-                }
-                Expression::UnaryExpression(un)
-                    if matches!(un.operator, UnaryOperator::UnaryNegation) =>
-                {
-                    if let Expression::NumericLiteral(num) = &un.argument {
-                        (num.value.to_int_32() == 1).then(|| {
-                            // The `_` will not be placed to the target code.
-                            let target = std::mem::replace(
-                                target,
-                                ctx.ast.simple_assignment_target_identifier_reference(SPAN, "_"),
-                            );
-                            ctx.ast.expression_update(SPAN, UpdateOperator::Increment, true, target)
-                        })
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
+                    ctx.ast.expression_update(SPAN, UpdateOperator::Increment, true, target)
+                })
             }
-        } else {
-            None
+            _ => None,
         }
     }
 
@@ -517,17 +623,47 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    fn try_fold_chain_call_expression(
+    /// `typeof foo === 'number'` -> `typeof foo == 'number'`
+    fn try_compress_type_of_equal_string(
         &mut self,
-        call_expr: &mut CallExpression<'a>,
+        e: &mut BinaryExpression<'a>,
+        _ctx: Ctx<'a, 'b>,
+    ) {
+        let op = match e.operator {
+            BinaryOperator::StrictEquality => BinaryOperator::Equality,
+            BinaryOperator::StrictInequality => BinaryOperator::Inequality,
+            _ => return,
+        };
+        if Self::commutative_pair(
+            (&e.left, &e.right),
+            |a| a.is_string_literal().then_some(()),
+            |b| matches!(b, Expression::UnaryExpression(e) if e.operator.is_typeof()).then_some(()),
+        )
+        .is_none()
+        {
+            return;
+        }
+        e.operator = op;
+        self.changed = true;
+    }
+
+    fn try_compress_chain_call_expression(
+        &mut self,
+        chain_expr: &mut ChainExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) {
-        // `window.Object?.()` -> `Object?.()`
-        if call_expr.arguments.is_empty() && Self::is_window_object(&call_expr.callee) {
-            call_expr.callee =
-                ctx.ast.expression_identifier_reference(call_expr.callee.span(), "Object");
-            self.changed = true;
+        if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
+            // `window.Object?.()` -> `Object?.()`
+            if call_expr.arguments.is_empty() && Self::is_window_object(&call_expr.callee) {
+                call_expr.callee =
+                    ctx.ast.expression_identifier_reference(call_expr.callee.span(), "Object");
+                self.changed = true;
+            }
         }
+    }
+
+    fn try_fold_template_literal(t: &TemplateLiteral, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
+        t.to_js_string().map(|val| ctx.ast.expression_string_literal(t.span(), val, None))
     }
 
     /// returns an `Array()` constructor call with zero, one, or more arguments, copying from the input
@@ -968,5 +1104,37 @@ mod test {
     fn test_fold_arrow_function_return() {
         test("const foo = () => { return 'baz' }", "const foo = () => 'baz'");
         test_same("const foo = () => { foo; return 'baz' }");
+    }
+
+    #[test]
+    fn test_fold_is_null_or_undefined() {
+        test("foo === null || foo === undefined", "foo == null");
+        test("foo === undefined || foo === null", "foo == null");
+        test("foo === null || foo === void 0", "foo == null");
+        test("foo === null || foo === void 0 || foo === 1", "foo == null || foo === 1");
+        test("foo === 1 || foo === null || foo === void 0", "foo === 1 || foo == null");
+        test_same("foo === void 0 || bar === null");
+        test_same("foo !== 1 && foo === void 0 || foo === null");
+        test_same("foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
+
+        test("foo !== null && foo !== undefined", "foo != null");
+        test("foo !== undefined && foo !== null", "foo != null");
+        test("foo !== null && foo !== void 0", "foo != null");
+        test("foo !== null && foo !== void 0 && foo !== 1", "foo != null && foo !== 1");
+        test("foo !== 1 && foo !== null && foo !== void 0", "foo !== 1 && foo != null");
+        test("foo !== 1 || foo !== void 0 && foo !== null", "foo !== 1 || foo != null");
+        test_same("foo !== void 0 && bar !== null");
+    }
+
+    #[test]
+    fn test_try_compress_type_of_equal_string() {
+        test("typeof foo === 'number'", "typeof foo == 'number'");
+        test("'number' === typeof foo", "'number' == typeof foo");
+        test("typeof foo === `number`", "typeof foo == 'number'");
+        test("`number` === typeof foo", "'number' == typeof foo");
+        test("typeof foo !== 'number'", "typeof foo != 'number'");
+        test("'number' !== typeof foo", "'number' != typeof foo");
+        test("typeof foo !== `number`", "typeof foo != 'number'");
+        test("`number` !== typeof foo", "'number' != typeof foo");
     }
 }

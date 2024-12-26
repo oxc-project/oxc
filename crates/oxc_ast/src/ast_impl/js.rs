@@ -188,6 +188,24 @@ impl<'a> Expression<'a> {
     }
 
     #[allow(missing_docs)]
+    #[must_use]
+    pub fn into_inner_expression(self) -> Expression<'a> {
+        let mut expr = self;
+        loop {
+            expr = match expr {
+                Expression::ParenthesizedExpression(e) => e.unbox().expression,
+                Expression::TSAsExpression(e) => e.unbox().expression,
+                Expression::TSSatisfiesExpression(e) => e.unbox().expression,
+                Expression::TSInstantiationExpression(e) => e.unbox().expression,
+                Expression::TSNonNullExpression(e) => e.unbox().expression,
+                Expression::TSTypeAssertion(e) => e.unbox().expression,
+                _ => break,
+            };
+        }
+        expr
+    }
+
+    #[allow(missing_docs)]
     pub fn get_inner_expression(&self) -> &Expression<'a> {
         let mut expr = self;
         loop {
@@ -868,6 +886,11 @@ impl fmt::Display for VariableDeclarationKind {
 }
 
 impl ForStatementInit<'_> {
+    /// Is `var` declaration
+    pub fn is_var_declaration(&self) -> bool {
+        matches!(self, Self::VariableDeclaration(decl) if decl.kind.is_var())
+    }
+
     /// LexicalDeclaration[In, Yield, Await] :
     ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
     pub fn is_lexical_declaration(&self) -> bool {

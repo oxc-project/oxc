@@ -299,11 +299,12 @@ const _: () = {
     assert!(offset_of!(AssignmentTargetPropertyIdentifier, binding) == 8usize);
     assert!(offset_of!(AssignmentTargetPropertyIdentifier, init) == 40usize);
 
-    assert!(size_of::<AssignmentTargetPropertyProperty>() == 40usize);
+    assert!(size_of::<AssignmentTargetPropertyProperty>() == 48usize);
     assert!(align_of::<AssignmentTargetPropertyProperty>() == 8usize);
     assert!(offset_of!(AssignmentTargetPropertyProperty, span) == 0usize);
     assert!(offset_of!(AssignmentTargetPropertyProperty, name) == 8usize);
     assert!(offset_of!(AssignmentTargetPropertyProperty, binding) == 24usize);
+    assert!(offset_of!(AssignmentTargetPropertyProperty, computed) == 40usize);
 
     assert!(size_of::<SequenceExpression>() == 40usize);
     assert!(align_of::<SequenceExpression>() == 8usize);
@@ -1861,11 +1862,12 @@ const _: () = {
     assert!(offset_of!(AssignmentTargetPropertyIdentifier, binding) == 8usize);
     assert!(offset_of!(AssignmentTargetPropertyIdentifier, init) == 28usize);
 
-    assert!(size_of::<AssignmentTargetPropertyProperty>() == 24usize);
+    assert!(size_of::<AssignmentTargetPropertyProperty>() == 28usize);
     assert!(align_of::<AssignmentTargetPropertyProperty>() == 4usize);
     assert!(offset_of!(AssignmentTargetPropertyProperty, span) == 0usize);
     assert!(offset_of!(AssignmentTargetPropertyProperty, name) == 8usize);
     assert!(offset_of!(AssignmentTargetPropertyProperty, binding) == 16usize);
+    assert!(offset_of!(AssignmentTargetPropertyProperty, computed) == 24usize);
 
     assert!(size_of::<SequenceExpression>() == 24usize);
     assert!(align_of::<SequenceExpression>() == 4usize);

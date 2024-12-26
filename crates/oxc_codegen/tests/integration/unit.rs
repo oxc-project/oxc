@@ -3,17 +3,26 @@ use oxc_codegen::CodegenOptions;
 use crate::tester::{test, test_minify, test_minify_same, test_options};
 
 #[test]
+fn decl() {
+    test_minify("const [foo] = bar", "const[foo]=bar;");
+    test_minify("const {foo} = bar", "const{foo}=bar;");
+    test_minify("const foo = bar", "const foo=bar;");
+}
+
+#[test]
 fn module_decl() {
     test("export * as foo from 'foo'", "export * as foo from \"foo\";\n");
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
     test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
+    test_minify("export { '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
+    test_minify("export { '☿' as '☿' } from 'mod';", "export{\"☿\"}from\"mod\";");
 }
 
 #[test]
 fn expr() {
     test("new (foo()).bar();", "new (foo()).bar();\n");
-    test_minify("x in new Error()", "x in new Error();");
+    test_minify("x in new Error()", "x in new Error;");
 
     test("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);\n");
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
@@ -28,7 +37,14 @@ fn expr() {
     test_minify_same("await import(\"\");");
 
     test("delete 2e308", "delete (0, Infinity);\n");
-    test_minify("delete 2e308", "delete (1/0);");
+    test_minify("delete 2e308", "delete(1/0);");
+
+    test_minify(
+        r#";'eval("\'\\vstr\\ving\\v\'") === "\\vstr\\ving\\v"'"#,
+        r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
+    );
+
+    test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
 }
 
 #[test]
@@ -44,11 +60,12 @@ fn private_in() {
 }
 
 #[test]
-fn access_property() {
+fn class() {
     test(
         "export default class Foo { @x @y accessor #aDef = 1 }",
         "export default class Foo {\n\t@x @y accessor #aDef = 1;\n}\n",
     );
+    test_minify("class { static [computed] }", "class{static[computed]}");
 }
 
 #[test]
@@ -144,11 +161,17 @@ fn assignment() {
     test_minify("a /= () => {}", "a/=()=>{};");
     test_minify("a %= async () => {}", "a%=async()=>{};");
     test_minify("a -= (1, 2)", "a-=(1,2);");
-    test_minify("a >>= b >>= c", "a>>=b>>=c;");
+    test_minify("({ x: x = flag1 = true } = {})", "({x=flag1=true}={});");
+
+    test_minify("({ 0: x } = foo);", "({0:x}=foo);");
+    test_minify("({ [0]: x } = foo);", "({[0]:x}=foo);");
+    test_minify("({ a: x } = foo);", "({a:x}=foo);");
+    test_minify("({ [a.b]: x } = foo);", "({[a.b]:x}=foo);");
 }
 
 #[test]
 fn r#yield() {
+    test("function * foo() { yield * 1 }", "function* foo() {\n\tyield* 1;\n}\n");
     test_minify("function *foo() { yield }", "function*foo(){yield}");
     test_minify("function *foo() { yield * a ? b : c }", "function*foo(){yield*a?b:c}");
     test_minify("function *foo() { yield * yield * a }", "function*foo(){yield*yield*a}");
@@ -156,27 +179,26 @@ fn r#yield() {
     test_minify("function *foo() { yield * async () => {} }", "function*foo(){yield*async()=>{}}");
     test_minify("function *foo() { yield a ? b : c }", "function*foo(){yield a?b:c}");
     test_minify("function *foo() { yield yield a }", "function*foo(){yield yield a}");
-    test_minify("function *foo() { yield () => {} }", "function*foo(){yield ()=>{}}");
+    test_minify("function *foo() { yield () => {} }", "function*foo(){yield()=>{}}");
     test_minify("function *foo() { yield async () => {} }", "function*foo(){yield async()=>{}}");
     test_minify(
         "function *foo() { yield { a } = [ b ] = c ? b : d }",
-        "function*foo(){yield {a}=[b]=c?b:d}",
+        "function*foo(){yield{a}=[b]=c?b:d}",
     );
-    // TODO: remove the extra space in `yield (a,b)`
-    test_minify("function *foo() { yield (a, b) }", "function*foo(){yield (a,b)}");
+    test_minify("function *foo() { yield (a, b) }", "function*foo(){yield(a,b)}");
     test_minify("function *foo() { yield a, b }", "function*foo(){yield a,b}");
 }
 
 #[test]
 fn arrow() {
-    test_minify("x => a, b", "(x)=>a,b;");
-    test_minify("x => (a, b)", "(x)=>(a,b);");
-    test_minify("x => (a => b)", "(x)=>(a)=>b;");
-    test_minify("x => y => a, b", "(x)=>(y)=>a,b;");
-    test_minify("x => y => (a = b)", "(x)=>(y)=>a=b;");
-    test_minify("x => y => z => a = b, c", "(x)=>(y)=>(z)=>a=b,c;");
-    test_minify("x => y => z => a = (b, c)", "(x)=>(y)=>(z)=>a=(b,c);");
-    test_minify("x => ({} + 0)", "(x)=>({})+0;");
+    test_minify("x => a, b", "x=>a,b;");
+    test_minify("x => (a, b)", "x=>(a,b);");
+    test_minify("x => (a => b)", "x=>a=>b;");
+    test_minify("x => y => a, b", "x=>y=>a,b;");
+    test_minify("x => y => (a = b)", "x=>y=>a=b;");
+    test_minify("x => y => z => a = b, c", "x=>y=>z=>a=b,c;");
+    test_minify("x => y => z => a = (b, c)", "x=>y=>z=>a=(b,c);");
+    test_minify("x => ({} + 0)", "x=>({})+0;");
 }
 
 #[test]
@@ -397,4 +419,10 @@ fn directive() {
     test_options("\"'\"", "\"'\";\n", double_quote.clone());
     test_options("'\"'", "'\"';\n", double_quote.clone());
     test_options(r#""'\"""#, "\"'\\\"\";\n", double_quote);
+}
+
+#[test]
+fn getter_setter() {
+    test_minify("({ get [foo]() {} })", "({get[foo](){}});");
+    test_minify("({ set [foo]() {} })", "({set[foo](){}});");
 }

@@ -5,8 +5,8 @@ use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
     ast_passes::{
-        CollapsePass, DeadCodeElimination, LatePeepholeOptimizations, PeepholeOptimizations,
-        RemoveSyntax,
+        CollapsePass, DeadCodeElimination, LatePeepholeOptimizations, Normalize,
+        PeepholeOptimizations, RemoveSyntax,
     },
     CompressOptions, CompressorPass,
 };
@@ -35,6 +35,7 @@ impl<'a> Compressor<'a> {
     ) {
         let mut ctx = ReusableTraverseCtx::new(scopes, symbols, self.allocator);
         RemoveSyntax::new(self.options).build(program, &mut ctx);
+        Normalize::new().build(program, &mut ctx);
         PeepholeOptimizations::new().build(program, &mut ctx);
         CollapsePass::new().build(program, &mut ctx);
         LatePeepholeOptimizations::new().run_in_loop(program, &mut ctx);
@@ -54,6 +55,7 @@ impl<'a> Compressor<'a> {
         program: &mut Program<'a>,
     ) {
         let mut ctx = ReusableTraverseCtx::new(scopes, symbols, self.allocator);
+        RemoveSyntax::new(self.options).build(program, &mut ctx);
         DeadCodeElimination::new().build(program, &mut ctx);
     }
 }

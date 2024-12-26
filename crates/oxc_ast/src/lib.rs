@@ -119,18 +119,18 @@ fn size_asserts() {
 
     use crate::ast;
 
-    assert!(size_of::<ast::Statement>() == 16);
-    assert!(size_of::<ast::Expression>() == 16);
-    assert!(size_of::<ast::Declaration>() == 16);
-    assert!(size_of::<ast::BindingPatternKind>() == 16);
-    assert!(size_of::<ast::ModuleDeclaration>() == 16);
-    assert!(size_of::<ast::ClassElement>() == 16);
-    assert!(size_of::<ast::ExportDefaultDeclarationKind>() == 16);
-    assert!(size_of::<ast::AssignmentTargetPattern>() == 16);
-    assert!(size_of::<ast::AssignmentTargetMaybeDefault>() == 16);
-    assert!(size_of::<ast::AssignmentTargetProperty>() == 16);
-    assert!(size_of::<ast::TSLiteral>() == 16);
-    assert!(size_of::<ast::TSType>() == 16);
+    assert_eq!(size_of::<ast::Statement>(), 16);
+    assert_eq!(size_of::<ast::Expression>(), 16);
+    assert_eq!(size_of::<ast::Declaration>(), 16);
+    assert_eq!(size_of::<ast::BindingPatternKind>(), 16);
+    assert_eq!(size_of::<ast::ModuleDeclaration>(), 16);
+    assert_eq!(size_of::<ast::ClassElement>(), 16);
+    assert_eq!(size_of::<ast::ExportDefaultDeclarationKind>(), 16);
+    assert_eq!(size_of::<ast::AssignmentTargetPattern>(), 16);
+    assert_eq!(size_of::<ast::AssignmentTargetMaybeDefault>(), 16);
+    assert_eq!(size_of::<ast::AssignmentTargetProperty>(), 16);
+    assert_eq!(size_of::<ast::TSLiteral>(), 16);
+    assert_eq!(size_of::<ast::TSType>(), 16);
 }
 
 #[test]

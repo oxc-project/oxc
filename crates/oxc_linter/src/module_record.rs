@@ -3,7 +3,7 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
-    sync::{Arc, RwLock},
+    sync::{Arc, OnceLock, RwLock},
 };
 
 use rustc_hash::FxHashMap;
@@ -78,7 +78,7 @@ pub struct ModuleRecord {
 
     /// Reexported bindings from `export * from 'specifier'`
     /// Keyed by resolved path
-    pub exported_bindings_from_star_export: RwLock<FxHashMap<PathBuf, Vec<CompactStr>>>,
+    exported_bindings_from_star_export: OnceLock<FxHashMap<PathBuf, Vec<CompactStr>>>,
 
     /// `export default name`
     ///         ^^^^^^^ span
@@ -490,5 +490,38 @@ impl ModuleRecord {
                 .next(),
             ..ModuleRecord::default()
         }
+    }
+
+    pub(crate) fn exported_bindings_from_star_export(
+        &self,
+    ) -> &FxHashMap<PathBuf, Vec<CompactStr>> {
+        self.exported_bindings_from_star_export.get_or_init(|| {
+            let mut exported_bindings_from_star_export: FxHashMap<PathBuf, Vec<CompactStr>> =
+                FxHashMap::default();
+            let loaded_modules = self.loaded_modules.read().unwrap();
+            for export_entry in &self.star_export_entries {
+                let Some(module_request) = &export_entry.module_request else {
+                    continue;
+                };
+                let Some(remote_module_record) = loaded_modules.get(module_request.name()) else {
+                    continue;
+                };
+                // Append both remote `bindings` and `exported_bindings_from_star_export`
+                let remote_exported_bindings_from_star_export = remote_module_record
+                    .exported_bindings_from_star_export()
+                    .iter()
+                    .flat_map(|(_, value)| value.clone());
+                let remote_bindings = remote_module_record
+                    .exported_bindings
+                    .keys()
+                    .cloned()
+                    .chain(remote_exported_bindings_from_star_export);
+                exported_bindings_from_star_export
+                    .entry(remote_module_record.resolved_absolute_path.clone())
+                    .or_default()
+                    .extend(remote_bindings);
+            }
+            exported_bindings_from_star_export
+        })
     }
 }
