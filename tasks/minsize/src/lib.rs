@@ -131,7 +131,7 @@ fn minify_twice(file: &TestFile) -> String {
     };
     let source_text1 = minify(&file.source_text, source_type, options);
     let source_text2 = minify(&source_text1, source_type, options);
-    assert!(source_text1 == source_text2, "Minification failed for {}", &file.file_name);
+    assert_eq!(source_text1, source_text2, "Minification failed for {}", &file.file_name);
     source_text2
 }
 
