@@ -1,9 +1,10 @@
-use crate::rules::jest::prefer_lowercase_title::PreferLowercaseTitle;
-use crate::rule::RuleMeta;
+
 
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use crate::rule::RuleMeta;
+    use super::PreferLowercaseTitle;
 
     let pass = vec![
         ("it.each()", None),
@@ -380,5 +381,6 @@ fn test() {
     Tester::new(PreferLowercaseTitle::NAME, PreferLowercaseTitle::CATEGORY, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
+        .with_snapshot_suffix("jest")
         .test_and_snapshot();
 }

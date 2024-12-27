@@ -1,8 +1,8 @@
 #[test]
 fn test() {
-    use crate::tester::Tester;
-    use crate::rules::jest::prefer_lowercase_title::PreferLowercaseTitle;
     use crate::rule::RuleMeta;
+    use super::PreferLowercaseTitle;
+    use crate::tester::Tester;
 
     let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
         ("it.each()", None),
