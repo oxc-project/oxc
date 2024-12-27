@@ -3,7 +3,7 @@ use oxc_ast::ast::{ConditionalExpression, Expression, IfStatement, Statement};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 fn no_negated_condition_diagnostic(span: Span) -> OxcDiagnostic {
@@ -56,12 +56,12 @@ impl Rule for NoNegatedCondition {
                 }
 
                 if is_negated_if(if_stmt) {
-                    ctx.diagnostic(no_negated_condition_diagnostic(if_stmt.span()));
+                    ctx.diagnostic(no_negated_condition_diagnostic(if_stmt.span));
                 }
             }
             AstKind::ConditionalExpression(conditional_expr) => {
                 if is_negated_if_conditional(conditional_expr) {
-                    ctx.diagnostic(no_negated_condition_diagnostic(conditional_expr.span()));
+                    ctx.diagnostic(no_negated_condition_diagnostic(conditional_expr.span));
                 }
             }
             _ => {}
