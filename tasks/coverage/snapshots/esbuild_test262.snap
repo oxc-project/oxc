@@ -2,7 +2,7 @@ commit: c4317b0c
 
 esbuild_test262 Summary:
 AST Parsed     : 44101/44101 (100.00%)
-Positive Passed: 41542/44101 (94.20%)
+Positive Passed: 41787/44101 (94.75%)
 tasks/coverage/test262/test/annexB/built-ins/RegExp/RegExp-decimal-escape-class-range.js
 >>  error: 14
 
@@ -132,18 +132,6 @@ tasks/coverage/test262/test/built-ins/Array/property-cast-boolean-primitive.js
 tasks/coverage/test262/test/built-ins/Array/property-cast-nan-infinity.js
 >>  error: 5
 
-tasks/coverage/test262/test/built-ins/Array/prototype/concat/Array.prototype.concat_array-like-negative-length.js
->>  error: 7
-
-tasks/coverage/test262/test/built-ins/Array/prototype/concat/Array.prototype.concat_array-like-string-length.js
->>  error: 13
-
-tasks/coverage/test262/test/built-ins/Array/prototype/concat/Array.prototype.concat_array-like-to-length-throws.js
->>  error: 13
-
-tasks/coverage/test262/test/built-ins/Array/prototype/concat/Array.prototype.concat_array-like.js
->>  error: 13
-
 tasks/coverage/test262/test/built-ins/Array/prototype/copyWithin/non-negative-out-of-bounds-end.js
 >>  error: 9
 
@@ -187,7 +175,7 @@ tasks/coverage/test262/test/built-ins/Array/prototype/includes/fromIndex-infinit
 >>  error: 4
 
 tasks/coverage/test262/test/built-ins/Array/prototype/includes/length-boundaries.js
->>  error: 8
+>>  error: 4
 
 tasks/coverage/test262/test/built-ins/Array/prototype/includes/resizable-buffer-special-float-values.js
 >>  error: 9
@@ -286,7 +274,7 @@ tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/length-clamped-t
 >>  error: 26
 
 tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/length-exceeding-array-length-limit.js
->>  error: 48
+>>  error: 46
 
 tasks/coverage/test262/test/built-ins/Array/prototype/unshift/S15.4.4.13_A2_T1.js
 >>  error: 12
@@ -1047,9 +1035,6 @@ tasks/coverage/test262/test/built-ins/JSON/parse/reviver-object-non-configurable
 tasks/coverage/test262/test/built-ins/JSON/parse/text-negative-zero.js
 >>  error: 2
 
-tasks/coverage/test262/test/built-ins/JSON/stringify/replacer-array-number.js
->>  error: 5
-
 tasks/coverage/test262/test/built-ins/JSON/stringify/value-number-non-finite.js
 >>  error: 4
 
@@ -1557,207 +1542,6 @@ tasks/coverage/test262/test/built-ins/Object/create/15.2.3.5-4-201.js
 tasks/coverage/test262/test/built-ins/Object/create/15.2.3.5-4-203.js
 >>  error: 8
 
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-2-5.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-2-7.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-178.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-183.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-184.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-185.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-186.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-187.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-188.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-194.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-195.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-196.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-197.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-198.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-199.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-200.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-206.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-208.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-210.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-211.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-212.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-213.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-214.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-215.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-216.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-217.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-218.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-219.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-220.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-223.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-224.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-225.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-226.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-227.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-228.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-233.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-234.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-235.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-236.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-237.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-238.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-239.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-240.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-243.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-246.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-247.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-248.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-249.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-250.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-251.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-252.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-253.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-263.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-264.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-265.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-266.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-269.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-270.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-271.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-272.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-273.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-302.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-305.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-306.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-307.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-308.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/defineProperties/15.2.3.7-6-a-309.js
->>  error: 1
-
 tasks/coverage/test262/test/built-ins/Object/defineProperty/15.2.3.6-2-11.js
 >>  error: 4
 
@@ -1776,9 +1560,6 @@ tasks/coverage/test262/test/built-ins/Object/defineProperty/15.2.3.6-4-254.js
 tasks/coverage/test262/test/built-ins/Object/defineProperty/15.2.3.6-4-397.js
 >>  error: 14
 
-tasks/coverage/test262/test/built-ins/Object/defineProperty/15.2.3.6-4-51.js
->>  error: 1
-
 tasks/coverage/test262/test/built-ins/Object/entries/primitive-numbers.js
 >>  error: 4
 
@@ -1788,134 +1569,17 @@ tasks/coverage/test262/test/built-ins/Object/fromEntries/string-entry-object-suc
 tasks/coverage/test262/test/built-ins/Object/fromEntries/string-entry-string-object-succeeds.js
 >>  error: 2
 
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-10.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-11.js
->>  error: 1
-
 tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-13.js
->>  error: 6
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-14.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-28.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-3.js
->>  error: 1
+>>  error: 4
 
 tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-30.js
 >>  error: 8
 
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-34.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-35.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-37.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-38.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-39.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-4.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-40.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-41.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-5.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-6.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-7.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-8.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-2-9.js
->>  error: 1
-
 tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-1.js
 >>  error: 2
 
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-223.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-224.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-225.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-226.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-227.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-228.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-229.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-230.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-231.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-232.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-233.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-234.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-235.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-236.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-237.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-238.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptor/15.2.3.3-4-247.js
->>  error: 1
-
 tasks/coverage/test262/test/built-ins/Object/getOwnPropertyDescriptors/primitive-numbers.js
 >>  error: 4
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyNames/15.2.3.4-4-38.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyNames/15.2.3.4-4-b-4.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyNames/15.2.3.4-4-b-5.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/Object/getOwnPropertyNames/15.2.3.4-4-b-6.js
->>  error: 1
 
 tasks/coverage/test262/test/built-ins/Object/groupBy/evenOdd.js
 >>  error: 5
@@ -1925,9 +1589,6 @@ tasks/coverage/test262/test/built-ins/Object/groupBy/groupLength.js
 
 tasks/coverage/test262/test/built-ins/Object/is/not-same-value-x-y-number.js
 >>  error: 4
-
-tasks/coverage/test262/test/built-ins/Object/keys/proxy-keys.js
->>  error: 3
 
 tasks/coverage/test262/test/built-ins/Object/prototype/propertyIsEnumerable/S15.2.4.7_A9.js
 >>  error: 1
@@ -2018,9 +1679,6 @@ tasks/coverage/test262/test/built-ins/Proxy/get/trap-is-not-callable.js
 
 tasks/coverage/test262/test/built-ins/Proxy/get/trap-is-undefined-no-property.js
 >>  error: 5
-
-tasks/coverage/test262/test/built-ins/Proxy/ownKeys/trap-is-null-target-is-proxy.js
->>  error: 3
 
 tasks/coverage/test262/test/built-ins/Proxy/revocable/tco-fn-realm.js
 >>  error: 7
@@ -2511,9 +2169,6 @@ tasks/coverage/test262/test/built-ins/String/prototype/trimStart/this-value-obje
 tasks/coverage/test262/test/built-ins/String/prototype/trimStart/this-value-object-valueof-meth-priority.js
 >>  error: 13
 
-tasks/coverage/test262/test/built-ins/String/raw/nextkey-is-symbol-throws.js
->>  error: 1
-
 tasks/coverage/test262/test/built-ins/String/raw/special-characters.js
 >>  error: 2
 
@@ -2571,9 +2226,6 @@ tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/rounding
 tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/roundingincrement-out-of-range.js
 >>  error: 4
 
-tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/smallestunit.js
->>  error: 13
-
 tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/subtract/infinity-throws-rangeerror.js
 >>  error: 9
 
@@ -2590,7 +2242,7 @@ tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/precisio
 >>  error: 10
 
 tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/precision-exact-mathematical-values-7.js
->>  error: 99
+>>  error: 91
 
 tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-infinity-throws-rangeerror.js
 >>  error: 4
@@ -2697,14 +2349,8 @@ tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/equals/ca
 tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/equals/infinity-throws-rangeerror.js
 >>  error: 4
 
-tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/round/roundingincrement-divides.js
->>  error: 11
-
 tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/round/roundingincrement-out-of-range.js
 >>  error: 4
-
-tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/round/roundingmode-halfexpand-is-default.js
->>  error: 11
 
 tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/argument-plaindate.js
 >>  error: 17
@@ -2714,9 +2360,6 @@ tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/cal
 
 tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/infinity-throws-rangeerror.js
 >>  error: 4
-
-tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/roundingincrement-does-not-divide.js
->>  error: 23
 
 tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/roundingincrement-non-integer.js
 >>  error: 5
@@ -2735,9 +2378,6 @@ tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/cal
 
 tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/infinity-throws-rangeerror.js
 >>  error: 4
-
-tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/roundingincrement-does-not-divide.js
->>  error: 23
 
 tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/roundingincrement-non-integer.js
 >>  error: 5
@@ -3174,12 +2814,6 @@ tasks/coverage/test262/test/built-ins/TypedArray/prototype/reverse/BigInt/return
 tasks/coverage/test262/test/built-ins/TypedArray/prototype/reverse/return-abrupt-from-this-out-of-bounds.js
 >>  error: 8
 
-tasks/coverage/test262/test/built-ins/TypedArray/prototype/set/BigInt/array-arg-return-abrupt-from-src-tonumber-value-symbol.js
->>  error: 7
-
-tasks/coverage/test262/test/built-ins/TypedArray/prototype/set/BigInt/array-arg-set-values.js
->>  error: 3
-
 tasks/coverage/test262/test/built-ins/TypedArray/prototype/set/BigInt/number-tobigint.js
 >>  error: 4
 
@@ -3191,12 +2825,6 @@ tasks/coverage/test262/test/built-ins/TypedArray/prototype/set/BigInt/typedarray
 
 tasks/coverage/test262/test/built-ins/TypedArray/prototype/set/BigInt/typedarray-arg-target-out-of-bounds.js
 >>  error: 2
-
-tasks/coverage/test262/test/built-ins/TypedArray/prototype/set/array-arg-return-abrupt-from-src-tonumber-value-symbol.js
->>  error: 7
-
-tasks/coverage/test262/test/built-ins/TypedArray/prototype/set/array-arg-set-values.js
->>  error: 3
 
 tasks/coverage/test262/test/built-ins/TypedArray/prototype/set/typedarray-arg-set-values-diff-buffer-other-type-conversions-sab.js
 >>  error: 19
@@ -3264,14 +2892,8 @@ tasks/coverage/test262/test/built-ins/TypedArray/prototype/toLocaleString/BigInt
 tasks/coverage/test262/test/built-ins/TypedArray/prototype/toLocaleString/return-abrupt-from-this-out-of-bounds.js
 >>  error: 8
 
-tasks/coverage/test262/test/built-ins/TypedArray/prototype/toReversed/this-value-invalid.js
->>  error: 7
-
 tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/comparefn-stop-after-error.js
 >>  error: 2
-
-tasks/coverage/test262/test/built-ins/TypedArray/prototype/toSorted/this-value-invalid.js
->>  error: 7
 
 tasks/coverage/test262/test/built-ins/TypedArray/prototype/values/BigInt/return-abrupt-from-this-out-of-bounds.js
 >>  error: 8
@@ -3285,9 +2907,6 @@ tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/index-bigger-or-
 tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/index-smaller-than-minus-length.js
 >>  error: 6
 
-tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/this-value-invalid.js
->>  error: 7
-
 tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors/length-arg/is-infinity-throws-rangeerror.js
 >>  error: 4
 
@@ -3297,41 +2916,14 @@ tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors/length-arg/un
 tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors/object-arg/iterated-array-with-modified-array-iterator.js
 >>  error: 5
 
-tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors/object-arg/new-instance-extensibility.js
->>  error: 5
-
-tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors/object-arg/returns.js
->>  error: 9
-
-tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors/object-arg/throws-setting-property.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors/object-arg/throws-setting-symbol-property.js
->>  error: 1
-
 tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors-bigint/length-arg/is-infinity-throws-rangeerror.js
 >>  error: 4
 
 tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors-bigint/length-arg/undefined-newtarget-throws.js
 >>  error: 4
 
-tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors-bigint/object-arg/new-instance-extensibility.js
->>  error: 5
-
 tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors-bigint/object-arg/number-tobigint.js
 >>  error: 4
-
-tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors-bigint/object-arg/throws-setting-property.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors-bigint/object-arg/throws-setting-symbol-property.js
->>  error: 1
-
-tasks/coverage/test262/test/built-ins/TypedArrayConstructors/from/BigInt/new-instance-from-ordinary-object.js
->>  error: 3
-
-tasks/coverage/test262/test/built-ins/TypedArrayConstructors/from/new-instance-from-ordinary-object.js
->>  error: 3
 
 tasks/coverage/test262/test/built-ins/TypedArrayConstructors/internals/DefineOwnProperty/BigInt/key-is-not-integer.js
 >>  error: 2
@@ -3609,15 +3201,6 @@ tasks/coverage/test262/test/harness/nativeFunctionMatcher.js
 tasks/coverage/test262/test/harness/testTypedArray.js
 >>  error: 8
 
-tasks/coverage/test262/test/intl402/BigInt/prototype/toLocaleString/de-DE.js
->>  error: 6
-
-tasks/coverage/test262/test/intl402/BigInt/prototype/toLocaleString/en-US.js
->>  error: 6
-
-tasks/coverage/test262/test/intl402/Collator/prototype/resolvedOptions/order.js
->>  error: 3
-
 tasks/coverage/test262/test/intl402/Collator/this-value-ignored.js
 >>  error: 3
 
@@ -3645,9 +3228,6 @@ tasks/coverage/test262/test/intl402/DateTimeFormat/constructor-options-order-tim
 tasks/coverage/test262/test/intl402/DateTimeFormat/constructor-options-timeStyle-valid.js
 >>  error: 7
 
-tasks/coverage/test262/test/intl402/DateTimeFormat/ignore-invalid-unicode-ext-values.js
->>  error: 5
-
 tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/format/throws-value-non-finite.js
 >>  error: 4
 
@@ -3663,18 +3243,6 @@ tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/formatToParts/date-
 tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/formatToParts/offset-timezone-correct.js
 >>  error: 5
 
-tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/resolvedOptions/order-dayPeriod.js
->>  error: 5
-
-tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/resolvedOptions/order-fractionalSecondDigits.js
->>  error: 5
-
-tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/resolvedOptions/order-style.js
->>  error: 19
-
-tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/resolvedOptions/order.js
->>  error: 19
-
 tasks/coverage/test262/test/intl402/DateTimeFormat/this-value-ignored.js
 >>  error: 8
 
@@ -3684,20 +3252,14 @@ tasks/coverage/test262/test/intl402/DisplayNames/prototype/resolvedOptions/optio
 tasks/coverage/test262/test/intl402/DisplayNames/prototype/resolvedOptions/option-style.js
 >>  error: 5
 
-tasks/coverage/test262/test/intl402/DisplayNames/prototype/resolvedOptions/return-object.js
->>  error: 1
-
 tasks/coverage/test262/test/intl402/DurationFormat/constructor-options-order.js
 >>  error: 20
 
 tasks/coverage/test262/test/intl402/DurationFormat/constructor-options-style-conflict.js
 >>  error: 3
 
-tasks/coverage/test262/test/intl402/DurationFormat/constructor-options-style-invalid.js
->>  error: 1
-
 tasks/coverage/test262/test/intl402/DurationFormat/constructor-options-style-valid.js
->>  error: 7
+>>  error: 5
 
 tasks/coverage/test262/test/intl402/DurationFormat/prototype/format/duration-out-of-range-1.js
 >>  error: 10
@@ -3720,33 +3282,6 @@ tasks/coverage/test262/test/intl402/DurationFormat/prototype/formatToParts/throw
 tasks/coverage/test262/test/intl402/DurationFormat/prototype/resolvedOptions/throw-invoked-as-func.js
 >>  error: 2
 
-tasks/coverage/test262/test/intl402/Intl/getCanonicalLocales/Locale-object.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/Intl/getCanonicalLocales/canonicalized-tags.js
->>  error: 7
-
-tasks/coverage/test262/test/intl402/Intl/getCanonicalLocales/complex-language-subtag-replacement.js
->>  error: 3
-
-tasks/coverage/test262/test/intl402/Intl/getCanonicalLocales/unicode-ext-canonicalize-calendar.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/Intl/getCanonicalLocales/unicode-ext-canonicalize-col-strength.js
->>  error: 3
-
-tasks/coverage/test262/test/intl402/Intl/getCanonicalLocales/unicode-ext-canonicalize-measurement-system.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/Intl/getCanonicalLocales/unicode-ext-canonicalize-region.js
->>  error: 11
-
-tasks/coverage/test262/test/intl402/Intl/getCanonicalLocales/unicode-ext-canonicalize-subdivision.js
->>  error: 11
-
-tasks/coverage/test262/test/intl402/Intl/getCanonicalLocales/unicode-ext-canonicalize-timezone.js
->>  error: 11
-
 tasks/coverage/test262/test/intl402/Intl/supportedValuesOf/calendars-accepted-by-DateTimeFormat.js
 >>  error: 12
 
@@ -3765,50 +3300,17 @@ tasks/coverage/test262/test/intl402/Intl/supportedValuesOf/numberingSystems-acce
 tasks/coverage/test262/test/intl402/Intl/supportedValuesOf/units-accepted-by-NumberFormat.js
 >>  error: 12
 
-tasks/coverage/test262/test/intl402/ListFormat/constructor/constructor/options-style-invalid.js
->>  error: 1
-
 tasks/coverage/test262/test/intl402/ListFormat/constructor/constructor/options-style-valid.js
->>  error: 7
-
-tasks/coverage/test262/test/intl402/ListFormat/constructor/constructor/options-type-invalid.js
->>  error: 1
+>>  error: 5
 
 tasks/coverage/test262/test/intl402/ListFormat/constructor/constructor/options-type-valid.js
->>  error: 7
+>>  error: 5
 
 tasks/coverage/test262/test/intl402/ListFormat/constructor/constructor/options-undefined.js
->>  error: 9
-
-tasks/coverage/test262/test/intl402/ListFormat/constructor/supportedLocalesOf/options-localeMatcher-invalid.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/ListFormat/constructor/supportedLocalesOf/options-undefined.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/ListFormat/constructor/supportedLocalesOf/result-type.js
->>  error: 4
-
-tasks/coverage/test262/test/intl402/ListFormat/prototype/format/iterable-iteratorclose.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/ListFormat/prototype/formatToParts/iterable-iteratorclose.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/ListFormat/prototype/resolvedOptions/type.js
->>  error: 3
-
-tasks/coverage/test262/test/intl402/Locale/constructor-tag.js
->>  error: 1
+>>  error: 5
 
 tasks/coverage/test262/test/intl402/Locale/invalid-tag-throws-number.js
 >>  error: 4
-
-tasks/coverage/test262/test/intl402/Locale/likely-subtags.js
->>  error: 5
-
-tasks/coverage/test262/test/intl402/Locale/prototype/minimize/removing-likely-subtags-first-adds-likely-subtags.js
->>  error: 1
 
 tasks/coverage/test262/test/intl402/Number/prototype/toLocaleString/returns-same-results-as-NumberFormat.js
 >>  error: 2
@@ -3835,61 +3337,10 @@ tasks/coverage/test262/test/intl402/NumberFormat/currency-digits-nonstandard-not
 >>  error: 9
 
 tasks/coverage/test262/test/intl402/NumberFormat/currencyDisplay-unit.js
->>  error: 21
-
-tasks/coverage/test262/test/intl402/NumberFormat/ignore-invalid-unicode-ext-values.js
->>  error: 1
+>>  error: 11
 
 tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/bound-to-numberformat-instance.js
 >>  error: 4
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-fraction-digits.js
->>  error: 5
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-mode-ceil.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-mode-expand.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-mode-floor.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-mode-half-ceil.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-mode-half-even.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-mode-half-expand.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-mode-half-floor.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-mode-half-trunc.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-mode-trunc.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-priority-auto.js
->>  error: 3
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-priority-less-precision.js
->>  error: 3
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-rounding-priority-more-precision.js
->>  error: 3
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/format-significant-digits.js
->>  error: 5
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/unit-de-DE.js
->>  error: 35
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/unit-en-US.js
->>  error: 35
 
 tasks/coverage/test262/test/intl402/NumberFormat/prototype/format/value-tonumber.js
 >>  error: 4
@@ -3906,83 +3357,14 @@ tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatRangeToParts/in
 tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatRangeToParts/x-greater-than-y-not-throws.js
 >>  error: 14
 
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/engineering-scientific-de-DE.js
->>  error: 170
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/engineering-scientific-en-US.js
->>  error: 170
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/engineering-scientific-ja-JP.js
->>  error: 170
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/engineering-scientific-ko-KR.js
->>  error: 170
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/engineering-scientific-zh-TW.js
->>  error: 152
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/notation-compact-de-DE.js
->>  error: 8
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/notation-compact-en-US.js
->>  error: 8
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/signDisplay-currency-de-DE.js
->>  error: 365
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/signDisplay-currency-en-US.js
->>  error: 297
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/signDisplay-currency-ja-JP.js
->>  error: 297
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/signDisplay-currency-ko-KR.js
->>  error: 297
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/signDisplay-currency-zh-TW.js
->>  error: 297
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/signDisplay-de-DE.js
->>  error: 34
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/signDisplay-en-US.js
->>  error: 34
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/signDisplay-ja-JP.js
->>  error: 34
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/signDisplay-ko-KR.js
->>  error: 34
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/unit-de-DE.js
->>  error: 177
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/unit-en-US.js
->>  error: 153
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/unit-ja-JP.js
->>  error: 57
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/formatToParts/unit-ko-KR.js
->>  error: 45
-
-tasks/coverage/test262/test/intl402/NumberFormat/prototype/resolvedOptions/order.js
->>  error: 9
-
 tasks/coverage/test262/test/intl402/NumberFormat/prototype/resolvedOptions/return-keys-order-default.js
 >>  error: 5
 
 tasks/coverage/test262/test/intl402/NumberFormat/style-unit.js
->>  error: 9
-
-tasks/coverage/test262/test/intl402/NumberFormat/test-option-style.js
->>  error: 1
+>>  error: 5
 
 tasks/coverage/test262/test/intl402/NumberFormat/this-value-ignored.js
 >>  error: 8
-
-tasks/coverage/test262/test/intl402/PluralRules/prototype/resolvedOptions/order.js
->>  error: 3
 
 tasks/coverage/test262/test/intl402/PluralRules/prototype/resolvedOptions/return-keys-order-default.js
 >>  error: 5
@@ -3993,65 +3375,23 @@ tasks/coverage/test262/test/intl402/PluralRules/prototype/select/non-finite.js
 tasks/coverage/test262/test/intl402/PluralRules/prototype/selectRange/invoked-as-func.js
 >>  error: 2
 
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/constructor/options-localeMatcher-invalid.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/constructor/options-numeric-invalid.js
->>  error: 1
-
 tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/constructor/options-numeric-valid.js
->>  error: 7
-
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/constructor/options-style-invalid.js
->>  error: 1
+>>  error: 5
 
 tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/constructor/options-style-valid.js
->>  error: 7
-
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/constructor/options-toobject-prototype.js
->>  error: 1
+>>  error: 5
 
 tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/constructor/options-undefined.js
 >>  error: 7
 
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/supportedLocalesOf/options-localeMatcher-invalid.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/supportedLocalesOf/options-undefined.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/supportedLocalesOf/result-type.js
->>  error: 4
-
 tasks/coverage/test262/test/intl402/RelativeTimeFormat/prototype/format/en-us-numeric-auto.js
->>  error: 57
-
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/prototype/format/en-us-style-short.js
->>  error: 17
+>>  error: 7
 
 tasks/coverage/test262/test/intl402/RelativeTimeFormat/prototype/format/value-non-finite.js
 >>  error: 4
 
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/prototype/formatToParts/en-us-numeric-always.js
->>  error: 118
-
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/prototype/formatToParts/en-us-numeric-auto.js
->>  error: 155
-
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/prototype/formatToParts/en-us-style-short.js
->>  error: 41
-
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/prototype/formatToParts/pl-pl-style-narrow.js
->>  error: 21
-
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/prototype/formatToParts/pl-pl-style-short.js
->>  error: 21
-
 tasks/coverage/test262/test/intl402/RelativeTimeFormat/prototype/formatToParts/value-non-finite.js
 >>  error: 4
-
-tasks/coverage/test262/test/intl402/RelativeTimeFormat/prototype/resolvedOptions/type.js
->>  error: 3
 
 tasks/coverage/test262/test/intl402/Segmenter/constructor/constructor/locales-valid.js
 >>  error: 19
@@ -4061,21 +3401,6 @@ tasks/coverage/test262/test/intl402/Segmenter/constructor/constructor/options-gr
 
 tasks/coverage/test262/test/intl402/Segmenter/constructor/constructor/options-valid-combinations.js
 >>  error: 19
-
-tasks/coverage/test262/test/intl402/Segmenter/constructor/supportedLocalesOf/options-localeMatcher-invalid.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/Segmenter/constructor/supportedLocalesOf/options-undefined.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/Segmenter/constructor/supportedLocalesOf/result-type.js
->>  error: 4
-
-tasks/coverage/test262/test/intl402/Segmenter/prototype/resolvedOptions/order.js
->>  error: 1
-
-tasks/coverage/test262/test/intl402/Segmenter/prototype/resolvedOptions/type-without-lbs.js
->>  error: 3
 
 tasks/coverage/test262/test/intl402/Segmenter/prototype/segment/containing/index-throws.js
 >>  error: 19
@@ -4090,7 +3415,7 @@ tasks/coverage/test262/test/intl402/Segmenter/prototype/segment/containing/zero-
 >>  error: 14
 
 tasks/coverage/test262/test/intl402/Segmenter/prototype/segment/segment-tostring.js
->>  error: 19
+>>  error: 17
 
 tasks/coverage/test262/test/intl402/Temporal/Duration/prototype/round/relativeto-infinity-throws-rangeerror.js
 >>  error: 4
@@ -4100,9 +3425,6 @@ tasks/coverage/test262/test/intl402/Temporal/Duration/prototype/total/dst-day-le
 
 tasks/coverage/test262/test/intl402/Temporal/Duration/prototype/total/relativeto-infinity-throws-rangeerror.js
 >>  error: 4
-
-tasks/coverage/test262/test/intl402/Temporal/Instant/prototype/toLocaleString/lone-options-accepted.js
->>  error: 7
 
 tasks/coverage/test262/test/intl402/Temporal/PlainDate/compare/infinity-throws-rangeerror.js
 >>  error: 4
@@ -4115,9 +3437,6 @@ tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/equals/infinity
 
 tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/since/infinity-throws-rangeerror.js
 >>  error: 4
-
-tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/toLocaleString/lone-options-accepted.js
->>  error: 1
 
 tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/toString/calendarname-always.js
 >>  error: 9
@@ -4148,9 +3467,6 @@ tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/equals/infi
 
 tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/since/infinity-throws-rangeerror.js
 >>  error: 4
-
-tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/toLocaleString/lone-options-accepted.js
->>  error: 5
 
 tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/toString/calendarname-always.js
 >>  error: 9
@@ -4239,9 +3555,6 @@ tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/equals/infi
 tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/since/infinity-throws-rangeerror.js
 >>  error: 4
 
-tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/toLocaleString/lone-options-accepted.js
->>  error: 7
-
 tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/toString/calendarname-always.js
 >>  error: 9
 
@@ -4259,9 +3572,6 @@ tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/toString/ca
 
 tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/until/infinity-throws-rangeerror.js
 >>  error: 4
-
-tasks/coverage/test262/test/intl402/language-tags-canonicalized.js
->>  error: 7
 
 tasks/coverage/test262/test/language/arguments-object/async-gen-meth-args-trailing-comma-spread-operator.js
 >>  error: 4
@@ -5601,9 +4911,6 @@ tasks/coverage/test262/test/language/expressions/in/S11.8.7_A4.js
 tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A1.js
 >>  error: 3
 
-tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A2.1_T1.js
->>  error: 7
-
 tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A2.1_T2.js
 >>  error: 1
 
@@ -5619,50 +4926,11 @@ tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A2.4_T3.js
 tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A2.4_T4.js
 >>  error: 3
 
-tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A3.js
->>  error: 9
-
-tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A4_T1.js
->>  error: 1
-
-tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A4_T2.js
->>  error: 8
-
-tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A4_T3.js
->>  error: 1
-
 tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A6_T1.js
 >>  error: 1
 
-tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A6_T2.js
->>  error: 1
-
-tasks/coverage/test262/test/language/expressions/instanceof/S15.3.5.3_A1_T1.js
->>  error: 4
-
-tasks/coverage/test262/test/language/expressions/instanceof/S15.3.5.3_A1_T2.js
->>  error: 4
-
-tasks/coverage/test262/test/language/expressions/instanceof/S15.3.5.3_A1_T3.js
->>  error: 4
-
-tasks/coverage/test262/test/language/expressions/instanceof/S15.3.5.3_A1_T4.js
->>  error: 4
-
-tasks/coverage/test262/test/language/expressions/instanceof/S15.3.5.3_A1_T5.js
->>  error: 4
-
-tasks/coverage/test262/test/language/expressions/instanceof/S15.3.5.3_A1_T6.js
->>  error: 4
-
-tasks/coverage/test262/test/language/expressions/instanceof/S15.3.5.3_A1_T7.js
->>  error: 4
-
 tasks/coverage/test262/test/language/expressions/instanceof/S15.3.5.3_A1_T8.js
 >>  error: 4
-
-tasks/coverage/test262/test/language/expressions/instanceof/symbol-hasinstance-to-boolean.js
->>  error: 5
 
 tasks/coverage/test262/test/language/expressions/left-shift/S11.7.1_A1.js
 >>  error: 3
@@ -5977,16 +5245,16 @@ tasks/coverage/test262/test/language/expressions/object/S11.1.5_A1.2.js
 >>  error: 3
 
 tasks/coverage/test262/test/language/expressions/object/S11.1.5_A1.3.js
->>  error: 6
+>>  error: 4
 
 tasks/coverage/test262/test/language/expressions/object/S11.1.5_A1.4.js
 >>  error: 4
 
 tasks/coverage/test262/test/language/expressions/object/S11.1.5_A3.js
->>  error: 5
+>>  error: 3
 
 tasks/coverage/test262/test/language/expressions/object/S11.1.5_A4.3.js
->>  error: 12
+>>  error: 8
 
 tasks/coverage/test262/test/language/expressions/object/accessor-name-computed-err-to-prop-key.js
 >>  error: 20
@@ -6595,7 +5863,7 @@ tasks/coverage/test262/test/language/expressions/property-accessors/S8.12.3_A2.j
 >>  error: 5
 
 tasks/coverage/test262/test/language/expressions/property-accessors/S8.12.3_A3.js
->>  error: 15
+>>  error: 13
 
 tasks/coverage/test262/test/language/expressions/right-shift/S11.7.2_A1.js
 >>  error: 3
@@ -7457,9 +6725,6 @@ tasks/coverage/test262/test/language/statements/for-in/head-expr-expr.js
 
 tasks/coverage/test262/test/language/statements/for-in/head-var-expr.js
 >>  error: 5
-
-tasks/coverage/test262/test/language/statements/for-in/order-enumerable-shadowed.js
->>  error: 3
 
 tasks/coverage/test262/test/language/statements/for-of/break-from-finally.js
 >>  error: 38

@@ -73,7 +73,7 @@ impl Case for EsbuildTest262Case {
 
         let diff = oxc.len() - esbuild.len();
 
-        if diff == 1 {
+        if diff < 10 {
             println!("\n{}\n", self.base.path().to_string_lossy());
             println!("\n{oxc}\n");
             println!("\n{esbuild}\n");
