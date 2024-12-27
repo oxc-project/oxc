@@ -511,7 +511,6 @@ mod vitest {
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
     pub mod require_local_test_context_for_concurrent_snapshots;
-    pub mod vitest_prefer_lowercase_title;
 }
 
 mod node {
@@ -983,7 +982,6 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::throw_new_error,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
-    vitest::vitest_prefer_lowercase_title,
     vitest::prefer_each,
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_object,

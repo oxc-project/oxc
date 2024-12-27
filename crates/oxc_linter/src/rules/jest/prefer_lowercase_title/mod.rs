@@ -3,6 +3,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
+#[cfg(test)]
+mod tests;
+
 use crate::{
     context::LintContext,
     rule::Rule,
@@ -10,21 +13,21 @@ use crate::{
 };
 
 fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Enforce lowercase titles")
+    OxcDiagnostic::warn("Enforce lowercase test names")
         .with_help(format!("`{title:?}`s should begin with lowercase"))
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct VitestPreferLowercaseTitleConfig {
+pub struct PreferLowercaseTitleConfig {
     allowed_prefixes: Vec<CompactStr>,
     ignore: Vec<CompactStr>,
     ignore_top_level_describe: bool,
     lowercase_first_character_only: bool,
 }
 
-impl std::ops::Deref for VitestPreferLowercaseTitle {
-    type Target = VitestPreferLowercaseTitleConfig;
+impl std::ops::Deref for PreferLowercaseTitle {
+    type Target = PreferLowercaseTitleConfig;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -32,7 +35,7 @@ impl std::ops::Deref for VitestPreferLowercaseTitle {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct VitestPreferLowercaseTitle(Box<VitestPreferLowercaseTitleConfig>);
+pub struct PreferLowercaseTitle(Box<PreferLowercaseTitleConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -60,12 +63,12 @@ declare_oxc_lint!(
     ///     ...
     /// })
     /// ```
-    VitestPreferLowercaseTitle,
+    PreferLowercaseTitle,
     style,
     fix
 );
 
-impl Rule for VitestPreferLowercaseTitle {
+impl Rule for PreferLowercaseTitle {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
         let ignore_top_level_describe = obj
@@ -87,7 +90,7 @@ impl Rule for VitestPreferLowercaseTitle {
             .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
-        Self(Box::new(VitestPreferLowercaseTitleConfig {
+        Self(Box::new(PreferLowercaseTitleConfig {
             allowed_prefixes,
             ignore,
             ignore_top_level_describe,
@@ -111,7 +114,6 @@ impl Rule for VitestPreferLowercaseTitle {
 
         let scopes = ctx.scopes();
 
-        // TODO: populate ignores
         let ignores = Self::populate_ignores(&self.ignore);
 
         if ignores.contains(&vitest_fn_call.name.as_ref()) {
@@ -144,7 +146,7 @@ impl Rule for VitestPreferLowercaseTitle {
     }
 }
 
-impl VitestPreferLowercaseTitle {
+impl PreferLowercaseTitle {
     fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
         if literal.is_empty()
             || self.allowed_prefixes.iter().any(|name| literal.starts_with(name.as_str()))
@@ -250,11 +252,9 @@ fn test() {
         ("bench(`Foo MM mm`, function () {})", "bench(`foo MM mm`, function () {})", None),
     ];
 
-    // TODO: figure out how to prefix this name.
-    Tester::new(VitestPreferLowercaseTitle::NAME, VitestPreferLowercaseTitle::CATEGORY, pass, fail)
+    Tester::new(PreferLowercaseTitle::NAME, PreferLowercaseTitle::CATEGORY, pass, fail)
         .expect_fix(fix)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
-        .with_snapshot_suffix("vitest")
         .test_and_snapshot();
 }
