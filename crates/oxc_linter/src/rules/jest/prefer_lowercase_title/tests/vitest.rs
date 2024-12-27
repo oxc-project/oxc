@@ -19,7 +19,7 @@ fn test() {
         (
             "test(`SFC Compile`, function () {})",
             Some(
-                serde_json::json!([        {          "lowercaseFirstCharacterOnly": false        }      ]),
+                serde_json::json!([{ "lowercaseFirstCharacterOnly": false }]),
             ),
         ),
         ("bench(`Foo MM mm`, function () {})", None),
@@ -32,7 +32,7 @@ fn test() {
             "test(`SFC Compile`, function () {})",
             "test(`sfc compile`, function () {})",
             Some(
-                serde_json::json!([        {          "lowercaseFirstCharacterOnly": false        }      ]),
+                serde_json::json!([{ "lowercaseFirstCharacterOnly": false }]),
             ),
         ),
         ("bench(`Foo MM mm`, function () {})", "bench(`foo MM mm`, function () {})", None),
