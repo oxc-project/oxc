@@ -241,7 +241,6 @@ impl<'a, 'b> PeepholeFoldConstants {
             BinaryOperator::ShiftLeft
             | BinaryOperator::ShiftRight
             | BinaryOperator::ShiftRightZeroFill
-            | BinaryOperator::Addition
             | BinaryOperator::Subtraction
             | BinaryOperator::Division
             | BinaryOperator::Remainder
@@ -249,6 +248,7 @@ impl<'a, 'b> PeepholeFoldConstants {
             | BinaryOperator::Exponential => {
                 ctx.eval_binary_expression(e).map(|v| ctx.value_to_expr(e.span, v))
             }
+            BinaryOperator::Addition => Self::try_fold_add(e, ctx),
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
                 if let Some(v) = ctx.eval_binary_expression(e) {
                     return Some(ctx.value_to_expr(e.span, v));
@@ -258,6 +258,27 @@ impl<'a, 'b> PeepholeFoldConstants {
             op if op.is_equality() || op.is_compare() => Self::try_fold_comparison(e, ctx),
             _ => None,
         }
+    }
+
+    // Simplified version of `tryFoldAdd` from closure compiler.
+    fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
+        if let Some(v) = ctx.eval_binary_expression(e) {
+            return Some(ctx.value_to_expr(e.span, v));
+        }
+        debug_assert_eq!(e.operator, BinaryOperator::Addition);
+        // a + 'b' + 'c' -> a + 'bc'
+        if let Expression::BinaryExpression(left_binary_expr) = &mut e.left {
+            if let Expression::StringLiteral(left_str) = &left_binary_expr.right {
+                if let Expression::StringLiteral(right_str) = &e.right {
+                    let span = Span::new(left_str.span.start, right_str.span.end);
+                    let value = left_str.value.to_string() + right_str.value.as_str();
+                    let right = ctx.ast.expression_string_literal(span, value, None);
+                    let left = ctx.ast.move_expression(&mut left_binary_expr.left);
+                    return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
+                }
+            }
+        }
+        None
     }
 
     fn try_fold_left_child_op(
@@ -1318,7 +1339,7 @@ mod test {
     }
 
     #[test]
-    fn test_fold_bit_shift() {
+    fn test_fold_bit_shifts() {
         test("x = 1 << 0", "x=1");
         test("x = -1 << 0", "x=-1");
         test("x = 1 << 1", "x=2");
@@ -1364,6 +1385,49 @@ mod test {
         test("8589934591 >>> 0", "4294967295");
         test("8589934592 >>> 0", "0");
         test("8589934593 >>> 0", "1");
+    }
+
+    #[test]
+    fn test_string_add() {
+        test("x = 'a' + 'bc'", "x = 'abc'");
+        test("x = 'a' + 5", "x = 'a5'");
+        test("x = 5 + 'a'", "x = '5a'");
+        // test("x = 'a' + 5n", "x = 'a5n'");
+        // test("x = 5n + 'a'", "x = '5na'");
+        test("x = 'a' + ''", "x = 'a'");
+        test("x = 'a' + foo()", "x = 'a'+foo()");
+        test("x = foo() + 'a' + 'b'", "x = foo()+'ab'");
+        test("x = (foo() + 'a') + 'b'", "x = foo()+'ab'"); // believe it!
+        test("x = foo() + 'a' + 'b' + 'cd' + bar()", "x = foo()+'abcd'+bar()");
+        test("x = foo() + 2 + 'b'", "x = foo()+2+\"b\""); // don't fold!
+
+        // test("x = foo() + 'a' + 2", "x = foo()+\"a2\"");
+        test("x = '' + null", "x = 'null'");
+        test("x = true + '' + false", "x = 'truefalse'");
+        // test("x = '' + []", "x = ''");
+        // test("x = foo() + 'a' + 1 + 1", "x = foo() + 'a11'");
+        test("x = 1 + 1 + 'a'", "x = '2a'");
+        test("x = 1 + 1 + 'a'", "x = '2a'");
+        test("x = 'a' + (1 + 1)", "x = 'a2'");
+        // test("x = '_' + p1 + '_' + ('' + p2)", "x = '_' + p1 + '_' + p2");
+        // test("x = 'a' + ('_' + 1 + 1)", "x = 'a_11'");
+        // test("x = 'a' + ('_' + 1) + 1", "x = 'a_11'");
+        // test("x = 1 + (p1 + '_') + ('' + p2)", "x = 1 + (p1 + '_') + p2");
+        // test("x = 1 + p1 + '_' + ('' + p2)", "x = 1 + p1 + '_' + p2");
+        // test("x = 1 + 'a' + p1", "x = '1a' + p1");
+        // test("x = (p1 + (p2 + 'a')) + 'b'", "x = (p1 + (p2 + 'ab'))");
+        // test("'a' + ('b' + p1) + 1", "'ab' + p1 + 1");
+        // test("x = 'a' + ('b' + p1 + 'c')", "x = 'ab' + (p1 + 'c')");
+        test_same("x = 'a' + (4 + p1 + 'a')");
+        test_same("x = p1 / 3 + 4");
+        test_same("foo() + 3 + 'a' + foo()");
+        test_same("x = 'a' + ('b' + p1 + p2)");
+        test_same("x = 1 + ('a' + p1)");
+        test_same("x = p1 + '' + p2");
+        test_same("x = 'a' + (1 + p1)");
+        test_same("x = (p2 + 'a') + (1 + p1)");
+        test_same("x = (p2 + 'a') + (1 + p1 + p2)");
+        test_same("x = (p2 + 'a') + (1 + (p1 + p2))");
     }
 
     #[test]
