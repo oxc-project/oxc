@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
+use std::sync::OnceLock;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -43,12 +44,8 @@ declare_oxc_lint!(
 impl Rule for NoOctalEscape {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::StringLiteral(literal) = node.kind() {
-            let octal_escape_pattern =
-                Regex::new(r"^(?:[^\\]|\\.)*?\\([0-3][0-7]{1,2}|[4-7][0-7]|(08|09)|[1-7])")
-                    .unwrap();
-
             if let Some(raw) = &literal.raw {
-                if let Some(captures) = octal_escape_pattern.captures(raw) {
+                if let Some(captures) = get_octal_escape_pattern().captures(raw) {
                     if let Some(sequence) = captures.get(1) {
                         ctx.diagnostic(no_octal_escape_diagnostic(literal.span, sequence.as_str()));
                     }
@@ -56,6 +53,14 @@ impl Rule for NoOctalEscape {
             }
         }
     }
+}
+
+static OCTAL_ESCAPE_PATTERN: OnceLock<Regex> = OnceLock::new();
+
+fn get_octal_escape_pattern() -> &'static Regex {
+    OCTAL_ESCAPE_PATTERN.get_or_init(|| {
+        Regex::new(r"^(?:[^\\]|\\.)*?\\([0-3][0-7]{1,2}|[4-7][0-7]|(08|09)|[1-7])").unwrap()
+    })
 }
 
 #[test]
