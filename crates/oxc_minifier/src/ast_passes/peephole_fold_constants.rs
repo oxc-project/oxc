@@ -245,7 +245,8 @@ impl<'a, 'b> PeepholeFoldConstants {
             | BinaryOperator::Division
             | BinaryOperator::Remainder
             | BinaryOperator::Multiplication
-            | BinaryOperator::Exponential => {
+            | BinaryOperator::Exponential
+            | BinaryOperator::Instanceof => {
                 ctx.eval_binary_expression(e).map(|v| ctx.value_to_expr(e.span, v))
             }
             BinaryOperator::Addition => Self::try_fold_add(e, ctx),
@@ -1501,6 +1502,45 @@ mod test {
     fn test_fold_left() {
         test_same("(+x - 1) + 2"); // not yet
         test("(+x & 1) & 2", "+x & 0");
+    }
+
+    #[test]
+    fn test_fold_instance_of() {
+        // Non object types are never instances of anything.
+        test("64 instanceof Object", "false");
+        test("64 instanceof Number", "false");
+        test("'' instanceof Object", "false");
+        test("'' instanceof String", "false");
+        test("true instanceof Object", "false");
+        test("true instanceof Boolean", "false");
+        test("!0 instanceof Object", "false");
+        test("!0 instanceof Boolean", "false");
+        test("false instanceof Object", "false");
+        test("null instanceof Object", "false");
+        test("undefined instanceof Object", "false");
+        test("NaN instanceof Object", "false");
+        test("Infinity instanceof Object", "false");
+
+        // Array and object literals are known to be objects.
+        test("[] instanceof Object", "true");
+        test("({}) instanceof Object", "true");
+
+        // These cases is foldable, but no handled currently.
+        test_same("new Foo() instanceof Object");
+        // These would require type information to fold.
+        test_same("[] instanceof Foo");
+        test_same("({}) instanceof Foo");
+
+        test("(function() {}) instanceof Object", "true");
+
+        // An unknown value should never be folded.
+        test_same("x instanceof Foo");
+    }
+
+    #[test]
+    fn test_fold_instance_of_additional() {
+        test("(typeof {}) instanceof Object", "false");
+        test("(+{}) instanceof Number", "false");
     }
 
     #[test]
