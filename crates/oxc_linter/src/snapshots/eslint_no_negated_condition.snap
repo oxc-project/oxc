@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ if (!a) {;} else {;}
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ if (a != b) {;} else {;}
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ if (a !== b) {;} else {;}
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !a ? b : c
+   · ──────────
+   ╰────
+
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ a != b ? c : d
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ a !== b ? c : d
+   · ───────────────
+   ╰────

@@ -93,6 +93,7 @@ mod eslint {
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_multi_str;
+    pub mod no_negated_condition;
     pub mod no_nested_ternary;
     pub mod no_new;
     pub mod no_new_func;
@@ -536,7 +537,6 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_classes_per_file,
     eslint::max_lines,
     eslint::max_params,
-    eslint::no_nested_ternary,
     eslint::no_labels,
     eslint::no_restricted_imports,
     eslint::no_object_constructor,
