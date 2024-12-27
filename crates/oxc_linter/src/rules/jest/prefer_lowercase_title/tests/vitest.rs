@@ -1,7 +1,7 @@
 #[test]
 fn test() {
-    use crate::rule::RuleMeta;
     use super::PreferLowercaseTitle;
+    use crate::rule::RuleMeta;
     use crate::tester::Tester;
 
     let pass: Vec<(&str, Option<serde_json::Value>)> = vec![

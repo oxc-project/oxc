@@ -1,10 +1,8 @@
-
-
 #[test]
 fn test() {
-    use crate::tester::Tester;
-    use crate::rule::RuleMeta;
     use super::PreferLowercaseTitle;
+    use crate::rule::RuleMeta;
+    use crate::tester::Tester;
 
     let pass = vec![
         ("it.each()", None),
