@@ -45,9 +45,16 @@ declare_oxc_lint!(
 impl Rule for NoNestedTernary {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ConditionalExpression(node) = node.kind() {
-            if matches!(node.alternate, Expression::ConditionalExpression(_))
-                || matches!(node.consequent, Expression::ConditionalExpression(_))
-            {
+            let check_nested_ternary = |expr: &Expression| {
+                if matches!(expr, Expression::ConditionalExpression(_)) {
+                    true
+                } else {
+                    let inner_expr = expr.get_inner_expression();
+                    matches!(inner_expr, Expression::ConditionalExpression(_))
+                }
+            };
+
+            if check_nested_ternary(&node.consequent) || check_nested_ternary(&node.alternate) {
                 ctx.diagnostic(no_nested_ternary_diagnostic(node.span));
             }
         }
@@ -58,11 +65,38 @@ impl Rule for NoNestedTernary {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec!["foo ? doBar() : doBaz();", "var foo = bar === baz ? qux : quxx;"];
+    let pass = vec![
+        "foo ? doBar() : doBaz();",
+        "var foo = bar === baz ? qux : quxx;",
+        "var result = foo && bar ? baz : qux || quux;",
+        "var result = foo ? bar : baz === qux;",
+        "foo ? doSomething(a, b) : doSomethingElse(c, d);",
+        // Parenthesized Expressions
+        "var result = (foo ? bar : baz) || qux;",
+        "var result = (foo ? bar : baz) && qux;",
+        "var result = foo === bar ? (baz || qux) : quux;",
+        "var result = (foo ? bar : baz) ? qux : quux;",
+        // TypeScript
+        "var result = foo! ? bar : baz;",
+        "var result = foo ? bar! : baz;",
+        "var result = (foo as boolean) ? bar : baz;",
+        "var result = foo ? (bar as string) : baz;",
+    ];
 
     let fail = vec![
         "foo ? bar : baz === qux ? quxx : foobar;",
         "foo ? baz === qux ? quxx : foobar : bar;",
+        // Parenthesized Expressions
+        "var result = foo ? (bar ? baz : qux) : quux;",
+        "var result = foo ? (bar === baz ? qux : quux) : foobar;",
+        "doSomething(foo ? bar : baz ? qux : quux);",
+        // Comment
+        "var result = foo /* comment */ ? bar : baz ? qux : quux;",
+        // TypeScript
+        "var result = foo! ? bar : baz! ? qux : quux;",
+        "var result = foo ? bar! : (baz! ? qux : quux);",
+        "var result = (foo as boolean) ? bar : (baz as string) ? qux : quux;",
+        "var result = foo ? (bar as string) : (baz as number ? qux : quux);",
     ];
 
     Tester::new(NoNestedTernary::NAME, NoNestedTernary::CATEGORY, pass, fail).test_and_snapshot();
