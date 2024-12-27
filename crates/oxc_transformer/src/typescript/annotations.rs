@@ -120,11 +120,13 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                                         &s.local
                                     }
                                 };
+                                // Should preserve `import x from 'x'`(x is unused) if only_remove_type_imports enable
                                 if self.only_remove_type_imports {
                                     return true;
                                 }
                                 self.has_value_reference(&id.name, ctx)
                             });
+                            // Should transform `import { type x } from 'x'`` to `import 'xx'` if only_remove_type_imports enable
                             if all_specifiers_is_type && self.only_remove_type_imports {
                                 *decl = ctx.ast.alloc_import_declaration(
                                     decl.span,
