@@ -45,16 +45,13 @@ declare_oxc_lint!(
 impl Rule for NoNestedTernary {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ConditionalExpression(node) = node.kind() {
-            let check_nested_ternary = |expr: &Expression| {
-                if matches!(expr, Expression::ConditionalExpression(_)) {
-                    true
-                } else {
-                    let inner_expr = expr.get_inner_expression();
-                    matches!(inner_expr, Expression::ConditionalExpression(_))
-                }
-            };
-
-            if check_nested_ternary(&node.consequent) || check_nested_ternary(&node.alternate) {
+            if matches!(
+                node.consequent.get_inner_expression(),
+                Expression::ConditionalExpression(_)
+            ) || matches!(
+                node.alternate.get_inner_expression(),
+                Expression::ConditionalExpression(_)
+            ) {
                 ctx.diagnostic(no_nested_ternary_diagnostic(node.span));
             }
         }
