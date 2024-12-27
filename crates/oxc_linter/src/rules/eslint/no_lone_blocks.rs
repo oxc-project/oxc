@@ -1,4 +1,4 @@
-use oxc_ast::ast::VariableDeclarationKind;
+use oxc_ast::ast::{Declaration, VariableDeclarationKind};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -76,29 +76,20 @@ impl Rule for NoLoneBlocks {
             lone_blocks.push(node);
         }
 
-        let span = stmt.span();
-        let children: Vec<_> = ctx
-            .nodes()
-            .iter()
-            .filter(|n| {
-                let n_span = n.span();
-                span.start < n_span.start && n_span.end < span.end
-            })
-            .collect();
-
-        for child in children {
-            if let Some(parent_of_child) = ctx.nodes().parent_node(child.id()) {
-                match child.kind() {
-                    AstKind::VariableDeclaration(var_decl)
-                        if var_decl.kind != VariableDeclarationKind::Var =>
-                    {
-                        mark_lone_block(parent_of_child, &mut lone_blocks);
-                    }
-                    AstKind::Function(_) | AstKind::Class(_) => {
-                        mark_lone_block(parent_of_child, &mut lone_blocks);
-                    }
-                    _ => {}
+        for child in &stmt.body {
+            match child.as_declaration() {
+                Some(Declaration::VariableDeclaration(decl))
+                    if decl.kind != VariableDeclarationKind::Var =>
+                {
+                    mark_lone_block(node, &mut lone_blocks);
                 }
+                Some(Declaration::ClassDeclaration(_)) => {
+                    mark_lone_block(node, &mut lone_blocks);
+                }
+                Some(Declaration::FunctionDeclaration(_)) => {
+                    mark_lone_block(node, &mut lone_blocks);
+                }
+                _ => {}
             }
         }
 
