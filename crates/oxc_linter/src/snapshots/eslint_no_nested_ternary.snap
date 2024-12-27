@@ -1,0 +1,15 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
+   ╭─[no_nested_ternary.tsx:1:1]
+ 1 │ foo ? bar : baz === qux ? quxx : foobar;
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
+   ╭─[no_nested_ternary.tsx:1:1]
+ 1 │ foo ? baz === qux ? quxx : foobar : bar;
+   · ───────────────────────────────────────
+   ╰────
