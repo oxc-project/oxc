@@ -291,9 +291,14 @@ impl PreferLowercaseTitle {
         let describe_alias = ["describe", "fdescribe", "xdescribe"];
         let test_name = "test";
         let it_name = "it";
+        let bench_name = "bench";
 
         if ignore.iter().any(|alias| alias == "describe") {
             ignores.extend(describe_alias.iter());
+        }
+
+        if ignore.iter().any(|alias| alias == bench_name) {
+            ignores.push(bench_name);
         }
 
         if ignore.iter().any(|alias| alias == test_name) {
