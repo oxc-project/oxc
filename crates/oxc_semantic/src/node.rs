@@ -1,7 +1,8 @@
+use hashbrown::HashMap;
 use oxc_ast::AstKind;
 use oxc_cfg::BlockNodeId;
 use oxc_index::IndexVec;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     scope::ScopeId,
@@ -108,6 +109,7 @@ pub struct AstNodes<'a> {
     nodes: IndexVec<NodeId, AstNode<'a>>,
     /// `node` -> `parent`
     parent_ids: IndexVec<NodeId, Option<NodeId>>,
+    node_by_span: HashMap<Span, AstNode<'a>>,
 }
 
 impl<'a> AstNodes<'a> {
@@ -194,6 +196,16 @@ impl<'a> AstNodes<'a> {
         &mut self.nodes[node_id]
     }
 
+    #[inline]
+    pub fn get_node_by_span(&self, span: Span) -> Option<&AstNode<'a>> {
+        self.node_by_span.get(&span)
+    }
+
+    #[inline]
+    pub fn get_node_by_span_mut(&mut self, span: Span) -> Option<&mut AstNode<'a>> {
+        self.node_by_span.get_mut(&span)
+    }
+
     /// Get the root [`NodeId`]. This always points to a [`Program`] node.
     ///
     /// Returns [`None`] if root node isn't set. This will never happen if you
@@ -255,6 +267,7 @@ impl<'a> AstNodes<'a> {
         let node_id = self.parent_ids.push(Some(parent_node_id));
         let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
         self.nodes.push(node);
+        self.node_by_span.insert(kind.span(), node);
         node_id
     }
 
@@ -270,6 +283,7 @@ impl<'a> AstNodes<'a> {
         self.root = Some(node_id);
         let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
         self.nodes.push(node);
+        self.node_by_span.insert(kind.span(), node);
         node_id
     }
 
@@ -277,6 +291,7 @@ impl<'a> AstNodes<'a> {
     pub fn reserve(&mut self, additional: usize) {
         self.nodes.reserve(additional);
         self.parent_ids.reserve(additional);
+        self.node_by_span.reserve(additional);
     }
 }
 
