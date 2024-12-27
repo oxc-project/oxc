@@ -83,10 +83,7 @@ impl Rule for NoLoneBlocks {
                 {
                     mark_lone_block(node, &mut lone_blocks);
                 }
-                Some(Declaration::ClassDeclaration(_)) => {
-                    mark_lone_block(node, &mut lone_blocks);
-                }
-                Some(Declaration::FunctionDeclaration(_)) => {
+                Some(Declaration::ClassDeclaration(_) | Declaration::FunctionDeclaration(_)) => {
                     mark_lone_block(node, &mut lone_blocks);
                 }
                 _ => {}
