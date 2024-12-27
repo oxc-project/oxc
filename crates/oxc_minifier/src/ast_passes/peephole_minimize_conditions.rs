@@ -1,5 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::CompressorPass;
@@ -89,7 +90,9 @@ impl<'a> PeepholeMinimizeConditions {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
-        match &if_stmt.alternate {
+        let then_branch = &if_stmt.consequent;
+        let else_branch = &if_stmt.alternate;
+        match else_branch {
             None => {
                 if Self::is_foldable_express_block(&if_stmt.consequent) {
                     let right = Self::get_block_expression(&mut if_stmt.consequent, ctx);
@@ -116,11 +119,31 @@ impl<'a> PeepholeMinimizeConditions {
                         );
                         return Some(ctx.ast.statement_expression(if_stmt.span, logical_expr));
                     }
+                } else {
+                    // `if (x) if (y) z` -> `if (x && y) z`
+                    if let Some(Statement::IfStatement(then_if_stmt)) = then_branch.get_one_child()
+                    {
+                        if then_if_stmt.alternate.is_none() {
+                            let and_left = ctx.ast.move_expression(&mut if_stmt.test);
+                            let Statement::IfStatement(mut then_if_stmt) =
+                                ctx.ast.move_statement(&mut if_stmt.consequent)
+                            else {
+                                unreachable!()
+                            };
+                            let and_right = ctx.ast.move_expression(&mut then_if_stmt.test);
+                            then_if_stmt.test = ctx.ast.expression_logical(
+                                and_left.span(),
+                                and_left,
+                                LogicalOperator::And,
+                                and_right,
+                            );
+                            return Some(Statement::IfStatement(then_if_stmt));
+                        }
+                    }
                 }
             }
             Some(else_branch) => {
-                let then_branch_is_expression_block =
-                    Self::is_foldable_express_block(&if_stmt.consequent);
+                let then_branch_is_expression_block = Self::is_foldable_express_block(then_branch);
                 let else_branch_is_expression_block = Self::is_foldable_express_block(else_branch);
                 // `if(foo) bar else baz` -> `foo ? bar : baz`
                 if then_branch_is_expression_block && else_branch_is_expression_block {
@@ -184,37 +207,18 @@ impl<'a> PeepholeMinimizeConditions {
     }
 
     fn is_foldable_express_block(stmt: &Statement<'a>) -> bool {
-        match stmt {
-            Statement::BlockStatement(block_stmt) if block_stmt.body.len() == 1 => {
-                matches!(&block_stmt.body[0], Statement::ExpressionStatement(_))
-            }
-            Statement::ExpressionStatement(_) => true,
-            _ => false,
-        }
+        matches!(stmt.get_one_child(), Some(Statement::ExpressionStatement(_)))
     }
 
     fn get_block_expression(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        match stmt {
-            Statement::BlockStatement(block_stmt) if block_stmt.body.len() == 1 => {
-                if let Statement::ExpressionStatement(s) = &mut block_stmt.body[0] {
-                    ctx.ast.move_expression(&mut s.expression)
-                } else {
-                    unreachable!()
-                }
-            }
-            Statement::ExpressionStatement(s) => ctx.ast.move_expression(&mut s.expression),
-            _ => unreachable!(),
-        }
+        let Some(Statement::ExpressionStatement(s)) = stmt.get_one_child_mut() else {
+            unreachable!()
+        };
+        ctx.ast.move_expression(&mut s.expression)
     }
 
     fn is_return_block(stmt: &Statement<'a>) -> bool {
-        match stmt {
-            Statement::BlockStatement(block_stmt) if block_stmt.body.len() == 1 => {
-                matches!(block_stmt.body[0], Statement::ReturnStatement(_))
-            }
-            Statement::ReturnStatement(_) => true,
-            _ => false,
-        }
+        matches!(stmt.get_one_child(), Some(Statement::ReturnStatement(_)))
     }
 
     fn is_return_expression(stmt: &Statement<'a>) -> bool {
@@ -235,17 +239,8 @@ impl<'a> PeepholeMinimizeConditions {
         stmt: &mut Statement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        match stmt {
-            Statement::BlockStatement(block_stmt) if block_stmt.body.len() == 1 => {
-                if let Statement::ReturnStatement(_) = &mut block_stmt.body[0] {
-                    Self::take_return_argument(stmt, ctx)
-                } else {
-                    unreachable!()
-                }
-            }
-            Statement::ReturnStatement(_) => Self::take_return_argument(stmt, ctx),
-            _ => unreachable!(),
-        }
+        let Some(stmt) = stmt.get_one_child_mut() else { unreachable!() };
+        Self::take_return_argument(stmt, ctx)
     }
 
     fn take_return_argument(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
@@ -323,13 +318,13 @@ mod test {
         // fold("if(x){do{foo()}while(y)}else bar()", "if(x){do foo();while(y)}else bar()");
 
         // Play with nested IFs
-        // fold("function f(){if(x){if(y)foo()}}", "function f(){x && (y && foo())}");
-        // fold("function f(){if(x){if(y)foo();else bar()}}", "function f(){x&&(y?foo():bar())}");
-        // fold("function f(){if(x){if(y)foo()}else bar()}", "function f(){x?y&&foo():bar()}");
-        // fold(
-        // "function f(){if(x){if(y)foo();else bar()}else{baz()}}",
-        // "function f(){x?y?foo():bar():baz()}",
-        // );
+        fold("function f(){if(x){if(y)foo()}}", "function f(){x && (y && foo())}");
+        fold("function f(){if(x){if(y)foo();else bar()}}", "function f(){x&&(y?foo():bar())}");
+        fold("function f(){if(x){if(y)foo()}else bar()}", "function f(){x?y&&foo():bar()}");
+        fold(
+            "function f(){if(x){if(y)foo();else bar()}else{baz()}}",
+            "function f(){x?y?foo():bar():baz()}",
+        );
 
         // fold("if(e1){while(e2){if(e3){foo()}}}else{bar()}", "if(e1)while(e2)e3&&foo();else bar()");
 
