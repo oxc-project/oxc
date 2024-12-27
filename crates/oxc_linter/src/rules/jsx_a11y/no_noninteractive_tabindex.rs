@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use phf::phf_set;
 
 use crate::{
@@ -21,8 +21,16 @@ fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoNoninteractiveTabindex;
+#[derive(Debug, Clone)]
+pub struct NoNoninteractiveTabindex {
+    roles: Vec<CompactStr>,
+}
+
+impl Default for NoNoninteractiveTabindex {
+    fn default() -> Self {
+        Self {roles: vec![CompactStr::new("tabpanel")]}
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -108,6 +116,16 @@ impl Rule for NoNoninteractiveTabindex {
                     ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
                 }
             }
+        }
+    }
+
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let config = value.get(0);
+        Self {
+            roles: config
+                .and_then(|v| v.get("roles"))
+                .and_then(|v| v.as_array())
+                .map_or(Self::default().roles, |v|  v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect())
         }
     }
 }
