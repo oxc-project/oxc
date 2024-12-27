@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// ```
     NoNegatedCondition,
     style,
+    pending,
 );
 
 impl Rule for NoNegatedCondition {
@@ -55,12 +56,12 @@ impl Rule for NoNegatedCondition {
                 }
 
                 if is_negated_if(if_stmt) {
-                    ctx.diagnostic(no_negated_condition_diagnostic(node.span()));
+                    ctx.diagnostic(no_negated_condition_diagnostic(if_stmt.span()));
                 }
             }
             AstKind::ConditionalExpression(conditional_expr) => {
                 if is_negated_if_conditional(conditional_expr) {
-                    ctx.diagnostic(no_negated_condition_diagnostic(node.span()));
+                    ctx.diagnostic(no_negated_condition_diagnostic(conditional_expr.span()));
                 }
             }
             _ => {}
