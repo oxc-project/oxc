@@ -1,11 +1,5 @@
 use crate::{context::LintContext, rule::Rule, AstNode};
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-
-fn no_negated_condition_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected negated condition.").with_label(span)
-}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNegatedCondition;
@@ -47,7 +41,7 @@ declare_oxc_lint!(
 impl Rule for NoNegatedCondition {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // This rule is exactly the same as the eslint-plugin-unicorn's no-negated-condition rule.
-        crate::rules::unicorn::no_negated_condition::NoNegatedCondition::default().run(node, ctx);
+        crate::rules::unicorn::no_negated_condition::NoNegatedCondition.run(node, ctx);
     }
 }
 
