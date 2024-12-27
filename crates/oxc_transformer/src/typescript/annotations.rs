@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
@@ -95,31 +95,47 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
                         false
-                    } else if self.only_remove_type_imports {
-                        true
                     } else if let Some(specifiers) = &mut decl.specifiers {
                         if specifiers.is_empty() {
                             // import {} from 'mod' -> import 'mod'
                             decl.specifiers = None;
                             true
                         } else {
+                            let mut all_specifiers_is_type = true;
                             specifiers.retain(|specifier| {
                                 let id = match specifier {
                                     ImportDeclarationSpecifier::ImportSpecifier(s) => {
                                         if s.import_kind.is_type() {
                                             return false;
                                         }
+                                        all_specifiers_is_type = false;
                                         &s.local
                                     }
                                     ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
+                                        all_specifiers_is_type = false;
                                         &s.local
                                     }
                                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
+                                        all_specifiers_is_type = false;
                                         &s.local
                                     }
                                 };
+                                if self.only_remove_type_imports {
+                                    return true;
+                                }
                                 self.has_value_reference(&id.name, ctx)
                             });
+                            if all_specifiers_is_type && self.only_remove_type_imports {
+                                *decl = ctx.ast.alloc_import_declaration(
+                                    decl.span,
+                                    None,
+                                    decl.source.clone(),
+                                    None,
+                                    decl.with_clause.clone_in(ctx.ast.allocator),
+                                    decl.import_kind,
+                                );
+                                return true;
+                            }
                             !specifiers.is_empty()
                         }
                     } else {
