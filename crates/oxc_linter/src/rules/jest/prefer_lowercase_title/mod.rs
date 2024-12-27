@@ -128,10 +128,10 @@ declare_oxc_lint!(
     ///     });
     /// });
     /// ```
-    /// 
+    ///
     /// ### `lowercaseFirstCharacterOnly`
     /// This option can be set to only validate that the first character of a test name is lowercased.
-    /// 
+    ///
     /// Example of **correct** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
     ///
     /// ```js
@@ -144,9 +144,9 @@ declare_oxc_lint!(
     ///     });
     /// });
     /// ```
-    /// 
+    ///
     /// Example of **incorrect** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
-    /// 
+    ///
     /// ```js
     /// /* eslint vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] */
     /// describe('MyClass', () => {
