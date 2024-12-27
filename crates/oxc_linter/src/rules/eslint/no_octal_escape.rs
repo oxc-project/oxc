@@ -7,7 +7,7 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_octal_escape_diagnostic(span: Span, sequence: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Don't use octal: '{}'. Use '\\u....' instead.", sequence))
+    OxcDiagnostic::warn(format!("Don't use octal: '\\{}'. Use '\\u....' instead.", sequence))
         .with_label(span)
 }
 
@@ -44,17 +44,12 @@ impl Rule for NoOctalEscape {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::StringLiteral(literal) = node.kind() {
             let octal_escape_pattern =
-            // /^(?:[^\\]|\\.)*?\\([0-3][0-7]{1,2}|[4-7][0-7]|0(?=[89])|[1-7])/su
-                Regex::new(r"^(?:[^\\]|\\.)*?\\([0-3][0-7]{1,2}|[4-7][0-7]|0[0-7]|[1-7])")
+                Regex::new(r"^(?:[^\\]|\\.)*?\\([0-3][0-7]{1,2}|[4-7][0-7]|(08|09)|[1-7])")
                     .unwrap();
 
-            if let Some(captures) = octal_escape_pattern.captures(&literal.value) {
-                if let Some(sequence) = captures.get(1) {
-                    let escape_seq = sequence.as_str();
-                    if escape_seq.starts_with('0')
-                        && escape_seq.len() == 2
-                        && &escape_seq[1..] >= "8"
-                    {
+            if let Some(raw) = &literal.raw {
+                if let Some(captures) = octal_escape_pattern.captures(raw) {
+                    if let Some(sequence) = captures.get(1) {
                         ctx.diagnostic(no_octal_escape_diagnostic(literal.span, sequence.as_str()));
                     }
                 }
@@ -68,31 +63,31 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "var foo = \"\x51\";",
-        "let foo = \"foo \\251 bar\"",
-        "var foo = /([abc]) \\1/g;",
-        "var foo = '\0';",
-        "'\\0'",
-        "'\\8'",
-        "'\\9'",
-        "'\\0 '",
-        "' \\0'",
-        "'a\\0'",
-        "'\\0a'",
-        "'a\\8a'",
-        "'\\0\\8'",
-        "'\\8\\0'",
-        "'\\80'",
-        "'\\81'",
-        "'\\\\'",
-        "'\\\\0'",
-        "'\\\\08'",
-        "'\\\\1'",
-        "'\\\\01'",
-        "'\\\\12'",
-        "'\\\\\\0'",
-        "'\\\\\\8'",
-        "'\\0\\\\'",
+        r#"var foo = "\x51";"#,
+        r#"var foo = "foo \\251 bar";"#,
+        r#"var foo = /([abc]) \1/g;"#,
+        r#"var foo = '\0';"#,
+        r#"'\0'"#,
+        r#"'\8'"#,
+        r#"'\9'"#,
+        r#"'\0 '"#,
+        r#"' \0'"#,
+        r#"'a\0'"#,
+        r#"'\0a'"#,
+        r#"'a\8a'"#,
+        r#"'\0\8'"#,
+        r#"'\8\0'"#,
+        r#"'\80'"#,
+        r#"'\81'"#,
+        r#"'\\'"#,
+        r#"'\\0'"#,
+        r#"'\\08'"#,
+        r#"'\\1'"#,
+        r#"'\\01'"#,
+        r#"'\\12'"#,
+        r#"'\\\0'"#,
+        r#"'\\\8'"#,
+        r#"'\0\\'"#,
         "'0'",
         "'1'",
         "'8'",
@@ -100,12 +95,12 @@ fn test() {
         "'08'",
         "'80'",
         "'12'",
-        "'\\a'",
-        "'\\n'",
+        r#"'\a'"#,
+        r#"'\n'"#,
     ];
 
     let fail = vec![
-        "var foo = \"foo \\01 bar\";",
+        r#"var foo = "foo \01 bar";"#,
         r#"var foo = "foo \000 bar";"#,
         r#"var foo = "foo \377 bar";"#,
         r#"var foo = "foo \378 bar";"#,
@@ -123,49 +118,49 @@ fn test() {
         r#"var foo = "foo \400 bar";"#,
         r#"var foo = "\t\1";"#,
         r#"var foo = "\\\751";"#,
-        "'\0\\1'",
-        "'\0 \\1'",
-        "'\0\01'",
-        "'\0 \01'",
-        "'\0a\\1'",
-        "'\0a\01'",
-        "'\0\08'",
-        "'\\1'",
-        "'\\2'",
-        "'\\7'",
-        "'\00'",
-        "'\01'",
-        "'\02'",
-        "'\07'",
-        "'\08'",
-        "'\09'",
-        "'\\10'",
-        "'\\12'",
-        "' \\1'",
-        "'\\1 '",
-        "'a\\1'",
-        "'\\1a'",
-        "'a\\1a'",
-        "' \01'",
-        "'\01 '",
-        "'a\01'",
-        "'\01a'",
-        "'a\01a'",
-        "'a\08a'",
-        "'\n\\1'",
-        "'\n\01'",
-        "'\n\08'",
-        "'\\\\1'",
-        "'\\\01'",
-        "'\\\08'",
-        "'\\
-			\\1'",
-        "'\01\02'",
-        "'\02\01'",
-        "'\01\\2'",
-        "'\\2\01'",
-        "'\08\\1'",
-        "'foo \\1 bar \\2'",
+        r#"'\0\1'"#,
+        r#"'\0 \1'"#,
+        r#"#\0\01'"#,
+        r#"'\0 \01'"#,
+        r#"'\0a\1'"#,
+        r#"'\0a\01'"#,
+        r#"'\0\08'"#,
+        r#"'\1'"#,
+        r#"'\2'"#,
+        r#"'\7'"#,
+        r#"'\00'"#,
+        r#"'\01'"#,
+        r#"'\02'"#,
+        r#"'\07'"#,
+        r#"'\08'"#,
+        r#"'\09'"#,
+        r#"'\10'"#,
+        r#"'\12'"#,
+        r#"' \1'"#,
+        r#"'\1 '"#,
+        r#"'a\1'"#,
+        r#"'\1a'"#,
+        r#"'a\1a'"#,
+        r#"' \01'"#,
+        r#"'\01 '"#,
+        r#"'a\01'"#,
+        r#"'\01a'"#,
+        r#"'a\01a'"#,
+        r#"'a\08a'"#,
+        r#"'\n\1'"#,
+        r#"'\n\01'"#,
+        r#"'\n\08'"#,
+        r#"'\\\1'"#,
+        r#"'\\\01'"#,
+        r#"'\\\08'"#,
+        r#"'\\
+			\\1'"#,
+        r#"'\01\02'"#,
+        r#"'\02\01'"#,
+        r#"'\01\2'"#,
+        r#"'\2\01'"#,
+        r#"'\08\1'"#,
+        r#"'foo \1 bar \2'"#,
     ];
 
     Tester::new(NoOctalEscape::NAME, NoOctalEscape::CATEGORY, pass, fail).test_and_snapshot();
