@@ -44,6 +44,7 @@ mod eslint {
     pub mod max_classes_per_file;
     pub mod max_lines;
     pub mod max_params;
+    pub mod new_cap;
     pub mod no_alert;
     pub mod no_array_constructor;
     pub mod no_async_promise_executor;
@@ -534,6 +535,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_classes_per_file,
     eslint::max_lines,
     eslint::max_params,
+    eslint::new_cap,
     eslint::no_restricted_imports,
     eslint::no_object_constructor,
     eslint::no_duplicate_imports,
