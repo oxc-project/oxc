@@ -1505,9 +1505,9 @@ mod test {
 
     #[test]
     fn test_fold_left_child_op() {
-        test_same("x & infinity & 2"); // FIXME: want x & 0
-        test_same("x - infinity - 2"); // FIXME: want "x-infinity"
-        test_same("x - 1 + infinity");
+        test("x & Infinity & 2", "x & 0");
+        test_same("x - Infinity - 2"); // FIXME: want "x-Infinity"
+        test_same("x - 1 + Infinity");
         test_same("x - 2 + 1");
         test_same("x - 2 + 3");
         test_same("1 + x - 2 + 1");

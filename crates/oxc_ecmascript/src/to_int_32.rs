@@ -56,6 +56,10 @@ impl ToInt32 for f64 {
 
         let number = *self;
 
+        if !number.is_finite() || number == 0.0 { // NOTE: this matches with negative zero
+            return 0;
+        }
+
         if number.is_finite() && number <= f64::from(i32::MAX) && number >= f64::from(i32::MIN) {
             let i = number as i32;
             if f64::from(i) == number {
