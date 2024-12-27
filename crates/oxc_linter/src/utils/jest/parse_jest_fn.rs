@@ -27,7 +27,6 @@ pub fn parse_jest_fn_call<'a>(
     let original = possible_jest_node.original;
     let node = possible_jest_node.node;
     let callee = &call_expr.callee;
-
     // If bailed out, we're not jest function
 
     let resolved = resolve_to_jest_fn(call_expr, original)?;
