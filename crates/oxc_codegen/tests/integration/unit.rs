@@ -93,6 +93,18 @@ fn for_stmt() {
 }
 
 #[test]
+fn if_stmt() {
+    test(
+        "function f() { if (foo) return foo; else if (bar) return foo; }",
+        "function f() {\n\tif (foo) return foo;\n\telse if (bar) return foo;\n}\n",
+    );
+    test_minify(
+        "function f() { if (foo) return foo; else if (bar) return foo; }",
+        "function f(){if(foo)return foo;else if(bar)return foo}",
+    );
+}
+
+#[test]
 fn shorthand() {
     test("let _ = { x }", "let _ = { x };\n");
     test("let { x } = y", "let { x } = y;\n");
