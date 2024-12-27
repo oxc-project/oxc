@@ -1,11 +1,17 @@
-use oxc_ast::{ast::{JSXAttributeItem, JSXAttributeValue}, AstKind};
+use oxc_ast::{
+    ast::{JSXAttributeItem, JSXAttributeValue},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 use phf::phf_set;
 
 use crate::{
-    context::LintContext, rule::Rule, utils::{get_element_type, has_jsx_prop_ignore_case}, AstNode
+    context::LintContext,
+    rule::Rule,
+    utils::{get_element_type, has_jsx_prop_ignore_case},
+    AstNode,
 };
 
 fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
@@ -24,11 +30,11 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Tab key navigation should be limited to elements on the page that can be interacted with. 
-    /// Thus it is not necessary to add a tabindex to items in an unordered list, for example, 
-    /// to make them navigable through assistive technology. 
-    /// 
-    /// These applications already afford page traversal mechanisms based on the HTML of the page. 
+    /// Tab key navigation should be limited to elements on the page that can be interacted with.
+    /// Thus it is not necessary to add a tabindex to items in an unordered list, for example,
+    /// to make them navigable through assistive technology.
+    ///
+    /// These applications already afford page traversal mechanisms based on the HTML of the page.
     /// Generally, we should try to reduce the size of the page's tab ring rather than increasing it.
     ///
     /// ### Examples
@@ -65,14 +71,16 @@ const INTERACTIVE_HTML_ELEMENTS: phf::set::Set<&'static str> = phf_set! {
 const INTERACTIVE_HTML_ROLES: phf::set::Set<&'static str> = phf_set! {
     "button", "checkbox", "gridcell", "link", "menuitem", "menuitemcheckbox", "menuitemradio", "option", "progressbar", "radio", "textbox"
 };
- 
+
 impl Rule for NoNoninteractiveTabindex {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
 
-        if let Some(JSXAttributeItem::Attribute(tabindex_attr)) = has_jsx_prop_ignore_case(jsx_el, "tabIndex") {
+        if let Some(JSXAttributeItem::Attribute(tabindex_attr)) =
+            has_jsx_prop_ignore_case(jsx_el, "tabIndex")
+        {
             if let Some(JSXAttributeValue::StringLiteral(tabindex)) = &tabindex_attr.value {
                 if tabindex.value == "-1" {
                     return;
@@ -84,10 +92,14 @@ impl Rule for NoNoninteractiveTabindex {
                     return;
                 }
 
-                if let Some(JSXAttributeItem::Attribute(role_attr)) = has_jsx_prop_ignore_case(jsx_el, "role") {
+                if let Some(JSXAttributeItem::Attribute(role_attr)) =
+                    has_jsx_prop_ignore_case(jsx_el, "role")
+                {
                     if let Some(JSXAttributeValue::StringLiteral(role)) = &role_attr.value {
                         if !INTERACTIVE_HTML_ROLES.contains(role.value.as_str()) {
-                            ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
+                            ctx.diagnostic(no_noninteractive_tabindex_diagnostic(
+                                tabindex_attr.span,
+                            ));
                         }
                     } else {
                         ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
@@ -97,7 +109,6 @@ impl Rule for NoNoninteractiveTabindex {
                 }
             }
         }
-
     }
 }
 
