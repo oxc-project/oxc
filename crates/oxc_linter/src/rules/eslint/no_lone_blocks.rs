@@ -6,11 +6,12 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_lone_blocks_diagnostic(span: Span, is_nested_block: bool) -> OxcDiagnostic {
-    let message =
-        if is_nested_block { "Nested block is redundant." } else { "Block is unnecessary." };
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn(message).with_label(span)
+fn no_lone_blocks_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Block is unnecessary.").with_label(span)
+}
+
+fn no_nested_lone_blocks_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Nested block is redundant.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -116,9 +117,9 @@ impl Rule for NoLoneBlocks {
 fn report(ctx: &LintContext, node: &AstNode, parent_node: &AstNode) {
     match parent_node.kind() {
         AstKind::BlockStatement(_) | AstKind::StaticBlock(_) => {
-            ctx.diagnostic(no_lone_blocks_diagnostic(node.span(), true));
+            ctx.diagnostic(no_nested_lone_blocks_diagnostic(node.span()));
         }
-        _ => ctx.diagnostic(no_lone_blocks_diagnostic(node.span(), false)),
+        _ => ctx.diagnostic(no_lone_blocks_diagnostic(node.span())),
     };
 }
 
