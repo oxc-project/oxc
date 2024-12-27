@@ -174,7 +174,8 @@ impl Rule for NewCap {
                         name,
                         &self.new_is_cap_exceptions,
                         &self.new_is_cap_exception_pattern,
-                    );
+                    )
+                    || (!self.properties && short_name != name);
 
                 if !allowed {
                     ctx.diagnostic(new_cap_diagnostic(expression.span));
@@ -205,7 +206,8 @@ impl Rule for NewCap {
                         name,
                         &caps_is_new_exceptions,
                         &self.cap_is_new_exception_pattern,
-                    );
+                    )
+                    || (!self.properties && short_name != name);
 
                 if !allowed {
                     ctx.diagnostic(new_cap_diagnostic(expression.span));
@@ -389,17 +391,17 @@ fn test() {
         //     "var x = new foo.bar(42);",
         //     Some(serde_json::json!([{ "newIsCapExceptionPattern": "^foo\\.." }])),
         // ),
-        // ("var x = new foo.bar(42);", Some(serde_json::json!([{ "properties": false }]))),
-        // ("var x = Foo.bar(42);", Some(serde_json::json!([{ "properties": false }]))),
-        // (
-        //     "var x = foo.Bar(42);",
-        //     Some(serde_json::json!([{ "capIsNew": false, "properties": false }])),
-        // ),
+        ("var x = new foo.bar(42);", Some(serde_json::json!([{ "properties": false }]))),
+        ("var x = Foo.bar(42);", Some(serde_json::json!([{ "properties": false }]))),
+        (
+            "var x = foo.Bar(42);",
+            Some(serde_json::json!([{ "capIsNew": false, "properties": false }])),
+        ),
         ("foo?.bar();", None),       // { "ecmaVersion": 2020 },
         ("(foo?.bar)();", None),     // { "ecmaVersion": 2020 },
         ("new (foo?.Bar)();", None), // { "ecmaVersion": 2020 },
-        // ("(foo?.Bar)();", Some(serde_json::json!([{ "properties": false }]))), // { "ecmaVersion": 2020 },
-        // ("new (foo?.bar)();", Some(serde_json::json!([{ "properties": false }]))), // { "ecmaVersion": 2020 },
+        ("(foo?.Bar)();", Some(serde_json::json!([{ "properties": false }]))), // { "ecmaVersion": 2020 },
+        ("new (foo?.bar)();", Some(serde_json::json!([{ "properties": false }]))), // { "ecmaVersion": 2020 },
         ("Date?.UTC();", None),   // { "ecmaVersion": 2020 },
         ("(Date?.UTC)();", None), // { "ecmaVersion": 2020 }
     ];
