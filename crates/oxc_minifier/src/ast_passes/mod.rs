@@ -190,6 +190,10 @@ impl<'a> Traverse<'a> for LatePeepholeOptimizations {
     fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x4_peephole_substitute_alternate_syntax.exit_call_expression(expr, ctx);
     }
+
+    fn exit_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x4_peephole_substitute_alternate_syntax.exit_property_key(key, ctx);
+    }
 }
 
 // See `createPeepholeOptimizationsPass`

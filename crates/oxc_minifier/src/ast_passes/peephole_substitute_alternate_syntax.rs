@@ -77,6 +77,10 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.in_define_export = false;
     }
 
+    fn exit_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.try_compress_property_key(key, ctx);
+    }
+
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx(ctx);
 
@@ -687,6 +691,39 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     fn empty_array_literal(ctx: Ctx<'a, 'b>) -> Expression<'a> {
         Self::array_literal(ctx.ast.vec(), ctx)
     }
+
+    // https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs
+    #[allow(clippy::cast_lossless)]
+    fn try_compress_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
+        use oxc_syntax::identifier::is_identifier_name;
+        let PropertyKey::StringLiteral(s) = key else { return };
+        if match ctx.parent() {
+            Ancestor::ObjectPropertyKey(key) => *key.computed(),
+            Ancestor::BindingPropertyKey(key) => *key.computed(),
+            Ancestor::MethodDefinitionKey(key) => *key.computed(),
+            Ancestor::PropertyDefinitionKey(key) => *key.computed(),
+            Ancestor::AccessorPropertyKey(key) => *key.computed(),
+            _ => true,
+        } {
+            return;
+        }
+        if is_identifier_name(&s.value) {
+            self.changed = true;
+            *key = PropertyKey::StaticIdentifier(
+                ctx.ast.alloc_identifier_name(s.span, s.value.clone()),
+            );
+        } else if (!s.value.starts_with('0') && !s.value.starts_with('+')) || s.value.len() <= 1 {
+            if let Ok(value) = s.value.parse::<u32>() {
+                self.changed = true;
+                *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
+                    s.span,
+                    value as f64,
+                    None,
+                    NumberBase::Decimal,
+                ));
+            }
+        }
+    }
 }
 
 /// Port from <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
@@ -1136,5 +1173,11 @@ mod test {
         test("'number' !== typeof foo", "'number' != typeof foo");
         test("typeof foo !== `number`", "typeof foo != 'number'");
         test("`number` !== typeof foo", "'number' != typeof foo");
+    }
+
+    #[test]
+    fn test_object_key() {
+        test("({ '0': _, 'a': _ })", "({ 0: _, a: _ })");
+        test_same("({ '1.1': _, '😊': _, 'a.a': _ })");
     }
 }
