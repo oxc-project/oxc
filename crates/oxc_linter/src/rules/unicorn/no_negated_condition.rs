@@ -119,6 +119,20 @@ fn test() {
         r"if (a !== b) {}",
         r"if (a === b) {} else {}",
         r"a ? b : c",
+        // Test cases from ESLint
+        "if (a) {}",
+        "if (a) {} else {}",
+        "if (!a) {}",
+        "if (!a) {} else if (b) {}",
+        "if (!a) {} else if (b) {} else {}",
+        "if (a == b) {}",
+        "if (a == b) {} else {}",
+        "if (a != b) {}",
+        "if (a != b) {} else if (b) {}",
+        "if (a != b) {} else if (b) {} else {}",
+        "if (a !== b) {}",
+        "if (a === b) {} else {}",
+        "a ? b : c",
     ];
 
     let fail = vec![
@@ -140,6 +154,13 @@ fn test() {
         r"if(!a) {b()} else {c()}",
         r"if(!!a) b(); else c();",
         r"(!!a) ? b() : c();",
+        // Test cases from ESLint
+        "if (!a) {;} else {;}",
+        "if (a != b) {;} else {;}",
+        "if (a !== b) {;} else {;}",
+        "!a ? b : c",
+        "a != b ? c : d",
+        "a !== b ? c : d",
     ];
 
     Tester::new(NoNegatedCondition::NAME, NoNegatedCondition::CATEGORY, pass, fail)

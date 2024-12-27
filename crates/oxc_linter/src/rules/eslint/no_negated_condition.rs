@@ -1,10 +1,7 @@
 use crate::{context::LintContext, rule::Rule, AstNode};
-use oxc_ast::ast::{ConditionalExpression, Expression, IfStatement, Statement};
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 fn no_negated_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected negated condition.").with_label(span)
@@ -49,49 +46,9 @@ declare_oxc_lint!(
 
 impl Rule for NoNegatedCondition {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::IfStatement(if_stmt) => {
-                if !has_else_without_condition(if_stmt) {
-                    return;
-                }
-
-                if is_negated_if(if_stmt) {
-                    ctx.diagnostic(no_negated_condition_diagnostic(if_stmt.span));
-                }
-            }
-            AstKind::ConditionalExpression(conditional_expr) => {
-                if is_negated_if_conditional(conditional_expr) {
-                    ctx.diagnostic(no_negated_condition_diagnostic(conditional_expr.span));
-                }
-            }
-            _ => {}
-        }
+        // This rule is exactly the same as the eslint-plugin-unicorn's no-negated-condition rule.
+        crate::rules::unicorn::no_negated_condition::NoNegatedCondition::default().run(node, ctx);
     }
-}
-
-fn has_else_without_condition(node: &IfStatement) -> bool {
-    matches!(node.alternate, Some(Statement::BlockStatement(_)))
-}
-
-fn is_negated_unary_expression(test: &Expression) -> bool {
-    matches!(test, Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot)
-}
-
-fn is_negated_binary_expression(test: &Expression) -> bool {
-    matches!(
-        test,
-        Expression::BinaryExpression(binary)
-            if binary.operator == BinaryOperator::Inequality
-                || binary.operator == BinaryOperator::StrictInequality
-    )
-}
-
-fn is_negated_if(node: &IfStatement) -> bool {
-    is_negated_unary_expression(&node.test) || is_negated_binary_expression(&node.test)
-}
-
-fn is_negated_if_conditional(node: &ConditionalExpression) -> bool {
-    is_negated_unary_expression(&node.test) || is_negated_binary_expression(&node.test)
 }
 
 #[test]
