@@ -55,6 +55,7 @@ impl Case for EsbuildTest262Case {
         let esbuild = Command::new("esbuild")
             .arg("--minify-whitespace=true")
             .arg("--minify-syntax=true")
+            .arg("--keep-names")
             .arg(&path)
             .output()
             .unwrap();
@@ -65,14 +66,18 @@ impl Case for EsbuildTest262Case {
         }
         let esbuild = String::from_utf8(esbuild.stdout).unwrap();
 
-        // println!("{oxc}");
-        // println!("{esbuild}");
         if esbuild.len() >= oxc.len() {
             self.base.set_result(TestResult::Passed);
             return;
         }
 
         let diff = oxc.len() - esbuild.len();
+
+        if diff == 1 {
+            println!("\n{}\n", self.base.path().to_string_lossy());
+            println!("\n{oxc}\n");
+            println!("\n{esbuild}\n");
+        }
 
         self.base.set_result(TestResult::GenericError(">> ", format!("{diff}")));
     }
