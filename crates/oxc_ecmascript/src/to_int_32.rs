@@ -56,8 +56,8 @@ impl ToInt32 for f64 {
 
         let number = *self;
 
+        // NOTE: this also matches with negative zero
         if !number.is_finite() || number == 0.0 {
-            // NOTE: this matches with negative zero
             return 0;
         }
 
