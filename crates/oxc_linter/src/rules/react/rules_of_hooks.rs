@@ -16,7 +16,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{is_react_component_or_hook_name, is_react_function_call, is_react_hook},
-    AstNode,
+    AstNode, FrameworkFlags,
 };
 
 mod diagnostics {
@@ -99,7 +99,7 @@ pub struct RulesOfHooks;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This enforcecs the Rules of Hooks
+    /// This enforces the Rules of Hooks
     ///
     /// <https://reactjs.org/docs/hooks-rules.html>
     ///
@@ -108,6 +108,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for RulesOfHooks {
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
+        // disable this rule in vue/nuxt and svelte(kit) files
+        // top level useFunction are very common
+        !ctx.frameworks().contains(FrameworkFlags::SvelteKit | FrameworkFlags::Nuxt)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call) = node.kind() else { return };
 
