@@ -133,17 +133,7 @@ impl Rule for NoNoninteractiveTabindex {
             if !INTERACTIVE_HTML_ROLES.contains(role.value.as_str())
                 && !self.0.roles.contains(&CompactStr::new(role.value.as_str()))
             {
-                        ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
-                        ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
-                    }
-                } else {
-                    ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
-                }
                 ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
-                    }
-                } else {
-                    ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
-                }
             }
         }
     }
@@ -151,7 +141,10 @@ impl Rule for NoNoninteractiveTabindex {
     fn from_configuration(value: serde_json::Value) -> Self {
         let default = Self::default();
 
-        if let Some(config) = value.get(0) {
+        let Some(config) = value.get(0) else {
+            return default;
+        };
+        
             Self(Box::new(NoNoninteractiveTabindexConfig {
                 roles: config
                     .get("roles")
@@ -170,9 +163,6 @@ impl Rule for NoNoninteractiveTabindex {
                     .and_then(serde_json::Value::as_bool)
                     .unwrap_or(default.0.allow_expression_values),
             }))
-        } else {
-            default
-        }
     }
 }
 
