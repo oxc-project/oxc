@@ -110,7 +110,10 @@ impl Modifier {
     }
 
     #[inline]
-    pub fn try_from_token(tok: Token, lexer: &Lexer) -> std::result::Result<Self, <ModifierKind as TryFrom<Kind>>::Error> {
+    pub fn try_from_token(
+        tok: Token,
+        lexer: &Lexer,
+    ) -> std::result::Result<Self, <ModifierKind as TryFrom<Kind>>::Error> {
         ModifierKind::try_from(tok.kind).map(|kind| Self { span: lexer.token_span(tok), kind })
     }
 }
