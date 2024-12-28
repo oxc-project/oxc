@@ -29,10 +29,6 @@ impl<'a> Traverse<'a> for RemoveSyntax {
         Self::drop_use_strict_directives_in_function_body(body, ctx);
     }
 
-    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::drop_use_strict_directives_if_function_is_empty(body, ctx);
-    }
-
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
         stmts.retain(|stmt| {
             !(matches!(stmt, Statement::EmptyStatement(_))
@@ -123,16 +119,6 @@ impl<'a> RemoveSyntax {
             body.directives.retain(|directive| !directive.is_use_strict());
         }
     }
-
-    /// Drop `"use strict";` directives if the function is empty.
-    fn drop_use_strict_directives_if_function_is_empty(
-        body: &mut FunctionBody<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        if body.statements.is_empty() {
-            body.directives.retain(|directive| !directive.is_use_strict());
-        }
-    }
 }
 
 #[cfg(test)]
@@ -205,7 +191,5 @@ mod test {
             "const Foo = class { foo() { 'use strict'; alert(1); } } ",
             "const Foo = class { foo() { alert(1); } } ",
         );
-
-        test_script("function foo() { 'use strict';}", "function foo() {}");
     }
 }

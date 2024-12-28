@@ -24,6 +24,10 @@ impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {
 }
 
 impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::drop_use_strict_directives_if_function_is_empty(body, ctx);
+    }
+
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx(ctx);
         if let Some(new_stmt) = match stmt {
@@ -121,6 +125,16 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
 
         if stmts.len() != len {
             self.changed = true;
+        }
+    }
+
+    /// Drop `"use strict";` directives if the function is empty.
+    fn drop_use_strict_directives_if_function_is_empty(
+        body: &mut FunctionBody<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if body.statements.is_empty() {
+            body.directives.retain(|directive| !directive.is_use_strict());
         }
     }
 
@@ -434,6 +448,11 @@ mod test {
 
     fn fold(js: &str, expected: &str) {
         test(js, expected);
+    }
+
+    #[test]
+    fn use_strict() {
+        test("function foo() { 'use strict';}", "function foo() {}");
     }
 
     #[test]
