@@ -1174,8 +1174,14 @@ mod test {
         test("var x; 'undefined' === typeof x", "var x; x === undefined");
         test("var x; 'undefined' == typeof x", "var x; x === undefined");
 
-        test("var x; function foo() { typeof x !== 'undefined' }", "var x; function foo() { x !== undefined }");
-        test("typeof x !== 'undefined'; function foo() { var x }", "typeof x < 'u'; function foo() { var x }");
+        test(
+            "var x; function foo() { typeof x !== 'undefined' }",
+            "var x; function foo() { x !== undefined }",
+        );
+        test(
+            "typeof x !== 'undefined'; function foo() { var x }",
+            "typeof x < 'u'; function foo() { var x }",
+        );
         test("typeof x !== 'undefined'; { var x }", "x !== undefined; { var x }");
         test("typeof x !== 'undefined'; { let x }", "typeof x < 'u'; { let x }");
         test("typeof x !== 'undefined'; var x", "x !== undefined; var x");
