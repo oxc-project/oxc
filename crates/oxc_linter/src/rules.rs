@@ -536,6 +536,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_classes_per_file,
     eslint::max_lines,
     eslint::max_params,
+    eslint::no_nested_ternary,
     eslint::no_labels,
     eslint::no_restricted_imports,
     eslint::no_object_constructor,
