@@ -239,8 +239,10 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    /// Compress `typeof foo == "undefined"` into `typeof foo > "u"`
+    /// Compress `typeof foo == "undefined"`
     ///
+    /// - `typeof foo == "undefined"` (if foo is resolved) -> `foo === undefined`
+    /// - `typeof foo != "undefined"` (if foo is resolved) -> `foo !== undefined`
     /// - `typeof foo == "undefined"` -> `typeof foo > "u"`
     /// - `typeof foo != "undefined"` -> `typeof foo < "u"`
     ///
@@ -249,12 +251,12 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         expr: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        let new_op = match expr.operator {
+        let (new_eq_op, new_comp_op) = match expr.operator {
             BinaryOperator::Equality | BinaryOperator::StrictEquality => {
-                BinaryOperator::GreaterThan
+                (BinaryOperator::StrictEquality, BinaryOperator::GreaterThan)
             }
             BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
-                BinaryOperator::LessThan
+                (BinaryOperator::StrictInequality, BinaryOperator::LessThan)
             }
             _ => return None,
         };
@@ -273,10 +275,17 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             },
         );
         let (_void_exp, id_ref) = pair?;
-        let argument = Expression::Identifier(ctx.alloc(id_ref));
-        let left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
-        let right = ctx.ast.expression_string_literal(SPAN, "u", None);
-        Some(ctx.ast.expression_binary(expr.span, left, new_op, right))
+        let is_resolved = ctx.scopes().find_binding(ctx.current_scope_id(), &id_ref.name).is_some();
+        if is_resolved {
+            let left = Expression::Identifier(ctx.alloc(id_ref));
+            let right = ctx.ast.void_0(SPAN);
+            Some(ctx.ast.expression_binary(expr.span, left, new_eq_op, right))
+        } else {
+            let argument = Expression::Identifier(ctx.alloc(id_ref));
+            let left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
+            let right = ctx.ast.expression_string_literal(SPAN, "u", None);
+            Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right))
+        }
     }
 
     /// Compress `foo === null || foo === undefined` into `foo == null`.
@@ -1151,6 +1160,27 @@ mod test {
     fn test_fold_arrow_function_return() {
         test("const foo = () => { return 'baz' }", "const foo = () => 'baz'");
         test_same("const foo = () => { foo; return 'baz' }");
+    }
+
+    #[test]
+    fn test_fold_is_typeof_equals_undefined_resolved() {
+        test("var x; typeof x !== 'undefined'", "var x; x !== undefined");
+        test("var x; typeof x != 'undefined'", "var x; x !== undefined");
+        test("var x; 'undefined' !== typeof x", "var x; x !== undefined");
+        test("var x; 'undefined' != typeof x", "var x; x !== undefined");
+
+        test("var x; typeof x === 'undefined'", "var x; x === undefined");
+        test("var x; typeof x == 'undefined'", "var x; x === undefined");
+        test("var x; 'undefined' === typeof x", "var x; x === undefined");
+        test("var x; 'undefined' == typeof x", "var x; x === undefined");
+
+        test("var x; function foo() { typeof x !== 'undefined' }", "var x; function foo() { x !== undefined }");
+        test("typeof x !== 'undefined'; function foo() { var x }", "typeof x < 'u'; function foo() { var x }");
+        test("typeof x !== 'undefined'; { var x }", "x !== undefined; { var x }");
+        test("typeof x !== 'undefined'; { let x }", "typeof x < 'u'; { let x }");
+        test("typeof x !== 'undefined'; var x", "x !== undefined; var x");
+        // input and output both errors with same TDZ error
+        test("typeof x !== 'undefined'; let x", "x !== undefined; let x");
     }
 
     /// Port from <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser_test.go#L4658>
