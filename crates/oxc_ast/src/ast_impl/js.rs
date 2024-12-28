@@ -767,6 +767,22 @@ impl Statement<'_> {
                 | Statement::WhileStatement(_)
         )
     }
+
+    /// Returns the single statement from block statement, or self
+    pub fn get_one_child(&self) -> Option<&Self> {
+        if let Statement::BlockStatement(block_stmt) = self {
+            return (block_stmt.body.len() == 1).then(|| &block_stmt.body[0]);
+        }
+        Some(self)
+    }
+
+    /// Returns the single statement from block statement, or self
+    pub fn get_one_child_mut(&mut self) -> Option<&mut Self> {
+        if let Statement::BlockStatement(block_stmt) = self {
+            return (block_stmt.body.len() == 1).then_some(&mut block_stmt.body[0]);
+        }
+        Some(self)
+    }
 }
 
 impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {

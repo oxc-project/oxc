@@ -3,7 +3,7 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_parser::{Parser, ParserReturn};
+use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
 use pico_args::Arguments;
 
@@ -52,7 +52,12 @@ fn parse<'a>(
     source_text: &'a str,
     source_type: SourceType,
 ) -> Option<ParserReturn<'a>> {
-    let ret = Parser::new(allocator, source_text, source_type).parse();
+    let ret = Parser::new(allocator, source_text, source_type)
+        .with_options(ParseOptions {
+            allow_return_outside_function: true,
+            ..ParseOptions::default()
+        })
+        .parse();
     if !ret.errors.is_empty() {
         for error in ret.errors {
             println!("{:?}", error.with_source_code(source_text.to_string()));

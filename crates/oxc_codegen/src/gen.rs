@@ -301,7 +301,12 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
                 p.print_soft_newline();
             }
         }
-        stmt => p.print_body(stmt, false, ctx),
+        stmt => {
+            p.print_body(stmt, false, ctx);
+            if if_stmt.alternate.is_some() {
+                p.print_indent();
+            }
+        }
     }
     if let Some(alternate) = if_stmt.alternate.as_ref() {
         p.print_semicolon_if_needed();

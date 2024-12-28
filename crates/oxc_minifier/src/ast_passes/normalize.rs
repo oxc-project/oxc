@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::CompressorPass;
+use crate::{node_util::Ctx, CompressorPass};
 
 /// Normalize AST
 ///
@@ -25,6 +25,12 @@ impl<'a> Traverse<'a> for Normalize {
             Self::convert_while_to_for(stmt, ctx);
         }
     }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::Identifier(_) = expr {
+            Self::convert_infinity_into_number(expr, ctx);
+        }
+    }
 }
 
 impl<'a> Normalize {
@@ -44,6 +50,21 @@ impl<'a> Normalize {
             ctx.create_child_scope_of_current(ScopeFlags::empty()),
         );
         *stmt = Statement::ForStatement(for_stmt);
+    }
+
+    fn convert_infinity_into_number(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let ctx = Ctx(ctx);
+        match expr {
+            Expression::Identifier(ident) if ctx.is_identifier_infinity(ident) => {
+                *expr = ctx.ast.expression_numeric_literal(
+                    ident.span,
+                    f64::INFINITY,
+                    None,
+                    NumberBase::Decimal,
+                );
+            }
+            _ => {}
+        }
     }
 }
 
