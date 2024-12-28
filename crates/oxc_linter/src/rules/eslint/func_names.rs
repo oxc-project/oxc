@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use oxc_ast::{
     ast::{
         AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
-        FunctionType, MethodDefinitionKind, PropertyKind,
+        FunctionType, MethodDefinitionKind, PropertyKey, PropertyKind,
     },
     AstKind,
 };
@@ -14,7 +14,7 @@ use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
 use phf::phf_set;
 
-use crate::{ast_util::get_static_property_name, context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn named_diagnostic(function_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected named {function_name}."))
@@ -232,6 +232,46 @@ fn get_function_identifier<'a>(func: &'a Function<'a>) -> Option<&'a Span> {
     func.id.as_ref().map(|id| &id.span)
 }
 
+fn get_property_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
+    if matches!(key, PropertyKey::NullLiteral(_)) {
+        return Some("null".into());
+    }
+
+    match key {
+        PropertyKey::RegExpLiteral(regex) => {
+            Some(Cow::Owned(format!("/{}/{}", regex.regex.pattern, regex.regex.flags)))
+        }
+        PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.raw.as_str())),
+        PropertyKey::TemplateLiteral(template) => {
+            if template.expressions.len() == 0 && template.quasis.len() == 1 {
+                if let Some(cooked) = &template.quasis[0].value.cooked {
+                    return Some(Cow::Borrowed(cooked.as_str()));
+                }
+            }
+
+            None
+        }
+        _ => None,
+    }
+}
+
+fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a, str>> {
+    let (key, computed) = match parent_node.kind() {
+        AstKind::PropertyDefinition(definition) => (&definition.key, definition.computed),
+        AstKind::MethodDefinition(method_definition) => {
+            (&method_definition.key, method_definition.computed)
+        }
+        AstKind::ObjectProperty(property) => (&property.key, property.computed),
+        _ => return None,
+    };
+
+    if key.is_identifier() && !computed {
+        return key.name();
+    }
+
+    get_property_key_name(key)
+}
+
 /// Gets the name and kind of the given function node.
 /// @see <https://github.com/eslint/eslint/blob/48117b27e98639ffe7e78a230bfad9a93039fb7f/lib/rules/utils/ast-utils.js#L1762>
 fn get_function_name_with_kind<'a>(func: &Function<'a>, parent_node: &AstNode<'a>) -> Cow<'a, str> {
@@ -295,14 +335,14 @@ fn get_function_name_with_kind<'a>(func: &Function<'a>, parent_node: &AstNode<'a
                 if let Some(name) = definition.key.name() {
                     tokens.push(name);
                 }
-            } else if let Some(static_name) = get_static_property_name(&parent_node.kind()) {
+            } else if let Some(static_name) = get_static_property_name(parent_node) {
                 tokens.push(static_name);
             } else if let Some(name) = func.name() {
                 tokens.push(Cow::Borrowed(name.as_str()));
             }
         }
         _ => {
-            if let Some(static_name) = get_static_property_name(&parent_node.kind()) {
+            if let Some(static_name) = get_static_property_name(parent_node) {
                 tokens.push(static_name);
             } else if let Some(name) = func.name() {
                 tokens.push(Cow::Borrowed(name.as_str()));

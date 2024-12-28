@@ -6,7 +6,6 @@ use oxc_ecmascript::ToBoolean;
 use oxc_semantic::{AstNode, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
-use std::borrow::Cow;
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
@@ -469,45 +468,4 @@ pub fn leftmost_identifier_reference<'a, 'b: 'a>(
         Expression::PrivateFieldExpression(mem) => leftmost_identifier_reference(&mem.object),
         _ => Err(expr),
     }
-}
-
-fn get_property_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
-    if matches!(key, PropertyKey::NullLiteral(_)) {
-        return Some("null".into());
-    }
-
-    match key {
-        PropertyKey::RegExpLiteral(regex) => {
-            Some(Cow::Owned(format!("/{}/{}", regex.regex.pattern, regex.regex.flags)))
-        }
-        PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.raw.as_str())),
-        PropertyKey::TemplateLiteral(template) => {
-            if template.expressions.len() == 0 && template.quasis.len() == 1 {
-                if let Some(cooked) = &template.quasis[0].value.cooked {
-                    return Some(Cow::Borrowed(cooked.as_str()));
-                }
-            }
-
-            None
-        }
-        _ => None,
-    }
-}
-
-pub fn get_static_property_name<'a>(kind: &AstKind<'a>) -> Option<Cow<'a, str>> {
-    let (key, computed) = match kind {
-        AstKind::PropertyDefinition(definition) => (&definition.key, definition.computed),
-        AstKind::MethodDefinition(method_definition) => {
-            (&method_definition.key, method_definition.computed)
-        }
-        AstKind::ObjectProperty(property) => (&property.key, property.computed),
-        // AstKind::MemberExpression(member) => (member., member.is_computed())
-        _ => return None,
-    };
-
-    if key.is_identifier() && !computed {
-        return key.name();
-    }
-
-    get_property_key_name(key)
 }

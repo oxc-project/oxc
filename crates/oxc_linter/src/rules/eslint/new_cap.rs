@@ -1,4 +1,4 @@
-use crate::{ast_util::get_static_property_name, context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 use oxc_ast::{
     ast::{ChainElement, ComputedMemberExpression, Expression},
     AstKind,
@@ -448,13 +448,11 @@ impl Rule for NewCap {
             AstKind::NewExpression(expression) if self.new_is_cap => {
                 let callee = expression.callee.without_parentheses();
 
-                let Some(short_name) = &extract_name_from_new_expression(callee, &node.kind())
-                else {
+                let Some(short_name) = &extract_name_from_expression(callee) else {
                     return;
                 };
 
-                let Some(name) = &extract_name_deep_from_new_expression(callee, &node.kind())
-                else {
+                let Some(name) = &extract_name_deep_from_expression(callee) else {
                     return;
                 };
 
@@ -477,13 +475,11 @@ impl Rule for NewCap {
             AstKind::CallExpression(expression) if self.cap_is_new => {
                 let callee = expression.callee.without_parentheses();
 
-                let Some(short_name) = &extract_name_from_new_expression(callee, &node.kind())
-                else {
+                let Some(short_name) = &extract_name_from_expression(callee) else {
                     return;
                 };
 
-                let Some(name) = &extract_name_deep_from_new_expression(callee, &node.kind())
-                else {
+                let Some(name) = &extract_name_deep_from_expression(callee) else {
                     return;
                 };
 
@@ -511,10 +507,7 @@ impl Rule for NewCap {
     }
 }
 
-fn extract_name_deep_from_new_expression(
-    expression: &Expression,
-    kind: &AstKind,
-) -> Option<CompactStr> {
+fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactStr> {
     if let Some(identifier) = expression.get_identifier_reference() {
         return Some(identifier.name.clone().into());
     }
@@ -522,10 +515,8 @@ fn extract_name_deep_from_new_expression(
     match expression.without_parentheses() {
         Expression::StaticMemberExpression(expression) => {
             let prop_name = expression.property.name.clone().into_compact_str();
-            let obj_name = extract_name_deep_from_new_expression(
-                expression.object.without_parentheses(),
-                kind,
-            );
+            let obj_name =
+                extract_name_deep_from_expression(expression.object.without_parentheses());
 
             if let Some(obj_name) = obj_name {
                 let new_name = format!("{obj_name}.{prop_name}");
@@ -536,10 +527,8 @@ fn extract_name_deep_from_new_expression(
         }
         Expression::ComputedMemberExpression(expression) => {
             let prop_name = get_computed_member_name(expression)?;
-            let obj_name = extract_name_deep_from_new_expression(
-                expression.object.without_parentheses(),
-                kind,
-            );
+            let obj_name =
+                extract_name_deep_from_expression(expression.object.without_parentheses());
 
             if let Some(obj_name) = obj_name {
                 let new_name = format!("{obj_name}.{prop_name}");
@@ -549,18 +538,14 @@ fn extract_name_deep_from_new_expression(
             Some(prop_name)
         }
         Expression::ChainExpression(chain) => match &chain.expression {
-            ChainElement::CallExpression(call) => {
-                extract_name_deep_from_new_expression(&call.callee, kind)
-            }
+            ChainElement::CallExpression(call) => extract_name_deep_from_expression(&call.callee),
             ChainElement::TSNonNullExpression(non_null) => {
-                extract_name_deep_from_new_expression(&non_null.expression, kind)
+                extract_name_deep_from_expression(&non_null.expression)
             }
             ChainElement::StaticMemberExpression(expression) => {
                 let prop_name = expression.property.name.clone().into_compact_str();
-                let obj_name = extract_name_deep_from_new_expression(
-                    expression.object.without_parentheses(),
-                    kind,
-                );
+                let obj_name =
+                    extract_name_deep_from_expression(expression.object.without_parentheses());
 
                 if let Some(obj_name) = obj_name {
                     let new_name = format!("{obj_name}.{prop_name}");
@@ -571,10 +556,8 @@ fn extract_name_deep_from_new_expression(
             }
             ChainElement::ComputedMemberExpression(expression) => {
                 let prop_name = get_computed_member_name(expression)?;
-                let obj_name = extract_name_deep_from_new_expression(
-                    expression.object.without_parentheses(),
-                    kind,
-                );
+                let obj_name =
+                    extract_name_deep_from_expression(expression.object.without_parentheses());
 
                 if let Some(obj_name) = obj_name {
                     let new_name = format!("{obj_name}.{prop_name}");
@@ -585,7 +568,7 @@ fn extract_name_deep_from_new_expression(
             }
             ChainElement::PrivateFieldExpression(_) => None,
         },
-        _ => get_static_property_name(kind).map(std::convert::Into::into),
+        _ => None,
     }
 }
 
@@ -602,7 +585,7 @@ fn get_computed_member_name(computed_member: &ComputedMemberExpression) -> Optio
     }
 }
 
-fn extract_name_from_new_expression(expression: &Expression, kind: &AstKind) -> Option<CompactStr> {
+fn extract_name_from_expression(expression: &Expression) -> Option<CompactStr> {
     if let Some(identifier) = expression.get_identifier_reference() {
         return Some(identifier.name.clone().into());
     }
@@ -613,11 +596,9 @@ fn extract_name_from_new_expression(expression: &Expression, kind: &AstKind) -> 
         }
         Expression::ComputedMemberExpression(expression) => get_computed_member_name(expression),
         Expression::ChainExpression(chain) => match &chain.expression {
-            ChainElement::CallExpression(call) => {
-                extract_name_from_new_expression(&call.callee, kind)
-            }
+            ChainElement::CallExpression(call) => extract_name_from_expression(&call.callee),
             ChainElement::TSNonNullExpression(non_null) => {
-                extract_name_from_new_expression(&non_null.expression, kind)
+                extract_name_from_expression(&non_null.expression)
             }
             ChainElement::StaticMemberExpression(expression) => {
                 Some(expression.property.name.clone().into_compact_str())
@@ -627,7 +608,7 @@ fn extract_name_from_new_expression(expression: &Expression, kind: &AstKind) -> 
             }
             ChainElement::PrivateFieldExpression(_) => None,
         },
-        _ => get_static_property_name(kind).map(std::convert::Into::into),
+        _ => None,
     }
 }
 
