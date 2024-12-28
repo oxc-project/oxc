@@ -80,12 +80,14 @@ declare_oxc_lint!(
     correctness,
 );
 
+// https://html.spec.whatwg.org/multipage/dom.html#interactive-content
 const INTERACTIVE_HTML_ELEMENTS: phf::set::Set<&'static str> = phf_set! {
     "a", "audio", "button", "details", "embed", "iframe", "img", "input", "label", "select", "textarea", "video"
 };
 
+// https://w3c.github.io/aria/#widget_roles
 const INTERACTIVE_HTML_ROLES: phf::set::Set<&'static str> = phf_set! {
-    "button", "checkbox", "gridcell", "link", "menuitem", "menuitemcheckbox", "menuitemradio", "option", "progressbar", "radio", "textbox"
+    "button", "checkbox", "gridcell", "link", "menuitem", "menuitemcheckbox", "menuitemradio", "option", "progressbar", "radio", "scrollbar", "searchbox", "separator", "slider", "spinbutton", "switch", "tab", "tabpanel", "textbox", "treeitem"
 };
 
 impl Rule for NoNoninteractiveTabindex {
@@ -94,37 +96,50 @@ impl Rule for NoNoninteractiveTabindex {
             return;
         };
 
-        if let Some(JSXAttributeItem::Attribute(tabindex_attr)) =
+        let Some(JSXAttributeItem::Attribute(tabindex_attr)) =
             has_jsx_prop_ignore_case(jsx_el, "tabIndex")
-        {
-            if let Some(JSXAttributeValue::StringLiteral(tabindex)) = &tabindex_attr.value {
-                if tabindex.value == "-1" {
-                    return;
-                }
+        else {
+            return;
+        };
 
-                let component = &get_element_type(ctx, jsx_el);
+        if let Some(JSXAttributeValue::StringLiteral(tabindex)) = &tabindex_attr.value {
+            if tabindex.value == "-1" {
+                return;
+            }
 
-                if INTERACTIVE_HTML_ELEMENTS.contains(component) {
-                    return;
-                }
+            let component = &get_element_type(ctx, jsx_el);
 
-                if let Some(JSXAttributeItem::Attribute(role_attr)) =
-                    has_jsx_prop_ignore_case(jsx_el, "role")
-                {
-                    if self.0.allow_expression_values {
-                        return;
-                    }
+            if INTERACTIVE_HTML_ELEMENTS.contains(component) {
+                return;
+            }
 
-                    if let Some(JSXAttributeValue::StringLiteral(role)) = &role_attr.value {
-                        if !INTERACTIVE_HTML_ROLES.contains(role.value.as_str())
-                            && !self.0.roles.contains(&CompactStr::new(role.value.as_str()))
-                        {
-                            ctx.diagnostic(no_noninteractive_tabindex_diagnostic(
-                                tabindex_attr.span,
-                            ));
-                        }
-                    } else {
+            let Some(JSXAttributeItem::Attribute(role_attr)) =
+                has_jsx_prop_ignore_case(jsx_el, "role")
+            else {
+                // if the component is not an interactive element and has no role, the tabindex is invalid.
+                ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
+                return;
+            };
+
+            if self.0.allow_expression_values {
+                return;
+            }
+
+            let Some(JSXAttributeValue::StringLiteral(role)) = &role_attr.value else {
+                ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
+                return;
+            };
+
+            if !INTERACTIVE_HTML_ROLES.contains(role.value.as_str())
+                && !self.0.roles.contains(&CompactStr::new(role.value.as_str()))
+            {
                         ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
+                        ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
+                    }
+                } else {
+                    ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
+                }
+                ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
                     }
                 } else {
                     ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
