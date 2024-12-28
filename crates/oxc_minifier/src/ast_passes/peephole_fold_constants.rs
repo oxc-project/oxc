@@ -527,7 +527,14 @@ mod test {
     fn test_nospace(source_text: &str, expected: &str) {
         let allocator = Allocator::default();
         let mut pass = super::PeepholeFoldConstants::new();
-        tester::test_impl(&allocator, source_text, expected, &mut pass, true);
+        tester::test_impl(
+            &allocator,
+            source_text,
+            expected,
+            &mut pass,
+            oxc_span::SourceType::mjs(),
+            true,
+        );
     }
 
     fn test_same(source_text: &str) {

@@ -21,6 +21,18 @@ impl<'a> CompressorPass<'a> for RemoveSyntax {
 }
 
 impl<'a> Traverse<'a> for RemoveSyntax {
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::drop_use_strict_directives_in_program(program, ctx);
+    }
+
+    fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::drop_use_strict_directives_in_function_body(body, ctx);
+    }
+
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::drop_use_strict_directives_if_function_is_empty(body, ctx);
+    }
+
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
         stmts.retain(|stmt| {
             !(matches!(stmt, Statement::EmptyStatement(_))
@@ -89,6 +101,38 @@ impl<'a> RemoveSyntax {
         let Some(ident) = obj.get_identifier_reference() else { return false };
         ident.name == "console"
     }
+
+    /// Drop `"use strict";` directives if the input is strict mode (e.g. written in ESM).
+    fn drop_use_strict_directives_in_program(
+        program: &mut Program<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if program.source_type.is_strict() {
+            program.directives.retain(|directive| !directive.is_use_strict());
+        }
+    }
+
+    /// Drop `"use strict";` directives if the parent scope is already strict mode.
+    fn drop_use_strict_directives_in_function_body(
+        body: &mut FunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let current_scope_id = ctx.current_scope_id();
+        let Some(parent_scope_id) = ctx.scopes().get_parent_id(current_scope_id) else { return };
+        if ctx.scopes().get_flags(parent_scope_id).is_strict_mode() {
+            body.directives.retain(|directive| !directive.is_use_strict());
+        }
+    }
+
+    /// Drop `"use strict";` directives if the function is empty.
+    fn drop_use_strict_directives_if_function_is_empty(
+        body: &mut FunctionBody<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if body.statements.is_empty() {
+            body.directives.retain(|directive| !directive.is_use_strict());
+        }
+    }
 }
 
 #[cfg(test)]
@@ -101,6 +145,23 @@ mod test {
         let allocator = Allocator::default();
         let mut pass = super::RemoveSyntax::new(CompressOptions::all_true());
         tester::test(&allocator, source_text, expected, &mut pass);
+    }
+
+    fn test_script(source_text: &str, expected: &str) {
+        let allocator = Allocator::default();
+        let mut pass = super::RemoveSyntax::new(CompressOptions::all_true());
+        tester::test_impl(
+            &allocator,
+            source_text,
+            expected,
+            &mut pass,
+            oxc_span::SourceType::cjs(),
+            true,
+        );
+    }
+
+    fn test_script_same(source_text: &str) {
+        test_script(source_text, source_text);
     }
 
     #[test]
@@ -117,5 +178,34 @@ mod test {
     #[test]
     fn drop_debugger() {
         test("debugger", "");
+    }
+
+    #[test]
+    fn use_strict() {
+        test("'use strict';", "");
+
+        test_script(
+            "'use strict'; function foo() { 'use strict'; alert(1); }",
+            "'use strict'; function foo() { alert(1); }",
+        );
+        test_script(
+            "'use strict'; const foo = () => { 'use strict'; alert(1); }",
+            "'use strict'; const foo = () => { alert(1); }",
+        );
+        test_script_same("function foo() { 'use strict'; alert(1); }");
+        test_script(
+            "function foo() { 'use strict'; return function foo() { 'use strict'; alert(1); }; } ",
+            "function foo() { 'use strict'; return function foo() { alert(1); }; } ",
+        );
+        test_script(
+            "class Foo { foo() { 'use strict'; alert(1); } } ",
+            "class Foo { foo() { alert(1); } } ",
+        );
+        test_script(
+            "const Foo = class { foo() { 'use strict'; alert(1); } } ",
+            "const Foo = class { foo() { alert(1); } } ",
+        );
+
+        test_script("function foo() { 'use strict';}", "function foo() {}");
     }
 }
