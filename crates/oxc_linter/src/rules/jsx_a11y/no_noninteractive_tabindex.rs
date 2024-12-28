@@ -30,7 +30,11 @@ pub struct NoNoninteractiveTabindex {
 
 impl Default for NoNoninteractiveTabindex {
     fn default() -> Self {
-        Self {roles: vec![CompactStr::new("tabpanel")], allow_expression_values: true, tags: vec![]}
+        Self {
+            roles: vec![CompactStr::new("tabpanel")],
+            allow_expression_values: true,
+            tags: vec![],
+        }
     }
 }
 
@@ -107,14 +111,17 @@ impl Rule for NoNoninteractiveTabindex {
                 if let Some(JSXAttributeItem::Attribute(role_attr)) =
                     has_jsx_prop_ignore_case(jsx_el, "role")
                 {
-                    if self.allow_expression_values {return;}
+                    if self.allow_expression_values {
+                        return;
+                    }
 
                     println!("role_attr: {role_attr:?}");
                     if let Some(JSXAttributeValue::StringLiteral(role)) = &role_attr.value {
                         println!("role: {role:?}");
 
-
-                        if !INTERACTIVE_HTML_ROLES.contains(role.value.as_str()) && !self.roles.contains(&CompactStr::new(role.value.as_str())) {
+                        if !INTERACTIVE_HTML_ROLES.contains(role.value.as_str())
+                            && !self.roles.contains(&CompactStr::new(role.value.as_str()))
+                        {
                             ctx.diagnostic(no_noninteractive_tabindex_diagnostic(
                                 tabindex_attr.span,
                             ));
@@ -137,17 +144,23 @@ impl Rule for NoNoninteractiveTabindex {
                 roles: config
                     .get("roles")
                     .and_then(serde_json::Value::as_array)
-                    .map_or(default.roles, |v|  v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()),
+                    .map_or(default.roles, |v| {
+                        v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
+                    }),
                 tags: config
-                .get("tags")
-                .and_then(serde_json::Value::as_array)
-                .map_or(default.tags, |v|  v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()),
-                allow_expression_values:  config.get("allow_expression_values").and_then(serde_json::Value::as_bool).unwrap_or(default.allow_expression_values)
+                    .get("tags")
+                    .and_then(serde_json::Value::as_array)
+                    .map_or(default.tags, |v| {
+                        v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
+                    }),
+                allow_expression_values: config
+                    .get("allow_expression_values")
+                    .and_then(serde_json::Value::as_bool)
+                    .unwrap_or(default.allow_expression_values),
             }
         } else {
             default
         }
-        
     }
 }
 
@@ -177,8 +190,14 @@ fn test() {
     ];
 
     let fail = vec![
-        (r#"<div role="tabpanel" tabIndex="0" />"#, Some(serde_json::json!([{ "roles": [], "allowExpressionValues": false }]))),
-        (r#"<div role={ROLE_BUTTON} onClick={() => {}} tabIndex="0" />;"#, Some(serde_json::json!([{ "roles": [], "allowExpressionValues": false }]))),
+        (
+            r#"<div role="tabpanel" tabIndex="0" />"#,
+            Some(serde_json::json!([{ "roles": [], "allowExpressionValues": false }])),
+        ),
+        (
+            r#"<div role={ROLE_BUTTON} onClick={() => {}} tabIndex="0" />;"#,
+            Some(serde_json::json!([{ "roles": [], "allowExpressionValues": false }])),
+        ),
         (
             r#"<div role={BUTTON} onClick={() => {}} tabIndex="0" />;"#,
             Some(serde_json::json!([{ "allowExpressionValues": false }])),
