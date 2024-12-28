@@ -240,14 +240,24 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     }
 
     /// Compress `typeof foo == "undefined"` into `typeof foo > "u"`
+    ///
+    /// - `typeof foo == "undefined"` -> `typeof foo > "u"`
+    /// - `typeof foo != "undefined"` -> `typeof foo < "u"`
+    ///
     /// Enabled by `compress.typeofs`
     fn try_compress_typeof_undefined(
         expr: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        if !matches!(expr.operator, BinaryOperator::Equality | BinaryOperator::StrictEquality) {
-            return None;
-        }
+        let new_op = match expr.operator {
+            BinaryOperator::Equality | BinaryOperator::StrictEquality => {
+                BinaryOperator::GreaterThan
+            }
+            BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
+                BinaryOperator::LessThan
+            }
+            _ => return None,
+        };
         let pair = Self::commutative_pair(
             (&expr.left, &expr.right),
             |a| a.is_specific_string_literal("undefined").then_some(()),
@@ -266,7 +276,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         let argument = Expression::Identifier(ctx.alloc(id_ref));
         let left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
         let right = ctx.ast.expression_string_literal(SPAN, "u", None);
-        Some(ctx.ast.expression_binary(expr.span, left, BinaryOperator::GreaterThan, right))
+        Some(ctx.ast.expression_binary(expr.span, left, new_op, right))
     }
 
     /// Compress `foo === null || foo === undefined` into `foo == null`.
@@ -1141,6 +1151,20 @@ mod test {
     fn test_fold_arrow_function_return() {
         test("const foo = () => { return 'baz' }", "const foo = () => 'baz'");
         test_same("const foo = () => { foo; return 'baz' }");
+    }
+
+    /// Port from <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser_test.go#L4658>
+    #[test]
+    fn test_fold_is_typeof_equals_undefined() {
+        test("typeof x !== 'undefined'", "typeof x < 'u'");
+        test("typeof x != 'undefined'", "typeof x < 'u'");
+        test("'undefined' !== typeof x", "typeof x < 'u'");
+        test("'undefined' != typeof x", "typeof x < 'u'");
+
+        test("typeof x === 'undefined'", "typeof x > 'u'");
+        test("typeof x == 'undefined'", "typeof x > 'u'");
+        test("'undefined' === typeof x", "typeof x > 'u'");
+        test("'undefined' == typeof x", "typeof x > 'u'");
     }
 
     #[test]

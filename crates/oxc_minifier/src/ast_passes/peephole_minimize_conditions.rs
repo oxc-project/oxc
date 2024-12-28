@@ -1276,8 +1276,11 @@ mod test {
     #[test]
     fn test_coercion_substitution_while() {
         // enableTypeCheck();
-        test_same("var x = {}; while (x != null) throw 'a';");
-        test_same("var x = 1; while (x != 0) throw 'a';");
+        test(
+            "var x = {}; while (x != null) throw 'a';",
+            "var x = {}; for (;x != null;) throw 'a';",
+        );
+        test("var x = 1; while (x != 0) throw 'a';", "var x = 1; for (;x != 0;) throw 'a';");
     }
 
     #[test]

@@ -456,7 +456,7 @@ mod test {
 
         // Cases to test for empty block.
         // fold("while(x()){x}", "while(x());");
-        fold("while(x()){x()}", "while(x())x()");
+        fold("while(x()){x()}", "for(;x();)x()");
         // fold("for(x=0;x<100;x++){x}", "for(x=0;x<100;x++);");
         // fold("for(x in y){x}", "for(x in y);");
         // fold("for (x of y) {x}", "for(x of y);");
