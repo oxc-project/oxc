@@ -16,7 +16,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{is_react_component_or_hook_name, is_react_function_call, is_react_hook},
-    AstNode, FrameworkFlags,
+    AstNode,
 };
 
 mod diagnostics {
@@ -110,8 +110,9 @@ declare_oxc_lint!(
 impl Rule for RulesOfHooks {
     fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
         // disable this rule in vue/nuxt and svelte(kit) files
-        // top level useFunction are very common
-        !ctx.frameworks().contains(FrameworkFlags::SvelteKit | FrameworkFlags::Nuxt)
+        // react hook can be build in only `.ts` files,
+        // but `useX` functions are popular and can be false positive in other frameworks
+        !ctx.file_path().extension().is_some_and(|ext| ext == "vue" || ext == "svelte")
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
