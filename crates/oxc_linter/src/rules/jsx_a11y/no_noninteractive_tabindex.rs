@@ -15,7 +15,6 @@ use crate::{
 };
 
 fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("tabIndex should only be declared on interactive elements")
         .with_help("tabIndex attribute should be removed")
         .with_label(span)
