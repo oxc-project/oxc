@@ -1,0 +1,205 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:6:4]
+ 5 │             }
+ 6 │             var second = 0;
+   ·             ───────────────
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:7:7]
+ 6 │                first = 4;
+ 7 │                var second = 1;
+   ·                ───────────────
+ 8 │                second = 2;
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:4:11]
+ 3 │                if (true) {
+ 4 │                    var second = true;
+   ·                    ──────────────────
+ 5 │                }
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:2:12]
+ 1 │ function foo() {
+ 2 │                for (var i = 0; i < 10; i++) {
+   ·                     ─────────
+ 3 │                    alert(i);
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:5:11]
+ 4 │                for (i = 0; i < first; i ++) {
+ 5 │                    var second = i;
+   ·                    ───────────────
+ 6 │                }
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:6:15]
+ 5 │                    case 10:
+ 6 │                        var hello = 1;
+   ·                        ──────────────
+ 7 │                        break;
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:5:11]
+ 4 │                try {
+ 5 │                    var hello = 1;
+   ·                    ──────────────
+ 6 │                } catch (e) {
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:7:11]
+ 6 │                } catch (e) {
+ 7 │                    var hello = 1;
+   ·                    ──────────────
+ 8 │                }
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:4:11]
+ 3 │                while (first) {
+ 4 │                    var hello = 1;
+   ·                    ──────────────
+ 5 │                }
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:4:11]
+ 3 │                do {
+ 4 │                    var hello = 1;
+   ·                    ──────────────
+ 5 │                } while (first == 10);
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:3:12]
+ 2 │                var first = [1,2,3];
+ 3 │                for (var item in first) {
+   ·                     ────────
+ 4 │                    item++;
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:5:11]
+ 4 │                for (item in first) {
+ 5 │                    var hello = item;
+   ·                    ─────────────────
+ 6 │                }
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:5:11]
+ 4 │                for (item in first) {
+ 5 │                    var hello = item;
+   ·                    ─────────────────
+ 6 │                }
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:1:18]
+ 1 │ 'use strict'; 0; var x; f();
+   ·                  ──────
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:1:35]
+ 1 │ 'use strict'; var x; 'directive'; var y; f();
+   ·                                   ──────
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:1:33]
+ 1 │ function f() { 'use strict'; 0; var x; f(); }
+   ·                                 ──────
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:1:51]
+ 1 │ function f() { 'use strict'; var x; 'directive';  var y; f(); }
+   ·                                                   ──────
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:2:4]
+ 1 │ export function f() {}
+ 2 │             var x;
+   ·             ──────
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:3:4]
+ 2 │             export function f() {}
+ 3 │             var y;
+   ·             ──────
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:3:4]
+ 2 │             export {foo};
+ 3 │             var test = 1;
+   ·             ─────────────
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:2:4]
+ 1 │ export {foo} from 'foo';
+ 2 │             var test = 1;
+   ·             ─────────────
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:2:4]
+ 1 │ export * from 'foo';
+ 2 │             var test = 1;
+   ·             ─────────────
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:4:12]
+ 3 │                     foo();
+ 4 │                     var x;
+   ·                     ──────
+ 5 │                 }
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:4:12]
+ 3 │                     'use strict';
+ 4 │                     var x;
+   ·                     ──────
+ 5 │                 }
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:5:12]
+ 4 │                     foo();
+ 5 │                     var y;
+   ·                     ──────
+ 6 │                 }
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:4:16]
+ 3 │                     if (foo) {
+ 4 │                         var x;
+   ·                         ──────
+ 5 │                     }
+   ╰────
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:4:16]
+ 3 │                     if (foo)
+ 4 │                         var x;
+   ·                         ──────
+ 5 │                 }
+   ╰────
