@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, Span, SPAN};
 
 use crate::{
     diagnostics,
-    lexer::{Kind, Token},
+    lexer::{Kind, Lexer, Token},
     ParserImpl,
 };
 
@@ -108,12 +108,10 @@ impl Modifier {
     pub fn is_static(&self) -> bool {
         matches!(self.kind, ModifierKind::Static)
     }
-}
-impl TryFrom<Token> for Modifier {
-    type Error = <ModifierKind as TryFrom<Kind>>::Error;
 
-    fn try_from(tok: Token) -> std::result::Result<Self, Self::Error> {
-        ModifierKind::try_from(tok.kind).map(|kind| Self { span: tok.span(), kind })
+    #[inline]
+    pub fn try_from_token(tok: Token, lexer: &Lexer) -> std::result::Result<Self, <ModifierKind as TryFrom<Kind>>::Error> {
+        ModifierKind::try_from(tok.kind).map(|kind| Self { span: lexer.token_span(tok), kind })
     }
 }
 
@@ -318,7 +316,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         match self.cur_kind() {
-            Kind::Const => !self.peek_token().is_on_new_line && self.peek_kind() == Kind::Enum,
+            Kind::Const => !self.peek_token().is_on_new_line() && self.peek_kind() == Kind::Enum,
             Kind::Export => {
                 self.bump_any();
                 match self.cur_kind() {
@@ -339,7 +337,7 @@ impl<'a> ParserImpl<'a> {
             // Rest modifiers cannot cross line
             _ => {
                 self.bump_any();
-                self.can_follow_modifier() && !self.cur_token().is_on_new_line
+                self.can_follow_modifier() && !self.cur_token().is_on_new_line()
             }
         }
     }
@@ -483,7 +481,7 @@ impl<'a> ParserImpl<'a> {
 
     fn next_token_is_on_same_line_and_can_follow_modifier(&mut self) -> bool {
         self.bump_any();
-        if self.cur_token().is_on_new_line {
+        if self.cur_token().is_on_new_line() {
             return false;
         }
         self.can_follow_modifier()
@@ -526,12 +524,12 @@ impl<'a> ParserImpl<'a> {
 
     fn next_token_is_class_keyword_on_same_line(&mut self) -> bool {
         self.bump_any();
-        self.cur_kind() == Kind::Class && !self.cur_token().is_on_new_line
+        self.cur_kind() == Kind::Class && !self.cur_token().is_on_new_line()
     }
 
     fn next_token_is_function_keyword_on_same_line(&mut self) -> bool {
         self.bump_any();
-        self.cur_kind() == Kind::Function && !self.cur_token().is_on_new_line
+        self.cur_kind() == Kind::Function && !self.cur_token().is_on_new_line()
     }
 
     fn check_for_duplicate_modifiers(&mut self, seen_flags: ModifierFlags, modifier: &Modifier) {

@@ -47,7 +47,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Get current source text
     pub(crate) fn cur_src(&self) -> &'a str {
-        let range = self.cur_token().span();
+        let range = self.lexer.token_span(self.cur_token());
         // SAFETY:
         // range comes from the lexer, which are ensured to meeting the criteria of `get_unchecked`.
 
@@ -109,13 +109,23 @@ impl<'a> ParserImpl<'a> {
         self.cur_kind() == kind
     }
 
+    #[inline]
+    pub(crate) fn cur_token_span(&self) -> Span {
+        self.lexer.token_span(self.cur_token())
+    }
+
+    #[inline]
+    pub(crate) fn cur_token_end(&self) -> u32 {
+        self.lexer.token_end(self.cur_token())
+    }
+
     /// `StringValue` of `IdentifierName` normalizes any Unicode escape sequences
     /// in `IdentifierName` hence such escapes cannot be used to write an Identifier
     /// whose code point sequence is the same as a `ReservedWord`.
     #[inline]
     fn test_escaped_keyword(&mut self, kind: Kind) {
         if self.cur_token().escaped() && kind.is_all_keyword() {
-            let span = self.cur_token().span();
+            let span = self.cur_token_span();
             self.error(diagnostics::escaped_keyword(span));
         }
     }
@@ -124,7 +134,7 @@ impl<'a> ParserImpl<'a> {
     /// Checks if the current token is escaped if it is a keyword
     fn advance(&mut self, kind: Kind) {
         self.test_escaped_keyword(kind);
-        self.prev_token_end = self.token.end;
+        self.prev_token_end = self.lexer.token_end(self.token);
         self.token = self.lexer.next_token();
     }
 
@@ -132,7 +142,7 @@ impl<'a> ParserImpl<'a> {
     /// Checks if the current token is escaped if it is a keyword
     fn advance_for_jsx_child(&mut self, kind: Kind) {
         self.test_escaped_keyword(kind);
-        self.prev_token_end = self.token.end;
+        self.prev_token_end = self.lexer.token_end(self.token);
         self.token = self.lexer.next_jsx_child();
     }
 
@@ -184,13 +194,13 @@ impl<'a> ParserImpl<'a> {
         if kind == Kind::Semicolon {
             return true;
         }
-        kind == Kind::RCurly || kind.is_eof() || self.cur_token().is_on_new_line
+        kind == Kind::RCurly || kind.is_eof() || self.cur_token().is_on_new_line()
     }
 
     /// # Errors
     pub(crate) fn expect_without_advance(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
-            let range = self.cur_token().span();
+            let range = self.cur_token_span();
             return Err(diagnostics::expect_token(kind.to_str(), self.cur_kind().to_str(), range));
         }
         Ok(())
@@ -238,7 +248,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`
     pub(crate) fn continue_lex_jsx_identifier(&mut self) {
-        if let Some(token) = self.lexer.continue_lex_jsx_identifier() {
+        if let Some(token) = self.lexer.continue_lex_jsx_identifier(self.token.start) {
             self.token = token;
         }
     }
