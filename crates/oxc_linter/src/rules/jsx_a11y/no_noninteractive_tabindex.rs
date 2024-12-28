@@ -33,12 +33,11 @@ struct NoNoninteractiveTabindexConfig {
 
 impl Default for NoNoninteractiveTabindex {
     fn default() -> Self {
-        Self (
-            Box::new(NoNoninteractiveTabindexConfig{ roles: vec![CompactStr::new("tabpanel")],
+        Self(Box::new(NoNoninteractiveTabindexConfig {
+            roles: vec![CompactStr::new("tabpanel")],
             allow_expression_values: true,
             tags: vec![],
-        })
-    )
+        }))
     }
 }
 
@@ -110,20 +109,14 @@ impl Rule for NoNoninteractiveTabindex {
                     return;
                 }
 
-                println!("component: {component}");
-
                 if let Some(JSXAttributeItem::Attribute(role_attr)) =
                     has_jsx_prop_ignore_case(jsx_el, "role")
                 {
-                    println!("allow_expression_values: {}", self.0.allow_expression_values);
                     if self.0.allow_expression_values {
                         return;
                     }
 
-                    println!("role_attr: {role_attr:?}");
                     if let Some(JSXAttributeValue::StringLiteral(role)) = &role_attr.value {
-                        println!("role: {role:?}");
-
                         if !INTERACTIVE_HTML_ROLES.contains(role.value.as_str())
                             && !self.0.roles.contains(&CompactStr::new(role.value.as_str()))
                         {
@@ -145,8 +138,8 @@ impl Rule for NoNoninteractiveTabindex {
         let default = Self::default();
 
         if let Some(config) = value.get(0) {
-            Self (
-                Box::new(NoNoninteractiveTabindexConfig {roles: config
+            Self(Box::new(NoNoninteractiveTabindexConfig {
+                roles: config
                     .get("roles")
                     .and_then(serde_json::Value::as_array)
                     .map_or(default.0.roles, |v| {
