@@ -93,7 +93,6 @@ mod eslint {
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_multi_str;
-    pub mod no_negated_condition;
     pub mod no_nested_ternary;
     pub mod no_new;
     pub mod no_new_func;
