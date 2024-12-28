@@ -38,6 +38,7 @@ declare_oxc_lint!(
     /// ```
     NoOctalEscape,
     correctness,
+    pending
 );
 
 impl Rule for NoOctalEscape {
