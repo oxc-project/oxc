@@ -9,7 +9,7 @@ mod tests;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_vitest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+    utils::{parse_jest_fn_call, JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode},
 };
 
 fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
@@ -194,14 +194,15 @@ impl Rule for PreferLowercaseTitle {
 
     fn run_on_jest_node<'a, 'c>(
         &self,
-        possible_vitest_node: &PossibleJestNode<'a, 'c>,
+        possible_jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        let node = possible_vitest_node.node;
+        let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(vitest_fn_call) = parse_vitest_fn_call(call_expr, possible_vitest_node, ctx)
+        let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
+            parse_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             return;
         };
@@ -210,16 +211,16 @@ impl Rule for PreferLowercaseTitle {
 
         let ignores = Self::populate_ignores(&self.ignore);
 
-        if ignores.contains(&vitest_fn_call.name.as_ref()) {
+        if ignores.contains(&jest_fn_call.name.as_ref()) {
             return;
         }
 
-        if matches!(vitest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
+        if matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
             if self.ignore_top_level_describe && scopes.get_flags(node.scope_id()).is_top() {
                 return;
             }
         } else if !matches!(
-            vitest_fn_call.kind,
+            jest_fn_call.kind,
             JestFnKind::General(JestGeneralFnKind::Test | JestGeneralFnKind::Bench)
         ) {
             return;
