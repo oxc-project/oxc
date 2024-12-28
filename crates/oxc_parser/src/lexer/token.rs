@@ -70,12 +70,13 @@ impl Token {
             cold_branch(|| {
                 self.len = u16::MAX;
                 long_ends.insert(self.start, end);
-            })
+            });
         }
     }
 
     #[inline]
     pub fn end(&self, long_ends: &FxHashMap<u32, u32>) -> u32 {
+        #[allow(clippy::if_not_else)]
         if self.len != u16::MAX {
             self.start + u32::from(self.len)
         } else {
@@ -94,7 +95,7 @@ impl Token {
     }
     #[inline]
     pub fn set_escaped(&mut self) {
-        self.flags.insert(TokenFlags::Escaped)
+        self.flags.insert(TokenFlags::Escaped);
     }
 
     #[inline]
@@ -104,7 +105,7 @@ impl Token {
 
     #[inline]
     pub fn set_is_on_new_line(&mut self) {
-        self.flags.insert(TokenFlags::IsOnNewLine)
+        self.flags.insert(TokenFlags::IsOnNewLine);
     }
 
     #[inline]
