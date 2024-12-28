@@ -22,7 +22,10 @@ fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone)]
-pub struct NoNoninteractiveTabindex {
+pub struct NoNoninteractiveTabindex(Box<NoNoninteractiveTabindexConfig>);
+
+#[derive(Debug, Clone)]
+struct NoNoninteractiveTabindexConfig {
     tags: Vec<CompactStr>,
     roles: Vec<CompactStr>,
     allow_expression_values: bool,
@@ -30,11 +33,12 @@ pub struct NoNoninteractiveTabindex {
 
 impl Default for NoNoninteractiveTabindex {
     fn default() -> Self {
-        Self {
-            roles: vec![CompactStr::new("tabpanel")],
+        Self (
+            Box::new(NoNoninteractiveTabindexConfig{ roles: vec![CompactStr::new("tabpanel")],
             allow_expression_values: true,
             tags: vec![],
-        }
+        })
+    )
     }
 }
 
@@ -111,8 +115,8 @@ impl Rule for NoNoninteractiveTabindex {
                 if let Some(JSXAttributeItem::Attribute(role_attr)) =
                     has_jsx_prop_ignore_case(jsx_el, "role")
                 {
-                    println!("allow_expression_values: {}", self.allow_expression_values);
-                    if self.allow_expression_values {
+                    println!("allow_expression_values: {}", self.0.allow_expression_values);
+                    if self.0.allow_expression_values {
                         return;
                     }
 
@@ -121,7 +125,7 @@ impl Rule for NoNoninteractiveTabindex {
                         println!("role: {role:?}");
 
                         if !INTERACTIVE_HTML_ROLES.contains(role.value.as_str())
-                            && !self.roles.contains(&CompactStr::new(role.value.as_str()))
+                            && !self.0.roles.contains(&CompactStr::new(role.value.as_str()))
                         {
                             ctx.diagnostic(no_noninteractive_tabindex_diagnostic(
                                 tabindex_attr.span,
@@ -141,24 +145,24 @@ impl Rule for NoNoninteractiveTabindex {
         let default = Self::default();
 
         if let Some(config) = value.get(0) {
-            Self {
-                roles: config
+            Self (
+                Box::new(NoNoninteractiveTabindexConfig {roles: config
                     .get("roles")
                     .and_then(serde_json::Value::as_array)
-                    .map_or(default.roles, |v| {
+                    .map_or(default.0.roles, |v| {
                         v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
                     }),
                 tags: config
                     .get("tags")
                     .and_then(serde_json::Value::as_array)
-                    .map_or(default.tags, |v| {
+                    .map_or(default.0.tags, |v| {
                         v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
                     }),
                 allow_expression_values: config
                     .get("allowExpressionValues")
                     .and_then(serde_json::Value::as_bool)
-                    .unwrap_or(default.allow_expression_values),
-            }
+                    .unwrap_or(default.0.allow_expression_values),
+            }))
         } else {
             default
         }
