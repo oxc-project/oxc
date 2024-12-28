@@ -1,18 +1,21 @@
 use crate::{ast_util::get_static_property_name, context::LintContext, rule::Rule, AstNode};
 use oxc_ast::{
-    ast::{ComputedMemberExpression, Expression},
+    ast::{ChainElement, ComputedMemberExpression, Expression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use regex::Regex;
 
-fn new_cap_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
-        .with_label(span)
+fn new_cap_diagnostic(span: Span, cap: &GetCapResult) -> OxcDiagnostic {
+    let msg = if *cap == GetCapResult::Lower {
+        "A constructor name should not start with a lowercase letter."
+    } else {
+        "A function with a name starting with an uppercase letter should only be used as a constructor."
+    };
+
+    OxcDiagnostic::warn(msg).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -122,15 +125,309 @@ fn caps_allowed_vec() -> Vec<CompactStr> {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// This rule requires constructor names to begin with a capital letter.
     ///
     /// ### Why is this bad?
     ///
+    /// The new operator in JavaScript creates a new instance of a particular type of object.
+    /// That type of object is represented by a constructor function.
+    /// Since constructor functions are just regular functions, the only defining characteristic
+    /// is that new is being used as part of the call.
+    /// Native JavaScript functions begin with an uppercase letter to distinguish those functions
+    /// that are to be used as constructors from functions that are not.
+    /// Many style guides recommend following this pattern
+    /// to more easily determine which functions are to be used as constructors.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// function foo(arg) {
+    ///     return Boolean(arg);
+    /// }
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with the default `{ "newIsCap": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCap": true }]*/
+    ///
+    /// var friend = new person();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the default `{ "newIsCap": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCap": true }]*/
+    ///
+    /// var friend = new Person();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `{ "newIsCap": false }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCap": false }]*/
+    ///
+    /// var friend = new person();
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with the default `{ "capIsNew": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNew": true }]*/
+    ///
+    /// var colleague = Person();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the default `{ "capIsNew": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNew": true }]*/
+    ///
+    /// var colleague = new Person();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `{ "capIsNew": false }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNew": false }]*/
+    ///
+    /// var colleague = Person();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptions": ["events"] }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCapExceptions": ["events"] }]*/
+    ///
+    /// var events = require('events');
+    ///
+    /// var emitter = new events();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptionPattern": "^person\\.." }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCapExceptionPattern": "^person\\.." }]*/
+    ///
+    /// var friend = new person.acquaintance();
+    ///
+    /// var bestFriend = new person.friend();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptionPattern": "\\.bar$" }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCapExceptionPattern": "\\.bar$" }]*/
+    ///
+    /// var friend = new person.bar();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptions": ["Person"] }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNewExceptions": ["Person"] }]*/
+    ///
+    /// function foo(arg) {
+    ///     return Person(arg);
+    /// }
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "^person\\.." }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "^person\\.." }]*/
+    ///
+    /// var friend = person.Acquaintance();
+    /// var bestFriend = person.Friend();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "\\.Bar$" }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "\\.Bar$" }]*/
+    ///
+    /// foo.Bar();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "^Foo" }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "^Foo" }]*/
+    ///
+    /// var x = Foo(42);
+    ///
+    /// var y = Foobar(42);
+    ///
+    /// var z = Foo.Bar(42);
+    /// ```
+    ///
+    /// ### properties
+    ///
+    /// Examples of **incorrect** code for this rule with the default `{ "properties": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "properties": true }]*/
+    ///
+    /// var friend = new person.acquaintance();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the default `{ "properties": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "properties": true }]*/
+    ///
+    /// var friend = new person.Acquaintance();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `{ "properties": false }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "properties": false }]*/
+    ///
+    /// var friend = new person.acquaintance();
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with the default `{ "newIsCap": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCap": true }]*/
+    ///
+    /// var friend = new person();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the default `{ "newIsCap": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCap": true }]*/
+    ///
+    /// var friend = new Person();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `{ "newIsCap": false }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCap": false }]*/
+    ///
+    /// var friend = new person();
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with the default `{ "capIsNew": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNew": true }]*/
+    ///
+    /// var colleague = Person();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the default `{ "capIsNew": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNew": true }]*/
+    ///
+    /// var colleague = new Person();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `{ "capIsNew": false }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNew": false }]*/
+    ///
+    /// var colleague = Person();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptions": ["events"] }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCapExceptions": ["events"] }]*/
+    ///
+    /// var events = require('events');
+    ///
+    /// var emitter = new events();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptionPattern": "^person\\.." }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCapExceptionPattern": "^person\\.." }]*/
+    ///
+    /// var friend = new person.acquaintance();
+    ///
+    /// var bestFriend = new person.friend();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptionPattern": "\\.bar$" }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "newIsCapExceptionPattern": "\\.bar$" }]*/
+    ///
+    /// var friend = new person.bar();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptions": ["Person"] }` option:
+    ///
+    /// ::: correct
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNewExceptions": ["Person"] }]*/
+    ///
+    /// function foo(arg) {
+    ///     return Person(arg);
+    /// }
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "^person\\.." }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "^person\\.." }]*/
+    ///
+    /// var friend = person.Acquaintance();
+    /// var bestFriend = person.Friend();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "\\.Bar$" }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "\\.Bar$" }]*/
+    ///
+    /// foo.Bar();
+    /// ```
+    ///
+    /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "^Foo" }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "^Foo" }]*/
+    ///
+    /// var x = Foo(42);
+    ///
+    /// var y = Foobar(42);
+    ///
+    /// var z = Foo.Bar(42);
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with the default `{ "properties": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "properties": true }]*/
+    ///
+    /// var friend = new person.acquaintance();
+    /// ```
+    ///
+    ///
+    /// Examples of **correct** code for this rule with the default `{ "properties": true }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "properties": true }]*/
+    ///
+    /// var friend = new person.Acquaintance();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `{ "properties": false }` option:
+    ///
+    /// ```js
+    /// /*eslint new-cap: ["error", { "properties": false }]*/
+    ///
+    /// var friend = new person.acquaintance();
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -138,12 +435,8 @@ declare_oxc_lint!(
     /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
     /// ```
     NewCap,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    style,
+    pending  // TODO: maybe?
 );
 
 impl Rule for NewCap {
@@ -165,9 +458,9 @@ impl Rule for NewCap {
                     return;
                 };
 
-                let capitalization = get_cap(short_name);
+                let capitalization = &get_cap(short_name);
 
-                let allowed = capitalization != GetCapResult::Lower
+                let allowed = *capitalization != GetCapResult::Lower
                     || is_cap_allowed_expression(
                         callee,
                         short_name,
@@ -178,7 +471,7 @@ impl Rule for NewCap {
                     || (!self.properties && short_name != name);
 
                 if !allowed {
-                    ctx.diagnostic(new_cap_diagnostic(expression.span));
+                    ctx.diagnostic(new_cap_diagnostic(callee.span(), capitalization));
                 }
             }
             AstKind::CallExpression(expression) if self.cap_is_new => {
@@ -194,12 +487,12 @@ impl Rule for NewCap {
                     return;
                 };
 
-                let capitalization = get_cap(short_name);
+                let capitalization = &get_cap(short_name);
 
                 let mut caps_is_new_exceptions = self.cap_is_new_exceptions.clone();
                 caps_is_new_exceptions.append(&mut caps_allowed_vec());
 
-                let allowed = capitalization != GetCapResult::Upper
+                let allowed = *capitalization != GetCapResult::Upper
                     || is_cap_allowed_expression(
                         callee,
                         short_name,
@@ -210,7 +503,7 @@ impl Rule for NewCap {
                     || (!self.properties && short_name != name);
 
                 if !allowed {
-                    ctx.diagnostic(new_cap_diagnostic(expression.span));
+                    ctx.diagnostic(new_cap_diagnostic(callee.span(), capitalization));
                 }
             }
             _ => (),
@@ -255,6 +548,43 @@ fn extract_name_deep_from_new_expression(
 
             Some(prop_name)
         }
+        Expression::ChainExpression(chain) => match &chain.expression {
+            ChainElement::CallExpression(call) => {
+                extract_name_deep_from_new_expression(&call.callee, kind)
+            }
+            ChainElement::TSNonNullExpression(non_null) => {
+                extract_name_deep_from_new_expression(&non_null.expression, kind)
+            }
+            ChainElement::StaticMemberExpression(expression) => {
+                let prop_name = expression.property.name.clone().into_compact_str();
+                let obj_name = extract_name_deep_from_new_expression(
+                    expression.object.without_parentheses(),
+                    kind,
+                );
+
+                if let Some(obj_name) = obj_name {
+                    let new_name = format!("{obj_name}.{prop_name}");
+                    return Some(CompactStr::new(&new_name));
+                }
+
+                Some(prop_name)
+            }
+            ChainElement::ComputedMemberExpression(expression) => {
+                let prop_name = get_computed_member_name(expression)?;
+                let obj_name = extract_name_deep_from_new_expression(
+                    expression.object.without_parentheses(),
+                    kind,
+                );
+
+                if let Some(obj_name) = obj_name {
+                    let new_name = format!("{obj_name}.{prop_name}");
+                    return Some(CompactStr::new(&new_name));
+                }
+
+                Some(prop_name)
+            }
+            ChainElement::PrivateFieldExpression(_) => None,
+        },
         _ => get_static_property_name(kind).map(std::convert::Into::into),
     }
 }
@@ -282,6 +612,21 @@ fn extract_name_from_new_expression(expression: &Expression, kind: &AstKind) -> 
             Some(expression.property.name.clone().into_compact_str())
         }
         Expression::ComputedMemberExpression(expression) => get_computed_member_name(expression),
+        Expression::ChainExpression(chain) => match &chain.expression {
+            ChainElement::CallExpression(call) => {
+                extract_name_from_new_expression(&call.callee, kind)
+            }
+            ChainElement::TSNonNullExpression(non_null) => {
+                extract_name_from_new_expression(&non_null.expression, kind)
+            }
+            ChainElement::StaticMemberExpression(expression) => {
+                Some(expression.property.name.clone().into_compact_str())
+            }
+            ChainElement::ComputedMemberExpression(expression) => {
+                get_computed_member_name(expression)
+            }
+            ChainElement::PrivateFieldExpression(_) => None,
+        },
         _ => get_static_property_name(kind).map(std::convert::Into::into),
     }
 }
