@@ -71,6 +71,19 @@ fn vec_str_serde_value(
         .collect::<Vec<CompactStr>>()
 }
 
+fn regex_serde_value(map: &serde_json::Map<String, serde_json::Value>, key: &str) -> Option<Regex> {
+    let value = map.get(key)?;
+    let err = format!("eslint/new-cap: expect configuration option '{key}' to be a regex string.");
+
+    let regex_string = value.as_str().expect(&err);
+
+    if let Ok(regex) = Regex::new(regex_string) {
+        return Some(regex);
+    }
+
+    None
+}
+
 impl From<&serde_json::Value> for NewCap {
     fn from(raw: &serde_json::Value) -> Self {
         let Some(config_entry) = raw.get(0) else {
@@ -105,9 +118,9 @@ impl From<&serde_json::Value> for NewCap {
                 "newIsCapExceptions",
                 caps_allowed_vec(),
             ),
-            new_is_cap_exception_pattern: None,
+            new_is_cap_exception_pattern: regex_serde_value(config, "newIsCapExceptionPattern"),
             cap_is_new_exceptions: vec_str_serde_value(config, "capIsNewExceptions", vec![]),
-            cap_is_new_exception_pattern: None,
+            cap_is_new_exception_pattern: regex_serde_value(config, "capIsNewExceptionPattern"),
             properties: bool_serde_value(config, "properties"),
         }))
     }
@@ -460,11 +473,10 @@ impl Rule for NewCap {
 
                 let allowed = *capitalization != GetCapResult::Lower
                     || is_cap_allowed_expression(
-                        callee,
                         short_name,
                         name,
                         &self.new_is_cap_exceptions,
-                        &self.new_is_cap_exception_pattern,
+                        self.new_is_cap_exception_pattern.as_ref(),
                     )
                     || (!self.properties && short_name != name);
 
@@ -490,11 +502,10 @@ impl Rule for NewCap {
 
                 let allowed = *capitalization != GetCapResult::Upper
                     || is_cap_allowed_expression(
-                        callee,
                         short_name,
                         name,
                         &caps_is_new_exceptions,
-                        &self.cap_is_new_exception_pattern,
+                        self.cap_is_new_exception_pattern.as_ref(),
                     )
                     || (!self.properties && short_name != name);
 
@@ -613,11 +624,10 @@ fn extract_name_from_expression(expression: &Expression) -> Option<CompactStr> {
 }
 
 fn is_cap_allowed_expression(
-    expression: &Expression<'_>,
     short_name: &CompactStr,
     name: &CompactStr,
-    exceptions: &Vec<CompactStr>,
-    patterns: &Option<Regex>,
+    exceptions: &[CompactStr],
+    patterns: Option<&Regex>,
 ) -> bool {
     if exceptions.contains(name) || exceptions.contains(short_name) {
         return true;
@@ -626,6 +636,10 @@ fn is_cap_allowed_expression(
     if name == "Date.UTC" {
         return true;
     }
+
+    if let Some(pattern) = &patterns {
+        return pattern.find(name).is_some();
+    };
 
     false
 }
@@ -695,28 +709,28 @@ fn test() {
             "var x = Foo(42);",
             Some(serde_json::json!([{ "capIsNew": true, "capIsNewExceptions": ["Foo"] }])),
         ),
-        // ("var x = Foo(42);", Some(serde_json::json!([{ "capIsNewExceptionPattern": "^Foo" }]))),
+        ("var x = Foo(42);", Some(serde_json::json!([{ "capIsNewExceptionPattern": "^Foo" }]))),
         (
             "var x = new foo(42);",
             Some(serde_json::json!([{ "newIsCap": true, "newIsCapExceptions": ["foo"] }])),
         ),
-        // ("var x = new foo(42);", Some(serde_json::json!([{ "newIsCapExceptionPattern": "^foo" }]))),
+        ("var x = new foo(42);", Some(serde_json::json!([{ "newIsCapExceptionPattern": "^foo" }]))),
         ("var x = Object(42);", Some(serde_json::json!([{ "capIsNewExceptions": ["Foo"] }]))),
         ("var x = Foo.Bar(42);", Some(serde_json::json!([{ "capIsNewExceptions": ["Bar"] }]))),
         ("var x = Foo.Bar(42);", Some(serde_json::json!([{ "capIsNewExceptions": ["Foo.Bar"] }]))),
-        // (
-        //     "var x = Foo.Bar(42);",
-        //     Some(serde_json::json!([{ "capIsNewExceptionPattern": "^Foo\\.." }])),
-        // ),
+        (
+            "var x = Foo.Bar(42);",
+            Some(serde_json::json!([{ "capIsNewExceptionPattern": "^Foo\\.." }])),
+        ),
         ("var x = new foo.bar(42);", Some(serde_json::json!([{ "newIsCapExceptions": ["bar"] }]))),
         (
             "var x = new foo.bar(42);",
             Some(serde_json::json!([{ "newIsCapExceptions": ["foo.bar"] }])),
         ),
-        // (
-        //     "var x = new foo.bar(42);",
-        //     Some(serde_json::json!([{ "newIsCapExceptionPattern": "^foo\\.." }])),
-        // ),
+        (
+            "var x = new foo.bar(42);",
+            Some(serde_json::json!([{ "newIsCapExceptionPattern": "^foo\\.." }])),
+        ),
         ("var x = new foo.bar(42);", Some(serde_json::json!([{ "properties": false }]))),
         ("var x = Foo.bar(42);", Some(serde_json::json!([{ "properties": false }]))),
         (
