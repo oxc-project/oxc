@@ -123,7 +123,7 @@ impl<'a> ParserImpl<'a> {
                 self.parse_using()
             }
             Kind::Using if self.peek_kind().is_binding_identifier() => self.parse_using(),
-            Kind::Async if self.peek_at(Kind::Function) && !self.peek_token().is_on_new_line => {
+            Kind::Async if self.peek_at(Kind::Function) && !self.peek_token().is_on_new_line() => {
                 self.parse_function_declaration(stmt_ctx)
             }
             _ if self.is_ts && self.at_start_of_ts_declaration() => {
@@ -243,7 +243,7 @@ impl<'a> ParserImpl<'a> {
         // [+Await]
         let r#await = if self.at(Kind::Await) {
             if !self.ctx.has_await() {
-                self.error(diagnostics::await_expression(self.cur_token().span()));
+                self.error(diagnostics::await_expression(self.cur_token_span()));
             }
             self.bump_any();
             true
@@ -497,11 +497,11 @@ impl<'a> ParserImpl<'a> {
     fn parse_throw_statement(&mut self) -> Result<Statement<'a>> {
         let span = self.start_span();
         self.bump_any(); // advance `throw`
-        if self.cur_token().is_on_new_line {
+        if self.cur_token().is_on_new_line() {
             self.error(diagnostics::illegal_newline(
                 "throw",
                 self.end_span(span),
-                self.cur_token().span(),
+                self.cur_token_span(),
             ));
         }
         let argument = self.parse_expr()?;

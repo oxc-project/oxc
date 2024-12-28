@@ -53,12 +53,12 @@ impl Token {
     }
 
     #[inline]
-    pub(super) fn span(&self, long_ends: &FxHashMap<u32, u32>) -> Span {
+    pub fn span(&self, long_ends: &FxHashMap<u32, u32>) -> Span {
         Span::new(self.start, self.end(long_ends))
     }
 
     #[inline]
-    pub(super) fn set_end(&mut self, end: u32, long_ends: &mut FxHashMap<u32, u32>) {
+    pub fn set_end(&mut self, end: u32, long_ends: &mut FxHashMap<u32, u32>) {
         if let Ok(len) = u16::try_from(end - self.start) {
             self.len = len;
         } else {
@@ -70,7 +70,7 @@ impl Token {
     }
 
     #[inline]
-    pub(super) fn end(&self, long_ends: &FxHashMap<u32, u32>) -> u32 {
+    pub fn end(&self, long_ends: &FxHashMap<u32, u32>) -> u32 {
         if self.len != u16::MAX {
             self.start + u32::from(self.len)
         } else {

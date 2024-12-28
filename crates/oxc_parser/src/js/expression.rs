@@ -75,7 +75,7 @@ impl<'a> ParserImpl<'a> {
         let cur = self.cur_kind();
         if !cur.is_binding_identifier() {
             let err = if cur.is_reserved_keyword() {
-                diagnostics::identifier_reserved_word(self.cur_token().span(), cur.to_str())
+                diagnostics::identifier_reserved_word(self.cur_token_span(), cur.to_str())
             } else {
                 self.unexpected()
             };
@@ -296,7 +296,7 @@ impl<'a> ParserImpl<'a> {
             }
             _ => unreachable!(),
         }
-        .map_err(|err| diagnostics::invalid_number(err, token.span()))?;
+        .map_err(|err| diagnostics::invalid_number(err, self.cur_token_span()))?;
         let base = match token.kind {
             Kind::Decimal => NumberBase::Decimal,
             Kind::Float => NumberBase::Float,
@@ -329,7 +329,7 @@ impl<'a> ParserImpl<'a> {
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
         let _value = parse_big_int(src, token.kind, token.has_separator())
-            .map_err(|err| diagnostics::invalid_number(err, token.span()))?;
+            .map_err(|err| diagnostics::invalid_number(err, self.cur_token_span()))?;
         self.bump_any();
         Ok(self.ast.big_int_literal(self.end_span(span), raw, base))
     }
@@ -341,7 +341,7 @@ impl<'a> ParserImpl<'a> {
         let pattern_start = self.cur_token().start + 1; // +1 to exclude left `/`
         let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
         let flags_start = pattern_end + 1; // +1 to include right `/`
-        let flags_text = &self.source_text[flags_start as usize..self.cur_token().end as usize];
+        let flags_text = &self.source_text[flags_start as usize..self.cur_token_end() as usize];
         let raw = self.cur_src();
         self.bump_any();
         // Parse pattern if options is enabled and also flags are valid
@@ -440,7 +440,7 @@ impl<'a> ParserImpl<'a> {
     ///     ,
     ///    Elision ,
     pub(crate) fn parse_elision(&mut self) -> ArrayExpressionElement<'a> {
-        self.ast.array_expression_element_elision(self.cur_token().span())
+        self.ast.array_expression_element_elision(self.cur_token_span())
     }
 
     /// Section [Template Literal](https://tc39.es/ecma262/#prod-TemplateLiteral)
@@ -689,7 +689,7 @@ impl<'a> ParserImpl<'a> {
                 Kind::LBrack if !self.ctx.has_decorator() => {
                     self.parse_computed_member_expression(lhs_span, lhs, false)?
                 }
-                Kind::Bang if !self.cur_token().is_on_new_line && self.is_ts => {
+                Kind::Bang if !self.cur_token().is_on_new_line() && self.is_ts => {
                     self.bump_any();
                     self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs)
                 }
@@ -926,7 +926,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let lhs = self.parse_lhs_expression_or_higher()?;
         // ++ -- postfix update expressions
-        if self.cur_kind().is_update_operator() && !self.cur_token().is_on_new_line {
+        if self.cur_kind().is_update_operator() && !self.cur_token().is_on_new_line() {
             let operator = map_update_operator(self.cur_kind());
             self.bump_any();
             let lhs = SimpleAssignmentTarget::cover(lhs, self)?;
@@ -1028,7 +1028,7 @@ impl<'a> ParserImpl<'a> {
             }
 
             if self.is_ts && matches!(kind, Kind::As | Kind::Satisfies) {
-                if self.cur_token().is_on_new_line {
+                if self.cur_token().is_on_new_line() {
                     break;
                 }
                 self.bump_any();
@@ -1157,7 +1157,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_await_expression(&mut self, lhs_span: Span) -> Result<Expression<'a>> {
         let span = self.start_span();
         if !self.ctx.has_await() {
-            self.error(diagnostics::await_expression(self.cur_token().span()));
+            self.error(diagnostics::await_expression(self.cur_token_span()));
         }
         self.bump_any();
         let argument = self.context(Context::Await, Context::empty(), |p| {
@@ -1214,7 +1214,7 @@ impl<'a> ParserImpl<'a> {
                 return false;
             }
 
-            return !peek_token.is_on_new_line && peek_token.kind.is_after_await_or_yield();
+            return !peek_token.is_on_new_line() && peek_token.kind.is_after_await_or_yield();
         }
         false
     }
@@ -1229,7 +1229,7 @@ impl<'a> ParserImpl<'a> {
             if self.ctx.has_yield() {
                 return true;
             }
-            return !peek_token.is_on_new_line && peek_token.kind.is_after_await_or_yield();
+            return !peek_token.is_on_new_line() && peek_token.kind.is_after_await_or_yield();
         }
         false
     }

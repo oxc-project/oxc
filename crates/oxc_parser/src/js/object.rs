@@ -56,7 +56,7 @@ impl<'a> ParserImpl<'a> {
             // AsyncGeneratorMethod
             Kind::Async
                 if (class_element_name || peek_kind == Kind::Star)
-                    && !self.peek_token().is_on_new_line =>
+                    && !self.peek_token().is_on_new_line() =>
             {
                 self.parse_property_definition_method()
             }
@@ -69,7 +69,7 @@ impl<'a> ParserImpl<'a> {
                     && modifier_kind.is_modifier_kind()
                     && peek_kind.is_identifier_or_keyword() =>
             {
-                if let Ok(modifier) = Modifier::try_from(self.cur_token()) {
+                if let Ok(modifier) = Modifier::try_from_token(self.cur_token(), &self.lexer) {
                     self.error(diagnostics::modifier_cannot_be_used_here(&modifier));
                 } else {
                     #[cfg(debug_assertions)]

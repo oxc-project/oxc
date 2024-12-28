@@ -57,7 +57,7 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::Async) {
             let second_token = self.peek_token();
             let second = second_token.kind;
-            if second_token.is_on_new_line {
+            if second_token.is_on_new_line() {
                 return Tristate::False;
             }
             if second != Kind::LParen && second != Kind::LAngle {
@@ -185,7 +185,7 @@ impl<'a> ParserImpl<'a> {
             let first = first_token.kind;
             // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
             // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
-            if first_token.is_on_new_line || first == Kind::Arrow {
+            if first_token.is_on_new_line() || first == Kind::Arrow {
                 return Tristate::False;
             }
             // Check for un-parenthesized AsyncArrowFunction
@@ -230,8 +230,8 @@ impl<'a> ParserImpl<'a> {
 
         self.ctx = self.ctx.and_await(has_await);
 
-        if self.cur_token().is_on_new_line {
-            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
+        if self.cur_token().is_on_new_line() {
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token_span()));
         }
 
         self.expect(Kind::Arrow)?;
@@ -262,8 +262,8 @@ impl<'a> ParserImpl<'a> {
 
         self.ctx = self.ctx.and_await(has_await);
 
-        if self.cur_token().is_on_new_line {
-            self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
+        if self.cur_token().is_on_new_line() {
+            self.error(diagnostics::lineterminator_before_arrow(self.cur_token_span()));
         }
 
         self.expect(Kind::Arrow)?;

@@ -90,8 +90,16 @@ pub struct Lexer<'a> {
     /// `None` is saved when the string contains an invalid escape sequence.
     pub escaped_templates: FxHashMap<u32, Option<&'a str>>,
 
+    /// Ends of long tokens, indexed by [Token::start] when [Token::len] is [u16::MAX].
+    long_token_ends: FxHashMap<u32, u32>,
+
     /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
     multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
+
+    /// Flag indicating whether `self.token` is allowed to start at 0.
+    /// It's used in debug mode to check if `self.token.start` has been set when producing the next token.
+    #[cfg(debug_assertions)]
+    is_at_first_token: bool,
 }
 
 impl<'a> Lexer<'a> {
@@ -120,7 +128,10 @@ impl<'a> Lexer<'a> {
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
+            long_token_ends: FxHashMap::default(),
             multi_line_comment_end_finder: None,
+            #[cfg(debug_assertions)]
+            is_at_first_token: true,
         }
     }
 
@@ -162,6 +173,10 @@ impl<'a> Lexer<'a> {
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
         self.errors.truncate(checkpoint.errors_pos);
         self.source.set_position(checkpoint.position);
+        #[cfg(debug_assertions)]
+        {
+            self.is_at_first_token = checkpoint.token.start == 0;
+        }
         self.token = checkpoint.token;
         self.lookahead.clear();
     }
@@ -216,12 +231,35 @@ impl<'a> Lexer<'a> {
 
     fn finish_next(&mut self, kind: Kind) -> Token {
         self.token.kind = kind;
-        self.token.end = self.offset();
-        debug_assert!(self.token.start <= self.token.end);
+        let end = self.offset();
+        self.token.set_end(end, &mut self.long_token_ends);
+        debug_assert!(self.token.start <= end);
+        #[cfg(debug_assertions)]
+        {
+            if !self.is_at_first_token {
+                assert_ne!(
+                    self.token.start, 0,
+                    "expect self.token.start to be set before producing {:?}",
+                    self.token
+                );
+            }
+            // The token starting at 0 can still be re-lexed starting at 0 (`/` to `/regex/`)
+            self.is_at_first_token = self.token.start == 0;
+        }
         let token = self.token;
         self.trivia_builder.handle_token(token);
         self.token = Token::default();
         token
+    }
+
+    #[inline]
+    pub fn token_end(&self, token: Token) -> u32 {
+        token.end(&self.long_token_ends)
+    }
+
+    #[inline]
+    pub fn token_span(&self, token: Token) -> Span {
+        token.span(&self.long_token_ends)
     }
 
     // ---------- Private Methods ---------- //
