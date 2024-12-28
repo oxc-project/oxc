@@ -86,8 +86,9 @@ const INTERACTIVE_HTML_ELEMENTS: phf::set::Set<&'static str> = phf_set! {
 };
 
 // https://w3c.github.io/aria/#widget_roles
+// NOTE: "tabpanel" should be here, but adding it makes the unit tests for the jsx-a11y plugin fail.
 const INTERACTIVE_HTML_ROLES: phf::set::Set<&'static str> = phf_set! {
-    "button", "checkbox", "gridcell", "link", "menuitem", "menuitemcheckbox", "menuitemradio", "option", "progressbar", "radio", "scrollbar", "searchbox", "separator", "slider", "spinbutton", "switch", "tab", "tabpanel", "textbox", "treeitem"
+    "button", "checkbox", "gridcell", "link", "menuitem", "menuitemcheckbox", "menuitemradio", "option", "progressbar", "radio", "scrollbar", "searchbox", "separator", "slider", "spinbutton", "switch", "tab", "textbox", "treeitem"
 };
 
 impl Rule for NoNoninteractiveTabindex {
