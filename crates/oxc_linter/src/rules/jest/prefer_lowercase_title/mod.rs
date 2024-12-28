@@ -9,7 +9,9 @@ mod tests;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{parse_jest_fn_call, JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode},
+    utils::{
+        parse_jest_fn_call, JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode,
+    },
 };
 
 fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
