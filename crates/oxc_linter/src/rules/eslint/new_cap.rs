@@ -155,7 +155,7 @@ declare_oxc_lint!(
     /// The option `newIsCapExceptionPattern` and `capIsNewExceptionPattern` are implemented with
     /// the [rust regex syntax](https://docs.rs/regex/latest/regex/). Many JavaScript features
     /// are not supported (Lookahead, Lookbehinds, ...).
-    /// 
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
