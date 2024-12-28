@@ -155,7 +155,7 @@ declare_oxc_lint!(
     /// The option `newIsCapExceptionPattern` and `capIsNewExceptionPattern` are implemented with
     /// the [rust regex syntax](https://docs.rs/regex/latest/regex/). Many JavaScript features
     /// are not supported (Lookahead, Lookbehinds, ...).
-    /// 
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -446,11 +446,6 @@ declare_oxc_lint!(
     /// /*eslint new-cap: ["error", { "properties": false }]*/
     ///
     /// var friend = new person.acquaintance();
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
     /// ```
     NewCap,
     style,
