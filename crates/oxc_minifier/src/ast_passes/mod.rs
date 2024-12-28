@@ -3,6 +3,7 @@ use oxc_ast::ast::*;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 mod collapse_variable_declarations;
+mod convert_to_dotted_properties;
 mod exploit_assigns;
 mod normalize;
 mod peephole_fold_constants;
@@ -14,6 +15,7 @@ mod remove_syntax;
 mod statement_fusion;
 
 pub use collapse_variable_declarations::CollapseVariableDeclarations;
+pub use convert_to_dotted_properties::ConvertToDottedProperties;
 pub use exploit_assigns::ExploitAssigns;
 pub use normalize::Normalize;
 pub use peephole_fold_constants::PeepholeFoldConstants;
@@ -73,6 +75,7 @@ pub struct LatePeepholeOptimizations {
     x4_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax,
     x5_peephole_replace_known_methods: PeepholeReplaceKnownMethods,
     x6_peephole_fold_constants: PeepholeFoldConstants,
+    x7_convert_to_dotted_properties: ConvertToDottedProperties,
 }
 
 impl LatePeepholeOptimizations {
@@ -88,6 +91,7 @@ impl LatePeepholeOptimizations {
             ),
             x5_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
             x6_peephole_fold_constants: PeepholeFoldConstants::new(),
+            x7_convert_to_dotted_properties: ConvertToDottedProperties::new(),
         }
     }
 
@@ -99,6 +103,7 @@ impl LatePeepholeOptimizations {
         self.x4_peephole_substitute_alternate_syntax.changed = false;
         self.x5_peephole_replace_known_methods.changed = false;
         self.x6_peephole_fold_constants.changed = false;
+        self.x7_convert_to_dotted_properties.changed = false;
     }
 
     fn changed(&self) -> bool {
@@ -109,6 +114,7 @@ impl LatePeepholeOptimizations {
             || self.x4_peephole_substitute_alternate_syntax.changed
             || self.x5_peephole_replace_known_methods.changed
             || self.x6_peephole_fold_constants.changed
+            || self.x7_convert_to_dotted_properties.changed
     }
 
     pub fn run_in_loop<'a>(
@@ -183,6 +189,14 @@ impl<'a> Traverse<'a> for LatePeepholeOptimizations {
         self.x6_peephole_fold_constants.exit_expression(expr, ctx);
     }
 
+    fn enter_member_expression(
+        &mut self,
+        expr: &mut MemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x7_convert_to_dotted_properties.enter_member_expression(expr, ctx);
+    }
+
     fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x4_peephole_substitute_alternate_syntax.enter_call_expression(expr, ctx);
     }
@@ -204,6 +218,7 @@ pub struct PeepholeOptimizations {
     x4_peephole_replace_known_methods: PeepholeReplaceKnownMethods,
     x5_peephole_remove_dead_code: PeepholeRemoveDeadCode,
     x6_peephole_fold_constants: PeepholeFoldConstants,
+    x7_convert_to_dotted_properties: ConvertToDottedProperties,
 }
 
 impl PeepholeOptimizations {
@@ -217,6 +232,7 @@ impl PeepholeOptimizations {
             x4_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
             x5_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
             x6_peephole_fold_constants: PeepholeFoldConstants::new(),
+            x7_convert_to_dotted_properties: ConvertToDottedProperties::new(),
         }
     }
 }
@@ -260,6 +276,14 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.x4_peephole_replace_known_methods.exit_expression(expr, ctx);
         self.x5_peephole_remove_dead_code.exit_expression(expr, ctx);
         self.x6_peephole_fold_constants.exit_expression(expr, ctx);
+    }
+
+    fn enter_member_expression(
+        &mut self,
+        expr: &mut MemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x7_convert_to_dotted_properties.enter_member_expression(expr, ctx);
     }
 
     fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
