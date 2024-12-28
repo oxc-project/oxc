@@ -16,8 +16,8 @@ use crate::{
 
 fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Tabindex should only be declared on interactive elements")
-        .with_help("Tabindex attribute should be removed")
+    OxcDiagnostic::warn("tabIndex should only be declared on interactive elements")
+        .with_help("tabIndex attribute should be removed")
         .with_label(span)
 }
 
@@ -111,6 +111,7 @@ impl Rule for NoNoninteractiveTabindex {
                 if let Some(JSXAttributeItem::Attribute(role_attr)) =
                     has_jsx_prop_ignore_case(jsx_el, "role")
                 {
+                    println!("allow_expression_values: {}", self.allow_expression_values);
                     if self.allow_expression_values {
                         return;
                     }
@@ -154,7 +155,7 @@ impl Rule for NoNoninteractiveTabindex {
                         v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
                     }),
                 allow_expression_values: config
-                    .get("allow_expression_values")
+                    .get("allowExpressionValues")
                     .and_then(serde_json::Value::as_bool)
                     .unwrap_or(default.allow_expression_values),
             }
