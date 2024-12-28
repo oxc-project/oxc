@@ -144,25 +144,25 @@ impl Rule for NoNoninteractiveTabindex {
         let Some(config) = value.get(0) else {
             return default;
         };
-        
-            Self(Box::new(NoNoninteractiveTabindexConfig {
-                roles: config
-                    .get("roles")
-                    .and_then(serde_json::Value::as_array)
-                    .map_or(default.0.roles, |v| {
-                        v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
-                    }),
-                tags: config
-                    .get("tags")
-                    .and_then(serde_json::Value::as_array)
-                    .map_or(default.0.tags, |v| {
-                        v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
-                    }),
-                allow_expression_values: config
-                    .get("allowExpressionValues")
-                    .and_then(serde_json::Value::as_bool)
-                    .unwrap_or(default.0.allow_expression_values),
-            }))
+
+        Self(Box::new(NoNoninteractiveTabindexConfig {
+            roles: config
+                .get("roles")
+                .and_then(serde_json::Value::as_array)
+                .map_or(default.0.roles, |v| {
+                    v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
+                }),
+            tags: config
+                .get("tags")
+                .and_then(serde_json::Value::as_array)
+                .map_or(default.0.tags, |v| {
+                    v.iter().map(|v| CompactStr::new(v.as_str().unwrap())).collect()
+                }),
+            allow_expression_values: config
+                .get("allowExpressionValues")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(default.0.allow_expression_values),
+        }))
     }
 }
 
