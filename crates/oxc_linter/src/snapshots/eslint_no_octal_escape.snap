@@ -122,31 +122,6 @@ snapshot_kind: text
    · ───────
    ╰────
 
-  × Invalid Unicode escape sequence
-   ╭─[no_octal_escape.tsx:1:3]
- 1 │ #\0\01'
-   ·   ─
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[no_octal_escape.tsx:1:5]
- 1 │ #\0\01'
-   ·     ─
-   ╰────
-
-  × Unterminated string
-   ╭─[no_octal_escape.tsx:1:7]
- 1 │ #\0\01'
-   ·       ─
-   ╰────
-
-  × Expected `in` but found `Unknown`
-   ╭─[no_octal_escape.tsx:1:7]
- 1 │ #\0\01'
-   ·       ┬
-   ·       ╰── `in` expected
-   ╰────
-
   ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
    ╭─[no_octal_escape.tsx:1:1]
  1 │ '\0 \01'
@@ -339,11 +314,10 @@ snapshot_kind: text
    · ───────
    ╰────
 
-  × Unterminated string
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
    ╭─[no_octal_escape.tsx:1:1]
- 1 │ '\\
-   · ────
- 2 │             \\1'
+ 1 │ '\\n\1'
+   · ───────
    ╰────
 
   ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.

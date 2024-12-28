@@ -57,7 +57,7 @@ impl Rule for NoOctalEscape {
 
 lazy_static! {
     static ref OCTAL_ESCAPE_PATTERN: Regex =
-        Regex::new(r"^(?:[^\\]|\\.)*?\\([0-3][0-7]{1,2}|[4-7][0-7]|(08|09)|[1-7])").unwrap();
+        Regex::new(r"(?s)^(?:[^\\]|\\.)*?\\([0-3][0-7]{1,2}|[4-7][0-7]|(08|09)|[1-7])").unwrap();
 }
 
 #[test]
@@ -122,7 +122,9 @@ fn test() {
         r#"var foo = "\\\751";"#,
         r"'\0\1'",
         r"'\0 \1'",
-        r"#\0\01'",
+        // oxc itself throws the error below:
+        // Octal escape sequences are not allowed. Use the syntax '\x01'.
+        // r"\0\01'",
         r"'\0 \01'",
         r"'\0a\1'",
         r"'\0a\01'",
@@ -155,8 +157,7 @@ fn test() {
         r"'\\\1'",
         r"'\\\01'",
         r"'\\\08'",
-        r"'\\
-            \\1'",
+        r"'\\n\1'",
         r"'\01\02'",
         r"'\02\01'",
         r"'\01\2'",
