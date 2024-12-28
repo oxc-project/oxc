@@ -102,39 +102,40 @@ impl Rule for NoNoninteractiveTabindex {
             return;
         };
 
-        if let Some(JSXAttributeValue::StringLiteral(tabindex)) = &tabindex_attr.value {
-            if tabindex.value == "-1" {
-                return;
-            }
+        let Some(JSXAttributeValue::StringLiteral(tabindex)) = &tabindex_attr.value else {
+            return;
+        };
 
-            let component = &get_element_type(ctx, jsx_el);
+        if tabindex.value == "-1" {
+            return;
+        }
 
-            if INTERACTIVE_HTML_ELEMENTS.contains(component) {
-                return;
-            }
+        let component = &get_element_type(ctx, jsx_el);
 
-            let Some(JSXAttributeItem::Attribute(role_attr)) =
-                has_jsx_prop_ignore_case(jsx_el, "role")
-            else {
-                // if the component is not an interactive element and has no role, the tabindex is invalid.
-                ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
-                return;
-            };
+        if INTERACTIVE_HTML_ELEMENTS.contains(component) {
+            return;
+        }
 
-            if self.0.allow_expression_values {
-                return;
-            }
+        let Some(JSXAttributeItem::Attribute(role_attr)) = has_jsx_prop_ignore_case(jsx_el, "role")
+        else {
+            // if the component is not an interactive element and has no role, the tabindex is invalid.
+            ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
+            return;
+        };
 
-            let Some(JSXAttributeValue::StringLiteral(role)) = &role_attr.value else {
-                ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
-                return;
-            };
+        if self.0.allow_expression_values {
+            return;
+        }
 
-            if !INTERACTIVE_HTML_ROLES.contains(role.value.as_str())
-                && !self.0.roles.contains(&CompactStr::new(role.value.as_str()))
-            {
-                ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
-            }
+        let Some(JSXAttributeValue::StringLiteral(role)) = &role_attr.value else {
+            ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
+            return;
+        };
+
+        if !INTERACTIVE_HTML_ROLES.contains(role.value.as_str())
+            && !self.0.roles.contains(&CompactStr::new(role.value.as_str()))
+        {
+            ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));
         }
     }
 
