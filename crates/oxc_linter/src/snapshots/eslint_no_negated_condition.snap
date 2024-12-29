@@ -45,6 +45,48 @@ snapshot_kind: text
   help: Remove the negation operator and switch the consequent and alternate branches.
 
   ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:5]
+ 1 │ if (!a) {;} else {;}
+   ·     ──
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:5]
+ 1 │ if (a != b) {;} else {;}
+   ·     ──────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:5]
+ 1 │ if (a !== b) {;} else {;}
+   ·     ───────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ !a ? b : c
+   · ──
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ a != b ? c : d
+   · ──────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
+   ╭─[no_negated_condition.tsx:1:1]
+ 1 │ a !== b ? c : d
+   · ───────
+   ╰────
+  help: Remove the negation operator and switch the consequent and alternate branches.
+
+  ⚠ eslint(no-negated-condition): Unexpected negated condition.
    ╭─[no_negated_condition.tsx:1:4]
  1 │ (( !a )) ? b : c
    ·    ──
@@ -125,47 +167,5 @@ snapshot_kind: text
    ╭─[no_negated_condition.tsx:1:2]
  1 │ (!!a) ? b() : c();
    ·  ───
-   ╰────
-  help: Remove the negation operator and switch the consequent and alternate branches.
-
-  ⚠ eslint(no-negated-condition): Unexpected negated condition.
-   ╭─[no_negated_condition.tsx:1:5]
- 1 │ if (!a) {;} else {;}
-   ·     ──
-   ╰────
-  help: Remove the negation operator and switch the consequent and alternate branches.
-
-  ⚠ eslint(no-negated-condition): Unexpected negated condition.
-   ╭─[no_negated_condition.tsx:1:5]
- 1 │ if (a != b) {;} else {;}
-   ·     ──────
-   ╰────
-  help: Remove the negation operator and switch the consequent and alternate branches.
-
-  ⚠ eslint(no-negated-condition): Unexpected negated condition.
-   ╭─[no_negated_condition.tsx:1:5]
- 1 │ if (a !== b) {;} else {;}
-   ·     ───────
-   ╰────
-  help: Remove the negation operator and switch the consequent and alternate branches.
-
-  ⚠ eslint(no-negated-condition): Unexpected negated condition.
-   ╭─[no_negated_condition.tsx:1:1]
- 1 │ !a ? b : c
-   · ──
-   ╰────
-  help: Remove the negation operator and switch the consequent and alternate branches.
-
-  ⚠ eslint(no-negated-condition): Unexpected negated condition.
-   ╭─[no_negated_condition.tsx:1:1]
- 1 │ a != b ? c : d
-   · ──────
-   ╰────
-  help: Remove the negation operator and switch the consequent and alternate branches.
-
-  ⚠ eslint(no-negated-condition): Unexpected negated condition.
-   ╭─[no_negated_condition.tsx:1:1]
- 1 │ a !== b ? c : d
-   · ───────
    ╰────
   help: Remove the negation operator and switch the consequent and alternate branches.

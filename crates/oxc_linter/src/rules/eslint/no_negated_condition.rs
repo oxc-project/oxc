@@ -106,20 +106,6 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"if (a) {}",
-        r"if (a) {} else {}",
-        r"if (!a) {}",
-        r"if (!a) {} else if (b) {}",
-        r"if (!a) {} else if (b) {} else {}",
-        r"if (a == b) {}",
-        r"if (a == b) {} else {}",
-        r"if (a != b) {}",
-        r"if (a != b) {} else if (b) {}",
-        r"if (a != b) {} else if (b) {} else {}",
-        r"if (a !== b) {}",
-        r"if (a === b) {} else {}",
-        r"a ? b : c",
-        // Test cases from ESLint
         "if (a) {}",
         "if (a) {} else {}",
         "if (!a) {}",
@@ -133,9 +119,30 @@ fn test() {
         "if (a !== b) {}",
         "if (a === b) {} else {}",
         "a ? b : c",
+        // Test cases from eslint-plugin-unicorn
+        r"if (a) {}",
+        r"if (a) {} else {}",
+        r"if (!a) {}",
+        r"if (!a) {} else if (b) {}",
+        r"if (!a) {} else if (b) {} else {}",
+        r"if (a == b) {}",
+        r"if (a == b) {} else {}",
+        r"if (a != b) {}",
+        r"if (a != b) {} else if (b) {}",
+        r"if (a != b) {} else if (b) {} else {}",
+        r"if (a !== b) {}",
+        r"if (a === b) {} else {}",
+        r"a ? b : c",
     ];
 
     let fail = vec![
+        "if (!a) {;} else {;}",
+        "if (a != b) {;} else {;}",
+        "if (a !== b) {;} else {;}",
+        "!a ? b : c",
+        "a != b ? c : d",
+        "a !== b ? c : d",
+        // Test cases from eslint-plugin-unicorn
         r"if (!a) {;} else {;}",
         r"if (a != b) {;} else {;}",
         r"if (a !== b) {;} else {;}",
@@ -154,13 +161,6 @@ fn test() {
         r"if(!a) {b()} else {c()}",
         r"if(!!a) b(); else c();",
         r"(!!a) ? b() : c();",
-        // Test cases from ESLint
-        "if (!a) {;} else {;}",
-        "if (a != b) {;} else {;}",
-        "if (a !== b) {;} else {;}",
-        "!a ? b : c",
-        "a != b ? c : d",
-        "a !== b ? c : d",
     ];
 
     Tester::new(NoNegatedCondition::NAME, NoNegatedCondition::CATEGORY, pass, fail)
