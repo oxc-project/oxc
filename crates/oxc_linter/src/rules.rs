@@ -93,6 +93,7 @@ mod eslint {
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_multi_str;
+    pub mod no_negated_condition;
     pub mod no_nested_ternary;
     pub mod no_new;
     pub mod no_new_func;
@@ -321,7 +322,6 @@ mod unicorn {
     pub mod no_length_as_slice_end;
     pub mod no_lonely_if;
     pub mod no_magic_array_flat_depth;
-    pub mod no_negated_condition;
     pub mod no_negation_in_equality_check;
     pub mod no_nested_ternary;
     pub mod no_new_array;
@@ -588,6 +588,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_label_var,
     eslint::no_loss_of_precision,
     eslint::no_magic_numbers,
+    eslint::no_negated_condition,
     eslint::no_multi_str,
     eslint::no_new_func,
     eslint::no_new_native_nonconstructor,
@@ -920,7 +921,6 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_length_as_slice_end,
     unicorn::no_lonely_if,
     unicorn::no_magic_array_flat_depth,
-    unicorn::no_negated_condition,
     unicorn::no_negation_in_equality_check,
     unicorn::no_nested_ternary,
     unicorn::no_new_array,
