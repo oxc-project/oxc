@@ -52,7 +52,7 @@ impl Case for EsbuildTest262Case {
         }
 
         let path = self.workspace_root.join(self.path());
-        let esbuild = Command::new("esbuild")
+        let esbuild = Command::new(self.workspace_root.join("../../esbuild.exe"))
             .arg("--minify-whitespace=true")
             .arg("--minify-syntax=true")
             .arg("--keep-names")
