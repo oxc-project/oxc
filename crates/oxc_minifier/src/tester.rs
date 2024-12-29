@@ -16,7 +16,7 @@ pub fn test<'a, P: CompressorPass<'a>>(
     expected: &'a str,
     pass: &mut P,
 ) {
-    test_impl(allocator, source_text, expected, pass, false);
+    test_impl(allocator, source_text, expected, pass, SourceType::mjs(), false);
 }
 
 pub fn test_impl<'a, P: CompressorPass<'a>>(
@@ -24,10 +24,11 @@ pub fn test_impl<'a, P: CompressorPass<'a>>(
     source_text: &'a str,
     expected: &'a str,
     pass: &mut P,
+    source_type: SourceType,
     remove_whitespace: bool,
 ) {
-    let result = run(allocator, source_text, Some(pass), remove_whitespace);
-    let expected = run::<P>(allocator, expected, None, remove_whitespace);
+    let result = run(allocator, source_text, Some(pass), source_type, remove_whitespace);
+    let expected = run::<P>(allocator, expected, None, source_type, remove_whitespace);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
@@ -35,9 +36,9 @@ fn run<'a, P: CompressorPass<'a>>(
     allocator: &'a Allocator,
     source_text: &'a str,
     pass: Option<&mut P>,
+    source_type: SourceType,
     remove_whitespace: bool,
 ) -> String {
-    let source_type = SourceType::mjs();
     let mut program = Parser::new(allocator, source_text, source_type).parse().program;
 
     if let Some(pass) = pass {
