@@ -85,8 +85,8 @@ const INTERACTIVE_HTML_ELEMENTS: phf::set::Set<&'static str> = phf_set! {
     "a", "audio", "button", "details", "embed", "iframe", "img", "input", "label", "select", "textarea", "video"
 };
 
-// https://w3c.github.io/aria/#widget_roles
-// NOTE: "tabpanel" should be here, but adding it makes the unit tests for the jsx-a11y plugin fail.
+// https://www.w3.org/TR/wai-aria/#widget_roles
+// NOTE: "tabpanel" is not included here because it's technically a section role. It can optionally be considered interactive within the context of a tablist, because its visibility is dynamically controlled by an element with the "tab" aria role. It's included in the recommended jsx-a11y config for this reason.
 const INTERACTIVE_HTML_ROLES: phf::set::Set<&'static str> = phf_set! {
     "button", "checkbox", "gridcell", "link", "menuitem", "menuitemcheckbox", "menuitemradio", "option", "progressbar", "radio", "scrollbar", "searchbox", "separator", "slider", "spinbutton", "switch", "tab", "textbox", "treeitem"
 };
