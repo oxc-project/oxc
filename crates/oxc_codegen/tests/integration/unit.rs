@@ -39,11 +39,6 @@ fn expr() {
     test("delete 2e308", "delete (0, Infinity);\n");
     test_minify("delete 2e308", "delete(1/0);");
 
-    test_minify(
-        r#";'eval("\'\\vstr\\ving\\v\'") === "\\vstr\\ving\\v"'"#,
-        r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
-    );
-
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
 }
 
@@ -437,4 +432,13 @@ fn directive() {
 fn getter_setter() {
     test_minify("({ get [foo]() {} })", "({get[foo](){}});");
     test_minify("({ set [foo]() {} })", "({set[foo](){}});");
+}
+
+#[test]
+fn string() {
+    test_minify(
+        r#";'eval("\'\\vstr\\ving\\v\'") === "\\vstr\\ving\\v"'"#,
+        r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
+    );
+    test_minify(r#"foo("\n")"#, "foo(`\n`);");
 }

@@ -589,9 +589,9 @@ impl<'a> Codegen<'a> {
 
     fn print_quoted_utf16(&mut self, s: &str, allow_backtick: bool) {
         let quote = if self.options.minify {
-            let mut single_cost: u32 = 0;
-            let mut double_cost: u32 = 0;
-            let mut backtick_cost: u32 = 0;
+            let mut single_cost: i32 = 0;
+            let mut double_cost: i32 = 0;
+            let mut backtick_cost: i32 = 0;
             let mut bytes = s.as_bytes().iter().peekable();
             while let Some(b) = bytes.next() {
                 match b {
@@ -642,7 +642,13 @@ impl<'a> Codegen<'a> {
                 '\u{8}' => self.print_str("\\b"), // \b
                 '\u{b}' => self.print_str("\\v"), // \v
                 '\u{c}' => self.print_str("\\f"), // \f
-                '\n' => self.print_str("\\n"),
+                '\n' => {
+                    if quote == b'`' {
+                        self.print_ascii_byte(b'\n');
+                    } else {
+                        self.print_str("\\n");
+                    }
+                }
                 '\r' => self.print_str("\\r"),
                 '\x1B' => self.print_str("\\x1B"),
                 '\\' => self.print_str("\\\\"),
