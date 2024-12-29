@@ -8,6 +8,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn vars_on_top_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("All 'var' declarations must be at the top of the function scope.")
+        .with_help("Consider moving this to the top of the functions scope or using let or const to declare this variable.")
         .with_label(span)
 }
 
