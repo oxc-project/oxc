@@ -146,6 +146,7 @@ impl<'a> Traverse<'a> for LatePeepholeOptimizations {
 
     fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_statement_fusion.exit_function_body(body, ctx);
+        self.x2_peephole_remove_dead_code.exit_function_body(body, ctx);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
@@ -232,6 +233,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.x5_peephole_remove_dead_code.exit_program(program, ctx);
     }
 
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x5_peephole_remove_dead_code.exit_function_body(body, ctx);
+    }
+
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.x2_peephole_minimize_conditions.exit_statements(stmts, ctx);
         self.x5_peephole_remove_dead_code.exit_statements(stmts, ctx);
@@ -298,6 +303,10 @@ impl<'a> Traverse<'a> for DeadCodeElimination {
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x2_peephole_remove_dead_code.exit_program(program, ctx);
+    }
+
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_peephole_remove_dead_code.exit_function_body(body, ctx);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
