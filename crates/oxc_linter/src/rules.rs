@@ -80,6 +80,7 @@ mod eslint {
     pub mod no_ex_assign;
     pub mod no_extend_native;
     pub mod no_extra_boolean_cast;
+    pub mod no_extra_label;
     pub mod no_fallthrough;
     pub mod no_func_assign;
     pub mod no_global_assign;
@@ -540,6 +541,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_classes_per_file,
     eslint::max_lines,
     eslint::max_params,
+    eslint::no_extra_label,
     eslint::no_multi_assign,
     eslint::no_nested_ternary,
     eslint::no_labels,
