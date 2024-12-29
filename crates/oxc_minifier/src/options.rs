@@ -1,5 +1,14 @@
+use oxc_syntax::es_target::ESTarget;
+
 #[derive(Debug, Clone, Copy)]
 pub struct CompressOptions {
+    /// Enable features that are targeted above.
+    ///
+    /// e.g.
+    ///
+    /// * catch optional binding when >= es2019
+    pub target: ESTarget,
+
     /// Remove `debugger;` statements.
     ///
     /// Default `true`
@@ -20,10 +29,10 @@ impl Default for CompressOptions {
 
 impl CompressOptions {
     pub fn all_true() -> Self {
-        Self { drop_debugger: true, drop_console: true }
+        Self { target: ESTarget::ESNext, drop_debugger: true, drop_console: true }
     }
 
     pub fn all_false() -> Self {
-        Self { drop_debugger: false, drop_console: false }
+        Self { target: ESTarget::ESNext, drop_debugger: false, drop_console: false }
     }
 }

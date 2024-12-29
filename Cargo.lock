@@ -1987,6 +1987,7 @@ version = "0.44.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
+ "cow-utils",
  "nonmax",
  "oxc_allocator",
  "oxc_ast_macros",
