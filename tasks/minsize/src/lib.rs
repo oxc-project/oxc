@@ -5,6 +5,7 @@ use std::{
     path::Path,
 };
 
+use cow_utils::CowUtils;
 use flate2::{write::GzEncoder, Compression};
 use humansize::{format_size, DECIMAL};
 use oxc_allocator::Allocator;
@@ -16,28 +17,12 @@ use oxc_span::SourceType;
 use oxc_tasks_common::{project_root, TestFile, TestFiles};
 use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 use rustc_hash::FxHashMap;
-use similar_asserts::assert_eq;
 
 // #[test]
 // #[cfg(any(coverage, coverage_nightly))]
 // fn test() {
 // run().unwrap();
 // }
-
-macro_rules! assert_eq_minified_code {
-    ($left:expr, $right:expr, $($arg:tt)*) => {
-        if $left != $right {
-            let normalized_left = $crate::normalize_minified_code($left);
-            let normalized_right = $crate::normalize_minified_code($right);
-            assert_eq!(normalized_left, normalized_right, $($arg)*);
-        }
-    };
-}
-
-fn normalize_minified_code(code: &str) -> String {
-    use cow_utils::CowUtils;
-    code.cow_replace(";", ";\n").cow_replace(",", ",\n").into_owned()
-}
 
 /// # Panics
 /// # Errors
@@ -147,12 +132,7 @@ fn minify_twice(file: &TestFile) -> String {
     };
     let source_text1 = minify(&file.source_text, source_type, options);
     let source_text2 = minify(&source_text1, source_type, options);
-    assert_eq_minified_code!(
-        &source_text1,
-        &source_text2,
-        "Minification failed for {}",
-        &file.file_name
-    );
+    assert_eq_minified_code(&source_text1, &source_text2, &file.file_name);
     source_text2
 }
 
@@ -180,4 +160,20 @@ fn gzip_size(s: &str) -> usize {
     e.write_all(s.as_bytes()).unwrap();
     let s = e.finish().unwrap();
     s.len()
+}
+
+fn assert_eq_minified_code(s1: &str, s2: &str, filename: &str) {
+    if s1 != s2 {
+        let normalized_left = normalize_minified_code(s1);
+        let normalized_right = normalize_minified_code(s2);
+        similar_asserts::assert_eq!(
+            normalized_left,
+            normalized_right,
+            "Minification failed for {filename}"
+        );
+    }
+}
+
+fn normalize_minified_code(code: &str) -> String {
+    code.cow_replace(";", ";\n").cow_replace(",", ",\n").into_owned()
 }

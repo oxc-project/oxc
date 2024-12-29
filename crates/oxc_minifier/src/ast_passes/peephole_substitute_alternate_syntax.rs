@@ -4,6 +4,7 @@ use oxc_ecmascript::{ToInt32, ToJsString};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
+    identifier::is_identifier_name,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
@@ -86,9 +87,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 
         // Change syntax
         match expr {
-            Expression::ArrowFunctionExpression(arrow_expr) => {
-                self.try_compress_arrow_expression(arrow_expr, ctx);
-            }
+            Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
             Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
             Expression::BinaryExpression(e) => self.try_compress_type_of_equal_string(e, ctx),
             _ => {}
@@ -101,12 +100,15 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
             Expression::AssignmentExpression(e) => Self::try_compress_assignment_expression(e, ctx),
             Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx),
             Expression::NewExpression(e) => Self::try_fold_new_expression(e, ctx),
+            Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
+            Expression::BinaryExpression(e) => Self::try_compress_typeof_undefined(e, ctx),
+            Expression::ComputedMemberExpression(e) => {
+                self.try_compress_computed_member_expression(e, ctx)
+            }
             Expression::CallExpression(e) => {
                 Self::try_fold_literal_constructor_call_expression(e, ctx)
                     .or_else(|| Self::try_fold_simple_function_call(e, ctx))
             }
-            Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
-            Expression::BinaryExpression(e) => Self::try_compress_typeof_undefined(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -714,7 +716,9 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     // https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs
     #[allow(clippy::cast_lossless)]
     fn try_compress_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
-        use oxc_syntax::identifier::is_identifier_name;
+        if self.in_fixed_loop {
+            return;
+        }
         let PropertyKey::StringLiteral(s) = key else { return };
         if match ctx.parent() {
             Ancestor::ObjectPropertyKey(key) => *key.computed(),
@@ -742,6 +746,26 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 ));
             }
         }
+    }
+
+    /// `foo['bar']` -> `foo.bar`
+    fn try_compress_computed_member_expression(
+        &self,
+        e: &mut ComputedMemberExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        if self.in_fixed_loop {
+            return None;
+        }
+        let Expression::StringLiteral(s) = &e.expression else { return None };
+        if !is_identifier_name(&s.value) {
+            return None;
+        }
+        let property = ctx.ast.identifier_name(s.span, s.value.clone());
+        let object = ctx.ast.move_expression(&mut e.object);
+        Some(Expression::StaticMemberExpression(
+            ctx.ast.alloc_static_member_expression(e.span, object, property, false),
+        ))
     }
 }
 
@@ -1239,5 +1263,11 @@ mod test {
     fn test_object_key() {
         test("({ '0': _, 'a': _ })", "({ 0: _, a: _ })");
         test_same("({ '1.1': _, '😊': _, 'a.a': _ })");
+    }
+
+    #[test]
+    fn test_computed_to_member_expression() {
+        test("x['true']", "x.true");
+        test_same("x['😊']");
     }
 }
