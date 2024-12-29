@@ -22,7 +22,7 @@
     "oxc"
   ],
   "engines": {
-    "vscode": "^1.96.0"
+    "vscode": "^1.93.0"
   },
   "sponsor": {
     "url": "https://github.com/sponsors/boshen"
@@ -146,7 +146,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.9",
     "@types/node": "^22.0.0",
-    "@types/vscode": "1.96.0",
+    "@types/vscode": "1.93.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.0.0",
