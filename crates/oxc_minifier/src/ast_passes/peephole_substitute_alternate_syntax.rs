@@ -4,19 +4,21 @@ use oxc_ecmascript::{ToInt32, ToJsString};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
+    es_target::ESTarget,
     identifier::is_identifier_name,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{node_util::Ctx, CompressorPass};
+use crate::{node_util::Ctx, CompressOptions, CompressorPass};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 pub struct PeepholeSubstituteAlternateSyntax {
+    options: CompressOptions,
     /// Do not compress syntaxes that are hard to analyze inside the fixed loop.
     /// e.g. Do not compress `undefined -> void 0`, `true` -> `!0`.
     /// Opposite of `late` in Closure Compiler.
@@ -43,6 +45,10 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
     ) {
         // We may fold `void 1` to `void 0`, so compress it after visiting
         self.compress_return_statement(stmt);
+    }
+
+    fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.compress_catch_clause(catch);
     }
 
     fn exit_variable_declaration(
@@ -118,8 +124,8 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 }
 
 impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
-    pub fn new(in_fixed_loop: bool) -> Self {
-        Self { in_fixed_loop, in_define_export: false, changed: false }
+    pub fn new(options: CompressOptions, in_fixed_loop: bool) -> Self {
+        Self { options, in_fixed_loop, in_define_export: false, changed: false }
     }
 
     /* Utilities */
@@ -767,6 +773,20 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             ctx.ast.alloc_static_member_expression(e.span, object, property, false),
         ))
     }
+
+    fn compress_catch_clause(&mut self, catch: &mut CatchClause<'a>) {
+        if catch.body.body.is_empty()
+            && !self.in_fixed_loop
+            && self.options.target >= ESTarget::ES2019
+        {
+            if let Some(param) = &catch.param {
+                if param.pattern.kind.is_binding_identifier() {
+                    catch.param = None;
+                    self.changed = true;
+                }
+            };
+        }
+    }
 }
 
 /// Port from <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
@@ -774,11 +794,12 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 mod test {
     use oxc_allocator::Allocator;
 
-    use crate::tester;
+    use crate::{tester, CompressOptions};
 
     fn test(source_text: &str, expected: &str) {
         let allocator = Allocator::default();
-        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(false);
+        let options = CompressOptions::default();
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(options, false);
         tester::test(&allocator, source_text, expected, &mut pass);
     }
 
@@ -802,7 +823,7 @@ mod test {
         test("var x = undefined", "var x");
         test_same("var undefined = 1;function f() {var undefined=2;var x;}");
         test("function f(undefined) {}", "function f(undefined){}");
-        test("try {} catch(undefined) {}", "try{}catch(undefined){}");
+        test("try {} catch(undefined) {foo}", "try{}catch(undefined){foo}");
         test("for (undefined in {}) {}", "for(undefined in {}){}");
         test("undefined++;", "undefined++");
         test("undefined += undefined;", "undefined+=void 0");
@@ -1269,6 +1290,22 @@ mod test {
     fn test_computed_to_member_expression() {
         test("x['true']", "x.true");
         test_same("x['😊']");
+    }
+
+    #[test]
+    fn optional_catch_binding() {
+        test("try {} catch(e) {}", "try {} catch {}");
+        test_same("try {} catch([e]) {}");
+        test_same("try {} catch({e}) {}");
+
+        let allocator = Allocator::default();
+        let options = CompressOptions {
+            target: oxc_syntax::es_target::ESTarget::ES2018,
+            ..CompressOptions::default()
+        };
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(options, false);
+        let code = "try {} catch(e) {}";
+        tester::test(&allocator, code, code, &mut pass);
     }
 
     // ----------

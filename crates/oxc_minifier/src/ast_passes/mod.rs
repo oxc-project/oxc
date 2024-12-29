@@ -24,6 +24,8 @@ pub use peephole_substitute_alternate_syntax::PeepholeSubstituteAlternateSyntax;
 pub use remove_syntax::RemoveSyntax;
 pub use statement_fusion::StatementFusion;
 
+use crate::CompressOptions;
+
 pub trait CompressorPass<'a>: Traverse<'a> {
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>);
 }
@@ -76,7 +78,7 @@ pub struct LatePeepholeOptimizations {
 }
 
 impl LatePeepholeOptimizations {
-    pub fn new() -> Self {
+    pub fn new(options: CompressOptions) -> Self {
         let in_fixed_loop = true;
         Self {
             x0_statement_fusion: StatementFusion::new(),
@@ -84,6 +86,7 @@ impl LatePeepholeOptimizations {
             x2_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
             x3_peephole_minimize_conditions: PeepholeMinimizeConditions::new(in_fixed_loop),
             x4_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax::new(
+                options,
                 in_fixed_loop,
             ),
             x5_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
@@ -194,6 +197,10 @@ impl<'a> Traverse<'a> for LatePeepholeOptimizations {
     fn exit_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x4_peephole_substitute_alternate_syntax.exit_property_key(key, ctx);
     }
+
+    fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x4_peephole_substitute_alternate_syntax.exit_catch_clause(catch, ctx);
+    }
 }
 
 // See `createPeepholeOptimizationsPass`
@@ -207,11 +214,12 @@ pub struct PeepholeOptimizations {
 }
 
 impl PeepholeOptimizations {
-    pub fn new() -> Self {
+    pub fn new(options: CompressOptions) -> Self {
         let in_fixed_loop = false;
         Self {
             x2_peephole_minimize_conditions: PeepholeMinimizeConditions::new(in_fixed_loop),
             x3_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax::new(
+                options,
                 in_fixed_loop,
             ),
             x4_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
@@ -272,6 +280,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
 
     fn exit_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x3_peephole_substitute_alternate_syntax.exit_property_key(key, ctx);
+    }
+
+    fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_peephole_substitute_alternate_syntax.exit_catch_clause(catch, ctx);
     }
 }
 

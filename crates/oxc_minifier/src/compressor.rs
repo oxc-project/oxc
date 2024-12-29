@@ -36,10 +36,10 @@ impl<'a> Compressor<'a> {
         let mut ctx = ReusableTraverseCtx::new(scopes, symbols, self.allocator);
         RemoveSyntax::new(self.options).build(program, &mut ctx);
         Normalize::new().build(program, &mut ctx);
-        PeepholeOptimizations::new().build(program, &mut ctx);
+        PeepholeOptimizations::new(self.options).build(program, &mut ctx);
         CollapsePass::new().build(program, &mut ctx);
-        LatePeepholeOptimizations::new().run_in_loop(program, &mut ctx);
-        PeepholeOptimizations::new().build(program, &mut ctx);
+        LatePeepholeOptimizations::new(self.options).run_in_loop(program, &mut ctx);
+        PeepholeOptimizations::new(self.options).build(program, &mut ctx);
     }
 
     pub fn dead_code_elimination(self, program: &mut Program<'a>) {
