@@ -43,8 +43,10 @@ impl IsolatedLintHandler {
         }
 
         Some(self.lint_path(path, content).map_or(vec![], |errors| {
+            let path_buf = &path.to_path_buf();
+
             let mut diagnostics: Vec<DiagnosticReport> =
-                errors.into_iter().map(|e| e.into_diagnostic_report(&path.to_path_buf())).collect();
+                errors.into_iter().map(|e| e.into_diagnostic_report(path_buf)).collect();
 
             // a diagnostics connected from related_info to original diagnostic
             let mut inverted_diagnostics = vec![];
