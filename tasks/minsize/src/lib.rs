@@ -125,7 +125,7 @@ pub fn run() -> Result<(), io::Error> {
 }
 
 fn minify_twice(file: &TestFile) -> String {
-    let source_type = SourceType::from_path(&file.file_name).unwrap();
+    let source_type = SourceType::from_path(&file.file_name).unwrap().with_script(true);
     let options = MinifierOptions {
         mangle: Some(MangleOptions::default()),
         compress: CompressOptions::default(),
