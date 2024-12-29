@@ -88,6 +88,14 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.try_compress_property_key(key, ctx);
     }
 
+    fn exit_member_expression(
+        &mut self,
+        expr: &mut MemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.try_compress_computed_member_expression(expr, Ctx(ctx));
+    }
+
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx(ctx);
 
@@ -108,9 +116,6 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
             Expression::NewExpression(e) => Self::try_fold_new_expression(e, ctx),
             Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
             Expression::BinaryExpression(e) => Self::try_compress_typeof_undefined(e, ctx),
-            Expression::ComputedMemberExpression(e) => {
-                self.try_compress_computed_member_expression(e, ctx)
-            }
             Expression::CallExpression(e) => {
                 Self::try_fold_literal_constructor_call_expression(e, ctx)
                     .or_else(|| Self::try_fold_simple_function_call(e, ctx))
@@ -736,23 +741,28 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     }
 
     /// `foo['bar']` -> `foo.bar`
+    /// `foo?.['bar']` -> `foo?.bar`
     fn try_compress_computed_member_expression(
-        &self,
-        e: &mut ComputedMemberExpression<'a>,
+        &mut self,
+        expr: &mut MemberExpression<'a>,
         ctx: Ctx<'a, 'b>,
-    ) -> Option<Expression<'a>> {
+    ) {
         if self.in_fixed_loop {
-            return None;
+            return;
         }
-        let Expression::StringLiteral(s) = &e.expression else { return None };
-        if !is_identifier_name(&s.value) {
-            return None;
+
+        if let MemberExpression::ComputedMemberExpression(e) = expr {
+            let Expression::StringLiteral(s) = &e.expression else { return };
+            if !is_identifier_name(&s.value) {
+                return;
+            }
+            let property = ctx.ast.identifier_name(s.span, s.value.clone());
+            let object = ctx.ast.move_expression(&mut e.object);
+            *expr = MemberExpression::StaticMemberExpression(
+                ctx.ast.alloc_static_member_expression(e.span, object, property, e.optional),
+            );
+            self.changed = true;
         }
-        let property = ctx.ast.identifier_name(s.span, s.value.clone());
-        let object = ctx.ast.move_expression(&mut e.object);
-        Some(Expression::StaticMemberExpression(
-            ctx.ast.alloc_static_member_expression(e.span, object, property, false),
-        ))
     }
 
     fn compress_catch_clause(&mut self, catch: &mut CatchClause<'a>) {
@@ -1354,7 +1364,6 @@ mod test {
         }
 
         #[test]
-        #[ignore]
         fn test_convert_to_dotted_properties_optional_chaining() {
             test("data?.['name']", "data?.name");
             test("data?.['name']?.['first']", "data?.name?.first");
@@ -1482,7 +1491,6 @@ mod test {
         }
 
         #[test]
-        #[ignore]
         fn test_convert_to_dotted_properties_continue_optional_chaining() {
             test("const opt1 = window?.a?.['b'];", "const opt1 = window?.a?.b;");
 
