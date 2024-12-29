@@ -1,0 +1,357 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "foo \01 bar";
+   ·           ─────────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\000'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "foo \000 bar";
+   ·           ──────────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\377'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "foo \377 bar";
+   ·           ──────────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\37'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "foo \378 bar";
+   ·           ──────────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\37'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "foo \37a bar";
+   ·           ──────────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\3'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "foo \381 bar";
+   ·           ──────────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\3'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "foo \3a1 bar";
+   ·           ──────────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\251'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "foo \251 bar";
+   ·           ──────────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\25'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "foo \258 bar";
+   ·           ──────────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\25'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "foo \25a bar";
+   ·           ──────────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\3'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "\3s51";
+   ·           ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\77'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "\77";
+   ·           ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\7'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "\78";
+   ·           ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\5'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "\5a";
+   ·           ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\75'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "\751";
+   ·           ──────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\40'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "foo \400 bar";
+   ·           ──────────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "\t\1";
+   ·           ──────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\75'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:11]
+ 1 │ var foo = "\\\751";
+   ·           ────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\0\1'
+   · ──────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\0 \1'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\0 \01'
+   · ────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\0a\1'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\0a\01'
+   · ────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\08'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\0\08'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\1'
+   · ────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\2'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\2'
+   · ────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\7'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\7'
+   · ────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\00'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\00'
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\01'
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\02'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\02'
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\07'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\07'
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\08'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\08'
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\09'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\09'
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\10'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\10'
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\12'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\12'
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ ' \1'
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\1 '
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ 'a\1'
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\1a'
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ 'a\1a'
+   · ──────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ ' \01'
+   · ──────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\01 '
+   · ──────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ 'a\01'
+   · ──────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\01a'
+   · ──────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ 'a\01a'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\08'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ 'a\08a'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\n\1'
+   · ──────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\n\01'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\08'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\n\08'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\\\1'
+   · ──────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\\\01'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\08'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\\\08'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\\n\1'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\01\02'
+   · ────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\02'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\02\01'
+   · ────────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\01'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\01\2'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\2'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\2\01'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\08'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ '\08\1'
+   · ───────
+   ╰────
+
+  ⚠ eslint(no-octal-escape): Don't use octal: '\1'. Use '\u....' instead.
+   ╭─[no_octal_escape.tsx:1:1]
+ 1 │ 'foo \1 bar \2'
+   · ───────────────
+   ╰────
