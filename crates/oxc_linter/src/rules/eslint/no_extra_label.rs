@@ -91,41 +91,18 @@ impl Rule for NoExtraLabel {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::BreakStatement(break_stmt) = node.kind() {
             if let Some(label) = &break_stmt.label {
-                report_label_if_extra(label, node, LabelUsage::Break, ctx);
+                report_label_if_extra(label, node, ctx);
             }
         }
         if let AstKind::ContinueStatement(cont_stmt) = node.kind() {
             if let Some(label) = &cont_stmt.label {
-                report_label_if_extra(label, node, LabelUsage::Continue, ctx);
+                report_label_if_extra(label, node, ctx);
             }
         }
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-enum LabelUsage {
-    /// e.g. `break A;`
-    Break,
-    /// e.g. `continue A;`
-    Continue,
-}
-
-impl LabelUsage {
-    /// Motivation: `(Break|Continue)Statement` doesn't store the keyword's span
-    fn keyword_len(self) -> u32 {
-        match self {
-            LabelUsage::Break => 5,
-            LabelUsage::Continue => 8,
-        }
-    }
-}
-
-fn report_label_if_extra(
-    label: &LabelIdentifier,
-    node: &AstNode,
-    usage: LabelUsage,
-    ctx: &LintContext,
-) {
+fn report_label_if_extra(label: &LabelIdentifier, node: &AstNode, ctx: &LintContext) {
     let nodes = ctx.nodes();
     for ancestor_id in nodes.ancestor_ids(node.id()) {
         if !is_breakable_statement(nodes.kind(ancestor_id)) {
@@ -138,7 +115,13 @@ fn report_label_if_extra(
             return;
         }
 
-        let keyword_end = node.span().start + usage.keyword_len();
+        let keyword_len: u32 = match node.kind() {
+            AstKind::BreakStatement(_) => 5,
+            AstKind::ContinueStatement(_) => 8,
+            _ => unreachable!(),
+        };
+
+        let keyword_end = node.span().start + keyword_len;
         let delete_span = Span::new(keyword_end, label.span.end);
 
         let diagnostic = no_extra_label_diagnostic(label);
