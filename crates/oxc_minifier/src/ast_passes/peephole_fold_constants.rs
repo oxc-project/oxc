@@ -51,7 +51,9 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
                     _ => ctx.eval_unary_expression(e).map(|v| ctx.value_to_expr(e.span, v)),
                 }
             }
-            // TODO: return tryFoldGetProp(subtree);
+            Expression::StaticMemberExpression(e) => {
+                Self::try_fold_static_member_expression(e, ctx)
+            }
             Expression::LogicalExpression(e) => Self::try_fold_logical_expression(e, ctx),
             Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
             // TODO: tryFoldGetElem
@@ -95,6 +97,16 @@ impl<'a, 'b> PeepholeFoldConstants {
         _ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         None
+    }
+
+    fn try_fold_static_member_expression(
+        static_member_expr: &mut StaticMemberExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        // TODO: tryFoldObjectPropAccess(n, left, name)
+
+        ctx.eval_static_member_expression(static_member_expr)
+            .map(|value| ctx.value_to_expr(static_member_expr.span, value))
     }
 
     fn try_fold_logical_expression(
@@ -1502,6 +1514,31 @@ mod test {
     fn test_fold_left() {
         test_same("(+x - 1) + 2"); // not yet
         test("(+x & 1) & 2", "+x & 0");
+    }
+
+    #[test]
+    fn test_fold_array_length() {
+        // Can fold
+        test("x = [].length", "x = 0");
+        test("x = [1,2,3].length", "x = 3");
+        // test("x = [a,b].length", "x = 2");
+
+        // Not handled yet
+        test("x = [,,1].length", "x = 3");
+
+        // Cannot fold
+        test("x = [foo(), 0].length", "x = [foo(),0].length");
+        test_same("x = y.length");
+    }
+
+    #[test]
+    fn test_fold_string_length() {
+        // Can fold basic strings.
+        test("x = ''.length", "x = 0");
+        test("x = '123'.length", "x = 3");
+
+        // Test Unicode escapes are accounted for.
+        test("x = '123\\u01dc'.length", "x = 4");
     }
 
     #[test]
