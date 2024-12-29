@@ -6,7 +6,9 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_multi_assign_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use chained assignment").with_label(span)
+    OxcDiagnostic::warn("Do not use chained assignment")
+        .with_help("Separate each assignment into its own statement")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
