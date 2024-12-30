@@ -166,6 +166,14 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.x4_peephole_substitute_alternate_syntax.exit_property_key(key, ctx);
     }
 
+    fn exit_member_expression(
+        &mut self,
+        expr: &mut MemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x4_peephole_substitute_alternate_syntax.exit_member_expression(expr, ctx);
+    }
+
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x4_peephole_substitute_alternate_syntax.exit_catch_clause(catch, ctx);
     }
