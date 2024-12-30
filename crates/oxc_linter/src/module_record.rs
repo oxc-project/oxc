@@ -157,9 +157,9 @@ impl<'a> From<&oxc_syntax::module_record::NameSpan<'a>> for NameSpan {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportEntry {
     /// Span of the import statement.
-    /// 
+    ///
     /// ## Examples
-    /// 
+    ///
     /// ```ts
     /// import { foo } from "mod";
     /// ^^^^^^^^^^^^^^^^^^^^^^^^^
