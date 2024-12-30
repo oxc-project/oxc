@@ -743,6 +743,14 @@ impl NoRestrictedImports {
                                     import_names.join(", ").as_str(),
                                     source,
                                 )
+                            } else if let Some(import_name_patterns) = &pattern.import_name_pattern
+                            {
+                                diagnostic_pattern_and_everything_with_regex_import_name(
+                                    entry.module_request.span(),
+                                    pattern.message.clone(),
+                                    &import_name_patterns,
+                                    source,
+                                )
                             } else if let Some(allowed_import_names) = &pattern.allow_import_names {
                                 diagnostic_everything_with_allowed_import_name(
                                     entry.module_request.span(),
@@ -903,6 +911,14 @@ impl NoRestrictedImports {
                                     import_names.join(", ").as_str(),
                                     source,
                                 )
+                            } else if let Some(import_name_patterns) = &pattern.import_name_pattern
+                            {
+                                diagnostic_pattern_and_everything_with_regex_import_name(
+                                    span,
+                                    pattern.message.clone(),
+                                    &import_name_patterns,
+                                    source,
+                                )
                             } else if let Some(allow_import_name_pattern) =
                                 &pattern.allow_import_name_pattern
                             {
@@ -926,12 +942,26 @@ impl NoRestrictedImports {
                             diagnostic
                         }
                         IsSkipAbleResult::NameDisallowed(name_span) => {
-                            diagnostic_pattern_and_import_name(
-                                name_span.clone().span(),
-                                pattern.message.clone(),
-                                name_span.name(),
-                                source,
-                            )
+                            let diagnostic = if let Some(allow_import_name_pattern) =
+                                &pattern.allow_import_name_pattern
+                            {
+                                diagnostic_allowed_import_name_pattern(
+                                    name_span.clone().span(),
+                                    pattern.message.clone(),
+                                    name_span.name(),
+                                    source,
+                                    allow_import_name_pattern.as_str(),
+                                )
+                            } else {
+                                diagnostic_pattern_and_import_name(
+                                    name_span.clone().span(),
+                                    pattern.message.clone(),
+                                    name_span.name(),
+                                    source,
+                                )
+                            };
+
+                            diagnostic
                         }
                         IsSkipAbleResult::Allowed => panic!("unreachable"),
                     };
@@ -1508,6 +1538,8 @@ fn test() {
                 }]
             }])),
         ),
+        // expect: 'default' import from 'foo' is restricted
+        // got: 'foo' import is restricted from being used.
         (
             r#"import DisallowedObject from "foo";"#,
             Some(serde_json::json!([{
@@ -1838,6 +1870,8 @@ fn test() {
                 ]
             }])),
         ),
+        // expect: 'default' import from 'mod' is restricted.
+        // got: 'mod' import is restricted from being used.
         (
             "import foo, { bar } from 'mod';",
             Some(serde_json::json!([{
@@ -1875,6 +1909,8 @@ fn test() {
                 }]
             }])),
         ),
+        // expected: 'default' import from 'mod' is restricted.
+        // got: 'mod' import is restricted from being used.
         (
             "import foo, { default as bar } from 'mod';",
             Some(serde_json::json!([{
@@ -1941,6 +1977,8 @@ fn test() {
                 }]
             }])),
         ),
+        // expected: 'default' import from 'mod' is restricted from being used by a pattern.
+        // got: 'mod' import is restricted from being used by a pattern.
         (
             "import def, * as ns from 'mod';",
             Some(serde_json::json!([{
@@ -1950,6 +1988,8 @@ fn test() {
                 }]
             }])),
         ),
+        // expected: 'default' import from 'mod' is restricted from being used by a pattern.
+        // got: 'mod' import is restricted from being used by a pattern.
         (
             "import Foo from 'mod';",
             Some(serde_json::json!([{
@@ -2139,6 +2179,8 @@ fn test() {
                 }]
             }])),
         ),
+        // expected: * import is invalid because import name matching '/^Foo/u' pattern from 'foo' is restricted from being used.
+        // got: 'foo' import is restricted from being used by a pattern.
         (
             "export * from 'foo';",
             Some(serde_json::json!([{
@@ -2186,6 +2228,8 @@ fn test() {
                 }]
             }])),
         ),
+        // expected: 'DisallowedObject' import from 'foo' is restricted because only 'AllowedObject' import(s) is/are allowed.
+        // got: 'DisallowedObject' import from 'foo' is restricted from being used by a pattern.
         (
             r#"import { AllowedObject, DisallowedObject } from "foo";"#,
             Some(serde_json::json!([{
@@ -2195,6 +2239,8 @@ fn test() {
                 }]
             }])),
         ),
+        // expected: 'DisallowedObject' import from 'foo' is restricted because only 'AllowedObject' import(s) is/are allowed.
+        // got: 'DisallowedObject' import from 'foo' is restricted from being used by a pattern.
         (
             r#"import { AllowedObject, DisallowedObject } from "foo";"#,
             Some(serde_json::json!([{
@@ -2278,6 +2324,8 @@ fn test() {
                 }]
             }])),
         ),
+        // expected: 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
+        // got: '../../my/relative-module' import is restricted from being used by a pattern.
         (
             "import { Foo } from '../../my/relative-module';",
             Some(serde_json::json!([{
@@ -2297,6 +2345,8 @@ fn test() {
                 }]
             }])),
         ),
+        // expected: 'Foo_*' import from '@app/api' is restricted from being used by a pattern.
+        // got: '@app/api/bar' import is restricted from being used by a pattern.
         (
             "
         	        // error

@@ -604,19 +604,19 @@ snapshot_kind: text
    ·               ───
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because import name matching '^Foo' pattern from 'foo' is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:22]
  1 │ import * as Foo from 'foo';
    ·                      ─────
    ╰────
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because import name matching '^Foo' pattern from '../../my/relative-module' is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:22]
  1 │ import * as All from '../../my/relative-module';
    ·                      ──────────────────────────
    ╰────
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because import name matching '^Foo' pattern from '../../my/relative-module' is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:39]
  1 │ import * as AllWithCustomMessage from '../../my/relative-module';
    ·                                       ──────────────────────────
@@ -684,19 +684,19 @@ snapshot_kind: text
    ·          ───
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): * import is invalid because import name matching '^Foo' pattern from 'foo' is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:15]
  1 │ export * from 'foo';
    ·               ─────
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'Bar' import from 'foo' is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): 'Bar' import from 'foo' is restricted because only imports that match the pattern '^Foo' are allowed from 'foo'.
    ╭─[no_restricted_imports.tsx:1:10]
  1 │ export { Bar } from 'foo';
    ·          ───
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'Bar' import from 'foo' is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): 'Bar' import from 'foo' is restricted because only imports that match the pattern '^Foo' are allowed from 'foo'.
    ╭─[no_restricted_imports.tsx:1:10]
  1 │ export { Bar } from 'foo';
    ·          ───
