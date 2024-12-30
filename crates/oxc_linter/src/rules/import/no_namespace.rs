@@ -115,11 +115,9 @@ impl Rule for NoNamespace {
                             return;
                         }
 
-                        if self
-                            .ignore
-                            .iter()
-                            .any(|pattern| glob_match(pattern, source.trim_start_matches("./")))
-                        {
+                        if self.ignore.iter().any(|pattern| {
+                            glob_match(pattern.as_str(), source.trim_start_matches("./"))
+                        }) {
                             return;
                         }
 

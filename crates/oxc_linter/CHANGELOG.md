@@ -4,6 +4,48 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.4] - 2024-12-30
+
+- ed75e42 semantic: [**BREAKING**] Make SymbolTable fields `pub(crate)` instead of `pub` (#7999) (Boshen)
+
+### Features
+
+- 47cea9a linter: Implement `eslint/no-extra-label` (#8181) (Anson Heung)
+- ef76e28 linter: Implement `eslint/no-multi-assign` (#8158) (Anson Heung)
+- 384858b linter: Implement `jsx-a11y/no-noninteractive-tabindex`  (#8167) (Tyler Earls)
+- afc21a6 linter: Implement `eslint/vars-on-top` (#8157) (Yuichiro Yamashita)
+- 65796c4 linter: Implement `eslint/prefer-rest-params` (#8155) (Yuichiro Yamashita)
+- 5234d96 linter: Implement `eslint/no-nested-ternary` (#8150) (Yuichiro Yamashita)
+- 1c5db72 linter: Implement eslint/no-labels (#8131) (Anson Heung)
+- 0b04288 linter: Move `import/named` to nursery (#8068) (Boshen)
+
+### Bug Fixes
+
+- f3050d4 linter: Exclude svelte files from `no_unused_vars` rule (#8170) (Yuichiro Yamashita)
+- faf7464 linter: Disable rule `react/rules-of-hook` by file extension (#8168) (Alexander S.)
+- 1171e00 linter: Disable `react/rules-of-hooks` for vue and svelte files (#8165) (Alexander S.)
+- 1b9a5ba linter: False positiver in private member expr in oxc/const-comparison (#8164) (camc314)
+- 6bd9ddb linter: False positive in `typescript/ban-tslint-comment` (#8094) (dalaoshu)
+- 10a1fd5 linter: Rule: `no-restricted-imports` support option `patterns` with `group` key (#8050) (Alexander S.)
+- b3f38ae linter: Rule `no-restricted-imports`: support option `allowImportNames` (#8002) (Alexander S.)
+- 340cc90 linter: Rule `no-restricted-imports`: fix option "importNames" (#7943) (Alexander S.)
+- ec2128e linter: Fix line calculation for `eslint/max-lines` in diagnostics (#7962) (Dmitry Zakharov)
+- 79af100 semantic: Reference flags not correctly resolved when after an export stmt (#8134) (camc314)
+
+### Performance
+
+- d8d2ec6 linter: Run rules which require typescript syntax only when source type is actually typescript (#8166) (Alexander S.)
+- 2736657 semantic: Allocate `UnresolvedReferences` in allocator (#8046) (Boshen)
+
+### Refactor
+
+- 774babb linter: Read `exported_bindings_from_star_export` lazily (#8062) (Boshen)
+- 547c102 linter: Use `RwLock<FxHashMap>` instead of `FxDashMap` for module record data (#8061) (Boshen)
+- 952d7e4 linter: Rename `flat.rs` to `config.rs` (#8033) (camc314)
+- 50848ed linter: Simplify `ConfigStore` to prep for nested configs (#8032) (camc314)
+- b2a4a78 linter: Remove unused `with_rules` and `set_rule` methods (#8029) (camc314)
+- 02f968d semantic: Change `Bindings` to a plain `FxHashMap` (#8019) (Boshen)
+
 ## [0.15.3] - 2024-12-17
 
 ### Features
