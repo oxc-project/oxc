@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.4] - 2024-12-30
+
+### Bug Fixes
+
+- f3050d4 linter: Exclude svelte files from `no_unused_vars` rule (#8170) (Yuichiro Yamashita)
+
+### Refactor
+
+- 6da0b21 oxlint: Remove unused `git.rs` (#7990) (Boshen)
+- 58e7777 oxlint: Remove extra if check in `Walkdir` (#7989) (Boshen)
+
 ## [0.15.3] - 2024-12-17
 
 ### Styling
