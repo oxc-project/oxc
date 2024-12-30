@@ -914,7 +914,7 @@ mod test {
         test_same("'' + x != '' + x"); // potentially foldable
         test_same("'' + x === '' + x"); // potentially foldable
 
-        test(r#"if ("string" !== "\u000Bstr\u000Bing\u000B") {}"#, "if (false) {}\n");
+        test(r#"if ("string" !== "\u000Bstr\u000Bing\u000B") {}"#, "if (false) {}\n");
     }
 
     #[test]
