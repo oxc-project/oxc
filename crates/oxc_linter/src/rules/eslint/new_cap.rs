@@ -45,9 +45,7 @@ fn bool_serde_value(map: &serde_json::Map<String, serde_json::Value>, key: &str)
         return true; // default value
     };
 
-    let err = format!("eslint/new-cap: expect configuration option '{key}' to be a boolean.");
-
-    value.as_bool().expect(&err)
+    value.as_bool().unwrap_or(true)
 }
 
 fn vec_str_serde_value(
@@ -58,24 +56,20 @@ fn vec_str_serde_value(
     let Some(value) = map.get(key) else {
         return default_value; // default value
     };
-    let err = format!("eslint/new-cap: expect configuration option '{key}' to be an array.");
-    let err2 = format!(
-        "eslint/new-cap: expect array configuration option '{key}' to only contain strings."
-    );
 
-    value
-        .as_array()
-        .expect(&err)
+    let Some(array_value) = value.as_array() else {
+        return default_value; // default value
+    };
+
+    array_value
         .iter()
-        .map(|value| CompactStr::new(value.as_str().expect(&err2)))
+        .map(|value| CompactStr::new(value.as_str().unwrap_or_default()))
         .collect::<Vec<CompactStr>>()
 }
 
 fn regex_serde_value(map: &serde_json::Map<String, serde_json::Value>, key: &str) -> Option<Regex> {
     let value = map.get(key)?;
-    let err = format!("eslint/new-cap: expect configuration option '{key}' to be a regex string.");
-
-    let regex_string = value.as_str().expect(&err);
+    let regex_string = value.as_str()?;
 
     if let Ok(regex) = Regex::new(regex_string) {
         return Some(regex);
