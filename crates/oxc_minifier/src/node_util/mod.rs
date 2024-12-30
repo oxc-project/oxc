@@ -71,4 +71,11 @@ impl<'a> Ctx<'a, '_> {
         }
         false
     }
+
+    pub fn is_identifier_nan(self, ident: &IdentifierReference) -> bool {
+        if ident.name == "Infinity" && ident.is_global_reference(self.symbols()) {
+            return true;
+        }
+        false
+    }
 }

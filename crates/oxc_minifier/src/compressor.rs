@@ -4,10 +4,7 @@ use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
 use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
-    ast_passes::{
-        CollapsePass, DeadCodeElimination, LatePeepholeOptimizations, Normalize,
-        PeepholeOptimizations, RemoveSyntax,
-    },
+    ast_passes::{DeadCodeElimination, Normalize, PeepholeOptimizations, RemoveSyntax},
     CompressOptions, CompressorPass,
 };
 
@@ -36,10 +33,8 @@ impl<'a> Compressor<'a> {
         let mut ctx = ReusableTraverseCtx::new(scopes, symbols, self.allocator);
         RemoveSyntax::new(self.options).build(program, &mut ctx);
         Normalize::new().build(program, &mut ctx);
-        PeepholeOptimizations::new().build(program, &mut ctx);
-        CollapsePass::new().build(program, &mut ctx);
-        LatePeepholeOptimizations::new().run_in_loop(program, &mut ctx);
-        PeepholeOptimizations::new().build(program, &mut ctx);
+        PeepholeOptimizations::new(true, self.options).run_in_loop(program, &mut ctx);
+        PeepholeOptimizations::new(false, self.options).build(program, &mut ctx);
     }
 
     pub fn dead_code_elimination(self, program: &mut Program<'a>) {
