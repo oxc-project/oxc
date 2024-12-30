@@ -667,7 +667,7 @@ impl NoRestrictedImports {
             }
 
             let diagnostic = get_diagnostic_from_is_skip_able_result_path(
-                &entry.module_request.span(),
+                entry.module_request.span(),
                 source,
                 result,
                 path,
@@ -693,7 +693,7 @@ impl NoRestrictedImports {
                 }
                 GlobResult::Found => {
                     let diagnostic = get_diagnostic_from_is_skip_able_result_pattern(
-                        &entry.module_request.span(),
+                        entry.module_request.span(),
                         source,
                         result,
                         pattern,
@@ -736,7 +736,7 @@ impl NoRestrictedImports {
             }
 
             let diagnostic =
-                get_diagnostic_from_is_skip_able_result_path(&entry.span, source, result, path);
+                get_diagnostic_from_is_skip_able_result_path(entry.span, source, result, path);
 
             ctx.diagnostic(diagnostic);
         }
@@ -764,7 +764,7 @@ impl NoRestrictedImports {
                     let span = module_request.span();
 
                     let diagnostic = get_diagnostic_from_is_skip_able_result_pattern(
-                        &span, source, result, pattern,
+                        span, source, result, pattern,
                     );
 
                     found_errors.push(diagnostic);
@@ -788,32 +788,32 @@ impl NoRestrictedImports {
 }
 
 fn get_diagnostic_from_is_skip_able_result_path(
-    span: &Span,
+    span: Span,
     source: &str,
     result: &IsSkipAbleResult,
     path: &RestrictedPath,
 ) -> OxcDiagnostic {
     match result {
         IsSkipAbleResult::GeneralDisallowed(_) => {
-            diagnostic_path(*span, path.message.clone(), source)
+            diagnostic_path(span, path.message.clone(), source)
         }
         IsSkipAbleResult::DefaultDisallowed => {
             if let Some(import_names) = &path.import_names {
                 diagnostic_everything(
-                    *span,
+                    span,
                     path.message.clone(),
                     import_names.join(", ").as_str(),
                     source,
                 )
             } else if let Some(allowed_import_names) = &path.allow_import_names {
                 diagnostic_everything_with_allowed_import_name(
-                    *span,
+                    span,
                     path.message.clone(),
                     source,
                     allowed_import_names.join(", ").as_str(),
                 )
             } else {
-                diagnostic_path(*span, path.message.clone(), source)
+                diagnostic_path(span, path.message.clone(), source)
             }
         }
         IsSkipAbleResult::NameDisallowed(name_span) => {
@@ -839,46 +839,46 @@ fn get_diagnostic_from_is_skip_able_result_path(
 }
 
 fn get_diagnostic_from_is_skip_able_result_pattern(
-    span: &Span,
+    span: Span,
     source: &str,
     result: &IsSkipAbleResult,
     pattern: &RestrictedPattern,
 ) -> OxcDiagnostic {
     match result {
         IsSkipAbleResult::GeneralDisallowed(_) => {
-            diagnostic_pattern(*span, pattern.message.clone(), source)
+            diagnostic_pattern(span, pattern.message.clone(), source)
         }
         IsSkipAbleResult::DefaultDisallowed => {
             let diagnostic = if let Some(import_names) = &pattern.import_names {
                 diagnostic_pattern_and_everything(
-                    *span,
+                    span,
                     pattern.message.clone(),
                     import_names.join(", ").as_str(),
                     source,
                 )
             } else if let Some(import_name_patterns) = &pattern.import_name_pattern {
                 diagnostic_pattern_and_everything_with_regex_import_name(
-                    *span,
+                    span,
                     pattern.message.clone(),
                     import_name_patterns,
                     source,
                 )
             } else if let Some(allow_import_name_pattern) = &pattern.allow_import_name_pattern {
                 diagnostic_everything_with_allowed_import_name_pattern(
-                    *span,
+                    span,
                     pattern.message.clone(),
                     source,
                     allow_import_name_pattern.as_str(),
                 )
             } else if let Some(allowed_import_names) = &pattern.allow_import_names {
                 diagnostic_everything_with_allowed_import_name(
-                    *span,
+                    span,
                     pattern.message.clone(),
                     source,
                     allowed_import_names.join(", ").as_str(),
                 )
             } else {
-                diagnostic_pattern(*span, pattern.message.clone(), source)
+                diagnostic_pattern(span, pattern.message.clone(), source)
             };
 
             diagnostic
