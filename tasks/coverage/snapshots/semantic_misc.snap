@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 30/30 (100.00%)
-Positive Passed: 19/30 (63.33%)
+AST Parsed     : 31/31 (100.00%)
+Positive Passed: 19/31 (61.29%)
 tasks/coverage/misc/pass/oxc-1288.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["from"]
@@ -169,4 +169,12 @@ tasks/coverage/misc/pass/oxc-5955.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/misc/pass/oxc-8193.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "A":
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
