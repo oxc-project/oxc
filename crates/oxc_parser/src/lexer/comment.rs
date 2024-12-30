@@ -74,14 +74,14 @@ impl Lexer<'_> {
             },
         };
 
-        self.token.is_on_new_line = true;
+        self.token.set_is_on_new_line();
         Kind::Skip
     }
 
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
         // If `is_on_new_line` is already set, go directly to faster search which only looks for `*/`
-        if self.token.is_on_new_line {
+        if self.token.is_on_new_line() {
             return self.skip_multi_line_comment_after_line_break(self.source.position());
         }
 
@@ -118,7 +118,7 @@ impl Lexer<'_> {
                         let next2 = unsafe { pos.add(1).read2() };
                         if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
                             // Irregular line break
-                            self.token.is_on_new_line = true;
+                            self.token.set_is_on_new_line();
                             // Ideally we'd go on to `skip_multi_line_comment_after_line_break` here
                             // but can't do that easily because can't use `return` in a closure.
                             // But irregular line breaks are rare anyway.
@@ -133,7 +133,7 @@ impl Lexer<'_> {
                 } else {
                     // Regular line break.
                     // No need to look for more line breaks, so switch to faster search just for `*/`.
-                    self.token.is_on_new_line = true;
+                    self.token.set_is_on_new_line();
                     // SAFETY: Regular line breaks are ASCII, so skipping 1 byte is a UTF-8 char boundary.
                     let after_line_break = unsafe { pos.add(1) };
                     return self.skip_multi_line_comment_after_line_break(after_line_break);
@@ -182,7 +182,7 @@ impl Lexer<'_> {
             }
             self.consume_char();
         }
-        self.token.is_on_new_line = true;
+        self.token.set_is_on_new_line();
         Kind::HashbangComment
     }
 }

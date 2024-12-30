@@ -41,7 +41,7 @@ impl Lexer<'_> {
         match self.peek_byte() {
             Some(b'-') => {
                 self.consume_char();
-                if self.token.is_on_new_line
+                if self.token.is_on_new_line()
                     && self.source_type.is_script()
                     && self.next_ascii_byte_eq(b'>')
                 {
@@ -59,6 +59,7 @@ impl Lexer<'_> {
     }
 
     pub(crate) fn next_right_angle(&mut self) -> Token {
+        self.token.start = self.offset() - 1; // include first `>`
         let kind = self.read_right_angle();
         self.lookahead.clear();
         self.finish_next(kind)
