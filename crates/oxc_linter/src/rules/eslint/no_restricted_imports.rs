@@ -660,66 +660,29 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            match path.is_skip_able_import(&entry.import_name) {
-                IsSkipAbleResult::GeneralDisallowed(_) => {
-                    ctx.diagnostic(diagnostic_path(
-                        entry.module_request.span(),
-                        path.message.clone(),
-                        source,
-                    ));
-                }
-                IsSkipAbleResult::DefaultDisallowed => {
-                    if let Some(import_names) = &path.import_names {
-                        ctx.diagnostic(diagnostic_everything(
-                            entry.module_request.span(),
-                            path.message.clone(),
-                            import_names.join(", ").as_str(),
-                            source,
-                        ));
-                    } else if let Some(allowed_import_names) = &path.allow_import_names {
-                        ctx.diagnostic(diagnostic_everything_with_allowed_import_name(
-                            entry.module_request.span(),
-                            path.message.clone(),
-                            source,
-                            allowed_import_names.join(", ").as_str(),
-                        ));
-                    } else {
-                        ctx.diagnostic(diagnostic_path(
-                            entry.module_request.span(),
-                            path.message.clone(),
-                            source,
-                        ));
-                    }
-                }
-                IsSkipAbleResult::NameDisallowed(name_span) => {
-                    if let Some(import_names) = &path.allow_import_names {
-                        ctx.diagnostic(diagnostic_allowed_import_name(
-                            name_span.clone().span(),
-                            path.message.clone(),
-                            name_span.name(),
-                            source,
-                            import_names.join(", ").as_str(),
-                        ));
-                    } else {
-                        ctx.diagnostic(diagnostic_import_name(
-                            name_span.clone().span(),
-                            path.message.clone(),
-                            name_span.name(),
-                            source,
-                        ));
-                    };
-                }
-                IsSkipAbleResult::Allowed => (),
+            let result = &path.is_skip_able_import(&entry.import_name);
+
+            if *result == IsSkipAbleResult::Allowed {
+                continue;
             }
+
+            let diagnostic = get_diagnostic_from_is_skip_able_result_path(
+                &entry.module_request.span(),
+                source,
+                result,
+                path
+            );
+
+            ctx.diagnostic(diagnostic);
         }
 
         let mut whitelist_found = false;
         let mut found_errors = vec![];
 
         for pattern in &self.patterns {
-            let result = pattern.is_skip_able_import(&entry.import_name);
+            let result = &pattern.is_skip_able_import(&entry.import_name);
 
-            if result == IsSkipAbleResult::Allowed {
+            if *result == IsSkipAbleResult::Allowed {
                 continue;
             }
 
@@ -729,78 +692,12 @@ impl NoRestrictedImports {
                     break;
                 }
                 GlobResult::Found => {
-                    let diagnostic: OxcDiagnostic = match result {
-                        IsSkipAbleResult::GeneralDisallowed(_) => diagnostic_pattern(
-                            entry.module_request.span(),
-                            pattern.message.clone(),
-                            source,
-                        ),
-                        IsSkipAbleResult::DefaultDisallowed => {
-                            let diagnostic = if let Some(import_names) = &pattern.import_names {
-                                diagnostic_pattern_and_everything(
-                                    entry.module_request.span(),
-                                    pattern.message.clone(),
-                                    import_names.join(", ").as_str(),
-                                    source,
-                                )
-                            } else if let Some(import_name_patterns) = &pattern.import_name_pattern
-                            {
-                                diagnostic_pattern_and_everything_with_regex_import_name(
-                                    entry.module_request.span(),
-                                    pattern.message.clone(),
-                                    import_name_patterns,
-                                    source,
-                                )
-                            } else if let Some(allowed_import_names) = &pattern.allow_import_names {
-                                diagnostic_everything_with_allowed_import_name(
-                                    entry.module_request.span(),
-                                    pattern.message.clone(),
-                                    source,
-                                    allowed_import_names.join(", ").as_str(),
-                                )
-                            } else if let Some(allow_import_name_pattern) =
-                                &pattern.allow_import_name_pattern
-                            {
-                                diagnostic_everything_with_allowed_import_name_pattern(
-                                    entry.module_request.span(),
-                                    pattern.message.clone(),
-                                    source,
-                                    allow_import_name_pattern.as_str(),
-                                )
-                            } else {
-                                diagnostic_pattern(
-                                    entry.module_request.span(),
-                                    pattern.message.clone(),
-                                    source,
-                                )
-                            };
-
-                            diagnostic
-                        }
-                        IsSkipAbleResult::NameDisallowed(name_span) => {
-                            let diagnostic = if let Some(allow_import_name_pattern) =
-                                &pattern.allow_import_name_pattern
-                            {
-                                diagnostic_allowed_import_name_pattern(
-                                    name_span.clone().span(),
-                                    pattern.message.clone(),
-                                    name_span.name(),
-                                    source,
-                                    allow_import_name_pattern.as_str(),
-                                )
-                            } else {
-                                diagnostic_pattern_and_import_name(
-                                    name_span.clone().span(),
-                                    pattern.message.clone(),
-                                    name_span.name(),
-                                    source,
-                                )
-                            };
-
-                            diagnostic
-                        }
-                        IsSkipAbleResult::Allowed => panic!("unreachable"),
-                    };
+                    let diagnostic = get_diagnostic_from_is_skip_able_result_pattern(
+                        &entry.module_request.span(),
+                        source,
+                        result,
+                        pattern,
+                    );
 
                     found_errors.push(diagnostic);
                 }
@@ -832,58 +729,29 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            match path.is_skip_able_export(&entry.import_name) {
-                IsSkipAbleResult::GeneralDisallowed(_) => {
-                    ctx.diagnostic(diagnostic_path(entry.span, path.message.clone(), source));
-                }
-                IsSkipAbleResult::DefaultDisallowed => {
-                    if let Some(import_names) = &path.import_names {
-                        ctx.diagnostic(diagnostic_everything(
-                            entry.span,
-                            path.message.clone(),
-                            import_names.join(", ").as_str(),
-                            source,
-                        ));
-                    } else if let Some(allowed_import_names) = &path.allow_import_names {
-                        ctx.diagnostic(diagnostic_everything_with_allowed_import_name(
-                            entry.span,
-                            path.message.clone(),
-                            source,
-                            allowed_import_names.join(", ").as_str(),
-                        ));
-                    } else {
-                        ctx.diagnostic(diagnostic_path(entry.span, path.message.clone(), source));
-                    }
-                }
-                IsSkipAbleResult::NameDisallowed(name_span) => {
-                    if let Some(allow_import_names) = &path.allow_import_names {
-                        ctx.diagnostic(diagnostic_allowed_import_name(
-                            name_span.clone().span(),
-                            path.message.clone(),
-                            name_span.name(),
-                            source,
-                            allow_import_names.join(", ").as_str(),
-                        ));
-                    } else {
-                        ctx.diagnostic(diagnostic_import_name(
-                            name_span.clone().span(),
-                            path.message.clone(),
-                            name_span.name(),
-                            source,
-                        ));
-                    };
-                }
-                IsSkipAbleResult::Allowed => (),
+            let result = &path.is_skip_able_export(&entry.import_name);
+
+            if *result == IsSkipAbleResult::Allowed {
+                continue;
             }
+
+            let diagnostic = get_diagnostic_from_is_skip_able_result_path(
+                &entry.span,
+                source,
+                result,
+                path
+            );
+
+            ctx.diagnostic(diagnostic);
         }
 
         let mut whitelist_found = false;
         let mut found_errors = vec![];
 
         for pattern in &self.patterns {
-            let result = pattern.is_skip_able_export(&entry.import_name);
+            let result = &pattern.is_skip_able_export(&entry.import_name);
 
-            if result == IsSkipAbleResult::Allowed {
+            if *result == IsSkipAbleResult::Allowed {
                 continue;
             }
 
@@ -899,72 +767,9 @@ impl NoRestrictedImports {
                 GlobResult::Found => {
                     let span = module_request.span();
 
-                    let diagnostic = match result {
-                        IsSkipAbleResult::GeneralDisallowed(_) => {
-                            diagnostic_pattern(span, pattern.message.clone(), source)
-                        }
-                        IsSkipAbleResult::DefaultDisallowed => {
-                            let diagnostic = if let Some(import_names) = &pattern.import_names {
-                                diagnostic_pattern_and_everything(
-                                    span,
-                                    pattern.message.clone(),
-                                    import_names.join(", ").as_str(),
-                                    source,
-                                )
-                            } else if let Some(import_name_patterns) = &pattern.import_name_pattern
-                            {
-                                diagnostic_pattern_and_everything_with_regex_import_name(
-                                    span,
-                                    pattern.message.clone(),
-                                    import_name_patterns,
-                                    source,
-                                )
-                            } else if let Some(allow_import_name_pattern) =
-                                &pattern.allow_import_name_pattern
-                            {
-                                diagnostic_everything_with_allowed_import_name_pattern(
-                                    span,
-                                    pattern.message.clone(),
-                                    source,
-                                    allow_import_name_pattern.as_str(),
-                                )
-                            } else if let Some(allowed_import_names) = &pattern.allow_import_names {
-                                diagnostic_everything_with_allowed_import_name(
-                                    span,
-                                    pattern.message.clone(),
-                                    source,
-                                    allowed_import_names.join(", ").as_str(),
-                                )
-                            } else {
-                                diagnostic_pattern(span, pattern.message.clone(), source)
-                            };
-
-                            diagnostic
-                        }
-                        IsSkipAbleResult::NameDisallowed(name_span) => {
-                            let diagnostic = if let Some(allow_import_name_pattern) =
-                                &pattern.allow_import_name_pattern
-                            {
-                                diagnostic_allowed_import_name_pattern(
-                                    name_span.clone().span(),
-                                    pattern.message.clone(),
-                                    name_span.name(),
-                                    source,
-                                    allow_import_name_pattern.as_str(),
-                                )
-                            } else {
-                                diagnostic_pattern_and_import_name(
-                                    name_span.clone().span(),
-                                    pattern.message.clone(),
-                                    name_span.name(),
-                                    source,
-                                )
-                            };
-
-                            diagnostic
-                        }
-                        IsSkipAbleResult::Allowed => panic!("unreachable"),
-                    };
+                    let diagnostic = get_diagnostic_from_is_skip_able_result_pattern(
+                        &span, source, result, pattern,
+                    );
 
                     found_errors.push(diagnostic);
                 }
@@ -983,6 +788,127 @@ impl NoRestrictedImports {
                 ctx.diagnostic(diagnostic);
             }
         }
+    }
+}
+
+fn get_diagnostic_from_is_skip_able_result_path(
+    span: &Span,
+    source: &str,
+    result: &IsSkipAbleResult,
+    path: &RestrictedPath,
+) -> OxcDiagnostic {
+    match result {
+        IsSkipAbleResult::GeneralDisallowed(_) => {
+            diagnostic_path(*span, path.message.clone(), source)
+        }
+        IsSkipAbleResult::DefaultDisallowed => {
+            if let Some(import_names) = &path.import_names {
+                diagnostic_everything(
+                    *span,
+                    path.message.clone(),
+                    import_names.join(", ").as_str(),
+                    source,
+                )
+            } else if let Some(allowed_import_names) = &path.allow_import_names {
+                diagnostic_everything_with_allowed_import_name(
+                    *span,
+                    path.message.clone(),
+                    source,
+                    allowed_import_names.join(", ").as_str(),
+                )
+            } else {
+                diagnostic_path(*span, path.message.clone(), source)
+            }
+        }
+        IsSkipAbleResult::NameDisallowed(name_span) => {
+            if let Some(allow_import_names) = &path.allow_import_names {
+                diagnostic_allowed_import_name(
+                    name_span.clone().span(),
+                    path.message.clone(),
+                    name_span.name(),
+                    source,
+                    allow_import_names.join(", ").as_str(),
+                )
+            } else {
+                diagnostic_import_name(
+                    name_span.clone().span(),
+                    path.message.clone(),
+                    name_span.name(),
+                    source,
+                )
+            }
+        }
+        IsSkipAbleResult::Allowed => unreachable!("should be filtered out by the parent function"),
+    }
+}
+
+fn get_diagnostic_from_is_skip_able_result_pattern(
+    span: &Span,
+    source: &str,
+    result: &IsSkipAbleResult,
+    pattern: &RestrictedPattern,
+) -> OxcDiagnostic {
+    match result {
+        IsSkipAbleResult::GeneralDisallowed(_) => {
+            diagnostic_pattern(*span, pattern.message.clone(), source)
+        }
+        IsSkipAbleResult::DefaultDisallowed => {
+            let diagnostic = if let Some(import_names) = &pattern.import_names {
+                diagnostic_pattern_and_everything(
+                    *span,
+                    pattern.message.clone(),
+                    import_names.join(", ").as_str(),
+                    source,
+                )
+            } else if let Some(import_name_patterns) = &pattern.import_name_pattern {
+                diagnostic_pattern_and_everything_with_regex_import_name(
+                    *span,
+                    pattern.message.clone(),
+                    import_name_patterns,
+                    source,
+                )
+            } else if let Some(allow_import_name_pattern) = &pattern.allow_import_name_pattern {
+                diagnostic_everything_with_allowed_import_name_pattern(
+                    *span,
+                    pattern.message.clone(),
+                    source,
+                    allow_import_name_pattern.as_str(),
+                )
+            } else if let Some(allowed_import_names) = &pattern.allow_import_names {
+                diagnostic_everything_with_allowed_import_name(
+                    *span,
+                    pattern.message.clone(),
+                    source,
+                    allowed_import_names.join(", ").as_str(),
+                )
+            } else {
+                diagnostic_pattern(*span, pattern.message.clone(), source)
+            };
+
+            diagnostic
+        }
+        IsSkipAbleResult::NameDisallowed(name_span) => {
+            let diagnostic =
+                if let Some(allow_import_name_pattern) = &pattern.allow_import_name_pattern {
+                    diagnostic_allowed_import_name_pattern(
+                        name_span.clone().span(),
+                        pattern.message.clone(),
+                        name_span.name(),
+                        source,
+                        allow_import_name_pattern.as_str(),
+                    )
+                } else {
+                    diagnostic_pattern_and_import_name(
+                        name_span.clone().span(),
+                        pattern.message.clone(),
+                        name_span.name(),
+                        source,
+                    )
+                };
+
+            diagnostic
+        }
+        IsSkipAbleResult::Allowed => unreachable!("should be filtered out by parent function"),
     }
 }
 
