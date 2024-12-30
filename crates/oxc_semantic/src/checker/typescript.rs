@@ -542,3 +542,32 @@ pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &
         }
     }
 }
+
+fn function_implementation_must_have_same_name_as_decl(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Function implementation name must be the same as the declaration.")
+        .with_label(span)
+}
+
+pub fn check_stmts(stmts: &oxc_allocator::Vec<'_, Statement<'_>>, ctx: &SemanticBuilder<'_>) {
+    if !ctx.source_type.is_typescript_definition() {
+        for (a, b) in stmts.iter().map(Some).chain(vec![None, None]).tuple_windows() {
+            if let Some(Statement::FunctionDeclaration(a)) = a {
+                if !a.declare && a.body.is_none() {
+                    if let Some(Statement::FunctionDeclaration(b)) = b {
+                        if b.id.as_ref().map(|id| &id.name) != a.id.as_ref().map(|id| &id.name)
+                            && b.body.is_some()
+                        {
+                            ctx.error(function_implementation_must_have_same_name_as_decl(
+                                a.id.as_ref().map_or(a.span, |id| id.span),
+                            ));
+                        }
+                    } else {
+                        ctx.error(function_implementation_missing(
+                            a.id.as_ref().map_or(a.span, |id| id.span),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+}
