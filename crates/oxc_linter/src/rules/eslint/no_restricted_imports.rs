@@ -670,7 +670,7 @@ impl NoRestrictedImports {
                 &entry.module_request.span(),
                 source,
                 result,
-                path
+                path,
             );
 
             ctx.diagnostic(diagnostic);
@@ -735,12 +735,8 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let diagnostic = get_diagnostic_from_is_skip_able_result_path(
-                &entry.span,
-                source,
-                result,
-                path
-            );
+            let diagnostic =
+                get_diagnostic_from_is_skip_able_result_path(&entry.span, source, result, path);
 
             ctx.diagnostic(diagnostic);
         }
