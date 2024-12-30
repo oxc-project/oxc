@@ -156,6 +156,16 @@ impl<'a> From<&oxc_syntax::module_record::NameSpan<'a>> for NameSpan {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportEntry {
+    /// Span of the import statement.
+    /// 
+    /// ## Examples
+    /// 
+    /// ```ts
+    /// import { foo } from "mod";
+    /// ^^^^^^^^^^^^^^^^^^^^^^^^^
+    /// ```
+    pub statement_span: Span,
+
     /// String value of the ModuleSpecifier of the ImportDeclaration.
     ///
     /// ## Examples
@@ -212,6 +222,7 @@ pub struct ImportEntry {
 impl<'a> From<&oxc_syntax::module_record::ImportEntry<'a>> for ImportEntry {
     fn from(other: &oxc_syntax::module_record::ImportEntry<'a>) -> Self {
         Self {
+            statement_span: other.statement_span,
             module_request: NameSpan::from(&other.module_request),
             import_name: ImportImportName::from(&other.import_name),
             local_name: NameSpan::from(&other.local_name),
