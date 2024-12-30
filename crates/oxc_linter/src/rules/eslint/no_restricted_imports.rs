@@ -748,7 +748,7 @@ impl NoRestrictedImports {
                                 diagnostic_pattern_and_everything_with_regex_import_name(
                                     entry.module_request.span(),
                                     pattern.message.clone(),
-                                    &import_name_patterns,
+                                    import_name_patterns,
                                     source,
                                 )
                             } else if let Some(allowed_import_names) = &pattern.allow_import_names {
@@ -916,7 +916,7 @@ impl NoRestrictedImports {
                                 diagnostic_pattern_and_everything_with_regex_import_name(
                                     span,
                                     pattern.message.clone(),
-                                    &import_name_patterns,
+                                    import_name_patterns,
                                     source,
                                 )
                             } else if let Some(allow_import_name_pattern) =
