@@ -1,6 +1,6 @@
 use std::{
     fs,
-    path::Path,
+    path::{Path, PathBuf},
     rc::Rc,
     sync::{Arc, OnceLock},
 };
@@ -38,57 +38,56 @@ impl IsolatedLintHandler {
         path: &Path,
         content: Option<String>,
     ) -> Option<Vec<DiagnosticReport>> {
-        if !Self::should_lint_path(path) {
-            return None;
-        }
-
-        Some(self.lint_path(path, content).map_or(vec![], |errors| {
-            let mut diagnostics: Vec<DiagnosticReport> =
-                errors.into_iter().map(|e| e.into_diagnostic_report(&path.to_path_buf())).collect();
-
-            // a diagnostics connected from related_info to original diagnostic
-            let mut inverted_diagnostics = vec![];
-            for d in &diagnostics {
-                let Some(ref related_info) = d.diagnostic.related_information else {
-                    continue;
-                };
-                let related_information = Some(vec![DiagnosticRelatedInformation {
-                    location: lsp_types::Location {
-                        uri: lsp_types::Url::from_file_path(path).unwrap(),
-                        range: d.diagnostic.range,
-                    },
-                    message: "original diagnostic".to_string(),
-                }]);
-                for r in related_info {
-                    if r.location.range == d.diagnostic.range {
+        if Self::should_lint_path(path) {
+            Some(self.lint_path(path, content).map_or(vec![], |(p, errors)| {
+                let mut diagnostics: Vec<DiagnosticReport> =
+                    errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect();
+                // a diagnostics connected from related_info to original diagnostic
+                let mut inverted_diagnostics = vec![];
+                for d in &diagnostics {
+                    let Some(ref related_info) = d.diagnostic.related_information else {
                         continue;
-                    }
-                    inverted_diagnostics.push(DiagnosticReport {
-                        diagnostic: lsp_types::Diagnostic {
-                            range: r.location.range,
-                            severity: Some(DiagnosticSeverity::HINT),
-                            code: None,
-                            message: r.message.clone(),
-                            source: d.diagnostic.source.clone(),
-                            code_description: None,
-                            related_information: related_information.clone(),
-                            tags: None,
-                            data: None,
+                    };
+                    let related_information = Some(vec![DiagnosticRelatedInformation {
+                        location: lsp_types::Location {
+                            uri: lsp_types::Url::from_file_path(path).unwrap(),
+                            range: d.diagnostic.range,
                         },
-                        fixed_content: None,
-                    });
+                        message: "original diagnostic".to_string(),
+                    }]);
+                    for r in related_info {
+                        if r.location.range == d.diagnostic.range {
+                            continue;
+                        }
+                        inverted_diagnostics.push(DiagnosticReport {
+                            diagnostic: lsp_types::Diagnostic {
+                                range: r.location.range,
+                                severity: Some(DiagnosticSeverity::HINT),
+                                code: None,
+                                message: r.message.clone(),
+                                source: d.diagnostic.source.clone(),
+                                code_description: None,
+                                related_information: related_information.clone(),
+                                tags: None,
+                                data: None,
+                            },
+                            fixed_content: None,
+                        });
+                    }
                 }
-            }
-            diagnostics.append(&mut inverted_diagnostics);
-            diagnostics
-        }))
+                diagnostics.append(&mut inverted_diagnostics);
+                diagnostics
+            }))
+        } else {
+            None
+        }
     }
 
     fn lint_path(
         &self,
         path: &Path,
         source_text: Option<String>,
-    ) -> Option<Vec<ErrorWithPosition>> {
+    ) -> Option<(PathBuf, Vec<ErrorWithPosition>)> {
         if !Loader::can_load(path) {
             debug!("extension not supported yet.");
             return None;
@@ -171,10 +170,12 @@ impl IsolatedLintHandler {
                     ErrorReport { error: Error::from(msg.error), fixed_content }
                 })
                 .collect::<Vec<ErrorReport>>();
-            diagnostics.extend(Self::wrap_diagnostics(path, &source_text, reports, start));
+            let (_, errors_with_position) =
+                Self::wrap_diagnostics(path, &source_text, reports, start);
+            diagnostics.extend(errors_with_position);
         }
 
-        Some(diagnostics)
+        Some((path.to_path_buf(), diagnostics))
     }
 
     fn should_lint_path(path: &Path) -> bool {
@@ -193,10 +194,9 @@ impl IsolatedLintHandler {
         source_text: &str,
         reports: Vec<ErrorReport>,
         start: u32,
-    ) -> Vec<ErrorWithPosition> {
+    ) -> (PathBuf, Vec<ErrorWithPosition>) {
         let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
-
-        reports
+        let diagnostics = reports
             .into_iter()
             .map(|report| {
                 ErrorWithPosition::new(
@@ -206,6 +206,7 @@ impl IsolatedLintHandler {
                     start as usize,
                 )
             })
-            .collect()
+            .collect();
+        (path.to_path_buf(), diagnostics)
     }
 }
