@@ -57,6 +57,9 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
             Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
+            Expression::ConditionalExpression(conditional_expr) => {
+                Self::try_minimize_conditional(conditional_expr, ctx)
+            }
             _ => None,
         } {
             *expr = folded_expr;
@@ -252,6 +255,28 @@ impl<'a> PeepholeMinimizeConditions {
             Some(e) => e,
             None => ctx.ast.void_0(return_stmt.span),
         }
+    }
+
+    /// `a ? a : b` -> `a || b`
+    fn try_minimize_conditional(
+        expr: &mut ConditionalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let Expression::Identifier(test_ident) = &expr.test else { return None };
+        let Expression::Identifier(consequent_ident) = &expr.consequent else { return None };
+
+        if test_ident.name != consequent_ident.name {
+            return None;
+        }
+
+        let ident = ctx.ast.move_expression(&mut expr.test);
+
+        Some(ctx.ast.expression_logical(
+            expr.span,
+            ident,
+            LogicalOperator::Or,
+            ctx.ast.move_expression(&mut expr.alternate),
+        ))
     }
 }
 
@@ -662,21 +687,18 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_hook() {
         fold("x ? x : y", "x || y");
-        // We assume GETPROPs don't have side effects.
-        fold("x.y ? x.y : x.z", "x.y || x.z");
-        fold("x?.y ? x?.y : x.z", "x?.y || x.z");
-        fold("x?.y ? x?.y : x?.z", "x?.y || x?.z");
+        fold_same("x.y ? x.y : x.z");
+        fold_same("x?.y ? x?.y : x.z");
+        fold_same("x?.y ? x?.y : x?.z");
 
-        // This can be folded if x() does not have side effects.
         fold_same("x() ? x() : y()");
         fold_same("x?.() ? x?.() : y()");
 
-        fold("!x ? foo() : bar()", "x ? bar() : foo()");
-        fold("while(!(x ? y : z)) foo();", "while(x ? !y : !z) foo();");
-        fold("(x ? !y : !z) ? foo() : bar()", "(x ? y : z) ? bar() : foo()");
+        // fold("!x ? foo() : bar()", "x ? bar() : foo()");
+        // fold("while(!(x ? y : z)) foo();", "while(x ? !y : !z) foo();");
+        // fold("(x ? !y : !z) ? foo() : bar()", "(x ? y : z) ? bar() : foo()");
     }
 
     #[test]
