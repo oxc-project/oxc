@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 632/1095
+Passed: 641/1095
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -358,7 +358,12 @@ x Output mismatch
 x Output mismatch
 
 * private/static-self-method/input.js
-x Output mismatch
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
 
 * private/static-shadow/input.js
 x Output mismatch
@@ -462,7 +467,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-methods (17/148)
+# babel-plugin-transform-private-methods (26/148)
 * accessors/arguments/input.js
 x Output mismatch
 
@@ -675,34 +680,7 @@ x Output mismatch
     `----
 
 
-* private-static-method/basic/input.js
-x Output mismatch
-
-* private-static-method/class-check/input.js
-x Output mismatch
-
-* private-static-method/class-expression/input.js
-x Output mismatch
-
-* private-static-method/exfiltrated/input.js
-x Output mismatch
-
-* private-static-method/generator/input.js
-x Output mismatch
-
-* private-static-method/preserve-comments/input.js
-x Output mismatch
-
 * private-static-method/read-only/input.js
-x Output mismatch
-
-* private-static-method/super/input.js
-x Output mismatch
-
-* private-static-method/tagged-template/input.js
-x Output mismatch
-
-* private-static-method/this/input.js
 x Output mismatch
 
 * private-static-method-loose/async/input.js

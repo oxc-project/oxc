@@ -61,17 +61,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         } = self.classes_stack.find_private_prop(&field_expr.field);
 
         let span = field_expr.span;
-
-        if is_method || is_accessor {
-            let prop_ident = prop_binding.create_read_expression(ctx);
-            return if is_assignment {
-                // TODO: Handle assignment to private method or accessor
-                None
-            } else {
-                Some(self.create_assert_class_brand_for_private_method(prop_ident, span, ctx))
-            };
-        };
-
         let object = ctx.ast.move_expression(&mut field_expr.object);
 
         if self.private_fields_as_properties {
@@ -88,6 +77,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let prop_ident = prop_binding.create_read_expression(ctx);
 
         let replacement = if is_static {
+            if is_assignment && (is_method || is_accessor) {
+                // TODO: Handle assignment to static private method or static accessor
+                return None;
+            }
+
             // TODO: Ensure there are tests for nested classes with references to private static props
             // of outer class inside inner class, to make sure we're getting the right `class_bindings`.
 
@@ -100,23 +94,37 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             ) {
                 // `_prop._`
                 ctx.symbols_mut().delete_resolved_reference(class_symbol_id, object_reference_id);
-                Self::create_underscore_member_expression(prop_ident, span, ctx)
+                if is_method || is_accessor {
+                    prop_ident
+                } else {
+                    Self::create_underscore_member_expression(prop_ident, span, ctx)
+                }
             } else {
                 // `_assertClassBrand(Class, object, _prop)._`
                 let class_binding = class_bindings.get_or_init_static_binding(ctx);
                 let class_ident = class_binding.create_read_expression(ctx);
-
-                self.create_assert_class_brand_underscore(
-                    class_ident,
-                    object,
-                    prop_ident,
-                    span,
-                    ctx,
-                )
+                if is_method || is_accessor {
+                    self.create_assert_class_brand(class_ident, object, prop_ident, span, ctx)
+                } else {
+                    self.create_assert_class_brand_underscore(
+                        class_ident,
+                        object,
+                        prop_ident,
+                        span,
+                        ctx,
+                    )
+                }
             }
         } else if is_assignment {
+            if is_method || is_accessor {
+                // TODO: Handle assignment to private method or accessor
+                return None;
+            }
             // `_toSetter(_classPrivateFieldSet2, [_prop, object])._`
             self.create_to_setter(prop_ident, object, span, ctx)
+        } else if is_method || is_accessor {
+            let brand_ident = class_bindings.brand().create_read_expression(ctx);
+            self.create_assert_class_brand(brand_ident, object, prop_ident, span, ctx)
         } else {
             // `_classPrivateFieldGet2(_prop, object)`
             self.create_private_field_get(prop_ident, object, span, ctx)
@@ -278,13 +286,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let span = field_expr.span;
         let prop_ident = prop_binding.create_read_expression(ctx);
 
-        if is_method || is_accessor {
-            return (
-                self.create_assert_class_brand_for_private_method(prop_ident, span, ctx),
-                ctx.ast.expression_this(SPAN),
-            );
-        };
-
         // `(object.#method)()`
         //  ^^^^^^^^^^^^^^^^ is a parenthesized expression
         let object = ctx.ast.move_expression(field_expr.object.get_inner_expression_mut());
@@ -308,8 +309,13 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             )
             .is_some()
             {
-                // `_prop._`
-                let callee = Self::create_underscore_member_expression(prop_ident, span, ctx);
+                let callee = if is_method || is_accessor {
+                    // `_prop`
+                    prop_ident
+                } else {
+                    // `_prop._`
+                    Self::create_underscore_member_expression(prop_ident, span, ctx)
+                };
                 (callee, object)
             } else {
                 let class_binding = class_bindings.get_or_init_static_binding(ctx);
@@ -318,14 +324,20 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // Make 2 copies of `object`
                 let (object1, object2) = self.duplicate_object(object, ctx);
 
-                // `_assertClassBrand(Class, object, _prop)._`
-                let assert_obj = self.create_assert_class_brand_underscore(
-                    class_ident,
-                    object1,
-                    prop_ident,
-                    span,
-                    ctx,
-                );
+                let assert_obj = if is_method || is_accessor {
+                    // `_assertClassBrand(Class, object, _prop)._`
+                    self.create_assert_class_brand(class_ident, object1, prop_ident, span, ctx)
+                } else {
+                    // `_assertClassBrand(Class, object, _prop)._`
+                    self.create_assert_class_brand_underscore(
+                        class_ident,
+                        object1,
+                        prop_ident,
+                        span,
+                        ctx,
+                    )
+                };
+
                 (assert_obj, object2)
             }
         } else {
@@ -333,9 +345,15 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // Make 2 copies of `object`
             let (object1, object2) = self.duplicate_object(object, ctx);
 
-            // `_classPrivateFieldGet2(_prop, object)`
-            let get_call = self.create_private_field_get(prop_ident, object1, span, ctx);
-            (get_call, object2)
+            let callee = if is_method || is_accessor {
+                // `(_Class_brand, this)`
+                let brand_ident = self.current_class().bindings.brand().create_read_expression(ctx);
+                self.create_assert_class_brand(brand_ident, object1, prop_ident, span, ctx)
+            } else {
+                // `_classPrivateFieldGet2(_prop, object)`
+                self.create_private_field_get(prop_ident, object1, span, ctx)
+            };
+            (callee, object2)
         };
 
         replacement
@@ -1793,19 +1811,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             ]),
             ctx,
         )
-    }
-
-    /// `_assertClassBrand(_Class_brand, object, _prop)`
-    #[inline]
-    fn create_assert_class_brand_for_private_method(
-        &self,
-        value_or_prop_ident: Expression<'a>,
-        span: Span,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let class_ident = self.current_class().bindings.brand().create_read_expression(ctx);
-        let object = ctx.ast.expression_this(SPAN);
-        self.create_assert_class_brand(class_ident, object, value_or_prop_ident, span, ctx)
     }
 
     /// `_assertClassBrand(Class, object, _prop)._`

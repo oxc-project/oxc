@@ -76,8 +76,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         // Check if class has any properties or statick blocks, and locate constructor (if class has one)
         let mut instance_prop_count = 0;
+        let mut has_instance_private_method = false;
         let mut has_static_prop = false;
-        let mut has_private_method = false;
         let mut has_static_block = false;
         // TODO: Store `FxIndexMap`s in a pool and re-use them
         let mut private_props = FxIndexMap::default();
@@ -118,7 +118,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                             constructor = Some(method);
                         }
                     } else if let PropertyKey::PrivateIdentifier(ident) = &method.key {
-                        has_private_method = true;
+                        if method.r#static {
+                            has_static_prop = true;
+                        } else {
+                            has_instance_private_method = true;
+                        }
+
                         let name = match method.kind {
                             MethodDefinitionKind::Method => ident.name.as_str(),
                             MethodDefinitionKind::Get => &format!("get_{}", ident.name),
@@ -154,7 +159,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         }
 
         // Exit if nothing to transform
-        if instance_prop_count == 0 && !has_static_prop && !has_static_block && !has_private_method
+        if instance_prop_count == 0
+            && !has_static_prop
+            && !has_static_block
+            && !has_instance_private_method
         {
             self.classes_stack.push(ClassDetails {
                 is_declaration,
@@ -193,7 +201,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             None
         };
 
-        let class_brand_binding = has_private_method.then(|| {
+        let class_brand_binding = has_instance_private_method.then(|| {
             // `_Class_brand`
             let name = class_name_binding.as_ref().map_or_else(|| "Class", |binding| &binding.name);
             let name = &format!("_{name}_brand");
@@ -219,7 +227,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         });
 
         // Exit if no instance properties (public or private)
-        if instance_prop_count == 0 && !has_private_method {
+        if instance_prop_count == 0 && !has_instance_private_method {
             return;
         }
 
@@ -271,10 +279,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // Those assignments will be moved to before class in exit phase of the transform.
         // -> `_foo = foo(); class C {}`
         let mut instance_inits =
-            Vec::with_capacity(instance_prop_count + usize::from(has_private_method));
+            Vec::with_capacity(instance_prop_count + usize::from(has_instance_private_method));
 
         // `_classPrivateMethodInitSpec(this, _C_brand);`
-        if has_private_method {
+        if has_instance_private_method {
             instance_inits.push(self.create_class_private_method_init_spec(ctx));
         }
 
@@ -590,11 +598,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 let mut weakmap_symbol_id = None;
                 let mut has_method = false;
                 exprs.extend(private_props.values().filter_map(|prop| {
-                    if (prop.is_method && has_method) || prop.is_accessor {
-                        return None;
-                    }
-
-                    if prop.is_method {
+                    if prop.is_method || prop.is_accessor {
+                        if prop.is_static || has_method {
+                            return None;
+                        }
                         has_method = true;
                         // `_C_brand = new WeakSet()`
                         let binding = class_details.bindings.brand();
@@ -645,6 +652,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // `_Class = class {}`
             let class_expr = ctx.ast.move_expression(expr);
             let assignment = create_assignment(binding, class_expr, ctx);
+
+            if exprs.is_empty() && self.insert_after_exprs.is_empty() {
+                // No need to wrap in sequence if no static property
+                // and static blocks
+                *expr = assignment;
+                return;
+            }
+
             exprs.push(assignment);
             // Add static property assignments + static blocks
             exprs.extend(self.insert_after_exprs.drain(..));
