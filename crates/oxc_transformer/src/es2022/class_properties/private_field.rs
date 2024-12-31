@@ -60,11 +60,18 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             is_declaration,
         } = self.classes_stack.find_private_prop(&field_expr.field);
 
+        let span = field_expr.span;
+
         if is_method || is_accessor {
-            return None;
+            let prop_ident = prop_binding.create_read_expression(ctx);
+            return if is_assignment {
+                // TODO: Handle assignment to private method or accessor
+                None
+            } else {
+                Some(self.create_assert_class_brand_for_private_method(prop_ident, span, ctx))
+            };
         };
 
-        let span = field_expr.span;
         let object = ctx.ast.move_expression(&mut field_expr.object);
 
         if self.private_fields_as_properties {
@@ -268,11 +275,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             is_declaration,
         } = self.classes_stack.find_private_prop(&field_expr.field);
 
+        let span = field_expr.span;
         let prop_ident = prop_binding.create_read_expression(ctx);
 
         if is_method || is_accessor {
             return (
-                self.create_assert_class_brand_for_private_method(prop_ident, ctx),
+                self.create_assert_class_brand_for_private_method(prop_ident, span, ctx),
                 ctx.ast.expression_this(SPAN),
             );
         };
@@ -301,8 +309,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             .is_some()
             {
                 // `_prop._`
-                let callee =
-                    Self::create_underscore_member_expression(prop_ident, field_expr.span, ctx);
+                let callee = Self::create_underscore_member_expression(prop_ident, span, ctx);
                 (callee, object)
             } else {
                 let class_binding = class_bindings.get_or_init_static_binding(ctx);
@@ -316,7 +323,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     class_ident,
                     object1,
                     prop_ident,
-                    field_expr.span,
+                    span,
                     ctx,
                 );
                 (assert_obj, object2)
@@ -327,7 +334,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             let (object1, object2) = self.duplicate_object(object, ctx);
 
             // `_classPrivateFieldGet2(_prop, object)`
-            let get_call = self.create_private_field_get(prop_ident, object1, field_expr.span, ctx);
+            let get_call = self.create_private_field_get(prop_ident, object1, span, ctx);
             (get_call, object2)
         };
 
@@ -533,7 +540,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 // Replace right side of assignment with `_assertClassBrand(Class, object, _prop)`
                 // TODO: Ensure there are tests for nested classes with references to private static props
                 // of outer class inside inner class, to make sure we're getting the right `class_binding`.
-                assign_expr.right = self.create_assert_class_brand(class_ident, object, value, ctx);
+                assign_expr.right =
+                    self.create_assert_class_brand(class_ident, object, value, SPAN, ctx);
             } else {
                 let class_ident = class_binding.create_read_expression(ctx);
                 let value = ctx.ast.move_expression(&mut assign_expr.right);
@@ -563,7 +571,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     let value = ctx.ast.expression_binary(SPAN, get_expr, operator, value);
                     // `_assertClassBrand(Class, object, _assertClassBrand(Class, object, _prop)._ + value)`
                     assign_expr.right =
-                        self.create_assert_class_brand(class_ident2, object1, value, ctx);
+                        self.create_assert_class_brand(class_ident2, object1, value, SPAN, ctx);
                 } else if let Some(operator) = operator.to_logical_operator() {
                     // `object.#prop &&= value`
                     // -> `_assertClassBrand(Class, object, _prop)._ && (_prop._ = _assertClassBrand(Class, object, value))`
@@ -585,7 +593,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     assign_expr.span = SPAN;
                     assign_expr.operator = AssignmentOperator::Assign;
                     assign_expr.right =
-                        self.create_assert_class_brand(class_ident2, object2, value, ctx);
+                        self.create_assert_class_brand(class_ident2, object2, value, SPAN, ctx);
                     let right = ctx.ast.move_expression(expr);
                     // `_assertClassBrand(Class, object, _prop)._ && (_prop._ = _assertClassBrand(Class, object, value))`
                     *expr = ctx.ast.expression_logical(span, left, operator, right);
@@ -869,7 +877,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
                 // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
                 if let Some(class_ident) = class_ident {
-                    value = self.create_assert_class_brand(class_ident, object, value, ctx);
+                    value = self.create_assert_class_brand(class_ident, object, value, SPAN, ctx);
                 }
 
                 // `_prop._ = <value>`
@@ -899,7 +907,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
                 // If no shortcut, wrap in `_assertClassBrand(Class, object, <value>)`
                 if let Some(class_ident) = class_ident {
-                    value = self.create_assert_class_brand(class_ident, object, value, ctx);
+                    value = self.create_assert_class_brand(class_ident, object, value, SPAN, ctx);
                 }
 
                 // `_prop._ = <value>`
@@ -1772,11 +1780,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         class_ident: Expression<'a>,
         object: Expression<'a>,
         value_or_prop_ident: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         self.ctx.helper_call_expr(
             Helper::AssertClassBrand,
-            SPAN,
+            span,
             ctx.ast.vec_from_array([
                 Argument::from(class_ident),
                 Argument::from(object),
@@ -1791,11 +1800,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     fn create_assert_class_brand_for_private_method(
         &self,
         value_or_prop_ident: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let class_ident = self.current_class().bindings.brand().create_read_expression(ctx);
         let object = ctx.ast.expression_this(SPAN);
-        self.create_assert_class_brand(class_ident, object, value_or_prop_ident, ctx)
+        self.create_assert_class_brand(class_ident, object, value_or_prop_ident, span, ctx)
     }
 
     /// `_assertClassBrand(Class, object, _prop)._`
@@ -1807,7 +1817,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let func_call = self.create_assert_class_brand(class_ident, object, prop_ident, ctx);
+        let func_call = self.create_assert_class_brand(class_ident, object, prop_ident, SPAN, ctx);
         Self::create_underscore_member_expression(func_call, span, ctx)
     }
 

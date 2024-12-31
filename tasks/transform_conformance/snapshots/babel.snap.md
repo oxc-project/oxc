@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 628/1095
+Passed: 630/1095
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -462,7 +462,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-methods (13/148)
+# babel-plugin-transform-private-methods (15/148)
 * accessors/arguments/input.js
 x Output mismatch
 
@@ -571,13 +571,7 @@ x Output mismatch
 * private-method/class-expression/input.js
 x Output mismatch
 
-* private-method/context/input.js
-x Output mismatch
-
 * private-method/destructuring/input.js
-x Output mismatch
-
-* private-method/exfiltrated/input.js
 x Output mismatch
 
 * private-method/read-only/input.js
