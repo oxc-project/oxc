@@ -894,25 +894,30 @@ fn get_diagnostic_from_is_skip_able_result_pattern(
             diagnostic
         }
         IsSkipAbleResult::NameDisallowed(name_span) => {
-            let diagnostic =
-                if let Some(allow_import_name_pattern) = &pattern.allow_import_name_pattern {
-                    diagnostic_allowed_import_name_pattern(
-                        name_span.clone().span(),
-                        pattern.message.clone(),
-                        name_span.name(),
-                        source,
-                        allow_import_name_pattern.as_str(),
-                    )
-                } else {
-                    diagnostic_pattern_and_import_name(
-                        name_span.clone().span(),
-                        pattern.message.clone(),
-                        name_span.name(),
-                        source,
-                    )
-                };
-
-            diagnostic
+            if let Some(allow_import_names) = &pattern.allow_import_names {
+                diagnostic_allowed_import_name(
+                    name_span.clone().span(),
+                    pattern.message.clone(),
+                    name_span.name(),
+                    source,
+                    allow_import_names.join(", ").as_str(),
+                )
+            } else if let Some(allow_import_name_pattern) = &pattern.allow_import_name_pattern {
+                diagnostic_allowed_import_name_pattern(
+                    name_span.clone().span(),
+                    pattern.message.clone(),
+                    name_span.name(),
+                    source,
+                    allow_import_name_pattern.as_str(),
+                )
+            } else {
+                diagnostic_pattern_and_import_name(
+                    name_span.clone().span(),
+                    pattern.message.clone(),
+                    name_span.name(),
+                    source,
+                )
+            }
         }
         IsSkipAbleResult::Allowed => unreachable!("should be filtered out by parent function"),
     }
@@ -2160,8 +2165,6 @@ fn test() {
                 }]
             }])),
         ),
-        // expected: 'DisallowedObject' import from 'foo' is restricted because only 'AllowedObject' import(s) is/are allowed.
-        // got: 'DisallowedObject' import from 'foo' is restricted from being used by a pattern.
         (
             r#"import { AllowedObject, DisallowedObject } from "foo";"#,
             Some(serde_json::json!([{
@@ -2171,8 +2174,6 @@ fn test() {
                 }]
             }])),
         ),
-        // expected: 'DisallowedObject' import from 'foo' is restricted because only 'AllowedObject' import(s) is/are allowed.
-        // got: 'DisallowedObject' import from 'foo' is restricted from being used by a pattern.
         (
             r#"import { AllowedObject, DisallowedObject } from "foo";"#,
             Some(serde_json::json!([{

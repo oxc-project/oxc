@@ -716,13 +716,13 @@ snapshot_kind: text
    ╰────
   help: Only "AllowedObject" is allowed to be imported from "foo".
 
-  ⚠ eslint(no-restricted-imports): 'DisallowedObject' import from 'foo' is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): 'DisallowedObject' import from 'foo' is restricted because only AllowedObject import(s) is/are allowed.
    ╭─[no_restricted_imports.tsx:1:25]
  1 │ import { AllowedObject, DisallowedObject } from "foo";
    ·                         ────────────────
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'DisallowedObject' import from 'foo' is restricted from being used by a pattern.
+  ⚠ eslint(no-restricted-imports): 'DisallowedObject' import from 'foo' is restricted because only AllowedObject import(s) is/are allowed.
    ╭─[no_restricted_imports.tsx:1:25]
  1 │ import { AllowedObject, DisallowedObject } from "foo";
    ·                         ────────────────
