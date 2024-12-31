@@ -258,9 +258,30 @@ impl<'a, 'b> PeepholeFoldConstants {
             | BinaryOperator::Remainder
             | BinaryOperator::Multiplication
             | BinaryOperator::Exponential
-            | BinaryOperator::Instanceof => {
-                ctx.eval_binary_expression(e).map(|v| ctx.value_to_expr(e.span, v))
+            | BinaryOperator::Instanceof => match (&e.left, &e.right) {
+                (Expression::NumericLiteral(left), Expression::NumericLiteral(right)) => {
+                    // Do not fold any division unless rhs is 0.
+                    if e.operator == BinaryOperator::Division
+                        && right.value != 0.0
+                        && !right.value.is_nan()
+                        && !right.value.is_infinite()
+                    {
+                        return None;
+                    }
+                    let value = ctx.eval_binary_expression(e)?;
+                    let ConstantValue::Number(num) = value else { return None };
+                    (num.is_nan()
+                        || num.is_infinite()
+                        || (num.abs() <= f64::powf(2.0, 53.0)
+                            && Self::approximate_printed_int_char_count(num)
+                                <= Self::approximate_printed_int_char_count(left.value)
+                                    + Self::approximate_printed_int_char_count(right.value)
+                                    + e.operator.as_str().len()))
+                    .then_some(value)
+                }
+                _ => ctx.eval_binary_expression(e),
             }
+            .map(|v| ctx.value_to_expr(e.span, v)),
             BinaryOperator::Addition => Self::try_fold_add(e, ctx),
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
                 if let Some(v) = ctx.eval_binary_expression(e) {
@@ -271,6 +292,23 @@ impl<'a, 'b> PeepholeFoldConstants {
             op if op.is_equality() || op.is_compare() => Self::try_fold_comparison(e, ctx),
             _ => None,
         }
+    }
+
+    // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1128
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    #[must_use]
+    fn approximate_printed_int_char_count(value: f64) -> usize {
+        let mut count = if value.is_infinite() {
+            "Infinity".len()
+        } else if value.is_nan() {
+            "NaN".len()
+        } else {
+            1 + 0.max(value.abs().log10().floor() as usize)
+        };
+        if value.is_sign_negative() {
+            count += 1;
+        }
+        count
     }
 
     // Simplified version of `tryFoldAdd` from closure compiler.
@@ -1340,8 +1378,8 @@ mod test {
     #[test]
     fn test_fold_bitwise_op_additional() {
         test("x = null & 1", "x = 0");
-        test("x = (2 ** 31 - 1) | 1", "x = 2147483647");
-        test("x = (2 ** 31) | 1", "x = -2147483647");
+        test_same("x = (2 ** 31 - 1) | 1");
+        test_same("x = (2 ** 31) | 1");
 
         // https://github.com/oxc-project/oxc/issues/7944
         test_same("(x - 1) & 1");
@@ -1374,9 +1412,9 @@ mod test {
         test("x = 10 >>> 1", "x=5");
         test("x = 10 >>> 2", "x=2");
         test("x = 10 >>> 5", "x=0");
-        test("x = -1 >>> 1", "x=2147483647"); // 0x7fffffff
-        test("x = -1 >>> 0", "x=4294967295"); // 0xffffffff
-        test("x = -2 >>> 0", "x=4294967294"); // 0xfffffffe
+        test_same("x = -1 >>> 1");
+        test_same("x = -1 >>> 0");
+        test_same("x = -2 >>> 0");
         test("x = 0x90000000 >>> 28", "x=9");
 
         test("x = 0xffffffff << 0", "x=-1");
@@ -1446,7 +1484,7 @@ mod test {
     #[test]
     fn test_fold_arithmetic() {
         test("x = 10 + 20", "x = 30");
-        test("x = 2 / 4", "x = 0.5");
+        test_same("x = 2 / 4");
         test("x = 2.25 * 3", "x = 6.75");
         test_same("z = x * y");
         test_same("x = y * 5");
@@ -1458,8 +1496,7 @@ mod test {
 
         test("x = 2 ** 3", "x = 8");
         test("x = 2 ** -3", "x = 0.125");
-        // FIXME
-        // test_same("x = 2 ** 55"); // backs off folding because 2 ** 55 is too large
+        test_same("x = 2 ** 55");
         // test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
 
         test("x = 0 / 0", "x = NaN");
