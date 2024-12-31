@@ -238,24 +238,27 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticVisitor<'a, 'ctx, 'v> {
                 }
             }
             // `super.prop`
-            Expression::StaticMemberExpression(_) => {
-                self.transform_static_member_expression_if_super(expr);
+            Expression::StaticMemberExpression(_) if self.this_depth == 0 => {
+                self.super_converter.transform_static_member_expression(expr, self.ctx);
             }
             // `super[prop]`
-            Expression::ComputedMemberExpression(_) => {
-                self.transform_computed_member_expression_if_super(expr);
+            Expression::ComputedMemberExpression(_) if self.this_depth == 0 => {
+                self.super_converter.transform_computed_member_expression(expr, self.ctx);
             }
             // `super.prop()`
-            Expression::CallExpression(call_expr) => {
-                self.transform_call_expression_if_super_member_expression(call_expr);
+            Expression::CallExpression(call_expr) if self.this_depth == 0 => {
+                self.super_converter
+                    .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
             }
             // `super.prop = value`, `super.prop += value`, `super.prop ??= value`
-            Expression::AssignmentExpression(_) => {
-                self.transform_assignment_expression_if_super_member_assignment_target(expr);
+            Expression::AssignmentExpression(_) if self.this_depth == 0 => {
+                self.super_converter
+                    .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
             }
             // `super.prop++`, `--super.prop`
-            Expression::UpdateExpression(_) => {
-                self.transform_update_expression_if_super_member_assignment_target(expr);
+            Expression::UpdateExpression(_) if self.this_depth == 0 => {
+                self.super_converter
+                    .transform_update_expression_for_super_assignment_target(expr, self.ctx);
             }
             _ => {}
         }
@@ -533,60 +536,6 @@ impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
             let scope_id = scope_id.get().unwrap();
             let current_scope_id = self.ctx.current_scope_id();
             self.ctx.scopes_mut().change_parent_id(scope_id, Some(current_scope_id));
-        }
-    }
-
-    // `#[inline]` into visitor to keep common path where member expression isn't `super.prop` fast
-    #[inline]
-    fn transform_static_member_expression_if_super(&mut self, expr: &mut Expression<'a>) {
-        if self.this_depth == 0 {
-            self.super_converter.transform_static_member_expression(expr, self.ctx);
-        }
-    }
-
-    // `#[inline]` into visitor to keep common path where member expression isn't `super.prop` fast
-    #[inline]
-    fn transform_computed_member_expression_if_super(&mut self, expr: &mut Expression<'a>) {
-        if self.this_depth == 0 {
-            self.super_converter.transform_computed_member_expression(expr, self.ctx);
-        }
-    }
-
-    // `#[inline]` into visitor to keep common path where call expression isn't `super.prop()` fast
-    #[inline]
-    fn transform_call_expression_if_super_member_expression(
-        &mut self,
-        call_expr: &mut CallExpression<'a>,
-    ) {
-        if self.this_depth == 0 {
-            self.super_converter
-                .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
-        }
-    }
-
-    // `#[inline]` into visitor to keep common path where assignment expression isn't
-    // `super.prop += 1` fast
-    #[inline]
-    fn transform_assignment_expression_if_super_member_assignment_target(
-        &mut self,
-        expr: &mut Expression<'a>,
-    ) {
-        if self.this_depth == 0 {
-            self.super_converter
-                .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
-        }
-    }
-
-    // `#[inline]` into visitor to keep common path where assignment expression isn't
-    // `super.prop++` fast
-    #[inline]
-    fn transform_update_expression_if_super_member_assignment_target(
-        &mut self,
-        expr: &mut Expression<'a>,
-    ) {
-        if self.this_depth == 0 {
-            self.super_converter
-                .transform_update_expression_for_super_assignment_target(expr, self.ctx);
         }
     }
 }
