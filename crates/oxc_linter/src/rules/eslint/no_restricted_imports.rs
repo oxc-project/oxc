@@ -430,8 +430,10 @@ impl RestrictedPath {
                 let name = CompactStr::new("default");
 
                 match is_name_span_allowed_in_path(&name, self) {
-                    NameSpanAllowedResult::NameDisallowed
-                    | NameSpanAllowedResult::GeneralDisallowed => {
+                    NameSpanAllowedResult::NameDisallowed => {
+                        IsSkipAbleResult::NameDisallowed(NameSpan::new(name, *span))
+                    }
+                    NameSpanAllowedResult::GeneralDisallowed => {
                         IsSkipAbleResult::GeneralDisallowed(NameSpan::new(name, *span))
                     }
                     NameSpanAllowedResult::Allowed => IsSkipAbleResult::Allowed,
@@ -1849,8 +1851,6 @@ fn test() {
                 }]
             }])),
         ),
-        // expected: 'default' import from 'mod' is restricted.
-        // got: 'mod' import is restricted from being used.
         (
             "import foo, { default as bar } from 'mod';",
             Some(serde_json::json!([{
@@ -2119,8 +2119,6 @@ fn test() {
                 }]
             }])),
         ),
-        // expected: * import is invalid because import name matching '/^Foo/u' pattern from 'foo' is restricted from being used.
-        // got: 'foo' import is restricted from being used by a pattern.
         (
             "export * from 'foo';",
             Some(serde_json::json!([{
@@ -2279,8 +2277,6 @@ fn test() {
                 }]
             }])),
         ),
-        // expected: 'Foo_*' import from '@app/api' is restricted from being used by a pattern.
-        // got: '@app/api/bar' import is restricted from being used by a pattern.
         // (
         //     "
         // 	        // error

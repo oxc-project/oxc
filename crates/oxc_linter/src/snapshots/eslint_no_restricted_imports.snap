@@ -145,10 +145,10 @@ snapshot_kind: text
    ╰────
   help: Please import from "bar" instead.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:1]
+  ⚠ eslint(no-restricted-imports): 'default' import from 'foo' is restricted.
+   ╭─[no_restricted_imports.tsx:1:8]
  1 │ import DisallowedObject from "foo";
-   · ───────────────────────────────────
+   ·        ────────────────
    ╰────
   help: Please import the default import of "foo" from /bar/ instead.
 
@@ -233,10 +233,10 @@ snapshot_kind: text
    ╰────
   help: Please import "DisallowedObject" and "DisallowedObjectTwo" from /bar/ instead.
 
-  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:1]
+  ⚠ eslint(no-restricted-imports): 'default' import from 'foo' is restricted.
+   ╭─[no_restricted_imports.tsx:1:8]
  1 │ import DisallowedObject, { AllowedObject as AllowedObjectTwo } from "foo";
-   · ──────────────────────────────────────────────────────────────────────────
+   ·        ────────────────
    ╰────
   help: Please import the default import of "foo" from /bar/ instead.
 
@@ -409,16 +409,16 @@ snapshot_kind: text
    ╰────
   help: Import bar from qux instead.
 
-  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:1]
+  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted.
+   ╭─[no_restricted_imports.tsx:1:8]
  1 │ import foo, { bar } from 'mod';
-   · ───────────────────────────────
+   ·        ───
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:1]
+  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted.
+   ╭─[no_restricted_imports.tsx:1:8]
  1 │ import foo, * as bar from 'mod';
-   · ────────────────────────────────
+   ·        ───
    ╰────
 
   ⚠ eslint(no-restricted-imports): * import is invalid because 'default' from 'mod' is restricted.
@@ -457,10 +457,10 @@ snapshot_kind: text
    ·                  ─
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used.
-   ╭─[no_restricted_imports.tsx:1:1]
+  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted.
+   ╭─[no_restricted_imports.tsx:1:8]
  1 │ import foo, { default as bar } from 'mod';
-   · ──────────────────────────────────────────
+   ·        ───
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted.
