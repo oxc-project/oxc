@@ -648,7 +648,7 @@ impl NoRestrictedImports {
         for (source, requests) in &module_record.requested_modules {
             for request in requests {
                 if request.is_import && module_record.import_entries.is_empty() {
-                    side_effect_import_map.entry(source).or_default().push(request.span);
+                    side_effect_import_map.entry(source).or_default().push(request.statement_span);
                 }
             }
         }
@@ -679,7 +679,7 @@ impl NoRestrictedImports {
             }
 
             let diagnostic = get_diagnostic_from_is_skip_able_result_path(
-                entry.module_request.span(),
+                entry.statement_span,
                 source,
                 result,
                 path,
@@ -705,7 +705,7 @@ impl NoRestrictedImports {
                 }
                 GlobResult::Found => {
                     let diagnostic = get_diagnostic_from_is_skip_able_result_pattern(
-                        entry.module_request.span(),
+                        entry.statement_span,
                         source,
                         result,
                         pattern,
@@ -717,9 +717,7 @@ impl NoRestrictedImports {
             };
 
             if pattern.get_regex_result(&entry.module_request) {
-                let span = entry.module_request.span();
-
-                ctx.diagnostic(diagnostic_pattern(span, pattern.message.clone(), source));
+                ctx.diagnostic(diagnostic_pattern(entry.statement_span, pattern.message.clone(), source));
             }
         }
 
@@ -773,10 +771,8 @@ impl NoRestrictedImports {
                     break;
                 }
                 GlobResult::Found => {
-                    let span = module_request.span();
-
                     let diagnostic = get_diagnostic_from_is_skip_able_result_pattern(
-                        span, source, result, pattern,
+                        entry.span, source, result, pattern,
                     );
 
                     found_errors.push(diagnostic);
@@ -785,9 +781,7 @@ impl NoRestrictedImports {
             };
 
             if pattern.get_regex_result(module_request) {
-                let span = module_request.span();
-
-                ctx.diagnostic(diagnostic_pattern(span, pattern.message.clone(), source));
+                ctx.diagnostic(diagnostic_pattern(entry.span, pattern.message.clone(), source));
             }
         }
 
