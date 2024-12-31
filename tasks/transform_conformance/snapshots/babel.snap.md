@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 641/1095
+Passed: 661/1095
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -467,39 +467,11 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-methods (26/148)
-* accessors/arguments/input.js
-x Output mismatch
-
-* accessors/basic/input.js
-x Output mismatch
-
-* accessors/class-binding/input.js
-x Output mismatch
-
-* accessors/destructuring/input.js
-x Output mismatch
-
-* accessors/get-only-setter/input.js
-x Output mismatch
-
-* accessors/preserve-comments/input.js
-x Output mismatch
-
-* accessors/reassignment/input.js
-x Output mismatch
-
-* accessors/set-only-getter/input.js
-x Output mismatch
-
+# babel-plugin-transform-private-methods (46/148)
 * accessors/tagged-template/input.js
-x Output mismatch
-
-* accessors/updates/input.js
-x Output mismatch
-
-* accessors/updates-bigint/input.js
-x Output mismatch
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
 
 * accessors-loose/basic/input.js
 x Output mismatch
@@ -559,24 +531,6 @@ x Output mismatch
 x Output mismatch
 
 * assumption-constantSuper/private-method-super/input.js
-x Output mismatch
-
-* duplicated-names/get-set/input.js
-x Output mismatch
-
-* duplicated-names/set-get/input.js
-x Output mismatch
-
-* misc/multiple/input.js
-x Output mismatch
-
-* private-method/destructuring/input.js
-x Output mismatch
-
-* private-method/read-only/input.js
-x Output mismatch
-
-* private-method/reassignment/input.js
 x Output mismatch
 
 * private-method/super/input.js
@@ -791,26 +745,16 @@ x Output mismatch
 * private-static-method-privateFieldsAsSymbols/this/input.js
 x Output mismatch
 
-* static-accessors/basic/input.js
-x Output mismatch
-
-* static-accessors/destructure-set/input.js
-x Output mismatch
-
 * static-accessors/get-only-setter/input.js
-x Output mismatch
-
-* static-accessors/preserve-comments/input.js
 x Output mismatch
 
 * static-accessors/set-only-getter/input.js
 x Output mismatch
 
 * static-accessors/tagged-template/input.js
-x Output mismatch
-
-* static-accessors/updates/input.js
-x Output mismatch
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 * static-accessors-loose/basic/input.js
 x Output mismatch

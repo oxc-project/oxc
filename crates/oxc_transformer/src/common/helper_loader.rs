@@ -161,6 +161,8 @@ pub enum Helper {
     ClassPrivateFieldLooseBase,
     SuperPropGet,
     SuperPropSet,
+    ReadOnlyError,
+    WriteOnlyError,
 }
 
 impl Helper {
@@ -187,6 +189,8 @@ impl Helper {
             Self::ClassPrivateFieldLooseBase => "classPrivateFieldLooseBase",
             Self::SuperPropGet => "superPropGet",
             Self::SuperPropSet => "superPropSet",
+            Self::ReadOnlyError => "readOnlyError",
+            Self::WriteOnlyError => "writeOnlyError",
         }
     }
 }

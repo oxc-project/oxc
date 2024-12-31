@@ -2,7 +2,7 @@ commit: 54a8389f
 
 node: v22.12.0
 
-Passed: 252 of 362 (69.61%)
+Passed: 283 of 362 (78.18%)
 
 Failures:
 
@@ -112,24 +112,6 @@ TypeError: Cannot read properties of undefined (reading 'x')
     at Foo.test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:25:63)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:68:12
 
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-arguments-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-basic-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-class-binding-exec.test.js
-AssertionError: expected [Function _get_getA] to be [Function A] // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-class-binding-exec.test.js:22:26
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-get-only-setter-exec.test.js
-AssertionError: expected function to throw an error, but it didn't
-    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-get-only-setter-exec.test.js:14:77)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-get-only-setter-exec.test.js:20:13
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-helper-exec.test.js
-Private field '#foo' must be declared in an enclosing class
-
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-basic-exec.test.js
 ReferenceError: _Cl_brand is not defined
     at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-basic-exec.test.js:10:38)
@@ -142,8 +124,8 @@ ReferenceError: _A_brand is not defined
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-get-only-setter-exec.test.js
 ReferenceError: _Cl_brand is not defined
-    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-get-only-setter-exec.test.js:10:38)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-get-only-setter-exec.test.js:21:13
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-get-only-setter-exec.test.js:11:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-get-only-setter-exec.test.js:22:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-helper-exec.test.js
 ReferenceError: _Cl_brand is not defined
@@ -156,11 +138,13 @@ AssertionError: expected +0 to be 1 // Object.is equality
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-set-only-getter-exec.test.js
 ReferenceError: _Cl_brand is not defined
-    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-set-only-getter-exec.test.js:10:38)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-set-only-getter-exec.test.js:22:13
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-set-only-getter-exec.test.js:11:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-set-only-getter-exec.test.js:23:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-updates-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-updates-exec.test.js:10:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-updates-exec.test.js:49:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-basic-exec.test.js
 ReferenceError: _Cl_brand is not defined
@@ -174,8 +158,8 @@ ReferenceError: _A_brand is not defined
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js
 ReferenceError: _Cl_brand is not defined
-    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:10:38)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:21:13
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:11:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:22:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-helper-exec.test.js
 ReferenceError: _Cl_brand is not defined
@@ -184,50 +168,19 @@ ReferenceError: _Cl_brand is not defined
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-set-only-getter-exec.test.js
 ReferenceError: _Cl_brand is not defined
-    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-set-only-getter-exec.test.js:10:38)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-set-only-getter-exec.test.js:22:13
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-set-only-getter-exec.test.js:11:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-set-only-getter-exec.test.js:23:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-updates-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-basic-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-class-binding-exec.test.js
-AssertionError: expected [Function _get_getA] to be [Function A] // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-class-binding-exec.test.js:22:26
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-updates-exec.test.js:10:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-updates-exec.test.js:49:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js
-AssertionError: expected [Function _set_privateFieldValue] to be undefined
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@2.1.2/node_modules/@vitest/expect/dist/index.js:1236:20)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@2.1.2/node_modules/@vitest/expect/dist/index.js:923:17)
-    at Proxy.methodWrapper (./node_modules/.pnpm/chai@5.1.2/node_modules/chai/chai.js:1610:25)
-    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:14:71)
+TypeError: "#privateFieldValue" is write-only
+    at _writeOnlyError (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/writeOnlyError.js:2:9)
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:14:18)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:20:13
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-helper-exec.test.js
-Private field '#foo' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-set-only-getter-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-updates-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-reassignment-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-set-only-getter-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-updates-bigint-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-updates-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-context-exec.test.js
-Private field '#getStatus' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-assignment-exec.test.js
 ReferenceError: _Foo_brand is not defined
@@ -302,15 +255,6 @@ ReferenceError: _Cl_brand is not defined
 ReferenceError: _Sub_brand is not defined
     at new Sub (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-super-exec.test.js:16:38)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-super-exec.test.js:29:9
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-context-exec.test.js
-Private field '#getStatus' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-read-only-exec.test.js
-Private field '#method' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-reassignment-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-basic-exec.test.js
 TypeError: attempted to use private field on non-instance
@@ -396,36 +340,17 @@ TypeError: attempted to use private field on non-instance
     at Function.extract (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-this-exec.test.js:17:12)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-this-exec.test.js:27:25
 
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-reassignment-exec.test.js
-Private field '#privateStaticMethod' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-read-only-exec.test.js
-Private field '#method' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-reassignment-exec.test.js
-Private field '#privateStaticMethod' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-access-in-static-field-initializer-exec.test.js
-Private field '#p' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-basic-exec.test.js
-Private field '#privateStaticFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-destructure-set-exec.test.js
-Private field '#p' must be declared in an enclosing class
-
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-get-only-setter-exec.test.js
-AssertionError: expected [Function _set_privateStaticFieldValue] to be undefined
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@2.1.2/node_modules/@vitest/expect/dist/index.js:1236:20)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@2.1.2/node_modules/@vitest/expect/dist/index.js:923:17)
-    at Proxy.methodWrapper (./node_modules/.pnpm/chai@5.1.2/node_modules/chai/chai.js:1610:25)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-get-only-setter-exec.test.js:13:42
+TypeError: "#privateStaticFieldValue" is write-only
+    at _writeOnlyError (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/writeOnlyError.js:2:9)
+    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-get-only-setter-exec.test.js:7:15)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-get-only-setter-exec.test.js:14:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-access-in-static-field-initializer-exec.test.js
 TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/classPrivateFieldLooseBase.js:2:44)
     at new C (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-access-in-static-field-initializer-exec.test.js:12:9)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-access-in-static-field-initializer-exec.test.js:18:11
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-access-in-static-field-initializer-exec.test.js:21:11
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-access-in-static-field-initializer-exec.test.js:24:4
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-basic-exec.test.js
@@ -441,19 +366,22 @@ TypeError: attempted to use private field on non-instance
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-destructure-set-exec.test.js:22:2
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js
-TypeError: attempted to use private field on non-instance
-    at _classPrivateFieldBase (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/classPrivateFieldLooseBase.js:2:44)
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:10:11)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:21:12
+TypeError: "#privateStaticFieldValue" is write-only
+    at _writeOnlyError (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/writeOnlyError.js:2:9)
+    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:11:15)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:22:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-updates-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
+TypeError: attempted to use private field on non-instance
+    at _classPrivateFieldBase (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/classPrivateFieldLooseBase.js:2:44)
+    at Function.testUpdates (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-updates-exec.test.js:24:4)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-updates-exec.test.js:47:5
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-access-in-static-field-initializer-exec.test.js
 TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/classPrivateFieldLooseBase.js:2:44)
     at new C (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-access-in-static-field-initializer-exec.test.js:12:9)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-access-in-static-field-initializer-exec.test.js:18:11
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-access-in-static-field-initializer-exec.test.js:21:11
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-access-in-static-field-initializer-exec.test.js:24:4
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-basic-exec.test.js
@@ -469,41 +397,22 @@ TypeError: attempted to use private field on non-instance
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-destructure-set-exec.test.js:22:2
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js
-TypeError: attempted to use private field on non-instance
-    at _classPrivateFieldBase (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/classPrivateFieldLooseBase.js:2:44)
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:10:11)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:21:12
+TypeError: "#privateStaticFieldValue" is write-only
+    at _writeOnlyError (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/writeOnlyError.js:2:9)
+    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:11:15)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:22:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-updates-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-access-in-static-field-initializer-exec.test.js
-Private field '#p' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-basic-exec.test.js
-Private field '#privateStaticFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-destructure-set-exec.test.js
-Private field '#p' must be declared in an enclosing class
+TypeError: attempted to use private field on non-instance
+    at _classPrivateFieldBase (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/classPrivateFieldLooseBase.js:2:44)
+    at Function.testUpdates (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-updates-exec.test.js:25:4)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-updates-exec.test.js:48:5
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js
-AssertionError: expected [Function _set_privateStaticFieldValue] to be undefined
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@2.1.2/node_modules/@vitest/expect/dist/index.js:1236:20)
-    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@2.1.2/node_modules/@vitest/expect/dist/index.js:923:17)
-    at Proxy.methodWrapper (./node_modules/.pnpm/chai@5.1.2/node_modules/chai/chai.js:1610:25)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:13:42
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-set-only-getter-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-updates-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-set-only-getter-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-updates-exec.test.js
-Private field '#privateFieldValue' must be declared in an enclosing class
+TypeError: "#privateStaticFieldValue" is write-only
+    at _writeOnlyError (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/writeOnlyError.js:2:9)
+    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:7:15)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:14:12
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown

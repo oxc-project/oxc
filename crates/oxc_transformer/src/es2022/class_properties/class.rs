@@ -1,6 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of class itself.
 
+use indexmap::map::Entry;
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
@@ -93,7 +94,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                         let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
                         private_props.insert(
                             ident.name.clone(),
-                            PrivateProp::new(binding, prop.r#static, false, false),
+                            PrivateProp::new(binding, prop.r#static, None, false),
                         );
                     }
 
@@ -135,10 +136,22 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                             ctx.current_block_scope_id(),
                             SymbolFlags::FunctionScopedVariable,
                         );
-                        private_props.insert(
-                            ident.name.clone(),
-                            PrivateProp::new(binding, method.r#static, true, false),
-                        );
+
+                        match private_props.entry(ident.name.clone()) {
+                            Entry::Occupied(mut entry) => {
+                                // If there's already a binding for this private property,
+                                // it's a setter or getter, so store the binding in `binding2`.
+                                entry.get_mut().set_binding2(binding);
+                            }
+                            Entry::Vacant(entry) => {
+                                entry.insert(PrivateProp::new(
+                                    binding,
+                                    method.r#static,
+                                    Some(method.kind),
+                                    false,
+                                ));
+                            }
+                        }
                     }
                 }
                 ClassElement::AccessorProperty(prop) => {
@@ -148,7 +161,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                         let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
                         private_props.insert(
                             ident.name.clone(),
-                            PrivateProp::new(dummy_binding, prop.r#static, true, true),
+                            PrivateProp::new(dummy_binding, prop.r#static, None, true),
                         );
                     }
                 }
@@ -443,7 +456,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
                     private_props.iter().filter_map(|(name, prop)| {
-                        if prop.is_method || prop.is_accessor {
+                        if prop.is_method() || prop.is_accessor {
                             return None;
                         }
 
@@ -459,10 +472,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
                     private_props.values().filter_map(|prop| {
-                        if prop.is_static || (prop.is_method && has_method) || prop.is_accessor {
+                        if prop.is_static || (prop.is_method() && has_method) || prop.is_accessor {
                             return None;
                         }
-                        if prop.is_method {
+                        if prop.is_method() {
                             // `var _C_brand = new WeakSet();`
                             has_method = true;
                             let binding = class_details.bindings.brand();
@@ -583,7 +596,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // TODO(improve-on-babel): Simplify this.
             if self.private_fields_as_properties {
                 exprs.extend(private_props.iter().filter_map(|(name, prop)| {
-                    if prop.is_method || prop.is_accessor {
+                    if prop.is_method() || prop.is_accessor {
                         return None;
                     }
 
@@ -598,7 +611,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 let mut weakmap_symbol_id = None;
                 let mut has_method = false;
                 exprs.extend(private_props.values().filter_map(|prop| {
-                    if prop.is_method || prop.is_accessor {
+                    if prop.is_method() || prop.is_accessor {
                         if prop.is_static || has_method {
                             return None;
                         }
@@ -703,6 +716,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// * Extract computed key assignments and insert them before class.
     /// * Remove all properties, private methods and static blocks from class body.
     fn transform_class_elements(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        let mut class_methods = vec![];
         class.body.body.retain_mut(|element| {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
@@ -721,7 +735,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 }
                 ClassElement::MethodDefinition(method) => {
                     self.substitute_temp_var_for_method_computed_key(method, ctx);
-                    if self.convert_private_method(method, ctx) {
+                    if let Some(statement) = self.convert_private_method(method, ctx) {
+                        class_methods.push(statement);
                         return false;
                     }
                 }
@@ -732,6 +747,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
             true
         });
+
+        // All methods are moved to after the class, but need to be before static properties
+        // TODO(improve-on-babel): Insertion order doesn't matter, and it more clear to insert according to
+        // definition order.
+        self.insert_after_stmts.splice(0..0, class_methods);
     }
 
     /// Flag that static private fields should be transpiled using temp binding,

@@ -39,14 +39,21 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         &mut self,
         method: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> bool {
-        let PropertyKey::PrivateIdentifier(ident) = &method.key else {
-            return false;
+    ) -> Option<Statement<'a>> {
+        let MethodDefinition { key, value, span, kind, r#static, .. } = method;
+        let PropertyKey::PrivateIdentifier(ident) = &key else {
+            return None;
         };
 
-        let mut function = ctx.ast.move_function(&mut method.value);
+        let mut function = ctx.ast.move_function(value);
+        let resolved_private_prop = if *kind == MethodDefinitionKind::Set {
+            self.classes_stack.find_writeable_private_prop(ident)
+        } else {
+            self.classes_stack.find_readable_private_prop(ident)
+        };
+        let temp_binding = resolved_private_prop.unwrap().prop_binding;
 
-        let temp_binding = self.classes_stack.find_private_prop(ident).prop_binding;
+        function.span = *span;
         function.id = Some(temp_binding.create_binding_identifier(ctx));
         function.r#type = FunctionType::FunctionDeclaration;
 
@@ -55,17 +62,20 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let scope_id = function.scope_id();
         let new_parent_id = ctx.current_scope_id();
         ctx.scopes_mut().change_parent_id(scope_id, Some(new_parent_id));
-        if !ctx.current_scope_flags().is_strict_mode() {
-            *ctx.scopes_mut().get_flags_mut(scope_id) -= ScopeFlags::StrictMode;
+        let is_strict_mode = ctx.current_scope_flags().is_strict_mode();
+        let flags = ctx.scopes_mut().get_flags_mut(scope_id);
+        *flags -= ScopeFlags::GetAccessor | ScopeFlags::SetAccessor;
+        if !is_strict_mode {
+            // TODO: Needs to remove all child scopes' strict mode flag if child scope
+            // is inherited from this scope.
+            *flags -= ScopeFlags::StrictMode;
         }
 
-        PrivateMethodVisitor::new(method.r#static, self, ctx)
+        PrivateMethodVisitor::new(*r#static, self, ctx)
             .visit_function(&mut function, ScopeFlags::Function);
 
         let function = ctx.ast.alloc(function);
-        self.insert_after_stmts.push(Statement::FunctionDeclaration(function));
-
-        true
+        Some(Statement::FunctionDeclaration(function))
     }
 
     // `_classPrivateMethodInitSpec(this, brand)`
