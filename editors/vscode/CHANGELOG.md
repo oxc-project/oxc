@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.4] - 2024-12-30
+
+### Bug Fixes
+
+- 0794bee editor/vscode: Set minimum supported ver. to `^1.93.0` (#8182) (Pavel Smirnov)
+
+### Refactor
+
+- de8246b language_server: Move structs into own file (#8026) (Alexander S.)
+
 ## [0.15.1] - 2024-12-13
 
 ### Features

@@ -119,6 +119,7 @@ impl EnvOptions {
     ///
     /// * When the query failed to parse.
     pub fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, String> {
+        use crate::options::es_target::ESVersion;
         let mut es_target = None;
         let mut engine_targets = EngineTargets::default();
 

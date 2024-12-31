@@ -113,6 +113,10 @@ impl Rule for NoMisusedNew {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 #[test]

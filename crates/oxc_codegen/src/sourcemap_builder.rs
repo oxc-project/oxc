@@ -1,4 +1,4 @@
-use std::{cmp::max, path::Path, sync::Arc};
+use std::{path::Path, sync::Arc};
 
 use nonmax::NonMaxU32;
 use oxc_index::{Idx, IndexVec};
@@ -235,9 +235,7 @@ impl SourcemapBuilder {
         let lines = &self.line_offset_tables.lines;
         let mut idx = self.last_line_lookup as usize;
 
-        let cap = idx.saturating_sub(16);
-        idx = max(idx.saturating_sub(1), cap);
-        while idx > cap && lines[idx].byte_offset_to_start_of_line > position {
+        while lines[idx].byte_offset_to_start_of_line > position {
             idx -= 1;
         }
 

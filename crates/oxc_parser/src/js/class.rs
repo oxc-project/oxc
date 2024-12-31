@@ -419,6 +419,11 @@ impl<'a> ParserImpl<'a> {
                 self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
             }
 
+            if let Some(type_sig) = &value.type_parameters {
+                // class Foo { constructor<T>(param: T ) {} }
+                self.error(diagnostics::ts_constructor_type_parameter(type_sig.span));
+            }
+
             if r#static {
                 self.error(diagnostics::static_constructor(key.span()));
             }

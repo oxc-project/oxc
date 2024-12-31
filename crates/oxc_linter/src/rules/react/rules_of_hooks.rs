@@ -99,7 +99,7 @@ pub struct RulesOfHooks;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This enforcecs the Rules of Hooks
+    /// This enforces the Rules of Hooks
     ///
     /// <https://reactjs.org/docs/hooks-rules.html>
     ///
@@ -108,6 +108,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for RulesOfHooks {
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
+        // disable this rule in vue/nuxt and svelte(kit) files
+        // react hook can be build in only `.ts` files,
+        // but `useX` functions are popular and can be false positive in other frameworks
+        !ctx.file_path().extension().is_some_and(|ext| ext == "vue" || ext == "svelte")
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call) = node.kind() else { return };
 

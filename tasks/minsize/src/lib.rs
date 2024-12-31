@@ -5,14 +5,17 @@ use std::{
     path::Path,
 };
 
+use cow_utils::CowUtils;
 use flate2::{write::GzEncoder, Compression};
 use humansize::{format_size, DECIMAL};
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::{project_root, TestFile, TestFiles};
+use oxc_transformer::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
 use rustc_hash::FxHashMap;
 
 // #[test]
@@ -129,7 +132,7 @@ fn minify_twice(file: &TestFile) -> String {
     };
     let source_text1 = minify(&file.source_text, source_type, options);
     let source_text2 = minify(&source_text1, source_type, options);
-    assert!(source_text1 == source_text2, "Minification failed for {}", &file.file_name);
+    assert_eq_minified_code(&source_text1, &source_text2, &file.file_name);
     source_text2
 }
 
@@ -137,6 +140,13 @@ fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) 
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
+    let (symbols, scopes) =
+        SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
+    let _ = ReplaceGlobalDefines::new(
+        &allocator,
+        ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'development'")]).unwrap(),
+    )
+    .build(symbols, scopes, &mut program);
     let ret = Minifier::new(options).build(&allocator, &mut program);
     CodeGenerator::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
@@ -150,4 +160,20 @@ fn gzip_size(s: &str) -> usize {
     e.write_all(s.as_bytes()).unwrap();
     let s = e.finish().unwrap();
     s.len()
+}
+
+fn assert_eq_minified_code(s1: &str, s2: &str, filename: &str) {
+    if s1 != s2 {
+        let normalized_left = normalize_minified_code(s1);
+        let normalized_right = normalize_minified_code(s2);
+        similar_asserts::assert_eq!(
+            normalized_left,
+            normalized_right,
+            "Minification failed for {filename}"
+        );
+    }
+}
+
+fn normalize_minified_code(code: &str) -> String {
+    code.cow_replace(";", ";\n").cow_replace(",", ",\n").into_owned()
 }

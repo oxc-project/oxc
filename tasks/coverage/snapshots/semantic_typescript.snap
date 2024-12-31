@@ -2,7 +2,7 @@ commit: d85767ab
 
 semantic_typescript Summary:
 AST Parsed     : 6503/6503 (100.00%)
-Positive Passed: 2848/6503 (43.80%)
+Positive Passed: 2852/6503 (43.86%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -8117,11 +8117,6 @@ tasks/coverage/typescript/tests/cases/compiler/declarationEmitTopLevelNodeFromCr
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-
-tasks/coverage/typescript/tests/cases/compiler/declarationEmitTransitiveImportOfHtmlDeclarationItem.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitTripleSlashReferenceAmbientModule.ts
 semantic error: Unresolved references mismatch:
@@ -20383,15 +20378,12 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationsImports1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./a", "A", "B", "Cls"]
-rebuilt        : ScopeId(0): ["A"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): ["A", "a", "b", "c"]
+rebuilt        : ScopeId(0): ["a", "b", "c"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationsImports2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./a", "A", "B"]
+after transform: ScopeId(0): ["./a", "A", "Cls"]
 rebuilt        : ScopeId(0): ["A"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -46349,58 +46341,18 @@ semantic error: Unresolved references mismatch:
 after transform: ["const"]
 rebuilt        : []
 
-tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFileForHtmlFileWithinDeclarationFile.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["HTML5Element", "blogPost", "doc"]
-rebuilt        : ScopeId(0): ["HTML5Element", "blogPost"]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Reference symbol mismatch for "doc":
-after transform: SymbolId(0) "doc"
-rebuilt        : <None>
-Reference flags mismatch for "doc":
-after transform: ReferenceId(1): ReferenceFlags(Read)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: ["Document", "Element", "HTMLElement"]
-rebuilt        : ["HTMLElement", "doc"]
-
-tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFileForHtmlImport.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["HTML5Element", "blogPost", "doc"]
-rebuilt        : ScopeId(0): ["HTML5Element", "blogPost"]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
-Reference symbol mismatch for "doc":
-after transform: SymbolId(0) "doc"
-rebuilt        : <None>
-Reference flags mismatch for "doc":
-after transform: ReferenceId(1): ReferenceFlags(Read)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
-Unresolved references mismatch:
-after transform: ["Document", "Element", "HTMLElement"]
-rebuilt        : ["HTMLElement", "doc"]
-
-tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFileForJsonImport.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["val"]
-rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "val":
-after transform: SymbolId(0) "val"
-rebuilt        : <None>
-Reference flags mismatch for "val":
-after transform: ReferenceId(0): ReferenceFlags(Read)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
+tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFilesForNodeNativeModules.ts
+semantic error: Missing SymbolId: "mod"
+Missing ReferenceId: "require"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Reference symbol mismatch for "mod":
+after transform: SymbolId(0) "mod"
+rebuilt        : SymbolId(0) "mod"
 Unresolved references mismatch:
 after transform: []
-rebuilt        : ["val"]
-
-tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFilesForNodeNativeModules.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/override/override10.ts
 semantic error: Scope children mismatch:
