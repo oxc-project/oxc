@@ -705,8 +705,10 @@ mod test {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
 
-        let expect_json =
-            std::fs::read_to_string("fixtures/print_config/normal/expect.json").unwrap();
+        #[expect(clippy::disallowed_methods)]
+        let expect_json = std::fs::read_to_string("fixtures/print_config/normal/expect.json")
+            .unwrap()
+            .replace("\r\n", "\n");
         assert_eq!(config, expect_json.trim());
     }
 
@@ -727,8 +729,11 @@ mod test {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
 
-        let expect_json =
-            std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json").unwrap();
+        #[expect(clippy::disallowed_methods)]
+        let expect_json = std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json")
+            .unwrap()
+            .replace("\r\n", "\n");
+
         assert_eq!(config, expect_json.trim());
     }
 
