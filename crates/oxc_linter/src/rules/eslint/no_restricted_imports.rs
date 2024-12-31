@@ -1394,6 +1394,7 @@ fn test() {
         ),
         (r#"export * from "fs";"#, Some(serde_json::json!(["fs"]))),
         (r#"export * as ns from "fs";"#, Some(serde_json::json!(["fs"]))),
+        // ToDo: wrong span
         (r#"export {a} from "fs";"#, Some(serde_json::json!(["fs"]))),
         (
             r#"export {foo as b} from "fs";"#,
@@ -1445,6 +1446,7 @@ fn test() {
                  }]
             }])),
         ),
+        // ToDo: wrong span
         (
             r#"export * as ns from "fs";"#,
             Some(serde_json::json!([{
@@ -1482,8 +1484,6 @@ fn test() {
                 }]
             }])),
         ),
-        // expect: 'default' import from 'foo' is restricted
-        // got: 'foo' import is restricted from being used.
         (
             r#"import DisallowedObject from "foo";"#,
             Some(serde_json::json!([{
@@ -1814,8 +1814,6 @@ fn test() {
                 ]
             }])),
         ),
-        // expect: 'default' import from 'mod' is restricted.
-        // got: 'mod' import is restricted from being used.
         (
             "import foo, { bar } from 'mod';",
             Some(serde_json::json!([{
