@@ -717,7 +717,11 @@ impl NoRestrictedImports {
             };
 
             if pattern.get_regex_result(&entry.module_request) {
-                ctx.diagnostic(diagnostic_pattern(entry.statement_span, pattern.message.clone(), source));
+                ctx.diagnostic(diagnostic_pattern(
+                    entry.statement_span,
+                    pattern.message.clone(),
+                    source,
+                ));
             }
         }
 
