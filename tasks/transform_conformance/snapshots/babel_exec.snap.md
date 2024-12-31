@@ -2,7 +2,7 @@ commit: 54a8389f
 
 node: v22.12.0
 
-Passed: 330 of 362 (91.16%)
+Passed: 215 of 362 (59.39%)
 
 Failures:
 
@@ -52,12 +52,18 @@ TypeError: Cannot read properties of undefined (reading 'bind')
     at Foo.test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-loose-parenthesized-optional-member-call-with-transform-exec.test.js:20:59)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-loose-parenthesized-optional-member-call-with-transform-exec.test.js:78:12
 
+./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-self-method-exec.test.js
+Private field '#bar' must be declared in an enclosing class
+
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js
 TypeError: e.has is not a function
     at _assertClassBrand (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:2:44)
     at func (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js:10:12)
     at Function.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js:12:11)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js:16:14
+
+./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-tagged-template-exec.test.js
+Private field '#tag' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js
 AssertionError: expected [Function] to throw error including '@@toPrimitive must return a primitive…' but got 'Cannot convert object to primitive va…'
@@ -112,40 +118,365 @@ TypeError: Cannot read properties of undefined (reading 'x')
     at Foo.test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:25:63)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-general-parenthesized-expression-member-call-loose-exec.test.js:68:12
 
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-arguments-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-basic-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-class-binding-exec.test.js
+Private field '#getA' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-get-only-setter-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-helper-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-basic-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-class-binding-exec.test.js
+Private field '#getA' must be declared in an enclosing class
+
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-get-only-setter-exec.test.js
-TypeError: '#privateFieldValue' was defined without a getter
-    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-get-only-setter-exec.test.js:16:16)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-get-only-setter-exec.test.js:19:13
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-helper-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-reassignment-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-set-only-getter-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-updates-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-basic-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-class-binding-exec.test.js
+Private field '#getA' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js
-TypeError: '#privateFieldValue' was defined without a getter
-    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:16:16)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:19:13
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-helper-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-set-only-getter-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-updates-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-basic-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-class-binding-exec.test.js
+Private field '#getA' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js
-TypeError: '#privateFieldValue' was defined without a getter
-    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:13:16)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:16:13
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-helper-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-set-only-getter-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-updates-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-reassignment-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-set-only-getter-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-tagged-template-exec.test.js
+Private field '#tag' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-updates-bigint-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-updates-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-assignment-exec.test.js
+Private field '#privateMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-before-fields-exec.test.js
+Private field '#method' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-class-binding-exec.test.js
+Private field '#getA' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-context-exec.test.js
+Private field '#getStatus' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-exfiltrated-exec.test.js
+Private field '#privateMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-generator-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-assignment-exec.test.js
+Private field '#privateMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-before-fields-exec.test.js
+Private field '#method' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-class-binding-exec.test.js
+Private field '#getA' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-context-exec.test.js
+Private field '#getStatus' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-exfiltrated-exec.test.js
+Private field '#privateMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-generator-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-reassignment-exec.test.js
+Private field '#privateMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-super-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-assignment-exec.test.js
+Private field '#privateMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-before-fields-exec.test.js
+Private field '#method' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-class-binding-exec.test.js
+Private field '#getA' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-context-exec.test.js
+Private field '#getStatus' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-exfiltrated-exec.test.js
+Private field '#privateMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-generator-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-super-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-assignment-exec.test.js
+Private field '#privateMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-before-fields-exec.test.js
+Private field '#method' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-class-binding-exec.test.js
+Private field '#getA' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-context-exec.test.js
+Private field '#getStatus' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-exfiltrated-exec.test.js
+Private field '#privateMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-generator-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-super-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-read-only-exec.test.js
+Private field '#method' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-reassignment-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-scopable-exec.test.js
+Private field '#privateMethodA' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-super-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-tagged-template-exec.test.js
+Private field '#tag' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-basic-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-class-check-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-exfiltrated-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-generator-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-basic-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-class-check-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-exfiltrated-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-generator-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-reassignment-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-scopable-exec.test.js
+Private field '#privateMethodA' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-super-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-this-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-basic-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-class-check-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-exfiltrated-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-generator-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-reassignment-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-scopable-exec.test.js
+Private field '#privateMethodA' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-super-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-this-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-basic-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-class-check-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-exfiltrated-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-generator-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-reassignment-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-scopable-exec.test.js
+Private field '#privateMethodA' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-super-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-this-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-read-only-exec.test.js
+Private field '#method' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-reassignment-exec.test.js
+Private field '#privateStaticMethod' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-scopable-exec.test.js
+Private field '#privateMethodA' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-super-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-tagged-template-exec.test.js
+Private field '#tag' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-this-exec.test.js
+Invalid access to super
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-access-in-static-field-initializer-exec.test.js
+Private field '#p' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-basic-exec.test.js
+Private field '#privateStaticFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-destructure-set-exec.test.js
+Private field '#p' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-get-only-setter-exec.test.js
-TypeError: '#privateStaticFieldValue' was defined without a getter
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-get-only-setter-exec.test.js:9:14)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-get-only-setter-exec.test.js:13:12
+Private field '#privateStaticFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-access-in-static-field-initializer-exec.test.js
+Private field '#p' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-basic-exec.test.js
+Private field '#privateStaticFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-destructure-set-exec.test.js
+Private field '#p' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js
-TypeError: '#privateStaticFieldValue' was defined without a getter
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:12:14)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:19:12
+Private field '#privateStaticFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-set-only-getter-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-updates-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-access-in-static-field-initializer-exec.test.js
+Private field '#p' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-basic-exec.test.js
+Private field '#privateStaticFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-destructure-set-exec.test.js
+Private field '#p' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js
-TypeError: '#privateStaticFieldValue' was defined without a getter
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:12:14)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:19:12
+Private field '#privateStaticFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-set-only-getter-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-updates-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-access-in-static-field-initializer-exec.test.js
+Private field '#p' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-basic-exec.test.js
+Private field '#privateStaticFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-destructure-set-exec.test.js
+Private field '#p' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js
-TypeError: '#privateStaticFieldValue' was defined without a getter
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:9:14)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:13:12
+Private field '#privateStaticFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-set-only-getter-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-updates-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-set-only-getter-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-updates-exec.test.js
+Private field '#privateFieldValue' must be declared in an enclosing class
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
