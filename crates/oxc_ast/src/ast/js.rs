@@ -894,6 +894,8 @@ pub struct AssignmentTargetPropertyProperty<'a> {
     pub span: Span,
     pub name: PropertyKey<'a>,
     pub binding: AssignmentTargetMaybeDefault<'a>,
+    /// Property was declared with a computed key
+    pub computed: bool,
 }
 
 /// `a++, b++` in `let a = 1, b = 2; let result = (a++, b++);`

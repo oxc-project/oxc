@@ -768,13 +768,6 @@ snapshot_kind: text
    ╰────
   help: Only import names starting with "Allow" are allowed to be imported from "foo".
 
-  ⚠ eslint(no-restricted-imports): 'foo/baz' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:26]
- 1 │ import withPatterns from "foo/baz";
-   ·                          ─────────
-   ╰────
-  help: foo is forbidden, use bar instead
-
   ⚠ eslint(no-restricted-imports): 'FOO' import is restricted from being used by a pattern.
    ╭─[no_restricted_imports.tsx:1:39]
  1 │ import withPatternsCaseSensitive from 'FOO';
@@ -794,35 +787,3 @@ snapshot_kind: text
    ·                                       ─────
    ╰────
   help: foo is forbidden, use bar instead
-
-  ⚠ eslint(no-restricted-imports): '@app/api' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:3:43]
- 2 │                     // error
- 3 │                     import { Foo_Enum } from '@app/api';
-   ·                                              ──────────
- 4 │                     import { Bar_Enum } from '@app/api/bar';
-   ╰────
-
-  ⚠ eslint(no-restricted-imports): '@app/api/bar' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:4:43]
- 3 │                     import { Foo_Enum } from '@app/api';
- 4 │                     import { Bar_Enum } from '@app/api/bar';
-   ·                                              ──────────────
- 5 │                     import { Baz_Enum } from '@app/api/baz';
-   ╰────
-
-  ⚠ eslint(no-restricted-imports): '@app/api/baz' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:5:43]
- 4 │                     import { Bar_Enum } from '@app/api/bar';
- 5 │                     import { Baz_Enum } from '@app/api/baz';
-   ·                                              ──────────────
- 6 │                     import { B_Enum } from '@app/api/enums/foo';
-   ╰────
-
-  ⚠ eslint(no-restricted-imports): '@app/api/enums/foo' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:6:41]
- 5 │                     import { Baz_Enum } from '@app/api/baz';
- 6 │                     import { B_Enum } from '@app/api/enums/foo';
-   ·                                            ────────────────────
- 7 │         
-   ╰────

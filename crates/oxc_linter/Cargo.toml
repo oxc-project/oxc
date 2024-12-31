@@ -1,6 +1,6 @@
 [package]
 name = "oxc_linter"
-version = "0.15.3"
+version = "0.15.4"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -53,7 +53,6 @@ nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 regex = { workspace = true }
-regress = { workspace = true }
 rust-lapper = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true, features = ["indexmap2"] }

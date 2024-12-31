@@ -306,6 +306,14 @@ impl<'a> SemanticBuilder<'a> {
         self.errors.borrow_mut().push(error);
     }
 
+    pub(crate) fn in_declare_scope(&self) -> bool {
+        self.source_type.is_typescript_definition()
+            || self
+                .scope
+                .ancestors(self.current_scope_id)
+                .any(|scope_id| self.scope.get_flags(scope_id).is_ts_module_block())
+    }
+
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         let mut flags = self.current_node_flags;
         if self.build_jsdoc && self.jsdoc.retrieve_attached_jsdoc(&kind) {
@@ -1853,25 +1861,27 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_declaration(declaration);
         }
 
-        for specifier in &it.specifiers {
-            // `export type { a }` or `export { type a }` -> `a` is a type reference
-            if it.export_kind.is_type() || specifier.export_kind.is_type() {
-                self.current_reference_flags = ReferenceFlags::Type;
-            } else {
-                // If the export specifier is not a explicit type export, we consider it as a potential
-                // type and value reference. If it references to a value in the end, we would delete the
-                // `ReferenceFlags::Type` flag in `fn resolve_references_for_current_scope`.
-                self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
-            }
-            self.visit_export_specifier(specifier);
-        }
-
         if let Some(source) = &it.source {
             self.visit_string_literal(source);
+            self.visit_export_specifiers(&it.specifiers);
+        } else {
+            for specifier in &it.specifiers {
+                // `export type { a }` or `export { type a }` -> `a` is a type reference
+                if it.export_kind.is_type() || specifier.export_kind.is_type() {
+                    self.current_reference_flags = ReferenceFlags::Type;
+                } else {
+                    // If the export specifier is not a explicit type export, we consider it as a potential
+                    // type and value reference. If it references to a value in the end, we would delete the
+                    // `ReferenceFlags::Type` flag in `fn resolve_references_for_current_scope`.
+                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
+                }
+                self.visit_export_specifier(specifier);
+            }
         }
         if let Some(with_clause) = &it.with_clause {
             self.visit_with_clause(with_clause);
         }
+
         self.leave_node(kind);
     }
 

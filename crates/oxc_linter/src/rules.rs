@@ -44,6 +44,7 @@ mod eslint {
     pub mod max_classes_per_file;
     pub mod max_lines;
     pub mod max_params;
+    pub mod new_cap;
     pub mod no_alert;
     pub mod no_array_constructor;
     pub mod no_async_promise_executor;
@@ -80,6 +81,7 @@ mod eslint {
     pub mod no_ex_assign;
     pub mod no_extend_native;
     pub mod no_extra_boolean_cast;
+    pub mod no_extra_label;
     pub mod no_fallthrough;
     pub mod no_func_assign;
     pub mod no_global_assign;
@@ -89,9 +91,13 @@ mod eslint {
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
     pub mod no_label_var;
+    pub mod no_labels;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
+    pub mod no_multi_assign;
     pub mod no_multi_str;
+    pub mod no_negated_condition;
+    pub mod no_nested_ternary;
     pub mod no_new;
     pub mod no_new_func;
     pub mod no_new_native_nonconstructor;
@@ -139,6 +145,7 @@ mod eslint {
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
+    pub mod prefer_rest_params;
     pub mod prefer_spread;
     pub mod radix;
     pub mod require_await;
@@ -150,6 +157,7 @@ mod eslint {
     pub mod unicode_bom;
     pub mod use_isnan;
     pub mod valid_typeof;
+    pub mod vars_on_top;
     pub mod yoda;
 }
 
@@ -318,7 +326,6 @@ mod unicorn {
     pub mod no_length_as_slice_end;
     pub mod no_lonely_if;
     pub mod no_magic_array_flat_depth;
-    pub mod no_negated_condition;
     pub mod no_negation_in_equality_check;
     pub mod no_nested_ternary;
     pub mod no_new_array;
@@ -409,6 +416,7 @@ mod jsx_a11y {
     pub mod no_aria_hidden_on_focusable;
     pub mod no_autofocus;
     pub mod no_distracting_elements;
+    pub mod no_noninteractive_tabindex;
     pub mod no_redundant_roles;
     pub mod prefer_tag_over_role;
     pub mod role_has_required_aria_props;
@@ -534,6 +542,11 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_classes_per_file,
     eslint::max_lines,
     eslint::max_params,
+    eslint::new_cap,
+    eslint::no_extra_label,
+    eslint::no_multi_assign,
+    eslint::no_nested_ternary,
+    eslint::no_labels,
     eslint::no_restricted_imports,
     eslint::no_object_constructor,
     eslint::no_duplicate_imports,
@@ -583,6 +596,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_label_var,
     eslint::no_loss_of_precision,
     eslint::no_magic_numbers,
+    eslint::no_negated_condition,
     eslint::no_multi_str,
     eslint::no_new_func,
     eslint::no_new_native_nonconstructor,
@@ -626,6 +640,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
+    eslint::prefer_rest_params,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
     eslint::prefer_object_has_own,
@@ -640,6 +655,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::unicode_bom,
     eslint::use_isnan,
     eslint::valid_typeof,
+    eslint::vars_on_top,
     eslint::yoda,
     import::default,
     import::export,
@@ -743,6 +759,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::lang,
     jsx_a11y::media_has_caption,
     jsx_a11y::mouse_events_have_key_events,
+    jsx_a11y::no_noninteractive_tabindex,
     jsx_a11y::no_access_key,
     jsx_a11y::no_aria_hidden_on_focusable,
     jsx_a11y::no_autofocus,
@@ -914,7 +931,6 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_length_as_slice_end,
     unicorn::no_lonely_if,
     unicorn::no_magic_array_flat_depth,
-    unicorn::no_negated_condition,
     unicorn::no_negation_in_equality_check,
     unicorn::no_nested_ternary,
     unicorn::no_new_array,

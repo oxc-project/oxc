@@ -1,7 +1,7 @@
 use std::{borrow::Cow, cmp::Ordering};
 
 use num_bigint::BigInt;
-use num_traits::Zero;
+use num_traits::{ToPrimitive, Zero};
 
 use oxc_ast::ast::*;
 
@@ -193,6 +193,7 @@ pub trait ConstantEvaluation<'a> {
             Expression::StringLiteral(lit) => {
                 Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
             }
+            Expression::StaticMemberExpression(e) => self.eval_static_member_expression(e),
             _ => None,
         }
     }
@@ -347,6 +348,22 @@ pub trait ConstantEvaluation<'a> {
                 }
                 None
             }
+            BinaryOperator::Instanceof => {
+                if left.may_have_side_effects() {
+                    return None;
+                }
+                if let Some(right_ident) = right.get_identifier_reference() {
+                    let name = right_ident.name.as_str();
+                    if matches!(name, "Object" | "Number" | "Boolean" | "String")
+                        && self.is_global_reference(right_ident)
+                    {
+                        return Some(ConstantValue::Boolean(
+                            name == "Object" && ValueType::from(left).is_object(),
+                        ));
+                    }
+                }
+                None
+            }
             _ => None,
         }
     }
@@ -434,6 +451,31 @@ pub trait ConstantEvaluation<'a> {
                 }
             }
             UnaryOperator::Delete => None,
+        }
+    }
+
+    fn eval_static_member_expression(
+        &self,
+        expr: &StaticMemberExpression<'a>,
+    ) -> Option<ConstantValue<'a>> {
+        match expr.property.name.as_str() {
+            "length" => {
+                if let Some(ConstantValue::String(s)) = self.eval_expression(&expr.object) {
+                    // TODO(perf): no need to actually convert, only need the length
+                    Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
+                } else {
+                    if expr.object.may_have_side_effects() {
+                        return None;
+                    }
+
+                    if let Expression::ArrayExpression(arr) = &expr.object {
+                        Some(ConstantValue::Number(arr.elements.len().to_f64().unwrap()))
+                    } else {
+                        None
+                    }
+                }
+            }
+            _ => None,
         }
     }
 

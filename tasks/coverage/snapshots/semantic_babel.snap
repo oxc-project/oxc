@@ -354,19 +354,17 @@ after transform: ["T", "X"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
+Function implementation is missing or not immediately following the declaration.
+Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names-babel-7/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
+Function implementation is missing or not immediately following the declaration.
+Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-reserved-names/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-computed/input.ts
 semantic error: Scope children mismatch:
@@ -377,14 +375,11 @@ after transform: ["Symbol"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-no-body/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
+Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-accessors/input.ts
 semantic error: Scope children mismatch:
@@ -416,9 +411,7 @@ Identifier `x` has already been declared
 Identifier `x` has already been declared
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
 semantic error: Bindings mismatch:

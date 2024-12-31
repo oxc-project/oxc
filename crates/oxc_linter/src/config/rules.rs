@@ -160,6 +160,10 @@ fn transform_rule_and_plugin_name<'a>(
         return (rule_name, "eslint");
     }
 
+    if plugin_name == "unicorn" && rule_name == "no-negated-condition" {
+        return ("no-negated-condition", "eslint");
+    }
+
     (rule_name, plugin_name)
 }
 

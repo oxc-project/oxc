@@ -1,0 +1,43 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/issue-7879.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "Class(Foo)",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(Import)",
+        "id": 0,
+        "name": "Bar",
+        "node": "ImportSpecifier(Bar)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 0,
+            "name": "Bar",
+            "node_id": 17
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Class)",
+        "id": 1,
+        "name": "Foo",
+        "node": "Class(Foo)",
+        "references": []
+      }
+    ]
+  }
+]

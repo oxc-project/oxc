@@ -1277,6 +1277,7 @@ impl ContentEq for AssignmentTargetPropertyProperty<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.name, &other.name)
             && ContentEq::content_eq(&self.binding, &other.binding)
+            && ContentEq::content_eq(&self.computed, &other.computed)
     }
 }
 
