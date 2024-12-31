@@ -183,8 +183,8 @@
 //! * `static_block_and_prop_init.rs`: Transform of static property initializers and static blocks.
 //! * `computed_key.rs`:               Transform of property/method computed keys.
 //! * `private_field.rs`:              Transform of private fields (`this.#prop`).
-//! * `private_method.rs`:              Transform of private methods (`this.#method()`).
-//! * `super.rs`:                      Transform `super` expressions.
+//! * `private_method.rs`:             Transform of private methods (`this.#method()`).
+//! * `super_converter.rs`:            Transform `super` expressions.
 //! * `class_details.rs`:              Structures containing details of classes and private properties.
 //! * `class_bindings.rs`:             Structure containing bindings for class name and temp var.
 //! * `utils.rs`:                      Utility functions.
@@ -218,7 +218,7 @@ mod private_field;
 mod private_method;
 mod prop_decl;
 mod static_block_and_prop_init;
-mod supers;
+mod super_converter;
 mod utils;
 use class_bindings::ClassBindings;
 use class_details::{ClassDetails, ClassesStack, PrivateProp, ResolvedPrivateProp};

@@ -10,7 +10,29 @@ use crate::Helper;
 
 use super::{utils::create_assignment, ClassProperties};
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+#[derive(Debug)]
+pub(super) enum ClassPropertiesSuperConverterMode {
+    // `static prop` or `static {}`
+    Static,
+}
+
+/// Convert `super` expressions.
+pub(super) struct ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
+    #[expect(unused)]
+    mode: ClassPropertiesSuperConverterMode,
+    pub(super) class_properties: &'v mut ClassProperties<'a, 'ctx>,
+}
+
+impl<'a, 'ctx, 'v> ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
+    pub(super) fn new(
+        mode: ClassPropertiesSuperConverterMode,
+        class_properties: &'v mut ClassProperties<'a, 'ctx>,
+    ) -> Self {
+        Self { mode, class_properties }
+    }
+}
+
+impl<'a, 'ctx, 'v> ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
     /// Transform static member expression where object is `super`.
     ///
     /// `super.prop` -> `_superPropGet(_Class, "prop", _Class)`
@@ -238,7 +260,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             self.create_super_prop_set(span, property, value, ctx)
         } else {
             // Make 2 copies of `object`
-            let (property1, property2) = self.duplicate_object(property, ctx);
+            let (property1, property2) = self.class_properties.duplicate_object(property, ctx);
 
             if let Some(operator) = operator.to_binary_operator() {
                 // `super[prop] += value`
@@ -471,13 +493,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // Make 2 copies of `property`
-        let (property1, property2) = self.duplicate_object(property, ctx);
+        let (property1, property2) = self.class_properties.duplicate_object(property, ctx);
 
         // `_superPropGet(_Class, prop, _Class)`
         let get_call = self.create_super_prop_get(SPAN, property2, false, ctx);
 
         // `_super$prop = _superPropGet(_Class, prop, _Class)`
-        let temp_binding = self.ctx.var_declarations.create_uid_var(temp_var_name_base, ctx);
+        let temp_binding =
+            self.class_properties.ctx.var_declarations.create_uid_var(temp_var_name_base, ctx);
         let assignment = create_assignment(&temp_binding, get_call, ctx);
 
         // `++_super$prop` / `_super$prop++` (reusing existing `UpdateExpression`)
@@ -498,7 +521,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         } else {
             // Source = `super.prop++` (postfix `++`)
             // `_super$prop2 = _super$prop++`
-            let temp_binding2 = self.ctx.var_declarations.create_uid_var(temp_var_name_base, ctx);
+            let temp_binding2 =
+                self.class_properties.ctx.var_declarations.create_uid_var(temp_var_name_base, ctx);
             let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
 
             // `(_super$prop = _superPropGet(_Class, prop, _Class), _super$prop2 = _super$prop++, _super$prop)`
@@ -533,7 +557,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         is_callee: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let temp_binding = self.current_class_mut().bindings.get_or_init_static_binding(ctx);
+        let temp_binding =
+            self.class_properties.current_class_mut().bindings.get_or_init_static_binding(ctx);
 
         let ident1 = Argument::from(temp_binding.create_read_expression(ctx));
         let ident2 = Argument::from(temp_binding.create_read_expression(ctx));
@@ -549,7 +574,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         };
 
         // `_superPropGet(_Class, prop, _Class)` or `_superPropGet(_Class, prop, _Class, 2)`
-        self.ctx.helper_call_expr(Helper::SuperPropGet, span, arguments, ctx)
+        self.class_properties.ctx.helper_call_expr(Helper::SuperPropGet, span, arguments, ctx)
     }
 
     /// `_superPropSet(_Class, prop, value, _Class, 1)`
@@ -560,7 +585,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let temp_binding = self.current_class_mut().bindings.get_or_init_static_binding(ctx);
+        let temp_binding =
+            self.class_properties.current_class_mut().bindings.get_or_init_static_binding(ctx);
         let arguments = ctx.ast.vec_from_array([
             Argument::from(temp_binding.create_read_expression(ctx)),
             Argument::from(property),
@@ -573,6 +599,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 NumberBase::Decimal,
             )),
         ]);
-        self.ctx.helper_call_expr(Helper::SuperPropSet, span, arguments, ctx)
+        self.class_properties.ctx.helper_call_expr(Helper::SuperPropSet, span, arguments, ctx)
     }
 }
