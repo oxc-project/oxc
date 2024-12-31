@@ -1609,6 +1609,7 @@ mod test {
 
         // An unknown value should never be folded.
         test_same("x instanceof Foo");
+        test_same("0 instanceof Foo");
     }
 
     #[test]
