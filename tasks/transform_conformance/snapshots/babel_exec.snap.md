@@ -53,9 +53,10 @@ TypeError: Cannot read properties of undefined (reading 'bind')
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-loose-parenthesized-optional-member-call-with-transform-exec.test.js:78:12
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-self-method-exec.test.js
-ReferenceError: _bar is not defined
-    at Function.extract (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-self-method-exec.test.js:13:46)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-self-method-exec.test.js:19:45
+TypeError: Private element is not present on this object
+    at _assertClassBrand (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/assertClassBrand.js:3:9)
+    at Function.extract (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-self-method-exec.test.js:13:10)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-self-method-exec.test.js:34:45
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js
 TypeError: e.has is not a function

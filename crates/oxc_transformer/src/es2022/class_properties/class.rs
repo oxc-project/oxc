@@ -617,6 +617,21 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             }
         }
 
+        // Insert private methods
+        if !self.insert_after_stmts.is_empty() {
+            // Find address of statement of class expression
+            let position = ctx
+                .ancestors()
+                .position(Ancestor::is_parent_of_statement)
+                .expect("Expression always inside a statement.");
+            // Position points to parent of statement, we need to find the statement itself,
+            // so `position - 1`.
+            let stmt_ancestor = ctx.ancestor(position - 1);
+            self.ctx
+                .statement_injector
+                .insert_many_after(&stmt_ancestor, self.insert_after_stmts.drain(..));
+        }
+
         // Insert computed key initializers
         exprs.extend(self.insert_before.drain(..));
 
