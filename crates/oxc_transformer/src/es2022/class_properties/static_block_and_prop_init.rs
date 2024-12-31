@@ -107,6 +107,35 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         ctx.ast.move_expression(expr)
     }
+
+    /// Replace reference to class name with reference to temp var for class.
+    fn replace_class_name_with_temp_var(
+        &mut self,
+        ident: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Check identifier is reference to class name
+        let class_details = self.current_class_mut();
+        let class_name_symbol_id = class_details.bindings.name_symbol_id();
+        let Some(class_name_symbol_id) = class_name_symbol_id else { return };
+
+        let reference_id = ident.reference_id();
+        let reference = ctx.symbols().get_reference(reference_id);
+        let Some(symbol_id) = reference.symbol_id() else { return };
+
+        if symbol_id != class_name_symbol_id {
+            return;
+        }
+
+        // Identifier is reference to class name. Rename it.
+        let temp_binding = class_details.bindings.get_or_init_static_binding(ctx);
+        ident.name = temp_binding.name.clone();
+
+        let symbols = ctx.symbols_mut();
+        symbols.get_reference_mut(reference_id).set_symbol_id(temp_binding.symbol_id);
+        symbols.delete_resolved_reference(symbol_id, reference_id);
+        symbols.add_resolved_reference(temp_binding.symbol_id, reference_id);
+    }
 }
 
 /// Visitor to transform:
@@ -268,7 +297,7 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticVisitor<'a, 'ctx, 'v> {
 
     /// Transform reference to class name to temp var
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
-        self.replace_class_name_with_temp_var(ident);
+        self.super_converter.class_properties.replace_class_name_with_temp_var(ident, self.ctx);
     }
 
     /// Convert scope to sloppy mode if `self.make_sloppy_mode == true`.
@@ -496,31 +525,6 @@ impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
             let temp_binding = class_details.bindings.get_or_init_static_binding(self.ctx);
             *expr = temp_binding.create_spanned_read_expression(span, self.ctx);
         }
-    }
-
-    /// Replace reference to class name with reference to temp var for class.
-    fn replace_class_name_with_temp_var(&mut self, ident: &mut IdentifierReference<'a>) {
-        // Check identifier is reference to class name
-        let class_details = self.super_converter.class_properties.current_class_mut();
-        let class_name_symbol_id = class_details.bindings.name_symbol_id();
-        let Some(class_name_symbol_id) = class_name_symbol_id else { return };
-
-        let reference_id = ident.reference_id();
-        let reference = self.ctx.symbols().get_reference(reference_id);
-        let Some(symbol_id) = reference.symbol_id() else { return };
-
-        if symbol_id != class_name_symbol_id {
-            return;
-        }
-
-        // Identifier is reference to class name. Rename it.
-        let temp_binding = class_details.bindings.get_or_init_static_binding(self.ctx);
-        ident.name = temp_binding.name.clone();
-
-        let symbols = self.ctx.symbols_mut();
-        symbols.get_reference_mut(reference_id).set_symbol_id(temp_binding.symbol_id);
-        symbols.delete_resolved_reference(symbol_id, reference_id);
-        symbols.add_resolved_reference(temp_binding.symbol_id, reference_id);
     }
 
     /// Replace `delete this` with `true`.
