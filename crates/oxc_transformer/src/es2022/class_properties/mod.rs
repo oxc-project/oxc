@@ -368,6 +368,10 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
             Expression::TaggedTemplateExpression(_) => {
                 self.transform_tagged_template_expression(expr, ctx);
             }
+            // "#prop in object"
+            Expression::PrivateInExpression(_) => {
+                self.transform_private_in_expression(expr, ctx);
+            }
             _ => {}
         }
     }

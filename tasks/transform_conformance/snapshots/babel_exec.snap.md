@@ -2,7 +2,7 @@ commit: 54a8389f
 
 node: v22.12.0
 
-Passed: 283 of 374 (75.67%)
+Passed: 291 of 374 (77.81%)
 
 Failures:
 
@@ -78,9 +78,6 @@ AssertionError: expected '_Class' to be 'Foo' // Object.is equality
 AssertionError: expected '_Class' to be 'Foo' // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-static-infer-name-exec.test.js:9:19
 
-./fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-loose-private-in-exec.test.js
-Private field '#bar' must be declared in an enclosing class
-
 ./fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-loose-private-methods-access-exec.test.js
 TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/classPrivateFieldLooseBase.js:2:44)
@@ -90,9 +87,6 @@ TypeError: attempted to use private field on non-instance
 ./fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-new-target-exec.test.js
 AssertionError: expected [Function Base] to be undefined // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-new-target-exec.test.js:10:29
-
-./fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-private-in-exec.test.js
-Private field '#bar' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js
 TypeError: Cannot read properties of undefined (reading 'x')
@@ -415,40 +409,32 @@ TypeError: "#privateStaticFieldValue" is write-only
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:14:12
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js
-Private field '#foo' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-rhs-not-object-exec.test.js
-Private field '#p' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsSymbols-method-exec.test.js
-Private field '#foo' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsSymbols-rhs-not-object-exec.test.js
-Private field '#p' must be declared in an enclosing class
+ReferenceError: _Foo_brand is not defined
+    at new Foo (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js:8:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js:19:13
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js
-Private field '#p' must be declared in an enclosing class
+AssertionError: expected [Function] to throw error including 'right-hand side of \'in\' should be a…' but got '_Class_brand is not defined'
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@2.1.2/node_modules/@vitest/expect/dist/index.js:1438:21)
+    at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@2.1.2/node_modules/@vitest/expect/dist/index.js:923:17)
+    at Proxy.methodWrapper (./node_modules/.pnpm/chai@5.1.2/node_modules/chai/chai.js:1610:25)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js:176:5
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js
-Private field '#x' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-rhs-not-object-exec.test.js
-Private field '#p' must be declared in an enclosing class
+AssertionError: expected 2 to be 5 // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js:18:25
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js
-Private field '#x' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-instance-exec.test.js
-Private field '#w' must be declared in an enclosing class
+AssertionError: expected 2 to be 5 // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js:18:25
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-static-exec.test.js
-Private field '#w' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-rhs-not-object-exec.test.js
-Private field '#p' must be declared in an enclosing class
+AssertionError: expected true to be false // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-static-exec.test.js:29:15
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js
-Private field '#x' must be declared in an enclosing class
+AssertionError: expected 2 to be 5 // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js:18:25
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown

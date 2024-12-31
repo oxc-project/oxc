@@ -163,6 +163,7 @@ pub enum Helper {
     SuperPropSet,
     ReadOnlyError,
     WriteOnlyError,
+    CheckInRHS,
 }
 
 impl Helper {
@@ -191,6 +192,7 @@ impl Helper {
             Self::SuperPropSet => "superPropSet",
             Self::ReadOnlyError => "readOnlyError",
             Self::WriteOnlyError => "writeOnlyError",
+            Self::CheckInRHS => "checkInRHS",
         }
     }
 }

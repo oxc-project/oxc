@@ -3,7 +3,7 @@
 
 use std::mem;
 
-use oxc_allocator::String as ArenaString;
+use oxc_allocator::{Box as ArenaBox, String as ArenaString};
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
@@ -1820,6 +1820,63 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         *target = AssignmentTarget::from(replacement.into_member_expression());
     }
 
+    /// Transform private field in expression.
+    ///
+    /// * Static
+    ///  `#prop in object` -> `_checkInRHS(object) === Class`
+    ///
+    /// * Instance prop
+    ///  `#prop in object` -> `_prop.has(_checkInRHS(object))`
+    ///
+    /// * Instance method
+    ///  `#method in object` -> `_Class_brand.has(_checkInRHS(object))`
+    ///
+    // `#[inline]` so that compiler sees that `expr` is an `Expression::PrivateFieldExpression`
+    #[inline]
+    pub(super) fn transform_private_in_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::PrivateInExpression(private_in) = ctx.ast.move_expression(expr) else {
+            unreachable!();
+        };
+
+        *expr = self.transform_private_in_expression_impl(private_in, ctx);
+    }
+
+    fn transform_private_in_expression_impl(
+        &mut self,
+        private_field: ArenaBox<'a, PrivateInExpression<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let PrivateInExpression { left, right, span, .. } = private_field.unbox();
+
+        let ResolvedPrivateProp { class_bindings, prop_binding, is_method, is_static, .. } =
+            self.classes_stack.find_private_prop(&left);
+
+        if is_static {
+            let class_binding = class_bindings.get_or_init_static_binding(ctx);
+            let class_ident = class_binding.create_read_expression(ctx);
+            let left = self.create_check_in_rhs(right, SPAN, ctx);
+            return ctx.ast.expression_binary(
+                span,
+                left,
+                BinaryOperator::StrictEquality,
+                class_ident,
+            );
+        }
+
+        let callee = if is_method {
+            class_bindings.brand().create_read_expression(ctx)
+        } else {
+            prop_binding.create_read_expression(ctx)
+        };
+        let callee = create_member_callee(callee, "has", ctx);
+        let argument = self.create_check_in_rhs(right, SPAN, ctx);
+        ctx.ast.expression_call(span, callee, NONE, ctx.ast.vec1(Argument::from(argument)), false)
+    }
+
     /// Duplicate object to be used in get/set pair.
     ///
     /// If `object` may have side effects, create a temp var `_object` and assign to it.
@@ -2150,5 +2207,20 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         let error = self.create_throw_error(Helper::WriteOnlyError, private_name, ctx);
         let expressions = ctx.ast.vec_from_array([object, error]);
         ctx.ast.expression_sequence(span, expressions)
+    }
+
+    /// _checkInRHS(object)
+    fn create_check_in_rhs(
+        &self,
+        object: Expression<'a>,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        self.ctx.helper_call_expr(
+            Helper::CheckInRHS,
+            span,
+            ctx.ast.vec1(Argument::from(object)),
+            ctx,
+        )
     }
 }
