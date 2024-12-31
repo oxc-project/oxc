@@ -2,7 +2,7 @@ commit: 54a8389f
 
 node: v22.12.0
 
-Passed: 227 of 362 (62.71%)
+Passed: 231 of 362 (63.81%)
 
 Failures:
 
@@ -129,7 +129,7 @@ Private field '#privateFieldValue' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-class-binding-exec.test.js
 AssertionError: expected [Function _get_getA] to be [Function A] // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-class-binding-exec.test.js:20:26
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-class-binding-exec.test.js:22:26
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-get-only-setter-exec.test.js
 AssertionError: expected function to throw an error, but it didn't
@@ -144,8 +144,8 @@ Private field '#privateFieldValue' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-class-binding-exec.test.js
 ReferenceError: _A_brand is not defined
-    at new A (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-class-binding-exec.test.js:8:38)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-class-binding-exec.test.js:19:9
+    at new A (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-class-binding-exec.test.js:9:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-class-binding-exec.test.js:21:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-loose-get-only-setter-exec.test.js
 ReferenceError: _Cl_brand is not defined
@@ -169,8 +169,8 @@ Private field '#privateFieldValue' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-class-binding-exec.test.js
 ReferenceError: _A_brand is not defined
-    at new A (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-class-binding-exec.test.js:8:38)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-class-binding-exec.test.js:19:9
+    at new A (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-class-binding-exec.test.js:9:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-class-binding-exec.test.js:21:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js
 ReferenceError: _Cl_brand is not defined
@@ -191,7 +191,7 @@ Private field '#privateFieldValue' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-class-binding-exec.test.js
 AssertionError: expected [Function _get_getA] to be [Function A] // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-class-binding-exec.test.js:20:26
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-class-binding-exec.test.js:22:26
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js
 AssertionError: expected [Function _set_privateFieldValue] to be undefined
@@ -222,10 +222,6 @@ Private field '#privateFieldValue' must be declared in an enclosing class
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-updates-exec.test.js
 Private field '#privateFieldValue' must be declared in an enclosing class
 
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-class-binding-exec.test.js
-AssertionError: expected null to be [Function A] // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-class-binding-exec.test.js:20:28
-
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-context-exec.test.js
 Private field '#getStatus' must be declared in an enclosing class
 
@@ -241,8 +237,8 @@ ReferenceError: _Cl_brand is not defined
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-class-binding-exec.test.js
 ReferenceError: _A_brand is not defined
-    at new A (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-class-binding-exec.test.js:8:38)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-class-binding-exec.test.js:19:9
+    at new A (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-class-binding-exec.test.js:9:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-class-binding-exec.test.js:21:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-context-exec.test.js
 Private field '#getStatus' must be declared in an enclosing class
@@ -261,7 +257,9 @@ ReferenceError: _Cl_brand is not defined
 Private field '#privateMethod' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-super-exec.test.js
-Invalid access to super
+ReferenceError: _Sub_brand is not defined
+    at new Sub (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-super-exec.test.js:16:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-super-exec.test.js:29:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-assignment-exec.test.js
 ReferenceError: _Foo_brand is not defined
@@ -275,8 +273,8 @@ ReferenceError: _Cl_brand is not defined
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-class-binding-exec.test.js
 ReferenceError: _A_brand is not defined
-    at new A (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-class-binding-exec.test.js:8:38)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-class-binding-exec.test.js:19:9
+    at new A (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-class-binding-exec.test.js:9:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-class-binding-exec.test.js:21:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-context-exec.test.js
 Private field '#getStatus' must be declared in an enclosing class
@@ -292,26 +290,18 @@ ReferenceError: _Cl_brand is not defined
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-generator-exec.test.js:18:14
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-super-exec.test.js
-Invalid access to super
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-class-binding-exec.test.js
-AssertionError: expected null to be [Function A] // Object.is equality
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-class-binding-exec.test.js:20:28
+ReferenceError: _Sub_brand is not defined
+    at new Sub (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-super-exec.test.js:16:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-super-exec.test.js:29:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-context-exec.test.js
 Private field '#getStatus' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-super-exec.test.js
-Invalid access to super
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-read-only-exec.test.js
 Private field '#method' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-reassignment-exec.test.js
 Private field '#privateFieldValue' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-super-exec.test.js
-Invalid access to super
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-basic-exec.test.js
 ReferenceError: _Cl_brand is not defined
@@ -362,10 +352,14 @@ ReferenceError: _Cl_brand is not defined
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-scopable-exec.test.js:22:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-super-exec.test.js
-Invalid access to super
+ReferenceError: _Sub_brand is not defined
+    at Function.check (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-super-exec.test.js:22:29)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-super-exec.test.js:29:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-this-exec.test.js
-Invalid access to super
+ReferenceError: _B_brand is not defined
+    at Function.extract (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-this-exec.test.js:22:30)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-this-exec.test.js:32:25
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-basic-exec.test.js
 ReferenceError: _Cl_brand is not defined
@@ -396,10 +390,14 @@ ReferenceError: _Cl_brand is not defined
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-scopable-exec.test.js:22:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-super-exec.test.js
-Invalid access to super
+ReferenceError: _Sub_brand is not defined
+    at Function.check (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-super-exec.test.js:22:29)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-super-exec.test.js:29:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-this-exec.test.js
-Invalid access to super
+ReferenceError: _B_brand is not defined
+    at Function.extract (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-this-exec.test.js:22:30)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-this-exec.test.js:32:25
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-basic-exec.test.js
 ReferenceError: _Cl_brand is not defined
@@ -430,10 +428,14 @@ ReferenceError: _Cl_brand is not defined
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-scopable-exec.test.js:22:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-super-exec.test.js
-Invalid access to super
+ReferenceError: _Sub_brand is not defined
+    at Function.check (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-super-exec.test.js:22:29)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-super-exec.test.js:29:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-this-exec.test.js
-Invalid access to super
+ReferenceError: _B_brand is not defined
+    at Function.extract (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-this-exec.test.js:22:30)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-this-exec.test.js:32:25
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-read-only-exec.test.js
 Private field '#method' must be declared in an enclosing class
@@ -447,7 +449,9 @@ ReferenceError: _Cl_brand is not defined
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-scopable-exec.test.js:22:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-super-exec.test.js
-Invalid access to super
+ReferenceError: _Sub_brand is not defined
+    at Function.check (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-super-exec.test.js:22:29)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-super-exec.test.js:29:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-tagged-template-exec.test.js
 ReferenceError: _Foo_brand is not defined
@@ -455,7 +459,9 @@ ReferenceError: _Foo_brand is not defined
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-tagged-template-exec.test.js:17:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-this-exec.test.js
-Invalid access to super
+ReferenceError: _B_brand is not defined
+    at Function.extract (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-this-exec.test.js:22:30)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-this-exec.test.js:32:25
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-access-in-static-field-initializer-exec.test.js
 Private field '#p' must be declared in an enclosing class
@@ -482,8 +488,8 @@ Private field '#p' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js
 ReferenceError: _Cl_brand is not defined
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:14:29)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:24:12
+    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:15:29)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:26:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-set-only-getter-exec.test.js
 Private field '#privateFieldValue' must be declared in an enclosing class
@@ -502,8 +508,8 @@ Private field '#p' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js
 ReferenceError: _Cl_brand is not defined
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:14:29)
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:24:12
+    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:15:29)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:26:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-set-only-getter-exec.test.js
 Private field '#privateFieldValue' must be declared in an enclosing class

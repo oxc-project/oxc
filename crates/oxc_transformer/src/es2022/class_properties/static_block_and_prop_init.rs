@@ -109,7 +109,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 
     /// Replace reference to class name with reference to temp var for class.
-    fn replace_class_name_with_temp_var(
+    pub(super) fn replace_class_name_with_temp_var(
         &mut self,
         ident: &mut IdentifierReference<'a>,
         ctx: &mut TraverseCtx<'a>,

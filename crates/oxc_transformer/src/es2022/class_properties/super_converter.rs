@@ -8,17 +8,23 @@ use oxc_traverse::{ast_operations::get_var_name_from_node, TraverseCtx};
 
 use crate::Helper;
 
-use super::{utils::create_assignment, ClassProperties};
+use super::{
+    utils::{create_assignment, create_prototype_member},
+    ClassProperties,
+};
 
 #[derive(Debug)]
 pub(super) enum ClassPropertiesSuperConverterMode {
     // `static prop` or `static {}`
     Static,
+    // `#method() {}`
+    PrivateMethod,
+    // `static #method() {}`
+    StaticPrivateMethod,
 }
 
 /// Convert `super` expressions.
 pub(super) struct ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
-    #[expect(unused)]
     mode: ClassPropertiesSuperConverterMode,
     pub(super) class_properties: &'v mut ClassProperties<'a, 'ctx>,
 }
@@ -557,20 +563,16 @@ impl<'a, 'ctx, 'v> ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
         is_callee: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let temp_binding =
-            self.class_properties.current_class_mut().bindings.get_or_init_static_binding(ctx);
-
-        let ident1 = Argument::from(temp_binding.create_read_expression(ctx));
-        let ident2 = Argument::from(temp_binding.create_read_expression(ctx));
+        let (class, receiver) = self.get_class_binding_arguments(ctx);
         let property = Argument::from(property);
 
         let arguments = if is_callee {
             // `(_Class, prop, _Class, 2)`
             let two = ctx.ast.expression_numeric_literal(SPAN, 2.0, None, NumberBase::Decimal);
-            ctx.ast.vec_from_array([ident1, property, ident2, Argument::from(two)])
+            ctx.ast.vec_from_array([class, property, receiver, Argument::from(two)])
         } else {
             // `(_Class, prop, _Class)`
-            ctx.ast.vec_from_array([ident1, property, ident2])
+            ctx.ast.vec_from_array([class, property, receiver])
         };
 
         // `_superPropGet(_Class, prop, _Class)` or `_superPropGet(_Class, prop, _Class, 2)`
@@ -585,13 +587,12 @@ impl<'a, 'ctx, 'v> ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let temp_binding =
-            self.class_properties.current_class_mut().bindings.get_or_init_static_binding(ctx);
+        let (class, receiver) = self.get_class_binding_arguments(ctx);
         let arguments = ctx.ast.vec_from_array([
-            Argument::from(temp_binding.create_read_expression(ctx)),
+            class,
             Argument::from(property),
             Argument::from(value),
-            Argument::from(temp_binding.create_read_expression(ctx)),
+            receiver,
             Argument::from(ctx.ast.expression_numeric_literal(
                 SPAN,
                 1.0,
@@ -600,5 +601,35 @@ impl<'a, 'ctx, 'v> ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
             )),
         ]);
         self.class_properties.ctx.helper_call_expr(Helper::SuperPropSet, span, arguments, ctx)
+    }
+
+    /// * [`ClassPropertiesSuperConverterMode::Static`]
+    /// (_Class, _Class)
+    ///
+    /// * [`ClassPropertiesSuperConverterMode::PrivateMethod`]
+    /// (_Class.prototype, this)
+    ///
+    /// * [`ClassPropertiesSuperConverterMode::StaticPrivateMethod`]
+    /// (_Class, this)
+    fn get_class_binding_arguments(
+        &mut self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> (Argument<'a>, Argument<'a>) {
+        let temp_binding =
+            self.class_properties.current_class_mut().bindings.get_or_init_static_binding(ctx);
+        let mut class = temp_binding.create_read_expression(ctx);
+        let receiver = match self.mode {
+            ClassPropertiesSuperConverterMode::Static => temp_binding.create_read_expression(ctx),
+            ClassPropertiesSuperConverterMode::PrivateMethod => {
+                // TODO(improve-on-babel): `superPropGet` and `superPropSet` helper function has a flag
+                // to use `class.prototype` rather than `class`. We should consider using that flag here.
+                // <https://github.com/babel/babel/blob/1fbdb64a7fcc3488797e312506dbacff746d4e41/packages/babel-helpers/src/helpers/superPropGet.ts>
+                class = create_prototype_member(class, ctx);
+                ctx.ast.expression_this(SPAN)
+            }
+            ClassPropertiesSuperConverterMode::StaticPrivateMethod => ctx.ast.expression_this(SPAN),
+        };
+
+        (Argument::from(class), Argument::from(receiver))
     }
 }

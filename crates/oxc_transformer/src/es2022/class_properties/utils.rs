@@ -71,3 +71,13 @@ pub(super) fn debug_assert_expr_is_not_parenthesis_or_typescript_syntax(
         "Should not be: {expr:?} in {path:?}",
     );
 }
+
+/// `object` -> `object.prototype`.
+pub(super) fn create_prototype_member<'a>(
+    object: Expression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Expression<'a> {
+    let property = ctx.ast.identifier_name(SPAN, Atom::from("prototype"));
+    let static_member = ctx.ast.member_expression_static(SPAN, object, property, false);
+    Expression::from(static_member)
+}
