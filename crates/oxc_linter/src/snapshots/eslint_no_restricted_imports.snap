@@ -538,10 +538,10 @@ snapshot_kind: text
    ╰────
   help: Import from @/utils instead.
 
-  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:1]
+  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:8]
  1 │ import def, * as ns from 'mod';
-   · ───────────────────────────────
+   ·        ───
    ╰────
 
   ⚠ eslint(no-restricted-imports): * import is invalid because 'default' from 'mod' is restricted from being used by a pattern.
@@ -550,10 +550,10 @@ snapshot_kind: text
    · ───────────────────────────────
    ╰────
 
-  ⚠ eslint(no-restricted-imports): 'mod' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:1]
+  ⚠ eslint(no-restricted-imports): 'default' import from 'mod' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:8]
  1 │ import Foo from 'mod';
-   · ──────────────────────
+   ·        ───
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'Foo' import from 'foo' is restricted from being used by a pattern.

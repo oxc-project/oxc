@@ -481,8 +481,10 @@ impl RestrictedPattern {
             ImportImportName::Default(span) => {
                 let name: CompactStr = CompactStr::new("default");
                 match is_name_span_allowed_in_pattern(&name, self) {
-                    NameSpanAllowedResult::NameDisallowed
-                    | NameSpanAllowedResult::GeneralDisallowed => {
+                    NameSpanAllowedResult::NameDisallowed => {
+                        IsSkipAbleResult::NameDisallowed(NameSpan::new(name, *span))
+                    }
+                    NameSpanAllowedResult::GeneralDisallowed => {
                         IsSkipAbleResult::GeneralDisallowed(NameSpan::new(name, *span))
                     }
                     NameSpanAllowedResult::Allowed => IsSkipAbleResult::Allowed,
@@ -1917,8 +1919,6 @@ fn test() {
                 }]
             }])),
         ),
-        // expected: 'default' import from 'mod' is restricted from being used by a pattern.
-        // got: 'mod' import is restricted from being used by a pattern.
         (
             "import def, * as ns from 'mod';",
             Some(serde_json::json!([{
@@ -1928,8 +1928,6 @@ fn test() {
                 }]
             }])),
         ),
-        // expected: 'default' import from 'mod' is restricted from being used by a pattern.
-        // got: 'mod' import is restricted from being used by a pattern.
         (
             "import Foo from 'mod';",
             Some(serde_json::json!([{
