@@ -447,15 +447,16 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             } else {
                 // TODO: Only call `insert_many_before` if some private *instance* props
                 let mut weakmap_symbol_id = None;
-                let has_method = false;
+                let mut has_method = false;
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
                     private_props.values().filter_map(|prop| {
-                        if prop.is_static || has_method || prop.is_accessor {
+                        if prop.is_static || (prop.is_method && has_method) || prop.is_accessor {
                             return None;
                         }
                         if prop.is_method {
                             // `var _C_brand = new WeakSet();`
+                            has_method = true;
                             let binding = class_details.bindings.brand();
                             let value = create_new_weakset(ctx);
                             Some(create_variable_declaration(binding, value, ctx))
@@ -587,9 +588,19 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 }));
             } else {
                 let mut weakmap_symbol_id = None;
+                let mut has_method = false;
                 exprs.extend(private_props.values().filter_map(|prop| {
-                    if prop.is_method || prop.is_accessor {
+                    if (prop.is_method && has_method) || prop.is_accessor {
                         return None;
+                    }
+
+                    if prop.is_method {
+                        has_method = true;
+                        // `_C_brand = new WeakSet()`
+                        let binding = class_details.bindings.brand();
+                        self.ctx.var_declarations.insert_var(binding, ctx);
+                        let value = create_new_weakset(ctx);
+                        return Some(create_assignment(binding, value, ctx));
                     }
 
                     // Insert `var _prop;` declaration

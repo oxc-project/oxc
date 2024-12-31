@@ -2,7 +2,7 @@ commit: 54a8389f
 
 node: v22.12.0
 
-Passed: 215 of 362 (59.39%)
+Passed: 225 of 362 (62.15%)
 
 Failures:
 
@@ -62,9 +62,6 @@ TypeError: e.has is not a function
     at Function.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js:12:11)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js:16:14
 
-./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-tagged-template-exec.test.js
-Private field '#tag' must be declared in an enclosing class
-
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js
 AssertionError: expected [Function] to throw error including '@@toPrimitive must return a primitive…' but got 'Cannot convert object to primitive va…'
     at Proxy.<anonymous> (./node_modules/.pnpm/@vitest+expect@2.1.2/node_modules/@vitest/expect/dist/index.js:1438:21)
@@ -98,7 +95,9 @@ AssertionError: expected [Function Base] to be undefined // Object.is equality
 Private field '#bar' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-private-methods-access-exec.test.js
-Private field '#foo' must be declared in an enclosing class
+ReferenceError: _Foo_brand is not defined
+    at getFoo (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-private-methods-access-exec.test.js:17:35)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-private-methods-access-exec.test.js:18:9
 
 ./fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js
 TypeError: Cannot read properties of undefined (reading 'x')
@@ -196,32 +195,21 @@ Private field '#privateFieldValue' must be declared in an enclosing class
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-set-only-getter-exec.test.js
 Private field '#privateFieldValue' must be declared in an enclosing class
 
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-tagged-template-exec.test.js
-Private field '#tag' must be declared in an enclosing class
-
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-updates-bigint-exec.test.js
 Private field '#privateFieldValue' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-accessors-updates-exec.test.js
 Private field '#privateFieldValue' must be declared in an enclosing class
 
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-assignment-exec.test.js
-Private field '#privateMethod' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-before-fields-exec.test.js
-Private field '#method' must be declared in an enclosing class
-
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-class-binding-exec.test.js
-Private field '#getA' must be declared in an enclosing class
+AssertionError: expected null to be [Function A] // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-class-binding-exec.test.js:20:28
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-context-exec.test.js
 Private field '#getStatus' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-exfiltrated-exec.test.js
 Private field '#privateMethod' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-generator-exec.test.js
-Private field '#foo' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-assignment-exec.test.js
 Private field '#privateMethod' must be declared in an enclosing class
@@ -268,23 +256,15 @@ Private field '#foo' must be declared in an enclosing class
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-super-exec.test.js
 Invalid access to super
 
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-assignment-exec.test.js
-Private field '#privateMethod' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-before-fields-exec.test.js
-Private field '#method' must be declared in an enclosing class
-
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-class-binding-exec.test.js
-Private field '#getA' must be declared in an enclosing class
+AssertionError: expected null to be [Function A] // Object.is equality
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-class-binding-exec.test.js:20:28
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-context-exec.test.js
 Private field '#getStatus' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-exfiltrated-exec.test.js
 Private field '#privateMethod' must be declared in an enclosing class
-
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-generator-exec.test.js
-Private field '#foo' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-super-exec.test.js
 Invalid access to super
@@ -295,26 +275,26 @@ Private field '#method' must be declared in an enclosing class
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-reassignment-exec.test.js
 Private field '#privateFieldValue' must be declared in an enclosing class
 
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-scopable-exec.test.js
-Private field '#privateMethodA' must be declared in an enclosing class
-
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-super-exec.test.js
 Invalid access to super
 
-./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-tagged-template-exec.test.js
-Private field '#tag' must be declared in an enclosing class
-
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-basic-exec.test.js
-Private field '#privateStaticMethod' must be declared in an enclosing class
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-basic-exec.test.js:21:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-basic-exec.test.js:28:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-class-check-exec.test.js
-Private field '#privateStaticMethod' must be declared in an enclosing class
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-class-check-exec.test.js:8:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-class-check-exec.test.js:17:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-exfiltrated-exec.test.js
 Private field '#privateStaticMethod' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-generator-exec.test.js
-Private field '#foo' must be declared in an enclosing class
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-generator-exec.test.js:8:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-generator-exec.test.js:18:14
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-basic-exec.test.js
 Private field '#privateStaticMethod' must be declared in an enclosing class
@@ -365,22 +345,30 @@ Invalid access to super
 Invalid access to super
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-basic-exec.test.js
-Private field '#privateStaticMethod' must be declared in an enclosing class
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-basic-exec.test.js:21:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-basic-exec.test.js:28:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-class-check-exec.test.js
-Private field '#privateStaticMethod' must be declared in an enclosing class
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-class-check-exec.test.js:8:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-class-check-exec.test.js:17:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-exfiltrated-exec.test.js
 Private field '#privateStaticMethod' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-generator-exec.test.js
-Private field '#foo' must be declared in an enclosing class
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-generator-exec.test.js:8:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-generator-exec.test.js:18:14
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-reassignment-exec.test.js
 Private field '#privateStaticMethod' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-scopable-exec.test.js
-Private field '#privateMethodA' must be declared in an enclosing class
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-scopable-exec.test.js:8:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-scopable-exec.test.js:22:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsSymbols-super-exec.test.js
 Invalid access to super
@@ -395,13 +383,17 @@ Private field '#method' must be declared in an enclosing class
 Private field '#privateStaticMethod' must be declared in an enclosing class
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-scopable-exec.test.js
-Private field '#privateMethodA' must be declared in an enclosing class
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-scopable-exec.test.js:8:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-scopable-exec.test.js:22:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-super-exec.test.js
 Invalid access to super
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-tagged-template-exec.test.js
-Private field '#tag' must be declared in an enclosing class
+ReferenceError: _Foo_brand is not defined
+    at Function.getReceiver (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-tagged-template-exec.test.js:11:29)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-tagged-template-exec.test.js:17:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-this-exec.test.js
 Invalid access to super

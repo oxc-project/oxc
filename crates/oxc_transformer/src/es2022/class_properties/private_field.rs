@@ -206,9 +206,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             return;
         }
 
-        let Some((callee, object)) = self.transform_private_field_callee(field_expr, ctx) else {
-            return;
-        };
+        let (callee, object) = self.transform_private_field_callee(field_expr, ctx);
         Self::substitute_callee_and_insert_context(call_expr, callee, object, ctx);
     }
 
@@ -260,7 +258,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         &mut self,
         field_expr: &mut PrivateFieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<(Expression<'a>, Expression<'a>)> {
+    ) -> (Expression<'a>, Expression<'a>) {
         let ResolvedPrivateProp {
             prop_binding,
             class_bindings,
@@ -270,11 +268,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             is_declaration,
         } = self.classes_stack.find_private_prop(&field_expr.field);
 
-        if is_method || is_accessor {
-            return None;
-        };
-
         let prop_ident = prop_binding.create_read_expression(ctx);
+
+        if is_method || is_accessor {
+            return (
+                self.create_assert_class_brand_for_private_method(prop_ident, ctx),
+                ctx.ast.expression_this(SPAN),
+            );
+        };
 
         // `(object.#method)()`
         //  ^^^^^^^^^^^^^^^^ is a parenthesized expression
@@ -330,7 +331,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             (get_call, object2)
         };
 
-        Some(replacement)
+        replacement
     }
 
     /// Transform assignment to private field.
@@ -1152,7 +1153,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         if matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_)) {
             // `(Foo?.#m)();` -> `(Foo === null || Foo === void 0 ? void 0 : _m._.bind(Foo))();`
             // ^^^^^^^^^^^^ is a call expression, we need to bind the proper context
-            *expr = self.transform_bindable_private_field(field_expr, ctx).unwrap();
+            *expr = self.transform_bindable_private_field(field_expr, ctx);
         } else {
             self.transform_private_field_expression(expr, ctx);
         }
@@ -1573,7 +1574,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             );
             Some(Expression::from(replacement))
         } else {
-            self.transform_bindable_private_field(field_expr, ctx)
+            Some(self.transform_bindable_private_field(field_expr, ctx))
         }
     }
 
@@ -1581,8 +1582,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         &mut self,
         field_expr: &mut PrivateFieldExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        let (callee, context) = self.transform_private_field_callee(field_expr, ctx)?;
+    ) -> Expression<'a> {
+        let (callee, context) = self.transform_private_field_callee(field_expr, ctx);
 
         // Return `<callee>.bind(object)`, to be substituted as tag of tagged template expression
         let callee = Expression::from(ctx.ast.member_expression_static(
@@ -1592,7 +1593,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             false,
         ));
         let arguments = ctx.ast.vec1(Argument::from(context));
-        Some(ctx.ast.expression_call(field_expr.span, callee, NONE, arguments, false))
+        ctx.ast.expression_call(field_expr.span, callee, NONE, arguments, false)
     }
 
     /// Transform private field in assignment pattern.
@@ -1783,6 +1784,18 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             ]),
             ctx,
         )
+    }
+
+    /// `_assertClassBrand(_Class_brand, object, _prop)`
+    #[inline]
+    fn create_assert_class_brand_for_private_method(
+        &self,
+        value_or_prop_ident: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let class_ident = self.current_class().bindings.brand().create_read_expression(ctx);
+        let object = ctx.ast.expression_this(SPAN);
+        self.create_assert_class_brand(class_ident, object, value_or_prop_ident, ctx)
     }
 
     /// `_assertClassBrand(Class, object, _prop)._`
