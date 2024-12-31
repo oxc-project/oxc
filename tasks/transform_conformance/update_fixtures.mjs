@@ -19,6 +19,7 @@ import { extname, join as pathJoin } from 'path';
 const PACKAGES = [
   'babel-plugin-transform-class-properties',
   'babel-plugin-transform-private-methods',
+  'babel-plugin-transform-private-property-in-object',
   'babel-plugin-transform-logical-assignment-operators',
 ];
 const FILTER_OUT_PRESETS = ['env'];
@@ -28,7 +29,19 @@ const FILTER_OUT_PLUGINS = [
   'transform-destructuring',
 ];
 
+const CLASS_PLUGINS = [
+  'transform-class-properties',
+  'transform-private-methods',
+  'transform-private-property-in-object',
+];
+
 const PACKAGES_PATH = pathJoin(import.meta.dirname, '../coverage/babel/packages');
+
+// These fixtures transform incorrectly by Babel. Haven't figured out why yet.
+const IGNORED_FIXTURES = [
+  'compile-to-class/constructor-collision-ignores-types',
+  'compile-to-class/constructor-collision-ignores-types-loose',
+];
 
 // Copied from `@babel/helper-transform-fixture-test-runner`
 const EXTERNAL_HELPERS_VERSION = '7.100.0';
@@ -46,6 +59,10 @@ for (const packageName of PACKAGES) {
  * @returns {undefined}
  */
 async function updateDir(dirPath, options, hasChangedOptions) {
+  if (IGNORED_FIXTURES.some(p => dirPath.endsWith(p))) {
+    return;
+  }
+
   const files = await readdir(dirPath, { withFileTypes: true });
 
   const dirFiles = [],
@@ -118,8 +135,46 @@ function updateOptions(options) {
 
   filter('presets', FILTER_OUT_PRESETS);
   filter('plugins', FILTER_OUT_PLUGINS);
+  if (ensureAllClassPluginsEnabled(options)) {
+    hasChangedOptions = true;
+  }
 
   return hasChangedOptions;
+}
+
+// Ensure all class plugins are enabled if any of class related plugins are enabled
+function ensureAllClassPluginsEnabled(options) {
+  let plugins = options.plugins;
+  if (!plugins) return false;
+
+  let already_enabled = [];
+  let pluginOptions;
+  plugins.forEach(plugin => {
+    let pluginName = getName(plugin);
+    if (CLASS_PLUGINS.includes(pluginName)) {
+      if (Array.isArray(plugin) && plugin[1]) {
+        // Store options for the plugin, so that we can ensure all plugins are
+        // enabled with the same options
+        pluginOptions = plugin[1];
+      }
+      already_enabled.push(pluginName);
+    }
+  });
+
+  if (already_enabled.length) {
+    CLASS_PLUGINS.forEach(pluginName => {
+      if (!already_enabled.includes(pluginName)) {
+        if (pluginOptions) {
+          plugins.push([pluginName, pluginOptions]);
+        } else {
+          plugins.push(pluginName);
+        }
+      }
+    });
+    return true;
+  } else {
+    return false;
+  }
 }
 
 /**
@@ -135,8 +190,13 @@ async function transform(inputPath, options) {
     babelrc: false,
     cwd: import.meta.dirname,
   };
+  delete options.BABEL_8_BREAKING;
+  delete options.validateLogs;
+  delete options.SKIP_ON_PUBLISH;
   delete options.SKIP_babel7plugins_babel8core;
   delete options.minNodeVersion;
+  delete options.validateLogs;
+  delete options.SKIP_ON_PUBLISH;
 
   function prefixName(plugin, type) {
     if (Array.isArray(plugin)) {
