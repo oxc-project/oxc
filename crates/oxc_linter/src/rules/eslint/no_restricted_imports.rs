@@ -717,10 +717,11 @@ impl NoRestrictedImports {
             };
 
             if pattern.get_regex_result(&entry.module_request) {
-                ctx.diagnostic(diagnostic_pattern(
+                ctx.diagnostic(get_diagnostic_from_is_skip_able_result_pattern(
                     entry.statement_span,
-                    pattern.message.clone(),
                     source,
+                    result,
+                    pattern,
                 ));
             }
         }
@@ -785,7 +786,9 @@ impl NoRestrictedImports {
             };
 
             if pattern.get_regex_result(module_request) {
-                ctx.diagnostic(diagnostic_pattern(entry.span, pattern.message.clone(), source));
+                ctx.diagnostic(get_diagnostic_from_is_skip_able_result_pattern(
+                    entry.span, source, result, pattern,
+                ));
             }
         }
 
@@ -2257,8 +2260,6 @@ fn test() {
                 }]
             }])),
         ),
-        // expected: 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
-        // got: '../../my/relative-module' import is restricted from being used by a pattern.
         (
             "import { Foo } from '../../my/relative-module';",
             Some(serde_json::json!([{

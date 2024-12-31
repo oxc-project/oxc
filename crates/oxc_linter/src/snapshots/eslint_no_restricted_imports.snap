@@ -775,10 +775,10 @@ snapshot_kind: text
    ╰────
   help: foo is forbidden, use bar instead
 
-  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used by a pattern.
-   ╭─[no_restricted_imports.tsx:1:1]
+  ⚠ eslint(no-restricted-imports): 'Foo' import from '../../my/relative-module' is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:10]
  1 │ import { Foo } from '../../my/relative-module';
-   · ───────────────────────────────────────────────
+   ·          ───
    ╰────
 
   ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
