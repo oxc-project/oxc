@@ -6,7 +6,7 @@ pub const PLUGINS: &[&str] = &[
     "babel-plugin-transform-class-properties",
     "babel-plugin-transform-class-static-block",
     "babel-plugin-transform-private-methods",
-    // "babel-plugin-transform-private-property-in-object",
+    "babel-plugin-transform-private-property-in-object",
     // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
     // ES2021
     "babel-plugin-transform-logical-assignment-operators",

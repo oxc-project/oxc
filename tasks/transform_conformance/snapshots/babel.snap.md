@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 661/1095
+Passed: 661/1154
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -808,6 +808,185 @@ x Output mismatch
 x Output mismatch
 
 * static-accessors-privateFieldsAsSymbols/updates/input.js
+x Output mismatch
+
+
+# babel-plugin-transform-private-property-in-object (0/59)
+* assumption-privateFieldsAsProperties/accessor/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/compiled-classes/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/field/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/method/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/nested-class/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/nested-class-other-redeclared/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/nested-class-redeclared/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/static-accessor/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/static-field/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/static-method/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/accessor/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/compiled-classes/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/field/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/method/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/nested-class/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/nested-class-other-redeclared/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/nested-class-redeclared/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/static-accessor/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/static-field/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/static-method/input.js
+x Output mismatch
+
+* private/accessor/input.js
+x Output mismatch
+
+* private/field/input.js
+x Output mismatch
+
+* private/method/input.js
+x Output mismatch
+
+* private/native-classes/input.js
+x Output mismatch
+
+* private/nested-class/input.js
+x Output mismatch
+
+* private/nested-class-other-redeclared/input.js
+x Output mismatch
+
+* private/nested-class-redeclared/input.js
+x Output mismatch
+
+* private/static-accessor/input.js
+x Output mismatch
+
+* private/static-field/input.js
+x Output mismatch
+
+* private/static-method/input.js
+x Output mismatch
+
+* private/static-shadow/input.js
+x Output mismatch
+
+* private-loose/accessor/input.js
+x Output mismatch
+
+* private-loose/field/input.js
+x Output mismatch
+
+* private-loose/method/input.js
+x Output mismatch
+
+* private-loose/native-classes/input.js
+x Output mismatch
+
+* private-loose/nested-class/input.js
+x Output mismatch
+
+* private-loose/nested-class-other-redeclared/input.js
+x Output mismatch
+
+* private-loose/nested-class-redeclared/input.js
+x Output mismatch
+
+* private-loose/static-accessor/input.js
+x Output mismatch
+
+* private-loose/static-field/input.js
+x Output mismatch
+
+* private-loose/static-method/input.js
+x Output mismatch
+
+* private-loose/static-shadow/input.js
+x Output mismatch
+
+* to-native-fields/accessor/input.js
+x Output mismatch
+
+* to-native-fields/class-expression-in-default-param/input.js
+x Output mismatch
+
+* to-native-fields/class-expression-instance/input.js
+x Output mismatch
+
+* to-native-fields/class-expression-static/input.js
+x Output mismatch
+
+* to-native-fields/field/input.js
+x Output mismatch
+
+* to-native-fields/half-constructed-instance/input.js
+x Output mismatch
+
+* to-native-fields/half-constructed-static/input.js
+x Output mismatch
+
+* to-native-fields/method/input.js
+x Output mismatch
+
+* to-native-fields/multiple-checks/input.js
+x Output mismatch
+
+* to-native-fields/nested-class/input.js
+x Output mismatch
+
+* to-native-fields/nested-class-other-redeclared/input.js
+x Output mismatch
+
+* to-native-fields/nested-class-redeclared/input.js
+x Output mismatch
+
+* to-native-fields/static-accessor/input.js
+x Output mismatch
+
+* to-native-fields/static-field/input.js
+x Output mismatch
+
+* to-native-fields/static-method/input.js
+x Output mismatch
+
+* to-native-fields/static-shadow/input.js
+x Output mismatch
+
+* to-native-fields/static-shadowed-binding/input.js
 x Output mismatch
 
 

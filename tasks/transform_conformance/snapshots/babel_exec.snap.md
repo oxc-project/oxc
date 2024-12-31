@@ -2,7 +2,7 @@ commit: 54a8389f
 
 node: v22.12.0
 
-Passed: 283 of 362 (78.18%)
+Passed: 283 of 374 (75.67%)
 
 Failures:
 
@@ -413,6 +413,42 @@ TypeError: "#privateStaticFieldValue" is write-only
     at _writeOnlyError (./node_modules/.pnpm/@babel+runtime@7.26.0/node_modules/@babel/runtime/helpers/writeOnlyError.js:2:9)
     at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:7:15)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:14:12
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-rhs-not-object-exec.test.js
+Private field '#p' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsSymbols-method-exec.test.js
+Private field '#foo' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsSymbols-rhs-not-object-exec.test.js
+Private field '#p' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-rhs-not-object-exec.test.js
+Private field '#p' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-loose-static-shadow-exec.test.js
+Private field '#x' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-rhs-not-object-exec.test.js
+Private field '#p' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-private-static-shadow-exec.test.js
+Private field '#x' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-instance-exec.test.js
+Private field '#w' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-half-constructed-static-exec.test.js
+Private field '#w' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-rhs-not-object-exec.test.js
+Private field '#p' must be declared in an enclosing class
+
+./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js
+Private field '#x' must be declared in an enclosing class
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
