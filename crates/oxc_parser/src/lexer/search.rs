@@ -434,7 +434,7 @@ macro_rules! byte_search {
         let mut $pos = $start;
         #[allow(unused_unsafe, clippy::unnecessary_safety_comment)] // Silence warnings if macro called in unsafe code
         'outer: loop {
-            let $byte = if $pos.addr() <= $lexer.source.end_for_batch_search_addr() {
+            let $byte = if $lexer.source.has_search_batch_remaining_from($pos) {
                 // Search a batch of `SEARCH_BATCH_SIZE` bytes.
                 //
                 // `'inner: loop {}` is not a real loop - it always exits on first turn.
@@ -444,7 +444,7 @@ macro_rules! byte_search {
                 // compiler to unroll it.
                 //
                 // SAFETY:
-                // `$pos.addr() <= lexer.source.end_for_batch_search_addr()` check above ensures
+                // `$lexer.source.has_search_batch_remaining_from($pos)` check above ensures
                 // there are at least `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
                 // So calls to `$pos.read()` and `$pos.add(1)` in this loop cannot go out of bounds.
                 'inner: loop {
@@ -466,9 +466,13 @@ macro_rules! byte_search {
             } else {
                 // Not enough bytes remaining for a batch. Process byte-by-byte.
                 // Same as above, `'inner: loop {}` is not a real loop here - always exits on first turn.
-                let end_addr = $lexer.source.end_addr();
+                let end_pos = $lexer.source.end_position();
                 'inner: loop {
-                    while $pos.addr() < end_addr {
+                    // SAFETY: `end_pos` is end of source, so `$pos` must be on or before it.
+                    // Note: `$pos < end_pos` would be semantically equivalent, but use `offset_from`
+                    // because it takes advantage of `Source`'s invariant that `$pos` can never be
+                    // after `end_pos`, which may allow compiler to produce better codegen.
+                    while unsafe { end_pos.offset_from($pos) } > 0 {
                         // SAFETY: `pos` is not at end of source, so safe to read a byte
                         let byte = unsafe { $pos.read() };
                         if $table.matches(byte) {
