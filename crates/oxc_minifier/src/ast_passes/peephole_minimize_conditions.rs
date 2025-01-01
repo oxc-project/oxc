@@ -341,6 +341,29 @@ impl<'a> PeepholeMinimizeConditions {
             ));
         }
 
+        // `x ? y : true` -> `!x || y`
+        // `x ? y : false` -> `x && y`
+        if let (Expression::Identifier(_), _, Expression::BooleanLiteral(alternate_lit)) =
+            (&expr.test, &expr.consequent, &expr.alternate)
+        {
+            if alternate_lit.value {
+                let ident = ctx.ast.move_expression(&mut expr.test);
+                return Some(ctx.ast.expression_logical(
+                    expr.span,
+                    ctx.ast.expression_unary(expr.span, UnaryOperator::LogicalNot, ident),
+                    LogicalOperator::Or,
+                    ctx.ast.move_expression(&mut expr.consequent),
+                ));
+            }
+            let ident = ctx.ast.move_expression(&mut expr.test);
+            return Some(ctx.ast.expression_logical(
+                expr.span,
+                ident,
+                LogicalOperator::And,
+                ctx.ast.move_expression(&mut expr.consequent),
+            ));
+        }
+
         None
     }
 }
@@ -645,7 +668,7 @@ mod test {
         fold("(x ? true : false) && y()", "!!x && y()");
         fold("(x ? false : true) && y()", "!x && y()");
         fold("(x ? true : y) && y()", "(x || y) && y()");
-        // fold("(x ? y : false) && y()", "(x && y) && y()");
+        fold("(x ? y : false) && y()", "(x && y) && y()");
         // fold("(x && true) && y()", "x && y()");
         // fold("(x && false) && y()", "0&&y()");
         // fold("(x || true) && y()", "1&&y()");
