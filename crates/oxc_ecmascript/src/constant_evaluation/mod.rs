@@ -124,13 +124,6 @@ pub trait ConstantEvaluation<'a> {
                     _ => None,
                 }
             }
-            Expression::AssignmentExpression(assign_expr) => {
-                match assign_expr.operator {
-                    AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => None,
-                    // For ASSIGN, the value is the value of the RHS.
-                    _ => self.get_boolean_value(&assign_expr.right),
-                }
-            }
             expr => {
                 use crate::ToBoolean;
                 expr.to_boolean()
