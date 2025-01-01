@@ -319,7 +319,27 @@ impl<'a> PeepholeMinimizeConditions {
         }
 
         // `x ? true : y` -> `x || y`
-        // TODO
+        // `x ? false : y` -> `!x && y`
+        if let (Expression::Identifier(_), Expression::BooleanLiteral(consequent_lit), _) =
+            (&expr.test, &expr.consequent, &expr.alternate)
+        {
+            if consequent_lit.value {
+                let ident = ctx.ast.move_expression(&mut expr.test);
+                return Some(ctx.ast.expression_logical(
+                    expr.span,
+                    ident,
+                    LogicalOperator::Or,
+                    ctx.ast.move_expression(&mut expr.alternate),
+                ));
+            }
+            let ident = ctx.ast.move_expression(&mut expr.test);
+            return Some(ctx.ast.expression_logical(
+                expr.span,
+                ctx.ast.expression_unary(expr.span, UnaryOperator::LogicalNot, ident),
+                LogicalOperator::And,
+                ctx.ast.move_expression(&mut expr.alternate),
+            ));
+        }
 
         None
     }
@@ -624,8 +644,8 @@ mod test {
     fn test_minimize_expr_condition() {
         fold("(x ? true : false) && y()", "!!x && y()");
         fold("(x ? false : true) && y()", "!x && y()");
-        // fold("(x ? true : y) && y()", "(x || y)&&y()");
-        // fold("(x ? y : false) && y()", "(x && y)&&y()");
+        fold("(x ? true : y) && y()", "(x || y) && y()");
+        // fold("(x ? y : false) && y()", "(x && y) && y()");
         // fold("(x && true) && y()", "x && y()");
         // fold("(x && false) && y()", "0&&y()");
         // fold("(x || true) && y()", "1&&y()");
