@@ -1,7 +1,7 @@
 use std::{
     env,
     io::BufWriter,
-    path::{Path, PathBuf},
+    path::{Path, PathBuf, MAIN_SEPARATOR_STR},
     time::Instant,
 };
 
@@ -21,6 +21,7 @@ use crate::{
     walk::{Extensions, Walk},
 };
 
+#[derive(Debug)]
 pub struct LintRunner {
     options: LintCommand,
     cwd: PathBuf,
@@ -118,8 +119,9 @@ impl Runner for LintRunner {
         let ignore_paths = oxlintrc
             .ignore_patterns
             .iter()
-            .map(|value| oxlintrc.path.parent().unwrap().join(value))
+            .map(|value| PathBuf::from(value.replace('/', MAIN_SEPARATOR_STR)))
             .collect::<Vec<_>>();
+
         let paths = Walk::new(&paths, &ignore_options, &ignore_paths)
             .with_extensions(Extensions(extensions))
             .paths();
@@ -280,10 +282,8 @@ impl LintRunner {
         Oxlintrc::from_file(&config_path).or_else(|_| Ok(Oxlintrc::default()))
     }
 }
-
-#[cfg(all(test, not(target_os = "windows")))]
 mod test {
-    use std::env;
+    use std::{env, path::MAIN_SEPARATOR_STR};
 
     use super::LintRunner;
     use crate::cli::{lint_command, CliRunResult, LintResult, Runner};
@@ -301,10 +301,18 @@ mod test {
     fn test_with_cwd(cwd: &str, args: &[&str]) -> LintResult {
         let mut new_args = vec!["--silent"];
         new_args.extend(args);
+
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
 
         let mut current_cwd = env::current_dir().unwrap();
-        current_cwd.push(cwd);
+
+        let part_cwd = if MAIN_SEPARATOR_STR != "/" {
+            cwd.replace('/', MAIN_SEPARATOR_STR)
+        } else {
+            cwd.into()
+        };
+
+        current_cwd.push(part_cwd);
 
         match LintRunner::new(options).with_cwd(current_cwd).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
@@ -343,6 +351,8 @@ mod test {
         assert_eq!(result.number_of_errors, 0);
     }
 
+    // exclude because we are working with Glob, which only supports the current working directory
+    #[cfg(all(test, not(target_os = "windows")))]
     #[test]
     fn cwd() {
         let args = &["debugger.js"];
@@ -679,12 +689,14 @@ mod test {
         use std::fs;
         let file = "fixtures/linter/fix.js";
         let args = &["--fix", file];
-        let content = fs::read_to_string(file).unwrap();
+        let content_original = fs::read_to_string(file).unwrap();
+        let content = content_original.replace("\r\n", "\n");
         assert_eq!(&content, "debugger\n");
 
         // Apply fix to the file.
         let _ = test(args);
-        assert_eq!(fs::read_to_string(file).unwrap(), "\n");
+        assert_eq!(fs::read_to_string(file).unwrap().replace("\r\n", "\n"), "\n");
+
 
         // File should not be modified if no fix is applied.
         let modified_before = fs::metadata(file).unwrap().modified().unwrap();
@@ -693,7 +705,7 @@ mod test {
         assert_eq!(modified_before, modified_after);
 
         // Write the file back.
-        fs::write(file, content).unwrap();
+        fs::write(file, content_original).unwrap();
     }
 
     #[test]
@@ -705,8 +717,10 @@ mod test {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
 
-        let expect_json =
-            std::fs::read_to_string("fixtures/print_config/normal/expect.json").unwrap();
+        let expect_json = std::fs::read_to_string("fixtures/print_config/normal/expect.json")
+            .unwrap()
+            .replace("\r\n", "\n");
+
         assert_eq!(config, expect_json.trim());
     }
 
@@ -727,8 +741,10 @@ mod test {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
 
-        let expect_json =
-            std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json").unwrap();
+        let expect_json = std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json")
+            .unwrap()
+            .replace("\r\n", "\n");
+
         assert_eq!(config, expect_json.trim());
     }
 
