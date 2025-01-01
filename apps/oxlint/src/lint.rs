@@ -282,6 +282,7 @@ impl LintRunner {
     }
 }
 
+#[cfg(test)]
 mod test {
     use std::{env, path::MAIN_SEPARATOR_STR};
 
