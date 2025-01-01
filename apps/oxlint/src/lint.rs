@@ -1,7 +1,7 @@
 use std::{
     env,
     io::BufWriter,
-    path::{Path, PathBuf, MAIN_SEPARATOR_STR},
+    path::{Path, PathBuf},
     time::Instant,
 };
 
@@ -72,16 +72,6 @@ impl Runner for LintRunner {
             paths.retain(|p| if p.is_dir() { true } else { !ignore.matched(p, false).is_ignore() });
         }
 
-        // Append cwd to all paths
-        paths = paths
-            .into_iter()
-            .map(|x| {
-                let mut path_with_cwd = self.cwd.clone();
-                path_with_cwd.push(x);
-                path_with_cwd
-            })
-            .collect();
-
         if paths.is_empty() {
             // If explicit paths were provided, but all have been
             // filtered, return early.
@@ -115,8 +105,10 @@ impl Runner for LintRunner {
         }
 
         let mut oxlintrc = config_search_result.unwrap();
+        let oxlint_wd = oxlintrc.path.parent().unwrap_or(&self.cwd).to_path_buf();
+        println!("Using configuration file: {:?}", oxlint_wd);
 
-        let paths = Walk::new(&oxlintrc.path, &paths, &ignore_options, &oxlintrc.ignore_patterns)
+        let paths = Walk::new(&oxlint_wd, &paths, &ignore_options, &oxlintrc.ignore_patterns)
             .with_extensions(Extensions(extensions))
             .paths();
 
