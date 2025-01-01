@@ -116,13 +116,7 @@ impl Runner for LintRunner {
 
         let mut oxlintrc = config_search_result.unwrap();
 
-        let ignore_paths = oxlintrc
-            .ignore_patterns
-            .iter()
-            .map(|value| PathBuf::from(value.replace('/', MAIN_SEPARATOR_STR)))
-            .collect::<Vec<_>>();
-
-        let paths = Walk::new(&paths, &ignore_options, &ignore_paths)
+        let paths = Walk::new(&oxlintrc.path, &paths, &ignore_options, &oxlintrc.ignore_patterns)
             .with_extensions(Extensions(extensions))
             .paths();
 
@@ -696,7 +690,6 @@ mod test {
         // Apply fix to the file.
         let _ = test(args);
         assert_eq!(fs::read_to_string(file).unwrap().replace("\r\n", "\n"), "\n");
-
 
         // File should not be modified if no fix is applied.
         let modified_before = fs::metadata(file).unwrap().modified().unwrap();

@@ -56,7 +56,10 @@ impl ignore::ParallelVisitor for WalkCollector {
         match entry {
             Ok(entry) => {
                 if Walk::is_wanted_entry(&entry, &self.extensions) {
+                    println!("Processing entry: {:?}", entry.path()); // Debug output
                     self.paths.push(entry.path().to_path_buf().into_boxed_path());
+                } else {
+                    println!("Ignoring entry: {:?}", entry.path()); // Debug output
                 }
                 ignore::WalkState::Continue
             }
@@ -64,14 +67,14 @@ impl ignore::ParallelVisitor for WalkCollector {
         }
     }
 }
-
 impl Walk {
     /// Will not canonicalize paths.
     /// # Panics
     pub fn new(
+        current_path: &PathBuf,
         paths: &[PathBuf],
         options: &IgnoreOptions,
-        config_ignore_patterns: &[PathBuf],
+        config_ignore_patterns: &Vec<String>,
     ) -> Self {
         assert!(!paths.is_empty(), "At least one path must be provided to Walk::new");
 
@@ -91,7 +94,7 @@ impl Walk {
         if !options.no_ignore {
             inner.add_custom_ignore_filename(&options.ignore_path);
 
-            let mut override_builder = OverrideBuilder::new(Path::new("/"));
+            let mut override_builder = OverrideBuilder::new(current_path);
             if !options.ignore_pattern.is_empty() {
                 for pattern in &options.ignore_pattern {
                     // Meaning of ignore pattern is reversed
@@ -103,7 +106,7 @@ impl Walk {
 
             if !config_ignore_patterns.is_empty() {
                 for pattern in config_ignore_patterns {
-                    let pattern = format!("!{}", pattern.to_str().unwrap());
+                    let pattern = format!("!{}", pattern);
                     override_builder.add(&pattern).unwrap();
                 }
             }
@@ -148,7 +151,7 @@ impl Walk {
 
 #[cfg(test)]
 mod test {
-    use std::{env, ffi::OsString};
+    use std::{env, ffi::OsString, path::PathBuf};
 
     use super::{Extensions, Walk};
     use crate::cli::IgnoreOptions;
@@ -164,7 +167,7 @@ mod test {
             symlinks: false,
         };
 
-        let mut paths = Walk::new(&fixtures, &ignore_options, &[])
+        let mut paths = Walk::new(&PathBuf::from("/"), &fixtures, &ignore_options, &vec![])
             .with_extensions(Extensions(["js", "vue"].to_vec()))
             .paths()
             .into_iter()
