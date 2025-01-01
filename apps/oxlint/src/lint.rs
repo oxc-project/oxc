@@ -72,6 +72,16 @@ impl Runner for LintRunner {
             paths.retain(|p| if p.is_dir() { true } else { !ignore.matched(p, false).is_ignore() });
         }
 
+        // Append cwd to all paths
+        paths = paths
+            .into_iter()
+            .map(|x| {
+                let mut path_with_cwd = self.cwd.clone();
+                path_with_cwd.push(x);
+                path_with_cwd
+            })
+            .collect();
+
         if paths.is_empty() {
             // If explicit paths were provided, but all have been
             // filtered, return early.
@@ -244,9 +254,12 @@ impl LintRunner {
     // when config is provided, but not found, an CliRunResult is returned, else the oxlintrc config file is returned
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
-    fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, CliRunResult> {
+    fn find_oxlint_config(cwd: &PathBuf, config: Option<&PathBuf>) -> Result<Oxlintrc, CliRunResult> {
         if let Some(config_path) = config {
-            return match Oxlintrc::from_file(config_path) {
+            let mut full_path = cwd.clone();
+            full_path.push(config_path);
+
+            return match Oxlintrc::from_file(&full_path) {
                 Ok(config) => Ok(config),
                 Err(diagnostic) => {
                     let handler = GraphicalReportHandler::new();
@@ -776,10 +789,9 @@ mod test {
 
     #[test]
     fn test_config_ignore_patterns_directory() {
-        let result = test(&[
+        let result = test_with_cwd("fixtures/config_ignore_patterns/ignore_directory", &[
             "-c",
-            "fixtures/config_ignore_patterns/ignore_directory/eslintrc.json",
-            "fixtures/config_ignore_patterns/ignore_directory",
+            "eslintrc.json",
         ]);
         assert_eq!(result.number_of_files, 1);
     }
