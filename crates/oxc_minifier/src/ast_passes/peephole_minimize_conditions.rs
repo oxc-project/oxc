@@ -277,7 +277,7 @@ impl<'a> PeepholeMinimizeConditions {
             }
         }
 
-        // `!x ? foo() : bar()` -> `x ? bar() : foo()`
+        // `!a ? b() : c()` -> `a ? c() : b()`
         if let Expression::UnaryExpression(test_expr) = &mut expr.test {
             if test_expr.operator.is_not() {
                 let test = ctx.ast.move_expression(&mut test_expr.argument);
@@ -288,6 +288,38 @@ impl<'a> PeepholeMinimizeConditions {
                 );
             }
         }
+
+        // `a ? false : true` -> `!a`
+        // `a ? true : false` -> `!!a`
+        if let (
+            Expression::Identifier(_),
+            Expression::BooleanLiteral(consequent_lit),
+            Expression::BooleanLiteral(alternate_lit),
+        ) = (&expr.test, &expr.consequent, &expr.alternate)
+        {
+            match (consequent_lit.value, alternate_lit.value) {
+                (false, true) => {
+                    let ident = ctx.ast.move_expression(&mut expr.test);
+                    return Some(ctx.ast.expression_unary(
+                        expr.span,
+                        UnaryOperator::LogicalNot,
+                        ident,
+                    ));
+                }
+                (true, false) => {
+                    let ident = ctx.ast.move_expression(&mut expr.test);
+                    return Some(ctx.ast.expression_unary(
+                        expr.span,
+                        UnaryOperator::LogicalNot,
+                        ctx.ast.expression_unary(expr.span, UnaryOperator::LogicalNot, ident),
+                    ));
+                }
+                _ => {}
+            }
+        }
+
+        // `x ? true : y` -> `x || y`
+        // TODO
 
         None
     }
@@ -589,16 +621,15 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_expr_condition() {
-        fold("(x ? true : false) && y()", "x&&y()");
-        fold("(x ? false : true) && y()", "(!x)&&y()");
-        fold("(x ? true : y) && y()", "(x || y)&&y()");
-        fold("(x ? y : false) && y()", "(x && y)&&y()");
-        fold("(x && true) && y()", "x && y()");
-        fold("(x && false) && y()", "0&&y()");
-        fold("(x || true) && y()", "1&&y()");
-        fold("(x || false) && y()", "x&&y()");
+        fold("(x ? true : false) && y()", "!!x && y()");
+        fold("(x ? false : true) && y()", "!x && y()");
+        // fold("(x ? true : y) && y()", "(x || y)&&y()");
+        // fold("(x ? y : false) && y()", "(x && y)&&y()");
+        // fold("(x && true) && y()", "x && y()");
+        // fold("(x && false) && y()", "0&&y()");
+        // fold("(x || true) && y()", "1&&y()");
+        // fold("(x || false) && y()", "x&&y()");
     }
 
     #[test]
