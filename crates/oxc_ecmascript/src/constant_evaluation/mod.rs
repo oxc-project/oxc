@@ -124,13 +124,6 @@ pub trait ConstantEvaluation<'a> {
                     _ => None,
                 }
             }
-            Expression::AssignmentExpression(assign_expr) => {
-                match assign_expr.operator {
-                    AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => None,
-                    // For ASSIGN, the value is the value of the RHS.
-                    _ => self.get_boolean_value(&assign_expr.right),
-                }
-            }
             expr => {
                 use crate::ToBoolean;
                 expr.to_boolean()
@@ -352,22 +345,17 @@ pub trait ConstantEvaluation<'a> {
                 if left.may_have_side_effects() {
                     return None;
                 }
-
-                let left_ty = ValueType::from(left);
-                if left_ty == ValueType::Undetermined {
-                    return None;
-                }
-                if left_ty == ValueType::Object {
-                    if let Some(right_ident) = right.get_identifier_reference() {
-                        if right_ident.name == "Object" && self.is_global_reference(right_ident) {
-                            return Some(ConstantValue::Boolean(true));
-                        }
+                if let Some(right_ident) = right.get_identifier_reference() {
+                    let name = right_ident.name.as_str();
+                    if matches!(name, "Object" | "Number" | "Boolean" | "String")
+                        && self.is_global_reference(right_ident)
+                    {
+                        return Some(ConstantValue::Boolean(
+                            name == "Object" && ValueType::from(left).is_object(),
+                        ));
                     }
-                    None
-                } else {
-                    // Non-object types are never instances.
-                    Some(ConstantValue::Boolean(false))
                 }
+                None
             }
             _ => None,
         }

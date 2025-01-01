@@ -57,6 +57,9 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
             Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
+            Expression::ConditionalExpression(conditional_expr) => {
+                Self::try_minimize_conditional(conditional_expr, ctx)
+            }
             _ => None,
         } {
             *expr = folded_expr;
@@ -252,6 +255,116 @@ impl<'a> PeepholeMinimizeConditions {
             Some(e) => e,
             None => ctx.ast.void_0(return_stmt.span),
         }
+    }
+
+    fn try_minimize_conditional(
+        expr: &mut ConditionalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        // `a ? a : b` -> `a || b`
+        if let (Expression::Identifier(test_ident), Expression::Identifier(consequent_ident)) =
+            (&expr.test, &expr.consequent)
+        {
+            if test_ident.name == consequent_ident.name {
+                let ident = ctx.ast.move_expression(&mut expr.test);
+
+                return Some(ctx.ast.expression_logical(
+                    expr.span,
+                    ident,
+                    LogicalOperator::Or,
+                    ctx.ast.move_expression(&mut expr.alternate),
+                ));
+            }
+        }
+
+        // `!a ? b() : c()` -> `a ? c() : b()`
+        if let Expression::UnaryExpression(test_expr) = &mut expr.test {
+            if test_expr.operator.is_not() {
+                let test = ctx.ast.move_expression(&mut test_expr.argument);
+                let consequent = ctx.ast.move_expression(&mut expr.consequent);
+                let alternate = ctx.ast.move_expression(&mut expr.alternate);
+                return Some(
+                    ctx.ast.expression_conditional(expr.span, test, alternate, consequent),
+                );
+            }
+        }
+
+        // `a ? false : true` -> `!a`
+        // `a ? true : false` -> `!!a`
+        if let (
+            Expression::Identifier(_),
+            Expression::BooleanLiteral(consequent_lit),
+            Expression::BooleanLiteral(alternate_lit),
+        ) = (&expr.test, &expr.consequent, &expr.alternate)
+        {
+            match (consequent_lit.value, alternate_lit.value) {
+                (false, true) => {
+                    let ident = ctx.ast.move_expression(&mut expr.test);
+                    return Some(ctx.ast.expression_unary(
+                        expr.span,
+                        UnaryOperator::LogicalNot,
+                        ident,
+                    ));
+                }
+                (true, false) => {
+                    let ident = ctx.ast.move_expression(&mut expr.test);
+                    return Some(ctx.ast.expression_unary(
+                        expr.span,
+                        UnaryOperator::LogicalNot,
+                        ctx.ast.expression_unary(expr.span, UnaryOperator::LogicalNot, ident),
+                    ));
+                }
+                _ => {}
+            }
+        }
+
+        // `x ? true : y` -> `x || y`
+        // `x ? false : y` -> `!x && y`
+        if let (Expression::Identifier(_), Expression::BooleanLiteral(consequent_lit), _) =
+            (&expr.test, &expr.consequent, &expr.alternate)
+        {
+            if consequent_lit.value {
+                let ident = ctx.ast.move_expression(&mut expr.test);
+                return Some(ctx.ast.expression_logical(
+                    expr.span,
+                    ident,
+                    LogicalOperator::Or,
+                    ctx.ast.move_expression(&mut expr.alternate),
+                ));
+            }
+            let ident = ctx.ast.move_expression(&mut expr.test);
+            return Some(ctx.ast.expression_logical(
+                expr.span,
+                ctx.ast.expression_unary(expr.span, UnaryOperator::LogicalNot, ident),
+                LogicalOperator::And,
+                ctx.ast.move_expression(&mut expr.alternate),
+            ));
+        }
+
+        // `x ? y : true` -> `!x || y`
+        // `x ? y : false` -> `x && y`
+        if let (Expression::Identifier(_), _, Expression::BooleanLiteral(alternate_lit)) =
+            (&expr.test, &expr.consequent, &expr.alternate)
+        {
+            if alternate_lit.value {
+                let ident = ctx.ast.move_expression(&mut expr.test);
+                return Some(ctx.ast.expression_logical(
+                    expr.span,
+                    ctx.ast.expression_unary(expr.span, UnaryOperator::LogicalNot, ident),
+                    LogicalOperator::Or,
+                    ctx.ast.move_expression(&mut expr.consequent),
+                ));
+            }
+            let ident = ctx.ast.move_expression(&mut expr.test);
+            return Some(ctx.ast.expression_logical(
+                expr.span,
+                ident,
+                LogicalOperator::And,
+                ctx.ast.move_expression(&mut expr.consequent),
+            ));
+        }
+
+        None
     }
 }
 
@@ -551,16 +664,15 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_expr_condition() {
-        fold("(x ? true : false) && y()", "x&&y()");
-        fold("(x ? false : true) && y()", "(!x)&&y()");
-        fold("(x ? true : y) && y()", "(x || y)&&y()");
-        fold("(x ? y : false) && y()", "(x && y)&&y()");
-        fold("(x && true) && y()", "x && y()");
-        fold("(x && false) && y()", "0&&y()");
-        fold("(x || true) && y()", "1&&y()");
-        fold("(x || false) && y()", "x&&y()");
+        fold("(x ? true : false) && y()", "!!x && y()");
+        fold("(x ? false : true) && y()", "!x && y()");
+        fold("(x ? true : y) && y()", "(x || y) && y()");
+        fold("(x ? y : false) && y()", "(x && y) && y()");
+        // fold("(x && true) && y()", "x && y()");
+        // fold("(x && false) && y()", "0&&y()");
+        // fold("(x || true) && y()", "1&&y()");
+        // fold("(x || false) && y()", "x&&y()");
     }
 
     #[test]
@@ -662,21 +774,18 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_hook() {
         fold("x ? x : y", "x || y");
-        // We assume GETPROPs don't have side effects.
-        fold("x.y ? x.y : x.z", "x.y || x.z");
-        fold("x?.y ? x?.y : x.z", "x?.y || x.z");
-        fold("x?.y ? x?.y : x?.z", "x?.y || x?.z");
+        fold_same("x.y ? x.y : x.z");
+        fold_same("x?.y ? x?.y : x.z");
+        fold_same("x?.y ? x?.y : x?.z");
 
-        // This can be folded if x() does not have side effects.
         fold_same("x() ? x() : y()");
         fold_same("x?.() ? x?.() : y()");
 
         fold("!x ? foo() : bar()", "x ? bar() : foo()");
-        fold("while(!(x ? y : z)) foo();", "while(x ? !y : !z) foo();");
-        fold("(x ? !y : !z) ? foo() : bar()", "(x ? y : z) ? bar() : foo()");
+        // fold("while(!(x ? y : z)) foo();", "while(x ? !y : !z) foo();");
+        // fold("(x ? !y : !z) ? foo() : bar()", "(x ? y : z) ? bar() : foo()");
     }
 
     #[test]
