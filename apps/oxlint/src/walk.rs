@@ -56,10 +56,7 @@ impl ignore::ParallelVisitor for WalkCollector {
         match entry {
             Ok(entry) => {
                 if Walk::is_wanted_entry(&entry, &self.extensions) {
-                    println!("Processing entry: {:?}", entry.path()); // Debug output
                     self.paths.push(entry.path().to_path_buf().into_boxed_path());
-                } else {
-                    println!("Ignoring entry: {:?}", entry.path()); // Debug output
                 }
                 ignore::WalkState::Continue
             }
@@ -106,7 +103,7 @@ impl Walk {
 
             if !config_ignore_patterns.is_empty() {
                 for pattern in config_ignore_patterns {
-                    let pattern = format!("!{}", pattern);
+                    let pattern = format!("!{pattern}");
                     override_builder.add(&pattern).unwrap();
                 }
             }

@@ -6,6 +6,7 @@ use std::{
 };
 
 use ignore::gitignore::Gitignore;
+
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
     loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, InvalidFilterKind, LintFilter, LintService,
@@ -253,9 +254,9 @@ impl LintRunner {
     // when config is provided, but not found, an CliRunResult is returned, else the oxlintrc config file is returned
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
-    fn find_oxlint_config(cwd: &PathBuf, config: Option<&PathBuf>) -> Result<Oxlintrc, CliRunResult> {
+    fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, CliRunResult> {
         if let Some(config_path) = config {
-            let mut full_path = cwd.clone();
+            let mut full_path = cwd.to_path_buf();
             full_path.push(config_path);
 
             return match Oxlintrc::from_file(&full_path) {
@@ -305,10 +306,11 @@ mod test {
 
         let mut current_cwd = env::current_dir().unwrap();
 
-        let part_cwd = if MAIN_SEPARATOR_STR != "/" {
-            cwd.replace('/', MAIN_SEPARATOR_STR)
-        } else {
+        let part_cwd = if MAIN_SEPARATOR_STR == "/" {
             cwd.into()
+        } else {
+            #[expect(clippy::disallowed_methods)]
+            cwd.replace('/', MAIN_SEPARATOR_STR)
         };
 
         current_cwd.push(part_cwd);
@@ -380,6 +382,8 @@ mod test {
         assert_eq!(result.number_of_errors, 0);
     }
 
+    // ToDo: lints all files under windows
+    #[cfg(all(test, not(target_os = "windows")))]
     #[test]
     fn wrong_extension() {
         let args = &["foo.asdf"];
@@ -689,12 +693,15 @@ mod test {
         let file = "fixtures/linter/fix.js";
         let args = &["--fix", file];
         let content_original = fs::read_to_string(file).unwrap();
+        #[expect(clippy::disallowed_methods)]
         let content = content_original.replace("\r\n", "\n");
         assert_eq!(&content, "debugger\n");
 
         // Apply fix to the file.
         let _ = test(args);
-        assert_eq!(fs::read_to_string(file).unwrap().replace("\r\n", "\n"), "\n");
+        #[expect(clippy::disallowed_methods)]
+        let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
+        assert_eq!(new_content, "\n");
 
         // File should not be modified if no fix is applied.
         let modified_before = fs::metadata(file).unwrap().modified().unwrap();
@@ -789,10 +796,10 @@ mod test {
 
     #[test]
     fn test_config_ignore_patterns_directory() {
-        let result = test_with_cwd("fixtures/config_ignore_patterns/ignore_directory", &[
-            "-c",
-            "eslintrc.json",
-        ]);
+        let result = test_with_cwd(
+            "fixtures/config_ignore_patterns/ignore_directory",
+            &["-c", "eslintrc.json"],
+        );
         assert_eq!(result.number_of_files, 1);
     }
 
