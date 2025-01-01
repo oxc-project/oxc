@@ -163,6 +163,11 @@ impl<'a> Semantic<'a> {
         &self.symbols
     }
 
+    /// Get a mutable reference to the [`SymbolTable`].
+    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
+        &mut self.symbols
+    }
+
     pub fn unused_labels(&self) -> &Vec<NodeId> {
         &self.unused_labels
     }

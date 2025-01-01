@@ -638,7 +638,7 @@ mod test {
         let args = &["fixtures/svelte/debugger.svelte"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -717,10 +717,10 @@ mod test {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
 
+        #[expect(clippy::disallowed_methods)]
         let expect_json = std::fs::read_to_string("fixtures/print_config/normal/expect.json")
             .unwrap()
             .replace("\r\n", "\n");
-
         assert_eq!(config, expect_json.trim());
     }
 
@@ -741,6 +741,7 @@ mod test {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
 
+        #[expect(clippy::disallowed_methods)]
         let expect_json = std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json")
             .unwrap()
             .replace("\r\n", "\n");

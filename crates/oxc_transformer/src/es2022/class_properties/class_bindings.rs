@@ -44,6 +44,8 @@ pub(super) struct ClassBindings<'a> {
     /// Temp var for class.
     /// e.g. `_Class` in `_Class = class {}, _Class.x = 1, _Class`
     pub temp: Option<BoundIdentifier<'a>>,
+    /// Temp var for WeakSet.
+    pub brand: Option<BoundIdentifier<'a>>,
     /// `ScopeId` of hoist scope outside class (which temp `var` binding would be created in)
     pub outer_hoist_scope_id: ScopeId,
     /// `true` if should use temp binding for references to class in transpiled static private fields,
@@ -58,6 +60,7 @@ impl<'a> ClassBindings<'a> {
     pub fn new(
         name_binding: Option<BoundIdentifier<'a>>,
         temp_binding: Option<BoundIdentifier<'a>>,
+        brand_binding: Option<BoundIdentifier<'a>>,
         outer_scope_id: ScopeId,
         static_private_fields_use_temp: bool,
         temp_var_is_created: bool,
@@ -65,6 +68,7 @@ impl<'a> ClassBindings<'a> {
         Self {
             name: name_binding,
             temp: temp_binding,
+            brand: brand_binding,
             outer_hoist_scope_id: outer_scope_id,
             static_private_fields_use_temp,
             temp_var_is_created,
@@ -75,12 +79,23 @@ impl<'a> ClassBindings<'a> {
     ///
     /// Used when class needs no transform, and for dummy entry at top of `ClassesStack`.
     pub fn dummy() -> Self {
-        Self::new(None, None, ScopeId::new(0), false, false)
+        Self::new(None, None, None, ScopeId::new(0), false, false)
     }
 
     /// Get `SymbolId` of name binding.
     pub fn name_symbol_id(&self) -> Option<SymbolId> {
         self.name.as_ref().map(|binding| binding.symbol_id)
+    }
+
+    /// Get [`BoundIdentifier`] for class brand.
+    ///
+    /// Only use this method when you are sure that [Self::brand] is not `None`,
+    /// this will happen when there is a private method in the class.
+    ///
+    /// # Panics
+    /// Panics if [Self::brand] is `None`.
+    pub fn brand(&self) -> &BoundIdentifier<'a> {
+        self.brand.as_ref().unwrap()
     }
 
     /// Get binding to use for referring to class in transpiled static private fields.

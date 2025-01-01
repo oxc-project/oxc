@@ -40,6 +40,10 @@ impl ValueType {
     pub fn is_boolean(self) -> bool {
         self == Self::Boolean
     }
+
+    pub fn is_object(self) -> bool {
+        self == Self::Object
+    }
 }
 
 /// `get_known_value_type`
