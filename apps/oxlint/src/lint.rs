@@ -116,7 +116,6 @@ impl Runner for LintRunner {
 
         let mut oxlintrc = config_search_result.unwrap();
         let oxlint_wd = oxlintrc.path.parent().unwrap_or(&self.cwd).to_path_buf();
-        println!("Using configuration file: {:?}", oxlint_wd);
 
         let paths = Walk::new(&oxlint_wd, &paths, &ignore_options, &oxlintrc.ignore_patterns)
             .with_extensions(Extensions(extensions))
@@ -281,6 +280,7 @@ impl LintRunner {
         Oxlintrc::from_file(&config_path).or_else(|_| Ok(Oxlintrc::default()))
     }
 }
+
 mod test {
     use std::{env, path::MAIN_SEPARATOR_STR};
 
