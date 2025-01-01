@@ -51,8 +51,8 @@ fn tagged_template() {
     test_same("(1, o.f)``");
     test_same("(!0 && o.f)()");
     test_same("(!0 && o.f)``");
-    test_same("(!0 ? o.f : !1)()");
-    test_same("(!0 ? o.f : !1)``");
+    test("(!0 ? o.f : !1)()", "(0 ? !1: o.f)()");
+    test("(!0 ? o.f : !1)``", "(0 ? !1: o.f)``");
 
     test("foo(true && o.f)", "foo(o.f)");
     test("foo(true ? o.f : false)", "foo(o.f)");

@@ -257,26 +257,39 @@ impl<'a> PeepholeMinimizeConditions {
         }
     }
 
-    /// `a ? a : b` -> `a || b`
     fn try_minimize_conditional(
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let Expression::Identifier(test_ident) = &expr.test else { return None };
-        let Expression::Identifier(consequent_ident) = &expr.consequent else { return None };
+        // `a ? a : b` -> `a || b`
+        if let (Expression::Identifier(test_ident), Expression::Identifier(consequent_ident)) =
+            (&expr.test, &expr.consequent)
+        {
+            if test_ident.name == consequent_ident.name {
+                let ident = ctx.ast.move_expression(&mut expr.test);
 
-        if test_ident.name != consequent_ident.name {
-            return None;
+                return Some(ctx.ast.expression_logical(
+                    expr.span,
+                    ident,
+                    LogicalOperator::Or,
+                    ctx.ast.move_expression(&mut expr.alternate),
+                ));
+            }
         }
 
-        let ident = ctx.ast.move_expression(&mut expr.test);
+        // `!x ? foo() : bar()` -> `x ? bar() : foo()`
+        if let Expression::UnaryExpression(test_expr) = &mut expr.test {
+            if test_expr.operator.is_not() {
+                let test = ctx.ast.move_expression(&mut test_expr.argument);
+                let consequent = ctx.ast.move_expression(&mut expr.consequent);
+                let alternate = ctx.ast.move_expression(&mut expr.alternate);
+                return Some(
+                    ctx.ast.expression_conditional(expr.span, test, alternate, consequent),
+                );
+            }
+        }
 
-        Some(ctx.ast.expression_logical(
-            expr.span,
-            ident,
-            LogicalOperator::Or,
-            ctx.ast.move_expression(&mut expr.alternate),
-        ))
+        None
     }
 }
 
@@ -696,7 +709,7 @@ mod test {
         fold_same("x() ? x() : y()");
         fold_same("x?.() ? x?.() : y()");
 
-        // fold("!x ? foo() : bar()", "x ? bar() : foo()");
+        fold("!x ? foo() : bar()", "x ? bar() : foo()");
         // fold("while(!(x ? y : z)) foo();", "while(x ? !y : !z) foo();");
         // fold("(x ? !y : !z) ? foo() : bar()", "(x ? y : z) ? bar() : foo()");
     }
