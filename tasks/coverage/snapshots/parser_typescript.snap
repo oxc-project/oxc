@@ -3,13 +3,10 @@ commit: d85767ab
 parser_typescript Summary:
 AST Parsed     : 6494/6503 (99.86%)
 Positive Passed: 6483/6503 (99.69%)
-Negative Passed: 1275/5747 (22.19%)
+Negative Passed: 1294/5747 (22.52%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/InterfaceDeclaration8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/abstractClassInLocalScopeIsAbstract.ts
@@ -101,7 +98,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assigningFun
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompat1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatBug2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatBug5.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatFunctionsWithOptionalArgs.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatInterfaceWithStringIndexSignature.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatWithOverloads.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability11.ts
@@ -220,10 +216,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOnClass.
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOnInstance.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloadViaElementAccessExpression.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloads1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloads2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloads3.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloads4.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloads5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callSignaturesShouldBeResolvedBeforeSpecialization.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callWithWrongNumberOfTypeArguments.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callbackArgsDifferByOptionality.ts
@@ -319,7 +311,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classMemberI
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classMemberInitializerWithLamdaScoping4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classMergedWithInterfaceMultipleBasesNoError.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classOrder2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classOverloadForFunction2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classPropertyErrorOnNameOnly.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classSideInheritance1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classSideInheritance2.ts
@@ -875,10 +866,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionCall
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionCallOnConstrainedTypeVariable.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionExpressionShadowedByParams.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloadAmbiguity1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloadImplementationOfWrongName.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloadImplementationOfWrongName2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads17.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads18.ts
@@ -887,7 +875,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOver
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads20.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads27.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads29.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads34.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads37.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads4.ts
@@ -1886,7 +1873,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spreadInvali
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spreadOfParamsFromGeneratorMakesRequiredParams.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spyComparisonChecking.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticAsIdentifier.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticClassMemberError.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticMemberExportAccess.ts
@@ -3280,7 +3266,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/fixSignatureCaching.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/functionImplementationErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/functionImplementations.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/functionNameConflicts.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/functionOverloadCompatibilityWithVoid01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/functionOverloadErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/functions/parameterInitializersForwardReferencing.2.ts
@@ -3747,9 +3732,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration2.d.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration3.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration4.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserAmbiguity1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Generics/parserAmbiguity2.ts
@@ -3796,7 +3778,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.d.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration2.d.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration4.d.ts
@@ -4923,6 +4904,27 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Did you mean `readonly`?
 
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/FunctionDeclaration3.ts:1:10]
+ 1 │ function foo();
+   ·          ───
+   ╰────
+
+  × Function implementation name must be the same as the declaration.
+   ╭─[typescript/tests/cases/compiler/FunctionDeclaration4.ts:1:10]
+ 1 │ function foo();
+   ·          ───
+ 2 │ function bar() { }
+   ╰────
+
+  × Function implementation name must be the same as the declaration.
+   ╭─[typescript/tests/cases/compiler/FunctionDeclaration6.ts:2:14]
+ 1 │ {
+ 2 │     function foo();
+   ·              ───
+ 3 │     function bar() { }
+   ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/MemberAccessorDeclaration15.ts:2:12]
  1 │ class C {
@@ -5312,6 +5314,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ // Below is actually valid JavaScript (see http://es5.github.com/#x8.7 ), even though will always fail at runtime with 'invalid left-hand side'
  4 │ var x = new y = 5;
    ·         ─────
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/assignmentCompatFunctionsWithOptionalArgs.ts:1:10]
+ 1 │ function foo(x: { id: number; name?: string; }): void;
+   ·          ───
+ 2 │ foo({ id: 1234 });                 // Ok
    ╰────
 
   × Cannot assign to this expression
@@ -5897,6 +5906,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·       ─
    ╰────
 
+  × Function implementation name must be the same as the declaration.
+    ╭─[typescript/tests/cases/compiler/callOverloads2.ts:9:10]
+  8 │ 
+  9 │ function Foo(); // error
+    ·          ───
+ 10 │ 
+    ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/callOverloads3.ts:2:10]
+ 1 │ function Foo():Foo; // error
+ 2 │ function Foo(s:string):Foo; // error
+   ·          ───
+ 3 │ class Foo { // error
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/callOverloads4.ts:2:10]
+ 1 │ function Foo():Foo; // error
+ 2 │ function Foo(s:string):Foo; // error
+   ·          ───
+ 3 │ class Foo { // error
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/callOverloads5.ts:2:10]
+ 1 │ function Foo():Foo; // error
+ 2 │ function Foo(s:string):Foo; // error
+   ·          ───
+ 3 │ class Foo { // error
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/cannotInvokeNewOnErrorExpression.ts:5:22]
  4 │ }
@@ -6009,6 +6050,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ function foo() {}
    ·          ─┬─
    ·           ╰── It can not be redeclared here
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/classOverloadForFunction2.ts:1:10]
+ 1 │ function bar(): string;
+   ·          ───
+ 2 │ class bar {}
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -8252,6 +8300,41 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │  with({}) {
    ·  ────
  3 │   function f() {
+   ╰────
+
+  × Function implementation name must be the same as the declaration.
+   ╭─[typescript/tests/cases/compiler/functionOverloadImplementationOfWrongName.ts:2:10]
+ 1 │ function foo(x);
+ 2 │ function foo(x, y);
+   ·          ───
+ 3 │ function bar() { }
+   ╰────
+
+  × Function implementation name must be the same as the declaration.
+   ╭─[typescript/tests/cases/compiler/functionOverloadImplementationOfWrongName2.ts:1:10]
+ 1 │ function foo(x);
+   ·          ───
+ 2 │ function bar() { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/functionOverloadImplementationOfWrongName2.ts:3:10]
+ 2 │ function bar() { }
+ 3 │ function foo(x, y);
+   ·          ───
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/functionOverloads1.ts:1:10]
+ 1 │ function foo();
+   ·          ───
+ 2 │ 1+1;
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/functionOverloads3.ts:1:10]
+ 1 │ function foo():string;
+   ·          ───
    ╰────
 
   × Function implementation is missing or not immediately following the declaration.
@@ -11978,6 +12061,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ──────
    ╰────
   help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/staticClassMemberError.ts:9:10]
+  8 │ // just want to make sure this one doesn't crash the compiler
+  9 │ function Foo();
+    ·          ───
+ 10 │ class Foo {
+    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/staticClassProps.ts:4:15]
@@ -19714,6 +19805,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                ╰── `,` expected
    ╰────
 
+  × Function implementation name must be the same as the declaration.
+    ╭─[typescript/tests/cases/conformance/functions/functionNameConflicts.ts:23:10]
+ 22 │ 
+ 23 │ function over();
+    ·          ────
+ 24 │ function overrr() {
+    ╰────
+
   × A rest parameter must be last in a parameter list
     ╭─[typescript/tests/cases/conformance/functions/functionOverloadErrorsSyntax.ts:9:25]
   8 │ //Function overload signature with rest param followed by non-optional parameter
@@ -21367,6 +21466,27 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·    ─────────
    ╰────
 
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration3.ts:1:10]
+ 1 │ function foo();
+   ·          ───
+   ╰────
+
+  × Function implementation name must be the same as the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration4.ts:1:10]
+ 1 │ function foo();
+   ·          ───
+ 2 │ function bar() { }
+   ╰────
+
+  × Function implementation name must be the same as the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration6.ts:2:14]
+ 1 │ {
+ 2 │     function foo();
+   ·              ───
+ 3 │     function bar() { }
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Fuzz/parser0_004152.ts:2:45]
  1 │ export class Game {
@@ -21753,6 +21873,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MissingTokens/parserMissingToken2.ts:1:1]
  1 │ / b;
    · ────
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration10.ts:2:10]
+ 1 │ function data(): string;
+ 2 │ function next(): string;
+   ·          ────
    ╰────
 
   × Expected `(` but found `;`

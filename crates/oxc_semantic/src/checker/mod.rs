@@ -17,8 +17,12 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     let kind = node.kind();
 
     match kind {
-        AstKind::Program(_) => {
+        AstKind::Program(program) => {
             js::check_duplicate_class_elements(ctx);
+            ts::check_stmts(&program.body, ctx);
+        }
+        AstKind::BlockStatement(block) => {
+            ts::check_stmts(&block.body, ctx);
         }
         AstKind::BindingIdentifier(ident) => {
             js::check_identifier(&ident.name, ident.span, node, ctx);
