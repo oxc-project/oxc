@@ -273,14 +273,11 @@ fn find_char_span(ctx: &LintContext, expr: &dyn GetSpan, target_char: char) -> O
  */
 fn get_char_span_before(start_token_span: Span, ctx: &LintContext) -> Option<Span> {
     let text_len = ctx.source_text().len();
-    for (idx, c) in ctx.source_text().chars().rev().enumerate() {
-        let Ok(char_span_start) = (text_len - 1 - idx).try_into() else {
+    let skip_count = text_len - start_token_span.start as usize;
+    for (idx, c) in ctx.source_text().chars().rev().skip(skip_count).enumerate() {
+        let Ok(char_span_start) = (start_token_span.start as usize - 1 - idx).try_into() else {
             return None;
         };
-
-        if start_token_span.start <= char_span_start {
-            continue;
-        }
 
         if c.is_whitespace() {
             continue;
@@ -329,13 +326,11 @@ fn get_last_char_span(expr: &Expression, last_from: u32, ctx: &LintContext) -> S
  * And ignore characters in the comment.
  */
 fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
-    for (idx, c) in ctx.source_text().char_indices() {
-        let Ok(current_span_start) = TryInto::<u32>::try_into(idx) else {
+    let skip_count = expr.span().end as usize;
+    for (idx, c) in ctx.source_text().chars().skip(skip_count).enumerate() {
+        let Ok(current_span_start) = TryInto::<u32>::try_into(idx + skip_count) else {
             return None;
         };
-        if current_span_start < expr.span().end {
-            continue;
-        }
 
         if c.is_whitespace() {
             continue;
