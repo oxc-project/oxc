@@ -1,15 +1,18 @@
-use oxc_allocator::Vec as ArenaVec;
-use oxc_ast::ast::*;
-use oxc_syntax::symbol::SymbolId;
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 use rustc_hash::FxHashSet;
 
-use crate::CompressorPass;
+use oxc_allocator::Vec as ArenaVec;
+use oxc_ast::ast::*;
+use oxc_syntax::{es_target::ESTarget, symbol::SymbolId};
+use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+
+use crate::{CompressOptions, CompressorPass};
 
 /// Remove Unused Code
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/RemoveUnusedCode.java>
 pub struct RemoveUnusedCode {
+    options: CompressOptions,
+
     pub(crate) changed: bool,
 
     symbol_ids_to_remove: FxHashSet<SymbolId>,
@@ -58,11 +61,28 @@ impl<'a> Traverse<'a> for RemoveUnusedCode {
             }
         }
     }
+
+    fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.compress_catch_clause(catch);
+    }
 }
 
 impl RemoveUnusedCode {
-    pub fn new() -> Self {
-        Self { changed: false, symbol_ids_to_remove: FxHashSet::default() }
+    pub fn new(options: CompressOptions) -> Self {
+        Self { options, changed: false, symbol_ids_to_remove: FxHashSet::default() }
+    }
+
+    fn compress_catch_clause(&mut self, catch: &mut CatchClause<'_>) {
+        if self.options.target >= ESTarget::ES2019 {
+            if let Some(param) = &catch.param {
+                if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
+                    if self.symbol_ids_to_remove.contains(&ident.symbol_id()) {
+                        catch.param = None;
+                        self.changed = true;
+                    }
+                }
+            };
+        }
     }
 }
 
@@ -70,16 +90,33 @@ impl RemoveUnusedCode {
 mod test {
     use oxc_allocator::Allocator;
 
-    use crate::tester;
+    use crate::{tester, CompressOptions};
 
     fn test(source_text: &str, expected: &str) {
         let allocator = Allocator::default();
-        let mut pass = super::RemoveUnusedCode::new();
+        let options = CompressOptions::default();
+        let mut pass = super::RemoveUnusedCode::new(options);
         tester::test(&allocator, source_text, expected, &mut pass);
     }
 
     fn test_same(source_text: &str) {
         test(source_text, source_text);
+    }
+
+    #[test]
+    fn optional_catch_binding() {
+        test("try {} catch(e) {}", "try {} catch {}");
+        test_same("try {} catch([e]) {}");
+        test_same("try {} catch({e}) {}");
+
+        let allocator = Allocator::default();
+        let options = CompressOptions {
+            target: oxc_syntax::es_target::ESTarget::ES2018,
+            ..CompressOptions::default()
+        };
+        let mut pass = super::RemoveUnusedCode::new(options);
+        let code = "try {} catch(e) {}";
+        tester::test(&allocator, code, code, &mut pass);
     }
 
     #[test]

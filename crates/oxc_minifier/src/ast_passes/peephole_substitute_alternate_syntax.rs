@@ -4,20 +4,18 @@ use oxc_ecmascript::{ToInt32, ToJsString};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
-    es_target::ESTarget,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{node_util::Ctx, CompressOptions, CompressorPass};
+use crate::{node_util::Ctx, CompressorPass};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 pub struct PeepholeSubstituteAlternateSyntax {
-    options: CompressOptions,
     /// Do not compress syntaxes that are hard to analyze inside the fixed loop.
     /// e.g. Do not compress `undefined -> void 0`, `true` -> `!0`.
     /// Opposite of `late` in Closure Compiler.
@@ -44,10 +42,6 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
     ) {
         // We may fold `void 1` to `void 0`, so compress it after visiting
         self.compress_return_statement(stmt);
-    }
-
-    fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.compress_catch_clause(catch);
     }
 
     fn exit_variable_declaration(
@@ -116,8 +110,8 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 }
 
 impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
-    pub fn new(options: CompressOptions, in_fixed_loop: bool) -> Self {
-        Self { options, in_fixed_loop, in_define_export: false, changed: false }
+    pub fn new(in_fixed_loop: bool) -> Self {
+        Self { in_fixed_loop, in_define_export: false, changed: false }
     }
 
     /// Test `Object.defineProperty(exports, ...)`
@@ -691,20 +685,6 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     fn empty_array_literal(ctx: Ctx<'a, 'b>) -> Expression<'a> {
         Self::array_literal(ctx.ast.vec(), ctx)
     }
-
-    fn compress_catch_clause(&mut self, catch: &mut CatchClause<'a>) {
-        if catch.body.body.is_empty()
-            && !self.in_fixed_loop
-            && self.options.target >= ESTarget::ES2019
-        {
-            if let Some(param) = &catch.param {
-                if param.pattern.kind.is_binding_identifier() {
-                    catch.param = None;
-                    self.changed = true;
-                }
-            };
-        }
-    }
 }
 
 /// Port from <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
@@ -712,12 +692,11 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 mod test {
     use oxc_allocator::Allocator;
 
-    use crate::{tester, CompressOptions};
+    use crate::tester;
 
     fn test(source_text: &str, expected: &str) {
         let allocator = Allocator::default();
-        let options = CompressOptions::default();
-        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(options, false);
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(false);
         tester::test(&allocator, source_text, expected, &mut pass);
     }
 
@@ -1196,21 +1175,5 @@ mod test {
         test("'number' !== typeof foo", "'number' != typeof foo");
         test("typeof foo !== `number`", "typeof foo != 'number'");
         test("`number` !== typeof foo", "'number' != typeof foo");
-    }
-
-    #[test]
-    fn optional_catch_binding() {
-        test("try {} catch(e) {}", "try {} catch {}");
-        test_same("try {} catch([e]) {}");
-        test_same("try {} catch({e}) {}");
-
-        let allocator = Allocator::default();
-        let options = CompressOptions {
-            target: oxc_syntax::es_target::ESTarget::ES2018,
-            ..CompressOptions::default()
-        };
-        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(options, false);
-        let code = "try {} catch(e) {}";
-        tester::test(&allocator, code, code, &mut pass);
     }
 }
