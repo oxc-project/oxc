@@ -252,8 +252,7 @@ fn find_char_span(ctx: &LintContext, expr: &dyn GetSpan, target_char: char) -> O
             return None;
         };
 
-        let current_span_start = span.start + idx;
-        let current_span = Span::new(current_span_start, current_span_start + 1);
+        let current_span = Span::sized(span.start + idx, 1);
 
         if ctx.comments().iter().any(|comment| comment.span.contains_inclusive(current_span)) {
             continue;
@@ -281,7 +280,7 @@ fn get_char_span_before(start_token_span: Span, ctx: &LintContext) -> Option<Spa
             continue;
         }
 
-        let current_span = Span::new(char_span_start, char_span_start + 1);
+        let current_span = Span::sized(char_span_start, 1);
 
         return Some(current_span);
     }
@@ -302,8 +301,7 @@ fn get_last_char_span(expr: &Expression, last_from: u32, ctx: &LintContext) -> S
             break;
         };
 
-        let current_span_start = expr_span.end - 1 - idx;
-        let current_span = Span::new(current_span_start, current_span_start + 1);
+        let current_span = Span::sized(expr_span.end - 1 - idx, 1);
 
         if ctx.comments().iter().any(|comment| comment.span.contains_inclusive(current_span)) {
             continue;
@@ -334,7 +332,7 @@ fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
             continue;
         }
 
-        let current_span = Span::new(current_span_start, current_span_start + 1);
+        let current_span = Span::sized(current_span_start, 1);
 
         if ctx.comments().iter().any(|comment| comment.span.contains_inclusive(current_span)) {
             continue;
