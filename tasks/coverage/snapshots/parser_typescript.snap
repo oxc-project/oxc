@@ -3,7 +3,7 @@ commit: d85767ab
 parser_typescript Summary:
 AST Parsed     : 6494/6503 (99.86%)
 Positive Passed: 6483/6503 (99.69%)
-Negative Passed: 1275/5747 (22.19%)
+Negative Passed: 1277/5747 (22.22%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -3182,7 +3182,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportClassNameWithObjectSystem.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportClassNameWithObjectUMD.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportDefaultClassNameWithObject.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesInIfThenStatementNoCrash1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportNonLocalDeclarations.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/importNonExternalModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/importTsBeforeDTs.ts
@@ -4080,7 +4079,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statement
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-ofTypeCheck9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/forStatements/forStatementsMultipleInvalidDecl.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/ifDoWhileStatements/ifDoWhileStatements.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementExportDeclarationNoCrash1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/invalidReturnStatements.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/switchStatements/switchStatements.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/any/anyAsConstructor.ts
@@ -6771,6 +6769,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                           ──
  5 │ 
    ╰────
+
+  × Missing initializer in const declaration
+    ╭─[typescript/tests/cases/compiler/constDeclarations-errors.ts:12:11]
+ 11 │ // error, can not be unintalized
+ 12 │ for(const c9; c9 < 1;) { }
+    ·           ──
+ 13 │ 
+    ╰────
+
+  × Missing initializer in const declaration
+    ╭─[typescript/tests/cases/compiler/constDeclarations-errors.ts:15:20]
+ 14 │ // error, can not be unintalized
+ 15 │ for(const c10 = 0, c11; c10 < 1;) { }
+    ·                    ───
+    ╰────
 
   × Lexical declaration cannot appear in a single-statement context
    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:3:5]
@@ -19457,6 +19470,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ let;
    ╰────
 
+  × Missing initializer in const declaration
+   ╭─[typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesInIfThenStatementNoCrash1.ts:4:14]
+ 3 │ if (true)
+ 4 │ export const cssExports: CssExports;
+   ·              ──────────────────────
+ 5 │ export default cssExports;
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesSystem.ts:1:4]
  1 │ var;
@@ -24000,6 +24021,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·              ╰── `,` expected
  14 │           `height: var foo`,
     ╰────
+
+  × Missing initializer in const declaration
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementExportDeclarationNoCrash1.ts:3:14]
+ 2 │ 
+ 3 │ export const box: string
+   ·              ───────────
+ 4 │ subTitle:
+   ╰────
+
+  × Missing initializer in const declaration
+   ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementExportDeclarationNoCrash1.ts:5:14]
+ 4 │ subTitle:
+ 5 │ export const title: string
+   ·              ─────────────
+   ╰────
 
   × Generators can only be declared at the top level or inside a block
    ╭─[typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementWithLabel.ts:2:8]

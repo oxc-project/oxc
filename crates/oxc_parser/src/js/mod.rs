@@ -34,16 +34,4 @@ pub enum FunctionKind {
 pub enum VariableDeclarationParent {
     For,
     Statement,
-    Clause,
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct VariableDeclarationContext {
-    pub parent: VariableDeclarationParent,
-}
-
-impl VariableDeclarationContext {
-    pub(crate) fn new(parent: VariableDeclarationParent) -> Self {
-        Self { parent }
-    }
 }

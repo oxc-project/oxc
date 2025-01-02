@@ -354,13 +354,15 @@ impl<'a> ParserImpl<'a> {
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
+        let reserved_ctx = self.ctx;
         let modifiers =
             if self.is_ts { self.eat_modifiers_before_declaration()? } else { Modifiers::empty() };
+        self.ctx = self.ctx.union_ambient_if(modifiers.contains_declare());
 
         let declaration = self.parse_declaration(decl_span, &modifiers)?;
-        let span = self.end_span(span);
+        self.ctx = reserved_ctx;
         Ok(self.ast.alloc_export_named_declaration(
-            span,
+            self.end_span(span),
             Some(declaration),
             self.ast.vec(),
             None,

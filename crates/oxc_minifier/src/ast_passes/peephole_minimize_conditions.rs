@@ -57,6 +57,9 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
             Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
+            Expression::LogicalExpression(logical_expr) => {
+                Self::try_minimize_logical(logical_expr, ctx)
+            }
             Expression::ConditionalExpression(conditional_expr) => {
                 Self::try_minimize_conditional(conditional_expr, ctx)
             }
@@ -255,6 +258,51 @@ impl<'a> PeepholeMinimizeConditions {
             Some(e) => e,
             None => ctx.ast.void_0(return_stmt.span),
         }
+    }
+
+    fn try_minimize_logical(
+        expr: &mut LogicalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        // `a && true` -> `a`
+        // `a && false` -> `false`
+        if expr.operator == LogicalOperator::And {
+            if let (
+                Expression::Identifier(test_ident),
+                Expression::BooleanLiteral(consequent_lit),
+            ) = (&expr.left, &expr.right)
+            {
+                if consequent_lit.value {
+                    return Some(ctx.ast.move_expression(&mut expr.left));
+                }
+                if ctx.scopes().find_binding(ctx.current_scope_id(), &test_ident.name).is_some() {
+                    return Some(ctx.ast.expression_boolean_literal(expr.span, false));
+                }
+                return None;
+            }
+        }
+
+        // `a || true` -> `true`
+        // `a || false` -> `a`
+        if expr.operator == LogicalOperator::Or {
+            if let (
+                Expression::Identifier(test_ident),
+                Expression::BooleanLiteral(consequent_lit),
+            ) = (&expr.left, &expr.right)
+            {
+                if consequent_lit.value {
+                    if ctx.scopes().find_binding(ctx.current_scope_id(), &test_ident.name).is_some()
+                    {
+                        return Some(ctx.ast.expression_boolean_literal(expr.span, true));
+                    }
+                } else {
+                    return Some(ctx.ast.move_expression(&mut expr.left));
+                }
+                return None;
+            }
+        }
+
+        None
     }
 
     fn try_minimize_conditional(
@@ -669,10 +717,15 @@ mod test {
         fold("(x ? false : true) && y()", "!x && y()");
         fold("(x ? true : y) && y()", "(x || y) && y()");
         fold("(x ? y : false) && y()", "(x && y) && y()");
-        // fold("(x && true) && y()", "x && y()");
-        // fold("(x && false) && y()", "0&&y()");
-        // fold("(x || true) && y()", "1&&y()");
-        // fold("(x || false) && y()", "x&&y()");
+        fold("var x; (x && true) && y()", "var x; x && y()");
+        fold("var x; (x && false) && y()", "var x; false && y()");
+        fold("(x && true) && y()", "x && y()");
+        fold("(x && false) && y()", "x && false && y()");
+        fold("var x; (x || true) && y()", "var x; true && y()");
+        fold("var x; (x || false) && y()", "var x; x && y()");
+
+        fold_same("(x || true) && y()");
+        fold("(x || false) && y()", "x && y()");
     }
 
     #[test]

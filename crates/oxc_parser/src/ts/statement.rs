@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     diagnostics,
-    js::{FunctionKind, VariableDeclarationContext, VariableDeclarationParent},
+    js::{FunctionKind, VariableDeclarationParent},
     lexer::Kind,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
     ParserImpl,
@@ -379,7 +379,7 @@ impl<'a> ParserImpl<'a> {
             kind if kind.is_variable_declaration() => self
                 .parse_variable_declaration(
                     start_span,
-                    VariableDeclarationContext::new(VariableDeclarationParent::Clause),
+                    VariableDeclarationParent::Statement,
                     modifiers,
                 )
                 .map(Declaration::VariableDeclaration),

@@ -127,10 +127,7 @@ impl Oxlintrc {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
 
-        // Get absolute path from `path`
-        let absolute_path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
-
-        config.path = absolute_path;
+        config.path = path.to_path_buf();
 
         Ok(config)
     }

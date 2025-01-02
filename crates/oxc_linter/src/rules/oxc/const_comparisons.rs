@@ -2,7 +2,7 @@
 use std::cmp::Ordering;
 
 use oxc_ast::{
-    ast::{Expression, LogicalExpression, NumericLiteral},
+    ast::{Expression, LogicalExpression, NumericLiteral, UnaryOperator},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -51,6 +51,19 @@ fn identical_expressions_logical_operator(left_span: Span, right_span: Span) -> 
                         right_span
                             .label("This expression will always evaluate to true"),
                     ])
+}
+
+fn identical_expressions_logical_operator_negated(
+    always_truthy: bool,
+    left_span: Span,
+    right_span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected constant comparison")
+        .with_help(format!("This logical expression will always evaluate to {always_truthy}"))
+        .with_labels([
+            left_span.label("If this expression evaluates to true"),
+            right_span.label("This expression will never evaluate to true"),
+        ])
 }
 
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/impossible>
@@ -197,7 +210,13 @@ impl ConstComparisons {
         }
     }
 
-    // checks for `a === b && a === b` and `a === b && a !== b`
+    /// checks for:
+    /// ```ts
+    /// a === b && b === a
+    /// a === b && a !== b
+    /// !a && a
+    /// a && !a
+    /// ```
     fn check_redundant_logical_expression<'a>(
         logical_expr: &LogicalExpression<'a>,
         ctx: &LintContext<'a>,
@@ -215,6 +234,24 @@ impl ConstComparisons {
                 logical_expr.left.span(),
                 logical_expr.right.span(),
             ));
+        }
+
+        // if either are `!foo`, check whether it looks like `foo && !foo` or `foo || !foo`
+        match (logical_expr.left.get_inner_expression(), logical_expr.right.get_inner_expression())
+        {
+            (Expression::UnaryExpression(negated_expr), other_expr)
+            | (other_expr, Expression::UnaryExpression(negated_expr)) => {
+                if negated_expr.operator == UnaryOperator::LogicalNot
+                    && is_same_expression(&negated_expr.argument, other_expr, ctx)
+                {
+                    ctx.diagnostic(identical_expressions_logical_operator_negated(
+                        matches!(logical_expr.operator, LogicalOperator::Or),
+                        logical_expr.left.span(),
+                        logical_expr.right.span(),
+                    ));
+                }
+            }
+            _ => {}
         }
     }
 
@@ -420,6 +457,10 @@ fn test() {
         "a > b",
         "a >= b",
         "class Foo { #a; #b; constructor() { this.#a = 1; }; test() { return this.#a > this.#b } }",
+        "!foo && bar",
+        "!foo && !bar",
+        "foo || bar",
+        "!foo || bar",
     ];
 
     let fail = vec![
@@ -508,6 +549,10 @@ fn test() {
         "!foo && !foo",
         "!foo || !foo",
         "class Foo { #a; #b; constructor() { this.#a = 1; }; test() { return this.#a > this.#a } }",
+        "!foo && foo",
+        "foo && !foo",
+        "!foo || foo",
+        "foo || !foo",
     ];
 
     Tester::new(ConstComparisons::NAME, ConstComparisons::CATEGORY, pass, fail).test_and_snapshot();

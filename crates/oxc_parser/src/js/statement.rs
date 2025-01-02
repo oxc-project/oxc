@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, Span};
 
-use super::{grammar::CoverGrammar, VariableDeclarationContext, VariableDeclarationParent};
+use super::{grammar::CoverGrammar, VariableDeclarationParent};
 use crate::{
     diagnostics, lexer::Kind, modifiers::Modifiers, Context, ParserImpl, StatementContext,
 };
@@ -174,7 +174,7 @@ impl<'a> ParserImpl<'a> {
         let start_span = self.start_span();
         let decl = self.parse_variable_declaration(
             start_span,
-            VariableDeclarationContext::new(VariableDeclarationParent::Statement),
+            VariableDeclarationParent::Statement,
             &Modifiers::empty(),
         )?;
 
@@ -309,7 +309,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Statement<'a>> {
         let start_span = self.start_span();
         let init_declaration = self.context(Context::empty(), Context::In, |p| {
-            let decl_ctx = VariableDeclarationContext::new(VariableDeclarationParent::For);
+            let decl_ctx = VariableDeclarationParent::For;
             p.parse_variable_declaration(start_span, decl_ctx, &Modifiers::empty())
         })?;
 
@@ -358,6 +358,11 @@ impl<'a> ParserImpl<'a> {
         r#await: bool,
     ) -> Result<Statement<'a>> {
         self.expect(Kind::Semicolon)?;
+        if let Some(ForStatementInit::VariableDeclaration(decl)) = &init {
+            for d in &decl.declarations {
+                self.check_missing_initializer(d);
+            }
+        }
         let test = if !self.at(Kind::Semicolon) && !self.at(Kind::RParen) {
             Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expr)?)
         } else {

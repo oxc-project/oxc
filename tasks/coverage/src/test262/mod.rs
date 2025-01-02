@@ -84,6 +84,10 @@ impl Test262Case {
         self.meta.flags.contains(&TestFlag::OnlyStrict)
     }
 
+    pub fn is_no_strict(&self) -> bool {
+        self.meta.flags.contains(&TestFlag::NoStrict)
+    }
+
     pub fn is_raw(&self) -> bool {
         self.meta.flags.contains(&TestFlag::Raw)
     }
