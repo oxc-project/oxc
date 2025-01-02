@@ -41,17 +41,14 @@ impl Case for MinifierTest262Case {
 
     fn skip_test_case(&self) -> bool {
         self.base.should_fail() || self.base.skip_test_case()
+            // Unable to minify non-strict code, which may contain syntaxes that the minifier do not support (e.g. `with`).
+            || self.base.is_no_strict()
     }
 
     fn run(&mut self) {
         let source_text = self.base.code();
         let is_module = self.base.is_module();
         let source_type = SourceType::default().with_module(is_module);
-        // Unable to minify `script`, which may contain syntaxes that the minifier do not support (e.g. `with`).
-        if source_type.is_script() {
-            self.base.set_result(TestResult::Passed);
-            return;
-        }
         let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }

@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.5] - 2025-01-02
+
+### Features
+
+- 0e168b8 linter: Catch more cases in const-comparisons (#8215) (Cameron)
+- bde44a3 linter: Add `statement_span` to `ModuleRecord/ImportEntry` (#8195) (Alexander S.)
+- ccaa9f7 linter: Implement `eslint/new-cap`  (#8146) (Alexander S.)
+
+### Bug Fixes
+
+- 2b14a6f linter: Fix `ignorePattern` config for windows  (#8214) (Alexander S.)
+
 ## [0.15.4] - 2024-12-30
 
 - ed75e42 semantic: [**BREAKING**] Make SymbolTable fields `pub(crate)` instead of `pub` (#7999) (Boshen)

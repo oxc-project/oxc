@@ -153,8 +153,8 @@ impl Case for Test262RuntimeCase {
             return;
         }
 
-        // Unable to minify `script`, which may contain syntaxes that the minifier do not support (e.g. `with`).
-        if !self.base.is_module() {
+        // Unable to minify non-strict code, which may contain syntaxes that the minifier do not support (e.g. `with`).
+        if self.base.is_no_strict() {
             self.base.set_result(TestResult::Passed);
             return;
         }
