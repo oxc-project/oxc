@@ -12,6 +12,7 @@ mod peephole_remove_dead_code;
 mod peephole_replace_known_methods;
 mod peephole_substitute_alternate_syntax;
 mod remove_syntax;
+mod remove_unused_code;
 mod statement_fusion;
 
 pub use collapse_variable_declarations::CollapseVariableDeclarations;
@@ -24,6 +25,7 @@ pub use peephole_remove_dead_code::PeepholeRemoveDeadCode;
 pub use peephole_replace_known_methods::PeepholeReplaceKnownMethods;
 pub use peephole_substitute_alternate_syntax::PeepholeSubstituteAlternateSyntax;
 pub use remove_syntax::RemoveSyntax;
+pub use remove_unused_code::RemoveUnusedCode;
 pub use statement_fusion::StatementFusion;
 
 use crate::CompressOptions;
@@ -32,7 +34,6 @@ pub trait CompressorPass<'a>: Traverse<'a> {
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>);
 }
 
-// See `latePeepholeOptimizations`
 pub struct PeepholeOptimizations {
     x0_statement_fusion: StatementFusion,
     x1_minimize_exit_points: MinimizeExitPoints,
