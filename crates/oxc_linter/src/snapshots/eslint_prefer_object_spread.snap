@@ -1,0 +1,506 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 356
+snapshot_kind: text
+---
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({}, foo)
+   · ──────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign  ({}, foo)
+   · ────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({}, { foo: 'bar' })
+   · ─────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({}, baz, { foo: 'bar' })
+   · ──────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({}, { foo: 'bar', baz: 'foo' })
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({ foo: 'bar' }, baz)
+   · ──────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({ foo: 'bar' }, cats, dogs, trees, birds)
+   · ───────────────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, baz))
+   · ─────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:31]
+ 1 │ Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, baz))
+   ·                               ──────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, Object.assign({}, { superNested: 'butwhy' })))
+   · ──────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:31]
+ 1 │ Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, Object.assign({}, { superNested: 'butwhy' })))
+   ·                               ───────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:61]
+ 1 │ Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, Object.assign({}, { superNested: 'butwhy' })))
+   ·                                                             ────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({foo: 'bar', ...bar}, baz)
+   · ────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({}, { foo, bar, baz })
+   · ────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({}, { [bar]: 'foo' })
+   · ───────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({ ...bar }, { ...baz })
+   · ─────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         Object.assign({ ...bar }, {
+ 3 │ │               // this is a bar
+ 4 │ │               foo: 'bar',
+ 5 │ │               baz: "cats"
+ 6 │ ╰─▶         })
+ 7 │             
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+    ╭─[prefer_object_spread.tsx:2:9]
+  1 │     
+  2 │ ╭─▶         Object.assign({
+  3 │ │               boo: "lol",
+  4 │ │               // I'm a comment
+  5 │ │               dog: "cat"
+  6 │ │           }, {
+  7 │ │               // this is a bar
+  8 │ │               foo: 'bar',
+  9 │ │               baz: "cats"
+ 10 │ ╰─▶         })
+ 11 │             
+    ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  × Unexpected token
+   ╭─[prefer_object_spread.tsx:3:13]
+ 2 │         const test = Object.assign({ ...bar }, {
+ 3 │             <!-- html comment
+   ·             ─
+ 4 │             foo: 'bar',
+   ╰────
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:2:22]
+ 1 │     
+ 2 │ ╭─▶         const test = Object.assign({ ...bar }, {
+ 3 │ │               foo: 'bar', // inline comment
+ 4 │ │               baz: "cats"
+ 5 │ ╰─▶         })
+ 6 │             
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:2:22]
+ 1 │     
+ 2 │ ╭─▶         const test = Object.assign({ ...bar }, {
+ 3 │ │               /**
+ 4 │ │                * foo
+ 5 │ │               */
+ 6 │ │               foo: 'bar',
+ 7 │ │               baz: "cats"
+ 8 │ ╰─▶         })
+ 9 │             
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({})
+   · ─────────────────
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({ foo: bar })
+   · ───────────────────────────
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         const foo = 'bar';
+ 3 │         Object.assign({ foo: bar })
+   ·         ───────────────────────────
+ 4 │         
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         foo = 'bar';
+ 3 │         Object.assign({ foo: bar })
+   ·         ───────────────────────────
+ 4 │         
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:9]
+ 1 │ let a = Object.assign({})
+   ·         ─────────────────
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:9]
+ 1 │ let a = Object.assign({}, a)
+   ·         ────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:9]
+ 1 │ let a = Object.assign   ({}, a)
+   ·         ───────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:9]
+ 1 │ let a = Object.assign({ a: 1 }, b)
+   ·         ──────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign(  {},  a,      b,   )
+   · ───────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({}, a ? b : {}, b => c, a = 2)
+   · ────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         const someVar = 'foo';
+ 3 │         Object.assign({}, a ? b : {}, b => c, a = 2)
+   ·         ────────────────────────────────────────────
+ 4 │         
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         someVar = 'foo';
+ 3 │         Object.assign({}, a ? b : {}, b => c, a = 2)
+   ·         ────────────────────────────────────────────
+ 4 │         
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:8]
+ 1 │ [1, 2, Object.assign({}, a)]
+   ·        ────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:13]
+ 1 │ const foo = Object.assign({}, a)
+   ·             ────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:25]
+ 1 │ function foo() { return Object.assign({}, a) }
+   ·                         ────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:5]
+ 1 │ foo(Object.assign({}, a));
+   ·     ────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:30]
+ 1 │ const x = { foo: 'bar', baz: Object.assign({}, a) }
+   ·                              ────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         import Foo from 'foo';
+ 3 │         Object.assign({ foo: Foo });
+   ·         ───────────────────────────
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         import Foo from 'foo';
+ 3 │         Object.assign({}, Foo);
+   ·         ──────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         const Foo = require('foo');
+ 3 │         Object.assign({ foo: Foo });
+   ·         ───────────────────────────
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         import { Something as somethingelse } from 'foo';
+ 3 │         Object.assign({}, somethingelse);
+   ·         ────────────────────────────────
+ 4 │         
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         import { foo } from 'foo';
+ 3 │         Object.assign({ foo: Foo });
+   ·         ───────────────────────────
+ 4 │         
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         const Foo = require('foo');
+ 3 │         Object.assign({}, Foo);
+   ·         ──────────────────────
+ 4 │         
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:2:25]
+ 1 │     
+ 2 │ ╭─▶         const actions = Object.assign(
+ 3 │ │               {
+ 4 │ │                   onChangeInput: this.handleChangeInput,
+ 5 │ │               },
+ 6 │ │               this.props.actions
+ 7 │ ╰─▶         );
+ 8 │             
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:2:25]
+ 1 │     
+ 2 │ ╭─▶         const actions = Object.assign(
+ 3 │ │               {
+ 4 │ │                   onChangeInput: this.handleChangeInput, //
+ 5 │ │               },
+ 6 │ │               this.props.actions
+ 7 │ ╰─▶         );
+ 8 │             
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:2:25]
+ 1 │     
+ 2 │ ╭─▶         const actions = Object.assign(
+ 3 │ │               {
+ 4 │ │                   onChangeInput: this.handleChangeInput //
+ 5 │ │               },
+ 6 │ │               this.props.actions
+ 7 │ ╰─▶         );
+ 8 │             
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+    ╭─[prefer_object_spread.tsx:2:25]
+  1 │     
+  2 │ ╭─▶         const actions = Object.assign(
+  3 │ │               (
+  4 │ │                   {
+  5 │ │                       onChangeInput: this.handleChangeInput
+  6 │ │                   }
+  7 │ │               ),
+  8 │ │               (
+  9 │ │                   this.props.actions
+ 10 │ │               )
+ 11 │ ╰─▶         );
+ 12 │             
+    ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:13]
+ 1 │ eventData = Object.assign({}, eventData, { outsideLocality: `${originLocality} - ${destinationLocality}` })
+   ·             ───────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({ });
+   · ──────────────────
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ ╭─▶ Object.assign({
+ 2 │ ╰─▶ });
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ globalThis.Object.assign({ });
+   · ─────────────────────────────
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ ╭─▶ globalThis.Object.assign({
+ 2 │ ╰─▶ });
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ globalThis.Object.assign({}, foo)
+   · ─────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ globalThis.Object.assign({}, { foo: 'bar' })
+   · ────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ globalThis.Object.assign({}, baz, { foo: 'bar' })
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         function foo () { var globalThis = bar; }
+ 3 │         globalThis.Object.assign({ });
+   ·         ─────────────────────────────
+ 4 │         
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:3:9]
+ 2 │         const Foo = require('foo');
+ 3 │         globalThis.Object.assign({ foo: Foo });
+   ·         ──────────────────────────────────────
+ 4 │         
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign({ get a() {}, set b(val) {} })
+   · ────────────────────────────────────────────
+   ╰────
+  help: Use an object literal instead of `Object.assign`. eg: `{ foo: bar }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:13]
+ 1 │ const obj = Object.assign<{}, Record<string, string[]>>({}, getObject());
+   ·             ────────────────────────────────────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
+
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:1:1]
+ 1 │ Object.assign<{}, A>({}, foo);
+   · ─────────────────────────────
+   ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.

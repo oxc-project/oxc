@@ -145,6 +145,7 @@ mod eslint {
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
+    pub mod prefer_object_spread;
     pub mod prefer_rest_params;
     pub mod prefer_spread;
     pub mod radix;
@@ -640,10 +641,11 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
-    eslint::prefer_rest_params,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
     eslint::prefer_object_has_own,
+    eslint::prefer_object_spread,
+    eslint::prefer_rest_params,
     eslint::prefer_spread,
     eslint::radix,
     eslint::require_await,
