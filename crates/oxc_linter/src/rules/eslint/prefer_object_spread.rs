@@ -245,7 +245,7 @@ fn has_get_or_set_property(obj_expr: &ObjectExpression) -> bool {
  */
 fn find_char_span(ctx: &LintContext, expr: &dyn GetSpan, target_char: char) -> Option<Span> {
     let span = expr.span();
-    for (idx, c) in ctx.source_range(span).chars().enumerate() {
+    for (idx, c) in ctx.source_range(span).char_indices() {
         if c != target_char {
             continue;
         }
@@ -329,7 +329,7 @@ fn get_last_char_span(expr: &Expression, last_from: u32, ctx: &LintContext) -> S
  * And ignore characters in the comment.
  */
 fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
-    for (idx, c) in ctx.source_text().chars().enumerate() {
+    for (idx, c) in ctx.source_text().char_indices() {
         let Ok(current_span_start) = TryInto::<u32>::try_into(idx) else {
             return None;
         };
@@ -356,7 +356,7 @@ fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
 fn get_delete_span_of_left(obj_expr: &Box<'_, ObjectExpression<'_>>, ctx: &LintContext) -> Span {
     let mut result: u32 = obj_expr.span.start + 1;
     let source_text = ctx.source_range(obj_expr.span);
-    for (i, c) in source_text.chars().enumerate() {
+    for (i, c) in source_text.char_indices() {
         if i == 0 {
             continue;
         }
