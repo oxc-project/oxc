@@ -5,7 +5,6 @@ use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
     es_target::ESTarget,
-    identifier::is_identifier_name,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
@@ -82,18 +81,6 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 
     fn exit_call_expression(&mut self, _expr: &mut CallExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.in_define_export = false;
-    }
-
-    fn exit_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.try_compress_property_key(key, ctx);
-    }
-
-    fn exit_member_expression(
-        &mut self,
-        expr: &mut MemberExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.try_compress_computed_member_expression(expr, Ctx(ctx));
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -705,66 +692,6 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         Self::array_literal(ctx.ast.vec(), ctx)
     }
 
-    // https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs
-    #[allow(clippy::cast_lossless)]
-    fn try_compress_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.in_fixed_loop {
-            return;
-        }
-        let PropertyKey::StringLiteral(s) = key else { return };
-        if match ctx.parent() {
-            Ancestor::ObjectPropertyKey(key) => *key.computed(),
-            Ancestor::BindingPropertyKey(key) => *key.computed(),
-            Ancestor::MethodDefinitionKey(key) => *key.computed(),
-            Ancestor::PropertyDefinitionKey(key) => *key.computed(),
-            Ancestor::AccessorPropertyKey(key) => *key.computed(),
-            _ => true,
-        } {
-            return;
-        }
-        if is_identifier_name(&s.value) {
-            self.changed = true;
-            *key = PropertyKey::StaticIdentifier(
-                ctx.ast.alloc_identifier_name(s.span, s.value.clone()),
-            );
-        } else if (!s.value.starts_with('0') && !s.value.starts_with('+')) || s.value.len() <= 1 {
-            if let Ok(value) = s.value.parse::<u32>() {
-                self.changed = true;
-                *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
-                    s.span,
-                    value as f64,
-                    None,
-                    NumberBase::Decimal,
-                ));
-            }
-        }
-    }
-
-    /// `foo['bar']` -> `foo.bar`
-    /// `foo?.['bar']` -> `foo?.bar`
-    fn try_compress_computed_member_expression(
-        &mut self,
-        expr: &mut MemberExpression<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) {
-        if self.in_fixed_loop {
-            return;
-        }
-
-        if let MemberExpression::ComputedMemberExpression(e) = expr {
-            let Expression::StringLiteral(s) = &e.expression else { return };
-            if !is_identifier_name(&s.value) {
-                return;
-            }
-            let property = ctx.ast.identifier_name(s.span, s.value.clone());
-            let object = ctx.ast.move_expression(&mut e.object);
-            *expr = MemberExpression::StaticMemberExpression(
-                ctx.ast.alloc_static_member_expression(e.span, object, property, e.optional),
-            );
-            self.changed = true;
-        }
-    }
-
     fn compress_catch_clause(&mut self, catch: &mut CatchClause<'a>) {
         if catch.body.body.is_empty()
             && !self.in_fixed_loop
@@ -1272,18 +1199,6 @@ mod test {
     }
 
     #[test]
-    fn test_object_key() {
-        test("({ '0': _, 'a': _ })", "({ 0: _, a: _ })");
-        test_same("({ '1.1': _, '😊': _, 'a.a': _ })");
-    }
-
-    #[test]
-    fn test_computed_to_member_expression() {
-        test("x['true']", "x.true");
-        test_same("x['😊']");
-    }
-
-    #[test]
     fn optional_catch_binding() {
         test("try {} catch(e) {}", "try {} catch {}");
         test_same("try {} catch([e]) {}");
@@ -1297,215 +1212,5 @@ mod test {
         let mut pass = super::PeepholeSubstituteAlternateSyntax::new(options, false);
         let code = "try {} catch(e) {}";
         tester::test(&allocator, code, code, &mut pass);
-    }
-
-    /// Port from <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/ConvertToDottedPropertiesTest.java>
-    mod convert_to_dotted_properties {
-        use super::{test, test_same};
-
-        #[test]
-        fn test_convert_to_dotted_properties_convert() {
-            test("a['p']", "a.p");
-            test("a['_p_']", "a._p_");
-            test("a['_']", "a._");
-            test("a['$']", "a.$");
-            test("a.b.c['p']", "a.b.c.p");
-            test("a.b['c'].p", "a.b.c.p");
-            test("a['p']();", "a.p();");
-            test("a()['p']", "a().p");
-            // ASCII in Unicode is always safe.
-            test("a['\\u0041A']", "a.AA");
-            // This is safe for ES5+. (keywords cannot be used for ES3)
-            test("a['default']", "a.default");
-            // This is safe for ES2015+. (\u1d17 was introduced in Unicode 3.1, ES2015+ uses Unicode 5.1+)
-            test("a['\\u1d17A']", "a.\u{1d17}A");
-            // Latin capital N with tilde - this is safe for ES3+.
-            test("a['\\u00d1StuffAfter']", "a.\u{00d1}StuffAfter");
-        }
-
-        #[test]
-        fn test_convert_to_dotted_properties_do_not_convert() {
-            test_same("a[0]");
-            test_same("a['']");
-            test_same("a[' ']");
-            test_same("a[',']");
-            test_same("a[';']");
-            test_same("a[':']");
-            test_same("a['.']");
-            test_same("a['0']");
-            test_same("a['p ']");
-            test_same("a['p' + '']");
-            test_same("a[p]");
-            test_same("a[P]");
-            test_same("a[$]");
-            test_same("a[p()]");
-            // Ignorable control characters are ok in Java identifiers, but not in JS.
-            test_same("a['A\\u0004']");
-        }
-
-        #[test]
-        fn test_convert_to_dotted_properties_already_dotted() {
-            test_same("a.b");
-            test_same("var a = {b: 0};");
-        }
-
-        #[test]
-        fn test_convert_to_dotted_properties_quoted_props() {
-            test_same("({'':0})");
-            test_same("({'1.0':0})");
-            test("({'\\u1d17A':0})", "({ \u{1d17}A: 0 })");
-            test_same("({'a\\u0004b':0})");
-        }
-
-        #[test]
-        fn test5746867() {
-            test_same("var a = { '$\\\\' : 5 };");
-            test_same("var a = { 'x\\\\u0041$\\\\' : 5 };");
-        }
-
-        #[test]
-        fn test_convert_to_dotted_properties_optional_chaining() {
-            test("data?.['name']", "data?.name");
-            test("data?.['name']?.['first']", "data?.name?.first");
-            test("data['name']?.['first']", "data.name?.first");
-            test_same("a?.[0]");
-            test_same("a?.['']");
-            test_same("a?.[' ']");
-            test_same("a?.[',']");
-            test_same("a?.[';']");
-            test_same("a?.[':']");
-            test_same("a?.['.']");
-            test_same("a?.['0']");
-            test_same("a?.['p ']");
-            test_same("a?.['p' + '']");
-            test_same("a?.[p]");
-            test_same("a?.[P]");
-            test_same("a?.[$]");
-            test_same("a?.[p()]");
-            // This is safe for ES5+. (keywords cannot be used for ES3)
-            test("a?.['default']", "a?.default");
-        }
-
-        #[test]
-        #[ignore]
-        fn test_convert_to_dotted_properties_computed_property_or_field() {
-            test("const test1 = {['prop1']:87};", "const test1 = {prop1:87};");
-            test(
-                "const test1 = {['prop1']:87,['prop2']:bg,['prop3']:'hfd'};",
-                "const test1 = {prop1:87,prop2:bg,prop3:'hfd'};",
-            );
-            test(
-                "o = {['x']: async function(x) { return await x + 1; }};",
-                "o = {x:async function (x) { return await x + 1; }};",
-            );
-            test("o = {['x']: function*(x) {}};", "o = {x: function*(x) {}};");
-            test(
-                "o = {['x']: async function*(x) { return await x + 1; }};",
-                "o = {x:async function*(x) { return await x + 1; }};",
-            );
-            test("class C {'x' = 0;  ['y'] = 1;}", "class C { x= 0;y= 1;}");
-            test("class C {'m'() {} }", "class C {m() {}}");
-
-            test(
-                "const o = {'b'() {}, ['c']() {}};",
-                "const o = {b: function() {}, c:function(){}};",
-            );
-            test("o = {['x']: () => this};", "o = {x: () => this};");
-
-            test("const o = {get ['d']() {}};", "const o = {get d() {}};");
-            test("const o = { set ['e'](x) {}};", "const o = { set e(x) {}};");
-            test(
-                "class C {'m'() {}  ['n']() {} 'x' = 0;  ['y'] = 1;}",
-                "class C {m() {}  n() {} x= 0;y= 1;}",
-            );
-            test(
-                "const o = { get ['d']() {},  set ['e'](x) {}};",
-                "const o = {get d() {},  set e(x){}};",
-            );
-            test(
-                "const o = {['a']: 1,'b'() {}, ['c']() {},  get ['d']() {},  set ['e'](x) {}};",
-                "const o = {a: 1,b: function() {}, c: function() {},  get d() {},  set e(x) {}};",
-            );
-
-            // test static keyword
-            test(
-                r"
-                class C {
-                'm'(){}
-                ['n'](){}
-                static 'x' = 0;
-                static ['y'] = 1;}
-            ",
-                r"
-                class C {
-                m(){}
-                n(){}
-                static x = 0;
-                static y= 1;}
-            ",
-            );
-            test(
-                r"
-                window['MyClass'] = class {
-                static ['Register'](){}
-                };
-            ",
-                r"
-                window.MyClass = class {
-                static Register(){}
-                };
-            ",
-            );
-            test(
-                r"
-                class C {
-                'method'(){}
-                async ['method1'](){}
-                *['method2'](){}
-                static ['smethod'](){}
-                static async ['smethod1'](){}
-                static *['smethod2'](){}}
-            ",
-                r"
-                class C {
-                method(){}
-                async method1(){}
-                *method2(){}
-                static smethod(){}
-                static async smethod1(){}
-                static *smethod2(){}}
-            ",
-            );
-
-            test_same("const o = {[fn()]: 0}");
-            test_same("const test1 = {[0]:87};");
-            test_same("const test1 = {['default']:87};");
-            test_same("class C { ['constructor']() {} }");
-            test_same("class C { ['constructor'] = 0 }");
-        }
-
-        #[test]
-        #[ignore]
-        fn test_convert_to_dotted_properties_computed_property_with_default_value() {
-            test("const {['o']: o = 0} = {};", "const {o:o = 0} = {};");
-        }
-
-        #[test]
-        fn test_convert_to_dotted_properties_continue_optional_chaining() {
-            test("const opt1 = window?.a?.['b'];", "const opt1 = window?.a?.b;");
-
-            test("const opt2 = window?.a['b'];", "const opt2 = window?.a.b;");
-            test(
-                r"
-                const chain =
-                window['a'].x.y.b.x.y['c'].x.y?.d.x.y['e'].x.y
-                ['f-f'].x.y?.['g-g'].x.y?.['h'].x.y['i'].x.y;
-            ",
-                r"
-                const chain = window.a.x.y.b.x.y.c.x.y?.d.x.y.e.x.y
-                ['f-f'].x.y?.['g-g'].x.y?.h.x.y.i.x.y;
-            ",
-            );
-        }
     }
 }

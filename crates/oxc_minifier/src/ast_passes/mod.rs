@@ -3,6 +3,7 @@ use oxc_ast::ast::*;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 mod collapse_variable_declarations;
+mod convert_to_dotted_properties;
 mod exploit_assigns;
 mod minimize_exit_points;
 mod normalize;
@@ -16,6 +17,7 @@ mod remove_unused_code;
 mod statement_fusion;
 
 pub use collapse_variable_declarations::CollapseVariableDeclarations;
+pub use convert_to_dotted_properties::ConvertToDottedProperties;
 pub use exploit_assigns::ExploitAssigns;
 pub use minimize_exit_points::MinimizeExitPoints;
 pub use normalize::Normalize;
@@ -44,6 +46,7 @@ pub struct PeepholeOptimizations {
     x6_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax,
     x7_peephole_replace_known_methods: PeepholeReplaceKnownMethods,
     x8_peephole_fold_constants: PeepholeFoldConstants,
+    x9_convert_to_dotted_properties: ConvertToDottedProperties,
 }
 
 impl PeepholeOptimizations {
@@ -61,6 +64,7 @@ impl PeepholeOptimizations {
             ),
             x7_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
             x8_peephole_fold_constants: PeepholeFoldConstants::new(),
+            x9_convert_to_dotted_properties: ConvertToDottedProperties::new(in_fixed_loop),
         }
     }
 
@@ -171,7 +175,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x6_peephole_substitute_alternate_syntax.exit_property_key(key, ctx);
+        self.x9_convert_to_dotted_properties.exit_property_key(key, ctx);
     }
 
     fn exit_member_expression(
@@ -179,7 +183,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x6_peephole_substitute_alternate_syntax.exit_member_expression(expr, ctx);
+        self.x9_convert_to_dotted_properties.exit_member_expression(expr, ctx);
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
