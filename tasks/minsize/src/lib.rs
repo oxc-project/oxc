@@ -145,7 +145,7 @@ fn minify(source_text: &str, source_type: SourceType) -> String {
     .build(symbols, scopes, &mut program);
     let ret = Minifier::new(MinifierOptions::default()).build(&allocator, &mut program);
     CodeGenerator::new()
-        .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
+        .with_options(CodegenOptions { minify: true, comments: false, ..CodegenOptions::default() })
         .with_mangler(ret.mangler)
         .build(&program)
         .code

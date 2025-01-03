@@ -131,8 +131,11 @@ impl<'a> PeepholeMinimizeConditions {
                     {
                         if then_if_stmt.alternate.is_none() {
                             let and_left = ctx.ast.move_expression(&mut if_stmt.test);
+                            let Some(then_if_stmt) = if_stmt.consequent.get_one_child_mut() else {
+                                unreachable!()
+                            };
                             let Statement::IfStatement(mut then_if_stmt) =
-                                ctx.ast.move_statement(&mut if_stmt.consequent)
+                                ctx.ast.move_statement(then_if_stmt)
                             else {
                                 unreachable!()
                             };
