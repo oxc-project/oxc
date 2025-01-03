@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// ```
     NoLoneBlocks,
     style,
+    pending
 );
 
 impl Rule for NoLoneBlocks {
