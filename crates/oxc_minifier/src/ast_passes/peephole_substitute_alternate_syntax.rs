@@ -1,6 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
-use oxc_ecmascript::{ToInt32, ToJsString};
+use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, ToInt32, ToJsString};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
@@ -84,7 +84,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         match expr {
             Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
             Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
-            Expression::BinaryExpression(e) => self.try_compress_type_of_equal_string(e, ctx),
+            Expression::BinaryExpression(e) => self.try_compress_type_of_equal_string(e),
             _ => {}
         }
 
@@ -228,6 +228,13 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         expr: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
+        let Expression::UnaryExpression(unary_expr) = &expr.left else { return None };
+        if !unary_expr.operator.is_typeof() {
+            return None;
+        }
+        if !expr.right.is_specific_string_literal("undefined") {
+            return None;
+        }
         let (new_eq_op, new_comp_op) = match expr.operator {
             BinaryOperator::Equality | BinaryOperator::StrictEquality => {
                 (BinaryOperator::StrictEquality, BinaryOperator::GreaterThan)
@@ -237,32 +244,25 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             }
             _ => return None,
         };
-        let pair = Self::commutative_pair(
-            (&expr.left, &expr.right),
-            |a| a.is_specific_string_literal("undefined").then_some(()),
-            |b| {
-                if let Expression::UnaryExpression(op) = b {
-                    if op.operator == UnaryOperator::Typeof {
-                        if let Expression::Identifier(id) = &op.argument {
-                            return Some((*id).clone());
-                        }
-                    }
-                }
-                None
-            },
-        );
-        let (_void_exp, id_ref) = pair?;
-        let is_resolved = ctx.scopes().find_binding(ctx.current_scope_id(), &id_ref.name).is_some();
-        if is_resolved {
-            let left = Expression::Identifier(ctx.alloc(id_ref));
-            let right = ctx.ast.void_0(SPAN);
-            Some(ctx.ast.expression_binary(expr.span, left, new_eq_op, right))
-        } else {
-            let argument = Expression::Identifier(ctx.alloc(id_ref));
-            let left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
-            let right = ctx.ast.expression_string_literal(SPAN, "u", None);
-            Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right))
-        }
+        if let Expression::Identifier(ident) = &unary_expr.argument {
+            if !ctx.is_global_reference(ident) {
+                let Expression::UnaryExpression(unary_expr) =
+                    ctx.ast.move_expression(&mut expr.left)
+                else {
+                    unreachable!()
+                };
+                let right = ctx.ast.void_0(expr.right.span());
+                return Some(ctx.ast.expression_binary(
+                    expr.span,
+                    unary_expr.unbox().argument,
+                    new_eq_op,
+                    right,
+                ));
+            }
+        };
+        let left = ctx.ast.move_expression(&mut expr.left);
+        let right = ctx.ast.expression_string_literal(expr.right.span(), "u", None);
+        Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right))
     }
 
     /// Compress `foo === null || foo === undefined` into `foo == null`.
@@ -622,23 +622,23 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     }
 
     /// `typeof foo === 'number'` -> `typeof foo == 'number'`
-    fn try_compress_type_of_equal_string(
-        &mut self,
-        e: &mut BinaryExpression<'a>,
-        _ctx: Ctx<'a, 'b>,
-    ) {
+    fn try_compress_type_of_equal_string(&mut self, e: &mut BinaryExpression<'a>) {
+        // Change  `'undefined' == typeof _'` -> `typeof _ == 'undefined'`
+        if matches!(&e.right, Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_typeof())
+            && e.left.is_string_literal()
+        {
+            std::mem::swap(&mut e.left, &mut e.right);
+        }
         let op = match e.operator {
             BinaryOperator::StrictEquality => BinaryOperator::Equality,
             BinaryOperator::StrictInequality => BinaryOperator::Inequality,
             _ => return,
         };
-        if Self::commutative_pair(
-            (&e.left, &e.right),
-            |a| a.is_string_literal().then_some(()),
-            |b| matches!(b, Expression::UnaryExpression(e) if e.operator.is_typeof()).then_some(()),
-        )
-        .is_none()
+        if !matches!(&e.left, Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_typeof())
         {
+            return;
+        }
+        if !e.right.is_string_literal() {
             return;
         }
         e.operator = op;
@@ -1143,6 +1143,9 @@ mod test {
         test("typeof x == 'undefined'", "typeof x > 'u'");
         test("'undefined' === typeof x", "typeof x > 'u'");
         test("'undefined' == typeof x", "typeof x > 'u'");
+
+        test("typeof x.y === 'undefined'", "typeof x.y > 'u'");
+        test("typeof x.y !== 'undefined'", "typeof x.y < 'u'");
     }
 
     #[test]
@@ -1168,12 +1171,12 @@ mod test {
     #[test]
     fn test_try_compress_type_of_equal_string() {
         test("typeof foo === 'number'", "typeof foo == 'number'");
-        test("'number' === typeof foo", "'number' == typeof foo");
+        test("'number' === typeof foo", "typeof foo == 'number'");
         test("typeof foo === `number`", "typeof foo == 'number'");
-        test("`number` === typeof foo", "'number' == typeof foo");
+        test("`number` === typeof foo", "typeof foo == 'number'");
         test("typeof foo !== 'number'", "typeof foo != 'number'");
-        test("'number' !== typeof foo", "'number' != typeof foo");
+        test("'number' !== typeof foo", "typeof foo != 'number'");
         test("typeof foo !== `number`", "typeof foo != 'number'");
-        test("`number` !== typeof foo", "'number' != typeof foo");
+        test("`number` !== typeof foo", "typeof foo != 'number'");
     }
 }
