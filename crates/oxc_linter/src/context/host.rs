@@ -10,7 +10,7 @@ use crate::{
     frameworks,
     module_record::ModuleRecord,
     options::LintOptions,
-    utils, FrameworkFlags, RuleWithSeverity,
+    FrameworkFlags, RuleWithSeverity,
 };
 
 use super::{plugin_name_to_prefix, LintContext};
@@ -171,7 +171,7 @@ impl<'a> ContextHost<'a> {
     /// Creates a new [`LintContext`] for a specific rule.
     pub fn spawn(self: Rc<Self>, rule: &RuleWithSeverity) -> LintContext<'a> {
         let rule_name = rule.name();
-        let plugin_name = self.map_jest_rule_to_vitest(rule);
+        let plugin_name = rule.plugin_name();
 
         LintContext {
             parent: self,
@@ -195,22 +195,6 @@ impl<'a> ContextHost<'a> {
             #[cfg(debug_assertions)]
             current_rule_fix_capabilities: crate::rule::RuleFixMeta::None,
             severity: oxc_diagnostics::Severity::Warning,
-        }
-    }
-
-    /// Maps Jest rule names and maps to Vitest rules when possible, returning the original plugin otherwise.
-    ///
-    /// Many Vitest rules are essentially ports of the Jest plugin rules with minor modifications.
-    /// For these rules, we use the corresponding jest rules with some adjustments for compatibility.
-    fn map_jest_rule_to_vitest(&self, rule: &RuleWithSeverity) -> &'static str {
-        let plugin_name = rule.plugin_name();
-        if self.plugins.has_vitest()
-            && plugin_name == "jest"
-            && utils::is_jest_rule_adapted_to_vitest(rule.name())
-        {
-            "vitest"
-        } else {
-            plugin_name
         }
     }
 

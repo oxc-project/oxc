@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 snapshot_kind: text
 ---
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:21]
  2 │                     it('foo', () => {
  3 │                       expect(bar ? foo : baz).toBe(boo);
@@ -10,7 +10,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:23]
  3 │                       const foo = function (bar) {
  4 │                         return foo ? bar : null;
@@ -18,7 +18,7 @@ snapshot_kind: text
  5 │                       };
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:26]
  2 │                     it('foo', () => {
  3 │                       const foo = bar ? foo : baz;
@@ -26,7 +26,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:26]
  2 │                     it('foo', () => {
  3 │                       const foo = bar ? foo : baz;
@@ -34,7 +34,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:26]
  2 │                     it('foo', () => {
  3 │                       const foo = bar ? foo : baz;
@@ -42,7 +42,7 @@ snapshot_kind: text
  4 │                       const anotherFoo = anotherBar ? anotherFoo : anotherBaz;
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:33]
  3 │                       const foo = bar ? foo : baz;
  4 │                       const anotherFoo = anotherBar ? anotherFoo : anotherBaz;
@@ -50,7 +50,7 @@ snapshot_kind: text
  5 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:4:16]
   3 │                           const values = something.map(thing => {
   4 │ ╭─▶                         switch (thing.isFoo) {
@@ -62,7 +62,7 @@ snapshot_kind: text
  10 │                           });
     ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                         it('foo', () => {
  3 │ ╭─▶                       switch (true) {
@@ -71,7 +71,7 @@ snapshot_kind: text
  6 │                         })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it('foo', () => {
  3 │                       switch('bar') {}
@@ -79,7 +79,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it.skip('foo', () => {
  3 │                       switch('bar') {}
@@ -87,7 +87,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it.only('foo', () => {
  3 │                       switch('bar') {}
@@ -95,7 +95,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     xit('foo', () => {
  3 │                       switch('bar') {}
@@ -103,7 +103,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     fit('foo', () => {
  3 │                       switch('bar') {}
@@ -111,7 +111,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test('foo', () => {
  3 │                       switch('bar') {}
@@ -119,7 +119,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test.skip('foo', () => {
  3 │                       switch('bar') {}
@@ -127,7 +127,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test.only('foo', () => {
  3 │                       switch('bar') {}
@@ -135,7 +135,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     xtest('foo', () => {
  3 │                       switch('bar') {}
@@ -143,7 +143,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     xtest('foo', function () {
  3 │                       switch('bar') {}
@@ -151,7 +151,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:5:16]
  4 │             
  5 │                         switch('bar') {}
@@ -159,7 +159,7 @@ snapshot_kind: text
  6 │                       })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:16]
  3 │                       it('bar', () => {
  4 │                         switch('bar') {}
@@ -167,7 +167,7 @@ snapshot_kind: text
  5 │                       })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:7:16]
  6 │                       it('baz', () => {
  7 │                         switch('qux') {}
@@ -175,7 +175,7 @@ snapshot_kind: text
  8 │                         switch('quux') {}
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:8:16]
  7 │                         switch('qux') {}
  8 │                         switch('quux') {}
@@ -183,7 +183,7 @@ snapshot_kind: text
  9 │                       })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       switch ('bar') {}
@@ -191,7 +191,7 @@ snapshot_kind: text
  5 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:6:20]
   5 │                               const values = something.map((thing) => {
   6 │ ╭─▶                             switch (thing.isFoo) {
@@ -203,7 +203,7 @@ snapshot_kind: text
  12 │                               });
     ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:14:18]
  13 │                 
  14 │ ╭─▶                           switch('invalid') {
@@ -213,7 +213,7 @@ snapshot_kind: text
  18 │                             });
     ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:16]
  3 │                           const foo = function(bar) {
  4 │ ╭─▶                         if (bar) {
@@ -224,7 +224,7 @@ snapshot_kind: text
  9 │                           };
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:16]
  3 │                           function foo(bar) {
  4 │ ╭─▶                         if (bar) {
@@ -235,7 +235,7 @@ snapshot_kind: text
  9 │                           };
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it('foo', () => {
  3 │                       if ('bar') {}
@@ -243,7 +243,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it.skip('foo', () => {
  3 │                       if ('bar') {}
@@ -251,7 +251,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it.skip('foo', function () {
  3 │                       if ('bar') {}
@@ -259,7 +259,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it.only('foo', () => {
  3 │                       if ('bar') {}
@@ -267,7 +267,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     xit('foo', () => {
  3 │                       if ('bar') {}
@@ -275,7 +275,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     fit('foo', () => {
  3 │                       if ('bar') {}
@@ -283,7 +283,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test('foo', () => {
  3 │                       if ('bar') {}
@@ -291,7 +291,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test.skip('foo', () => {
  3 │                       if ('bar') {}
@@ -299,7 +299,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test.only('foo', () => {
  3 │                       if ('bar') {}
@@ -307,7 +307,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     xtest('foo', () => {
  3 │                       if ('bar') {}
@@ -315,7 +315,7 @@ snapshot_kind: text
  4 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:16]
  3 │                       it('bar', () => {
  4 │                         if ('bar') {}
@@ -323,7 +323,7 @@ snapshot_kind: text
  5 │                       })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:16]
  3 │                       it('bar', () => {
  4 │                         if ('bar') {}
@@ -331,7 +331,7 @@ snapshot_kind: text
  5 │                       })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:7:16]
  6 │                       it('baz', () => {
  7 │                         if ('qux') {}
@@ -339,7 +339,7 @@ snapshot_kind: text
  8 │                         if ('quux') {}
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:8:16]
  7 │                         if ('qux') {}
  8 │                         if ('quux') {}
@@ -347,7 +347,7 @@ snapshot_kind: text
  9 │                       })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       if ('bar') {}
@@ -355,7 +355,7 @@ snapshot_kind: text
  5 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       if ('bar') {}
@@ -363,7 +363,7 @@ snapshot_kind: text
  5 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       if ('bar') {}
@@ -371,7 +371,7 @@ snapshot_kind: text
  5 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       if ('bar') {}
@@ -379,7 +379,7 @@ snapshot_kind: text
  5 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       if ('bar') {}
@@ -387,7 +387,7 @@ snapshot_kind: text
  5 │                     })
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:6:20]
   5 │                               const values = something.map((thing) => {
   6 │ ╭─▶                             if (thing.isFoo) {
@@ -398,7 +398,7 @@ snapshot_kind: text
  11 │                               });
     ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:13:18]
  12 │                 
  13 │ ╭─▶                           if ('invalid') {
@@ -407,7 +407,7 @@ snapshot_kind: text
  16 │                             });
     ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                         test("shows error", () => {
  3 │ ╭─▶                       if (1 === 2) {
@@ -416,7 +416,7 @@ snapshot_kind: text
  6 │                         });
    ╰────
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
+  ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:10:14]
   9 │                           setTimeout(() => console.log("noop"));
  10 │ ╭─▶                       if (1 === 2) {
