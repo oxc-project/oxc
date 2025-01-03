@@ -97,6 +97,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
             Expression::NewExpression(e) => Self::try_fold_new_expression(e, ctx),
             Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
             Expression::BinaryExpression(e) => Self::try_compress_typeof_undefined(e, ctx),
+            Expression::ConditionalExpression(e) => Self::try_compress_conditional(e, ctx),
             Expression::CallExpression(e) => {
                 Self::try_fold_literal_constructor_call_expression(e, ctx)
                     .or_else(|| Self::try_fold_simple_function_call(e, ctx))
@@ -263,6 +264,37 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         let left = ctx.ast.move_expression(&mut expr.left);
         let right = ctx.ast.expression_string_literal(expr.right.span(), "u", None);
         Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right))
+    }
+
+    fn try_compress_conditional(
+        expr: &mut ConditionalExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        if let Expression::Identifier(ident_test) = &expr.test {
+            // `foo ? foo : bar` -> `foo || bar`
+            if let Expression::Identifier(ident_consequent) = &expr.consequent {
+                if ident_test.name == ident_consequent.name {
+                    return Some(ctx.ast.expression_logical(
+                        expr.span,
+                        ctx.ast.move_expression(&mut expr.test),
+                        LogicalOperator::Or,
+                        ctx.ast.move_expression(&mut expr.alternate),
+                    ));
+                }
+            }
+            // `foo ? bar : foo` -> `foo && bar`
+            if let Expression::Identifier(ident_alternate) = &expr.alternate {
+                if ident_test.name == ident_alternate.name {
+                    return Some(ctx.ast.expression_logical(
+                        expr.span,
+                        ctx.ast.move_expression(&mut expr.test),
+                        LogicalOperator::And,
+                        ctx.ast.move_expression(&mut expr.consequent),
+                    ));
+                }
+            }
+        }
+        None
     }
 
     /// Compress `foo === null || foo === undefined` into `foo == null`.
@@ -1178,5 +1210,13 @@ mod test {
         test("'number' !== typeof foo", "typeof foo != 'number'");
         test("typeof foo !== `number`", "typeof foo != 'number'");
         test("`number` !== typeof foo", "typeof foo != 'number'");
+    }
+
+    #[test]
+    fn compress_conditional() {
+        test("foo ? foo : bar", "foo || bar");
+        test("foo ? bar : foo", "foo && bar");
+        test_same("x.y ? x.y : bar");
+        test_same("x.y ? bar : x.y");
     }
 }
