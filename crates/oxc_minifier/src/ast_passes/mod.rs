@@ -141,6 +141,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.x6_peephole_substitute_alternate_syntax.exit_return_statement(stmt, ctx);
     }
 
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x1_minimize_exit_points.exit_function_body(body, ctx);
+    }
+
     fn exit_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,

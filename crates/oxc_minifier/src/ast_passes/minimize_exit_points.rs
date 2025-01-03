@@ -22,6 +22,10 @@ impl<'a> CompressorPass<'a> for MinimizeExitPoints {
 }
 
 impl<'a> Traverse<'a> for MinimizeExitPoints {
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.remove_last_return(&mut body.statements);
+    }
+
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.fold_if_return(stmts, ctx);
     }
@@ -30,6 +34,16 @@ impl<'a> Traverse<'a> for MinimizeExitPoints {
 impl<'a> MinimizeExitPoints {
     pub fn new() -> Self {
         Self { changed: false }
+    }
+
+    // `function foo() { return }` -> `function foo() {}`
+    fn remove_last_return(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        if let Some(last) = stmts.last() {
+            if matches!(last, Statement::ReturnStatement(ret) if ret.argument.is_none()) {
+                stmts.pop();
+                self.changed = true;
+            }
+        }
     }
 
     // `if(x)return;foo` -> `if(!x)foo;`
@@ -87,6 +101,8 @@ mod test {
         fold(source_text, source_text);
     }
 
+    // oxc
+
     #[test]
     fn simple() {
         fold(
@@ -108,6 +124,15 @@ mod test {
         fold_same("function foo() { if (foo) return }");
         fold_same("function foo() { if (foo) return bar; baz }");
     }
+
+    #[test]
+    fn remove_last_return() {
+        fold("function () {return}", "function () {}");
+        fold("function () {a;b;return}", "function () {a;b;}");
+        fold_same("function () { if(foo) { return } }");
+    }
+
+    // closure
 
     #[test]
     #[ignore]
