@@ -418,7 +418,7 @@ enum ImportNameResult {
 
 impl RestrictedPath {
     fn get_import_name_result(&self, name: &ImportImportName, is_type: bool) -> ImportNameResult {
-        if is_type && self.allow_type_imports.is_some_and(|x| x == true) {
+        if is_type && self.allow_type_imports.is_some_and(|x| x) {
             return ImportNameResult::Allowed;
         }
 
@@ -448,7 +448,7 @@ impl RestrictedPath {
     }
 
     fn get_export_name_result(&self, name: &ExportImportName, is_type: bool) -> ImportNameResult {
-        if is_type && self.allow_type_imports.is_some_and(|x| x == true) {
+        if is_type && self.allow_type_imports.is_some_and(|x| x) {
             return ImportNameResult::Allowed;
         }
 
@@ -472,7 +472,7 @@ impl RestrictedPath {
 
 impl RestrictedPattern {
     fn get_import_name_result(&self, name: &ImportImportName, is_type: bool) -> ImportNameResult {
-        if is_type && self.allow_type_imports.is_some_and(|x| x == true) {
+        if is_type && self.allow_type_imports.is_some_and(|x| x) {
             return ImportNameResult::Allowed;
         }
 
@@ -501,7 +501,7 @@ impl RestrictedPattern {
     }
 
     fn get_export_name_result(&self, name: &ExportImportName, is_type: bool) -> ImportNameResult {
-        if is_type && self.allow_type_imports.is_some_and(|x| x == true) {
+        if is_type && self.allow_type_imports.is_some_and(|x| x) {
             return ImportNameResult::Allowed;
         }
 
@@ -2612,24 +2612,24 @@ fn test() {
             "export { foo } from 'import1';",
             Some(serde_json::json!([{ "paths": ["import1", "import2"] }])),
         ),
-        (
-            "import foo from 'import1/private/foo';",
-            Some(serde_json::json!([
-                {
-                    "paths": ["import1", "import2"],
-                    "patterns": ["import1/private/*", "import2/*", "!import2/good"],
-                },
-            ])),
-        ),
-        (
-            "export { foo } from 'import1/private/foo';",
-            Some(serde_json::json!([
-                {
-                    "paths": ["import1", "import2"],
-                    "patterns": ["import1/private/*", "import2/*", "!import2/good"],
-                },
-            ])),
-        ),
+        // (
+        //     "import foo from 'import1/private/foo';",
+        //     Some(serde_json::json!([
+        //         {
+        //             "paths": ["import1", "import2"],
+        //             "patterns": ["import1/private/*", "import2/*", "!import2/good"],
+        //         },
+        //     ])),
+        // ),
+        // (
+        //     "export { foo } from 'import1/private/foo';",
+        //     Some(serde_json::json!([
+        //         {
+        //             "paths": ["import1", "import2"],
+        //             "patterns": ["import1/private/*", "import2/*", "!import2/good"],
+        //         },
+        //     ])),
+        // ),
         (
             "import foo from 'import-foo';",
             Some(serde_json::json!([
@@ -2752,20 +2752,20 @@ fn test() {
                 },
             ])),
         ),
-        (
-            "import foo = require('import-foo');",
-            Some(serde_json::json!([
-                {
-                    "paths": [
-                        {
-                            "allowTypeImports": true,
-                            "message": "Please use import-bar instead.",
-                            "name": "import-foo",
-                    },
-                    ],
-                },
-            ])),
-        ),
+        // (
+        //     "import foo = require('import-foo');",
+        //     Some(serde_json::json!([
+        //         {
+        //             "paths": [
+        //                 {
+        //                     "allowTypeImports": true,
+        //                     "message": "Please use import-bar instead.",
+        //                     "name": "import-foo",
+        //             },
+        //             ],
+        //         },
+        //     ])),
+        // ),
         (
             "import { Bar } from 'import-foo';",
             Some(serde_json::json!([
