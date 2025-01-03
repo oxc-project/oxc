@@ -188,7 +188,8 @@ impl Rule for PreferObjectSpread {
                         rule_fixes.push(fixer.delete_range(delete_span_of_right));
 
                         if obj_expr.properties.is_empty()
-                            || ctx.source_range(get_last_char_span(expression, 1, ctx)) == ","
+                            || ctx.source_range(get_last_char_span(expression, 1, ctx).unwrap())
+                                == ","
                         {
                             if let Some(maybe_arg_comma_span) = get_char_span_after(expression, ctx)
                             {
@@ -236,9 +237,7 @@ fn has_get_or_set_property(obj_expr: &ObjectExpression) -> bool {
 fn find_char_span(ctx: &LintContext, expr: &dyn GetSpan, target_char: u8) -> Option<Span> {
     let span = expr.span();
     for idx in memchr::memchr_iter(target_char, ctx.source_range(span).as_bytes()) {
-        let Ok(idx) = TryInto::<u32>::try_into(idx) else {
-            return None;
-        };
+        let idx = u32::try_from(idx).unwrap();
 
         let current_span = Span::sized(span.start + idx, 1);
 
@@ -256,19 +255,18 @@ fn find_char_span(ctx: &LintContext, expr: &dyn GetSpan, target_char: u8) -> Opt
  * Find the span of the first non-whitespace character before the expression.
  * (Includes character in the comment)
  */
-fn get_char_span_before(start_token_span: Span, ctx: &LintContext) -> Option<Span> {
-    let text_len = ctx.source_text().len();
-    let skip_count = text_len - start_token_span.start as usize;
-    for (idx, c) in ctx.source_text().chars().rev().skip(skip_count).enumerate() {
-        let Ok(char_span_start) = (start_token_span.start as usize - 1 - idx).try_into() else {
-            return None;
-        };
+fn get_char_span_before(start_char_span: Span, ctx: &LintContext) -> Option<Span> {
+    let skip_count = start_char_span.start;
+    let mut span_start = skip_count;
+    for c in ctx.source_text()[..skip_count as usize].chars().rev() {
+        let c_size = u32::try_from(c.len_utf8()).unwrap();
+        span_start -= c_size;
 
         if c.is_whitespace() {
             continue;
         }
 
-        let current_span = Span::sized(char_span_start, 1);
+        let current_span = Span::sized(span_start, c_size);
 
         return Some(current_span);
     }
@@ -276,33 +274,31 @@ fn get_char_span_before(start_token_span: Span, ctx: &LintContext) -> Option<Spa
     None
 }
 
-fn get_last_char_span(expr: &Expression, last_from: u32, ctx: &LintContext) -> Span {
+fn get_last_char_span(expr: &Expression, last_from: u32, ctx: &LintContext) -> Option<Span> {
     let expr_span = expr.span();
     let mut count: u32 = 0;
-    let mut result = Span::new(expr_span.end - 1, expr_span.end);
-    for (idx, c) in ctx.source_range(expr_span).chars().rev().enumerate() {
+    let mut span_start = expr_span.end;
+    for c in ctx.source_range(expr_span).chars().rev() {
+        let c_size = u32::try_from(c.len_utf8()).unwrap();
+        span_start -= c_size;
+
         if c.is_whitespace() {
             continue;
         }
 
-        let Ok(idx) = TryInto::<u32>::try_into(idx) else {
-            break;
-        };
-
-        let current_span = Span::sized(expr_span.end - 1 - idx, 1);
+        let current_span = Span::sized(span_start, c_size);
 
         if ctx.comments().iter().any(|comment| comment.span.contains_inclusive(current_span)) {
             continue;
         }
 
-        result = current_span;
         count += 1;
         if count > last_from {
-            break;
+            return Some(current_span);
         }
     }
 
-    result
+    None
 }
 
 /**
@@ -310,17 +306,17 @@ fn get_last_char_span(expr: &Expression, last_from: u32, ctx: &LintContext) -> S
  * And ignore characters in the comment.
  */
 fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
-    let skip_count = expr.span().end as usize;
-    for (idx, c) in ctx.source_text().chars().skip(skip_count).enumerate() {
-        let Ok(current_span_start) = TryInto::<u32>::try_into(idx + skip_count) else {
-            return None;
-        };
+    let skip_count = expr.span().end;
+    let mut span_end = skip_count;
+    for c in ctx.source_text()[skip_count as usize..].chars() {
+        let c_size = u32::try_from(c.len_utf8()).unwrap();
+        span_end += c_size;
 
         if c.is_whitespace() {
             continue;
         }
 
-        let current_span = Span::sized(current_span_start, 1);
+        let current_span = Span::new(span_end - c_size, span_end);
 
         if ctx.comments().iter().any(|comment| comment.span.contains_inclusive(current_span)) {
             continue;
@@ -333,32 +329,26 @@ fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
 }
 
 fn get_delete_span_of_left(obj_expr: &Box<'_, ObjectExpression<'_>>, ctx: &LintContext) -> Span {
-    let mut result: u32 = obj_expr.span.start + 1;
-    let source_text = ctx.source_range(obj_expr.span);
-    for (i, c) in source_text.char_indices() {
-        if i == 0 {
-            continue;
-        }
-
-        if c.is_whitespace() {
-            result += 1;
-        } else {
+    let mut span_end = obj_expr.span.start;
+    for (i, c) in ctx.source_range(obj_expr.span).chars().enumerate() {
+        if i != 0 && !c.is_whitespace() {
             break;
         }
+
+        let c_size = u32::try_from(c.len_utf8()).unwrap();
+        span_end += c_size;
     }
 
-    Span::new(obj_expr.span.start, result)
+    Span::new(obj_expr.span.start, span_end)
 }
 
 fn get_delete_span_start_of_right(
     obj_expr: &Box<'_, ObjectExpression<'_>>,
     ctx: &LintContext,
 ) -> u32 {
-    let mut result: u32 = obj_expr.span.end - 1;
-
     let obj_expr_last_char_span = Span::new(obj_expr.span.end - 1, obj_expr.span.end);
     let Some(prev_token_span) = get_char_span_before(obj_expr_last_char_span, ctx) else {
-        return result;
+        return obj_expr_last_char_span.start;
     };
 
     let has_line_comment = if let Some(comment) =
@@ -370,24 +360,20 @@ fn get_delete_span_start_of_right(
     };
 
     if has_line_comment {
-        return result;
+        return obj_expr_last_char_span.start;
     }
 
-    let source_text = ctx.source_range(obj_expr.span);
-
-    for (i, c) in source_text.chars().rev().enumerate() {
-        if i == 0 {
-            continue;
-        }
-
-        if c.is_whitespace() {
-            result -= 1;
-        } else {
+    let mut span_start: u32 = obj_expr.span.end;
+    for (i, c) in ctx.source_range(obj_expr.span).chars().rev().enumerate() {
+        if i != 0 && !c.is_whitespace() {
             break;
         }
+
+        let c_size = u32::try_from(c.len_utf8()).unwrap();
+        span_start -= c_size;
     }
 
-    result
+    span_start
 }
 
 #[test]
@@ -402,6 +388,7 @@ fn test() {
         "const bar = { ...foo }",
         "Object.assign(...foo)",
         "Object.assign(foo, { bar: baz })",
+        "Object.assign/** comment😀 */(foo, { 'key😀': '😀😀' })", // with multi byte characters
         "Object.assign({}, ...objects)",
         "foo({ foo: 'bar' })",
         "
@@ -459,6 +446,7 @@ fn test() {
         "Object.assign({}, { foo: 'bar' })",
         "Object.assign({}, baz, { foo: 'bar' })",
         "Object.assign({}, { foo: 'bar', baz: 'foo' })",
+        "Object.assign/** comment😀 */({}, { '😀': '😀', '😆': '💪' })", // with multi byte characters
         "Object.assign({ foo: 'bar' }, baz)",
         "Object.assign({ foo: 'bar' }, cats, dogs, trees, birds)",
         "Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, baz))",
@@ -621,6 +609,7 @@ fn test() {
         ("Object.assign({}, { foo: 'bar' })", "({ foo: 'bar'})", None),
         ("Object.assign({}, baz, { foo: 'bar' })", "({ ...baz, foo: 'bar'})", None),
         ("Object.assign({}, { foo: 'bar', baz: 'foo' })", "({ foo: 'bar', baz: 'foo'})", None),
+        (r"Object.assign/** comment with multi byte 😀 */({}, { '😀': '😀', '😆': '💪' })", r"({ '😀': '😀', '😆': '💪'})", None),
         ("Object.assign({ foo: 'bar' }, baz)", "({foo: 'bar', ...baz})", None),
         ("Object.assign({ foo: 'bar' }, cats, dogs, trees, birds)", "({foo: 'bar', ...cats, ...dogs, ...trees, ...birds})", None),
         ("Object.assign({ foo: 'bar' }, Object.assign({ bar: 'foo' }, baz))", "({foo: 'bar', ...Object.assign({ bar: 'foo' }, baz)})", None),
