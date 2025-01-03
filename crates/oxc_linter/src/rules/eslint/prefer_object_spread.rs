@@ -114,35 +114,30 @@ impl Rule for PreferObjectSpread {
             _ => return,
         }
 
-        let Some(Expression::ObjectExpression(_)) = call_expr.arguments[0]
-            .as_expression()
-            .map(oxc_ast::ast::Expression::get_inner_expression)
-        else {
-            return;
-        };
+        let arguments_len = call_expr.arguments.len();
 
-        if call_expr.arguments.len() > 1
-            && call_expr.arguments.iter().any(|arg| {
-                let Some(Expression::ObjectExpression(obj_expr)) =
-                    arg.as_expression().map(oxc_ast::ast::Expression::get_inner_expression)
-                else {
-                    return false;
-                };
+        for (idx, arg) in call_expr.arguments.iter().enumerate() {
+            let Some(Expression::ObjectExpression(obj_expr)) =
+                arg.as_expression().map(oxc_ast::ast::Expression::get_inner_expression)
+            else {
+                if idx == 0 {
+                    return;
+                }
 
-                has_get_or_set_property(obj_expr)
-            })
-        {
-            return;
+                if arg.is_spread() {
+                    return;
+                }
+
+                continue;
+            };
+
+            if arguments_len > 1 && has_get_or_set_property(obj_expr) {
+                return;
+            }
         }
-
-        if call_expr.arguments.len() > 1 && call_expr.arguments[1].is_spread() {
-            return;
-        }
-
-        let for_use_literal = call_expr.arguments.len() == 1;
 
         ctx.diagnostic_with_fix(
-            prefer_object_spread_diagnostic(call_expr.span(), for_use_literal),
+            prefer_object_spread_diagnostic(call_expr.span(), arguments_len == 1),
             |fixer| {
                 let fixer = fixer.for_multifix();
                 let mut rule_fixes = fixer.new_fix_with_capacity(2 + call_expr.arguments.len() * 5);
