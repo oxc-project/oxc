@@ -30,6 +30,7 @@ const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
     "no-restricted-jest-methods",
     "no-test-prefixes",
     "prefer-hooks-in-order",
+    "prefer-lowercase-title",
     "valid-describe-callback",
     "valid-expect",
 };
