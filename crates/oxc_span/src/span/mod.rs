@@ -341,6 +341,25 @@ impl Span {
     pub fn primary_label<S: Into<String>>(self, label: S) -> LabeledSpan {
         LabeledSpan::new_primary_with_span(Some(label.into()), self)
     }
+
+    /// Convert [`Span`] to a single `u64`.
+    ///
+    /// On 64-bit platforms, `Span` is aligned on 8, so equivalent to a `u64`.
+    /// Compiler boils this conversion down to a no-op on 64-bit platforms.
+    /// <https://godbolt.org/z/9rcMoT1fc>
+    ///
+    /// Do not use this on 32-bit platforms as it's likely to be less efficient.
+    ///
+    /// Note: `#[ast]` macro adds `#[repr(C)]` to the struct, so field order is guaranteed.
+    #[expect(clippy::inline_always)] // Because this is a no-op on 64-bit platforms.
+    #[inline(always)]
+    const fn as_u64(self) -> u64 {
+        if cfg!(target_endian = "little") {
+            ((self.end as u64) << 32) | (self.start as u64)
+        } else {
+            ((self.start as u64) << 32) | (self.end as u64)
+        }
+    }
 }
 
 impl Index<Span> for str {
@@ -378,12 +397,18 @@ impl From<Span> for LabeledSpan {
     }
 }
 
-// Skip hashing `_align` field
+// Skip hashing `_align` field.
+// On 64-bit platforms, hash `Span` as a single `u64`, which is faster with `FxHash`.
+// https://godbolt.org/z/4fbvcsTxM
 impl Hash for Span {
-    #[inline] // We exclusively use `FxHasher`, which produces small output hashing `u32`s
+    #[inline] // We exclusively use `FxHasher`, which produces small output hashing `u64`s and `u32`s
     fn hash<H: Hasher>(&self, hasher: &mut H) {
-        self.start.hash(hasher);
-        self.end.hash(hasher);
+        if cfg!(target_pointer_width = "64") {
+            self.as_u64().hash(hasher);
+        } else {
+            self.start.hash(hasher);
+            self.end.hash(hasher);
+        }
     }
 }
 
@@ -446,7 +471,6 @@ mod test {
     }
 
     #[test]
-    #[expect(clippy::items_after_statements)]
     fn test_hash() {
         use std::hash::{DefaultHasher, Hash, Hasher};
         fn hash<T: Hash>(value: T) -> u64 {
@@ -455,20 +479,32 @@ mod test {
             hasher.finish()
         }
 
-        let first_hash = hash(Span::new(0, 5));
-        let second_hash = hash(Span::new(0, 5));
+        let first_hash = hash(Span::new(1, 5));
+        let second_hash = hash(Span::new(1, 5));
         assert_eq!(first_hash, second_hash);
 
-        // Check `_align` field does not alter hash
-        #[derive(Hash)]
-        #[repr(C)]
-        struct PlainSpan {
-            start: u32,
-            end: u32,
+        // On 64-bit platforms, check hash is equivalent to `u64`
+        #[cfg(target_pointer_width = "64")]
+        {
+            let u64_equivalent: u64 =
+                if cfg!(target_endian = "little") { 1 + (5 << 32) } else { (1 << 32) + 5 };
+            let u64_hash = hash(u64_equivalent);
+            assert_eq!(first_hash, u64_hash);
         }
 
-        let plain_hash = hash(PlainSpan { start: 0, end: 5 });
-        assert_eq!(plain_hash, first_hash);
+        // On 32-bit platforms, check `_align` field does not alter hash
+        #[cfg(not(target_pointer_width = "64"))]
+        {
+            #[derive(Hash)]
+            #[repr(C)]
+            struct PlainSpan {
+                start: u32,
+                end: u32,
+            }
+
+            let plain_hash = hash(PlainSpan { start: 1, end: 5 });
+            assert_eq!(first_hash, plain_hash);
+        }
     }
 
     #[test]
