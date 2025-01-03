@@ -328,6 +328,20 @@ impl<'a> PeepholeMinimizeConditions {
             }
         }
 
+        // `foo ? bar : foo` -> `foo && bar`
+        if let (Expression::Identifier(test_ident), Expression::Identifier(alternate_ident)) =
+            (&expr.test, &expr.alternate)
+        {
+            if test_ident.name == alternate_ident.name {
+                return Some(ctx.ast.expression_logical(
+                    expr.span,
+                    ctx.ast.move_expression(&mut expr.test),
+                    LogicalOperator::And,
+                    ctx.ast.move_expression(&mut expr.consequent),
+                ));
+            }
+        }
+
         // `!a ? b() : c()` -> `a ? c() : b()`
         if let Expression::UnaryExpression(test_expr) = &mut expr.test {
             if test_expr.operator.is_not() {
@@ -1508,5 +1522,13 @@ mod test {
             ),
             concat!("function x() {", "  return new.target ? 1 : 2;", "}"),
         );
+    }
+
+    #[test]
+    fn compress_conditional() {
+        test("foo ? foo : bar", "foo || bar");
+        test("foo ? bar : foo", "foo && bar");
+        test_same("x.y ? x.y : bar");
+        test_same("x.y ? bar : x.y");
     }
 }
