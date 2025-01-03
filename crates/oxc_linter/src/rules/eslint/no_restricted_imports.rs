@@ -417,7 +417,11 @@ enum ImportNameResult {
 }
 
 impl RestrictedPath {
-    fn get_import_name_result(&self, name: &ImportImportName) -> ImportNameResult {
+    fn get_import_name_result(&self, name: &ImportImportName, is_type: bool) -> ImportNameResult {
+        if is_type && self.allow_type_imports.is_some_and(|x| x == true) {
+            return ImportNameResult::Allowed;
+        }
+
         match &name {
             ImportImportName::Name(import) => {
                 match is_name_span_allowed_in_path(&import.name, self) {
@@ -443,7 +447,11 @@ impl RestrictedPath {
         }
     }
 
-    fn get_export_name_result(&self, name: &ExportImportName) -> ImportNameResult {
+    fn get_export_name_result(&self, name: &ExportImportName, is_type: bool) -> ImportNameResult {
+        if is_type && self.allow_type_imports.is_some_and(|x| x == true) {
+            return ImportNameResult::Allowed;
+        }
+
         match &name {
             ExportImportName::Name(import) => {
                 match is_name_span_allowed_in_path(&import.name, self) {
@@ -463,7 +471,11 @@ impl RestrictedPath {
 }
 
 impl RestrictedPattern {
-    fn get_import_name_result(&self, name: &ImportImportName) -> ImportNameResult {
+    fn get_import_name_result(&self, name: &ImportImportName, is_type: bool) -> ImportNameResult {
+        if is_type && self.allow_type_imports.is_some_and(|x| x == true) {
+            return ImportNameResult::Allowed;
+        }
+
         match &name {
             ImportImportName::Name(import) => {
                 match is_name_span_allowed_in_pattern(&import.name, self) {
@@ -488,7 +500,11 @@ impl RestrictedPattern {
         }
     }
 
-    fn get_export_name_result(&self, name: &ExportImportName) -> ImportNameResult {
+    fn get_export_name_result(&self, name: &ExportImportName, is_type: bool) -> ImportNameResult {
+        if is_type && self.allow_type_imports.is_some_and(|x| x == true) {
+            return ImportNameResult::Allowed;
+        }
+
         match &name {
             ExportImportName::Name(import) => {
                 match is_name_span_allowed_in_pattern(&import.name, self) {
@@ -668,7 +684,7 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let result = &path.get_import_name_result(&entry.import_name);
+            let result = &path.get_import_name_result(&entry.import_name, entry.is_type);
 
             if *result == ImportNameResult::Allowed {
                 continue;
@@ -688,7 +704,7 @@ impl NoRestrictedImports {
         let mut found_errors = vec![];
 
         for pattern in &self.patterns {
-            let result = &pattern.get_import_name_result(&entry.import_name);
+            let result = &pattern.get_import_name_result(&entry.import_name, entry.is_type);
 
             if *result == ImportNameResult::Allowed {
                 continue;
@@ -740,7 +756,7 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let result = &path.get_export_name_result(&entry.import_name);
+            let result = &path.get_export_name_result(&entry.import_name, entry.is_type);
 
             if *result == ImportNameResult::Allowed {
                 continue;
@@ -756,7 +772,7 @@ impl NoRestrictedImports {
         let mut found_errors = vec![];
 
         for pattern in &self.patterns {
-            let result = &pattern.get_export_name_result(&entry.import_name);
+            let result = &pattern.get_export_name_result(&entry.import_name, entry.is_type);
 
             if *result == ImportNameResult::Allowed {
                 continue;
