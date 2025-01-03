@@ -120,15 +120,11 @@ impl<'a> CompressorPass<'a> for PeepholeOptimizations {
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x0_statement_fusion.exit_program(program, ctx);
         self.x4_peephole_remove_dead_code.exit_program(program, ctx);
     }
 
-    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x0_statement_fusion.exit_function_body(body, ctx);
-    }
-
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_statement_fusion.exit_statements(stmts, ctx);
         self.x1_minimize_exit_points.exit_statements(stmts, ctx);
         self.x2_exploit_assigns.exit_statements(stmts, ctx);
         self.x3_collapse_variable_declarations.exit_statements(stmts, ctx);
@@ -139,10 +135,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x4_peephole_remove_dead_code.exit_statement(stmt, ctx);
         self.x5_peephole_minimize_conditions.exit_statement(stmt, ctx);
-    }
-
-    fn exit_block_statement(&mut self, block: &mut BlockStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x0_statement_fusion.exit_block_statement(block, ctx);
     }
 
     fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {

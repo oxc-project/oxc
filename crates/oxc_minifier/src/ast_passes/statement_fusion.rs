@@ -23,16 +23,8 @@ impl<'a> CompressorPass<'a> for StatementFusion {
 }
 
 impl<'a> Traverse<'a> for StatementFusion {
-    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fuse_statements(&mut program.body, ctx);
-    }
-
-    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fuse_statements(&mut body.statements, ctx);
-    }
-
-    fn exit_block_statement(&mut self, block: &mut BlockStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fuse_statements(&mut block.body, ctx);
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.fuse_statements(stmts, ctx);
     }
 }
 
@@ -306,6 +298,11 @@ mod test {
         );
         fuse("a;b;c;{var x;d;e;}", "a,b,c;{var x;d,e;}");
         fuse("a;b;c;label:{break label;d;e;}", "a,b,c;label:{break label;d,e;}");
+    }
+
+    #[test]
+    fn fuse_into_switch_cases() {
+        fuse("switch (_) { case _: a; return b }", "switch (_) { case _: return a, b }");
     }
 
     #[test]
