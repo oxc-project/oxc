@@ -187,10 +187,8 @@ impl Rule for PreferObjectSpread {
                         rule_fixes.push(fixer.delete_range(delete_span_of_left));
                         rule_fixes.push(fixer.delete_range(delete_span_of_right));
 
-                        let maybe_trailing_comma_span = get_last_char_span(expression, 1, ctx);
-
                         if obj_expr.properties.is_empty()
-                            || ctx.source_range(maybe_trailing_comma_span) == ","
+                            || ctx.source_range(get_last_char_span(expression, 1, ctx)) == ","
                         {
                             if let Some(maybe_arg_comma_span) = get_char_span_after(expression, ctx)
                             {
