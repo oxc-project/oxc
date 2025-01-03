@@ -154,7 +154,7 @@ impl Rule for PreferObjectSpread {
                     )
                 );
 
-                let Some(callee_left_paren_span) = find_char_span(ctx, call_expr, '(') else {
+                let Some(callee_left_paren_span) = find_char_span(ctx, call_expr, b'(') else {
                     return fixer.noop();
                 };
 
@@ -233,13 +233,9 @@ fn has_get_or_set_property(obj_expr: &ObjectExpression) -> bool {
 /**
  * Find the span of the first character matches with target_char in the expression
  */
-fn find_char_span(ctx: &LintContext, expr: &dyn GetSpan, target_char: char) -> Option<Span> {
+fn find_char_span(ctx: &LintContext, expr: &dyn GetSpan, target_char: u8) -> Option<Span> {
     let span = expr.span();
-    for (idx, c) in ctx.source_range(span).char_indices() {
-        if c != target_char {
-            continue;
-        }
-
+    for idx in memchr::memchr_iter(target_char, ctx.source_range(span).as_bytes()) {
         let Ok(idx) = TryInto::<u32>::try_into(idx) else {
             return None;
         };
