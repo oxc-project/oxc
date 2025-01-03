@@ -313,18 +313,28 @@ impl<'a> PeepholeMinimizeConditions {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // `a ? a : b` -> `a || b`
-        if let (Expression::Identifier(test_ident), Expression::Identifier(consequent_ident)) =
-            (&expr.test, &expr.consequent)
-        {
-            if test_ident.name == consequent_ident.name {
-                let ident = ctx.ast.move_expression(&mut expr.test);
-
-                return Some(ctx.ast.expression_logical(
-                    expr.span,
-                    ident,
-                    LogicalOperator::Or,
-                    ctx.ast.move_expression(&mut expr.alternate),
-                ));
+        if let Expression::Identifier(ident_test) = &expr.test {
+            // `foo ? foo : bar` -> `foo || bar`
+            if let Expression::Identifier(ident_consequent) = &expr.consequent {
+                if ident_test.name == ident_consequent.name {
+                    return Some(ctx.ast.expression_logical(
+                        expr.span,
+                        ctx.ast.move_expression(&mut expr.test),
+                        LogicalOperator::Or,
+                        ctx.ast.move_expression(&mut expr.alternate),
+                    ));
+                }
+            }
+            // `foo ? bar : foo` -> `foo && bar`
+            if let Expression::Identifier(ident_alternate) = &expr.alternate {
+                if ident_test.name == ident_alternate.name {
+                    return Some(ctx.ast.expression_logical(
+                        expr.span,
+                        ctx.ast.move_expression(&mut expr.test),
+                        LogicalOperator::And,
+                        ctx.ast.move_expression(&mut expr.consequent),
+                    ));
+                }
             }
         }
 
@@ -729,6 +739,11 @@ mod test {
 
         fold_same("(x || true) && y()");
         fold("(x || false) && y()", "x && y()");
+
+        test("foo ? foo : bar", "foo || bar");
+        test("foo ? bar : foo", "foo && bar");
+        test_same("x.y ? x.y : bar");
+        test_same("x.y ? bar : x.y");
     }
 
     #[test]
