@@ -129,6 +129,23 @@ function generateWalkForStruct(type, types) {
       `;
       exitScopeCode += 'ctx.set_current_hoist_scope_id(previous_hoist_scope_id);';
     }
+
+    // TODO: Type names shouldn't be hard-coded here. Block scopes should be signalled by attrs in AST.
+    let isBlockScope = [
+      'Program',
+      'BlockStatement',
+      'Function',
+      'ArrowFunctionExpression',
+      'StaticBlock',
+      'TSModuleDeclaration',
+    ].includes(type.name);
+    if (isBlockScope) {
+      enterScopeCode += `
+        let previous_block_scope_id = ctx.current_block_scope_id();
+        ctx.set_current_block_scope_id(current_scope_id);
+      `;
+      exitScopeCode += 'ctx.set_current_block_scope_id(previous_block_scope_id);';
+    }
   }
 
   const fieldsCodes = visitedFields.map((field, index) => {

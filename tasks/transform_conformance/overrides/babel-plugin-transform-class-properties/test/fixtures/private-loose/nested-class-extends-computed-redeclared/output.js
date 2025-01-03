@@ -7,12 +7,12 @@ class Foo {
     });
   }
   test() {
-    var _foo3;
+    var _foo2;
     let _this$foo;
-    var _foo2 = babelHelpers.classPrivateFieldLooseKey("foo");
-    class Nested extends (_foo3 = babelHelpers.classPrivateFieldLooseKey("foo"), _this$foo = babelHelpers.classPrivateFieldLooseBase(this, _foo3)[_foo3], class {
+    var _foo3 = babelHelpers.classPrivateFieldLooseKey("foo");
+    class Nested extends (_foo2 = babelHelpers.classPrivateFieldLooseKey("foo"), _this$foo = babelHelpers.classPrivateFieldLooseBase(this, _foo2)[_foo2], class {
       constructor() {
-        Object.defineProperty(this, _foo3, {
+        Object.defineProperty(this, _foo2, {
           writable: true,
           value: 2
         });
@@ -21,7 +21,7 @@ class Foo {
     }) {
       constructor(..._args) {
         super(..._args);
-        Object.defineProperty(this, _foo2, {
+        Object.defineProperty(this, _foo3, {
           writable: true,
           value: 3
         });

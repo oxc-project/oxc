@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+- ad2a620 ast: [**BREAKING**] Add missing `AssignmentTargetProperty::computed` (#8097) (Boshen)
+
+### Bug Fixes
+
+- 55d6eb9 parser: Disallow type parameters on class constructors (#8071) (injuly)
+- be2c60d parser: Parse `import source from from 'mod'` (#8056) (Boshen)
+
+## [0.42.0] - 2024-12-18
+
+### Features
+
+- 81eedb1 parser: 'readonly' type modifier is only permitted on array and tuple literal types. (#7880) (Boshen)
+
+### Bug Fixes
+
+- 111dc52 parser: Include export token in spans of TSNamespaceExportDeclaration (#7963) (branchseer)
+
+### Refactor
+
+- 3858221 global: Sort imports (#7883) (overlookmotel)
+
+### Styling
+
+- 7fb9d47 rust: `cargo +nightly fmt` (#7877) (Boshen)
+
 ## [0.41.0] - 2024-12-13
 
 - fb325dc ast: [**BREAKING**] `span` field must be the first element (#7821) (Boshen)

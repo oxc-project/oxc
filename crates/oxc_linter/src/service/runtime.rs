@@ -255,41 +255,14 @@ impl Runtime {
                         if let ModuleState::Resolved(target_module_record) = target_ref.value() {
                             module_record
                                 .loaded_modules
+                                .write()
+                                .unwrap()
                                 .insert(specifier.clone(), Arc::clone(target_module_record));
                         }
                     };
                 });
 
             // The thread is blocked here until all dependent modules are resolved.
-
-            // Resolve and append `star_export_bindings`
-            for export_entry in &module_record.star_export_entries {
-                let Some(remote_module_record_ref) =
-                    export_entry.module_request.as_ref().and_then(|module_request| {
-                        module_record.loaded_modules.get(module_request.name())
-                    })
-                else {
-                    continue;
-                };
-                let remote_module_record = remote_module_record_ref.value();
-                // Append both remote `bindings` and `exported_bindings_from_star_export`
-                let remote_exported_bindings_from_star_export = remote_module_record
-                    .exported_bindings_from_star_export
-                    .iter()
-                    .flat_map(|r| r.value().clone());
-                let remote_bindings = remote_module_record
-                    .exported_bindings
-                    .keys()
-                    .cloned()
-                    .chain(remote_exported_bindings_from_star_export)
-                    .collect::<Vec<_>>();
-                module_record
-                    .exported_bindings_from_star_export
-                    .entry(remote_module_record.resolved_absolute_path.clone())
-                    .or_default()
-                    .value_mut()
-                    .extend(remote_bindings);
-            }
 
             // Stop if the current module is not marked for lint.
             if !self.paths.contains(path) {

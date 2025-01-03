@@ -51,7 +51,7 @@
 //! * Babel implementation: <https://github.com/babel/babel/blob/v7.26.2/packages/babel-plugin-transform-async-to-generator>
 //! * Async / Await TC39 proposal: <https://github.com/tc39/proposal-async-await>
 
-use std::mem;
+use std::{borrow::Cow, mem};
 
 use oxc_allocator::{Box as ArenaBox, String as ArenaString};
 use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
@@ -534,15 +534,16 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     /// // Reserved keyword
     /// * `this` -> `_this`
     /// * `arguments` -> `_arguments`
-    fn normalize_function_name(input: &str, ast: AstBuilder<'a>) -> Atom<'a> {
-        if !is_reserved_keyword(input) && is_identifier_name(input) {
-            return ast.atom(input);
+    fn normalize_function_name(input: &Cow<'a, str>, ast: AstBuilder<'a>) -> Atom<'a> {
+        let input_str = input.as_ref();
+        if !is_reserved_keyword(input_str) && is_identifier_name(input_str) {
+            return ast.atom_from_cow(input);
         }
 
-        let mut name = ArenaString::with_capacity_in(input.len() + 1, ast.allocator);
+        let mut name = ArenaString::with_capacity_in(input_str.len() + 1, ast.allocator);
         let mut capitalize_next = false;
 
-        let mut chars = input.chars();
+        let mut chars = input_str.chars();
         if let Some(first) = chars.next() {
             if is_identifier_start(first) {
                 name.push(first);
@@ -563,12 +564,14 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         }
 
         if name.is_empty() {
-            return ast.atom("_");
-        } else if is_reserved_keyword(name.as_str()) {
+            return Atom::from("_");
+        }
+
+        if is_reserved_keyword(name.as_str()) {
             name.insert(0, '_');
         }
 
-        ast.atom(name.into_bump_str())
+        Atom::from(name)
     }
 
     /// Creates a [`Function`] with the specified params, body and scope_id.

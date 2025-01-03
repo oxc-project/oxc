@@ -1,6 +1,6 @@
 [package]
 name = "oxc_linter"
-version = "0.15.2"
+version = "0.15.4"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -42,6 +42,7 @@ cow-utils = { workspace = true }
 dashmap = { workspace = true }
 fast-glob = { workspace = true }
 globset = { workspace = true }
+ignore = { workspace = true }
 itertools = { workspace = true }
 json-strip-comments = { workspace = true }
 language-tags = { workspace = true }

@@ -41,7 +41,7 @@
 
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_allocator::String as ArenaString;
+use oxc_allocator::{String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
@@ -130,10 +130,7 @@ impl ClassStaticBlock {
     /// Convert static block to expression which will be value of private field.
     /// `static { foo }` -> `foo`
     /// `static { foo; bar; }` -> `(() => { foo; bar; })()`
-    ///
-    /// This function also used by `ClassProperties` transform.
-    /// TODO: Make this function non-pub if no longer use it for `ClassProperties`.
-    pub fn convert_block_to_expression<'a>(
+    fn convert_block_to_expression<'a>(
         block: &mut StaticBlock<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
@@ -161,6 +158,17 @@ impl ClassStaticBlock {
         *ctx.scopes_mut().get_flags_mut(scope_id) =
             ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode;
 
+        Self::wrap_statements_in_iife(stmts, scope_id, ctx)
+    }
+
+    /// Wrap statements in an IIFE.
+    ///
+    /// This function also used by `ClassProperties` transform.
+    pub(super) fn wrap_statements_in_iife<'a>(
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
         let stmts = ctx.ast.move_vec(stmts);
         let params = ctx.ast.alloc_formal_parameters(
             SPAN,
@@ -269,7 +277,7 @@ impl<'a> Keys<'a> {
         let mut key = ArenaString::with_capacity_in(num_str.len() + 1, ctx.ast.allocator);
         key.push('_');
         key.push_str(num_str);
-        let key = Atom::from(key.into_bump_str());
+        let key = Atom::from(key);
 
         self.numbered.push(&key.as_str()[1..]);
 

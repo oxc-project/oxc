@@ -123,32 +123,33 @@ impl Rule for Namespace {
             return;
         }
 
+        let loaded_modules = module_record.loaded_modules.read().unwrap();
+
         for entry in &module_record.import_entries {
             let (source, module) = match &entry.import_name {
                 ImportImportName::NamespaceObject => {
                     let source = entry.module_request.name();
-                    if let Some(module) = module_record.loaded_modules.get(source) {
-                        (source.to_string(), Arc::clone(module.value()))
+                    if let Some(module) = loaded_modules.get(source) {
+                        (source.to_string(), Arc::clone(module))
                     } else {
                         return;
                     }
                 }
                 ImportImportName::Name(name) => {
-                    let Some(loaded_module) =
-                        module_record.loaded_modules.get(entry.module_request.name())
+                    let Some(loaded_module) = loaded_modules.get(entry.module_request.name())
                     else {
                         return;
                     };
-                    let Some(source) = get_module_request_name(name.name(), &loaded_module) else {
+                    let Some(source) = get_module_request_name(name.name(), loaded_module) else {
                         return;
                     };
 
-                    let Some(loaded_module) = &loaded_module.loaded_modules.get(source.as_str())
-                    else {
+                    let loaded_module = loaded_module.loaded_modules.read().unwrap();
+                    let Some(loaded_module) = loaded_module.get(source.as_str()) else {
                         return;
                     };
 
-                    (source, Arc::clone(loaded_module.value()))
+                    (source, Arc::clone(loaded_module))
                 }
                 ImportImportName::Default(_) => {
                     // TODO: Hard to confirm if it's a namespace object
@@ -275,10 +276,11 @@ fn check_deep_namespace_for_node(
 
     if let Some(module_source) = get_module_request_name(name, module) {
         let parent_node = ctx.nodes().parent_node(node.id())?;
-        let module_record = module.loaded_modules.get(module_source.as_str())?;
+        let loaded_modules = module.loaded_modules.read().unwrap();
+        let module_record = loaded_modules.get(module_source.as_str())?;
         let mut namespaces = namespaces.to_owned();
         namespaces.push(name.into());
-        check_deep_namespace_for_node(parent_node, source, &namespaces, module_record.value(), ctx);
+        check_deep_namespace_for_node(parent_node, source, &namespaces, module_record, ctx);
     } else {
         check_binding_exported(
             name,
@@ -313,11 +315,13 @@ fn check_deep_namespace_for_object_pattern(
             if let Some(module_source) = get_module_request_name(&name, module) {
                 let mut next_namespaces = namespaces.to_owned();
                 next_namespaces.push(name.to_string());
+
+                let loaded_modules = module.loaded_modules.read().unwrap();
                 check_deep_namespace_for_object_pattern(
                     pattern,
                     source,
                     next_namespaces.as_slice(),
-                    module.loaded_modules.get(module_source.as_str()).unwrap().value(),
+                    loaded_modules.get(module_source.as_str()).unwrap(),
                     ctx,
                 );
                 continue;
@@ -352,9 +356,9 @@ fn check_binding_exported(
     if module.exported_bindings.contains_key(name)
         || (name == "default" && module.export_default.is_some())
         || module
-            .exported_bindings_from_star_export
+            .exported_bindings_from_star_export()
             .iter()
-            .any(|entry| entry.value().iter().any(|s| s.as_str() == name))
+            .any(|(_, value)| value.iter().any(|s| s.as_str() == name))
     {
         return;
     }

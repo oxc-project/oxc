@@ -6,8 +6,9 @@ use oxc_span::CompactStr;
 
 type Slot = usize;
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
+    pub top_level: bool,
     pub debug: bool,
 }
 
@@ -109,8 +110,10 @@ impl Mangler {
             let mut slot = parent_max_slot;
 
             if !bindings.is_empty() {
-                // `bindings` are stored in order, traverse and increment slot
-                for symbol_id in bindings.values().copied() {
+                // Sort `bindings` in declaration order.
+                let mut bindings = bindings.values().copied().collect::<Vec<_>>();
+                bindings.sort_unstable();
+                for symbol_id in bindings {
                     slots[symbol_id] = slot;
                     slot += 1;
                 }
@@ -124,7 +127,7 @@ impl Mangler {
         }
 
         let frequencies =
-            Self::tally_slot_frequencies(&symbol_table, &scope_tree, total_number_of_slots, &slots);
+            self.tally_slot_frequencies(&symbol_table, &scope_tree, total_number_of_slots, &slots);
 
         let root_unresolved_references = scope_tree.root_unresolved_references();
         let root_bindings = scope_tree.get_bindings(scope_tree.root_scope_id());
@@ -142,7 +145,7 @@ impl Mangler {
                 if !is_keyword(n)
                     && !is_special_name(n)
                     && !root_unresolved_references.contains_key(n)
-                    && !root_bindings.contains_key(n)
+                    && (self.options.top_level || !root_bindings.contains_key(n))
                 {
                     break name;
                 }
@@ -191,7 +194,7 @@ impl Mangler {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for &symbol_id in &symbol_to_rename.symbol_ids {
-                    symbol_table.set_name(symbol_id, new_name.clone());
+                    symbol_table.set_name(symbol_id, new_name.as_str());
                 }
             }
         }
@@ -201,6 +204,7 @@ impl Mangler {
     }
 
     fn tally_slot_frequencies(
+        &self,
         symbol_table: &SymbolTable,
         scope_tree: &ScopeTree,
         total_number_of_slots: usize,
@@ -209,7 +213,7 @@ impl Mangler {
         let root_scope_id = scope_tree.root_scope_id();
         let mut frequencies = vec![SlotFrequency::default(); total_number_of_slots];
         for (symbol_id, slot) in slots.iter_enumerated() {
-            if symbol_table.get_scope_id(symbol_id) == root_scope_id {
+            if !self.options.top_level && symbol_table.get_scope_id(symbol_id) == root_scope_id {
                 continue;
             }
             if is_special_name(symbol_table.get_name(symbol_id)) {

@@ -48,6 +48,7 @@ pub use bumpalo::collections::String;
 use bumpalo::Bump;
 
 mod address;
+mod allocator_api2;
 mod boxed;
 mod clone_in;
 mod convert;
@@ -70,6 +71,11 @@ pub use vec::Vec;
 pub struct Allocator {
     bump: Bump,
 }
+
+/// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
+unsafe impl Send for Allocator {}
+/// SAFETY: Not actually safe, but for enabling `Sync` for downstream crates.
+unsafe impl Sync for Allocator {}
 
 impl From<Bump> for Allocator {
     fn from(bump: Bump) -> Self {

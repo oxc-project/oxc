@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+### Features
+
+- 5397fe9 minifier: Constant fold `undefined?.bar` -> `undefined` (#8075) (Boshen)
+
+## [0.42.0] - 2024-12-18
+
+### Features
+
+- 075bd16 minifier: Fold bitwise operation (#7908) (翠 / green)
+
+### Bug Fixes
+
+- 4799471 minfier: Bigint bitwise operation only works with bigint (#7937) (Boshen)
+
+### Refactor
+
+- 3858221 global: Sort imports (#7883) (overlookmotel)
+
+### Styling
+
+- 7fb9d47 rust: `cargo +nightly fmt` (#7877) (Boshen)
+
 ## [0.39.0] - 2024-12-04
 
 - b0e1c03 ast: [**BREAKING**] Add `StringLiteral::raw` field (#7393) (Boshen)

@@ -15,7 +15,7 @@ use oxc_span::{GetSpan, SourceType, Span};
 // Re-export flags and ID types
 pub use oxc_syntax::{
     node::{NodeFlags, NodeId},
-    reference::{ReferenceFlags, ReferenceId},
+    reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -30,7 +30,6 @@ mod diagnostics;
 mod jsdoc;
 mod label;
 mod node;
-mod reference;
 mod scope;
 mod stats;
 mod symbol;
@@ -39,7 +38,6 @@ mod unresolved_stack;
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
 pub use node::{AstNode, AstNodes};
-pub use reference::Reference;
 pub use scope::ScopeTree;
 pub use stats::Stats;
 pub use symbol::{IsGlobalReference, SymbolTable};
@@ -165,6 +163,11 @@ impl<'a> Semantic<'a> {
         &self.symbols
     }
 
+    /// Get a mutable reference to the [`SymbolTable`].
+    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
+        &mut self.symbols
+    }
+
     pub fn unused_labels(&self) -> &Vec<NodeId> {
         &self.unused_labels
     }
@@ -284,7 +287,7 @@ mod tests {
         let top_level_a = semantic
             .scopes()
             .iter_bindings()
-            .find(|(_scope_id, _symbol_id, name)| name.as_str() == "Fn")
+            .find(|(_scope_id, _symbol_id, name)| *name == "Fn")
             .unwrap();
         assert_eq!(semantic.symbols.get_scope_id(top_level_a.1), top_level_a.0);
     }
@@ -314,7 +317,7 @@ mod tests {
         let allocator = Allocator::default();
         let source_type: SourceType = SourceType::default().with_typescript(true);
         let semantic = get_semantic(&allocator, source, source_type);
-        assert!(semantic.symbols().references.len() == 1);
+        assert_eq!(semantic.symbols().references.len(), 1);
     }
 
     #[test]

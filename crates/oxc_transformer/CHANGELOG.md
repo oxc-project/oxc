@@ -4,6 +4,131 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+### Features
+
+- e632a7b transformer: Remove typescript symbols after transform (#8069) (Boshen)
+
+### Bug Fixes
+
+- 3057686 transformer/class-properties: Unwrap parenthesised expressions (#8049) (overlookmotel)
+- e67cd05 transformer/class-properties: Correctly resolve private fields pointing to private accessors (#8047) (overlookmotel)
+- 6b08c6e transformer/class-properties: Correctly resolve private fields pointing to private methods (#8042) (overlookmotel)
+- 274f117 transformer/nullish-coalescing: Use correct scope id for binding (#8053) (camc314)
+
+### Refactor
+
+- cbd5169 transformer/class-properties: Do not recreate private field if not transforming it (#8044) (overlookmotel)
+- 98e8a72 transformer/class-properties: Do not take mut ref when immut ref will do (#8040) (overlookmotel)
+
+## [0.43.0] - 2024-12-21
+
+- de4c772 traverse: [**BREAKING**] Rename `Ancestor::is_via_*` methods to `is_parent_of_*` (#8031) (overlookmotel)
+
+- ed75e42 semantic: [**BREAKING**] Make SymbolTable fields `pub(crate)` instead of `pub` (#7999) (Boshen)
+
+### Features
+
+- 897a1a8 transformer/class-properties: Exit faster from super replacement visitor (#8028) (overlookmotel)
+- 3ea4109 transformer/class-properties: Transform super update expressions within static prop initializer (#7997) (Dunqing)
+- cc57db3 transformer/class-properties: Transform super assignment expressions within static prop initializer (#7991) (Dunqing)
+
+### Bug Fixes
+
+- 043252d transformer/class-properties: Replace `this` and class name in static blocks (#8035) (overlookmotel)
+- 273795d transformer/class-properties: Run other transforms on static properties, static blocks, and computed keys (#7982) (overlookmotel)
+
+### Performance
+
+- 2736657 semantic: Allocate `UnresolvedReferences` in allocator (#8046) (Boshen)
+- 0f9308f transformer/react-refresh: Reduce allocations (#8018) (overlookmotel)
+- 0deb9e6 transformer/react-refresh: Reserve capacity in hook key string (#8016) (overlookmotel)
+- 7b70347 transformer/react-refresh: Avoid allocating string in each hook call (#8013) (Dunqing)
+
+### Refactor
+
+- ac097e9 transformer/class-properties: Rename file (#8036) (overlookmotel)
+- 059a5dd transformer/class-properties: Do not pass `ScopeId` into `insert_instance_inits` (#8001) (overlookmotel)
+- 0a38eea transformer/class-properties: Use `temp_var_name_base` to generate temp var names for `super` transform (#8004) (overlookmotel)
+- d1b7181 transformer/class-properties: Rename var (#8006) (overlookmotel)
+- 5a23d72 transformer/class-properties: Remove outdated comment (#8000) (overlookmotel)
+- b3a5f3e transformer/class-properties: Mark `transform_assignment_expression_if_super_member_assignment_target` as inline (#7993) (Dunqing)
+
+## [0.42.0] - 2024-12-18
+
+- c071494 semantic: [**BREAKING**] Remove `SymbolTable::rename` method (#7868) (overlookmotel)
+
+### Features
+
+- c16a851 napi/transform: Add `jsx: 'preserve'` option (#7965) (Boshen)
+- c30a982 span: Add `impl From<ArenaString> for Atom` (#7973) (overlookmotel)
+- 02b653c transformer/class-properties: Do not create temp var for template literal computed key (#7919) (overlookmotel)
+- feac02e transformer/class-properties: Only rename symbols if necessary (#7896) (overlookmotel)
+- 6bc530d transformer/class-properties: Transform super call expression that is inside static prop initializer (#7831) (Dunqing)
+- 53e2bc0 traverse: Add `TraverseScoping::rename_symbol` method (#7871) (overlookmotel)
+
+### Bug Fixes
+
+- 9a30910 oxc_transformer: Inject_global_variables should considering string imported name (#7768) (IWANABETHATGUY)
+- 4924073 semantic: `ScopeTree::rename_binding` preserve order of bindings (#7870) (overlookmotel)
+- bb38065 transformer/class-properties: Do not transform `super.prop` in nested method within static prop initializer (#7978) (overlookmotel)
+- e76fbb0 transformer/class-properties: Fix symbol clashes in instance prop initializers (#7872) (overlookmotel)
+- c0576fa transformer/class-properties: Use UID for `args` in created class constructor (#7866) (overlookmotel)
+- d660d8d transformer/optional-chaining: Do not create unused reference when `noDocumentAll` assumption (#7847) (overlookmotel)
+- 4920c6a transformer/optional-chaining: Avoid creating a useless reference when `noDocumentAll` is true (#7832) (Dunqing)
+
+### Performance
+
+- b31f123 transformer/class-properties: Do not re-generate same method key (#7915) (overlookmotel)
+- 8ca8fce transformer/class-properties: Reduce work updating scopes when transforming static prop initializers (#7904) (overlookmotel)
+- 80d0b3e transformer/class-properties: Fast path for instance prop initializer scope re-parenting (#7901) (overlookmotel)
+- 38aafa2 transformer/class-properties: Reduce size of `transform_call_expression_for_super_member_expr` (#7859) (overlookmotel)
+
+### Documentation
+
+- 10a86b9 transformer: Fix comments (#7925) (overlookmotel)
+- f4cb5d3 transformer: Clarify comment (#7918) (overlookmotel)
+- 41a1456 transformer/class-properties: Correct doc comments (#7966) (overlookmotel)
+- 18441af transformer/class-properties: Remove oudated todo for assignment expression (#7955) (Dunqing)
+- 1317c00 transformer/class-properties: Clarify doc comments (#7914) (overlookmotel)
+- 9989b58 transformer/class-properties: Re-order file list in doc comment (#7911) (overlookmotel)
+- 7390048 transformer/class-properties: Reformat doc comment (#7909) (overlookmotel)
+
+### Refactor
+
+- 3858221 global: Sort imports (#7883) (overlookmotel)
+- d59bbae transformer: Remove unneeded lint `#[allow]` (#7971) (overlookmotel)
+- 2c94236 transformer: Improve encapsulation of transforms (#7888) (overlookmotel)
+- 34091b2 transformer: Use `Expression::is_super` (#7852) (overlookmotel)
+- d4d7bc0 transformer/async-to-generator: Avoid allocating unnecessary `Atom`s (#7975) (overlookmotel)
+- 2e5ffd3 transformer/class-properties: Store `temp_var_is_created` on `ClassBindings` (#7981) (overlookmotel)
+- 27cc6da transformer/class-properties: Store `is_declaration` only on `ClassDetails` (#7980) (overlookmotel)
+- ee282f8 transformer/class-properties: Remove `move_expression`s (#7979) (overlookmotel)
+- 94b376a transformer/class-properties: Simplify logic for when to create temp binding (#7977) (overlookmotel)
+- ff9d1b3 transformer/class-properties: Comments about shorter output (#7976) (overlookmotel)
+- 6fc40f0 transformer/class-properties: Pass `BoundIdentifier`s by reference (#7968) (overlookmotel)
+- 69eeeea transformer/class-properties: Methods take `&self` where possible (#7967) (overlookmotel)
+- 98340bb transformer/class-properties: Use stack of `ClassDetails` (#7947) (overlookmotel)
+- 088dd48 transformer/class-properties: Shorten code (#7913) (overlookmotel)
+- 544ffbf transformer/class-properties: Split up code into multiple files (#7912) (overlookmotel)
+- dcaf674 transformer/class-properties: Rename file (#7910) (overlookmotel)
+- 6243980 transformer/class-properties: Instance prop inits visitor use `Visit` (#7867) (overlookmotel)
+- eb47d43 transformer/class-properties: Re-use existing `Vec` (#7854) (overlookmotel)
+- 1380b7b transformer/class-properties: Reduce visibility of method (#7858) (overlookmotel)
+- 0f5e078 transformer/class-properties: Rename `*_owner` to `owned_*` (#7855) (Dunqing)
+- 4ea90d4 transformer/react-refresh: Calculate signature key once (#7970) (Dunqing)
+- 15b9bff transformer/typescript: Reuse `Atom` (#7969) (overlookmotel)
+
+### Styling
+
+- 7fb9d47 rust: `cargo +nightly fmt` (#7877) (Boshen)
+
+### Testing
+
+- e766051 transformer: Skip test which uses filesystem under miri (#7874) (overlookmotel)
+- f39e65e transformer: Prevent lint error when running miri (#7873) (overlookmotel)
+
 ## [0.41.0] - 2024-12-13
 
 - fb325dc ast: [**BREAKING**] `span` field must be the first element (#7821) (Boshen)

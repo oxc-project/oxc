@@ -95,8 +95,10 @@ impl Rule for NoBarrelFile {
         let mut total: usize = 0;
 
         for module_request in module_requests {
-            if let Some(remote_module) = module_record.loaded_modules.get(module_request.name()) {
-                if let Some(count) = count_loaded_modules(remote_module.value()) {
+            if let Some(remote_module) =
+                module_record.loaded_modules.read().unwrap().get(module_request.name())
+            {
+                if let Some(count) = count_loaded_modules(remote_module) {
                     total += count;
                     labels.push(module_request.span().label(format!("{count} modules")));
                 }
@@ -111,7 +113,7 @@ impl Rule for NoBarrelFile {
 }
 
 fn count_loaded_modules(module_record: &ModuleRecord) -> Option<usize> {
-    if module_record.loaded_modules.is_empty() {
+    if module_record.loaded_modules.read().unwrap().is_empty() {
         return None;
     }
     Some(

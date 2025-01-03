@@ -2,7 +2,7 @@ use napi_derive::napi;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -14,10 +14,12 @@ pub fn minify(filename: String, source_text: String) -> String {
 
     let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
 
-    let mangler =
-        Minifier::new(MinifierOptions { mangle: true, compress: CompressOptions::default() })
-            .build(&allocator, &mut program)
-            .mangler;
+    let mangler = Minifier::new(MinifierOptions {
+        mangle: Some(MangleOptions::default()),
+        compress: CompressOptions::default(),
+    })
+    .build(&allocator, &mut program)
+    .mangler;
 
     Codegen::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })

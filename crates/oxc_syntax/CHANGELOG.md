@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+### Features
+
+- be4feb4 syntax: Add `SymbolId::new` method (#8041) (overlookmotel)
+
+## [0.43.0] - 2024-12-21
+
+### Refactor
+
+- e7476a1 semantic: Remove `serialize` (#8015) (Boshen)
+
+## [0.42.0] - 2024-12-18
+
+- 84b75a0 semantic: [**BREAKING**] Remove `ScopeFlags::Modifiers` (#7935) (overlookmotel)
+
+### Refactor
+
+- 3858221 global: Sort imports (#7883) (overlookmotel)
+- 8cf9766 semantic, syntax, wasm: Remove `#![allow(non_snake_case)]` (#7863) (overlookmotel)
+
+### Styling
+
+- 7fb9d47 rust: `cargo +nightly fmt` (#7877) (Boshen)
+
 ## [0.41.0] - 2024-12-13
 
 ### Refactor

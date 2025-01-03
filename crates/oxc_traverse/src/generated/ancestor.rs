@@ -1858,7 +1858,7 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_via_statement(self) -> bool {
+    pub fn is_parent_of_statement(self) -> bool {
         matches!(
             self,
             Self::ProgramBody(_)
@@ -1880,17 +1880,17 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_via_array_expression_element(self) -> bool {
+    pub fn is_parent_of_array_expression_element(self) -> bool {
         matches!(self, Self::ArrayExpressionElements(_))
     }
 
     #[inline]
-    pub fn is_via_object_property_kind(self) -> bool {
+    pub fn is_parent_of_object_property_kind(self) -> bool {
         matches!(self, Self::ObjectExpressionProperties(_))
     }
 
     #[inline]
-    pub fn is_via_property_key(self) -> bool {
+    pub fn is_parent_of_property_key(self) -> bool {
         matches!(
             self,
             Self::ObjectPropertyKey(_)
@@ -1905,7 +1905,7 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_via_expression(self) -> bool {
+    pub fn is_parent_of_expression(self) -> bool {
         matches!(
             self,
             Self::ObjectPropertyValue(_)
@@ -1970,17 +1970,17 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_via_argument(self) -> bool {
+    pub fn is_parent_of_argument(self) -> bool {
         matches!(self, Self::CallExpressionArguments(_) | Self::NewExpressionArguments(_))
     }
 
     #[inline]
-    pub fn is_via_simple_assignment_target(self) -> bool {
+    pub fn is_parent_of_simple_assignment_target(self) -> bool {
         matches!(self, Self::UpdateExpressionArgument(_))
     }
 
     #[inline]
-    pub fn is_via_assignment_target(self) -> bool {
+    pub fn is_parent_of_assignment_target(self) -> bool {
         matches!(
             self,
             Self::AssignmentExpressionLeft(_)
@@ -1990,7 +1990,7 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_via_assignment_target_maybe_default(self) -> bool {
+    pub fn is_parent_of_assignment_target_maybe_default(self) -> bool {
         matches!(
             self,
             Self::ArrayAssignmentTargetElements(_)
@@ -1999,42 +1999,42 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_via_assignment_target_property(self) -> bool {
+    pub fn is_parent_of_assignment_target_property(self) -> bool {
         matches!(self, Self::ObjectAssignmentTargetProperties(_))
     }
 
     #[inline]
-    pub fn is_via_chain_element(self) -> bool {
+    pub fn is_parent_of_chain_element(self) -> bool {
         matches!(self, Self::ChainExpressionExpression(_))
     }
 
     #[inline]
-    pub fn is_via_for_statement_init(self) -> bool {
+    pub fn is_parent_of_for_statement_init(self) -> bool {
         matches!(self, Self::ForStatementInit(_))
     }
 
     #[inline]
-    pub fn is_via_for_statement_left(self) -> bool {
+    pub fn is_parent_of_for_statement_left(self) -> bool {
         matches!(self, Self::ForInStatementLeft(_) | Self::ForOfStatementLeft(_))
     }
 
     #[inline]
-    pub fn is_via_binding_pattern_kind(self) -> bool {
+    pub fn is_parent_of_binding_pattern_kind(self) -> bool {
         matches!(self, Self::BindingPatternKind(_))
     }
 
     #[inline]
-    pub fn is_via_class_element(self) -> bool {
+    pub fn is_parent_of_class_element(self) -> bool {
         matches!(self, Self::ClassBodyBody(_))
     }
 
     #[inline]
-    pub fn is_via_import_declaration_specifier(self) -> bool {
+    pub fn is_parent_of_import_declaration_specifier(self) -> bool {
         matches!(self, Self::ImportDeclarationSpecifiers(_))
     }
 
     #[inline]
-    pub fn is_via_module_export_name(self) -> bool {
+    pub fn is_parent_of_module_export_name(self) -> bool {
         matches!(
             self,
             Self::ImportSpecifierImported(_)
@@ -2046,62 +2046,62 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_via_import_attribute_key(self) -> bool {
+    pub fn is_parent_of_import_attribute_key(self) -> bool {
         matches!(self, Self::ImportAttributeKey(_))
     }
 
     #[inline]
-    pub fn is_via_declaration(self) -> bool {
+    pub fn is_parent_of_declaration(self) -> bool {
         matches!(self, Self::ExportNamedDeclarationDeclaration(_))
     }
 
     #[inline]
-    pub fn is_via_export_default_declaration_kind(self) -> bool {
+    pub fn is_parent_of_export_default_declaration_kind(self) -> bool {
         matches!(self, Self::ExportDefaultDeclarationDeclaration(_))
     }
 
     #[inline]
-    pub fn is_via_jsx_child(self) -> bool {
+    pub fn is_parent_of_jsx_child(self) -> bool {
         matches!(self, Self::JSXElementChildren(_) | Self::JSXFragmentChildren(_))
     }
 
     #[inline]
-    pub fn is_via_jsx_element_name(self) -> bool {
+    pub fn is_parent_of_jsx_element_name(self) -> bool {
         matches!(self, Self::JSXOpeningElementName(_) | Self::JSXClosingElementName(_))
     }
 
     #[inline]
-    pub fn is_via_jsx_attribute_item(self) -> bool {
+    pub fn is_parent_of_jsx_attribute_item(self) -> bool {
         matches!(self, Self::JSXOpeningElementAttributes(_))
     }
 
     #[inline]
-    pub fn is_via_jsx_member_expression_object(self) -> bool {
+    pub fn is_parent_of_jsx_member_expression_object(self) -> bool {
         matches!(self, Self::JSXMemberExpressionObject(_))
     }
 
     #[inline]
-    pub fn is_via_jsx_expression(self) -> bool {
+    pub fn is_parent_of_jsx_expression(self) -> bool {
         matches!(self, Self::JSXExpressionContainerExpression(_))
     }
 
     #[inline]
-    pub fn is_via_jsx_attribute_name(self) -> bool {
+    pub fn is_parent_of_jsx_attribute_name(self) -> bool {
         matches!(self, Self::JSXAttributeName(_))
     }
 
     #[inline]
-    pub fn is_via_jsx_attribute_value(self) -> bool {
+    pub fn is_parent_of_jsx_attribute_value(self) -> bool {
         matches!(self, Self::JSXAttributeValue(_))
     }
 
     #[inline]
-    pub fn is_via_ts_enum_member_name(self) -> bool {
+    pub fn is_parent_of_ts_enum_member_name(self) -> bool {
         matches!(self, Self::TSEnumMemberId(_))
     }
 
     #[inline]
-    pub fn is_via_ts_type(self) -> bool {
+    pub fn is_parent_of_ts_type(self) -> bool {
         matches!(
             self,
             Self::TSTypeAnnotationTypeAnnotation(_)
@@ -2135,17 +2135,17 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_via_ts_literal(self) -> bool {
+    pub fn is_parent_of_ts_literal(self) -> bool {
         matches!(self, Self::TSLiteralTypeLiteral(_))
     }
 
     #[inline]
-    pub fn is_via_ts_tuple_element(self) -> bool {
+    pub fn is_parent_of_ts_tuple_element(self) -> bool {
         matches!(self, Self::TSTupleTypeElementTypes(_) | Self::TSNamedTupleMemberElementType(_))
     }
 
     #[inline]
-    pub fn is_via_ts_type_name(self) -> bool {
+    pub fn is_parent_of_ts_type_name(self) -> bool {
         matches!(
             self,
             Self::TSTypeReferenceTypeName(_)
@@ -2156,37 +2156,37 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_via_ts_signature(self) -> bool {
+    pub fn is_parent_of_ts_signature(self) -> bool {
         matches!(self, Self::TSInterfaceBodyBody(_) | Self::TSTypeLiteralMembers(_))
     }
 
     #[inline]
-    pub fn is_via_ts_type_predicate_name(self) -> bool {
+    pub fn is_parent_of_ts_type_predicate_name(self) -> bool {
         matches!(self, Self::TSTypePredicateParameterName(_))
     }
 
     #[inline]
-    pub fn is_via_ts_module_declaration_name(self) -> bool {
+    pub fn is_parent_of_ts_module_declaration_name(self) -> bool {
         matches!(self, Self::TSModuleDeclarationId(_))
     }
 
     #[inline]
-    pub fn is_via_ts_module_declaration_body(self) -> bool {
+    pub fn is_parent_of_ts_module_declaration_body(self) -> bool {
         matches!(self, Self::TSModuleDeclarationBody(_))
     }
 
     #[inline]
-    pub fn is_via_ts_type_query_expr_name(self) -> bool {
+    pub fn is_parent_of_ts_type_query_expr_name(self) -> bool {
         matches!(self, Self::TSTypeQueryExprName(_))
     }
 
     #[inline]
-    pub fn is_via_ts_import_attribute_name(self) -> bool {
+    pub fn is_parent_of_ts_import_attribute_name(self) -> bool {
         matches!(self, Self::TSImportAttributeName(_))
     }
 
     #[inline]
-    pub fn is_via_ts_module_reference(self) -> bool {
+    pub fn is_parent_of_ts_module_reference(self) -> bool {
         matches!(self, Self::TSImportEqualsDeclarationModuleReference(_))
     }
 }
@@ -4455,6 +4455,8 @@ pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NAME: usize =
     offset_of!(AssignmentTargetPropertyProperty, name);
 pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_BINDING: usize =
     offset_of!(AssignmentTargetPropertyProperty, binding);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED: usize =
+    offset_of!(AssignmentTargetPropertyProperty, computed);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -4477,6 +4479,14 @@ impl<'a, 't> AssignmentTargetPropertyPropertyWithoutName<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_BINDING)
                 as *const AssignmentTargetMaybeDefault<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED)
+                as *const bool)
         }
     }
 }
@@ -4509,6 +4519,14 @@ impl<'a, 't> AssignmentTargetPropertyPropertyWithoutBinding<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NAME)
                 as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED)
+                as *const bool)
         }
     }
 }

@@ -415,9 +415,11 @@ fn test() {
         "status_code > 500 && foo() && bar || status_code < 400;",
         // oxc specific
         "a < b",
+        "a.b.c < b.b.c",
         "a <= b",
         "a > b",
         "a >= b",
+        "class Foo { #a; #b; constructor() { this.#a = 1; }; test() { return this.#a > this.#b } }",
     ];
 
     let fail = vec![
@@ -500,10 +502,12 @@ fn test() {
         "a <= a",
         "a > a",
         "a >= a",
+        "a.b.c >= a.b.c",
         "a == b && a == b",
         "a == b || a == b",
         "!foo && !foo",
         "!foo || !foo",
+        "class Foo { #a; #b; constructor() { this.#a = 1; }; test() { return this.#a > this.#a } }",
     ];
 
     Tester::new(ConstComparisons::NAME, ConstComparisons::CATEGORY, pass, fail).test_and_snapshot();

@@ -1,0 +1,87 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/parameters.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "BlockStatement",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "BlockStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(BlockScopedVariable | CatchVariable)",
+                "id": 2,
+                "name": "a",
+                "node": "CatchParameter",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Read)",
+                    "id": 1,
+                    "name": "a",
+                    "node_id": 22
+                  }
+                ]
+              },
+              {
+                "flags": "SymbolFlags(BlockScopedVariable | CatchVariable)",
+                "id": 3,
+                "name": "b",
+                "node": "CatchParameter",
+                "references": []
+              },
+              {
+                "flags": "SymbolFlags(BlockScopedVariable)",
+                "id": 4,
+                "name": "A",
+                "node": "VariableDeclarator(A)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode | CatchClause)",
+        "id": 2,
+        "node": "CatchClause",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "a",
+        "node": "VariableDeclarator(a)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 1,
+        "name": "A",
+        "node": "VariableDeclarator(A)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 0,
+            "name": "A",
+            "node_id": 17
+          }
+        ]
+      }
+    ]
+  }
+]

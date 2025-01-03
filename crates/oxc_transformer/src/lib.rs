@@ -262,10 +262,12 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.enter_static_block(block, ctx);
+        self.x2_es2022.enter_static_block(block, ctx);
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.exit_static_block(block, ctx);
+        self.x2_es2022.exit_static_block(block, ctx);
     }
 
     fn enter_ts_module_declaration(
@@ -294,6 +296,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_jsx.exit_expression(expr, ctx);
+        self.x2_es2022.exit_expression(expr, ctx);
         self.x2_es2018.exit_expression(expr, ctx);
         self.x2_es2017.exit_expression(expr, ctx);
         self.common.exit_expression(expr, ctx);
@@ -438,6 +441,15 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_property_definition(def, ctx);
         }
+        self.x2_es2022.enter_property_definition(def, ctx);
+    }
+
+    fn exit_property_definition(
+        &mut self,
+        def: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x2_es2022.exit_property_definition(def, ctx);
     }
 
     fn enter_accessor_property(
@@ -470,18 +482,30 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         // which can cause issues with the `() => x;` case, as it only allows a single statement.
         // To address this, we wrap the last statement in a return statement and set the expression to false.
         // This transforms the arrow function into the form `() => { return x; };`.
-        if arrow.expression && arrow.body.statements.len() > 1 {
-            let Statement::ExpressionStatement(statement) = arrow.body.statements.pop().unwrap()
-            else {
-                unreachable!(
-                    "The last statement in an ArrowFunctionExpression should always be an ExpressionStatement."
-                )
-            };
-            arrow
-                .body
-                .statements
-                .push(ctx.ast.statement_return(SPAN, Some(statement.unbox().expression)));
+        let statements = &mut arrow.body.statements;
+        if arrow.expression && statements.len() > 1 {
             arrow.expression = false;
+
+            // Reverse looping to find the expression statement, because other plugins could
+            // insert new statements after the expression statement.
+            // `() => x;`
+            // ->
+            // ```
+            // () => {
+            //    var new_insert_variable;
+            //    return x;
+            //    function new_insert_function() {}
+            // };
+            // ```
+            for stmt in statements.iter_mut().rev() {
+                let Statement::ExpressionStatement(expr_stmt) = stmt else {
+                    continue;
+                };
+                let expression = Some(ctx.ast.move_expression(&mut expr_stmt.expression));
+                *stmt = ctx.ast.statement_return(SPAN, expression);
+                return;
+            }
+            unreachable!("At least one statement should be expression statement")
         }
     }
 
@@ -518,7 +542,6 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statement(stmt, ctx);
         }
-        self.x2_es2022.enter_statement(stmt, ctx);
         self.x2_es2018.enter_statement(stmt, ctx);
     }
 

@@ -106,7 +106,8 @@ pub struct TransformOptions {
     pub typescript: Option<TypeScriptOptions>,
 
     /// Configure how TSX and JSX are transformed.
-    pub jsx: Option<JsxOptions>,
+    #[napi(ts_type = "'preserve' | JsxOptions")]
+    pub jsx: Option<Either<String, JsxOptions>>,
 
     /// Sets the target environment for the generated JavaScript.
     ///
@@ -150,7 +151,17 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 .typescript
                 .map(oxc::transformer::TypeScriptOptions::from)
                 .unwrap_or_default(),
-            jsx: options.jsx.map(Into::into).unwrap_or_default(),
+            jsx: match options.jsx {
+                Some(Either::A(s)) => {
+                    if s == "preserve" {
+                        oxc::transformer::JsxOptions::disable()
+                    } else {
+                        return Err(format!("Invalid jsx option: `{s}`."));
+                    }
+                }
+                Some(Either::B(options)) => oxc::transformer::JsxOptions::from(options),
+                None => oxc::transformer::JsxOptions::enable(),
+            },
             env,
             helper_loader: options
                 .helpers

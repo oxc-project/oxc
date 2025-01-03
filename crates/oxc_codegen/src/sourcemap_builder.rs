@@ -11,6 +11,9 @@ const LS_OR_PS_SECOND: u8 = 0x80;
 const LS_THIRD: u8 = 0xA8;
 const PS_THIRD: u8 = 0xA9;
 
+/// Number of lines to check with linear search when translating byte position to line index
+const LINE_SEARCH_LINEAR_ITERATIONS: usize = 16;
+
 /// Index into vec of `ColumnOffsets`
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ColumnOffsetsId(NonMaxU32);
@@ -71,6 +74,10 @@ pub struct SourcemapBuilder {
     sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
     generated_column: u32,
+    /// Tracks the last accessed line index to optimize sequential lookups in `search_original_line_and_column`.
+    /// Most calls to this method access positions in increasing order (e.g., when mapping source tokens linearly),
+    /// so we can avoid unnecessary binary searches by advancing linearly from this cached index.
+    last_line_lookup: u32,
 }
 
 impl SourcemapBuilder {
@@ -88,6 +95,7 @@ impl SourcemapBuilder {
             sourcemap_builder,
             generated_line: 0,
             generated_column: 0,
+            last_line_lookup: 0,
         }
     }
 
@@ -129,13 +137,13 @@ impl SourcemapBuilder {
         self.last_position = Some(position);
     }
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     fn search_original_line_and_column(&mut self, position: u32) -> (u32, u32) {
-        let result = self
-            .line_offset_tables
-            .lines
-            .partition_point(|table| table.byte_offset_to_start_of_line <= position);
-        let original_line = if result > 0 { result - 1 } else { 0 };
+        let original_line = self.search_original_line(position);
+
+        // Store line index as starting point for next search
+        self.last_line_lookup = original_line as u32;
+
         let line = &self.line_offset_tables.lines[original_line];
         let mut original_column = position - line.byte_offset_to_start_of_line;
         if let Some(column_offsets_id) = line.column_offsets_id {
@@ -146,6 +154,98 @@ impl SourcemapBuilder {
             }
         }
         (original_line as u32, original_column)
+    }
+
+    /// Find line index for byte index `position`, using line offset table.
+    ///
+    /// Usually output code is roughly in same order as it was in original source,
+    /// so line will be close to the line found in last call to this function.
+    ///
+    /// So do fast linear search first over a few lines, and fallback to slower binary search
+    /// if this doesn't find the line.
+    fn search_original_line(&self, position: u32) -> usize {
+        let lines = &self.line_offset_tables.lines;
+        let idx = self.last_line_lookup as usize;
+
+        if position >= lines[idx].byte_offset_to_start_of_line {
+            self.search_original_line_forwards(position)
+        } else {
+            self.search_original_line_backwards(position)
+        }
+    }
+
+    /// Find line index for byte index `position`, starting search at `last_line_lookup`,
+    /// and working forwards.
+    ///
+    /// Search forwards, looking for first line which starts *after* `position`.
+    /// `position` then must be on the line before that one.
+    fn search_original_line_forwards(&self, position: u32) -> usize {
+        let lines = &self.line_offset_tables.lines;
+        let last_idx = self.last_line_lookup as usize;
+
+        let start_idx = last_idx + 1;
+        let end_idx = start_idx + LINE_SEARCH_LINEAR_ITERATIONS;
+
+        // We have a fast path for when there are more than `LINE_SEARCH_LINEAR_ITERATIONS` lines
+        // to search (common case unless file is very short).
+        // Fast path is do linear search on first `LINE_SEARCH_LINEAR_ITERATIONS` lines,
+        // then fallback to binary search over remaining lines.
+        // If less than `LINE_SEARCH_LINEAR_ITERATIONS` lines to search, just do linear search,
+        // but that's slower as number of lines being searched is not constant, so loop cannot be unrolled.
+        if end_idx > lines.len() {
+            // Less than `LINE_SEARCH_LINEAR_ITERATIONS` lines to search. Take slow path.
+            // Unless file is very short, this branch is rarely taken.
+            return self.search_original_line_forwards_when_few_lines(position);
+        }
+
+        // Linear search for `LINE_SEARCH_LINEAR_ITERATIONS` lines.
+        // Compiler should unroll this loop as it has constant number of iterations.
+        // https://godbolt.org/z/heh1cnYa4
+        for (line_idx, line) in lines[start_idx..end_idx].iter().enumerate() {
+            if line.byte_offset_to_start_of_line > position {
+                // This line starts after `position`. `position` must be on previous line.
+                return start_idx + line_idx - 1;
+            }
+        }
+
+        // Line not found yet. Binary search over remaining lines.
+        lines[end_idx..].partition_point(|line| line.byte_offset_to_start_of_line <= position)
+            + end_idx
+            - 1
+    }
+
+    #[cold]
+    fn search_original_line_forwards_when_few_lines(&self, position: u32) -> usize {
+        let lines = &self.line_offset_tables.lines;
+        let last_idx = self.last_line_lookup as usize;
+        let start_idx = last_idx + 1;
+
+        for (line_idx, line) in lines[start_idx..].iter().enumerate() {
+            if line.byte_offset_to_start_of_line > position {
+                // This line starts after `position`. `position` must be on previous line.
+                return start_idx + line_idx - 1;
+            }
+        }
+
+        // No line starts after `position`. `position` must be on last line.
+        lines.len() - 1
+    }
+
+    fn search_original_line_backwards(&self, position: u32) -> usize {
+        let lines = &self.line_offset_tables.lines;
+        let mut idx = self.last_line_lookup as usize;
+
+        while lines[idx].byte_offset_to_start_of_line > position {
+            idx -= 1;
+        }
+
+        if lines[idx].byte_offset_to_start_of_line < position {
+            idx = lines
+                .partition_point(|table| table.byte_offset_to_start_of_line <= position)
+                .saturating_sub(1);
+        }
+
+        idx
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -462,5 +562,53 @@ mod test {
         builder.add_source_mapping(output, 0, None);
         let sm = builder.into_sourcemap();
         assert_eq!(sm.get_tokens().count(), 2);
+    }
+
+    static SOURCE: &str = "a\nbc\ndef";
+    static MAPPINGS: &[(u32, u32)] = &[
+        (0, 0), // 'a'
+        (0, 1), // '\n'
+        (1, 0), // 'b'
+        (1, 1), // 'c'
+        (1, 2), // '\n'
+        (2, 0), // 'd'
+        (2, 1), // 'e'
+        (2, 2), // 'f'
+        (2, 3), // EOF
+    ];
+
+    #[test]
+    fn test_search_original_line_and_column_sequential() {
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), SOURCE);
+
+        #[expect(clippy::cast_possible_truncation)]
+        for (pos, (expected_line, expected_col)) in MAPPINGS.iter().copied().enumerate() {
+            let (line, col) = builder.search_original_line_and_column(pos as u32);
+            assert_eq!((line, col), (expected_line, expected_col), "Mismatch at position {pos}");
+        }
+    }
+
+    #[test]
+    fn test_search_original_line_and_column_reverse_sequential() {
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), SOURCE);
+
+        #[expect(clippy::cast_possible_truncation)]
+        for (pos, (expected_line, expected_col)) in MAPPINGS.iter().copied().enumerate().rev() {
+            let (line, col) = builder.search_original_line_and_column(pos as u32);
+            assert_eq!((line, col), (expected_line, expected_col), "Mismatch at position {pos}");
+        }
+    }
+
+    #[test]
+    fn test_search_original_line_and_column_non_sequential() {
+        let mut builder = SourcemapBuilder::new(Path::new("x.js"), SOURCE);
+
+        let indexes = [8, 0, 7, 1, 6, 2, 5, 3, 4];
+
+        for pos in indexes {
+            let (expected_line, expected_col) = MAPPINGS[pos as usize];
+            let (line, col) = builder.search_original_line_and_column(pos);
+            assert_eq!((line, col), (expected_line, expected_col), "Mismatch at position {pos}");
+        }
     }
 }

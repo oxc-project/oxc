@@ -140,6 +140,10 @@ impl Rule for NoEmptyObjectType {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 fn check_interface_declaration(

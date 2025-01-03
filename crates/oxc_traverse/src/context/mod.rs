@@ -188,6 +188,14 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.current_hoist_scope_id()
     }
 
+    /// Get current block scope ID.
+    ///
+    /// Shortcut for `ctx.scoping.current_block_scope_id`.
+    #[inline]
+    pub fn current_block_scope_id(&self) -> ScopeId {
+        self.scoping.current_block_scope_id()
+    }
+
     /// Get current scope flags.
     ///
     /// Shortcut for `ctx.scoping.current_scope_flags`.
@@ -358,7 +366,7 @@ impl<'a> TraverseCtx<'a> {
         // Get name for UID
         let name = self.generate_uid_name(name);
         let name_atom = self.ast.atom(&name);
-        let symbol_id = self.scoping.add_binding(name, scope_id, flags);
+        let symbol_id = self.scoping.add_binding(&name, scope_id, flags);
         BoundIdentifier::new(name_atom, symbol_id)
     }
 
@@ -480,11 +488,7 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// This is a shortcut for `ctx.scoping.create_unbound_reference`.
     #[inline]
-    pub fn create_unbound_reference(
-        &mut self,
-        name: CompactStr,
-        flags: ReferenceFlags,
-    ) -> ReferenceId {
+    pub fn create_unbound_reference(&mut self, name: &str, flags: ReferenceFlags) -> ReferenceId {
         self.scoping.create_unbound_reference(name, flags)
     }
 
@@ -495,7 +499,7 @@ impl<'a> TraverseCtx<'a> {
         name: Atom<'a>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_unbound_reference(name.to_compact_str(), flags);
+        let reference_id = self.create_unbound_reference(name.as_str(), flags);
         self.ast.identifier_reference_with_reference_id(span, name, reference_id)
     }
 
@@ -519,7 +523,7 @@ impl<'a> TraverseCtx<'a> {
     #[inline]
     pub fn create_reference(
         &mut self,
-        name: CompactStr,
+        name: &str,
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> ReferenceId {
@@ -568,7 +572,7 @@ impl<'a> TraverseCtx<'a> {
     #[inline]
     pub fn create_reference_in_current_scope(
         &mut self,
-        name: CompactStr,
+        name: &str,
         flags: ReferenceFlags,
     ) -> ReferenceId {
         self.scoping.create_reference_in_current_scope(name, flags)
@@ -658,5 +662,11 @@ impl<'a> TraverseCtx<'a> {
     #[inline]
     pub(crate) fn set_current_hoist_scope_id(&mut self, scope_id: ScopeId) {
         self.scoping.set_current_hoist_scope_id(scope_id);
+    }
+
+    /// Shortcut for `ctx.scoping.set_current_block_scope_id`, to make `walk_*` methods less verbose.
+    #[inline]
+    pub(crate) fn set_current_block_scope_id(&mut self, scope_id: ScopeId) {
+        self.scoping.set_current_block_scope_id(scope_id);
     }
 }

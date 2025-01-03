@@ -1,6 +1,7 @@
 //! Common code for JavaScript Syntax
 #![warn(missing_docs)]
 pub mod class;
+pub mod es_target;
 pub mod identifier;
 pub mod keyword;
 pub mod module_record;

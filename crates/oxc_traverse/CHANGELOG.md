@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+- ad2a620 ast: [**BREAKING**] Add missing `AssignmentTargetProperty::computed` (#8097) (Boshen)
+
+### Features
+
+- e632a7b transformer: Remove typescript symbols after transform (#8069) (Boshen)
+
+### Bug Fixes
+
+
+## [0.43.0] - 2024-12-21
+
+- de4c772 traverse: [**BREAKING**] Rename `Ancestor::is_via_*` methods to `is_parent_of_*` (#8031) (overlookmotel)
+
+- ed75e42 semantic: [**BREAKING**] Make SymbolTable fields `pub(crate)` instead of `pub` (#7999) (Boshen)
+
+### Features
+
+- 6b6444b traverse: Record current block scope (#8007) (overlookmotel)
+
+### Performance
+
+- 2736657 semantic: Allocate `UnresolvedReferences` in allocator (#8046) (Boshen)
+- 2e8872c semantic: Allocate child scope in allocator (#8045) (Boshen)
+- 414e828 semantic: Allocate symbol data in Allocator (#8012) (Boshen)
+- 7aebed0 semantic: Allocate `Bindings` in allocator (#8021) (Boshen)
+
+### Refactor
+
+- f1adf9f semantic: `ScopeTree::rename_binding` remove old binding first (#8020) (overlookmotel)
+
+## [0.42.0] - 2024-12-18
+
+### Features
+
+- 53e2bc0 traverse: Add `TraverseScoping::rename_symbol` method (#7871) (overlookmotel)
+
+### Refactor
+
+- 3858221 global: Sort imports (#7883) (overlookmotel)
+
+### Styling
+
+- 7fb9d47 rust: `cargo +nightly fmt` (#7877) (Boshen)
+
 ## [0.41.0] - 2024-12-13
 
 - fb325dc ast: [**BREAKING**] `span` field must be the first element (#7821) (Boshen)

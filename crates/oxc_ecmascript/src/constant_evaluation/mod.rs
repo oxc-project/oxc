@@ -1,7 +1,7 @@
 use std::{borrow::Cow, cmp::Ordering};
 
 use num_bigint::BigInt;
-use num_traits::Zero;
+use num_traits::{ToPrimitive, Zero};
 
 use oxc_ast::ast::*;
 
@@ -193,14 +193,22 @@ pub trait ConstantEvaluation<'a> {
             Expression::StringLiteral(lit) => {
                 Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
             }
+            Expression::StaticMemberExpression(e) => self.eval_static_member_expression(e),
             _ => None,
         }
     }
 
     fn eval_binary_expression(&self, e: &BinaryExpression<'a>) -> Option<ConstantValue<'a>> {
-        let left = &e.left;
-        let right = &e.right;
-        match e.operator {
+        self.eval_binary_operation(e.operator, &e.left, &e.right)
+    }
+
+    fn eval_binary_operation(
+        &self,
+        operator: BinaryOperator,
+        left: &Expression<'a>,
+        right: &Expression<'a>,
+    ) -> Option<ConstantValue<'a>> {
+        match operator {
             BinaryOperator::Addition => {
                 if left.may_have_side_effects() || right.may_have_side_effects() {
                     return None;
@@ -230,7 +238,7 @@ pub trait ConstantEvaluation<'a> {
             | BinaryOperator::Exponential => {
                 let lval = self.eval_to_number(left)?;
                 let rval = self.eval_to_number(right)?;
-                let val = match e.operator {
+                let val = match operator {
                     BinaryOperator::Subtraction => lval - rval,
                     BinaryOperator::Division => lval / rval,
                     BinaryOperator::Remainder => {
@@ -264,7 +272,7 @@ pub trait ConstantEvaluation<'a> {
                     let right_val_int = right_val as u32;
                     let bits = left_val.to_int_32();
 
-                    let result_val: f64 = match e.operator {
+                    let result_val: f64 = match operator {
                         BinaryOperator::ShiftLeft => f64::from(bits.wrapping_shl(right_val_int)),
                         BinaryOperator::ShiftRight => f64::from(bits.wrapping_shr(right_val_int)),
                         BinaryOperator::ShiftRightZeroFill => {
@@ -309,6 +317,52 @@ pub trait ConstantEvaluation<'a> {
                     ConstantValue::Boolean(false) => ConstantValue::Boolean(true),
                     _ => unreachable!(),
                 })
+            }
+            BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
+                if left.is_big_int_literal() && right.is_big_int_literal() {
+                    let left_bigint = self.get_side_free_bigint_value(left);
+                    let right_bigint = self.get_side_free_bigint_value(right);
+                    if let (Some(left_val), Some(right_val)) = (left_bigint, right_bigint) {
+                        let result_val: BigInt = match operator {
+                            BinaryOperator::BitwiseAnd => left_val & right_val,
+                            BinaryOperator::BitwiseOR => left_val | right_val,
+                            BinaryOperator::BitwiseXOR => left_val ^ right_val,
+                            _ => unreachable!(),
+                        };
+                        return Some(ConstantValue::BigInt(result_val));
+                    }
+                }
+                let left_num = self.get_side_free_number_value(left);
+                let right_num = self.get_side_free_number_value(right);
+                if let (Some(left_val), Some(right_val)) = (left_num, right_num) {
+                    let left_val_int = left_val.to_int_32();
+                    let right_val_int = right_val.to_int_32();
+
+                    let result_val: f64 = match operator {
+                        BinaryOperator::BitwiseAnd => f64::from(left_val_int & right_val_int),
+                        BinaryOperator::BitwiseOR => f64::from(left_val_int | right_val_int),
+                        BinaryOperator::BitwiseXOR => f64::from(left_val_int ^ right_val_int),
+                        _ => unreachable!(),
+                    };
+                    return Some(ConstantValue::Number(result_val));
+                }
+                None
+            }
+            BinaryOperator::Instanceof => {
+                if left.may_have_side_effects() {
+                    return None;
+                }
+                if let Some(right_ident) = right.get_identifier_reference() {
+                    let name = right_ident.name.as_str();
+                    if matches!(name, "Object" | "Number" | "Boolean" | "String")
+                        && self.is_global_reference(right_ident)
+                    {
+                        return Some(ConstantValue::Boolean(
+                            name == "Object" && ValueType::from(left).is_object(),
+                        ));
+                    }
+                }
+                None
             }
             _ => None,
         }
@@ -397,6 +451,31 @@ pub trait ConstantEvaluation<'a> {
                 }
             }
             UnaryOperator::Delete => None,
+        }
+    }
+
+    fn eval_static_member_expression(
+        &self,
+        expr: &StaticMemberExpression<'a>,
+    ) -> Option<ConstantValue<'a>> {
+        match expr.property.name.as_str() {
+            "length" => {
+                if let Some(ConstantValue::String(s)) = self.eval_expression(&expr.object) {
+                    // TODO(perf): no need to actually convert, only need the length
+                    Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
+                } else {
+                    if expr.object.may_have_side_effects() {
+                        return None;
+                    }
+
+                    if let Expression::ArrayExpression(arr) = &expr.object {
+                        Some(ConstantValue::Number(arr.elements.len().to_f64().unwrap()))
+                    } else {
+                        None
+                    }
+                }
+            }
+            _ => None,
         }
     }
 

@@ -23,22 +23,20 @@ fn bench_lexer(criterion: &mut Criterion) {
         .collect::<Vec<_>>();
 
     for file in files {
+        let id = BenchmarkId::from_parameter(&file.file_name);
+        let source_text = file.source_text.as_str();
         let source_type = SourceType::from_path(&file.file_name).unwrap();
-        group.bench_with_input(
-            BenchmarkId::from_parameter(&file.file_name),
-            &file.source_text,
-            |b, source_text| {
-                // Do not include initializing allocator in benchmark.
-                // User code would likely reuse the same allocator over and over to parse multiple files,
-                // so we do the same here.
-                let mut allocator = Allocator::default();
-                b.iter(|| {
-                    let mut lexer = Lexer::new_for_benchmarks(&allocator, source_text, source_type);
-                    while lexer.next_token().kind != Kind::Eof {}
-                    allocator.reset();
-                });
-            },
-        );
+        group.bench_function(id, |b| {
+            // Do not include initializing allocator in benchmark.
+            // User code would likely reuse the same allocator over and over to parse multiple files,
+            // so we do the same here.
+            let mut allocator = Allocator::default();
+            b.iter(|| {
+                let mut lexer = Lexer::new_for_benchmarks(&allocator, source_text, source_type);
+                while lexer.next_token().kind != Kind::Eof {}
+                allocator.reset();
+            });
+        });
     }
     group.finish();
 }

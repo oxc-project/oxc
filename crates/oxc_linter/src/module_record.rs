@@ -3,17 +3,14 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, OnceLock, RwLock},
 };
 
-use dashmap::DashMap;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::FxHashMap;
 
 use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, Span};
 pub use oxc_syntax::module_record::RequestedModule;
-
-type FxDashMap<K, V> = DashMap<K, V, FxBuildHasher>;
 
 /// ESM Module Record
 ///
@@ -49,7 +46,7 @@ pub struct ModuleRecord {
     ///
     /// Note that Oxc does not support cross-file analysis, so this map will be empty after
     /// [`ModuleRecord`] is created. You must link the module records yourself.
-    pub loaded_modules: FxDashMap<CompactStr, Arc<ModuleRecord>>,
+    pub loaded_modules: RwLock<FxHashMap<CompactStr, Arc<ModuleRecord>>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -81,7 +78,7 @@ pub struct ModuleRecord {
 
     /// Reexported bindings from `export * from 'specifier'`
     /// Keyed by resolved path
-    pub exported_bindings_from_star_export: FxDashMap<PathBuf, Vec<CompactStr>>,
+    exported_bindings_from_star_export: OnceLock<FxHashMap<PathBuf, Vec<CompactStr>>>,
 
     /// `export default name`
     ///         ^^^^^^^ span
@@ -93,8 +90,10 @@ impl fmt::Debug for ModuleRecord {
         // recursively formatting loaded modules can crash when the module graph is cyclic
         let loaded_modules = self
             .loaded_modules
+            .read()
+            .unwrap()
             .iter()
-            .map(|entry| (entry.key().to_string()))
+            .map(|(key, _)| (key.to_string()))
             .reduce(|acc, key| format!("{acc}, {key}"))
             .unwrap_or_default();
         let loaded_modules = format!("{{ {loaded_modules} }}");
@@ -157,6 +156,16 @@ impl<'a> From<&oxc_syntax::module_record::NameSpan<'a>> for NameSpan {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportEntry {
+    /// Span of the import statement.
+    ///
+    /// ## Examples
+    ///
+    /// ```ts
+    /// import { foo } from "mod";
+    /// ^^^^^^^^^^^^^^^^^^^^^^^^^
+    /// ```
+    pub statement_span: Span,
+
     /// String value of the ModuleSpecifier of the ImportDeclaration.
     ///
     /// ## Examples
@@ -213,6 +222,7 @@ pub struct ImportEntry {
 impl<'a> From<&oxc_syntax::module_record::ImportEntry<'a>> for ImportEntry {
     fn from(other: &oxc_syntax::module_record::ImportEntry<'a>) -> Self {
         Self {
+            statement_span: other.statement_span,
             module_request: NameSpan::from(&other.module_request),
             import_name: ImportImportName::from(&other.import_name),
             local_name: NameSpan::from(&other.local_name),
@@ -491,5 +501,38 @@ impl ModuleRecord {
                 .next(),
             ..ModuleRecord::default()
         }
+    }
+
+    pub(crate) fn exported_bindings_from_star_export(
+        &self,
+    ) -> &FxHashMap<PathBuf, Vec<CompactStr>> {
+        self.exported_bindings_from_star_export.get_or_init(|| {
+            let mut exported_bindings_from_star_export: FxHashMap<PathBuf, Vec<CompactStr>> =
+                FxHashMap::default();
+            let loaded_modules = self.loaded_modules.read().unwrap();
+            for export_entry in &self.star_export_entries {
+                let Some(module_request) = &export_entry.module_request else {
+                    continue;
+                };
+                let Some(remote_module_record) = loaded_modules.get(module_request.name()) else {
+                    continue;
+                };
+                // Append both remote `bindings` and `exported_bindings_from_star_export`
+                let remote_exported_bindings_from_star_export = remote_module_record
+                    .exported_bindings_from_star_export()
+                    .iter()
+                    .flat_map(|(_, value)| value.clone());
+                let remote_bindings = remote_module_record
+                    .exported_bindings
+                    .keys()
+                    .cloned()
+                    .chain(remote_exported_bindings_from_star_export);
+                exported_bindings_from_star_export
+                    .entry(remote_module_record.resolved_absolute_path.clone())
+                    .or_default()
+                    .extend(remote_bindings);
+            }
+            exported_bindings_from_star_export
+        })
     }
 }

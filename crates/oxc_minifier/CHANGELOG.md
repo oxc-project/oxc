@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+### Features
+
+- 5397fe9 minifier: Constant fold `undefined?.bar` -> `undefined` (#8075) (Boshen)
+- 1932f1e minifier: Fold `foo === undefined || foo === null` (#8063) (翠 / green)
+
+### Bug Fixes
+
+- b605baa minifier: Constant fold strings with tab char (#8096) (Boshen)
+
+### Refactor
+
+- 8b54d89 minifier: Remove parens must happen on enter (#8060) (Boshen)
+- 7cb84f3 minifier: Only minify on ast node exit (#8059) (Boshen)
+- 77d845a minifier: Fuse DCE AST passes (#8058) (Boshen)
+- 6123f5e minifier: Fold statements on exit (#8057) (Boshen)
+
+## [0.42.0] - 2024-12-18
+
+### Features
+
+- db9e93b mangler: Mangle top level variables (#7907) (翠 / green)
+- 075bd16 minifier: Fold bitwise operation (#7908) (翠 / green)
+
+### Bug Fixes
+
+- 4799471 minfier: Bigint bitwise operation only works with bigint (#7937) (Boshen)
+- de8a86e minifier: Incorrect minification in `try_fold_left_child_op` (#7949) (翠 / green)
+
+### Refactor
+
+- 3858221 global: Sort imports (#7883) (overlookmotel)
+- 1314c97 minifier: Expose dce as an API instead of an option (#7957) (Boshen)
+
+### Styling
+
+- 7fb9d47 rust: `cargo +nightly fmt` (#7877) (Boshen)
+
 ## [0.40.0] - 2024-12-10
 
 - ebc80f6 ast: [**BREAKING**] Change 'raw' from &str to Option<Atom> (#7547) (Song Gao)

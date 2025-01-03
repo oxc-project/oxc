@@ -46,7 +46,8 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
             .as_str(),
         );
         result.push_str("\"symbols\": ");
-        let bindings = scope_tree.get_bindings(scope_id);
+        let mut bindings = scope_tree.get_bindings(scope_id).iter().collect::<Vec<_>>();
+        bindings.sort_unstable_by_key(|&(_, symbol_id)| symbol_id);
         result.push('[');
         bindings.iter().enumerate().for_each(|(index, (name, &symbol_id))| {
             if index != 0 {
@@ -80,7 +81,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                         if index != 0 {
                             result.push(',');
                         }
-                        let reference = &semantic.symbols().references[reference_id];
+                        let reference = &semantic.symbols().get_reference(reference_id);
                         result.push('{');
                         result
                             .push_str(format!("\"flags\": \"{:?}\",", reference.flags()).as_str());

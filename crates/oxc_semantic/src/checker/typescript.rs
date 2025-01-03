@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use itertools::Itertools;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{ast::*, AstKind};
@@ -26,12 +27,11 @@ pub fn check_ts_type_parameter_declaration(
     }
 }
 /// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
-#[allow(clippy::needless_pass_by_value)]
 fn jsdoc_type_in_annotation(
     modifier: char,
     is_start: bool,
     span: Span,
-    suggested_type: Cow<str>,
+    suggested_type: &str,
 ) -> OxcDiagnostic {
     let (code, start_or_end) = if is_start { ("17020", "start") } else { ("17019", "end") };
 
@@ -58,13 +58,19 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
         span_with_illegal_modifier.shrink_right(1)
     };
 
+    let suggestion = &ctx.source_text[valid_type_span];
     let suggestion = if modifier == '?' {
-        Cow::Owned(format!("{} | null | undefined", &ctx.source_text[valid_type_span]))
+        Cow::Owned(format!("{suggestion} | null | undefined"))
     } else {
-        Cow::Borrowed(&ctx.source_text[valid_type_span])
+        Cow::Borrowed(suggestion)
     };
 
-    ctx.error(jsdoc_type_in_annotation(modifier, is_start, span_with_illegal_modifier, suggestion));
+    ctx.error(jsdoc_type_in_annotation(
+        modifier,
+        is_start,
+        span_with_illegal_modifier,
+        &suggestion,
+    ));
 }
 
 /// Initializers are not allowed in ambient contexts. ts(1039)
@@ -325,12 +331,49 @@ fn abstract_elem_in_concrete_class(is_property: bool, span: Span) -> OxcDiagnost
         .with_label(span)
 }
 
+fn constructor_implementation_missing(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Constructor implementation is missing.").with_label(span)
+}
+
+fn function_implementation_missing(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "Function implementation is missing or not immediately following the declaration.",
+    )
+    .with_label(span)
+}
+
 pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
     if !class.r#abstract {
         for elem in &class.body.body {
             if elem.is_abstract() {
                 let span = elem.property_key().map_or_else(|| elem.span(), GetSpan::span);
                 ctx.error(abstract_elem_in_concrete_class(elem.is_property(), span));
+            }
+        }
+    }
+
+    if !class.r#declare && !ctx.in_declare_scope() {
+        for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
+            if let Some(ClassElement::MethodDefinition(a)) = a {
+                if !a.r#type.is_abstract()
+                    && !a.optional
+                    && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
+                    && b.map_or(true, |b| match b {
+                        ClassElement::StaticBlock(_)
+                        | ClassElement::PropertyDefinition(_)
+                        | ClassElement::AccessorProperty(_)
+                        | ClassElement::TSIndexSignature(_) => true,
+                        ClassElement::MethodDefinition(b) => {
+                            b.key.static_name() != a.key.static_name()
+                        }
+                    })
+                {
+                    if a.kind.is_constructor() {
+                        ctx.error(constructor_implementation_missing(a.key.span()));
+                    } else {
+                        ctx.error(function_implementation_missing(a.key.span()));
+                    };
+                }
             }
         }
     }

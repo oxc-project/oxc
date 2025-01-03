@@ -1161,6 +1161,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentTargetPropertyProperty<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             name: CloneIn::clone_in(&self.name, allocator),
             binding: CloneIn::clone_in(&self.binding, allocator),
+            computed: CloneIn::clone_in(&self.computed, allocator),
         }
     }
 }

@@ -3,18 +3,8 @@ commit: d85767ab
 parser_typescript Summary:
 AST Parsed     : 6494/6503 (99.86%)
 Positive Passed: 6483/6503 (99.69%)
-Negative Passed: 1240/5747 (21.58%)
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration14.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration15.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration21.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration22.ts
+Negative Passed: 1275/5747 (22.19%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration25.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration8.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
@@ -339,8 +329,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classStaticP
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classTypeParametersInStatics.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classUsedBeforeInitializedVariables.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classWithMultipleBaseClasses.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/cloduleSplitAcrossFiles.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/cloduleStaticMembers.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/cloduleTest2.ts
@@ -491,7 +479,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashInYield
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashInsourcePropertyIsRelatableToTargetProperty.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashIntypeCheckInvocationExpression.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashIntypeCheckObjectCreationExpression.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashOnMethodSignatures.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashRegressionTest.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/dataViewConstructor.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileEmitDeclarationOnlyError1.ts
@@ -907,7 +894,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOver
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads40.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads41.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloads5.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionOverloadsOutOfOrder.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionParameterArityMismatch.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionSignatureAssignmentCompat1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionToFunctionWithPropError.ts
@@ -1090,7 +1076,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incompatible
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incompatibleExports2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incompatibleGenericTypes.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incompatibleTypes.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incorrectClassOverloadChain.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incorrectNumberOfTypeArgumentsDuringErrorReporting.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incorrectRecursiveMappedTypeConstraint.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/incrementOnTypeParameter.ts
@@ -1111,7 +1096,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/indexedAcces
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/indexedAccessRelation.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/indexedAccessWithFreshObjectLiteral.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/indexedAccessWithVariableElement.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/indexer2A.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/indexerConstraints.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/indirectDiscriminantAndExcessProperty.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/indirectSelfReference.ts
@@ -1394,7 +1378,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mismatchedEx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mismatchedGenericArguments1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingCommaInTemplateStringsArray.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingDomElements.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingFunctionImplementation.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingFunctionImplementation2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingMemberErrorHasShortPath.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingPropertiesOfClassExpression.ts
@@ -1660,7 +1643,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadingO
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadresolutionWithConstraintCheckingDeferred.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadsAndTypeArgumentArityErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadsInDifferentContainersDisagreeOnAmbient.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadsWithComputedNames.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadsWithProvisionalErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overridingPrivateStaticMembers.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overshifts.ts
@@ -1804,7 +1786,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveRes
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveTupleTypeInference.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeComparison2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeParameterConstraintReferenceLacksTypeArgs.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeRelations.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursivelyExpandingUnionNoStackoverflow.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/redefineArray.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reexportMissingDefault.ts
@@ -2356,7 +2337,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/c
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSingleLineDecl.ts
@@ -2523,7 +2503,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/p
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/initializerReferencingConstructorParameters.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/derivedTypeAccessesHiddenBaseCallViaSuperPropertyAccess.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/instanceMemberAssignsToClassPrototype.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionsWithPrivateOverloads.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionsWithPublicPrivateOverloads.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/staticMemberAssignsToConstructorFunctionMembers.ts
@@ -2662,7 +2641,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbo
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty36.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty39.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty42.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty43.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty44.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty46.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty47.ts
@@ -3723,28 +3701,17 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClass1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClass2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration10.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration12.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration13.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration14.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration15.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration18.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration21.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration22.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration24.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration25.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration8.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName10.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName4.ts
@@ -3756,7 +3723,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration7.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration3.d.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic1.ts
@@ -3948,7 +3914,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserUsingConstructorAsIdentifier.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parservoidInQualifiedName2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName10.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName12.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName13.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName14.ts
@@ -4827,6 +4792,94 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·          ────────────────
    ╰────
 
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration10.ts:2:4]
+ 1 │ class C {
+ 2 │    constructor();
+   ·    ───────────
+ 3 │    foo();
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration10.ts:3:4]
+ 2 │    constructor();
+ 3 │    foo();
+   ·    ───
+ 4 │ }
+   ╰────
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration11.ts:2:4]
+ 1 │ class C {
+ 2 │    constructor();
+   ·    ───────────
+ 3 │    foo() { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration13.ts:2:4]
+ 1 │ class C {
+ 2 │    foo();
+   ·    ───
+ 3 │    bar() { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration14.ts:2:4]
+ 1 │ class C {
+ 2 │    foo();
+   ·    ───
+ 3 │    constructor();
+   ╰────
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration14.ts:3:4]
+ 2 │    foo();
+ 3 │    constructor();
+   ·    ───────────
+ 4 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration15.ts:2:4]
+ 1 │ class C {
+ 2 │    foo();
+   ·    ───
+ 3 │    constructor() { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration21.ts:2:5]
+ 1 │ class C {
+ 2 │     0();
+   ·     ─
+ 3 │     1() { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration22.ts:2:5]
+ 1 │ class C {
+ 2 │     "foo"();
+   ·     ─────
+ 3 │     "bar"() { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration25.ts:6:5]
+ 5 │ class List<U> implements IList<U> {
+ 6 │     data(): U;
+   ·     ────
+ 7 │     next(): string;
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration25.ts:7:5]
+ 6 │     data(): U;
+ 7 │     next(): string;
+   ·     ────
+ 8 │ }
+   ╰────
+
   × TS(1248): A class member cannot have the 'const' keyword.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration26.ts:2:18]
  1 │ class C {
@@ -4844,6 +4897,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ 
    ╰────
   help: Try insert a semicolon here
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration8.ts:2:3]
+ 1 │ class C {
+ 2 │   constructor();
+   ·   ───────────
+ 3 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration9.ts:2:4]
+ 1 │ class C {
+ 2 │    foo();
+   ·    ───
+ 3 │ }
+   ╰────
 
   × TS(1248): A class member cannot have the 'const' keyword.
    ╭─[typescript/tests/cases/compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts:2:16]
@@ -4959,6 +5028,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  15 │     abstract notAllowed: string;
     ·              ──────────
  16 │     get concreteWithNoBody(): string;
+    ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:16:9]
+ 15 │     abstract notAllowed: string;
+ 16 │     get concreteWithNoBody(): string;
+    ·         ──────────────────
+ 17 │ }
     ╰────
 
   × Unexpected token
@@ -5986,6 +6063,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName.ts:3:5]
+ 2 │     foo(): string;
+ 3 │     foo(x): number;
+   ·     ───
+ 4 │     bar(x): any { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName2.ts:2:5]
+ 1 │ class C {
+ 2 │     foo(): string;
+   ·     ───
+ 3 │     bar(x): any { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName2.ts:4:5]
+ 3 │     bar(x): any { }
+ 4 │     foo(x): number;
+   ·     ───
+ 5 │ }
+   ╰────
+
   × Cannot assign to 'arguments' in strict mode
    ╭─[typescript/tests/cases/compiler/collisionArgumentsClassConstructor.ts:3:31]
  2 │ class c1 {
@@ -6971,6 +7072,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
      ·                      ─
  293 │     class interface { }
      ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/crashOnMethodSignatures.ts:2:5]
+ 1 │ class A {
+ 2 │     a(completed: () => any): void;
+   ·     ─
+ 3 │ }
+   ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/createArray.ts:1:19]
@@ -8145,6 +8254,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │   function f() {
    ╰────
 
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/functionOverloadsOutOfOrder.ts:6:13]
+ 5 │     }
+ 6 │     private foo(s: string): string;
+   ·             ───
+ 7 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/functionOverloadsOutOfOrder.ts:14:13]
+ 13 │     private foo(s: string): string;
+ 14 │     private foo(n: number): string;
+    ·             ───
+ 15 │ }
+    ╰────
+
   × Expected `,` but found `var`
    ╭─[typescript/tests/cases/compiler/functionTypesLackingReturnTypes.ts:6:1]
  5 │ // Error (no '=>')
@@ -8289,6 +8414,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ var x = tt;
    ╰────
 
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/incorrectClassOverloadChain.ts:3:5]
+ 2 │     foo(): string;
+ 3 │     foo(x): number;
+   ·     ───
+ 4 │     x = 1;
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/indexSignatureMustHaveTypeAnnotation.ts:4:16]
  3 │     [x]: string;
@@ -8360,6 +8493,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/compiler/indexWithoutParamType.ts:1:11]
  1 │ var y: { []; } // Error
    ·           ─
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/indexer2A.ts:4:5]
+ 3 │     // Decided to enforce a semicolon after declarations
+ 4 │     hasOwnProperty(objectId: number): boolean
+   ·     ──────────────
+ 5 │     [objectId: number]: IHeapObjectProperty[]
    ╰────
 
   × Unexpected token
@@ -9362,6 +9503,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     while( (a2 > 0) && a1
    ╰────
 
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:2:3]
+ 1 │ export class C1 {
+ 2 │   m(): void;
+   ·   ─
+ 3 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:7:3]
+ 6 │ export class C2 {
+ 7 │   m(): void;
+   ·   ─
+ 8 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:15:3]
+ 14 │   m(a, b);
+ 15 │   m(a);
+    ·   ─
+ 16 │ }
+    ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:21:10]
+ 20 │ class C4 {
+ 21 │   static m(a): void;
+    ·          ─
+ 22 │ }
+    ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:27:10]
+ 26 │   static m(a): void;
+ 27 │   static m(): void;
+    ·          ─
+ 28 │ }
+    ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:32:10]
+ 31 │ class C6 {
+ 32 │   static m(): void;
+    ·          ─
+ 33 │ }
+    ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:40:10]
+ 39 │   static m(a): void;
+ 40 │   static m(): void;
+    ·          ─
+ 41 │ }
+    ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/missingFunctionImplementation.ts:48:10]
+ 47 │   static m(a): void;
+ 48 │   static m(a, b): void;
+    ·          ─
+ 49 │ }
+    ╰────
+
   × The only valid meta property for new is new.target
    ╭─[typescript/tests/cases/compiler/misspelledNewMetaProperty.ts:1:16]
  1 │ function foo(){new.targ}
@@ -10215,6 +10420,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │   static test()
    ╰────
 
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:3:6]
+ 2 │ class Person {
+ 3 │     ["B"](a: number): string;
+   ·      ───
+ 4 │     ["A"](a: string|number): number | string {
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:14:6]
+ 13 │ class C {
+ 14 │     ["foo"](): void
+    ·      ─────
+ 15 │     ["bar"](): void;
+    ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:15:6]
+ 14 │     ["foo"](): void
+ 15 │     ["bar"](): void;
+    ·      ─────
+ 16 │     ["foo"]() {
+    ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/compiler/overloadsWithComputedNames.ts:52:6]
+ 51 │ class C3 {
+ 52 │     [1](): void;  // should error
+    ·      ─
+ 53 │     [2](): void;
+    ╰────
+
   × Identifier `fnOverload` has already been declared
    ╭─[typescript/tests/cases/compiler/overloadsWithinClasses.ts:3:12]
  2 │  
@@ -10602,6 +10839,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·  ─
    ╰────
 
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<>() { }
+   ·              ──
+ 3 │   constructor<> () { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:3:14]
+ 2 │   constructor<>() { }
+ 3 │   constructor<> () { }
+   ·              ──
+ 4 │   constructor <>() { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:4:15]
+ 3 │   constructor<> () { }
+ 4 │   constructor <>() { }
+   ·               ──
+ 5 │   constructor <> () { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:5:15]
+ 4 │   constructor <>() { }
+ 5 │   constructor <> () { }
+   ·               ──
+ 6 │   constructor< >() { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:6:14]
+ 5 │   constructor <> () { }
+ 6 │   constructor< >() { }
+   ·              ───
+ 7 │   constructor< > () { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:7:14]
+ 6 │   constructor< >() { }
+ 7 │   constructor< > () { }
+   ·              ───
+ 8 │   constructor < >() { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:8:15]
+ 7 │   constructor< > () { }
+ 8 │   constructor < >() { }
+   ·               ───
+ 9 │   constructor < > () { }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:9:15]
+  8 │   constructor < >() { }
+  9 │   constructor < > () { }
+    ·               ───
+ 10 │ }
+    ╰────
+
   × Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:14]
  1 │ class C {
@@ -10739,6 +11040,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·            ─┬─
    ·             ╰── It can not be redeclared here
  6 │  
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/compiler/recursiveTypeRelations.ts:8:5]
+ 7 │ class Query<A extends Attributes<keyof A>> {
+ 8 │     multiply<B extends Attributes<keyof B>>(x: B): Query<A & B>;
+   ·     ────────
+ 9 │ }
    ╰────
 
   × Identifier `e` has already been declared
@@ -13748,6 +14057,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  9 │ }
    ╰────
 
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts:46:5]
+ 45 │     abstract nom(): boolean;
+ 46 │     nom(x : number): boolean; // error -- use of modifier abstract must match on all overloads.
+    ·     ───
+ 47 │ }
+    ╰────
+
   × TS(1244): Abstract methods can only appear within an abstract class.
     ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts:50:14]
  49 │ class H { // error -- not declared abstract
@@ -13835,6 +14152,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·              ───
  3 │ }
    ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts:15:5]
+ 14 │     
+ 15 │     qux();
+    ·     ───
+ 16 │ }
+    ╰────
 
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts:2:14]
@@ -15196,6 +15521,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  12 │ };
     ╰────
 
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:3:12]
+ 2 │     foo();
+ 3 │     static foo(); // error
+   ·            ───
+ 4 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:8:5]
+ 7 │     static foo();
+ 8 │     foo(); // error    
+   ·     ───
+ 9 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:13:12]
+ 12 │     foo(x: T);
+ 13 │     static foo(x: number); // error
+    ·            ───
+ 14 │ }
+    ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:18:5]
+ 17 │     static foo(x: number);
+ 18 │     foo(x: T); // error    
+    ·     ───
+ 19 │ }
+    ╰────
+
   × Identifier `x` has already been declared
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/propertyAndAccessorWithSameName.ts:2:5]
  1 │ class C {
@@ -15512,6 +15869,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  8 │ const y = `\u{hello} ${ 100 } \xtraordinary ${ 200 } wonderful ${ 300 } \uworld`; // should error with NoSubstitutionTemplate
    ·                                                                        ────────
  9 │ const z = tag`\u{hello} \xtraordinary wonderful \uworld` // should work with Tagged NoSubstitutionTemplate
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/es6/Symbols/symbolProperty43.ts:3:6]
+ 2 │     [Symbol.iterator](x: string): string;
+ 3 │     [Symbol.iterator](x: number): number;
+   ·      ───────────────
+ 4 │ }
    ╰────
 
   × Line terminator not permitted before arrow
@@ -20186,11 +20551,131 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                 ╰── `,` expected
    ╰────
 
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration10.ts:2:4]
+ 1 │ class C {
+ 2 │    constructor();
+   ·    ───────────
+ 3 │    foo();
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration10.ts:3:4]
+ 2 │    constructor();
+ 3 │    foo();
+   ·    ───
+ 4 │ }
+   ╰────
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration11.ts:2:4]
+ 1 │ class C {
+ 2 │    constructor();
+   ·    ───────────
+ 3 │    foo() { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration13.ts:2:4]
+ 1 │ class C {
+ 2 │    foo();
+   ·    ───
+ 3 │    bar() { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration14.ts:2:4]
+ 1 │ class C {
+ 2 │    foo();
+   ·    ───
+ 3 │    constructor();
+   ╰────
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration14.ts:3:4]
+ 2 │    foo();
+ 3 │    constructor();
+   ·    ───────────
+ 4 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration15.ts:2:4]
+ 1 │ class C {
+ 2 │    foo();
+   ·    ───
+ 3 │    constructor() { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration21.ts:2:5]
+ 1 │ class C {
+ 2 │     0();
+   ·     ─
+ 3 │     1() { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration22.ts:2:5]
+ 1 │ class C {
+ 2 │     "foo"();
+   ·     ─────
+ 3 │     "bar"() { }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration25.ts:6:5]
+ 5 │ class List<U> implements IList<U> {
+ 6 │     data(): U;
+   ·     ────
+ 7 │     next(): string;
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration25.ts:7:5]
+ 6 │     data(): U;
+ 7 │     next(): string;
+   ·     ────
+ 8 │ }
+   ╰────
+
+  × Constructor implementation is missing.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration8.ts:2:3]
+ 1 │ class C {
+ 2 │   constructor();
+   ·   ───────────
+ 3 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration9.ts:2:4]
+ 1 │ class C {
+ 2 │    foo();
+   ·    ───
+ 3 │ }
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts:2:5]
+ 1 │ class C {
+ 2 │    [e]();
+   ·     ─
+ 3 │ }
+   ╰────
+
   × TS(1164): Computed property names are not allowed in enums.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName6.ts:2:4]
  1 │ enum E {
  2 │   [e] = 1
    ·    ─
+ 3 │ }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<>() { }
+   ·              ──
  3 │ }
    ╰────
 
@@ -20226,6 +20711,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │   public constructor;
    ·          ───────────
  4 │ }
+   ╰────
+
+  × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration9.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<T>() { }
+   ·              ───
+ 3 │ }
    ╰────
 
   × Unexpected token
@@ -22345,6 +22838,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName1.ts:1:15]
  1 │ var v = { [e] };
    ·               ─
+   ╰────
+
+  × Function implementation is missing or not immediately following the declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName11.ts:2:5]
+ 1 │ class C {
+ 2 │    [e]();
+   ·     ─
+ 3 │ }
    ╰────
 
   × TS(1164): Computed property names are not allowed in enums.

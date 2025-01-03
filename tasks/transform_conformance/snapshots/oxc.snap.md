@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 109/123
+Passed: 120/138
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -16,7 +16,21 @@ Passed: 109/123
 * regexp
 
 
-# babel-plugin-transform-class-properties (10/12)
+# babel-plugin-transform-class-properties (20/26)
+* private-field-resolve-to-method-in-computed-key/input.js
+x Output mismatch
+
+* static-block-this-and-class-name/input.js
+Symbol flags mismatch for "inner":
+after transform: SymbolId(8): SymbolFlags(BlockScopedVariable | Function)
+rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
+
+* static-super-assignment-target/input.js
+x Output mismatch
+
+* static-super-tagged-template/input.js
+x Output mismatch
+
 * typescript/optional-call/input.ts
 Symbol reference IDs mismatch for "X":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(16)]
@@ -117,7 +131,7 @@ Missing ReferenceId: "_Name"
 Missing ReferenceId: "Name"
 Missing ReferenceId: "Name"
 Bindings mismatch:
-after transform: ScopeId(0): ["Baq", "Bar", "Baz", "Foo", "Func", "Im", "Name", "Ok", "T"]
+after transform: ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok"]
 rebuilt        : ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok", "T"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
@@ -145,14 +159,14 @@ after transform: SymbolId(7) "Name"
 rebuilt        : SymbolId(5) "Name"
 
 * exports/type-and-non-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["ToastProps", "ToastViewport"]
-rebuilt        : ScopeId(0): ["ToastViewport"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 * redeclarations/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["A"]
+rebuilt        : ScopeId(0): ["A", "B", "T"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []

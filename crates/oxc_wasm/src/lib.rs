@@ -13,13 +13,14 @@ use oxc::{
     allocator::Allocator,
     ast::{ast::Program, Comment as OxcComment, CommentKind, Visit},
     codegen::{CodeGenerator, CodegenOptions},
-    minifier::{CompressOptions, Minifier, MinifierOptions},
+    minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
         dot::{DebugDot, DebugDotContext},
-        ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable,
+        ReferenceId, ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolFlags, SymbolTable,
     },
-    span::SourceType,
+    span::{SourceType, Span},
+    syntax::reference::Reference,
     transformer::{TransformOptions, Transformer},
 };
 use oxc_index::Idx;
@@ -51,7 +52,7 @@ pub struct Oxc {
     pub control_flow_graph: String,
 
     #[wasm_bindgen(readonly, skip_typescript)]
-    #[tsify(type = "SymbolTable")]
+    #[tsify(type = "any")]
     pub symbols: JsValue,
 
     #[wasm_bindgen(readonly, skip_typescript, js_name = "scopeText")]
@@ -239,7 +240,7 @@ impl Oxc {
                 self.scope_text = Self::get_scope_text(&program, &symbols, &scopes);
             }
             if run_options.symbol.unwrap_or_default() {
-                self.symbols = symbols.serialize(&self.serializer)?;
+                self.symbols = self.get_symbols_text(&symbols)?;
             }
         }
 
@@ -269,12 +270,12 @@ impl Oxc {
         {
             let compress_options = minifier_options.compress_options.unwrap_or_default();
             let options = MinifierOptions {
-                mangle: minifier_options.mangle.unwrap_or_default(),
+                mangle: minifier_options.mangle.unwrap_or_default().then(MangleOptions::default),
                 compress: if minifier_options.compress.unwrap_or_default() {
                     CompressOptions {
                         drop_console: compress_options.drop_console,
                         drop_debugger: compress_options.drop_debugger,
-                        ..CompressOptions::default()
+                        ..CompressOptions::all_false()
                     }
                 } else {
                     CompressOptions::all_false()
@@ -378,18 +379,19 @@ impl Oxc {
         }
 
         impl Visit<'_> for ScopesTextWriter<'_> {
-            fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+            fn enter_scope(&mut self, _: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
                 let scope_id = scope_id.get().unwrap();
+                let flags = self.scopes.get_flags(scope_id);
                 self.write_line(format!("Scope {} ({flags:?}) {{", scope_id.index()));
                 self.indent_in();
 
                 let bindings = self.scopes.get_bindings(scope_id);
                 if !bindings.is_empty() {
                     self.write_line("Bindings: {");
-                    bindings.iter().for_each(|(name, &symbol_id)| {
+                    for (name, &symbol_id) in bindings {
                         let symbol_flags = self.symbols.get_flags(symbol_id);
                         self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})",));
-                    });
+                    }
                     self.write_line("}");
                 }
             }
@@ -403,6 +405,43 @@ impl Oxc {
         let mut writer = ScopesTextWriter::new(symbols, scopes);
         writer.visit_program(program);
         writer.scope_text
+    }
+
+    fn get_symbols_text(
+        &self,
+        symbols: &SymbolTable,
+    ) -> Result<JsValue, serde_wasm_bindgen::Error> {
+        #[derive(Serialize)]
+        struct Data {
+            span: Span,
+            name: String,
+            flags: SymbolFlags,
+            scope_id: ScopeId,
+            resolved_references: Vec<ReferenceId>,
+            references: Vec<Reference>,
+        }
+
+        let data = symbols
+            .symbol_ids()
+            .map(|symbol_id| Data {
+                span: symbols.get_span(symbol_id),
+                name: symbols.get_name(symbol_id).into(),
+                flags: symbols.get_flags(symbol_id),
+                scope_id: symbols.get_scope_id(symbol_id),
+                resolved_references: symbols
+                    .get_resolved_reference_ids(symbol_id)
+                    .iter()
+                    .copied()
+                    .collect::<Vec<_>>(),
+                references: symbols
+                    .get_resolved_reference_ids(symbol_id)
+                    .iter()
+                    .map(|reference_id| symbols.get_reference(*reference_id).clone())
+                    .collect::<Vec<_>>(),
+            })
+            .collect::<Vec<_>>();
+
+        data.serialize(&self.serializer)
     }
 
     fn save_diagnostics(&self, diagnostics: Vec<oxc::diagnostics::OxcDiagnostic>) {

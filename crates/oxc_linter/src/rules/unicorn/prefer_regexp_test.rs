@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
@@ -147,11 +147,28 @@ impl Rule for PreferRegexpTest {
                     return;
                 }
             }
-            _ => unreachable!("match or test {:?}", name),
+            _ => unreachable!("expected match or test, got: {:?}", name),
         }
 
         ctx.diagnostic_with_fix(prefer_regexp_test_diagnostic(span), |fixer| {
-            fixer.replace(span, "test")
+            if name.as_str() == "exec" {
+                return fixer.replace(span, "test");
+            }
+            let mut fix = fixer.new_fix_with_capacity(3);
+
+            fix.push(fixer.replace(span, "test"));
+
+            fix.push(fixer.replace(
+                call_expr.arguments[0].span(),
+                fixer.source_range(member_expr.object().span()),
+            ));
+
+            fix.push(fixer.replace(
+                member_expr.object().span(),
+                fixer.source_range(call_expr.arguments[0].span()),
+            ));
+
+            fix
         });
     }
 }
@@ -242,27 +259,27 @@ fn test() {
     ];
 
     let fix = vec![
-        ("const re = /a/; const bar = !foo.match(re)", "const re = /a/; const bar = !foo.test(re)"),
+        ("const re = /a/; const bar = !foo.match(re)", "const re = /a/; const bar = !re.test(foo)"),
         (
             "const re = /a/; const bar = Boolean(foo.match(re))",
-            "const re = /a/; const bar = Boolean(foo.test(re))",
+            "const re = /a/; const bar = Boolean(re.test(foo))",
         ),
-        ("const re = /a/; if (foo.match(re)) {}", "const re = /a/; if (foo.test(re)) {}"),
+        ("const re = /a/; if (foo.match(re)) {}", "const re = /a/; if (re.test(foo)) {}"),
         (
             "const re = /a/; const bar = foo.match(re) ? 1 : 2",
-            "const re = /a/; const bar = foo.test(re) ? 1 : 2",
+            "const re = /a/; const bar = re.test(foo) ? 1 : 2",
         ),
         (
             "const re = /a/; while (foo.match(re)) foo = foo.slice(1);",
-            "const re = /a/; while (foo.test(re)) foo = foo.slice(1);",
+            "const re = /a/; while (re.test(foo)) foo = foo.slice(1);",
         ),
         (
             "const re = /a/; do {foo = foo.slice(1)} while (foo.match(re));",
-            "const re = /a/; do {foo = foo.slice(1)} while (foo.test(re));",
+            "const re = /a/; do {foo = foo.slice(1)} while (re.test(foo));",
         ),
         (
             "const re = /a/; for (; foo.match(re); ) foo = foo.slice(1);",
-            "const re = /a/; for (; foo.test(re); ) foo = foo.slice(1);",
+            "const re = /a/; for (; re.test(foo); ) foo = foo.slice(1);",
         ),
         ("const re = /a/; const bar = !re.exec(foo)", "const re = /a/; const bar = !re.test(foo)"),
         (
@@ -270,6 +287,7 @@ fn test() {
             "const re = /a/; const bar = Boolean(re.test(foo))",
         ),
         ("const re = /a/; if (re.exec(foo)) {}", "const re = /a/; if (re.test(foo)) {}"),
+        ("const re = /a/; if (someStr.match(re)) {}", "const re = /a/; if (re.test(someStr)) {}"),
     ];
 
     Tester::new(PreferRegexpTest::NAME, PreferRegexpTest::CATEGORY, pass, fail)
