@@ -330,7 +330,7 @@ fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
 
 fn get_delete_span_of_left(obj_expr: &Box<'_, ObjectExpression<'_>>, ctx: &LintContext) -> Span {
     let mut span_end = obj_expr.span.start;
-    for (i, c) in ctx.source_range(obj_expr.span).chars().enumerate() {
+    for (i, c) in ctx.source_range(obj_expr.span).char_indices() {
         if i != 0 && !c.is_whitespace() {
             break;
         }
