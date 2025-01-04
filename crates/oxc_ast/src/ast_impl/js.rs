@@ -72,6 +72,11 @@ impl<'a> Expression<'a> {
         matches!(self, Self::StringLiteral(_) | Self::TemplateLiteral(_))
     }
 
+    /// Return `true` if the expression is a plain template.
+    pub fn is_no_substitution_template(&self) -> bool {
+        matches!(self, Expression::TemplateLiteral(e) if e.is_no_substitution_template())
+    }
+
     /// Returns `true` for [numeric](NumericLiteral) and [big int](BigIntLiteral) literals.
     pub fn is_number_literal(&self) -> bool {
         matches!(self, Self::NumericLiteral(_) | Self::BigIntLiteral(_))

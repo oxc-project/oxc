@@ -84,7 +84,10 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         match expr {
             Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
             Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
-            Expression::BinaryExpression(e) => self.try_compress_type_of_equal_string(e),
+            Expression::BinaryExpression(e) => {
+                Self::swap_binary_expressions(e);
+                self.try_compress_type_of_equal_string(e);
+            }
             _ => {}
         }
 
@@ -112,6 +115,15 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     pub fn new(in_fixed_loop: bool) -> Self {
         Self { in_fixed_loop, in_define_export: false, changed: false }
+    }
+
+    fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
+        if e.operator.is_equality()
+            && (e.left.is_literal() || e.left.is_no_substitution_template())
+            && !e.right.is_literal()
+        {
+            std::mem::swap(&mut e.left, &mut e.right);
+        }
     }
 
     /// Test `Object.defineProperty(exports, ...)`
@@ -623,12 +635,6 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 
     /// `typeof foo === 'number'` -> `typeof foo == 'number'`
     fn try_compress_type_of_equal_string(&mut self, e: &mut BinaryExpression<'a>) {
-        // Change  `'undefined' == typeof _'` -> `typeof _ == 'undefined'`
-        if matches!(&e.right, Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_typeof())
-            && e.left.is_string_literal()
-        {
-            std::mem::swap(&mut e.left, &mut e.right);
-        }
         let op = match e.operator {
             BinaryOperator::StrictEquality => BinaryOperator::Equality,
             BinaryOperator::StrictInequality => BinaryOperator::Inequality,

@@ -748,10 +748,10 @@ mod test {
         test("null === undefined", "false");
         test("null === null", "true");
         test("null === void 0", "false");
-        test_same("null===x");
+        test_same("x===null");
 
-        test_same("null==this");
-        test_same("null==x");
+        test_same("this==null");
+        test_same("x==null");
 
         test("null != undefined", "false");
         test("null != null", "false");
@@ -769,8 +769,8 @@ mod test {
         test("null !== void 0", "true");
         test("null !== null", "false");
 
-        test_same("null!=this");
-        test_same("null!=x");
+        test_same("this!=null");
+        test_same("x!=null");
 
         test("null < null", "false");
         test("null > null", "false");
@@ -835,9 +835,7 @@ mod test {
         test("null != (function(){})", "true");
 
         test_same("({a:f()})==null");
-        test_same("null=={a:f()}");
         test_same("[f()]==null");
-        test_same("null==[f()]");
 
         test_same("this==null");
         test_same("x==null");
@@ -897,10 +895,7 @@ mod test {
         test("typeof function() {} < typeof function() {}", "false");
         test("'a' == 'a'", "true");
         test("'b' != 'a'", "true");
-        test_same("'undefined' == typeof a");
         test_same("typeof a != 'number'");
-        test_same("'undefined' == typeof a");
-        test_same("'undefined' == typeof a");
         test_same("typeof a == typeof a");
         test("'a' === 'a'", "true");
         test("'b' !== 'a'", "true");
@@ -1019,8 +1014,7 @@ mod test {
     #[test]
     fn test_object_bigint_comparison() {
         test_same("{ valueOf: function() { return 0n; } } != 0n");
-        test_same("0n != { valueOf: function() { return 0n; } }");
-        test_same("0n != { toString: function() { return '0'; } }");
+        test_same("{ toString: function() { return '0'; } } != 0n");
     }
 
     #[test]
