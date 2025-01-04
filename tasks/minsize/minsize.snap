@@ -23,5 +23,5 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 6.69 MB    | 2.32 MB    | 2.31 MB    | 492.86 kB  | 488.28 kB  | antd.js   
 
-10.95 MB   | 3.50 MB    | 3.49 MB    | 909.33 kB  | 915.50 kB  | typescript.js
+10.95 MB   | 3.50 MB    | 3.49 MB    | 909.32 kB  | 915.50 kB  | typescript.js
 

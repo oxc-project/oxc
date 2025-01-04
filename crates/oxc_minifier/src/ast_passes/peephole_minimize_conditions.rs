@@ -83,6 +83,15 @@ impl<'a> PeepholeMinimizeConditions {
         if !expr.operator.is_not() {
             return None;
         }
+        if let Expression::UnaryExpression(e1) = &mut expr.argument {
+            if e1.operator.is_not() {
+                if let Expression::UnaryExpression(e2) = &mut e1.argument {
+                    if e2.operator.is_not() {
+                        expr.argument = ctx.ast.move_expression(&mut e2.argument);
+                    }
+                }
+            }
+        }
         let Expression::BinaryExpression(binary_expr) = &mut expr.argument else { return None };
         let new_op = binary_expr.operator.equality_inverse_operator()?;
         binary_expr.operator = new_op;
@@ -345,7 +354,10 @@ impl<'a> PeepholeMinimizeConditions {
 
         // `!a ? b() : c()` -> `a ? c() : b()`
         if let Expression::UnaryExpression(test_expr) = &mut expr.test {
-            if test_expr.operator.is_not() {
+            if test_expr.operator.is_not()
+                // Skip `!!!a`
+                && !matches!(test_expr.argument, Expression::UnaryExpression(_))
+            {
                 let test = ctx.ast.move_expression(&mut test_expr.argument);
                 let consequent = ctx.ast.move_expression(&mut expr.consequent);
                 let alternate = ctx.ast.move_expression(&mut expr.alternate);
@@ -489,13 +501,12 @@ impl<'a> PeepholeMinimizeConditions {
         e: &mut BinaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        // let ctx = Ctx(ctx);
-        if !ValueType::from(&e.left).is_boolean() {
-            return None;
-        }
         let Expression::BooleanLiteral(b) = &mut e.right else {
             return None;
         };
+        if !ValueType::from(&e.left).is_boolean() {
+            return None;
+        }
         match e.operator {
             BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
                 e.operator = BinaryOperator::Equality;
@@ -504,7 +515,8 @@ impl<'a> PeepholeMinimizeConditions {
             BinaryOperator::StrictEquality => {
                 e.operator = BinaryOperator::Equality;
             }
-            _ => {}
+            BinaryOperator::Equality => {}
+            _ => return None,
         }
         Some(if b.value {
             ctx.ast.move_expression(&mut e.left)
@@ -808,6 +820,11 @@ mod test {
         fold("x = !(y() && true)", "x = !y()");
         // This will be further optimized by PeepholeFoldConstants.
         fold("x = !true", "x = !1");
+    }
+
+    #[test]
+    fn test_fold_triple_not() {
+        fold("!!!foo ? bar : baz", "foo ? baz : bar");
     }
 
     #[test]
