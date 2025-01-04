@@ -88,7 +88,7 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
 use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_ecmascript::PropName;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
@@ -590,10 +590,9 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                             // deopt if spreading an object with `__proto__` key
                             if !matches!(&spread.argument, Expression::ObjectExpression(o) if has_proto(o))
                             {
-                                arguments.push(Argument::from({
-                                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                                    unsafe { ctx.ast.copy(&spread.argument) }
-                                }));
+                                let arg = spread.argument.clone_in(ctx.ast.allocator);
+
+                                arguments.push(Argument::from(arg));
                                 continue;
                             }
                         }
@@ -601,12 +600,10 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                         // Add attribute to prop object
                         match &spread.argument {
                             Expression::ObjectExpression(expr) if !has_proto(expr) => {
-                                // SAFETY: `ast.copy` is unsound! We need to fix.
-                                properties.extend(unsafe { ctx.ast.copy(&expr.properties) });
+                                properties.extend(expr.properties.clone_in(ctx.ast.allocator));
                             }
                             expr => {
-                                // SAFETY: `ast.copy` is unsound! We need to fix.
-                                let argument = unsafe { ctx.ast.copy(expr) };
+                                let argument = expr.clone_in(ctx.ast.allocator);
                                 let object_property = ctx
                                     .ast
                                     .object_property_kind_spread_element(spread.span, argument);
@@ -874,8 +871,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             }
             Some(JSXAttributeValue::ExpressionContainer(c)) => match &c.expression {
                 e @ match_expression!(JSXExpression) => {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    unsafe { ctx.ast.copy(e.to_expression()) }
+                    e.to_expression().clone_in(ctx.ast.allocator)
                 }
                 JSXExpression::EmptyExpression(e) => {
                     ctx.ast.expression_boolean_literal(e.span, true)
@@ -894,8 +890,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
             JSXChild::Text(text) => Self::transform_jsx_text(text, ctx),
             JSXChild::ExpressionContainer(e) => match &e.expression {
                 e @ match_expression!(JSXExpression) => {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    Some(unsafe { ctx.ast.copy(e.to_expression()) })
+                    Some(e.to_expression().clone_in(ctx.ast.allocator))
                 }
                 JSXExpression::EmptyExpression(_) => None,
             },

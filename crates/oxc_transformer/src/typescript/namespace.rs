@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, CompactStr, SPAN};
@@ -56,15 +56,11 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptNamespace<'a, 'ctx> {
                             self.ctx.error(namespace_not_supported(decl.span));
                         }
 
-                        if let Some(transformed_stmt) = self.handle_nested(
-                            {
-                                // SAFETY: `ast.copy` is unsound! We need to fix.
-                                unsafe { ctx.ast.copy(&decl) }.unbox()
-                            },
-                            None,
-                            ctx,
-                        ) {
-                            let name = decl.id.name();
+                        let decl = decl.clone_in(ctx.ast.allocator);
+                        let name = decl.id.name();
+
+                        if let Some(transformed_stmt) = self.handle_nested(decl.unbox(), None, ctx)
+                        {
                             if names.insert(name.clone()) {
                                 new_stmts.push(Statement::from(Self::create_variable_declaration(
                                     name, ctx,
@@ -85,15 +81,12 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptNamespace<'a, 'ctx> {
                                     self.ctx.error(namespace_not_supported(decl.span));
                                 }
 
-                                if let Some(transformed_stmt) = self.handle_nested(
-                                    {
-                                        // SAFETY: `ast.copy` is unsound! We need to fix.
-                                        unsafe { ctx.ast.copy(decl) }
-                                    },
-                                    None,
-                                    ctx,
-                                ) {
-                                    let name = decl.id.name();
+                                let decl = decl.clone_in(ctx.ast.allocator);
+                                let name = decl.id.name();
+
+                                if let Some(transformed_stmt) =
+                                    self.handle_nested(decl.unbox(), None, ctx)
+                                {
                                     if names.insert(name.clone()) {
                                         let declaration =
                                             Self::create_variable_declaration(name, ctx);
@@ -358,8 +351,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
             // (_N.M = {}) or (N = {})
             let mut logical_right = {
                 // _N.M
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                let parent_export = unsafe { ctx.ast.copy(&parent_export) };
+                let parent_export = parent_export.clone_in(ctx.ast.allocator);
                 let assign_left = if let Some(parent_export) = parent_export {
                     AssignmentTarget::from(ctx.ast.member_expression_static(
                         SPAN,

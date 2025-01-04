@@ -101,17 +101,6 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    /// # SAFETY
-    /// This method is completely unsound and should not be used.
-    /// We need to remove all uses of it. Please don't add any more!
-    /// <https://github.com/oxc-project/oxc/issues/3483>
-    #[allow(clippy::missing_safety_doc)]
-    #[inline]
-    pub unsafe fn copy<T>(self, src: &T) -> T {
-        // SAFETY: Not safe (see above)
-        unsafe { std::mem::transmute_copy(src) }
-    }
-
     /// Moves the expression out by replacing it with an [`Expression::NullLiteral`].
     #[inline]
     pub fn move_expression(self, expr: &mut Expression<'a>) -> Expression<'a> {
