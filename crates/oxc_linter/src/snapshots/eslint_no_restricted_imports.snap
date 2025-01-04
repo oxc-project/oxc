@@ -598,6 +598,174 @@ snapshot_kind: text
   help: Remove the import statement.
 
   ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ import { Foo } from 'foo';
+   ·                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:28]
+ 1 │ import { Foo as Bar } from 'foo';
+   ·                            ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:26]
+ 1 │ import Foo, { Bar } from 'foo';
+   ·                          ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ import { Foo } from '../../my/relative-module';
+   ·                     ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:24]
+ 1 │ import { FooBar } from '../../my/relative-module';
+   ·                        ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:26]
+ 1 │ import Foo, { Bar } from '../../my/relative-module';
+   ·                          ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:26]
+ 1 │ import { Foo, Bar } from '../../my/relative-module';
+   ·                          ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:26]
+ 1 │ import { Foo, Bar } from '../../my/relative-module';
+   ·                          ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:22]
+ 1 │ import * as Foo from 'foo';
+   ·                      ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:22]
+ 1 │ import * as All from '../../my/relative-module';
+   ·                      ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Import from @/utils instead.
+   ╭─[no_restricted_imports.tsx:1:39]
+ 1 │ import * as AllWithCustomMessage from '../../my/relative-module';
+   ·                                       ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Import from @/utils instead.
+   ╭─[no_restricted_imports.tsx:1:39]
+ 1 │ import * as AllWithCustomMessage from '../../my/relative-module';
+   ·                                       ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ import { Foo } from '../../my/relative-module';
+   ·                     ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ import { Foo } from '../../my/relative-module';
+   ·                     ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ import { Foo } from '../../my/relative-module';
+   ·                     ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ import { Foo } from '../../my/relative-module';
+   ·                     ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:26]
+ 1 │ import { Foo, Bar } from '../../my/relative-module';
+   ·                          ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:26]
+ 1 │ import { Foo, Bar } from '../../my/relative-module';
+   ·                          ──────────────────────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ export { Foo } from 'foo';
+   ·                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:28]
+ 1 │ export { Foo as Bar } from 'foo';
+   ·                            ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ export { Foo } from 'foo';
+   ·                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:15]
+ 1 │ export * from 'foo';
+   ·               ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ export { Bar } from 'foo';
+   ·                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Only imports that match the pattern "/^Foo/u" are allowed to be imported from "foo".
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ export { Bar } from 'foo';
+   ·                     ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:49]
  1 │ import { AllowedObject, DisallowedObject } from "foo";
    ·                                                 ─────
@@ -650,6 +818,34 @@ snapshot_kind: text
    ╭─[no_restricted_imports.tsx:1:32]
  1 │ import * as AllowedObject from "foo/bar";
    ·                                ─────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:32]
+ 1 │ import * as AllowedObject from "foo/bar";
+   ·                                ─────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): Only import names starting with "Allow" are allowed to be imported from "foo".
+   ╭─[no_restricted_imports.tsx:1:32]
+ 1 │ import * as AllowedObject from "foo/bar";
+   ·                                ─────────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): foo is forbidden, use bar instead
+   ╭─[no_restricted_imports.tsx:1:39]
+ 1 │ import withPatternsCaseSensitive from 'FOO';
+   ·                                       ─────
+   ╰────
+  help: Remove the import statement.
+
+  ⚠ eslint(no-restricted-imports): '../../my/relative-module' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:21]
+ 1 │ import { Foo } from '../../my/relative-module';
+   ·                     ──────────────────────────
    ╰────
   help: Remove the import statement.
 
