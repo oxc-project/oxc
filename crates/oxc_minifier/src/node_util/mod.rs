@@ -31,6 +31,10 @@ impl<'a> Ctx<'a, '_> {
         self.0.symbols()
     }
 
+    pub fn eval_binary(self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
+        self.eval_binary_expression(e).map(|v| self.value_to_expr(e.span, v))
+    }
+
     pub fn value_to_expr(self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
         match value {
             ConstantValue::Number(n) => {

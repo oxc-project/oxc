@@ -244,53 +244,94 @@ impl<'a, 'b> PeepholeFoldConstants {
         }
     }
 
+    fn extract_numeric_values(e: &BinaryExpression<'a>) -> Option<(f64, f64)> {
+        if let (Expression::NumericLiteral(left), Expression::NumericLiteral(right)) =
+            (&e.left, &e.right)
+        {
+            return Some((left.value, right.value));
+        }
+        None
+    }
+
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn try_fold_binary_expression(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         // TODO: tryReduceOperandsForOp
+
+        // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1136
+        // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1222
+        let span = e.span;
         match e.operator {
-            BinaryOperator::ShiftLeft
-            | BinaryOperator::ShiftRight
-            | BinaryOperator::ShiftRightZeroFill
-            | BinaryOperator::Subtraction
-            | BinaryOperator::Division
-            | BinaryOperator::Remainder
-            | BinaryOperator::Multiplication
-            | BinaryOperator::Exponential
-            | BinaryOperator::Instanceof => match (&e.left, &e.right) {
-                (Expression::NumericLiteral(left), Expression::NumericLiteral(right)) => {
-                    // Do not fold any division unless rhs is 0.
-                    if e.operator == BinaryOperator::Division
-                        && right.value != 0.0
-                        && !right.value.is_nan()
-                        && !right.value.is_infinite()
-                    {
-                        return None;
-                    }
-                    let value = ctx.eval_binary_expression(e)?;
-                    let ConstantValue::Number(num) = value else { return None };
-                    (num.is_nan()
-                        || num.is_infinite()
-                        || (num.abs() <= f64::powf(2.0, 53.0)
-                            && Self::approximate_printed_int_char_count(num)
-                                <= Self::approximate_printed_int_char_count(left.value)
-                                    + Self::approximate_printed_int_char_count(right.value)
-                                    + e.operator.as_str().len()))
-                    .then_some(value)
-                }
-                _ => ctx.eval_binary_expression(e),
-            }
-            .map(|v| ctx.value_to_expr(e.span, v)),
-            BinaryOperator::Addition => Self::try_fold_add(e, ctx),
+            BinaryOperator::Equality
+            | BinaryOperator::Inequality
+            | BinaryOperator::StrictEquality
+            | BinaryOperator::StrictInequality
+            | BinaryOperator::LessThan
+            | BinaryOperator::GreaterThan
+            | BinaryOperator::LessEqualThan
+            | BinaryOperator::GreaterEqualThan => Self::try_fold_comparison(e, ctx),
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
-                if let Some(v) = ctx.eval_binary_expression(e) {
-                    return Some(ctx.value_to_expr(e.span, v));
-                }
-                Self::try_fold_left_child_op(e, ctx)
+                ctx.eval_binary(e).or_else(|| Self::try_fold_left_child_op(e, ctx))
             }
-            op if op.is_equality() || op.is_compare() => Self::try_fold_comparison(e, ctx),
-            _ => None,
+            BinaryOperator::Addition => Self::try_fold_add(e, ctx),
+            BinaryOperator::Subtraction => {
+                // Subtraction of small-ish integers can definitely be folded without issues
+                Self::extract_numeric_values(e)
+                    .filter(|(left, right)| {
+                        left.is_nan()
+                            || left.is_finite()
+                            || right.is_nan()
+                            || right.is_finite()
+                            || (left.fract() == 0.0
+                                && right.fract() == 0.0
+                                && (left.abs() as usize) <= 0xFFFF_FFFF
+                                && (right.abs() as usize) <= 0xFFFF_FFFF)
+                    })
+                    .and_then(|_| ctx.eval_binary(e))
+            }
+            BinaryOperator::Multiplication
+            | BinaryOperator::Exponential
+            | BinaryOperator::Remainder => Self::extract_numeric_values(e)
+                .filter(|(left, right)| {
+                    *left == 0.0
+                        || left.is_nan()
+                        || left.is_infinite()
+                        || *right == 0.0
+                        || right.is_nan()
+                        || right.is_infinite()
+                })
+                .and_then(|_| ctx.eval_binary(e)),
+            BinaryOperator::Division => Self::extract_numeric_values(e)
+                .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
+                .and_then(|_| ctx.eval_binary(e)),
+            BinaryOperator::ShiftLeft => {
+                if let Some((left, right)) = Self::extract_numeric_values(e) {
+                    let result = ctx.eval_binary_expression(e)?.into_number()?;
+                    let left_len = Self::approximate_printed_int_char_count(left);
+                    let right_len = Self::approximate_printed_int_char_count(right);
+                    let result_len = Self::approximate_printed_int_char_count(result);
+                    if result_len <= left_len + 2 + right_len {
+                        return Some(ctx.value_to_expr(span, ConstantValue::Number(result)));
+                    }
+                }
+                None
+            }
+            BinaryOperator::ShiftRightZeroFill => {
+                if let Some((left, right)) = Self::extract_numeric_values(e) {
+                    let result = ctx.eval_binary_expression(e)?.into_number()?;
+                    let left_len = Self::approximate_printed_int_char_count(left);
+                    let right_len = Self::approximate_printed_int_char_count(right);
+                    let result_len = Self::approximate_printed_int_char_count(result);
+                    if result_len <= left_len + 3 + right_len {
+                        return Some(ctx.value_to_expr(span, ConstantValue::Number(result)));
+                    }
+                }
+                None
+            }
+            BinaryOperator::ShiftRight | BinaryOperator::Instanceof => ctx.eval_binary(e),
+            BinaryOperator::In => None,
         }
     }
 
@@ -572,12 +613,6 @@ mod test {
         let allocator = Allocator::default();
         let mut pass = super::PeepholeFoldConstants::new();
         tester::test(&allocator, source_text, expected, &mut pass);
-    }
-
-    fn test_nospace(source_text: &str, expected: &str) {
-        let allocator = Allocator::default();
-        let mut pass = super::PeepholeFoldConstants::new();
-        tester::test_impl(&allocator, source_text, expected, &mut pass, true);
     }
 
     fn test_same(source_text: &str) {
@@ -1483,54 +1518,9 @@ mod test {
 
     #[test]
     fn test_fold_arithmetic() {
-        test("x = 10 + 20", "x = 30");
-        test_same("x = 2 / 4");
-        test("x = 2.25 * 3", "x = 6.75");
-        test_same("z = x * y");
-        test_same("x = y * 5");
-        test("x = 1 / 0", "x = Infinity");
-        test("x = 3 % 2", "x = 1");
-        test("x = 3 % -2", "x = 1");
-        test("x = -1 % 3", "x = -1");
-        test("x = 1 % 0", "x = NaN");
-
-        test("x = 2 ** 3", "x = 8");
-        test("x = 2 ** -3", "x = 0.125");
-        test_same("x = 2 ** 55");
-        // test_same("x = 3 ** -1"); // backs off because 3**-1 is shorter than 0.3333333333333333
-
-        test("x = 0 / 0", "x = NaN");
-        test("x = 0 % 0", "x = NaN");
-        test("x = (-1) ** 0.5", "x = NaN");
-
-        test_nospace("1n+ +1n", "1n + +1n");
-        test_nospace("1n- -1n", "1n - -1n");
-        test_nospace("a- -b", "a - -b");
-    }
-
-    #[test]
-    fn test_fold_arithmetic2() {
-        test_same("x = y + 10 + 20");
-        test_same("x = y / 2 / 4");
-        // test("x = y * 2.25 * 3", "x = y * 6.75");
-        test_same("x = y * 2.25 * z * 3");
-        test_same("z = x * y");
-        test_same("x = y * 5");
-        // test("x = y + (z * 24 * 60 * 60 * 1000)", "x = y + z * 864E5");
-        test("x = y + (z & 24 & 60 & 60 & 1000)", "x = y + (z & 8)");
-    }
-
-    #[test]
-    fn test_fold_arithmetic3() {
-        test("x = null * undefined", "x = NaN");
-        test("x = null * 1", "x = 0");
-        test("x = (null - 1) * 2", "x = -2");
-        test("x = (null + 1) * 2", "x = 2");
-        test("x = null ** 0", "x = 1");
-        test("x = (-0) ** 3", "x = -0");
-
-        test("x = 1 + null", "x = 1");
-        test("x = null + 1", "x = 1");
+        test("1n+ +1n", "1n + +1n");
+        test("1n- -1n", "1n - -1n");
+        test("a- -b", "a - -b");
     }
 
     #[test]
@@ -1541,10 +1531,71 @@ mod test {
         test("x = Infinity ** 2", "x = Infinity");
         test("x = Infinity ** -2", "x = 0");
 
-        test("x = Infinity / Infinity", "x = NaN");
         test("x = Infinity % Infinity", "x = NaN");
-        test("x = Infinity / 0", "x = Infinity");
         test("x = Infinity % 0", "x = NaN");
+    }
+
+    #[test]
+    fn test_fold_add() {
+        test("x = 10 + 20", "x = 30");
+        test_same("x = y + 10 + 20");
+        test("x = 1 + null", "x = 1");
+        test("x = null + 1", "x = 1");
+    }
+
+    #[test]
+    fn test_fold_multiply() {
+        test_same("x = 2.25 * 3");
+        test_same("z = x * y");
+        test_same("x = y * 5");
+        // test("x = null * undefined", "x = NaN");
+        // test("x = null * 1", "x = 0");
+        // test("x = (null - 1) * 2", "x = -2");
+        // test("x = (null + 1) * 2", "x = 2");
+        // test("x = y + (z * 24 * 60 * 60 * 1000)", "x = y + z * 864E5");
+        test("x = y + (z & 24 & 60 & 60 & 1000)", "x = y + (z & 8)");
+    }
+
+    #[test]
+    fn test_fold_division() {
+        test("x = Infinity / Infinity", "x = NaN");
+        test("x = Infinity / 0", "x = Infinity");
+        test("x = 1 / 0", "x = Infinity");
+        test("x = 0 / 0", "x = NaN");
+        test_same("x = 2 / 4");
+        test_same("x = y / 2 / 4");
+    }
+
+    #[test]
+    fn test_fold_remainder() {
+        test_same("x = 3 % 2");
+        test_same("x = 3 % -2");
+        test_same("x = -1 % 3");
+        test("x = 1 % 0", "x = NaN");
+        test("x = 0 % 0", "x = NaN");
+    }
+
+    #[test]
+    fn test_fold_exponential() {
+        test_same("x = 2 ** 3");
+        test_same("x = 2 ** -3");
+        test_same("x = 2 ** 55");
+        test_same("x = 3 ** -1");
+        test_same("x = (-1) ** 0.5");
+        test("x = (-0) ** 3", "x = -0");
+        test_same("x = null ** 0");
+    }
+
+    #[test]
+    fn test_fold_shift_right_zero_fill() {
+        test("10 >>> 1", "5");
+        test_same("-1 >>> 0");
+    }
+
+    #[test]
+    fn test_fold_shift_left() {
+        test("1 << 3", "8");
+        test_same("1 << 24");
     }
 
     #[test]
