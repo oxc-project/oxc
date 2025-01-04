@@ -30,34 +30,11 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
-            Expression::CallExpression(e) => {
-                Self::try_fold_useless_object_dot_define_properties_call(e, ctx)
-            }
-            Expression::NewExpression(e) => Self::try_fold_ctor_cal(e, ctx),
-            // TODO
-            // return tryFoldSpread(subtree);
-            Expression::ArrayExpression(e) => Self::try_flatten_array_expression(e, ctx),
-            Expression::ObjectExpression(e) => Self::try_flatten_object_expression(e, ctx),
-            Expression::BinaryExpression(e) => Self::try_fold_binary_expression(e, ctx),
-            #[allow(clippy::float_cmp)]
-            Expression::UnaryExpression(e) => {
-                match e.operator {
-                    // Do not fold `void 0` back to `undefined`.
-                    UnaryOperator::Void if e.argument.is_number_0() => None,
-                    // Do not fold `true` and `false` back to `!0` and `!1`
-                    UnaryOperator::LogicalNot if matches!(&e.argument, Expression::NumericLiteral(lit) if lit.value == 0.0 || lit.value == 1.0) => {
-                        None
-                    }
-                    _ => ctx.eval_unary_expression(e).map(|v| ctx.value_to_expr(e.span, v)),
-                }
-            }
-            Expression::StaticMemberExpression(e) => {
-                Self::try_fold_static_member_expression(e, ctx)
-            }
-            Expression::LogicalExpression(e) => Self::try_fold_logical_expression(e, ctx),
+            Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx),
+            Expression::UnaryExpression(e) => Self::try_fold_unary_expr(e, ctx),
+            Expression::StaticMemberExpression(e) => Self::try_fold_static_member_expr(e, ctx),
+            Expression::LogicalExpression(e) => Self::try_fold_logical_expr(e, ctx),
             Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
-            // TODO: tryFoldGetElem
-            // TODO: tryFoldAssign
             _ => None,
         } {
             *expr = folded_expr;
@@ -71,45 +48,29 @@ impl<'a, 'b> PeepholeFoldConstants {
         Self { changed: false }
     }
 
-    fn try_fold_useless_object_dot_define_properties_call(
-        _call_expr: &mut CallExpression<'a>,
-        _ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        None
+    #[allow(clippy::float_cmp)]
+    fn try_fold_unary_expr(e: &UnaryExpression<'a>, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
+        match e.operator {
+            // Do not fold `void 0` back to `undefined`.
+            UnaryOperator::Void if e.argument.is_number_0() => None,
+            // Do not fold `true` and `false` back to `!0` and `!1`
+            UnaryOperator::LogicalNot if matches!(&e.argument, Expression::NumericLiteral(lit) if lit.value == 0.0 || lit.value == 1.0) => {
+                None
+            }
+            _ => ctx.eval_unary_expression(e).map(|v| ctx.value_to_expr(e.span, v)),
+        }
     }
 
-    fn try_fold_ctor_cal(
-        _new_expr: &mut NewExpression<'a>,
-        _ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        None
-    }
-
-    fn try_flatten_array_expression(
-        _new_expr: &mut ArrayExpression<'a>,
-        _ctx: Ctx<'a, 'b>,
-    ) -> Option<Expression<'a>> {
-        None
-    }
-
-    fn try_flatten_object_expression(
-        _new_expr: &mut ObjectExpression<'a>,
-        _ctx: Ctx<'a, 'b>,
-    ) -> Option<Expression<'a>> {
-        None
-    }
-
-    fn try_fold_static_member_expression(
+    fn try_fold_static_member_expr(
         static_member_expr: &mut StaticMemberExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
-
         ctx.eval_static_member_expression(static_member_expr)
             .map(|value| ctx.value_to_expr(static_member_expr.span, value))
     }
 
-    fn try_fold_logical_expression(
+    fn try_fold_logical_expr(
         logical_expr: &mut LogicalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -254,7 +215,7 @@ impl<'a, 'b> PeepholeFoldConstants {
     }
 
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    fn try_fold_binary_expression(
+    fn try_fold_binary_expr(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
