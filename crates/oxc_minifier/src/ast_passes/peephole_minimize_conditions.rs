@@ -355,8 +355,6 @@ impl<'a> PeepholeMinimizeConditions {
             }
         }
 
-        let in_boolean_context = Self::is_in_boolean_context(ctx);
-
         // `a ? false : true` -> `!a`
         // `a ? true : false` -> `!!a`
         if let (
@@ -377,7 +375,7 @@ impl<'a> PeepholeMinimizeConditions {
                 (true, false) => {
                     let ident = ctx.ast.move_expression(&mut expr.test);
 
-                    if in_boolean_context {
+                    if Self::is_in_boolean_context(ctx) {
                         return Some(ident);
                     }
                     return Some(ctx.ast.expression_unary(
@@ -399,7 +397,7 @@ impl<'a> PeepholeMinimizeConditions {
                 let ident = ctx.ast.move_expression(&mut expr.test);
                 return Some(ctx.ast.expression_logical(
                     expr.span,
-                    if in_boolean_context {
+                    if Self::is_in_boolean_context(ctx) {
                         ident
                     } else {
                         ctx.ast.expression_unary(
@@ -438,7 +436,7 @@ impl<'a> PeepholeMinimizeConditions {
             let ident = ctx.ast.move_expression(&mut expr.test);
             return Some(ctx.ast.expression_logical(
                 expr.span,
-                if in_boolean_context {
+                if Self::is_in_boolean_context(ctx) {
                     ident
                 } else {
                     ctx.ast.expression_unary(
@@ -467,7 +465,9 @@ impl<'a> PeepholeMinimizeConditions {
                 | Ancestor::WhileStatementTest(_)
                 | Ancestor::ForStatementTest(_)
                 | Ancestor::DoWhileStatementTest(_)
-                | Ancestor::ExpressionStatementExpression(_) => return true,
+                | Ancestor::ExpressionStatementExpression(_)
+                | Ancestor::SequenceExpressionExpressions(_)
+                | Ancestor::ProgramBody(_) => return true,
                 Ancestor::CallExpressionArguments(_)
                 | Ancestor::AssignmentPatternRight(_)
                 | Ancestor::BindingRestElementArgument(_)
@@ -482,10 +482,7 @@ impl<'a> PeepholeMinimizeConditions {
                 _ => continue,
             }
         }
-        #[cfg(debug_assertions)]
-        unreachable!();
-        #[cfg(not(debug_assertions))]
-        false
+        true
     }
 
     fn try_minimize_binary(
