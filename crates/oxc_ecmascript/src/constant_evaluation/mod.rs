@@ -440,6 +440,10 @@ pub trait ConstantEvaluation<'a> {
                         .map(|v| !v.to_int_32())
                         .map(|v| v as f64)
                         .map(ConstantValue::Number),
+                    ValueType::Undefined | ValueType::Null => Some(ConstantValue::Number(-1.0)),
+                    ValueType::Boolean => self
+                        .get_side_free_boolean_value(&expr.argument)
+                        .map(|v| ConstantValue::Number(if v { -2.0 } else { -1.0 })),
                     _ => None,
                 }
             }

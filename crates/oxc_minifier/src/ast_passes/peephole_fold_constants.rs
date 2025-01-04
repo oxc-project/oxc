@@ -1448,6 +1448,14 @@ mod test {
     }
 
     #[test]
+    fn test_fold_bitwise_not() {
+        test("~undefined", "-1");
+        test("~null", "-1");
+        test("~false", "-1");
+        test("~true", "-2");
+    }
+
+    #[test]
     fn test_fold_bit_shifts() {
         test("x = 1 << 0", "x=1");
         test("x = -1 << 0", "x=-1");
