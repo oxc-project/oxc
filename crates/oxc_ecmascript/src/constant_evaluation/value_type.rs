@@ -44,6 +44,10 @@ impl ValueType {
     pub fn is_object(self) -> bool {
         self == Self::Object
     }
+
+    pub fn is_undetermined(self) -> bool {
+        self == Self::Undetermined
+    }
 }
 
 /// `get_known_value_type`
