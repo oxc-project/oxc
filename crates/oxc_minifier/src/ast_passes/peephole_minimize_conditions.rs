@@ -275,6 +275,9 @@ impl<'a> PeepholeMinimizeConditions {
                 Expression::BooleanLiteral(consequent_lit),
             ) = (&expr.left, &expr.right)
             {
+                if !is_in_boolean_context(ctx) {
+                    return None;
+                }
                 if consequent_lit.value {
                     return Some(ctx.ast.move_expression(&mut expr.left));
                 }
@@ -354,6 +357,8 @@ impl<'a> PeepholeMinimizeConditions {
             }
         }
 
+        let in_boolean_context = is_in_boolean_context(ctx);
+
         // `a ? false : true` -> `!a`
         // `a ? true : false` -> `!!a`
         if let (
@@ -373,6 +378,10 @@ impl<'a> PeepholeMinimizeConditions {
                 }
                 (true, false) => {
                     let ident = ctx.ast.move_expression(&mut expr.test);
+
+                    if in_boolean_context {
+                        return Some(ident);
+                    }
                     return Some(ctx.ast.expression_unary(
                         expr.span,
                         UnaryOperator::LogicalNot,
@@ -382,14 +391,6 @@ impl<'a> PeepholeMinimizeConditions {
                 _ => {}
             }
         }
-
-        let in_boolean_context = matches!(
-            ctx.parent(),
-            Ancestor::IfStatementTest(_)
-                | Ancestor::WhileStatementTest(_)
-                | Ancestor::DoWhileStatementTest(_)
-                | Ancestor::ExpressionStatementExpression(_)
-        );
 
         // `x ? true : y` -> `x || y`
         // `x ? false : y` -> `!x && y`
@@ -455,6 +456,39 @@ impl<'a> PeepholeMinimizeConditions {
 
         None
     }
+}
+
+// returns `true` if the current node is in a context in which the return
+// value type is coerced to boolean.
+// For example `if (condition)` and `return condition`
+// inside the `if` stmt, `condition` is coerced to a boolean
+// whereas inside the return, it is not
+fn is_in_boolean_context(ctx: &mut TraverseCtx<'_>) -> bool {
+    for ancestor in ctx.ancestors() {
+        match ancestor {
+            Ancestor::IfStatementTest(_)
+            | Ancestor::WhileStatementTest(_)
+            | Ancestor::ForStatementTest(_)
+            | Ancestor::DoWhileStatementTest(_)
+            | Ancestor::ExpressionStatementExpression(_) => return true,
+            Ancestor::CallExpressionArguments(_)
+            | Ancestor::AssignmentPatternRight(_)
+            | Ancestor::BindingRestElementArgument(_)
+            | Ancestor::JSXSpreadAttributeArgument(_)
+            | Ancestor::NewExpressionArguments(_)
+            | Ancestor::ObjectPropertyKey(_)
+            | Ancestor::ObjectPropertyValue(_)
+            | Ancestor::ReturnStatementArgument(_)
+            | Ancestor::ThrowStatementArgument(_)
+            | Ancestor::YieldExpressionArgument(_)
+            | Ancestor::VariableDeclaratorInit(_) => return false,
+            _ => continue,
+        }
+    }
+    #[cfg(debug_assertions)]
+    unreachable!();
+    #[cfg(not(debug_assertions))]
+    false
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeMinimizeConditionsTest.java>
@@ -754,11 +788,10 @@ mod test {
 
     #[test]
     fn test_minimize_expr_condition() {
-        fold("(x ? true : false) && y()", "!!x && y()");
+        fold("(x ? true : false) && y()", "x && y()");
         fold("(x ? false : true) && y()", "!x && y()");
-        fold("(x ? true : y) && y()", "(!!x || y) && y()");
-        // TODO: drop the `!!`
-        fold("(x ? y : false) && y()", "(!!x && y) && y()");
+        fold("(x ? true : y) && y()", "(x || y) && y()");
+        fold("(x ? y : false) && y()", "(x && y) && y()");
         fold("var x; (x && true) && y()", "var x; x && y()");
         fold("var x; (x && false) && y()", "var x; false && y()");
         fold("(x && true) && y()", "x && y()");
@@ -772,6 +805,11 @@ mod test {
         fold("let x = foo ? true : false", "let x = !!foo");
         fold("let x = foo ? true : bar", "let x = !!foo || bar");
         fold("let x = foo ? bar : false", "let x = !!foo && bar");
+        fold("function x () { return a ? true : false }", "function x() { return !!a }");
+        fold("function x () { return a ? false : true }", "function x() { return !a }");
+        fold("function x () { return a ? true : b }", "function x() { return !!a || b }");
+        // can't be minified e.g. `a = ''` would return `''`
+        fold("function x() { return a && true }", "function x() { return a && true }");
     }
 
     #[test]
