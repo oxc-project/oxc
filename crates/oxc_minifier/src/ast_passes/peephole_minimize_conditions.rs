@@ -1,5 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_ecmascript::constant_evaluation::ValueType;
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
@@ -57,12 +58,9 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
             Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
-            Expression::LogicalExpression(logical_expr) => {
-                Self::try_minimize_logical(logical_expr, ctx)
-            }
-            Expression::ConditionalExpression(conditional_expr) => {
-                Self::try_minimize_conditional(conditional_expr, ctx)
-            }
+            Expression::LogicalExpression(e) => Self::try_minimize_logical(e, ctx),
+            Expression::BinaryExpression(e) => Self::try_minimize_binary(e, ctx),
+            Expression::ConditionalExpression(e) => Self::try_minimize_conditional(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -275,7 +273,7 @@ impl<'a> PeepholeMinimizeConditions {
                 Expression::BooleanLiteral(consequent_lit),
             ) = (&expr.left, &expr.right)
             {
-                if !is_in_boolean_context(ctx) {
+                if !Self::is_in_boolean_context(ctx) {
                     return None;
                 }
                 if consequent_lit.value {
@@ -357,7 +355,7 @@ impl<'a> PeepholeMinimizeConditions {
             }
         }
 
-        let in_boolean_context = is_in_boolean_context(ctx);
+        let in_boolean_context = Self::is_in_boolean_context(ctx);
 
         // `a ? false : true` -> `!a`
         // `a ? true : false` -> `!!a`
@@ -456,39 +454,68 @@ impl<'a> PeepholeMinimizeConditions {
 
         None
     }
-}
 
-// returns `true` if the current node is in a context in which the return
-// value type is coerced to boolean.
-// For example `if (condition)` and `return condition`
-// inside the `if` stmt, `condition` is coerced to a boolean
-// whereas inside the return, it is not
-fn is_in_boolean_context(ctx: &mut TraverseCtx<'_>) -> bool {
-    for ancestor in ctx.ancestors() {
-        match ancestor {
-            Ancestor::IfStatementTest(_)
-            | Ancestor::WhileStatementTest(_)
-            | Ancestor::ForStatementTest(_)
-            | Ancestor::DoWhileStatementTest(_)
-            | Ancestor::ExpressionStatementExpression(_) => return true,
-            Ancestor::CallExpressionArguments(_)
-            | Ancestor::AssignmentPatternRight(_)
-            | Ancestor::BindingRestElementArgument(_)
-            | Ancestor::JSXSpreadAttributeArgument(_)
-            | Ancestor::NewExpressionArguments(_)
-            | Ancestor::ObjectPropertyKey(_)
-            | Ancestor::ObjectPropertyValue(_)
-            | Ancestor::ReturnStatementArgument(_)
-            | Ancestor::ThrowStatementArgument(_)
-            | Ancestor::YieldExpressionArgument(_)
-            | Ancestor::VariableDeclaratorInit(_) => return false,
-            _ => continue,
+    // returns `true` if the current node is in a context in which the return
+    // value type is coerced to boolean.
+    // For example `if (condition)` and `return condition`
+    // inside the `if` stmt, `condition` is coerced to a boolean
+    // whereas inside the return, it is not
+    fn is_in_boolean_context(ctx: &mut TraverseCtx<'_>) -> bool {
+        for ancestor in ctx.ancestors() {
+            match ancestor {
+                Ancestor::IfStatementTest(_)
+                | Ancestor::WhileStatementTest(_)
+                | Ancestor::ForStatementTest(_)
+                | Ancestor::DoWhileStatementTest(_)
+                | Ancestor::ExpressionStatementExpression(_) => return true,
+                Ancestor::CallExpressionArguments(_)
+                | Ancestor::AssignmentPatternRight(_)
+                | Ancestor::BindingRestElementArgument(_)
+                | Ancestor::JSXSpreadAttributeArgument(_)
+                | Ancestor::NewExpressionArguments(_)
+                | Ancestor::ObjectPropertyKey(_)
+                | Ancestor::ObjectPropertyValue(_)
+                | Ancestor::ReturnStatementArgument(_)
+                | Ancestor::ThrowStatementArgument(_)
+                | Ancestor::YieldExpressionArgument(_)
+                | Ancestor::VariableDeclaratorInit(_) => return false,
+                _ => continue,
+            }
         }
+        #[cfg(debug_assertions)]
+        unreachable!();
+        #[cfg(not(debug_assertions))]
+        false
     }
-    #[cfg(debug_assertions)]
-    unreachable!();
-    #[cfg(not(debug_assertions))]
-    false
+
+    fn try_minimize_binary(
+        e: &mut BinaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        // let ctx = Ctx(ctx);
+        if !ValueType::from(&e.left).is_boolean() {
+            return None;
+        }
+        let Expression::BooleanLiteral(b) = &mut e.right else {
+            return None;
+        };
+        match e.operator {
+            BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
+                e.operator = BinaryOperator::Equality;
+                b.value = !b.value;
+            }
+            BinaryOperator::StrictEquality => {
+                e.operator = BinaryOperator::Equality;
+            }
+            _ => {}
+        }
+        Some(if b.value {
+            ctx.ast.move_expression(&mut e.left)
+        } else {
+            let argument = ctx.ast.move_expression(&mut e.left);
+            ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
+        })
+    }
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeMinimizeConditionsTest.java>
@@ -1597,5 +1624,28 @@ mod test {
         test("foo ? bar : foo", "foo && bar");
         test_same("x.y ? x.y : bar");
         test_same("x.y ? bar : x.y");
+    }
+
+    #[test]
+    fn compress_binary() {
+        test("a instanceof b === true", "a instanceof b");
+        test("a instanceof b == true", "a instanceof b");
+        test("a instanceof b === false", "!(a instanceof b)");
+        test("a instanceof b == false", "!(a instanceof b)");
+
+        test("a instanceof b !== true", "!(a instanceof b)");
+        test("a instanceof b != true", "!(a instanceof b)");
+        test("a instanceof b !== false", "a instanceof b");
+        test("a instanceof b != false", "a instanceof b");
+
+        test("delete x === true", "delete x");
+        test("delete x == true", "delete x");
+        test("delete x === false", "!(delete x)");
+        test("delete x == false", "!(delete x)");
+
+        test("delete x !== true", "!(delete x)");
+        test("delete x != true", "!(delete x)");
+        test("delete x !== false", "delete x");
+        test("delete x != false", "delete x");
     }
 }

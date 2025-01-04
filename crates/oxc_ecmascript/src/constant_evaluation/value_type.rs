@@ -1,4 +1,4 @@
-use oxc_ast::ast::Expression;
+use oxc_ast::ast::{BinaryExpression, Expression};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 /// JavaScript Language Type
@@ -81,30 +81,37 @@ impl<'a> From<&Expression<'a>> for ValueType {
                     Self::Number
                 }
                 UnaryOperator::UnaryPlus => Self::Number,
-                UnaryOperator::LogicalNot => Self::Boolean,
+                UnaryOperator::LogicalNot | UnaryOperator::Delete => Self::Boolean,
                 UnaryOperator::Typeof => Self::String,
-                _ => Self::Undetermined,
+                UnaryOperator::BitwiseNot => Self::Undetermined,
             },
-            Expression::BinaryExpression(binary_expr) => match binary_expr.operator {
-                BinaryOperator::Addition => {
-                    let left_ty = Self::from(&binary_expr.left);
-                    let right_ty = Self::from(&binary_expr.right);
-                    if left_ty == Self::String || right_ty == Self::String {
-                        return Self::String;
-                    }
-                    // There are some pretty weird cases for object types:
-                    //   {} + [] === "0"
-                    //   [] + {} === "[object Object]"
-                    if left_ty == Self::Object || right_ty == Self::Object {
-                        return Self::Undetermined;
-                    }
-                    Self::Undetermined
-                }
-                _ => Self::Undetermined,
-            },
+            Expression::BinaryExpression(e) => Self::from(&**e),
             Expression::SequenceExpression(e) => {
                 e.expressions.last().map_or(ValueType::Undetermined, Self::from)
             }
+            _ => Self::Undetermined,
+        }
+    }
+}
+
+impl<'a> From<&BinaryExpression<'a>> for ValueType {
+    fn from(e: &BinaryExpression<'a>) -> Self {
+        match e.operator {
+            BinaryOperator::Addition => {
+                let left_ty = Self::from(&e.left);
+                let right_ty = Self::from(&e.right);
+                if left_ty == Self::String || right_ty == Self::String {
+                    return Self::String;
+                }
+                // There are some pretty weird cases for object types:
+                //   {} + [] === "0"
+                //   [] + {} === "[object Object]"
+                if left_ty == Self::Object || right_ty == Self::Object {
+                    return Self::Undetermined;
+                }
+                Self::Undetermined
+            }
+            BinaryOperator::Instanceof => Self::Boolean,
             _ => Self::Undetermined,
         }
     }
