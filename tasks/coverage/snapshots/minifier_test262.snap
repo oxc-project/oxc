@@ -2,6 +2,4 @@ commit: c4317b0c
 
 minifier_test262 Summary:
 AST Parsed     : 41696/41696 (100.00%)
-Positive Passed: 41694/41696 (100.00%)
-Compress: tasks/coverage/test262/test/language/module-code/instn-local-bndng-for-dup.js
-Compress: tasks/coverage/test262/test/language/types/undefined/S8.1_A1_T1.js
+Positive Passed: 41696/41696 (100.00%)

@@ -68,6 +68,7 @@ impl<'a> Traverse<'a> for RemoveUnusedCode {
 }
 
 impl RemoveUnusedCode {
+    #[allow(dead_code)]
     pub fn new(options: CompressOptions) -> Self {
         Self { options, changed: false, symbol_ids_to_remove: FxHashSet::default() }
     }

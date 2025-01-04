@@ -27,6 +27,7 @@ pub use peephole_remove_dead_code::PeepholeRemoveDeadCode;
 pub use peephole_replace_known_methods::PeepholeReplaceKnownMethods;
 pub use peephole_substitute_alternate_syntax::PeepholeSubstituteAlternateSyntax;
 pub use remove_syntax::RemoveSyntax;
+#[expect(unused)]
 pub use remove_unused_code::RemoveUnusedCode;
 pub use statement_fusion::StatementFusion;
 
