@@ -35,6 +35,7 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
             Expression::StaticMemberExpression(e) => Self::try_fold_static_member_expr(e, ctx),
             Expression::LogicalExpression(e) => Self::try_fold_logical_expr(e, ctx),
             Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
+            Expression::CallExpression(e) => Self::try_fold_number_constructor(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -554,6 +555,51 @@ impl<'a, 'b> PeepholeFoldConstants {
             return Some(false);
         }
         None
+    }
+
+    fn try_fold_number_constructor(
+        e: &CallExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        let Expression::Identifier(ident) = &e.callee else { return None };
+        if ident.name != "Number" {
+            return None;
+        }
+        if !ctx.is_global_reference(ident) {
+            return None;
+        }
+        if e.arguments.len() != 1 {
+            return None;
+        }
+        Some(ctx.value_to_expr(
+            e.span,
+            ConstantValue::Number(match &e.arguments[0] {
+                // `Number(undefined)` -> `NaN`
+                Argument::Identifier(ident) if ctx.is_identifier_undefined(ident) => f64::NAN,
+                // `Number(null)` -> `0`
+                Argument::NullLiteral(_) => 0.0,
+                // `Number(true)` -> `1` `Number(false)` -> `0`
+                Argument::BooleanLiteral(b) => f64::from(b.value),
+                // `Number(100)` -> `100`
+                Argument::NumericLiteral(n) => n.value,
+                // `Number("a")` -> `+"a"` -> `NaN`
+                // `Number("1")` -> `+"1"` -> `1`
+                Argument::StringLiteral(n) => {
+                    let argument =
+                        ctx.ast.expression_string_literal(n.span, n.value.clone(), n.raw.clone());
+                    if let Some(n) = ctx.eval_to_number(&argument) {
+                        n
+                    } else {
+                        return Some(ctx.ast.expression_unary(
+                            e.span,
+                            UnaryOperator::UnaryPlus,
+                            argument,
+                        ));
+                    }
+                }
+                _ => return None,
+            }),
+        ))
     }
 }
 
@@ -1675,5 +1721,16 @@ mod test {
                 test(&format!("x = +'{op}{s}'"), "x = NaN");
             }
         }
+    }
+
+    #[test]
+    fn test_number_constructor() {
+        test("Number(undefined)", "NaN");
+        test("Number(null)", "0");
+        test("Number(true)", "1");
+        test("Number(false)", "0");
+        test("Number('a')", "NaN");
+        test("Number('1')", "1");
+        test_same("var Number; Number(1)");
     }
 }
