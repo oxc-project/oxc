@@ -5,7 +5,7 @@ use cow_utils::CowUtils;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::ConstantEvaluation, StringCharAt, StringCharCodeAt, StringIndexOf,
-    StringLastIndexOf, StringSubstring,
+    StringLastIndexOf, StringSubstring, ToInt32,
 };
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
@@ -30,20 +30,20 @@ impl<'a> Traverse<'a> for PeepholeReplaceKnownMethods {
     }
 }
 
-impl PeepholeReplaceKnownMethods {
+impl<'a> PeepholeReplaceKnownMethods {
     pub fn new() -> Self {
         Self { changed: false }
     }
 
-    fn try_fold_known_string_methods<'a>(
+    fn try_fold_known_string_methods(
         &mut self,
         node: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::CallExpression(ce) = node else { return };
         let Expression::StaticMemberExpression(member) = &ce.callee else { return };
-        if let Expression::StringLiteral(s) = &member.object {
-            let replacement = match member.property.name.as_str() {
+        let replacement = match &member.object {
+            Expression::StringLiteral(s) => match member.property.name.as_str() {
                 "toLowerCase" | "toUpperCase" | "trim" => {
                     let value = match member.property.name.as_str() {
                         "toLowerCase" => s.value.cow_to_lowercase(),
@@ -59,16 +59,24 @@ impl PeepholeReplaceKnownMethods {
                 "charCodeAt" => Self::try_fold_string_char_code_at(ce, s, ctx),
                 "replace" | "replaceAll" => Self::try_fold_string_replace(ce, member, s, ctx),
                 _ => None,
-            };
-
-            if let Some(replacement) = replacement {
-                self.changed = true;
-                *node = replacement;
+            },
+            Expression::Identifier(ident)
+                if ident.name == "String"
+                    && member.property.name == "fromCharCode"
+                    && Ctx(ctx).is_global_reference(ident) =>
+            {
+                Self::try_fold_string_from_char_code(ce, ctx)
             }
+            _ => None,
+        };
+
+        if let Some(replacement) = replacement {
+            self.changed = true;
+            *node = replacement;
         }
     }
 
-    fn try_fold_string_index_of<'a>(
+    fn try_fold_string_index_of(
         call_expr: &CallExpression<'a>,
         member: &StaticMemberExpression<'a>,
         string_lit: &StringLiteral<'a>,
@@ -96,7 +104,7 @@ impl PeepholeReplaceKnownMethods {
         Some(ctx.ast.expression_numeric_literal(span, result as f64, None, NumberBase::Decimal))
     }
 
-    fn try_fold_string_substring_or_slice<'a>(
+    fn try_fold_string_substring_or_slice(
         call_expr: &CallExpression<'a>,
         string_lit: &StringLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -131,7 +139,7 @@ impl PeepholeReplaceKnownMethods {
         ))
     }
 
-    fn try_fold_string_char_at<'a>(
+    fn try_fold_string_char_at(
         call_expr: &CallExpression<'a>,
         string_lit: &StringLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -163,7 +171,7 @@ impl PeepholeReplaceKnownMethods {
         Some(ctx.ast.expression_string_literal(span, result, None))
     }
 
-    fn try_fold_string_char_code_at<'a>(
+    fn try_fold_string_char_code_at(
         call_expr: &CallExpression<'a>,
         string_lit: &StringLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -179,7 +187,7 @@ impl PeepholeReplaceKnownMethods {
         Some(ctx.ast.expression_numeric_literal(span, result as f64, None, NumberBase::Decimal))
     }
 
-    fn try_fold_string_replace<'a>(
+    fn try_fold_string_replace(
         call_expr: &CallExpression<'a>,
         member: &StaticMemberExpression<'a>,
         string_lit: &StringLiteral<'a>,
@@ -216,6 +224,31 @@ impl PeepholeReplaceKnownMethods {
             _ => unreachable!(),
         };
         Some(ctx.ast.expression_string_literal(span, result, None))
+    }
+
+    fn try_fold_string_from_char_code(
+        ce: &CallExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let args = &ce.arguments;
+        if args.iter().any(|arg| !matches!(arg, Argument::NumericLiteral(_))) {
+            return None;
+        }
+        let mut s = String::with_capacity(args.len());
+        for arg in args {
+            let Argument::NumericLiteral(lit) = arg else { unreachable!() };
+            if lit.value.is_nan() || lit.value.is_infinite() {
+                return None;
+            }
+            let v = lit.value.to_int_32();
+            if v >= 65535 {
+                return None;
+            }
+            let Ok(v) = u32::try_from(v) else { return None };
+            let Ok(c) = char::try_from(v) else { return None };
+            s.push(c);
+        }
+        Some(ctx.ast.expression_string_literal(ce.span, s, None))
     }
 }
 
@@ -1057,5 +1090,26 @@ mod test {
         let left = "function f(/** string */ a) {".to_string() + js + "}";
         let right = "function f(/** string */ a) {".to_string() + expected + "}";
         test(left.as_str(), right.as_str());
+    }
+
+    #[test]
+    fn test_fold_string_from_char_code() {
+        test("String.fromCharCode()", "''");
+        test("String.fromCharCode(0)", "'\\0'");
+        test("String.fromCharCode(120)", "'x'");
+        test("String.fromCharCode(120, 121)", "'xy'");
+        test_same("String.fromCharCode(55358, 56768)");
+        test("String.fromCharCode(0x10000)", "String.fromCharCode(65536)");
+        test("String.fromCharCode(0x10078, 0x10079)", "String.fromCharCode(0x10078, 0x10079)");
+        test("String.fromCharCode(0x1_0000_FFFF)", "String.fromCharCode(4295032831)");
+        test_same("String.fromCharCode(NaN)");
+        test_same("String.fromCharCode(-Infinity)");
+        test_same("String.fromCharCode(Infinity)");
+        test_same("String.fromCharCode(null)");
+        test_same("String.fromCharCode(undefined)");
+        test_same("String.fromCharCode('123')");
+        test_same("String.fromCharCode(x)");
+        test_same("String.fromCharCode('x')");
+        test_same("String.fromCharCode('0.5')");
     }
 }
