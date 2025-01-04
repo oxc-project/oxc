@@ -307,7 +307,7 @@ impl SortImports {
 
         if is_fixable {
             // Safe to index because we know that `specifiers` is at least 2 element long
-            let specifiers_span = specifiers[0].span.merge(&specifiers[specifiers.len() - 1].span);
+            let specifiers_span = specifiers[0].span.merge(specifiers[specifiers.len() - 1].span);
             ctx.diagnostic_with_fix(
                 sort_members_alphabetically_diagnostic(unsorted_name, unsorted_span),
                 |fixer| {

@@ -89,7 +89,7 @@ impl Rule for NoConsole {
             && !self.allow.iter().any(|s| mem.static_property_name().is_some_and(|f| f == s))
         {
             if let Some((mem_span, _)) = mem.static_property_info() {
-                let diagnostic_span = ident.span().merge(&mem_span);
+                let diagnostic_span = ident.span().merge(mem_span);
                 ctx.diagnostic_with_suggestion(no_console_diagnostic(diagnostic_span), |fixer| {
                     remove_console(fixer, ctx, node)
                 });
