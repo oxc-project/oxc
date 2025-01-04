@@ -3,7 +3,7 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 -------------------------------------------------------------------------------------
 72.14 kB   | 23.68 kB   | 23.70 kB   | 8.61 kB    | 8.54 kB    | react.development.js
 
-173.90 kB  | 59.86 kB   | 59.82 kB   | 19.43 kB   | 19.33 kB   | moment.js 
+173.90 kB  | 59.87 kB   | 59.82 kB   | 19.43 kB   | 19.33 kB   | moment.js 
 
 287.63 kB  | 90.16 kB   | 90.07 kB   | 32.08 kB   | 31.95 kB   | jquery.js 
 
@@ -11,11 +11,11 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 544.10 kB  | 71.81 kB   | 72.48 kB   | 26.19 kB   | 26.20 kB   | lodash.js 
 
-555.77 kB  | 273.19 kB  | 270.13 kB  | 90.99 kB   | 90.80 kB   | d3.js     
+555.77 kB  | 273.19 kB  | 270.13 kB  | 90.98 kB   | 90.80 kB   | d3.js     
 
-1.01 MB    | 460.32 kB  | 458.89 kB  | 126.85 kB  | 126.71 kB  | bundle.min.js
+1.01 MB    | 460.33 kB  | 458.89 kB  | 126.85 kB  | 126.71 kB  | bundle.min.js
 
-1.25 MB    | 652.68 kB  | 646.76 kB  | 163.53 kB  | 163.73 kB  | three.js  
+1.25 MB    | 652.70 kB  | 646.76 kB  | 163.53 kB  | 163.73 kB  | three.js  
 
 2.14 MB    | 726.19 kB  | 724.14 kB  | 180.18 kB  | 181.07 kB  | victory.js
 
