@@ -170,16 +170,53 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.x6_peephole_substitute_alternate_syntax.exit_call_expression(expr, ctx);
     }
 
-    fn exit_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x9_convert_to_dotted_properties.exit_property_key(key, ctx);
-    }
-
     fn exit_member_expression(
         &mut self,
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.x9_convert_to_dotted_properties.exit_member_expression(expr, ctx);
+    }
+
+    fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x6_peephole_substitute_alternate_syntax.exit_object_property(prop, ctx);
+    }
+
+    fn exit_assignment_target_property_property(
+        &mut self,
+        prop: &mut AssignmentTargetPropertyProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x6_peephole_substitute_alternate_syntax
+            .exit_assignment_target_property_property(prop, ctx);
+    }
+
+    fn exit_binding_property(&mut self, prop: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x6_peephole_substitute_alternate_syntax.exit_binding_property(prop, ctx);
+    }
+
+    fn exit_method_definition(
+        &mut self,
+        prop: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x6_peephole_substitute_alternate_syntax.exit_method_definition(prop, ctx);
+    }
+
+    fn exit_property_definition(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x6_peephole_substitute_alternate_syntax.exit_property_definition(prop, ctx);
+    }
+
+    fn exit_accessor_property(
+        &mut self,
+        prop: &mut AccessorProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x6_peephole_substitute_alternate_syntax.exit_accessor_property(prop, ctx);
     }
 }
 

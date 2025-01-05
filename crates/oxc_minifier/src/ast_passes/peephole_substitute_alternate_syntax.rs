@@ -4,6 +4,7 @@ use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, ToInt32, ToJsStrin
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
+    identifier::is_identifier_name,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
@@ -35,6 +36,46 @@ impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {
 }
 
 impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
+    fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+    }
+
+    fn exit_assignment_target_property_property(
+        &mut self,
+        prop: &mut AssignmentTargetPropertyProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
+    }
+
+    fn exit_binding_property(&mut self, prop: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+    }
+
+    fn exit_method_definition(
+        &mut self,
+        prop: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+    }
+
+    fn exit_property_definition(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+    }
+
+    fn exit_accessor_property(
+        &mut self,
+        prop: &mut AccessorProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
+    }
+
     fn exit_return_statement(
         &mut self,
         stmt: &mut ReturnStatement<'a>,
@@ -691,6 +732,42 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     fn empty_array_literal(ctx: Ctx<'a, 'b>) -> Expression<'a> {
         Self::array_literal(ctx.ast.vec(), ctx)
     }
+
+    // https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs
+    #[allow(clippy::cast_lossless)]
+    fn try_compress_property_key(
+        &mut self,
+        key: &mut PropertyKey<'a>,
+        computed: &mut bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.in_fixed_loop {
+            return;
+        }
+        let PropertyKey::StringLiteral(s) = key else { return };
+        if s.value == "__proto__" || s.value == "constructor" {
+            return;
+        }
+        if *computed {
+            *computed = false;
+        }
+        if is_identifier_name(&s.value) {
+            self.changed = true;
+            *key = PropertyKey::StaticIdentifier(
+                ctx.ast.alloc_identifier_name(s.span, s.value.clone()),
+            );
+        } else if (!s.value.starts_with('0') && !s.value.starts_with('+')) || s.value.len() <= 1 {
+            if let Ok(value) = s.value.parse::<u32>() {
+                self.changed = true;
+                *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
+                    s.span,
+                    value as f64,
+                    None,
+                    NumberBase::Decimal,
+                ));
+            }
+        }
+    }
 }
 
 /// Port from <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
@@ -1184,5 +1261,39 @@ mod test {
         test("'number' !== typeof foo", "typeof foo != 'number'");
         test("typeof foo !== `number`", "typeof foo != 'number'");
         test("`number` !== typeof foo", "typeof foo != 'number'");
+    }
+
+    #[test]
+    fn test_property_key() {
+        // Object Property
+        test(
+            "({ '0': _, 'a': _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ })",
+            "({  0: _,   a: _,      1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ })",
+        );
+        // AssignmentTargetPropertyProperty
+        test(
+            "({ '0': _, 'a': _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ } = {})",
+            "({  0: _,   a: _,      1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ } = {})",
+        );
+        // Binding Property
+        test(
+            "var { '0': _, 'a': _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ } = {}",
+            "var {  0: _,   a: _,      1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ } = {}",
+        );
+        // Method Definition
+        test(
+            "class F { '0'(){}; 'a'(){}; ['1'](){}; ['b'](){}; ['c.c'](){}; '1.1'(){}; '😊'(){}; 'd.d'(){} }",
+            "class F {  0(){};   a(){};      1(){};     b(){};   'c.c'(){}; '1.1'(){}; '😊'(){}; 'd.d'(){} }"
+        );
+        // Property Definition
+        test(
+            "class F { '0' = _; 'a' = _; ['1'] = _; ['b'] = _; ['c.c'] = _; '1.1' = _; '😊' = _; 'd.d' = _ }",
+            "class F {  0 = _;   a = _;      1 = _;     b = _;   'c.c' = _; '1.1' = _; '😊' = _; 'd.d' = _ }"
+        );
+        // Accessor Property
+        test(
+            "class F { accessor '0' = _; accessor 'a' = _; accessor ['1'] = _; accessor ['b'] = _; accessor ['c.c'] = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }",
+            "class F { accessor  0 = _;  accessor  a = _;  accessor     1 = _; accessor     b = _; accessor   'c.c' = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }"
+        );
     }
 }

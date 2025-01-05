@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::{node_util::Ctx, CompressorPass};
 
@@ -21,12 +21,6 @@ impl<'a> CompressorPass<'a> for ConvertToDottedProperties {
 }
 
 impl<'a> Traverse<'a> for ConvertToDottedProperties {
-    fn exit_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.in_fixed_loop {
-            self.try_compress_property_key(key, ctx);
-        }
-    }
-
     fn exit_member_expression(
         &mut self,
         expr: &mut MemberExpression<'a>,
@@ -41,38 +35,6 @@ impl<'a> Traverse<'a> for ConvertToDottedProperties {
 impl<'a> ConvertToDottedProperties {
     pub fn new(in_fixed_loop: bool) -> Self {
         Self { changed: false, in_fixed_loop }
-    }
-
-    // https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs
-    #[allow(clippy::cast_lossless)]
-    fn try_compress_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
-        let PropertyKey::StringLiteral(s) = key else { return };
-        if match ctx.parent() {
-            Ancestor::ObjectPropertyKey(key) => *key.computed(),
-            Ancestor::BindingPropertyKey(key) => *key.computed(),
-            Ancestor::MethodDefinitionKey(key) => *key.computed(),
-            Ancestor::PropertyDefinitionKey(key) => *key.computed(),
-            Ancestor::AccessorPropertyKey(key) => *key.computed(),
-            _ => true,
-        } {
-            return;
-        }
-        if is_identifier_name(&s.value) {
-            self.changed = true;
-            *key = PropertyKey::StaticIdentifier(
-                ctx.ast.alloc_identifier_name(s.span, s.value.clone()),
-            );
-        } else if (!s.value.starts_with('0') && !s.value.starts_with('+')) || s.value.len() <= 1 {
-            if let Ok(value) = s.value.parse::<u32>() {
-                self.changed = true;
-                *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
-                    s.span,
-                    value as f64,
-                    None,
-                    NumberBase::Decimal,
-                ));
-            }
-        }
     }
 
     /// `foo['bar']` -> `foo.bar`
@@ -111,12 +73,6 @@ mod test {
 
     fn test_same(source_text: &str) {
         test(source_text, source_text);
-    }
-
-    #[test]
-    fn test_object_key() {
-        test("({ '0': _, 'a': _ })", "({ 0: _, a: _ })");
-        test_same("({ '1.1': _, '😊': _, 'a.a': _ })");
     }
 
     #[test]
@@ -175,7 +131,7 @@ mod test {
     fn test_convert_to_dotted_properties_quoted_props() {
         test_same("({'':0})");
         test_same("({'1.0':0})");
-        test("({'\\u1d17A':0})", "({ \u{1d17}A: 0 })");
+        test_same("({'\\u1d17A':0})");
         test_same("({'a\\u0004b':0})");
     }
 
