@@ -9,8 +9,8 @@ use ignore::gitignore::Gitignore;
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
-    loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, InvalidFilterKind, LintFilter, LintService,
-    LintServiceOptions, Linter, LinterBuilder, Oxlintrc,
+    loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, ConfigStoreBuilder, InvalidFilterKind,
+    LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use oxc_span::VALID_EXTENSIONS;
 
@@ -128,20 +128,32 @@ impl Runner for LintRunner {
 
         let oxlintrc_for_print =
             if misc_options.print_config { Some(oxlintrc.clone()) } else { None };
-        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc)
-            .with_filters(filter)
-            .with_fix(fix_options.fix_kind());
+        let config_builder =
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).with_filters(filter);
 
         if let Some(basic_config_file) = oxlintrc_for_print {
             return CliRunResult::PrintConfigResult {
-                config_file: builder.resolve_final_config_file(basic_config_file),
+                config_file: config_builder.resolve_final_config_file(basic_config_file),
             };
         }
 
         let mut options = LintServiceOptions::new(self.cwd, paths)
-            .with_cross_module(builder.plugins().has_import());
+            .with_cross_module(config_builder.plugins().has_import());
 
-        let linter = builder.build();
+        let lint_config = match config_builder.build() {
+            Ok(config) => config,
+            Err(diagnostic) => {
+                let handler = GraphicalReportHandler::new();
+                let mut err = String::new();
+                handler.render_report(&mut err, &diagnostic).unwrap();
+                return CliRunResult::InvalidOptions {
+                    message: format!("Failed to parse configuration file.\n{err}"),
+                };
+            }
+        };
+
+        let linter =
+            Linter::new(LintOptions::default(), lint_config).with_fix(fix_options.fix_kind());
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
