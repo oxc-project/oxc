@@ -332,6 +332,7 @@ fn report_if_needed<'a>(
     });
 }
 
+#[allow(clippy::cast_possible_truncation)] // for `as i32`
 fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
     let node = get_node_by_statement(node, ctx);
     let span = node.span();
@@ -355,8 +356,7 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
 
     let text = ctx.source_range(Span::new(
         before_node_span.end + 1,
-        span.end
-            - (u32::try_from(node_string.len()).expect("Failed to convert to u32") - trimmed_len),
+        span.end - (node_string.len() as u32) - trimmed_len,
     ));
 
     !text.contains('\n')
@@ -400,6 +400,7 @@ fn is_lexical_declaration(node: &Statement) -> bool {
     }
 }
 
+#[allow(clippy::cast_possible_truncation)] // for `as i32`
 fn is_followed_by_else_keyword(node: &Statement, ctx: &LintContext) -> bool {
     let start = node.span().end + 1;
     let end = ctx.source_text().len() as u32;
