@@ -1724,6 +1724,7 @@ dependencies = [
  "serde",
  "serde_json",
  "similar",
+ "similar-asserts",
  "tokio",
  "walkdir",
 ]

@@ -1,0 +1,1151 @@
+commit: bc5c1417
+
+esbuild_test262 Summary:
+AST Parsed     : 44293/44293 (100.00%)
+Positive Passed: 43911/44293 (99.14%)
+tasks/coverage/test262/test/built-ins/Array/from/array-like-has-length-but-no-indexes-with-values.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/non-iterable-input-with-thenable-async-mapped-callback-err.js
+>>  error: 25
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/non-iterable-input-with-thenable-element-rejects.js
+>>  error: 53
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/non-iterable-sync-mapped-callback-err.js
+>>  error: 25
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/non-iterable-with-non-promise-thenable.js
+>>  error: 25
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/non-iterable-with-thenable-async-mapped-awaits-once.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/non-iterable-with-thenable-awaits-once.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/non-iterable-with-thenable-sync-mapped-awaits-once.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/non-iterable-with-thenable-then-method-err.js
+>>  error: 25
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/returned-promise-resolves-to-array.js
+>>  error: 13
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/sync-iterable-input-with-non-promise-thenable.js
+>>  error: 25
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/sync-iterable-with-thenable-async-mapped-awaits-once.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/sync-iterable-with-thenable-awaits-once.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/sync-iterable-with-thenable-element-rejects.js
+>>  error: 25
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/sync-iterable-with-thenable-sync-mapped-awaits-once.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Array/fromAsync/sync-iterable-with-thenable-then-method-err.js
+>>  error: 53
+
+tasks/coverage/test262/test/built-ins/Array/prototype/pop/clamps-to-integer-limit.js
+>>  error: 8
+
+tasks/coverage/test262/test/built-ins/Array/prototype/push/clamps-to-integer-limit.js
+>>  error: 8
+
+tasks/coverage/test262/test/built-ins/Array/prototype/push/throws-if-integer-limit-exceeded.js
+>>  error: 8
+
+tasks/coverage/test262/test/built-ins/Array/prototype/slice/length-exceeding-integer-limit-proxied-array.js
+>>  error: 8
+
+tasks/coverage/test262/test/built-ins/Array/prototype/sort/stability-2048-elements.js
+>>  error: 27
+
+tasks/coverage/test262/test/built-ins/Array/prototype/sort/stability-513-elements.js
+>>  error: 27
+
+tasks/coverage/test262/test/built-ins/Array/prototype/splice/clamps-length-to-integer-limit.js
+>>  error: 8
+
+tasks/coverage/test262/test/built-ins/Array/prototype/splice/length-and-deleteCount-exceeding-integer-limit.js
+>>  error: 8
+
+tasks/coverage/test262/test/built-ins/Array/prototype/splice/throws-if-integer-limit-exceeded.js
+>>  error: 8
+
+tasks/coverage/test262/test/built-ins/Array/prototype/toSpliced/length-exceeding-array-length-limit.js
+>>  error: 6
+
+tasks/coverage/test262/test/built-ins/Array/prototype/unshift/clamps-to-integer-limit.js
+>>  error: 8
+
+tasks/coverage/test262/test/built-ins/Array/prototype/unshift/throws-if-integer-limit-exceeded.js
+>>  error: 8
+
+tasks/coverage/test262/test/built-ins/Array/prototype/with/index-bigger-or-eq-than-length.js
+>>  error: 8
+
+tasks/coverage/test262/test/built-ins/ArrayBuffer/options-maxbytelength-compared-before-object-creation.js
+>>  error: 41
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/bigint/notify-all-on-loc.js
+>>  error: 166
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/count-defaults-to-infinity-missing.js
+>>  error: 73
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/count-defaults-to-infinity-undefined.js
+>>  error: 73
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/negative-count.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/notify-all-on-loc.js
+>>  error: 166
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/notify-all.js
+>>  error: 73
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/notify-in-order-one-time.js
+>>  error: 99
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/notify-in-order.js
+>>  error: 99
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/notify-nan.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/notify-one.js
+>>  error: 104
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/notify-renotify-noop.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/notify-two.js
+>>  error: 104
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/notify-with-no-agents-waiting.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/notify-with-no-matching-agents-waiting.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/notify/notify-zero.js
+>>  error: 86
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/no-spurious-wakeup-no-operation.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/no-spurious-wakeup-on-add.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/no-spurious-wakeup-on-and.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/no-spurious-wakeup-on-compareExchange.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/no-spurious-wakeup-on-exchange.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/no-spurious-wakeup-on-or.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/no-spurious-wakeup-on-store.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/no-spurious-wakeup-on-sub.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/no-spurious-wakeup-on-xor.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/value-not-equal.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/was-woken-before-timeout.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/false-for-timeout-agent.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/nan-for-timeout.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/negative-timeout-agent.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/no-spurious-wakeup-no-operation.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/no-spurious-wakeup-on-add.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/no-spurious-wakeup-on-and.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/no-spurious-wakeup-on-compareExchange.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/no-spurious-wakeup-on-exchange.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/no-spurious-wakeup-on-or.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/no-spurious-wakeup-on-store.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/no-spurious-wakeup-on-sub.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/no-spurious-wakeup-on-xor.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/null-for-timeout-agent.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/object-for-timeout-agent.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/poisoned-object-for-timeout-throws-agent.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/symbol-for-index-throws-agent.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/symbol-for-timeout-throws-agent.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/symbol-for-value-throws-agent.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/true-for-timeout-agent.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/undefined-for-timeout.js
+>>  error: 66
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/undefined-index-defaults-to-zero.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/value-not-equal.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/wait-index-value-not-equal.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/Atomics/wait/was-woken-before-timeout.js
+>>  error: 14
+
+tasks/coverage/test262/test/built-ins/JSON/parse/reviver-forward-modifies-object.js
+>>  error: 92
+
+tasks/coverage/test262/test/built-ins/Map/map-iterable-empty-does-not-call-set.js
+>>  error: 11
+
+tasks/coverage/test262/test/built-ins/Map/map-iterable-throws-when-set-is-not-callable.js
+>>  error: 21
+
+tasks/coverage/test262/test/built-ins/Map/valid-keys.js
+>>  error: 204
+
+tasks/coverage/test262/test/built-ins/Object/create/15.2.3.5-1-2.js
+>>  error: 20
+
+tasks/coverage/test262/test/built-ins/RegExp/escape/escaped-surrogates.js
+>>  error: 515
+
+tasks/coverage/test262/test/built-ins/Set/prototype/isDisjointFrom/set-like-class-mutation.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/Set/set-iterable-throws-when-add-is-not-callable.js
+>>  error: 13
+
+tasks/coverage/test262/test/built-ins/String/prototype/at/returns-code-unit.js
+>>  error: 1
+
+tasks/coverage/test262/test/built-ins/String/prototype/codePointAt/return-first-code-unit.js
+>>  error: 25
+
+tasks/coverage/test262/test/built-ins/String/prototype/split/separator-undef-limit-custom.js
+>>  error: 2
+
+tasks/coverage/test262/test/built-ins/StringIteratorPrototype/next/next-iteration-surrogate-pairs.js
+>>  error: 1
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/calendar-temporal-object.js
+>>  error: 21
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/largestunit-correct-rebalancing.js
+>>  error: 116
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/precision-exact-in-balance-time-duration.js
+>>  error: 42
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/precision-exact-in-round-duration.js
+>>  error: 35
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/relativeto-string-plaindatetime.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/relativeto-string-zoneddatetime.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/round-cross-unit-boundary.js
+>>  error: 79
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/round/roundingincrement-non-integer.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/calendar-temporal-object.js
+>>  error: 21
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/precision-exact-mathematical-values-5.js
+>>  error: 42
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/precision-exact-mathematical-values-6.js
+>>  error: 10
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/precision-exact-mathematical-values-7.js
+>>  error: 48
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-string-plaindatetime.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-string-zoneddatetime.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Temporal/Duration/prototype/total/relativeto-zoneddatetime-with-fractional-days.js
+>>  error: 10
+
+tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/since/argument-zoneddatetime.js
+>>  error: 13
+
+tasks/coverage/test262/test/built-ins/Temporal/Instant/prototype/until/argument-zoneddatetime.js
+>>  error: 13
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/equals/calendar-temporal-object.js
+>>  error: 13
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/argument-plaindatetime.js
+>>  error: 7
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/calendar-temporal-object.js
+>>  error: 13
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/since/roundingincrement-non-integer.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/argument-plaindatetime.js
+>>  error: 7
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/calendar-temporal-object.js
+>>  error: 13
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/until/roundingincrement-non-integer.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDate/prototype/withCalendar/calendar-temporal-object.js
+>>  error: 13
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/equals/calendar-temporal-object.js
+>>  error: 21
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/argument-plaindate.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/calendar-temporal-object.js
+>>  error: 21
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/since/roundingincrement-non-integer.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/argument-plaindate.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/calendar-temporal-object.js
+>>  error: 13
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/until/roundingincrement-non-integer.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/prototype/withCalendar/calendar-temporal-object.js
+>>  error: 13
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainMonthDay/prototype/equals/calendar-temporal-object.js
+>>  error: 21
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainTime/minute-undefined.js
+>>  error: 7
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/equals/calendar-temporal-object.js
+>>  error: 23
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/since/calendar-temporal-object.js
+>>  error: 23
+
+tasks/coverage/test262/test/built-ins/Temporal/PlainYearMonth/prototype/until/calendar-temporal-object.js
+>>  error: 23
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/from/argument-propertybag-calendar-iso-string.js
+>>  error: 4
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/equals/argument-propertybag-timezone-normalize-offset-strings.js
+>>  error: 7
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/equals/argument-string-time-zone-annotation.js
+>>  error: 15
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/equals/calendar-temporal-object.js
+>>  error: 21
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/since/calendar-temporal-object.js
+>>  error: 21
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/toString/timezonename-auto.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/toString/timezonename-critical.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/toString/timezonename-never.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/until/calendar-temporal-object.js
+>>  error: 21
+
+tasks/coverage/test262/test/built-ins/Temporal/ZonedDateTime/prototype/withCalendar/calendar-temporal-object.js
+>>  error: 13
+
+tasks/coverage/test262/test/built-ins/TypedArray/prototype/with/index-bigger-or-eq-than-length.js
+>>  error: 8
+
+tasks/coverage/test262/test/built-ins/TypedArrayConstructors/ctors/object-arg/iterated-array-with-modified-array-iterator.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/TypedArrayConstructors/internals/Delete/BigInt/key-is-out-of-bounds-non-strict.js
+>>  error: 1
+
+tasks/coverage/test262/test/built-ins/TypedArrayConstructors/internals/Delete/BigInt/key-is-out-of-bounds-strict.js
+>>  error: 1
+
+tasks/coverage/test262/test/built-ins/TypedArrayConstructors/internals/Delete/key-is-out-of-bounds-non-strict.js
+>>  error: 1
+
+tasks/coverage/test262/test/built-ins/TypedArrayConstructors/internals/Delete/key-is-out-of-bounds-strict.js
+>>  error: 1
+
+tasks/coverage/test262/test/built-ins/encodeURI/S15.1.3.3_A2.2_T1.js
+>>  error: 5
+
+tasks/coverage/test262/test/built-ins/encodeURIComponent/S15.1.3.4_A2.2_T1.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/DateTimeFormat/constructor-options-dateStyle-valid.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/DateTimeFormat/constructor-options-dayPeriod-valid.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/DateTimeFormat/constructor-options-fractionalSecondDigits-valid.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/DateTimeFormat/constructor-options-timeStyle-valid.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/formatRange/en-US.js
+>>  error: 10
+
+tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/formatRange/fractionalSecondDigits.js
+>>  error: 10
+
+tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/formatToParts/offset-timezone-correct.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/DisplayNames/prototype/resolvedOptions/option-fallback.js
+>>  error: 3
+
+tasks/coverage/test262/test/intl402/DisplayNames/prototype/resolvedOptions/option-style.js
+>>  error: 3
+
+tasks/coverage/test262/test/intl402/DurationFormat/constructor-options-style-valid.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/DurationFormat/prototype/format/invalid-negative-duration-throws.js
+>>  error: 99
+
+tasks/coverage/test262/test/intl402/DurationFormat/prototype/format/rounding-mode-trunc-for-seconds.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/DurationFormat/prototype/formatToParts/invalid-negative-duration-throws.js
+>>  error: 99
+
+tasks/coverage/test262/test/intl402/Intl/supportedValuesOf/calendars-accepted-by-DateTimeFormat.js
+>>  error: 12
+
+tasks/coverage/test262/test/intl402/Intl/supportedValuesOf/collations-accepted-by-Collator.js
+>>  error: 27
+
+tasks/coverage/test262/test/intl402/Intl/supportedValuesOf/numberingSystems-accepted-by-DateTimeFormat.js
+>>  error: 12
+
+tasks/coverage/test262/test/intl402/Intl/supportedValuesOf/numberingSystems-accepted-by-NumberFormat.js
+>>  error: 12
+
+tasks/coverage/test262/test/intl402/Intl/supportedValuesOf/numberingSystems-accepted-by-RelativeTimeFormat.js
+>>  error: 12
+
+tasks/coverage/test262/test/intl402/Intl/supportedValuesOf/units-accepted-by-NumberFormat.js
+>>  error: 12
+
+tasks/coverage/test262/test/intl402/ListFormat/constructor/constructor/options-style-valid.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/ListFormat/constructor/constructor/options-type-valid.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/NumberFormat/constructor-compactDisplay-compact.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/NumberFormat/constructor-notation.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/NumberFormat/constructor-signDisplay.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/NumberFormat/currencyDisplay-unit.js
+>>  error: 3
+
+tasks/coverage/test262/test/intl402/NumberFormat/prototype/resolvedOptions/return-keys-order-default.js
+>>  error: 3
+
+tasks/coverage/test262/test/intl402/NumberFormat/style-unit.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/PluralRules/prototype/resolvedOptions/return-keys-order-default.js
+>>  error: 3
+
+tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/constructor/options-numeric-valid.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/constructor/options-style-valid.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/constructor/options-toobject-prototype.js
+>>  error: 3
+
+tasks/coverage/test262/test/intl402/RelativeTimeFormat/constructor/constructor/options-toobject.js
+>>  error: 3
+
+tasks/coverage/test262/test/intl402/Segmenter/constructor/constructor/locales-valid.js
+>>  error: 9
+
+tasks/coverage/test262/test/intl402/Segmenter/constructor/constructor/options-granularity-valid.js
+>>  error: 15
+
+tasks/coverage/test262/test/intl402/Segmenter/constructor/constructor/options-valid-combinations.js
+>>  error: 13
+
+tasks/coverage/test262/test/intl402/Segmenter/prototype/segment/containing/index-throws.js
+>>  error: 17
+
+tasks/coverage/test262/test/intl402/Segmenter/prototype/segment/containing/one-index.js
+>>  error: 11
+
+tasks/coverage/test262/test/intl402/Segmenter/prototype/segment/containing/out-of-bound-index.js
+>>  error: 15
+
+tasks/coverage/test262/test/intl402/Segmenter/prototype/segment/containing/zero-index.js
+>>  error: 10
+
+tasks/coverage/test262/test/intl402/Segmenter/prototype/segment/segment-tostring.js
+>>  error: 13
+
+tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/toString/calendarname-always.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/toString/calendarname-auto.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/toString/calendarname-critical.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/toString/calendarname-never.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/PlainDate/prototype/toString/calendarname-undefined.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/toString/calendarname-always.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/toString/calendarname-auto.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/toString/calendarname-critical.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/toString/calendarname-never.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/PlainDateTime/prototype/toString/calendarname-undefined.js
+>>  error: 13
+
+tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/toJSON/calendarname.js
+>>  error: 13
+
+tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/toString/calendarname-always.js
+>>  error: 13
+
+tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/toString/calendarname-auto.js
+>>  error: 13
+
+tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/toString/calendarname-critical.js
+>>  error: 13
+
+tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/toString/calendarname-never.js
+>>  error: 13
+
+tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/prototype/toString/calendarname-undefined.js
+>>  error: 13
+
+tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/from/reference-day-chinese.js
+>>  error: 16
+
+tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/prototype/toString/calendarname-always.js
+>>  error: 15
+
+tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/prototype/toString/calendarname-auto.js
+>>  error: 15
+
+tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/prototype/toString/calendarname-critical.js
+>>  error: 15
+
+tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/prototype/toString/calendarname-never.js
+>>  error: 15
+
+tasks/coverage/test262/test/intl402/Temporal/PlainYearMonth/prototype/toString/calendarname-undefined.js
+>>  error: 15
+
+tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/equals/sub-minute-offset.js
+>>  error: 1
+
+tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/toString/calendarname-always.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/toString/calendarname-auto.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/toString/calendarname-critical.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/toString/calendarname-never.js
+>>  error: 5
+
+tasks/coverage/test262/test/intl402/Temporal/ZonedDateTime/prototype/toString/calendarname-undefined.js
+>>  error: 13
+
+tasks/coverage/test262/test/language/asi/S7.9_A1.js
+>>  error: 10
+
+tasks/coverage/test262/test/language/asi/S7.9_A2.js
+>>  error: 10
+
+tasks/coverage/test262/test/language/block-scope/leave/x-after-break-to-label.js
+>>  error: 7
+
+tasks/coverage/test262/test/language/block-scope/leave/x-before-continue.js
+>>  error: 15
+
+tasks/coverage/test262/test/language/block-scope/shadowing/let-declaration-shadowing-catch-parameter.js
+>>  error: 8
+
+tasks/coverage/test262/test/language/comments/multi-line-asi-carriage-return.js
+>>  error: 2
+
+tasks/coverage/test262/test/language/comments/multi-line-asi-line-feed.js
+>>  error: 2
+
+tasks/coverage/test262/test/language/comments/multi-line-asi-line-separator.js
+>>  error: 2
+
+tasks/coverage/test262/test/language/comments/multi-line-asi-paragraph-separator.js
+>>  error: 2
+
+tasks/coverage/test262/test/language/expressions/array/spread-err-mult-err-obj-unresolvable.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/array/spread-mult-empty.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/array/spread-mult-literal.js
+>>  error: 4
+
+tasks/coverage/test262/test/language/expressions/array/spread-sngl-empty.js
+>>  error: 4
+
+tasks/coverage/test262/test/language/expressions/array/spread-sngl-literal.js
+>>  error: 4
+
+tasks/coverage/test262/test/language/expressions/arrow-function/syntax/variations.js
+>>  error: 15
+
+tasks/coverage/test262/test/language/expressions/call/spread-err-mult-err-expr-throws.js
+>>  error: 15
+
+tasks/coverage/test262/test/language/expressions/call/spread-err-mult-err-itr-get-call.js
+>>  error: 15
+
+tasks/coverage/test262/test/language/expressions/call/spread-err-mult-err-obj-unresolvable.js
+>>  error: 17
+
+tasks/coverage/test262/test/language/expressions/call/spread-err-mult-err-unresolvable.js
+>>  error: 15
+
+tasks/coverage/test262/test/language/expressions/call/spread-err-sngl-err-expr-throws.js
+>>  error: 13
+
+tasks/coverage/test262/test/language/expressions/call/spread-err-sngl-err-itr-get-call.js
+>>  error: 13
+
+tasks/coverage/test262/test/language/expressions/call/spread-err-sngl-err-itr-get-value.js
+>>  error: 13
+
+tasks/coverage/test262/test/language/expressions/call/spread-err-sngl-err-obj-unresolvable.js
+>>  error: 13
+
+tasks/coverage/test262/test/language/expressions/call/spread-err-sngl-err-unresolvable.js
+>>  error: 13
+
+tasks/coverage/test262/test/language/expressions/division/line-terminator.js
+>>  error: 4
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-eval-rqstd-abrupt-typeerror.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-eval-rqstd-abrupt-urierror.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-eval-script-code-target.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-file-does-not-exist.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-instn-iee-err-ambiguous-import.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-instn-iee-err-circular.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/catch/nested-block-labeled-specifier-tostring-abrupt-rejects.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-labeled-empty-str-is-valid-assign-expr.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-labeled-import-attributes-trailing-comma-first.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-labeled-import-attributes-trailing-comma-second.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/syntax/valid/nested-block-labeled-nested-imports.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-eval-gtbndng-indirect-update-dflt.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-eval-gtbndng-indirect-update.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-is-call-expression-square-brackets.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-returns-thenable.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/dynamic-import/usage/syntax-nested-block-labeled-specifier-tostring.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/exponentiation/exp-operator-evaluation-order.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/expressions/in/S11.8.7_A2.4_T1.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/expressions/in/S11.8.7_A2.4_T4.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A2.4_T1.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/expressions/instanceof/S11.8.6_A2.4_T4.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/expressions/logical-or/S11.11.2_A2.1_T2.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/modulus/line-terminator.js
+>>  error: 4
+
+tasks/coverage/test262/test/language/expressions/multiplication/line-terminator.js
+>>  error: 2
+
+tasks/coverage/test262/test/language/expressions/new/spread-mult-empty.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/new/spread-mult-literal.js
+>>  error: 4
+
+tasks/coverage/test262/test/language/expressions/new/spread-sngl-literal.js
+>>  error: 4
+
+tasks/coverage/test262/test/language/expressions/object/accessor-name-computed-err-to-prop-key.js
+>>  error: 20
+
+tasks/coverage/test262/test/language/expressions/object/accessor-name-computed-err-unresolvable.js
+>>  error: 20
+
+tasks/coverage/test262/test/language/expressions/object/cpn-obj-lit-computed-property-name-from-exponetiation-expression.js
+>>  error: 4
+
+tasks/coverage/test262/test/language/expressions/object/cpn-obj-lit-computed-property-name-from-math.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/object/cpn-obj-lit-computed-property-name-from-multiplicative-expression-div.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/object/cpn-obj-lit-computed-property-name-from-multiplicative-expression-mult.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/generator-prop-name-eval-error.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/name-prop-name-eval-error.js
+>>  error: 4
+
+tasks/coverage/test262/test/language/expressions/object/method-definition/yield-as-literal-property-name.js
+>>  error: 24
+
+tasks/coverage/test262/test/language/expressions/object/prop-def-id-eval-error.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/object/prop-def-id-get-error.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/optional-chaining/iteration-statement-for.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/optional-chaining/optional-call-preserves-this.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/expressions/optional-chaining/punctuator-decimal-lookahead.js
+>>  error: 2
+
+tasks/coverage/test262/test/language/expressions/optional-chaining/short-circuiting.js
+>>  error: 43
+
+tasks/coverage/test262/test/language/expressions/postfix-decrement/S11.3.2_A3_T2.js
+>>  error: 11
+
+tasks/coverage/test262/test/language/expressions/postfix-increment/S11.3.1_A3_T2.js
+>>  error: 11
+
+tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A3_T2.js
+>>  error: 11
+
+tasks/coverage/test262/test/language/expressions/prefix-increment/S11.4.4_A4_T2.js
+>>  error: 11
+
+tasks/coverage/test262/test/language/expressions/strict-does-not-equals/S11.9.5_A2.1_T2.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/strict-does-not-equals/S11.9.5_A2.1_T3.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/strict-does-not-equals/S11.9.5_A2.4_T3.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/strict-equals/S11.9.4_A2.1_T2.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/strict-equals/S11.9.4_A2.1_T3.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/strict-equals/S11.9.4_A2.4_T3.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/super/prop-dot-obj-val-from-arrow.js
+>>  error: 15
+
+tasks/coverage/test262/test/language/expressions/super/prop-expr-obj-val-from-arrow.js
+>>  error: 15
+
+tasks/coverage/test262/test/language/expressions/template-literal/middle-list-many-expr-abrupt.js
+>>  error: 7
+
+tasks/coverage/test262/test/language/expressions/template-literal/middle-list-many-expr-member-expr.js
+>>  error: 23
+
+tasks/coverage/test262/test/language/expressions/template-literal/middle-list-one-expr-abrupt.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/expressions/template-literal/middle-list-one-expr-member-expr.js
+>>  error: 11
+
+tasks/coverage/test262/test/language/future-reserved-words/implements.js
+>>  error: 33
+
+tasks/coverage/test262/test/language/future-reserved-words/interface.js
+>>  error: 31
+
+tasks/coverage/test262/test/language/future-reserved-words/package.js
+>>  error: 27
+
+tasks/coverage/test262/test/language/future-reserved-words/private.js
+>>  error: 27
+
+tasks/coverage/test262/test/language/future-reserved-words/protected.js
+>>  error: 31
+
+tasks/coverage/test262/test/language/future-reserved-words/public.js
+>>  error: 25
+
+tasks/coverage/test262/test/language/future-reserved-words/static.js
+>>  error: 25
+
+tasks/coverage/test262/test/language/import/import-attributes/json-invalid.js
+>>  error: 10
+
+tasks/coverage/test262/test/language/import/import-attributes/json-named-bindings.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/literals/regexp/named-groups/invalid-lone-surrogate-groupname.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/module-code/eval-gtbndng-local-bndng-const.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/eval-rqstd-once.js
+>>  error: 58
+
+tasks/coverage/test262/test/language/module-code/eval-rqstd-order.js
+>>  error: 58
+
+tasks/coverage/test262/test/language/module-code/eval-self-once.js
+>>  error: 57
+
+tasks/coverage/test262/test/language/module-code/import-attributes/allow-nlt-before-with.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-key-string-double.js
+>>  error: 6
+
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-key-string-single.js
+>>  error: 6
+
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-many.js
+>>  error: 7
+
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-trlng-comma.js
+>>  error: 7
+
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-double.js
+>>  error: 7
+
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-single.js
+>>  error: 7
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-ambiguous-as.js
+>>  error: 11
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-ambiguous.js
+>>  error: 6
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-dflt-thru-star-as.js
+>>  error: 17
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-dflt-thru-star-dflt.js
+>>  error: 6
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-not-found-as.js
+>>  error: 11
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-not-found-dflt.js
+>>  error: 6
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-not-found.js
+>>  error: 6
+
+tasks/coverage/test262/test/language/module-code/instn-once.js
+>>  error: 57
+
+tasks/coverage/test262/test/language/module-code/instn-resolve-empty-import.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/module-code/instn-star-err-not-found.js
+>>  error: 10
+
+tasks/coverage/test262/test/language/module-code/source-phase-import/import-source-binding-name.js
+>>  error: 21
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-body.js
+>>  error: 8
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-tick.js
+>>  error: 8
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection.js
+>>  error: 13
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-array-literal.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-func-expression.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-identifier.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-literal-number.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-literal-string.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-nested.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-new-expr.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-null.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-obj-literal.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-regexp.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-template-literal.js
+>>  error: 9
+
+tasks/coverage/test262/test/language/module-code/top-level-await/syntax/export-var-await-expr-this.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/statementList/block-let-declaration.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/statementList/block-with-statment-let-declaration.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/statements/break/S12.8_A7.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/statements/break/S12.8_A9_T2.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/statements/break/line-terminators.js
+>>  error: 43
+
+tasks/coverage/test262/test/language/statements/const/function-local-use-before-initialization-in-prior-statement.js
+>>  error: 24
+
+tasks/coverage/test262/test/language/statements/const/global-use-before-initialization-in-prior-statement.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/statements/const/syntax/const.js
+>>  error: 17
+
+tasks/coverage/test262/test/language/statements/const/syntax/with-initializer-case-expression-statement-list.js
+>>  error: 26
+
+tasks/coverage/test262/test/language/statements/const/syntax/with-initializer-default-statement-list.js
+>>  error: 27
+
+tasks/coverage/test262/test/language/statements/continue/S12.7_A7.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/statements/continue/S12.7_A9_T2.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/statements/continue/line-terminators.js
+>>  error: 15
+
+tasks/coverage/test262/test/language/statements/do-while/S12.6.1_A4_T2.js
+>>  error: 5
+
+tasks/coverage/test262/test/language/statements/do-while/S12.6.1_A4_T3.js
+>>  error: 4
+
+tasks/coverage/test262/test/language/statements/do-while/S12.6.1_A4_T4.js
+>>  error: 11
+
+tasks/coverage/test262/test/language/statements/for/S12.6.3_A11.1_T2.js
+>>  error: 25
+
+tasks/coverage/test262/test/language/statements/for/S12.6.3_A11_T2.js
+>>  error: 25
+
+tasks/coverage/test262/test/language/statements/for/S12.6.3_A12.1_T2.js
+>>  error: 25
+
+tasks/coverage/test262/test/language/statements/for/S12.6.3_A12_T2.js
+>>  error: 25
+
+tasks/coverage/test262/test/language/statements/for-of/string-astral-truncated.js
+>>  error: 3
+
+tasks/coverage/test262/test/language/statements/let/block-local-use-before-initialization-in-prior-statement.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/statements/let/function-local-use-before-initialization-in-prior-statement.js
+>>  error: 22
+
+tasks/coverage/test262/test/language/statements/let/global-use-before-initialization-in-prior-statement.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/statements/let/syntax/escaped-let.js
+>>  error: 1
+
+tasks/coverage/test262/test/language/statements/let/syntax/with-initialisers-in-statement-positions-case-expression-statement-list.js
+>>  error: 16
+
+tasks/coverage/test262/test/language/statements/let/syntax/with-initialisers-in-statement-positions-default-statement-list.js
+>>  error: 17
+
+tasks/coverage/test262/test/language/statements/let/syntax/without-initialisers-in-statement-positions-case-expression-statement-list.js
+>>  error: 16
+
+tasks/coverage/test262/test/language/statements/let/syntax/without-initialisers-in-statement-positions-default-statement-list.js
+>>  error: 17
+
+tasks/coverage/test262/test/language/statements/switch/scope-lex-const.js
+>>  error: 25
+
+tasks/coverage/test262/test/language/statements/switch/scope-lex-let.js
+>>  error: 18
+
+tasks/coverage/test262/test/language/statements/try/S12.14_A8.js
+>>  error: 7
+
+tasks/coverage/test262/test/language/statements/variable/S12.2_A3.js
+>>  error: 65
+
+tasks/coverage/test262/test/language/statements/while/S12.6.2_A4_T2.js
+>>  error: 6
+
+tasks/coverage/test262/test/language/statements/while/S12.6.2_A4_T3.js
+>>  error: 6
+
+tasks/coverage/test262/test/language/statements/while/S12.6.2_A4_T4.js
+>>  error: 13
+

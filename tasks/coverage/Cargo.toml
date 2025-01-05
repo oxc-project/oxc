@@ -43,3 +43,4 @@ serde_json = { workspace = true }
 similar = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 walkdir = { workspace = true }
+similar-asserts = { workspace = true }
