@@ -105,7 +105,9 @@ impl Rule for Curly {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let root_node = get_root_node(node, ctx);
+        let Some(root_node) = ctx.nodes().root_node() else {
+            return;
+        };
 
         match node.kind() {
             AstKind::IfStatement(stmt) => {
