@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::ValueType;
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{cmp::ContentEq, GetSpan, SPAN};
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::CompressorPass;
@@ -462,6 +462,15 @@ impl<'a> PeepholeMinimizeConditions {
             ));
         }
 
+        // `foo() ? bar : bar` -> `foo(), bar`
+        if expr.alternate.content_eq(&expr.consequent) {
+            let expressions = ctx.ast.vec_from_array([
+                ctx.ast.move_expression(&mut expr.test),
+                ctx.ast.move_expression(&mut expr.consequent),
+            ]);
+            return Some(ctx.ast.expression_sequence(expr.span, expressions));
+        }
+
         None
     }
 
@@ -851,6 +860,10 @@ mod test {
         fold("function x () { return a ? true : b }", "function x() { return !!a || b }");
         // can't be minified e.g. `a = ''` would return `''`
         fold("function x() { return a && true }", "function x() { return a && true }");
+
+        fold("foo ? bar : bar", "foo, bar");
+        fold_same("foo ? bar : baz");
+        fold("foo() ? bar : bar", "foo(), bar");
     }
 
     #[test]
