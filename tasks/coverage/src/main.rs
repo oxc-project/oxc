@@ -27,6 +27,7 @@ fn main() {
         "transpiler" => args.run_transpiler(),
         "minifier" => args.run_minifier(),
         "runtime" => args.run_runtime(),
+        "esbuild" => args.run_esbuild(),
         "all" => {
             args.run_default();
             args.run_runtime();
