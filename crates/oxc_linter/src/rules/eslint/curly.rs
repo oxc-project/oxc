@@ -230,13 +230,6 @@ impl Rule for Curly {
     }
 }
 
-fn get_root_node<'a, 'b>(mut node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> &'a AstNode<'b> {
-    while let Some(parent) = ctx.nodes().parent_node(node.id()) {
-        node = parent;
-    }
-    node
-}
-
 fn get_node_by_statement<'a>(statement: &'a Statement, ctx: &'a LintContext) -> &'a AstNode<'a> {
     let span = statement.span();
     ctx.nodes().iter().find(|n| n.span() == span).expect("Failed to get node by statement")
@@ -356,7 +349,7 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
 
     let text = ctx.source_range(Span::new(
         before_node_span.end + 1,
-        span.end - (node_string.len() as u32) - trimmed_len,
+        span.end - ((node_string.len() as u32) - trimmed_len),
     ));
 
     !text.contains('\n')
