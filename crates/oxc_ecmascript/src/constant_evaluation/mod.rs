@@ -1,3 +1,4 @@
+use core::f64;
 use std::{borrow::Cow, cmp::Ordering};
 
 use num_bigint::BigInt;
@@ -149,6 +150,9 @@ pub trait ConstantEvaluation<'a> {
                 UnaryOperator::Void => Some(f64::NAN),
                 _ => None,
             },
+            Expression::SequenceExpression(s) => {
+                s.expressions.last().and_then(|e| self.eval_to_number(e))
+            }
             expr => {
                 use crate::ToNumber;
                 expr.to_number()
@@ -247,39 +251,20 @@ pub trait ConstantEvaluation<'a> {
                 };
                 Some(ConstantValue::Number(val))
             }
-            #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
+            #[expect(clippy::cast_sign_loss)]
             BinaryOperator::ShiftLeft
             | BinaryOperator::ShiftRight
             | BinaryOperator::ShiftRightZeroFill => {
-                let left_num = self.get_side_free_number_value(left);
-                let right_num = self.get_side_free_number_value(right);
-                if let (Some(left_val), Some(right_val)) = (left_num, right_num) {
-                    if left_val.fract() != 0.0 || right_val.fract() != 0.0 {
-                        return None;
-                    }
-                    // only the lower 5 bits are used when shifting, so don't do anything
-                    // if the shift amount is outside [0,32)
-                    if !(0.0..32.0).contains(&right_val) {
-                        return None;
-                    }
-                    let right_val_int = right_val as u32;
-                    let bits = left_val.to_int_32();
-
-                    let result_val: f64 = match operator {
-                        BinaryOperator::ShiftLeft => f64::from(bits.wrapping_shl(right_val_int)),
-                        BinaryOperator::ShiftRight => f64::from(bits.wrapping_shr(right_val_int)),
-                        BinaryOperator::ShiftRightZeroFill => {
-                            // JavaScript always treats the result of >>> as unsigned.
-                            // We must force Rust to do the same here.
-                            let bits = bits as u32;
-                            let res = bits.wrapping_shr(right_val_int);
-                            f64::from(res)
-                        }
-                        _ => unreachable!(),
-                    };
-                    return Some(ConstantValue::Number(result_val));
-                }
-                None
+                let left = self.get_side_free_number_value(left)?;
+                let right = self.get_side_free_number_value(right)?;
+                let left = left.to_int_32();
+                let right = (right.to_int_32() as u32) & 31;
+                Some(ConstantValue::Number(match operator {
+                    BinaryOperator::ShiftLeft => f64::from(left << right),
+                    BinaryOperator::ShiftRight => f64::from(left >> right),
+                    BinaryOperator::ShiftRightZeroFill => f64::from((left as u32) >> right),
+                    _ => unreachable!(),
+                }))
             }
             BinaryOperator::LessThan => {
                 self.is_less_than(left, right, true).map(|value| match value {
@@ -401,52 +386,36 @@ pub trait ConstantEvaluation<'a> {
                 };
                 Some(ConstantValue::String(Cow::Borrowed(s)))
             }
-            UnaryOperator::Void => {
-                if (!expr.argument.is_number() || !expr.argument.is_number_0())
-                    && !expr.may_have_side_effects()
-                {
-                    return Some(ConstantValue::Undefined);
-                }
-                None
-            }
+            UnaryOperator::Void => (expr.argument.is_literal() || !expr.may_have_side_effects())
+                .then_some(ConstantValue::Undefined),
             UnaryOperator::LogicalNot => {
                 self.get_boolean_value(&expr.argument).map(|b| !b).map(ConstantValue::Boolean)
             }
             UnaryOperator::UnaryPlus => {
                 self.eval_to_number(&expr.argument).map(ConstantValue::Number)
             }
-            UnaryOperator::UnaryNegation => {
-                let ty = ValueType::from(&expr.argument);
-                match ty {
-                    ValueType::BigInt => {
-                        self.eval_to_big_int(&expr.argument).map(|v| -v).map(ConstantValue::BigInt)
-                    }
-                    ValueType::Number => self
-                        .eval_to_number(&expr.argument)
-                        .map(|v| if v.is_nan() { v } else { -v })
-                        .map(ConstantValue::Number),
-                    _ => None,
+            UnaryOperator::UnaryNegation => match ValueType::from(&expr.argument) {
+                ValueType::BigInt => {
+                    self.eval_to_big_int(&expr.argument).map(|v| -v).map(ConstantValue::BigInt)
                 }
-            }
-            UnaryOperator::BitwiseNot => {
-                let ty = ValueType::from(&expr.argument);
-                match ty {
-                    ValueType::BigInt => {
-                        self.eval_to_big_int(&expr.argument).map(|v| !v).map(ConstantValue::BigInt)
-                    }
-                    #[expect(clippy::cast_lossless)]
-                    ValueType::Number => self
-                        .eval_to_number(&expr.argument)
-                        .map(|v| !v.to_int_32())
-                        .map(|v| v as f64)
-                        .map(ConstantValue::Number),
-                    ValueType::Undefined | ValueType::Null => Some(ConstantValue::Number(-1.0)),
-                    ValueType::Boolean => self
-                        .get_side_free_boolean_value(&expr.argument)
-                        .map(|v| ConstantValue::Number(if v { -2.0 } else { -1.0 })),
-                    _ => None,
+                ValueType::Number => self
+                    .eval_to_number(&expr.argument)
+                    .map(|v| if v.is_nan() { v } else { -v })
+                    .map(ConstantValue::Number),
+                ValueType::Undefined => Some(ConstantValue::Number(f64::NAN)),
+                ValueType::Null => Some(ConstantValue::Number(-0.0)),
+                _ => None,
+            },
+            UnaryOperator::BitwiseNot => match ValueType::from(&expr.argument) {
+                ValueType::BigInt => {
+                    self.eval_to_big_int(&expr.argument).map(|v| !v).map(ConstantValue::BigInt)
                 }
-            }
+                #[expect(clippy::cast_lossless)]
+                _ => self
+                    .eval_to_number(&expr.argument)
+                    .map(|v| (!v.to_int_32()) as f64)
+                    .map(ConstantValue::Number),
+            },
             UnaryOperator::Delete => None,
         }
     }

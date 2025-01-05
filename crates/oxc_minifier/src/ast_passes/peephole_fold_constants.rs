@@ -51,7 +51,7 @@ impl<'a, 'b> PeepholeFoldConstants {
         Self { changed: false }
     }
 
-    #[allow(clippy::float_cmp)]
+    #[expect(clippy::float_cmp)]
     fn try_fold_unary_expr(e: &UnaryExpression<'a>, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
         match e.operator {
             // Do not fold `void 0` back to `undefined`.
@@ -217,7 +217,7 @@ impl<'a, 'b> PeepholeFoldConstants {
         None
     }
 
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn try_fold_binary_expr(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, 'b>,
@@ -300,7 +300,7 @@ impl<'a, 'b> PeepholeFoldConstants {
     }
 
     // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1128
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     #[must_use]
     fn approximate_printed_int_char_count(value: f64) -> usize {
         let mut count = if value.is_infinite() {
@@ -505,48 +505,37 @@ impl<'a, 'b> PeepholeFoldConstants {
     ) -> Option<bool> {
         let left = ValueType::from(left_expr);
         let right = ValueType::from(right_expr);
-        if left != ValueType::Undetermined && right != ValueType::Undetermined {
+        if !left.is_undetermined() && !right.is_undetermined() {
             // Strict equality can only be true for values of the same type.
             if left != right {
                 return Some(false);
             }
             return match left {
                 ValueType::Number => {
-                    let left_number = ctx.get_side_free_number_value(left_expr);
-                    let right_number = ctx.get_side_free_number_value(right_expr);
-
-                    if let (Some(l_num), Some(r_num)) = (left_number, right_number) {
-                        if l_num.is_nan() || r_num.is_nan() {
-                            return Some(false);
-                        }
-
-                        return Some(l_num == r_num);
+                    let lnum = ctx.get_side_free_number_value(left_expr)?;
+                    let rnum = ctx.get_side_free_number_value(right_expr)?;
+                    if lnum.is_nan() || rnum.is_nan() {
+                        return Some(false);
                     }
-
-                    None
+                    Some(lnum == rnum)
                 }
                 ValueType::String => {
-                    let left_string = ctx.get_side_free_string_value(left_expr);
-                    let right_string = ctx.get_side_free_string_value(right_expr);
-                    if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
-                        return Some(left_string == right_string);
-                    }
-                    None
+                    let left = ctx.get_side_free_string_value(left_expr)?;
+                    let right = ctx.get_side_free_string_value(right_expr)?;
+                    Some(left == right)
                 }
                 ValueType::Undefined | ValueType::Null => Some(true),
                 ValueType::Boolean if right.is_boolean() => {
-                    let left = ctx.get_boolean_value(left_expr);
-                    let right = ctx.get_boolean_value(right_expr);
-                    if let (Some(left_bool), Some(right_bool)) = (left, right) {
-                        return Some(left_bool == right_bool);
-                    }
-                    None
+                    let left = ctx.get_boolean_value(left_expr)?;
+                    let right = ctx.get_boolean_value(right_expr)?;
+                    Some(left == right)
                 }
-                // TODO
-                ValueType::BigInt
-                | ValueType::Object
-                | ValueType::Boolean
-                | ValueType::Undetermined => None,
+                ValueType::BigInt => {
+                    let left = ctx.get_side_free_bigint_value(left_expr)?;
+                    let right = ctx.get_side_free_bigint_value(right_expr)?;
+                    Some(left == right)
+                }
+                ValueType::Object | ValueType::Boolean | ValueType::Undetermined => None,
             };
         }
 
@@ -646,6 +635,11 @@ mod test {
 
     fn test_same(source_text: &str) {
         test(source_text, source_text);
+    }
+
+    #[test]
+    fn test_comparison() {
+        test("(1, 2) !== 2", "false");
     }
 
     #[test]
@@ -1103,31 +1097,28 @@ mod test {
     }
 
     #[test]
-    fn unary_ops() {
-        // TODO: need to port
-        // These cases are handled by PeepholeRemoveDeadCode in closure-compiler.
-        // test_same("!foo()");
-        // test_same("~foo()");
-        // test_same("-foo()");
+    fn test_fold_unary() {
+        test_same("!foo()");
+        test_same("~foo()");
+        test_same("-foo()");
 
-        // These cases are handled here.
         test("a=!true", "a=false");
         test("a=!10", "a=false");
         test("a=!false", "a=true");
         test_same("a=!foo()");
-        // test("a=-0", "a=-0.0");
-        // test("a=-(0)", "a=-0.0");
+
+        test("a=-0", "a=-0");
+        test("a=-(0)", "a=-0");
         test_same("a=-Infinity");
         test("a=-NaN", "a=NaN");
         test_same("a=-foo()");
-        test("a=~~0", "a=0");
-        test("a=~~10", "a=10");
-        test("a=~-7", "a=6");
-        test_same("a=~~foo()");
+        test("-undefined", "NaN");
+        test("-null", "-0");
+        test("-NaN", "NaN");
 
-        // test("a=+true", "a=1");
+        test("a=+true", "a=1");
         test("a=+10", "a=10");
-        // test("a=+false", "a=0");
+        test("a=+false", "a=0");
         test_same("a=+foo()");
         test_same("a=+f");
         // test("a=+(f?true:false)", "a=+(f?1:0)");
@@ -1135,15 +1126,19 @@ mod test {
         test("a=+Infinity", "a=Infinity");
         test("a=+NaN", "a=NaN");
         test("a=+-7", "a=-7");
-        // test("a=+.5", "a=.5");
+        test("a=+.5", "a=.5");
 
+        test("a=~~0", "a=0");
+        test("a=~~10", "a=10");
+        test("a=~-7", "a=6");
+        test_same("a=~~foo()");
         test("a=~0xffffffff", "a=0");
         test("a=~~0xffffffff", "a=-1");
-        // test_same("a=~.5", PeepholeFoldConstants.FRACTIONAL_BITWISE_OPERAND);
+        // test_same("a=~.5");
     }
 
     #[test]
-    fn unary_with_big_int() {
+    fn test_fold_unary_big_int() {
         test("-(1n)", "-1n");
         test("- -1n", "1n");
         test("!1n", "false");
@@ -1453,6 +1448,8 @@ mod test {
         test("~null", "-1");
         test("~false", "-1");
         test("~true", "-2");
+        test("~'1'", "-2");
+        test("~'-1'", "0");
     }
 
     #[test]
@@ -1485,9 +1482,9 @@ mod test {
 
         test("x = 0xffffffff << 0", "x=-1");
         test("x = 0xffffffff << 4", "x=-16");
-        test("1 << 32", "1<<32");
+        test("1 << 32", "1");
         test("1 << -1", "1<<-1");
-        test("1 >> 32", "1>>32");
+        test("1 >> 32", "1");
 
         // Regression on #6161, ported from <https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/test/language/expressions/unsigned-right-shift/S9.6_A2.2.js>.
         test("-2147483647 >>> 0", "2147483649");
@@ -1535,6 +1532,8 @@ mod test {
         // test("x = (p1 + (p2 + 'a')) + 'b'", "x = (p1 + (p2 + 'ab'))");
         // test("'a' + ('b' + p1) + 1", "'ab' + p1 + 1");
         // test("x = 'a' + ('b' + p1 + 'c')", "x = 'ab' + (p1 + 'c')");
+        test("void 0 + ''", "'undefined'");
+
         test_same("x = 'a' + (4 + p1 + 'a')");
         test_same("x = p1 / 3 + 4");
         test_same("foo() + 3 + 'a' + foo()");
@@ -1618,15 +1617,21 @@ mod test {
     }
 
     #[test]
-    fn test_fold_shift_right_zero_fill() {
-        test("10 >>> 1", "5");
-        test_same("-1 >>> 0");
+    fn test_fold_shift_left() {
+        test("1 << 3", "8");
+        test("1.2345 << 0", "1");
+        test_same("1 << 24");
     }
 
     #[test]
-    fn test_fold_shift_left() {
-        test("1 << 3", "8");
-        test_same("1 << 24");
+    fn test_fold_shift_right() {
+        test("2147483647 >> -32.1", "2147483647");
+    }
+
+    #[test]
+    fn test_fold_shift_right_zero_fill() {
+        test("10 >>> 1", "5");
+        test_same("-1 >>> 0");
     }
 
     #[test]

@@ -506,6 +506,9 @@ impl<'a> PeepholeMinimizeConditions {
         true
     }
 
+    // `a instanceof b === true` -> `a instanceof b`
+    // `a instanceof b === false` -> `!(a instanceof b)`
+    //  ^^^^^^^^^^^^^^ `ValueType::from(&e.left).is_boolean()` is `true`.
     fn try_minimize_binary(
         e: &mut BinaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,

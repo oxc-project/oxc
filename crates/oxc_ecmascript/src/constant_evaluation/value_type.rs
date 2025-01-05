@@ -93,6 +93,7 @@ impl<'a> From<&Expression<'a>> for ValueType {
             Expression::SequenceExpression(e) => {
                 e.expressions.last().map_or(ValueType::Undetermined, Self::from)
             }
+            Expression::AssignmentExpression(e) => Self::from(&e.right),
             _ => Self::Undetermined,
         }
     }
@@ -115,8 +116,27 @@ impl<'a> From<&BinaryExpression<'a>> for ValueType {
                 }
                 Self::Undetermined
             }
-            BinaryOperator::Instanceof => Self::Boolean,
-            _ => Self::Undetermined,
+            BinaryOperator::Subtraction
+            | BinaryOperator::Multiplication
+            | BinaryOperator::Division
+            | BinaryOperator::Remainder
+            | BinaryOperator::ShiftLeft
+            | BinaryOperator::BitwiseOR
+            | BinaryOperator::ShiftRight
+            | BinaryOperator::BitwiseXOR
+            | BinaryOperator::BitwiseAnd
+            | BinaryOperator::Exponential
+            | BinaryOperator::ShiftRightZeroFill => Self::Number,
+            BinaryOperator::Instanceof
+            | BinaryOperator::In
+            | BinaryOperator::Equality
+            | BinaryOperator::Inequality
+            | BinaryOperator::StrictEquality
+            | BinaryOperator::StrictInequality
+            | BinaryOperator::LessThan
+            | BinaryOperator::LessEqualThan
+            | BinaryOperator::GreaterThan
+            | BinaryOperator::GreaterEqualThan => Self::Boolean,
         }
     }
 }

@@ -176,10 +176,11 @@ impl<'a> PeepholeReplaceKnownMethods {
         string_lit: &StringLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let char_at_index = call_expr.arguments.first().and_then(|arg| match arg {
-            Argument::SpreadElement(_) => None,
-            _ => Ctx(ctx).get_side_free_number_value(arg.to_expression()),
-        })?;
+        let char_at_index = match call_expr.arguments.first() {
+            None => Some(0.0),
+            Some(Argument::SpreadElement(_)) => None,
+            Some(e) => Ctx(ctx).get_side_free_number_value(e.to_expression()),
+        }?;
         let span = call_expr.span;
         // TODO: if `result` is `None`, return `NaN` instead of skipping the optimization
         let result = string_lit.value.as_str().char_code_at(Some(char_at_index))?;
@@ -226,26 +227,19 @@ impl<'a> PeepholeReplaceKnownMethods {
         Some(ctx.ast.expression_string_literal(span, result, None))
     }
 
+    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
     fn try_fold_string_from_char_code(
         ce: &CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        let ctx = Ctx(ctx);
         let args = &ce.arguments;
-        if args.iter().any(|arg| !matches!(arg, Argument::NumericLiteral(_))) {
-            return None;
-        }
         let mut s = String::with_capacity(args.len());
         for arg in args {
-            let Argument::NumericLiteral(lit) = arg else { unreachable!() };
-            if lit.value.is_nan() || lit.value.is_infinite() {
-                return None;
-            }
-            let v = lit.value.to_int_32();
-            if v >= 65535 {
-                return None;
-            }
-            let Ok(v) = u32::try_from(v) else { return None };
-            let Ok(c) = char::try_from(v) else { return None };
+            let expr = arg.as_expression()?;
+            let v = ctx.get_side_free_number_value(expr)?;
+            let v = v.to_int_32() as u16 as u32;
+            let c = char::try_from(v).ok()?;
             s.push(c);
         }
         Some(ctx.ast.expression_string_literal(ce.span, s, None))
@@ -508,6 +502,7 @@ mod test {
 
     #[test]
     fn test_fold_string_char_code_at() {
+        fold("x = 'abcde'.charCodeAt()", "x = 97");
         fold("x = 'abcde'.charCodeAt(0)", "x = 97");
         fold("x = 'abcde'.charCodeAt(1)", "x = 98");
         fold("x = 'abcde'.charCodeAt(2)", "x = 99");
@@ -1099,17 +1094,17 @@ mod test {
         test("String.fromCharCode(120)", "'x'");
         test("String.fromCharCode(120, 121)", "'xy'");
         test_same("String.fromCharCode(55358, 56768)");
-        test("String.fromCharCode(0x10000)", "String.fromCharCode(65536)");
-        test("String.fromCharCode(0x10078, 0x10079)", "String.fromCharCode(0x10078, 0x10079)");
-        test("String.fromCharCode(0x1_0000_FFFF)", "String.fromCharCode(4295032831)");
-        test_same("String.fromCharCode(NaN)");
-        test_same("String.fromCharCode(-Infinity)");
-        test_same("String.fromCharCode(Infinity)");
-        test_same("String.fromCharCode(null)");
-        test_same("String.fromCharCode(undefined)");
-        test_same("String.fromCharCode('123')");
+        test("String.fromCharCode(0x10000)", "'\\0'");
+        test("String.fromCharCode(0x10078, 0x10079)", "'xy'");
+        test("String.fromCharCode(0x1_0000_FFFF)", "'\u{ffff}'");
+        test("String.fromCharCode(NaN)", "'\\0'");
+        test("String.fromCharCode(-Infinity)", "'\\0'");
+        test("String.fromCharCode(Infinity)", "'\\0'");
+        test("String.fromCharCode(null)", "'\\0'");
+        test("String.fromCharCode(undefined)", "'\\0'");
+        test("String.fromCharCode('123')", "'{'");
         test_same("String.fromCharCode(x)");
-        test_same("String.fromCharCode('x')");
-        test_same("String.fromCharCode('0.5')");
+        test("String.fromCharCode('x')", "'\\0'");
+        test("String.fromCharCode('0.5')", "'\\0'");
     }
 }
