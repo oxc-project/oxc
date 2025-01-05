@@ -105,10 +105,6 @@ impl Rule for Curly {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(root_node) = ctx.nodes().root_node() else {
-            return;
-        };
-
         match node.kind() {
             AstKind::IfStatement(stmt) => {
                 struct StatementInfo<'a> {
@@ -121,12 +117,7 @@ impl Rule for Curly {
                 let mut infos = vec![StatementInfo {
                     statement: &stmt.consequent,
                     is_else: false,
-                    should_have_braces: should_have_braces(
-                        root_node,
-                        &self.0.options,
-                        &stmt.consequent,
-                        ctx,
-                    ),
+                    should_have_braces: should_have_braces(&self.0.options, &stmt.consequent, ctx),
                     has_braces: has_braces(&stmt.consequent),
                 }];
 
@@ -138,7 +129,6 @@ impl Rule for Curly {
                             statement: &node.consequent,
                             is_else: false,
                             should_have_braces: should_have_braces(
-                                root_node,
                                 &self.0.options,
                                 &node.consequent,
                                 ctx,
@@ -150,12 +140,7 @@ impl Rule for Curly {
                         infos.push(StatementInfo {
                             statement,
                             is_else: true,
-                            should_have_braces: should_have_braces(
-                                root_node,
-                                &self.0.options,
-                                statement,
-                                ctx,
-                            ),
+                            should_have_braces: should_have_braces(&self.0.options, statement, ctx),
                             has_braces: has_braces(statement),
                         });
                         break;
@@ -201,7 +186,7 @@ impl Rule for Curly {
                     &stmt.body,
                     "for",
                     has_braces(&stmt.body),
-                    should_have_braces(root_node, &self.0.options, &stmt.body, ctx),
+                    should_have_braces(&self.0.options, &stmt.body, ctx),
                 );
             }
             AstKind::ForInStatement(stmt) => {
@@ -210,7 +195,7 @@ impl Rule for Curly {
                     &stmt.body,
                     "for-in",
                     has_braces(&stmt.body),
-                    should_have_braces(root_node, &self.0.options, &stmt.body, ctx),
+                    should_have_braces(&self.0.options, &stmt.body, ctx),
                 );
             }
             AstKind::ForOfStatement(stmt) => {
@@ -219,7 +204,7 @@ impl Rule for Curly {
                     &stmt.body,
                     "for-of",
                     has_braces(&stmt.body),
-                    should_have_braces(root_node, &self.0.options, &stmt.body, ctx),
+                    should_have_braces(&self.0.options, &stmt.body, ctx),
                 );
             }
             AstKind::WhileStatement(stmt) => {
@@ -228,7 +213,7 @@ impl Rule for Curly {
                     &stmt.body,
                     "while",
                     has_braces(&stmt.body),
-                    should_have_braces(root_node, &self.0.options, &stmt.body, ctx),
+                    should_have_braces(&self.0.options, &stmt.body, ctx),
                 );
             }
             AstKind::DoWhileStatement(stmt) => {
@@ -237,7 +222,7 @@ impl Rule for Curly {
                     &stmt.body,
                     "do",
                     has_braces(&stmt.body),
-                    should_have_braces(root_node, &self.0.options, &stmt.body, ctx),
+                    should_have_braces(&self.0.options, &stmt.body, ctx),
                 );
             }
             _ => {}
@@ -262,7 +247,6 @@ fn has_braces(body: &Statement) -> bool {
 }
 
 fn should_have_braces<'a>(
-    root_node: &AstNode<'a>,
     options: &[CurlyType],
     body: &Statement<'a>,
     ctx: &LintContext<'a>,
@@ -272,7 +256,7 @@ fn should_have_braces<'a>(
         Statement::BlockStatement(block) => block.body.len() != 1,
         _ => true,
     };
-    let braces_necessary = are_braces_necessary(root_node, body, ctx);
+    let braces_necessary = are_braces_necessary(body, ctx);
 
     let should_block = if is_block && (is_not_single_statement || braces_necessary) {
         Some(true)
@@ -393,7 +377,7 @@ fn get_token_before<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a AstN
     ctx.nodes().iter().filter(|n| n.span().end < span_start).max_by_key(|n| n.span().end)
 }
 
-pub fn are_braces_necessary(root_node: &AstNode, node: &Statement, ctx: &LintContext) -> bool {
+pub fn are_braces_necessary(node: &Statement, ctx: &LintContext) -> bool {
     let Statement::BlockStatement(block) = node else {
         return false;
     };
@@ -403,8 +387,7 @@ pub fn are_braces_necessary(root_node: &AstNode, node: &Statement, ctx: &LintCon
     };
 
     is_lexical_declaration(first_body_statement)
-        || (has_unsafe_if(first_body_statement)
-            && is_followed_by_else_keyword(root_node, node, ctx))
+        || (has_unsafe_if(first_body_statement) && is_followed_by_else_keyword(node, ctx))
 }
 
 fn is_lexical_declaration(node: &Statement) -> bool {
@@ -417,9 +400,9 @@ fn is_lexical_declaration(node: &Statement) -> bool {
     }
 }
 
-fn is_followed_by_else_keyword(root_node: &AstNode, node: &Statement, ctx: &LintContext) -> bool {
+fn is_followed_by_else_keyword(node: &Statement, ctx: &LintContext) -> bool {
     let start = node.span().end + 1;
-    let end = root_node.span().end;
+    let end = ctx.source_text().len() as u32;
 
     if start > end {
         return false;
