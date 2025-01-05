@@ -153,6 +153,7 @@ pub trait ConstantEvaluation<'a> {
             Expression::SequenceExpression(s) => {
                 s.expressions.last().and_then(|e| self.eval_to_number(e))
             }
+            Expression::ObjectExpression(e) if e.properties.is_empty() => Some(f64::NAN),
             expr => {
                 use crate::ToNumber;
                 expr.to_number()
