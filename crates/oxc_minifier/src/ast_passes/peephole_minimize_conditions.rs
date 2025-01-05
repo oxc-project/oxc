@@ -1510,7 +1510,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_if() {
         // enableTypeCheck();
         test("var x = {};\nif (x != null) throw 'a';\n", "var x={}; if (x!=null) throw 'a'");
@@ -1550,7 +1549,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_coercion_substitution_not() {
         // enableTypeCheck();
         test(
