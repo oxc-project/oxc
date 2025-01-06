@@ -535,7 +535,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn expression_super(self, span: Span) -> Expression<'a> {
-        Expression::Super(self.alloc_super_(span))
+        Expression::Super(self.alloc_super(span))
     }
 
     /// Build an [`Expression::ArrayExpression`]
@@ -2974,7 +2974,7 @@ impl<'a> AstBuilder<'a> {
 
     /// Build a [`Super`].
     ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_super_`] instead.
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_super`] instead.
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
@@ -2990,7 +2990,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// - span: The [`Span`] covering this node
     #[inline]
-    pub fn alloc_super_(self, span: Span) -> Box<'a, Super> {
+    pub fn alloc_super(self, span: Span) -> Box<'a, Super> {
         Box::new_in(self.super_(span), self.allocator)
     }
 
