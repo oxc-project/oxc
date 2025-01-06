@@ -480,15 +480,24 @@ impl<'a> PeepholeMinimizeConditions {
     // inside the `if` stmt, `condition` is coerced to a boolean
     // whereas inside the return, it is not
     fn is_in_boolean_context(ctx: &mut TraverseCtx<'_>) -> bool {
-        for ancestor in ctx.ancestors() {
+        let mut ancestors = ctx.ancestors().peekable();
+        while let Some(ancestor) = ancestors.next() {
             match ancestor {
                 Ancestor::IfStatementTest(_)
                 | Ancestor::WhileStatementTest(_)
                 | Ancestor::ForStatementTest(_)
                 | Ancestor::DoWhileStatementTest(_)
-                | Ancestor::ExpressionStatementExpression(_)
                 | Ancestor::SequenceExpressionExpressions(_)
                 | Ancestor::ProgramBody(_) => return true,
+                // `var k = () => foo`, `foo` is not coerced to a boolean
+                Ancestor::ExpressionStatementExpression(_) => {
+                    if let Some(next_ancestor) = ancestors.peek() {
+                        match next_ancestor {
+                            Ancestor::FunctionBodyStatements(_) => return false,
+                            _ => return true,
+                        }
+                    }
+                }
                 Ancestor::CallExpressionArguments(_)
                 | Ancestor::AssignmentPatternRight(_)
                 | Ancestor::BindingRestElementArgument(_)
@@ -503,6 +512,7 @@ impl<'a> PeepholeMinimizeConditions {
                 _ => continue,
             }
         }
+
         true
     }
 
@@ -867,6 +877,8 @@ mod test {
         fold("foo ? bar : bar", "foo, bar");
         fold_same("foo ? bar : baz");
         fold("foo() ? bar : bar", "foo(), bar");
+
+        test_same("var k = () => !!x;");
     }
 
     #[test]
