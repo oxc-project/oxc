@@ -650,6 +650,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         }
     }
 
+    /// Fold `Boolean`, `Number`, `String`, `BigInt` constructors.
     fn try_fold_simple_function_call(
         call_expr: &mut CallExpression<'a>,
         ctx: Ctx<'a, 'b>,
@@ -657,62 +658,78 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         if call_expr.optional || call_expr.arguments.len() != 1 {
             return None;
         }
-        if call_expr.callee.is_global_reference_name("Boolean", ctx.symbols()) {
+        let Expression::Identifier(ident) = &call_expr.callee else { return None };
+        let name = ident.name.as_str();
+        if !matches!(name, "Boolean" | "Number" | "String" | "BigInt") {
+            return None;
+        }
+        let args = &mut call_expr.arguments;
+        if args.len() != 1 {
+            return None;
+        }
+        let arg = args[0].as_expression_mut()?;
+        if !ctx.is_global_reference(ident) {
+            return None;
+        }
+        match name {
             // `Boolean(a)` -> `!!(a)`
             // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-boolean-constructor-boolean-value
             // and
             // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-logical-not-operator-runtime-semantics-evaluation
-
-            let arg = call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
-
-            if let Expression::UnaryExpression(unary_expr) = arg {
-                if unary_expr.operator == UnaryOperator::LogicalNot {
-                    return Some(ctx.ast.move_expression(arg));
+            "Boolean" => {
+                if let Expression::UnaryExpression(unary_expr) = arg {
+                    if unary_expr.operator == UnaryOperator::LogicalNot {
+                        return Some(ctx.ast.move_expression(arg));
+                    }
                 }
-            }
-
-            Some(ctx.ast.expression_unary(
-                call_expr.span,
-                UnaryOperator::LogicalNot,
-                ctx.ast.expression_unary(
-                    call_expr.span,
-                    UnaryOperator::LogicalNot,
-                    ctx.ast.move_expression(
-                        call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?,
+                Some(
+                    ctx.ast.expression_unary(
+                        call_expr.span,
+                        UnaryOperator::LogicalNot,
+                        ctx.ast.expression_unary(
+                            call_expr.span,
+                            UnaryOperator::LogicalNot,
+                            ctx.ast.move_expression(
+                                call_expr
+                                    .arguments
+                                    .get_mut(0)
+                                    .and_then(|arg| arg.as_expression_mut())?,
+                            ),
+                        ),
                     ),
-                ),
-            ))
-        } else if call_expr.callee.is_global_reference_name("String", ctx.symbols()) {
-            // `String(a)` -> `'' + (a)`
-            let arg = call_expr.arguments.get_mut(0).and_then(|arg| arg.as_expression_mut())?;
-
-            if !matches!(arg, Expression::Identifier(_) | Expression::CallExpression(_))
-                && !arg.is_literal()
-            {
-                return None;
+                )
             }
-
-            Some(ctx.ast.expression_binary(
-                call_expr.span,
-                ctx.ast.expression_string_literal(SPAN, "", None),
-                BinaryOperator::Addition,
-                ctx.ast.move_expression(arg),
-            ))
-        } else if call_expr.callee.is_global_reference_name("Number", ctx.symbols()) {
-            let number = call_expr
-                .arguments
-                .get_mut(0)
-                .and_then(|arg| arg.as_expression_mut())?
-                .to_number()?;
-
-            Some(ctx.ast.expression_numeric_literal(
-                call_expr.span,
-                number,
-                None,
-                NumberBase::Decimal,
-            ))
-        } else {
-            None
+            "String" => {
+                // `String(a)` -> `'' + (a)`
+                if !matches!(arg, Expression::Identifier(_) | Expression::CallExpression(_))
+                    && !arg.is_literal()
+                {
+                    return None;
+                }
+                Some(ctx.ast.expression_binary(
+                    call_expr.span,
+                    ctx.ast.expression_string_literal(SPAN, "", None),
+                    BinaryOperator::Addition,
+                    ctx.ast.move_expression(arg),
+                ))
+            }
+            "Number" => {
+                let number = arg.to_number()?;
+                Some(ctx.ast.expression_numeric_literal(
+                    call_expr.span,
+                    number,
+                    None,
+                    NumberBase::Decimal,
+                ))
+            }
+            // `BigInt(1n)` -> `1n`
+            "BigInt" => {
+                if !matches!(arg, Expression::BigIntLiteral(_)) {
+                    return None;
+                }
+                Some(ctx.ast.move_expression(arg))
+            }
+            _ => None,
         }
     }
 
@@ -1219,20 +1236,6 @@ mod test {
     }
 
     #[test]
-    fn test_simple_function_call1() {
-        test("var a = String(23)", "var a = '' + 23");
-        // Don't fold the existence check to preserve behavior
-        test_same("var a = String?.(23)");
-
-        test("var a = String('hello')", "var a = '' + 'hello'");
-        // Don't fold the existence check to preserve behavior
-        test_same("var a = String?.('hello')");
-
-        test_same("var a = String('hello', bar());");
-        test_same("var a = String({valueOf: function() { return 1; }});");
-    }
-
-    #[test]
     fn test_simple_function_call2() {
         test("var a = Boolean(true)", "var a = !0");
         // Don't fold the existence check to preserve behavior
@@ -1424,10 +1427,30 @@ mod test {
     }
 
     #[test]
-    fn test_fold_number_call() {
+    fn test_fold_string_constructor() {
+        test("var a = String(23)", "var a = '' + 23");
+        // Don't fold the existence check to preserve behavior
+        test_same("var a = String?.(23)");
+
+        test("var a = String('hello')", "var a = '' + 'hello'");
+        // Don't fold the existence check to preserve behavior
+        test_same("var a = String?.('hello')");
+
+        test_same("var a = String('hello', bar());");
+        test_same("var a = String({valueOf: function() { return 1; }});");
+    }
+
+    #[test]
+    fn test_fold_number_constructor() {
         test("Number(0)", "0");
         test("Number(true)", "1");
         test("Number(false)", "0");
         test("Number('foo')", "NaN");
+    }
+
+    #[test]
+    fn test_fold_big_int_constructor() {
+        test("BigInt(1n)", "1n");
+        test_same("BigInt(1)");
     }
 }
