@@ -91,6 +91,10 @@ impl<'a> PeepholeMinimizeConditions {
                         expr.argument = ctx.ast.move_expression(&mut e2.argument);
                         return Some(ctx.ast.move_expression(&mut expr.argument));
                     }
+                    // `!!delete a.b` -> `delete a.b`
+                    if e2.operator.is_delete() {
+                        return Some(ctx.ast.move_expression(&mut e1.argument));
+                    }
                 }
                 // `!!a` -> `a` // ONLY in boolean contexts
                 if Self::is_in_boolean_context(ctx) {
@@ -1726,5 +1730,12 @@ mod test {
         test_same("function k () { return !!x; }");
         test_same("var k = () => { return !!x; }");
         test_same("var k = () => !!x;");
+    }
+
+    #[test]
+    fn minimize_nots_with_deletes() {
+        test("!!delete x.y", "delete x.y");
+        test("!!!delete x.y", "!delete x.y");
+        test("!!!!delete x.y", "delete x.y");
     }
 }
