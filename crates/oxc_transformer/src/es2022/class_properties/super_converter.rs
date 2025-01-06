@@ -38,7 +38,7 @@ impl<'a, 'ctx, 'v> ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
     }
 }
 
-impl<'a, 'ctx, 'v> ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
+impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
     /// Transform static member expression where object is `super`.
     ///
     /// `super.prop` -> `_superPropGet(_Class, "prop", _Class)`

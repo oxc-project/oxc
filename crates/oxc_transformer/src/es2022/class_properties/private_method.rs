@@ -13,7 +13,7 @@ use super::{
     ClassProperties,
 };
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Convert method definition where the key is a private identifier and
     /// insert it after the class.
     ///
@@ -120,7 +120,7 @@ impl<'a, 'ctx, 'v> PrivateMethodVisitor<'a, 'ctx, 'v> {
     }
 }
 
-impl<'a, 'ctx, 'v> VisitMut<'a> for PrivateMethodVisitor<'a, 'ctx, 'v> {
+impl<'a> VisitMut<'a> for PrivateMethodVisitor<'a, '_, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
@@ -162,5 +162,3 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for PrivateMethodVisitor<'a, 'ctx, 'v> {
         // Ignore because we don't need to transform `super` for other classes.
     }
 }
-
-impl<'a, 'ctx, 'v> PrivateMethodVisitor<'a, 'ctx, 'v> {}

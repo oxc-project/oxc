@@ -51,7 +51,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ExponentiationOperator<'a, 'ctx> {
+impl<'a> Traverse<'a> for ExponentiationOperator<'a, '_> {
     // Note: Do not transform to `Math.pow` with BigInt arguments - that's a runtime error
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
@@ -98,7 +98,7 @@ impl<'a, 'ctx> Traverse<'a> for ExponentiationOperator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
+impl<'a> ExponentiationOperator<'a, '_> {
     /// Convert `BinaryExpression`.
     ///
     /// `left ** right` -> `Math.pow(left, right)`

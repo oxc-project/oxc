@@ -206,7 +206,7 @@ pub struct HelperLoaderStore<'a> {
     pub(crate) used_helpers: RefCell<FxHashMap<Helper, String>>,
 }
 
-impl<'a> HelperLoaderStore<'a> {
+impl HelperLoaderStore<'_> {
     pub fn new(options: &HelperLoaderOptions) -> Self {
         Self {
             module_name: options.module_name.clone(),

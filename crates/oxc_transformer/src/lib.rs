@@ -1,4 +1,3 @@
-#![allow(clippy::needless_lifetimes)]
 //! Transformer / Transpiler
 //!
 //! References:
@@ -156,7 +155,7 @@ struct TransformerImpl<'a, 'ctx> {
     common: Common<'a, 'ctx>,
 }
 
-impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
+impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_program(program, ctx);

@@ -76,7 +76,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
+impl<'a> Traverse<'a> for AsyncToGenerator<'a, '_> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
@@ -144,7 +144,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
+impl<'a> AsyncToGenerator<'a, '_> {
     /// Check whether the current node is inside an async function.
     fn is_inside_async_function(ctx: &mut TraverseCtx<'a>) -> bool {
         // Early return if current scope is top because we don't need to transform top-level await expression.
@@ -819,7 +819,7 @@ impl<'a, 'ctx> BindingMover<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Visit<'a> for BindingMover<'a, 'ctx> {
+impl<'a> Visit<'a> for BindingMover<'a, '_> {
     /// Visits a binding identifier and moves it to the target scope.
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
         let symbols = self.ctx.symbols();

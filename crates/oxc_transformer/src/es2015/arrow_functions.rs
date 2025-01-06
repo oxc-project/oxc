@@ -152,4 +152,4 @@ impl<'a, 'ctx> ArrowFunctions<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ArrowFunctions<'a, 'ctx> {}
+impl<'a> Traverse<'a> for ArrowFunctions<'a, '_> {}

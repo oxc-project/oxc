@@ -38,7 +38,7 @@ use super::{
 // Maybe force transform of static blocks if any static properties?
 // Or alternatively could insert static property initializers into static blocks.
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Perform first phase of transformation of class.
     ///
     /// This is the only entry point into the transform upon entering class body.

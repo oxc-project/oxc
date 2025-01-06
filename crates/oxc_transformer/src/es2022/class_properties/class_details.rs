@@ -22,7 +22,7 @@ pub(super) struct ClassDetails<'a> {
     pub bindings: ClassBindings<'a>,
 }
 
-impl<'a> ClassDetails<'a> {
+impl ClassDetails<'_> {
     /// Create dummy `ClassDetails`.
     ///
     /// Used for dummy entry at top of `ClassesStack`.
@@ -269,7 +269,7 @@ pub(super) struct ResolvedGetSetPrivateProp<'a, 'b> {
 }
 
 // Shortcut methods to get current class
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Get details of current class.
     pub(super) fn current_class(&self) -> &ClassDetails<'a> {
         self.classes_stack.last()

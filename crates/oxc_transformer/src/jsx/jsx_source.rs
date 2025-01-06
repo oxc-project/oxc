@@ -57,7 +57,7 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for JsxSource<'a, 'ctx> {
+impl<'a> Traverse<'a> for JsxSource<'a, '_> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(stmt) = self.get_filename_var_statement(ctx) {
             self.ctx.top_level_statements.insert_statement(stmt);
@@ -73,7 +73,7 @@ impl<'a, 'ctx> Traverse<'a> for JsxSource<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> JsxSource<'a, 'ctx> {
+impl<'a> JsxSource<'a, '_> {
     /// Get line and column from offset and source text.
     ///
     /// Line number starts at 1.

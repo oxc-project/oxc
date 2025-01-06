@@ -60,7 +60,7 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
+impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut no_modules_remaining = true;
         let mut some_modules_deleted = false;
@@ -561,7 +561,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
+impl<'a> TypeScriptAnnotations<'a, '_> {
     /// Check if the given name is a JSX pragma or fragment pragma import
     /// and if the file contains JSX elements or fragments
     fn is_jsx_imports(&self, name: &str) -> bool {
