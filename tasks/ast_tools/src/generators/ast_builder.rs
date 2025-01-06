@@ -131,21 +131,21 @@ fn generate_enum_variant_builder_fn(
         .or_else(|| var_type.transparent_type_id())
         .and_then(|id| schema.get(id))
         .expect("type not found!");
-    let (params, inner_builder) = match ty {
+    let (params, mut inner_builder) = match ty {
         TypeDef::Struct(it) => (get_struct_params(it, schema), struct_builder_name(it)),
         TypeDef::Enum(_) => panic!("Unsupported!"),
     };
+
+    let does_alloc = matches!(var_type_name, TypeName::Box(_));
+    if does_alloc {
+        inner_builder = format_ident!("alloc_{inner_builder}");
+    }
 
     let params = params.into_iter().filter(Param::not_default).collect_vec();
     let fields = params.iter().map(|it| it.ident.clone());
     let (generic_params, where_clause) = get_generic_params(&params);
 
-    let mut inner = quote!(self.#inner_builder(#(#fields),*));
-    let mut does_alloc = false;
-    if matches!(var_type_name, TypeName::Box(_)) {
-        inner = quote!(self.alloc(#inner));
-        does_alloc = true;
-    }
+    let inner = quote!(self.#inner_builder(#(#fields),*));
 
     let article = article_for(enum_ident.to_string());
     let mut docs = DocComment::new(format!(" Build {article} [`{enum_ident}::{var_ident}`]"))
