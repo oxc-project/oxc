@@ -100,6 +100,23 @@ impl<'a> PeepholeMinimizeConditions {
                 if Self::is_in_boolean_context(ctx) {
                     return Some(ctx.ast.move_expression(&mut e1.argument));
                 }
+                if let Expression::BinaryExpression(bin_expr) = &e1.argument {
+                    if matches!(
+                        bin_expr.operator,
+                        BinaryOperator::Equality
+                            | BinaryOperator::Inequality
+                            | BinaryOperator::StrictEquality
+                            | BinaryOperator::StrictInequality
+                            | BinaryOperator::LessThan
+                            | BinaryOperator::LessEqualThan
+                            | BinaryOperator::GreaterThan
+                            | BinaryOperator::GreaterEqualThan
+                            | BinaryOperator::In
+                            | BinaryOperator::Instanceof
+                    ) {
+                        return Some(ctx.ast.move_expression(&mut e1.argument));
+                    }
+                }
             }
         }
 
@@ -1733,9 +1750,10 @@ mod test {
     }
 
     #[test]
-    fn minimize_nots_with_deletes() {
+    fn minimize_nots_with_binary_expressions() {
         test("!!delete x.y", "delete x.y");
         test("!!!delete x.y", "!delete x.y");
         test("!!!!delete x.y", "delete x.y");
+        test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
     }
 }
