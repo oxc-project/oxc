@@ -1,4 +1,3 @@
-use core::f64;
 use std::{borrow::Cow, cmp::Ordering};
 
 use num_bigint::BigInt;
