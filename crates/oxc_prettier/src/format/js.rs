@@ -18,7 +18,7 @@ use crate::{
     },
     group, hardline, indent,
     ir::{Doc, JoinSeparator},
-    join, line, softline, text, wrap, Prettier,
+    join, line, softline, text, utils, wrap, Prettier,
 };
 
 impl<'a> Format<'a> for Program<'a> {
@@ -935,7 +935,7 @@ impl<'a> Format<'a> for RegExpLiteral<'a> {
 
 impl<'a> Format<'a> for StringLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        literal::replace_end_of_line(
+        utils::replace_end_of_line(
             p,
             literal::print_string(p, self.span.source_text(p.source_text), p.options.single_quote),
             JoinSeparator::Literalline,
@@ -1470,27 +1470,18 @@ impl<'a> Format<'a> for TemplateLiteral<'a> {
 
 impl<'a> Format<'a> for TemplateElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        // TODO: `replaceEndOfLine`
-        dynamic_text!(p, self.value.raw.as_str())
+        utils::replace_end_of_line(
+            p,
+            dynamic_text!(p, self.value.raw.as_str()),
+            JoinSeparator::Literalline,
+        )
     }
 }
 
 impl<'a> Format<'a> for TaggedTemplateExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, TaggedTemplateExpression, {
-            let mut parts = Vec::new_in(p.allocator);
-
-            parts.push(self.tag.format(p));
-
-            if let Some(type_parameters) = &self.type_parameters {
-                parts.push(text!("<"));
-                parts.push(type_parameters.format(p));
-                parts.push(text!(">"));
-            }
-
-            parts.push(self.quasi.format(p));
-
-            array!(p, parts)
+            template_literal::print_tagged_template_literal(p, self)
         })
     }
 }

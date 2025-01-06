@@ -278,6 +278,19 @@ macro_rules! literalline {
     }};
 }
 
+/// In cases where you embed code inside of templates, comments shouldn't be able to leave the code part.
+/// lineSuffixBoundary is an explicit marker you can use to flush the lineSuffix buffer in addition to line breaks.
+/// <https://github.com/prettier/prettier/blob/3.4.1/commands.md#linesuffixboundary>
+/// ```
+/// line_suffix_boundary!();
+/// ```
+#[macro_export]
+macro_rules! line_suffix_boundary {
+    () => {{
+       $crate::ir::Doc::LineSuffixBondary
+    }};
+}
+
 /// Increase the level of indentation.
 /// <https://github.com/prettier/prettier/blob/3.4.1/commands.md#indent>
 /// ```

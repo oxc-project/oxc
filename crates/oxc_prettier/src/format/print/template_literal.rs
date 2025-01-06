@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
-use crate::{array, format::Format, ir::Doc, text, Prettier};
+use crate::{array, format::Format, ir::Doc, line_suffix_boundary, text, Prettier};
 
 #[allow(clippy::enum_variant_names)]
 pub enum TemplateLiteralPrinter<'a, 'b> {
@@ -48,6 +48,25 @@ pub fn print_template_literal<'a, 'b>(
     }
 
     parts.push(text!("`"));
+
+    array!(p, parts)
+}
+
+pub fn print_tagged_template_literal<'a>(
+    p: &mut Prettier<'a>,
+    tagged_template_literal: &TaggedTemplateExpression<'a>,
+) -> Doc<'a> {
+    let mut parts = Vec::new_in(p.allocator);
+
+    parts.push(tagged_template_literal.tag.format(p));
+
+    if let Some(type_parameters) = &tagged_template_literal.type_parameters {
+        parts.push(type_parameters.format(p));
+    }
+
+    parts.push(line_suffix_boundary!());
+
+    parts.push(tagged_template_literal.quasi.format(p));
 
     array!(p, parts)
 }

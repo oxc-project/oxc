@@ -81,6 +81,7 @@ impl<'a> Printer<'a> {
                 Doc::IndentIfBreak(docs) => self.handle_indent_if_break(indent, mode, docs),
                 Doc::Line(line) => self.handle_line(line, indent, mode, doc),
                 Doc::LineSuffix(docs) => self.handle_line_suffix(indent, mode, docs),
+                Doc::LineSuffixBondary => self.handle_line_suffix_boundary(indent, mode),
                 Doc::IfBreak(if_break) => self.handle_if_break(if_break, indent, mode),
                 Doc::Fill(fill) => self.handle_fill(indent, mode, fill),
                 Doc::BreakParent => { /* No op */ }
@@ -225,6 +226,16 @@ impl<'a> Printer<'a> {
         docs: oxc_allocator::Vec<'a, Doc<'a>>,
     ) {
         self.line_suffix.push(Command { indent, mode, doc: Doc::Array(docs) });
+    }
+
+    fn handle_line_suffix_boundary(&mut self, indent: Indent, mode: Mode) {
+        if !self.line_suffix.is_empty() {
+            self.cmds.push(Command {
+                indent,
+                mode,
+                doc: Doc::Line(Line { hard: true, ..Line::default() }),
+            });
+        }
     }
 
     fn handle_if_break(&mut self, if_break: IfBreak<'a>, indent: Indent, mode: Mode) {
@@ -412,6 +423,12 @@ impl<'a> Printer<'a> {
                     }
                 }
                 Doc::LineSuffix(_) => {
+                    break;
+                }
+                Doc::LineSuffixBondary => {
+                    if !self.line_suffix.is_empty() {
+                        return false;
+                    }
                     break;
                 }
                 Doc::BreakParent => {}
