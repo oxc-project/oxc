@@ -1,6 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
-use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, ToInt32, ToJsString};
+use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, ToInt32, ToJsString, ToNumber};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
@@ -670,6 +670,19 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 ctx.ast.expression_string_literal(SPAN, "", None),
                 BinaryOperator::Addition,
                 ctx.ast.move_expression(arg),
+            ))
+        } else if call_expr.callee.is_global_reference_name("Number", ctx.symbols()) {
+            let number = call_expr
+                .arguments
+                .get_mut(0)
+                .and_then(|arg| arg.as_expression_mut())?
+                .to_number()?;
+
+            Some(ctx.ast.expression_numeric_literal(
+                call_expr.span,
+                number,
+                None,
+                NumberBase::Decimal,
             ))
         } else {
             None
@@ -1372,5 +1385,13 @@ mod test {
         test("f(...[1, 2])", "f(1, 2)");
         test("f(...[1,,,3])", "f(1, void 0, void 0, 3)");
         test("f(a, ...[])", "f(a)");
+    }
+
+    #[test]
+    fn test_fold_number_call() {
+        test("Number(0)", "0");
+        test("Number(true)", "1");
+        test("Number(false)", "0");
+        test("Number('foo')", "NaN");
     }
 }
