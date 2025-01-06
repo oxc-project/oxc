@@ -542,6 +542,7 @@ impl<'a> PeepholeMinimizeConditions {
             }
             Expression::NumericLiteral(lit)
                 if lit.value == 0.0
+                    && !e.left.is_literal() // let constant folding do the work
                     && ValueType::from(&e.left).is_number()
                     && Self::is_in_boolean_context(ctx) =>
             {
@@ -1709,6 +1710,7 @@ mod test {
         test("if(x >> y === 0){}", "if(!(x >> y)){}");
         test("if(x >> y != 0){}", "if(x >> y){}");
         test("if(x >> y !== 0){}", "if(x >> y){}");
+        test("if((-0 != +0) !== false){}", "if (-0 != +0) {}");
         test_same("foo(x >> y == 0)");
     }
 
