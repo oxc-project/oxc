@@ -1602,10 +1602,7 @@ impl<'a> Format<'a> for AccessorProperty<'a> {
 
 impl<'a> Format<'a> for PrivateIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(text!("#"));
-        parts.push(dynamic_text!(p, self.name.as_str()));
-        array!(p, parts)
+        array!(p, [text!("#"), dynamic_text!(p, self.name.as_str()),])
     }
 }
 
