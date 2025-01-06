@@ -1,8 +1,9 @@
 use oxc_diagnostics::Result;
 use oxc_syntax::identifier::is_line_terminator;
 
-use super::{Kind, Lexer, RegExpFlags, Token};
 use crate::diagnostics;
+
+use super::{Kind, Lexer, RegExpFlags, Token};
 
 impl Lexer<'_> {
     /// Re-tokenize the current `/` or `/=` and return `RegExp`

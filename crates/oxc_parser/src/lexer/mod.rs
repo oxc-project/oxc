@@ -5,6 +5,17 @@
 //!     * [rustc](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_lexer/src)
 //!     * [v8](https://v8.dev/blog/scanner)
 
+use std::collections::VecDeque;
+
+use rustc_hash::FxHashMap;
+
+use oxc_allocator::Allocator;
+use oxc_ast::ast::RegExpFlags;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_span::{SourceType, Span};
+
+use crate::{diagnostics, UniquePromise};
+
 mod byte_handlers;
 mod comment;
 mod identifier;
@@ -24,25 +35,13 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
-use std::collections::VecDeque;
+pub use kind::Kind;
+pub use number::{parse_big_int, parse_float, parse_int};
+pub use token::Token;
 
-use oxc_allocator::Allocator;
-use oxc_ast::ast::RegExpFlags;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{SourceType, Span};
-use rustc_hash::FxHashMap;
-
-use self::{
-    byte_handlers::handle_byte,
-    source::{Source, SourcePosition},
-    trivia_builder::TriviaBuilder,
-};
-pub use self::{
-    kind::Kind,
-    number::{parse_big_int, parse_float, parse_int},
-    token::Token,
-};
-use crate::{diagnostics, UniquePromise};
+use byte_handlers::handle_byte;
+use source::{Source, SourcePosition};
+use trivia_builder::TriviaBuilder;
 
 #[derive(Debug, Clone, Copy)]
 pub struct LexerCheckpoint<'a> {

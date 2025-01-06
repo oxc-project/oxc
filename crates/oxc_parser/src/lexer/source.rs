@@ -2,8 +2,9 @@
 
 use std::{marker::PhantomData, slice, str};
 
-use super::search::SEARCH_BATCH_SIZE;
 use crate::{UniquePromise, MAX_LEN};
+
+use super::search::SEARCH_BATCH_SIZE;
 
 /// `Source` holds the source text for the lexer, and provides APIs to read it.
 ///

@@ -6,12 +6,13 @@ use oxc_syntax::identifier::{
     is_identifier_part, is_identifier_part_unicode, is_identifier_start_unicode,
 };
 
+use crate::diagnostics;
+
 use super::{
     cold_branch,
     search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
     Kind, Lexer, SourcePosition,
 };
-use crate::diagnostics;
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 

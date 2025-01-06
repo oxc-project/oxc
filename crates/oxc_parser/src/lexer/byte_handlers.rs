@@ -1,5 +1,6 @@
-use super::{Kind, Lexer};
 use crate::diagnostics;
+
+use super::{Kind, Lexer};
 
 /// Handle next byte of source.
 ///
