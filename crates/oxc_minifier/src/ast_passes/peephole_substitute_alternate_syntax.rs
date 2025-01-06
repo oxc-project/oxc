@@ -4,6 +4,7 @@ use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, ToInt32, ToJsStrin
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
+    es_target::ESTarget,
     identifier::is_identifier_name,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
@@ -17,6 +18,7 @@ use crate::{node_util::Ctx, CompressorPass};
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 pub struct PeepholeSubstituteAlternateSyntax {
+    target: ESTarget,
     /// Do not compress syntaxes that are hard to analyze inside the fixed loop.
     /// e.g. Do not compress `undefined -> void 0`, `true` -> `!0`.
     /// Opposite of `late` in Closure Compiler.
@@ -36,6 +38,10 @@ impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {
 }
 
 impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
+    fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.compress_catch_clause(catch, ctx);
+    }
+
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -157,8 +163,22 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 }
 
 impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
-    pub fn new(in_fixed_loop: bool) -> Self {
-        Self { in_fixed_loop, in_define_export: false, changed: false }
+    pub fn new(target: ESTarget, in_fixed_loop: bool) -> Self {
+        Self { target, in_fixed_loop, in_define_export: false, changed: false }
+    }
+
+    fn compress_catch_clause(&mut self, catch: &mut CatchClause<'_>, ctx: &mut TraverseCtx<'a>) {
+        if !self.in_fixed_loop && self.target >= ESTarget::ES2019 {
+            if let Some(param) = &catch.param {
+                if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
+                    if catch.body.body.is_empty()
+                        || ctx.symbols().get_resolved_references(ident.symbol_id()).count() == 0
+                    {
+                        catch.param = None;
+                    }
+                };
+            }
+        }
     }
 
     fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
@@ -903,12 +923,14 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
+    use oxc_syntax::es_target::ESTarget;
 
     use crate::tester;
 
     fn test(source_text: &str, expected: &str) {
         let allocator = Allocator::default();
-        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(false);
+        let target = ESTarget::ESNext;
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(target, false);
         tester::test(&allocator, source_text, expected, &mut pass);
     }
 
@@ -931,8 +953,8 @@ mod test {
     fn test_undefined() {
         test("var x = undefined", "var x");
         test_same("var undefined = 1;function f() {var undefined=2;var x;}");
-        test("function f(undefined) {}", "function f(undefined){}");
-        test("try {} catch(undefined) {foo}", "try{}catch(undefined){foo}");
+        test_same("function f(undefined) {}");
+        test_same("try {} catch(undefined) {foo(undefined)}");
         test("for (undefined in {}) {}", "for(undefined in {}){}");
         test("undefined++;", "undefined++");
         test("undefined += undefined;", "undefined+=void 0");
@@ -1462,5 +1484,20 @@ mod test {
         test("BigInt(1n)", "1n");
         test_same("BigInt()");
         test_same("BigInt(1)");
+    }
+
+    #[test]
+    fn optional_catch_binding() {
+        test("try {} catch(e) {}", "try {} catch {}");
+        test("try {} catch(e) {foo}", "try {} catch {foo}");
+        test_same("try {} catch(e) {e}");
+        test_same("try {} catch([e]) {}");
+        test_same("try {} catch({e}) {}");
+
+        let allocator = Allocator::default();
+        let target = ESTarget::ES2018;
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(target, false);
+        let code = "try {} catch(e) {}";
+        tester::test(&allocator, code, code, &mut pass);
     }
 }

@@ -51,7 +51,7 @@ pub struct PeepholeOptimizations {
 }
 
 impl PeepholeOptimizations {
-    pub fn new(in_fixed_loop: bool, _options: CompressOptions) -> Self {
+    pub fn new(in_fixed_loop: bool, options: CompressOptions) -> Self {
         Self {
             x0_statement_fusion: StatementFusion::new(),
             x1_minimize_exit_points: MinimizeExitPoints::new(),
@@ -60,6 +60,7 @@ impl PeepholeOptimizations {
             x4_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
             x5_peephole_minimize_conditions: PeepholeMinimizeConditions::new(in_fixed_loop),
             x6_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax::new(
+                options.target,
                 in_fixed_loop,
             ),
             x7_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
@@ -217,6 +218,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.x6_peephole_substitute_alternate_syntax.exit_accessor_property(prop, ctx);
+    }
+
+    fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x6_peephole_substitute_alternate_syntax.exit_catch_clause(catch, ctx);
     }
 }
 
