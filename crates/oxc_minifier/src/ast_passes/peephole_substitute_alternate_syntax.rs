@@ -114,8 +114,10 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    fn exit_call_expression(&mut self, _expr: &mut CallExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.in_define_export = false;
+
+        self.try_compress_call_expression_arguments(expr, ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -768,6 +770,68 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             }
         }
     }
+
+    // `foo(...[1,2,3])` -> `foo(1,2,3)`
+    fn try_compress_call_expression_arguments(
+        &mut self,
+        node: &mut CallExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let (new_size, should_fold) =
+            node.arguments.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
+                new_size += if let Argument::SpreadElement(spread_el) = arg {
+                    if let Expression::ArrayExpression(array_expr) = &spread_el.argument {
+                        should_fold = true;
+                        array_expr.elements.len()
+                    } else {
+                        1
+                    }
+                } else {
+                    1
+                };
+
+                (new_size, should_fold)
+            });
+
+        if should_fold {
+            let old_args =
+                std::mem::replace(&mut node.arguments, ctx.ast.vec_with_capacity(new_size));
+            let new_args = &mut node.arguments;
+
+            for arg in old_args {
+                if let Argument::SpreadElement(mut spread_el) = arg {
+                    if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
+                        for el in array_expr.elements.iter_mut() {
+                            match el {
+                                ArrayExpressionElement::SpreadElement(spread_el) => {
+                                    new_args.push(ctx.ast.argument_spread_element(
+                                        spread_el.span,
+                                        ctx.ast.move_expression(&mut spread_el.argument),
+                                    ));
+                                }
+                                ArrayExpressionElement::Elision(elision) => {
+                                    new_args.push(ctx.ast.void_0(elision.span).into());
+                                }
+                                match_expression!(ArrayExpressionElement) => {
+                                    new_args.push(
+                                        ctx.ast.move_expression(el.to_expression_mut()).into(),
+                                    );
+                                }
+                            }
+                        }
+                    } else {
+                        new_args.push(ctx.ast.argument_spread_element(
+                            spread_el.span,
+                            ctx.ast.move_expression(&mut spread_el.argument),
+                        ));
+                    }
+                } else {
+                    new_args.push(arg);
+                }
+            }
+            self.changed = true;
+        }
+    }
 }
 
 /// Port from <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
@@ -1295,5 +1359,18 @@ mod test {
             "class F { accessor '0' = _; accessor 'a' = _; accessor ['1'] = _; accessor ['b'] = _; accessor ['c.c'] = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }",
             "class F { accessor  0 = _;  accessor  a = _;  accessor     1 = _; accessor     b = _; accessor   'c.c' = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }"
         );
+    }
+
+    #[test]
+    fn fold_function_spread_args() {
+        test_same("f(...a)");
+        test_same("f(...a, ...b)");
+        test_same("f(...a, b, ...c)");
+
+        test("f(...[])", "f()");
+        test("f(...[1])", "f(1)");
+        test("f(...[1, 2])", "f(1, 2)");
+        test("f(...[1,,,3])", "f(1, void 0, void 0, 3)");
+        test("f(a, ...[])", "f(a)");
     }
 }
