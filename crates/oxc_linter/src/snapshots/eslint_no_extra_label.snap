@@ -1,0 +1,140 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:20]
+ 1 │ A: while (a) break A;
+   ·                    ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:30]
+ 1 │ A: while (a) { B: { continue A; } }
+   ·                              ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:42]
+ 1 │ X: while (x) { A: while (a) { B: { break A; break B; continue X; } } }
+   ·                                          ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:15]
+ 1 │ A: do { break A; } while (a);
+   ·               ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:21]
+ 1 │ A: for (;;) { break A; }
+   ·                     ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:27]
+ 1 │ A: for (a in obj) { break A; }
+   ·                           ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:27]
+ 1 │ A: for (a of ary) { break A; }
+   ·                           ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:31]
+ 1 │ A: switch (a) { case 0: break A; }
+   ·                               ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:46]
+ 1 │ X: while (x) { A: switch (a) { case 0: break A; } }
+   ·                                              ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:44]
+ 1 │ X: switch (a) { case 0: A: while (b) break A; }
+   ·                                            ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:3:19]
+ 2 │         A: while (true) {
+ 3 │             break A;
+   ·                   ─
+ 4 │             while (true) {
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:35]
+ 1 │ A: while(true) { /*comment*/break A; }
+   ·                                   ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:28]
+ 1 │ A: while(true) { break/**/ A; }
+   ·                            ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:32]
+ 1 │ A: while(true) { continue /**/ A; }
+   ·                                ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:28]
+ 1 │ A: while(true) { break /**/A; }
+   ·                            ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:30]
+ 1 │ A: while(true) { continue/**/A; }
+   ·                              ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:27]
+ 1 │ A: while(true) { continue A/*comment*/; }
+   ·                           ─
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:24]
+ 1 │ A: while(true) { break A//comment
+   ·                        ─
+ 2 │              }
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+
+  ⚠ eslint(no-extra-label): This label 'A' is unnecessary
+   ╭─[no_extra_label.tsx:1:24]
+ 1 │ A: while(true) { break A/*comment*/
+   ·                        ─
+ 2 │             foo() }
+   ╰────
+  help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches

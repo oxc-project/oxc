@@ -24,7 +24,7 @@ fn missing_yields(span: Span) -> OxcDiagnostic {
 
 fn duplicate_yields(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Duplicate `@yields` tags.")
-        .with_help("Remove redundunt `@yields` tag.")
+        .with_help("Remove redundant `@yields` tag.")
         .with_label(span)
 }
 

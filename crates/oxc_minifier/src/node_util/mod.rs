@@ -31,6 +31,10 @@ impl<'a> Ctx<'a, '_> {
         self.0.symbols()
     }
 
+    pub fn eval_binary(self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
+        self.eval_binary_expression(e).map(|v| self.value_to_expr(e.span, v))
+    }
+
     pub fn value_to_expr(self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
         match value {
             ConstantValue::Number(n) => {
@@ -60,6 +64,20 @@ impl<'a> Ctx<'a, '_> {
 
     pub fn is_identifier_undefined(self, ident: &IdentifierReference) -> bool {
         if ident.name == "undefined" && ident.is_global_reference(self.symbols()) {
+            return true;
+        }
+        false
+    }
+
+    pub fn is_identifier_infinity(self, ident: &IdentifierReference) -> bool {
+        if ident.name == "Infinity" && ident.is_global_reference(self.symbols()) {
+            return true;
+        }
+        false
+    }
+
+    pub fn is_identifier_nan(self, ident: &IdentifierReference) -> bool {
+        if ident.name == "Infinity" && ident.is_global_reference(self.symbols()) {
             return true;
         }
         false

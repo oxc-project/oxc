@@ -11,7 +11,10 @@ use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::TraverseCtx;
 
 use super::super::ClassStaticBlock;
-use super::ClassProperties;
+use super::{
+    super_converter::{ClassPropertiesSuperConverter, ClassPropertiesSuperConverterMode},
+    ClassProperties,
+};
 
 impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// Transform static property initializer.
@@ -104,6 +107,35 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
         ctx.ast.move_expression(expr)
     }
+
+    /// Replace reference to class name with reference to temp var for class.
+    pub(super) fn replace_class_name_with_temp_var(
+        &mut self,
+        ident: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Check identifier is reference to class name
+        let class_details = self.current_class_mut();
+        let class_name_symbol_id = class_details.bindings.name_symbol_id();
+        let Some(class_name_symbol_id) = class_name_symbol_id else { return };
+
+        let reference_id = ident.reference_id();
+        let reference = ctx.symbols().get_reference(reference_id);
+        let Some(symbol_id) = reference.symbol_id() else { return };
+
+        if symbol_id != class_name_symbol_id {
+            return;
+        }
+
+        // Identifier is reference to class name. Rename it.
+        let temp_binding = class_details.bindings.get_or_init_static_binding(ctx);
+        ident.name = temp_binding.name.clone();
+
+        let symbols = ctx.symbols_mut();
+        symbols.get_reference_mut(reference_id).set_symbol_id(temp_binding.symbol_id);
+        symbols.delete_resolved_reference(symbol_id, reference_id);
+        symbols.add_resolved_reference(temp_binding.symbol_id, reference_id);
+    }
 }
 
 /// Visitor to transform:
@@ -179,8 +211,8 @@ struct StaticVisitor<'a, 'ctx, 'v> {
     /// the `ScopeId` of the old static block, so we don't need to reparent scopes anyway,
     /// so `scope_depth` is ignored.
     scope_depth: u32,
-    /// Main transform instance.
-    class_properties: &'v mut ClassProperties<'a, 'ctx>,
+    /// Converter for `super` expressions.
+    super_converter: ClassPropertiesSuperConverter<'a, 'ctx, 'v>,
     /// `TraverseCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
@@ -200,7 +232,17 @@ impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
         #[expect(clippy::bool_to_int_with_if)]
         let scope_depth = if reparent_scopes { 0 } else { 1 };
 
-        Self { walk_deep, make_sloppy_mode, this_depth: 0, scope_depth, class_properties, ctx }
+        Self {
+            walk_deep,
+            make_sloppy_mode,
+            this_depth: 0,
+            scope_depth,
+            super_converter: ClassPropertiesSuperConverter::new(
+                ClassPropertiesSuperConverterMode::Static,
+                class_properties,
+            ),
+            ctx,
+        }
     }
 }
 
@@ -225,24 +267,27 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticVisitor<'a, 'ctx, 'v> {
                 }
             }
             // `super.prop`
-            Expression::StaticMemberExpression(_) => {
-                self.transform_static_member_expression_if_super(expr);
+            Expression::StaticMemberExpression(_) if self.this_depth == 0 => {
+                self.super_converter.transform_static_member_expression(expr, self.ctx);
             }
             // `super[prop]`
-            Expression::ComputedMemberExpression(_) => {
-                self.transform_computed_member_expression_if_super(expr);
+            Expression::ComputedMemberExpression(_) if self.this_depth == 0 => {
+                self.super_converter.transform_computed_member_expression(expr, self.ctx);
             }
             // `super.prop()`
-            Expression::CallExpression(call_expr) => {
-                self.transform_call_expression_if_super_member_expression(call_expr);
+            Expression::CallExpression(call_expr) if self.this_depth == 0 => {
+                self.super_converter
+                    .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
             }
             // `super.prop = value`, `super.prop += value`, `super.prop ??= value`
-            Expression::AssignmentExpression(_) => {
-                self.transform_assignment_expression_if_super_member_assignment_target(expr);
+            Expression::AssignmentExpression(_) if self.this_depth == 0 => {
+                self.super_converter
+                    .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
             }
             // `super.prop++`, `--super.prop`
-            Expression::UpdateExpression(_) => {
-                self.transform_update_expression_if_super_member_assignment_target(expr);
+            Expression::UpdateExpression(_) if self.this_depth == 0 => {
+                self.super_converter
+                    .transform_update_expression_for_super_assignment_target(expr, self.ctx);
             }
             _ => {}
         }
@@ -252,7 +297,7 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticVisitor<'a, 'ctx, 'v> {
 
     /// Transform reference to class name to temp var
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
-        self.replace_class_name_with_temp_var(ident);
+        self.super_converter.class_properties.replace_class_name_with_temp_var(ident, self.ctx);
     }
 
     /// Convert scope to sloppy mode if `self.make_sloppy_mode == true`.
@@ -476,35 +521,10 @@ impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
     /// Replace `this` with reference to temp var for class.
     fn replace_this_with_temp_var(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {
-            let class_details = self.class_properties.current_class_mut();
+            let class_details = self.super_converter.class_properties.current_class_mut();
             let temp_binding = class_details.bindings.get_or_init_static_binding(self.ctx);
             *expr = temp_binding.create_spanned_read_expression(span, self.ctx);
         }
-    }
-
-    /// Replace reference to class name with reference to temp var for class.
-    fn replace_class_name_with_temp_var(&mut self, ident: &mut IdentifierReference<'a>) {
-        // Check identifier is reference to class name
-        let class_details = self.class_properties.current_class_mut();
-        let class_name_symbol_id = class_details.bindings.name_symbol_id();
-        let Some(class_name_symbol_id) = class_name_symbol_id else { return };
-
-        let reference_id = ident.reference_id();
-        let reference = self.ctx.symbols().get_reference(reference_id);
-        let Some(symbol_id) = reference.symbol_id() else { return };
-
-        if symbol_id != class_name_symbol_id {
-            return;
-        }
-
-        // Identifier is reference to class name. Rename it.
-        let temp_binding = class_details.bindings.get_or_init_static_binding(self.ctx);
-        ident.name = temp_binding.name.clone();
-
-        let symbols = self.ctx.symbols_mut();
-        symbols.get_reference_mut(reference_id).set_symbol_id(temp_binding.symbol_id);
-        symbols.delete_resolved_reference(symbol_id, reference_id);
-        symbols.add_resolved_reference(temp_binding.symbol_id, reference_id);
     }
 
     /// Replace `delete this` with `true`.
@@ -520,60 +540,6 @@ impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
             let scope_id = scope_id.get().unwrap();
             let current_scope_id = self.ctx.current_scope_id();
             self.ctx.scopes_mut().change_parent_id(scope_id, Some(current_scope_id));
-        }
-    }
-
-    // `#[inline]` into visitor to keep common path where member expression isn't `super.prop` fast
-    #[inline]
-    fn transform_static_member_expression_if_super(&mut self, expr: &mut Expression<'a>) {
-        if self.this_depth == 0 {
-            self.class_properties.transform_static_member_expression(expr, self.ctx);
-        }
-    }
-
-    // `#[inline]` into visitor to keep common path where member expression isn't `super.prop` fast
-    #[inline]
-    fn transform_computed_member_expression_if_super(&mut self, expr: &mut Expression<'a>) {
-        if self.this_depth == 0 {
-            self.class_properties.transform_computed_member_expression(expr, self.ctx);
-        }
-    }
-
-    // `#[inline]` into visitor to keep common path where call expression isn't `super.prop()` fast
-    #[inline]
-    fn transform_call_expression_if_super_member_expression(
-        &mut self,
-        call_expr: &mut CallExpression<'a>,
-    ) {
-        if self.this_depth == 0 {
-            self.class_properties
-                .transform_call_expression_for_super_member_expr(call_expr, self.ctx);
-        }
-    }
-
-    // `#[inline]` into visitor to keep common path where assignment expression isn't
-    // `super.prop += 1` fast
-    #[inline]
-    fn transform_assignment_expression_if_super_member_assignment_target(
-        &mut self,
-        expr: &mut Expression<'a>,
-    ) {
-        if self.this_depth == 0 {
-            self.class_properties
-                .transform_assignment_expression_for_super_assignment_target(expr, self.ctx);
-        }
-    }
-
-    // `#[inline]` into visitor to keep common path where assignment expression isn't
-    // `super.prop++` fast
-    #[inline]
-    fn transform_update_expression_if_super_member_assignment_target(
-        &mut self,
-        expr: &mut Expression<'a>,
-    ) {
-        if self.this_depth == 0 {
-            self.class_properties
-                .transform_update_expression_for_super_assignment_target(expr, self.ctx);
         }
     }
 }

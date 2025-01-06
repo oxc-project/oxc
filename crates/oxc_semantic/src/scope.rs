@@ -176,7 +176,7 @@ impl ScopeTree {
         self.cell.with_dependent_mut(|_allocator, inner| {
             let reference_ids = inner.root_unresolved_references.get_mut(name).unwrap();
             if reference_ids.len() == 1 {
-                assert!(reference_ids[0] == reference_id);
+                assert_eq!(reference_ids[0], reference_id);
                 inner.root_unresolved_references.remove(name);
             } else {
                 let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();

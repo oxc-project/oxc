@@ -57,10 +57,6 @@ pub struct Test262Case {
 }
 
 impl Test262Case {
-    pub fn meta(&self) -> &MetaData {
-        &self.meta
-    }
-
     /// # Panics
     pub fn read_metadata(code: &str) -> MetaData {
         let (start, end) = (code.find("/*---").unwrap(), code.find("---*/").unwrap());
@@ -68,12 +64,36 @@ impl Test262Case {
         MetaData::from_str(s)
     }
 
+    fn compute_should_fail(meta: &MetaData) -> bool {
+        meta.negative.as_ref().filter(|n| n.phase == Phase::Parse).is_some()
+    }
+
     pub fn set_result(&mut self, result: TestResult) {
         self.result = result;
     }
 
-    fn compute_should_fail(meta: &MetaData) -> bool {
-        meta.negative.as_ref().filter(|n| n.phase == Phase::Parse).is_some()
+    pub fn meta(&self) -> &MetaData {
+        &self.meta
+    }
+
+    pub fn is_module(&self) -> bool {
+        self.meta.flags.contains(&TestFlag::Module)
+    }
+
+    pub fn is_only_strict(&self) -> bool {
+        self.meta.flags.contains(&TestFlag::OnlyStrict)
+    }
+
+    pub fn is_no_strict(&self) -> bool {
+        self.meta.flags.contains(&TestFlag::NoStrict)
+    }
+
+    pub fn is_raw(&self) -> bool {
+        self.meta.flags.contains(&TestFlag::Raw)
+    }
+
+    pub fn is_async(&self) -> bool {
+        self.meta.flags.contains(&TestFlag::Async)
     }
 }
 

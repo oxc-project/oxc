@@ -77,7 +77,8 @@ declare_oxc_lint!(
     /// import { SomeNonsenseThatDoesntExist } from 'react'
     /// ```
     Named,
-    correctness
+    nursery // There are race conditions in the runtime which may cause the module to
+            // not find any exports from `exported_bindings_from_star_export`.
 );
 
 impl Rule for Named {

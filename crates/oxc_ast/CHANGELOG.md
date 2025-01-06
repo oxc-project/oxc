@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+- ad2a620 ast: [**BREAKING**] Add missing `AssignmentTargetProperty::computed` (#8097) (Boshen)
+
+### Features
+
+- c2daa20 ast: Add `Expression::into_inner_expression` (#8048) (overlookmotel)
+
+### Bug Fixes
+
+
 ## [0.43.0] - 2024-12-21
 
 ### Features

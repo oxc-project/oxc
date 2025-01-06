@@ -3,44 +3,43 @@ use std::{
     fmt,
 };
 
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
 use crate::{
     config::{ConfigStore, ESLintRule, LintPlugins, OxlintOverrides, OxlintRules},
     rules::RULES,
-    AllowWarnDeny, FixKind, FrameworkFlags, LintConfig, LintFilter, LintFilterKind, LintOptions,
-    Linter, Oxlintrc, RuleCategory, RuleEnum, RuleWithSeverity,
+    AllowWarnDeny, LintConfig, LintFilter, LintFilterKind, Oxlintrc, RuleCategory, RuleEnum,
+    RuleWithSeverity,
 };
 
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
-pub struct LinterBuilder {
+pub struct ConfigStoreBuilder {
     pub(super) rules: FxHashSet<RuleWithSeverity>,
-    options: LintOptions,
     config: LintConfig,
     overrides: OxlintOverrides,
     cache: RulesCache,
 }
 
-impl Default for LinterBuilder {
+impl Default for ConfigStoreBuilder {
     fn default() -> Self {
         Self { rules: Self::warn_correctness(LintPlugins::default()), ..Self::empty() }
     }
 }
 
-impl LinterBuilder {
-    /// Create a [`LinterBuilder`] with default plugins enabled and no
+impl ConfigStoreBuilder {
+    /// Create a [`ConfigStoreBuilder`] with default plugins enabled and no
     /// configured rules.
     ///
     /// You can think of this as `oxlint -A all`.
     pub fn empty() -> Self {
-        let options = LintOptions::default();
         let config = LintConfig::default();
         let rules = FxHashSet::default();
         let overrides = OxlintOverrides::default();
         let cache = RulesCache::new(config.plugins);
 
-        Self { rules, options, config, overrides, cache }
+        Self { rules, config, overrides, cache }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -48,7 +47,6 @@ impl LinterBuilder {
     ///
     /// You can think of this as `oxlint -W all -W nursery`.
     pub fn all() -> Self {
-        let options = LintOptions::default();
         let config = LintConfig { plugins: LintPlugins::all(), ..LintConfig::default() };
         let overrides = OxlintOverrides::default();
         let cache = RulesCache::new(config.plugins);
@@ -57,31 +55,30 @@ impl LinterBuilder {
                 .iter()
                 .map(|rule| RuleWithSeverity { rule: rule.clone(), severity: AllowWarnDeny::Warn })
                 .collect(),
-            options,
             config,
             overrides,
             cache,
         }
     }
 
-    /// Create a [`LinterBuilder`] from a loaded or manually built [`Oxlintrc`].
+    /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
     /// `start_empty` will configure the builder to contain only the
     /// configuration settings from the config. When this is `false`, the config
     /// will be applied on top of a default [`Oxlintrc`].
     ///
     /// # Example
-    /// Here's how to create a [`Linter`] from a `.oxlintrc.json` file.
+    /// Here's how to create a [`ConfigStore`] from a `.oxlintrc.json` file.
     /// ```
-    /// use oxc_linter::{LinterBuilder, Oxlintrc};
+    /// use oxc_linter::{ConfigBuilder, Oxlintrc};
     /// let oxlintrc = Oxlintrc::from_file("path/to/.oxlintrc.json").unwrap();
-    /// let linter = LinterBuilder::from_oxlintrc(true, oxlintrc).build();
+    /// let config_store = ConfigStoreBuilder::from_oxlintrc(true, oxlintrc).build();
     /// // you can use `From` as a shorthand for `from_oxlintrc(false, oxlintrc)`
-    /// let linter = LinterBuilder::from(oxlintrc).build();
+    /// let config_store = ConfigStoreBuilder::from(oxlintrc).build();
     /// ```
     ///
     /// # Errors
     ///
-    /// Will return a [`LinterBuilderError::UnknownRules`] if there are unknown rules in the
+    /// Will return a [`ConfigBuilderError::UnknownRules`] if there are unknown rules in the
     /// config. This can happen if the plugin for a rule is not enabled, or the rule name doesn't
     /// match any recognized rules.
     pub fn from_oxlintrc(start_empty: bool, oxlintrc: Oxlintrc) -> Self {
@@ -99,11 +96,10 @@ impl LinterBuilder {
         } = oxlintrc;
 
         let config = LintConfig { plugins, settings, env, globals, path: Some(path) };
-        let options = LintOptions::default();
         let rules =
             if start_empty { FxHashSet::default() } else { Self::warn_correctness(plugins) };
         let cache = RulesCache::new(config.plugins);
-        let mut builder = Self { rules, options, config, overrides, cache };
+        let mut builder = Self { rules, config, overrides, cache };
 
         if !categories.is_empty() {
             builder = builder.with_filters(categories.filters());
@@ -117,24 +113,6 @@ impl LinterBuilder {
         builder
     }
 
-    #[inline]
-    pub fn with_framework_hints(mut self, flags: FrameworkFlags) -> Self {
-        self.options.framework_hints = flags;
-        self
-    }
-
-    #[inline]
-    pub fn and_framework_hints(mut self, flags: FrameworkFlags) -> Self {
-        self.options.framework_hints |= flags;
-        self
-    }
-
-    #[inline]
-    pub fn with_fix(mut self, fix: FixKind) -> Self {
-        self.options.fix = fix;
-        self
-    }
-
     /// Configure what linter plugins are enabled.
     ///
     /// Turning on a plugin will not automatically enable any of its rules. You must do this
@@ -146,8 +124,8 @@ impl LinterBuilder {
     /// This method sets what plugins are enabled and disabled, overwriting whatever existing
     /// config is set. If you are looking to add/remove plugins, use [`and_plugins`]
     ///
-    /// [`with_filters`]: LinterBuilder::with_filters
-    /// [`and_plugins`]: LinterBuilder::and_plugins
+    /// [`with_filters`]: ConfigStoreBuilder::with_filters
+    /// [`and_plugins`]: ConfigStoreBuilder::and_plugins
     #[inline]
     pub fn with_plugins(mut self, plugins: LintPlugins) -> Self {
         self.config.plugins = plugins;
@@ -157,7 +135,7 @@ impl LinterBuilder {
 
     /// Enable or disable a set of plugins, leaving unrelated plugins alone.
     ///
-    /// See [`LinterBuilder::with_plugins`] for details on how plugin configuration affects your
+    /// See [`ConfigStoreBuilder::with_plugins`] for details on how plugin configuration affects your
     /// rules.
     #[inline]
     pub fn and_plugins(mut self, plugins: LintPlugins, enabled: bool) -> Self {
@@ -241,8 +219,8 @@ impl LinterBuilder {
         }
     }
 
-    #[must_use]
-    pub fn build(self) -> Linter {
+    /// # Errors
+    pub fn build(self) -> Result<ConfigStore, OxcDiagnostic> {
         // When a plugin gets disabled before build(), rules for that plugin aren't removed until
         // with_filters() gets called. If the user never calls it, those now-undesired rules need
         // to be taken out.
@@ -253,8 +231,7 @@ impl LinterBuilder {
             self.rules.into_iter().collect::<Vec<_>>()
         };
         rules.sort_unstable_by_key(|r| r.id());
-        let config = ConfigStore::new(rules, self.config, self.overrides);
-        Linter::new(self.options, config)
+        Ok(ConfigStore::new(rules, self.config, self.overrides))
     }
 
     /// Warn for all correctness rules in the given set of plugins.
@@ -309,8 +286,8 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
     }
 }
 
-impl TryFrom<Oxlintrc> for LinterBuilder {
-    type Error = LinterBuilderError;
+impl TryFrom<Oxlintrc> for ConfigStoreBuilder {
+    type Error = ConfigBuilderError;
 
     #[inline]
     fn try_from(oxlintrc: Oxlintrc) -> Result<Self, Self::Error> {
@@ -318,27 +295,26 @@ impl TryFrom<Oxlintrc> for LinterBuilder {
     }
 }
 
-impl fmt::Debug for LinterBuilder {
+impl fmt::Debug for ConfigStoreBuilder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("LinterBuilder")
+        f.debug_struct("ConfigStoreBuilder")
             .field("rules", &self.rules)
-            .field("options", &self.options)
             .field("config", &self.config)
             .finish_non_exhaustive()
     }
 }
 
-/// An error that can occur while building a [`Linter`] from an [`Oxlintrc`].
+/// An error that can occur while building a [`ConfigStore`] from an [`Oxlintrc`].
 #[derive(Debug, Clone)]
-pub enum LinterBuilderError {
+pub enum ConfigBuilderError {
     /// There were unknown rules that could not be matched to any known plugins/rules.
     UnknownRules { rules: Vec<ESLintRule> },
 }
 
-impl std::fmt::Display for LinterBuilderError {
+impl std::fmt::Display for ConfigBuilderError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LinterBuilderError::UnknownRules { rules } => {
+            ConfigBuilderError::UnknownRules { rules } => {
                 write!(f, "unknown rules: ")?;
                 for rule in rules {
                     write!(f, "{}", rule.full_name())?;
@@ -349,7 +325,7 @@ impl std::fmt::Display for LinterBuilderError {
     }
 }
 
-impl std::error::Error for LinterBuilderError {}
+impl std::error::Error for ConfigBuilderError {}
 
 struct RulesCache {
     all_rules: RefCell<Option<Vec<RuleEnum>>>,
@@ -378,9 +354,9 @@ impl RulesCache {
         // initialize() is called), all_rules will be some if and only if last_fresh_plugins ==
         // plugins. Right before creation, (::new()) and before initialize() is called, these two
         // fields will be equal _but all_rules will be none_. This is OK for this function, but is
-        // a possible future foot-gun. LinterBuilder uses this to re-build its rules list in
+        // a possible future foot-gun. ConfigBuilder uses this to re-build its rules list in
         // ::build(). If cache is created but never made stale (by changing plugins),
-        // LinterBuilder's rule list won't need updating anyways, meaning its sound for this to
+        // ConfigBuilder's rule list won't need updating anyways, meaning its sound for this to
         // return `false`.
         self.last_fresh_plugins != self.plugins
     }
@@ -446,7 +422,7 @@ mod test {
 
     #[test]
     fn test_builder_default() {
-        let builder = LinterBuilder::default();
+        let builder = ConfigStoreBuilder::default();
         assert_eq!(builder.plugins(), LintPlugins::default());
 
         // populated with all correctness-level ESLint rules at a "warn" severity
@@ -465,14 +441,14 @@ mod test {
 
     #[test]
     fn test_builder_empty() {
-        let builder = LinterBuilder::empty();
+        let builder = ConfigStoreBuilder::empty();
         assert_eq!(builder.plugins(), LintPlugins::default());
         assert!(builder.rules.is_empty());
     }
 
     #[test]
     fn test_filter_deny_on_default() {
-        let builder = LinterBuilder::default();
+        let builder = ConfigStoreBuilder::default();
         let initial_rule_count = builder.rules.len();
 
         let builder = builder.with_filters([LintFilter::deny(RuleCategory::Correctness)]);
@@ -500,7 +476,7 @@ mod test {
     #[test]
     fn test_filter_deny_single_enabled_rule_on_default() {
         for filter_string in ["no-const-assign", "eslint/no-const-assign"] {
-            let builder = LinterBuilder::default();
+            let builder = ConfigStoreBuilder::default();
             let initial_rule_count = builder.rules.len();
 
             let builder =
@@ -526,7 +502,7 @@ mod test {
     fn test_filter_warn_single_disabled_rule_on_default() {
         for filter_string in ["no-console", "eslint/no-console"] {
             let filter = LintFilter::new(AllowWarnDeny::Warn, filter_string).unwrap();
-            let builder = LinterBuilder::default();
+            let builder = ConfigStoreBuilder::default();
             // sanity check: not already turned on
             assert!(!builder.rules.iter().any(|r| r.name() == "no-console"));
             let builder = builder.with_filter(filter);
@@ -542,9 +518,11 @@ mod test {
 
     #[test]
     fn test_filter_allow_all_then_warn() {
-        let builder =
-            LinterBuilder::default()
-                .with_filters([LintFilter::new(AllowWarnDeny::Allow, "all").unwrap()]);
+        let builder = ConfigStoreBuilder::default().with_filters([LintFilter::new(
+            AllowWarnDeny::Allow,
+            "all",
+        )
+        .unwrap()]);
         assert!(builder.rules.is_empty(), "Allowing all rules should empty out the rules list");
 
         let builder = builder.with_filters([LintFilter::warn(RuleCategory::Correctness)]);
@@ -570,7 +548,7 @@ mod test {
 
     #[test]
     fn test_rules_after_plugin_added() {
-        let builder = LinterBuilder::default();
+        let builder = ConfigStoreBuilder::default();
         let initial_rule_count = builder.rules.len();
 
         let builder = builder.and_plugins(LintPlugins::IMPORT, true);
@@ -589,7 +567,7 @@ mod test {
         let mut desired_plugins = LintPlugins::default();
         desired_plugins.set(LintPlugins::TYPESCRIPT, false);
 
-        let linter = LinterBuilder::default().with_plugins(desired_plugins).build();
+        let linter = ConfigStoreBuilder::default().with_plugins(desired_plugins).build().unwrap();
         for rule in linter.rules().iter() {
             let name = rule.name();
             let plugin = rule.plugin_name();
@@ -603,11 +581,11 @@ mod test {
 
     #[test]
     fn test_plugin_configuration() {
-        let builder = LinterBuilder::default();
+        let builder = ConfigStoreBuilder::default();
         let initial_plugins = builder.plugins();
 
         // ==========================================================================================
-        // Test LinterBuilder::and_plugins, which deltas the plugin list instead of overriding it
+        // Test ConfigStoreBuilder::and_plugins, which deltas the plugin list instead of overriding it
         // ==========================================================================================
 
         // Enable eslint plugin. Since it's already enabled, this does nothing.
@@ -632,7 +610,7 @@ mod test {
         assert_eq!(initial_plugins, builder.plugins());
 
         // ==========================================================================================
-        // Test LinterBuilder::with_plugins, which _does_ override plugins
+        // Test ConfigStoreBuilder::with_plugins, which _does_ override plugins
         // ==========================================================================================
 
         let builder = builder.with_plugins(LintPlugins::ESLINT);
@@ -660,7 +638,7 @@ mod test {
         "#,
         )
         .unwrap();
-        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc);
+        let builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc);
         for rule in &builder.rules {
             let name = rule.name();
             let plugin = rule.plugin_name();

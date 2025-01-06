@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.44.0] - 2024-12-25
+
+- ad2a620 ast: [**BREAKING**] Add missing `AssignmentTargetProperty::computed` (#8097) (Boshen)
+
+### Features
+
+- 618b6aa codege: Minify whitespace in object getter / setter (#8080) (Boshen)
+- 4727667 codegen: Minify arrow expr `(x) => y` -> `x => y` (#8078) (Boshen)
+- 0562830 codegen: Minify string with backtick when needed (#8095) (Boshen)
+- 6237c05 codegen: Minify more whitespace (#8089) (Boshen)
+- 6355b7c codegen: Minify `export { 's' as 's' }` -> `export { 's' }` (#8093) (Boshen)
+- fccfda9 codegen: Minify `class{static[computed]}` (#8088) (Boshen)
+- f873139 codegen: Minify `for (_ of [])` -> `for(_ of[])` (#8086) (Boshen)
+- 8b8cbcd codegen: Minify `case "foo"` -> `case"foo"` (#8085) (Boshen)
+- 414c118 codegen: Minify `yield "s"` -> `yield"s"` (#8084) (Boshen)
+- f8f067b codegen: Minify class method `async*fn(){}` (#8083) (Boshen)
+- 1d5ae81 codegen: Minify `const [foo] = bar` -> `const[foo]=bar` (#8079) (Boshen)
+- e3f78fb codegen: `new Foo()` -> `new Foo` when minify (#8077) (Boshen)
+- d84d60a codegen: Minify numbers with large exponents (#8074) (Boshen)
+- 373279b codegen: Balance string quotes when minify whitespace (#8072) (Boshen)
+
+### Bug Fixes
+
+- bdc241d codegen: Disallow template literals in object property key (#8108) (Boshen)
+- 728ed20 codegen: Print `yield * ident` correctly (Boshen)
+
+### Performance
+
+- 78d2e83 sourcemap: Improve perf of `search_original_line_and_column` (#7926) (Cameron)
+
+### Refactor
+
+- 7110c7b codegen: Add `print_quoted_utf16` and `print_unquoted_utf16` methods (#8107) (Boshen)
+
 ## [0.43.0] - 2024-12-21
 
 ### Performance

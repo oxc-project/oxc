@@ -4455,6 +4455,8 @@ pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NAME: usize =
     offset_of!(AssignmentTargetPropertyProperty, name);
 pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_BINDING: usize =
     offset_of!(AssignmentTargetPropertyProperty, binding);
+pub(crate) const OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED: usize =
+    offset_of!(AssignmentTargetPropertyProperty, computed);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -4477,6 +4479,14 @@ impl<'a, 't> AssignmentTargetPropertyPropertyWithoutName<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_BINDING)
                 as *const AssignmentTargetMaybeDefault<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED)
+                as *const bool)
         }
     }
 }
@@ -4509,6 +4519,14 @@ impl<'a, 't> AssignmentTargetPropertyPropertyWithoutBinding<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NAME)
                 as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_COMPUTED)
+                as *const bool)
         }
     }
 }

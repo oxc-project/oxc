@@ -34,11 +34,10 @@ declare_oxc_lint!(
 impl Rule for BanTslintComment {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().comments();
-        let source_text_len = ctx.semantic().source_text().len();
         for comment in comments {
             let raw = ctx.source_range(comment.content_span());
             if is_tslint_comment_directive(raw) {
-                let comment_span = get_full_comment(source_text_len, comment.span);
+                let comment_span = get_full_comment(ctx, comment.span);
                 ctx.diagnostic_with_fix(
                     ban_tslint_comment_diagnostic(raw.trim(), comment_span),
                     |fixer| fixer.delete_range(comment_span),
@@ -57,12 +56,17 @@ fn is_tslint_comment_directive(raw: &str) -> bool {
     ENABLE_DISABLE_REGEX.is_match(raw)
 }
 
-fn get_full_comment(source_text_len: usize, span: Span) -> Span {
+fn get_full_comment(ctx: &LintContext, span: Span) -> Span {
     let mut span = span;
+
+    let source_size = u32::try_from(ctx.source_text().len()).unwrap();
+    let tokens = ctx.source_range(Span::new(span.end, source_size));
+
     // Take into account new line at the end of the comment
-    if source_text_len > span.end as usize {
+    if matches!(tokens.chars().next(), Some('\n')) {
         span.end += 1;
     }
+
     span
 }
 
@@ -111,6 +115,8 @@ fn test() {
             None,
         ),
         (r"/* tslint:disable-line */", r"", None),
+        // Issue: <https://github.com/oxc-project/oxc/issues/8090>
+        (r"/*tslint:disable*/É", r"É", None),
     ];
 
     Tester::new(BanTslintComment::NAME, BanTslintComment::CATEGORY, pass, fail)

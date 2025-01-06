@@ -1,0 +1,141 @@
+---
+source: crates/oxc_linter/src/tester.rs
+snapshot_kind: text
+---
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:13]
+ 1 │ var x = new c();
+   ·             ─
+   ╰────
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:13]
+ 1 │ var x = new φ;
+   ·             ─
+   ╰────
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:13]
+ 1 │ var x = new a.b.c;
+   ·             ─────
+   ╰────
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:13]
+ 1 │ var x = new a.b['c'];
+   ·             ────────
+   ╰────
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:9]
+ 1 │ var b = Foo();
+   ·         ───
+   ╰────
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:9]
+ 1 │ var b = a.Foo();
+   ·         ─────
+   ╰────
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:9]
+ 1 │ var b = a['Foo']();
+   ·         ────────
+   ╰────
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:9]
+ 1 │ var b = a.Date.UTC();
+   ·         ──────────
+   ╰────
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:9]
+ 1 │ var b = UTC();
+   ·         ───
+   ╰────
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:9]
+ 1 │ var a = B.C();
+   ·         ───
+   ╰────
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:9]
+ 1 │ ╭─▶ var a = B
+ 2 │ ╰─▶             .C();
+   ╰────
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:13]
+ 1 │ var a = new B.c();
+   ·             ───
+   ╰────
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:13]
+ 1 │ ╭─▶ var a = new B.
+ 2 │ ╰─▶             c();
+   ╰────
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:13]
+ 1 │ var a = new c();
+   ·             ─
+   ╰────
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:13]
+ 1 │ var a = new b[ ( 'foo' ) ]();
+   ·             ──────────────
+   ╰────
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:13]
+ 1 │ var a = new b[`foo`];
+   ·             ────────
+   ╰────
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:9]
+ 1 │ var x = Foo.Bar(42);
+   ·         ───────
+   ╰────
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:9]
+ 1 │ var x = Bar.Foo(42);
+   ·         ───────
+   ╰────
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:13]
+ 1 │ var x = new foo.bar(42);
+   ·             ───────
+   ╰────
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:13]
+ 1 │ var x = new bar.foo(42);
+   ·             ───────
+   ╰────
+
+  ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
+   ╭─[new_cap.tsx:1:6]
+ 1 │ new (foo?.bar)();
+   ·      ────────
+   ╰────
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:1]
+ 1 │ foo?.Bar();
+   · ────────
+   ╰────
+
+  ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
+   ╭─[new_cap.tsx:1:2]
+ 1 │ (foo?.Bar)();
+   ·  ────────
+   ╰────

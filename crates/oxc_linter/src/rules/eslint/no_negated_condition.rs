@@ -106,6 +106,20 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        "if (a) {}",
+        "if (a) {} else {}",
+        "if (!a) {}",
+        "if (!a) {} else if (b) {}",
+        "if (!a) {} else if (b) {} else {}",
+        "if (a == b) {}",
+        "if (a == b) {} else {}",
+        "if (a != b) {}",
+        "if (a != b) {} else if (b) {}",
+        "if (a != b) {} else if (b) {} else {}",
+        "if (a !== b) {}",
+        "if (a === b) {} else {}",
+        "a ? b : c",
+        // Test cases from eslint-plugin-unicorn
         r"if (a) {}",
         r"if (a) {} else {}",
         r"if (!a) {}",
@@ -122,6 +136,13 @@ fn test() {
     ];
 
     let fail = vec![
+        "if (!a) {;} else {;}",
+        "if (a != b) {;} else {;}",
+        "if (a !== b) {;} else {;}",
+        "!a ? b : c",
+        "a != b ? c : d",
+        "a !== b ? c : d",
+        // Test cases from eslint-plugin-unicorn
         r"if (!a) {;} else {;}",
         r"if (a != b) {;} else {;}",
         r"if (a !== b) {;} else {;}",

@@ -612,6 +612,7 @@ impl ContentHash for AssignmentTargetPropertyProperty<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.name, state);
         ContentHash::content_hash(&self.binding, state);
+        ContentHash::content_hash(&self.computed, state);
     }
 }
 

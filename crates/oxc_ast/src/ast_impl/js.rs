@@ -72,6 +72,11 @@ impl<'a> Expression<'a> {
         matches!(self, Self::StringLiteral(_) | Self::TemplateLiteral(_))
     }
 
+    /// Return `true` if the expression is a plain template.
+    pub fn is_no_substitution_template(&self) -> bool {
+        matches!(self, Expression::TemplateLiteral(e) if e.is_no_substitution_template())
+    }
+
     /// Returns `true` for [numeric](NumericLiteral) and [big int](BigIntLiteral) literals.
     pub fn is_number_literal(&self) -> bool {
         matches!(self, Self::NumericLiteral(_) | Self::BigIntLiteral(_))
@@ -767,6 +772,22 @@ impl Statement<'_> {
                 | Statement::WhileStatement(_)
         )
     }
+
+    /// Returns the single statement from block statement, or self
+    pub fn get_one_child(&self) -> Option<&Self> {
+        if let Statement::BlockStatement(block_stmt) = self {
+            return (block_stmt.body.len() == 1).then(|| &block_stmt.body[0]);
+        }
+        Some(self)
+    }
+
+    /// Returns the single statement from block statement, or self
+    pub fn get_one_child_mut(&mut self) -> Option<&mut Self> {
+        if let Statement::BlockStatement(block_stmt) = self {
+            return (block_stmt.body.len() == 1).then_some(&mut block_stmt.body[0]);
+        }
+        Some(self)
+    }
 }
 
 impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
@@ -886,6 +907,11 @@ impl fmt::Display for VariableDeclarationKind {
 }
 
 impl ForStatementInit<'_> {
+    /// Is `var` declaration
+    pub fn is_var_declaration(&self) -> bool {
+        matches!(self, Self::VariableDeclaration(decl) if decl.kind.is_var())
+    }
+
     /// LexicalDeclaration[In, Yield, Await] :
     ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
     pub fn is_lexical_declaration(&self) -> bool {

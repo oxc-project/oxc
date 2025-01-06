@@ -25,9 +25,9 @@ impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {
 
 impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.compress_block(stmt, Ctx(ctx));
         let ctx = Ctx(ctx);
         if let Some(new_stmt) = match stmt {
+            Statement::BlockStatement(block_stmt) => Self::try_optimize_block(block_stmt, ctx),
             Statement::IfStatement(if_stmt) => self.try_fold_if(if_stmt, ctx),
             Statement::ForStatement(for_stmt) => self.try_fold_for(for_stmt, ctx),
             Statement::ExpressionStatement(expr_stmt) => {
@@ -126,28 +126,27 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
 
     /// Remove block from single line blocks
     /// `{ block } -> block`
-    fn compress_block(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, 'b>) {
-        if let Statement::BlockStatement(block) = stmt {
-            // Avoid compressing `if (x) { var x = 1 }` to `if (x) var x = 1` due to different
-            // semantics according to AnnexB, which lead to different semantics.
-            if block.body.len() == 1 && !block.body[0].is_declaration() {
-                *stmt = block.body.remove(0);
-                self.compress_block(stmt, ctx);
-                self.changed = true;
-                return;
-            }
-            if block.body.len() == 0
-                && (ctx.parent().is_while_statement()
-                    || ctx.parent().is_for_statement()
-                    || ctx.parent().is_for_in_statement()
-                    || ctx.parent().is_for_of_statement()
-                    || ctx.parent().is_block_statement()
-                    || ctx.parent().is_program())
-            {
-                // Remove the block if it is empty and the parent is a block statement.
-                *stmt = ctx.ast.statement_empty(SPAN);
-            }
+    fn try_optimize_block(
+        stmt: &mut BlockStatement<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Statement<'a>> {
+        // Avoid compressing `if (x) { var x = 1 }` to `if (x) var x = 1` due to different
+        // semantics according to AnnexB, which lead to different semantics.
+        if stmt.body.len() == 1 && !stmt.body[0].is_declaration() {
+            return Some(stmt.body.remove(0));
         }
+        if stmt.body.len() == 0
+            && (ctx.parent().is_while_statement()
+                || ctx.parent().is_for_statement()
+                || ctx.parent().is_for_in_statement()
+                || ctx.parent().is_for_of_statement()
+                || ctx.parent().is_block_statement()
+                || ctx.parent().is_program())
+        {
+            // Remove the block if it is empty and the parent is a block statement.
+            return Some(ctx.ast.statement_empty(stmt.span));
+        }
+        None
     }
 
     fn try_fold_if(
@@ -311,6 +310,21 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                 Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
                     Some(ctx.ast.statement_empty(SPAN))
                 }
+                Expression::ArrowFunctionExpression(_) => Some(ctx.ast.statement_empty(SPAN)),
+                // `typeof x` -> ``
+                Expression::UnaryExpression(unary_expr)
+                    if unary_expr.operator.is_typeof()
+                        && unary_expr.argument.is_identifier_reference() =>
+                {
+                    Some(ctx.ast.statement_empty(SPAN))
+                }
+                // `typeof x.y` -> `x`, `!x` -> `x`, `void x` -> `x`...
+                Expression::UnaryExpression(unary_expr) if !unary_expr.operator.is_delete() => {
+                    Some(ctx.ast.statement_expression(
+                        unary_expr.span,
+                        ctx.ast.move_expression(&mut unary_expr.argument),
+                    ))
+                }
                 _ => None,
             })
     }
@@ -395,17 +409,16 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
+        // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
+        let parent = ctx.ancestry.parent();
+        if parent.is_tagged_template_expression()
+            || matches!(parent, Ancestor::CallExpressionCallee(_))
+        {
+            return None;
+        }
+
         match ctx.get_boolean_value(&expr.test) {
-            Some(true) => {
-                // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
-                let parent = ctx.ancestry.parent();
-                if parent.is_tagged_template_expression()
-                    || matches!(parent, Ancestor::CallExpressionCallee(_))
-                {
-                    return None;
-                }
-                Some(ctx.ast.move_expression(&mut expr.consequent))
-            }
+            Some(true) => Some(ctx.ast.move_expression(&mut expr.consequent)),
             Some(false) => Some(ctx.ast.move_expression(&mut expr.alternate)),
             None => None,
         }
@@ -457,7 +470,7 @@ mod test {
 
         // Cases to test for empty block.
         // fold("while(x()){x}", "while(x());");
-        fold("while(x()){x()}", "while(x())x()");
+        fold("while(x()){x()}", "for(;x();)x()");
         // fold("for(x=0;x<100;x++){x}", "for(x=0;x<100;x++);");
         // fold("for(x in y){x}", "for(x in y);");
         // fold("for (x of y) {x}", "for(x of y);");
@@ -549,5 +562,36 @@ mod test {
         fold("([foo(), ...c, bar()])", "(foo(), [...c], bar())");
         fold("([...a, b, ...c])", "([...a, ...c])");
         fold_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
+    }
+
+    #[test]
+    fn test_fold_unary_expression_statement() {
+        fold("typeof x", "");
+        fold("typeof x?.y", "x?.y");
+        fold("typeof x.y", "x.y");
+        fold("typeof x.y.z()", "x.y.z()");
+        fold("void x", "x");
+        fold("void x?.y", "x?.y");
+        fold("void x.y", "x.y");
+        fold("void x.y.z()", "x.y.z()");
+        fold("!x", "x");
+        fold("!x?.y", "x?.y");
+        fold("!x.y", "x.y");
+        fold("!x.y.z()", "x.y.z()");
+        fold("-x.y.z()", "x.y.z()");
+
+        fold_same("delete x");
+        fold_same("delete x.y");
+        fold_same("delete x.y.z()");
+    }
+
+    #[test]
+    fn test_fold_function() {
+        fold("() => {}", "");
+        fold_same("var k = () => {}");
+        fold_same("var k = function () {}");
+        // TODO: fold the following...
+        fold_same("(() => {})()");
+        fold_same("(function () {})()");
     }
 }

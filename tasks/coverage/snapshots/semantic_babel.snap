@@ -2,7 +2,7 @@ commit: 54a8389f
 
 semantic_babel Summary:
 AST Parsed     : 2218/2218 (100.00%)
-Positive Passed: 1889/2218 (85.17%)
+Positive Passed: 1885/2218 (84.99%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -26,11 +26,41 @@ semantic error: A 'return' statement can only be used within a function body.
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/328/input.js
 semantic error: A 'return' statement can only be used within a function body.
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/async/input.js
+semantic error: Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/async-generator/input.js
+semantic error: Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(5): ScopeFlags(0x0)
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(6): ScopeFlags(0x0)
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(7): ScopeFlags(0x0)
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
 semantic error: 'arguments' is not allowed in class field initializer
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-identifier-in-computed-property-inside-params-of-function-inside-params-of-async-function/input.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["_asyncToGenerator", "_defineProperty"]
+rebuilt        : ScopeId(0): ["_asyncToGenerator", "_await", "_defineProperty"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_await", "f", "x"]
+rebuilt        : ScopeId(2): ["f", "x"]
+Symbol scope ID mismatch for "_await":
+after transform: SymbolId(3): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(0)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js
 semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -80,8 +110,8 @@ rebuilt        : ScopeId(1): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript/input.js
 semantic error: Unresolved references mismatch:
-after transform: ["Array", "foo"]
-rebuilt        : ["foo"]
+after transform: ["Array", "WeakMap", "foo", "require"]
+rebuilt        : ["WeakMap", "foo", "require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/enum/input.js
 semantic error: Bindings mismatch:
@@ -119,16 +149,16 @@ rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/loc-index-property/input.js
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["AssertsFoo", "Foo"]
-rebuilt        : ScopeId(0): ["AssertsFoo"]
+after transform: ScopeId(0): ["AssertsFoo", "Foo", "_defineProperty"]
+rebuilt        : ScopeId(0): ["AssertsFoo", "_defineProperty"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/loc-index-property-babel-7/input.js
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["AssertsFoo", "Foo"]
-rebuilt        : ScopeId(0): ["AssertsFoo"]
+after transform: ScopeId(0): ["AssertsFoo", "Foo", "_defineProperty"]
+rebuilt        : ScopeId(0): ["AssertsFoo", "_defineProperty"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
@@ -188,7 +218,7 @@ rebuilt        : []
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-this-with-predicate/input.ts
 semantic error: Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
-rebuilt        : SymbolId(0): []
+rebuilt        : SymbolId(1): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-var/input.ts
 semantic error: Scope children mismatch:
@@ -207,19 +237,19 @@ rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/TSTypeParameterInstantiation/input.ts
 semantic error: Symbol reference IDs mismatch for "AbstractClass":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2)]
 Symbol reference IDs mismatch for "ConcreteClass":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
-rebuilt        : SymbolId(1): [ReferenceId(1)]
+rebuilt        : SymbolId(2): [ReferenceId(3)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/TSTypeParameterInstantiation-babel-7/input.ts
 semantic error: Symbol reference IDs mismatch for "AbstractClass":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
-rebuilt        : SymbolId(0): [ReferenceId(0)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2)]
 Symbol reference IDs mismatch for "ConcreteClass":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
-rebuilt        : SymbolId(1): [ReferenceId(1)]
+rebuilt        : SymbolId(2): [ReferenceId(3)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/as/input.ts
 semantic error: Unresolved references mismatch:
@@ -266,8 +296,8 @@ rebuilt        : ScopeId(5): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-named-properties/input.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-optional-method/input.js
 semantic error: Scope children mismatch:
@@ -354,19 +384,17 @@ after transform: ["T", "X"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
+Function implementation is missing or not immediately following the declaration.
+Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names-babel-7/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
+Function implementation is missing or not immediately following the declaration.
+Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-reserved-names/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-computed/input.ts
 semantic error: Scope children mismatch:
@@ -377,14 +405,11 @@ after transform: ["Symbol"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-no-body/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
+Function implementation is missing or not immediately following the declaration.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-accessors/input.ts
 semantic error: Scope children mismatch:
@@ -405,8 +430,11 @@ semantic error: A required parameter cannot follow an optional parameter.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-method-overload/input.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(5)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
+Symbol flags mismatch for "_f":
+after transform: SymbolId(4): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
 semantic error: Identifier `x` has already been declared
@@ -416,9 +444,12 @@ Identifier `x` has already been declared
 Identifier `x` has already been declared
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(1): []
+semantic error: Function implementation is missing or not immediately following the declaration.
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static-asi/input.ts
+semantic error: Symbol flags mismatch for "_method":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
 semantic error: Bindings mismatch:
@@ -1883,7 +1914,7 @@ rebuilt        : ["f"]
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-asi/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(8)]
 Unresolved references mismatch:
 after transform: ["f", "true"]
 rebuilt        : ["f"]

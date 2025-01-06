@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ oxc(const-comparisons): Unexpected constant comparison
    ╭─[const_comparisons.tsx:1:1]
@@ -264,6 +263,13 @@ snapshot_kind: text
    ╰────
   help: Because `a` will always be equal to itself
 
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to true
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ a.b.c >= a.b.c
+   · ──────────────
+   ╰────
+  help: Because `a.b.c` will always be equal to itself
+
   ⚠ oxc(const-comparisons): Both sides of the logical operator are the same
    ╭─[const_comparisons.tsx:1:1]
  1 │ a == b && a == b
@@ -299,3 +305,46 @@ snapshot_kind: text
    ·   ╰── If this expression evaluates to true
    ╰────
   help: This logical expression will always evaluate to the same value as the expression itself.
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to false
+   ╭─[const_comparisons.tsx:1:69]
+ 1 │ class Foo { #a; #b; constructor() { this.#a = 1; }; test() { return this.#a > this.#a } }
+   ·                                                                     ─────────────────
+   ╰────
+  help: Because `this.#a` will never be greater than itself
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ !foo && foo
+   · ──┬─    ─┬─
+   ·   │      ╰── This expression will never evaluate to true
+   ·   ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to false
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ foo && !foo
+   · ─┬─    ──┬─
+   ·  │       ╰── This expression will never evaluate to true
+   ·  ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to false
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ !foo || foo
+   · ──┬─    ─┬─
+   ·   │      ╰── This expression will never evaluate to true
+   ·   ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to true
+
+  ⚠ oxc(const-comparisons): Unexpected constant comparison
+   ╭─[const_comparisons.tsx:1:1]
+ 1 │ foo || !foo
+   · ─┬─    ──┬─
+   ·  │       ╰── This expression will never evaluate to true
+   ·  ╰── If this expression evaluates to true
+   ╰────
+  help: This logical expression will always evaluate to true

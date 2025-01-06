@@ -163,6 +163,11 @@ impl<'a> Semantic<'a> {
         &self.symbols
     }
 
+    /// Get a mutable reference to the [`SymbolTable`].
+    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
+        &mut self.symbols
+    }
+
     pub fn unused_labels(&self) -> &Vec<NodeId> {
         &self.unused_labels
     }
@@ -312,7 +317,7 @@ mod tests {
         let allocator = Allocator::default();
         let source_type: SourceType = SourceType::default().with_typescript(true);
         let semantic = get_semantic(&allocator, source, source_type);
-        assert!(semantic.symbols().references.len() == 1);
+        assert_eq!(semantic.symbols().references.len(), 1);
     }
 
     #[test]

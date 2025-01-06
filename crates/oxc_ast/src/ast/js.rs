@@ -894,6 +894,8 @@ pub struct AssignmentTargetPropertyProperty<'a> {
     pub span: Span,
     pub name: PropertyKey<'a>,
     pub binding: AssignmentTargetMaybeDefault<'a>,
+    /// Property was declared with a computed key
+    pub computed: bool,
 }
 
 /// `a++, b++` in `let a = 1, b = 2; let result = (a++, b++);`
@@ -1475,7 +1477,6 @@ pub struct AssignmentPattern<'a> {
     pub right: Expression<'a>,
 }
 
-// See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
@@ -1497,7 +1498,6 @@ pub struct BindingProperty<'a> {
     pub computed: bool,
 }
 
-// See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
@@ -1642,7 +1642,6 @@ pub enum FunctionType {
 }
 
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
-// See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]

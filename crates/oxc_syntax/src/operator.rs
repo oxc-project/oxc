@@ -488,9 +488,19 @@ impl UnaryOperator {
         self == Self::BitwiseNot
     }
 
+    /// Returns `true` if this is the [`void`](UnaryOperator::Typeof) operator.
+    pub fn is_typeof(self) -> bool {
+        self == Self::Typeof
+    }
+
     /// Returns `true` if this is the [`void`](UnaryOperator::Void) operator.
     pub fn is_void(self) -> bool {
         self == Self::Void
+    }
+
+    /// Returns `true` if this is the [`delete`](UnaryOperator::Delete) operator.
+    pub fn is_delete(self) -> bool {
+        self == Self::Delete
     }
 
     /// Returns `true` if this operator is a keyword instead of punctuation.
