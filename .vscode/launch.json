@@ -28,7 +28,7 @@
           "name": "oxlint",
           "kind": "bin"
         }
-      },
+      }
       // "args": ["--ARGS-TO-OXLINT"],
       // "cwd": "PATH-TO-TEST-PROJECT"
     }
