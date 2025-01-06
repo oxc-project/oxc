@@ -803,6 +803,12 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         if self.in_fixed_loop {
             return;
         }
+        if let PropertyKey::NumericLiteral(_) = key {
+            if *computed {
+                *computed = false;
+            }
+            return;
+        };
         let PropertyKey::StringLiteral(s) = key else { return };
         if s.value == "__proto__" || s.value == "constructor" {
             return;
@@ -1383,33 +1389,33 @@ mod test {
     fn test_property_key() {
         // Object Property
         test(
-            "({ '0': _, 'a': _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ })",
-            "({  0: _,   a: _,      1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ })",
+            "({ '0': _, 'a': _, [1]: _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ })",
+            "({  0: _,   a: _,    1: _,     1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ })",
         );
         // AssignmentTargetPropertyProperty
         test(
-            "({ '0': _, 'a': _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ } = {})",
-            "({  0: _,   a: _,      1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ } = {})",
+            "({ '0': _, 'a': _, [1]: _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ } = {})",
+            "({  0: _,   a: _,    1: _,   1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ } = {})",
         );
         // Binding Property
         test(
-            "var { '0': _, 'a': _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ } = {}",
-            "var {  0: _,   a: _,      1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ } = {}",
+            "var { '0': _, 'a': _, [1]: _, ['1']: _, ['b']: _, ['c.c']: _, '1.1': _, '😊': _, 'd.d': _ } = {}",
+            "var {  0: _,   a: _,    1: _,   1: _,     b: _,   'c.c': _, '1.1': _, '😊': _, 'd.d': _ } = {}",
         );
         // Method Definition
         test(
-            "class F { '0'(){}; 'a'(){}; ['1'](){}; ['b'](){}; ['c.c'](){}; '1.1'(){}; '😊'(){}; 'd.d'(){} }",
-            "class F {  0(){};   a(){};      1(){};     b(){};   'c.c'(){}; '1.1'(){}; '😊'(){}; 'd.d'(){} }"
+            "class F { '0'(){}; 'a'(){}; [1](){}; ['1'](){}; ['b'](){}; ['c.c'](){}; '1.1'(){}; '😊'(){}; 'd.d'(){} }",
+            "class F {  0(){};   a(){};    1(){};    1(){};     b(){};   'c.c'(){}; '1.1'(){}; '😊'(){}; 'd.d'(){} }"
         );
         // Property Definition
         test(
-            "class F { '0' = _; 'a' = _; ['1'] = _; ['b'] = _; ['c.c'] = _; '1.1' = _; '😊' = _; 'd.d' = _ }",
-            "class F {  0 = _;   a = _;      1 = _;     b = _;   'c.c' = _; '1.1' = _; '😊' = _; 'd.d' = _ }"
+            "class F { '0' = _; 'a' = _; [1] = _; ['1'] = _; ['b'] = _; ['c.c'] = _; '1.1' = _; '😊' = _; 'd.d' = _ }",
+            "class F {  0 = _;   a = _;    1 = _;    1 = _;     b = _;   'c.c' = _; '1.1' = _; '😊' = _; 'd.d' = _ }"
         );
         // Accessor Property
         test(
-            "class F { accessor '0' = _; accessor 'a' = _; accessor ['1'] = _; accessor ['b'] = _; accessor ['c.c'] = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }",
-            "class F { accessor  0 = _;  accessor  a = _;  accessor     1 = _; accessor     b = _; accessor   'c.c' = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }"
+            "class F { accessor '0' = _; accessor 'a' = _; accessor [1] = _; accessor ['1'] = _; accessor ['b'] = _; accessor ['c.c'] = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }",
+            "class F { accessor  0 = _;  accessor  a = _;    accessor 1 = _;accessor     1 = _; accessor     b = _; accessor   'c.c' = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }"
         );
     }
 
