@@ -138,7 +138,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
                 p,
                 [
                     text!("if ("),
-                    group!(p, [indent!(p, [softline!(), test_doc]), softline!(),]),
+                    group!(p, [indent!(p, [softline!(), test_doc]), softline!()]),
                     text!(")"),
                     consequent
                 ]
@@ -205,7 +205,7 @@ impl<'a> Format<'a> for ForStatement<'a> {
                 indent!(p, parts_head)
             };
 
-            group!(p, [text!("for ("), group!(p, [parts_head, softline!()]), text!(")"), body,])
+            group!(p, [text!("for ("), group!(p, [parts_head, softline!()]), text!(")"), body])
         })
     }
 }
@@ -271,7 +271,7 @@ impl<'a> Format<'a> for WhileStatement<'a> {
 
             parts.push(text!("while ("));
             let test_doc = self.test.format(p);
-            parts.push(group!(p, [indent!(p, [softline!(), test_doc]), softline!(),]));
+            parts.push(group!(p, [indent!(p, [softline!(), test_doc]), softline!()]));
             parts.push(text!(")"));
 
             let body = self.body.format(p);
@@ -461,7 +461,7 @@ impl<'a> Format<'a> for LabeledStatement<'a> {
             return array!(p, [self.label.format(p), text!(":;")]);
         }
 
-        array!(p, [self.label.format(p), text!(": "), self.body.format(p),])
+        array!(p, [self.label.format(p), text!(": "), self.body.format(p)])
     }
 }
 
@@ -1270,7 +1270,7 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
                 &self.right,
             );
             if misc::in_parentheses(p.parent_kind(), p.source_text, self.span) {
-                group!(p, [indent!(p, [softline!(), doc]), softline!(),])
+                group!(p, [indent!(p, [softline!(), doc]), softline!()])
             } else {
                 doc
             }
@@ -1602,7 +1602,7 @@ impl<'a> Format<'a> for AccessorProperty<'a> {
 
 impl<'a> Format<'a> for PrivateIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        array!(p, [text!("#"), dynamic_text!(p, self.name.as_str()),])
+        array!(p, [text!("#"), dynamic_text!(p, self.name.as_str())])
     }
 }
 
