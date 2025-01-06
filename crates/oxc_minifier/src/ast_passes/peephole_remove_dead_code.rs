@@ -310,6 +310,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                 Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
                     Some(ctx.ast.statement_empty(SPAN))
                 }
+                Expression::ArrowFunctionExpression(_) => Some(ctx.ast.statement_empty(SPAN)),
                 // `typeof x` -> ``
                 Expression::UnaryExpression(unary_expr)
                     if unary_expr.operator.is_typeof()
@@ -582,5 +583,15 @@ mod test {
         fold_same("delete x");
         fold_same("delete x.y");
         fold_same("delete x.y.z()");
+    }
+
+    #[test]
+    fn test_fold_function() {
+        fold("() => {}", "");
+        fold_same("var k = () => {}");
+        fold_same("var k = function () {}");
+        // TODO: fold the following...
+        fold_same("(() => {})()");
+        fold_same("(function () {})()");
     }
 }
