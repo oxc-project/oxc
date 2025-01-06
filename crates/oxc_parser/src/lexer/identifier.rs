@@ -47,7 +47,7 @@ impl<'a> Lexer<'a> {
     /// # SAFETY
     /// * `self.source` must not be exhausted (at least 1 char remaining).
     /// * Next char must be ASCII.
-    #[allow(clippy::missing_safety_doc)] // Clippy is wrong!
+    #[expect(clippy::unnecessary_safety_comment)]
     pub(super) unsafe fn identifier_name_handler(&mut self) -> &'a str {
         // Advance past 1st byte.
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.

@@ -31,7 +31,7 @@ impl Lexer<'_> {
                 // If this is end of comment, create trivia, and advance `pos` to after line break.
                 // Do that here rather than in `handle_match`, to avoid branching twice on value of
                 // the matched byte.
-                #[allow(clippy::if_not_else)]
+                #[expect(clippy::if_not_else)]
                 if next_byte != LS_OR_PS_FIRST {
                     // `\r` or `\n`
                     self.trivia_builder

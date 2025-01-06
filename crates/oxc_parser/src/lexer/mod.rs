@@ -1,6 +1,3 @@
-#![allow(clippy::unnecessary_safety_comment)]
-#![allow(unsafe_code)]
-
 //! An Ecma-262 Lexer / Tokenizer
 //! Prior Arts:
 //!     * [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/24004745a8ed4939fc0dc7332bfd1268ac52285f/crates/parser/src)
@@ -99,7 +96,6 @@ pub struct Lexer<'a> {
     multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
 }
 
-#[allow(clippy::unused_self)]
 impl<'a> Lexer<'a> {
     /// Create new `Lexer`.
     ///
@@ -230,7 +226,6 @@ impl<'a> Lexer<'a> {
 
     /// Get the length offset from the source, in UTF-8 bytes
     #[inline]
-    #[allow(clippy::cast_possible_truncation)]
     fn offset(&self) -> u32 {
         self.source.offset()
     }

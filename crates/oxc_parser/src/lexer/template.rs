@@ -86,6 +86,7 @@ impl<'a> Lexer<'a> {
     /// # SAFETY
     /// * Byte at `pos` must be `\r`.
     /// * `pos` must not be before `self.source.position()`.
+    #[expect(clippy::unnecessary_safety_comment)]
     unsafe fn template_literal_carriage_return(
         &mut self,
         mut pos: SourcePosition<'a>,
@@ -128,6 +129,7 @@ impl<'a> Lexer<'a> {
     /// # SAFETY
     /// * Byte at `pos` must be `\`.
     /// * `pos` must not be before `self.source.position()`.
+    #[expect(clippy::unnecessary_safety_comment)]
     unsafe fn template_literal_backslash(
         &mut self,
         pos: SourcePosition<'a>,
@@ -163,6 +165,7 @@ impl<'a> Lexer<'a> {
     /// Create arena string for modified template literal, containing the template literal up to `pos`.
     /// # SAFETY
     /// `pos` must not be before `self.source.position()`
+    #[expect(clippy::unnecessary_safety_comment)]
     unsafe fn template_literal_create_string(&self, pos: SourcePosition) -> String<'a> {
         // Create arena string to hold modified template literal.
         // We don't know how long template literal will end up being. Take a guess that total length

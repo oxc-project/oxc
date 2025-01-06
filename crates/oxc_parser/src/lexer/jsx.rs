@@ -26,6 +26,7 @@ impl Lexer<'_> {
     /// # SAFETY
     /// * `delimiter` must be an ASCII character.
     /// * Next char in `lexer.source` must be ASCII.
+    #[expect(clippy::unnecessary_safety_comment)]
     pub(super) unsafe fn read_jsx_string_literal(&mut self, delimiter: u8) -> Kind {
         // Skip opening quote
         debug_assert!(delimiter.is_ascii());
