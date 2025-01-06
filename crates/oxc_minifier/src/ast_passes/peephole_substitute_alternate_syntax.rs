@@ -142,7 +142,8 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
             Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx),
             Expression::NewExpression(e) => Self::try_fold_new_expression(e, ctx),
             Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
-            Expression::BinaryExpression(e) => Self::try_compress_typeof_undefined(e, ctx),
+            Expression::BinaryExpression(e) => Self::try_fold_loose_equals_undefined(e, ctx)
+                .or_else(|| Self::try_compress_typeof_undefined(e, ctx)),
             Expression::CallExpression(e) => {
                 Self::try_fold_literal_constructor_call_expression(e, ctx)
                     .or_else(|| Self::try_fold_simple_function_call(e, ctx))
@@ -446,6 +447,32 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 return Some((a, b));
             }
         }
+        None
+    }
+    fn try_fold_loose_equals_undefined(
+        e: &mut BinaryExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        // `foo == void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
+        // `foo != void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
+        if e.operator == BinaryOperator::Inequality || e.operator == BinaryOperator::Equality {
+            let (left, right) = if e.right.is_undefined() || e.right.is_void_0() {
+                (
+                    ctx.ast.move_expression(&mut e.left),
+                    ctx.ast.expression_null_literal(e.right.span()),
+                )
+            } else if e.left.is_undefined() || e.left.is_void_0() {
+                (
+                    ctx.ast.move_expression(&mut e.right),
+                    ctx.ast.expression_null_literal(e.left.span()),
+                )
+            } else {
+                return None;
+            };
+
+            return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
+        }
+
         None
     }
 
@@ -1326,6 +1353,15 @@ mod test {
         test("foo !== 1 && foo !== null && foo !== void 0", "foo !== 1 && foo != null");
         test("foo !== 1 || foo !== void 0 && foo !== null", "foo !== 1 || foo != null");
         test_same("foo !== void 0 && bar !== null");
+    }
+
+    #[test]
+    fn test_fold_loose_equals_undefined() {
+        test_same("foo != null");
+        test("foo != undefined", "foo != null");
+        test("foo != void 0", "foo != null");
+        test("undefined != foo", "foo != null");
+        test("void 0 != foo", "foo != null");
     }
 
     #[test]
