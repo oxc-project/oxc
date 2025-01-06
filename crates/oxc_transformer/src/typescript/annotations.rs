@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{CloneIn, Vec as ArenaVec};
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
@@ -101,44 +101,43 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                             decl.specifiers = None;
                             true
                         } else {
-                            let mut all_specifiers_is_type = true;
                             specifiers.retain(|specifier| {
                                 let id = match specifier {
                                     ImportDeclarationSpecifier::ImportSpecifier(s) => {
                                         if s.import_kind.is_type() {
                                             return false;
                                         }
-                                        all_specifiers_is_type = false;
                                         &s.local
                                     }
                                     ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
-                                        all_specifiers_is_type = false;
                                         &s.local
                                     }
                                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
-                                        all_specifiers_is_type = false;
                                         &s.local
                                     }
                                 };
-                                // Should preserve `import x from 'x'`(x is unused) if only_remove_type_imports enable
+                                // If `only_remove_type_imports` is true, then we can return `true` to keep it because
+                                // it is not a type import, otherwise we need to check if the identifier is referenced
                                 if self.only_remove_type_imports {
-                                    return true;
+                                    true
+                                } else {
+                                    self.has_value_reference(&id.name, ctx)
                                 }
-                                self.has_value_reference(&id.name, ctx)
                             });
-                            // Should transform `import { type x } from 'x'`` to `import 'xx'` if only_remove_type_imports enable
-                            if all_specifiers_is_type && self.only_remove_type_imports {
-                                *decl = ctx.ast.alloc_import_declaration(
-                                    decl.span,
-                                    None,
-                                    decl.source.clone(),
-                                    None,
-                                    decl.with_clause.clone_in(ctx.ast.allocator),
-                                    decl.import_kind,
-                                );
+
+                            if !specifiers.is_empty() {
                                 return true;
                             }
-                            !specifiers.is_empty()
+
+                            // `import { type A } from 'mod'`
+                            if self.only_remove_type_imports {
+                                // -> `import 'mod'`
+                                decl.specifiers = None;
+                                true
+                            } else {
+                                // Remove the import declaration if all specifiers are removed
+                                false
+                            }
                         }
                     } else {
                         true
