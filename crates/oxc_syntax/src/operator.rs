@@ -498,6 +498,11 @@ impl UnaryOperator {
         self == Self::Void
     }
 
+    /// Returns `true` if this is the [`delete`](UnaryOperator::Delete) operator.
+    pub fn is_delete(self) -> bool {
+        self == Self::Delete
+    }
+
     /// Returns `true` if this operator is a keyword instead of punctuation.
     pub fn is_keyword(self) -> bool {
         matches!(self, Self::Typeof | Self::Void | Self::Delete)

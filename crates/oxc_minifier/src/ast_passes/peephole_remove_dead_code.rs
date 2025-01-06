@@ -310,6 +310,20 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                 Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
                     Some(ctx.ast.statement_empty(SPAN))
                 }
+                // `typeof x` -> ``
+                Expression::UnaryExpression(unary_expr)
+                    if unary_expr.operator.is_typeof()
+                        && unary_expr.argument.is_identifier_reference() =>
+                {
+                    Some(ctx.ast.statement_empty(SPAN))
+                }
+                // `typeof x.y` -> `x`, `!x` -> `x`, `void x` -> `x`...
+                Expression::UnaryExpression(unary_expr) if !unary_expr.operator.is_delete() => {
+                    Some(ctx.ast.statement_expression(
+                        unary_expr.span,
+                        ctx.ast.move_expression(&mut unary_expr.argument),
+                    ))
+                }
                 _ => None,
             })
     }
@@ -547,5 +561,26 @@ mod test {
         fold("([foo(), ...c, bar()])", "(foo(), [...c], bar())");
         fold("([...a, b, ...c])", "([...a, ...c])");
         fold_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
+    }
+
+    #[test]
+    fn test_fold_unary_expression_statement() {
+        fold("typeof x", "");
+        fold("typeof x?.y", "x?.y");
+        fold("typeof x.y", "x.y");
+        fold("typeof x.y.z()", "x.y.z()");
+        fold("void x", "x");
+        fold("void x?.y", "x?.y");
+        fold("void x.y", "x.y");
+        fold("void x.y.z()", "x.y.z()");
+        fold("!x", "x");
+        fold("!x?.y", "x?.y");
+        fold("!x.y", "x.y");
+        fold("!x.y.z()", "x.y.z()");
+        fold("-x.y.z()", "x.y.z()");
+
+        fold_same("delete x");
+        fold_same("delete x.y");
+        fold_same("delete x.y.z()");
     }
 }
