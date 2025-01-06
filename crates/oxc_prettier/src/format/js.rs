@@ -458,13 +458,10 @@ impl<'a> Format<'a> for ReturnStatement<'a> {
 impl<'a> Format<'a> for LabeledStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         if matches!(self.body, Statement::EmptyStatement(_)) {
-            let label_doc = self.label.format(p);
-            return array!(p, [label_doc, text!(":;")]);
+            return array!(p, [self.label.format(p), text!(":;")]);
         }
 
-        let label_doc = self.label.format(p);
-        let body_doc = self.body.format(p);
-        array!(p, [label_doc, text!(": "), body_doc])
+        array!(p, [self.label.format(p), text!(": "), self.body.format(p),])
     }
 }
 
