@@ -322,6 +322,10 @@ impl<'a> Format<'a> for ContinueStatement<'a> {
             parts.push(label.format(p));
         }
 
+        if p.options.semi {
+            parts.push(text!(";"));
+        }
+
         array!(p, parts)
     }
 }
