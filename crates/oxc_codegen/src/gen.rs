@@ -1167,7 +1167,7 @@ impl GenExpr for Expression<'_> {
             Self::BooleanLiteral(lit) => lit.print(p, ctx),
             Self::NullLiteral(lit) => lit.print(p, ctx),
             Self::NumericLiteral(lit) => lit.print_expr(p, precedence, ctx),
-            Self::BigIntLiteral(lit) => lit.print(p, ctx),
+            Self::BigIntLiteral(lit) => lit.print_expr(p, precedence, ctx),
             Self::RegExpLiteral(lit) => lit.print(p, ctx),
             Self::StringLiteral(lit) => lit.print(p, ctx),
             Self::Identifier(ident) => ident.print(p, ctx),
@@ -1306,16 +1306,20 @@ impl GenExpr for NumericLiteral<'_> {
     }
 }
 
-impl Gen for BigIntLiteral<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
+impl GenExpr for BigIntLiteral<'_> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
         let raw = self.raw.as_str().cow_replace('_', "");
-        if raw.starts_with('-') {
-            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
-        }
 
-        p.print_space_before_identifier();
         p.add_source_mapping(self.span);
-        p.print_str(&raw);
+        if !raw.starts_with('-') {
+            p.print_str(&raw);
+        } else if precedence >= Precedence::Prefix {
+            p.print_ascii_byte(b'(');
+            p.print_str(&raw);
+            p.print_ascii_byte(b')');
+        } else {
+            p.print_str(&raw);
+        }
     }
 }
 
@@ -3310,7 +3314,7 @@ impl Gen for TSLiteral<'_> {
             Self::BooleanLiteral(decl) => decl.print(p, ctx),
             Self::NullLiteral(decl) => decl.print(p, ctx),
             Self::NumericLiteral(decl) => decl.print_expr(p, Precedence::Lowest, ctx),
-            Self::BigIntLiteral(decl) => decl.print(p, ctx),
+            Self::BigIntLiteral(decl) => decl.print_expr(p, Precedence::Lowest, ctx),
             Self::RegExpLiteral(decl) => decl.print(p, ctx),
             Self::StringLiteral(decl) => decl.print(p, ctx),
             Self::TemplateLiteral(decl) => decl.print(p, ctx),
