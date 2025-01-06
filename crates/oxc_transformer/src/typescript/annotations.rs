@@ -125,18 +125,18 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                                 }
                             });
 
-                            if !specifiers.is_empty() {
-                                return true;
-                            }
-
-                            // `import { type A } from 'mod'`
-                            if self.only_remove_type_imports {
-                                // -> `import 'mod'`
-                                decl.specifiers = None;
-                                true
+                            if specifiers.is_empty() {
+                                // `import { type A } from 'mod'`
+                                if self.only_remove_type_imports {
+                                    // -> `import 'mod'`
+                                    decl.specifiers = None;
+                                    true
+                                } else {
+                                    // Remove the import declaration if all specifiers are removed
+                                    false
+                                }
                             } else {
-                                // Remove the import declaration if all specifiers are removed
-                                false
+                                true
                             }
                         }
                     } else {
