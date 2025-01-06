@@ -85,13 +85,20 @@ impl<'a> PeepholeMinimizeConditions {
         }
         if let Expression::UnaryExpression(e1) = &mut expr.argument {
             if e1.operator.is_not() {
+                // `!!!a` -> `!!a`
                 if let Expression::UnaryExpression(e2) = &mut e1.argument {
                     if e2.operator.is_not() {
                         expr.argument = ctx.ast.move_expression(&mut e2.argument);
+                        return Some(ctx.ast.move_expression(&mut expr.argument));
                     }
+                }
+                // `!!a` -> `a` // ONLY in boolean contexts
+                if Self::is_in_boolean_context(ctx) {
+                    return Some(ctx.ast.move_expression(&mut e1.argument));
                 }
             }
         }
+
         let Expression::BinaryExpression(binary_expr) = &mut expr.argument else { return None };
         let new_op = binary_expr.operator.equality_inverse_operator()?;
         binary_expr.operator = new_op;
@@ -386,10 +393,6 @@ impl<'a> PeepholeMinimizeConditions {
                 }
                 (true, false) => {
                     let ident = ctx.ast.move_expression(&mut expr.test);
-
-                    if Self::is_in_boolean_context(ctx) {
-                        return Some(ident);
-                    }
                     return Some(ctx.ast.expression_unary(
                         expr.span,
                         UnaryOperator::LogicalNot,
@@ -409,15 +412,11 @@ impl<'a> PeepholeMinimizeConditions {
                 let ident = ctx.ast.move_expression(&mut expr.test);
                 return Some(ctx.ast.expression_logical(
                     expr.span,
-                    if Self::is_in_boolean_context(ctx) {
-                        ident
-                    } else {
-                        ctx.ast.expression_unary(
-                            SPAN,
-                            UnaryOperator::LogicalNot,
-                            ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, ident),
-                        )
-                    },
+                    ctx.ast.expression_unary(
+                        SPAN,
+                        UnaryOperator::LogicalNot,
+                        ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, ident),
+                    ),
                     LogicalOperator::Or,
                     ctx.ast.move_expression(&mut expr.alternate),
                 ));
@@ -448,15 +447,11 @@ impl<'a> PeepholeMinimizeConditions {
             let ident = ctx.ast.move_expression(&mut expr.test);
             return Some(ctx.ast.expression_logical(
                 expr.span,
-                if Self::is_in_boolean_context(ctx) {
-                    ident
-                } else {
-                    ctx.ast.expression_unary(
-                        SPAN,
-                        UnaryOperator::LogicalNot,
-                        ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, ident),
-                    )
-                },
+                ctx.ast.expression_unary(
+                    SPAN,
+                    UnaryOperator::LogicalNot,
+                    ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, ident),
+                ),
                 LogicalOperator::And,
                 ctx.ast.move_expression(&mut expr.consequent),
             ));
@@ -851,10 +846,10 @@ mod test {
 
     #[test]
     fn test_minimize_expr_condition() {
-        fold("(x ? true : false) && y()", "x && y()");
+        fold("(x ? true : false) && y()", "!!x && y()");
         fold("(x ? false : true) && y()", "!x && y()");
-        fold("(x ? true : y) && y()", "(x || y) && y()");
-        fold("(x ? y : false) && y()", "(x && y) && y()");
+        fold("(x ? true : y) && y()", "(!!x || y) && y()");
+        fold("(x ? y : false) && y()", "(!!x && y) && y()");
         fold("var x; (x && true) && y()", "var x; x && y()");
         fold("var x; (x && false) && y()", "var x; false && y()");
         fold("(x && true) && y()", "x && y()");
@@ -1687,5 +1682,19 @@ mod test {
         test("delete x != true", "!(delete x)");
         test("delete x !== false", "delete x");
         test("delete x != false", "delete x");
+    }
+
+    #[test]
+    fn minimize_duplicate_nots() {
+        test("!!x", "x");
+        test("!!!x", "!x");
+        test("!!!!x", "x");
+        test("!!!(x && y)", "!(x && y)");
+        test_same("var k = () => { !!x; }");
+
+        test_same("var k = !!x;");
+        test_same("function k () { return !!x; }");
+        test_same("var k = () => { return !!x; }");
+        test_same("var k = () => !!x;");
     }
 }
