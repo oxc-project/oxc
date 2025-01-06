@@ -228,8 +228,10 @@ impl<'a> Format<'a> for ForInStatement<'a> {
             parts.push(text!(" in "));
             parts.push(self.right.format(p));
             parts.push(text!(")"));
-            let body = self.body.format(p);
-            parts.push(misc::adjust_clause(p, &self.body, body, false));
+
+            let body_doc = self.body.format(p);
+            parts.push(misc::adjust_clause(p, &self.body, body_doc, false));
+
             group!(p, parts)
         })
     }
@@ -248,8 +250,10 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
             parts.push(text!(" of "));
             parts.push(self.right.format(p));
             parts.push(text!(")"));
-            let body = self.body.format(p);
-            parts.push(misc::adjust_clause(p, &self.body, body, false));
+
+            let body_doc = self.body.format(p);
+            parts.push(misc::adjust_clause(p, &self.body, body_doc, false));
+
             group!(p, parts)
         })
     }
@@ -268,14 +272,12 @@ impl<'a> Format<'a> for WhileStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, WhileStatement, {
             let mut parts = Vec::new_in(p.allocator);
-
             parts.push(text!("while ("));
-            let test_doc = self.test.format(p);
-            parts.push(group!(p, [indent!(p, [softline!(), test_doc]), softline!()]));
+            parts.push(group!(p, [indent!(p, [softline!(), self.test.format(p)]), softline!()]));
             parts.push(text!(")"));
 
-            let body = self.body.format(p);
-            parts.push(misc::adjust_clause(p, &self.body, body, false));
+            let body_doc = self.body.format(p);
+            parts.push(misc::adjust_clause(p, &self.body, body_doc, false));
 
             group!(p, parts)
         })
@@ -287,10 +289,9 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
         wrap!(p, self, DoWhileStatement, {
             let mut parts = Vec::new_in(p.allocator);
 
-            let clause = self.body.format(p);
-            let clause = misc::adjust_clause(p, &self.body, clause, false);
+            let clause_doc = self.body.format(p);
+            let clause = misc::adjust_clause(p, &self.body, clause_doc, false);
             let do_body = group!(p, [text!("do"), clause]);
-
             parts.push(do_body);
 
             if matches!(self.body, Statement::BlockStatement(_)) {
@@ -300,9 +301,9 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
             }
 
             parts.push(text!("while ("));
-            let test_doc = self.test.format(p);
-            parts.push(group!(p, [indent!(p, [softline!(), test_doc]), softline!()]));
+            parts.push(group!(p, [indent!(p, [softline!(), self.test.format(p)]), softline!()]));
             parts.push(text!(")"));
+
             if let Some(semi) = p.semi() {
                 parts.push(semi);
             }
@@ -517,13 +518,12 @@ impl<'a> Format<'a> for ThrowStatement<'a> {
 
 impl<'a> Format<'a> for WithStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let object_doc = self.object.format(p);
         let body_doc = self.body.format(p);
         group!(
             p,
             [
                 text!("with ("),
-                object_doc,
+                self.object.format(p),
                 text!(")"),
                 misc::adjust_clause(p, &self.body, body_doc, false)
             ]
