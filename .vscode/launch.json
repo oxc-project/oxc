@@ -14,6 +14,23 @@
         "SERVER_PATH_DEV": "${workspaceRoot}/target/debug/oxc_language_server",
         "RUST_LOG": "debug"
       }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Oxlint",
+      "cargo": {
+        "env": {
+          "RUSTFLAGS": "-g"
+        },
+        "args": ["build", "--bin=oxlint", "--package=oxlint"],
+        "filter": {
+          "name": "oxlint",
+          "kind": "bin"
+        }
+      },
+      // "args": ["--ARGS-TO-OXLINT"],
+      // "cwd": "PATH-TO-TEST-PROJECT"
     }
   ]
 }
