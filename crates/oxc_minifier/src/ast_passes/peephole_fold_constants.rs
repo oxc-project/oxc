@@ -334,6 +334,18 @@ impl<'a, 'b> PeepholeFoldConstants {
                 }
             }
         }
+
+        // typeof foo + ""
+        if let Expression::UnaryExpression(left) = &e.left {
+            if left.operator.is_typeof() {
+                if let Expression::StringLiteral(right) = &e.right {
+                    if right.value.is_empty() {
+                        return Some(ctx.ast.move_expression(&mut e.left));
+                    }
+                }
+            }
+        }
+
         None
     }
 
@@ -1776,5 +1788,13 @@ mod test {
         test("1 .toString()", "'1'");
         test("true.toString()", "'true'");
         test("false.toString()", "'false'");
+    }
+
+    #[test]
+    fn test_fold_typeof_addition_string() {
+        test_same("typeof foo");
+        test_same("typeof foo + '123'");
+        test("typeof foo + ''", "typeof foo");
+        test_same("typeof foo - ''");
     }
 }
