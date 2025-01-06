@@ -191,8 +191,6 @@ async function transform(inputPath, options) {
     cwd: import.meta.dirname,
   };
   delete options.BABEL_8_BREAKING;
-  delete options.validateLogs;
-  delete options.SKIP_ON_PUBLISH;
   delete options.SKIP_babel7plugins_babel8core;
   delete options.minNodeVersion;
   delete options.validateLogs;
