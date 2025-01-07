@@ -843,16 +843,14 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             *key = PropertyKey::StaticIdentifier(
                 ctx.ast.alloc_identifier_name(s.span, s.value.clone()),
             );
-        } else if (!s.value.starts_with('0') && !s.value.starts_with('+')) || s.value.len() <= 1 {
-            if let Ok(value) = s.value.parse::<u32>() {
-                self.changed = true;
-                *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
-                    s.span,
-                    value as f64,
-                    None,
-                    NumberBase::Decimal,
-                ));
-            }
+        } else if let Some(value) = Ctx::string_to_equivalent_number_value(s.value.as_str()) {
+            self.changed = true;
+            *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
+                s.span,
+                value,
+                None,
+                NumberBase::Decimal,
+            ));
         }
     }
 

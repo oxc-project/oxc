@@ -46,15 +46,22 @@ impl<'a> ConvertToDottedProperties {
     ) {
         if let MemberExpression::ComputedMemberExpression(e) = expr {
             let Expression::StringLiteral(s) = &e.expression else { return };
-            if !is_identifier_name(&s.value) {
+            if is_identifier_name(&s.value) {
+                let property = ctx.ast.identifier_name(s.span, s.value.clone());
+                let object = ctx.ast.move_expression(&mut e.object);
+                *expr = MemberExpression::StaticMemberExpression(
+                    ctx.ast.alloc_static_member_expression(e.span, object, property, e.optional),
+                );
+                self.changed = true;
                 return;
             }
-            let property = ctx.ast.identifier_name(s.span, s.value.clone());
-            let object = ctx.ast.move_expression(&mut e.object);
-            *expr = MemberExpression::StaticMemberExpression(
-                ctx.ast.alloc_static_member_expression(e.span, object, property, e.optional),
-            );
-            self.changed = true;
+            let v = s.value.as_str();
+            if !e.optional {
+                if let Some(n) = Ctx::string_to_equivalent_number_value(v) {
+                    e.expression =
+                        ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
+                }
+            }
         }
     }
 }
@@ -110,7 +117,6 @@ mod test {
         test_same("a[';']");
         test_same("a[':']");
         test_same("a['.']");
-        test_same("a['0']");
         test_same("a['p ']");
         test_same("a['p' + '']");
         test_same("a[p]");
@@ -281,5 +287,30 @@ mod test {
                 ['f-f'].x.y?.['g-g'].x.y?.h.x.y.i.x.y;
             ",
         );
+    }
+
+    #[test]
+    fn test_index() {
+        test("x['y']", "x.y;");
+        test_same("x['y z']");
+        test("x?.['y']", "x?.y;");
+        test_same("x?.['y z']");
+        test("x?.['y']()", "x?.y();");
+        test_same("x?.['y z']()");
+        test_same("x['y' + 'z']");
+        test_same("x?.['y' + 'z']");
+        test("x['0']", "x[0];");
+        test("x['123']", "x[123];");
+        test("x['-123']", "x[-123];");
+        test_same("x['-0']");
+        test_same("x['+0']");
+        test_same("x['01']");
+        test_same("x['-01']");
+        test_same("x['0x1']");
+        test_same("x['-0x1']");
+        test("x['2147483647']", "x[2147483647]");
+        test_same("x['2147483648']");
+        test_same("x['-2147483648']");
+        test_same("x['-2147483649']");
     }
 }
