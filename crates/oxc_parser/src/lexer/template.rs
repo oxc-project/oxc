@@ -167,7 +167,7 @@ impl<'a> Lexer<'a> {
     /// # SAFETY
     /// `pos` must not be before `self.source.position()`
     #[expect(clippy::unnecessary_safety_comment)]
-    unsafe fn template_literal_create_string(&self, pos: SourcePosition) -> String<'a> {
+    unsafe fn template_literal_create_string(&self, pos: SourcePosition<'a>) -> String<'a> {
         // Create arena string to hold modified template literal.
         // We don't know how long template literal will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_TEMPLATE_LIT_LEN` minimum.

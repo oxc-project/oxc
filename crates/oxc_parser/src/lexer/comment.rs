@@ -22,7 +22,7 @@ static LINE_BREAK_TABLE: SafeByteMatchTable =
 static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST));
 
-impl Lexer<'_> {
+impl<'a> Lexer<'a> {
     /// Section 12.4 Single Line Comment
     pub(super) fn skip_single_line_comment(&mut self) -> Kind {
         byte_search! {
@@ -151,7 +151,7 @@ impl Lexer<'_> {
         Kind::Skip
     }
 
-    fn skip_multi_line_comment_after_line_break(&mut self, pos: SourcePosition) -> Kind {
+    fn skip_multi_line_comment_after_line_break(&mut self, pos: SourcePosition<'a>) -> Kind {
         // Can use `memchr` here as only searching for 1 pattern.
         // Cache `Finder` instance on `Lexer` as there's a significant cost to creating it.
         // `Finder::new` isn't a const function, so can't make it a `static`, and `lazy_static!`

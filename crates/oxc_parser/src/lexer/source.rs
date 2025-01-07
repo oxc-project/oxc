@@ -167,7 +167,7 @@ impl<'a> Source<'a> {
 
     /// Move current position.
     #[inline]
-    pub(super) fn set_position(&mut self, pos: SourcePosition) {
+    pub(super) fn set_position(&mut self, pos: SourcePosition<'a>) {
         // `SourcePosition` always upholds the invariants of `Source`, as long as it's created
         // from this `Source`. `SourcePosition`s can only be created from a `Source`.
         // `Source::new` takes a `UniquePromise`, which guarantees that it's the only `Source`
@@ -216,7 +216,7 @@ impl<'a> Source<'a> {
     }
 
     /// Get string slice from a `SourcePosition` up to the current position of `Source`.
-    pub(super) fn str_from_pos_to_current(&self, pos: SourcePosition) -> &'a str {
+    pub(super) fn str_from_pos_to_current(&self, pos: SourcePosition<'a>) -> &'a str {
         assert!(pos.ptr <= self.ptr);
         // SAFETY: The above assertion satisfies `str_from_pos_to_current_unchecked`'s requirements
         unsafe { self.str_from_pos_to_current_unchecked(pos) }
@@ -230,7 +230,10 @@ impl<'a> Source<'a> {
     /// 1. `Source::set_position` has not been called since `pos` was created.
     /// 2. `pos` has not been advanced with `SourcePosition::add`.
     #[inline]
-    pub(super) unsafe fn str_from_pos_to_current_unchecked(&self, pos: SourcePosition) -> &'a str {
+    pub(super) unsafe fn str_from_pos_to_current_unchecked(
+        &self,
+        pos: SourcePosition<'a>,
+    ) -> &'a str {
         // SAFETY: Caller guarantees `pos` is not after current position of `Source`.
         // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
         self.str_between_positions_unchecked(pos, SourcePosition::new(self.ptr))
@@ -244,7 +247,10 @@ impl<'a> Source<'a> {
     /// 1. `Source::set_position` has not been called since `pos` was created.
     /// 2. `pos` has not been moved backwards with `SourcePosition::sub`.
     #[inline]
-    pub(super) unsafe fn str_from_current_to_pos_unchecked(&self, pos: SourcePosition) -> &'a str {
+    pub(super) unsafe fn str_from_current_to_pos_unchecked(
+        &self,
+        pos: SourcePosition<'a>,
+    ) -> &'a str {
         // SAFETY: Caller guarantees `pos` is not before current position of `Source`.
         // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
         self.str_between_positions_unchecked(SourcePosition::new(self.ptr), pos)
@@ -252,7 +258,7 @@ impl<'a> Source<'a> {
 
     /// Get string slice from a `SourcePosition` up to the end of `Source`.
     #[inline]
-    pub(super) fn str_from_pos_to_end(&self, pos: SourcePosition) -> &'a str {
+    pub(super) fn str_from_pos_to_end(&self, pos: SourcePosition<'a>) -> &'a str {
         // SAFETY: Invariants of `SourcePosition` is that it cannot be after end of `Source`,
         // and always on a UTF-8 character boundary.
         // `self.end` is always a valid `SourcePosition` due to invariants of `Source`.
@@ -266,8 +272,8 @@ impl<'a> Source<'a> {
     #[inline]
     pub(super) unsafe fn str_between_positions_unchecked(
         &self,
-        start: SourcePosition,
-        end: SourcePosition,
+        start: SourcePosition<'a>,
+        end: SourcePosition<'a>,
     ) -> &'a str {
         // Check `start` is not after `end`
         debug_assert!(start.ptr <= end.ptr);
@@ -304,7 +310,7 @@ impl<'a> Source<'a> {
     /// Get offset of `pos`.
     #[expect(clippy::cast_possible_truncation)]
     #[inline]
-    pub(super) fn offset_of(&self, pos: SourcePosition) -> u32 {
+    pub(super) fn offset_of(&self, pos: SourcePosition<'a>) -> u32 {
         // Cannot overflow `u32` because of `MAX_LEN` check in `Source::new`
         (pos.addr() - self.start as usize) as u32
     }

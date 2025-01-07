@@ -98,7 +98,7 @@ impl<'a> Lexer<'a> {
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.
     /// Any number of characters can have already been consumed from `self.source` prior to it.
     /// `self.source` should be positioned at start of Unicode character.
-    fn identifier_tail_unicode(&mut self, start_pos: SourcePosition) -> &'a str {
+    fn identifier_tail_unicode(&mut self, start_pos: SourcePosition<'a>) -> &'a str {
         let c = self.peek_char().unwrap();
         if is_identifier_part_unicode(c) {
             self.consume_char();
@@ -113,7 +113,10 @@ impl<'a> Lexer<'a> {
     ///
     /// First char should have been consumed from `self.source` prior to calling this.
     /// `start_pos` should be position of the start of the identifier (before first char was consumed).
-    pub(super) fn identifier_tail_after_unicode(&mut self, start_pos: SourcePosition) -> &'a str {
+    pub(super) fn identifier_tail_after_unicode(
+        &mut self,
+        start_pos: SourcePosition<'a>,
+    ) -> &'a str {
         // Identifier contains a Unicode chars, so probably contains more.
         // So just iterate over chars now, instead of bytes.
         while let Some(c) = self.peek_char() {
@@ -146,7 +149,7 @@ impl<'a> Lexer<'a> {
     ///
     /// The `\` must not have be consumed from `lexer.source`.
     /// `start_pos` must be position of start of identifier.
-    fn identifier_backslash(&mut self, start_pos: SourcePosition, is_start: bool) -> &'a str {
+    fn identifier_backslash(&mut self, start_pos: SourcePosition<'a>, is_start: bool) -> &'a str {
         // Create arena string to hold unescaped identifier.
         // We don't know how long identifier will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
