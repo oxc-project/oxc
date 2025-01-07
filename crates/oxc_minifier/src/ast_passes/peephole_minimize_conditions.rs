@@ -541,8 +541,27 @@ impl<'a> PeepholeMinimizeConditions {
         e: &mut BinaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        if !e.operator.is_equality() {
+            return None;
+        }
+        let left = ValueType::from(&e.left);
+        let right = ValueType::from(&e.right);
+        if left.is_undetermined() || right.is_undetermined() {
+            return None;
+        }
+        if left == right {
+            match e.operator {
+                BinaryOperator::StrictInequality => {
+                    e.operator = BinaryOperator::Inequality;
+                }
+                BinaryOperator::StrictEquality => {
+                    e.operator = BinaryOperator::Equality;
+                }
+                _ => {}
+            }
+        }
         match &mut e.right {
-            Expression::BooleanLiteral(b) if ValueType::from(&e.left).is_boolean() => {
+            Expression::BooleanLiteral(b) if left.is_boolean() => {
                 match e.operator {
                     BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
                         e.operator = BinaryOperator::Equality;
@@ -562,9 +581,9 @@ impl<'a> PeepholeMinimizeConditions {
                 })
             }
             Expression::NumericLiteral(lit)
-                if lit.value == 0.0
+                if lit.value  == 0.0
                     && !e.left.is_literal() // let constant folding do the work
-                    && ValueType::from(&e.left).is_number()
+                    && left.is_number()
                     && Self::is_in_boolean_context(ctx) =>
             {
                 match e.operator {
@@ -1733,6 +1752,9 @@ mod test {
         test("if(x >> y !== 0){}", "if(x >> y){}");
         test("if((-0 != +0) !== false){}", "if (-0 != +0) {}");
         test_same("foo(x >> y == 0)");
+
+        test("(x = 1) === 1", "(x = 1) == 1");
+        test("(x = 1) !== 1", "(x = 1) != 1");
     }
 
     #[test]
