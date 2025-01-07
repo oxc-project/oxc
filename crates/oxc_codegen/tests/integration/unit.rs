@@ -88,6 +88,12 @@ fn for_stmt() {
 }
 
 #[test]
+fn do_while_stmt() {
+    test("do ; while (true);", "do;\nwhile (true);\n");
+    test_minify("do ; while (true);", "do;while(true);");
+}
+
+#[test]
 fn if_stmt() {
     test(
         "function f() { if (foo) return foo; else if (bar) return foo; }",

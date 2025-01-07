@@ -273,6 +273,7 @@ impl Gen for IfStatement<'_> {
 }
 
 fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
+    p.print_space_before_identifier();
     p.print_str("if");
     p.print_soft_space();
     p.print_ascii_byte(b'(');
@@ -362,6 +363,7 @@ impl Gen for ForStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("for");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -471,17 +473,23 @@ impl Gen for DoWhileStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
-        p.print_str("do ");
-        if let Statement::BlockStatement(block) = &self.body {
-            p.print_block_statement(block, ctx);
-            p.print_soft_space();
-        } else {
-            p.print_soft_newline();
-            p.indent();
-            self.body.print(p, ctx);
-            p.print_semicolon_if_needed();
-            p.dedent();
-            p.print_indent();
+        p.print_space_before_identifier();
+        p.print_str("do");
+        match &self.body {
+            Statement::BlockStatement(block) => {
+                p.print_soft_space();
+                p.print_block_statement(block, ctx);
+                p.print_soft_space();
+            }
+            Statement::EmptyStatement(s) => s.print(p, ctx),
+            _ => {
+                p.print_soft_newline();
+                p.indent();
+                self.body.print(p, ctx);
+                p.print_semicolon_if_needed();
+                p.dedent();
+                p.print_indent();
+            }
         }
         p.print_str("while");
         p.print_soft_space();
@@ -505,6 +513,7 @@ impl Gen for ContinueStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("continue");
         if let Some(label) = &self.label {
             p.print_soft_space();
@@ -518,6 +527,7 @@ impl Gen for BreakStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("break");
         if let Some(label) = &self.label {
             p.print_soft_space();
@@ -682,6 +692,7 @@ impl Gen for VariableDeclaration<'_> {
             p.start_of_annotation_comment = Some(self.span.start);
         }
 
+        p.print_space_before_identifier();
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => "const",
             VariableDeclarationKind::Let => "let",

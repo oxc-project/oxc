@@ -140,16 +140,19 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         if stmt.body.len() == 1 && !stmt.body[0].is_declaration() {
             return Some(stmt.body.remove(0));
         }
-        if stmt.body.len() == 0
-            && (ctx.parent().is_while_statement()
-                || ctx.parent().is_for_statement()
-                || ctx.parent().is_for_in_statement()
-                || ctx.parent().is_for_of_statement()
-                || ctx.parent().is_block_statement()
-                || ctx.parent().is_program())
-        {
-            // Remove the block if it is empty and the parent is a block statement.
-            return Some(ctx.ast.statement_empty(stmt.span));
+        if stmt.body.len() == 0 {
+            let parent = ctx.parent();
+            if parent.is_while_statement()
+                || parent.is_do_while_statement()
+                || parent.is_for_statement()
+                || parent.is_for_in_statement()
+                || parent.is_for_of_statement()
+                || parent.is_block_statement()
+                || parent.is_program()
+            {
+                // Remove the block if it is empty and the parent is a block statement.
+                return Some(ctx.ast.statement_empty(stmt.span));
+            }
         }
         None
     }
@@ -563,6 +566,7 @@ mod test {
         // fold("for (x of y) {x}", "for(x of y);");
         fold("for (let x = 1; x <10; x++ ) {}", "for (let x = 1; x <10; x++ );");
         fold("for (var x = 1; x <10; x++ ) {}", "for (var x = 1; x <10; x++ );");
+        fold("do { } while (true)", "do;while(true)");
     }
 
     #[test]
