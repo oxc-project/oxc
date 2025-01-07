@@ -1,4 +1,4 @@
-ts compatibility: 189/568 (33.27%)
+ts compatibility: 190/568 (33.45%)
 
 # Failed
 
@@ -564,7 +564,6 @@ ts compatibility: 189/568 (33.27%)
 
 ### typescript/template-literals
 * typescript/template-literals/as-expression.ts
-* typescript/template-literals/expressions.ts
 
 ### typescript/ternaries
 * typescript/ternaries/indent.ts
