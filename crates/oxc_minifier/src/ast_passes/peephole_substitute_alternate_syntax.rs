@@ -1,6 +1,9 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
-use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, ToInt32, ToJsString, ToNumber};
+use oxc_ecmascript::{
+    constant_evaluation::{ConstantEvaluation, ValueType},
+    ToInt32, ToJsString, ToNumber,
+};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
@@ -613,6 +616,35 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 );
                 Some(Self::array_literal(elements, ctx))
             }
+        } else if new_expr.callee.is_global_reference_name("Error", ctx.symbols())
+            || new_expr.callee.is_global_reference_name("Function", ctx.symbols())
+        {
+            Some(ctx.ast.expression_call(
+                new_expr.span,
+                ctx.ast.move_expression(&mut new_expr.callee),
+                Option::<TSTypeParameterInstantiation>::None,
+                ctx.ast.move_vec(&mut new_expr.arguments),
+                false,
+            ))
+        } else if new_expr.callee.is_global_reference_name("RegExp", ctx.symbols()) {
+            let arguments_len = new_expr.arguments.len();
+            if arguments_len == 0
+                || (arguments_len >= 1
+                    && new_expr.arguments[0].as_expression().map_or(false, |first_argument| {
+                        let ty = ValueType::from(first_argument);
+                        !ty.is_undetermined() && !ty.is_object()
+                    }))
+            {
+                Some(ctx.ast.expression_call(
+                    new_expr.span,
+                    ctx.ast.move_expression(&mut new_expr.callee),
+                    Option::<TSTypeParameterInstantiation>::None,
+                    ctx.ast.move_vec(&mut new_expr.arguments),
+                    false,
+                ))
+            } else {
+                None
+            }
         } else {
             None
         }
@@ -1056,6 +1088,29 @@ mod test {
             "x = new Array(Object(), Array(\"abc\", Object(), Array(Array())))",
             "x = [{}, [\"abc\", {}, [[]]]]",
         );
+    }
+
+    #[test]
+    fn test_fold_new_expressions() {
+        test("new Error()", "Error()");
+        test("new Error('a')", "Error('a')");
+        test("new Error('a', { cause: b })", "Error('a', { cause: b })");
+        test_same("var Error; new Error()");
+
+        test("new Function()", "Function()");
+        test(
+            "new Function('a', 'b', 'console.log(a, b)')",
+            "Function('a', 'b', 'console.log(a, b)')",
+        );
+        test_same("var Function; new Function()");
+
+        test("new RegExp()", "RegExp()");
+        test("new RegExp('a')", "RegExp('a')");
+        test("new RegExp(0)", "RegExp(0)");
+        test("new RegExp(null)", "RegExp(null)");
+        test("new RegExp('a', 'g')", "RegExp('a', 'g')");
+        test_same("new RegExp(foo)");
+        test_same("new RegExp(/foo/)");
     }
 
     #[test]
