@@ -1,15 +1,17 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
-use crate::{array, format::Format, ir::Doc, line_suffix_boundary, text, Prettier};
+use crate::{
+    array, format::Format, group, ir::Doc, line_suffix_boundary, softline, text, Prettier,
+};
 
 #[allow(clippy::enum_variant_names)]
-pub enum TemplateLiteralPrinter<'a, 'b> {
+pub enum TemplateLiteralLike<'a, 'b> {
     TemplateLiteral(&'b TemplateLiteral<'a>),
     TSTemplateLiteralType(&'b TSTemplateLiteralType<'a>),
 }
 
-impl<'a> TemplateLiteralPrinter<'a, '_> {
+impl<'a> TemplateLiteralLike<'a, '_> {
     fn quasis(&self) -> &[TemplateElement<'a>] {
         match self {
             Self::TemplateLiteral(template_literal) => &template_literal.quasis,
@@ -17,13 +19,13 @@ impl<'a> TemplateLiteralPrinter<'a, '_> {
         }
     }
 
-    fn get_nth_expr_doc(&self, p: &mut Prettier<'a>, index: usize) -> Option<Doc<'a>> {
+    fn get_nth_expr_doc(&self, p: &mut Prettier<'a>, idx: usize) -> Option<Doc<'a>> {
         match self {
             Self::TemplateLiteral(template_literal) => {
-                template_literal.expressions.get(index).map(|expression| expression.format(p))
+                template_literal.expressions.get(idx).map(|expression| expression.format(p))
             }
             Self::TSTemplateLiteralType(template_literal) => {
-                template_literal.types.get(index).map(|type_| type_.format(p))
+                template_literal.types.get(idx).map(|type_| type_.format(p))
             }
         }
     }
@@ -31,20 +33,32 @@ impl<'a> TemplateLiteralPrinter<'a, '_> {
 
 pub fn print_template_literal<'a, 'b>(
     p: &mut Prettier<'a>,
-    template_literal: &'b TemplateLiteralPrinter<'a, 'b>,
+    template_literal: TemplateLiteralLike<'a, 'b>,
 ) -> Doc<'a> {
+    // TODO: Special support for Jest `.each`
+
     let mut parts = Vec::new_in(p.allocator);
+    // parts.push(line_suffix_boundary!());
     parts.push(text!("`"));
 
-    for (index, quais) in template_literal.quasis().iter().enumerate() {
-        parts.push(quais.format(p));
-        let Some(expr_doc) = template_literal.get_nth_expr_doc(p, index) else {
+    for (idx, quasi) in template_literal.quasis().iter().enumerate() {
+        parts.push(quasi.format(p));
+
+        let Some(expr_doc) = template_literal.get_nth_expr_doc(p, idx) else {
             break;
         };
 
-        parts.push(text!("${"));
-        parts.push(expr_doc);
-        parts.push(text!("}"));
+        // TODO: Handle indent size, align!(), add_alignment_to_doc!() etc...
+
+        parts.push(group!(
+            p,
+            [
+                text!("${"),
+                expr_doc,
+                // line_suffix_boundary!(),
+                text!("}"),
+            ]
+        ));
     }
 
     parts.push(text!("`"));
@@ -59,14 +73,12 @@ pub fn print_tagged_template_literal<'a>(
     let mut parts = Vec::new_in(p.allocator);
 
     parts.push(tagged_template_literal.tag.format(p));
-
     if let Some(type_parameters) = &tagged_template_literal.type_parameters {
         parts.push(type_parameters.format(p));
     }
-
     parts.push(line_suffix_boundary!());
-
     parts.push(tagged_template_literal.quasi.format(p));
 
+    // TODO: Wrap with `label!()`
     array!(p, parts)
 }

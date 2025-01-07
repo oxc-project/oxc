@@ -402,7 +402,7 @@ impl<'a> Format<'a> for TSTemplateLiteralType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         template_literal::print_template_literal(
             p,
-            &template_literal::TemplateLiteralPrinter::TSTemplateLiteralType(self),
+            template_literal::TemplateLiteralLike::TSTemplateLiteralType(self),
         )
     }
 }

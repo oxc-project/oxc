@@ -1463,7 +1463,7 @@ impl<'a> Format<'a> for TemplateLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         template_literal::print_template_literal(
             p,
-            &template_literal::TemplateLiteralPrinter::TemplateLiteral(self),
+            template_literal::TemplateLiteralLike::TemplateLiteral(self),
         )
     }
 }
