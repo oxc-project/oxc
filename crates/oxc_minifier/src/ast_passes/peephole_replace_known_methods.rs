@@ -42,88 +42,93 @@ impl<'a> PeepholeReplaceKnownMethods {
     ) {
         let Expression::CallExpression(ce) = node else { return };
         let Expression::StaticMemberExpression(member) = &ce.callee else { return };
-        let replacement = match &member.object {
-            Expression::StringLiteral(s) => match member.property.name.as_str() {
-                "toLowerCase" | "toUpperCase" | "trim" => {
-                    let value = match member.property.name.as_str() {
-                        "toLowerCase" => s.value.cow_to_lowercase(),
-                        "toUpperCase" => s.value.cow_to_uppercase(),
-                        "trim" => Cow::Borrowed(s.value.trim()),
-                        _ => return,
-                    };
-                    Some(ctx.ast.expression_string_literal(ce.span, value, None))
-                }
-                "indexOf" | "lastIndexOf" => Self::try_fold_string_index_of(ce, member, s, ctx),
-                "substring" | "slice" => Self::try_fold_string_substring_or_slice(ce, s, ctx),
-                "charAt" => Self::try_fold_string_char_at(ce, s, ctx),
-                "charCodeAt" => Self::try_fold_string_char_code_at(ce, s, ctx),
-                "replace" | "replaceAll" => Self::try_fold_string_replace(ce, member, s, ctx),
-                _ => None,
-            },
-            Expression::Identifier(ident)
-                if ident.name == "String"
-                    && member.property.name == "fromCharCode"
-                    && Ctx(ctx).is_global_reference(ident) =>
-            {
-                Self::try_fold_string_from_char_code(ce, ctx)
-            }
+        if member.optional {
+            return;
+        }
+        let replacement = match member.property.name.as_str() {
+            "toLowerCase" | "toUpperCase" | "trim" => Self::try_fold_string_casing(ce, member, ctx),
+            "substring" | "slice" => Self::try_fold_string_substring_or_slice(ce, member, ctx),
+            "indexOf" | "lastIndexOf" => Self::try_fold_string_index_of(ce, member, ctx),
+            "charAt" => Self::try_fold_string_char_at(ce, member, ctx),
+            "charCodeAt" => Self::try_fold_string_char_code_at(ce, member, ctx),
+            "replace" | "replaceAll" => Self::try_fold_string_replace(ce, member, ctx),
+            "fromCharCode" => Self::try_fold_string_from_char_code(ce, member, ctx),
             _ => None,
         };
-
         if let Some(replacement) = replacement {
             self.changed = true;
             *node = replacement;
         }
     }
 
-    fn try_fold_string_index_of(
-        call_expr: &CallExpression<'a>,
+    fn try_fold_string_casing(
+        ce: &CallExpression<'a>,
         member: &StaticMemberExpression<'a>,
-        string_lit: &StringLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let search_value = match call_expr.arguments.first() {
+        if ce.arguments.len() >= 1 {
+            return None;
+        }
+        let Expression::StringLiteral(s) = &member.object else { return None };
+        let value = match member.property.name.as_str() {
+            "toLowerCase" => s.value.cow_to_lowercase(),
+            "toUpperCase" => s.value.cow_to_uppercase(),
+            "trim" => Cow::Borrowed(s.value.trim()),
+            _ => return None,
+        };
+        Some(ctx.ast.expression_string_literal(ce.span, value, None))
+    }
+
+    fn try_fold_string_index_of(
+        ce: &CallExpression<'a>,
+        member: &StaticMemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let args = &ce.arguments;
+        if args.len() >= 3 {
+            return None;
+        }
+        let Expression::StringLiteral(s) = &member.object else { return None };
+        let search_value = match args.first() {
             Some(Argument::StringLiteral(string_lit)) => Some(string_lit.value.as_str()),
             None => None,
             _ => return None,
         };
-        let search_start_index = match call_expr.arguments.get(1) {
+        let search_start_index = match args.get(1) {
             Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
             None => None,
             _ => return None,
         };
         let result = match member.property.name.as_str() {
-            "indexOf" => string_lit.value.as_str().index_of(search_value, search_start_index),
-            "lastIndexOf" => {
-                string_lit.value.as_str().last_index_of(search_value, search_start_index)
-            }
+            "indexOf" => s.value.as_str().index_of(search_value, search_start_index),
+            "lastIndexOf" => s.value.as_str().last_index_of(search_value, search_start_index),
             _ => unreachable!(),
         };
-        let span = call_expr.span;
         #[expect(clippy::cast_precision_loss)]
-        Some(ctx.ast.expression_numeric_literal(span, result as f64, None, NumberBase::Decimal))
+        Some(ctx.ast.expression_numeric_literal(ce.span, result as f64, None, NumberBase::Decimal))
     }
 
     fn try_fold_string_substring_or_slice(
-        call_expr: &CallExpression<'a>,
-        string_lit: &StringLiteral<'a>,
+        ce: &CallExpression<'a>,
+        member: &StaticMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if call_expr.arguments.len() > 2 {
+        let args = &ce.arguments;
+        if args.len() > 2 {
             return None;
         }
-        let span = call_expr.span;
-        let start_idx = call_expr.arguments.first().and_then(|arg| match arg {
+        let Expression::StringLiteral(s) = &member.object else { return None };
+        let start_idx = args.first().and_then(|arg| match arg {
             Argument::SpreadElement(_) => None,
             _ => Ctx(ctx).get_side_free_number_value(arg.to_expression()),
         });
-        let end_idx = call_expr.arguments.get(1).and_then(|arg| match arg {
+        let end_idx = args.get(1).and_then(|arg| match arg {
             Argument::SpreadElement(_) => None,
             _ => Ctx(ctx).get_side_free_number_value(arg.to_expression()),
         });
         #[expect(clippy::cast_precision_loss)]
-        if start_idx.is_some_and(|start| start > string_lit.value.len() as f64 || start < 0.0)
-            || end_idx.is_some_and(|end| end > string_lit.value.len() as f64 || end < 0.0)
+        if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
+            || end_idx.is_some_and(|end| end > s.value.len() as f64 || end < 0.0)
         {
             return None;
         }
@@ -133,22 +138,23 @@ impl<'a> PeepholeReplaceKnownMethods {
             }
         };
         Some(ctx.ast.expression_string_literal(
-            span,
-            string_lit.value.as_str().substring(start_idx, end_idx),
+            ce.span,
+            s.value.as_str().substring(start_idx, end_idx),
             None,
         ))
     }
 
     fn try_fold_string_char_at(
-        call_expr: &CallExpression<'a>,
-        string_lit: &StringLiteral<'a>,
+        ce: &CallExpression<'a>,
+        member: &StaticMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if call_expr.arguments.len() > 1 {
+        let args = &ce.arguments;
+        if args.len() > 1 {
             return None;
         }
-        let span = call_expr.span;
-        let char_at_index: Option<f64> = match call_expr.arguments.first() {
+        let Expression::StringLiteral(s) = &member.object else { return None };
+        let char_at_index: Option<f64> = match args.first() {
             Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
             Some(Argument::UnaryExpression(unary_expr))
                 if unary_expr.operator == UnaryOperator::UnaryNegation =>
@@ -161,51 +167,46 @@ impl<'a> PeepholeReplaceKnownMethods {
             None => None,
             _ => return None,
         };
-
-        let result = &string_lit
-            .value
-            .as_str()
-            .char_at(char_at_index)
-            .map_or(String::new(), |v| v.to_string());
-
-        Some(ctx.ast.expression_string_literal(span, result, None))
+        let result =
+            &s.value.as_str().char_at(char_at_index).map_or(String::new(), |v| v.to_string());
+        Some(ctx.ast.expression_string_literal(ce.span, result, None))
     }
 
     fn try_fold_string_char_code_at(
-        call_expr: &CallExpression<'a>,
-        string_lit: &StringLiteral<'a>,
+        ce: &CallExpression<'a>,
+        member: &StaticMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let char_at_index = match call_expr.arguments.first() {
+        let Expression::StringLiteral(s) = &member.object else { return None };
+        let char_at_index = match ce.arguments.first() {
             None => Some(0.0),
             Some(Argument::SpreadElement(_)) => None,
             Some(e) => Ctx(ctx).get_side_free_number_value(e.to_expression()),
         }?;
-        let span = call_expr.span;
         // TODO: if `result` is `None`, return `NaN` instead of skipping the optimization
-        let result = string_lit.value.as_str().char_code_at(Some(char_at_index))?;
+        let result = s.value.as_str().char_code_at(Some(char_at_index))?;
         #[expect(clippy::cast_lossless)]
-        Some(ctx.ast.expression_numeric_literal(span, result as f64, None, NumberBase::Decimal))
+        Some(ctx.ast.expression_numeric_literal(ce.span, result as f64, None, NumberBase::Decimal))
     }
 
     fn try_fold_string_replace(
-        call_expr: &CallExpression<'a>,
+        ce: &CallExpression<'a>,
         member: &StaticMemberExpression<'a>,
-        string_lit: &StringLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if call_expr.arguments.len() != 2 {
+        if ce.arguments.len() != 2 {
             return None;
         }
-        let span = call_expr.span;
-        let search_value = call_expr.arguments.first().unwrap();
+        let Expression::StringLiteral(s) = &member.object else { return None };
+        let span = ce.span;
+        let search_value = ce.arguments.first().unwrap();
         let search_value = match search_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
                 Ctx(ctx).get_side_free_string_value(search_value.to_expression())?
             }
         };
-        let replace_value = call_expr.arguments.get(1).unwrap();
+        let replace_value = ce.arguments.get(1).unwrap();
         let replace_value = match replace_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
@@ -216,12 +217,8 @@ impl<'a> PeepholeReplaceKnownMethods {
             return None;
         }
         let result = match member.property.name.as_str() {
-            "replace" => {
-                string_lit.value.as_str().cow_replacen(search_value.as_ref(), &replace_value, 1)
-            }
-            "replaceAll" => {
-                string_lit.value.as_str().cow_replace(search_value.as_ref(), &replace_value)
-            }
+            "replace" => s.value.as_str().cow_replacen(search_value.as_ref(), &replace_value, 1),
+            "replaceAll" => s.value.as_str().cow_replace(search_value.as_ref(), &replace_value),
             _ => unreachable!(),
         };
         Some(ctx.ast.expression_string_literal(span, result, None))
@@ -230,9 +227,14 @@ impl<'a> PeepholeReplaceKnownMethods {
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
     fn try_fold_string_from_char_code(
         ce: &CallExpression<'a>,
+        member: &StaticMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        let Expression::Identifier(ident) = &member.object else { return None };
         let ctx = Ctx(ctx);
+        if !ctx.is_global_reference(ident) {
+            return None;
+        }
         let args = &ce.arguments;
         let mut s = String::with_capacity(args.len());
         for arg in args {
