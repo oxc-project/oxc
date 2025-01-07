@@ -1,12 +1,20 @@
-#![allow(clippy::unnecessary_safety_comment)]
-#![allow(unsafe_code)]
-
 //! An Ecma-262 Lexer / Tokenizer
 //! Prior Arts:
 //!     * [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/24004745a8ed4939fc0dc7332bfd1268ac52285f/crates/parser/src)
 //!     * [rome](https://github.com/rome/tools/tree/lsp/v0.28.0/crates/rome_js_parser/src/lexer)
 //!     * [rustc](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_lexer/src)
 //!     * [v8](https://v8.dev/blog/scanner)
+
+use std::collections::VecDeque;
+
+use rustc_hash::FxHashMap;
+
+use oxc_allocator::Allocator;
+use oxc_ast::ast::RegExpFlags;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_span::{SourceType, Span};
+
+use crate::{diagnostics, UniquePromise};
 
 mod byte_handlers;
 mod comment;
@@ -27,25 +35,13 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
-use std::collections::VecDeque;
+pub use kind::Kind;
+pub use number::{parse_big_int, parse_float, parse_int};
+pub use token::Token;
 
-use oxc_allocator::Allocator;
-use oxc_ast::ast::RegExpFlags;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{SourceType, Span};
-use rustc_hash::FxHashMap;
-
-use self::{
-    byte_handlers::handle_byte,
-    source::{Source, SourcePosition},
-    trivia_builder::TriviaBuilder,
-};
-pub use self::{
-    kind::Kind,
-    number::{parse_big_int, parse_float, parse_int},
-    token::Token,
-};
-use crate::{diagnostics, UniquePromise};
+use byte_handlers::handle_byte;
+use source::{Source, SourcePosition};
+use trivia_builder::TriviaBuilder;
 
 #[derive(Debug, Clone, Copy)]
 pub struct LexerCheckpoint<'a> {
@@ -99,7 +95,6 @@ pub struct Lexer<'a> {
     multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
 }
 
-#[allow(clippy::unused_self)]
 impl<'a> Lexer<'a> {
     /// Create new `Lexer`.
     ///
@@ -230,7 +225,6 @@ impl<'a> Lexer<'a> {
 
     /// Get the length offset from the source, in UTF-8 bytes
     #[inline]
-    #[allow(clippy::cast_possible_truncation)]
     fn offset(&self) -> u32 {
         self.source.offset()
     }

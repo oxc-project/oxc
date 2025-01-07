@@ -16,7 +16,7 @@ impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for TypeScriptModule<'a, 'ctx> {
+impl<'a> Traverse<'a> for TypeScriptModule<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // In Babel, it will insert `use strict` in `@babel/transform-modules-commonjs` plugin.
         // Once we have a commonjs plugin, we can consider moving this logic there.
@@ -43,7 +43,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptModule<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
+impl<'a> TypeScriptModule<'a, '_> {
     /// Transform `export = expression` to `module.exports = expression`.
     fn transform_ts_export_assignment(
         &mut self,

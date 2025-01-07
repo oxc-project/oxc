@@ -16,7 +16,7 @@ use super::{
     ClassProperties,
 };
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Transform static property initializer.
     ///
     /// Replace `this`, and references to class name, with temp var for class. Transform `super`.
@@ -246,7 +246,7 @@ impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
     }
 }
 
-impl<'a, 'ctx, 'v> VisitMut<'a> for StaticVisitor<'a, 'ctx, 'v> {
+impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
@@ -517,7 +517,7 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for StaticVisitor<'a, 'ctx, 'v> {
     }
 }
 
-impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
+impl<'a> StaticVisitor<'a, '_, '_> {
     /// Replace `this` with reference to temp var for class.
     fn replace_this_with_temp_var(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {

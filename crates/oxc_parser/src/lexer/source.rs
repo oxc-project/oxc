@@ -1,9 +1,10 @@
-#![allow(clippy::unnecessary_safety_comment)]
+#![expect(clippy::unnecessary_safety_comment)]
 
 use std::{marker::PhantomData, slice, str};
 
-use super::search::SEARCH_BATCH_SIZE;
 use crate::{UniquePromise, MAX_LEN};
+
+use super::search::SEARCH_BATCH_SIZE;
 
 /// `Source` holds the source text for the lexer, and provides APIs to read it.
 ///
@@ -80,8 +81,8 @@ impl<'a> Source<'a> {
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `Source` can exist
     /// on a single thread at one time.
-    #[allow(clippy::needless_pass_by_value)]
-    pub(super) fn new(mut source_text: &'a str, _unique: UniquePromise) -> Self {
+    #[expect(unused_variables, clippy::needless_pass_by_value)]
+    pub(super) fn new(mut source_text: &'a str, unique: UniquePromise) -> Self {
         // If source text exceeds size limit, substitute a short source text which will fail to parse.
         // `Parser::parse` will convert error to `diagnostics::overlong_source()`.
         if source_text.len() > MAX_LEN {
@@ -295,14 +296,13 @@ impl<'a> Source<'a> {
     }
 
     /// Get current position in source, relative to start of source.
-    #[allow(clippy::cast_possible_truncation)]
     #[inline]
     pub(super) fn offset(&self) -> u32 {
         self.offset_of(self.position())
     }
 
     /// Get offset of `pos`.
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     #[inline]
     pub(super) fn offset_of(&self, pos: SourcePosition) -> u32 {
         // Cannot overflow `u32` because of `MAX_LEN` check in `Source::new`
@@ -435,10 +435,10 @@ impl<'a> Source<'a> {
     ///   source.next_char().unwrap();
     /// }
     /// ```
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     #[inline]
     unsafe fn next_byte(&mut self) -> Option<u8> {
-        #[allow(clippy::if_not_else)] // Hot path first
+        #[expect(clippy::if_not_else)] // Hot path first
         if !self.is_eof() {
             // SAFETY: Safe to read from `ptr` as we just checked it's not out of bounds
             Some(self.next_byte_unchecked())
@@ -504,7 +504,7 @@ impl<'a> Source<'a> {
     /// Peek next byte of source without consuming it.
     #[inline]
     pub(super) fn peek_byte(&self) -> Option<u8> {
-        #[allow(clippy::if_not_else)] // Hot path first
+        #[expect(clippy::if_not_else)] // Hot path first
         if !self.is_eof() {
             // SAFETY: Safe to read from `ptr` as we just checked it's not out of bounds
             Some(unsafe { self.peek_byte_unchecked() })
@@ -642,7 +642,7 @@ impl SourcePosition<'_> {
         // Pointer is "dereferenceable" by definition as a `u8` is 1 byte and cannot span multiple objects.
         // Alignment is not relevant as `u8` is aligned on 1 (i.e. no alignment requirements).
         debug_assert!(!self.ptr.is_null());
-        #[allow(clippy::ptr_as_ptr)]
+        #[expect(clippy::ptr_as_ptr)]
         let p = self.ptr as *const [u8; 2];
         *p.as_ref().unwrap_unchecked()
     }

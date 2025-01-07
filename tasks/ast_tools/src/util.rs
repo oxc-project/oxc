@@ -296,13 +296,17 @@ static RESERVED_NAMES: &[&str] = &[
     "macro_rules", "union", // "dyn" also listed as a weak keyword, but is already on strict list
 ];
 
+pub fn is_reserved_name(name: &str) -> bool {
+    RESERVED_NAMES.contains(&name)
+}
+
 impl<S> ToIdent for S
 where
     S: AsRef<str>,
 {
     fn to_ident(&self) -> Ident {
         let name = self.as_ref();
-        if RESERVED_NAMES.contains(&name) {
+        if is_reserved_name(name) {
             format_ident!("r#{name}")
         } else {
             format_ident!("{name}")

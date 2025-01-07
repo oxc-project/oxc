@@ -33,7 +33,7 @@ impl<'a, 'ctx> StatementInjector<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for StatementInjector<'a, 'ctx> {
+impl<'a> Traverse<'a> for StatementInjector<'a, '_> {
     fn exit_statements(
         &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
@@ -61,7 +61,7 @@ pub struct StatementInjectorStore<'a> {
 }
 
 // Public methods
-impl<'a> StatementInjectorStore<'a> {
+impl StatementInjectorStore<'_> {
     /// Create new `StatementInjectorStore`.
     pub fn new() -> Self {
         Self { insertions: RefCell::new(FxHashMap::default()) }

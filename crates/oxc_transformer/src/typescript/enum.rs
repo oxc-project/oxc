@@ -16,7 +16,7 @@ pub struct TypeScriptEnum<'a> {
     enums: FxHashMap<Atom<'a>, FxHashMap<Atom<'a>, ConstantValue>>,
 }
 
-impl<'a> TypeScriptEnum<'a> {
+impl TypeScriptEnum<'_> {
     pub fn new() -> Self {
         Self { enums: FxHashMap::default() }
     }
@@ -519,23 +519,23 @@ impl<'a> TypeScriptEnum<'a> {
 ///   d = A.c,
 /// }
 /// ```
-struct IdentifierReferenceRename<'a, 'b> {
+struct IdentifierReferenceRename<'a, 'ctx> {
     enum_name: Atom<'a>,
-    ctx: &'b TraverseCtx<'a>,
+    ctx: &'ctx TraverseCtx<'a>,
     previous_enum_members: FxHashMap<Atom<'a>, ConstantValue>,
 }
 
-impl<'a, 'b> IdentifierReferenceRename<'a, 'b> {
+impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
     fn new(
         enum_name: Atom<'a>,
         previous_enum_members: FxHashMap<Atom<'a>, ConstantValue>,
-        ctx: &'b TraverseCtx<'a>,
+        ctx: &'ctx TraverseCtx<'a>,
     ) -> Self {
         IdentifierReferenceRename { enum_name, ctx, previous_enum_members }
     }
 }
 
-impl<'a, 'b> VisitMut<'a> for IdentifierReferenceRename<'a, 'b> {
+impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         let new_expr = match expr {
             match_member_expression!(Expression) => {

@@ -146,7 +146,7 @@ pub struct ArrowFunctionConverter<'a> {
     super_methods: Option<FxIndexMap<SuperMethodKey<'a>, SuperMethodInfo<'a>>>,
 }
 
-impl<'a> ArrowFunctionConverter<'a> {
+impl ArrowFunctionConverter<'_> {
     pub fn new(env: &EnvOptions) -> Self {
         let mode = if env.es2015.arrow_function.is_some() {
             ArrowFunctionConverterMode::Enabled

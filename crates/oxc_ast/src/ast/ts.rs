@@ -656,7 +656,7 @@ pub struct TSNullKeyword {
     pub span: Span,
 }
 
-/// TypeScript `null` Keyword
+/// TypeScript `undefined` Keyword
 ///
 /// ## Example
 /// ```ts

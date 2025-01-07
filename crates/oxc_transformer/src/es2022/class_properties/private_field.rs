@@ -22,7 +22,7 @@ use super::{
     ClassProperties, ResolvedPrivateProp,
 };
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Transform private field expression.
     ///
     /// Not loose:

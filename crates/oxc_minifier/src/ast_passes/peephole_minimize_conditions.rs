@@ -91,10 +91,31 @@ impl<'a> PeepholeMinimizeConditions {
                         expr.argument = ctx.ast.move_expression(&mut e2.argument);
                         return Some(ctx.ast.move_expression(&mut expr.argument));
                     }
+                    // `!!delete a.b` -> `delete a.b`
+                    if e2.operator.is_delete() {
+                        return Some(ctx.ast.move_expression(&mut e1.argument));
+                    }
                 }
                 // `!!a` -> `a` // ONLY in boolean contexts
                 if Self::is_in_boolean_context(ctx) {
                     return Some(ctx.ast.move_expression(&mut e1.argument));
+                }
+                if let Expression::BinaryExpression(bin_expr) = &e1.argument {
+                    if matches!(
+                        bin_expr.operator,
+                        BinaryOperator::Equality
+                            | BinaryOperator::Inequality
+                            | BinaryOperator::StrictEquality
+                            | BinaryOperator::StrictInequality
+                            | BinaryOperator::LessThan
+                            | BinaryOperator::LessEqualThan
+                            | BinaryOperator::GreaterThan
+                            | BinaryOperator::GreaterEqualThan
+                            | BinaryOperator::In
+                            | BinaryOperator::Instanceof
+                    ) {
+                        return Some(ctx.ast.move_expression(&mut e1.argument));
+                    }
                 }
             }
         }
@@ -514,33 +535,53 @@ impl<'a> PeepholeMinimizeConditions {
     // `a instanceof b === true` -> `a instanceof b`
     // `a instanceof b === false` -> `!(a instanceof b)`
     //  ^^^^^^^^^^^^^^ `ValueType::from(&e.left).is_boolean()` is `true`.
+    // `x >> y !== 0` -> `x >> y`
+    //  ^^^^^^ ValueType::from(&e.left).is_number()` is `true`.
     fn try_minimize_binary(
         e: &mut BinaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let Expression::BooleanLiteral(b) = &mut e.right else {
-            return None;
-        };
-        if !ValueType::from(&e.left).is_boolean() {
-            return None;
-        }
-        match e.operator {
-            BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
-                e.operator = BinaryOperator::Equality;
-                b.value = !b.value;
+        match &mut e.right {
+            Expression::BooleanLiteral(b) if ValueType::from(&e.left).is_boolean() => {
+                match e.operator {
+                    BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
+                        e.operator = BinaryOperator::Equality;
+                        b.value = !b.value;
+                    }
+                    BinaryOperator::StrictEquality => {
+                        e.operator = BinaryOperator::Equality;
+                    }
+                    BinaryOperator::Equality => {}
+                    _ => return None,
+                }
+                Some(if b.value {
+                    ctx.ast.move_expression(&mut e.left)
+                } else {
+                    let argument = ctx.ast.move_expression(&mut e.left);
+                    ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
+                })
             }
-            BinaryOperator::StrictEquality => {
-                e.operator = BinaryOperator::Equality;
+            Expression::NumericLiteral(lit)
+                if lit.value == 0.0
+                    && !e.left.is_literal() // let constant folding do the work
+                    && ValueType::from(&e.left).is_number()
+                    && Self::is_in_boolean_context(ctx) =>
+            {
+                match e.operator {
+                    // `x >> y !== 0` -> `x >> y`
+                    BinaryOperator::StrictInequality | BinaryOperator::Inequality => {
+                        Some(ctx.ast.move_expression(&mut e.left))
+                    }
+                    // `x >> y !== 0` -> `!(x >> y)`
+                    BinaryOperator::StrictEquality | BinaryOperator::Equality => {
+                        let argument = ctx.ast.move_expression(&mut e.left);
+                        Some(ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument))
+                    }
+                    _ => None,
+                }
             }
-            BinaryOperator::Equality => {}
-            _ => return None,
+            _ => None,
         }
-        Some(if b.value {
-            ctx.ast.move_expression(&mut e.left)
-        } else {
-            let argument = ctx.ast.move_expression(&mut e.left);
-            ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
-        })
     }
 }
 
@@ -1662,7 +1703,7 @@ mod test {
     }
 
     #[test]
-    fn compress_binary() {
+    fn compress_binary_boolean() {
         test("a instanceof b === true", "a instanceof b");
         test("a instanceof b == true", "a instanceof b");
         test("a instanceof b === false", "!(a instanceof b)");
@@ -1685,6 +1726,16 @@ mod test {
     }
 
     #[test]
+    fn compress_binary_number() {
+        test("if(x >> y == 0){}", "if(!(x >> y)){}");
+        test("if(x >> y === 0){}", "if(!(x >> y)){}");
+        test("if(x >> y != 0){}", "if(x >> y){}");
+        test("if(x >> y !== 0){}", "if(x >> y){}");
+        test("if((-0 != +0) !== false){}", "if (-0 != +0) {}");
+        test_same("foo(x >> y == 0)");
+    }
+
+    #[test]
     fn minimize_duplicate_nots() {
         test("!!x", "x");
         test("!!!x", "!x");
@@ -1696,5 +1747,13 @@ mod test {
         test_same("function k () { return !!x; }");
         test_same("var k = () => { return !!x; }");
         test_same("var k = () => !!x;");
+    }
+
+    #[test]
+    fn minimize_nots_with_binary_expressions() {
+        test("!!delete x.y", "delete x.y");
+        test("!!!delete x.y", "!delete x.y");
+        test("!!!!delete x.y", "delete x.y");
+        test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
     }
 }

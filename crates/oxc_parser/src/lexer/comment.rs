@@ -1,5 +1,8 @@
 use memchr::memmem::Finder;
+
 use oxc_syntax::identifier::is_line_terminator;
+
+use crate::diagnostics;
 
 use super::{
     cold_branch,
@@ -7,7 +10,6 @@ use super::{
     source::SourcePosition,
     Kind, Lexer,
 };
-use crate::diagnostics;
 
 // Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)
 const LS_OR_PS_FIRST: u8 = 0xE2;
@@ -31,7 +33,7 @@ impl Lexer<'_> {
                 // If this is end of comment, create trivia, and advance `pos` to after line break.
                 // Do that here rather than in `handle_match`, to avoid branching twice on value of
                 // the matched byte.
-                #[allow(clippy::if_not_else)]
+                #[expect(clippy::if_not_else)]
                 if next_byte != LS_OR_PS_FIRST {
                     // `\r` or `\n`
                     self.trivia_builder

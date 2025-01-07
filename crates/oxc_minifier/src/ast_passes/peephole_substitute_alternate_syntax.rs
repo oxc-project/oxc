@@ -4,6 +4,7 @@ use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, ToInt32, ToJsStrin
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
+    es_target::ESTarget,
     identifier::is_identifier_name,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
@@ -17,6 +18,7 @@ use crate::{node_util::Ctx, CompressorPass};
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 pub struct PeepholeSubstituteAlternateSyntax {
+    target: ESTarget,
     /// Do not compress syntaxes that are hard to analyze inside the fixed loop.
     /// e.g. Do not compress `undefined -> void 0`, `true` -> `!0`.
     /// Opposite of `late` in Closure Compiler.
@@ -36,6 +38,10 @@ impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {
 }
 
 impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
+    fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.compress_catch_clause(catch, ctx);
+    }
+
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
@@ -157,8 +163,22 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 }
 
 impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
-    pub fn new(in_fixed_loop: bool) -> Self {
-        Self { in_fixed_loop, in_define_export: false, changed: false }
+    pub fn new(target: ESTarget, in_fixed_loop: bool) -> Self {
+        Self { target, in_fixed_loop, in_define_export: false, changed: false }
+    }
+
+    fn compress_catch_clause(&mut self, catch: &mut CatchClause<'_>, ctx: &mut TraverseCtx<'a>) {
+        if !self.in_fixed_loop && self.target >= ESTarget::ES2019 {
+            if let Some(param) = &catch.param {
+                if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
+                    if catch.body.body.is_empty()
+                        || ctx.symbols().get_resolved_references(ident.symbol_id()).count() == 0
+                    {
+                        catch.param = None;
+                    }
+                };
+            }
+        }
     }
 
     fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
@@ -655,7 +675,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         call_expr: &mut CallExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        if call_expr.optional || call_expr.arguments.len() != 1 {
+        if call_expr.optional || call_expr.arguments.len() >= 2 {
             return None;
         }
         let Expression::Identifier(ident) = &call_expr.callee else { return None };
@@ -664,71 +684,73 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             return None;
         }
         let args = &mut call_expr.arguments;
-        if args.len() != 1 {
-            return None;
-        }
-        let arg = args[0].as_expression_mut()?;
+        let arg = match args.get_mut(0) {
+            None => None,
+            Some(arg) => Some(arg.as_expression_mut()?),
+        };
         if !ctx.is_global_reference(ident) {
             return None;
         }
+        let span = call_expr.span;
         match name {
             // `Boolean(a)` -> `!!(a)`
             // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-boolean-constructor-boolean-value
             // and
             // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-logical-not-operator-runtime-semantics-evaluation
-            "Boolean" => {
-                if let Expression::UnaryExpression(unary_expr) = arg {
-                    if unary_expr.operator == UnaryOperator::LogicalNot {
-                        return Some(ctx.ast.move_expression(arg));
+            "Boolean" => match arg {
+                None => Some(ctx.ast.expression_boolean_literal(span, false)),
+                Some(arg) => {
+                    if let Expression::UnaryExpression(unary_expr) = arg {
+                        if unary_expr.operator == UnaryOperator::LogicalNot {
+                            return Some(ctx.ast.move_expression(arg));
+                        }
                     }
-                }
-                Some(
-                    ctx.ast.expression_unary(
-                        call_expr.span,
+                    Some(ctx.ast.expression_unary(
+                        span,
                         UnaryOperator::LogicalNot,
                         ctx.ast.expression_unary(
-                            call_expr.span,
+                            span,
                             UnaryOperator::LogicalNot,
-                            ctx.ast.move_expression(
-                                call_expr
-                                    .arguments
-                                    .get_mut(0)
-                                    .and_then(|arg| arg.as_expression_mut())?,
-                            ),
+                            ctx.ast.move_expression(arg),
                         ),
-                    ),
-                )
-            }
+                    ))
+                }
+            },
             "String" => {
-                // `String(a)` -> `'' + (a)`
-                if !matches!(arg, Expression::Identifier(_) | Expression::CallExpression(_))
-                    && !arg.is_literal()
-                {
-                    return None;
+                match arg {
+                    // `String()` -> `''`
+                    None => Some(ctx.ast.expression_string_literal(span, "", None)),
+                    // `String(a)` -> `'' + (a)`
+                    Some(arg) => {
+                        if !matches!(arg, Expression::Identifier(_) | Expression::CallExpression(_))
+                            && !arg.is_literal()
+                        {
+                            return None;
+                        }
+                        Some(ctx.ast.expression_binary(
+                            span,
+                            ctx.ast.expression_string_literal(SPAN, "", None),
+                            BinaryOperator::Addition,
+                            ctx.ast.move_expression(arg),
+                        ))
+                    }
                 }
-                Some(ctx.ast.expression_binary(
-                    call_expr.span,
-                    ctx.ast.expression_string_literal(SPAN, "", None),
-                    BinaryOperator::Addition,
-                    ctx.ast.move_expression(arg),
-                ))
             }
-            "Number" => {
-                let number = arg.to_number()?;
-                Some(ctx.ast.expression_numeric_literal(
-                    call_expr.span,
-                    number,
-                    None,
-                    NumberBase::Decimal,
-                ))
-            }
+            "Number" => Some(ctx.ast.expression_numeric_literal(
+                span,
+                match arg {
+                    None => 0.0,
+                    Some(arg) => arg.to_number()?,
+                },
+                None,
+                NumberBase::Decimal,
+            )),
             // `BigInt(1n)` -> `1n`
-            "BigInt" => {
-                if !matches!(arg, Expression::BigIntLiteral(_)) {
-                    return None;
-                }
-                Some(ctx.ast.move_expression(arg))
-            }
+            "BigInt" => match arg {
+                None => None,
+                Some(arg) => matches!(arg, Expression::BigIntLiteral(_))
+                    .then(|| ctx.ast.move_expression(arg)),
+            },
             _ => None,
         }
     }
@@ -901,12 +923,14 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
+    use oxc_syntax::es_target::ESTarget;
 
     use crate::tester;
 
     fn test(source_text: &str, expected: &str) {
         let allocator = Allocator::default();
-        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(false);
+        let target = ESTarget::ESNext;
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(target, false);
         tester::test(&allocator, source_text, expected, &mut pass);
     }
 
@@ -929,8 +953,8 @@ mod test {
     fn test_undefined() {
         test("var x = undefined", "var x");
         test_same("var undefined = 1;function f() {var undefined=2;var x;}");
-        test("function f(undefined) {}", "function f(undefined){}");
-        test("try {} catch(undefined) {foo}", "try{}catch(undefined){foo}");
+        test_same("function f(undefined) {}");
+        test_same("try {} catch(undefined) {foo(undefined)}");
         test("for (undefined in {}) {}", "for(undefined in {}){}");
         test("undefined++;", "undefined++");
         test("undefined += undefined;", "undefined+=void 0");
@@ -1242,32 +1266,6 @@ mod test {
     }
 
     #[test]
-    fn test_simple_function_call2() {
-        test("var a = Boolean(true)", "var a = !0");
-        // Don't fold the existence check to preserve behavior
-        test("var a = Boolean?.(true)", "var a = Boolean?.(!0)");
-
-        test("var a = Boolean(false)", "var a = !1");
-        // Don't fold the existence check to preserve behavior
-        test("var a = Boolean?.(false)", "var a = Boolean?.(!1)");
-
-        test("var a = Boolean(1)", "var a = !!1");
-        // Don't fold the existence check to preserve behavior
-        test_same("var a = Boolean?.(1)");
-
-        test("var a = Boolean(x)", "var a = !!x");
-        // Don't fold the existence check to preserve behavior
-        test_same("var a = Boolean?.(x)");
-
-        test("var a = Boolean({})", "var a = !!{}");
-        // Don't fold the existence check to preserve behavior
-        test_same("var a = Boolean?.({})");
-
-        test_same("var a = Boolean()");
-        test_same("var a = Boolean(!0, !1);");
-    }
-
-    #[test]
     #[ignore]
     fn test_rotate_associative_operators() {
         test("a || (b || c); a * (b * c); a | (b | c)", "(a || b) || c; (a * b) * c; (a | b) | c");
@@ -1433,7 +1431,34 @@ mod test {
     }
 
     #[test]
+    fn test_fold_boolean_constructor() {
+        test("var a = Boolean(true)", "var a = !0");
+        // Don't fold the existence check to preserve behavior
+        test("var a = Boolean?.(true)", "var a = Boolean?.(!0)");
+
+        test("var a = Boolean(false)", "var a = !1");
+        // Don't fold the existence check to preserve behavior
+        test("var a = Boolean?.(false)", "var a = Boolean?.(!1)");
+
+        test("var a = Boolean(1)", "var a = !!1");
+        // Don't fold the existence check to preserve behavior
+        test_same("var a = Boolean?.(1)");
+
+        test("var a = Boolean(x)", "var a = !!x");
+        // Don't fold the existence check to preserve behavior
+        test_same("var a = Boolean?.(x)");
+
+        test("var a = Boolean({})", "var a = !!{}");
+        // Don't fold the existence check to preserve behavior
+        test_same("var a = Boolean?.({})");
+
+        test("var a = Boolean()", "var a = false;");
+        test_same("var a = Boolean(!0, !1);");
+    }
+
+    #[test]
     fn test_fold_string_constructor() {
+        test("String()", "''");
         test("var a = String(23)", "var a = '' + 23");
         // Don't fold the existence check to preserve behavior
         test_same("var a = String?.(23)");
@@ -1448,7 +1473,7 @@ mod test {
 
     #[test]
     fn test_fold_number_constructor() {
-        test("Number(0)", "0");
+        test("Number()", "0");
         test("Number(true)", "1");
         test("Number(false)", "0");
         test("Number('foo')", "NaN");
@@ -1457,6 +1482,22 @@ mod test {
     #[test]
     fn test_fold_big_int_constructor() {
         test("BigInt(1n)", "1n");
+        test_same("BigInt()");
         test_same("BigInt(1)");
+    }
+
+    #[test]
+    fn optional_catch_binding() {
+        test("try {} catch(e) {}", "try {} catch {}");
+        test("try {} catch(e) {foo}", "try {} catch {foo}");
+        test_same("try {} catch(e) {e}");
+        test_same("try {} catch([e]) {}");
+        test_same("try {} catch({e}) {}");
+
+        let allocator = Allocator::default();
+        let target = ESTarget::ES2018;
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(target, false);
+        let code = "try {} catch(e) {}";
+        tester::test(&allocator, code, code, &mut pass);
     }
 }

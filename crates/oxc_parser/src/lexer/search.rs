@@ -41,7 +41,7 @@ pub const SEARCH_BATCH_SIZE: usize = 32;
 #[repr(C, align(64))]
 pub struct ByteMatchTable([bool; 256]);
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 impl ByteMatchTable {
     // Create new `ByteMatchTable`.
     pub const fn new(bytes: [bool; 256]) -> Self {
@@ -61,7 +61,7 @@ impl ByteMatchTable {
     /// An unsafe function here, whereas for `SafeByteMatchTable` it's safe.
     /// `byte_search!` macro calls `.use_table()` on whatever table it's provided, which makes
     /// using the macro unsafe for `ByteMatchTable`, but safe for `SafeByteMatchTable`.
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     #[inline]
     pub const unsafe fn use_table(&self) {}
 
@@ -92,7 +92,7 @@ impl ByteMatchTable {
 ///   TABLE
 /// }
 /// ```
-#[allow(unused_macros)]
+#[expect(unused_macros)]
 macro_rules! byte_match_table {
     (|$byte:ident| $res:expr) => {{
         use crate::lexer::search::ByteMatchTable;
@@ -105,7 +105,7 @@ macro_rules! byte_match_table {
         TABLE
     }};
 }
-#[allow(unused_imports)]
+#[expect(unused_imports)]
 pub(crate) use byte_match_table;
 
 /// Safe byte matcher lookup table.
@@ -203,7 +203,7 @@ impl SafeByteMatchTable {
     /// A safe function here, whereas for `ByteMatchTable` it's unsafe.
     /// `byte_search!` macro calls `.use_table()` on whatever table it's provided, which makes
     /// using the macro unsafe for `ByteMatchTable`, but safe for `SafeByteMatchTable`.
-    #[allow(clippy::unused_self)]
+    #[expect(clippy::unused_self)]
     #[inline]
     pub const fn use_table(&self) {}
 
@@ -428,10 +428,11 @@ macro_rules! byte_search {
         // responsibility to uphold this invariant.
         // Therefore we can assume this is taken care of one way or another, and wrap the calls
         // to unsafe functions in this function with `unsafe {}`.
+        #[allow(clippy::unnecessary_safety_comment)]
         $table.use_table();
 
         let mut $pos = $start;
-        #[allow(unused_unsafe)] // Silence warnings if macro called in unsafe code
+        #[allow(unused_unsafe, clippy::unnecessary_safety_comment)] // Silence warnings if macro called in unsafe code
         'outer: loop {
             let $byte = if $pos.addr() <= $lexer.source.end_for_batch_search_addr() {
                 // Search a batch of `SEARCH_BATCH_SIZE` bytes.

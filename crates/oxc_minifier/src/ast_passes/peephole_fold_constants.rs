@@ -31,7 +31,8 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
-            Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx),
+            Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx)
+                .or_else(|| Self::try_fold_binary_typeof_comparison(e, ctx)),
             Expression::UnaryExpression(e) => Self::try_fold_unary_expr(e, ctx),
             Expression::StaticMemberExpression(e) => Self::try_fold_static_member_expr(e, ctx),
             Expression::LogicalExpression(e) => Self::try_fold_logical_expr(e, ctx),
@@ -334,6 +335,18 @@ impl<'a, 'b> PeepholeFoldConstants {
                 }
             }
         }
+
+        // typeof foo + ""
+        if let Expression::UnaryExpression(left) = &e.left {
+            if left.operator.is_typeof() {
+                if let Expression::StringLiteral(right) = &e.right {
+                    if right.value.is_empty() {
+                        return Some(ctx.ast.move_expression(&mut e.left));
+                    }
+                }
+            }
+        }
+
         None
     }
 
@@ -611,6 +624,55 @@ impl<'a, 'b> PeepholeFoldConstants {
         object
             .to_js_string()
             .map(|value| ctx.ast.expression_string_literal(object.span(), value, None))
+    }
+
+    // `typeof a === typeof b` -> `typeof a == typeof b`, `typeof a != typeof b` -> `typeof a != typeof b`,
+    // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
+    fn try_fold_binary_typeof_comparison(
+        bin_expr: &mut BinaryExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        if bin_expr.operator.is_equality() {
+            if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
+                (&bin_expr.left, &bin_expr.right)
+            {
+                if left.operator.is_typeof() && right.operator.is_typeof() {
+                    if let (
+                        Expression::Identifier(left_ident),
+                        Expression::Identifier(right_ident),
+                    ) = (&left.argument, &right.argument)
+                    {
+                        if left_ident.name == right_ident.name {
+                            return Some(ctx.ast.expression_boolean_literal(
+                                bin_expr.span,
+                                matches!(
+                                    bin_expr.operator,
+                                    BinaryOperator::StrictEquality | BinaryOperator::Equality
+                                ),
+                            ));
+                        }
+                    }
+
+                    if matches!(
+                        bin_expr.operator,
+                        BinaryOperator::StrictEquality | BinaryOperator::StrictInequality
+                    ) {
+                        return Some(ctx.ast.expression_binary(
+                            bin_expr.span,
+                            ctx.ast.move_expression(&mut bin_expr.left),
+                            if bin_expr.operator == BinaryOperator::StrictEquality {
+                                BinaryOperator::Equality
+                            } else {
+                                BinaryOperator::Inequality
+                            },
+                            ctx.ast.move_expression(&mut bin_expr.right),
+                        ));
+                    }
+                }
+            }
+        }
+
+        None
     }
 }
 
@@ -919,11 +981,8 @@ mod test {
         test("'a' == 'a'", "true");
         test("'b' != 'a'", "true");
         test_same("typeof a != 'number'");
-        test_same("typeof a == typeof a");
         test("'a' === 'a'", "true");
         test("'b' !== 'a'", "true");
-        test_same("typeof a === typeof a");
-        test_same("typeof a !== typeof a");
         test_same("'' + x <= '' + y");
         test_same("'' + x != '' + y");
         test_same("'' + x === '' + y");
@@ -1776,5 +1835,21 @@ mod test {
         test("1 .toString()", "'1'");
         test("true.toString()", "'true'");
         test("false.toString()", "'false'");
+    }
+
+    #[test]
+    fn test_fold_typeof_addition_string() {
+        test_same("typeof foo");
+        test_same("typeof foo + '123'");
+        test("typeof foo + ''", "typeof foo");
+        test_same("typeof foo - ''");
+    }
+
+    #[test]
+    fn test_fold_same_typeof() {
+        test("typeof foo === typeof bar", "typeof foo == typeof bar");
+        test("typeof foo !== typeof bar", "typeof foo != typeof bar");
+        test("typeof foo.bar === typeof foo.bar", "typeof foo.bar == typeof foo.bar");
+        test("typeof foo.bar !== typeof foo.bar", "typeof foo.bar != typeof foo.bar");
     }
 }

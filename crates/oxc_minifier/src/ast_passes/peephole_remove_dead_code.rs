@@ -1,6 +1,9 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsLiteralValue};
+use oxc_ecmascript::{
+    constant_evaluation::{ConstantEvaluation, IsLiteralValue},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_span::SPAN;
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
@@ -52,6 +55,9 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
         let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
             Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
+            Expression::SequenceExpression(sequence_expression) => {
+                Self::try_fold_sequence_expression(sequence_expression, ctx)
+            }
             _ => None,
         } {
             *expr = folded_expr;
@@ -423,6 +429,65 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
             None => None,
         }
     }
+
+    fn try_fold_sequence_expression(
+        sequence_expr: &mut SequenceExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        let should_include_ret_val =
+            !matches!(ctx.parent(), Ancestor::ExpressionStatementExpression(_));
+        let should_keep_as_sequence_expr = matches!(
+            ctx.parent(),
+            Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
+        );
+
+        if should_keep_as_sequence_expr && sequence_expr.expressions.len() == 2 {
+            return None;
+        }
+
+        let (should_fold, new_len) = sequence_expr.expressions.iter().enumerate().fold(
+            (false, 0),
+            |(mut should_fold, mut new_len), (i, expr)| {
+                if expr.may_have_side_effects()
+                    || (should_include_ret_val && i == sequence_expr.expressions.len() - 1)
+                {
+                    new_len += 1;
+                } else {
+                    should_fold = true;
+                }
+                (should_fold, new_len)
+            },
+        );
+
+        if new_len == 0 {
+            return Some(ctx.ast.expression_null_literal(sequence_expr.span));
+        }
+
+        if should_fold {
+            let mut new_exprs = ctx.ast.vec_with_capacity(new_len);
+            let len = sequence_expr.expressions.len();
+            for (i, expr) in sequence_expr.expressions.iter_mut().enumerate() {
+                if expr.may_have_side_effects() || (should_include_ret_val && i == len - 1) {
+                    new_exprs.push(ctx.ast.move_expression(expr));
+                }
+            }
+
+            if should_keep_as_sequence_expr && new_exprs.len() == 1 {
+                new_exprs.insert(
+                    0,
+                    ctx.ast.expression_numeric_literal(SPAN, 1.0, None, NumberBase::Decimal),
+                );
+            }
+
+            if new_exprs.len() == 1 {
+                return Some(new_exprs.pop().unwrap());
+            }
+
+            return Some(ctx.ast.expression_sequence(sequence_expr.span, new_exprs));
+        }
+
+        None
+    }
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
@@ -593,5 +658,16 @@ mod test {
         // TODO: fold the following...
         fold_same("(() => {})()");
         fold_same("(function () {})()");
+    }
+
+    #[test]
+    fn test_fold_sequence_expr() {
+        fold("('foo', 'bar', 'baz')", "");
+        fold("('foo', 'bar', baz())", "baz()");
+        fold("('foo', bar(), baz())", "bar(), baz()");
+        fold("(() => {}, bar(), baz())", "bar(), baz()");
+        fold("(function k() {}, k(), baz())", "k(), baz()");
+        fold_same("(0, o.f)();");
+        fold("var obj = Object((null, 2, 3), 1, 2);", "var obj = Object(3, 1, 2);");
     }
 }

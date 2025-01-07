@@ -54,7 +54,7 @@ impl<'a, 'ctx> ModuleImports<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ModuleImports<'a, 'ctx> {
+impl<'a> Traverse<'a> for ModuleImports<'a, '_> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.ctx.module_imports.insert_into_program(self.ctx, ctx);
     }

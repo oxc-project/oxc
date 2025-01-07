@@ -2173,7 +2173,9 @@ after transform: []
 rebuilt        : ["require"]
 
 * imports/only-remove-type-imports/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
+rebuilt        : ScopeId(0): ["L2", "a", "b", "c2", "d", "d2", "e", "e4"]
 
 * imports/property-signature/input.ts
 Bindings mismatch:
@@ -2204,7 +2206,9 @@ after transform: ScopeId(0): ["Foo1", "Foo2"]
 rebuilt        : ScopeId(0): []
 
 * imports/type-only-import-specifier-4/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["A"]
+rebuilt        : ScopeId(0): []
 
 * lvalues/TSTypeParameterInstantiation/input.ts
 Symbol reference IDs mismatch for "AbstractClass":

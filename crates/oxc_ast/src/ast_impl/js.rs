@@ -2,8 +2,8 @@
 #![warn(missing_docs)]
 use std::{borrow::Cow, fmt};
 
-use oxc_allocator::{Box, FromIn, Vec};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_allocator::{Box, Vec};
+use oxc_span::{Atom, Span};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;
@@ -787,15 +787,6 @@ impl Statement<'_> {
             return (block_stmt.body.len() == 1).then_some(&mut block_stmt.body[0]);
         }
         Some(self)
-    }
-}
-
-impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
-    fn from_in(expression: Expression<'a>, allocator: &'a oxc_allocator::Allocator) -> Self {
-        Statement::ExpressionStatement(Box::from_in(
-            ExpressionStatement { span: expression.span(), expression },
-            allocator,
-        ))
     }
 }
 
