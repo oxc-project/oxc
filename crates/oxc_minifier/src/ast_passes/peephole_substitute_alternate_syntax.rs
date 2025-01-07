@@ -140,6 +140,9 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                 Self::swap_binary_expressions(e);
                 self.try_compress_type_of_equal_string(e);
             }
+            Expression::AssignmentExpression(e) => {
+                self.try_compress_normal_assignment_to_combined_assignment(e, ctx);
+            }
             _ => {}
         }
 
@@ -147,7 +150,9 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         if let Some(folded_expr) = match expr {
             Expression::Identifier(ident) => self.try_compress_undefined(ident, ctx),
             Expression::BooleanLiteral(_) => self.try_compress_boolean(expr, ctx),
-            Expression::AssignmentExpression(e) => Self::try_compress_assignment_expression(e, ctx),
+            Expression::AssignmentExpression(e) => {
+                Self::try_compress_assignment_to_update_expression(e, ctx)
+            }
             Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx),
             Expression::NewExpression(e) => Self::try_fold_new_expression(e, ctx),
             Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
@@ -525,7 +530,32 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    fn try_compress_assignment_expression(
+    /// Compress `a = a + b` to `a += b`
+    fn try_compress_normal_assignment_to_combined_assignment(
+        &mut self,
+        expr: &mut AssignmentExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) {
+        if !matches!(expr.operator, AssignmentOperator::Assign) {
+            return;
+        }
+        let AssignmentTarget::AssignmentTargetIdentifier(write_id_ref) = &mut expr.left else {
+            return;
+        };
+
+        let Expression::BinaryExpression(binary_expr) = &mut expr.right else { return };
+        let Some(new_op) = binary_expr.operator.to_assignment_operator() else { return };
+        let Expression::Identifier(read_id_ref) = &mut binary_expr.left else { return };
+        if write_id_ref.name != read_id_ref.name {
+            return;
+        }
+
+        expr.operator = new_op;
+        expr.right = ctx.ast.move_expression(&mut binary_expr.right);
+        self.changed = true;
+    }
+
+    fn try_compress_assignment_to_update_expression(
         expr: &mut AssignmentExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
@@ -1018,6 +1048,58 @@ mod test {
         // The following should not be folded.
         test("x === true", "x === !0");
         test("x !== false", "x !== !1");
+    }
+
+    /// Based on https://github.com/terser/terser/blob/58ba5c163fa1684f2a63c7bc19b7ebcf85b74f73/test/compress/assignment.js
+    #[test]
+    fn test_fold_normal_assignment_to_combined_assignment() {
+        test("x = x + 3", "x += 3");
+        test("x = x - 3", "x -= 3");
+        test("x = x / 3", "x /= 3");
+        test("x = x * 3", "x *= 3");
+        test("x = x >> 3", "x >>= 3");
+        test("x = x << 3", "x <<= 3");
+        test("x = x >>> 3", "x >>>= 3");
+        test("x = x | 3", "x |= 3");
+        test("x = x ^ 3", "x ^= 3");
+        test("x = x % 3", "x %= 3");
+        test("x = x & 3", "x &= 3");
+        test("x = x + g()", "x += g()");
+        test("x = x - g()", "x -= g()");
+        test("x = x / g()", "x /= g()");
+        test("x = x * g()", "x *= g()");
+        test("x = x >> g()", "x >>= g()");
+        test("x = x << g()", "x <<= g()");
+        test("x = x >>> g()", "x >>>= g()");
+        test("x = x | g()", "x |= g()");
+        test("x = x ^ g()", "x ^= g()");
+        test("x = x % g()", "x %= g()");
+        test("x = x & g()", "x &= g()");
+
+        test_same("x = 3 + x");
+        test_same("x = 3 - x");
+        test_same("x = 3 / x");
+        test_same("x = 3 * x");
+        test_same("x = 3 >> x");
+        test_same("x = 3 << x");
+        test_same("x = 3 >>> x");
+        test_same("x = 3 | x");
+        test_same("x = 3 ^ x");
+        test_same("x = 3 % x");
+        test_same("x = 3 & x");
+        test_same("x = g() + x");
+        test_same("x = g() - x");
+        test_same("x = g() / x");
+        test_same("x = g() * x");
+        test_same("x = g() >> x");
+        test_same("x = g() << x");
+        test_same("x = g() >>> x");
+        test_same("x = g() | x");
+        test_same("x = g() ^ x");
+        test_same("x = g() % x");
+        test_same("x = g() & x");
+
+        test_same("x = (x -= 2) ^ x");
     }
 
     #[test]
