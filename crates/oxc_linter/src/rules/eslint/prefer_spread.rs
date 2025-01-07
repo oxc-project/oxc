@@ -72,6 +72,8 @@ impl Rule for PreferSpread {
             return;
         };
 
+        println!("hello from eslint world");
+
         check_eslint_prefer_spread(call_expr, ctx);
     }
 }

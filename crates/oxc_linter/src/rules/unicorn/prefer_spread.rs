@@ -52,7 +52,7 @@ impl Rule for PreferSpread {
             return;
         };
 
-        println!("{call_expr:?}");
+        println!("hello from unicorn world");
 
         check_unicorn_prefer_spread(call_expr, ctx);
     }
