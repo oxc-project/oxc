@@ -287,7 +287,7 @@ macro_rules! literalline {
 #[macro_export]
 macro_rules! line_suffix_boundary {
     () => {{
-        $crate::ir::Doc::LineSuffixBondary
+        $crate::ir::Doc::LineSuffixBoundary
     }};
 }
 
