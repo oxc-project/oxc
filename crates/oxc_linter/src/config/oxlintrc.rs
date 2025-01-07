@@ -17,9 +17,9 @@ use super::{
 /// This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).
 ///
 /// Usage: `oxlint -c .oxlintrc.json --import-plugin`
-/// 
+///
 /// **Automatic search for config file:**
-/// When no `-c/--config` flag is provided, 
+/// When no `-c/--config` flag is provided,
 /// oxlint will look in the current working directory for a `.oxlintrc.json` file.
 ///
 /// ::: danger NOTE
