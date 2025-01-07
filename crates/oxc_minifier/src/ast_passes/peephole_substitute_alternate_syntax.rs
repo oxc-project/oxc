@@ -153,7 +153,8 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
             Expression::AssignmentExpression(e) => {
                 Self::try_compress_assignment_to_update_expression(e, ctx)
             }
-            Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx),
+            Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx)
+                .or_else(|| self.try_compress_logical_expression_to_assignment_expression(e, ctx)),
             Expression::NewExpression(e) => Self::try_fold_new_expression(e, ctx),
             Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
             Expression::BinaryExpression(e) => Self::try_fold_loose_equals_undefined(e, ctx)
@@ -455,6 +456,39 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             ctx.ast.expression_identifier_reference(left_id_expr_span, left_id_ref.name);
         let null_expr = ctx.ast.expression_null_literal(null_expr_span);
         Some(ctx.ast.expression_binary(span, left_id_expr, replace_op, null_expr))
+    }
+
+    /// Compress `a || (a = b)` to `a ||= b`
+    fn try_compress_logical_expression_to_assignment_expression(
+        &self,
+        expr: &mut LogicalExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        if self.target < ESTarget::ES2020 {
+            return None;
+        }
+
+        let Expression::AssignmentExpression(assignment_expr) = &mut expr.right else {
+            return None;
+        };
+        if assignment_expr.operator != AssignmentOperator::Assign {
+            return None;
+        }
+
+        let new_op = expr.operator.to_assignment_operator();
+
+        let AssignmentTarget::AssignmentTargetIdentifier(write_id_ref) = &mut assignment_expr.left
+        else {
+            return None;
+        };
+        let Expression::Identifier(read_id_ref) = &mut expr.left else { return None };
+        if write_id_ref.name != read_id_ref.name {
+            return None;
+        }
+
+        assignment_expr.span = expr.span;
+        assignment_expr.operator = new_op;
+        Some(ctx.ast.move_expression(&mut expr.right))
     }
 
     fn commutative_pair<A, F, G, RetF: 'a, RetG: 'a>(
@@ -1495,6 +1529,27 @@ mod test {
         test("foo !== 1 && foo !== null && foo !== void 0", "foo !== 1 && foo != null");
         test("foo !== 1 || foo !== void 0 && foo !== null", "foo !== 1 || foo != null");
         test_same("foo !== void 0 && bar !== null");
+    }
+
+    #[test]
+    fn test_fold_logical_expression_to_assignment_expression() {
+        test("x || (x = 3)", "x ||= 3");
+        test("x && (x = 3)", "x &&= 3");
+        test("x ?? (x = 3)", "x ??= 3");
+        test("x || (x = g())", "x ||= g()");
+        test("x && (x = g())", "x &&= g()");
+        test("x ?? (x = g())", "x ??= g()");
+
+        test_same("x || (y = 3)");
+
+        // foo() might have a side effect
+        test_same("foo().a || (foo().a = 3)");
+
+        let allocator = Allocator::default();
+        let target = ESTarget::ES2019;
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(target, false);
+        let code = "x || (x = 3)";
+        tester::test(&allocator, code, code, &mut pass);
     }
 
     #[test]

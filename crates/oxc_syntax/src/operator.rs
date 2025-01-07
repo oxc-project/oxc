@@ -444,6 +444,15 @@ impl LogicalOperator {
             Self::Coalesce => Precedence::Conditional,
         }
     }
+
+    /// Get [`AssignmentOperator`] corresponding to this [`LogicalOperator`].
+    pub fn to_assignment_operator(self) -> AssignmentOperator {
+        match self {
+            Self::Or => AssignmentOperator::LogicalOr,
+            Self::And => AssignmentOperator::LogicalAnd,
+            Self::Coalesce => AssignmentOperator::LogicalNullish,
+        }
+    }
 }
 
 impl GetPrecedence for LogicalOperator {
