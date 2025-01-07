@@ -379,6 +379,7 @@ mod unicorn {
     pub mod prefer_regexp_test;
     pub mod prefer_set_has;
     pub mod prefer_set_size;
+    pub mod prefer_spread;
     pub mod prefer_string_raw;
     pub mod prefer_string_replace_all;
     pub mod prefer_string_slice;
@@ -955,6 +956,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,
+    unicorn::prefer_spread,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat,
     unicorn::prefer_array_flat_map,
