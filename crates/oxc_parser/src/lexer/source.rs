@@ -60,7 +60,6 @@ use super::search::SEARCH_BATCH_SIZE;
 /// are satisfied, to restore this invariant before passing control back to other code.
 /// It will often be preferable to instead use `Source::peek_byte`, followed by `Source::next_char`,
 /// which are safe methods, and compiler will often reduce to equally efficient code.
-#[derive(Clone)]
 pub(super) struct Source<'a> {
     /// Pointer to start of source string. Never altered after initialization.
     start: *const u8,
