@@ -39,7 +39,6 @@ pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;
 
-use byte_handlers::handle_byte;
 use source::{Source, SourcePosition};
 use trivia_builder::TriviaBuilder;
 
@@ -315,7 +314,7 @@ impl<'a> Lexer<'a> {
             };
 
             // SAFETY: `byte` is byte value at current position in source
-            let kind = unsafe { handle_byte(byte, self) };
+            let kind = unsafe { self.handle_byte(byte) };
             if kind != Kind::Skip {
                 return kind;
             }

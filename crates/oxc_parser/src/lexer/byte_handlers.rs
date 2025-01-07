@@ -2,15 +2,17 @@ use crate::diagnostics;
 
 use super::{Kind, Lexer};
 
-/// Handle next byte of source.
-///
-/// # SAFETY
-///
-/// * Lexer must not be at end of file.
-/// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
-/// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!()` macro.
-pub(super) unsafe fn handle_byte(byte: u8, lexer: &mut Lexer) -> Kind {
-    BYTE_HANDLERS[byte as usize](lexer)
+impl Lexer<'_> {
+    /// Handle next byte of source.
+    ///
+    /// # SAFETY
+    ///
+    /// * Lexer must not be at end of file.
+    /// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
+    /// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!()` macro.
+    pub(super) unsafe fn handle_byte(&mut self, byte: u8) -> Kind {
+        BYTE_HANDLERS[byte as usize](self)
+    }
 }
 
 type ByteHandler = unsafe fn(&mut Lexer<'_>) -> Kind;
