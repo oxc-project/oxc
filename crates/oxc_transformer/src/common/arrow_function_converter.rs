@@ -92,10 +92,10 @@ use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
-use oxc_ast::{ast::*, NONE};
-use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
+use oxc_ast::{ast::*, visit::walk_mut::walk_expression, VisitMut, NONE};
+use oxc_data_structures::stack::{NonEmptyStack, SparseStack, Stack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
-use oxc_span::{CompactStr, SPAN};
+use oxc_span::{CompactStr, GetSpan, SPAN};
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
@@ -139,6 +139,7 @@ pub struct ArrowFunctionConverter<'a> {
     mode: ArrowFunctionConverterMode,
     this_var_stack: SparseStack<BoundIdentifier<'a>>,
     arguments_var_stack: SparseStack<BoundIdentifier<'a>>,
+    constructor_super_stack: Stack<bool>,
     arguments_needs_transform_stack: NonEmptyStack<bool>,
     renamed_arguments_symbol_ids: FxHashSet<SymbolId>,
     // TODO(improve-on-babel): `FxHashMap` would suffice here. Iteration order is not important.
@@ -160,6 +161,7 @@ impl ArrowFunctionConverter<'_> {
             mode,
             this_var_stack: SparseStack::new(),
             arguments_var_stack: SparseStack::new(),
+            constructor_super_stack: Stack::new(),
             arguments_needs_transform_stack: NonEmptyStack::new(false),
             renamed_arguments_symbol_ids: FxHashSet::default(),
             super_methods: None,
@@ -200,6 +202,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
 
         self.this_var_stack.push(None);
         self.arguments_var_stack.push(None);
+        self.constructor_super_stack.push(false);
         if self.is_async_only() && func.r#async && Self::is_class_method_like_ancestor(ctx.parent())
         {
             self.super_methods = Some(FxIndexMap::default());
@@ -235,6 +238,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
             arguments_var,
             ctx,
         );
+        self.constructor_super_stack.pop();
     }
 
     fn enter_arrow_function_expression(
@@ -330,6 +334,12 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         let new_expr = match expr {
             Expression::ThisExpression(this) => {
                 self.get_this_identifier(this.span, ctx).map(Expression::Identifier)
+            }
+            Expression::Super(_) => {
+                if let Some(v) = self.constructor_super_stack.last_mut() {
+                    *v = true;
+                }
+                return;
             }
             Expression::CallExpression(call) => self.transform_call_expression_for_super(call, ctx),
             Expression::AssignmentExpression(assignment) => {
@@ -1033,12 +1043,9 @@ impl<'a> ArrowFunctionConverter<'a> {
         let arguments = self.create_arguments_var_declarator(target_scope_id, arguments_var, ctx);
 
         let is_class_method_like = Self::is_class_method_like_ancestor(ctx.parent());
+        let super_method_count = self.super_methods.as_ref().map_or(0, FxIndexMap::len);
         let declarations_count = usize::from(arguments.is_some())
-            + if is_class_method_like {
-                self.super_methods.as_ref().map_or(0, FxIndexMap::len)
-            } else {
-                0
-            }
+            + if is_class_method_like { super_method_count } else { 0 }
             + usize::from(this_var.is_some());
 
         // Exit if no declarations to be inserted
@@ -1070,12 +1077,25 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         // `_this = this;`
         if let Some(this_var) = this_var {
+            let is_constructor = ctx.scopes().get_flags(target_scope_id).is_constructor();
+            let init = if is_constructor
+                && (super_method_count != 0
+                    || self.constructor_super_stack.last().copied().unwrap_or(false))
+            {
+                // `super()` is called in the constructor body, so we need to insert `_this = this;`
+                // after `super()` call. Because `this` is not available before `super()` call.
+                ConstructorBodyThisAfterSuperInserter::new(&this_var, ctx)
+                    .visit_statements(statements);
+                None
+            } else {
+                Some(Expression::ThisExpression(ctx.ast.alloc_this_expression(SPAN)))
+            };
             Self::adjust_binding_scope(target_scope_id, &this_var, ctx);
             let variable_declarator = ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
                 this_var.create_binding_pattern(ctx),
-                Some(ctx.ast.expression_this(SPAN)),
+                init,
                 false,
             );
             declarations.push(variable_declarator);
@@ -1093,5 +1113,76 @@ impl<'a> ArrowFunctionConverter<'a> {
         let stmt = Statement::VariableDeclaration(stmt);
 
         statements.insert(0, stmt);
+    }
+}
+
+/// Visitor for inserting `this` after `super` in constructor body.
+struct ConstructorBodyThisAfterSuperInserter<'a, 'arrow> {
+    this_var_binding: &'arrow BoundIdentifier<'a>,
+    ctx: &'arrow mut TraverseCtx<'a>,
+}
+
+impl<'a, 'b> ConstructorBodyThisAfterSuperInserter<'a, 'b> {
+    fn new(this_var_binding: &'b BoundIdentifier<'a>, ctx: &'b mut TraverseCtx<'a>) -> Self {
+        Self { this_var_binding, ctx }
+    }
+
+    #[inline]
+    fn transform_super_call_expression(&mut self, expr: &Expression<'a>) -> Option<Expression<'a>> {
+        if expr.is_super_call_expression() {
+            let assignment = self.ctx.ast.expression_assignment(
+                SPAN,
+                AssignmentOperator::Assign,
+                self.this_var_binding.create_write_target(self.ctx),
+                self.ctx.ast.expression_this(SPAN),
+            );
+            Some(assignment)
+        } else {
+            None
+        }
+    }
+}
+
+impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
+    #[inline]
+    fn visit_class(&mut self, _class: &mut Class<'a>) {
+        // Do not need to insert in nested classes
+    }
+
+    /// `super()` -> `super(); _this = this;`
+    #[inline]
+    fn visit_statements(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
+        let mut new_stmts = vec![];
+
+        for (index, stmt) in statements.iter_mut().enumerate() {
+            let Statement::ExpressionStatement(expr_stmt) = stmt else {
+                self.visit_statement(stmt);
+                continue;
+            };
+            if let Some(assignment) = self.transform_super_call_expression(&expr_stmt.expression) {
+                let new_stmt = self.ctx.ast.statement_expression(SPAN, assignment);
+                new_stmts.push((index, new_stmt));
+            } else {
+                self.visit_statement(stmt);
+            }
+        }
+
+        for (index, new_stmt) in new_stmts.into_iter().rev() {
+            // insert the new statement after the super call
+            statements.insert(index + 1, new_stmt);
+        }
+    }
+
+    /// `const A = super()` -> `const A = (super(), _this = this);`
+    #[inline]
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        if let Some(assignment) = self.transform_super_call_expression(expr) {
+            let span = expr.span();
+            let exprs =
+                self.ctx.ast.vec_from_array([self.ctx.ast.move_expression(expr), assignment]);
+            *expr = self.ctx.ast.expression_sequence(span, exprs);
+        } else {
+            walk_expression(self, expr);
+        }
     }
 }
