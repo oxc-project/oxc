@@ -2,7 +2,6 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, ValueType},
     side_effects::MayHaveSideEffects,
-    ToJsString,
 };
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
@@ -37,8 +36,7 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
             Expression::StaticMemberExpression(e) => Self::try_fold_static_member_expr(e, ctx),
             Expression::LogicalExpression(e) => Self::try_fold_logical_expr(e, ctx),
             Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
-            Expression::CallExpression(e) => Self::try_fold_number_constructor(e, ctx)
-                .or_else(|| Self::try_fold_to_string(e, ctx)),
+            Expression::CallExpression(e) => Self::try_fold_number_constructor(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -604,26 +602,6 @@ impl<'a, 'b> PeepholeFoldConstants {
                 _ => return None,
             }),
         ))
-    }
-
-    fn try_fold_to_string(e: &CallExpression<'a>, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
-        let Expression::StaticMemberExpression(member_expr) = &e.callee else { return None };
-        if member_expr.property.name != "toString" {
-            return None;
-        }
-        if !e.arguments.is_empty() {
-            return None;
-        }
-        let object = &member_expr.object;
-        if !matches!(
-            ValueType::from(object),
-            ValueType::String | ValueType::Boolean | ValueType::Number
-        ) {
-            return None;
-        }
-        object
-            .to_js_string()
-            .map(|value| ctx.ast.expression_string_literal(object.span(), value, None))
     }
 
     // `typeof a === typeof b` -> `typeof a == typeof b`, `typeof a != typeof b` -> `typeof a != typeof b`,
@@ -1827,14 +1805,6 @@ mod test {
         test("Number('a')", "NaN");
         test("Number('1')", "1");
         test_same("var Number; Number(1)");
-    }
-
-    #[test]
-    fn test_fold_to_string() {
-        test("'x'.toString()", "'x'");
-        test("1 .toString()", "'1'");
-        test("true.toString()", "'true'");
-        test("false.toString()", "'false'");
     }
 
     #[test]

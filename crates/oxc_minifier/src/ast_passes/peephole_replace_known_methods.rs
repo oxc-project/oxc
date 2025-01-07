@@ -53,6 +53,7 @@ impl<'a> PeepholeReplaceKnownMethods {
             "charCodeAt" => Self::try_fold_string_char_code_at(ce, member, ctx),
             "replace" | "replaceAll" => Self::try_fold_string_replace(ce, member, ctx),
             "fromCharCode" => Self::try_fold_string_from_char_code(ce, member, ctx),
+            "toString" => Self::try_fold_to_string(ce, member, ctx),
             _ => None,
         };
         if let Some(replacement) = replacement {
@@ -245,6 +246,81 @@ impl<'a> PeepholeReplaceKnownMethods {
             s.push(c);
         }
         Some(ctx.ast.expression_string_literal(ce.span, s, None))
+    }
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        clippy::cast_lossless,
+        clippy::float_cmp
+    )]
+    fn try_fold_to_string(
+        ce: &CallExpression<'a>,
+        member: &StaticMemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let args = &ce.arguments;
+        match &member.object {
+            // Number.prototype.toString()
+            // Number.prototype.toString(radix)
+            Expression::NumericLiteral(lit) if args.len() <= 1 => {
+                let mut radix: u32 = 0;
+                if args.is_empty() {
+                    radix = 10;
+                }
+                if let Some(Argument::NumericLiteral(n)) = args.first() {
+                    if n.value >= 2.0 && n.value <= 36.0 && n.value.fract() == 0.0 {
+                        radix = n.value as u32;
+                    }
+                }
+                if radix == 0 {
+                    return None;
+                }
+                if lit.value.is_nan() {
+                    return Some(ctx.ast.expression_string_literal(ce.span, "NaN", None));
+                }
+                if lit.value.is_infinite() {
+                    return Some(ctx.ast.expression_string_literal(ce.span, "Infinity", None));
+                }
+                if radix == 10 {
+                    use oxc_syntax::number::ToJsString;
+                    return Some(ctx.ast.expression_string_literal(
+                        ce.span,
+                        lit.value.to_js_string(),
+                        None,
+                    ));
+                }
+                // Only convert integers for other radix values.
+                let value = lit.value;
+                if value >= 0.0 && value.fract() != 0.0 {
+                    return None;
+                }
+                let i = value as u32;
+                if i as f64 != value {
+                    return None;
+                }
+                Some(ctx.ast.expression_string_literal(ce.span, Self::format_radix(i, radix), None))
+            }
+            e if e.is_literal() && args.is_empty() => {
+                use oxc_ecmascript::ToJsString;
+                e.to_js_string().map(|s| ctx.ast.expression_string_literal(ce.span, s, None))
+            }
+            _ => None,
+        }
+    }
+
+    fn format_radix(mut x: u32, radix: u32) -> String {
+        debug_assert!((2..=36).contains(&radix));
+        let mut result = vec![];
+        loop {
+            let m = x % radix;
+            x /= radix;
+            result.push(std::char::from_digit(m, radix).unwrap());
+            if x == 0 {
+                break;
+            }
+        }
+        result.into_iter().rev().collect()
     }
 }
 
@@ -1108,5 +1184,46 @@ mod test {
         test_same("String.fromCharCode(x)");
         test("String.fromCharCode('x')", "'\\0'");
         test("String.fromCharCode('0.5')", "'\\0'");
+    }
+
+    #[test]
+    fn test_to_string() {
+        test("false.toString()", "'false';");
+        test("true.toString()", "'true';");
+        test("'xy'.toString()", "'xy';");
+        test("0 .toString()", "'0';");
+        test("123 .toString()", "'123';");
+        test("NaN.toString()", "'NaN';");
+        test("Infinity.toString()", "'Infinity';");
+        // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
+
+        test("100 .toString(0)", "100 .toString(0)");
+        test("100 .toString(1)", "100 .toString(1)");
+        test("100 .toString(2)", "'1100100'");
+        test("100 .toString(5)", "'400'");
+        test("100 .toString(8)", "'144'");
+        test("100 .toString(13)", "'79'");
+        test("100 .toString(16)", "'64'");
+        test("10000 .toString(19)", "'18d6'");
+        test("10000 .toString(23)", "'iki'");
+        test("1000000 .toString(29)", "'1c01m'");
+        test("1000000 .toString(31)", "'12hi2'");
+        test("1000000 .toString(36)", "'lfls'");
+        test("0 .toString(36)", "'0'");
+        test("0.5.toString()", "'0.5'");
+
+        test("false.toString(b)", "false.toString(b)");
+        test("true.toString(b)", "true.toString(b)");
+        test("'xy'.toString(b)", "'xy'.toString(b)");
+        test("123 .toString(b)", "123 .toString(b)");
+        test("1e99.toString(b)", "1e99.toString(b)");
+        test("/./.toString(b)", "/./.toString(b)");
+
+        // Will get constant folded into positive values
+        test_same("(-0).toString()");
+        test_same("(-123).toString()");
+        test_same("(-Infinity).toString()");
+        test_same("(-1000000).toString(36)");
+        test_same("(-0).toString(36)");
     }
 }
