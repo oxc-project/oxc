@@ -30,13 +30,12 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx(ctx);
         if let Some(new_stmt) = match stmt {
-            Statement::BlockStatement(block_stmt) => Self::try_optimize_block(block_stmt, ctx),
-            Statement::IfStatement(if_stmt) => self.try_fold_if(if_stmt, ctx),
-            Statement::ForStatement(for_stmt) => self.try_fold_for(for_stmt, ctx),
-            Statement::ExpressionStatement(expr_stmt) => {
-                Self::try_fold_expression_stmt(expr_stmt, ctx)
-            }
-            Statement::LabeledStatement(labeled) => Self::try_fold_labeled(labeled, ctx),
+            Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
+            Statement::IfStatement(s) => self.try_fold_if(s, ctx),
+            Statement::ForStatement(s) => self.try_fold_for(s, ctx),
+            Statement::ExpressionStatement(s) => Self::try_fold_expression_stmt(s, ctx),
+            Statement::TryStatement(s) => Self::try_fold_try(s, ctx),
+            Statement::LabeledStatement(s) => Self::try_fold_labeled(s, ctx),
             _ => None,
         } {
             *stmt = new_stmt;
@@ -333,6 +332,29 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                 }
                 _ => None,
             })
+    }
+
+    fn try_fold_try(s: &mut TryStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
+        if !s.block.body.is_empty() {
+            return None;
+        }
+        if let Some(finalizer) = &mut s.finalizer {
+            if finalizer.body.is_empty() {
+                Some(ctx.ast.statement_empty(s.span))
+            } else {
+                let mut block = ctx.ast.block_statement(SPAN, ctx.ast.vec());
+                std::mem::swap(&mut **finalizer, &mut block);
+                Some(Statement::BlockStatement(ctx.ast.alloc(block)))
+            }
+        } else {
+            if let Some(handler) = &s.handler {
+                if handler.body.body.iter().any(|s| matches!(s, Statement::VariableDeclaration(_)))
+                {
+                    return None;
+                }
+            }
+            Some(ctx.ast.statement_empty(s.span))
+        }
     }
 
     // `([1,2,3, foo()])` -> `foo()`
@@ -669,5 +691,20 @@ mod test {
         fold("(function k() {}, k(), baz())", "k(), baz()");
         fold_same("(0, o.f)();");
         fold("var obj = Object((null, 2, 3), 1, 2);", "var obj = Object(3, 1, 2);");
+    }
+
+    #[test]
+    fn test_fold_try_statement() {
+        fold_same("try { throw 0 } catch (e) { foo() }");
+        fold_same("try {} catch (e) { var foo }");
+        fold("try {} catch (e) { foo() }", "");
+        fold("try {} catch (e) { foo() } finally {}", "");
+        fold("try {} finally { foo() }", "{ foo() }");
+        fold("try {} catch (e) { foo() } finally { bar() }", "{ bar() }");
+        fold("try {} finally { var x = foo() }", "{ var x = foo() }");
+        fold("try {} catch (e) { foo() } finally { var x = bar() }", "{ var x = bar() }");
+        fold("try {} finally { let x = foo() }", "{ let x = foo() }");
+        fold("try {} catch (e) { foo() } finally { let x = bar() }", "{ let x = bar();}");
+        fold("try {} catch () { } finally {}", "");
     }
 }
