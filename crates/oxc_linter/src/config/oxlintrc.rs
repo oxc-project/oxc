@@ -20,7 +20,7 @@ use super::{
 /// 
 /// **Automatic search for config file:**
 /// When no `-c/--config` flag is provided, 
-/// oxlint is looking in the current working directory for a `.oxlintrc.json` file.
+/// oxlint will look in the current working directory for a `.oxlintrc.json` file.
 ///
 /// ::: danger NOTE
 ///
