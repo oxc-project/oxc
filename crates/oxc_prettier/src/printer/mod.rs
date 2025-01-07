@@ -81,7 +81,7 @@ impl<'a> Printer<'a> {
                 Doc::IndentIfBreak(docs) => self.handle_indent_if_break(indent, mode, docs),
                 Doc::Line(line) => self.handle_line(line, indent, mode, doc),
                 Doc::LineSuffix(docs) => self.handle_line_suffix(indent, mode, docs),
-                Doc::LineSuffixBondary => self.handle_line_suffix_boundary(indent, mode),
+                Doc::LineSuffixBoundary => self.handle_line_suffix_boundary(indent, mode),
                 Doc::IfBreak(if_break) => self.handle_if_break(if_break, indent, mode),
                 Doc::Fill(fill) => self.handle_fill(indent, mode, fill),
                 Doc::BreakParent => { /* No op */ }
@@ -425,7 +425,7 @@ impl<'a> Printer<'a> {
                 Doc::LineSuffix(_) => {
                     break;
                 }
-                Doc::LineSuffixBondary => {
+                Doc::LineSuffixBoundary => {
                     if !self.line_suffix.is_empty() {
                         return false;
                     }

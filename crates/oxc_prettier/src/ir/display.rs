@@ -114,7 +114,7 @@ fn print_doc_to_debug(doc: &Doc<'_>) -> std::string::String {
             }
             string.push(')');
         }
-        Doc::LineSuffixBondary => {
+        Doc::LineSuffixBoundary => {
             string.push_str("lineSuffixBoundary");
         }
         Doc::BreakParent => {
