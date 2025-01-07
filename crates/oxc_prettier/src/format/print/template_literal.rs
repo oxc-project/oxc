@@ -31,9 +31,9 @@ impl<'a> TemplateLiteralLike<'a, '_> {
     }
 }
 
-pub fn print_template_literal<'a, 'b>(
+pub fn print_template_literal<'a>(
     p: &mut Prettier<'a>,
-    template_literal: TemplateLiteralLike<'a, 'b>,
+    template_literal: &TemplateLiteralLike<'a, '_>,
 ) -> Doc<'a> {
     // TODO: Special support for Jest `.each`
 
