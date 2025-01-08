@@ -1,72 +1,24 @@
-#![allow(clippy::print_stdout, clippy::print_stderr, clippy::disallowed_methods)]
+#![allow(clippy::print_stdout)]
+
 mod ignore_list;
+pub mod options;
 mod spec;
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
+
+use cow_utils::CowUtils;
+use rustc_hash::FxHashSet;
+use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::SourceType;
-use oxc_tasks_common::project_root;
-use rustc_hash::FxHashSet;
-use walkdir::WalkDir;
 
-use crate::{ignore_list::IGNORE_TESTS, spec::SpecParser};
-
-#[test]
-#[cfg(any(coverage, coverage_nightly))]
-fn test() {
-    TestRunner::new(TestLanguage::Js, TestRunnerOptions::default()).run();
-    TestRunner::new(TestLanguage::Ts, TestRunnerOptions::default()).run();
-}
-
-pub enum TestLanguage {
-    Js,
-    Ts,
-}
-
-impl TestLanguage {
-    fn as_str(&self) -> &'static str {
-        match self {
-            Self::Js => "js",
-            Self::Ts => "ts",
-        }
-    }
-
-    /// Prettier's test fixtures roots for different languages.
-    fn fixtures_roots(&self) -> Vec<PathBuf> {
-        match self {
-            Self::Js => ["js", "jsx"],
-            // There is no `tsx` directory, just check it works with TS
-            // `SourceType`.`variant` is handled by spec file extension
-            Self::Ts => ["typescript", "jsx"],
-        }
-        .iter()
-        .map(|dir| fixtures_root().join(dir))
-        .collect::<Vec<_>>()
-    }
-}
-
-#[derive(Default, Clone)]
-pub struct TestRunnerOptions {
-    pub filter: Option<String>,
-}
-
-/// The test runner which walks the prettier repository and searches for formatting tests.
-pub struct TestRunner {
-    language: TestLanguage,
-    fixtures_roots: Vec<PathBuf>,
-    ignore_tests: &'static [&'static str],
-    options: TestRunnerOptions,
-    spec: SpecParser,
-}
+use crate::{ignore_list::IGNORE_TESTS, options::TestRunnerOptions, spec::parse_spec};
 
 fn root() -> PathBuf {
-    project_root().join("tasks").join("prettier_conformance")
+    oxc_tasks_common::project_root().join("tasks").join("prettier_conformance")
 }
 
 fn fixtures_root() -> PathBuf {
@@ -77,182 +29,315 @@ fn snap_root() -> PathBuf {
     root().join("snapshots")
 }
 
-const SNAP_NAME: &str = "format.test.js";
-const SNAP_RELATIVE_PATH: &str = "__snapshots__/format.test.js.snap";
-const LF: char = '\u{a}';
-const CR: char = '\u{d}';
+const FORMAT_TEST_SPEC_NAME: &str = "format.test.js";
+const SNAPSHOT_DIR_NAME: &str = "__snapshots__";
+const SNAPSHOT_FILE_NAME: &str = "format.test.js.snap";
+
+pub struct TestRunner {
+    options: TestRunnerOptions,
+}
 
 impl TestRunner {
-    pub fn new(language: TestLanguage, options: TestRunnerOptions) -> Self {
-        let fixtures_roots = language.fixtures_roots();
-        Self {
-            language,
-            fixtures_roots,
-            ignore_tests: IGNORE_TESTS,
-            options,
-            spec: SpecParser::default(),
-        }
+    pub fn new(options: TestRunnerOptions) -> Self {
+        Self { options }
     }
 
     /// # Panics
-    #[expect(clippy::cast_precision_loss)]
-    pub fn run(mut self) {
-        let fixture_roots = &self.fixtures_roots;
-        // Read the first level of directories that contain `__snapshots__`
-        let mut dirs = vec![];
-        for fixture_root in fixture_roots {
-            let dir = WalkDir::new(fixture_root)
-                .min_depth(1)
-                .into_iter()
-                .filter_map(Result::ok)
-                .filter(|e| {
-                    self.options
-                        .filter
-                        .as_ref()
-                        .map_or(true, |name| e.path().to_string_lossy().contains(name))
-                })
-                .filter(|e| {
-                    !self.ignore_tests.iter().any(|s| e.path().to_string_lossy().contains(s))
-                })
-                .map(|e| {
-                    let mut path = e.into_path();
-                    if path.is_file() {
-                        if let Some(parent_path) = path.parent() {
-                            path = parent_path.into();
-                        }
-                    }
-                    path
-                })
-                .filter(|path| path.join("__snapshots__").exists())
-                .collect::<Vec<_>>();
-            dirs.extend(dir);
+    pub fn run(&self) {
+        let test_lang = self.options.language.as_str();
+        let test_dirs = collect_test_dirs(&self.options.language.fixtures_roots(&fixtures_root()));
+
+        // If filter is set, only run the specified test for debug
+        if self.options.filter.is_some() {
+            for dir in &test_dirs {
+                let inputs = collect_test_files(dir, self.options.filter.as_ref());
+                // If filter is set, many of the tests can be skipped
+                if !inputs.is_empty() {
+                    // This will print the diff
+                    let _failed_test_files = test_snapshots(dir, &inputs, true);
+                }
+            }
+
+            return;
         }
 
-        let dir_set: FxHashSet<_> = dirs.iter().cloned().collect();
-        dirs = dir_set.into_iter().collect();
+        // Otherwise, run all tests and generate coverage reports
+        let mut total_tested_file_count = 0;
+        let mut total_failed_file_count = 0;
+        let mut failed_reports = String::new();
+        failed_reports.push_str("# Failed\n");
 
-        dirs.sort_unstable();
+        for dir in &test_dirs {
+            let inputs = collect_test_files(dir, None);
+            let failed_test_files = test_snapshots(dir, &inputs, false);
 
-        let mut total = 0;
-        let mut failed = vec![];
+            total_tested_file_count += inputs.len();
+            total_failed_file_count += failed_test_files.len();
 
-        for dir in &dirs {
-            // Get `format.test.js`
-            let mut spec_path = dir.join(SNAP_NAME);
-            while !spec_path.exists() {
-                spec_path = dir.parent().unwrap().join(SNAP_NAME);
+            if !failed_test_files.is_empty() {
+                // Use dir as header
+                failed_reports.push_str(&format!(
+                    "\n### {}\n",
+                    &dir.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
+                ));
+                // Each failed test file
+                for path in failed_test_files {
+                    failed_reports.push_str(&format!(
+                        "* {}\n",
+                        path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
+                    ));
+                }
             }
+        }
 
-            if !spec_path.exists() {
-                continue;
-            }
+        let passed = total_tested_file_count - total_failed_file_count;
+        #[expect(clippy::cast_precision_loss)]
+        let percentage = (passed as f64 / total_tested_file_count as f64) * 100.0;
+        let summary = format!(
+            "{test_lang} compatibility: {passed}/{total_tested_file_count} ({percentage:.2}%)"
+        );
 
-            // Get all the other input files
-            let mut inputs: Vec<PathBuf> = WalkDir::new(dir)
-                .min_depth(1)
-                .max_depth(1)
-                .into_iter()
-                .filter_map(Result::ok)
-                .filter(|e| !e.file_type().is_dir())
-                .filter(|e| {
-                    !self.ignore_tests.iter().any(|s| e.path().to_string_lossy().contains(s))
-                })
-                .filter(|e| {
-                    self.options
-                        .filter
-                        .as_ref()
-                        .map_or(true, |name| e.path().to_string_lossy().contains(name))
-                        && !e
-                            .path()
-                            .file_name()
-                            .is_some_and(|name| name.to_string_lossy().contains(SNAP_NAME))
-                })
-                .map(|e| e.path().to_path_buf())
-                .collect();
-            inputs.sort_unstable();
+        // Print summary
+        println!("{summary}");
+        // And generate coverage reports
+        let snapshot = format!("{summary}\n\n{failed_reports}");
+        std::fs::write(snap_root().join(format!("prettier.{test_lang}.snap.md")), snapshot)
+            .unwrap();
+    }
+}
 
-            self.spec.parse(&spec_path);
-            debug_assert!(
-                !self.spec.calls.is_empty(),
-                "There is no `runFormatTest()` in {}, please check if it is correct?",
-                spec_path.to_string_lossy()
+/// Read the first level of directories that contain `__snapshots__` and `format.test.js`
+/// ```
+/// js/arrows <------------------------------- THIS
+/// ├── __snapshots__
+/// ├── arrow-chain-with-trailing-comments.js
+/// ├── arrow_function_expression.js
+/// ├── format.test.js
+/// ├── semi <-------------------------------- AND THIS
+/// │   ├── __snapshots__
+/// │   ├── format.test.js
+/// │   └── semi.js
+/// └── tuple-and-record.js
+/// ```
+fn collect_test_dirs(fixture_roots: &Vec<PathBuf>) -> Vec<PathBuf> {
+    let mut test_dirs = FxHashSet::default();
+
+    for fixture_root in fixture_roots {
+        let dirs = WalkDir::new(fixture_root)
+            .min_depth(1)
+            .into_iter()
+            .filter_map(Result::ok)
+            .map(|e| {
+                let mut path = e.into_path();
+                if path.is_file() {
+                    if let Some(parent_path) = path.parent() {
+                        path = parent_path.into();
+                    }
+                }
+                path
+            })
+            .filter(|path| {
+                path.join(SNAPSHOT_DIR_NAME).exists() && path.join(FORMAT_TEST_SPEC_NAME).exists()
+            })
+            .collect::<Vec<_>>();
+
+        test_dirs.extend(dirs);
+    }
+
+    let mut test_dirs = test_dirs.into_iter().collect::<Vec<_>>();
+    test_dirs.sort_unstable();
+
+    test_dirs
+}
+
+/// Read all test files in the directory with applying ignore + filter
+/// ```
+/// js/arrows
+/// ├── __snapshots__
+/// ├── arrow-chain-with-trailing-comments.js <---- THIS
+/// ├── arrow_function_expression.js <------------- AND THIS
+/// ├── format.test.js
+/// └── tuple-and-record.js <---------------------- AND THIS
+/// ```
+fn collect_test_files(dir: &Path, filter: Option<&String>) -> Vec<PathBuf> {
+    let mut test_files: Vec<PathBuf> = WalkDir::new(dir)
+        .min_depth(1)
+        .max_depth(1)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| !e.file_type().is_dir())
+        .filter(|e| e.path().file_name().is_none_or(|name| name != FORMAT_TEST_SPEC_NAME))
+        .filter(|e| !IGNORE_TESTS.iter().any(|s| e.path().to_string_lossy().contains(s)))
+        .filter(|e| filter.map_or(true, |name| e.path().to_string_lossy().contains(name)))
+        .map(|e| e.path().to_path_buf())
+        .collect();
+    test_files.sort_unstable();
+
+    test_files
+}
+
+/// Run `oxc_prettier` and compare the output with the Prettier's snapshot
+fn test_snapshots(dir: &Path, test_files: &Vec<PathBuf>, has_debug_filter: bool) -> Vec<PathBuf> {
+    // Parse all `runFormatTest()` calls and collect format options
+    let spec_path = &dir.join(FORMAT_TEST_SPEC_NAME);
+    let spec_calls = parse_spec(spec_path);
+    debug_assert!(
+        !spec_calls.is_empty(),
+        "There is no `runFormatTest()` in {}, please check if it is correct?",
+        spec_path.to_string_lossy()
+    );
+
+    let snapshots =
+        std::fs::read_to_string(dir.join(SNAPSHOT_DIR_NAME).join(SNAPSHOT_FILE_NAME)).unwrap();
+
+    let mut failed_test_files = vec![];
+    for path in test_files {
+        // Single source text is used for multiple options
+        let source_text = std::fs::read_to_string(path).unwrap();
+        // Check every combination of options!
+        let result = spec_calls.iter().all(|(prettier_options, snapshot_options)| {
+            // Single snapshot file contains multiple test cases, so need to find the right one
+            let expected = find_output_from_snapshots(
+                &snapshots,
+                path.file_name().unwrap().to_string_lossy().as_ref(),
+                snapshot_options,
+                prettier_options.print_width,
+            )
+            .unwrap();
+
+            let actual = replace_escape_and_eol(
+                &run_oxc_prettier(
+                    &source_text,
+                    SourceType::from_path(path).unwrap(),
+                    *prettier_options,
+                ),
+                expected.contains("LF>") || expected.contains("<CR"),
             );
 
-            total += inputs.len();
-            self.test_snapshot(dir, &spec_path, &inputs, &mut failed);
-        }
+            let result = expected == actual;
 
-        let language = self.language.as_str();
-        let passed = total - failed.len();
-        let percentage = if passed == 0 { 0_f64 } else { (passed as f64 / total as f64) * 100.0 };
-        let heading = format!("{language} compatibility: {passed}/{total} ({percentage:.2}%)");
+            if has_debug_filter {
+                let print_with_border = |title: &str| {
+                    let w = prettier_options.print_width;
+                    println!("--- {title} {}", "-".repeat(w - title.len() - 5));
+                };
 
-        println!("{heading}");
+                println!(
+                    "{} Test: {}",
+                    if result { "✨" } else { "💥" },
+                    path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
+                );
+                println!(
+                    "Options: {{ {} }}",
+                    snapshot_options
+                        .iter()
+                        .filter(|(k, _)| k != "parsers")
+                        .map(|(k, v)| format!("{k}: {v}"))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                );
 
-        if self.options.filter.is_none() {
-            let failed = failed.join("\n");
-            let snapshot = format!("{heading}\n\n# Failed\n{failed}");
-            let filename = format!("prettier.{language}.snap.md");
-            fs::write(snap_root().join(filename), snapshot).unwrap();
-        }
-    }
-
-    fn test_snapshot(
-        &self,
-        dir: &Path,
-        spec_path: &Path,
-        inputs: &[PathBuf],
-        failed: &mut Vec<String>,
-    ) {
-        let expected_file = spec_path.parent().unwrap().join(SNAP_RELATIVE_PATH);
-        let expected = fs::read_to_string(expected_file).unwrap();
-
-        let mut write_dir_info = true;
-        for path in inputs {
-            let input = fs::read_to_string(path).unwrap();
-
-            let result = self.spec.calls.iter().all(|spec| {
-                let snapshot = self.get_single_snapshot(path, &input, spec.0, &spec.1, &expected);
-                if snapshot.trim().is_empty() {
-                    return false;
+                if !result {
+                    print_with_border("Input");
+                    println!("{source_text}");
+                    print_with_border(&format!("PrettierOutput: {}LoC", expected.lines().count()));
+                    println!("{expected}");
+                    print_with_border(&format!("OxcOutput: {}LoC", actual.lines().count()));
+                    println!("{actual}");
+                    print_with_border("Diff");
+                    oxc_tasks_common::print_diff_in_terminal(&expected, &actual);
                 }
-                expected.contains(&snapshot)
-            });
-
-            if !result {
-                let mut dir_info = String::new();
-                if write_dir_info {
-                    dir_info = format!(
-                        "\n### {}\n",
-                        dir.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
-                    );
-                    write_dir_info = false;
-                }
-
-                // NOTE: `failed.len()` is used as failed count directly
-                failed.push(format!(
-                    "{dir_info}* {}",
-                    path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
-                ));
+                println!();
             }
+
+            result
+        });
+
+        if !result {
+            failed_test_files.push(path.clone());
         }
     }
 
-    fn visualize_end_of_line(content: &str) -> String {
-        let mut chars = content.chars();
+    failed_test_files
+}
+
+/// Extract single output section from snapshot file which contains multiple test cases.
+///
+/// Format is like below:
+/// ```
+/// filename1
+/// ===optionsA===
+/// ====input1====
+/// ===output1A===
+/// ==============
+/// filename1
+/// ===optionsB===
+/// ====input1====
+/// ===output1B===
+/// ==============
+///
+/// filename2
+/// ===optionsA===
+/// ====input2====
+/// ===output2A===
+/// ==============
+/// ```
+///
+/// There are also options-like strings after the filename, but it seems that format is not guaranteed...
+/// Thus, we need to find the right section by filename and options for sure.
+fn find_output_from_snapshots(
+    snap_content: &str,
+    file_name: &str,
+    snapshot_options: &[(String, String)],
+    print_width: usize,
+) -> Option<String> {
+    let filename_started = snap_content.find(&format!("exports[`{file_name} "))?;
+    let expected = &snap_content[filename_started..];
+
+    let options_started = expected.find(&format!(
+        "====================================options=====================================
+{}
+{}| printWidth
+=====================================input======================================
+",
+        snapshot_options.iter().map(|(k, v)| format!("{k}: {v}")).collect::<Vec<_>>().join("\n"),
+        " ".repeat(print_width)
+    ))?;
+    let expected = &expected[options_started..];
+
+    let output_start_line =
+        "=====================================output=====================================\n";
+    let output_started = expected.find(output_start_line)?;
+    let output_end_line =
+        "\n================================================================================";
+    let output_ended = expected.find(output_end_line)?;
+
+    let output = expected[output_started..output_ended]
+        .trim_start_matches(output_start_line)
+        .trim_end_matches(output_end_line);
+
+    Some(output.to_string())
+}
+
+/// Apply the same escape rules as Prettier does.
+/// If Prettier's snapshot contains <LF>, <CR> or <CRLF>, we also need to visualize.
+fn replace_escape_and_eol(input: &str, need_eol_visualized: bool) -> String {
+    let input = input
+        .cow_replace("\\", "\\\\")
+        .cow_replace("`", "\\`")
+        .cow_replace("${", "\\${")
+        .into_owned();
+
+    if need_eol_visualized {
+        let mut chars = input.chars();
         let mut result = String::new();
 
-        loop {
-            let current = chars.next();
-            let Some(char) = current else {
-                break;
-            };
-
+        while let Some(char) = chars.next() {
             match char {
-                LF => result.push_str("<LF>\n"),
-                CR => {
+                '\u{a}' => result.push_str("<LF>\n"),
+                '\u{d}' => {
                     let next = chars.clone().next();
-                    if next == Some(LF) {
+                    if next == Some('\u{a}') {
                         result.push_str("<CRLF>\n");
                         chars.next();
                     } else {
@@ -264,198 +349,21 @@ impl TestRunner {
                 }
             }
         }
-        result
+
+        return result;
     }
 
-    fn get_single_snapshot(
-        &self,
-        path: &Path,
-        input: &str,
-        prettier_options: PrettierOptions,
-        snapshot_options: &[(String, String)],
-        snap_content: &str,
-    ) -> String {
-        let filename = path.file_name().unwrap().to_string_lossy();
-
-        let snapshot_line = snapshot_options
-            .iter()
-            .filter(|k| {
-                if k.0 == "parsers" {
-                    false
-                } else if k.0 == "printWidth" {
-                    return k.1 != "80";
-                } else {
-                    true
-                }
-            })
-            .map(|(k, v)| format!("\"{k}\":{v}"))
-            .collect::<Vec<_>>()
-            .join(",");
-
-        let title_snapshot_options = format!("- {{{snapshot_line}}} ",);
-
-        let title = format!(
-            "exports[`{filename} {}format 1`] = `",
-            if snapshot_line.is_empty() { String::new() } else { title_snapshot_options }
-        );
-
-        let need_eol_visualized = snap_content.contains("<LF>");
-        let output = Self::prettier(path, input, prettier_options);
-        let output = Self::escape_and_convert_snap_string(&output, need_eol_visualized);
-        let input = Self::escape_and_convert_snap_string(input, need_eol_visualized);
-        let snapshot_options = snapshot_options
-            .iter()
-            .map(|(k, v)| format!("{k}: {v}"))
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        let space_line = " ".repeat(prettier_options.print_width);
-        let snapshot_without_output = format!(
-            r#"
-{title}
-====================================options=====================================
-{snapshot_options}
-{space_line}| printWidth
-=====================================input======================================
-{input}"#
-        );
-
-        let snapshot_output = format!(
-            r#"
-=====================================output=====================================
-{output}
-
-================================================================================
-`;"#
-        );
-
-        // put it here but not in below if-statement to help detect no matched input cases.
-        let expected = Self::get_expect(snap_content, &snapshot_without_output).unwrap_or_default();
-
-        if self.options.filter.is_some() {
-            println!("Input path: {}", path.to_string_lossy());
-            if !snapshot_line.is_empty() {
-                println!("Options: \n{snapshot_line}\n");
-            }
-            println!("Input:");
-            println!("{input}");
-            println!("Output:");
-            println!("{output}");
-            println!("Diff:");
-            println!("{}", Self::get_diff(&output, &expected));
-        }
-
-        format!("{snapshot_without_output}{snapshot_output}")
-    }
-
-    fn get_expect(expected: &str, input: &str) -> Option<String> {
-        let input_started = expected.find(input)?;
-        let expected = &expected[input_started..];
-        let output_start_line =
-            "=====================================output=====================================\n";
-        let output_end_line =
-            "================================================================================";
-        let output_started = expected.find(output_start_line)?;
-        let output_ended = expected.find(output_end_line)?;
-        let output = expected[output_started..output_ended]
-            .trim_start_matches(output_start_line)
-            .trim_end_matches(output_end_line);
-        Some(output.to_string())
-    }
-
-    fn get_diff(output: &str, expect: &str) -> String {
-        let output = output.trim().lines().collect::<Vec<_>>();
-        let expect = expect.trim().lines().collect::<Vec<_>>();
-        let length = output.len().max(expect.len());
-        let mut result = String::new();
-
-        for i in 0..length {
-            let left = output.get(i).unwrap_or(&"");
-            let right = expect.get(i).unwrap_or(&"");
-
-            let s = if left == right {
-                format!("{left: <80} | {right: <80}\n")
-            } else {
-                format!("{left: <80} X {right: <80}\n")
-            };
-
-            result.push_str(&s);
-        }
-
-        result
-    }
-
-    fn escape_and_convert_snap_string(input: &str, need_eol_visualized: bool) -> String {
-        let input = input.replace('\\', "\\\\").replace('`', "\\`").replace("${", "\\${");
-        if need_eol_visualized {
-            Self::visualize_end_of_line(&input)
-        } else {
-            input
-        }
-    }
-
-    fn prettier(path: &Path, source_text: &str, prettier_options: PrettierOptions) -> String {
-        let allocator = Allocator::default();
-        let source_type = SourceType::from_path(path).unwrap();
-        let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
-            .parse();
-        Prettier::new(&allocator, prettier_options).build(&ret.program)
-    }
+    input
 }
 
-#[cfg(test)]
-mod tests {
-    use std::fs;
-
-    use crate::{fixtures_root, TestRunner, SNAP_RELATIVE_PATH};
-
-    fn get_expect_in_arrays(input_name: &str) -> String {
-        let base = fixtures_root().join("js/arrays");
-        let expect_file = fs::read_to_string(base.join(SNAP_RELATIVE_PATH)).unwrap();
-        let input = fs::read_to_string(base.join(input_name)).unwrap();
-        TestRunner::get_expect(&expect_file, &input).unwrap()
-    }
-
-    #[ignore]
-    #[test]
-    fn test_get_expect() {
-        let expected = get_expect_in_arrays("empty.js");
-        assert_eq!(
-            expected,
-            "const a =
-  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || [];
-const b =
-  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || {};
-
-"
-        );
-    }
-
-    #[ignore]
-    #[test]
-    fn test_get_diff() {
-        let expected = get_expect_in_arrays("empty.js");
-        let output = "
-const a =
-  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||
-  []
-;
-const b =
-  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||
-  {}
-;";
-        let diff = TestRunner::get_diff(output, &expected);
-        let expected_diff = "
-const a =                                                                        | const a =
-  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||           X   someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || [];
-  []                                                                             X const b =
-;                                                                                X   someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression || {};
-const b =                                                                        X
-  someVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeLong.Expression ||           X
-  {}                                                                             X
-;                                                                                X";
-
-        assert_eq!(diff.trim(), expected_diff.trim());
-    }
+fn run_oxc_prettier(
+    source_text: &str,
+    source_type: SourceType,
+    prettier_options: PrettierOptions,
+) -> String {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type)
+        .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+        .parse();
+    Prettier::new(&allocator, prettier_options).build(&ret.program)
 }

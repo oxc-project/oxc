@@ -1,4 +1,4 @@
-ts compatibility: 190/568 (33.45%)
+ts compatibility: 193/568 (33.98%)
 
 # Failed
 
@@ -54,10 +54,8 @@ ts compatibility: 190/568 (33.45%)
 * jsx/jsx/quotes.js
 * jsx/jsx/regex.js
 * jsx/jsx/return-statement.js
-* jsx/jsx/self-closing.js
 * jsx/jsx/spacing.js
 * jsx/jsx/template-literal-in-attr.js
-* jsx/jsx/ternary.js
 
 ### jsx/last-line
 * jsx/last-line/last_line.js
@@ -229,9 +227,6 @@ ts compatibility: 190/568 (33.45%)
 * typescript/conformance/classes/mixinClassesAnonymous.ts
 * typescript/conformance/classes/mixinClassesMembers.ts
 * typescript/conformance/classes/nestedClassDeclaration.ts
-
-### typescript/conformance/classes/classDeclarations/classAbstractKeyword
-* typescript/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
 
 ### typescript/conformance/classes/classDeclarations/classHeritageSpecification
 * typescript/conformance/classes/classDeclarations/classHeritageSpecification/classExtendsItselfIndirectly.ts
