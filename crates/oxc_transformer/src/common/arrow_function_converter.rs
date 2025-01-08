@@ -1141,12 +1141,8 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
         let mut new_stmts = vec![];
 
         for (index, stmt) in statements.iter_mut().enumerate() {
-            let Statement::ExpressionStatement(expr_stmt) = stmt else {
-                self.visit_statement(stmt);
-                continue;
-            };
-
-            if expr_stmt.expression.is_super_call_expression() {
+            if matches!(stmt, Statement::ExpressionStatement(expr_stmt) if expr_stmt.expression.is_super_call_expression())
+            {
                 let assignment = self.create_assignment_to_this_temp_var();
                 let new_stmt = self.ctx.ast.statement_expression(SPAN, assignment);
                 new_stmts.push((index, new_stmt));
