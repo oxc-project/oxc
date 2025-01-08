@@ -107,7 +107,7 @@ impl TestRunner {
 }
 
 /// Read the first level of directories that contain `__snapshots__` and `format.test.js`
-/// ```
+/// ```text
 /// js/arrows <------------------------------- THIS
 /// ├── __snapshots__
 /// ├── arrow-chain-with-trailing-comments.js
@@ -151,7 +151,7 @@ fn collect_test_dirs(fixture_roots: &Vec<PathBuf>) -> Vec<PathBuf> {
 }
 
 /// Read all test files in the directory with applying ignore + filter
-/// ```
+/// ```text
 /// js/arrows
 /// ├── __snapshots__
 /// ├── arrow-chain-with-trailing-comments.js <---- THIS
@@ -320,7 +320,7 @@ fn find_output_from_snapshots(
 }
 
 /// Apply the same escape rules as Prettier does.
-/// If Prettier's snapshot contains <LF>, <CR> or <CRLF>, we also need to visualize.
+/// If Prettier's snapshot contains `<LF>`, `<CR>` or `<CRLF>`, we also need to visualize.
 fn replace_escape_and_eol(input: &str, need_eol_visualized: bool) -> String {
     let input = input
         .cow_replace("\\", "\\\\")
