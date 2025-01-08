@@ -251,21 +251,21 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
     /// ```js
     /// a: break a;
     /// ```
-    fn try_fold_labeled(
-        labeled: &mut LabeledStatement<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Statement<'a>> {
-        let id = labeled.label.name.as_str();
+    fn try_fold_labeled(s: &mut LabeledStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
+        let id = s.label.name.as_str();
         // Check the first statement in the block, or just the `break [id] ` statement.
         // Check if we need to remove the whole block.
-        match &mut labeled.body {
+        match &mut s.body {
             Statement::BreakStatement(break_stmt)
                 if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
             Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
+            Statement::EmptyStatement(_) => {
+                return Some(ctx.ast.statement_empty(s.span))
+            }
             _ => return None,
         }
         let mut var = KeepVar::new(ctx.ast);
-        var.visit_statement(&labeled.body);
+        var.visit_statement(&s.body);
         let var_decl = var.get_variable_declaration_statement();
         var_decl.unwrap_or(ctx.ast.statement_empty(SPAN)).into()
     }
@@ -587,6 +587,7 @@ mod test {
 
         fold_same("b: { var x = 1; } x = 2;");
         fold_same("a: b: { var x = 1; } x = 2;");
+        fold("foo:;", "");
     }
 
     #[test]
