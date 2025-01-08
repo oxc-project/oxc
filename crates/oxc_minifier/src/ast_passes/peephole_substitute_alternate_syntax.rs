@@ -4,6 +4,7 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ValueType},
     ToInt32, ToJsString, ToNumber,
 };
+use oxc_span::cmp::ContentEq;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::{
     es_target::ESTarget,
@@ -153,6 +154,9 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
             Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
             Expression::BinaryExpression(e) => Self::try_fold_loose_equals_undefined(e, ctx)
                 .or_else(|| Self::try_compress_typeof_undefined(e, ctx)),
+            Expression::ConditionalExpression(e) => {
+                Self::try_merge_conditional_expression_inside(e, ctx)
+            }
             Expression::NewExpression(e) => Self::get_fold_constructor_name(&e.callee, ctx)
                 .and_then(|name| {
                     Self::try_fold_object_or_array_constructor(e.span, name, &mut e.arguments, ctx)
@@ -621,6 +625,46 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             }
             _ => None,
         }
+    }
+
+    /// Merge `consequent` and `alternate` of `ConditionalExpression` inside.
+    ///
+    /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
+    fn try_merge_conditional_expression_inside(
+        expr: &mut ConditionalExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        let (
+            Expression::AssignmentExpression(consequent),
+            Expression::AssignmentExpression(alternate),
+        ) = (&mut expr.consequent, &mut expr.alternate)
+        else {
+            return None;
+        };
+        if !matches!(consequent.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
+            return None;
+        }
+        if consequent.right.is_anonymous_function_definition() {
+            return None;
+        }
+        if consequent.operator != AssignmentOperator::Assign
+            || consequent.operator != alternate.operator
+            || consequent.left.content_ne(&alternate.left)
+        {
+            return None;
+        }
+
+        Some(ctx.ast.expression_assignment(
+            SPAN,
+            consequent.operator,
+            ctx.ast.move_assignment_target(&mut alternate.left),
+            ctx.ast.expression_conditional(
+                SPAN,
+                ctx.ast.move_expression(&mut expr.test),
+                ctx.ast.move_expression(&mut consequent.right),
+                ctx.ast.move_expression(&mut alternate.right),
+            ),
+        ))
     }
 
     /// Fold `Boolean`, `Number`, `String`, `BigInt` constructors.
@@ -1123,6 +1167,28 @@ mod test {
         test_same("x -= 2");
         test_same("x += 1"); // The string concatenation may be triggered, so we don't fold this.
         test_same("x += -1");
+    }
+
+    #[test]
+    fn test_compress_conditional_expression_inside() {
+        test("x ? a = 0 : a = 1", "a = x ? 0 : 1");
+        test(
+            "x ? a = function foo() { return 'a' } : a = function bar() { return 'b' }",
+            "a = x ? function foo() { return 'a' } : function bar() { return 'b' }",
+        );
+
+        // a.b might have a side effect
+        test_same("x ? a.b = 0 : a.b = 1");
+        // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function
+        test_same("x ? a = () => 'a' : a = () => 'b'");
+        test_same("x ? a = function () { return 'a' } : a = function () { return 'b' }");
+        test_same("x ? a = class { foo = 'a' } : a = class { foo = 'b' }");
+
+        // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`
+        // so cannot be fold to `a += x ? 0 : 1`
+        // example case: `(()=>{"use strict"; (console.log("log"), 1) ? a += 0 : a += 1; })()`
+        test_same("x ? a += 0 : a += 1");
+        test_same("x ? a &&= 0 : a &&= 1");
     }
 
     #[test]

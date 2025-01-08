@@ -263,6 +263,18 @@ impl<'a> Expression<'a> {
         matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
     }
 
+    /// Returns `true` if this [`Expression`] is an anonymous function definition.
+    /// Note that this includes [`Class`]s.
+    /// <https://262.ecma-international.org/15.0/#sec-isanonymousfunctiondefinition>
+    pub fn is_anonymous_function_definition(&self) -> bool {
+        match self {
+            Self::ArrowFunctionExpression(_) => true,
+            Self::FunctionExpression(func) => func.name().is_none(),
+            Self::ClassExpression(class) => class.name().is_none(),
+            _ => false,
+        }
+    }
+
     /// Returns `true` if this [`Expression`] is a [`CallExpression`].
     pub fn is_call_expression(&self) -> bool {
         matches!(self, Expression::CallExpression(_))
@@ -1160,7 +1172,13 @@ impl<'a> ArrowFunctionExpression<'a> {
     }
 }
 
-impl Class<'_> {
+impl<'a> Class<'a> {
+    /// Returns this [`Class`]'s name, if it has one.
+    #[inline]
+    pub fn name(&self) -> Option<Atom<'a>> {
+        self.id.as_ref().map(|id| id.name.clone())
+    }
+
     /// `true` if this [`Class`] is an expression.
     ///
     /// For example,
