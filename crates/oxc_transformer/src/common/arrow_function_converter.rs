@@ -449,6 +449,9 @@ impl<'a> ArrowFunctionConverter<'a> {
                 .unwrap();
             ctx.generate_uid("this", target_scope_id, SymbolFlags::FunctionScopedVariable)
         });
+        // TODO: Add `BoundIdentifier::create_spanned_read_reference_boxed` method (and friends)
+        // for this use case, so we can avoid `alloc()` call here.
+        // I (@overlookmotel) doubt it'd make a perf difference, but it'd be cleaner code.
         Some(ctx.ast.alloc(this_var.create_spanned_read_reference(span, ctx)))
     }
 
@@ -1007,6 +1010,9 @@ impl<'a> ArrowFunctionConverter<'a> {
         Self::adjust_binding_scope(target_scope_id, &arguments_var, ctx);
         let reference =
             ctx.create_unbound_ident_reference(SPAN, Atom::from("arguments"), ReferenceFlags::Read);
+        // TODO: We shouldn't be cloning `IdentifierReference` here.
+        // We'll end up with 2 x `IdentifierReference`s with same `ReferenceId`.
+        // I guess we don't have a test that covers this, or transform semantic checker would have flagged it.
         let mut init = Expression::Identifier(ctx.ast.alloc(reference.clone()));
 
         // Top level may doesn't have `arguments`, so we need to check it.
@@ -1134,7 +1140,22 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     #[inline] // `#[inline]` because is a no-op
     fn visit_class(&mut self, _class: &mut Class<'a>) {
         // Do not need to insert in nested classes
+
+        // TODO: Need to transform `super()` in:
+        // 1. Class `extends` clause.
+        // 2. Class property computed key
+        // 3. Class method computed key
+        //
+        // So do need to visit class, but only the above parts.
+        // Stop traversal in `visit_property_definition`, `visit_accessor_property`, `visit_static_block`
+        // and `visit_function` instead of here.
+        // (the same places as `this_depth` is incremented in `StaticVisitor` in class properties transform).
+        //
+        // https://babeljs.io/repl#?code_lz=MYGwhgzhAEDyCuAXApgJ2sgHigdgExgRVQGV4AHNaAbwChppgB7HCRVeYRJ1ACgEoa9Bo3BRoASRw4qWXAWgQKaAUJEiA2ksp9-AXWgBeaAEYA3MPVswiAJbBoW5boPGATBcubtK_auoAvl4M1nYOTjoCev5B6rEiIMiI0ABmOEbQkACeOA6qhgB80IgAFrYQFgxBQUA&presets=&externalPlugins=%40babel%2Fplugin-external-helpers%407.25.9%2C%40babel%2Fplugin-transform-async-to-generator%407.25.9&assumptions=%7B%7D
     }
+
+    // TODO: Stop traversal at a `Function` too. `super()` can't appear in a nested function,
+    // so no point traversing it. This is for performance, not correctness.
 
     /// `super()` -> `super(); _this = this;`
     fn visit_statements(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
