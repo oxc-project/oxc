@@ -51,6 +51,8 @@ pub struct PeepholeOptimizations {
 }
 
 impl PeepholeOptimizations {
+    /// `in_fixed_loop`: Do not compress syntaxes that are hard to analyze inside the fixed loop.
+    /// Opposite of `late` in Closure Compiler.
     pub fn new(in_fixed_loop: bool, options: CompressOptions) -> Self {
         Self {
             x0_statement_fusion: StatementFusion::new(),
@@ -58,7 +60,7 @@ impl PeepholeOptimizations {
             x2_exploit_assigns: ExploitAssigns::new(),
             x3_collapse_variable_declarations: CollapseVariableDeclarations::new(),
             x4_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
-            x5_peephole_minimize_conditions: PeepholeMinimizeConditions::new(in_fixed_loop),
+            x5_peephole_minimize_conditions: PeepholeMinimizeConditions::new(),
             x6_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax::new(
                 options.target,
                 in_fixed_loop,

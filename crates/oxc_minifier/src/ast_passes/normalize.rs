@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{node_util::Ctx, CompressorPass};
+use crate::{ctx::Ctx, CompressorPass};
 
 /// Normalize AST
 ///

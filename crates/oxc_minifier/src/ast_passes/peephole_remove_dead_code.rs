@@ -7,7 +7,7 @@ use oxc_ecmascript::{
 use oxc_span::SPAN;
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{keep_var::KeepVar, node_util::Ctx, CompressorPass};
+use crate::{ctx::Ctx, keep_var::KeepVar, CompressorPass};
 
 /// Remove Dead Code from the AST.
 ///

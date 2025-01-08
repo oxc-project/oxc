@@ -13,7 +13,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{node_util::Ctx, CompressorPass};
+use crate::{ctx::Ctx, CompressorPass};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
@@ -21,12 +21,9 @@ use crate::{node_util::Ctx, CompressorPass};
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
 pub struct PeepholeSubstituteAlternateSyntax {
     target: ESTarget,
-    /// Do not compress syntaxes that are hard to analyze inside the fixed loop.
-    /// e.g. Do not compress `undefined -> void 0`, `true` -> `!0`.
-    /// Opposite of `late` in Closure Compiler.
+
     in_fixed_loop: bool,
 
-    // states
     in_define_export: bool,
 
     pub(crate) changed: bool,

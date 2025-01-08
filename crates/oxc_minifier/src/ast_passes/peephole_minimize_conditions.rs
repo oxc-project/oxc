@@ -14,10 +14,6 @@ use crate::CompressorPass;
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 pub struct PeepholeMinimizeConditions {
-    /// Do not compress syntaxes that are hard to analyze inside the fixed loop.
-    #[allow(unused)]
-    in_fixed_loop: bool,
-
     pub(crate) changed: bool,
 }
 
@@ -70,8 +66,8 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
 }
 
 impl<'a> PeepholeMinimizeConditions {
-    pub fn new(in_fixed_loop: bool) -> Self {
-        Self { in_fixed_loop, changed: false }
+    pub fn new() -> Self {
+        Self { changed: false }
     }
 
     /// Try to minimize NOT nodes such as `!(x==y)`.
@@ -613,7 +609,7 @@ mod test {
 
     fn test(source_text: &str, positive: &str) {
         let allocator = Allocator::default();
-        let mut pass = super::PeepholeMinimizeConditions::new(true);
+        let mut pass = super::PeepholeMinimizeConditions::new();
         tester::test(&allocator, source_text, positive, &mut pass);
     }
 
