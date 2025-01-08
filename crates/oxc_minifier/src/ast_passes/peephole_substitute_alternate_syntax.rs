@@ -1520,6 +1520,10 @@ mod test {
         test("x && (x = g())", "x &&= g()");
         test("x ?? (x = g())", "x ??= g()");
 
+        // `||=`, `&&=`, `??=` sets the name property of the function
+        // Example case: `let f = false; f || (f = () => {}); console.log(f.name)`
+        test("x || (x = () => 'a')", "x ||= () => 'a'");
+
         test_same("x || (y = 3)");
 
         // foo() might have a side effect
