@@ -103,15 +103,20 @@ impl<'a> From<&BinaryExpression<'a>> for ValueType {
     fn from(e: &BinaryExpression<'a>) -> Self {
         match e.operator {
             BinaryOperator::Addition => {
-                let left_ty = Self::from(&e.left);
-                let right_ty = Self::from(&e.right);
-                if left_ty == Self::String || right_ty == Self::String {
+                let left = Self::from(&e.left);
+                let right = Self::from(&e.right);
+                if left == Self::Boolean
+                    && matches!(right, Self::Undefined | Self::Null | Self::Number)
+                {
+                    return Self::Number;
+                }
+                if left == Self::String || right == Self::String {
                     return Self::String;
                 }
                 // There are some pretty weird cases for object types:
                 //   {} + [] === "0"
                 //   [] + {} === "[object Object]"
-                if left_ty == Self::Object || right_ty == Self::Object {
+                if left == Self::Object || right == Self::Object {
                     return Self::Undetermined;
                 }
                 Self::Undetermined
