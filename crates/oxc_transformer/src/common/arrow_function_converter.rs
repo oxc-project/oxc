@@ -1119,13 +1119,13 @@ impl<'a> ArrowFunctionConverter<'a> {
 }
 
 /// Visitor for inserting `this` after `super` in constructor body.
-struct ConstructorBodyThisAfterSuperInserter<'a, 'arrow> {
-    this_var_binding: &'arrow BoundIdentifier<'a>,
-    ctx: &'arrow mut TraverseCtx<'a>,
+struct ConstructorBodyThisAfterSuperInserter<'a, 'v> {
+    this_var_binding: &'v BoundIdentifier<'a>,
+    ctx: &'v mut TraverseCtx<'a>,
 }
 
-impl<'a, 'b> ConstructorBodyThisAfterSuperInserter<'a, 'b> {
-    fn new(this_var_binding: &'b BoundIdentifier<'a>, ctx: &'b mut TraverseCtx<'a>) -> Self {
+impl<'a, 'v> ConstructorBodyThisAfterSuperInserter<'a, 'v> {
+    fn new(this_var_binding: &'v BoundIdentifier<'a>, ctx: &'v mut TraverseCtx<'a>) -> Self {
         Self { this_var_binding, ctx }
     }
 
