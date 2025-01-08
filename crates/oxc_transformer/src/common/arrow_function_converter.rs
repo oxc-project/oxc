@@ -93,7 +93,7 @@ use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, visit::walk_mut::walk_expression, VisitMut, NONE};
-use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
+use oxc_data_structures::stack::{NonEmptyStack, SparseStack, Stack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{CompactStr, GetSpan, SPAN};
 use oxc_syntax::{
@@ -144,7 +144,7 @@ pub struct ArrowFunctionConverter<'a> {
     renamed_arguments_symbol_ids: FxHashSet<SymbolId>,
     // TODO(improve-on-babel): `FxHashMap` would suffice here. Iteration order is not important.
     // Only using `FxIndexMap` for predictable iteration order to match Babel's output.
-    super_methods: Option<FxIndexMap<SuperMethodKey<'a>, SuperMethodInfo<'a>>>,
+    super_methods_stack: Stack<FxIndexMap<SuperMethodKey<'a>, SuperMethodInfo<'a>>>,
 }
 
 impl ArrowFunctionConverter<'_> {
@@ -164,7 +164,7 @@ impl ArrowFunctionConverter<'_> {
             constructor_super_stack: NonEmptyStack::new(false),
             arguments_needs_transform_stack: NonEmptyStack::new(false),
             renamed_arguments_symbol_ids: FxHashSet::default(),
-            super_methods: None,
+            super_methods_stack: Stack::new(),
         }
     }
 }
@@ -210,7 +210,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         self.constructor_super_stack.push(false);
         if self.is_async_only() && func.r#async && Self::is_class_method_like_ancestor(ctx.parent())
         {
-            self.super_methods = Some(FxIndexMap::default());
+            self.super_methods_stack.push(FxIndexMap::default());
         }
     }
 
@@ -617,7 +617,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     /// whose body includes the original `super` expression. The arrow function's name
     /// is generated based on the property name, such as `_superprop_getProperty`.
     ///
-    /// The `super` expressions are temporarily stored in [`Self::super_methods`]
+    /// The `super` expressions are temporarily stored in [`Self::super_methods_stack`]
     /// and eventually inserted by [`Self::insert_variable_statement_at_the_top_of_statements`].`
     ///
     /// ## Example
@@ -640,7 +640,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         assign_value: Option<&mut Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let super_methods = self.super_methods.as_mut()?;
+        let super_methods = self.super_methods_stack.last_mut()?;
 
         let mut argument = None;
         let mut property = "";
@@ -718,7 +718,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         call: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if self.super_methods.is_none() || !call.callee.is_member_expression() {
+        if self.super_methods_stack.last().is_none() || !call.callee.is_member_expression() {
             return None;
         }
 
@@ -757,7 +757,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // Check if the left of the assignment is a `super` member expression.
-        if self.super_methods.is_none()
+        if self.super_methods_stack.last().is_none()
             || !assignment.left.as_member_expression().is_some_and(|m| m.object().is_super())
         {
             return None;
@@ -1050,10 +1050,11 @@ impl<'a> ArrowFunctionConverter<'a> {
         let arguments = self.create_arguments_var_declarator(target_scope_id, arguments_var, ctx);
 
         let is_class_method_like = Self::is_class_method_like_ancestor(ctx.parent());
-        let super_method_count = self.super_methods.as_ref().map_or(0, FxIndexMap::len);
-        let declarations_count = usize::from(arguments.is_some())
-            + if is_class_method_like { super_method_count } else { 0 }
-            + usize::from(this_var.is_some());
+        let super_methods =
+            if is_class_method_like { self.super_methods_stack.pop() } else { None };
+        let super_method_count = super_methods.as_ref().map_or(0, FxIndexMap::len);
+        let declarations_count =
+            usize::from(arguments.is_some()) + super_method_count + usize::from(this_var.is_some());
 
         // Exit if no declarations to be inserted
         if declarations_count == 0 {
@@ -1070,8 +1071,8 @@ impl<'a> ArrowFunctionConverter<'a> {
         // `_superprop_setSomething = _value => super.something = _value;`
         // `_superprop_set = (_prop, _value) => super[_prop] = _value;`
         if is_class_method_like {
-            if let Some(super_methods) = self.super_methods.as_mut() {
-                declarations.extend(super_methods.drain(..).map(|(key, super_method)| {
+            if let Some(super_methods) = super_methods {
+                declarations.extend(super_methods.into_iter().map(|(key, super_method)| {
                     Self::generate_super_method(
                         target_scope_id,
                         super_method,
