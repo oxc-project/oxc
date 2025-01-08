@@ -93,7 +93,7 @@ use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, visit::walk_mut::walk_expression, VisitMut, NONE};
-use oxc_data_structures::stack::{NonEmptyStack, SparseStack, Stack};
+use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{CompactStr, GetSpan, SPAN};
 use oxc_syntax::{
@@ -139,7 +139,7 @@ pub struct ArrowFunctionConverter<'a> {
     mode: ArrowFunctionConverterMode,
     this_var_stack: SparseStack<BoundIdentifier<'a>>,
     arguments_var_stack: SparseStack<BoundIdentifier<'a>>,
-    constructor_super_stack: Stack<bool>,
+    constructor_super_stack: NonEmptyStack<bool>,
     arguments_needs_transform_stack: NonEmptyStack<bool>,
     renamed_arguments_symbol_ids: FxHashSet<SymbolId>,
     // TODO(improve-on-babel): `FxHashMap` would suffice here. Iteration order is not important.
@@ -161,7 +161,7 @@ impl ArrowFunctionConverter<'_> {
             mode,
             this_var_stack: SparseStack::new(),
             arguments_var_stack: SparseStack::new(),
-            constructor_super_stack: Stack::new(),
+            constructor_super_stack: NonEmptyStack::new(false),
             arguments_needs_transform_stack: NonEmptyStack::new(false),
             renamed_arguments_symbol_ids: FxHashSet::default(),
             super_methods: None,
@@ -193,6 +193,11 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         debug_assert!(self.this_var_stack.last().is_none());
         debug_assert!(self.arguments_var_stack.len() == 1);
         debug_assert!(self.arguments_var_stack.last().is_none());
+        debug_assert!(self.constructor_super_stack.len() == 1);
+        // TODO: This assertion currently failing because we don't handle `super` in arrow functions
+        // in class static properties correctly.
+        // e.g. `class C { static f = async () => super.prop; }`
+        // debug_assert!(self.constructor_super_stack.last() == &false);
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -336,9 +341,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
                 self.get_this_identifier(this.span, ctx).map(Expression::Identifier)
             }
             Expression::Super(_) => {
-                if let Some(v) = self.constructor_super_stack.last_mut() {
-                    *v = true;
-                }
+                *self.constructor_super_stack.last_mut() = true;
                 return;
             }
             Expression::CallExpression(call) => self.transform_call_expression_for_super(call, ctx),
@@ -1079,8 +1082,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         if let Some(this_var) = this_var {
             let is_constructor = ctx.scopes().get_flags(target_scope_id).is_constructor();
             let init = if is_constructor
-                && (super_method_count != 0
-                    || self.constructor_super_stack.last().copied().unwrap_or(false))
+                && (super_method_count != 0 || *self.constructor_super_stack.last())
             {
                 // `super()` is called in the constructor body, so we need to insert `_this = this;`
                 // after `super()` call. Because `this` is not available before `super()` call.
