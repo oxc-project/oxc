@@ -9,44 +9,67 @@ use super::{NonNull, StackCapacity, StackCommon};
 
 /// A stack which can never be empty.
 ///
-/// `NonEmptyStack` is created initially with 1 entry, and `pop` does not allow removing it
-/// (though that initial entry can be mutated with `last_mut`).
+/// [`NonEmptyStack`] is created initially with 1 entry, and [`pop`] does not allow removing it
+/// (though that initial entry can be mutated with [`last_mut`]).
 ///
-/// The fact that the stack is never empty makes all operations except `pop` infallible.
-/// `last` and `last_mut` are branchless.
+/// The fact that the stack is never empty makes all operations except [`pop`] infallible.
+/// [`last`] and [`last_mut`] are branchless.
 ///
-/// The trade-off is that you cannot create a `NonEmptyStack` without allocating.
+/// The trade-off is that you cannot create a [`NonEmptyStack`] without allocating,
+/// and you must create an initial value for the "dummy" initial entry.
 /// If that is not a good trade-off for your use case, prefer [`Stack`], which can be empty.
+///
+/// [`NonEmptyStack`] is usually a better choice than [`Stack`], unless either:
+///
+/// 1. The stack will likely never have anything pushed to it.
+///    [`NonEmptyStack::new`] always allocates, whereas [`Stack::new`] does not.
+///    So if stack usually starts empty and remains empty, [`Stack`] will avoid an allocation.
+///    This is the same as how [`Vec`] does not allocate until you push a value into it.
+///
+/// 2. The type the stack holds is large or expensive to construct, so there's a high cost in having to
+///    create an initial dummy value (which [`NonEmptyStack`] requires, but [`Stack`] doesn't).
+///
+/// [`SparseStack`] may be preferable if the type you're storing is an `Option`.
 ///
 /// To simplify implementation, zero size types are not supported (e.g. `NonEmptyStack<()>`).
 ///
 /// ## Design
-/// Designed for maximally efficient `push`, `pop`, and reading/writing the last value on stack.
+/// Designed for maximally efficient [`push`], [`pop`], and reading/writing the last value on stack
+/// ([`last`] / [`last_mut`]).
 ///
-/// The alternative would likely be to use a `Vec`. But `Vec` is optimized for indexing into at
+/// The alternative would likely be to use a [`Vec`]. But `Vec` is optimized for indexing into at
 /// arbitrary positions, not for `push` and `pop`. `Vec` stores `len` and `capacity` as integers,
 /// so requires pointer maths on every operation: `let entry_ptr = base_ptr + index * size_of::<T>();`.
 ///
-/// In comparison, `NonEmptyStack` contains a `cursor` pointer, which always points to last entry
+/// In comparison, [`NonEmptyStack`] contains a `cursor` pointer, which always points to last entry
 /// on stack, so it can be read/written with a minimum of operations.
 ///
-/// This design is similar to `std`'s slice iterator.
+/// This design is similar to [`std`'s slice iterators].
 ///
-/// Comparison to `Vec`:
-/// * `last` and `last_mut` are 1 instruction, instead of `Vec`'s 4.
-/// * `pop` is 1 instruction shorter than `Vec`'s equivalent.
-/// * `push` is 1 instruction shorter than `Vec`'s equivalent, and uses 1 less register.
+/// Comparison to [`Vec`]:
+/// * [`last`] and [`last_mut`] are 1 instruction, instead of `Vec`'s 4.
+/// * [`pop`] is 1 instruction shorter than `Vec`'s equivalent.
+/// * [`push`] is 1 instruction shorter than `Vec`'s equivalent, and uses 1 less register.
 ///
 /// ### Possible alternative designs
-/// 1. `cursor` could point to *after* last entry, rather than *to* it. This has advantage that `pop`
-///    uses 1 less register, but disadvantage that `last` and `last_mut` are 2 instructions, not 1.
+/// 1. `cursor` could point to *after* last entry, rather than *to* it. This has advantage that [`pop`]
+///    uses 1 less register, but disadvantage that [`last`] and [`last_mut`] are 2 instructions, not 1.
 ///    <https://godbolt.org/z/xnx7YP5de>
 ///
-/// 2. Stack could grow downwards, like `bumpalo` allocator does. This would probably make `pop` use
-///    1 less register, but at the cost that the stack can never grow in place, which would incur more
-///    memory copies when the stack grows.
+/// 2. Stack could grow downwards, like `bumpalo` allocator does. This would probably make [`pop`] use
+///    1 less register, but at the cost that: (a) the stack can never grow in place, which would incur
+///    more memory copies when the stack grows, and (b) [`as_slice`] would have the entries in
+///    reverse order.
 ///
+/// [`push`]: NonEmptyStack::push
+/// [`pop`]: NonEmptyStack::pop
+/// [`last`]: NonEmptyStack::last
+/// [`last_mut`]: NonEmptyStack::last_mut
+/// [`as_slice`]: NonEmptyStack::as_slice
 /// [`Stack`]: super::Stack
+/// [`Stack::new`]: super::Stack::new
+/// [`SparseStack`]: super::SparseStack
+/// [`std`'s slice iterators]: std::slice::Iter
 pub struct NonEmptyStack<T> {
     /// Pointer to last entry on stack.
     /// Points *to* last entry, not *after* last entry.
