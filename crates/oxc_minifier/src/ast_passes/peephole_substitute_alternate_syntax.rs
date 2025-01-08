@@ -762,7 +762,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                         Some(ctx.ast.expression_array(span, ctx.ast.vec(), None))
                     }
                     // `new Array(8)` -> `Array(8)`
-                    else if arg.is_number_literal() {
+                    else if let Expression::NumericLiteral(_) = arg {
                         let callee = ctx.ast.expression_identifier_reference(SPAN, "Array");
                         let args = ctx.ast.move_vec(args);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
@@ -1144,6 +1144,7 @@ mod test {
         test("x = new Array(0)", "x = []");
         test("x = new Array(\"a\")", "x = [\"a\"]");
         test("x = new Array(7)", "x = Array(7)");
+        test("x = new Array(7n)", "x = [7n]");
         test("x = new Array(y)", "x = Array(y)");
         test("x = new Array(foo())", "x = Array(foo())");
         test("x = Array(0)", "x = []");
