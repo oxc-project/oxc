@@ -174,11 +174,27 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     self.changed = true;
                 }
             }
+            Some(Statement::BlockStatement(s)) if s.body.is_empty() => {
+                if_stmt.alternate = None;
+                self.changed = true;
+            }
             Some(Statement::EmptyStatement(_)) => {
                 if_stmt.alternate = None;
                 self.changed = true;
             }
             _ => {}
+        }
+
+        // `if (test) {}` -> `test`
+        if if_stmt.alternate.is_none()
+            && match &if_stmt.consequent {
+                Statement::EmptyStatement(_) => true,
+                Statement::BlockStatement(s) => s.body.is_empty(),
+                _ => false,
+            }
+        {
+            let expr = ctx.ast.move_expression(&mut if_stmt.test);
+            return Some(ctx.ast.statement_expression(if_stmt.span, expr));
         }
 
         match ctx.get_boolean_value(&if_stmt.test) {
@@ -711,5 +727,11 @@ mod test {
         fold("try {} finally { let x = foo() }", "{ let x = foo() }");
         fold("try {} catch (e) { foo() } finally { let x = bar() }", "{ let x = bar();}");
         fold("try {} catch () { } finally {}", "");
+    }
+
+    #[test]
+    fn test_fold_if_statement() {
+        test("if (foo) {}", "foo");
+        test("if (foo) {} else {}", "foo");
     }
 }
