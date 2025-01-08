@@ -172,7 +172,6 @@ impl Gen for Statement<'_> {
                 p.print_statement_comments(stmt.span.start);
                 stmt.print(p, ctx);
             }
-
             Self::ImportDeclaration(decl) => {
                 p.print_statement_comments(decl.span.start);
                 decl.print(p, ctx);
@@ -197,7 +196,6 @@ impl Gen for Statement<'_> {
                 p.print_statement_comments(decl.span.start);
                 decl.print(p, ctx);
             }
-
             Self::VariableDeclaration(decl) => {
                 p.print_statement_comments(decl.span.start);
                 p.print_indent();
@@ -395,6 +393,7 @@ impl Gen for ForInStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("for");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -413,6 +412,7 @@ impl Gen for ForOfStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("for");
         if self.r#await {
             p.print_str(" await");
@@ -460,6 +460,7 @@ impl Gen for WhileStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("while");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -541,6 +542,7 @@ impl Gen for SwitchStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("switch");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -648,6 +650,7 @@ impl Gen for ThrowStatement<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("throw");
         p.print_soft_space();
         p.print_expression(&self.argument);
@@ -659,6 +662,7 @@ impl Gen for WithStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("with");
         p.print_ascii_byte(b'(');
         p.print_expression(&self.object);
@@ -671,6 +675,7 @@ impl Gen for DebuggerStatement {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("debugger");
         p.print_semicolon_after_statement();
     }
@@ -679,6 +684,7 @@ impl Gen for DebuggerStatement {
 impl Gen for VariableDeclaration<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
+        p.print_space_before_identifier();
         if self.declare {
             p.print_str("declare ");
         }
@@ -692,7 +698,6 @@ impl Gen for VariableDeclaration<'_> {
             p.start_of_annotation_comment = Some(self.span.start);
         }
 
-        p.print_space_before_identifier();
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => "const",
             VariableDeclarationKind::Let => "let",
