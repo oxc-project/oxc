@@ -1131,7 +1131,7 @@ impl<'a, 'v> ConstructorBodyThisAfterSuperInserter<'a, 'v> {
 }
 
 impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
-    #[inline]
+    #[inline] // `#[inline]` because is a no-op
     fn visit_class(&mut self, _class: &mut Class<'a>) {
         // Do not need to insert in nested classes
     }
@@ -1145,7 +1145,9 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
                 self.visit_statement(stmt);
                 continue;
             };
-            if let Some(assignment) = self.transform_super_call_expression(&expr_stmt.expression) {
+
+            if expr_stmt.expression.is_super_call_expression() {
+                let assignment = self.create_assignment_to_this_temp_var();
                 let new_stmt = self.ctx.ast.statement_expression(SPAN, assignment);
                 new_stmts.push((index, new_stmt));
             } else {
@@ -1160,13 +1162,11 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     }
 
     /// `const A = super()` -> `const A = (super(), _this = this);`
+    // `#[inline]` to avoid a function call for all `Expressions` which are not `super()` (vast majority)
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        if let Some(assignment) = self.transform_super_call_expression(expr) {
-            let span = expr.span();
-            let exprs =
-                self.ctx.ast.vec_from_array([self.ctx.ast.move_expression(expr), assignment]);
-            *expr = self.ctx.ast.expression_sequence(span, exprs);
+        if expr.is_super_call_expression() {
+            self.transform_super_call_expression(expr);
         } else {
             walk_expression(self, expr);
         }
@@ -1174,18 +1174,21 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
 }
 
 impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
-    #[inline]
-    fn transform_super_call_expression(&mut self, expr: &Expression<'a>) -> Option<Expression<'a>> {
-        if expr.is_super_call_expression() {
-            let assignment = self.ctx.ast.expression_assignment(
-                SPAN,
-                AssignmentOperator::Assign,
-                self.this_var_binding.create_write_target(self.ctx),
-                self.ctx.ast.expression_this(SPAN),
-            );
-            Some(assignment)
-        } else {
-            None
-        }
+    /// `super()` -> `(super(), _this = this)`
+    fn transform_super_call_expression(&mut self, expr: &mut Expression<'a>) {
+        let assignment = self.create_assignment_to_this_temp_var();
+        let span = expr.span();
+        let exprs = self.ctx.ast.vec_from_array([self.ctx.ast.move_expression(expr), assignment]);
+        *expr = self.ctx.ast.expression_sequence(span, exprs);
+    }
+
+    /// `_this = this`
+    fn create_assignment_to_this_temp_var(&mut self) -> Expression<'a> {
+        self.ctx.ast.expression_assignment(
+            SPAN,
+            AssignmentOperator::Assign,
+            self.this_var_binding.create_write_target(self.ctx),
+            self.ctx.ast.expression_this(SPAN),
+        )
     }
 }
