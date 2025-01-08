@@ -11,7 +11,7 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 544.10 kB  | 71.75 kB   | 72.48 kB   | 26.16 kB   | 26.20 kB   | lodash.js 
 
-555.77 kB  | 272.91 kB  | 270.13 kB  | 90.92 kB   | 90.80 kB   | d3.js     
+555.77 kB  | 272.82 kB  | 270.13 kB  | 90.92 kB   | 90.80 kB   | d3.js     
 
 1.01 MB    | 460.22 kB  | 458.89 kB  | 126.83 kB  | 126.71 kB  | bundle.min.js
 
@@ -23,5 +23,5 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 6.69 MB    | 2.32 MB    | 2.31 MB    | 492.72 kB  | 488.28 kB  | antd.js   
 
-10.95 MB   | 3.50 MB    | 3.49 MB    | 908.29 kB  | 915.50 kB  | typescript.js
+10.95 MB   | 3.50 MB    | 3.49 MB    | 908.28 kB  | 915.50 kB  | typescript.js
 

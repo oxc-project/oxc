@@ -762,7 +762,24 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                         Some(ctx.ast.expression_array(span, ctx.ast.vec(), None))
                     }
                     // `new Array(8)` -> `Array(8)`
-                    else if let Expression::NumericLiteral(_) = arg {
+                    else if let Expression::NumericLiteral(n) = arg {
+                        // new Array(2) -> `[,,]`
+                        // this does not work with IE8 and below
+                        // learned from https://github.com/babel/minify/pull/45
+                        #[expect(clippy::cast_possible_truncation)]
+                        if n.value.fract() == 0.0 {
+                            let n_int = n.value as i64;
+                            if (1..=6).contains(&n_int) {
+                                return Some(ctx.ast.expression_array(
+                                    span,
+                                    ctx.ast.vec_from_iter((0..n_int).map(|_| {
+                                        ArrayExpressionElement::Elision(Elision { span: SPAN })
+                                    })),
+                                    None,
+                                ));
+                            }
+                        }
+
                         let callee = ctx.ast.expression_identifier_reference(SPAN, "Array");
                         let args = ctx.ast.move_vec(args);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
@@ -1143,6 +1160,8 @@ mod test {
         // One argument
         test("x = new Array(0)", "x = []");
         test("x = new Array(\"a\")", "x = [\"a\"]");
+        test("x = new Array(1)", "x = [,]");
+        test("x = new Array(6)", "x = [,,,,,,]");
         test("x = new Array(7)", "x = Array(7)");
         test("x = new Array(7n)", "x = [7n]");
         test("x = new Array(y)", "x = Array(y)");
