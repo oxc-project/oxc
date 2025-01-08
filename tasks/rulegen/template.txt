@@ -38,7 +38,7 @@ declare_oxc_lint!(
     /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
     /// ```
     {{pascal_rule_name}},
-    {{plugin_name}},
+    {{snake_plugin_name_stripped}},
     nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
              

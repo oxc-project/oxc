@@ -321,6 +321,7 @@ impl<'a> Visit<'a> for TestCase {
 #[derive(Serialize)]
 pub struct Context {
     plugin_name: String,
+    snake_plugin_name_stripped: String,
     kebab_rule_name: String,
     pascal_rule_name: String,
     snake_rule_name: String,
@@ -339,8 +340,18 @@ impl Context {
         let pascal_rule_name = rule_name.to_case(Case::Pascal);
         let kebab_rule_name = rule_name.to_case(Case::Kebab);
         let underscore_rule_name = rule_name.to_case(Case::Snake);
+        let snake_plugin_name = plugin_name
+            .to_case(Case::Snake) // fix for jsx_a11y
+            .replace("a_11_y", "a11y");
+
+        let snake_plugin_name_stripped = snake_plugin_name
+            .strip_prefix("eslint_plugin_")
+            .unwrap_or(&snake_plugin_name)
+            .to_string();
+
         Self {
             plugin_name,
+            snake_plugin_name_stripped,
             kebab_rule_name,
             pascal_rule_name,
             snake_rule_name: underscore_rule_name,
