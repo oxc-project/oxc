@@ -1088,7 +1088,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                     .visit_statements(statements);
                 None
             } else {
-                Some(Expression::ThisExpression(ctx.ast.alloc_this_expression(SPAN)))
+                Some(ctx.ast.expression_this(SPAN))
             };
             Self::adjust_binding_scope(target_scope_id, &this_var, ctx);
             let variable_declarator = ctx.ast.variable_declarator(
