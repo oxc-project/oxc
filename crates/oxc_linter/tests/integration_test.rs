@@ -35,5 +35,5 @@ fn test_declare_oxc_lint() {
     assert_eq!(TestRule::NAME, "test-rule");
 
     // plugin name is passed to const
-    assert_eq!(TestRule::PLUGIN, "eslint")
+    assert_eq!(TestRule::PLUGIN, "eslint");
 }
