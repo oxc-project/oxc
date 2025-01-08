@@ -1008,17 +1008,15 @@ impl<'a> ArrowFunctionConverter<'a> {
         }
 
         Self::adjust_binding_scope(target_scope_id, &arguments_var, ctx);
-        let reference =
-            ctx.create_unbound_ident_reference(SPAN, Atom::from("arguments"), ReferenceFlags::Read);
-        // TODO: We shouldn't be cloning `IdentifierReference` here.
-        // We'll end up with 2 x `IdentifierReference`s with same `ReferenceId`.
-        // I guess we don't have a test that covers this, or transform semantic checker would have flagged it.
-        let mut init = Expression::Identifier(ctx.ast.alloc(reference.clone()));
 
-        // Top level may doesn't have `arguments`, so we need to check it.
+        let mut init =
+            ctx.create_unbound_ident_expr(SPAN, Atom::from("arguments"), ReferenceFlags::Read);
+
+        // Top level may not have `arguments`, so we need to check it.
         // `typeof arguments === "undefined" ? void 0 : arguments;`
         if ctx.scopes().root_scope_id() == target_scope_id {
-            let argument = Expression::Identifier(ctx.ast.alloc(reference));
+            let argument =
+                ctx.create_unbound_ident_expr(SPAN, Atom::from("arguments"), ReferenceFlags::Read);
             let typeof_arguments = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
             let undefined_literal = ctx.ast.expression_string_literal(SPAN, "undefined", None);
             let test = ctx.ast.expression_binary(
