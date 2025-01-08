@@ -1128,21 +1128,6 @@ impl<'a, 'v> ConstructorBodyThisAfterSuperInserter<'a, 'v> {
     fn new(this_var_binding: &'v BoundIdentifier<'a>, ctx: &'v mut TraverseCtx<'a>) -> Self {
         Self { this_var_binding, ctx }
     }
-
-    #[inline]
-    fn transform_super_call_expression(&mut self, expr: &Expression<'a>) -> Option<Expression<'a>> {
-        if expr.is_super_call_expression() {
-            let assignment = self.ctx.ast.expression_assignment(
-                SPAN,
-                AssignmentOperator::Assign,
-                self.this_var_binding.create_write_target(self.ctx),
-                self.ctx.ast.expression_this(SPAN),
-            );
-            Some(assignment)
-        } else {
-            None
-        }
-    }
 }
 
 impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
@@ -1185,6 +1170,23 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
             *expr = self.ctx.ast.expression_sequence(span, exprs);
         } else {
             walk_expression(self, expr);
+        }
+    }
+}
+
+impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
+    #[inline]
+    fn transform_super_call_expression(&mut self, expr: &Expression<'a>) -> Option<Expression<'a>> {
+        if expr.is_super_call_expression() {
+            let assignment = self.ctx.ast.expression_assignment(
+                SPAN,
+                AssignmentOperator::Assign,
+                self.this_var_binding.create_write_target(self.ctx),
+                self.ctx.ast.expression_this(SPAN),
+            );
+            Some(assignment)
+        } else {
+            None
         }
     }
 }
