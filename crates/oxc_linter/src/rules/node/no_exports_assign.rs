@@ -72,6 +72,7 @@ declare_oxc_lint!(
     /// exports = module.exports = {}
     /// ```
     NoExportsAssign,
+    node,
     style,
     fix
 );
@@ -122,7 +123,7 @@ fn test() {
 
     let fix = vec![("exports = {}", "module.exports = {}")];
 
-    Tester::new(NoExportsAssign::NAME, NoExportsAssign::CATEGORY, pass, fail)
+    Tester::new(NoExportsAssign::NAME, NoExportsAssign::PLUGIN, pass, fail)
         .expect_fix(fix)
         .with_node_plugin(true)
         .test_and_snapshot();

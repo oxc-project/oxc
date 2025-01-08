@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// var appHeader = new AppHeader();
     /// ```
     NoNewRequire,
+    node,
     restriction
 );
 
@@ -70,5 +71,5 @@ fn test() {
         "var appHeader = new require('headers').appHeader",
     ];
 
-    Tester::new(NoNewRequire::NAME, NoNewRequire::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoNewRequire::NAME, NoNewRequire::PLUGIN, pass, fail).test_and_snapshot();
 }

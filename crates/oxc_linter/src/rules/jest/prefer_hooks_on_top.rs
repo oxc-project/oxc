@@ -135,6 +135,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     PreferHooksOnTop,
+    jest,
     style,
 );
 
@@ -375,7 +376,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferHooksOnTop::NAME, PreferHooksOnTop::CATEGORY, pass, fail)
+    Tester::new(PreferHooksOnTop::NAME, PreferHooksOnTop::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

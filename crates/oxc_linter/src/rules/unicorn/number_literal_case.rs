@@ -73,6 +73,7 @@ declare_oxc_lint!(
     /// const foo = 2e+5;
     /// ```
     NumberLiteralCase,
+    unicorn,
     style,
     fix
 );
@@ -242,7 +243,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NumberLiteralCase::NAME, NumberLiteralCase::CATEGORY, pass, fail)
+    Tester::new(NumberLiteralCase::NAME, NumberLiteralCase::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

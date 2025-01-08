@@ -68,6 +68,7 @@ declare_oxc_lint!(
     /// globalThis.value;
     /// ```
     TripleSlashReference,
+    typescript,
     correctness
 );
 
@@ -322,6 +323,6 @@ fn test() {
         (r#"/// <reference lib="foo" />"#, Some(serde_json::json!([{ "lib": "never" }]))),
     ];
 
-    Tester::new(TripleSlashReference::NAME, TripleSlashReference::CATEGORY, pass, fail)
+    Tester::new(TripleSlashReference::NAME, TripleSlashReference::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

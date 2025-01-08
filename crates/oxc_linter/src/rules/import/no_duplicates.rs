@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// import type { d } from 'foo'; // `preferInline` is true
     /// ```
     NoDuplicates,
+    import,
     suspicious
 );
 
@@ -409,7 +410,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoDuplicates::NAME, NoDuplicates::CATEGORY, pass, fail)
+    Tester::new(NoDuplicates::NAME, NoDuplicates::PLUGIN, pass, fail)
         .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();

@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoSetState,
+    react,
     style,
 );
 
@@ -184,5 +185,5 @@ fn test() {
 			      ",
     ];
 
-    Tester::new(NoSetState::NAME, NoSetState::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoSetState::NAME, NoSetState::PLUGIN, pass, fail).test_and_snapshot();
 }

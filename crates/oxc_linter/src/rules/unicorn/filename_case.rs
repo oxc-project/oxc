@@ -99,6 +99,7 @@ declare_oxc_lint!(
     /// - `SomeFileName.Test.js`
     /// - `SomeFileName.TestUtils.js`
     FilenameCase,
+    unicorn,
     style
 );
 
@@ -310,5 +311,5 @@ fn test() {
         test_cases("src/foo/{foo_bar}.js", ["camelCase", "pascalCase", "kebabCase"]),
     ];
 
-    Tester::new(FilenameCase::NAME, FilenameCase::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(FilenameCase::NAME, FilenameCase::PLUGIN, pass, fail).test_and_snapshot();
 }

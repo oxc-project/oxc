@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUnreachable,
+    eslint,
     nursery
 );
 
@@ -347,5 +348,5 @@ fn test() {
         "function foo() { var x = 1; do { } while (true); x = 2; }",
     ];
 
-    Tester::new(NoUnreachable::NAME, NoUnreachable::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoUnreachable::NAME, NoUnreachable::PLUGIN, pass, fail).test_and_snapshot();
 }

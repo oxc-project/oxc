@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// if (Array.isArray(x) && x.length === 0) { }
     /// ```
     BadObjectLiteralComparison,
+    oxc,
     correctness
 );
 
@@ -139,6 +140,6 @@ fn test() {
         r"if (config != []) { }",
     ];
 
-    Tester::new(BadObjectLiteralComparison::NAME, BadObjectLiteralComparison::CATEGORY, pass, fail)
+    Tester::new(BadObjectLiteralComparison::NAME, BadObjectLiteralComparison::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

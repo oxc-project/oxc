@@ -25,6 +25,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoAssignModuleVariable,
+    nextjs,
     correctness
 );
 
@@ -70,7 +71,7 @@ fn test() {
 			      ",
     ];
 
-    Tester::new(NoAssignModuleVariable::NAME, NoAssignModuleVariable::CATEGORY, pass, fail)
+    Tester::new(NoAssignModuleVariable::NAME, NoAssignModuleVariable::PLUGIN, pass, fail)
         .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

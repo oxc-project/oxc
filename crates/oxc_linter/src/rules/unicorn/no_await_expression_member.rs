@@ -35,6 +35,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoAwaitExpressionMember,
+    unicorn,
     style,
     pending
 );
@@ -103,6 +104,6 @@ fn test() {
         (r"const foo: Type | A = (await promise).foo", None),
     ];
 
-    Tester::new(NoAwaitExpressionMember::NAME, NoAwaitExpressionMember::CATEGORY, pass, fail)
+    Tester::new(NoAwaitExpressionMember::NAME, NoAwaitExpressionMember::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

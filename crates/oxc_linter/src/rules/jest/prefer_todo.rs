@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// test.todo('i need to write this test');
     /// ```
     PreferTodo,
+    jest,
     style,
     fix
 );
@@ -248,7 +249,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferTodo::NAME, PreferTodo::CATEGORY, pass, fail)
+    Tester::new(PreferTodo::NAME, PreferTodo::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// const foo = '\cA';
     /// ```
     EscapeCase,
+    unicorn,
     pedantic,
     fix
 );
@@ -283,7 +284,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(EscapeCase::NAME, EscapeCase::CATEGORY, pass, fail)
+    Tester::new(EscapeCase::NAME, EscapeCase::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

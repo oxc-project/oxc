@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     DefaultCaseLast,
+    eslint,
     style
 );
 
@@ -117,5 +118,5 @@ fn test() {
         r"switch (foo) { case 1: default: case 2: }",
     ];
 
-    Tester::new(DefaultCaseLast::NAME, DefaultCaseLast::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(DefaultCaseLast::NAME, DefaultCaseLast::PLUGIN, pass, fail).test_and_snapshot();
 }

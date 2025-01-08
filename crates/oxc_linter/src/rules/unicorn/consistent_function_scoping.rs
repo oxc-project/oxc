@@ -139,6 +139,7 @@ declare_oxc_lint!(
     /// })();
     /// ```
     ConsistentFunctionScoping,
+    unicorn,
     suspicious,
     pending
 );
@@ -842,6 +843,6 @@ fn test() {
         ("function outer() { const inner = function inner() {}; }", None),
     ];
 
-    Tester::new(ConsistentFunctionScoping::NAME, ConsistentFunctionScoping::CATEGORY, pass, fail)
+    Tester::new(ConsistentFunctionScoping::NAME, ConsistentFunctionScoping::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

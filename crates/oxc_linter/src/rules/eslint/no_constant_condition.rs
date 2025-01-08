@@ -63,6 +63,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoConstantCondition,
+    eslint,
     correctness
 );
 
@@ -405,6 +406,6 @@ fn test() {
         // ("function* foo() { for (let foo = 1 + 2 + 3 + (yield); true; baz) {}}", None),
     ];
 
-    Tester::new(NoConstantCondition::NAME, NoConstantCondition::CATEGORY, pass, fail)
+    Tester::new(NoConstantCondition::NAME, NoConstantCondition::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

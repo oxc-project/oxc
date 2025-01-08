@@ -63,6 +63,7 @@ declare_oxc_lint!(
     /// <div onMouseOver={() => void 0} onFocus={() => void 0} />
     /// ```
     MouseEventsHaveKeyEvents,
+    jsx_a11y,
     correctness
 );
 
@@ -250,6 +251,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(MouseEventsHaveKeyEvents::NAME, MouseEventsHaveKeyEvents::CATEGORY, pass, fail)
+    Tester::new(MouseEventsHaveKeyEvents::NAME, MouseEventsHaveKeyEvents::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

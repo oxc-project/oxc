@@ -117,6 +117,7 @@ declare_oxc_lint!(
     /// ```
     ///
     MaxNestedDescribe,
+    jest,
     style,
 );
 
@@ -396,7 +397,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxNestedDescribe::NAME, MaxNestedDescribe::CATEGORY, pass, fail)
+    Tester::new(MaxNestedDescribe::NAME, MaxNestedDescribe::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

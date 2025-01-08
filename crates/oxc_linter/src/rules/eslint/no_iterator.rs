@@ -53,6 +53,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     NoIterator,
+    eslint,
     restriction,
     pending // TODO: suggestion
 );
@@ -93,5 +94,5 @@ fn test() {
         "test[`__iterator__`] = function () {};",
     ];
 
-    Tester::new(NoIterator::NAME, NoIterator::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoIterator::NAME, NoIterator::PLUGIN, pass, fail).test_and_snapshot();
 }

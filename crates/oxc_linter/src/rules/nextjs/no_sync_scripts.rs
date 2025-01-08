@@ -29,6 +29,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoSyncScripts,
+    nextjs,
     correctness
 );
 
@@ -130,5 +131,5 @@ fn test() {
 			      }",
     ];
 
-    Tester::new(NoSyncScripts::NAME, NoSyncScripts::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoSyncScripts::NAME, NoSyncScripts::PLUGIN, pass, fail).test_and_snapshot();
 }

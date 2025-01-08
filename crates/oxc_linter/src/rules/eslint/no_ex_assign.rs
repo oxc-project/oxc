@@ -32,6 +32,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoExAssign,
+    eslint,
     correctness
 );
 
@@ -68,5 +69,5 @@ fn test() {
         ("try { } catch ({message}) { message = 10; }", None),
     ];
 
-    Tester::new(NoExAssign::NAME, NoExAssign::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoExAssign::NAME, NoExAssign::PLUGIN, pass, fail).test_and_snapshot();
 }

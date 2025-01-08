@@ -55,6 +55,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferComparisonMatcher,
+    jest,
     style,
     fix
 );
@@ -468,7 +469,7 @@ fn test() {
         fix.push((case.as_str(), fixer.as_str(), None));
     }
 
-    Tester::new(PreferComparisonMatcher::NAME, PreferComparisonMatcher::CATEGORY, pass, fail)
+    Tester::new(PreferComparisonMatcher::NAME, PreferComparisonMatcher::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

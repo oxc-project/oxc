@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// var barIsEnumerable = foo.propertyIsEnumerable("bar");
     /// ```
     NoPrototypeBuiltins,
+    eslint,
     pedantic
 );
 
@@ -112,6 +113,6 @@ fn test() {
         "(foo?.[`hasOwnProperty`])('bar')",
     ];
 
-    Tester::new(NoPrototypeBuiltins::NAME, NoPrototypeBuiltins::CATEGORY, pass, fail)
+    Tester::new(NoPrototypeBuiltins::NAME, NoPrototypeBuiltins::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

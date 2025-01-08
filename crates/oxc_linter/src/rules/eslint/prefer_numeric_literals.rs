@@ -53,6 +53,7 @@ declare_oxc_lint!(
     /// Number.parseInt("1F7", 16) === 503;
     /// ```
     PreferNumericLiterals,
+    eslint,
     style,
     conditional_fix
 );
@@ -375,7 +376,7 @@ fn test() {
         (r#"(Number?.parseInt)?.("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
     ];
 
-    Tester::new(PreferNumericLiterals::NAME, PreferNumericLiterals::CATEGORY, pass, fail)
+    Tester::new(PreferNumericLiterals::NAME, PreferNumericLiterals::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

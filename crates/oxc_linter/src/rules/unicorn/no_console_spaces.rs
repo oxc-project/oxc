@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// console.log("abc", "def");
     /// ```
     NoConsoleSpaces,
+    unicorn,
     style,
     fix
 );
@@ -252,7 +253,7 @@ fn test() {
         ("console.error(foo, ` bar`)", "console.error(foo, `bar`)", None),
     ];
 
-    Tester::new(NoConsoleSpaces::NAME, NoConsoleSpaces::CATEGORY, pass, fail)
+    Tester::new(NoConsoleSpaces::NAME, NoConsoleSpaces::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

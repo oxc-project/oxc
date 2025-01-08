@@ -27,6 +27,7 @@ declare_oxc_lint!(
     /// someCode();
     /// ```
     BanTslintComment,
+    typescript,
     style,
     fix
 );
@@ -119,7 +120,7 @@ fn test() {
         (r"/*tslint:disable*/É", r"É", None),
     ];
 
-    Tester::new(BanTslintComment::NAME, BanTslintComment::CATEGORY, pass, fail)
+    Tester::new(BanTslintComment::NAME, BanTslintComment::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

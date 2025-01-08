@@ -310,6 +310,7 @@ declare_oxc_lint!(
     /// - [ECMA262 - Object spread evaluation semantics](https://262.ecma-international.org/15.0/index.html#sec-runtime-semantics-propertydefinitionevaluation)
     /// - [JSPerf - `concat` vs array spread performance](https://jsperf.app/pihevu)
     NoMapSpread,
+    oxc,
     nursery, // TODO: make this `perf` once we've battle-tested this a bit
     conditional_fix_suggestion
 );
@@ -859,7 +860,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoMapSpread::NAME, NoMapSpread::CATEGORY, pass, fail)
+    Tester::new(NoMapSpread::NAME, NoMapSpread::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

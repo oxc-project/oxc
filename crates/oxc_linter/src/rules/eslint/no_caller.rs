@@ -68,6 +68,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoCaller,
+    eslint,
     correctness
 );
 
@@ -98,5 +99,5 @@ fn test() {
 
     let fail = vec![("var x = arguments.callee", None), ("var x = arguments.caller", None)];
 
-    Tester::new(NoCaller::NAME, NoCaller::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoCaller::NAME, NoCaller::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// ));
     /// ```
     NoArrayIndexKey,
+    react,
     perf,
 );
 
@@ -293,5 +294,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoArrayIndexKey::NAME, NoArrayIndexKey::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoArrayIndexKey::NAME, NoArrayIndexKey::PLUGIN, pass, fail).test_and_snapshot();
 }

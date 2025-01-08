@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// "\\9"
     /// ```
     NoNonoctalDecimalEscape,
+    eslint,
     correctness,
     pending
 );
@@ -227,6 +228,6 @@ fn test() {
         r"'\0\\n\8'",
     ];
 
-    Tester::new(NoNonoctalDecimalEscape::NAME, NoNonoctalDecimalEscape::CATEGORY, pass, fail)
+    Tester::new(NoNonoctalDecimalEscape::NAME, NoNonoctalDecimalEscape::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

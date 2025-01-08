@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// import { bar } from './bar' // correct usage of named import
     /// ```
     Default,
+    import,
     correctness
 );
 
@@ -149,7 +150,7 @@ fn test() {
         // r#"import Foo from "./typescript-export-as-default-namespace""#,
     ];
 
-    Tester::new(Default::NAME, Default::CATEGORY, pass, fail)
+    Tester::new(Default::NAME, Default::PLUGIN, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

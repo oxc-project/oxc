@@ -96,6 +96,7 @@ declare_oxc_lint!(
     /// <img src="baz" alt={`Baz taking a ${photo}`} /> // This is valid since photo is a variable name.
     /// ```
     ImgRedundantAlt,
+    jsx_a11y,
     correctness
 );
 
@@ -291,7 +292,7 @@ fn test() {
         (r"<Image alt='Word2' />;", Some(array()), None),
     ];
 
-    Tester::new(ImgRedundantAlt::NAME, ImgRedundantAlt::CATEGORY, pass, fail)
+    Tester::new(ImgRedundantAlt::NAME, ImgRedundantAlt::PLUGIN, pass, fail)
         .with_jsx_a11y_plugin(true)
         .test_and_snapshot();
 }

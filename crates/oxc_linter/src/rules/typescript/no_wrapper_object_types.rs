@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// let myObject: object = "Type 'string' is not assignable to type 'object'.";
     /// ```
     NoWrapperObjectTypes,
+    typescript,
     correctness,
     fix
 );
@@ -197,7 +198,7 @@ fn test() {
         ("type MyType = Number & String;", "type MyType = number & string;", None),
     ];
 
-    Tester::new(NoWrapperObjectTypes::NAME, NoWrapperObjectTypes::CATEGORY, pass, fail)
+    Tester::new(NoWrapperObjectTypes::NAME, NoWrapperObjectTypes::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

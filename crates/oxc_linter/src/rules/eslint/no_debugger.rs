@@ -30,6 +30,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoDebugger,
+    eslint,
     correctness,
     fix
 );
@@ -81,7 +82,7 @@ fn test() {
         ("if (foo) { debugger }", "if (foo) {  }", None),
     ];
 
-    Tester::new(NoDebugger::NAME, NoDebugger::CATEGORY, pass, fail)
+    Tester::new(NoDebugger::NAME, NoDebugger::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

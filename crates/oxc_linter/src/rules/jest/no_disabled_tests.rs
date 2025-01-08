@@ -60,6 +60,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoDisabledTests,
+    jest,
     correctness
 );
 
@@ -275,7 +276,7 @@ fn test() {
     pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
     fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
 
-    Tester::new(NoDisabledTests::NAME, NoDisabledTests::CATEGORY, pass, fail)
+    Tester::new(NoDisabledTests::NAME, NoDisabledTests::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();

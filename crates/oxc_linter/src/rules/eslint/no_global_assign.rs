@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// Object = null
     /// ```
     NoGlobalAssign,
+    eslint,
     correctness
 );
 
@@ -105,5 +106,5 @@ fn test() {
         ("Array = 1;", None),
     ];
 
-    Tester::new(NoGlobalAssign::NAME, NoGlobalAssign::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoGlobalAssign::NAME, NoGlobalAssign::PLUGIN, pass, fail).test_and_snapshot();
 }

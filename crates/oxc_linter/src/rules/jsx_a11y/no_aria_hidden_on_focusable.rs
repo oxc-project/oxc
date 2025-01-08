@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// <div aria-hidden="true" />
     /// ```
     NoAriaHiddenOnFocusable,
+    jsx_a11y,
     correctness,
     fix
 );
@@ -141,7 +142,7 @@ fn test() {
         (r#"<p tabIndex="0" aria-hidden="true">text</p>;"#, r#"<p tabIndex="0" >text</p>;"#),
     ];
 
-    Tester::new(NoAriaHiddenOnFocusable::NAME, NoAriaHiddenOnFocusable::CATEGORY, pass, fail)
+    Tester::new(NoAriaHiddenOnFocusable::NAME, NoAriaHiddenOnFocusable::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

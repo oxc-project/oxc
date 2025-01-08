@@ -65,6 +65,8 @@ pub trait Rule: Sized + Default + fmt::Debug {
 pub trait RuleMeta {
     const NAME: &'static str;
 
+    const PLUGIN: &'static str;
+
     const CATEGORY: RuleCategory;
 
     /// What kind of auto-fixing can this rule do?

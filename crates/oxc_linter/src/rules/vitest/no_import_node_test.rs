@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// })
     /// ```
     NoImportNodeTest,
+    vitest,
     style,
     fix
 );
@@ -80,7 +81,7 @@ fn test() {
         (r#"import * as foo from "node:test""#, r#"import * as foo from "vitest""#, None),
     ];
 
-    Tester::new(NoImportNodeTest::NAME, NoImportNodeTest::CATEGORY, pass, fail)
+    Tester::new(NoImportNodeTest::NAME, NoImportNodeTest::PLUGIN, pass, fail)
         .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

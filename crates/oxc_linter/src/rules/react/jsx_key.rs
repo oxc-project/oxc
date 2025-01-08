@@ -58,6 +58,7 @@ declare_oxc_lint!(
     /// [1, 2, 3]?.map(x => <BabelEslintApp key={x} />)
     /// ```
     JsxKey,
+    react,
     correctness
 );
 
@@ -625,5 +626,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(JsxKey::NAME, JsxKey::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(JsxKey::NAME, JsxKey::PLUGIN, pass, fail).test_and_snapshot();
 }

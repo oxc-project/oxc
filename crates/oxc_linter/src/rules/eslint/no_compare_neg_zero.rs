@@ -29,6 +29,7 @@ declare_oxc_lint!(
     /// if (x === -0) {}
     /// ```
     NoCompareNegZero,
+    eslint,
     correctness,
     conditional_fix_suggestion
 );
@@ -167,7 +168,7 @@ fn test() {
         ("-0n <= x", "0n <= x", None),
     ];
 
-    Tester::new(NoCompareNegZero::NAME, NoCompareNegZero::CATEGORY, pass, fail)
+    Tester::new(NoCompareNegZero::NAME, NoCompareNegZero::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

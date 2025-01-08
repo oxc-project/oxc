@@ -32,6 +32,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoExport,
+    jest,
     correctness
 );
 
@@ -139,7 +140,7 @@ fn test() {
         // ("module.export.invalid = function() {}; ;  test('a test', () => { expect(1).toBe(1);});", None)
     ];
 
-    Tester::new(NoExport::NAME, NoExport::CATEGORY, pass, fail)
+    Tester::new(NoExport::NAME, NoExport::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

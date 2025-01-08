@@ -45,6 +45,7 @@ declare_oxc_lint!(
     /// /** @param */
     /// ```
     CheckTagNames,
+    jsdoc,
     correctness
 );
 
@@ -1118,9 +1119,9 @@ fn test() {
         None,
     )];
 
-    Tester::new(CheckTagNames::NAME, CheckTagNames::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, pass, fail).test_and_snapshot();
     // Currently only 1 snapshot can be saved under a rule name
-    Tester::new(CheckTagNames::NAME, CheckTagNames::CATEGORY, dts_pass, dts_fail)
+    Tester::new(CheckTagNames::NAME, CheckTagNames::PLUGIN, dts_pass, dts_fail)
         .change_rule_path("test.d.ts")
         .test();
 }

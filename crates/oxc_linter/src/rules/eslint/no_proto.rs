@@ -36,6 +36,7 @@ declare_oxc_lint!(
     /// obj["__proto__"] = b;
     /// ```
     NoProto,
+    eslint,
     restriction,
     pending
 );
@@ -76,5 +77,5 @@ fn test() {
         "test[`__proto__`] = function () {};",
     ];
 
-    Tester::new(NoProto::NAME, NoProto::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoProto::NAME, NoProto::PLUGIN, pass, fail).test_and_snapshot();
 }

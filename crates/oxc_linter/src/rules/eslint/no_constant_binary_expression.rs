@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// // However, this will always result in `isEmpty` being `false`.
     /// ```
     NoConstantBinaryExpression,
+    eslint,
     correctness
 );
 
@@ -654,6 +655,6 @@ fn test() {
         ("window.abc ?? 'non-nullish' ?? anything", None),
     ];
 
-    Tester::new(NoConstantBinaryExpression::NAME, NoConstantBinaryExpression::CATEGORY, pass, fail)
+    Tester::new(NoConstantBinaryExpression::NAME, NoConstantBinaryExpression::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

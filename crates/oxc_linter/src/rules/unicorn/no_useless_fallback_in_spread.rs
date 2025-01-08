@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// const object = { ...(foo || { not: "empty" }) }
     /// ```
     NoUselessFallbackInSpread,
+    unicorn,
     correctness,
     conditional_fix
 );
@@ -168,7 +169,7 @@ fn test() {
         (r"const object = {...(Infinity || {})}", r"const object = {...(Infinity || {})}"),
     ];
 
-    Tester::new(NoUselessFallbackInSpread::NAME, NoUselessFallbackInSpread::CATEGORY, pass, fail)
+    Tester::new(NoUselessFallbackInSpread::NAME, NoUselessFallbackInSpread::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

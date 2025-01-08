@@ -184,6 +184,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     Yoda,
+    eslint,
     style,
     fix
 );
@@ -1165,5 +1166,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(Yoda::NAME, Yoda::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(Yoda::NAME, Yoda::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -30,6 +30,7 @@ declare_oxc_lint!(
     /// let a = new A() // Error
     /// ```
     NoClassAssign,
+    eslint,
     correctness
 );
 
@@ -84,5 +85,5 @@ fn test() {
         ("if (foo) { class A {} A = 1; }", None),
     ];
 
-    Tester::new(NoClassAssign::NAME, NoClassAssign::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoClassAssign::NAME, NoClassAssign::PLUGIN, pass, fail).test_and_snapshot();
 }
