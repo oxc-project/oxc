@@ -1137,7 +1137,6 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     }
 
     /// `super()` -> `super(); _this = this;`
-    #[inline]
     fn visit_statements(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
         let mut new_stmts = vec![];
 
