@@ -824,6 +824,15 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
                 // super references are allowed in method
                 break;
             }
+            // * It is a Syntax Error if FunctionBody Contains SuperProperty is true.
+            AstKind::Function(_) => {
+                if !matches!(ctx.nodes.parent_kind(node_id), Some(AstKind::MethodDefinition(_))) {
+                    return super_call_span.map_or_else(
+                        || ctx.error(unexpected_super_reference(sup.span)),
+                        |super_call_span| ctx.error(unexpected_super_call(super_call_span)),
+                    );
+                }
+            }
             // FieldDefinition : ClassElementName Initializer opt
             // * It is a Syntax Error if Initializer is present and Initializer Contains SuperCall is true.
             // PropertyDefinition : MethodDefinition
