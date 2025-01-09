@@ -1185,7 +1185,7 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
             self.visit_expression(super_class);
         }
 
-        for element in class.body.body.iter_mut() {
+        for element in &mut class.body.body {
             match element {
                 // `class Inner { @(super()) [super()]() {} }`
                 //                  ^^^^^^^   ^^^^^^^
