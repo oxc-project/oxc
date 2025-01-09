@@ -53,10 +53,6 @@ after transform: ["const"]
 rebuilt        : []
 
 * computed-constant-value/input.ts
-Missing ReferenceId: "Infinity"
-Missing ReferenceId: "Infinity"
-Missing ReferenceId: "Infinity"
-Missing ReferenceId: "Infinity"
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "a", "b", "c", "d", "e"]
 rebuilt        : ScopeId(1): ["A"]
@@ -97,7 +93,7 @@ Unresolved references mismatch:
 after transform: ["Infinity", "NaN"]
 rebuilt        : ["Infinity"]
 Unresolved reference IDs mismatch for "Infinity":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(18)]
 rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12)]
 
 * elimination-declare/input.ts

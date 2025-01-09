@@ -308,12 +308,18 @@ impl<'a> TypeScriptEnum<'a> {
         ctx.ast.expression_numeric_literal(SPAN, value, None, NumberBase::Decimal)
     }
 
-    fn get_initializer_expr(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {
+    fn get_initializer_expr(value: f64, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let is_negative = value < 0.0;
 
         // Infinity
         let expr = if value.is_infinite() {
-            ctx.ast.expression_identifier_reference(SPAN, "Infinity")
+            let infinity_symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "Infinity");
+            ctx.create_ident_expr(
+                SPAN,
+                Atom::from("Infinity"),
+                infinity_symbol_id,
+                ReferenceFlags::Read,
+            )
         } else {
             let value = if is_negative { -value } else { value };
             Self::get_number_literal_expression(value, ctx)
