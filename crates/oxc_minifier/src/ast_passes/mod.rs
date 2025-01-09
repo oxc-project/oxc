@@ -1,5 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_syntax::es_target::ESTarget;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 mod collapse_variable_declarations;
@@ -53,7 +54,7 @@ pub struct PeepholeOptimizations {
 impl PeepholeOptimizations {
     /// `in_fixed_loop`: Do not compress syntaxes that are hard to analyze inside the fixed loop.
     /// Opposite of `late` in Closure Compiler.
-    pub fn new(in_fixed_loop: bool, options: CompressOptions) -> Self {
+    pub fn new(target: ESTarget, in_fixed_loop: bool, options: CompressOptions) -> Self {
         Self {
             x0_statement_fusion: StatementFusion::new(),
             x1_minimize_exit_points: MinimizeExitPoints::new(),
@@ -61,7 +62,7 @@ impl PeepholeOptimizations {
             x3_collapse_variable_declarations: CollapseVariableDeclarations::new(),
             x4_peephole_fold_constants: PeepholeFoldConstants::new(),
             x5_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
-            x6_peephole_minimize_conditions: PeepholeMinimizeConditions::new(),
+            x6_peephole_minimize_conditions: PeepholeMinimizeConditions::new(target),
             x7_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
             x8_convert_to_dotted_properties: ConvertToDottedProperties::new(in_fixed_loop),
             x9_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax::new(

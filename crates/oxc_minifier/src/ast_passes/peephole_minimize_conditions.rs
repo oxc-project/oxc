@@ -2,6 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::constant_evaluation::ValueType;
 use oxc_span::{cmp::ContentEq, GetSpan, SPAN};
+use oxc_syntax::es_target::ESTarget;
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::CompressorPass;
@@ -14,6 +15,7 @@ use crate::CompressorPass;
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 pub struct PeepholeMinimizeConditions {
+    target: ESTarget,
     pub(crate) changed: bool,
 }
 
@@ -56,7 +58,7 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
             Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
             Expression::LogicalExpression(e) => Self::try_minimize_logical(e, ctx),
             Expression::BinaryExpression(e) => Self::try_minimize_binary(e, ctx),
-            Expression::ConditionalExpression(e) => Self::try_minimize_conditional(e, ctx),
+            Expression::ConditionalExpression(e) => self.try_minimize_conditional(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -66,8 +68,8 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
 }
 
 impl<'a> PeepholeMinimizeConditions {
-    pub fn new() -> Self {
-        Self { changed: false }
+    pub fn new(target: ESTarget) -> Self {
+        Self { target, changed: false }
     }
 
     /// Try to minimize NOT nodes such as `!(x==y)`.
@@ -344,6 +346,7 @@ impl<'a> PeepholeMinimizeConditions {
 
     // based on https://github.com/evanw/esbuild/blob/df815ac27b84f8b34374c9182a93c94718f8a630/internal/js_ast/js_ast_helpers.go#L2745
     fn try_minimize_conditional(
+        &self,
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -633,7 +636,39 @@ impl<'a> PeepholeMinimizeConditions {
             }
         }
 
-        // TODO: Try using the "??" or "?." operators
+        // Try using the "??" or "?." operators
+        if let Expression::BinaryExpression(bin_expr) = &mut expr.test {
+            if bin_expr.operator == BinaryOperator::Equality
+                || bin_expr.operator == BinaryOperator::Inequality
+            {
+                if let Some(check) = {
+                    if bin_expr.left.is_null() {
+                        Some(&bin_expr.right)
+                    } else {
+                        Some(&bin_expr.left)
+                    }
+                } {
+                    // `a != null ? a : b` -> `a ?? b``
+                    if check.content_eq(if bin_expr.operator == BinaryOperator::Equality {
+                        &expr.alternate
+                    } else {
+                        &expr.consequent
+                    }) && self.target >= ESTarget::ES2020
+                    // TODO: this is probably a but too aggressive
+                        && matches!(check, Expression::Identifier(_))
+                    {
+                        return Some(ctx.ast.expression_logical(
+                            SPAN,
+                            ctx.ast.move_expression(&mut expr.consequent),
+                            LogicalOperator::Coalesce,
+                            ctx.ast.move_expression(&mut expr.alternate),
+                        ));
+                    }
+
+                    // TODO: `a != null ? a.b.c[d](e) : undefined` -> `a?.b.c[d](e)``
+                }
+            }
+        }
 
         // Non esbuild optimizations
 
@@ -812,12 +847,13 @@ impl<'a> PeepholeMinimizeConditions {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
+    use oxc_syntax::es_target::ESTarget;
 
     use crate::tester;
 
     fn test(source_text: &str, positive: &str) {
         let allocator = Allocator::default();
-        let mut pass = super::PeepholeMinimizeConditions::new();
+        let mut pass = super::PeepholeMinimizeConditions::new(ESTarget::ES2025);
         tester::test(&allocator, source_text, positive, &mut pass);
     }
 
@@ -2003,7 +2039,8 @@ mod test {
         test("var a; a ? b(c, d) : b(e, d)", "var a; b(a ? c : e, d)");
         test("var a; a ? b(...c) : b(...e)", "var a; b(...a ? c : e)");
         test("var a; a ? b(c) : b(e)", "var a; b(a ? c : e)");
-        // test("a != null ? a : b", "a ?? b");
+        test("a != null ? a : b", "a ?? b");
+        test_same("a() != null ? a() : b");
         // test("a != null ? a.b.c[d](e) : undefined", "a?.b.c[d](e)");
     }
 }
