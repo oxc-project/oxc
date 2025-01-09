@@ -47,7 +47,7 @@ impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
+impl<'a> Traverse<'a> for NullishCoalescingOperator<'a, '_> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
@@ -64,7 +64,7 @@ impl<'a, 'ctx> Traverse<'a> for NullishCoalescingOperator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> NullishCoalescingOperator<'a, 'ctx> {
+impl<'a> NullishCoalescingOperator<'a, '_> {
     fn transform_logical_expression(
         &mut self,
         logical_expr: ArenaBox<'a, LogicalExpression<'a>>,

@@ -36,6 +36,7 @@ declare_oxc_lint!(
     /// location.href = `javascript:void(0)`;
     /// ```
     NoScriptUrl,
+    eslint,
     style
 );
 
@@ -99,5 +100,5 @@ fn test() {
         "var a = `JavaScript:`;",
     ];
 
-    Tester::new(NoScriptUrl::NAME, NoScriptUrl::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoScriptUrl::NAME, NoScriptUrl::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -30,7 +30,7 @@ fn cjs() {
         });",
     );
     // @babel/types/lib/index.js
-    test_same(
+    test(
         r#"Object.keys(_index6).forEach(function(key) {
           if (key === "default" || key === "__esModule") return;
           if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
@@ -42,6 +42,18 @@ fn cjs() {
             }
           });
         });"#,
+        "
+        Object.keys(_index6).forEach(function(key) {
+        if (key === 'default' || key === '__esModule') return;
+        if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+        if (key in exports && exports[key] === _index6[key]) return;
+        Object.defineProperty(exports, key, {
+                enumerable: true,
+                get: function() {
+                        return _index6[key];
+                }
+        });
+});",
     );
 }
 
@@ -51,8 +63,8 @@ fn tagged_template() {
     test_same("(1, o.f)``");
     test_same("(!0 && o.f)()");
     test_same("(!0 && o.f)``");
-    test_same("(!0 ? o.f : !1)()");
-    test_same("(!0 ? o.f : !1)``");
+    test("(!0 ? o.f : !1)()", "(0 ? !1: o.f)()");
+    test("(!0 ? o.f : !1)``", "(0 ? !1: o.f)``");
 
     test("foo(true && o.f)", "foo(o.f)");
     test("foo(true ? o.f : false)", "foo(o.f)");

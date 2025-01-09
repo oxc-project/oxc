@@ -104,6 +104,7 @@ declare_oxc_lint!(
     /// <https://reactjs.org/docs/hooks-rules.html>
     ///
     RulesOfHooks,
+    react,
     pedantic
 );
 
@@ -1592,5 +1593,5 @@ fn test() {
         r"const MyComponent3 = makeComponent(function foo () { useHook(); });",
     ];
 
-    Tester::new(RulesOfHooks::NAME, RulesOfHooks::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(RulesOfHooks::NAME, RulesOfHooks::PLUGIN, pass, fail).test_and_snapshot();
 }

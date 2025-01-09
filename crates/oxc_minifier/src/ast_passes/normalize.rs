@@ -2,13 +2,15 @@ use oxc_ast::ast::*;
 use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{node_util::Ctx, CompressorPass};
+use crate::{ctx::Ctx, CompressorPass};
 
 /// Normalize AST
 ///
 /// Make subsequent AST passes easier to analyze:
 ///
 /// * convert whiles to fors
+/// * convert `Infinity` to `f64::INFINITY`
+/// * convert `NaN` to `f64::NaN`
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Normalize.java>
 pub struct Normalize;
@@ -28,7 +30,7 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::Identifier(_) = expr {
-            Self::convert_infinity_into_number(expr, ctx);
+            Self::convert_infinity_or_nan_into_number(expr, ctx);
         }
     }
 }
@@ -52,18 +54,18 @@ impl<'a> Normalize {
         *stmt = Statement::ForStatement(for_stmt);
     }
 
-    fn convert_infinity_into_number(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let ctx = Ctx(ctx);
-        match expr {
-            Expression::Identifier(ident) if ctx.is_identifier_infinity(ident) => {
-                *expr = ctx.ast.expression_numeric_literal(
-                    ident.span,
-                    f64::INFINITY,
-                    None,
-                    NumberBase::Decimal,
-                );
-            }
-            _ => {}
+    fn convert_infinity_or_nan_into_number(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::Identifier(ident) = expr {
+            let ctx = Ctx(ctx);
+            let value = if ctx.is_identifier_infinity(ident) {
+                f64::INFINITY
+            } else if ctx.is_identifier_nan(ident) {
+                f64::NAN
+            } else {
+                return;
+            };
+            *expr =
+                ctx.ast.expression_numeric_literal(ident.span, value, None, NumberBase::Decimal);
         }
     }
 }

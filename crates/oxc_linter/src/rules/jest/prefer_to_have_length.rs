@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferToHaveLength,
+    jest,
     style,
     fix
 );
@@ -265,7 +266,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferToHaveLength::NAME, PreferToHaveLength::CATEGORY, pass, fail)
+    Tester::new(PreferToHaveLength::NAME, PreferToHaveLength::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

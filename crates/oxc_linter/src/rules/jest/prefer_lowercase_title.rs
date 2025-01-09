@@ -127,6 +127,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferLowercaseTitle,
+    jest,
     style,
     fix
 );
@@ -626,7 +627,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferLowercaseTitle::NAME, PreferLowercaseTitle::CATEGORY, pass, fail)
+    Tester::new(PreferLowercaseTitle::NAME, PreferLowercaseTitle::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

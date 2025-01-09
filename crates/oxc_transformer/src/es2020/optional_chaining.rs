@@ -88,7 +88,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for OptionalChaining<'a, 'ctx> {
+impl<'a> Traverse<'a> for OptionalChaining<'a, '_> {
     // `#[inline]` because this is a hot path
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -121,7 +121,7 @@ impl<'a, 'ctx> Traverse<'a> for OptionalChaining<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
+impl<'a> OptionalChaining<'a, '_> {
     fn set_temp_binding(&mut self, binding: BoundIdentifier<'a>) {
         self.temp_binding.replace(binding);
     }

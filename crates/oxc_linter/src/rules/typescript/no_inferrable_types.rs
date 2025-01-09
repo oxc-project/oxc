@@ -50,6 +50,7 @@ declare_oxc_lint!(
     /// const fn = (a = 5, b = true, c = 'foo') => {};
     /// ```
     NoInferrableTypes,
+    typescript,
     style,
     pending
 );
@@ -512,7 +513,7 @@ fn test() {
             Some(serde_json::json!([{ "ignoreParameters": false, "ignoreProperties": false, }, ])),
         ),
     ];
-    Tester::new(NoInferrableTypes::NAME, NoInferrableTypes::CATEGORY, pass, fail)
+    Tester::new(NoInferrableTypes::NAME, NoInferrableTypes::PLUGIN, pass, fail)
         //.expect_fix(fix)
         .test_and_snapshot();
 }

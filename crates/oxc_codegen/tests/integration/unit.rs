@@ -88,6 +88,26 @@ fn for_stmt() {
 }
 
 #[test]
+fn do_while_stmt() {
+    test("do ; while (true)", "do;\nwhile (true);\n");
+    test_minify("do ; while (true)", "do;while(true);");
+    test_minify("do break; while (true)", "do break;while(true);");
+    test_minify("do continue; while (true)", "do continue;while(true);");
+    test_minify("do debugger; while (true)", "do debugger;while(true);");
+    test_minify("do for(x in y); while (true)", "do for(x in y);while(true);");
+    test_minify("do for(x of y); while (true)", "do for(x of y);while(true);");
+    test_minify("do for(;;); while (true)", "do for(;;);while(true);");
+    test_minify("do if (test) {} while (true)", "do if(test){}while(true);");
+    test_minify("do foo:; while (true)", "do foo:;while(true);");
+    test_minify("do return; while (true)", "do return;while(true);");
+    test_minify("do switch(test){} while (true)", "do switch(test){}while(true);");
+    test_minify("do throw x; while (true)", "do throw x;while(true);");
+    test_minify("do with(x); while (true)", "do with(x);while(true);");
+    test_minify("do try{} catch{} while (true)", "do try{}catch{}while(true);");
+    test_minify("do do ; while(true) while (true)", "do do;while(true);while(true);");
+}
+
+#[test]
 fn if_stmt() {
     test(
         "function f() { if (foo) return foo; else if (bar) return foo; }",
@@ -382,6 +402,9 @@ fn big_int() {
     test("0xfabn", "0xfabn;\n");
     test("0xaef_en;", "0xaefen;\n");
     test("0xaefen;", "0xaefen;\n");
+
+    test("return 1n", "return 1n;\n");
+    test_minify("return 1n", "return 1n;");
 }
 
 #[test]

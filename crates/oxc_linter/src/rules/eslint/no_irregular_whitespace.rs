@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoIrregularWhitespace,
+    eslint,
     correctness
 );
 
@@ -405,6 +406,6 @@ fn test() {
         // (r"<div>　</div>;", None),
     ];
 
-    Tester::new(NoIrregularWhitespace::NAME, NoIrregularWhitespace::CATEGORY, pass, fail)
+    Tester::new(NoIrregularWhitespace::NAME, NoIrregularWhitespace::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

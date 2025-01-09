@@ -402,7 +402,7 @@ impl<'a> Format<'a> for TSTemplateLiteralType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         template_literal::print_template_literal(
             p,
-            &template_literal::TemplateLiteralPrinter::TSTemplateLiteralType(self),
+            &template_literal::TemplateLiteralLike::TSTemplateLiteralType(self),
         )
     }
 }
@@ -582,7 +582,7 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
         if self.body.body.len() > 0 {
             let mut indent_parts = Vec::new_in(p.allocator);
             for sig in &self.body.body {
-                indent_parts.extend(hardline!());
+                indent_parts.push(hardline!(p));
                 indent_parts.push(sig.format(p));
 
                 if let Some(semi) = p.semi() {
@@ -590,7 +590,7 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
                 }
             }
             parts.push(indent!(p, indent_parts));
-            parts.extend(hardline!());
+            parts.push(hardline!(p));
         }
         parts.push(text!("}"));
         array!(p, parts)
@@ -612,11 +612,11 @@ impl<'a> Format<'a> for TSEnumDeclaration<'a> {
         if self.members.len() > 0 {
             let mut indent_parts = Vec::new_in(p.allocator);
             for member in &self.members {
-                indent_parts.extend(hardline!());
+                indent_parts.push(hardline!(p));
                 indent_parts.push(member.format(p));
             }
             parts.push(indent!(p, indent_parts));
-            parts.extend(hardline!());
+            parts.push(hardline!(p));
         }
         parts.push(text!("}"));
 
@@ -664,13 +664,8 @@ impl<'a> Format<'a> for TSModuleDeclaration<'a> {
 
         if let Some(body) = &self.body {
             if !body.is_empty() {
-                let mut indent_parts = Vec::new_in(p.allocator);
-
-                indent_parts.extend(hardline!());
-                indent_parts.push(body.format(p));
-
-                parts.push(indent!(p, indent_parts));
-                parts.extend(hardline!());
+                parts.push(indent!(p, [hardline!(p), body.format(p)]));
+                parts.push(hardline!(p));
             }
         }
 

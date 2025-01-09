@@ -40,7 +40,7 @@ impl<'a, 'ctx> Common<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for Common<'a, 'ctx> {
+impl<'a> Traverse<'a> for Common<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.module_imports.exit_program(program, ctx);
         self.var_declarations.exit_program(program, ctx);

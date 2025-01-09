@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 30/30 (100.00%)
-Positive Passed: 19/30 (63.33%)
+AST Parsed     : 31/31 (100.00%)
+Positive Passed: 19/31 (61.29%)
 tasks/coverage/misc/pass/oxc-1288.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["from"]
@@ -38,23 +38,23 @@ rebuilt        : []
 
 tasks/coverage/misc/pass/oxc-3948-1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["BrowserWorkingCopyBackupTracker", "CancellationToken", "DisposableStore", "EditorPart", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "IInstantiationService", "ILifecycleService", "ILogService", "IUntitledTextResourceEditorInput", "IWorkingCopyBackup", "IWorkingCopyBackupService", "IWorkingCopyEditorHandler", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
-rebuilt        : ScopeId(0): ["BrowserWorkingCopyBackupTracker", "DisposableStore", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "ILifecycleService", "ILogService", "IWorkingCopyBackupService", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
+after transform: ScopeId(0): ["BrowserWorkingCopyBackupTracker", "CancellationToken", "DisposableStore", "EditorPart", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "IInstantiationService", "ILifecycleService", "ILogService", "IUntitledTextResourceEditorInput", "IWorkingCopyBackup", "IWorkingCopyBackupService", "IWorkingCopyEditorHandler", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "_defineProperty", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
+rebuilt        : ScopeId(0): ["BrowserWorkingCopyBackupTracker", "DisposableStore", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "ILifecycleService", "ILogService", "IWorkingCopyBackupService", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "_defineProperty", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
 Symbol reference IDs mismatch for "URI":
 after transform: SymbolId(1): [ReferenceId(109), ReferenceId(117), ReferenceId(156), ReferenceId(158), ReferenceId(160), ReferenceId(162)]
-rebuilt        : SymbolId(1): [ReferenceId(158), ReferenceId(160), ReferenceId(162), ReferenceId(164)]
+rebuilt        : SymbolId(1): [ReferenceId(160), ReferenceId(162), ReferenceId(164), ReferenceId(166)]
 Symbol reference IDs mismatch for "IEditorService":
 after transform: SymbolId(2): [ReferenceId(23), ReferenceId(24), ReferenceId(67), ReferenceId(184)]
-rebuilt        : SymbolId(2): [ReferenceId(17), ReferenceId(58), ReferenceId(185)]
+rebuilt        : SymbolId(2): [ReferenceId(17), ReferenceId(59), ReferenceId(187)]
 Symbol reference IDs mismatch for "IEditorGroupsService":
 after transform: SymbolId(4): [ReferenceId(25), ReferenceId(26), ReferenceId(57), ReferenceId(176)]
-rebuilt        : SymbolId(3): [ReferenceId(18), ReferenceId(49), ReferenceId(178)]
+rebuilt        : SymbolId(3): [ReferenceId(18), ReferenceId(50), ReferenceId(180)]
 Symbol reference IDs mismatch for "EditorService":
 after transform: SymbolId(5): [ReferenceId(61), ReferenceId(64), ReferenceId(178), ReferenceId(181)]
-rebuilt        : SymbolId(4): [ReferenceId(55), ReferenceId(182)]
+rebuilt        : SymbolId(4): [ReferenceId(56), ReferenceId(184)]
 Symbol reference IDs mismatch for "IWorkingCopyBackupService":
 after transform: SymbolId(7): [ReferenceId(11), ReferenceId(12), ReferenceId(51), ReferenceId(170)]
-rebuilt        : SymbolId(5): [ReferenceId(11), ReferenceId(43), ReferenceId(172)]
+rebuilt        : SymbolId(5): [ReferenceId(11), ReferenceId(44), ReferenceId(174)]
 Symbol reference IDs mismatch for "IFilesConfigurationService":
 after transform: SymbolId(10): [ReferenceId(13), ReferenceId(14)]
 rebuilt        : SymbolId(8): [ReferenceId(12)]
@@ -72,19 +72,19 @@ after transform: SymbolId(17): [ReferenceId(38), ReferenceId(87)]
 rebuilt        : SymbolId(13): [ReferenceId(31)]
 Symbol reference IDs mismatch for "InMemoryTestWorkingCopyBackupService":
 after transform: SymbolId(19): [ReferenceId(43), ReferenceId(46), ReferenceId(165)]
-rebuilt        : SymbolId(15): [ReferenceId(38), ReferenceId(167)]
+rebuilt        : SymbolId(15): [ReferenceId(39), ReferenceId(169)]
 Symbol reference IDs mismatch for "TestServiceAccessor":
 after transform: SymbolId(21): [ReferenceId(1), ReferenceId(40), ReferenceId(71), ReferenceId(155), ReferenceId(188)]
-rebuilt        : SymbolId(17): [ReferenceId(62), ReferenceId(189)]
+rebuilt        : SymbolId(17): [ReferenceId(63), ReferenceId(191)]
 Symbol reference IDs mismatch for "IWorkingCopyEditorService":
 after transform: SymbolId(32): [ReferenceId(21), ReferenceId(22)]
 rebuilt        : SymbolId(26): [ReferenceId(16)]
 Symbol reference IDs mismatch for "TestWorkingCopyBackupTracker":
 after transform: SymbolId(39): [ReferenceId(42), ReferenceId(74), ReferenceId(154), ReferenceId(215)]
-rebuilt        : SymbolId(34): [ReferenceId(65), ReferenceId(216)]
+rebuilt        : SymbolId(35): [ReferenceId(66), ReferenceId(218)]
 Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(36), ReferenceId(39), ReferenceId(82), ReferenceId(114), ReferenceId(153), ReferenceId(282)]
-rebuilt        : [ReferenceId(289)]
+rebuilt        : [ReferenceId(291)]
 
 tasks/coverage/misc/pass/oxc-4449.ts
 semantic error: Bindings mismatch:
@@ -169,4 +169,12 @@ tasks/coverage/misc/pass/oxc-5955.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/misc/pass/oxc-8193.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "A":
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 

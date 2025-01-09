@@ -85,6 +85,7 @@ declare_oxc_lint!(
     /// })
     /// ```
     RequireLocalTestContextForConcurrentSnapshots,
+    vitest,
     correctness,
     pending
 );
@@ -178,7 +179,7 @@ fn test() {
 
     Tester::new(
         RequireLocalTestContextForConcurrentSnapshots::NAME,
-        RequireLocalTestContextForConcurrentSnapshots::CATEGORY,
+        RequireLocalTestContextForConcurrentSnapshots::PLUGIN,
         pass,
         fail,
     )

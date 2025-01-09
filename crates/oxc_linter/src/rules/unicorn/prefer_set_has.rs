@@ -65,6 +65,7 @@ declare_oxc_lint!(
     /// const hasOne = array.includes(1);
     /// ```
     PreferSetHas,
+    unicorn,
     perf,
     dangerous_fix
 );
@@ -905,7 +906,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferSetHas::NAME, PreferSetHas::CATEGORY, pass, fail)
+    Tester::new(PreferSetHas::NAME, PreferSetHas::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

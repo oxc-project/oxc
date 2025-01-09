@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// <nav />
     /// ```
     NoRedundantRoles,
+    jsx_a11y,
     correctness,
     fix
 );
@@ -114,7 +115,7 @@ fn test() {
         ("<body role='document' />", "<body  />"),
     ];
 
-    Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::CATEGORY, pass, fail)
+    Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

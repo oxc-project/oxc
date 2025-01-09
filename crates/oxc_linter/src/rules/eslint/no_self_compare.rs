@@ -34,6 +34,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoSelfCompare,
+    eslint,
     pedantic // The code is not wrong if it is intended to check for NaNs, which is the majority of
              // the case.
 );
@@ -87,5 +88,5 @@ fn test() {
         ("class C { #field; foo() { this.#field === this.#field; } }", None),
     ];
 
-    Tester::new(NoSelfCompare::NAME, NoSelfCompare::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoSelfCompare::NAME, NoSelfCompare::PLUGIN, pass, fail).test_and_snapshot();
 }

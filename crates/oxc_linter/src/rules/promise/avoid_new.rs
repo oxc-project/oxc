@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// const bar = await Promise.all([baz(), bang()]);
     /// ```
     AvoidNew,
+    promise,
     style,
 );
 
@@ -77,5 +78,5 @@ fn test() {
         "Thing(new Promise(() => {}))",
     ];
 
-    Tester::new(AvoidNew::NAME, AvoidNew::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(AvoidNew::NAME, AvoidNew::PLUGIN, pass, fail).test_and_snapshot();
 }

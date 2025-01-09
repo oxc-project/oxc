@@ -56,6 +56,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoThenable,
+    unicorn,
     correctness
 );
 
@@ -432,5 +433,5 @@ fn test() {
         ("export const notThen = 1, then = 1", None),
     ];
 
-    Tester::new(NoThenable::NAME, NoThenable::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoThenable::NAME, NoThenable::PLUGIN, pass, fail).test_and_snapshot();
 }

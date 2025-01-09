@@ -78,6 +78,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoHooks,
+    jest,
     style,
 );
 
@@ -161,7 +162,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoHooks::NAME, NoHooks::CATEGORY, pass, fail)
+    Tester::new(NoHooks::NAME, NoHooks::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

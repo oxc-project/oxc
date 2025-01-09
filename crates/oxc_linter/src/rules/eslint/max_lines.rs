@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// file, most people would agree it should not be in the thousands.
     /// Recommendations usually range from 100 to 500 lines.
     MaxLines,
+    eslint,
     pedantic
 );
 
@@ -420,5 +421,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxLines::NAME, MaxLines::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(MaxLines::NAME, MaxLines::PLUGIN, pass, fail).test_and_snapshot();
 }

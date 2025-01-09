@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// function quux (foo) {}
     /// ```
     NoDefaults,
+    jsdoc,
     correctness
 );
 
@@ -405,5 +406,5 @@ fn test() {
         //   ),
     ];
 
-    Tester::new(NoDefaults::NAME, NoDefaults::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoDefaults::NAME, NoDefaults::PLUGIN, pass, fail).test_and_snapshot();
 }

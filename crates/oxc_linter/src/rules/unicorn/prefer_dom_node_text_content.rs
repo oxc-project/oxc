@@ -38,6 +38,7 @@ declare_oxc_lint!(
     /// const text = foo.textContent;
     /// ```
     PreferDomNodeTextContent,
+    unicorn,
     style,
     conditional_fix
 );
@@ -153,7 +154,7 @@ fn test() {
         ("innerText.innerText = 'foo';", "innerText.textContent = 'foo';"),
     ];
 
-    Tester::new(PreferDomNodeTextContent::NAME, PreferDomNodeTextContent::CATEGORY, pass, fail)
+    Tester::new(PreferDomNodeTextContent::NAME, PreferDomNodeTextContent::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

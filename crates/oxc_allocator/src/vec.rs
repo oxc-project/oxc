@@ -9,6 +9,7 @@ use std::{
     mem::ManuallyDrop,
     ops,
     ptr::NonNull,
+    slice::SliceIndex,
 };
 
 use allocator_api2::vec;
@@ -253,16 +254,24 @@ impl<'alloc, T> IntoIterator for &'alloc Vec<'alloc, T> {
     }
 }
 
-impl<T> ops::Index<usize> for Vec<'_, T> {
-    type Output = T;
+impl<T, I> ops::Index<I> for Vec<'_, T>
+where
+    I: SliceIndex<[T]>,
+{
+    type Output = I::Output;
 
-    fn index(&self, index: usize) -> &Self::Output {
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
         self.0.index(index)
     }
 }
 
-impl<T> ops::IndexMut<usize> for Vec<'_, T> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+impl<T, I> ops::IndexMut<I> for Vec<'_, T>
+where
+    I: SliceIndex<[T]>,
+{
+    #[inline]
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
         self.0.index_mut(index)
     }
 }

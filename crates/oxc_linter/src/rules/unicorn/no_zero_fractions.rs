@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// const foo = 1.1;
     /// ```
     NoZeroFractions,
+    unicorn,
     style,
     fix
 );
@@ -214,7 +215,7 @@ fn test() {
         ("ôTest(0.)", "ôTest(0)"),
     ];
 
-    Tester::new(NoZeroFractions::NAME, NoZeroFractions::CATEGORY, pass, fail)
+    Tester::new(NoZeroFractions::NAME, NoZeroFractions::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

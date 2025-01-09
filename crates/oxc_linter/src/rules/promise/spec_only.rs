@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// Promise.resolve()
     /// ```
     SpecOnly,
+    promise,
     restriction,
 );
 
@@ -133,5 +134,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(SpecOnly::NAME, SpecOnly::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(SpecOnly::NAME, SpecOnly::PLUGIN, pass, fail).test_and_snapshot();
 }

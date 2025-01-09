@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// <App bar baz foo={3} />;
     /// ```
     JsxNoDuplicateProps,
+    react,
     correctness
 );
 
@@ -122,6 +123,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(JsxNoDuplicateProps::NAME, JsxNoDuplicateProps::CATEGORY, pass, fail)
+    Tester::new(JsxNoDuplicateProps::NAME, JsxNoDuplicateProps::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

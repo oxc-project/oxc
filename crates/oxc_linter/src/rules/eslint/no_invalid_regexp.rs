@@ -50,6 +50,7 @@ declare_oxc_lint!(
     /// this.RegExp('[')
     /// ```
     NoInvalidRegexp,
+    eslint,
     correctness,
 );
 
@@ -340,5 +341,5 @@ fn test() {
         ("new RegExp('(?<k>a)(?<k>b)')", None),
     ];
 
-    Tester::new(NoInvalidRegexp::NAME, NoInvalidRegexp::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoInvalidRegexp::NAME, NoInvalidRegexp::PLUGIN, pass, fail).test_and_snapshot();
 }

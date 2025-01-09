@@ -1,27 +1,27 @@
            | Oxc        | ESBuild    | Oxc        | ESBuild    |
 Original   | minified   | minified   | gzip       | gzip       | Fixture
 -------------------------------------------------------------------------------------
-72.14 kB   | 23.71 kB   | 23.70 kB   | 8.62 kB    | 8.54 kB    | react.development.js
+72.14 kB   | 23.70 kB   | 23.70 kB   | 8.61 kB    | 8.54 kB    | react.development.js
 
-173.90 kB  | 60.15 kB   | 59.82 kB   | 19.50 kB   | 19.33 kB   | moment.js 
+173.90 kB  | 59.77 kB   | 59.82 kB   | 19.39 kB   | 19.33 kB   | moment.js 
 
-287.63 kB  | 90.56 kB   | 90.07 kB   | 32.18 kB   | 31.95 kB   | jquery.js 
+287.63 kB  | 90.02 kB   | 90.07 kB   | 32.01 kB   | 31.95 kB   | jquery.js 
 
-342.15 kB  | 118.53 kB  | 118.14 kB  | 44.56 kB   | 44.37 kB   | vue.js    
+342.15 kB  | 118.08 kB  | 118.14 kB  | 44.43 kB   | 44.37 kB   | vue.js    
 
-544.10 kB  | 71.98 kB   | 72.48 kB   | 26.19 kB   | 26.20 kB   | lodash.js 
+544.10 kB  | 71.72 kB   | 72.48 kB   | 26.15 kB   | 26.20 kB   | lodash.js 
 
-555.77 kB  | 273.88 kB  | 270.13 kB  | 91.19 kB   | 90.80 kB   | d3.js     
+555.77 kB  | 272.89 kB  | 270.13 kB  | 90.85 kB   | 90.80 kB   | d3.js     
 
-1.01 MB    | 460.99 kB  | 458.89 kB  | 126.92 kB  | 126.71 kB  | bundle.min.js
+1.01 MB    | 460.13 kB  | 458.89 kB  | 126.74 kB  | 126.71 kB  | bundle.min.js
 
-1.25 MB    | 653.54 kB  | 646.76 kB  | 164.04 kB  | 163.73 kB  | three.js  
+1.25 MB    | 652.81 kB  | 646.76 kB  | 163.50 kB  | 163.73 kB  | three.js  
 
-2.14 MB    | 727.90 kB  | 724.14 kB  | 180.39 kB  | 181.07 kB  | victory.js
+2.14 MB    | 725.99 kB  | 724.14 kB  | 180.05 kB  | 181.07 kB  | victory.js
 
-3.20 MB    | 1.01 MB    | 1.01 MB    | 332.29 kB  | 331.56 kB  | echarts.js
+3.20 MB    | 1.01 MB    | 1.01 MB    | 331.68 kB  | 331.56 kB  | echarts.js
 
-6.69 MB    | 2.32 MB    | 2.31 MB    | 493.24 kB  | 488.28 kB  | antd.js   
+6.69 MB    | 2.32 MB    | 2.31 MB    | 492.60 kB  | 488.28 kB  | antd.js   
 
-10.95 MB   | 3.51 MB    | 3.49 MB    | 910.88 kB  | 915.50 kB  | typescript.js
+10.95 MB   | 3.49 MB    | 3.49 MB    | 907.25 kB  | 915.50 kB  | typescript.js
 

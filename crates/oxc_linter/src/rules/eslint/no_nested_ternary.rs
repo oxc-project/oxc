@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoNestedTernary,
+    eslint,
     style,
 );
 
@@ -96,5 +97,5 @@ fn test() {
         "var result = foo ? (bar as string) : (baz as number ? qux : quux);",
     ];
 
-    Tester::new(NoNestedTernary::NAME, NoNestedTernary::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoNestedTernary::NAME, NoNestedTernary::PLUGIN, pass, fail).test_and_snapshot();
 }

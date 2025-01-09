@@ -73,6 +73,7 @@ declare_oxc_lint!(
     /// jest.addMatchers // since Jest 17
     /// ```
     NoDeprecatedFunctions,
+    jest,
     style,
     fix
 );
@@ -187,7 +188,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(NoDeprecatedFunctions::NAME, NoDeprecatedFunctions::CATEGORY, pass, fail)
+    Tester::new(NoDeprecatedFunctions::NAME, NoDeprecatedFunctions::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

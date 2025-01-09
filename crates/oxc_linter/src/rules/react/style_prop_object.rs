@@ -74,6 +74,7 @@ declare_oxc_lint!(
     /// React.createElement("div", { style: styles });
     /// ```
     StylePropObject,
+    react,
     suspicious
 );
 
@@ -493,5 +494,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(StylePropObject::NAME, StylePropObject::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(StylePropObject::NAME, StylePropObject::PLUGIN, pass, fail).test_and_snapshot();
 }

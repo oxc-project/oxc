@@ -232,16 +232,11 @@ where
 
             if !is_last {
                 if is_line_after_element_empty(p, element.span().end) {
-                    let mut space_parts = Vec::new_in(p.allocator);
-                    space_parts.extend(hardline!());
-                    space_parts.extend(hardline!());
-                    parts.push(array!(p, space_parts));
+                    parts.push(array!(p, [hardline!(p), hardline!(p)]));
                 } else if arr.elements.get(i + 1).is_some_and(|next| {
                     p.has_comment(next.span(), CommentFlags::Leading | CommentFlags::Line)
                 }) {
-                    let mut space_parts = Vec::new_in(p.allocator);
-                    space_parts.extend(hardline!());
-                    parts.push(array!(p, space_parts));
+                    parts.push(array!(p, [hardline!(p)]));
                 } else {
                     parts.push(line!());
                 }

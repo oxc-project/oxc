@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// const foo = Math.trunc(1.1);
     /// ```
     PreferMathTrunc,
+    unicorn,
     pedantic,
     pending
 );
@@ -180,5 +181,5 @@ fn test() {
         r"const foo = ~~~~((bar | 0 | 0) >> 0 >> 0 << 0 << 0 ^ 0 ^0);",
     ];
 
-    Tester::new(PreferMathTrunc::NAME, PreferMathTrunc::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(PreferMathTrunc::NAME, PreferMathTrunc::PLUGIN, pass, fail).test_and_snapshot();
 }

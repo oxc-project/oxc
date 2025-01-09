@@ -12,13 +12,8 @@ pub fn print_block<'a>(
 
     parts.push(text!("{"));
     if let Some(doc) = print_block_body(p, stmts, directives) {
-        parts.push({
-            let mut parts = Vec::new_in(p.allocator);
-            parts.extend(hardline!());
-            parts.push(doc);
-            indent!(p, parts)
-        });
-        parts.extend(hardline!());
+        parts.push(indent!(p, [hardline!(p), doc]));
+        parts.push(hardline!(p));
     } else {
         let parent = p.parent_kind();
         let parent_parent = p.parent_parent_kind();
@@ -40,7 +35,7 @@ pub fn print_block<'a>(
                 && !matches!(p.parent_parent_kind(), Some(AstKind::TryStatement(stmt)) if stmt.finalizer.is_some()))
                 || matches!(p.current_kind(), AstKind::StaticBlock(_)))
         {
-            parts.extend(hardline!());
+            parts.push(hardline!(p));
         }
     }
     parts.push(text!("}"));
@@ -48,6 +43,7 @@ pub fn print_block<'a>(
     array!(p, parts)
 }
 
+/// For `Program` only
 pub fn print_block_body<'a>(
     p: &mut Prettier<'a>,
     stmts: &[Statement<'a>],
@@ -64,13 +60,14 @@ pub fn print_block_body<'a>(
 
     if has_directives {
         if let Some(directives) = directives {
+            // `statement::print_statement_sequence()` equivalent for directives
             let mut last_directive = &directives[0];
             for (idx, directive) in directives.iter().enumerate() {
                 parts.push(directive.format(p));
                 if idx != directives.len() - 1 {
-                    parts.extend(hardline!());
+                    parts.push(hardline!(p));
                     if p.is_next_line_empty(directive.span) {
-                        parts.extend(hardline!());
+                        parts.push(hardline!(p));
                     }
                 }
 
@@ -78,9 +75,9 @@ pub fn print_block_body<'a>(
             }
 
             if has_body {
-                parts.extend(hardline!());
+                parts.push(hardline!(p));
                 if p.is_next_line_empty(last_directive.span) {
-                    parts.extend(hardline!());
+                    parts.push(hardline!(p));
                 }
             }
         }

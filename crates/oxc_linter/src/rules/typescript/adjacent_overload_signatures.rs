@@ -77,6 +77,7 @@ declare_oxc_lint!(
     /// export function foo(sn: string | number): void;
     /// ```
     AdjacentOverloadSignatures,
+    typescript,
     style
 );
 
@@ -765,6 +766,6 @@ fn test() {
       }",
     ];
 
-    Tester::new(AdjacentOverloadSignatures::NAME, AdjacentOverloadSignatures::CATEGORY, pass, fail)
+    Tester::new(AdjacentOverloadSignatures::NAME, AdjacentOverloadSignatures::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

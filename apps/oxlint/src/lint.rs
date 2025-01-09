@@ -6,10 +6,11 @@ use std::{
 };
 
 use ignore::gitignore::Gitignore;
+
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
-    loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, InvalidFilterKind, LintFilter, LintService,
-    LintServiceOptions, Linter, LinterBuilder, Oxlintrc,
+    loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, ConfigStoreBuilder, InvalidFilterKind,
+    LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use oxc_span::VALID_EXTENSIONS;
 
@@ -21,6 +22,7 @@ use crate::{
     walk::{Extensions, Walk},
 };
 
+#[derive(Debug)]
 pub struct LintRunner {
     options: LintCommand,
     cwd: PathBuf,
@@ -114,13 +116,9 @@ impl Runner for LintRunner {
         }
 
         let mut oxlintrc = config_search_result.unwrap();
+        let oxlint_wd = oxlintrc.path.parent().unwrap_or(&self.cwd).to_path_buf();
 
-        let ignore_paths = oxlintrc
-            .ignore_patterns
-            .iter()
-            .map(|value| oxlintrc.path.parent().unwrap().join(value))
-            .collect::<Vec<_>>();
-        let paths = Walk::new(&paths, &ignore_options, &ignore_paths)
+        let paths = Walk::new(&oxlint_wd, &paths, &ignore_options, &oxlintrc.ignore_patterns)
             .with_extensions(Extensions(extensions))
             .paths();
 
@@ -130,20 +128,32 @@ impl Runner for LintRunner {
 
         let oxlintrc_for_print =
             if misc_options.print_config { Some(oxlintrc.clone()) } else { None };
-        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc)
-            .with_filters(filter)
-            .with_fix(fix_options.fix_kind());
+        let config_builder =
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).with_filters(filter);
 
         if let Some(basic_config_file) = oxlintrc_for_print {
             return CliRunResult::PrintConfigResult {
-                config_file: builder.resolve_final_config_file(basic_config_file),
+                config_file: config_builder.resolve_final_config_file(basic_config_file),
             };
         }
 
         let mut options = LintServiceOptions::new(self.cwd, paths)
-            .with_cross_module(builder.plugins().has_import());
+            .with_cross_module(config_builder.plugins().has_import());
 
-        let linter = builder.build();
+        let lint_config = match config_builder.build() {
+            Ok(config) => config,
+            Err(diagnostic) => {
+                let handler = GraphicalReportHandler::new();
+                let mut err = String::new();
+                handler.render_report(&mut err, &diagnostic).unwrap();
+                return CliRunResult::InvalidOptions {
+                    message: format!("Failed to parse configuration file.\n{err}"),
+                };
+            }
+        };
+
+        let linter =
+            Linter::new(LintOptions::default(), lint_config).with_fix(fix_options.fix_kind());
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
@@ -258,7 +268,10 @@ impl LintRunner {
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, CliRunResult> {
         if let Some(config_path) = config {
-            return match Oxlintrc::from_file(config_path) {
+            let mut full_path = cwd.to_path_buf();
+            full_path.push(config_path);
+
+            return match Oxlintrc::from_file(&full_path) {
                 Ok(config) => Ok(config),
                 Err(diagnostic) => {
                     let handler = GraphicalReportHandler::new();
@@ -281,9 +294,9 @@ impl LintRunner {
     }
 }
 
-#[cfg(all(test, not(target_os = "windows")))]
+#[cfg(test)]
 mod test {
-    use std::env;
+    use std::{env, path::MAIN_SEPARATOR_STR};
 
     use super::LintRunner;
     use crate::cli::{lint_command, CliRunResult, LintResult, Runner};
@@ -301,10 +314,19 @@ mod test {
     fn test_with_cwd(cwd: &str, args: &[&str]) -> LintResult {
         let mut new_args = vec!["--silent"];
         new_args.extend(args);
+
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
 
         let mut current_cwd = env::current_dir().unwrap();
-        current_cwd.push(cwd);
+
+        let part_cwd = if MAIN_SEPARATOR_STR == "/" {
+            cwd.into()
+        } else {
+            #[expect(clippy::disallowed_methods)]
+            cwd.replace('/', MAIN_SEPARATOR_STR)
+        };
+
+        current_cwd.push(part_cwd);
 
         match LintRunner::new(options).with_cwd(current_cwd).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
@@ -343,6 +365,8 @@ mod test {
         assert_eq!(result.number_of_errors, 0);
     }
 
+    // exclude because we are working with Glob, which only supports the current working directory
+    #[cfg(all(test, not(target_os = "windows")))]
     #[test]
     fn cwd() {
         let args = &["debugger.js"];
@@ -371,6 +395,8 @@ mod test {
         assert_eq!(result.number_of_errors, 0);
     }
 
+    // ToDo: lints all files under windows
+    #[cfg(all(test, not(target_os = "windows")))]
     #[test]
     fn wrong_extension() {
         let args = &["foo.asdf"];
@@ -628,7 +654,7 @@ mod test {
         let args = &["fixtures/svelte/debugger.svelte"];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
     }
 
@@ -679,12 +705,16 @@ mod test {
         use std::fs;
         let file = "fixtures/linter/fix.js";
         let args = &["--fix", file];
-        let content = fs::read_to_string(file).unwrap();
+        let content_original = fs::read_to_string(file).unwrap();
+        #[expect(clippy::disallowed_methods)]
+        let content = content_original.replace("\r\n", "\n");
         assert_eq!(&content, "debugger\n");
 
         // Apply fix to the file.
         let _ = test(args);
-        assert_eq!(fs::read_to_string(file).unwrap(), "\n");
+        #[expect(clippy::disallowed_methods)]
+        let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
+        assert_eq!(new_content, "\n");
 
         // File should not be modified if no fix is applied.
         let modified_before = fs::metadata(file).unwrap().modified().unwrap();
@@ -693,7 +723,7 @@ mod test {
         assert_eq!(modified_before, modified_after);
 
         // Write the file back.
-        fs::write(file, content).unwrap();
+        fs::write(file, content_original).unwrap();
     }
 
     #[test]
@@ -705,8 +735,10 @@ mod test {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
 
-        let expect_json =
-            std::fs::read_to_string("fixtures/print_config/normal/expect.json").unwrap();
+        #[expect(clippy::disallowed_methods)]
+        let expect_json = std::fs::read_to_string("fixtures/print_config/normal/expect.json")
+            .unwrap()
+            .replace("\r\n", "\n");
         assert_eq!(config, expect_json.trim());
     }
 
@@ -727,8 +759,11 @@ mod test {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
 
-        let expect_json =
-            std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json").unwrap();
+        #[expect(clippy::disallowed_methods)]
+        let expect_json = std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json")
+            .unwrap()
+            .replace("\r\n", "\n");
+
         assert_eq!(config, expect_json.trim());
     }
 
@@ -774,11 +809,10 @@ mod test {
 
     #[test]
     fn test_config_ignore_patterns_directory() {
-        let result = test(&[
-            "-c",
-            "fixtures/config_ignore_patterns/ignore_directory/eslintrc.json",
+        let result = test_with_cwd(
             "fixtures/config_ignore_patterns/ignore_directory",
-        ]);
+            &["-c", "eslintrc.json"],
+        );
         assert_eq!(result.number_of_files, 1);
     }
 

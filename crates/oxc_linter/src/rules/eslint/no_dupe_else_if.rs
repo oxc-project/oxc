@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoDupeElseIf,
+    eslint,
     correctness
 );
 
@@ -257,5 +258,5 @@ fn test() {
         ("if (a && a) {} else if (a) {}", None),
     ];
 
-    Tester::new(NoDupeElseIf::NAME, NoDupeElseIf::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoDupeElseIf::NAME, NoDupeElseIf::PLUGIN, pass, fail).test_and_snapshot();
 }

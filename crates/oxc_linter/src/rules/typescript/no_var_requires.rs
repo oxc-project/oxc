@@ -34,6 +34,7 @@ declare_oxc_lint!(
     /// let foo = require('foo');
     /// ```
     NoVarRequires,
+    typescript,
     restriction
 );
 
@@ -117,5 +118,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoVarRequires::NAME, NoVarRequires::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoVarRequires::NAME, NoVarRequires::PLUGIN, pass, fail).test_and_snapshot();
 }

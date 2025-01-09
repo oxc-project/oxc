@@ -32,6 +32,7 @@ declare_oxc_lint!(
     /// delete x;
     /// ```
     NoDeleteVar,
+    eslint,
     correctness
 );
 
@@ -54,5 +55,5 @@ fn test() {
 
     let fail = vec![("delete x", None)];
 
-    Tester::new(NoDeleteVar::NAME, NoDeleteVar::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoDeleteVar::NAME, NoDeleteVar::PLUGIN, pass, fail).test_and_snapshot();
 }

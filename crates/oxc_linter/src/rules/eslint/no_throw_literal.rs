@@ -65,6 +65,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoThrowLiteral,
+    eslint,
     pedantic,
     conditional_suggestion,
 );
@@ -270,7 +271,7 @@ fn test() {
         ("throw 'error' satisfies Error", "throw new Error('error' satisfies Error)"),
     ];
 
-    Tester::new(NoThrowLiteral::NAME, NoThrowLiteral::CATEGORY, pass, fail)
+    Tester::new(NoThrowLiteral::NAME, NoThrowLiteral::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

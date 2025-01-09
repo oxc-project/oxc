@@ -63,7 +63,7 @@ impl<'a, 'ctx> TypeScript<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for TypeScript<'a, 'ctx> {
+impl<'a> Traverse<'a> for TypeScript<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.ctx.source_type.is_typescript_definition() {
             // Output empty file for TS definitions

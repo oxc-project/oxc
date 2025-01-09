@@ -1,15 +1,18 @@
-use super::{Kind, Lexer};
 use crate::diagnostics;
 
-#[allow(clippy::unnecessary_safety_comment)]
-/// Handle next byte of source.
-///
-/// SAFETY:
-/// * Lexer must not be at end of file.
-/// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
-/// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!()` macro.
-pub(super) unsafe fn handle_byte(byte: u8, lexer: &mut Lexer) -> Kind {
-    BYTE_HANDLERS[byte as usize](lexer)
+use super::{Kind, Lexer};
+
+impl Lexer<'_> {
+    /// Handle next byte of source.
+    ///
+    /// # SAFETY
+    ///
+    /// * Lexer must not be at end of file.
+    /// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
+    /// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!()` macro.
+    pub(super) unsafe fn handle_byte(&mut self, byte: u8) -> Kind {
+        BYTE_HANDLERS[byte as usize](self)
+    }
 }
 
 type ByteHandler = unsafe fn(&mut Lexer<'_>) -> Kind;
@@ -72,7 +75,6 @@ macro_rules! byte_handler {
     };
 }
 
-#[allow(clippy::unnecessary_safety_comment)]
 /// Macro for defining byte handler for an ASCII character.
 ///
 /// In addition to defining a `const` for the handler, it also asserts that lexer
@@ -132,7 +134,6 @@ macro_rules! ascii_byte_handler {
     };
 }
 
-#[allow(clippy::unnecessary_safety_comment)]
 /// Macro for defining byte handler for an ASCII character which is start of an identifier
 /// (`a`-`z`, `A`-`Z`, `$` or `_`).
 ///

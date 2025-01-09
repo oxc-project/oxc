@@ -29,6 +29,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUnnecessaryAwait,
+    unicorn,
     correctness,
     conditional_fix
 );
@@ -166,7 +167,7 @@ fn test() {
         ("-await -1", "-await -1", None),                     // no autofix
     ];
 
-    Tester::new(NoUnnecessaryAwait::NAME, NoUnnecessaryAwait::CATEGORY, pass, fail)
+    Tester::new(NoUnnecessaryAwait::NAME, NoUnnecessaryAwait::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

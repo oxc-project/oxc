@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoRestrictedGlobals,
+    eslint,
     restriction,
 );
 
@@ -148,6 +149,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoRestrictedGlobals::NAME, NoRestrictedGlobals::CATEGORY, pass, fail)
+    Tester::new(NoRestrictedGlobals::NAME, NoRestrictedGlobals::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

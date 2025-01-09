@@ -23,16 +23,8 @@ impl<'a> CompressorPass<'a> for StatementFusion {
 }
 
 impl<'a> Traverse<'a> for StatementFusion {
-    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fuse_statements(&mut program.body, ctx);
-    }
-
-    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fuse_statements(&mut body.statements, ctx);
-    }
-
-    fn exit_block_statement(&mut self, block: &mut BlockStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fuse_statements(&mut block.body, ctx);
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.fuse_statements(stmts, ctx);
     }
 }
 
@@ -42,20 +34,46 @@ impl<'a> StatementFusion {
     }
 
     fn fuse_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        if Self::can_fuse_into_one_statement(stmts) {
-            self.fuse_into_one_statement(stmts, ctx);
-        }
-    }
-
-    fn can_fuse_into_one_statement(stmts: &[Statement<'a>]) -> bool {
         let len = stmts.len();
+
         if len <= 1 {
-            return false;
+            return;
         }
-        if stmts[0..len - 1].iter().any(|s| !matches!(s, Statement::ExpressionStatement(_))) {
-            return false;
+
+        let mut end = None;
+
+        // TODO: make this cleaner and faster. Find the groups of expressions i..j and fusable j+1
+        // statement.
+        for i in (0..stmts.len()).rev() {
+            match end {
+                None => {
+                    if Self::is_fusable_control_statement(&stmts[i]) {
+                        end = Some(i);
+                    }
+                }
+                Some(j) => {
+                    let is_expr_stmt = matches!(&stmts[i], Statement::ExpressionStatement(_));
+                    if i == 0 && is_expr_stmt {
+                        Self::fuse_into_one_statement(&mut stmts[0..=j], ctx);
+                        self.changed = true;
+                    } else if !is_expr_stmt {
+                        if j - i > 1 {
+                            Self::fuse_into_one_statement(&mut stmts[i + 1..=j], ctx);
+                            self.changed = true;
+                        }
+                        if Self::is_fusable_control_statement(&stmts[i]) {
+                            end = Some(i);
+                        } else {
+                            end = None;
+                        }
+                    }
+                }
+            }
         }
-        Self::is_fusable_control_statement(&stmts[len - 1])
+
+        if self.changed {
+            stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
+        }
     }
 
     fn is_fusable_control_statement(stmt: &Statement<'a>) -> bool {
@@ -82,39 +100,28 @@ impl<'a> StatementFusion {
         }
     }
 
-    fn fuse_into_one_statement(
-        &mut self,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let len = stmts.len();
-        let mut expressions = ctx.ast.vec();
+    fn fuse_into_one_statement(stmts: &mut [Statement<'a>], ctx: &mut TraverseCtx<'a>) {
+        let mut exprs = ctx.ast.vec();
 
-        for stmt in stmts.iter_mut().take(len - 1) {
-            match stmt {
-                Statement::ExpressionStatement(expr_stmt) => {
-                    if let Expression::SequenceExpression(sequence_expr) = &mut expr_stmt.expression
-                    {
-                        expressions.extend(
-                            sequence_expr
-                                .expressions
-                                .iter_mut()
-                                .map(|e| ctx.ast.move_expression(e)),
-                        );
-                    } else {
-                        expressions.push(ctx.ast.move_expression(&mut expr_stmt.expression));
-                    }
-                    *stmt = ctx.ast.statement_empty(SPAN);
+        let len = stmts.len();
+
+        for stmt in &mut stmts[0..len - 1] {
+            if let Statement::ExpressionStatement(expr_stmt) = stmt {
+                if let Expression::SequenceExpression(sequence_expr) = &mut expr_stmt.expression {
+                    exprs.extend(
+                        sequence_expr.expressions.iter_mut().map(|e| ctx.ast.move_expression(e)),
+                    );
+                } else {
+                    exprs.push(ctx.ast.move_expression(&mut expr_stmt.expression));
                 }
-                _ => unreachable!(),
+                *stmt = ctx.ast.statement_empty(SPAN);
+            } else {
+                break;
             }
         }
 
-        let last = stmts.last_mut().unwrap();
-        Self::fuse_expression_into_control_flow_statement(last, expressions, ctx);
-
-        *stmts = ctx.ast.vec1(ctx.ast.move_statement(last));
-        self.changed = true;
+        let last = &mut stmts[len - 1];
+        Self::fuse_expression_into_control_flow_statement(last, exprs, ctx);
     }
 
     fn fuse_expression_into_control_flow_statement(
@@ -171,9 +178,7 @@ fn can_merge_block_stmt(node: &BlockStatement) -> bool {
 fn can_merge_block_stmt_member(node: &Statement) -> bool {
     match node {
         Statement::LabeledStatement(label) => can_merge_block_stmt_member(&label.body),
-        Statement::VariableDeclaration(var_decl) => {
-            !matches!(var_decl.kind, VariableDeclarationKind::Const | VariableDeclarationKind::Let)
-        }
+        Statement::VariableDeclaration(var_decl) => var_decl.kind.is_var(),
         Statement::ClassDeclaration(_) | Statement::FunctionDeclaration(_) => false,
         _ => true,
     }
@@ -229,25 +234,21 @@ mod test {
         fuse("a;b;c;if(x,y){}else{}", "if(a,b,c,x,y){}else{}");
         fuse("a;b;c;if(x,y){}", "if(a,b,c,x,y){}");
         fuse("a;b;c;if(x,y,z){}", "if(a,b,c,x,y,z){}");
-
-        // Can't fuse if there are statements after the IF.
-        fuse_same("a();if(a()){}a()");
+        fuse("a();if(a()){}a()", "if(a(), a()){}a()");
     }
 
     #[test]
     fn fold_block_return() {
         fuse("a;b;c;return x", "return a,b,c,x");
         fuse("a;b;c;return x+y", "return a,b,c,x+y");
-
-        // DeadAssignmentElimination would have cleaned it up anyways.
-        fuse_same("a;b;c;return x;a;b;c");
+        fuse("a;b;c;return x;a;b;c", "return a,b,c,x;a,b,c");
     }
 
     #[test]
     fn fold_block_throw() {
         fuse("a;b;c;throw x", "throw a,b,c,x");
         fuse("a;b;c;throw x+y", "throw a,b,c,x+y");
-        fuse_same("a;b;c;throw x;a;b;c");
+        fuse("a;b;c;throw x;a;b;c", "throw a,b,c,x;a,b,c");
     }
 
     #[test]
@@ -262,9 +263,6 @@ mod test {
 
     #[test]
     fn fuse_into_for_in2() {
-        // This test case causes a parse warning in ES5 strict out, but is a parse error in ES6+ out.
-        // setAcceptedLanguage(CompilerOptions.LanguageMode.ECMASCRIPT5_STRICT);
-        // set_expect_parse_warnings_in_this_test();
         fuse_same("a();for(var x = b() in y){}");
     }
 
@@ -278,9 +276,9 @@ mod test {
 
     #[test]
     fn fuse_into_vanilla_for2() {
-        fuse_same("a;b;c;for(var d;g;){}");
-        fuse_same("a;b;c;for(let d;g;){}");
-        fuse_same("a;b;c;for(const d = 5;g;){}");
+        fuse("a;b;c;for(var d;g;){}", "a,b,c;for(var d;g;){}");
+        fuse("a;b;c;for(let d;g;){}", "a,b,c;for(let d;g;){}");
+        fuse("a;b;c;for(const d = 5;g;){}", "a,b,c;for(const d = 5;g;){}");
     }
 
     #[test]
@@ -298,8 +296,13 @@ mod test {
             "a;b; label: { if(q) break label; bar(); }",
             "label: { if(a,b,q) break label; bar(); }",
         );
-        fuse_same("a;b;c;{var x;d;e;}");
-        fuse_same("a;b;c;label:{break label;d;e;}");
+        fuse("a;b;c;{var x;d;e;}", "a,b,c;{var x;d,e;}");
+        fuse("a;b;c;label:{break label;d;e;}", "a,b,c;label:{break label;d,e;}");
+    }
+
+    #[test]
+    fn fuse_into_switch_cases() {
+        fuse("switch (_) { case _: a; return b }", "switch (_) { case _: return a, b }");
     }
 
     #[test]
@@ -309,7 +312,7 @@ mod test {
 
     #[test]
     fn no_fuse_into_do() {
-        fuse_same("a;b;c;do{}while(x)");
+        fuse("a;b;c;do{}while(x)", "a,b,c;do{}while(x)");
     }
 
     #[test]
@@ -324,14 +327,13 @@ mod test {
         fuse_same("a; { b; function a() {} }");
         fuse_same("a; { b; const otherVariable = 1; }");
 
-        // enable_normalize();
         // test(
-        //     "function f(a) { if (COND) { a; { b; let a = 1; } } }",
-        //     "function f(a) { if (COND) { { a,b; let a$jscomp$1 = 1; } } }",
+        // "function f(a) { if (COND) { a; { b; let a = 1; } } }",
+        // "function f(a) { if (COND) { { a,b; let a$jscomp$1 = 1; } } }",
         // );
         // test(
-        //     "function f(a) { if (COND) { a; { b; let otherVariable = 1; } } }",
-        //     "function f(a) { if (COND) {  { a,b; let otherVariable = 1; } } }",
+        // "function f(a) { if (COND) { a; { b; let otherVariable = 1; } } }",
+        // "function f(a) { if (COND) {  { a,b; let otherVariable = 1; } } }",
         // );
     }
 

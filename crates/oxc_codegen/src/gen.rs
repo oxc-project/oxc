@@ -172,7 +172,6 @@ impl Gen for Statement<'_> {
                 p.print_statement_comments(stmt.span.start);
                 stmt.print(p, ctx);
             }
-
             Self::ImportDeclaration(decl) => {
                 p.print_statement_comments(decl.span.start);
                 decl.print(p, ctx);
@@ -197,7 +196,6 @@ impl Gen for Statement<'_> {
                 p.print_statement_comments(decl.span.start);
                 decl.print(p, ctx);
             }
-
             Self::VariableDeclaration(decl) => {
                 p.print_statement_comments(decl.span.start);
                 p.print_indent();
@@ -273,6 +271,7 @@ impl Gen for IfStatement<'_> {
 }
 
 fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
+    p.print_space_before_identifier();
     p.print_str("if");
     p.print_soft_space();
     p.print_ascii_byte(b'(');
@@ -362,6 +361,7 @@ impl Gen for ForStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("for");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -393,6 +393,7 @@ impl Gen for ForInStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("for");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -411,6 +412,7 @@ impl Gen for ForOfStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("for");
         if self.r#await {
             p.print_str(" await");
@@ -458,6 +460,7 @@ impl Gen for WhileStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("while");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -471,17 +474,23 @@ impl Gen for DoWhileStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
-        p.print_str("do ");
-        if let Statement::BlockStatement(block) = &self.body {
-            p.print_block_statement(block, ctx);
-            p.print_soft_space();
-        } else {
-            p.print_soft_newline();
-            p.indent();
-            self.body.print(p, ctx);
-            p.print_semicolon_if_needed();
-            p.dedent();
-            p.print_indent();
+        p.print_space_before_identifier();
+        p.print_str("do");
+        match &self.body {
+            Statement::BlockStatement(block) => {
+                p.print_soft_space();
+                p.print_block_statement(block, ctx);
+                p.print_soft_space();
+            }
+            Statement::EmptyStatement(s) => s.print(p, ctx),
+            _ => {
+                p.print_soft_newline();
+                p.indent();
+                self.body.print(p, ctx);
+                p.print_semicolon_if_needed();
+                p.dedent();
+                p.print_indent();
+            }
         }
         p.print_str("while");
         p.print_soft_space();
@@ -505,6 +514,7 @@ impl Gen for ContinueStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("continue");
         if let Some(label) = &self.label {
             p.print_soft_space();
@@ -518,6 +528,7 @@ impl Gen for BreakStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("break");
         if let Some(label) = &self.label {
             p.print_soft_space();
@@ -531,6 +542,7 @@ impl Gen for SwitchStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("switch");
         p.print_soft_space();
         p.print_ascii_byte(b'(');
@@ -638,6 +650,7 @@ impl Gen for ThrowStatement<'_> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("throw");
         p.print_soft_space();
         p.print_expression(&self.argument);
@@ -649,6 +662,7 @@ impl Gen for WithStatement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("with");
         p.print_ascii_byte(b'(');
         p.print_expression(&self.object);
@@ -661,6 +675,7 @@ impl Gen for DebuggerStatement {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("debugger");
         p.print_semicolon_after_statement();
     }
@@ -669,6 +684,7 @@ impl Gen for DebuggerStatement {
 impl Gen for VariableDeclaration<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
+        p.print_space_before_identifier();
         if self.declare {
             p.print_str("declare ");
         }
@@ -1167,7 +1183,7 @@ impl GenExpr for Expression<'_> {
             Self::BooleanLiteral(lit) => lit.print(p, ctx),
             Self::NullLiteral(lit) => lit.print(p, ctx),
             Self::NumericLiteral(lit) => lit.print_expr(p, precedence, ctx),
-            Self::BigIntLiteral(lit) => lit.print(p, ctx),
+            Self::BigIntLiteral(lit) => lit.print_expr(p, precedence, ctx),
             Self::RegExpLiteral(lit) => lit.print(p, ctx),
             Self::StringLiteral(lit) => lit.print(p, ctx),
             Self::Identifier(ident) => ident.print(p, ctx),
@@ -1306,16 +1322,20 @@ impl GenExpr for NumericLiteral<'_> {
     }
 }
 
-impl Gen for BigIntLiteral<'_> {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        let raw = self.raw.as_str().cow_replace('_', "");
-        if raw.starts_with('-') {
-            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
-        }
-
+impl GenExpr for BigIntLiteral<'_> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping(self.span);
-        p.print_str(&raw);
+        let raw = self.raw.as_str().cow_replace('_', "");
+        if !raw.starts_with('-') {
+            p.print_str(&raw);
+        } else if precedence >= Precedence::Prefix {
+            p.print_ascii_byte(b'(');
+            p.print_str(&raw);
+            p.print_ascii_byte(b')');
+        } else {
+            p.print_str(&raw);
+        }
     }
 }
 
@@ -3310,7 +3330,7 @@ impl Gen for TSLiteral<'_> {
             Self::BooleanLiteral(decl) => decl.print(p, ctx),
             Self::NullLiteral(decl) => decl.print(p, ctx),
             Self::NumericLiteral(decl) => decl.print_expr(p, Precedence::Lowest, ctx),
-            Self::BigIntLiteral(decl) => decl.print(p, ctx),
+            Self::BigIntLiteral(decl) => decl.print_expr(p, Precedence::Lowest, ctx),
             Self::RegExpLiteral(decl) => decl.print(p, ctx),
             Self::StringLiteral(decl) => decl.print(p, ctx),
             Self::TemplateLiteral(decl) => decl.print(p, ctx),

@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferMockPromiseShorthand,
+    jest,
     style,
     conditional_fix
 );
@@ -430,7 +431,7 @@ fn test() {
         // ),
     ];
 
-    Tester::new(PreferMockPromiseShorthand::NAME, PreferMockPromiseShorthand::CATEGORY, pass, fail)
+    Tester::new(PreferMockPromiseShorthand::NAME, PreferMockPromiseShorthand::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
