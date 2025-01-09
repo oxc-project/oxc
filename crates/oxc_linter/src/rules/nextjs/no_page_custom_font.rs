@@ -35,6 +35,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoPageCustomFont,
+    nextjs,
     correctness,
 );
 
@@ -325,5 +326,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoPageCustomFont::NAME, NoPageCustomFont::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoPageCustomFont::NAME, NoPageCustomFont::PLUGIN, pass, fail).test_and_snapshot();
 }

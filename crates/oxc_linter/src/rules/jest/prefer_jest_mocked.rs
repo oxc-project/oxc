@@ -50,6 +50,7 @@ declare_oxc_lint!(
     /// jest.mocked([].foo).mockReturnValue(1);
     /// ```
     PreferJestMocked,
+    jest,
     style,
     conditional_fix
 );
@@ -349,7 +350,7 @@ fn test() {
         ("(foo as jest.Mock) = jest.fn();", "(foo as jest.Mock) = jest.fn();"),
     ];
 
-    Tester::new(PreferJestMocked::NAME, PreferJestMocked::CATEGORY, pass, fail)
+    Tester::new(PreferJestMocked::NAME, PreferJestMocked::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

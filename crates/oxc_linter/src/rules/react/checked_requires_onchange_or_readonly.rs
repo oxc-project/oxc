@@ -62,6 +62,7 @@ declare_oxc_lint!(
     /// React.createElement('input', { type: 'checkbox', defaultChecked: true });
     /// ```
     CheckedRequiresOnchangeOrReadonly,
+    react,
     pedantic
 );
 
@@ -277,7 +278,7 @@ fn test() {
 
     Tester::new(
         CheckedRequiresOnchangeOrReadonly::NAME,
-        CheckedRequiresOnchangeOrReadonly::CATEGORY,
+        CheckedRequiresOnchangeOrReadonly::PLUGIN,
         pass,
         fail,
     )

@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// <input aria-labelledby="address_label" />
     /// ```
     AriaProps,
+    jsx_a11y,
     correctness,
     conditional_fix
 );
@@ -102,7 +103,5 @@ fn test() {
     let fix =
         vec![(r#"<div aria-labeledby="foobar" />"#, r#"<div aria-labelledby="foobar" />"#, None)];
 
-    Tester::new(AriaProps::NAME, AriaProps::CATEGORY, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(AriaProps::NAME, AriaProps::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

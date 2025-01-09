@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// el.removeEventListener('click', handler.bind(this));
     /// ```
     NoInvalidRemoveEventListener,
+    unicorn,
     correctness
 );
 
@@ -207,7 +208,7 @@ fn test() {
 
     Tester::new(
         NoInvalidRemoveEventListener::NAME,
-        NoInvalidRemoveEventListener::CATEGORY,
+        NoInvalidRemoveEventListener::PLUGIN,
         pass,
         fail,
     )

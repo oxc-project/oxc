@@ -77,6 +77,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ForDirection,
+    eslint,
     correctness,
     fix_dangerous
 );
@@ -320,7 +321,7 @@ fn test() {
         ("for(var ii = 10; ii > 0; ii+=1){}", "for(var ii = 10; ii > 0; ii-=1){}", None),
     ];
 
-    Tester::new(ForDirection::NAME, ForDirection::CATEGORY, pass, fail)
+    Tester::new(ForDirection::NAME, ForDirection::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -82,6 +82,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     SortKeys,
+    eslint,
     style,
     pending
 );
@@ -1023,5 +1024,5 @@ fn test() {
         ), // { "ecmaVersion": 2018 }
     ];
 
-    Tester::new(SortKeys::NAME, SortKeys::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).test_and_snapshot();
 }

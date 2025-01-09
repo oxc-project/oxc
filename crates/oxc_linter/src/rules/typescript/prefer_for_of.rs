@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferForOf,
+    typescript,
     style,
     pending
 );
@@ -306,5 +307,5 @@ fn test() {
         "function* gen() { for (let i = 0; i < this.array.length; ++i) { yield this.array[i]; } }",
     ];
 
-    Tester::new(PreferForOf::NAME, PreferForOf::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(PreferForOf::NAME, PreferForOf::PLUGIN, pass, fail).test_and_snapshot();
 }

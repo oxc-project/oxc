@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// if (!!foo || bar) {}
     /// ```
     NoExtraBooleanCast,
+    eslint,
     correctness,
     // a suggestion could be added. Note that lacking !! can mess up TS type
     // narrowing sometimes, so it should not be an autofix
@@ -872,6 +873,6 @@ fn test() {
         ("if (!Boolean(a as any)) { }", None),
     ];
 
-    Tester::new(NoExtraBooleanCast::NAME, NoExtraBooleanCast::CATEGORY, pass, fail)
+    Tester::new(NoExtraBooleanCast::NAME, NoExtraBooleanCast::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

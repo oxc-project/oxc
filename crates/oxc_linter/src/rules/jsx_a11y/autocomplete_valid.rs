@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// <input autocomplete="name" />
     /// ```
     AutocompleteValid,
+    jsx_a11y,
     correctness
 );
 
@@ -259,6 +260,5 @@ fn test() {
         ("<Input type='text' autocomplete='baz' />;", None, Some(settings())),
     ];
 
-    Tester::new(AutocompleteValid::NAME, AutocompleteValid::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(AutocompleteValid::NAME, AutocompleteValid::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -11,8 +11,7 @@ use serde_json::Value;
 
 use crate::{
     fixer::FixKind, options::LintOptions, rules::RULES, AllowWarnDeny, ConfigStoreBuilder, Fixer,
-    LintPlugins, LintService, LintServiceOptions, Linter, Oxlintrc, RuleCategory, RuleEnum,
-    RuleWithSeverity,
+    LintPlugins, LintService, LintServiceOptions, Linter, Oxlintrc, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Eq, PartialEq)]
@@ -162,7 +161,7 @@ where
 
 pub struct Tester {
     rule_name: &'static str,
-    rule_category: RuleCategory,
+    plugin_name: &'static str,
     rule_path: PathBuf,
     expect_pass: Vec<TestCase>,
     expect_fail: Vec<TestCase>,
@@ -185,7 +184,7 @@ pub struct Tester {
 impl Tester {
     pub fn new<T: Into<TestCase>>(
         rule_name: &'static str,
-        rule_category: RuleCategory,
+        plugin_name: &'static str,
         expect_pass: Vec<T>,
         expect_fail: Vec<T>,
     ) -> Self {
@@ -197,7 +196,7 @@ impl Tester {
             env::current_dir().unwrap().join("fixtures/import").into_boxed_path();
         Self {
             rule_name,
-            rule_category,
+            plugin_name,
             rule_path,
             expect_pass,
             expect_fail,
@@ -508,7 +507,7 @@ impl Tester {
     fn find_rule(&self) -> &RuleEnum {
         RULES
             .iter()
-            .find(|rule| rule.category() == self.rule_category && rule.name() == self.rule_name)
+            .find(|rule| rule.plugin_name() == self.plugin_name && rule.name() == self.rule_name)
             .unwrap_or_else(|| panic!("Rule not found: {}", &self.rule_name))
     }
 }

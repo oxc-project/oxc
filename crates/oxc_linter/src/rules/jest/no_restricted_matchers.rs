@@ -72,6 +72,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoRestrictedMatchers,
+    jest,
     style,
 );
 
@@ -243,7 +244,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoRestrictedMatchers::NAME, NoRestrictedMatchers::CATEGORY, pass, fail)
+    Tester::new(NoRestrictedMatchers::NAME, NoRestrictedMatchers::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

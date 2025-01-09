@@ -141,6 +141,7 @@ declare_oxc_lint!(
     /// Foo.prototype.bar = function() {};
     /// ```
     FuncNames,
+    eslint,
     style,
     conditional_fix_suggestion
 );
@@ -798,7 +799,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(FuncNames::NAME, FuncNames::CATEGORY, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(FuncNames::NAME, FuncNames::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

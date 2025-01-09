@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// } catch { }
     /// ```
     PreferOptionalCatchBinding,
+    unicorn,
     style,
     fix
 );
@@ -153,7 +154,7 @@ fn test() {
         (r"try {} catch ({cause: {message}}) {}", r"try {} catch {}"),
     ];
 
-    Tester::new(PreferOptionalCatchBinding::NAME, PreferOptionalCatchBinding::CATEGORY, pass, fail)
+    Tester::new(PreferOptionalCatchBinding::NAME, PreferOptionalCatchBinding::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

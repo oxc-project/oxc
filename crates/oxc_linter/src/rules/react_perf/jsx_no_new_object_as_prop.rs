@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// <Item config={staticConfig} />
     /// ```
     JsxNoNewObjectAsProp,
+    react_perf,
     perf
 );
 
@@ -159,7 +160,7 @@ fn test() {
         r"const Foo = ({ x = {} }) => <Item x={x} />",
     ];
 
-    Tester::new(JsxNoNewObjectAsProp::NAME, JsxNoNewObjectAsProp::CATEGORY, pass, fail)
+    Tester::new(JsxNoNewObjectAsProp::NAME, JsxNoNewObjectAsProp::PLUGIN, pass, fail)
         .with_react_perf_plugin(true)
         .test_and_snapshot();
 }

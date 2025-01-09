@@ -33,6 +33,7 @@ declare_oxc_lint!(
     /// async function hi() { await thing() }
     /// ```
     PreferAwaitToThen,
+    promise,
     style,
 );
 
@@ -97,6 +98,5 @@ fn test() {
         "something().then(async () => await somethingElse())",
     ];
 
-    Tester::new(PreferAwaitToThen::NAME, PreferAwaitToThen::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(PreferAwaitToThen::NAME, PreferAwaitToThen::PLUGIN, pass, fail).test_and_snapshot();
 }

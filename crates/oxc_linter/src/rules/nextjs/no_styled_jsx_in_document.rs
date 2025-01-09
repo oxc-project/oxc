@@ -30,6 +30,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoStyledJsxInDocument,
+    nextjs,
     correctness,
 );
 
@@ -171,6 +172,6 @@ fn test() {
         Some(PathBuf::from("pages/_document.jsx")),
     )];
 
-    Tester::new(NoStyledJsxInDocument::NAME, NoStyledJsxInDocument::CATEGORY, pass, fail)
+    Tester::new(NoStyledJsxInDocument::NAME, NoStyledJsxInDocument::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

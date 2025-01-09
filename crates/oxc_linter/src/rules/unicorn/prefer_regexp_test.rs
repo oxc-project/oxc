@@ -42,6 +42,7 @@ declare_oxc_lint!(
     ///
     /// ```
     PreferRegexpTest,
+    unicorn,
     pedantic,
     fix
 );
@@ -290,7 +291,7 @@ fn test() {
         ("const re = /a/; if (someStr.match(re)) {}", "const re = /a/; if (re.test(someStr)) {}"),
     ];
 
-    Tester::new(PreferRegexpTest::NAME, PreferRegexpTest::CATEGORY, pass, fail)
+    Tester::new(PreferRegexpTest::NAME, PreferRegexpTest::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

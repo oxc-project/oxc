@@ -110,6 +110,7 @@ declare_oxc_lint!(
     /// <Foo role={role}></Foo>       <!-- Good: ignoreNonDOM is set to true -->
     /// ```
     AriaRole,
+    jsx_a11y,
     correctness
 );
 
@@ -255,5 +256,5 @@ fn test() {
         ("<Box asChild='div' role='Button' />", None, None, None),
     ];
 
-    Tester::new(AriaRole::NAME, AriaRole::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(AriaRole::NAME, AriaRole::PLUGIN, pass, fail).test_and_snapshot();
 }

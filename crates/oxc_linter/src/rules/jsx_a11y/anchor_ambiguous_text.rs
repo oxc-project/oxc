@@ -82,6 +82,7 @@ declare_oxc_lint!(
     /// <a aria-label="oxc linter documentation">click here</a>
     /// ```
     AnchorAmbiguousText,
+    jsx_a11y,
     restriction,
 );
 
@@ -307,6 +308,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(AnchorAmbiguousText::NAME, AnchorAmbiguousText::CATEGORY, pass, fail)
+    Tester::new(AnchorAmbiguousText::NAME, AnchorAmbiguousText::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

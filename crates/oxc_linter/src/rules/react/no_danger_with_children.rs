@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// <div dangerouslySetInnerHTML={{ __html: "HTML" }} />
     /// ```
     NoDangerWithChildren,
+    react,
     correctness
 );
 
@@ -235,7 +236,7 @@ fn test() {
         "#,
     ];
 
-    Tester::new(NoDangerWithChildren::NAME, NoDangerWithChildren::CATEGORY, pass, fail)
+    Tester::new(NoDangerWithChildren::NAME, NoDangerWithChildren::PLUGIN, pass, fail)
         .test_and_snapshot();
 }
 

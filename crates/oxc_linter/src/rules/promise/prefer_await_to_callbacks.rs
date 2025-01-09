@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// eventEmitter.on('error', err => {})
     /// ```
     PreferAwaitToCallbacks,
+    promise,
     style,
 );
 
@@ -181,6 +182,6 @@ fn test() {
         "customMap(errors, (err) => err.message)",
     ];
 
-    Tester::new(PreferAwaitToCallbacks::NAME, PreferAwaitToCallbacks::CATEGORY, pass, fail)
+    Tester::new(PreferAwaitToCallbacks::NAME, PreferAwaitToCallbacks::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

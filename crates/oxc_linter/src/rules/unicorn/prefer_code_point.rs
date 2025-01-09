@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// String.fromCodePoint(0x1f984);
     /// ```
     PreferCodePoint,
+    unicorn,
     pedantic,
     fix
 );
@@ -115,7 +116,7 @@ fn test() {
         (r"String.fromCharCode(0x1f984);", r"String.fromCodePoint(0x1f984);"),
     ];
 
-    Tester::new(PreferCodePoint::NAME, PreferCodePoint::CATEGORY, pass, fail)
+    Tester::new(PreferCodePoint::NAME, PreferCodePoint::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

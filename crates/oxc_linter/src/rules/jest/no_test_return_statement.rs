@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoTestReturnStatement,
+    jest,
     style,
 );
 
@@ -235,7 +236,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoTestReturnStatement::NAME, NoTestReturnStatement::CATEGORY, pass, fail)
+    Tester::new(NoTestReturnStatement::NAME, NoTestReturnStatement::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

@@ -442,6 +442,7 @@ declare_oxc_lint!(
     /// var friend = new person.acquaintance();
     /// ```
     NewCap,
+    eslint,
     style,
     pending  // TODO: maybe?
 );
@@ -785,5 +786,5 @@ fn test() {
         ("(foo?.Bar)();", None),     // { "ecmaVersion": 2020 }
     ];
 
-    Tester::new(NewCap::NAME, NewCap::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NewCap::NAME, NewCap::PLUGIN, pass, fail).test_and_snapshot();
 }

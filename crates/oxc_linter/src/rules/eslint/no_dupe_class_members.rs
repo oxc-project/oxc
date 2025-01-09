@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// a.foo() // Uncaught TypeError: a.foo is not a function
     /// ```
     NoDupeClassMembers,
+    eslint,
     correctness
 );
 
@@ -164,6 +165,6 @@ fn test() {
         "class A { foo;  foo() {}}",
     ];
 
-    Tester::new(NoDupeClassMembers::NAME, NoDupeClassMembers::CATEGORY, pass, fail)
+    Tester::new(NoDupeClassMembers::NAME, NoDupeClassMembers::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

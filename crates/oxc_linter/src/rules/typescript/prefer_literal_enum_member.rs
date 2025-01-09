@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferLiteralEnumMember,
+    typescript,
     restriction
 );
 
@@ -356,6 +357,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferLiteralEnumMember::NAME, PreferLiteralEnumMember::CATEGORY, pass, fail)
+    Tester::new(PreferLiteralEnumMember::NAME, PreferLiteralEnumMember::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

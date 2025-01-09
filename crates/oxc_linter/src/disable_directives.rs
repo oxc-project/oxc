@@ -599,7 +599,7 @@ semi*/
             ),
         ];
 
-        Tester::new(EslintNoDebugger::NAME, EslintNoDebugger::CATEGORY, pass, fail)
+        Tester::new(EslintNoDebugger::NAME, EslintNoDebugger::PLUGIN, pass, fail)
             .intentionally_allow_no_fix_tests()
             .test();
     }

@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// Reflect.apply(foo, null);
     /// ```
     PreferReflectApply,
+    unicorn,
     style
 );
 
@@ -143,6 +144,6 @@ fn test() {
         ("foo[\"apply\"](null, [42]);", None),
     ];
 
-    Tester::new(PreferReflectApply::NAME, PreferReflectApply::CATEGORY, pass, fail)
+    Tester::new(PreferReflectApply::NAME, PreferReflectApply::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

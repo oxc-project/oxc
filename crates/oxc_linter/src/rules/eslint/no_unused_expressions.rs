@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// const foo = new Set<number>();
     /// ```
     NoUnusedExpressions,
+    eslint,
     restriction
 );
 
@@ -534,6 +535,6 @@ fn test() {
         ("const _func = (value: number) => { value + 1; }", None),
     ];
 
-    Tester::new(NoUnusedExpressions::NAME, NoUnusedExpressions::CATEGORY, pass, fail)
+    Tester::new(NoUnusedExpressions::NAME, NoUnusedExpressions::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

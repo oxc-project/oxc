@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// var re = /foo   bar/;
     /// ```
     NoRegexSpaces,
+    eslint,
     restriction,
     pending // TODO: This is somewhat autofixable, but the fixer does not exist yet.
 );
@@ -248,5 +249,5 @@ fn test() {
         "var foo = new RegExp('[[    ]    ]    ', 'v');",
     ];
 
-    Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::PLUGIN, pass, fail).test_and_snapshot();
 }

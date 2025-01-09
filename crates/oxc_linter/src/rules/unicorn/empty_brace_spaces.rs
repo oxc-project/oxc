@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     EmptyBraceSpaces,
+    unicorn,
     style,
     fix
 );
@@ -341,7 +342,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(EmptyBraceSpaces::NAME, EmptyBraceSpaces::CATEGORY, pass, fail)
+    Tester::new(EmptyBraceSpaces::NAME, EmptyBraceSpaces::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

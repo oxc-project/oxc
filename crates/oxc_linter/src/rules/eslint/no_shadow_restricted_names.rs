@@ -34,6 +34,7 @@ declare_oxc_lint!(
     /// try {} catch(eval){}
     /// ```
     NoShadowRestrictedNames,
+    eslint,
     correctness
 );
 
@@ -162,6 +163,6 @@ fn test() {
         ("class foo { #undefined(undefined) { } }", None),
     ];
 
-    Tester::new(NoShadowRestrictedNames::NAME, NoShadowRestrictedNames::CATEGORY, pass, fail)
+    Tester::new(NoShadowRestrictedNames::NAME, NoShadowRestrictedNames::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

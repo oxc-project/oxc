@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// typeof foo === baz
     /// ```
     ValidTypeof,
+    eslint,
     correctness,
     conditional_fix
 );
@@ -224,7 +225,7 @@ fn test() {
 
     let fix = vec![("typeof foo === undefined", r#"typeof foo === "undefined""#)];
 
-    Tester::new(ValidTypeof::NAME, ValidTypeof::CATEGORY, pass, fail)
+    Tester::new(ValidTypeof::NAME, ValidTypeof::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

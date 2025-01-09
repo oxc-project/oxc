@@ -59,6 +59,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoDocumentCookie,
+    unicorn,
     correctness
 );
 
@@ -161,5 +162,5 @@ fn test() {
         r#"window.document.cookie = "foo=bar""#,
     ];
 
-    Tester::new(NoDocumentCookie::NAME, NoDocumentCookie::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoDocumentCookie::NAME, NoDocumentCookie::PLUGIN, pass, fail).test_and_snapshot();
 }

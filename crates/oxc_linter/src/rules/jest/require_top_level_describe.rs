@@ -106,6 +106,7 @@ declare_oxc_lint!(
     /// ```
     ///
     RequireTopLevelDescribe,
+    jest,
     style,
 );
 
@@ -392,7 +393,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireTopLevelDescribe::NAME, RequireTopLevelDescribe::CATEGORY, pass, fail)
+    Tester::new(RequireTopLevelDescribe::NAME, RequireTopLevelDescribe::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }
