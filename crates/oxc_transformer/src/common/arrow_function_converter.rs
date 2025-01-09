@@ -1198,7 +1198,6 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     // TODO: Stop traversal at a `Function` too. `super()` can't appear in a nested function,
     // so no point traversing it. This is for performance, not correctness.
 
-
     /// `super()` -> `super(); _this = this;`
     fn visit_statements(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
         let mut new_stmts = vec![];
