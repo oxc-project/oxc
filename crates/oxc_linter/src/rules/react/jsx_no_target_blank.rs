@@ -152,18 +152,20 @@ impl Rule for JsxNoTargetBlank {
                                 }
                             } else if attribute_name == "href"
                                 || attribute_name == "action"
-                                || ctx.settings().react.get_link_component_attrs(tag_name).map_or(
-                                    false,
-                                    |link_attribute| {
+                                || ctx
+                                    .settings()
+                                    .react
+                                    .get_link_component_attrs(tag_name)
+                                    .is_some_and(|link_attribute| {
                                         link_attribute.contains(&CompactStr::new(attribute_name))
-                                    },
-                                )
-                                || ctx.settings().react.get_form_component_attrs(tag_name).map_or(
-                                    false,
-                                    |form_attribute| {
+                                    })
+                                || ctx
+                                    .settings()
+                                    .react
+                                    .get_form_component_attrs(tag_name)
+                                    .is_some_and(|form_attribute| {
                                         form_attribute.contains(&CompactStr::new(attribute_name))
-                                    },
-                                )
+                                    })
                             {
                                 if let Some(val) = attribute.value.as_ref() {
                                     has_href_value = true;

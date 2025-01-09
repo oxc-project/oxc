@@ -1497,7 +1497,7 @@ impl ExportNamedDeclaration<'_> {
     #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         self.export_kind == ImportOrExportKind::Type
-            || self.declaration.as_ref().map_or(false, Declaration::is_typescript_syntax)
+            || self.declaration.as_ref().is_some_and(Declaration::is_typescript_syntax)
     }
 }
 

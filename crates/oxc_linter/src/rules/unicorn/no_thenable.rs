@@ -144,7 +144,7 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
             && !matches!(expr.arguments[0], Argument::SpreadElement(_))
             && match expr.callee.as_member_expression() {
                 Some(me) => {
-                    me.object().get_identifier_reference().map_or(false, |ident_ref| {
+                    me.object().get_identifier_reference().is_some_and(|ident_ref| {
                         ident_ref.name == "Reflect" || ident_ref.name == "Object"
                     }) && me.static_property_name() == Some("defineProperty")
                         && !me.optional()
@@ -167,7 +167,7 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
                 Some(me) => {
                     me.object()
                         .get_identifier_reference()
-                        .map_or(false, |ident_ref| ident_ref.name == "Object")
+                        .is_some_and(|ident_ref| ident_ref.name == "Object")
                         && me.static_property_name() == Some("fromEntries")
                         && !me.optional()
                 }

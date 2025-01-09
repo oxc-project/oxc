@@ -208,7 +208,7 @@ impl Rule for CheckTagNames {
         let config = &self.0;
         let user_defined_tags = settings.list_user_defined_tag_names();
 
-        let is_dts = ctx.file_path().to_str().map_or(false, |p| p.ends_with(".d.ts"));
+        let is_dts = ctx.file_path().to_str().is_some_and(|p| p.ends_with(".d.ts"));
         // NOTE: The original rule seems to check `declare` context by visiting AST nodes.
         // https://github.com/gajus/eslint-plugin-jsdoc/blob/e343ab5b1efaa59b07c600138aee070b4083857e/src/rules/checkTagNames.js#L121
         // But...

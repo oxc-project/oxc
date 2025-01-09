@@ -162,8 +162,8 @@ impl Rule for NoLargeSnapshots {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let is_snap = ctx.file_path().to_str().map_or(false, |p| {
-            Path::new(p).extension().map_or(false, |ext| ext.eq_ignore_ascii_case("snap"))
+        let is_snap = ctx.file_path().to_str().is_some_and(|p| {
+            Path::new(p).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("snap"))
         });
 
         if is_snap {

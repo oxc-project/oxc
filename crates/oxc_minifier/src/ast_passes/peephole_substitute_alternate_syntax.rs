@@ -955,7 +955,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 let arguments_len = e.arguments.len();
                 arguments_len == 0
                     || (arguments_len >= 1
-                        && e.arguments[0].as_expression().map_or(false, |first_argument| {
+                        && e.arguments[0].as_expression().is_some_and(|first_argument| {
                             let ty = ValueType::from(first_argument);
                             !ty.is_undetermined() && !ty.is_object()
                         }))

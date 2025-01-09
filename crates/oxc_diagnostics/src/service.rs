@@ -175,7 +175,7 @@ impl DiagnosticService {
     /// Check if the max warning threshold, as set by
     /// [`with_max_warnings`](DiagnosticService::with_max_warnings), has been exceeded.
     pub fn max_warnings_exceeded(&self) -> bool {
-        self.max_warnings.map_or(false, |max_warnings| self.warnings_count.get() > max_warnings)
+        self.max_warnings.is_some_and(|max_warnings| self.warnings_count.get() > max_warnings)
     }
 
     /// Wrap [diagnostics] with the source code and path, converting them into [Error]s.

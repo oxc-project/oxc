@@ -143,7 +143,7 @@ impl TestCase {
         );
 
         // ("null==null", "null === null", None),
-        Some(format!(r#"({code}, {output}, {config})"#))
+        Some(format!(r"({code}, {output}, {config})"))
     }
 }
 

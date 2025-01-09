@@ -75,7 +75,7 @@ impl Rule for NoZeroFractions {
                 let mut fixed = fmt.clone();
                 let is_decimal_integer = fmt.parse::<i64>().is_ok();
                 let is_member_expression =
-                    ctx.nodes().parent_node(node.id()).map_or(false, |parent_node| {
+                    ctx.nodes().parent_node(node.id()).is_some_and(|parent_node| {
                         matches!(parent_node.kind(), AstKind::MemberExpression(_))
                     });
 

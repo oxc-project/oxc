@@ -75,7 +75,7 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
             Self::TemplateLiteral(template) => {
                 let test_quasis = in_boolean_position
                     && template.quasis.iter().any(|quasi| {
-                        quasi.value.cooked.as_ref().map_or(false, |cooked| !cooked.is_empty())
+                        quasi.value.cooked.as_ref().is_some_and(|cooked| !cooked.is_empty())
                     });
                 let test_expressions =
                     template.expressions.iter().all(|expr| expr.is_constant(false, semantic));
@@ -125,7 +125,7 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
                 .expressions
                 .iter()
                 .last()
-                .map_or(false, |last| last.is_constant(in_boolean_position, semantic)),
+                .is_some_and(|last| last.is_constant(in_boolean_position, semantic)),
             Self::CallExpression(call_expr) => call_expr.is_constant(in_boolean_position, semantic),
             Self::ParenthesizedExpression(paren_expr) => {
                 paren_expr.expression.is_constant(in_boolean_position, semantic)

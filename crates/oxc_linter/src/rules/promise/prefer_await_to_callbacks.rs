@@ -81,7 +81,7 @@ impl Rule for PreferAwaitToCallbacks {
                         return;
                     }
 
-                    let is_lodash = expr.callee.as_member_expression().map_or(false, |mem_expr| {
+                    let is_lodash = expr.callee.as_member_expression().is_some_and( |mem_expr| {
                         matches!(mem_expr.object(), Expression::Identifier(id) if matches!(id.name.as_str(), "_" | "lodash" | "underscore"))
                     });
 

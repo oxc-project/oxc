@@ -2344,7 +2344,7 @@ impl<'a> PatternParser<'a> {
             //   - && ClassSubtraction has ClassOperands
             //     - && the first ClassOperand has MayContainStrings: true
             ast::CharacterClassContentsKind::Subtraction => {
-                body.iter().next().map_or(false, may_contain_strings)
+                body.iter().next().is_some_and(may_contain_strings)
             }
         }
     }

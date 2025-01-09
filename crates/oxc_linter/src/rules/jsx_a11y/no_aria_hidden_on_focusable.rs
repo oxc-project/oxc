@@ -97,7 +97,7 @@ fn is_focusable<'a>(ctx: &LintContext<'a>, element: &JSXOpeningElement<'a>) -> b
 
     if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(element, "tabIndex") {
         if let Some(attr_value) = &attr.value {
-            return parse_jsx_value(attr_value).map_or(false, |num| num >= 0.0);
+            return parse_jsx_value(attr_value).is_ok_and(|num| num >= 0.0);
         }
     }
 

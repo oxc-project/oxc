@@ -182,7 +182,7 @@ impl<'a> CheckForStateChange<'a, '_> for VariableDeclarator<'a> {
             || self
                 .init
                 .as_ref()
-                .map_or(false, |init| init.check_for_state_change(check_for_new_objects))
+                .is_some_and(|init| init.check_for_state_change(check_for_new_objects))
     }
 }
 
@@ -294,7 +294,7 @@ impl CheckForStateChange<'_, '_> for AssignmentTargetProperty<'_> {
             ) => assignment_target_property_identifier
                 .init
                 .as_ref()
-                .map_or(false, |init| init.check_for_state_change(check_for_new_objects)),
+                .is_some_and(|init| init.check_for_state_change(check_for_new_objects)),
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(
                 assignment_target_property_property,
             ) => {

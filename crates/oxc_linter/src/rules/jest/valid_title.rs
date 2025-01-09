@@ -293,7 +293,7 @@ fn validate_title(
 
     if !valid_title.disallowed_words.is_empty() {
         let Ok(disallowed_words_reg) = regex::Regex::new(&format!(
-            r#"(?iu)\b(?:{})\b"#,
+            r"(?iu)\b(?:{})\b",
             valid_title.disallowed_words.join("|").cow_replace('.', r"\.")
         )) else {
             return;

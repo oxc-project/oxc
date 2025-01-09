@@ -205,8 +205,8 @@ impl Rule for AltText {
         // <input type="image">
         if let Some(custom_tags) = &self.input_type_image {
             let has_input_with_type_image = name.eq_ignore_ascii_case("input")
-                && has_jsx_prop_ignore_case(jsx_el, "type").map_or(false, |v| {
-                    get_string_literal_prop_value(v).map_or(false, |v| v == "image")
+                && has_jsx_prop_ignore_case(jsx_el, "type").is_some_and(|v| {
+                    get_string_literal_prop_value(v).is_some_and(|v| v == "image")
                 });
             if has_input_with_type_image || custom_tags.iter().any(|i| i == name) {
                 input_type_image_rule(jsx_el, ctx);
@@ -231,7 +231,7 @@ fn is_valid_alt_prop(item: &JSXAttributeItem<'_>) -> bool {
 
 fn is_presentation_role<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
     get_string_literal_prop_value(item)
-        .map_or(false, |value| value == "presentation" || value == "none")
+        .is_some_and(|value| value == "presentation" || value == "none")
 }
 
 fn aria_label_has_value<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
@@ -253,7 +253,7 @@ fn img_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
         return;
     }
 
-    if has_jsx_prop_ignore_case(node, "role").map_or(false, is_presentation_role) {
+    if has_jsx_prop_ignore_case(node, "role").is_some_and(is_presentation_role) {
         ctx.diagnostic(prefer_alt(node.span));
         return;
     }
@@ -281,13 +281,13 @@ fn object_rule<'a>(
     ctx: &LintContext<'a>,
 ) {
     let has_aria_label =
-        has_jsx_prop_ignore_case(node, "aria-label").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-label").is_some_and(aria_label_has_value);
     let has_aria_labelledby =
-        has_jsx_prop_ignore_case(node, "aria-labelledby").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-labelledby").is_some_and(aria_label_has_value);
     let has_label = has_aria_label || has_aria_labelledby;
     let has_title_attr = has_jsx_prop_ignore_case(node, "title")
         .and_then(get_string_literal_prop_value)
-        .map_or(false, |v| !v.is_empty());
+        .is_some_and(|v| !v.is_empty());
 
     if has_label || has_title_attr || object_has_accessible_child(ctx, parent) {
         return;
@@ -297,9 +297,9 @@ fn object_rule<'a>(
 
 fn area_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     let has_aria_label =
-        has_jsx_prop_ignore_case(node, "aria-label").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-label").is_some_and(aria_label_has_value);
     let has_aria_labelledby =
-        has_jsx_prop_ignore_case(node, "aria-labelledby").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-labelledby").is_some_and(aria_label_has_value);
     let has_label = has_aria_label || has_aria_labelledby;
     if has_label {
         return;
@@ -318,9 +318,9 @@ fn area_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
 
 fn input_type_image_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     let has_aria_label =
-        has_jsx_prop_ignore_case(node, "aria-label").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-label").is_some_and(aria_label_has_value);
     let has_aria_labelledby =
-        has_jsx_prop_ignore_case(node, "aria-labelledby").map_or(false, aria_label_has_value);
+        has_jsx_prop_ignore_case(node, "aria-labelledby").is_some_and(aria_label_has_value);
     let has_label = has_aria_label || has_aria_labelledby;
     if has_label {
         return;

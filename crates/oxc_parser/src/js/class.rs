@@ -402,7 +402,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<ClassElement<'a>> {
         let kind = if !r#static
             && !computed
-            && key.prop_name().map_or(false, |(name, _)| name == "constructor")
+            && key.prop_name().is_some_and(|(name, _)| name == "constructor")
         {
             MethodDefinitionKind::Constructor
         } else {

@@ -334,7 +334,7 @@ impl<'a> Prettier<'a> {
                 .init
                 .as_ref()
                 .and_then(ForStatementInit::as_expression)
-                .map_or(false, |e| Self::starts_with_no_lookahead_token(e, ident.span)),
+                .is_some_and(|e| Self::starts_with_no_lookahead_token(e, ident.span)),
             AstKind::ForInStatement(stmt) => {
                 if let Some(target) = stmt.left.as_assignment_target() {
                     if let Some(e) = target.as_member_expression() {
@@ -643,10 +643,9 @@ impl<'a> Prettier<'a> {
                         }
                     }
             }
-            Expression::SequenceExpression(e) => e
-                .expressions
-                .first()
-                .map_or(false, |e| Self::starts_with_no_lookahead_token(e, span)),
+            Expression::SequenceExpression(e) => {
+                e.expressions.first().is_some_and(|e| Self::starts_with_no_lookahead_token(e, span))
+            }
             Expression::ChainExpression(e) => match &e.expression {
                 ChainElement::CallExpression(e) => {
                     Self::starts_with_no_lookahead_token(&e.callee, span)
