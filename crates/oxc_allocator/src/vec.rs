@@ -245,9 +245,9 @@ impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
     }
 }
 
-impl<'alloc, T> IntoIterator for &'alloc Vec<'alloc, T> {
-    type IntoIter = std::slice::Iter<'alloc, T>;
-    type Item = &'alloc T;
+impl<'i, T> IntoIterator for &'i Vec<'_, T> {
+    type IntoIter = std::slice::Iter<'i, T>;
+    type Item = &'i T;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
