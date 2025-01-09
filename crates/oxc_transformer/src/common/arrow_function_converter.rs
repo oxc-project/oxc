@@ -93,7 +93,7 @@ use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, visit::walk_mut::walk_expression, VisitMut, NONE};
-use oxc_data_structures::stack::{NonEmptyStack, SparseStack, Stack};
+use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{CompactStr, GetSpan, SPAN};
 use oxc_syntax::{
@@ -144,7 +144,7 @@ pub struct ArrowFunctionConverter<'a> {
     renamed_arguments_symbol_ids: FxHashSet<SymbolId>,
     // TODO(improve-on-babel): `FxHashMap` would suffice here. Iteration order is not important.
     // Only using `FxIndexMap` for predictable iteration order to match Babel's output.
-    super_methods_stack: Stack<FxIndexMap<SuperMethodKey<'a>, SuperMethodInfo<'a>>>,
+    super_methods_stack: SparseStack<FxIndexMap<SuperMethodKey<'a>, SuperMethodInfo<'a>>>,
 }
 
 impl ArrowFunctionConverter<'_> {
@@ -164,7 +164,7 @@ impl ArrowFunctionConverter<'_> {
             constructor_super_stack: NonEmptyStack::new(false),
             arguments_needs_transform_stack: NonEmptyStack::new(false),
             renamed_arguments_symbol_ids: FxHashSet::default(),
-            super_methods_stack: Stack::new(),
+            super_methods_stack: SparseStack::new(),
         }
     }
 }
@@ -186,6 +186,8 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
             &mut program.body,
             this_var,
             arguments_var,
+            // `super()` Only allowed in class constructor
+            None,
             ctx,
         );
 
@@ -194,6 +196,8 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         debug_assert!(self.arguments_var_stack.len() == 1);
         debug_assert!(self.arguments_var_stack.last().is_none());
         debug_assert!(self.constructor_super_stack.len() == 1);
+        debug_assert!(self.super_methods_stack.len() == 1);
+        debug_assert!(self.super_methods_stack.last().is_none());
         // TODO: This assertion currently failing because we don't handle `super` in arrow functions
         // in class static properties correctly.
         // e.g. `class C { static f = async () => super.prop; }`
@@ -208,9 +212,33 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         self.this_var_stack.push(None);
         self.arguments_var_stack.push(None);
         self.constructor_super_stack.push(false);
-        if self.is_async_only() && func.r#async && Self::is_class_method_like_ancestor(ctx.parent())
+
+        if self.is_async_only()
+            && (func.r#async || self.super_methods_stack.len() > 1)
+            && Self::is_class_method_like_ancestor(ctx.parent())
         {
-            self.super_methods_stack.push(FxIndexMap::default());
+            // `self.super_methods_stack.len() > 1` means we are in a nested class method
+            //
+            // Only `super` that inside async methods need to be transformed, if it is a
+            // nested class method and it is not async, we still need to push a `None` to
+            // `self.super_methods_stack`, because if we don't get a `FxIndexMap` from
+            // `self.super_methods_stack.last_mut()`, that means we don't need to transform.
+            // See how to transform `super` in `self.transform_member_expression_for_super`
+            //
+            // ```js
+            // class Outer {
+            //   async method() {
+            //     class Inner extends Outer {
+            //       normal() {
+            //         // `super.value` should not be transformed, because it is not in an async method
+            //         super.value
+            //       }
+            //     }
+            //   }
+            // }
+            // ```
+            let super_methods = if func.r#async { Some(FxIndexMap::default()) } else { None };
+            self.super_methods_stack.push(super_methods);
         }
     }
 
@@ -236,11 +264,20 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         };
         let this_var = self.this_var_stack.pop();
         let arguments_var = self.arguments_var_stack.pop();
+        let super_methods = if self.is_async_only()
+            && (func.r#async || self.super_methods_stack.len() > 1)
+            && Self::is_class_method_like_ancestor(ctx.parent())
+        {
+            self.super_methods_stack.pop()
+        } else {
+            None
+        };
         self.insert_variable_statement_at_the_top_of_statements(
             scope_id,
             &mut body.statements,
             this_var,
             arguments_var,
+            super_methods,
             ctx,
         );
         self.constructor_super_stack.pop();
@@ -294,6 +331,8 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
             &mut block.body,
             this_var,
             // `arguments` is not allowed to be used in static blocks
+            None,
+            // `super()` Only allowed in class constructor
             None,
             ctx,
         );
@@ -1044,14 +1083,12 @@ impl<'a> ArrowFunctionConverter<'a> {
         statements: &mut ArenaVec<'a, Statement<'a>>,
         this_var: Option<BoundIdentifier<'a>>,
         arguments_var: Option<BoundIdentifier<'a>>,
+        super_methods: Option<FxIndexMap<SuperMethodKey, SuperMethodInfo<'a>>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // `_arguments = arguments;`
         let arguments = self.create_arguments_var_declarator(target_scope_id, arguments_var, ctx);
 
-        let is_class_method_like = Self::is_class_method_like_ancestor(ctx.parent());
-        let super_methods =
-            if is_class_method_like { self.super_methods_stack.pop() } else { None };
         let super_method_count = super_methods.as_ref().map_or(0, FxIndexMap::len);
         let declarations_count =
             usize::from(arguments.is_some()) + super_method_count + usize::from(this_var.is_some());
@@ -1070,25 +1107,16 @@ impl<'a> ArrowFunctionConverter<'a> {
         // `_superprop_getSomething = () => super.something;`
         // `_superprop_setSomething = _value => super.something = _value;`
         // `_superprop_set = (_prop, _value) => super[_prop] = _value;`
-        if is_class_method_like {
-            if let Some(super_methods) = super_methods {
-                declarations.extend(super_methods.into_iter().map(|(key, super_method)| {
-                    Self::generate_super_method(
-                        target_scope_id,
-                        super_method,
-                        key.is_assignment,
-                        ctx,
-                    )
-                }));
-            }
+        if let Some(super_methods) = super_methods {
+            declarations.extend(super_methods.into_iter().map(|(key, super_method)| {
+                Self::generate_super_method(target_scope_id, super_method, key.is_assignment, ctx)
+            }));
         }
 
         // `_this = this;`
         if let Some(this_var) = this_var {
             let is_constructor = ctx.scopes().get_flags(target_scope_id).is_constructor();
-            let init = if is_constructor
-                && (super_method_count != 0 || *self.constructor_super_stack.last())
-            {
+            let init = if is_constructor && *self.constructor_super_stack.last() {
                 // `super()` is called in the constructor body, so we need to insert `_this = this;`
                 // after `super()` call. Because `this` is not available before `super()` call.
                 ConstructorBodyThisAfterSuperInserter::new(&this_var, ctx)

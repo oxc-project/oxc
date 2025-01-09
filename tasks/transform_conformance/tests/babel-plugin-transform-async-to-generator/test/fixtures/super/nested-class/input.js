@@ -1,18 +1,19 @@
-const outer = {
-  value: 0,
+class Root {}
+class Outer extends Root {
+  value = 0
   async method() {
     () => super.value;
 
-    const inner = {
-      value: 0,
+    class Inner extends Outer {
       normal() {
         console.log(super.value);
-      },
+      }
+
       async method() {
         () => super.value;
       }
-    };
+    }
 
     () => super.value;
   }
-};
+}
