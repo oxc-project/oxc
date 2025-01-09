@@ -44,13 +44,16 @@ fn cjs() {
         });"#,
         "
         Object.keys(_index6).forEach(function(key) {
-            !(key === 'default' || key === '__esModule') && !Object.prototype.hasOwnProperty.call(_exportNames, key) && (key in exports && exports[key] === _index6[key] || Object.defineProperty(exports, key, {
-                enumerable: !0,
+        if (key === 'default' || key === '__esModule') return;
+        if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+        if (key in exports && exports[key] === _index6[key]) return;
+        Object.defineProperty(exports, key, {
+                enumerable: true,
                 get: function() {
-                    return _index6[key];
+                        return _index6[key];
                 }
-            }));
-        });"
+        });
+});",
     );
 }
 
