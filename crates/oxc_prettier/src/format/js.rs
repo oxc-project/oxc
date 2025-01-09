@@ -33,7 +33,7 @@ impl<'a> Format<'a> for Program<'a> {
 
             if let Some(body_doc) = block::print_block_body(p, &self.body, Some(&self.directives)) {
                 parts.push(body_doc);
-                parts.extend(hardline!());
+                parts.push(hardline!(p));
             }
 
             array!(p, parts)
@@ -46,10 +46,10 @@ impl<'a> Format<'a> for Hashbang<'a> {
         let mut parts = Vec::new_in(p.allocator);
 
         parts.push(dynamic_text!(p, self.span.source_text(p.source_text)));
-        parts.extend(hardline!());
+        parts.push(hardline!(p));
         // Preserve original newline
         if p.is_next_line_empty(self.span) {
-            parts.extend(hardline!());
+            parts.push(hardline!(p));
         }
 
         array!(p, parts)
@@ -149,7 +149,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
                 if else_on_same_line {
                     parts.push(text!(" "));
                 } else {
-                    parts.extend(hardline!());
+                    parts.push(hardline!(p));
                 }
                 parts.push(text!("else"));
                 let alternate_doc = alternate.format(p);
@@ -296,7 +296,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
             if matches!(self.body, Statement::BlockStatement(_)) {
                 parts.push(text!(" "));
             } else {
-                parts.extend(hardline!());
+                parts.push(hardline!(p));
             }
 
             parts.push(text!("while ("));
@@ -370,19 +370,14 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
             let mut cases_parts = Vec::new_in(p.allocator);
             let len = self.cases.len();
             for (i, case) in self.cases.iter().enumerate() {
-                cases_parts.push({
-                    let mut parts = Vec::new_in(p.allocator);
-                    parts.extend(hardline!());
-                    parts.push(case.format(p));
-                    indent!(p, parts)
-                });
+                cases_parts.push(indent!(p, [hardline!(p), case.format(p)]));
                 if i != len - 1 && p.is_next_line_empty(case.span) {
-                    cases_parts.extend(hardline!());
+                    cases_parts.push(hardline!(p));
                 }
             }
             parts.extend(cases_parts);
 
-            parts.extend(hardline!());
+            parts.push(hardline!(p));
             parts.push(text!("}"));
 
             array!(p, parts)
@@ -417,14 +412,14 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             if i != 0 && matches!(stmt, Statement::BreakStatement(_)) {
                 let last_stmt = &consequent[i - 1];
                 if p.is_next_line_empty(last_stmt.span()) {
-                    consequent_parts.extend(hardline!());
+                    consequent_parts.push(hardline!(p));
                 }
             }
 
             if is_only_one_block_statement {
                 consequent_parts.push(text!(" "));
             } else {
-                consequent_parts.extend(hardline!());
+                consequent_parts.push(hardline!(p));
             }
             consequent_parts.push(stmt.format(p));
         }
@@ -601,11 +596,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
                     let mut d_parts = Vec::new_in(p.allocator);
                     if i != 0 {
                         d_parts.push(text!(","));
-                        if is_hardline {
-                            d_parts.extend(hardline!());
-                        } else {
-                            d_parts.push(line!());
-                        }
+                        d_parts.push(if is_hardline { hardline!(p) } else { line!() });
                     }
                     d_parts.push(decl.format(p));
                     indent!(p, d_parts)

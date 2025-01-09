@@ -65,8 +65,8 @@ pub fn print_call_arguments<'a>(
             if i < len - 1 {
                 arg.push(text!(","));
                 if p.is_next_line_empty(element.span()) {
-                    arg.extend(hardline!());
-                    arg.extend(hardline!());
+                    arg.push(hardline!(p));
+                    arg.push(hardline!(p));
                 } else {
                     arg.push(line!());
                 }

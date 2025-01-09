@@ -206,11 +206,11 @@ macro_rules! join {
             if i != 0 {
                 match $sep {
                     $crate::ir::JoinSeparator::Softline => parts.push($crate::softline!()),
-                    $crate::ir::JoinSeparator::Hardline => parts.extend($crate::hardline!()),
+                    $crate::ir::JoinSeparator::Hardline => parts.push($crate::hardline!($p)),
                     $crate::ir::JoinSeparator::CommaLine => {
                         parts.extend([$crate::text!(","), $crate::line!()]);
                     }
-                    $crate::ir::JoinSeparator::Literalline => parts.extend($crate::literalline!()),
+                    $crate::ir::JoinSeparator::Literalline => parts.push($crate::literalline!($p)),
                 }
             }
             parts.push(doc);
@@ -249,13 +249,15 @@ macro_rules! softline {
 /// Specify a line break that is always included in the output, no matter if the expression fits on one line or not.
 /// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#hardline>
 /// ```
-/// hardline!();
+/// hardline!(p);
 /// ```
 #[macro_export]
 macro_rules! hardline {
-    () => {{
-        let hardline = $crate::ir::Doc::Line($crate::ir::Line { hard: true, ..Default::default() });
-        [hardline, $crate::ir::Doc::BreakParent]
+    ($p:ident) => {{
+        let mut temp_vec = oxc_allocator::Vec::new_in($p.allocator);
+        temp_vec.push($crate::ir::Doc::Line($crate::ir::Line { hard: true, ..Default::default() }));
+        temp_vec.push($crate::ir::Doc::BreakParent);
+        $crate::ir::Doc::Array(temp_vec)
     }};
 }
 
@@ -264,17 +266,19 @@ macro_rules! hardline {
 /// This is used for template literals.
 /// <https://github.com/prettier/prettier/blob/3.4.2/commands.md#literalline>
 /// ```
-/// literalline!();
+/// literalline!(p);
 /// ```
 #[macro_export]
 macro_rules! literalline {
-    () => {{
-        let literalline = $crate::ir::Doc::Line($crate::ir::Line {
+    ($p:ident) => {{
+        let mut temp_vec = oxc_allocator::Vec::new_in($p.allocator);
+        temp_vec.push($crate::ir::Doc::Line($crate::ir::Line {
             hard: true,
             literal: true,
             ..Default::default()
-        });
-        [literalline, $crate::ir::Doc::BreakParent]
+        }));
+        temp_vec.push($crate::ir::Doc::BreakParent);
+        $crate::ir::Doc::Array(temp_vec)
     }};
 }
 
