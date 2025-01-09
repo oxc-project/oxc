@@ -481,13 +481,39 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 
         let new_op = expr.operator.to_assignment_operator();
 
-        let AssignmentTarget::AssignmentTargetIdentifier(write_id_ref) = &mut assignment_expr.left
-        else {
-            return None;
-        };
-        let Expression::Identifier(read_id_ref) = &mut expr.left else { return None };
-        if write_id_ref.name != read_id_ref.name {
-            return None;
+        match (&assignment_expr.left, &expr.left) {
+            // `a || (a = b)` -> `a ||= b`
+            (
+                AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
+                Expression::Identifier(read_id_ref),
+            ) => {
+                if write_id_ref.name != read_id_ref.name {
+                    return None;
+                }
+            }
+            // `a.b || (a.b = c)` -> `a.b ||= c`
+            // `a.#b || (a.#b = c)` -> `a.#b ||= c`
+            (
+                AssignmentTarget::StaticMemberExpression(_),
+                Expression::StaticMemberExpression(_),
+            )
+            | (
+                AssignmentTarget::PrivateFieldExpression(_),
+                Expression::PrivateFieldExpression(_),
+            ) => {
+                let write_expr = assignment_expr.left.to_member_expression();
+                let read_expr = expr.left.to_member_expression();
+                let Expression::Identifier(write_expr_object_id) = &write_expr.object() else {
+                    return None;
+                };
+                // It should also return None when the reference might refer to a reference value created by a with statement
+                // when the minifier supports with statements
+                if ctx.is_global_reference(write_expr_object_id) || write_expr.content_ne(read_expr)
+                {
+                    return None;
+                }
+            }
+            _ => return None,
         }
 
         assignment_expr.span = expr.span;
@@ -1591,6 +1617,18 @@ mod test {
         test("x || (x = () => 'a')", "x ||= () => 'a'");
 
         test_same("x || (y = 3)");
+
+        // GetValue(x) has no sideeffect when x is a resolved identifier
+        test("var x; x.y || (x.y = 3)", "var x; x.y ||= 3");
+        test("var x; x.#y || (x.#y = 3)", "var x; x.#y ||= 3");
+        test_same("x.y || (x.y = 3)");
+        // this can be compressed if `y` does not have side effect
+        test_same("var x; x[y] || (x[y] = 3)");
+        // GetValue(x) has a side effect in this case
+        // Example case: `var a = { get b() { console.log('b'); return { get c() { console.log('c') } } } }; a.b.c || (a.b.c = 1)`
+        test_same("var x; x.y.z || (x.y.z = 3)");
+        // This case is not supported, since the minifier does not support with statements
+        // test_same("var x; with (z) { x.y || (x.y = 3) }");
 
         // foo() might have a side effect
         test_same("foo().a || (foo().a = 3)");
