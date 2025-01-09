@@ -1164,23 +1164,51 @@ impl<'a, 'v> ConstructorBodyThisAfterSuperInserter<'a, 'v> {
 }
 
 impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
-    #[inline] // `#[inline]` because is a no-op
-    fn visit_class(&mut self, _class: &mut Class<'a>) {
-        // Do not need to insert in nested classes
+    fn visit_class(&mut self, class: &mut Class<'a>) {
+        // Only need to transform `super()` in:
+        //
+        // 1. Class decorators
+        // 2. Class `extends` clause
+        // 3. Class property decorators and computed key
+        // 4. Class method decorators and computed key
+        // 5. Class accessor decorators and computed key
+        //
+        // Because the `super()` points to the parent class, not the current class.
 
-        // TODO: Need to transform `super()` in:
-        // 1. Class `extends` clause.
-        // 2. Class property computed key
-        // 3. Class method computed key
-        //
-        // So do need to visit class, but only the above parts.
-        // Stop traversal in `visit_property_definition`, `visit_accessor_property`, `visit_static_block`
-        // and `visit_function` instead of here.
-        // (the same places as `this_depth` is incremented in `StaticVisitor` in class properties transform).
-        //
-        // https://babeljs.io/repl#?code_lz=MYGwhgzhAEDyCuAXApgJ2sgHigdgExgRVQGV4AHNaAbwChppgB7HCRVeYRJ1ACgEoa9Bo3BRoASRw4qWXAWgQKaAUJEiA2ksp9-AXWgBeaAEYA3MPVswiAJbBoW5boPGATBcubtK_auoAvl4M1nYOTjoCev5B6rEiIMiI0ABmOEbQkACeOA6qhgB80IgAFrYQFgxBQUA&presets=&externalPlugins=%40babel%2Fplugin-external-helpers%407.25.9%2C%40babel%2Fplugin-transform-async-to-generator%407.25.9&assumptions=%7B%7D
+        // `@(super()) class Inner {}`
+        //    ^^^^^^^
+        self.visit_decorators(&mut class.decorators);
+
+        // `class Inner extends super() {}`
+        //                      ^^^^^^^
+        if let Some(super_class) = &mut class.super_class {
+            self.visit_expression(super_class);
+        }
+
+        for element in &mut class.body.body {
+            match element {
+                // `class Inner { @(super()) [super()]() {} }`
+                //                  ^^^^^^^   ^^^^^^^
+                ClassElement::MethodDefinition(method) if method.computed => {
+                    self.visit_decorators(&mut method.decorators);
+                    self.visit_property_key(&mut method.key);
+                }
+                // `class Inner { @(super()) [super()] = 123; }`
+                //                  ^^^^^^^   ^^^^^^^
+                ClassElement::PropertyDefinition(prop) if prop.computed => {
+                    self.visit_decorators(&mut prop.decorators);
+                    self.visit_property_key(&mut prop.key);
+                }
+                // `class Inner { @(super()) accessor [super()] = 123; }`
+                //                  ^^^^^^^            ^^^^^^^
+                ClassElement::AccessorProperty(prop) if prop.computed => {
+                    self.visit_decorators(&mut prop.decorators);
+                    self.visit_property_key(&mut prop.key);
+                }
+                _ => {}
+            }
+        }
     }
-
     // TODO: Stop traversal at a `Function` too. `super()` can't appear in a nested function,
     // so no point traversing it. This is for performance, not correctness.
 
