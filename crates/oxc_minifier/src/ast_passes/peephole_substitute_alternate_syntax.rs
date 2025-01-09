@@ -481,18 +481,39 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 
         let new_op = expr.operator.to_assignment_operator();
 
-        match (&assignment_expr.left, &expr.left) {
-            // `a || (a = b)` -> `a ||= b`
+        if !Self::has_no_side_effect_for_evaluation_same_target(
+            &assignment_expr.left,
+            &expr.left,
+            ctx,
+        ) {
+            return None;
+        }
+
+        assignment_expr.span = expr.span;
+        assignment_expr.operator = new_op;
+        Some(ctx.ast.move_expression(&mut expr.right))
+    }
+
+    /// Returns `true` if the assignment target and expression have no side effect for *evaluation* and points to the same reference.
+    ///
+    /// Evaluation here means `Evaluation` in the spec.
+    /// <https://tc39.es/ecma262/multipage/syntax-directed-operations.html#sec-evaluation>
+    ///
+    /// Matches the following cases:
+    ///
+    /// - `a`, `a`
+    /// - `a.b`, `a.b`
+    /// - `a.#b`, `a.#b`
+    fn has_no_side_effect_for_evaluation_same_target(
+        assignment_target: &AssignmentTarget,
+        expr: &Expression,
+        ctx: Ctx<'a, 'b>,
+    ) -> bool {
+        match (&assignment_target, &expr) {
             (
                 AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
                 Expression::Identifier(read_id_ref),
-            ) => {
-                if write_id_ref.name != read_id_ref.name {
-                    return None;
-                }
-            }
-            // `a.b || (a.b = c)` -> `a.b ||= c`
-            // `a.#b || (a.#b = c)` -> `a.#b ||= c`
+            ) => write_id_ref.name == read_id_ref.name,
             (
                 AssignmentTarget::StaticMemberExpression(_),
                 Expression::StaticMemberExpression(_),
@@ -501,24 +522,17 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 AssignmentTarget::PrivateFieldExpression(_),
                 Expression::PrivateFieldExpression(_),
             ) => {
-                let write_expr = assignment_expr.left.to_member_expression();
-                let read_expr = expr.left.to_member_expression();
+                let write_expr = assignment_target.to_member_expression();
+                let read_expr = expr.to_member_expression();
                 let Expression::Identifier(write_expr_object_id) = &write_expr.object() else {
-                    return None;
+                    return false;
                 };
-                // It should also return None when the reference might refer to a reference value created by a with statement
+                // It should also return false when the reference might refer to a reference value created by a with statement
                 // when the minifier supports with statements
-                if ctx.is_global_reference(write_expr_object_id) || write_expr.content_ne(read_expr)
-                {
-                    return None;
-                }
+                !ctx.is_global_reference(write_expr_object_id) && write_expr.content_eq(read_expr)
             }
-            _ => return None,
+            _ => false,
         }
-
-        assignment_expr.span = expr.span;
-        assignment_expr.operator = new_op;
-        Some(ctx.ast.move_expression(&mut expr.right))
     }
 
     fn commutative_pair<A, F, G, RetF: 'a, RetG: 'a>(
@@ -603,14 +617,12 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         if !matches!(expr.operator, AssignmentOperator::Assign) {
             return;
         }
-        let AssignmentTarget::AssignmentTargetIdentifier(write_id_ref) = &mut expr.left else {
-            return;
-        };
 
         let Expression::BinaryExpression(binary_expr) = &mut expr.right else { return };
         let Some(new_op) = binary_expr.operator.to_assignment_operator() else { return };
-        let Expression::Identifier(read_id_ref) = &mut binary_expr.left else { return };
-        if write_id_ref.name != read_id_ref.name {
+
+        if !Self::has_no_side_effect_for_evaluation_same_target(&expr.left, &binary_expr.left, ctx)
+        {
             return;
         }
 
@@ -1184,6 +1196,18 @@ mod test {
         test_same("x = g() & x");
 
         test_same("x = (x -= 2) ^ x");
+
+        // GetValue(x) has no sideeffect when x is a resolved identifier
+        test("var x; x.y = x.y + 3", "var x; x.y += 3");
+        test("var x; x.#y = x.#y + 3", "var x; x.#y += 3");
+        test_same("x.y = x.y + 3");
+        // this can be compressed if `y` does not have side effect
+        test_same("var x; x[y] = x[y] + 3");
+        // GetValue(x) has a side effect in this case
+        // Example case: `var a = { get b() { console.log('b'); return { get c() { console.log('c') } } } }; a.b.c = a.b.c + 1`
+        test_same("var x; x.y.z = x.y.z + 3");
+        // This case is not supported, since the minifier does not support with statements
+        // test_same("var x; with (z) { x.y || (x.y = 3) }");
     }
 
     #[test]
