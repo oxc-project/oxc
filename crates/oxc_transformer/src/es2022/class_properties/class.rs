@@ -65,12 +65,7 @@ impl<'a> ClassProperties<'a, '_> {
         }
 
         // Get basic details about class
-        let is_declaration = match ctx.ancestor(1) {
-            Ancestor::ExportDefaultDeclarationDeclaration(_)
-            | Ancestor::ExportNamedDeclarationDeclaration(_) => true,
-            grandparent => grandparent.is_parent_of_statement(),
-        };
-
+        let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
         let has_super_class = class.super_class().is_some();
