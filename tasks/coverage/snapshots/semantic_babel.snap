@@ -131,13 +131,9 @@ rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-require/input.js
 semantic error: Missing SymbolId: "x"
-Missing ReferenceId: "require"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/literals/input.js
 semantic error: Scope children mismatch:
@@ -740,23 +736,15 @@ rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require/input.ts
 semantic error: Missing SymbolId: "a"
-Missing ReferenceId: "require"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-unambiguous/input.ts
 semantic error: Missing SymbolId: "a"
-Missing ReferenceId: "require"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import/input.ts
 semantic error: Missing SymbolId: "A"
@@ -766,23 +754,15 @@ rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-require/input.ts
 semantic error: Missing SymbolId: "a"
-Missing ReferenceId: "require"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-as-identifier/input.ts
 semantic error: Missing SymbolId: "type"
-Missing ReferenceId: "require"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-require/input.ts
 semantic error: Bindings mismatch:
@@ -791,16 +771,12 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-named-import-require/input.ts
 semantic error: Missing SymbolId: "a"
-Missing ReferenceId: "require"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 Reference symbol mismatch for "a":
 after transform: SymbolId(0) "a"
 rebuilt        : SymbolId(0) "a"
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-default-and-named-id-type/input.ts
 semantic error: Bindings mismatch:
@@ -824,13 +800,9 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-type-as-identifier/input.ts
 semantic error: Missing SymbolId: "type"
-Missing ReferenceId: "require"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/internal-comments/input.ts
 semantic error: Bindings mismatch:

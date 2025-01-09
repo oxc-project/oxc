@@ -2161,16 +2161,12 @@ rebuilt        : ScopeId(0): []
 
 * imports/import=-module-to-cjs/input.ts
 Missing SymbolId: "lib"
-Missing ReferenceId: "require"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 Reference symbol mismatch for "lib":
 after transform: SymbolId(0) "lib"
 rebuilt        : SymbolId(0) "lib"
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
 
 * imports/only-remove-type-imports/input.ts
 Bindings mismatch:

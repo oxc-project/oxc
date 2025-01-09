@@ -104,7 +104,14 @@ impl<'a> TypeScriptModule<'a, '_> {
                     self.ctx.error(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));
                 }
 
-                let callee = ctx.ast.expression_identifier_reference(SPAN, "require");
+                let require_symbol_id =
+                    ctx.scopes().find_binding(ctx.current_scope_id(), "require");
+                let callee = ctx.create_ident_expr(
+                    SPAN,
+                    Atom::from("require"),
+                    require_symbol_id,
+                    ReferenceFlags::Read,
+                );
                 let arguments =
                     ctx.ast.vec1(Argument::StringLiteral(ctx.alloc(reference.expression.clone())));
                 (
