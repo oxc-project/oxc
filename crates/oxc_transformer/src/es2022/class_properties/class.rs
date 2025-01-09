@@ -214,9 +214,9 @@ impl<'a> ClassProperties<'a, '_> {
             // `_Class_brand`
             let name = class_name_binding.as_ref().map_or_else(|| "Class", |binding| &binding.name);
             let name = &format!("_{name}_brand");
-            let scope_id = ctx.current_block_scope_id();
-            ctx.generate_uid(name, scope_id, SymbolFlags::FunctionScopedVariable)
+            ctx.generate_uid_in_current_hoist_scope(name)
         });
+
         let static_private_fields_use_temp = !is_declaration;
         let class_bindings = ClassBindings::new(
             class_name_binding,

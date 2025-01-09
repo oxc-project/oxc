@@ -2,7 +2,7 @@ commit: d85767ab
 
 semantic_typescript Summary:
 AST Parsed     : 6503/6503 (100.00%)
-Positive Passed: 2831/6503 (43.53%)
+Positive Passed: 2832/6503 (43.55%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -34881,17 +34881,6 @@ rebuilt        : ScopeId(6): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(8): ScopeFlags(Function)
-
-tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameClassExpressionLoop.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["_classPrivateFieldInitSpec", "_classPrivateMethodInitSpec", "_myField", "array"]
-rebuilt        : ScopeId(0): ["_C_brand", "_classPrivateFieldInitSpec", "_classPrivateMethodInitSpec", "_myField", "array"]
-Bindings mismatch:
-after transform: ScopeId(2): ["_C_brand", "_get_accessor", "_method", "_set_accessor"]
-rebuilt        : ScopeId(2): ["_get_accessor", "_method", "_set_accessor"]
-Symbol scope ID mismatch for "_C_brand":
-after transform: SymbolId(8): ScopeId(2)
-rebuilt        : SymbolId(5): ScopeId(0)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameComputedPropertyName1.ts
 semantic error: Unresolved references mismatch:
