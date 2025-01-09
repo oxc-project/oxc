@@ -452,6 +452,7 @@ impl<'a> ClassProperties<'a, '_> {
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
                     private_props.iter().filter_map(|(name, prop)| {
+                        // TODO: Output `var _C_brand = new WeakSet();` for private instance method
                         if prop.is_method() || prop.is_accessor {
                             return None;
                         }
@@ -592,6 +593,7 @@ impl<'a> ClassProperties<'a, '_> {
             // TODO(improve-on-babel): Simplify this.
             if self.private_fields_as_properties {
                 exprs.extend(private_props.iter().filter_map(|(name, prop)| {
+                    // TODO: Output `_C_brand = new WeakSet()` for private instance method
                     if prop.is_method() || prop.is_accessor {
                         return None;
                     }
