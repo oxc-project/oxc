@@ -105,8 +105,8 @@ declare_oxc_lint!(
     /// var path = require('path');
     /// ```
     Order,
-    nursery,
-    pending
+    import,
+    nursery
 );
 
 impl Rule for Order {
@@ -547,7 +547,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(Order::NAME, Order::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(Order::NAME, Order::PLUGIN, pass, fail).test_and_snapshot();
 }
 
 #[test]
