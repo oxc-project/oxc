@@ -36,7 +36,6 @@ oxc_linter = { workspace = true }
 oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
-glob = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
 rayon = { workspace = true }
