@@ -130,6 +130,7 @@ declare_oxc_lint!(
     /// <img src="flower.jpg" />
     /// ```
     AltText,
+    jsx_a11y,
     correctness
 );
 
@@ -527,7 +528,7 @@ fn test() {
         (r#"<Input type="image" />"#, None, None),
     ];
 
-    Tester::new(AltText::NAME, AltText::CATEGORY, pass, fail)
+    Tester::new(AltText::NAME, AltText::PLUGIN, pass, fail)
         .with_jsx_a11y_plugin(true)
         .test_and_snapshot();
 }

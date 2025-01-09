@@ -87,6 +87,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     VarsOnTop,
+    eslint,
     style,
 );
 
@@ -540,5 +541,5 @@ fn test() {
 			}", // {                "ecmaVersion": 2022            }
     ];
 
-    Tester::new(VarsOnTop::NAME, VarsOnTop::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(VarsOnTop::NAME, VarsOnTop::PLUGIN, pass, fail).test_and_snapshot();
 }

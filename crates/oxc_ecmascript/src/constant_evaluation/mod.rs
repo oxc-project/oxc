@@ -298,17 +298,15 @@ pub trait ConstantEvaluation<'a> {
             }
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
                 if left.is_big_int_literal() && right.is_big_int_literal() {
-                    let left_bigint = self.get_side_free_bigint_value(left);
-                    let right_bigint = self.get_side_free_bigint_value(right);
-                    if let (Some(left_val), Some(right_val)) = (left_bigint, right_bigint) {
-                        let result_val: BigInt = match operator {
-                            BinaryOperator::BitwiseAnd => left_val & right_val,
-                            BinaryOperator::BitwiseOR => left_val | right_val,
-                            BinaryOperator::BitwiseXOR => left_val ^ right_val,
-                            _ => unreachable!(),
-                        };
-                        return Some(ConstantValue::BigInt(result_val));
-                    }
+                    let left_val = self.get_side_free_bigint_value(left)?;
+                    let right_val = self.get_side_free_bigint_value(right)?;
+                    let result_val: BigInt = match operator {
+                        BinaryOperator::BitwiseAnd => left_val & right_val,
+                        BinaryOperator::BitwiseOR => left_val | right_val,
+                        BinaryOperator::BitwiseXOR => left_val ^ right_val,
+                        _ => unreachable!(),
+                    };
+                    return Some(ConstantValue::BigInt(result_val));
                 }
                 let left_num = self.get_side_free_number_value(left);
                 let right_num = self.get_side_free_number_value(right);
@@ -330,7 +328,7 @@ pub trait ConstantEvaluation<'a> {
                 if left.may_have_side_effects() {
                     return None;
                 }
-                if let Some(right_ident) = right.get_identifier_reference() {
+                if let Expression::Identifier(right_ident) = right {
                     let name = right_ident.name.as_str();
                     if matches!(name, "Object" | "Number" | "Boolean" | "String")
                         && self.is_global_reference(right_ident)

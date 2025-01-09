@@ -45,6 +45,7 @@ declare_oxc_lint!(
     /// ```
     ///
     RoleSupportsAriaProps,
+    jsx_a11y,
     correctness
 );
 
@@ -1590,6 +1591,6 @@ fn test() {
         (r#"<Link href="/" aria-checked />"#, None, Some(settings()), None),
     ];
 
-    Tester::new(RoleSupportsAriaProps::NAME, RoleSupportsAriaProps::CATEGORY, pass, fail)
+    Tester::new(RoleSupportsAriaProps::NAME, RoleSupportsAriaProps::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

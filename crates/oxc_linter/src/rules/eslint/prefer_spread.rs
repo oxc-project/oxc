@@ -63,6 +63,7 @@ declare_oxc_lint!(
     /// obj.foo.apply(obj, [1, 2, 3]);
     /// ```
     PreferSpread,
+    eslint,
     style
 );
 
@@ -71,8 +72,6 @@ impl Rule for PreferSpread {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-
-        println!("hello from eslint world");
 
         check_eslint_prefer_spread(call_expr, ctx);
     }
@@ -193,5 +192,5 @@ fn test() {
         "class C { #foo; foo() { obj.#foo.apply(obj, args); } }",
     ];
 
-    Tester::new(PreferSpread::NAME, PreferSpread::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail).test_and_snapshot();
 }

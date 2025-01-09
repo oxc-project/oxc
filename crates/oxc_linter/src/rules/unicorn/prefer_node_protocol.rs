@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// import fs from "node:fs";
     /// ```
     PreferNodeProtocol,
+    unicorn,
     restriction,
     fix
 );
@@ -159,7 +160,7 @@ fn test() {
         (r#"import fs from "fs/promises";"#, r#"import fs from "node:fs/promises";"#, None),
     ];
 
-    Tester::new(PreferNodeProtocol::NAME, PreferNodeProtocol::CATEGORY, pass, fail)
+    Tester::new(PreferNodeProtocol::NAME, PreferNodeProtocol::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -132,6 +132,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoLargeSnapshots,
+    jest,
     style,
 );
 
@@ -485,7 +486,7 @@ fn test() {
         // ),
     ];
 
-    Tester::new(NoLargeSnapshots::NAME, NoLargeSnapshots::CATEGORY, pass, fail)
+    Tester::new(NoLargeSnapshots::NAME, NoLargeSnapshots::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

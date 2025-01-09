@@ -60,6 +60,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferRestParams,
+    eslint,
     style,
 );
 
@@ -122,5 +123,5 @@ fn test() {
         "function foo() { arguments[Symbol.iterator]; }",
     ];
 
-    Tester::new(PreferRestParams::NAME, PreferRestParams::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(PreferRestParams::NAME, PreferRestParams::PLUGIN, pass, fail).test_and_snapshot();
 }

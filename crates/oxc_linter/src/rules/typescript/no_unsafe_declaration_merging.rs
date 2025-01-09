@@ -35,6 +35,7 @@ declare_oxc_lint!(
     /// class Foo {}
     /// ```
     NoUnsafeDeclarationMerging,
+    typescript,
     correctness
 );
 
@@ -186,6 +187,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUnsafeDeclarationMerging::NAME, NoUnsafeDeclarationMerging::CATEGORY, pass, fail)
+    Tester::new(NoUnsafeDeclarationMerging::NAME, NoUnsafeDeclarationMerging::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

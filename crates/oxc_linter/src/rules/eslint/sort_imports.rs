@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// import e from 'bar.js';
     /// ```
     SortImports,
+    eslint,
     style,
     conditional_fix
 );
@@ -828,7 +829,7 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(SortImports::NAME, SortImports::CATEGORY, pass, fail)
+    Tester::new(SortImports::NAME, SortImports::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

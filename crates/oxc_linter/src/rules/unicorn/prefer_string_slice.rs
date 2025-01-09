@@ -34,6 +34,7 @@ declare_oxc_lint!(
     /// "foo".slice(1, 2)
     /// ```
     PreferStringSlice,
+    unicorn,
     pedantic,
     fix
 );
@@ -141,7 +142,7 @@ fn test() {
         ("foo.bar.baz?.substr()", "foo.bar.baz?.slice()"),
     ];
 
-    Tester::new(PreferStringSlice::NAME, PreferStringSlice::CATEGORY, pass, fail)
+    Tester::new(PreferStringSlice::NAME, PreferStringSlice::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

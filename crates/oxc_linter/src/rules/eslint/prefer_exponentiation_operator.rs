@@ -31,6 +31,7 @@ declare_oxc_lint!(
     /// Math.pow(a, b)
     /// ```
     PreferExponentiationOperator,
+    eslint,
     style,
 );
 
@@ -126,7 +127,7 @@ fn test() {
 
     Tester::new(
         PreferExponentiationOperator::NAME,
-        PreferExponentiationOperator::CATEGORY,
+        PreferExponentiationOperator::PLUGIN,
         pass,
         fail,
     )

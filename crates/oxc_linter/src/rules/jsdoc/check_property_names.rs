@@ -57,6 +57,7 @@ declare_oxc_lint!(
     ///  */
     /// ```
     CheckPropertyNames,
+    jsdoc,
     correctness
 );
 
@@ -426,6 +427,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(CheckPropertyNames::NAME, CheckPropertyNames::CATEGORY, pass, fail)
+    Tester::new(CheckPropertyNames::NAME, CheckPropertyNames::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

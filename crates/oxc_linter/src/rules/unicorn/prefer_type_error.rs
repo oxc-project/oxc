@@ -45,6 +45,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferTypeError,
+    unicorn,
     pedantic,
     fix
 );
@@ -524,7 +525,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferTypeError::NAME, PreferTypeError::CATEGORY, pass, fail)
+    Tester::new(PreferTypeError::NAME, PreferTypeError::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

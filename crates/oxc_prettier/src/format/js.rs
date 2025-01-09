@@ -33,8 +33,7 @@ impl<'a> Format<'a> for Program<'a> {
 
             if let Some(body_doc) = block::print_block_body(p, &self.body, Some(&self.directives)) {
                 parts.push(body_doc);
-                // XXX: Prettier seems to add this, but test results don't match
-                // parts.extend(hardline!());
+                parts.extend(hardline!());
             }
 
             array!(p, parts)

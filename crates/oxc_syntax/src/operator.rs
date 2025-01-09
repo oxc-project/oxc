@@ -313,6 +313,25 @@ impl BinaryOperator {
         }
     }
 
+    /// Get [`AssignmentOperator`] corresponding to this [`BinaryOperator`].
+    pub fn to_assignment_operator(self) -> Option<AssignmentOperator> {
+        match self {
+            Self::Addition => Some(AssignmentOperator::Addition),
+            Self::Subtraction => Some(AssignmentOperator::Subtraction),
+            Self::Multiplication => Some(AssignmentOperator::Multiplication),
+            Self::Division => Some(AssignmentOperator::Division),
+            Self::Remainder => Some(AssignmentOperator::Remainder),
+            Self::Exponential => Some(AssignmentOperator::Exponential),
+            Self::ShiftLeft => Some(AssignmentOperator::ShiftLeft),
+            Self::ShiftRight => Some(AssignmentOperator::ShiftRight),
+            Self::ShiftRightZeroFill => Some(AssignmentOperator::ShiftRightZeroFill),
+            Self::BitwiseOR => Some(AssignmentOperator::BitwiseOR),
+            Self::BitwiseXOR => Some(AssignmentOperator::BitwiseXOR),
+            Self::BitwiseAnd => Some(AssignmentOperator::BitwiseAnd),
+            _ => None,
+        }
+    }
+
     /// The string representation of this operator as it appears in source code.
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -423,6 +442,15 @@ impl LogicalOperator {
             Self::Or => Precedence::NullishCoalescing,
             Self::And => Precedence::LogicalOr,
             Self::Coalesce => Precedence::Conditional,
+        }
+    }
+
+    /// Get [`AssignmentOperator`] corresponding to this [`LogicalOperator`].
+    pub fn to_assignment_operator(self) -> AssignmentOperator {
+        match self {
+            Self::Or => AssignmentOperator::LogicalOr,
+            Self::And => AssignmentOperator::LogicalAnd,
+            Self::Coalesce => AssignmentOperator::LogicalNullish,
         }
     }
 }

@@ -45,6 +45,7 @@ declare_oxc_lint!(
     /// var a = 10;
     /// ```
     NoRedeclare,
+    eslint,
     pedantic
 );
 
@@ -159,5 +160,5 @@ fn test() {
         ("for (var a, a;;);", None),
     ];
 
-    Tester::new(NoRedeclare::NAME, NoRedeclare::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail).test_and_snapshot();
 }

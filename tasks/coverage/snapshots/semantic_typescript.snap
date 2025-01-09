@@ -13683,9 +13683,7 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/fakeInfinity2.ts
-semantic error: Missing ReferenceId: "Infinity"
-Missing ReferenceId: "Infinity"
-Missing SymbolId: "X"
+semantic error: Missing SymbolId: "X"
 Missing SymbolId: "_X"
 Missing ReferenceId: "_X"
 Missing ReferenceId: "f"
@@ -13718,14 +13716,9 @@ rebuilt        : SymbolId(4): [ReferenceId(9)]
 Reference symbol mismatch for "X":
 after transform: SymbolId(3) "X"
 rebuilt        : SymbolId(2) "X"
-Unresolved references mismatch:
-after transform: ["Error"]
-rebuilt        : ["Error", "Infinity"]
 
 tasks/coverage/typescript/tests/cases/compiler/fakeInfinity3.ts
-semantic error: Missing ReferenceId: "Infinity"
-Missing ReferenceId: "Infinity"
-Missing SymbolId: "X"
+semantic error: Missing SymbolId: "X"
 Missing SymbolId: "_X"
 Missing ReferenceId: "_X"
 Missing ReferenceId: "f"
@@ -13755,9 +13748,6 @@ rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "f":
 after transform: SymbolId(6): []
 rebuilt        : SymbolId(4): [ReferenceId(9)]
-Symbol reference IDs mismatch for "Infinity":
-after transform: SymbolId(8): []
-rebuilt        : SymbolId(6): [ReferenceId(2), ReferenceId(5)]
 Reference symbol mismatch for "X":
 after transform: SymbolId(3) "X"
 rebuilt        : SymbolId(2) "X"

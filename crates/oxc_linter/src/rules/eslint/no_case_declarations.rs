@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoCaseDeclarations,
+    eslint,
     pedantic
 );
 
@@ -103,6 +104,6 @@ fn test() {
         ("switch (a) { default: class C {} break; }", None),
     ];
 
-    Tester::new(NoCaseDeclarations::NAME, NoCaseDeclarations::CATEGORY, pass, fail)
+    Tester::new(NoCaseDeclarations::NAME, NoCaseDeclarations::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

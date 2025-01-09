@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// foo.startsWith("abc");
     /// ```
     PreferStringStartsEndsWith,
+    unicorn,
     correctness,
     fix
 );
@@ -288,7 +289,7 @@ fn test() {
         ("/^foo/.test(x + y)", "/^foo/.test(x + y)", None),
     ];
 
-    Tester::new(PreferStringStartsEndsWith::NAME, PreferStringStartsEndsWith::CATEGORY, pass, fail)
+    Tester::new(PreferStringStartsEndsWith::NAME, PreferStringStartsEndsWith::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

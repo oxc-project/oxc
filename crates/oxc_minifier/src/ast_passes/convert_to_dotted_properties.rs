@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{node_util::Ctx, CompressorPass};
+use crate::{ctx::Ctx, CompressorPass};
 
 /// Converts property accesses from quoted string or bracket access syntax to dot or unquoted string
 /// syntax, where possible. Dot syntax is more compact.

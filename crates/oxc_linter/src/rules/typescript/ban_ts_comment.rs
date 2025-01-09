@@ -119,6 +119,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     BanTsComment,
+    typescript,
     pedantic,
     conditional_fix
 );
@@ -995,7 +996,7 @@ if (false) {
         ("// @ts-ignore    : TS1234 because xyz", r"// @ts-expect-error    : TS1234 because xyz"),
     ];
 
-    Tester::new(BanTsComment::NAME, BanTsComment::CATEGORY, pass, fail)
+    Tester::new(BanTsComment::NAME, BanTsComment::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

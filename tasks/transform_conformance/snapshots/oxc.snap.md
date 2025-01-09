@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 122/141
+Passed: 123/141
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -9,6 +9,7 @@ Passed: 122/141
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-async-generator-functions
 * babel-plugin-transform-object-rest-spread
+* babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
@@ -45,11 +46,6 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-async-to-generator (17/18)
-* super/nested/input.js
-x Output mismatch
-
-
 # babel-plugin-transform-typescript (2/10)
 * class-property-definition/input.ts
 Unresolved references mismatch:
@@ -57,10 +53,6 @@ after transform: ["const"]
 rebuilt        : []
 
 * computed-constant-value/input.ts
-Missing ReferenceId: "Infinity"
-Missing ReferenceId: "Infinity"
-Missing ReferenceId: "Infinity"
-Missing ReferenceId: "Infinity"
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "a", "b", "c", "d", "e"]
 rebuilt        : ScopeId(1): ["A"]
@@ -101,7 +93,7 @@ Unresolved references mismatch:
 after transform: ["Infinity", "NaN"]
 rebuilt        : ["Infinity"]
 Unresolved reference IDs mismatch for "Infinity":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(18)]
 rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12)]
 
 * elimination-declare/input.ts

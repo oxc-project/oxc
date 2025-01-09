@@ -25,6 +25,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoImgElement,
+    nextjs,
     correctness
 );
 
@@ -147,5 +148,5 @@ fn test() {
 			      }"#,
     ];
 
-    Tester::new(NoImgElement::NAME, NoImgElement::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoImgElement::NAME, NoImgElement::PLUGIN, pass, fail).test_and_snapshot();
 }

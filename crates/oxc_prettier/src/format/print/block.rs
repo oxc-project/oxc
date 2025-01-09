@@ -48,6 +48,7 @@ pub fn print_block<'a>(
     array!(p, parts)
 }
 
+/// For `Program` only
 pub fn print_block_body<'a>(
     p: &mut Prettier<'a>,
     stmts: &[Statement<'a>],

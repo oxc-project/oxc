@@ -35,6 +35,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     SwitchCaseBraces,
+    unicorn,
     style,
     fix
 );
@@ -156,7 +157,7 @@ fn test() {
         ("switch(s){case'':/]/}", "switch(s){case '': {/]/}}", None),
     ];
 
-    Tester::new(SwitchCaseBraces::NAME, SwitchCaseBraces::CATEGORY, pass, fail)
+    Tester::new(SwitchCaseBraces::NAME, SwitchCaseBraces::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

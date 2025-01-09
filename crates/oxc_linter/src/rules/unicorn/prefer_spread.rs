@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// Array.from(...argumentsArray);
     /// ```
     PreferSpread,
+    unicorn,
     style,
     conditional_fix
 );
@@ -51,8 +52,6 @@ impl Rule for PreferSpread {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-
-        println!("hello from unicorn world");
 
         check_unicorn_prefer_spread(call_expr, ctx);
     }
@@ -467,7 +466,7 @@ fn test() {
         (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#, None),
     ];
 
-    Tester::new(PreferSpread::NAME, PreferSpread::CATEGORY, pass, fail)
+    Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail)
         .expect_fix(expect_fix)
         .test_and_snapshot();
 }

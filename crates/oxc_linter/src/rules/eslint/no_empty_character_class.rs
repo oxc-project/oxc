@@ -32,6 +32,7 @@ declare_oxc_lint!(
     /// var foo = /^abc[]/;
     /// ```
     NoEmptyCharacterClass,
+    eslint,
     correctness
 );
 
@@ -126,6 +127,6 @@ fn test() {
         ("var foo = /[[]&&b]/v;", None),      // { "ecmaVersion": 2024 }
     ];
 
-    Tester::new(NoEmptyCharacterClass::NAME, NoEmptyCharacterClass::CATEGORY, pass, fail)
+    Tester::new(NoEmptyCharacterClass::NAME, NoEmptyCharacterClass::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

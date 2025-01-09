@@ -38,6 +38,7 @@ declare_oxc_lint!(
     /// foo === undefined;
     /// ```
     NoTypeofUndefined,
+    unicorn,
     pedantic,
     pending
 );
@@ -142,6 +143,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoTypeofUndefined::NAME, NoTypeofUndefined::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(NoTypeofUndefined::NAME, NoTypeofUndefined::PLUGIN, pass, fail).test_and_snapshot();
 }

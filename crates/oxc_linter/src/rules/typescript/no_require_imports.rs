@@ -114,6 +114,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoRequireImports,
+    typescript,
     restriction,
     pending  // TODO: fixer (change require to import)
 );
@@ -399,7 +400,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoRequireImports::NAME, NoRequireImports::CATEGORY, pass, fail)
+    Tester::new(NoRequireImports::NAME, NoRequireImports::PLUGIN, pass, fail)
         .change_rule_path_extension("ts")
         .test_and_snapshot();
 }

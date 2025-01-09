@@ -10,7 +10,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{node_util::Ctx, CompressorPass};
+use crate::{ctx::Ctx, CompressorPass};
 
 /// Constant Folding
 ///
@@ -37,6 +37,7 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
             Expression::LogicalExpression(e) => Self::try_fold_logical_expr(e, ctx),
             Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
             Expression::CallExpression(e) => Self::try_fold_number_constructor(e, ctx),
+            Expression::ObjectExpression(e) => self.fold_object_spread(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -652,6 +653,38 @@ impl<'a, 'b> PeepholeFoldConstants {
             }
         }
 
+        None
+    }
+
+    fn fold_object_spread(
+        &mut self,
+        e: &mut ObjectExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        let len = e.properties.len();
+        e.properties.retain(|p| {
+            if let ObjectPropertyKind::SpreadProperty(spread_element) = p {
+                let e = &spread_element.argument;
+                if e.is_literal() || ctx.is_expression_undefined(e) {
+                    return false;
+                }
+                if let Expression::ObjectExpression(o) = e {
+                    if o.properties.is_empty() {
+                        return false;
+                    }
+                }
+                if let Expression::ArrayExpression(o) = e {
+                    if o.elements.is_empty() {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            true
+        });
+        if e.properties.len() != len {
+            self.changed = true;
+        }
         None
     }
 }
@@ -1829,6 +1862,21 @@ mod test {
         fn test_object_bigint_comparison() {
             test_same("{ valueOf: function() { return 0n; } } != 0n");
             test_same("{ toString: function() { return '0'; } } != 0n");
+        }
+
+        #[test]
+        fn test_fold_object_spread() {
+            test_same("({ z, ...a })");
+            let result = "({ z })";
+            test("({ z, ...[] })", result);
+            test("({ z, ...{} })", result);
+            test("({ z, ...undefined })", result);
+            test("({ z, ...void 0 })", result);
+            test("({ z, ...null })", result);
+            test("({ z, ...true })", result);
+            test("({ z, ...1 })", result);
+            test("({ z, ...1n })", result);
+            test("({ z, .../asdf/ })", result);
         }
     }
 }

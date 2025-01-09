@@ -119,6 +119,7 @@ declare_oxc_lint!(
     ///     }
     /// ```
     NoLabels,
+    eslint,
     style,
 );
 
@@ -268,5 +269,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoLabels::NAME, NoLabels::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoLabels::NAME, NoLabels::PLUGIN, pass, fail).test_and_snapshot();
 }

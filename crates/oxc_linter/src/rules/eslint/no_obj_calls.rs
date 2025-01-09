@@ -63,6 +63,7 @@ declare_oxc_lint! {
     /// let segmenterFrom = Intl.Segmenter("fr", { granularity: "word" });
     /// ```
     NoObjCalls,
+    eslint,
     correctness,
 }
 
@@ -216,5 +217,5 @@ fn test() {
         ("let m = globalThis.Math; new m();", None),
     ];
 
-    Tester::new(NoObjCalls::NAME, NoObjCalls::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test_and_snapshot();
 }

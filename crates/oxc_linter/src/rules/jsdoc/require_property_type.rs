@@ -44,6 +44,7 @@ declare_oxc_lint!(
     ///  */
     /// ```
     RequirePropertyType,
+    jsdoc,
     correctness
 );
 
@@ -187,6 +188,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequirePropertyType::NAME, RequirePropertyType::CATEGORY, pass, fail)
+    Tester::new(RequirePropertyType::NAME, RequirePropertyType::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

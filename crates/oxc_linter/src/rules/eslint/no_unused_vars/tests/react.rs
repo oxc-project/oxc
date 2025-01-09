@@ -126,7 +126,7 @@ fn test() {
 		",
     ];
 
-    Tester::new(NoUnusedVars::NAME, NoUnusedVars::CATEGORY, pass, fail)
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("eslint-plugin-react")
         .test_and_snapshot();

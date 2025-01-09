@@ -54,6 +54,7 @@ declare_oxc_lint!(
     /// export { foo } from 'foo';
     /// ```
     NoBarrelFile,
+    oxc,
     restriction
 );
 
@@ -144,7 +145,7 @@ fn test() {
         settings,
     )];
 
-    Tester::new(NoBarrelFile::NAME, NoBarrelFile::CATEGORY, pass, fail)
+    Tester::new(NoBarrelFile::NAME, NoBarrelFile::PLUGIN, pass, fail)
         .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();

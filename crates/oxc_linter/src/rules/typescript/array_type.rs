@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// const arr: number[] = new Array<number>();
     /// ```
     ArrayType,
+    typescript,
     style,
     fix
 );
@@ -1644,7 +1645,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(ArrayType::NAME, ArrayType::CATEGORY, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(ArrayType::NAME, ArrayType::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

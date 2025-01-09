@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// declare namespace foo {}
     /// ```
     NoNamespace,
+    typescript,
     restriction
 );
 
@@ -357,5 +358,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoNamespace::NAME, NoNamespace::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoNamespace::NAME, NoNamespace::PLUGIN, pass, fail).test_and_snapshot();
 }

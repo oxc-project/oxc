@@ -7,7 +7,7 @@ use oxc_ecmascript::{
 use oxc_span::SPAN;
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{keep_var::KeepVar, node_util::Ctx, CompressorPass};
+use crate::{ctx::Ctx, keep_var::KeepVar, CompressorPass};
 
 /// Remove Dead Code from the AST.
 ///
@@ -33,7 +33,9 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
             Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
             Statement::IfStatement(s) => self.try_fold_if(s, ctx),
             Statement::ForStatement(s) => self.try_fold_for(s, ctx),
-            Statement::ExpressionStatement(s) => Self::try_fold_expression_stmt(s, ctx),
+            Statement::ExpressionStatement(s) => {
+                Self::try_fold_iife(s, ctx).or_else(|| Self::try_fold_expression_stmt(s, ctx))
+            }
             Statement::TryStatement(s) => Self::try_fold_try(s, ctx),
             Statement::LabeledStatement(s) => Self::try_fold_labeled(s, ctx),
             _ => None,
@@ -174,11 +176,27 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     self.changed = true;
                 }
             }
+            Some(Statement::BlockStatement(s)) if s.body.is_empty() => {
+                if_stmt.alternate = None;
+                self.changed = true;
+            }
             Some(Statement::EmptyStatement(_)) => {
                 if_stmt.alternate = None;
                 self.changed = true;
             }
             _ => {}
+        }
+
+        // `if (test) {}` -> `test`
+        if if_stmt.alternate.is_none()
+            && match &if_stmt.consequent {
+                Statement::EmptyStatement(_) => true,
+                Statement::BlockStatement(s) => s.body.is_empty(),
+                _ => false,
+            }
+        {
+            let expr = ctx.ast.move_expression(&mut if_stmt.test);
+            return Some(ctx.ast.statement_expression(if_stmt.span, expr));
         }
 
         match ctx.get_boolean_value(&if_stmt.test) {
@@ -251,21 +269,21 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
     /// ```js
     /// a: break a;
     /// ```
-    fn try_fold_labeled(
-        labeled: &mut LabeledStatement<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Statement<'a>> {
-        let id = labeled.label.name.as_str();
+    fn try_fold_labeled(s: &mut LabeledStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
+        let id = s.label.name.as_str();
         // Check the first statement in the block, or just the `break [id] ` statement.
         // Check if we need to remove the whole block.
-        match &mut labeled.body {
+        match &mut s.body {
             Statement::BreakStatement(break_stmt)
                 if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
             Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
+            Statement::EmptyStatement(_) => {
+                return Some(ctx.ast.statement_empty(s.span))
+            }
             _ => return None,
         }
         let mut var = KeepVar::new(ctx.ast);
-        var.visit_statement(&labeled.body);
+        var.visit_statement(&s.body);
         let var_decl = var.get_variable_declaration_statement();
         var_decl.unwrap_or(ctx.ast.statement_empty(SPAN)).into()
     }
@@ -513,6 +531,19 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
 
         None
     }
+
+    fn try_fold_iife(e: &ExpressionStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
+        let Expression::CallExpression(e) = &e.expression else { return None };
+        if !e.arguments.is_empty() {
+            return None;
+        }
+        let (params_empty, body_empty) = match &e.callee {
+            Expression::FunctionExpression(f) => (f.params.is_empty(), f.body.as_ref()?.is_empty()),
+            Expression::ArrowFunctionExpression(f) => (f.params.is_empty(), f.body.is_empty()),
+            _ => return None,
+        };
+        (params_empty && body_empty).then(|| ctx.ast.statement_empty(e.span))
+    }
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
@@ -587,6 +618,7 @@ mod test {
 
         fold_same("b: { var x = 1; } x = 2;");
         fold_same("a: b: { var x = 1; } x = 2;");
+        fold("foo:;", "");
     }
 
     #[test]
@@ -677,16 +709,6 @@ mod test {
     }
 
     #[test]
-    fn test_fold_function() {
-        fold("() => {}", "");
-        fold_same("var k = () => {}");
-        fold_same("var k = function () {}");
-        // TODO: fold the following...
-        fold_same("(() => {})()");
-        fold_same("(function () {})()");
-    }
-
-    #[test]
     fn test_fold_sequence_expr() {
         fold("('foo', 'bar', 'baz')", "");
         fold("('foo', 'bar', baz())", "baz()");
@@ -710,5 +732,37 @@ mod test {
         fold("try {} finally { let x = foo() }", "{ let x = foo() }");
         fold("try {} catch (e) { foo() } finally { let x = bar() }", "{ let x = bar();}");
         fold("try {} catch () { } finally {}", "");
+    }
+
+    #[test]
+    fn test_fold_if_statement() {
+        test("if (foo) {}", "foo");
+        test("if (foo) {} else {}", "foo");
+    }
+
+    #[test]
+    fn test_fold_iife() {
+        fold_same("var k = () => {}");
+        fold_same("var k = function () {}");
+        // test("var a = (() => {})()", "var a = /* @__PURE__ */ (() => {})();");
+        test("(() => {})()", "");
+        // test("(() => a())()", "a();");
+        // test("(() => { a() })()", "a();");
+        // test("(() => { return a() })()", "a();");
+        // test("(() => { let b = a; b() })()", "a();");
+        // test("(() => { let b = a; return b() })()", "a();");
+        test("(async () => {})()", "");
+        test_same("(async () => { a() })()");
+        // test("(async () => { let b = a; b() })()", "(async () => a())();");
+        // test("var a = (function() {})()", "var a = /* @__PURE__ */ function() {}();");
+        test("(function() {})()", "");
+        test("(function*() {})()", "");
+        test("(async function() {})()", "");
+        test_same("(function() { a() })()");
+        test_same("(function*() { a() })()");
+        test_same("(async function() { a() })()");
+        // test("(() => x)()", "x;");
+        // test("/* @__PURE__ */ (() => x)()", "");
+        // test("/* @__PURE__ */ (() => x)(y, z)", "y, z;");
     }
 }

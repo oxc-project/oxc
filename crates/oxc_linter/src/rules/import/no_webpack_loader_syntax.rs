@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// var theme = require('./theme.css');
     /// ```
     NoWebpackLoaderSyntax,
+    import,
     restriction,
 );
 
@@ -123,6 +124,6 @@ fn test() {
         "var data = require('json!@scope/my-package/data.json')",
     ];
 
-    Tester::new(NoWebpackLoaderSyntax::NAME, NoWebpackLoaderSyntax::CATEGORY, pass, fail)
+    Tester::new(NoWebpackLoaderSyntax::NAME, NoWebpackLoaderSyntax::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

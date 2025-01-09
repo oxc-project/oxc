@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// ];
     /// ```
     ConsistentEmptyArraySpread,
+    unicorn,
     pedantic,
     suggestion
 );
@@ -156,7 +157,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(ConsistentEmptyArraySpread::NAME, ConsistentEmptyArraySpread::CATEGORY, pass, fail)
+    Tester::new(ConsistentEmptyArraySpread::NAME, ConsistentEmptyArraySpread::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

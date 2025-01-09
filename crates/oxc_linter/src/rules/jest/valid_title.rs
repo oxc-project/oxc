@@ -76,6 +76,7 @@ declare_oxc_lint!(
     /// it('bar', () => {});
     /// test('baz', () => {});
     ValidTitle,
+    jest,
     correctness,
     conditional_fix
 );
@@ -1031,7 +1032,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(ValidTitle::NAME, ValidTitle::CATEGORY, pass, fail)
+    Tester::new(ValidTitle::NAME, ValidTitle::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

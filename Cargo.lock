@@ -1585,6 +1585,7 @@ name = "oxc_coverage"
 version = "0.0.0"
 dependencies = [
  "console",
+ "cow-utils",
  "encoding_rs",
  "encoding_rs_io",
  "futures",
@@ -1892,6 +1893,7 @@ dependencies = [
 name = "oxc_prettier_conformance"
 version = "0.0.0"
 dependencies = [
+ "cow-utils",
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",

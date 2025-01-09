@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoAwaitInPromiseMethods,
+    unicorn,
     correctness
 );
 
@@ -132,6 +133,6 @@ fn test() {
         "Promise.all([await /* comment*/ promise])",
     ];
 
-    Tester::new(NoAwaitInPromiseMethods::NAME, NoAwaitInPromiseMethods::CATEGORY, pass, fail)
+    Tester::new(NoAwaitInPromiseMethods::NAME, NoAwaitInPromiseMethods::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

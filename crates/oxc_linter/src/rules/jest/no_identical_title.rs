@@ -67,6 +67,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoIdenticalTitle,
+    jest,
     style
 );
 
@@ -528,7 +529,7 @@ fn test() {
     pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
     fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
 
-    Tester::new(NoIdenticalTitle::NAME, NoIdenticalTitle::CATEGORY, pass, fail)
+    Tester::new(NoIdenticalTitle::NAME, NoIdenticalTitle::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();
