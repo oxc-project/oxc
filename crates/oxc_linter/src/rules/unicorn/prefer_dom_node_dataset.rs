@@ -61,6 +61,7 @@ declare_oxc_lint!(
     /// element.dataset.unicorn = '🦄';
     /// ```
     PreferDomNodeDataset,
+    unicorn,
     pedantic,
     pending
 );
@@ -257,6 +258,6 @@ fn test() {
         r#"element.getAttribute("data-unicorn").toString()"#,
     ];
 
-    Tester::new(PreferDomNodeDataset::NAME, PreferDomNodeDataset::CATEGORY, pass, fail)
+    Tester::new(PreferDomNodeDataset::NAME, PreferDomNodeDataset::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

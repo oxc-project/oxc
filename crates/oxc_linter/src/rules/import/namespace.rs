@@ -102,6 +102,7 @@ declare_oxc_lint!(
     /// foo[method](); // Valid: method refers to an exported function
     /// ```
     Namespace,
+    import,
     correctness
 );
 
@@ -516,7 +517,7 @@ fn test() {
         (r#"import * as a from "./deep-es7/a"; var {b:{c:{ e }, e: { c }}} = a"#, None),
     ];
 
-    Tester::new(Namespace::NAME, Namespace::CATEGORY, pass, fail)
+    Tester::new(Namespace::NAME, Namespace::PLUGIN, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

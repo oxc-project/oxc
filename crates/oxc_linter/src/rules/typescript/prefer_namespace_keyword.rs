@@ -34,6 +34,7 @@ declare_oxc_lint!(
     /// module Example {}
     /// ```
     PreferNamespaceKeyword,
+    typescript,
     style,
     fix
 );
@@ -130,7 +131,7 @@ fn test() {
         ("module foo.'a'", "namespace foo.'a'", None),
     ];
 
-    Tester::new(PreferNamespaceKeyword::NAME, PreferNamespaceKeyword::CATEGORY, pass, fail)
+    Tester::new(PreferNamespaceKeyword::NAME, PreferNamespaceKeyword::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

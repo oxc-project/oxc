@@ -55,6 +55,7 @@ declare_oxc_lint!(
     /// module.exports = foo;
     /// ```
     NoAnonymousDefaultExport,
+    unicorn,
     restriction,
 );
 
@@ -170,6 +171,6 @@ fn test() {
         "export default (class extends class {} {})",
     ];
 
-    Tester::new(NoAnonymousDefaultExport::NAME, NoAnonymousDefaultExport::CATEGORY, pass, fail)
+    Tester::new(NoAnonymousDefaultExport::NAME, NoAnonymousDefaultExport::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

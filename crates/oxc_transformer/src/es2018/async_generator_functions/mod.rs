@@ -83,7 +83,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for AsyncGeneratorFunctions<'a, 'ctx> {
+impl<'a> Traverse<'a> for AsyncGeneratorFunctions<'a, '_> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
@@ -152,7 +152,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncGeneratorFunctions<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
+impl<'a> AsyncGeneratorFunctions<'a, '_> {
     /// Transform `yield * argument` expression to `yield asyncGeneratorDelegate(asyncIterator(argument))`.
     fn transform_yield_expression(
         &self,

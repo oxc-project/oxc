@@ -1,6 +1,7 @@
 //! ES2022: Class Properties
 //! Transform of class itself.
 
+use indexmap::map::Entry;
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
@@ -37,7 +38,7 @@ use super::{
 // Maybe force transform of static blocks if any static properties?
 // Or alternatively could insert static property initializers into static blocks.
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Perform first phase of transformation of class.
     ///
     /// This is the only entry point into the transform upon entering class body.
@@ -64,18 +65,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         }
 
         // Get basic details about class
-        let is_declaration = match ctx.ancestor(1) {
-            Ancestor::ExportDefaultDeclarationDeclaration(_)
-            | Ancestor::ExportNamedDeclarationDeclaration(_) => true,
-            grandparent => grandparent.is_parent_of_statement(),
-        };
-
+        let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
         let has_super_class = class.super_class().is_some();
 
         // Check if class has any properties or statick blocks, and locate constructor (if class has one)
         let mut instance_prop_count = 0;
+        let mut has_instance_private_method = false;
         let mut has_static_prop = false;
         let mut has_static_block = false;
         // TODO: Store `FxIndexMap`s in a pool and re-use them
@@ -92,7 +89,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                         let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
                         private_props.insert(
                             ident.name.clone(),
-                            PrivateProp::new(binding, prop.r#static, false, false),
+                            PrivateProp::new(binding, prop.r#static, None, false),
                         );
                     }
 
@@ -117,11 +114,39 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                             constructor = Some(method);
                         }
                     } else if let PropertyKey::PrivateIdentifier(ident) = &method.key {
-                        let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
-                        private_props.insert(
-                            ident.name.clone(),
-                            PrivateProp::new(dummy_binding, method.r#static, true, false),
+                        if method.r#static {
+                            has_static_prop = true;
+                        } else {
+                            has_instance_private_method = true;
+                        }
+
+                        let name = match method.kind {
+                            MethodDefinitionKind::Method => ident.name.as_str(),
+                            MethodDefinitionKind::Get => &format!("get_{}", ident.name),
+                            MethodDefinitionKind::Set => &format!("set_{}", ident.name),
+                            MethodDefinitionKind::Constructor => unreachable!(),
+                        };
+                        let binding = ctx.generate_uid(
+                            name,
+                            ctx.current_block_scope_id(),
+                            SymbolFlags::FunctionScopedVariable,
                         );
+
+                        match private_props.entry(ident.name.clone()) {
+                            Entry::Occupied(mut entry) => {
+                                // If there's already a binding for this private property,
+                                // it's a setter or getter, so store the binding in `binding2`.
+                                entry.get_mut().set_binding2(binding);
+                            }
+                            Entry::Vacant(entry) => {
+                                entry.insert(PrivateProp::new(
+                                    binding,
+                                    method.r#static,
+                                    Some(method.kind),
+                                    false,
+                                ));
+                            }
+                        }
                     }
                 }
                 ClassElement::AccessorProperty(prop) => {
@@ -131,7 +156,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                         let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
                         private_props.insert(
                             ident.name.clone(),
-                            PrivateProp::new(dummy_binding, prop.r#static, true, true),
+                            PrivateProp::new(dummy_binding, prop.r#static, None, true),
                         );
                     }
                 }
@@ -142,7 +167,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         }
 
         // Exit if nothing to transform
-        if instance_prop_count == 0 && !has_static_prop && !has_static_block {
+        if instance_prop_count == 0
+            && !has_static_prop
+            && !has_static_block
+            && !has_instance_private_method
+        {
             self.classes_stack.push(ClassDetails {
                 is_declaration,
                 is_transform_required: false,
@@ -180,10 +209,18 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             None
         };
 
+        let class_brand_binding = has_instance_private_method.then(|| {
+            // `_Class_brand`
+            let name = class_name_binding.as_ref().map_or_else(|| "Class", |binding| &binding.name);
+            let name = &format!("_{name}_brand");
+            let scope_id = ctx.current_block_scope_id();
+            ctx.generate_uid(name, scope_id, SymbolFlags::FunctionScopedVariable)
+        });
         let static_private_fields_use_temp = !is_declaration;
         let class_bindings = ClassBindings::new(
             class_name_binding,
             class_temp_binding,
+            class_brand_binding,
             outer_hoist_scope_id,
             static_private_fields_use_temp,
             need_temp_var,
@@ -198,7 +235,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         });
 
         // Exit if no instance properties (public or private)
-        if instance_prop_count == 0 {
+        if instance_prop_count == 0 && !has_instance_private_method {
             return;
         }
 
@@ -249,7 +286,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         // `class C { [foo()] = 123; }` -> `class C { [_foo = foo()]; }`
         // Those assignments will be moved to before class in exit phase of the transform.
         // -> `_foo = foo(); class C {}`
-        let mut instance_inits = Vec::with_capacity(instance_prop_count);
+        let mut instance_inits =
+            Vec::with_capacity(instance_prop_count + usize::from(has_instance_private_method));
+
+        // `_classPrivateMethodInitSpec(this, _C_brand);`
+        if has_instance_private_method {
+            instance_inits.push(self.create_class_private_method_init_spec(ctx));
+        }
+
         let mut constructor = None;
         for element in body.body.iter_mut() {
             #[expect(clippy::match_same_arms)]
@@ -407,7 +451,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
                     private_props.iter().filter_map(|(name, prop)| {
-                        if prop.is_method || prop.is_accessor {
+                        if prop.is_method() || prop.is_accessor {
                             return None;
                         }
 
@@ -419,16 +463,24 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             } else {
                 // TODO: Only call `insert_many_before` if some private *instance* props
                 let mut weakmap_symbol_id = None;
+                let mut has_method = false;
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
                     private_props.values().filter_map(|prop| {
-                        if prop.is_static || prop.is_method || prop.is_accessor {
+                        if prop.is_static || (prop.is_method() && has_method) || prop.is_accessor {
                             return None;
                         }
-
-                        // `var _prop = new WeakMap();`
-                        let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
-                        Some(create_variable_declaration(&prop.binding, value, ctx))
+                        if prop.is_method() {
+                            // `var _C_brand = new WeakSet();`
+                            has_method = true;
+                            let binding = class_details.bindings.brand();
+                            let value = create_new_weakset(ctx);
+                            Some(create_variable_declaration(binding, value, ctx))
+                        } else {
+                            // `var _prop = new WeakMap();`
+                            let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
+                            Some(create_variable_declaration(&prop.binding, value, ctx))
+                        }
                     }),
                 );
             }
@@ -539,7 +591,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // TODO(improve-on-babel): Simplify this.
             if self.private_fields_as_properties {
                 exprs.extend(private_props.iter().filter_map(|(name, prop)| {
-                    if prop.is_method || prop.is_accessor {
+                    if prop.is_method() || prop.is_accessor {
                         return None;
                     }
 
@@ -552,9 +604,18 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 }));
             } else {
                 let mut weakmap_symbol_id = None;
+                let mut has_method = false;
                 exprs.extend(private_props.values().filter_map(|prop| {
-                    if prop.is_method || prop.is_accessor {
-                        return None;
+                    if prop.is_method() || prop.is_accessor {
+                        if prop.is_static || has_method {
+                            return None;
+                        }
+                        has_method = true;
+                        // `_C_brand = new WeakSet()`
+                        let binding = class_details.bindings.brand();
+                        self.ctx.var_declarations.insert_var(binding, ctx);
+                        let value = create_new_weakset(ctx);
+                        return Some(create_assignment(binding, value, ctx));
                     }
 
                     // Insert `var _prop;` declaration
@@ -571,6 +632,21 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             }
         }
 
+        // Insert private methods
+        if !self.insert_after_stmts.is_empty() {
+            // Find address of statement of class expression
+            let position = ctx
+                .ancestors()
+                .position(Ancestor::is_parent_of_statement)
+                .expect("Expression always inside a statement.");
+            // Position points to parent of statement, we need to find the statement itself,
+            // so `position - 1`.
+            let stmt_ancestor = ctx.ancestor(position - 1);
+            self.ctx
+                .statement_injector
+                .insert_many_after(&stmt_ancestor, self.insert_after_stmts.drain(..));
+        }
+
         // Insert computed key initializers
         exprs.extend(self.insert_before.drain(..));
 
@@ -584,6 +660,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             // `_Class = class {}`
             let class_expr = ctx.ast.move_expression(expr);
             let assignment = create_assignment(binding, class_expr, ctx);
+
+            if exprs.is_empty() && self.insert_after_exprs.is_empty() {
+                // No need to wrap in sequence if no static property
+                // and static blocks
+                *expr = assignment;
+                return;
+            }
+
             exprs.push(assignment);
             // Add static property assignments + static blocks
             exprs.extend(self.insert_after_exprs.drain(..));
@@ -623,9 +707,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     ///
     /// * Transform static properties and insert after class.
     /// * Transform static blocks and insert after class.
+    /// * Transform private methods and insert after class.
     /// * Extract computed key assignments and insert them before class.
-    /// * Remove all properties and static blocks from class body.
+    /// * Remove all properties, private methods and static blocks from class body.
     fn transform_class_elements(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        let mut class_methods = vec![];
         class.body.body.retain_mut(|element| {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
@@ -644,6 +730,10 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 }
                 ClassElement::MethodDefinition(method) => {
                     self.substitute_temp_var_for_method_computed_key(method, ctx);
+                    if let Some(statement) = self.convert_private_method(method, ctx) {
+                        class_methods.push(statement);
+                        return false;
+                    }
                 }
                 ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
                     // TODO: Need to handle these?
@@ -652,6 +742,11 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
             true
         });
+
+        // All methods are moved to after the class, but need to be before static properties
+        // TODO(improve-on-babel): Insertion order doesn't matter, and it more clear to insert according to
+        // definition order.
+        self.insert_after_stmts.splice(0..0, class_methods);
     }
 
     /// Flag that static private fields should be transpiled using temp binding,
@@ -741,5 +836,12 @@ fn create_new_weakmap<'a>(
     let symbol_id = *symbol_id
         .get_or_insert_with(|| ctx.scopes().find_binding(ctx.current_scope_id(), "WeakMap"));
     let ident = ctx.create_ident_expr(SPAN, Atom::from("WeakMap"), symbol_id, ReferenceFlags::Read);
+    ctx.ast.expression_new(SPAN, ident, ctx.ast.vec(), NONE)
+}
+
+/// Create `new WeakSet()` expression.
+fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "WeakSet");
+    let ident = ctx.create_ident_expr(SPAN, Atom::from("WeakSet"), symbol_id, ReferenceFlags::Read);
     ctx.ast.expression_new(SPAN, ident, ctx.ast.vec(), NONE)
 }

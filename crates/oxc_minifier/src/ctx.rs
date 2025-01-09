@@ -31,6 +31,10 @@ impl<'a> Ctx<'a, '_> {
         self.0.symbols()
     }
 
+    pub fn eval_binary(self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
+        self.eval_binary_expression(e).map(|v| self.value_to_expr(e.span, v))
+    }
+
     pub fn value_to_expr(self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
         match value {
             ConstantValue::Number(n) => {
@@ -73,9 +77,39 @@ impl<'a> Ctx<'a, '_> {
     }
 
     pub fn is_identifier_nan(self, ident: &IdentifierReference) -> bool {
-        if ident.name == "Infinity" && ident.is_global_reference(self.symbols()) {
+        if ident.name == "NaN" && ident.is_global_reference(self.symbols()) {
             return true;
         }
         false
+    }
+
+    // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2641
+    pub fn string_to_equivalent_number_value(s: &str) -> Option<f64> {
+        if s.is_empty() {
+            return None;
+        }
+        let mut is_negative = false;
+        let mut int_value = 0i32;
+        let mut start = 0;
+        let bytes = s.as_bytes();
+        if bytes[0] == b'-' && s.len() > 1 {
+            is_negative = true;
+            start += 1;
+        }
+        if bytes[start] == b'0' && s.len() > 1 {
+            return None;
+        }
+        for b in &bytes[start..] {
+            if b.is_ascii_digit() {
+                int_value =
+                    int_value.checked_mul(10).and_then(|v| v.checked_add(i32::from(b & 15)))?;
+            } else {
+                return None;
+            }
+        }
+        if is_negative {
+            int_value = -int_value;
+        }
+        Some(f64::from(int_value))
     }
 }

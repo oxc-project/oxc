@@ -16,7 +16,7 @@ use oxc_traverse::TraverseCtx;
 
 use super::ClassProperties;
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Transform instance property initializer.
     ///
     /// Instance property initializers move from the class body into either class constructor,
@@ -73,7 +73,7 @@ impl<'a, 'v> InstanceInitializerVisitor<'a, 'v> {
     }
 }
 
-impl<'a, 'v> Visit<'a> for InstanceInitializerVisitor<'a, 'v> {
+impl<'a> Visit<'a> for InstanceInitializerVisitor<'a, '_> {
     /// Update parent scope for first level of scopes.
     /// Convert scope to sloppy mode if `self.make_sloppy_mode == true`.
     //
@@ -100,7 +100,7 @@ impl<'a, 'v> Visit<'a> for InstanceInitializerVisitor<'a, 'v> {
     }
 }
 
-impl<'a, 'v> InstanceInitializerVisitor<'a, 'v> {
+impl<'a> InstanceInitializerVisitor<'a, '_> {
     /// Update parent of scope.
     fn reparent_scope(&mut self, scope_id: ScopeId) {
         self.ctx.scopes_mut().change_parent_id(scope_id, Some(self.parent_scope_id));
@@ -161,7 +161,7 @@ impl<'a, 'v> FastInstanceInitializerVisitor<'a, 'v> {
     }
 }
 
-impl<'a, 'v> Visit<'a> for FastInstanceInitializerVisitor<'a, 'v> {
+impl<'a> Visit<'a> for FastInstanceInitializerVisitor<'a, '_> {
     #[inline]
     fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
         self.reparent_scope(&func.scope_id);
@@ -210,7 +210,7 @@ impl<'a, 'v> Visit<'a> for FastInstanceInitializerVisitor<'a, 'v> {
     }
 }
 
-impl<'a, 'v> FastInstanceInitializerVisitor<'a, 'v> {
+impl FastInstanceInitializerVisitor<'_, '_> {
     /// Update parent of scope.
     fn reparent_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
         let scope_id = scope_id.get().unwrap();

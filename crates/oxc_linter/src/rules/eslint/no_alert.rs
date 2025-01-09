@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoAlert,
+    eslint,
     restriction,
 );
 
@@ -175,5 +176,5 @@ fn test() {
         "(window?.alert)(foo)",     // { "ecmaVersion": 2020 }
     ];
 
-    Tester::new(NoAlert::NAME, NoAlert::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoAlert::NAME, NoAlert::PLUGIN, pass, fail).test_and_snapshot();
 }

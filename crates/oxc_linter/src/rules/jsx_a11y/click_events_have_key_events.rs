@@ -45,6 +45,7 @@ declare_oxc_lint!(
     /// <div onClick={() => void 0} onKeyDown={() => void 0} />
     /// ```
     ClickEventsHaveKeyEvents,
+    jsx_a11y,
     correctness
 );
 
@@ -147,6 +148,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(ClickEventsHaveKeyEvents::NAME, ClickEventsHaveKeyEvents::CATEGORY, pass, fail)
+    Tester::new(ClickEventsHaveKeyEvents::NAME, ClickEventsHaveKeyEvents::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

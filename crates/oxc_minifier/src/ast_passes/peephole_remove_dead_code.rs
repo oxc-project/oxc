@@ -1,10 +1,13 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, Visit};
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, IsLiteralValue};
+use oxc_ecmascript::{
+    constant_evaluation::{ConstantEvaluation, IsLiteralValue},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_span::SPAN;
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{keep_var::KeepVar, node_util::Ctx, CompressorPass};
+use crate::{ctx::Ctx, keep_var::KeepVar, CompressorPass};
 
 /// Remove Dead Code from the AST.
 ///
@@ -27,13 +30,14 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx(ctx);
         if let Some(new_stmt) = match stmt {
-            Statement::BlockStatement(block_stmt) => Self::try_optimize_block(block_stmt, ctx),
-            Statement::IfStatement(if_stmt) => self.try_fold_if(if_stmt, ctx),
-            Statement::ForStatement(for_stmt) => self.try_fold_for(for_stmt, ctx),
-            Statement::ExpressionStatement(expr_stmt) => {
-                Self::try_fold_expression_stmt(expr_stmt, ctx)
+            Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
+            Statement::IfStatement(s) => self.try_fold_if(s, ctx),
+            Statement::ForStatement(s) => self.try_fold_for(s, ctx),
+            Statement::ExpressionStatement(s) => {
+                Self::try_fold_iife(s, ctx).or_else(|| Self::try_fold_expression_stmt(s, ctx))
             }
-            Statement::LabeledStatement(labeled) => Self::try_fold_labeled(labeled, ctx),
+            Statement::TryStatement(s) => Self::try_fold_try(s, ctx),
+            Statement::LabeledStatement(s) => Self::try_fold_labeled(s, ctx),
             _ => None,
         } {
             *stmt = new_stmt;
@@ -52,6 +56,9 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
         let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
             Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
+            Expression::SequenceExpression(sequence_expression) => {
+                Self::try_fold_sequence_expression(sequence_expression, ctx)
+            }
             _ => None,
         } {
             *expr = folded_expr;
@@ -135,16 +142,19 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         if stmt.body.len() == 1 && !stmt.body[0].is_declaration() {
             return Some(stmt.body.remove(0));
         }
-        if stmt.body.len() == 0
-            && (ctx.parent().is_while_statement()
-                || ctx.parent().is_for_statement()
-                || ctx.parent().is_for_in_statement()
-                || ctx.parent().is_for_of_statement()
-                || ctx.parent().is_block_statement()
-                || ctx.parent().is_program())
-        {
-            // Remove the block if it is empty and the parent is a block statement.
-            return Some(ctx.ast.statement_empty(stmt.span));
+        if stmt.body.len() == 0 {
+            let parent = ctx.parent();
+            if parent.is_while_statement()
+                || parent.is_do_while_statement()
+                || parent.is_for_statement()
+                || parent.is_for_in_statement()
+                || parent.is_for_of_statement()
+                || parent.is_block_statement()
+                || parent.is_program()
+            {
+                // Remove the block if it is empty and the parent is a block statement.
+                return Some(ctx.ast.statement_empty(stmt.span));
+            }
         }
         None
     }
@@ -166,11 +176,27 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     self.changed = true;
                 }
             }
+            Some(Statement::BlockStatement(s)) if s.body.is_empty() => {
+                if_stmt.alternate = None;
+                self.changed = true;
+            }
             Some(Statement::EmptyStatement(_)) => {
                 if_stmt.alternate = None;
                 self.changed = true;
             }
             _ => {}
+        }
+
+        // `if (test) {}` -> `test`
+        if if_stmt.alternate.is_none()
+            && match &if_stmt.consequent {
+                Statement::EmptyStatement(_) => true,
+                Statement::BlockStatement(s) => s.body.is_empty(),
+                _ => false,
+            }
+        {
+            let expr = ctx.ast.move_expression(&mut if_stmt.test);
+            return Some(ctx.ast.statement_expression(if_stmt.span, expr));
         }
 
         match ctx.get_boolean_value(&if_stmt.test) {
@@ -243,21 +269,21 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
     /// ```js
     /// a: break a;
     /// ```
-    fn try_fold_labeled(
-        labeled: &mut LabeledStatement<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Statement<'a>> {
-        let id = labeled.label.name.as_str();
+    fn try_fold_labeled(s: &mut LabeledStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
+        let id = s.label.name.as_str();
         // Check the first statement in the block, or just the `break [id] ` statement.
         // Check if we need to remove the whole block.
-        match &mut labeled.body {
+        match &mut s.body {
             Statement::BreakStatement(break_stmt)
                 if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
             Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
+            Statement::EmptyStatement(_) => {
+                return Some(ctx.ast.statement_empty(s.span))
+            }
             _ => return None,
         }
         let mut var = KeepVar::new(ctx.ast);
-        var.visit_statement(&labeled.body);
+        var.visit_statement(&s.body);
         let var_decl = var.get_variable_declaration_statement();
         var_decl.unwrap_or(ctx.ast.statement_empty(SPAN)).into()
     }
@@ -310,8 +336,46 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                 Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
                     Some(ctx.ast.statement_empty(SPAN))
                 }
+                Expression::ArrowFunctionExpression(_) => Some(ctx.ast.statement_empty(SPAN)),
+                // `typeof x` -> ``
+                Expression::UnaryExpression(unary_expr)
+                    if unary_expr.operator.is_typeof()
+                        && unary_expr.argument.is_identifier_reference() =>
+                {
+                    Some(ctx.ast.statement_empty(SPAN))
+                }
+                // `typeof x.y` -> `x`, `!x` -> `x`, `void x` -> `x`...
+                Expression::UnaryExpression(unary_expr) if !unary_expr.operator.is_delete() => {
+                    Some(ctx.ast.statement_expression(
+                        unary_expr.span,
+                        ctx.ast.move_expression(&mut unary_expr.argument),
+                    ))
+                }
                 _ => None,
             })
+    }
+
+    fn try_fold_try(s: &mut TryStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
+        if !s.block.body.is_empty() {
+            return None;
+        }
+        if let Some(finalizer) = &mut s.finalizer {
+            if finalizer.body.is_empty() {
+                Some(ctx.ast.statement_empty(s.span))
+            } else {
+                let mut block = ctx.ast.block_statement(SPAN, ctx.ast.vec());
+                std::mem::swap(&mut **finalizer, &mut block);
+                Some(Statement::BlockStatement(ctx.ast.alloc(block)))
+            }
+        } else {
+            if let Some(handler) = &s.handler {
+                if handler.body.body.iter().any(|s| matches!(s, Statement::VariableDeclaration(_)))
+                {
+                    return None;
+                }
+            }
+            Some(ctx.ast.statement_empty(s.span))
+        }
     }
 
     // `([1,2,3, foo()])` -> `foo()`
@@ -394,20 +458,91 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         expr: &mut ConditionalExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
+        // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
+        let parent = ctx.ancestry.parent();
+        if parent.is_tagged_template_expression()
+            || matches!(parent, Ancestor::CallExpressionCallee(_))
+        {
+            return None;
+        }
+
         match ctx.get_boolean_value(&expr.test) {
-            Some(true) => {
-                // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
-                let parent = ctx.ancestry.parent();
-                if parent.is_tagged_template_expression()
-                    || matches!(parent, Ancestor::CallExpressionCallee(_))
-                {
-                    return None;
-                }
-                Some(ctx.ast.move_expression(&mut expr.consequent))
-            }
+            Some(true) => Some(ctx.ast.move_expression(&mut expr.consequent)),
             Some(false) => Some(ctx.ast.move_expression(&mut expr.alternate)),
             None => None,
         }
+    }
+
+    fn try_fold_sequence_expression(
+        sequence_expr: &mut SequenceExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        let should_include_ret_val =
+            !matches!(ctx.parent(), Ancestor::ExpressionStatementExpression(_));
+        let should_keep_as_sequence_expr = matches!(
+            ctx.parent(),
+            Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
+        );
+
+        if should_keep_as_sequence_expr && sequence_expr.expressions.len() == 2 {
+            return None;
+        }
+
+        let (should_fold, new_len) = sequence_expr.expressions.iter().enumerate().fold(
+            (false, 0),
+            |(mut should_fold, mut new_len), (i, expr)| {
+                if expr.may_have_side_effects()
+                    || (should_include_ret_val && i == sequence_expr.expressions.len() - 1)
+                {
+                    new_len += 1;
+                } else {
+                    should_fold = true;
+                }
+                (should_fold, new_len)
+            },
+        );
+
+        if new_len == 0 {
+            return Some(ctx.ast.expression_null_literal(sequence_expr.span));
+        }
+
+        if should_fold {
+            let mut new_exprs = ctx.ast.vec_with_capacity(new_len);
+            let len = sequence_expr.expressions.len();
+            for (i, expr) in sequence_expr.expressions.iter_mut().enumerate() {
+                if expr.may_have_side_effects() || (should_include_ret_val && i == len - 1) {
+                    new_exprs.push(ctx.ast.move_expression(expr));
+                }
+            }
+
+            if should_keep_as_sequence_expr && new_exprs.len() == 1 {
+                new_exprs.insert(
+                    0,
+                    ctx.ast.expression_numeric_literal(SPAN, 1.0, None, NumberBase::Decimal),
+                );
+            }
+
+            if new_exprs.len() == 1 {
+                return Some(new_exprs.pop().unwrap());
+            }
+
+            return Some(ctx.ast.expression_sequence(sequence_expr.span, new_exprs));
+        }
+
+        None
+    }
+
+    fn try_fold_iife(e: &ExpressionStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
+        let Expression::CallExpression(e) = &e.expression else { return None };
+        if !e.arguments.is_empty() {
+            return None;
+        }
+        let (params_empty, body_empty) = match &e.callee {
+            Expression::FunctionExpression(f) => (f.params.is_empty(), f.body.as_ref()?.is_empty()),
+            Expression::ArrowFunctionExpression(f) => (f.params.is_empty(), f.body.is_empty()),
+            _ => return None,
+        };
+        (params_empty && body_empty).then(|| ctx.ast.statement_empty(e.span))
     }
 }
 
@@ -462,6 +597,7 @@ mod test {
         // fold("for (x of y) {x}", "for(x of y);");
         fold("for (let x = 1; x <10; x++ ) {}", "for (let x = 1; x <10; x++ );");
         fold("for (var x = 1; x <10; x++ ) {}", "for (var x = 1; x <10; x++ );");
+        fold("do { } while (true)", "do;while(true)");
     }
 
     #[test]
@@ -482,6 +618,7 @@ mod test {
 
         fold_same("b: { var x = 1; } x = 2;");
         fold_same("a: b: { var x = 1; } x = 2;");
+        fold("foo:;", "");
     }
 
     #[test]
@@ -548,5 +685,84 @@ mod test {
         fold("([foo(), ...c, bar()])", "(foo(), [...c], bar())");
         fold("([...a, b, ...c])", "([...a, ...c])");
         fold_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
+    }
+
+    #[test]
+    fn test_fold_unary_expression_statement() {
+        fold("typeof x", "");
+        fold("typeof x?.y", "x?.y");
+        fold("typeof x.y", "x.y");
+        fold("typeof x.y.z()", "x.y.z()");
+        fold("void x", "x");
+        fold("void x?.y", "x?.y");
+        fold("void x.y", "x.y");
+        fold("void x.y.z()", "x.y.z()");
+        fold("!x", "x");
+        fold("!x?.y", "x?.y");
+        fold("!x.y", "x.y");
+        fold("!x.y.z()", "x.y.z()");
+        fold("-x.y.z()", "x.y.z()");
+
+        fold_same("delete x");
+        fold_same("delete x.y");
+        fold_same("delete x.y.z()");
+    }
+
+    #[test]
+    fn test_fold_sequence_expr() {
+        fold("('foo', 'bar', 'baz')", "");
+        fold("('foo', 'bar', baz())", "baz()");
+        fold("('foo', bar(), baz())", "bar(), baz()");
+        fold("(() => {}, bar(), baz())", "bar(), baz()");
+        fold("(function k() {}, k(), baz())", "k(), baz()");
+        fold_same("(0, o.f)();");
+        fold("var obj = Object((null, 2, 3), 1, 2);", "var obj = Object(3, 1, 2);");
+    }
+
+    #[test]
+    fn test_fold_try_statement() {
+        fold_same("try { throw 0 } catch (e) { foo() }");
+        fold_same("try {} catch (e) { var foo }");
+        fold("try {} catch (e) { foo() }", "");
+        fold("try {} catch (e) { foo() } finally {}", "");
+        fold("try {} finally { foo() }", "{ foo() }");
+        fold("try {} catch (e) { foo() } finally { bar() }", "{ bar() }");
+        fold("try {} finally { var x = foo() }", "{ var x = foo() }");
+        fold("try {} catch (e) { foo() } finally { var x = bar() }", "{ var x = bar() }");
+        fold("try {} finally { let x = foo() }", "{ let x = foo() }");
+        fold("try {} catch (e) { foo() } finally { let x = bar() }", "{ let x = bar();}");
+        fold("try {} catch () { } finally {}", "");
+    }
+
+    #[test]
+    fn test_fold_if_statement() {
+        test("if (foo) {}", "foo");
+        test("if (foo) {} else {}", "foo");
+    }
+
+    #[test]
+    fn test_fold_iife() {
+        fold_same("var k = () => {}");
+        fold_same("var k = function () {}");
+        // test("var a = (() => {})()", "var a = /* @__PURE__ */ (() => {})();");
+        test("(() => {})()", "");
+        // test("(() => a())()", "a();");
+        // test("(() => { a() })()", "a();");
+        // test("(() => { return a() })()", "a();");
+        // test("(() => { let b = a; b() })()", "a();");
+        // test("(() => { let b = a; return b() })()", "a();");
+        test("(async () => {})()", "");
+        test_same("(async () => { a() })()");
+        // test("(async () => { let b = a; b() })()", "(async () => a())();");
+        // test("var a = (function() {})()", "var a = /* @__PURE__ */ function() {}();");
+        test("(function() {})()", "");
+        test("(function*() {})()", "");
+        test("(async function() {})()", "");
+        test_same("(function() { a() })()");
+        test_same("(function*() { a() })()");
+        test_same("(async function() { a() })()");
+        // test("(() => x)()", "x;");
+        // test("/* @__PURE__ */ (() => x)()", "");
+        // test("/* @__PURE__ */ (() => x)(y, z)", "y, z;");
     }
 }

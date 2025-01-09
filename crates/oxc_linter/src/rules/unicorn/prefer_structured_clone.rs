@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// const clone = structuredClone(foo);
     /// ```
     PreferStructuredClone,
+    unicorn,
     style,
     pending,
 );
@@ -197,6 +198,6 @@ fn test() {
         ("my.cloneDeep(foo,)", Some(serde_json::json!([{"functions": ["my.cloneDeep"]}]))),
     ];
 
-    Tester::new(PreferStructuredClone::NAME, PreferStructuredClone::CATEGORY, pass, fail)
+    Tester::new(PreferStructuredClone::NAME, PreferStructuredClone::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

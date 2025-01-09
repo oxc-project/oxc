@@ -79,7 +79,13 @@ impl<'a> ToJsString<'a> for IdentifierReference<'a> {
 impl<'a> ToJsString<'a> for NumericLiteral<'a> {
     fn to_js_string(&self) -> Option<Cow<'a, str>> {
         use oxc_syntax::number::ToJsString;
-        Some(Cow::Owned(self.value.to_js_string()))
+        let value = self.value;
+        let s = value.to_js_string();
+        Some(if value == 0.0 {
+            Cow::Borrowed("0")
+        } else {
+            Cow::Owned(if value.is_sign_negative() && value != 0.0 { format!("-{s}") } else { s })
+        })
     }
 }
 

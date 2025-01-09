@@ -38,6 +38,7 @@ declare_oxc_lint!(
     /// const x = Promise.resolve(value);
     /// ```
     NoNewStatics,
+    promise,
     correctness,
     fix
 );
@@ -112,7 +113,7 @@ fn test() {
         ("new Promise.any()", "Promise.any()", None),
         ("new Promise.race()", "Promise.race()", None),
     ];
-    Tester::new(NoNewStatics::NAME, NoNewStatics::CATEGORY, pass, fail)
+    Tester::new(NoNewStatics::NAME, NoNewStatics::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

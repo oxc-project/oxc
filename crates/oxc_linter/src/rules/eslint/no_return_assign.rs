@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// function x() { var result = a = b; return result; }
     /// ```
     NoReturnAssign,
+    eslint,
     style,
     pending // TODO: add a suggestion
 );
@@ -202,5 +203,5 @@ fn test() {
         ("const foo = (a) => (b) => a = b", None), // { "ecmaVersion": 6 }
     ];
 
-    Tester::new(NoReturnAssign::NAME, NoReturnAssign::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoReturnAssign::NAME, NoReturnAssign::PLUGIN, pass, fail).test_and_snapshot();
 }

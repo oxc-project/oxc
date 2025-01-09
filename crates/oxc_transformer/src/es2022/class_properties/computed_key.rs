@@ -7,7 +7,7 @@ use oxc_traverse::TraverseCtx;
 
 use super::{utils::create_assignment, ClassProperties};
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Substitute temp var for method computed key.
     /// `class C { [x()]() {} }` -> `let _x; _x = x(); class C { [_x]() {} }`
     /// This transform is only required if class has properties or a static block.

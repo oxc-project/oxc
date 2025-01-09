@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// var booleanObject = Boolean(value);
     /// ```
     NoNewWrappers,
+    eslint,
     pedantic,
     pending
 );
@@ -108,5 +109,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoNewWrappers::NAME, NoNewWrappers::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoNewWrappers::NAME, NoNewWrappers::PLUGIN, pass, fail).test_and_snapshot();
 }

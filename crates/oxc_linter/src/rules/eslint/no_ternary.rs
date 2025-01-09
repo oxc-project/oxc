@@ -30,6 +30,7 @@ declare_oxc_lint!(
     // }
     /// ```
     NoTernary,
+    eslint,
     style
 );
 
@@ -56,5 +57,5 @@ fn test() {
         "function foo(bar) { return bar ? baz : qux; }",
     ];
 
-    Tester::new(NoTernary::NAME, NoTernary::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoTernary::NAME, NoTernary::PLUGIN, pass, fail).test_and_snapshot();
 }

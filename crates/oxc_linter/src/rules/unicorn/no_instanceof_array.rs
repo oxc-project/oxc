@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// [1,2,3] instanceof Array;
     /// ```
     NoInstanceofArray,
+    unicorn,
     pedantic,
     fix
 );
@@ -101,7 +102,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoInstanceofArray::NAME, NoInstanceofArray::CATEGORY, pass, fail)
+    Tester::new(NoInstanceofArray::NAME, NoInstanceofArray::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -54,7 +54,7 @@
 use std::{borrow::Cow, mem};
 
 use oxc_allocator::{Box as ArenaBox, String as ArenaString};
-use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
+use oxc_ast::{ast::*, Visit, NONE};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::{
@@ -76,7 +76,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
+impl<'a> Traverse<'a> for AsyncToGenerator<'a, '_> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {
@@ -144,7 +144,7 @@ impl<'a, 'ctx> Traverse<'a> for AsyncToGenerator<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
+impl<'a> AsyncToGenerator<'a, '_> {
     /// Check whether the current node is inside an async function.
     fn is_inside_async_function(ctx: &mut TraverseCtx<'a>) -> bool {
         // Early return if current scope is top because we don't need to transform top-level await expression.
@@ -517,7 +517,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             }
             // infer `foo` from `({ foo: async function() {} })`
             Ancestor::ObjectPropertyValue(property) if !*property.method() => {
-                property.key().static_name().map(|key| Self::normalize_function_name(&key, ctx.ast))
+                property.key().static_name().map(|key| Self::normalize_function_name(&key, ctx))
             }
             _ => None,
         }
@@ -534,13 +534,13 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     /// // Reserved keyword
     /// * `this` -> `_this`
     /// * `arguments` -> `_arguments`
-    fn normalize_function_name(input: &Cow<'a, str>, ast: AstBuilder<'a>) -> Atom<'a> {
+    fn normalize_function_name(input: &Cow<'a, str>, ctx: &TraverseCtx<'a>) -> Atom<'a> {
         let input_str = input.as_ref();
         if !is_reserved_keyword(input_str) && is_identifier_name(input_str) {
-            return ast.atom_from_cow(input);
+            return ctx.ast.atom_from_cow(input);
         }
 
-        let mut name = ArenaString::with_capacity_in(input_str.len() + 1, ast.allocator);
+        let mut name = ArenaString::with_capacity_in(input_str.len() + 1, ctx.ast.allocator);
         let mut capitalize_next = false;
 
         let mut chars = input_str.chars();
@@ -819,7 +819,7 @@ impl<'a, 'ctx> BindingMover<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Visit<'a> for BindingMover<'a, 'ctx> {
+impl<'a> Visit<'a> for BindingMover<'a, '_> {
     /// Visits a binding identifier and moves it to the target scope.
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
         let symbols = self.ctx.symbols();

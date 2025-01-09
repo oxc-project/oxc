@@ -83,7 +83,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ObjectRestSpread<'a, 'ctx> {
+impl<'a> Traverse<'a> for ObjectRestSpread<'a, '_> {
     // For excluded keys when destructuring inside a function.
     // `function foo() { ({a, ...b} = c) }` -> `const _excluded = ["a"]; function foo() { ... }`
     fn exit_program(&mut self, _node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -181,7 +181,7 @@ impl<'a, 'ctx> Traverse<'a> for ObjectRestSpread<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
+impl<'a> ObjectRestSpread<'a, '_> {
     // Transform `({ x, ..y } = foo)`.
     // Transform `([{ x, ..y }] = foo)`.
     fn transform_assignment_expression(
@@ -532,7 +532,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
+impl<'a> ObjectRestSpread<'a, '_> {
     // Transform `function foo({...x}) {}`.
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
@@ -769,7 +769,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
+impl<'a> ObjectRestSpread<'a, '_> {
     // Transform `let { x, ..y } = foo`.
     // Transform `let [{ x, ..y }] = foo`.
     fn transform_variable_declaration(

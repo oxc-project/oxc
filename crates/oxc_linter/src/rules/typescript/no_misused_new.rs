@@ -50,6 +50,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoMisusedNew,
+    typescript,
     correctness
 );
 
@@ -148,5 +149,5 @@ fn test() {
         "interface I { constructor(): '';}",
     ];
 
-    Tester::new(NoMisusedNew::NAME, NoMisusedNew::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoMisusedNew::NAME, NoMisusedNew::PLUGIN, pass, fail).test_and_snapshot();
 }

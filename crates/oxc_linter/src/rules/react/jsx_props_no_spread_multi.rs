@@ -55,6 +55,7 @@ declare_oxc_lint!(
     /// <App {...props} myAttr="1" />
     /// ```
     JsxPropsNoSpreadMulti,
+    react,
     correctness,
     fix
 );
@@ -186,7 +187,7 @@ fn test() {
         ("<div {...props} {...props} {...props} />", "<div   {...props} />"),
     ];
 
-    Tester::new(JsxPropsNoSpreadMulti::NAME, JsxPropsNoSpreadMulti::CATEGORY, pass, fail)
+    Tester::new(JsxPropsNoSpreadMulti::NAME, JsxPropsNoSpreadMulti::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

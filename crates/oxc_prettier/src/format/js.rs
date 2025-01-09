@@ -18,7 +18,7 @@ use crate::{
     },
     group, hardline, indent,
     ir::{Doc, JoinSeparator},
-    join, line, softline, text, wrap, Prettier,
+    join, line, softline, text, utils, wrap, Prettier,
 };
 
 impl<'a> Format<'a> for Program<'a> {
@@ -33,8 +33,7 @@ impl<'a> Format<'a> for Program<'a> {
 
             if let Some(body_doc) = block::print_block_body(p, &self.body, Some(&self.directives)) {
                 parts.push(body_doc);
-                // XXX: Prettier seems to add this, but test results don't match
-                // parts.extend(hardline!());
+                parts.extend(hardline!());
             }
 
             array!(p, parts)
@@ -138,7 +137,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
                 p,
                 [
                     text!("if ("),
-                    group!(p, [indent!(p, [softline!(), test_doc]), softline!(),]),
+                    group!(p, [indent!(p, [softline!(), test_doc]), softline!()]),
                     text!(")"),
                     consequent
                 ]
@@ -205,7 +204,7 @@ impl<'a> Format<'a> for ForStatement<'a> {
                 indent!(p, parts_head)
             };
 
-            group!(p, [text!("for ("), group!(p, [parts_head, softline!()]), text!(")"), body,])
+            group!(p, [text!("for ("), group!(p, [parts_head, softline!()]), text!(")"), body])
         })
     }
 }
@@ -228,8 +227,10 @@ impl<'a> Format<'a> for ForInStatement<'a> {
             parts.push(text!(" in "));
             parts.push(self.right.format(p));
             parts.push(text!(")"));
-            let body = self.body.format(p);
-            parts.push(misc::adjust_clause(p, &self.body, body, false));
+
+            let body_doc = self.body.format(p);
+            parts.push(misc::adjust_clause(p, &self.body, body_doc, false));
+
             group!(p, parts)
         })
     }
@@ -248,8 +249,10 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
             parts.push(text!(" of "));
             parts.push(self.right.format(p));
             parts.push(text!(")"));
-            let body = self.body.format(p);
-            parts.push(misc::adjust_clause(p, &self.body, body, false));
+
+            let body_doc = self.body.format(p);
+            parts.push(misc::adjust_clause(p, &self.body, body_doc, false));
+
             group!(p, parts)
         })
     }
@@ -268,14 +271,12 @@ impl<'a> Format<'a> for WhileStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, WhileStatement, {
             let mut parts = Vec::new_in(p.allocator);
-
             parts.push(text!("while ("));
-            let test_doc = self.test.format(p);
-            parts.push(group!(p, [indent!(p, [softline!(), test_doc]), softline!(),]));
+            parts.push(group!(p, [indent!(p, [softline!(), self.test.format(p)]), softline!()]));
             parts.push(text!(")"));
 
-            let body = self.body.format(p);
-            parts.push(misc::adjust_clause(p, &self.body, body, false));
+            let body_doc = self.body.format(p);
+            parts.push(misc::adjust_clause(p, &self.body, body_doc, false));
 
             group!(p, parts)
         })
@@ -287,10 +288,9 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
         wrap!(p, self, DoWhileStatement, {
             let mut parts = Vec::new_in(p.allocator);
 
-            let clause = self.body.format(p);
-            let clause = misc::adjust_clause(p, &self.body, clause, false);
+            let clause_doc = self.body.format(p);
+            let clause = misc::adjust_clause(p, &self.body, clause_doc, false);
             let do_body = group!(p, [text!("do"), clause]);
-
             parts.push(do_body);
 
             if matches!(self.body, Statement::BlockStatement(_)) {
@@ -300,9 +300,9 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
             }
 
             parts.push(text!("while ("));
-            let test_doc = self.test.format(p);
-            parts.push(group!(p, [indent!(p, [softline!(), test_doc]), softline!()]));
+            parts.push(group!(p, [indent!(p, [softline!(), self.test.format(p)]), softline!()]));
             parts.push(text!(")"));
+
             if let Some(semi) = p.semi() {
                 parts.push(semi);
             }
@@ -320,6 +320,10 @@ impl<'a> Format<'a> for ContinueStatement<'a> {
         if let Some(label) = &self.label {
             parts.push(text!(" "));
             parts.push(label.format(p));
+        }
+
+        if p.options.semi {
+            parts.push(text!(";"));
         }
 
         array!(p, parts)
@@ -454,13 +458,10 @@ impl<'a> Format<'a> for ReturnStatement<'a> {
 impl<'a> Format<'a> for LabeledStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         if matches!(self.body, Statement::EmptyStatement(_)) {
-            let label_doc = self.label.format(p);
-            return array!(p, [label_doc, text!(":;")]);
+            return array!(p, [self.label.format(p), text!(":;")]);
         }
 
-        let label_doc = self.label.format(p);
-        let body_doc = self.body.format(p);
-        array!(p, [label_doc, text!(": "), body_doc])
+        array!(p, [self.label.format(p), text!(": "), self.body.format(p)])
     }
 }
 
@@ -516,13 +517,12 @@ impl<'a> Format<'a> for ThrowStatement<'a> {
 
 impl<'a> Format<'a> for WithStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let object_doc = self.object.format(p);
         let body_doc = self.body.format(p);
         group!(
             p,
             [
                 text!("with ("),
-                object_doc,
+                self.object.format(p),
                 text!(")"),
                 misc::adjust_clause(p, &self.body, body_doc, false)
             ]
@@ -934,7 +934,7 @@ impl<'a> Format<'a> for RegExpLiteral<'a> {
 
 impl<'a> Format<'a> for StringLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        literal::replace_end_of_line(
+        utils::replace_end_of_line(
             p,
             literal::print_string(p, self.span.source_text(p.source_text), p.options.single_quote),
             JoinSeparator::Literalline,
@@ -1269,7 +1269,7 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
                 &self.right,
             );
             if misc::in_parentheses(p.parent_kind(), p.source_text, self.span) {
-                group!(p, [indent!(p, [softline!(), doc]), softline!(),])
+                group!(p, [indent!(p, [softline!(), doc]), softline!()])
             } else {
                 doc
             }
@@ -1462,34 +1462,25 @@ impl<'a> Format<'a> for TemplateLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         template_literal::print_template_literal(
             p,
-            &template_literal::TemplateLiteralPrinter::TemplateLiteral(self),
+            &template_literal::TemplateLiteralLike::TemplateLiteral(self),
         )
     }
 }
 
 impl<'a> Format<'a> for TemplateElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        // TODO: `replaceEndOfLine`
-        dynamic_text!(p, self.value.raw.as_str())
+        utils::replace_end_of_line(
+            p,
+            dynamic_text!(p, self.value.raw.as_str()),
+            JoinSeparator::Literalline,
+        )
     }
 }
 
 impl<'a> Format<'a> for TaggedTemplateExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, TaggedTemplateExpression, {
-            let mut parts = Vec::new_in(p.allocator);
-
-            parts.push(self.tag.format(p));
-
-            if let Some(type_parameters) = &self.type_parameters {
-                parts.push(text!("<"));
-                parts.push(type_parameters.format(p));
-                parts.push(text!(">"));
-            }
-
-            parts.push(self.quasi.format(p));
-
-            array!(p, parts)
+            template_literal::print_tagged_template_literal(p, self)
         })
     }
 }
@@ -1601,10 +1592,7 @@ impl<'a> Format<'a> for AccessorProperty<'a> {
 
 impl<'a> Format<'a> for PrivateIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(text!("#"));
-        parts.push(dynamic_text!(p, self.name.as_str()));
-        array!(p, parts)
+        array!(p, [text!("#"), dynamic_text!(p, self.name.as_str())])
     }
 }
 

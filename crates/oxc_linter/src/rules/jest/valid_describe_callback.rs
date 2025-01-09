@@ -69,6 +69,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ValidDescribeCallback,
+    jest,
     correctness
 );
 
@@ -512,7 +513,7 @@ fn test() {
     pass.extend(pass_vitest);
     fail.extend(fail_vitest);
 
-    Tester::new(ValidDescribeCallback::NAME, ValidDescribeCallback::CATEGORY, pass, fail)
+    Tester::new(ValidDescribeCallback::NAME, ValidDescribeCallback::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();

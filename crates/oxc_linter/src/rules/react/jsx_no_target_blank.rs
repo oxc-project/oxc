@@ -122,6 +122,7 @@ declare_oxc_lint!(
     /// [`noreferrer` docs]: https://html.spec.whatwg.org/multipage/links.html#link-type-noreferrer
     /// [`noopener` docs]: https://html.spec.whatwg.org/multipage/links.html#link-type-noopener
     JsxNoTargetBlank,
+    react,
     correctness
 );
 
@@ -795,5 +796,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(JsxNoTargetBlank::NAME, JsxNoTargetBlank::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(JsxNoTargetBlank::NAME, JsxNoTargetBlank::PLUGIN, pass, fail).test_and_snapshot();
 }

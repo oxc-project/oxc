@@ -93,6 +93,7 @@ declare_oxc_lint!(
     /// <iframe sandbox="allow-origin" />;
     /// ```
     IframeMissingSandbox,
+    react,
     suspicious,
     pending
 );
@@ -260,6 +261,6 @@ fn test() {
         r#"<iframe sandbox="allow-same-origin allow-scripts"/>;"#,
     ];
 
-    Tester::new(IframeMissingSandbox::NAME, IframeMissingSandbox::CATEGORY, pass, fail)
+    Tester::new(IframeMissingSandbox::NAME, IframeMissingSandbox::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

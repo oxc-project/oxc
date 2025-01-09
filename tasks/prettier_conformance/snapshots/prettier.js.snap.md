@@ -1,4 +1,4 @@
-js compatibility: 246/641 (38.38%)
+js compatibility: 249/641 (38.85%)
 
 # Failed
 
@@ -219,9 +219,6 @@ js compatibility: 246/641 (38.38%)
 * js/empty-paren-comment/class-property.js
 * js/empty-paren-comment/class.js
 * js/empty-paren-comment/empty_paren_comment.js
-
-### js/end-of-line
-* js/end-of-line/example.js
 
 ### js/export
 * js/export/blank-line-between-specifiers.js
@@ -566,10 +563,8 @@ js compatibility: 246/641 (38.38%)
 * jsx/jsx/quotes.js
 * jsx/jsx/regex.js
 * jsx/jsx/return-statement.js
-* jsx/jsx/self-closing.js
 * jsx/jsx/spacing.js
 * jsx/jsx/template-literal-in-attr.js
-* jsx/jsx/ternary.js
 
 ### jsx/last-line
 * jsx/last-line/last_line.js

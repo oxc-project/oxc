@@ -1,5 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_semantic::ScopeFlags;
+use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::CompressorPass;
@@ -14,19 +16,72 @@ pub struct MinimizeExitPoints {
 
 impl<'a> CompressorPass<'a> for MinimizeExitPoints {
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = true;
+        self.changed = false;
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
 impl<'a> Traverse<'a> for MinimizeExitPoints {
-    fn exit_statements(&mut self, _stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.remove_last_return(&mut body.statements);
+    }
+
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.fold_if_return(stmts, ctx);
     }
 }
 
-impl MinimizeExitPoints {
+impl<'a> MinimizeExitPoints {
     pub fn new() -> Self {
         Self { changed: false }
+    }
+
+    // `function foo() { return }` -> `function foo() {}`
+    fn remove_last_return(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        if let Some(last) = stmts.last() {
+            if matches!(last, Statement::ReturnStatement(ret) if ret.argument.is_none()) {
+                stmts.pop();
+                self.changed = true;
+            }
+        }
+    }
+
+    // `if(x)return;foo` -> `if(!x)foo;`
+    fn fold_if_return(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        if stmts.len() <= 1 {
+            return;
+        }
+        let Some(index) = stmts.iter().position(|stmt| {
+            if let Statement::IfStatement(if_stmt) = stmt {
+                if if_stmt.alternate.is_none()
+                    && matches!(
+                        if_stmt.consequent.get_one_child(),
+                        Some(Statement::ReturnStatement(s)) if s.argument.is_none()
+                    )
+                {
+                    return true;
+                }
+            }
+            false
+        }) else {
+            return;
+        };
+        let Some(stmts_rest) = stmts.get_mut(index + 1..) else { return };
+        let body = ctx.ast.vec_from_iter(stmts_rest.iter_mut().map(|s| ctx.ast.move_statement(s)));
+        let Statement::IfStatement(if_stmt) = &mut stmts[index] else { unreachable!() };
+        let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
+        if_stmt.test = match ctx.ast.move_expression(&mut if_stmt.test) {
+            Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                unary_expr.unbox().argument
+            }
+            e => ctx.ast.expression_unary(e.span(), UnaryOperator::LogicalNot, e),
+        };
+        if_stmt.alternate = None;
+        if_stmt.consequent = Statement::BlockStatement(
+            ctx.ast.alloc_block_statement_with_scope_id(SPAN, body, scope_id),
+        );
+        stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
+        self.changed = true;
     }
 }
 
@@ -45,6 +100,39 @@ mod test {
     fn fold_same(source_text: &str) {
         fold(source_text, source_text);
     }
+
+    // oxc
+
+    #[test]
+    fn simple() {
+        fold(
+            "function foo() { if (foo) return; bar; quaz; }",
+            "function foo() { if (!foo) { bar; quaz; } }",
+        );
+        fold(
+            "function foo() { if (!foo) return; bar; quaz; }",
+            "function foo() { if (foo) { bar; quaz; } }",
+        );
+        fold(
+            "function foo() { x; if (foo) return; bar; quaz; }",
+            "function foo() { x; if (!foo) { bar; quaz; } }",
+        );
+        fold(
+            "function foo() { x; if (!foo) return; bar; quaz; }",
+            "function foo() { x; if (foo) { bar; quaz; } }",
+        );
+        fold_same("function foo() { if (foo) return }");
+        fold_same("function foo() { if (foo) return bar; baz }");
+    }
+
+    #[test]
+    fn remove_last_return() {
+        fold("function () {return}", "function () {}");
+        fold("function () {a;b;return}", "function () {a;b;}");
+        fold_same("function () { if(foo) { return } }");
+    }
+
+    // closure
 
     #[test]
     #[ignore]

@@ -60,6 +60,7 @@ declare_oxc_lint!(
     /// const foo = [maybeArray].flat();
     /// ```
     PreferArrayFlat,
+    unicorn,
     pedantic,
     conditional_fix
 );
@@ -457,7 +458,7 @@ fn test() {
         ("array.reduce((a, b) => [...a, ...b], [])", "array.flat()"),
     ];
 
-    Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::CATEGORY, pass, fail)
+    Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -10,8 +10,8 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    fixer::FixKind, rules::RULES, AllowWarnDeny, Fixer, LintPlugins, LintService,
-    LintServiceOptions, LinterBuilder, Oxlintrc, RuleCategory, RuleEnum, RuleWithSeverity,
+    fixer::FixKind, options::LintOptions, rules::RULES, AllowWarnDeny, ConfigStoreBuilder, Fixer,
+    LintPlugins, LintService, LintServiceOptions, Linter, Oxlintrc, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Eq, PartialEq)]
@@ -161,7 +161,7 @@ where
 
 pub struct Tester {
     rule_name: &'static str,
-    rule_category: RuleCategory,
+    plugin_name: &'static str,
     rule_path: PathBuf,
     expect_pass: Vec<TestCase>,
     expect_fail: Vec<TestCase>,
@@ -184,7 +184,7 @@ pub struct Tester {
 impl Tester {
     pub fn new<T: Into<TestCase>>(
         rule_name: &'static str,
-        rule_category: RuleCategory,
+        plugin_name: &'static str,
         expect_pass: Vec<T>,
         expect_fail: Vec<T>,
     ) -> Self {
@@ -196,7 +196,7 @@ impl Tester {
             env::current_dir().unwrap().join("fixtures/import").into_boxed_path();
         Self {
             rule_name,
-            rule_category,
+            plugin_name,
             rule_path,
             expect_pass,
             expect_fail,
@@ -441,15 +441,19 @@ impl Tester {
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
-        let linter = eslint_config
-            .as_ref()
-            .map_or_else(LinterBuilder::empty, |v| {
-                LinterBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
-            })
-            .with_fix(fix.into())
-            .with_plugins(self.plugins)
-            .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))
-            .build();
+        let linter = Linter::new(
+            LintOptions::default(),
+            eslint_config
+                .as_ref()
+                .map_or_else(ConfigStoreBuilder::empty, |v| {
+                    ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
+                })
+                .with_plugins(self.plugins)
+                .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))
+                .build()
+                .unwrap(),
+        )
+        .with_fix(fix.into());
 
         let path_to_lint = if self.plugins.has_import() {
             assert!(path.is_none(), "import plugin does not support path");
@@ -503,7 +507,7 @@ impl Tester {
     fn find_rule(&self) -> &RuleEnum {
         RULES
             .iter()
-            .find(|rule| rule.category() == self.rule_category && rule.name() == self.rule_name)
+            .find(|rule| rule.plugin_name() == self.plugin_name && rule.name() == self.rule_name)
             .unwrap_or_else(|| panic!("Rule not found: {}", &self.rule_name))
     }
 }

@@ -2,12 +2,13 @@ use std::cmp::max;
 
 use oxc_allocator::String;
 
+use crate::diagnostics;
+
 use super::{
     cold_branch,
     search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
     Kind, Lexer, LexerContext, Span, Token,
 };
-use crate::diagnostics;
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 

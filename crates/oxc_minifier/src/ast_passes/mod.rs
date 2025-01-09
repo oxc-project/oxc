@@ -3,6 +3,7 @@ use oxc_ast::ast::*;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 mod collapse_variable_declarations;
+mod convert_to_dotted_properties;
 mod exploit_assigns;
 mod minimize_exit_points;
 mod normalize;
@@ -12,9 +13,11 @@ mod peephole_remove_dead_code;
 mod peephole_replace_known_methods;
 mod peephole_substitute_alternate_syntax;
 mod remove_syntax;
+mod remove_unused_code;
 mod statement_fusion;
 
 pub use collapse_variable_declarations::CollapseVariableDeclarations;
+pub use convert_to_dotted_properties::ConvertToDottedProperties;
 pub use exploit_assigns::ExploitAssigns;
 pub use minimize_exit_points::MinimizeExitPoints;
 pub use normalize::Normalize;
@@ -24,6 +27,8 @@ pub use peephole_remove_dead_code::PeepholeRemoveDeadCode;
 pub use peephole_replace_known_methods::PeepholeReplaceKnownMethods;
 pub use peephole_substitute_alternate_syntax::PeepholeSubstituteAlternateSyntax;
 pub use remove_syntax::RemoveSyntax;
+#[expect(unused)]
+pub use remove_unused_code::RemoveUnusedCode;
 pub use statement_fusion::StatementFusion;
 
 use crate::CompressOptions;
@@ -32,7 +37,6 @@ pub trait CompressorPass<'a>: Traverse<'a> {
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>);
 }
 
-// See `latePeepholeOptimizations`
 pub struct PeepholeOptimizations {
     x0_statement_fusion: StatementFusion,
     x1_minimize_exit_points: MinimizeExitPoints,
@@ -43,9 +47,12 @@ pub struct PeepholeOptimizations {
     x6_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax,
     x7_peephole_replace_known_methods: PeepholeReplaceKnownMethods,
     x8_peephole_fold_constants: PeepholeFoldConstants,
+    x9_convert_to_dotted_properties: ConvertToDottedProperties,
 }
 
 impl PeepholeOptimizations {
+    /// `in_fixed_loop`: Do not compress syntaxes that are hard to analyze inside the fixed loop.
+    /// Opposite of `late` in Closure Compiler.
     pub fn new(in_fixed_loop: bool, options: CompressOptions) -> Self {
         Self {
             x0_statement_fusion: StatementFusion::new(),
@@ -53,13 +60,14 @@ impl PeepholeOptimizations {
             x2_exploit_assigns: ExploitAssigns::new(),
             x3_collapse_variable_declarations: CollapseVariableDeclarations::new(),
             x4_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
-            x5_peephole_minimize_conditions: PeepholeMinimizeConditions::new(in_fixed_loop),
+            x5_peephole_minimize_conditions: PeepholeMinimizeConditions::new(),
             x6_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax::new(
-                options,
+                options.target,
                 in_fixed_loop,
             ),
             x7_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
             x8_peephole_fold_constants: PeepholeFoldConstants::new(),
+            x9_convert_to_dotted_properties: ConvertToDottedProperties::new(in_fixed_loop),
         }
     }
 
@@ -116,15 +124,11 @@ impl<'a> CompressorPass<'a> for PeepholeOptimizations {
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x0_statement_fusion.exit_program(program, ctx);
         self.x4_peephole_remove_dead_code.exit_program(program, ctx);
     }
 
-    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x0_statement_fusion.exit_function_body(body, ctx);
-    }
-
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_statement_fusion.exit_statements(stmts, ctx);
         self.x1_minimize_exit_points.exit_statements(stmts, ctx);
         self.x2_exploit_assigns.exit_statements(stmts, ctx);
         self.x3_collapse_variable_declarations.exit_statements(stmts, ctx);
@@ -137,12 +141,12 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.x5_peephole_minimize_conditions.exit_statement(stmt, ctx);
     }
 
-    fn exit_block_statement(&mut self, block: &mut BlockStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x0_statement_fusion.exit_block_statement(block, ctx);
-    }
-
     fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x6_peephole_substitute_alternate_syntax.exit_return_statement(stmt, ctx);
+    }
+
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x1_minimize_exit_points.exit_function_body(body, ctx);
     }
 
     fn exit_variable_declaration(
@@ -169,16 +173,53 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.x6_peephole_substitute_alternate_syntax.exit_call_expression(expr, ctx);
     }
 
-    fn exit_property_key(&mut self, key: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x6_peephole_substitute_alternate_syntax.exit_property_key(key, ctx);
-    }
-
     fn exit_member_expression(
         &mut self,
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x6_peephole_substitute_alternate_syntax.exit_member_expression(expr, ctx);
+        self.x9_convert_to_dotted_properties.exit_member_expression(expr, ctx);
+    }
+
+    fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x6_peephole_substitute_alternate_syntax.exit_object_property(prop, ctx);
+    }
+
+    fn exit_assignment_target_property_property(
+        &mut self,
+        prop: &mut AssignmentTargetPropertyProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x6_peephole_substitute_alternate_syntax
+            .exit_assignment_target_property_property(prop, ctx);
+    }
+
+    fn exit_binding_property(&mut self, prop: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x6_peephole_substitute_alternate_syntax.exit_binding_property(prop, ctx);
+    }
+
+    fn exit_method_definition(
+        &mut self,
+        prop: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x6_peephole_substitute_alternate_syntax.exit_method_definition(prop, ctx);
+    }
+
+    fn exit_property_definition(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x6_peephole_substitute_alternate_syntax.exit_property_definition(prop, ctx);
+    }
+
+    fn exit_accessor_property(
+        &mut self,
+        prop: &mut AccessorProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x6_peephole_substitute_alternate_syntax.exit_accessor_property(prop, ctx);
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {

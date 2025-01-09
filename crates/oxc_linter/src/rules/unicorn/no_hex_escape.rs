@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// const foo = `\u001B${bar}`;
     /// ```
     NoHexEscape,
+    unicorn,
     pedantic,
     fix
 );
@@ -212,7 +213,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoHexEscape::NAME, NoHexEscape::CATEGORY, pass, fail)
+    Tester::new(NoHexEscape::NAME, NoHexEscape::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

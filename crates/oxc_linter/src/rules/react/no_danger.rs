@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// const Hello = <div>Hello World</div>;
     /// ```
     NoDanger,
+    react,
     restriction
 );
 
@@ -116,5 +117,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoDanger::NAME, NoDanger::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoDanger::NAME, NoDanger::PLUGIN, pass, fail).test_and_snapshot();
 }

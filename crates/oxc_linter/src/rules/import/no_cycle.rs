@@ -88,6 +88,7 @@ declare_oxc_lint!(
     ///
     /// In this corrected version, `dep-b.js` no longer imports `dep-a.js`, breaking the cycle.
     NoCycle,
+    import,
     restriction
 );
 
@@ -364,7 +365,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoCycle::NAME, NoCycle::CATEGORY, pass, fail)
+    Tester::new(NoCycle::NAME, NoCycle::PLUGIN, pass, fail)
         .change_rule_path("cycles/depth-zero.js")
         .with_import_plugin(true)
         .test_and_snapshot();

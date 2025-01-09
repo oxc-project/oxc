@@ -88,6 +88,7 @@ declare_oxc_lint!(
     /// const isEmpty = foo.length === 0;
     /// ```
     ExplicitLengthCheck,
+    unicorn,
     pedantic,
     conditional_fix
 );
@@ -414,7 +415,7 @@ fn test() {
         ("for(const a of!foo.length);", "for(const a of foo.length === 0);", None),
         ("for(const a in!foo.length);", "for(const a in foo.length === 0);", None),
     ];
-    Tester::new(ExplicitLengthCheck::NAME, ExplicitLengthCheck::CATEGORY, pass, fail)
+    Tester::new(ExplicitLengthCheck::NAME, ExplicitLengthCheck::PLUGIN, pass, fail)
         .expect_fix(fixes)
         .test_and_snapshot();
 }

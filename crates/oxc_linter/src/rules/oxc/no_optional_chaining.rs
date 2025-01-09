@@ -62,6 +62,7 @@ declare_oxc_lint!(
     /// - `message`: A custom help message to display when optional chaining is found.
     ///
     NoOptionalChaining,
+    oxc,
     restriction,
 );
 
@@ -112,6 +113,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoOptionalChaining::NAME, NoOptionalChaining::CATEGORY, pass, fail)
+    Tester::new(NoOptionalChaining::NAME, NoOptionalChaining::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

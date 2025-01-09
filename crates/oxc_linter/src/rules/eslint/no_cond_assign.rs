@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoCondAssign,
+    eslint,
     correctness
 );
 
@@ -250,5 +251,5 @@ fn test() {
         ("(((3496.29)).bkufyydt = 2e308) ? foo : bar;", None),
     ];
 
-    Tester::new(NoCondAssign::NAME, NoCondAssign::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoCondAssign::NAME, NoCondAssign::PLUGIN, pass, fail).test_and_snapshot();
 }

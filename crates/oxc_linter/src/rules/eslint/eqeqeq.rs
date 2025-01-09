@@ -35,6 +35,7 @@ declare_oxc_lint!(
     /// a == b
     /// ```
     Eqeqeq,
+    eslint,
     pedantic,
     conditional_fix
 );
@@ -253,5 +254,5 @@ fn test() {
         ("a == b", "a == b", None),
     ];
 
-    Tester::new(Eqeqeq::NAME, Eqeqeq::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(Eqeqeq::NAME, Eqeqeq::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

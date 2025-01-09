@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// if (!(foo === bar)) {}
     /// ```
     NoNegationInEqualityCheck,
+    unicorn,
     pedantic,
     pending
 );
@@ -135,6 +136,6 @@ fn test() {
 					",
     ];
 
-    Tester::new(NoNegationInEqualityCheck::NAME, NoNegationInEqualityCheck::CATEGORY, pass, fail)
+    Tester::new(NoNegationInEqualityCheck::NAME, NoNegationInEqualityCheck::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

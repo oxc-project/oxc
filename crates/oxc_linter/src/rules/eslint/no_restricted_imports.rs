@@ -132,6 +132,7 @@ declare_oxc_lint!(
     /// export { foo } from "bar";
     /// ```
     NoRestrictedImports,
+    eslint,
     nursery,
 );
 
@@ -1928,6 +1929,6 @@ fn test() {
         // ),
     ];
 
-    Tester::new(NoRestrictedImports::NAME, NoRestrictedImports::CATEGORY, pass, fail)
+    Tester::new(NoRestrictedImports::NAME, NoRestrictedImports::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

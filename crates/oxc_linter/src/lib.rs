@@ -4,7 +4,6 @@
 mod tester;
 
 mod ast_util;
-mod builder;
 mod config;
 mod context;
 mod disable_directives;
@@ -29,23 +28,22 @@ use oxc_semantic::{AstNode, Semantic};
 use rules::RULES;
 
 pub use crate::{
-    builder::{LinterBuilder, LinterBuilderError},
-    config::{ESLintRule, LintPlugins, Oxlintrc},
+    config::{
+        ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintPlugins, Oxlintrc,
+    },
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
     module_record::ModuleRecord,
+    options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
 use crate::{
-    config::{
-        ConfigStore, LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState,
-    },
+    config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, ResolvedLinterState},
     context::ContextHost,
     fixer::{Fixer, Message},
-    options::LintOptions,
     rules::RuleEnum,
     table::RuleTable,
     utils::iter_possible_jest_call_node,
@@ -68,14 +66,8 @@ pub struct Linter {
     config: ConfigStore,
 }
 
-impl Default for Linter {
-    fn default() -> Self {
-        LinterBuilder::default().build()
-    }
-}
-
 impl Linter {
-    pub(crate) fn new(options: LintOptions, config: ConfigStore) -> Self {
+    pub fn new(options: LintOptions, config: ConfigStore) -> Self {
         Self { options, config }
     }
 
@@ -101,10 +93,6 @@ impl Linter {
 
     pub fn number_of_rules(&self) -> usize {
         self.config.number_of_rules()
-    }
-
-    pub(crate) fn rules(&self) -> &Arc<[RuleWithSeverity]> {
-        self.config.rules()
     }
 
     pub fn run<'a>(

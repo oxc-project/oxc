@@ -84,11 +84,7 @@ impl EnvOptions {
             es2021: ES2021Options { logical_assignment_operators: true },
             es2022: ES2022Options {
                 class_static_block: true,
-                class_properties: if include_unfinished_plugins {
-                    Some(ClassPropertiesOptions::default())
-                } else {
-                    None
-                },
+                class_properties: Some(ClassPropertiesOptions::default()),
             },
         }
     }
@@ -140,9 +136,7 @@ impl EnvOptions {
             }
         }
         engine_targets.insert(Engine::Es, es_target.unwrap_or(ESTarget::default()).version());
-        let mut env_options = EnvOptions::from(engine_targets);
-        env_options.es2022.class_properties = None;
-        Ok(env_options)
+        Ok(EnvOptions::from(engine_targets))
     }
 }
 

@@ -25,6 +25,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoHeadElement,
+    nextjs,
     correctness
 );
 
@@ -170,5 +171,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoHeadElement::NAME, NoHeadElement::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoHeadElement::NAME, NoHeadElement::PLUGIN, pass, fail).test_and_snapshot();
 }
