@@ -138,6 +138,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
             }
             Expression::AssignmentExpression(e) => {
                 self.try_compress_normal_assignment_to_combined_assignment(e, ctx);
+                self.try_compress_normal_assignment_to_combined_logical_assignment(e, ctx);
             }
             _ => {}
         }
@@ -628,6 +629,42 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 
         expr.operator = new_op;
         expr.right = ctx.ast.move_expression(&mut binary_expr.right);
+        self.changed = true;
+    }
+
+    /// Compress `a = a || b` to `a ||= b`
+    ///
+    /// This can only be done for resolved identifiers as this would avoid setting `a` when `a` is truthy.
+    fn try_compress_normal_assignment_to_combined_logical_assignment(
+        &mut self,
+        expr: &mut AssignmentExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) {
+        if self.target < ESTarget::ES2020 {
+            return;
+        }
+        if !matches!(expr.operator, AssignmentOperator::Assign) {
+            return;
+        }
+
+        let Expression::LogicalExpression(logical_expr) = &mut expr.right else { return };
+        let new_op = logical_expr.operator.to_assignment_operator();
+
+        let (
+            AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
+            Expression::Identifier(read_id_ref),
+        ) = (&expr.left, &logical_expr.left)
+        else {
+            return;
+        };
+        // It should also early return when the reference might refer to a reference value created by a with statement
+        // when the minifier supports with statements
+        if write_id_ref.name != read_id_ref.name || ctx.is_global_reference(write_id_ref) {
+            return;
+        }
+
+        expr.operator = new_op;
+        expr.right = ctx.ast.move_expression(&mut logical_expr.right);
         self.changed = true;
     }
 
@@ -1208,6 +1245,27 @@ mod test {
         test_same("var x; x.y.z = x.y.z + 3");
         // This case is not supported, since the minifier does not support with statements
         // test_same("var x; with (z) { x.y || (x.y = 3) }");
+    }
+
+    #[test]
+    fn test_compress_normal_assignment_to_combined_logical_assignment() {
+        test("var x; x = x || 1", "var x; x ||= 1");
+        test("var x; x = x && 1", "var x; x &&= 1");
+        test("var x; x = x ?? 1", "var x; x ??= 1");
+
+        // `x` is a global reference and might have a setter
+        // Example case: `Object.defineProperty(globalThis, 'x', { get: () => true, set: () => console.log('x') }); x = x || 1`
+        test_same("x = x || 1");
+        // setting x.y might have a side effect
+        test_same("var x; x.y = x.y || 1");
+        // This case is not supported, since the minifier does not support with statements
+        // test_same("var x; with (z) { x = x || 1 }");
+
+        let allocator = Allocator::default();
+        let target = ESTarget::ES2019;
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(target, false);
+        let code = "var x; x = x || 1";
+        tester::test(&allocator, code, code, &mut pass);
     }
 
     #[test]
