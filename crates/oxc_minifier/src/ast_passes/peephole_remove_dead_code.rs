@@ -395,7 +395,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
             return None;
         }
 
-        for el in array_expr.elements.iter_mut() {
+        for el in &mut array_expr.elements {
             match el {
                 ArrayExpressionElement::SpreadElement(_) => {
                     let spread_element = ctx.ast.move_array_expression_element(el);

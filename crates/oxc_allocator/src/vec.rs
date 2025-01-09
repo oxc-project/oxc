@@ -254,6 +254,15 @@ impl<'i, T> IntoIterator for &'i Vec<'_, T> {
     }
 }
 
+impl<'i, T> IntoIterator for &'i mut Vec<'_, T> {
+    type IntoIter = std::slice::IterMut<'i, T>;
+    type Item = &'i mut T;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
+    }
+}
+
 impl<T, I> ops::Index<I> for Vec<'_, T>
 where
     I: SliceIndex<[T]>,

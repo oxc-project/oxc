@@ -79,7 +79,7 @@ impl<'a> ClassProperties<'a, '_> {
         // TODO: Store `FxIndexMap`s in a pool and re-use them
         let mut private_props = FxIndexMap::default();
         let mut constructor = None;
-        for element in body.body.iter_mut() {
+        for element in &mut body.body {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
                     // TODO: Throw error if property has decorators
@@ -296,7 +296,7 @@ impl<'a> ClassProperties<'a, '_> {
         }
 
         let mut constructor = None;
-        for element in body.body.iter_mut() {
+        for element in &mut body.body {
             #[expect(clippy::match_same_arms)]
             match element {
                 ClassElement::PropertyDefinition(prop) => {

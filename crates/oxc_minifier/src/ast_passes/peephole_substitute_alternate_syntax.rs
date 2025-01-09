@@ -91,7 +91,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        for declarator in decl.declarations.iter_mut() {
+        for declarator in &mut decl.declarations {
             self.compress_variable_declarator(declarator, Ctx(ctx));
         }
     }
@@ -1084,7 +1084,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             for arg in old_args {
                 if let Argument::SpreadElement(mut spread_el) = arg {
                     if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
-                        for el in array_expr.elements.iter_mut() {
+                        for el in &mut array_expr.elements {
                             match el {
                                 ArrayExpressionElement::SpreadElement(spread_el) => {
                                     new_args.push(ctx.ast.argument_spread_element(
