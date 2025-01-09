@@ -196,12 +196,12 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         debug_assert!(self.arguments_var_stack.len() == 1);
         debug_assert!(self.arguments_var_stack.last().is_none());
         debug_assert!(self.constructor_super_stack.len() == 1);
-        debug_assert!(self.super_methods_stack.len() == 1);
-        debug_assert!(self.super_methods_stack.last().is_none());
         // TODO: This assertion currently failing because we don't handle `super` in arrow functions
         // in class static properties correctly.
         // e.g. `class C { static f = async () => super.prop; }`
         // debug_assert!(self.constructor_super_stack.last() == &false);
+        debug_assert!(self.super_methods_stack.len() == 1);
+        debug_assert!(self.super_methods_stack.last().is_none());
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
