@@ -1167,11 +1167,17 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     fn visit_class(&mut self, class: &mut Class<'a>) {
         // Only need to transform `super()` in:
         //
-        // 1. Class `extends` clause.
-        // 2. Class property computed key
-        // 3. Class method computed key
+        // 1. Class decorators
+        // 2. Class `extends` clause.
+        // 3. Class property decorators and computed key
+        // 4. Class method decorators and computed key
+        // 5. Class accessor decorators and computed key
         //
         // Because the `super()` points to the parent class, not the current class.
+
+        // `@super() class Inner {}`
+        //  ^^^^^^^^
+        self.visit_decorators(&mut class.decorators);
 
         // `class Inner extends super() {}`
         //                      ^^^^^^^
@@ -1181,14 +1187,22 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
 
         for element in class.body.body.iter_mut() {
             match element {
-                // `class Inner { [super()]() {} }`
-                //                 ^^^^^^^
+                // `class Inner { @(super()) [super()]() {} }`
+                //                  ^^^^^^^   ^^^^^^^
                 ClassElement::MethodDefinition(method) if method.computed => {
+                    self.visit_decorators(&mut method.decorators);
                     self.visit_property_key(&mut method.key);
                 }
-                // `class Inner { [super()] = 123; }`
-                //                 ^^^^^^^
+                // `class Inner { @(super()) [super()] = 123; }`
+                //                  ^^^^^^^   ^^^^^^^
                 ClassElement::PropertyDefinition(prop) if prop.computed => {
+                    self.visit_decorators(&mut prop.decorators);
+                    self.visit_property_key(&mut prop.key);
+                }
+                // `class Inner { @(super()) accessor [super()] = 123; }`
+                //                  ^^^^^^^            ^^^^^^^
+                ClassElement::AccessorProperty(prop) if prop.computed => {
+                    self.visit_decorators(&mut prop.decorators);
                     self.visit_property_key(&mut prop.key);
                 }
                 _ => {}
