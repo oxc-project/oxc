@@ -2,6 +2,7 @@ mod meta;
 
 use std::path::{Path, PathBuf};
 
+use cow_utils::CowUtils;
 use oxc::span::SourceType;
 
 pub use self::meta::{MetaData, Phase, TestFlag};
@@ -27,6 +28,7 @@ impl<T: Case> Suite<T> for Test262Suite<T> {
 
     fn skip_test_path(&self, path: &Path) -> bool {
         let path = path.to_string_lossy();
+        let path = path.cow_replace('\\', "/");
         path.contains("test262/test/staging") ||
         // ignore markdown files
         path.ends_with(".md") ||
