@@ -82,13 +82,8 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    fn exit_return_statement(
-        &mut self,
-        stmt: &mut ReturnStatement<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        // We may fold `void 1` to `void 0`, so compress it after visiting
-        self.compress_return_statement(stmt);
+    fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.compress_return_statement(stmt, ctx);
     }
 
     fn exit_variable_declaration(
@@ -563,12 +558,12 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         // `foo == void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         // `foo != void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         if e.operator == BinaryOperator::Inequality || e.operator == BinaryOperator::Equality {
-            let (left, right) = if e.right.is_undefined() || e.right.is_void_0() {
+            let (left, right) = if ctx.is_expression_undefined(&e.right) {
                 (
                     ctx.ast.move_expression(&mut e.left),
                     ctx.ast.expression_null_literal(e.right.span()),
                 )
-            } else if e.left.is_undefined() || e.left.is_void_0() {
+            } else if ctx.is_expression_undefined(&e.left) {
                 (
                     ctx.ast.move_expression(&mut e.right),
                     ctx.ast.expression_null_literal(e.left.span()),
@@ -587,8 +582,12 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     ///
     /// `return undefined` -> `return`
     /// `return void 0` -> `return`
-    fn compress_return_statement(&mut self, stmt: &mut ReturnStatement<'a>) {
-        if stmt.argument.as_ref().is_some_and(|expr| expr.is_undefined() || expr.is_void_0()) {
+    fn compress_return_statement(
+        &mut self,
+        stmt: &mut ReturnStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if stmt.argument.as_ref().is_some_and(|expr| Ctx(ctx).is_expression_undefined(expr)) {
             stmt.argument = None;
             self.changed = true;
         }
@@ -1140,6 +1139,7 @@ mod test {
         test("function f(){return undefined;}", "function f(){return}");
         // Here we handle the block in dce.
         test("function f(){if(a()){return undefined;}}", "function f(){if(a()){return}}");
+        test_same("function a(undefined) { return undefined; }");
     }
 
     #[test]
