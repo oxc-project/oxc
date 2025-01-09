@@ -402,6 +402,9 @@ fn big_int() {
     test("0xfabn", "0xfabn;\n");
     test("0xaef_en;", "0xaefen;\n");
     test("0xaefen;", "0xaefen;\n");
+
+    test("return 1n", "return 1n;\n");
+    test_minify("return 1n", "return 1n;");
 }
 
 #[test]

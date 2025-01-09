@@ -1324,9 +1324,9 @@ impl GenExpr for NumericLiteral<'_> {
 
 impl GenExpr for BigIntLiteral<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
-        let raw = self.raw.as_str().cow_replace('_', "");
-
+        p.print_space_before_identifier();
         p.add_source_mapping(self.span);
+        let raw = self.raw.as_str().cow_replace('_', "");
         if !raw.starts_with('-') {
             p.print_str(&raw);
         } else if precedence >= Precedence::Prefix {
