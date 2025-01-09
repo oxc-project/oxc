@@ -715,6 +715,14 @@ mod test {
     #[test]
     fn test_comparison() {
         test("(1, 2) !== 2", "false");
+        test_same("({} <= {})");
+        test_same("({} >= {})");
+        test_same("({} > {})");
+        test_same("({} < {})");
+        test_same("([] <= [])");
+        test_same("([] >= [])");
+        test_same("([] > [])");
+        test_same("([] < [])");
     }
 
     #[test]
