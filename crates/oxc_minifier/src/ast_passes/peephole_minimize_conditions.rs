@@ -1,5 +1,5 @@
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::constant_evaluation::ValueType;
 use oxc_span::{cmp::ContentEq, GetSpan, SPAN};
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
@@ -342,41 +342,31 @@ impl<'a> PeepholeMinimizeConditions {
         None
     }
 
+    // based on https://github.com/evanw/esbuild/blob/df815ac27b84f8b34374c9182a93c94718f8a630/internal/js_ast/js_ast_helpers.go#L2745
     fn try_minimize_conditional(
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        // `a ? a : b` -> `a || b`
-        if let (Expression::Identifier(test_ident), Expression::Identifier(consequent_ident)) =
-            (&expr.test, &expr.consequent)
-        {
-            if test_ident.name == consequent_ident.name {
-                let ident = ctx.ast.move_expression(&mut expr.test);
-
-                return Some(ctx.ast.expression_logical(
-                    expr.span,
-                    ident,
-                    LogicalOperator::Or,
+        // `(a, b) ? c : d` -> `a, b ? c : d`
+        if let Expression::SequenceExpression(sequence_expr) = &expr.test {
+            if sequence_expr.expressions.len() > 1 {
+                let mut sequence = ctx.ast.move_expression(&mut expr.test);
+                let Expression::SequenceExpression(ref mut sequence_expr) = &mut sequence else {
+                    unreachable!()
+                };
+                let test = sequence_expr.expressions.pop().expect("sequence_expr.expressions");
+                expr.test = test;
+                sequence_expr.expressions.push(ctx.ast.expression_conditional(
+                    SPAN,
+                    ctx.ast.move_expression(&mut expr.test),
+                    ctx.ast.move_expression(&mut expr.consequent),
                     ctx.ast.move_expression(&mut expr.alternate),
                 ));
+                return Some(sequence);
             }
         }
 
-        // `foo ? bar : foo` -> `foo && bar`
-        if let (Expression::Identifier(test_ident), Expression::Identifier(alternate_ident)) =
-            (&expr.test, &expr.alternate)
-        {
-            if test_ident.name == alternate_ident.name {
-                return Some(ctx.ast.expression_logical(
-                    expr.span,
-                    ctx.ast.move_expression(&mut expr.test),
-                    LogicalOperator::And,
-                    ctx.ast.move_expression(&mut expr.consequent),
-                ));
-            }
-        }
-
-        // `!a ? b() : c()` -> `a ? c() : b()`
+        // `!a ? b : c` -> `a ? c : b`
         if let Expression::UnaryExpression(test_expr) = &mut expr.test {
             if test_expr.operator.is_not()
                 // Skip `!!!a`
@@ -391,8 +381,19 @@ impl<'a> PeepholeMinimizeConditions {
             }
         }
 
-        // `a ? false : true` -> `!a`
+        // TODO: `/* @__PURE__ */ a() ? b : b` -> `b`
+
+        // `a ? b : b` -> `a, b`
+        if expr.alternate.content_eq(&expr.consequent) {
+            let expressions = ctx.ast.vec_from_array([
+                ctx.ast.move_expression(&mut expr.test),
+                ctx.ast.move_expression(&mut expr.consequent),
+            ]);
+            return Some(ctx.ast.expression_sequence(expr.span, expressions));
+        }
+
         // `a ? true : false` -> `!!a`
+        // `a ? false : true` -> `!a`
         if let (
             Expression::Identifier(_),
             Expression::BooleanLiteral(consequent_lit),
@@ -419,6 +420,222 @@ impl<'a> PeepholeMinimizeConditions {
                 _ => {}
             }
         }
+
+        // `a ? a : b` -> `a || b`
+        if let (Expression::Identifier(test_ident), Expression::Identifier(consequent_ident)) =
+            (&expr.test, &expr.consequent)
+        {
+            if test_ident.name == consequent_ident.name {
+                let ident = ctx.ast.move_expression(&mut expr.test);
+
+                return Some(ctx.ast.expression_logical(
+                    expr.span,
+                    ident,
+                    LogicalOperator::Or,
+                    ctx.ast.move_expression(&mut expr.alternate),
+                ));
+            }
+        }
+        // `a ? b : a` -> `a && b`
+        if let (Expression::Identifier(test_ident), Expression::Identifier(alternate_ident)) =
+            (&expr.test, &expr.alternate)
+        {
+            if test_ident.name == alternate_ident.name {
+                return Some(ctx.ast.expression_logical(
+                    expr.span,
+                    ctx.ast.move_expression(&mut expr.test),
+                    LogicalOperator::And,
+                    ctx.ast.move_expression(&mut expr.consequent),
+                ));
+            }
+        }
+
+        // `a ? b ? c : d : d` -> `a && b ? c : d`
+        if let Expression::ConditionalExpression(consequent) = &mut expr.consequent {
+            if consequent.alternate.content_eq(&expr.alternate) {
+                return Some(ctx.ast.expression_conditional(
+                    SPAN,
+                    ctx.ast.expression_logical(
+                        SPAN,
+                        ctx.ast.move_expression(&mut expr.test),
+                        LogicalOperator::And,
+                        ctx.ast.move_expression(&mut consequent.test),
+                    ),
+                    ctx.ast.move_expression(&mut consequent.consequent),
+                    ctx.ast.move_expression(&mut consequent.alternate),
+                ));
+            }
+        }
+
+        // `a ? b : c ? b : d` -> `a || c ? b : d`
+        if let Expression::ConditionalExpression(alternate) = &mut expr.alternate {
+            if alternate.consequent.content_eq(&expr.consequent) {
+                return Some(ctx.ast.expression_conditional(
+                    SPAN,
+                    ctx.ast.expression_logical(
+                        SPAN,
+                        ctx.ast.move_expression(&mut expr.test),
+                        LogicalOperator::Or,
+                        ctx.ast.move_expression(&mut alternate.test),
+                    ),
+                    ctx.ast.move_expression(&mut expr.consequent),
+                    ctx.ast.move_expression(&mut alternate.alternate),
+                ));
+            }
+        }
+
+        // `a ? c : (b, c)` -> `(a || b), c`
+        if let Expression::SequenceExpression(alternate) = &mut expr.alternate {
+            if alternate.expressions.len() == 2
+                && alternate.expressions[1].content_eq(&expr.consequent)
+            {
+                return Some(ctx.ast.expression_sequence(
+                    SPAN,
+                    ctx.ast.vec_from_array([
+                        ctx.ast.expression_logical(
+                            SPAN,
+                            ctx.ast.move_expression(&mut expr.test),
+                            LogicalOperator::Or,
+                            ctx.ast.move_expression(&mut alternate.expressions[0]),
+                        ),
+                        ctx.ast.move_expression(&mut expr.consequent),
+                    ]),
+                ));
+            }
+        }
+
+        // `a ? (b, c) : c` -> `(a && b), c`
+        if let Expression::SequenceExpression(consequent) = &mut expr.consequent {
+            if consequent.expressions.len() == 2
+                && consequent.expressions[1].content_eq(&expr.alternate)
+            {
+                return Some(ctx.ast.expression_sequence(
+                    SPAN,
+                    ctx.ast.vec_from_array([
+                        ctx.ast.expression_logical(
+                            SPAN,
+                            ctx.ast.move_expression(&mut expr.test),
+                            LogicalOperator::And,
+                            ctx.ast.move_expression(&mut consequent.expressions[0]),
+                        ),
+                        ctx.ast.move_expression(&mut expr.alternate),
+                    ]),
+                ));
+            }
+        }
+
+        // `a ? b || c : c` => "(a && b) || c"
+        if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent {
+            if logical_expr.operator == LogicalOperator::Or
+                && logical_expr.right.content_eq(&expr.alternate)
+            {
+                return Some(ctx.ast.expression_logical(
+                    SPAN,
+                    ctx.ast.expression_logical(
+                        SPAN,
+                        ctx.ast.move_expression(&mut expr.test),
+                        LogicalOperator::And,
+                        ctx.ast.move_expression(&mut logical_expr.left),
+                    ),
+                    LogicalOperator::Or,
+                    ctx.ast.move_expression(&mut expr.alternate),
+                ));
+            }
+        }
+
+        // `a ? c : b && c` -> `(a || b) && c``
+        if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate {
+            if logical_expr.operator == LogicalOperator::And
+                && logical_expr.right.content_eq(&expr.consequent)
+            {
+                return Some(ctx.ast.expression_logical(
+                    SPAN,
+                    ctx.ast.expression_logical(
+                        SPAN,
+                        ctx.ast.move_expression(&mut expr.test),
+                        LogicalOperator::Or,
+                        ctx.ast.move_expression(&mut logical_expr.left),
+                    ),
+                    LogicalOperator::And,
+                    ctx.ast.move_expression(&mut expr.consequent),
+                ));
+            }
+        }
+
+        // `a ? b(c, d) : b(e, d)` -> `b(a ? c : e, d)``
+        if let (
+            Expression::Identifier(test),
+            Expression::CallExpression(consequent),
+            Expression::CallExpression(alternate),
+        ) = (&expr.test, &mut expr.consequent, &mut expr.alternate)
+        {
+            if consequent.callee.content_eq(&alternate.callee)
+                && consequent.arguments.len() == alternate.arguments.len()
+                && ctx.scopes().find_binding(ctx.current_scope_id(), &test.name).is_some()
+                && consequent
+                    .arguments
+                    .iter()
+                    .zip(&alternate.arguments)
+                    .skip(1)
+                    .all(|(a, b)| a.content_eq(b))
+            {
+                // `a ? b(...c) : b(...e)` -> `b(...a ? c : e)``
+                if matches!(consequent.arguments[0], Argument::SpreadElement(_))
+                    && matches!(alternate.arguments[0], Argument::SpreadElement(_))
+                {
+                    let callee = ctx.ast.move_expression(&mut consequent.callee);
+                    let consequent_first_arg = {
+                        let Argument::SpreadElement(ref mut el) = &mut consequent.arguments[0]
+                        else {
+                            unreachable!()
+                        };
+                        ctx.ast.move_expression(&mut el.argument)
+                    };
+                    let alternate_first_arg = {
+                        let Argument::SpreadElement(ref mut el) = &mut alternate.arguments[0]
+                        else {
+                            unreachable!()
+                        };
+                        ctx.ast.move_expression(&mut el.argument)
+                    };
+                    let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
+                    args[0] = ctx.ast.argument_spread_element(
+                        SPAN,
+                        ctx.ast.expression_conditional(
+                            SPAN,
+                            ctx.ast.move_expression(&mut expr.test),
+                            consequent_first_arg,
+                            alternate_first_arg,
+                        ),
+                    );
+
+                    return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
+                }
+                // `a ? b(c) : b(e)` -> `b(a ? c : e)``
+                if !matches!(consequent.arguments[0], Argument::SpreadElement(_))
+                    && !matches!(alternate.arguments[0], Argument::SpreadElement(_))
+                {
+                    let callee = ctx.ast.move_expression(&mut consequent.callee);
+
+                    let consequent_first_arg =
+                        ctx.ast.move_expression(consequent.arguments[0].to_expression_mut());
+                    let alternate_first_arg =
+                        ctx.ast.move_expression(alternate.arguments[0].to_expression_mut());
+                    let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
+                    args[0] = Argument::from(ctx.ast.expression_conditional(
+                        SPAN,
+                        ctx.ast.move_expression(&mut expr.test),
+                        consequent_first_arg,
+                        alternate_first_arg,
+                    ));
+                    return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
+                }
+            }
+        }
+
+        // TODO: Try using the "??" or "?." operators
+
+        // Non esbuild optimizations
 
         // `x ? true : y` -> `x || y`
         // `x ? false : y` -> `!x && y`
@@ -472,15 +689,6 @@ impl<'a> PeepholeMinimizeConditions {
                 LogicalOperator::And,
                 ctx.ast.move_expression(&mut expr.consequent),
             ));
-        }
-
-        // `foo() ? bar : bar` -> `foo(), bar`
-        if expr.alternate.content_eq(&expr.consequent) {
-            let expressions = ctx.ast.vec_from_array([
-                ctx.ast.move_expression(&mut expr.test),
-                ctx.ast.move_expression(&mut expr.consequent),
-            ]);
-            return Some(ctx.ast.expression_sequence(expr.span, expressions));
         }
 
         None
@@ -1774,5 +1982,28 @@ mod test {
         test("!!!delete x.y", "!delete x.y");
         test("!!!!delete x.y", "delete x.y");
         test("var k = !!(foo instanceof bar)", "var k = foo instanceof bar");
+    }
+
+    #[test]
+    fn minimize_conditional_exprs_esbuild() {
+        test("(a, b) ? c : d", "a, b ? c : d");
+        test("!a ? b : c", "a ? c : b");
+        // test("/* @__PURE__ */ a() ? b : b", "b");
+        test("a ? b : b", "a, b");
+        test("a ? true : false", "!!a");
+        test("a ? false : true", "!a");
+        test("a ? a : b", "a || b");
+        test("a ? b : a", "a && b");
+        test("a ? b ? c : d : d", "a && b ? c : d");
+        test("a ? b : c ? b : d", "a || c ? b : d");
+        test("a ? c : (b, c)", "(a || b), c");
+        test("a ? (b, c) : c", "(a && b), c");
+        test("a ? b || c : c", "(a && b) || c");
+        test("a ? c : b && c", "(a || b) && c");
+        test("var a; a ? b(c, d) : b(e, d)", "var a; b(a ? c : e, d)");
+        test("var a; a ? b(...c) : b(...e)", "var a; b(...a ? c : e)");
+        test("var a; a ? b(c) : b(e)", "var a; b(a ? c : e)");
+        // test("a != null ? a : b", "a ?? b");
+        // test("a != null ? a.b.c[d](e) : undefined", "a?.b.c[d](e)");
     }
 }

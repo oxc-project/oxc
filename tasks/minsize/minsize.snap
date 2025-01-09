@@ -1,27 +1,27 @@
            | Oxc        | ESBuild    | Oxc        | ESBuild    |
 Original   | minified   | minified   | gzip       | gzip       | Fixture
 -------------------------------------------------------------------------------------
-72.14 kB   | 23.71 kB   | 23.70 kB   | 8.62 kB    | 8.54 kB    | react.development.js
+72.14 kB   | 23.70 kB   | 23.70 kB   | 8.61 kB    | 8.54 kB    | react.development.js
 
 173.90 kB  | 59.80 kB   | 59.82 kB   | 19.41 kB   | 19.33 kB   | moment.js 
 
-287.63 kB  | 90.14 kB   | 90.07 kB   | 32.07 kB   | 31.95 kB   | jquery.js 
+287.63 kB  | 90.13 kB   | 90.07 kB   | 32.05 kB   | 31.95 kB   | jquery.js 
 
-342.15 kB  | 118.38 kB  | 118.14 kB  | 44.53 kB   | 44.37 kB   | vue.js    
+342.15 kB  | 118.36 kB  | 118.14 kB  | 44.52 kB   | 44.37 kB   | vue.js    
 
-544.10 kB  | 71.75 kB   | 72.48 kB   | 26.16 kB   | 26.20 kB   | lodash.js 
+544.10 kB  | 71.74 kB   | 72.48 kB   | 26.14 kB   | 26.20 kB   | lodash.js 
 
-555.77 kB  | 273.20 kB  | 270.13 kB  | 90.93 kB   | 90.80 kB   | d3.js     
+555.77 kB  | 273.19 kB  | 270.13 kB  | 90.92 kB   | 90.80 kB   | d3.js     
 
-1.01 MB    | 460.62 kB  | 458.89 kB  | 126.89 kB  | 126.71 kB  | bundle.min.js
+1.01 MB    | 460.47 kB  | 458.89 kB  | 126.83 kB  | 126.71 kB  | bundle.min.js
 
-1.25 MB    | 653.02 kB  | 646.76 kB  | 163.55 kB  | 163.73 kB  | three.js  
+1.25 MB    | 652.88 kB  | 646.76 kB  | 163.52 kB  | 163.73 kB  | three.js  
 
-2.14 MB    | 726.50 kB  | 724.14 kB  | 180.19 kB  | 181.07 kB  | victory.js
+2.14 MB    | 726.28 kB  | 724.14 kB  | 180.14 kB  | 181.07 kB  | victory.js
 
-3.20 MB    | 1.01 MB    | 1.01 MB    | 331.98 kB  | 331.56 kB  | echarts.js
+3.20 MB    | 1.01 MB    | 1.01 MB    | 331.93 kB  | 331.56 kB  | echarts.js
 
-6.69 MB    | 2.32 MB    | 2.31 MB    | 492.75 kB  | 488.28 kB  | antd.js   
+6.69 MB    | 2.32 MB    | 2.31 MB    | 492.68 kB  | 488.28 kB  | antd.js   
 
-10.95 MB   | 3.50 MB    | 3.49 MB    | 909.08 kB  | 915.50 kB  | typescript.js
+10.95 MB   | 3.50 MB    | 3.49 MB    | 908.82 kB  | 915.50 kB  | typescript.js
 
