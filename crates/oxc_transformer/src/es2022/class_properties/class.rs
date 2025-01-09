@@ -70,11 +70,12 @@ impl<'a> ClassProperties<'a, '_> {
         let class_scope_id = class.scope_id().get().unwrap();
         let has_super_class = class.super_class().is_some();
 
-        // Check if class has any properties or statick blocks, and locate constructor (if class has one)
+        // Check if class has any properties, private methods, or static blocks.
+        // Locate constructor (if class has one).
         let mut instance_prop_count = 0;
-        let mut has_instance_private_method = false;
         let mut has_static_prop = false;
-        let mut has_static_block = false;
+        let mut has_instance_private_method = false;
+        let mut has_static_private_method_or_static_block = false;
         // TODO: Store `FxIndexMap`s in a pool and re-use them
         let mut private_props = FxIndexMap::default();
         let mut constructor = None;
@@ -104,7 +105,7 @@ impl<'a> ClassProperties<'a, '_> {
                 ClassElement::StaticBlock(_) => {
                     // Static block only necessitates transforming class if it's being transformed
                     if self.transform_static_blocks {
-                        has_static_block = true;
+                        has_static_private_method_or_static_block = true;
                         continue;
                     }
                 }
@@ -115,7 +116,7 @@ impl<'a> ClassProperties<'a, '_> {
                         }
                     } else if let PropertyKey::PrivateIdentifier(ident) = &method.key {
                         if method.r#static {
-                            has_static_prop = true;
+                            has_static_private_method_or_static_block = true;
                         } else {
                             has_instance_private_method = true;
                         }
@@ -169,7 +170,7 @@ impl<'a> ClassProperties<'a, '_> {
         // Exit if nothing to transform
         if instance_prop_count == 0
             && !has_static_prop
-            && !has_static_block
+            && !has_static_private_method_or_static_block
             && !has_instance_private_method
         {
             self.classes_stack.push(ClassDetails {

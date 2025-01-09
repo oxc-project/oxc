@@ -1,9 +1,10 @@
 commit: 54a8389f
 
-Passed: 123/141
+Passed: 124/142
 
 # All Passed:
 * babel-plugin-transform-class-static-block
+* babel-plugin-transform-private-methods
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
