@@ -1026,18 +1026,19 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
             return;
         };
         let PropertyKey::StringLiteral(s) = key else { return };
-        if s.value == "__proto__" || s.value == "constructor" {
+        let value = s.value.as_str();
+        if matches!(value, "__proto__" | "constructor" | "prototype") {
             return;
         }
         if *computed {
             *computed = false;
         }
-        if is_identifier_name(&s.value) {
+        if is_identifier_name(value) {
             self.changed = true;
             *key = PropertyKey::StaticIdentifier(
                 ctx.ast.alloc_identifier_name(s.span, s.value.clone()),
             );
-        } else if let Some(value) = Ctx::string_to_equivalent_number_value(s.value.as_str()) {
+        } else if let Some(value) = Ctx::string_to_equivalent_number_value(value) {
             self.changed = true;
             *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
                 s.span,
@@ -1775,6 +1776,10 @@ mod test {
             "class F { accessor '0' = _; accessor 'a' = _; accessor [1] = _; accessor ['1'] = _; accessor ['b'] = _; accessor ['c.c'] = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }",
             "class F { accessor  0 = _;  accessor  a = _;    accessor 1 = _;accessor     1 = _; accessor     b = _; accessor   'c.c' = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }"
         );
+
+        test_same("class C { ['prototype']() {} }");
+        test_same("class C { ['__proto__']() {} }");
+        test_same("class C { ['constructor']() {} }");
     }
 
     #[test]
