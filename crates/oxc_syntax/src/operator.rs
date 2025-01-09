@@ -268,6 +268,11 @@ impl BinaryOperator {
         self == Self::In
     }
 
+    /// Returns `true` if this is an [`In`](BinaryOperator::Instanceof) operator.
+    pub fn is_instance_of(self) -> bool {
+        self == Self::Instanceof
+    }
+
     /// Returns `true` for any bitwise operator
     #[rustfmt::skip]
     pub fn is_bitwise(self) -> bool {

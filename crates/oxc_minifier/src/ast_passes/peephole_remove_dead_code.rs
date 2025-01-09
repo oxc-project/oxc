@@ -717,6 +717,7 @@ mod test {
         fold("(function k() {}, k(), baz())", "k(), baz()");
         fold_same("(0, o.f)();");
         fold("var obj = Object((null, 2, 3), 1, 2);", "var obj = Object(3, 1, 2);");
+        fold_same("(0 instanceof 0, foo)");
     }
 
     #[test]

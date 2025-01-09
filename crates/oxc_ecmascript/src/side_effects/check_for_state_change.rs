@@ -95,10 +95,15 @@ impl<'a> CheckForStateChange<'a, '_> for UnaryExpression<'a> {
 
 impl<'a> CheckForStateChange<'a, '_> for BinaryExpression<'a> {
     fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        // `instanceof` can throw `TypeError`
+        if self.operator.is_instance_of() {
+            return true;
+        }
         let left = self.left.check_for_state_change(check_for_new_objects);
-        let right = self.right.check_for_state_change(check_for_new_objects);
-
-        left || right
+        if left {
+            return true;
+        }
+        self.right.check_for_state_change(check_for_new_objects)
     }
 }
 
