@@ -140,8 +140,6 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
 
         // Fold
         if let Some(folded_expr) = match expr {
-            Expression::Identifier(ident) => self.try_compress_undefined(ident, ctx),
-            Expression::BooleanLiteral(_) => self.try_compress_boolean(expr, ctx),
             Expression::AssignmentExpression(e) => {
                 Self::try_compress_assignment_to_update_expression(e, ctx)
             }
@@ -163,6 +161,20 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                     Self::try_fold_object_or_array_constructor(e.span, name, &mut e.arguments, ctx)
                 })
                 .or_else(|| Self::try_fold_simple_function_call(e, ctx)),
+            _ => None,
+        } {
+            *expr = folded_expr;
+            self.changed = true;
+        }
+
+        // Out of fixed loop syntax changes happen last.
+        if self.in_fixed_loop {
+            return;
+        }
+
+        if let Some(folded_expr) = match expr {
+            Expression::Identifier(ident) => self.try_compress_undefined(ident, ctx),
+            Expression::BooleanLiteral(_) => self.try_compress_boolean(expr, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -224,9 +236,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         ident: &IdentifierReference<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        if self.in_fixed_loop {
-            return None;
-        }
+        debug_assert!(!self.in_fixed_loop);
         if !ctx.is_identifier_undefined(ident) {
             return None;
         }
@@ -240,9 +250,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         expr: &mut Expression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        if self.in_fixed_loop {
-            return None;
-        }
+        debug_assert!(!self.in_fixed_loop);
         let Expression::BooleanLiteral(lit) = expr else { return None };
         if self.in_define_export {
             return None;
@@ -1016,9 +1024,6 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         computed: &mut bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.in_fixed_loop {
-            return;
-        }
         if let PropertyKey::NumericLiteral(_) = key {
             if *computed {
                 *computed = false;
@@ -1817,7 +1822,7 @@ mod test {
         // Don't fold the existence check to preserve behavior
         test_same("var a = Boolean?.({})");
 
-        test("var a = Boolean()", "var a = false;");
+        test("var a = Boolean()", "var a = !1;");
         test_same("var a = Boolean(!0, !1);");
     }
 
