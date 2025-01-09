@@ -47,7 +47,7 @@ pub fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     for decorator in &class.decorators {
         parts.push(text!("@"));
         parts.push(decorator.expression.format(p));
-        parts.extend(hardline!());
+        parts.push(hardline!(p));
     }
 
     if class.declare {
@@ -82,7 +82,7 @@ pub fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
         parts.push(printend_parts_group);
 
         if !class.body.body.is_empty() && has_multiple_heritage(class) {
-            parts.extend(hardline!());
+            parts.push(hardline!(p));
         }
     } else {
         parts.push(array!(p, [array!(p, group_parts), array!(p, heritage_clauses_parts)]));
@@ -106,10 +106,10 @@ pub fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<'a>) ->
         }
 
         if i < class_body.body.len() - 1 {
-            parts_inner.extend(hardline!());
+            parts_inner.push(hardline!(p));
 
             if p.is_next_line_empty(node.span()) {
-                parts_inner.extend(hardline!());
+                parts_inner.push(hardline!(p));
             }
         }
     }
@@ -119,14 +119,8 @@ pub fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<'a>) ->
     let mut parts = Vec::new_in(p.allocator);
     parts.push(text!("{"));
     if !parts_inner.is_empty() {
-        let indent = {
-            let mut parts = Vec::new_in(p.allocator);
-            parts.extend(hardline!());
-            parts.push(array!(p, parts_inner));
-            indent!(p, parts)
-        };
-        parts.push(array!(p, [indent]));
-        parts.extend(hardline!());
+        parts.push(array!(p, [indent!(p, [hardline!(p), array!(p, parts_inner)])]));
+        parts.push(hardline!(p));
     }
 
     parts.push(text!("}"));
@@ -250,7 +244,7 @@ pub fn print_class_property<'a>(p: &mut Prettier<'a>, node: &ClassMemberish<'a, 
         for decorator in decarators {
             parts.push(text!("@"));
             parts.push(decorator.expression.format(p));
-            parts.extend(hardline!());
+            parts.push(hardline!(p));
         }
     }
 
@@ -387,7 +381,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
     if should_indent_only_heritage_clauses(class) {
         parts.push(if_break!(p, line!()));
     } else if class.super_class.is_some() {
-        parts.extend(hardline!());
+        parts.push(hardline!(p));
     } else {
         parts.push(softline!());
     }
@@ -398,7 +392,7 @@ fn print_heritage_clauses_implements<'a>(p: &mut Prettier<'a>, class: &Class<'a>
 
     parts.push(indent!(
         p,
-        [group!(p, [softline!(), join!(p, JoinSeparator::CommaLine, implements_docs),])]
+        [group!(p, [softline!(), join!(p, JoinSeparator::CommaLine, implements_docs)])]
     ));
     parts.push(text!(" "));
 
