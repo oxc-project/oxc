@@ -641,17 +641,18 @@ impl<'a> ClassProperties<'a, '_> {
 
         // Insert private methods
         if !self.insert_after_stmts.is_empty() {
-            // Find address of statement of class expression
-            let position = ctx
-                .ancestors()
-                .position(Ancestor::is_parent_of_statement)
-                .expect("Expression always inside a statement.");
-            // Position points to parent of statement, we need to find the statement itself,
-            // so `position - 1`.
-            let stmt_ancestor = ctx.ancestor(position - 1);
+            // Find `Address` of statement containing class expression
+            let mut stmt_address = Address::DUMMY;
+            for ancestor in ctx.ancestors() {
+                if ancestor.is_parent_of_statement() {
+                    break;
+                }
+                stmt_address = ancestor.address();
+            }
+
             self.ctx
                 .statement_injector
-                .insert_many_after(&stmt_ancestor, self.insert_after_stmts.drain(..));
+                .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
         }
 
         // Insert computed key initializers
