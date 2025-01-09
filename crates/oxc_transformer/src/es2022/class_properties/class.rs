@@ -607,7 +607,11 @@ impl<'a> ClassProperties<'a, '_> {
                 let mut weakmap_symbol_id = None;
                 let mut has_method = false;
                 exprs.extend(private_props.values().filter_map(|prop| {
-                    if prop.is_method() || prop.is_accessor {
+                    if prop.is_accessor {
+                        return None;
+                    }
+
+                    if prop.is_method() {
                         if prop.is_static || has_method {
                             return None;
                         }
