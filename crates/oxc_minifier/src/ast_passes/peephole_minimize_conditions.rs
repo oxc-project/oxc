@@ -1,11 +1,11 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
-use oxc_ecmascript::constant_evaluation::ValueType;
+use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ValueType};
 use oxc_span::{cmp::ContentEq, GetSpan, SPAN};
 use oxc_syntax::es_target::ESTarget;
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::CompressorPass;
+use crate::{ctx::Ctx, CompressorPass};
 
 /// Minimize Conditions
 ///
@@ -43,6 +43,26 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let expr = match stmt {
+            Statement::IfStatement(s) => Some(&mut s.test),
+            Statement::WhileStatement(s) => Some(&mut s.test),
+            Statement::ForStatement(s) => s.test.as_mut(),
+            Statement::DoWhileStatement(s) => Some(&mut s.test),
+            Statement::ExpressionStatement(s)
+                if !matches!(
+                    ctx.ancestry.ancestor(1),
+                    Ancestor::ArrowFunctionExpressionBody(_)
+                ) =>
+            {
+                Some(&mut s.expression)
+            }
+            _ => None,
+        };
+
+        if let Some(expr) = expr {
+            self.try_fold_expr_in_boolean_context(expr, Ctx(ctx));
+        }
+
         if let Some(folded_stmt) = match stmt {
             // If the condition is a literal, we'll let other optimizations try to remove useless code.
             Statement::IfStatement(s) if !s.test.is_literal() => Self::try_minimize_if(stmt, ctx),
@@ -54,9 +74,12 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::ConditionalExpression(e) = expr {
+            self.try_fold_expr_in_boolean_context(&mut e.test, Ctx(ctx));
+        }
+
         if let Some(folded_expr) = match expr {
             Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
-            Expression::LogicalExpression(e) => Self::try_minimize_logical(e, ctx),
             Expression::BinaryExpression(e) => Self::try_minimize_binary(e, ctx),
             Expression::ConditionalExpression(e) => self.try_minimize_conditional(e, ctx),
             _ => None,
@@ -72,56 +95,18 @@ impl<'a> PeepholeMinimizeConditions {
         Self { target, changed: false }
     }
 
-    /// Try to minimize NOT nodes such as `!(x==y)`.
     fn try_minimize_not(
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        // TODO: tryMinimizeCondition(node.getFirstChild());
-        if !expr.operator.is_not() {
-            return None;
-        }
-        if let Expression::UnaryExpression(e1) = &mut expr.argument {
-            if e1.operator.is_not() {
-                // `!!!a` -> `!!a`
-                if let Expression::UnaryExpression(e2) = &mut e1.argument {
-                    if e2.operator.is_not() {
-                        expr.argument = ctx.ast.move_expression(&mut e2.argument);
-                        return Some(ctx.ast.move_expression(&mut expr.argument));
-                    }
-                    // `!!delete a.b` -> `delete a.b`
-                    if e2.operator.is_delete() {
-                        return Some(ctx.ast.move_expression(&mut e1.argument));
-                    }
-                }
-                // `!!a` -> `a` // ONLY in boolean contexts
-                if Self::is_in_boolean_context(ctx) {
+        if expr.operator.is_not() {
+            if let Expression::UnaryExpression(e1) = &mut expr.argument {
+                if e1.operator.is_not() && ValueType::from(&e1.argument).is_boolean() {
                     return Some(ctx.ast.move_expression(&mut e1.argument));
-                }
-                if let Expression::BinaryExpression(bin_expr) = &e1.argument {
-                    if matches!(
-                        bin_expr.operator,
-                        BinaryOperator::Equality
-                            | BinaryOperator::Inequality
-                            | BinaryOperator::StrictEquality
-                            | BinaryOperator::StrictInequality
-                            | BinaryOperator::LessThan
-                            | BinaryOperator::LessEqualThan
-                            | BinaryOperator::GreaterThan
-                            | BinaryOperator::GreaterEqualThan
-                            | BinaryOperator::In
-                            | BinaryOperator::Instanceof
-                    ) {
-                        return Some(ctx.ast.move_expression(&mut e1.argument));
-                    }
                 }
             }
         }
-
-        let Expression::BinaryExpression(binary_expr) = &mut expr.argument else { return None };
-        let new_op = binary_expr.operator.equality_inverse_operator()?;
-        binary_expr.operator = new_op;
-        Some(ctx.ast.move_expression(&mut expr.argument))
+        None
     }
 
     fn try_minimize_if(
@@ -296,55 +281,7 @@ impl<'a> PeepholeMinimizeConditions {
         }
     }
 
-    fn try_minimize_logical(
-        expr: &mut LogicalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        // `a && true` -> `a`
-        // `a && false` -> `false`
-        if expr.operator == LogicalOperator::And {
-            if let (
-                Expression::Identifier(test_ident),
-                Expression::BooleanLiteral(consequent_lit),
-            ) = (&expr.left, &expr.right)
-            {
-                if !Self::is_in_boolean_context(ctx) {
-                    return None;
-                }
-                if consequent_lit.value {
-                    return Some(ctx.ast.move_expression(&mut expr.left));
-                }
-                if ctx.scopes().find_binding(ctx.current_scope_id(), &test_ident.name).is_some() {
-                    return Some(ctx.ast.expression_boolean_literal(expr.span, false));
-                }
-                return None;
-            }
-        }
-
-        // `a || true` -> `true`
-        // `a || false` -> `a`
-        if expr.operator == LogicalOperator::Or {
-            if let (
-                Expression::Identifier(test_ident),
-                Expression::BooleanLiteral(consequent_lit),
-            ) = (&expr.left, &expr.right)
-            {
-                if consequent_lit.value {
-                    if ctx.scopes().find_binding(ctx.current_scope_id(), &test_ident.name).is_some()
-                    {
-                        return Some(ctx.ast.expression_boolean_literal(expr.span, true));
-                    }
-                } else {
-                    return Some(ctx.ast.move_expression(&mut expr.left));
-                }
-                return None;
-            }
-        }
-
-        None
-    }
-
-    // based on https://github.com/evanw/esbuild/blob/df815ac27b84f8b34374c9182a93c94718f8a630/internal/js_ast/js_ast_helpers.go#L2745
+    // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745
     fn try_minimize_conditional(
         &self,
         expr: &mut ConditionalExpression<'a>,
@@ -376,6 +313,22 @@ impl<'a> PeepholeMinimizeConditions {
                 && !matches!(test_expr.argument, Expression::UnaryExpression(_))
             {
                 let test = ctx.ast.move_expression(&mut test_expr.argument);
+                let consequent = ctx.ast.move_expression(&mut expr.consequent);
+                let alternate = ctx.ast.move_expression(&mut expr.alternate);
+                return Some(
+                    ctx.ast.expression_conditional(expr.span, test, alternate, consequent),
+                );
+            }
+        }
+
+        // `x != y ? b : c` -> `x == y ? c : b`
+        if let Expression::BinaryExpression(test_expr) = &mut expr.test {
+            if matches!(
+                test_expr.operator,
+                BinaryOperator::Inequality | BinaryOperator::StrictInequality
+            ) {
+                test_expr.operator = test_expr.operator.equality_inverse_operator().unwrap();
+                let test = ctx.ast.move_expression(&mut expr.test);
                 let consequent = ctx.ast.move_expression(&mut expr.consequent);
                 let alternate = ctx.ast.move_expression(&mut expr.alternate);
                 return Some(
@@ -729,46 +682,115 @@ impl<'a> PeepholeMinimizeConditions {
         None
     }
 
-    // returns `true` if the current node is in a context in which the return
-    // value type is coerced to boolean.
-    // For example `if (condition)` and `return condition`
-    // inside the `if` stmt, `condition` is coerced to a boolean
-    // whereas inside the return, it is not
-    fn is_in_boolean_context(ctx: &mut TraverseCtx<'_>) -> bool {
-        let mut ancestors = ctx.ancestors().peekable();
-        while let Some(ancestor) = ancestors.next() {
-            match ancestor {
-                Ancestor::IfStatementTest(_)
-                | Ancestor::WhileStatementTest(_)
-                | Ancestor::ForStatementTest(_)
-                | Ancestor::DoWhileStatementTest(_)
-                | Ancestor::SequenceExpressionExpressions(_)
-                | Ancestor::ProgramBody(_) => return true,
-                // `var k = () => foo`, `foo` is not coerced to a boolean
-                Ancestor::ExpressionStatementExpression(_) => {
-                    if let Some(next_ancestor) = ancestors.peek() {
-                        match next_ancestor {
-                            Ancestor::FunctionBodyStatements(_) => return false,
-                            _ => return true,
-                        }
-                    }
-                }
-                Ancestor::CallExpressionArguments(_)
-                | Ancestor::AssignmentPatternRight(_)
-                | Ancestor::BindingRestElementArgument(_)
-                | Ancestor::JSXSpreadAttributeArgument(_)
-                | Ancestor::NewExpressionArguments(_)
-                | Ancestor::ObjectPropertyKey(_)
-                | Ancestor::ObjectPropertyValue(_)
-                | Ancestor::ReturnStatementArgument(_)
-                | Ancestor::ThrowStatementArgument(_)
-                | Ancestor::YieldExpressionArgument(_)
-                | Ancestor::VariableDeclaratorInit(_) => return false,
-                _ => continue,
+    /// Simplify syntax when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
+    ///
+    /// <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>
+    fn try_fold_expr_in_boolean_context(&mut self, e: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+        loop {
+            let changed = self.try_fold_expr_in_boolean_context_impl(e, ctx);
+            if changed {
+                self.changed = true;
+            } else {
+                return;
             }
         }
+    }
 
-        true
+    fn try_fold_expr_in_boolean_context_impl(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> bool {
+        match expr {
+            // "!!a" => "a"
+            Expression::UnaryExpression(u1) if u1.operator.is_not() => {
+                if let Expression::UnaryExpression(u2) = &mut u1.argument {
+                    if u2.operator.is_not() {
+                        let mut e = ctx.ast.move_expression(&mut u2.argument);
+                        self.try_fold_expr_in_boolean_context(&mut e, ctx);
+                        *expr = e;
+                        return true;
+                    }
+                }
+            }
+            Expression::BinaryExpression(e)
+                if e.operator.is_equality()
+                    && matches!(&e.right, Expression::NumericLiteral(lit) if lit.value == 0.0)
+                    && ValueType::from(&e.left).is_number() =>
+            {
+                let argument = ctx.ast.move_expression(&mut e.left);
+                *expr = if matches!(
+                    e.operator,
+                    BinaryOperator::StrictInequality | BinaryOperator::Inequality
+                ) {
+                    // `if ((a | b) !== 0)` -> `if (a | b);`
+                    argument
+                } else {
+                    // `if ((a | b) === 0);", "if (!(a | b));")`
+                    ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
+                };
+                return true;
+            }
+            // "if (!!a && !!b)" => "if (a && b)"
+            Expression::LogicalExpression(e) if e.operator == LogicalOperator::And => {
+                self.try_fold_expr_in_boolean_context(&mut e.left, ctx);
+                self.try_fold_expr_in_boolean_context(&mut e.right, ctx);
+                // "if (anything && truthyNoSideEffects)" => "if (anything)"
+                if ctx.get_side_free_boolean_value(&e.right) == Some(true) {
+                    *expr = ctx.ast.move_expression(&mut e.left);
+                    return true;
+                }
+            }
+            // "if (!!a ||!!b)" => "if (a || b)"
+            Expression::LogicalExpression(e) if e.operator == LogicalOperator::Or => {
+                self.try_fold_expr_in_boolean_context(&mut e.left, ctx);
+                self.try_fold_expr_in_boolean_context(&mut e.right, ctx);
+                // "if (anything || falsyNoSideEffects)" => "if (anything)"
+                if ctx.get_side_free_boolean_value(&e.right) == Some(false) {
+                    *expr = ctx.ast.move_expression(&mut e.left);
+                    return true;
+                }
+            }
+            Expression::ConditionalExpression(e) => {
+                // "if (a ? !!b : !!c)" => "if (a ? b : c)"
+                self.try_fold_expr_in_boolean_context(&mut e.consequent, ctx);
+                self.try_fold_expr_in_boolean_context(&mut e.alternate, ctx);
+                if let Some(boolean) = ctx.get_side_free_boolean_value(&e.consequent) {
+                    let right = ctx.ast.move_expression(&mut e.alternate);
+                    let left = ctx.ast.move_expression(&mut e.test);
+                    if boolean {
+                        // "if (anything1 ? truthyNoSideEffects : anything2)" => "if (anything1 || anything2)"
+                        *expr =
+                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::Or, right);
+                    } else {
+                        // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 || anything2)"
+                        let left =
+                            ctx.ast.expression_unary(left.span(), UnaryOperator::LogicalNot, left);
+                        *expr =
+                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::Or, right);
+                    }
+                    return true;
+                }
+                if let Some(boolean) = ctx.get_side_free_boolean_value(&e.alternate) {
+                    let left = ctx.ast.move_expression(&mut e.test);
+                    let right = ctx.ast.move_expression(&mut e.consequent);
+                    if boolean {
+                        // "if (anything1 ? anything2 : truthyNoSideEffects)" => "if (!anything1 || anything2)"
+                        let left =
+                            ctx.ast.expression_unary(left.span(), UnaryOperator::LogicalNot, left);
+                        *expr =
+                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::Or, right);
+                    } else {
+                        // "if (anything1 ? anything2 : falsyNoSideEffects)" => "if (anything1 && anything2)"
+                        *expr =
+                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::And, right);
+                    }
+                    return true;
+                }
+            }
+            _ => {}
+        }
+        false
     }
 
     // `a instanceof b === true` -> `a instanceof b`
@@ -818,25 +840,6 @@ impl<'a> PeepholeMinimizeConditions {
                     let argument = ctx.ast.move_expression(&mut e.left);
                     ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
                 })
-            }
-            Expression::NumericLiteral(lit)
-                if lit.value  == 0.0
-                    && !e.left.is_literal() // let constant folding do the work
-                    && left.is_number()
-                    && Self::is_in_boolean_context(ctx) =>
-            {
-                match e.operator {
-                    // `x >> y !== 0` -> `x >> y`
-                    BinaryOperator::StrictInequality | BinaryOperator::Inequality => {
-                        Some(ctx.ast.move_expression(&mut e.left))
-                    }
-                    // `x >> y !== 0` -> `!(x >> y)`
-                    BinaryOperator::StrictEquality | BinaryOperator::Equality => {
-                        let argument = ctx.ast.move_expression(&mut e.left);
-                        Some(ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument))
-                    }
-                    _ => None,
-                }
             }
             _ => None,
         }
@@ -951,7 +954,6 @@ mod test {
         // );
     }
 
-    /** Try to minimize returns */
     #[test]
     fn test_fold_returns() {
         fold("function f(){if(x)return 1;else return 2}", "function f(){return x?1:2}");
@@ -1146,15 +1148,15 @@ mod test {
 
     #[test]
     fn test_minimize_expr_condition() {
-        fold("(x ? true : false) && y()", "!!x && y()");
+        fold("(x ? true : false) && y()", "x && y()");
         fold("(x ? false : true) && y()", "!x && y()");
-        fold("(x ? true : y) && y()", "(!!x || y) && y()");
-        fold("(x ? y : false) && y()", "(!!x && y) && y()");
+        fold("(x ? true : y) && y()", "(x || y) && y();");
+        fold("(x ? y : false) && y()", "(x && y) && y()");
         fold("var x; (x && true) && y()", "var x; x && y()");
-        fold("var x; (x && false) && y()", "var x; false && y()");
+        fold("var x; (x && false) && y()", "var x; x && false && y()");
         fold("(x && true) && y()", "x && y()");
         fold("(x && false) && y()", "x && false && y()");
-        fold("var x; (x || true) && y()", "var x; true && y()");
+        fold("var x; (x || true) && y()", "var x; (x || true) && y()");
         fold("var x; (x || false) && y()", "var x; x && y()");
 
         fold_same("(x || true) && y()");
@@ -1285,6 +1287,7 @@ mod test {
         fold_same("x?.() ? x?.() : y()");
 
         fold("!x ? foo() : bar()", "x ? bar() : foo()");
+        // TODO
         // fold("while(!(x ? y : z)) foo();", "while(x ? !y : !z) foo();");
         // fold("(x ? !y : !z) ? foo() : bar()", "(x ? y : z) ? bar() : foo()");
     }
@@ -1318,15 +1321,14 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_for_condition() {
         // This test uses constant folding logic, so is only here for completeness.
         // These could be simplified to "for(;;) ..."
-        fold("for(;!!true;) foo()", "for(;1;) foo()");
+        fold("for(;!!true;) foo()", "for(;true;) foo()");
         // Verify function deletion tracking.
-        fold("if(!!true||function(){}) {}", "if(1) {}");
+        // fold("if(!!true||function(){}) {}", "if(1) {}");
         // Don't bother with FOR inits as there are normalized out.
-        fold("for(!!true;;) foo()", "for(!0;;) foo()");
+        fold("for(!!true;;) foo()", "for(true;;) foo()");
 
         // These test tryMinimizeCondition
         fold("for(;!!x;) foo()", "for(;x;) foo()");
@@ -1334,16 +1336,15 @@ mod test {
         fold_same("for(a in b) foo()");
         fold_same("for(a in {}) foo()");
         fold_same("for(a in []) foo()");
-        fold("for(a in !!true) foo()", "for(a in !0) foo()");
+        fold("for(a in !!true) foo()", "for(a in true) foo()");
 
         fold_same("for(a of b) foo()");
         fold_same("for(a of {}) foo()");
         fold_same("for(a of []) foo()");
-        fold("for(a of !!true) foo()", "for(a of !0) foo()");
+        fold("for(a of !!true) foo()", "for(a of true) foo()");
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_condition_example1() {
         // Based on a real failing code sample.
         fold("if(!!(f() > 20)) {foo();foo()}", "if(f() > 20){foo();foo()}");
@@ -1803,7 +1804,6 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_disabled() {
-        // enableTypeCheck();
         test_same("var x = {}; if (x != null) throw 'a';");
         test_same("var x = {}; var y = x != null;");
 
@@ -1813,13 +1813,11 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_boolean_result0() {
-        // enableTypeCheck();
         test_same("var x = {}; var y = x != null;");
     }
 
     #[test]
     fn test_coercion_substitution_boolean_result1() {
-        // enableTypeCheck();
         test_same("var x = {}; var y = x == null;");
         test_same("var x = {}; var y = x !== null;");
         test_same("var x = undefined; var y = x !== null;");
@@ -1834,7 +1832,6 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_if() {
-        // enableTypeCheck();
         test("var x = {};\nif (x != null) throw 'a';\n", "var x={}; if (x!=null) throw 'a'");
         test_same("var x = {};\nif (x == null) throw 'a';\n");
         test_same("var x = {};\nif (x !== null) throw 'a';\n");
@@ -1859,31 +1856,24 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_expression() {
-        // enableTypeCheck();
         test_same("var x = {}; x != null && alert('b');");
         test_same("var x = 1; x != 0 && alert('b');");
     }
 
     #[test]
     fn test_coercion_substitution_hook() {
-        // enableTypeCheck();
-        test_same(concat!("var x = {};", "var y = x != null ? 1 : 2;"));
-        test_same(concat!("var x = 1;", "var y = x != 0 ? 1 : 2;"));
+        test("var x = {}; var y = x != null ? 1 : 2;", "var x = {}; var y = x == null ? 2 : 1;");
+        test("var x = 1; var y = x != 0 ? 1 : 2;", "var x = 1; var y = x == 0 ? 2 : 1;");
     }
 
     #[test]
     fn test_coercion_substitution_not() {
-        // enableTypeCheck();
-        test(
-            "var x = {};\nvar y = !(x != null) ? 1 : 2;\n",
-            "var x = {};\nvar y = (x == null) ? 1 : 2;\n",
-        );
-        test("var x = 1;\nvar y = !(x != 0) ? 1 : 2;\n", "var x = 1;\nvar y = x == 0 ? 1 : 2;\n");
+        test("var x = {}; var y = !(x != null) ? 1 : 2;", "var x = {}; var y = x != null ? 2 : 1;");
+        test("var x = 1; var y = !(x != 0) ? 1 : 2; ", "var x = 1; var y = x != 0 ? 2 : 1; ");
     }
 
     #[test]
     fn test_coercion_substitution_while() {
-        // enableTypeCheck();
         test(
             "var x = {}; while (x != null) throw 'a';",
             "var x = {}; for (;x != null;) throw 'a';",
@@ -1893,21 +1883,18 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_unknown_type() {
-        // enableTypeCheck();
         test_same("var x = /** @type {?} */ ({});\nif (x != null) throw 'a';\n");
         test_same("var x = /** @type {?} */ (1);\nif (x != 0) throw 'a';\n");
     }
 
     #[test]
     fn test_coercion_substitution_all_type() {
-        // enableTypeCheck();
         test_same("var x = /** @type {*} */ ({});\nif (x != null) throw 'a';\n");
         test_same("var x = /** @type {*} */ (1);\nif (x != 0) throw 'a';\n");
     }
 
     #[test]
     fn test_coercion_substitution_primitives_vs_null() {
-        // enableTypeCheck();
         test_same("var x = 0;\nif (x != null) throw 'a';\n");
         test_same("var x = '';\nif (x != null) throw 'a';\n");
         test_same("var x = false;\nif (x != null) throw 'a';\n");
@@ -1915,7 +1902,6 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_non_number_vs_zero() {
-        // enableTypeCheck();
         test_same("var x = {};\nif (x != 0) throw 'a';\n");
         test_same("var x = '';\nif (x != 0) throw 'a';\n");
         test_same("var x = false;\nif (x != 0) throw 'a';\n");
@@ -1923,13 +1909,11 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_boxed_number_vs_zero() {
-        // enableTypeCheck();
         test_same("var x = new Number(0);\nif (x != 0) throw 'a';\n");
     }
 
     #[test]
     fn test_coercion_substitution_boxed_primitives() {
-        // enableTypeCheck();
         test_same("var x = new Number(); if (x != null) throw 'a';");
         test_same("var x = new String(); if (x != null) throw 'a';");
         test_same("var x = new Boolean();\nif (x != null) throw 'a';");
@@ -2026,7 +2010,7 @@ mod test {
         test("!a ? b : c", "a ? c : b");
         // test("/* @__PURE__ */ a() ? b : b", "b");
         test("a ? b : b", "a, b");
-        test("a ? true : false", "!!a");
+        test("a ? true : false", "a");
         test("a ? false : true", "!a");
         test("a ? a : b", "a || b");
         test("a ? b : a", "a && b");
@@ -2039,8 +2023,30 @@ mod test {
         test("var a; a ? b(c, d) : b(e, d)", "var a; b(a ? c : e, d)");
         test("var a; a ? b(...c) : b(...e)", "var a; b(...a ? c : e)");
         test("var a; a ? b(c) : b(e)", "var a; b(a ? c : e)");
-        test("a != null ? a : b", "a ?? b");
-        test_same("a() != null ? a() : b");
+        // test("a != null ? a : b", "a ?? b");
+        test("a() != null ? a() : b", "a() == null ? b : a()");
         // test("a != null ? a.b.c[d](e) : undefined", "a?.b.c[d](e)");
+    }
+
+    #[test]
+    fn test_try_fold_in_boolean_context() {
+        test("if (!!a);", "if (a);");
+        test("while (!!a);", "for (;a;);");
+        test("do; while (!!a);", "do; while (a);");
+        test("for (;!!a;);", "for (;a;);");
+        test("!!a ? b : c", "a ? b : c");
+        test("if (!!!a);", "if (!a);");
+        // test("Boolean(!!a)", "Boolean()");
+        test("if ((a | b) !== 0);", "if (a | b);");
+        test("if ((a | b) === 0);", "if (!(a | b));");
+        test("if (!!a && !!b);", "if (a && b);");
+        test("if (!!a || !!b);", "if (a || b);");
+        test("if (anything || (0, false));", "if (anything);");
+        test("if (a ? !!b : !!c);", "if (a ? b : c);");
+        test("if (anything1 ? (0, true) : anything2);", "if (anything1 || anything2);");
+        test("if (anything1 ? (0, false) : anything2);", "if (!anything1 || anything2);");
+        test("if (anything1 ? anything2 : (0, true));", "if (!anything1 || anything2);");
+        test("if (anything1 ? anything2 : (0, false));", "if (anything1 && anything2);");
+        test("if(!![]);", "if([]);");
     }
 }

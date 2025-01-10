@@ -46,6 +46,7 @@ impl<'a> ToBoolean<'a> for Expression<'a> {
                     .and_then(|quasi| quasi.value.cooked.as_ref())
                     .map(|cooked| !cooked.is_empty())
             }
+            Expression::SequenceExpression(e) => e.expressions.last().and_then(Self::to_boolean),
             _ => None,
         }
     }

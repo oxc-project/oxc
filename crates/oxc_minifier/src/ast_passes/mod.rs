@@ -44,8 +44,8 @@ pub struct PeepholeOptimizations {
     x2_exploit_assigns: ExploitAssigns,
     x3_collapse_variable_declarations: CollapseVariableDeclarations,
     x4_peephole_fold_constants: PeepholeFoldConstants,
-    x5_peephole_remove_dead_code: PeepholeRemoveDeadCode,
-    x6_peephole_minimize_conditions: PeepholeMinimizeConditions,
+    x6_peephole_remove_dead_code: PeepholeRemoveDeadCode,
+    x5_peephole_minimize_conditions: PeepholeMinimizeConditions,
     x7_peephole_replace_known_methods: PeepholeReplaceKnownMethods,
     x8_convert_to_dotted_properties: ConvertToDottedProperties,
     x9_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax,
@@ -61,8 +61,8 @@ impl PeepholeOptimizations {
             x2_exploit_assigns: ExploitAssigns::new(),
             x3_collapse_variable_declarations: CollapseVariableDeclarations::new(),
             x4_peephole_fold_constants: PeepholeFoldConstants::new(),
-            x5_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
-            x6_peephole_minimize_conditions: PeepholeMinimizeConditions::new(target),
+            x5_peephole_minimize_conditions: PeepholeMinimizeConditions::new(target),
+            x6_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
             x7_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
             x8_convert_to_dotted_properties: ConvertToDottedProperties::new(in_fixed_loop),
             x9_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax::new(
@@ -78,8 +78,8 @@ impl PeepholeOptimizations {
         self.x2_exploit_assigns.changed = false;
         self.x3_collapse_variable_declarations.changed = false;
         self.x4_peephole_fold_constants.changed = false;
-        self.x5_peephole_remove_dead_code.changed = false;
-        self.x6_peephole_minimize_conditions.changed = false;
+        self.x5_peephole_minimize_conditions.changed = false;
+        self.x6_peephole_remove_dead_code.changed = false;
         self.x7_peephole_replace_known_methods.changed = false;
         self.x9_peephole_substitute_alternate_syntax.changed = false;
     }
@@ -90,8 +90,8 @@ impl PeepholeOptimizations {
             || self.x2_exploit_assigns.changed
             || self.x3_collapse_variable_declarations.changed
             || self.x4_peephole_fold_constants.changed
-            || self.x5_peephole_remove_dead_code.changed
-            || self.x6_peephole_minimize_conditions.changed
+            || self.x5_peephole_minimize_conditions.changed
+            || self.x6_peephole_remove_dead_code.changed
             || self.x7_peephole_replace_known_methods.changed
             || self.x9_peephole_substitute_alternate_syntax.changed
     }
@@ -125,7 +125,7 @@ impl<'a> CompressorPass<'a> for PeepholeOptimizations {
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x5_peephole_remove_dead_code.exit_program(program, ctx);
+        self.x6_peephole_remove_dead_code.exit_program(program, ctx);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
@@ -133,13 +133,13 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.x1_minimize_exit_points.exit_statements(stmts, ctx);
         self.x2_exploit_assigns.exit_statements(stmts, ctx);
         self.x3_collapse_variable_declarations.exit_statements(stmts, ctx);
-        self.x5_peephole_remove_dead_code.exit_statements(stmts, ctx);
-        self.x6_peephole_minimize_conditions.exit_statements(stmts, ctx);
+        self.x5_peephole_minimize_conditions.exit_statements(stmts, ctx);
+        self.x6_peephole_remove_dead_code.exit_statements(stmts, ctx);
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x5_peephole_remove_dead_code.exit_statement(stmt, ctx);
-        self.x6_peephole_minimize_conditions.exit_statement(stmt, ctx);
+        self.x5_peephole_minimize_conditions.exit_statement(stmt, ctx);
+        self.x6_peephole_remove_dead_code.exit_statement(stmt, ctx);
     }
 
     fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -160,8 +160,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x4_peephole_fold_constants.exit_expression(expr, ctx);
-        self.x5_peephole_remove_dead_code.exit_expression(expr, ctx);
-        self.x6_peephole_minimize_conditions.exit_expression(expr, ctx);
+        self.x5_peephole_minimize_conditions.exit_expression(expr, ctx);
+        self.x6_peephole_remove_dead_code.exit_expression(expr, ctx);
         self.x7_peephole_replace_known_methods.exit_expression(expr, ctx);
         self.x9_peephole_substitute_alternate_syntax.exit_expression(expr, ctx);
     }
