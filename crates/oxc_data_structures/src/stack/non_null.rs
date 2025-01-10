@@ -18,12 +18,6 @@ use std::{cmp::Ordering, ptr::NonNull as NativeNonNull};
 #[repr(transparent)]
 pub struct NonNull<T>(NativeNonNull<T>);
 
-#[cfg(clippy)]
-#[expect(clippy::incompatible_msrv)]
-unsafe fn _non_null_add_is_not_stable(ptr: NativeNonNull<u8>) -> NativeNonNull<u8> {
-    ptr.add(1)
-}
-
 impl<T> NonNull<T> {
     #[inline(always)]
     pub const unsafe fn new_unchecked(ptr: *mut T) -> Self {
