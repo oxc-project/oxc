@@ -30,7 +30,6 @@ impl ContentEq for NullLiteral {
 impl ContentEq for NumericLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.raw, &other.raw)
             && ContentEq::content_eq(&self.base, &other.base)
     }
 }
@@ -38,7 +37,6 @@ impl ContentEq for NumericLiteral<'_> {
 impl ContentEq for StringLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.raw, &other.raw)
     }
 }
 
