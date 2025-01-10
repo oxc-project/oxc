@@ -43,31 +43,6 @@ fn validate_paths(paths: &Vec<PathBuf>) -> bool {
 
 const PATHS_ERROR_MESSAGE: &str = "PATH must not contain \"..\"";
 
-#[cfg(target_os = "windows")]
-#[allow(clippy::needless_pass_by_value)]
-fn expand_glob(paths: Vec<PathBuf>) -> Vec<PathBuf> {
-    let match_options = glob::MatchOptions {
-        case_sensitive: true,
-        require_literal_separator: false,
-        require_literal_leading_dot: false,
-    };
-
-    paths
-        .iter()
-        .filter_map(|path| path.to_str())
-        .filter_map(|path| glob::glob_with(path, match_options).ok())
-        .flatten()
-        .filter_map(Result::ok)
-        .collect()
-}
-
-#[cfg(not(target_os = "windows"))]
-#[allow(clippy::needless_pass_by_value)]
-fn expand_glob(paths: Vec<PathBuf>) -> Vec<PathBuf> {
-    // no-op on any os other than windows, since they expand globs
-    paths
-}
-
 #[cfg(test)]
 mod misc_options {
     use super::{lint::lint_command, MiscOptions};

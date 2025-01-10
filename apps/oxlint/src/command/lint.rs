@@ -4,7 +4,6 @@ use bpaf::Bpaf;
 use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 
 use super::{
-    expand_glob,
     ignore::{ignore_options, IgnoreOptions},
     misc_options, validate_paths, MiscOptions, PATHS_ERROR_MESSAGE, VERSION,
 };
@@ -41,7 +40,7 @@ pub struct LintCommand {
     pub misc_options: MiscOptions,
 
     /// Single file, single path or list of paths
-    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE), map(expand_glob))]
+    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
 }
 
@@ -478,27 +477,6 @@ mod lint_options {
         let options =
             get_lint_options(format!("{file_name_foo} {file_name_bar} {file_name_baz}").as_str());
         assert_eq!(options.paths, [file_foo, file_bar, file_baz]);
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    #[allow(clippy::similar_names)]
-    fn wildcard_expansion() {
-        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
-        let file_foo = temp_dir.path().join("foo.js");
-        File::create(&file_foo).expect("Could not create foo.js temp file");
-        let file_bar = temp_dir.path().join("bar.js");
-        File::create(&file_bar).expect("Could not create bar.js temp file");
-        let file_baz = temp_dir.path().join("baz");
-        File::create(&file_baz).expect("Could not create baz temp file");
-
-        let js_files_wildcard = temp_dir.path().join("*.js");
-        let options = get_lint_options(
-            js_files_wildcard.to_str().expect("could not get js files wildcard path"),
-        );
-        assert!(options.paths.contains(&file_foo));
-        assert!(options.paths.contains(&file_bar));
-        assert!(!options.paths.contains(&file_baz));
     }
 
     #[test]

@@ -365,8 +365,6 @@ mod test {
         assert_eq!(result.number_of_errors, 0);
     }
 
-    // exclude because we are working with Glob, which only supports the current working directory
-    #[cfg(all(test, not(target_os = "windows")))]
     #[test]
     fn cwd() {
         let args = &["debugger.js"];
@@ -395,8 +393,6 @@ mod test {
         assert_eq!(result.number_of_errors, 0);
     }
 
-    // ToDo: lints all files under windows
-    #[cfg(all(test, not(target_os = "windows")))]
     #[test]
     fn wrong_extension() {
         let args = &["foo.asdf"];
