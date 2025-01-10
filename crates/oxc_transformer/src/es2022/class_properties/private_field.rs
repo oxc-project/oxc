@@ -501,6 +501,12 @@ impl<'a> ClassProperties<'a, '_> {
             return;
         }
 
+        // Note: `transform_static_assignment_expression` and `transform_instance_assignment_expression`
+        // are marked `#[inline]`, so hopefully compiler will see that clones of `BoundIdentifier`s
+        // can be elided.
+        // Can't break this up into separate functions otherwise, as `&BoundIdentifier`s keep `&self` ref
+        // taken by `lookup_private_property` alive.
+        // TODO: Try to find a way around this.
         if is_static && !is_method {
             // TODO: No temp var is required if able to use shortcut version, so want to skip calling
             // `class_bindings.get_or_init_temp_binding(ctx)` if shortcut can be used.
@@ -516,7 +522,6 @@ impl<'a> ClassProperties<'a, '_> {
             let class_symbol_id = class_bindings.name_symbol_id();
             // Unwrap is safe because `is_method` is false, then static private prop is always have a `get_binding`
             // and `set_binding` and they are always are the same.
-            // Clone as borrow restrictions
             let prop_binding = get_binding.cloned().unwrap();
 
             self.transform_static_assignment_expression(
@@ -528,7 +533,6 @@ impl<'a> ClassProperties<'a, '_> {
                 ctx,
             );
         } else if !is_method || !assign_expr.operator.is_assign() || set_binding.is_none() {
-            // Clone as borrow restrictions
             let class_binding = is_method.then(|| {
                 if is_static {
                     class_bindings.get_or_init_static_binding(ctx).clone()
@@ -1076,7 +1080,8 @@ impl<'a> ClassProperties<'a, '_> {
                 );
             }
         } else {
-            // Clone as borrow restrictions
+            // Clone as borrow restrictions.
+            // TODO: Try to find a way to avoid this.
             let class_binding = is_method.then(|| {
                 if is_static {
                     class_bindings.get_or_init_static_binding(ctx).clone()
@@ -1144,7 +1149,6 @@ impl<'a> ClassProperties<'a, '_> {
                     ]),
                 );
 
-                let set_binding = set_binding.clone();
                 // `_classPrivateFieldSet(_prop, object, <value>)`
                 let set_call = self.create_private_setter(
                     &private_name,
