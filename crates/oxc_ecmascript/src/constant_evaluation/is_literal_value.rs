@@ -21,13 +21,14 @@ pub fn is_immutable_value(expr: &Expression<'_>) -> bool {
         Expression::BooleanLiteral(_)
         | Expression::NullLiteral(_)
         | Expression::NumericLiteral(_)
-        | Expression::BigIntLiteral(_)
         | Expression::RegExpLiteral(_)
         | Expression::StringLiteral(_) => true,
         Expression::TemplateLiteral(lit) if lit.is_no_substitution_template() => true,
         Expression::Identifier(ident) => {
             matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
         }
+        // Operations on bigint can result type error.
+        // Expression::BigIntLiteral(_) => false,
         _ => false,
     }
 }

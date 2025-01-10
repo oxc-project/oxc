@@ -314,9 +314,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     if !template_lit.expressions.is_empty() {
                         return None;
                     }
-
                     let mut expressions = ctx.ast.move_vec(&mut template_lit.expressions);
-
                     if expressions.len() == 0 {
                         return Some(ctx.ast.statement_empty(SPAN));
                     } else if expressions.len() == 1 {
@@ -327,7 +325,6 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                             ),
                         );
                     }
-
                     Some(ctx.ast.statement_expression(
                         template_lit.span,
                         ctx.ast.expression_sequence(template_lit.span, expressions),
@@ -345,7 +342,13 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     Some(ctx.ast.statement_empty(SPAN))
                 }
                 // `typeof x.y` -> `x`, `!x` -> `x`, `void x` -> `x`...
-                Expression::UnaryExpression(unary_expr) if !unary_expr.operator.is_delete() => {
+                // `+0n` -> `Uncaught TypeError: Cannot convert a BigInt value to a number`
+                Expression::UnaryExpression(unary_expr)
+                    if !matches!(
+                        unary_expr.operator,
+                        UnaryOperator::Delete | UnaryOperator::UnaryPlus
+                    ) =>
+                {
                     Some(ctx.ast.statement_expression(
                         unary_expr.span,
                         ctx.ast.move_expression(&mut unary_expr.argument),
@@ -706,6 +709,7 @@ mod test {
         fold_same("delete x");
         fold_same("delete x.y");
         fold_same("delete x.y.z()");
+        fold_same("+0n"); // Uncaught TypeError: Cannot convert a BigInt value to a number
     }
 
     #[test]
