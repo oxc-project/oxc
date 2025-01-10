@@ -1032,7 +1032,9 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         };
         let PropertyKey::StringLiteral(s) = key else { return };
         let value = s.value.as_str();
-        if matches!(value, "__proto__" | "constructor" | "prototype") {
+        // Uncaught SyntaxError: Classes may not have a field named 'constructor'
+        // Uncaught SyntaxError: Class constructor may not be a private method
+        if matches!(value, "__proto__" | "prototype" | "constructor" | "#constructor") {
             return;
         }
         if *computed {
@@ -1785,6 +1787,7 @@ mod test {
         test_same("class C { ['prototype']() {} }");
         test_same("class C { ['__proto__']() {} }");
         test_same("class C { ['constructor']() {} }");
+        test_same("class C { ['#constructor']() {} }");
     }
 
     #[test]
