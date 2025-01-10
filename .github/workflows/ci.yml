@@ -55,7 +55,7 @@ jobs:
       # Unsung heros of the internet, who led me here to speed up window's slowness:
       # https://github.com/actions/cache/issues/752#issuecomment-1847036770
       # https://github.com/astral-sh/uv/blob/502e04200d52de30d3159894833b3db4f0d6644d/.github/workflows/ci.yml#L158
-      - uses: samypr100/setup-dev-drive@d3f2420389ae9ea6e91dd178779e122c42352047 # v3
+      - uses: samypr100/setup-dev-drive@c13db539c98b4353ff2bc78fb8f775b94336025b # v3
         with:
           workspace-copy: true
           drive-size: 8GB
@@ -77,7 +77,7 @@ jobs:
           rustup show
           git restore .
 
-      - uses: Swatinem/rust-cache@82a92a6e8fbeee089604da2575dc567ae9ddeaab # v2
+      - uses: Swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # v2
         with:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: ${{ github.ref_name == 'main' }}
