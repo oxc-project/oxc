@@ -736,13 +736,24 @@ impl<'a> ClassProperties<'a, '_> {
                         return false;
                     }
                 }
-                ClassElement::MethodDefinition(method) => {
-                    self.substitute_temp_var_for_method_computed_key(method, ctx);
-                    if let Some(statement) = self.convert_private_method(method, ctx) {
-                        class_methods.push(statement);
+                ClassElement::MethodDefinition(method) => match &mut method.key {
+                    PropertyKey::StaticIdentifier(_) => {}
+                    PropertyKey::PrivateIdentifier(ident) => {
+                        let ident = ident.clone();
+                        let function_statement = self.convert_private_method(element, &ident, ctx);
+                        class_methods.push(function_statement);
                         return false;
                     }
-                }
+                    // Computed key
+                    key @ match_expression!(PropertyKey) => {
+                        let key = key.to_expression_mut();
+                        if let Some(replacement_key) =
+                            self.substitute_temp_var_for_method_computed_key(key, ctx)
+                        {
+                            method.key = replacement_key;
+                        }
+                    }
+                },
                 ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
                     // TODO: Need to handle these?
                 }

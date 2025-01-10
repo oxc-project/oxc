@@ -13,19 +13,13 @@ impl<'a> ClassProperties<'a, '_> {
     /// This transform is only required if class has properties or a static block.
     pub(super) fn substitute_temp_var_for_method_computed_key(
         &mut self,
-        method: &mut MethodDefinition<'a>,
+        key: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) {
-        // Exit if key is not an `Expression`
-        // (`PropertyKey::StaticIdentifier` or `PropertyKey::PrivateIdentifier`)
-        let Some(key) = method.key.as_expression_mut() else {
-            return;
-        };
-
+    ) -> Option<PropertyKey<'a>> {
         // Exit if evaluating key cannot have side effects.
         // This check also results in exit for non-computed keys e.g. `class C { 'x'() {} 123() {} }`.
         if !key_needs_temp_var(key, ctx) {
-            return;
+            return None;
         }
 
         // TODO(improve-on-babel): It's unnecessary to create temp vars for method keys unless:
@@ -37,7 +31,7 @@ impl<'a> ClassProperties<'a, '_> {
         let original_key = ctx.ast.move_expression(key);
         let (assignment, temp_var) = self.create_computed_key_temp_var(original_key, ctx);
         self.insert_before.push(assignment);
-        method.key = PropertyKey::from(temp_var);
+        Some(PropertyKey::from(temp_var))
     }
 
     /// Convert computed property/method key to a temp var, if a temp var is required.

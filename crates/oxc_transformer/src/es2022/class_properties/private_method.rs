@@ -34,26 +34,30 @@ impl<'a> ClassProperties<'a, '_> {
     /// function _get_prop() {return 0}
     /// ```
     ///
-    /// Returns `true` if the method was converted.
+    /// Returns statement to insert after class.
     pub(super) fn convert_private_method(
         &mut self,
-        method: &mut MethodDefinition<'a>,
+        element: &mut ClassElement<'a>,
+        ident: &PrivateIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Statement<'a>> {
-        let MethodDefinition { key, value, span, kind, r#static, .. } = method;
-        let PropertyKey::PrivateIdentifier(ident) = &key else {
-            return None;
-        };
+    ) -> Statement<'a> {
+        // We receive a `&mut ClassElement<'a>` and move it onto stack (16 bytes), instead of using
+        // `move_function` to avoid moving a `Function` (large type) out of the arena onto stack and then
+        // allocating it back into arena again.
+        // `function` here is a `Box<Function>` - we mutate its properties in place in the arena.
+        let element = ctx.ast.move_class_element(element);
+        let ClassElement::MethodDefinition(method) = element else { unreachable!() };
+        let MethodDefinition { value: mut function, span, kind, r#static: is_static, .. } =
+            method.unbox();
 
-        let mut function = ctx.ast.move_function(value);
-        let resolved_private_prop = if *kind == MethodDefinitionKind::Set {
+        let resolved_private_prop = if kind == MethodDefinitionKind::Set {
             self.classes_stack.find_writeable_private_prop(ident)
         } else {
             self.classes_stack.find_readable_private_prop(ident)
         };
         let temp_binding = resolved_private_prop.unwrap().prop_binding;
 
-        function.span = *span;
+        function.span = span;
         function.id = Some(temp_binding.create_binding_identifier(ctx));
         function.r#type = FunctionType::FunctionDeclaration;
 
@@ -71,11 +75,10 @@ impl<'a> ClassProperties<'a, '_> {
             *flags -= ScopeFlags::StrictMode;
         }
 
-        PrivateMethodVisitor::new(*r#static, self, ctx)
+        PrivateMethodVisitor::new(is_static, self, ctx)
             .visit_function(&mut function, ScopeFlags::Function);
 
-        let function = ctx.ast.alloc(function);
-        Some(Statement::FunctionDeclaration(function))
+        Statement::FunctionDeclaration(function)
     }
 
     // `_classPrivateMethodInitSpec(this, brand)`
