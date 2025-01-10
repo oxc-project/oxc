@@ -140,14 +140,14 @@ impl<'a> ClassProperties<'a, '_> {
                 let class_ident = class_binding.create_read_expression(ctx);
                 if is_method {
                     if is_assignment {
+                        // `toSetter(_prop.bind(object), [])._`
                         let object =
                             self.create_assert_class_brand_without_value(class_ident, object, ctx);
-                        // `toSetter(_prop.bind(object), [])._`
                         self.create_to_setter_for_bind_call(prop_ident, object, span, ctx)
                     } else if is_accessor {
+                        // `_prop.bind(_assertClassBrand(Class, object))`
                         let object =
                             self.create_assert_class_brand_without_value(class_ident, object, ctx);
-                        // `_prop.bind(_assertClassBrand(Class, object))`
                         create_call_call(prop_ident, object, span, ctx)
                     } else {
                         self.create_assert_class_brand(class_ident, object, prop_ident, span, ctx)
@@ -165,12 +165,12 @@ impl<'a> ClassProperties<'a, '_> {
         } else if is_method {
             let brand_ident = class_bindings.brand().create_read_expression(ctx);
             if is_assignment {
-                let object = self.create_assert_class_brand_without_value(brand_ident, object, ctx);
                 // `_toSetter(_prop.call(_assertClassBrand(_Class_brand, object)))._`
+                let object = self.create_assert_class_brand_without_value(brand_ident, object, ctx);
                 self.create_to_setter_for_bind_call(prop_ident, object, span, ctx)
             } else if is_accessor {
-                let object = self.create_assert_class_brand_without_value(brand_ident, object, ctx);
                 // `_prop.bind(_assertClassBrand(_Class_brand, object))`
+                let object = self.create_assert_class_brand_without_value(brand_ident, object, ctx);
                 create_call_call(prop_ident, object, span, ctx)
             } else {
                 self.create_assert_class_brand(brand_ident, object, prop_ident, span, ctx)
@@ -390,9 +390,9 @@ impl<'a> ClassProperties<'a, '_> {
 
                 let assert_obj = if is_method {
                     if is_accessor {
+                        // `_prop.call(_assertClassBrand(Class, object))`
                         let object =
                             self.create_assert_class_brand_without_value(class_ident, object1, ctx);
-                        // `_prop.call(_assertClassBrand(Class, object))`
                         create_call_call(prop_ident, object, span, ctx)
                     } else {
                         // `_assertClassBrand(Class, object, _prop)`
