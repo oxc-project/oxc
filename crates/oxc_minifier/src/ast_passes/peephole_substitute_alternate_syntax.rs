@@ -889,17 +889,24 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                         // new Array(2) -> `[,,]`
                         // this does not work with IE8 and below
                         // learned from https://github.com/babel/minify/pull/45
-                        #[expect(clippy::cast_possible_truncation)]
+                        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
                         if n.value.fract() == 0.0 {
-                            let n_int = n.value as i64;
+                            let n_int = n.value as usize;
                             if (1..=6).contains(&n_int) {
-                                return Some(ctx.ast.expression_array(
-                                    span,
-                                    ctx.ast.vec_from_iter((0..n_int).map(|_| {
-                                        ArrayExpressionElement::Elision(Elision { span: SPAN })
-                                    })),
-                                    None,
-                                ));
+                                return Some(
+                                    ctx.ast.expression_array(
+                                        span,
+                                        ctx.ast.vec_from_iter(
+                                            std::iter::from_fn(|| {
+                                                Some(ArrayExpressionElement::Elision(
+                                                    ctx.ast.elision(SPAN),
+                                                ))
+                                            })
+                                            .take(n_int),
+                                        ),
+                                        None,
+                                    ),
+                                );
                             }
                         }
 

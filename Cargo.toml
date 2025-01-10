@@ -48,13 +48,14 @@ rest_pat_in_fully_bound_structs = "warn"
 unnecessary_safety_comment = "warn"
 undocumented_unsafe_blocks = "warn"
 infinite_loop = "warn"
+map_with_unused_argument_over_ranges = "warn"
+unused_result_ok = "warn"
+pathbuf_init_then_push = "warn"
 # I want to write the best Rust code so pedantic is enabled.
 # We should only disable rules globally if they are either false positives, chaotic, or does not make sense.
 pedantic = { level = "warn", priority = -1 }
 # Allowed rules
 # pedantic
-# This rule is too pedantic, I don't want to force this because naming things are hard.
-module_name_repetitions = "allow"
 # All triggers are mostly ignored in our codebase, so this is ignored globally.
 struct_excessive_bools = "allow"
 too_many_lines = "allow"
