@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_syntax::operator::UnaryOperator;
+use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 /// A "simple" operator is one whose children are expressions, has no direct side-effects.
 fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
@@ -63,7 +63,6 @@ impl<'a> CheckForStateChange<'a, '_> for Expression<'a> {
                 if check_for_new_objects {
                     return true;
                 }
-
                 object_expr
                     .properties
                     .iter()
@@ -95,8 +94,8 @@ impl<'a> CheckForStateChange<'a, '_> for UnaryExpression<'a> {
 
 impl<'a> CheckForStateChange<'a, '_> for BinaryExpression<'a> {
     fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
-        // `instanceof` can throw `TypeError`
-        if self.operator.is_instance_of() {
+        // `instanceof` and `in` can throw `TypeError`
+        if matches!(self.operator, BinaryOperator::In | BinaryOperator::Instanceof) {
             return true;
         }
         let left = self.left.check_for_state_change(check_for_new_objects);
