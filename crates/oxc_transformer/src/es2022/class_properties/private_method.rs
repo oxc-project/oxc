@@ -107,11 +107,11 @@ struct PrivateMethodVisitor<'a, 'ctx, 'v> {
 
 impl<'a, 'ctx, 'v> PrivateMethodVisitor<'a, 'ctx, 'v> {
     fn new(
-        r#static: bool,
+        is_static: bool,
         class_properties: &'v mut ClassProperties<'a, 'ctx>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
-        let mode = if r#static {
+        let mode = if is_static {
             ClassPropertiesSuperConverterMode::StaticPrivateMethod
         } else {
             ClassPropertiesSuperConverterMode::PrivateMethod
