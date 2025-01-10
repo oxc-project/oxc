@@ -341,12 +341,12 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                 {
                     Some(ctx.ast.statement_empty(SPAN))
                 }
-                // `typeof x.y` -> `x`, `!x` -> `x`, `void x` -> `x`...
+                // `typeof x.y` -> `x.y`, `void x` -> `x`
                 // `+0n` -> `Uncaught TypeError: Cannot convert a BigInt value to a number`
                 Expression::UnaryExpression(unary_expr)
-                    if !matches!(
+                    if matches!(
                         unary_expr.operator,
-                        UnaryOperator::Delete | UnaryOperator::UnaryPlus
+                        UnaryOperator::Typeof | UnaryOperator::Void
                     ) =>
                 {
                     Some(ctx.ast.statement_expression(
@@ -700,11 +700,13 @@ mod test {
         fold("void x?.y", "x?.y");
         fold("void x.y", "x.y");
         fold("void x.y.z()", "x.y.z()");
-        fold("!x", "x");
-        fold("!x?.y", "x?.y");
-        fold("!x.y", "x.y");
-        fold("!x.y.z()", "x.y.z()");
-        fold("-x.y.z()", "x.y.z()");
+
+        // Removed in `MinimizeConditions`, to keep this pass idempotent for DCE.
+        fold_same("!x");
+        fold_same("!x?.y");
+        fold_same("!x.y");
+        fold_same("!x.y.z()");
+        fold_same("-x.y.z()");
 
         fold_same("delete x");
         fold_same("delete x.y");

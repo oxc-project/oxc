@@ -1951,6 +1951,7 @@ mod test {
 
     #[test]
     fn minimize_duplicate_nots() {
+        // test("!x", "x"); // TODO: in ExpressionStatement
         test("!!x", "x");
         test("!!!x", "!x");
         test("!!!!x", "x");
