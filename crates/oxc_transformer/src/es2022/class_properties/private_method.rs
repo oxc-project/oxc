@@ -160,5 +160,12 @@ impl<'a> VisitMut<'a> for PrivateMethodVisitor<'a, '_, '_> {
     #[inline]
     fn visit_class(&mut self, _class: &mut Class<'a>) {
         // Ignore because we don't need to transform `super` for other classes.
+
+        // TODO: Actually we do need to transform `super` in:
+        // 1. Class decorators
+        // 2. Class `extends` clause
+        // 3. Class property/method/accessor computed keys
+        // 4. Class property/method/accessor decorators
+        //    (or does `super` in a decorator refer to inner class?)
     }
 }

@@ -365,6 +365,8 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
 
         self.reparent_scope_if_first_level(&class.scope_id);
 
+        // TODO: Need to visit decorators *before* incrementing `scope_depth`.
+        // Decorators could contain scopes. e.g. `@(() => {}) class C {}`
         self.scope_depth += 1;
         walk_mut::walk_class(self, class);
         self.scope_depth -= 1;
