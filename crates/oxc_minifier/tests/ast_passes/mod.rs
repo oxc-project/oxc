@@ -61,7 +61,35 @@ fn cjs() {
           }
         });",
     );
+    test_same(
+        "Object.defineProperty(exports, 'ConnectableObservable', {
+          enumerable: true,
+          get: function() {
+            return ConnectableObservable_1.ConnectableObservable;
+          }
+        });",
+    );
     // @babel/types/lib/index.js
+    test(
+        r#"
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    Object.defineProperty(exports, "TargetNames", {
+      enumerable: true,
+      get: function () {
+        return _options.TargetNames;
+      }
+    });"#,
+        r#"
+    Object.defineProperty(exports, "__esModule", { value: true }), Object.defineProperty(exports, "TargetNames", {
+        enumerable: true,
+        get: function() {
+            return _options.TargetNames;
+        }
+    });"#,
+    );
+
     test(
         r#"Object.keys(_index6).forEach(function(key) {
           if (key === "default" || key === "__esModule") return;

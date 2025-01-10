@@ -108,15 +108,20 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         call_expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if ctx.parent().is_expression_statement()
-            && Self::is_object_define_property_exports(call_expr)
-        {
-            self.in_define_export = true;
+        if !self.in_fixed_loop {
+            let parent = ctx.parent();
+            if (parent.is_expression_statement() || parent.is_sequence_expression())
+                && Self::is_object_define_property_exports(call_expr)
+            {
+                self.in_define_export = true;
+            }
         }
     }
 
     fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.in_define_export = false;
+        if !self.in_fixed_loop {
+            self.in_define_export = false;
+        }
         self.try_compress_call_expression_arguments(expr, ctx);
     }
 

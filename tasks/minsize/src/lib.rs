@@ -98,7 +98,6 @@ pub fn run() -> Result<(), io::Error> {
     let save_path = Path::new("./target/minifier").join(marker);
 
     for file in files.files() {
-        println!("{}", &file.file_name);
         let minified = minify_twice(file);
 
         fs::create_dir_all(&save_path).unwrap();
