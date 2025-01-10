@@ -15,6 +15,7 @@ use crate::{ctx::Ctx, CompressorPass};
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 pub struct PeepholeMinimizeConditions {
+    #[allow(unused)]
     target: ESTarget,
     pub(crate) changed: bool,
 }
@@ -81,7 +82,7 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
         if let Some(folded_expr) = match expr {
             Expression::UnaryExpression(e) => Self::try_minimize_not(e, ctx),
             Expression::BinaryExpression(e) => Self::try_minimize_binary(e, ctx),
-            Expression::ConditionalExpression(e) => self.try_minimize_conditional(e, ctx),
+            Expression::ConditionalExpression(e) => Self::try_minimize_conditional(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -283,7 +284,6 @@ impl<'a> PeepholeMinimizeConditions {
 
     // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745
     fn try_minimize_conditional(
-        &self,
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -589,39 +589,7 @@ impl<'a> PeepholeMinimizeConditions {
             }
         }
 
-        // Try using the "??" or "?." operators
-        if let Expression::BinaryExpression(bin_expr) = &mut expr.test {
-            if bin_expr.operator == BinaryOperator::Equality
-                || bin_expr.operator == BinaryOperator::Inequality
-            {
-                if let Some(check) = {
-                    if bin_expr.left.is_null() {
-                        Some(&bin_expr.right)
-                    } else {
-                        Some(&bin_expr.left)
-                    }
-                } {
-                    // `a != null ? a : b` -> `a ?? b``
-                    if check.content_eq(if bin_expr.operator == BinaryOperator::Equality {
-                        &expr.alternate
-                    } else {
-                        &expr.consequent
-                    }) && self.target >= ESTarget::ES2020
-                    // TODO: this is probably a but too aggressive
-                        && matches!(check, Expression::Identifier(_))
-                    {
-                        return Some(ctx.ast.expression_logical(
-                            SPAN,
-                            ctx.ast.move_expression(&mut expr.consequent),
-                            LogicalOperator::Coalesce,
-                            ctx.ast.move_expression(&mut expr.alternate),
-                        ));
-                    }
-
-                    // TODO: `a != null ? a.b.c[d](e) : undefined` -> `a?.b.c[d](e)``
-                }
-            }
-        }
+        // TODO: Try using the "??" or "?." operators
 
         // Non esbuild optimizations
 
@@ -2023,8 +1991,8 @@ mod test {
         test("var a; a ? b(c, d) : b(e, d)", "var a; b(a ? c : e, d)");
         test("var a; a ? b(...c) : b(...e)", "var a; b(...a ? c : e)");
         test("var a; a ? b(c) : b(e)", "var a; b(a ? c : e)");
-        // test("a != null ? a : b", "a ?? b");
         test("a() != null ? a() : b", "a() == null ? b : a()");
+        // test("a != null ? a : b", "a ?? b");
         // test("a != null ? a.b.c[d](e) : undefined", "a?.b.c[d](e)");
     }
 
