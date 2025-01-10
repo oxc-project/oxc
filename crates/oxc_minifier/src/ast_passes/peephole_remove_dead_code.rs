@@ -33,15 +33,20 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
             Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
             Statement::IfStatement(s) => self.try_fold_if(s, ctx),
             Statement::ForStatement(s) => self.try_fold_for(s, ctx),
-            Statement::ExpressionStatement(s) => {
-                Self::try_fold_iife(s, ctx).or_else(|| Self::try_fold_expression_stmt(s, ctx))
-            }
+            Statement::ExpressionStatement(s) => Self::try_fold_iife(s, ctx),
             Statement::TryStatement(s) => Self::try_fold_try(s, ctx),
             Statement::LabeledStatement(s) => Self::try_fold_labeled(s, ctx),
             _ => None,
         } {
             *stmt = new_stmt;
             self.changed = true;
+        }
+
+        if let Statement::ExpressionStatement(s) = stmt {
+            if let Some(new_stmt) = Self::try_fold_expression_stmt(s, ctx) {
+                *stmt = new_stmt;
+                self.changed = true;
+            }
         }
     }
 
@@ -746,6 +751,8 @@ mod test {
     fn test_fold_if_statement() {
         test("if (foo) {}", "foo");
         test("if (foo) {} else {}", "foo");
+        test("if (false) {}", "");
+        test("if (true) {}", "");
     }
 
     #[test]
