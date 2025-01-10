@@ -21,7 +21,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// class C {
     ///    #method() {}
     ///    set #prop(value) {}
-    ///    get #prop() {return 0}
+    ///    get #prop() { return 0; }
     /// }
     /// ```
     ///
@@ -31,7 +31,7 @@ impl<'a> ClassProperties<'a, '_> {
     /// class C {}
     /// function _method() {}
     /// function _set_prop(value) {}
-    /// function _get_prop() {return 0}
+    /// function _get_prop() { return 0; }
     /// ```
     ///
     /// Returns `true` if the method was converted.
@@ -92,7 +92,7 @@ impl<'a> ClassProperties<'a, '_> {
     }
 }
 
-/// Visitor to transform:
+/// Visitor to transform private methods.
 ///
 /// Almost the same as `super::static_block_and_prop_init::StaticVisitor`,
 /// but only does following:
