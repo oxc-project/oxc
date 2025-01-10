@@ -3,20 +3,18 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_mangler::MangleOptions;
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use pico_args::Arguments;
 
 // Instruction:
 // create a `test.js`,
-// run `cargo run -p oxc_minifier --example minifier` or `just example minifier`
+// run `cargo run -p oxc_minifier --example dce`
 
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
 
-    let mangle = args.contains("--mangle");
     let nospace = args.contains("--nospace");
     let twice = args.contains("--twice");
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
@@ -26,12 +24,12 @@ fn main() -> std::io::Result<()> {
     let source_type = SourceType::from_path(path).unwrap();
 
     let mut allocator = Allocator::default();
-    let printed = minify(&allocator, &source_text, source_type, mangle, nospace);
+    let printed = dce(&allocator, &source_text, source_type, nospace);
     println!("{printed}");
 
     if twice {
         allocator.reset();
-        let printed2 = minify(&allocator, &printed, source_type, mangle, nospace);
+        let printed2 = dce(&allocator, &printed, source_type, nospace);
         println!("{printed2}");
         println!("same = {}", printed == printed2);
     }
@@ -39,23 +37,12 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn minify(
-    allocator: &Allocator,
-    source_text: &str,
-    source_type: SourceType,
-    mangle: bool,
-    nospace: bool,
-) -> String {
+fn dce(allocator: &Allocator, source_text: &str, source_type: SourceType, nospace: bool) -> String {
     let ret = Parser::new(allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let options = MinifierOptions {
-        mangle: mangle.then(MangleOptions::default),
-        compress: CompressOptions::default(),
-    };
-    let ret = Minifier::new(options).build(allocator, &mut program);
+    Compressor::new(allocator, CompressOptions::default()).dead_code_elimination(&mut program);
     CodeGenerator::new()
         .with_options(CodegenOptions { minify: nospace, ..CodegenOptions::default() })
-        .with_mangler(ret.mangler)
         .build(&program)
         .code
 }
