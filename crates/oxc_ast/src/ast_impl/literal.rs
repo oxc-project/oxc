@@ -100,6 +100,41 @@ impl fmt::Display for NumericLiteral<'_> {
     }
 }
 
+impl StringLiteral<'_> {
+    /// Static Semantics: `IsStringWellFormedUnicode`
+    /// test for \uD800-\uDFFF
+    ///
+    /// See: <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isstringwellformedunicode>
+    pub fn is_string_well_formed_unicode(&self) -> bool {
+        let mut chars = self.value.chars();
+        while let Some(c) = chars.next() {
+            if c == '\\' && chars.next() == Some('u') {
+                let hex = &chars.as_str()[..4];
+                if let Ok(hex) = u32::from_str_radix(hex, 16) {
+                    if (0xd800..=0xdfff).contains(&hex) {
+                        return false;
+                    }
+                };
+            }
+        }
+        true
+    }
+}
+
+impl AsRef<str> for StringLiteral<'_> {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        self.value.as_ref()
+    }
+}
+
+impl fmt::Display for StringLiteral<'_> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.value.fmt(f)
+    }
+}
+
 impl BigIntLiteral<'_> {
     /// Is this BigInt literal zero? (`0n`).
     pub fn is_zero(&self) -> bool {
@@ -260,40 +295,5 @@ impl fmt::Display for RegExpFlags {
             write!(f, "v")?;
         }
         Ok(())
-    }
-}
-
-impl StringLiteral<'_> {
-    /// Static Semantics: `IsStringWellFormedUnicode`
-    /// test for \uD800-\uDFFF
-    ///
-    /// See: <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isstringwellformedunicode>
-    pub fn is_string_well_formed_unicode(&self) -> bool {
-        let mut chars = self.value.chars();
-        while let Some(c) = chars.next() {
-            if c == '\\' && chars.next() == Some('u') {
-                let hex = &chars.as_str()[..4];
-                if let Ok(hex) = u32::from_str_radix(hex, 16) {
-                    if (0xd800..=0xdfff).contains(&hex) {
-                        return false;
-                    }
-                };
-            }
-        }
-        true
-    }
-}
-
-impl AsRef<str> for StringLiteral<'_> {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        self.value.as_ref()
-    }
-}
-
-impl fmt::Display for StringLiteral<'_> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.value.fmt(f)
     }
 }
