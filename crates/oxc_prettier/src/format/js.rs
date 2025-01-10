@@ -11,8 +11,8 @@ use crate::{
     format::{
         print::{
             array, arrow_function, assignment, binaryish, block, call_expression, class, function,
-            function_parameters, literal, misc, module, object, property, template_literal,
-            ternary,
+            function_parameters, literal, misc, module, object, property, statement,
+            template_literal, ternary,
         },
         Format,
     },
@@ -129,29 +129,23 @@ impl<'a> Format<'a> for IfStatement<'a> {
         wrap!(p, self, IfStatement, {
             let mut parts = Vec::new_in(p.allocator);
 
-            let test_doc = self.test.format(p);
-            let consequent = self.consequent.format(p);
-            let consequent = misc::adjust_clause(p, &self.consequent, consequent, false);
-
-            let opening = group!(
+            let consequent_doc = self.consequent.format(p);
+            parts.push(group!(
                 p,
                 [
                     text!("if ("),
-                    group!(p, [indent!(p, [softline!(), test_doc]), softline!()]),
+                    group!(p, [indent!(p, [softline!(), self.test.format(p)]), softline!()]),
                     text!(")"),
-                    consequent
+                    misc::adjust_clause(p, &self.consequent, consequent_doc, false)
                 ]
-            );
-            parts.push(opening);
+            ));
 
             if let Some(alternate) = &self.alternate {
                 let else_on_same_line = matches!(alternate, Statement::BlockStatement(_));
-                if else_on_same_line {
-                    parts.push(text!(" "));
-                } else {
-                    parts.push(hardline!(p));
-                }
+                parts.push(if else_on_same_line { text!(" ") } else { hardline!(p) });
+
                 parts.push(text!("else"));
+
                 let alternate_doc = alternate.format(p);
                 parts.push(group!(
                     p,
@@ -178,43 +172,42 @@ impl<'a> Format<'a> for BlockStatement<'a> {
 impl<'a> Format<'a> for ForStatement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ForStatement, {
-            let body = self.body.format(p);
-            let body = misc::adjust_clause(p, &self.body, body, false);
+            let body_doc = self.body.format(p);
+            let body_doc = misc::adjust_clause(p, &self.body, body_doc, false);
 
             if self.init.is_none() && self.test.is_none() && self.update.is_none() {
-                return group!(p, [text!("for (;;)"), body]);
+                return group!(p, [text!("for (;;)"), body_doc]);
             }
 
-            let parts_head = {
-                let mut parts_head = Vec::new_in(p.allocator);
-                parts_head.push(softline!());
-                if let Some(init) = &self.init {
-                    parts_head.push(init.format(p));
-                }
-                parts_head.push(text!(";"));
-                parts_head.push(line!());
-                if let Some(init) = &self.test {
-                    parts_head.push(init.format(p));
-                }
-                parts_head.push(text!(";"));
-                parts_head.push(line!());
-                if let Some(init) = &self.update {
-                    parts_head.push(init.format(p));
-                }
-                indent!(p, parts_head)
-            };
+            let mut init_test_update_parts = Vec::new_in(p.allocator);
+            init_test_update_parts.push(softline!());
+            if let Some(init) = &self.init {
+                init_test_update_parts.push(match init {
+                    ForStatementInit::VariableDeclaration(v) => v.format(p),
+                    match_expression!(ForStatementInit) => init.to_expression().format(p),
+                });
+            }
+            init_test_update_parts.push(text!(";"));
+            init_test_update_parts.push(line!());
+            if let Some(init) = &self.test {
+                init_test_update_parts.push(init.format(p));
+            }
+            init_test_update_parts.push(text!(";"));
+            init_test_update_parts.push(line!());
+            if let Some(init) = &self.update {
+                init_test_update_parts.push(init.format(p));
+            }
 
-            group!(p, [text!("for ("), group!(p, [parts_head, softline!()]), text!(")"), body])
+            group!(
+                p,
+                [
+                    text!("for ("),
+                    group!(p, [indent!(p, init_test_update_parts), softline!()]),
+                    text!(")"),
+                    body_doc
+                ]
+            )
         })
-    }
-}
-
-impl<'a> Format<'a> for ForStatementInit<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self {
-            ForStatementInit::VariableDeclaration(v) => v.format(p),
-            match_expression!(ForStatementInit) => self.to_expression().format(p),
-        }
     }
 }
 
@@ -353,17 +346,15 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
         wrap!(p, self, SwitchStatement, {
             let mut parts = Vec::new_in(p.allocator);
 
-            let mut header_parts = Vec::new_in(p.allocator);
-
-            header_parts.push(text!("switch ("));
-
-            let discriminant_doc = self.discriminant.format(p);
-            header_parts.push(indent!(p, [softline!(), discriminant_doc]));
-
-            header_parts.push(softline!());
-            header_parts.push(text!(")"));
-
-            parts.push(group!(p, header_parts));
+            parts.push(group!(
+                p,
+                [
+                    text!("switch ("),
+                    indent!(p, [softline!(), self.discriminant.format(p)]),
+                    softline!(),
+                    text!(")"),
+                ]
+            ));
 
             parts.push(text!(" {"));
 
@@ -397,38 +388,16 @@ impl<'a> Format<'a> for SwitchCase<'a> {
             parts.push(text!("default:"));
         }
 
-        let consequent: Vec<_> = Vec::from_iter_in(
-            self.consequent.iter().filter(|c| !matches!(c, Statement::EmptyStatement(_))),
-            p.allocator,
-        );
-        let len = consequent.len();
-        let is_only_one_block_statement =
-            len == 1 && matches!(self.consequent[0], Statement::BlockStatement(_));
+        let len =
+            self.consequent.iter().filter(|c| !matches!(c, Statement::EmptyStatement(_))).count();
+        if len != 0 {
+            let consequent_parts =
+                statement::print_statement_sequence(p, self.consequent.as_slice());
 
-        let mut consequent_parts = Vec::new_in(p.allocator);
-        for i in 0..len {
-            let stmt = &consequent[i];
-
-            if i != 0 && matches!(stmt, Statement::BreakStatement(_)) {
-                let last_stmt = &consequent[i - 1];
-                if p.is_next_line_empty(last_stmt.span()) {
-                    consequent_parts.push(hardline!(p));
-                }
-            }
-
-            if is_only_one_block_statement {
-                consequent_parts.push(text!(" "));
+            if len == 1 && matches!(self.consequent[0], Statement::BlockStatement(_)) {
+                parts.push(array!(p, [text!(" "), array!(p, consequent_parts)]));
             } else {
-                consequent_parts.push(hardline!(p));
-            }
-            consequent_parts.push(stmt.format(p));
-        }
-
-        if !consequent_parts.is_empty() {
-            if is_only_one_block_statement {
-                parts.extend(consequent_parts);
-            } else {
-                parts.push(indent!(p, [group!(p, consequent_parts)]));
+                parts.push(indent!(p, [hardline!(p), array!(p, consequent_parts)]));
             }
         }
 
@@ -484,17 +453,14 @@ impl<'a> Format<'a> for TryStatement<'a> {
 impl<'a> Format<'a> for CatchClause<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, CatchClause, {
-            let mut parts = Vec::new_in(p.allocator);
-
-            parts.push(text!("catch "));
             if let Some(param) = &self.param {
-                parts.push(text!("("));
-                parts.push(param.pattern.format(p));
-                parts.push(text!(") "));
+                return array!(
+                    p,
+                    [text!("catch ("), param.pattern.format(p), text!(") "), self.body.format(p)]
+                );
             }
-            parts.push(self.body.format(p));
 
-            array!(p, parts)
+            array!(p, [text!("catch "), self.body.format(p)])
         })
     }
 }
@@ -618,7 +584,16 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
 
 impl<'a> Format<'a> for VariableDeclarator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, VariableDeclarator, { assignment::print_variable_declarator(p, self) })
+        wrap!(p, self, VariableDeclarator, {
+            let left_doc = self.id.format(p);
+            assignment::print_assignment(
+                p,
+                assignment::AssignmentLikeNode::VariableDeclarator(self),
+                left_doc,
+                text!(" ="),
+                self.init.as_ref(),
+            )
+        })
     }
 }
 
@@ -736,18 +711,11 @@ impl<'a> Format<'a> for WithClause<'a> {
 
 impl<'a> Format<'a> for ImportAttribute<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let key_doc = self.key.format(p);
-        let value_doc = self.value.format(p);
-        array!(p, [key_doc, text!(": "), value_doc])
-    }
-}
-
-impl<'a> Format<'a> for ImportAttributeKey<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self {
-            Self::Identifier(ident) => ident.format(p),
-            Self::StringLiteral(literal) => literal.format(p),
-        }
+        let key_doc = match &self.key {
+            ImportAttributeKey::Identifier(ident) => ident.format(p),
+            ImportAttributeKey::StringLiteral(literal) => literal.format(p),
+        };
+        group!(p, [group!(p, [key_doc]), text!(": "), self.value.format(p)])
     }
 }
 
@@ -805,16 +773,13 @@ impl<'a> Format<'a> for ExportAllDeclaration<'a> {
 
 impl<'a> Format<'a> for ExportDefaultDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        self.declaration.format(p)
-    }
-}
-impl<'a> Format<'a> for ExportDefaultDeclarationKind<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self {
-            match_expression!(Self) => self.to_expression().format(p),
-            Self::FunctionDeclaration(decl) => decl.format(p),
-            Self::ClassDeclaration(decl) => decl.format(p),
-            Self::TSInterfaceDeclaration(decl) => decl.format(p),
+        match &self.declaration {
+            match_expression!(ExportDefaultDeclarationKind) => {
+                self.declaration.to_expression().format(p)
+            }
+            ExportDefaultDeclarationKind::FunctionDeclaration(decl) => decl.format(p),
+            ExportDefaultDeclarationKind::ClassDeclaration(decl) => decl.format(p),
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl) => decl.format(p),
         }
     }
 }
@@ -1225,11 +1190,10 @@ impl<'a> Format<'a> for YieldExpression<'a> {
 impl<'a> Format<'a> for UpdateExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, UpdateExpression, {
+            let argument_doc = self.argument.format(p);
             if self.prefix {
-                let argument_doc = self.argument.format(p);
                 array!(p, [text!(self.operator.as_str()), argument_doc])
             } else {
-                let argument_doc = self.argument.format(p);
                 array!(p, [argument_doc, text!(self.operator.as_str())])
             }
         })
@@ -1305,7 +1269,16 @@ impl<'a> Format<'a> for ConditionalExpression<'a> {
 
 impl<'a> Format<'a> for AssignmentExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, AssignmentExpression, { assignment::print_assignment_expression(p, self) })
+        wrap!(p, self, AssignmentExpression, {
+            let left_doc = self.left.format(p);
+            assignment::print_assignment(
+                p,
+                assignment::AssignmentLikeNode::AssignmentExpression(self),
+                left_doc,
+                array!(p, [text!(" "), text!(self.operator.as_str())]),
+                Some(&self.right),
+            )
+        })
     }
 }
 
@@ -1495,17 +1468,15 @@ impl<'a> Format<'a> for AwaitExpression<'a> {
 
 impl<'a> Format<'a> for ChainExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, ChainExpression, { self.expression.format(p) })
-    }
-}
-
-impl<'a> Format<'a> for ChainElement<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self {
-            Self::CallExpression(expr) => expr.format(p),
-            Self::TSNonNullExpression(expr) => expr.format(p),
-            match_member_expression!(Self) => self.to_member_expression().format(p),
-        }
+        wrap!(p, self, ChainExpression, {
+            match &self.expression {
+                ChainElement::CallExpression(expr) => expr.format(p),
+                ChainElement::TSNonNullExpression(expr) => expr.format(p),
+                match_member_expression!(ChainElement) => {
+                    self.expression.to_member_expression().format(p)
+                }
+            }
+        })
     }
 }
 
@@ -1522,9 +1493,7 @@ impl<'a> Format<'a> for NewExpression<'a> {
 
 impl<'a> Format<'a> for MetaProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let meta_doc = self.meta.format(p);
-        let property_doc = self.property.format(p);
-        array!(p, [meta_doc, text!("."), property_doc])
+        array!(p, [self.meta.format(p), text!("."), self.property.format(p)])
     }
 }
 
@@ -1555,8 +1524,7 @@ impl<'a> Format<'a> for ClassElement<'a> {
 impl<'a> Format<'a> for StaticBlock<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, StaticBlock, {
-            let block_doc = block::print_block(p, &self.body, None);
-            array!(p, [text!("static "), block_doc])
+            array!(p, [text!("static "), block::print_block(p, &self.body, None)])
         })
     }
 }
