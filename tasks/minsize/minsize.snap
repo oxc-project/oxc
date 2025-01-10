@@ -13,7 +13,7 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 555.77 kB  | 273.21 kB  | 270.13 kB  | 90.92 kB   | 90.80 kB   | d3.js     
 
-1.01 MB    | 460.18 kB  | 458.89 kB  | 126.76 kB  | 126.71 kB  | bundle.min.js
+1.01 MB    | 460.18 kB  | 458.89 kB  | 126.77 kB  | 126.71 kB  | bundle.min.js
 
 1.25 MB    | 652.85 kB  | 646.76 kB  | 163.54 kB  | 163.73 kB  | three.js  
 
@@ -23,5 +23,5 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 6.69 MB    | 2.32 MB    | 2.31 MB    | 492.64 kB  | 488.28 kB  | antd.js   
 
-10.95 MB   | 3.49 MB    | 3.49 MB    | 907.46 kB  | 915.50 kB  | typescript.js
+10.95 MB   | 3.49 MB    | 3.49 MB    | 907.45 kB  | 915.50 kB  | typescript.js
 
