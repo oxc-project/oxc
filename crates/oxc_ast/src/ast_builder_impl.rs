@@ -194,6 +194,12 @@ impl<'a> AstBuilder<'a> {
         mem::replace(function, empty_function)
     }
 
+    /// Move a class element out by replacing it with an empty [`ClassElement::StaticBlock`].
+    pub fn move_class_element(self, element: &mut ClassElement<'a>) -> ClassElement<'a> {
+        let block = self.class_element_static_block(SPAN, self.vec());
+        mem::replace(element, block)
+    }
+
     /// Move an array element out by replacing it with an [`ArrayExpressionElement::Elision`].
     pub fn move_array_expression_element(
         self,
