@@ -13,6 +13,25 @@ fn test_same(source_text: &str) {
 
 // Oxc Integration Tests
 
+#[test]
+fn integration() {
+    test(
+        "function writeInteger(int) {
+          if (int >= 0)
+            if (int <= 0xffffffff)
+              return this.u32(int);
+            else if (int > -0x80000000)
+              return this.n32(int);
+        }",
+        "function writeInteger(int) {
+          if (int >= 0) {
+            if (int <= 4294967295) return this.u32(int);
+            if (int > -2147483648) return this.n32(int);
+          }
+        }",
+    );
+}
+
 #[test] // https://github.com/oxc-project/oxc/issues/4341
 fn tagged_template() {
     test_same("(1, o.f)()");
