@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.45.0] - 2025-01-11
+
+- 7f69561 ast: [**BREAKING**] `oxc_ast` do not export `BigUint` (#8428) (overlookmotel)
+
+- d8b27af ast: [**BREAKING**] No unneccesary trailing underscores on `AstBuilder` method names (#8283) (overlookmotel)
+
+- 5106088 ast: [**BREAKING**] Remove `FromIn<Expression> for Statement` (#8280) (overlookmotel)
+
+### Features
+
+- 3212bcd ast_tools: Ignore `raw` field of `NumericLiteral` and `StringLiteral` in `ContentEq` (#8417) (Boshen)
+- 8d52cd0 minifier: Merge assign expression in conditional expression (#8345) (sapphi-red)
+- e84f267 minifier: Compress more property keys (#8253) (Boshen)
+- ccdc039 minifier: Always put literals on the rhs of equal op `1==x` => `x==1` (#8240) (Boshen)
+- 213364a minifier: Minimize `if (x) if (y) z` -> `if (x && y) z` (#8136) (Boshen)
+- fef0b25 minifier: Collapse `var` into for loop initializer (#8119) (Boshen)
+
+### Bug Fixes
+
+- 97a7992 ast: Fix `ContentEq` and `ContentHash` impls for literal types (#8426) (overlookmotel)
+
+### Documentation
+
+- c8e4843 ast: Fix doc comment (#8286) (overlookmotel)
+
+### Refactor
+
+- b29655f ast: Rearrange impls for literal types in same order as they are defined (#8425) (overlookmotel)
+- 0db2a22 ast: `AstBuilder` enum builder methods use `alloc_*` methods (#8281) (overlookmotel)
+- aea9551 ast: Simplify `get_identifier_reference` of `TSType` and `TSTypeName` (#8273) (Dunqing)
+
 ## [0.44.0] - 2024-12-25
 
 - ad2a620 ast: [**BREAKING**] Add missing `AssignmentTargetProperty::computed` (#8097) (Boshen)
