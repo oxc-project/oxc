@@ -87,10 +87,6 @@ fn derive_struct(def: &StructDef) -> (&str, TokenStream) {
             .iter()
             .filter(|field| {
                 let Some(name) = field.name.as_ref() else { return false };
-                if name == "raw" && matches!(def.name.as_str(), "NumericLiteral" | "StringLiteral")
-                {
-                    return false;
-                }
                 !IGNORE_FIELDS
                     .iter()
                     .any(|it| name == it.0 && field.typ.name().inner_name() == it.1)
