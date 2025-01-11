@@ -143,9 +143,12 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
                         true
                     }
                 }
-                Statement::TSExportAssignment(_) | Statement::TSNamespaceExportDeclaration(_) => {
-                    false
-                }
+                // `import Binding = X.Y.Z`
+                // `Binding` can be referenced as a value or a type, but here we already know it only as a type
+                // See `TypeScriptModule::transform_ts_import_equals`
+                Statement::TSTypeAliasDeclaration(_)
+                | Statement::TSExportAssignment(_)
+                | Statement::TSNamespaceExportDeclaration(_) => false,
                 _ => return true,
             };
 

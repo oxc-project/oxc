@@ -57,7 +57,7 @@ impl<'a, 'ctx> TypeScript<'a, 'ctx> {
             annotations: TypeScriptAnnotations::new(options, ctx),
             r#enum: TypeScriptEnum::new(),
             namespace: TypeScriptNamespace::new(options, ctx),
-            module: TypeScriptModule::new(ctx),
+            module: TypeScriptModule::new(options.only_remove_type_imports, ctx),
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
         }
     }

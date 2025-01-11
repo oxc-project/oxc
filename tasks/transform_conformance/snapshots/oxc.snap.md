@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 126/144
+Passed: 126/145
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -47,7 +47,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (2/10)
+# babel-plugin-transform-typescript (2/11)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -158,6 +158,12 @@ rebuilt        : SymbolId(5) "Name"
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+
+* preserve-import-=/input.js
+Missing SymbolId: "Foo"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
 
 * redeclarations/input.ts
 Bindings mismatch:

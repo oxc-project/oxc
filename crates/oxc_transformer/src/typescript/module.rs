@@ -1,4 +1,5 @@
 use oxc_ast::{ast::*, NONE};
+use oxc_semantic::Reference;
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -7,12 +8,14 @@ use super::diagnostics;
 use crate::TransformCtx;
 
 pub struct TypeScriptModule<'a, 'ctx> {
+    /// <https://babeljs.io/docs/babel-plugin-transform-typescript#onlyremovetypeimports>
+    only_remove_type_imports: bool,
     ctx: &'ctx TransformCtx<'a>,
 }
 
 impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+    pub fn new(only_remove_type_imports: bool, ctx: &'ctx TransformCtx<'a>) -> Self {
+        Self { only_remove_type_imports, ctx }
     }
 }
 
@@ -37,7 +40,9 @@ impl<'a> Traverse<'a> for TypeScriptModule<'a, '_> {
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Declaration::TSImportEqualsDeclaration(import_equals) = decl {
             if import_equals.import_kind.is_value() {
-                *decl = self.transform_ts_import_equals(import_equals, ctx);
+                if let Some(new_decl) = self.transform_ts_import_equals(import_equals, ctx) {
+                    *decl = new_decl;
+                }
             }
         }
     }
@@ -88,7 +93,29 @@ impl<'a> TypeScriptModule<'a, '_> {
         &self,
         decl: &mut TSImportEqualsDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Declaration<'a> {
+    ) -> Option<Declaration<'a>> {
+        if !self.only_remove_type_imports
+            && !ctx.parent().is_export_named_declaration()
+            && ctx.symbols().get_resolved_references(decl.id.symbol_id()).all(Reference::is_type)
+        {
+            // No value reference, we will remove this declaration in `TypeScriptAnnotations`
+            match &mut decl.module_reference {
+                module_reference @ match_ts_type_name!(TSModuleReference) => {
+                    let ident = module_reference.to_ts_type_name().get_identifier_reference();
+                    let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id());
+                    // The binding of TSImportEqualsDeclaration has treated as a type reference,
+                    // so an identifier reference that it referenced also should be treated as a type reference.
+                    // `import TypeBinding = X.Y.Z`
+                    //                       ^ `X` should be treated as a type reference.
+                    let flags = reference.flags_mut();
+                    debug_assert_eq!(*flags, ReferenceFlags::Read);
+                    *flags = ReferenceFlags::Type;
+                }
+                TSModuleReference::ExternalModuleReference(_) => {}
+            }
+            return None;
+        }
+
         let binding_pattern_kind =
             ctx.ast.binding_pattern_kind_binding_identifier(SPAN, &decl.id.name);
         let binding = ctx.ast.binding_pattern(binding_pattern_kind, NONE, false);
@@ -123,7 +150,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         let decls =
             ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, binding, Some(init), false));
 
-        ctx.ast.declaration_variable(SPAN, kind, decls, false)
+        Some(ctx.ast.declaration_variable(SPAN, kind, decls, false))
     }
 
     #[allow(clippy::only_used_in_recursion)]
