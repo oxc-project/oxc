@@ -979,7 +979,8 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    /// `new Error()` -> `Error()`
+    /// `new Error()` -> `Error()` (also for NativeErrors)
+    /// `new AggregateError()` -> `AggregateError()`
     /// `new Function()` -> `Function()`
     /// `new RegExp()` -> `RegExp()`
     fn try_fold_new_expression(
@@ -988,14 +989,17 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     ) -> Option<Expression<'a>> {
         let Expression::Identifier(ident) = &e.callee else { return None };
         let name = ident.name.as_str();
-        if !matches!(name, "Error" | "Function" | "RegExp") {
+        if !matches!(name, "Error" | "AggregateError" | "Function" | "RegExp")
+            && !Self::is_native_error_name(name)
+        {
             return None;
         }
         if !ctx.is_global_reference(ident) {
             return None;
         }
         if match name {
-            "Error" | "Function" => true,
+            "Error" | "AggregateError" | "Function" => true,
+            _ if Self::is_native_error_name(name) => true,
             "RegExp" => {
                 let arguments_len = e.arguments.len();
                 arguments_len == 0
@@ -1017,6 +1021,21 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         } else {
             None
         }
+    }
+
+    /// Whether the name matches any native error name.
+    ///
+    /// See <https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-native-error-types-used-in-this-standard> for the list of native errors.
+    fn is_native_error_name(name: &str) -> bool {
+        matches!(
+            name,
+            "EvalError"
+                | "RangeError"
+                | "ReferenceError"
+                | "SyntaxError"
+                | "TypeError"
+                | "URIError"
+        )
     }
 
     /// `typeof foo === 'number'` -> `typeof foo == 'number'`
@@ -1419,6 +1438,13 @@ mod test {
         test("new Error('a')", "Error('a')");
         test("new Error('a', { cause: b })", "Error('a', { cause: b })");
         test_same("var Error; new Error()");
+        test("new EvalError()", "EvalError()");
+        test("new RangeError()", "RangeError()");
+        test("new ReferenceError()", "ReferenceError()");
+        test("new SyntaxError()", "SyntaxError()");
+        test("new TypeError()", "TypeError()");
+        test("new URIError()", "URIError()");
+        test("new AggregateError()", "AggregateError()");
 
         test("new Function()", "Function()");
         test(
