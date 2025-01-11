@@ -149,7 +149,8 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
                 Self::try_compress_assignment_to_update_expression(e, ctx)
             }
             Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx)
-                .or_else(|| self.try_compress_logical_expression_to_assignment_expression(e, ctx)),
+                .or_else(|| self.try_compress_logical_expression_to_assignment_expression(e, ctx))
+                .or_else(|| Self::try_rotate_logical_expression(e, ctx)),
             Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
             Expression::BinaryExpression(e) => Self::try_fold_loose_equals_undefined(e, ctx)
                 .or_else(|| Self::try_compress_typeof_undefined(e, ctx)),
@@ -501,6 +502,38 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         assignment_expr.span = expr.span;
         assignment_expr.operator = new_op;
         Some(ctx.ast.move_expression(&mut expr.right))
+    }
+
+    /// `a || (b || c);` -> `(a || b) || c;`
+    fn try_rotate_logical_expression(
+        expr: &mut LogicalExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        let Expression::LogicalExpression(right) = &mut expr.right else { return None };
+        if right.operator != expr.operator {
+            return None;
+        }
+
+        let mut new_left = ctx.ast.expression_logical(
+            expr.span,
+            ctx.ast.move_expression(&mut expr.left),
+            expr.operator,
+            ctx.ast.move_expression(&mut right.left),
+        );
+
+        {
+            let Expression::LogicalExpression(new_left2) = &mut new_left else { unreachable!() };
+            if let Some(expr) = Self::try_rotate_logical_expression(new_left2, ctx) {
+                new_left = expr;
+            }
+        }
+
+        Some(ctx.ast.expression_logical(
+            expr.span,
+            new_left,
+            expr.operator,
+            ctx.ast.move_expression(&mut right.right),
+        ))
     }
 
     /// Returns `true` if the assignment target and expression have no side effect for *evaluation* and points to the same reference.

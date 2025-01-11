@@ -515,7 +515,7 @@ impl<'a> PeepholeMinimizeConditions {
             }
         }
 
-        // `a ? c : b && c` -> `(a || b) && c``
+        // `a ? c : b && c` -> `(a || b) && c`
         if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate {
             if logical_expr.operator == LogicalOperator::And
                 && logical_expr.right.content_eq(&expr.consequent)

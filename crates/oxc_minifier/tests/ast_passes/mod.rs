@@ -50,6 +50,17 @@ fn integration() {
         return console.log(e || JSON.stringify(os));
     });"#,
     );
+
+    test_idempotent(
+        "if (!(foo instanceof Var) || open) {
+          arg0 = null;
+        } else if (que || !(foo && bar)) {
+          if (baz()) arg0 = null;
+        }",
+        "(!(foo instanceof Var) || open || (que || !(foo && bar)) && baz()) && (arg0 = null);",
+    );
+
+    test_same("a && (b && (c && (d && (e && (f && (g && (h && i && j && k && l && m && n && o && p && q && r && s && t && u && v && w && x && y && z)))))))");
 }
 
 #[test] // https://github.com/oxc-project/oxc/issues/4341
