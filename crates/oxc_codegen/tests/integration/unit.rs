@@ -39,11 +39,6 @@ fn expr() {
     test("delete 2e308", "delete (0, Infinity);\n");
     test_minify("delete 2e308", "delete(1/0);");
 
-    test_minify(
-        r#";'eval("\'\\vstr\\ving\\v\'") === "\\vstr\\ving\\v"'"#,
-        r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
-    );
-
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
 }
 
@@ -89,6 +84,38 @@ fn for_stmt() {
     test(
         "for (var a = 1 || (2 in {}) in { x: 1 }) count++;",
         "for (var a = 1 || (2 in {}) in { x: 1 }) count++;\n",
+    );
+}
+
+#[test]
+fn do_while_stmt() {
+    test("do ; while (true)", "do;\nwhile (true);\n");
+    test_minify("do ; while (true)", "do;while(true);");
+    test_minify("do break; while (true)", "do break;while(true);");
+    test_minify("do continue; while (true)", "do continue;while(true);");
+    test_minify("do debugger; while (true)", "do debugger;while(true);");
+    test_minify("do for(x in y); while (true)", "do for(x in y);while(true);");
+    test_minify("do for(x of y); while (true)", "do for(x of y);while(true);");
+    test_minify("do for(;;); while (true)", "do for(;;);while(true);");
+    test_minify("do if (test) {} while (true)", "do if(test){}while(true);");
+    test_minify("do foo:; while (true)", "do foo:;while(true);");
+    test_minify("do return; while (true)", "do return;while(true);");
+    test_minify("do switch(test){} while (true)", "do switch(test){}while(true);");
+    test_minify("do throw x; while (true)", "do throw x;while(true);");
+    test_minify("do with(x); while (true)", "do with(x);while(true);");
+    test_minify("do try{} catch{} while (true)", "do try{}catch{}while(true);");
+    test_minify("do do ; while(true) while (true)", "do do;while(true);while(true);");
+}
+
+#[test]
+fn if_stmt() {
+    test(
+        "function f() { if (foo) return foo; else if (bar) return foo; }",
+        "function f() {\n\tif (foo) return foo;\n\telse if (bar) return foo;\n}\n",
+    );
+    test_minify(
+        "function f() { if (foo) return foo; else if (bar) return foo; }",
+        "function f(){if(foo)return foo;else if(bar)return foo}",
     );
 }
 
@@ -375,6 +402,9 @@ fn big_int() {
     test("0xfabn", "0xfabn;\n");
     test("0xaef_en;", "0xaefen;\n");
     test("0xaefen;", "0xaefen;\n");
+
+    test("return 1n", "return 1n;\n");
+    test_minify("return 1n", "return 1n;");
 }
 
 #[test]
@@ -425,4 +455,13 @@ fn directive() {
 fn getter_setter() {
     test_minify("({ get [foo]() {} })", "({get[foo](){}});");
     test_minify("({ set [foo]() {} })", "({set[foo](){}});");
+}
+
+#[test]
+fn string() {
+    test_minify(
+        r#";'eval("\'\\vstr\\ving\\v\'") === "\\vstr\\ving\\v"'"#,
+        r#";`eval("'\\vstr\\ving\\v'") === "\\vstr\\ving\\v"`;"#,
+    );
+    test_minify(r#"foo("\n")"#, "foo(`\n`);");
 }

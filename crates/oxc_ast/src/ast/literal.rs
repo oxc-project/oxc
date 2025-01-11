@@ -33,7 +33,7 @@ pub struct BooleanLiteral {
 /// <https://tc39.es/ecma262/#sec-null-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
 #[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, raw: \"null\" | null")]
 pub struct NullLiteral {
     /// Node location in source code
@@ -45,7 +45,7 @@ pub struct NullLiteral {
 /// <https://tc39.es/ecma262/#sec-literals-numeric-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
 #[estree(type = "Literal", via = crate::serialize::ESTreeLiteral)]
 pub struct NumericLiteral<'a> {
     /// Node location in source code
@@ -66,7 +66,7 @@ pub struct NumericLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-string-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
 #[estree(type = "Literal", via = crate::serialize::ESTreeLiteral)]
 pub struct StringLiteral<'a> {
     /// Node location in source code
@@ -85,7 +85,7 @@ pub struct StringLiteral<'a> {
 /// BigInt literal
 #[ast(visit)]
 #[derive(Debug, Clone)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
 #[estree(type = "Literal", via = crate::serialize::ESTreeLiteral, add_ts = "value: null, bigint: string")]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
@@ -103,7 +103,7 @@ pub struct BigIntLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-regular-expression-literals>
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ESTree)]
 #[estree(
 	type = "Literal",
 	via = crate::serialize::ESTreeLiteral,
@@ -141,7 +141,7 @@ pub struct RegExp<'a> {
 /// This pattern may or may not be parsed.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, ESTree)]
 pub enum RegExpPattern<'a> {
     /// Unparsed pattern. Contains string slice of the pattern.
     /// Pattern was not parsed, so may be valid or invalid.

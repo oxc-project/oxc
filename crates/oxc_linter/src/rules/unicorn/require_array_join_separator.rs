@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// foo.join(",")
     /// ```
     RequireArrayJoinSeparator,
+    unicorn,
     style,
     conditional_fix
 );
@@ -180,7 +181,7 @@ fn test() {
         (r"foo?.join()", r#"foo?.join(",")"#),
     ];
 
-    Tester::new(RequireArrayJoinSeparator::NAME, RequireArrayJoinSeparator::CATEGORY, pass, fail)
+    Tester::new(RequireArrayJoinSeparator::NAME, RequireArrayJoinSeparator::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

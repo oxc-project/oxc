@@ -50,7 +50,7 @@ export default function generateWalkFunctionsCode(types) {
       ctx: &mut TraverseCtx<'a>
     ) {
       traverser.enter_statements(&mut *stmts, ctx);
-      for stmt in (*stmts).iter_mut() {
+      for stmt in &mut *stmts {
         walk_statement(traverser, stmt, ctx);
       }
       traverser.exit_statements(&mut *stmts, ctx);
@@ -209,17 +209,18 @@ function generateWalkForStruct(type, types) {
         walkVecCode = `walk_statements(traverser, ${fieldCode}, ctx);`;
       } else {
         let walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`,
-          iterModifier = '';
+          iteratorCode = '';
         if (field.wrappers.length === 2 && field.wrappers[1] === 'Option') {
-          iterModifier = '.flatten()';
+          iteratorCode = `(*(${fieldCode})).iter_mut().flatten()`;
         } else {
           assert(
             field.wrappers.length === 1,
             `Cannot handle struct field with type ${field.type}`,
           );
+          iteratorCode = `&mut *(${fieldCode})`;
         }
         walkVecCode = `
-          for item in (*(${fieldCode})).iter_mut()${iterModifier} {
+          for item in ${iteratorCode} {
             ${walkCode}
           }
         `.trim();

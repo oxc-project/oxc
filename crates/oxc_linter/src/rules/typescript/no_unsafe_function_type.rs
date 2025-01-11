@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// identity = value => value;
     /// ```
     NoUnsafeFunctionType,
+    typescript,
     pedantic,
 );
 
@@ -75,6 +76,10 @@ impl Rule for NoUnsafeFunctionType {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 
@@ -117,6 +122,6 @@ fn test() {
 			      ",
     ];
 
-    Tester::new(NoUnsafeFunctionType::NAME, NoUnsafeFunctionType::CATEGORY, pass, fail)
+    Tester::new(NoUnsafeFunctionType::NAME, NoUnsafeFunctionType::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

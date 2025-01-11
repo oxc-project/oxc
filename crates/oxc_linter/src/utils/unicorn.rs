@@ -274,7 +274,16 @@ pub fn is_same_member_expression(
         (Some(_), None) | (None, Some(_)) => {
             return false;
         }
-        _ => {}
+        (None, None) => {
+            if let (
+                MemberExpression::PrivateFieldExpression(left),
+                MemberExpression::PrivateFieldExpression(right),
+            ) = (left, right)
+            {
+                return left.field.name == right.field.name
+                    && is_same_expression(&left.object, &right.object, ctx);
+            }
+        }
     }
 
     if let (

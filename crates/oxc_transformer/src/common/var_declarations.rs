@@ -40,7 +40,7 @@ impl<'a, 'ctx> VarDeclarations<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for VarDeclarations<'a, 'ctx> {
+impl<'a> Traverse<'a> for VarDeclarations<'a, '_> {
     fn enter_statements(
         &mut self,
         _stmts: &mut ArenaVec<'a, Statement<'a>>,

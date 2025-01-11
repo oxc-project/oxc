@@ -1477,7 +1477,6 @@ pub struct AssignmentPattern<'a> {
     pub right: Expression<'a>,
 }
 
-// See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
@@ -1499,7 +1498,6 @@ pub struct BindingProperty<'a> {
     pub computed: bool,
 }
 
-// See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
@@ -1644,7 +1642,6 @@ pub enum FunctionType {
 }
 
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
-// See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]

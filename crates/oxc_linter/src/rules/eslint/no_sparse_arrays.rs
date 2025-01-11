@@ -22,6 +22,7 @@ declare_oxc_lint!(
     /// var colors = [ "red",, "blue" ];
     /// ```
     NoSparseArrays,
+    eslint,
     correctness
 );
 
@@ -96,5 +97,5 @@ fn test() {
         , , , , , , , , , , , , , , , , , , ,  2];",
     ];
 
-    Tester::new(NoSparseArrays::NAME, NoSparseArrays::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoSparseArrays::NAME, NoSparseArrays::PLUGIN, pass, fail).test_and_snapshot();
 }

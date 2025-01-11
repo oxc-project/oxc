@@ -98,6 +98,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoDuplicateHooks,
+    jest,
     style,
 );
 
@@ -554,7 +555,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoDuplicateHooks::NAME, NoDuplicateHooks::CATEGORY, pass, fail)
+    Tester::new(NoDuplicateHooks::NAME, NoDuplicateHooks::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

@@ -50,6 +50,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoMisusedNew,
+    typescript,
     correctness
 );
 
@@ -113,6 +114,10 @@ impl Rule for NoMisusedNew {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 #[test]
@@ -144,5 +149,5 @@ fn test() {
         "interface I { constructor(): '';}",
     ];
 
-    Tester::new(NoMisusedNew::NAME, NoMisusedNew::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoMisusedNew::NAME, NoMisusedNew::PLUGIN, pass, fail).test_and_snapshot();
 }

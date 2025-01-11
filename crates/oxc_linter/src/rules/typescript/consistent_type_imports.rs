@@ -102,6 +102,7 @@ declare_oxc_lint!(
     /// type S = import("Foo");
     /// ```
     ConsistentTypeImports,
+    typescript,
     nursery,
     conditional_fix
 );
@@ -1517,6 +1518,14 @@ fn test() {
         //   ",
         //     None,
         // ),
+        (
+            "import { Bar } from './bar';
+export type { Baz } from './baz';
+
+export class Foo extends Bar {}
+",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -3363,7 +3372,7 @@ fn test() {
         .map(|(a, b, c)| (remove_common_prefix_space(a), remove_common_prefix_space(b), c))
         .collect::<Vec<_>>();
 
-    Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::CATEGORY, pass, fail)
+    Tester::new(ConsistentTypeImports::NAME, ConsistentTypeImports::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

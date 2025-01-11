@@ -1,4 +1,3 @@
-#![allow(clippy::needless_lifetimes)]
 //! Transformer / Transpiler
 //!
 //! References:
@@ -156,7 +155,7 @@ struct TransformerImpl<'a, 'ctx> {
     common: Common<'a, 'ctx>,
 }
 
-impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
+impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_program(program, ctx);
@@ -482,18 +481,30 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         // which can cause issues with the `() => x;` case, as it only allows a single statement.
         // To address this, we wrap the last statement in a return statement and set the expression to false.
         // This transforms the arrow function into the form `() => { return x; };`.
-        if arrow.expression && arrow.body.statements.len() > 1 {
-            let Statement::ExpressionStatement(statement) = arrow.body.statements.pop().unwrap()
-            else {
-                unreachable!(
-                    "The last statement in an ArrowFunctionExpression should always be an ExpressionStatement."
-                )
-            };
-            arrow
-                .body
-                .statements
-                .push(ctx.ast.statement_return(SPAN, Some(statement.unbox().expression)));
+        let statements = &mut arrow.body.statements;
+        if arrow.expression && statements.len() > 1 {
             arrow.expression = false;
+
+            // Reverse looping to find the expression statement, because other plugins could
+            // insert new statements after the expression statement.
+            // `() => x;`
+            // ->
+            // ```
+            // () => {
+            //    var new_insert_variable;
+            //    return x;
+            //    function new_insert_function() {}
+            // };
+            // ```
+            for stmt in statements.iter_mut().rev() {
+                let Statement::ExpressionStatement(expr_stmt) = stmt else {
+                    continue;
+                };
+                let expression = Some(ctx.ast.move_expression(&mut expr_stmt.expression));
+                *stmt = ctx.ast.statement_return(SPAN, expression);
+                return;
+            }
+            unreachable!("At least one statement should be expression statement")
         }
     }
 

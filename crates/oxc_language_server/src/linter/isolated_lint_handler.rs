@@ -186,7 +186,7 @@ impl IsolatedLintHandler {
 
         path.extension()
             .and_then(std::ffi::OsStr::to_str)
-            .map_or(false, |ext| wanted_exts.contains(ext))
+            .is_some_and(|ext| wanted_exts.contains(ext))
     }
 
     fn wrap_diagnostics(

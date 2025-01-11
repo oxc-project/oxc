@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// x! ?? '';
     /// ```
     NoNonNullAssertedNullishCoalescing,
+    typescript,
     restriction,
 );
 
@@ -184,7 +185,7 @@ fn test() {
 
     Tester::new(
         NoNonNullAssertedNullishCoalescing::NAME,
-        NoNonNullAssertedNullishCoalescing::CATEGORY,
+        NoNonNullAssertedNullishCoalescing::PLUGIN,
         pass,
         fail,
     )

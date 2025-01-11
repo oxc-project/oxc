@@ -77,6 +77,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoNamespace,
+    import,
     style,
     pending  // TODO: fixer
 );
@@ -115,11 +116,9 @@ impl Rule for NoNamespace {
                             return;
                         }
 
-                        if self
-                            .ignore
-                            .iter()
-                            .any(|pattern| glob_match(pattern, source.trim_start_matches("./")))
-                        {
+                        if self.ignore.iter().any(|pattern| {
+                            glob_match(pattern.as_str(), source.trim_start_matches("./"))
+                        }) {
                             return;
                         }
 
@@ -158,7 +157,7 @@ fn test() {
         (r"import * as foo from './foo';", None),
     ];
 
-    Tester::new(NoNamespace::NAME, NoNamespace::CATEGORY, pass, fail)
+    Tester::new(NoNamespace::NAME, NoNamespace::PLUGIN, pass, fail)
         .change_rule_path("index.js")
         .with_import_plugin(true)
         .test_and_snapshot();

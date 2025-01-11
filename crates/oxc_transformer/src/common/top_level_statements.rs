@@ -33,7 +33,7 @@ impl<'a, 'ctx> TopLevelStatements<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for TopLevelStatements<'a, 'ctx> {
+impl<'a> Traverse<'a> for TopLevelStatements<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.ctx.top_level_statements.insert_into_program(program);
     }

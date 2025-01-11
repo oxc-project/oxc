@@ -35,6 +35,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoPageCustomFont,
+    nextjs,
     correctness,
 );
 
@@ -60,8 +61,8 @@ impl Rule for NoPageCustomFont {
             return;
         }
 
-        let in_document = ctx.file_path().file_name().map_or(false, |file_name| {
-            file_name.to_str().map_or(false, |file_name| file_name.starts_with("_document."))
+        let in_document = ctx.file_path().file_name().is_some_and(|file_name| {
+            file_name.to_str().is_some_and(|file_name| file_name.starts_with("_document."))
         });
         let span = ctx.nodes().parent_kind(node.id()).unwrap().span();
         let diagnostic = if in_document {
@@ -325,5 +326,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoPageCustomFont::NAME, NoPageCustomFont::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoPageCustomFont::NAME, NoPageCustomFont::PLUGIN, pass, fail).test_and_snapshot();
 }

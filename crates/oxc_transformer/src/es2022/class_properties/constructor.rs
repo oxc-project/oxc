@@ -138,7 +138,7 @@ pub(super) struct InstanceInitScopes {
     pub constructor_scope_id: Option<ScopeId>,
 }
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Replace `super()` call(s) in constructor, if required.
     ///
     /// Returns:
@@ -456,15 +456,15 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 }
 
 /// Visitor for transforming `super()` in class constructor params.
-struct ConstructorParamsSuperReplacer<'a, 'c> {
+struct ConstructorParamsSuperReplacer<'a, 'ctx> {
     /// Binding for `_super` function.
     /// Initially `None`. Binding is created if `super()` is found.
     super_binding: Option<BoundIdentifier<'a>>,
-    ctx: &'c mut TraverseCtx<'a>,
+    ctx: &'ctx mut TraverseCtx<'a>,
 }
 
-impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
-    fn new(ctx: &'c mut TraverseCtx<'a>) -> Self {
+impl<'a, 'ctx> ConstructorParamsSuperReplacer<'a, 'ctx> {
+    fn new(ctx: &'ctx mut TraverseCtx<'a>) -> Self {
         Self { super_binding: None, ctx }
     }
 
@@ -510,7 +510,7 @@ impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
     }
 }
 
-impl<'a, 'c> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, 'c> {
+impl<'a> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
     /// Replace `super()` with `_super.call(super())`.
     // `#[inline]` to make hot path for all other expressions as cheap as possible.
     #[inline]
@@ -574,7 +574,7 @@ impl<'a, 'c> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, 'c> {
     }
 }
 
-impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
+impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
     /// Wrap `super()` -> `_super.call(super())`
     fn wrap_super(&mut self, expr: &mut Expression<'a>, span: Span) {
         let super_binding = self.super_binding.get_or_insert_with(|| {
@@ -603,18 +603,18 @@ impl<'a, 'c> ConstructorParamsSuperReplacer<'a, 'c> {
 }
 
 /// Visitor for transforming `super()` in class constructor body.
-struct ConstructorBodySuperReplacer<'a, 'c> {
+struct ConstructorBodySuperReplacer<'a, 'ctx> {
     /// Scope of class constructor
     constructor_scope_id: ScopeId,
     /// Binding for `_super` function.
     /// Initially `None`. Binding is created if `super()` is found in position other than top-level,
     /// that requires a `_super` function.
     super_binding: Option<BoundIdentifier<'a>>,
-    ctx: &'c mut TraverseCtx<'a>,
+    ctx: &'ctx mut TraverseCtx<'a>,
 }
 
-impl<'a, 'c> ConstructorBodySuperReplacer<'a, 'c> {
-    fn new(constructor_scope_id: ScopeId, ctx: &'c mut TraverseCtx<'a>) -> Self {
+impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
+    fn new(constructor_scope_id: ScopeId, ctx: &'ctx mut TraverseCtx<'a>) -> Self {
         Self { constructor_scope_id, super_binding: None, ctx }
     }
 
@@ -695,7 +695,7 @@ impl<'a, 'c> ConstructorBodySuperReplacer<'a, 'c> {
     }
 }
 
-impl<'a, 'c> VisitMut<'a> for ConstructorBodySuperReplacer<'a, 'c> {
+impl<'a> VisitMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
     /// Replace `super()` with `_super()`.
     // `#[inline]` to make hot path for all other function calls as cheap as possible.
     #[inline]
@@ -752,7 +752,7 @@ impl<'a, 'c> VisitMut<'a> for ConstructorBodySuperReplacer<'a, 'c> {
     }
 }
 
-impl<'a, 'c> ConstructorBodySuperReplacer<'a, 'c> {
+impl<'a> ConstructorBodySuperReplacer<'a, '_> {
     /// Replace `super(arg1, arg2)` with `_super(arg1, arg2)`
     fn replace_super(&mut self, call_expr: &mut CallExpression<'a>, span: Span) {
         if self.super_binding.is_none() {
@@ -788,7 +788,7 @@ impl<'a, 'v> ConstructorSymbolRenamer<'a, 'v> {
     }
 }
 
-impl<'a, 'v> VisitMut<'a> for ConstructorSymbolRenamer<'a, 'v> {
+impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
     fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier<'a>) {
         let symbol_id = ident.symbol_id();
         if let Some(new_name) = self.clashing_symbols.get(&symbol_id) {

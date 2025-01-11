@@ -63,6 +63,7 @@ declare_oxc_lint!(
     /// <div />
     /// ```
     NoAutofocus,
+    jsx_a11y,
     correctness,
     fix
 );
@@ -176,7 +177,7 @@ fn test() {
         ("<div autoFocus id='lol'>foo</div>", "<div  id='lol'>foo</div>", None),
     ];
 
-    Tester::new(NoAutofocus::NAME, NoAutofocus::CATEGORY, pass, fail)
+    Tester::new(NoAutofocus::NAME, NoAutofocus::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

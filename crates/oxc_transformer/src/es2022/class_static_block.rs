@@ -87,7 +87,7 @@ impl<'a> Traverse<'a> for ClassStaticBlock {
             return;
         }
 
-        for element in body.body.iter_mut() {
+        for element in &mut body.body {
             if let ClassElement::StaticBlock(block) = element {
                 *element = Self::convert_block_to_private_field(block, &mut keys, ctx);
             }

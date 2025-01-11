@@ -141,6 +141,7 @@ declare_oxc_lint!(
     /// Foo.prototype.bar = function() {};
     /// ```
     FuncNames,
+    eslint,
     style,
     conditional_fix_suggestion
 );
@@ -449,8 +450,7 @@ impl Rule for FuncNames {
                             |name| {
                                 // if this name shadows a variable in the outer scope **and** that name is referenced
                                 // inside the function body, it is unsafe to add a name to this function
-                                if ctx.scopes().find_binding(func.scope_id(), &name).map_or(
-                                    false,
+                                if ctx.scopes().find_binding(func.scope_id(), &name).is_some_and(
                                     |shadowed_var| {
                                         ctx.semantic().symbol_references(shadowed_var).any(
                                             |reference| {
@@ -798,7 +798,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(FuncNames::NAME, FuncNames::CATEGORY, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(FuncNames::NAME, FuncNames::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

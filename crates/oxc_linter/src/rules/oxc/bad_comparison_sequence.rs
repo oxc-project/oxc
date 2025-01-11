@@ -30,6 +30,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     BadComparisonSequence,
+    oxc,
     correctness
 );
 
@@ -162,6 +163,6 @@ fn test() {
         ("if (a <= b <= c) { console.log('foo') }", None),
     ];
 
-    Tester::new(BadComparisonSequence::NAME, BadComparisonSequence::CATEGORY, pass, fail)
+    Tester::new(BadComparisonSequence::NAME, BadComparisonSequence::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// export async function getServurSideProps(){};
     /// ```
     NoTypos,
+    nextjs,
     correctness,
     pending
 );
@@ -298,5 +299,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoTypos::NAME, NoTypos::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoTypos::NAME, NoTypos::PLUGIN, pass, fail).test_and_snapshot();
 }

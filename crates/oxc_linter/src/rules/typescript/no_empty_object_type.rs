@@ -84,6 +84,7 @@ declare_oxc_lint!(
     /// type TypeWith = { property: boolean };
     /// ```
     NoEmptyObjectType,
+    typescript,
     restriction,
 );
 
@@ -139,6 +140,10 @@ impl Rule for NoEmptyObjectType {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 
@@ -451,6 +456,5 @@ fn test() {
         ("interface Base {}", Some(serde_json::json!([{ "allowWithName": "Props" }])), None, None),
     ];
 
-    Tester::new(NoEmptyObjectType::NAME, NoEmptyObjectType::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(NoEmptyObjectType::NAME, NoEmptyObjectType::PLUGIN, pass, fail).test_and_snapshot();
 }

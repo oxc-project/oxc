@@ -88,6 +88,7 @@ declare_oxc_lint!(
     /// ```
     ///
     First,
+    import,
     style,
     pending  // TODO: fixer
 );
@@ -229,7 +230,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(First::NAME, First::CATEGORY, pass, fail)
+    Tester::new(First::NAME, First::PLUGIN, pass, fail)
         .change_rule_path("index.ts")
         .with_import_plugin(true)
         .test_and_snapshot();

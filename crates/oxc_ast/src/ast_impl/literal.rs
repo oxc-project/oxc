@@ -30,13 +30,6 @@ impl fmt::Display for BooleanLiteral {
     }
 }
 
-impl ContentHash for NullLiteral {
-    #[inline]
-    fn content_hash<H: Hasher>(&self, state: &mut H) {
-        Hash::hash(&Option::<bool>::None, state);
-    }
-}
-
 impl fmt::Display for NullLiteral {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -82,10 +75,45 @@ impl NumericLiteral<'_> {
     }
 }
 
+impl ContentEq for NumericLiteral<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        // Note: `f64::content_eq` uses `==` equality.
+        // `f64::NAN != f64::NAN` and `0.0 == -0.0`, so we follow the same here.
+        // If we change that behavior, we should alter `content_hash` too.
+        ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
 impl ContentHash for NumericLiteral<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.base, state);
-        ContentHash::content_hash(&self.raw, state);
+        // `f64` does not implement `Hash` due to ambiguity over what is the right way to hash NaN
+        // and +/- zero values.
+        //
+        // # NaN
+        // IEEE 754 defines a whole range of NaN values.
+        // https://doc.rust-lang.org/std/primitive.f64.html#associatedconstant.NAN
+        // We can ignore that complication here as the rule is that 2 types which are equal (`==`)
+        // must hash the same.
+        // `ContentEq` uses `==` equality, and even the same NaN doesn't equal itself!
+        // `f64::NAN != f64::NAN`
+        // So it doesn't matter if two NaNs have the same hash or not.
+        //
+        // # Zero
+        // `ContentEq` uses `==` equality, which considers `0.0` and `-0.0` equal, so we must make
+        // them hash the same.
+        // But `(0.0).to_bits() != (-0.0).to_bits()`, so we need to convert `-0.0` to `0.0`.
+        //
+        // # Infinity
+        // `f64::INFINITY != -f64::INFINITY` and `f64::INFINITY.to_bits() != (-f64::INFINITY).to_bits()`
+        // so infinity needs no special handling.
+        //
+        // Whatever the value, we convert to `u64` using `to_bits`, and hash that.
+        let mut value = self.value;
+        if value == -0.0 {
+            value = 0.0;
+        }
+        let value = value.to_bits();
+        std::hash::Hash::hash(&value, state);
     }
 }
 
@@ -100,6 +128,53 @@ impl fmt::Display for NumericLiteral<'_> {
     }
 }
 
+impl StringLiteral<'_> {
+    /// Static Semantics: `IsStringWellFormedUnicode`
+    /// test for \uD800-\uDFFF
+    ///
+    /// See: <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isstringwellformedunicode>
+    pub fn is_string_well_formed_unicode(&self) -> bool {
+        let mut chars = self.value.chars();
+        while let Some(c) = chars.next() {
+            if c == '\\' && chars.next() == Some('u') {
+                let hex = &chars.as_str()[..4];
+                if let Ok(hex) = u32::from_str_radix(hex, 16) {
+                    if (0xd800..=0xdfff).contains(&hex) {
+                        return false;
+                    }
+                };
+            }
+        }
+        true
+    }
+}
+
+impl ContentEq for StringLiteral<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.value, &other.value)
+    }
+}
+
+impl ContentHash for StringLiteral<'_> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.value, state);
+    }
+}
+
+impl AsRef<str> for StringLiteral<'_> {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        self.value.as_ref()
+    }
+}
+
+impl fmt::Display for StringLiteral<'_> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.value.fmt(f)
+    }
+}
+
 impl BigIntLiteral<'_> {
     /// Is this BigInt literal zero? (`0n`).
     pub fn is_zero(&self) -> bool {
@@ -107,9 +182,33 @@ impl BigIntLiteral<'_> {
     }
 }
 
+impl ContentEq for BigIntLiteral<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.raw, &other.raw)
+    }
+}
+
+impl ContentHash for BigIntLiteral<'_> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.raw, state);
+    }
+}
+
 impl fmt::Display for BigIntLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.raw.fmt(f)
+    }
+}
+
+impl ContentEq for RegExpLiteral<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.regex, &other.regex)
+    }
+}
+
+impl ContentHash for RegExpLiteral<'_> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.regex, state);
     }
 }
 
@@ -165,6 +264,32 @@ impl<'a> RegExpPattern<'a> {
         } else {
             None
         }
+    }
+}
+
+impl ContentEq for RegExpPattern<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        let self_str = match self {
+            Self::Raw(s) | Self::Invalid(s) => *s,
+            Self::Pattern(p) => &p.to_string(),
+        };
+
+        let other_str = match other {
+            Self::Raw(s) | Self::Invalid(s) => *s,
+            Self::Pattern(p) => &p.to_string(),
+        };
+
+        self_str == other_str
+    }
+}
+
+impl ContentHash for RegExpPattern<'_> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        let self_str = match self {
+            Self::Raw(s) | Self::Invalid(s) => s,
+            Self::Pattern(p) => &&*p.to_string(),
+        };
+        ContentHash::content_hash(self_str, state);
     }
 }
 
@@ -260,40 +385,5 @@ impl fmt::Display for RegExpFlags {
             write!(f, "v")?;
         }
         Ok(())
-    }
-}
-
-impl StringLiteral<'_> {
-    /// Static Semantics: `IsStringWellFormedUnicode`
-    /// test for \uD800-\uDFFF
-    ///
-    /// See: <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isstringwellformedunicode>
-    pub fn is_string_well_formed_unicode(&self) -> bool {
-        let mut chars = self.value.chars();
-        while let Some(c) = chars.next() {
-            if c == '\\' && chars.next() == Some('u') {
-                let hex = &chars.as_str()[..4];
-                if let Ok(hex) = u32::from_str_radix(hex, 16) {
-                    if (0xd800..=0xdfff).contains(&hex) {
-                        return false;
-                    }
-                };
-            }
-        }
-        true
-    }
-}
-
-impl AsRef<str> for StringLiteral<'_> {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        self.value.as_ref()
-    }
-}
-
-impl fmt::Display for StringLiteral<'_> {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.value.fmt(f)
     }
 }

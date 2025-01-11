@@ -26,7 +26,7 @@ fn missing_returns_diagnostic(span: Span) -> OxcDiagnostic {
 }
 fn duplicate_returns_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Duplicate `@returns` tags.")
-        .with_help("Remove redundunt `@returns` tag.")
+        .with_help("Remove redundant `@returns` tag.")
         .with_label(span)
 }
 
@@ -63,6 +63,7 @@ declare_oxc_lint!(
     /// function quux () { return foo; }
     /// ```
     RequireReturns,
+    jsdoc,
     pedantic,
 );
 
@@ -2235,5 +2236,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(RequireReturns::NAME, RequireReturns::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(RequireReturns::NAME, RequireReturns::PLUGIN, pass, fail).test_and_snapshot();
 }

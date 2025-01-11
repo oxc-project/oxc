@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// number.toFixed(2);
     /// ```
     RequireNumberToFixedDigitsArgument,
+    unicorn,
     pedantic,
     fix
 );
@@ -133,7 +134,7 @@ fn test() {
 
     Tester::new(
         RequireNumberToFixedDigitsArgument::NAME,
-        RequireNumberToFixedDigitsArgument::CATEGORY,
+        RequireNumberToFixedDigitsArgument::PLUGIN,
         pass,
         fail,
     )

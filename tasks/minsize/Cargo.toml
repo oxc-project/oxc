@@ -29,5 +29,7 @@ oxc_transformer = { workspace = true }
 flate2 = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
+cow-utils = { workspace = true }
 humansize = { workspace = true }
 rustc-hash = { workspace = true }
+similar-asserts = { workspace = true }

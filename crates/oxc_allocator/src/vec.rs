@@ -9,6 +9,7 @@ use std::{
     mem::ManuallyDrop,
     ops,
     ptr::NonNull,
+    slice::SliceIndex,
 };
 
 use allocator_api2::vec;
@@ -244,25 +245,42 @@ impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
     }
 }
 
-impl<'alloc, T> IntoIterator for &'alloc Vec<'alloc, T> {
-    type IntoIter = std::slice::Iter<'alloc, T>;
-    type Item = &'alloc T;
+impl<'i, T> IntoIterator for &'i Vec<'_, T> {
+    type IntoIter = std::slice::Iter<'i, T>;
+    type Item = &'i T;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
     }
 }
 
-impl<T> ops::Index<usize> for Vec<'_, T> {
-    type Output = T;
+impl<'i, T> IntoIterator for &'i mut Vec<'_, T> {
+    type IntoIter = std::slice::IterMut<'i, T>;
+    type Item = &'i mut T;
 
-    fn index(&self, index: usize) -> &Self::Output {
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
+    }
+}
+
+impl<T, I> ops::Index<I> for Vec<'_, T>
+where
+    I: SliceIndex<[T]>,
+{
+    type Output = I::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
         self.0.index(index)
     }
 }
 
-impl<T> ops::IndexMut<usize> for Vec<'_, T> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+impl<T, I> ops::IndexMut<I> for Vec<'_, T>
+where
+    I: SliceIndex<[T]>,
+{
+    #[inline]
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
         self.0.index_mut(index)
     }
 }

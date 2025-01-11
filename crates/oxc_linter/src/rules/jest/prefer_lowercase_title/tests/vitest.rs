@@ -34,7 +34,7 @@ fn test() {
         ("bench(`Foo MM mm`, function () {})", "bench(`foo MM mm`, function () {})", None),
     ];
 
-    Tester::new(PreferLowercaseTitle::NAME, PreferLowercaseTitle::CATEGORY, pass, fail)
+    Tester::new(PreferLowercaseTitle::NAME, PreferLowercaseTitle::PLUGIN, pass, fail)
         .expect_fix(fix)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)

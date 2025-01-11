@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// const a: Foo<string> = new Foo(); // prefer type annotation
     /// ```
     ConsistentGenericConstructors,
+    typescript,
     style,
     pending
 );
@@ -117,6 +118,10 @@ impl Rule for ConsistentGenericConstructors {
                 .and_then(|s| PreferGenericType::try_from(s).ok())
                 .unwrap_or_default(),
         }))
+    }
+
+    fn should_run(&self, ctx: &crate::rules::ContextHost) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 
@@ -680,7 +685,7 @@ fn test() {
     ];
     Tester::new(
         ConsistentGenericConstructors::NAME,
-        ConsistentGenericConstructors::CATEGORY,
+        ConsistentGenericConstructors::PLUGIN,
         pass,
         fail,
     )

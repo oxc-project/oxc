@@ -1,12 +1,10 @@
 commit: 54a8389f
 
-Passed: 604/927
+Passed: 686/1154
 
 # All Passed:
-* babel-plugin-transform-class-static-block
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-optional-catch-binding
-* babel-plugin-transform-async-generator-functions
 * babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
@@ -276,7 +274,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (211/264)
+# babel-plugin-transform-class-properties (212/268)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -359,6 +357,14 @@ x Output mismatch
 * private/static-infer-name/input.js
 x Output mismatch
 
+* private/static-self-method/input.js
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
+
 * private/static-shadow/input.js
 x Output mismatch
 
@@ -438,6 +444,474 @@ x Output mismatch
 x Output mismatch
 
 * regression/6153/input.js
+x Output mismatch
+
+* source-maps/private-get/input.js
+x Output mismatch
+
+* source-maps/private-set/input.js
+x Output mismatch
+
+
+# babel-plugin-transform-class-static-block (17/21)
+* integration/in-class-heritage/input.js
+x Output mismatch
+
+* integration/new-target/input.js
+x Output mismatch
+
+* integration-loose/in-class-heritage/input.js
+x Output mismatch
+
+* integration-loose/super-static-block/input.js
+x Output mismatch
+
+
+# babel-plugin-transform-private-methods (46/148)
+* accessors/tagged-template/input.js
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
+rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
+
+* accessors-loose/basic/input.js
+x Output mismatch
+
+* accessors-loose/class-binding/input.js
+x Output mismatch
+
+* accessors-loose/get-only-setter/input.js
+x Output mismatch
+
+* accessors-loose/preserve-comments/input.js
+x Output mismatch
+
+* accessors-loose/reassignment/input.js
+x Output mismatch
+
+* accessors-loose/set-only-getter/input.js
+x Output mismatch
+
+* accessors-loose/updates/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsProperties/basic/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsProperties/class-binding/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsProperties/get-only-setter/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsProperties/preserve-comments/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsProperties/set-only-getter/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsProperties/updates/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsSymbols/basic/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsSymbols/class-binding/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsSymbols/get-only-setter/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsSymbols/preserve-comments/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsSymbols/set-only-getter/input.js
+x Output mismatch
+
+* accessors-privateFieldsAsSymbols/updates/input.js
+x Output mismatch
+
+* assumption-constantSuper/private-method-super/input.js
+x Output mismatch
+
+* private-method/super/input.js
+x Output mismatch
+
+* private-method-loose/assignment/input.js
+x Output mismatch
+
+* private-method-loose/async/input.js
+x Output mismatch
+
+* private-method-loose/before-fields/input.js
+x Output mismatch
+
+* private-method-loose/class-binding/input.js
+x Output mismatch
+
+* private-method-loose/class-expression/input.js
+x Output mismatch
+
+* private-method-loose/context/input.js
+x Output mismatch
+
+* private-method-loose/exfiltrated/input.js
+x Output mismatch
+
+* private-method-loose/generator/input.js
+x Output mismatch
+
+* private-method-loose/preserve-comments/input.js
+x Output mismatch
+
+* private-method-loose/reassignment/input.js
+x Output mismatch
+
+* private-method-loose/super/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsProperties/assignment/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsProperties/async/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsProperties/before-fields/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsProperties/class-binding/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsProperties/class-expression/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsProperties/context/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsProperties/exfiltrated/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsProperties/generator/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsProperties/super/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsSymbols/assignment/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsSymbols/async/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsSymbols/before-fields/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsSymbols/class-binding/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsSymbols/class-expression/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsSymbols/context/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsSymbols/exfiltrated/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsSymbols/generator/input.js
+x Output mismatch
+
+* private-method-privateFieldsAsSymbols/super/input.js
+x Output mismatch
+
+* private-static-method/async/input.js
+
+  x TS(1108): A 'return' statement can only be used within a function body.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-private-methods/test/fixtures/private-static-method/async/input.js:11:1]
+ 10 | 
+ 11 | return new Cl().test().then(val => {
+    : ^^^^^^
+ 12 |   expect(val).toBe(2);
+    `----
+
+
+* private-static-method/read-only/input.js
+x Output mismatch
+
+* private-static-method-loose/async/input.js
+
+  x TS(1108): A 'return' statement can only be used within a function body.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-private-methods/test/fixtures/private-static-method-loose/async/input.js:11:1]
+ 10 | 
+ 11 | return new Cl().test().then(val => {
+    : ^^^^^^
+ 12 |   expect(val).toBe(2);
+    `----
+
+
+* private-static-method-loose/basic/input.js
+x Output mismatch
+
+* private-static-method-loose/class-check/input.js
+x Output mismatch
+
+* private-static-method-loose/class-expression/input.js
+x Output mismatch
+
+* private-static-method-loose/exfiltrated/input.js
+x Output mismatch
+
+* private-static-method-loose/generator/input.js
+x Output mismatch
+
+* private-static-method-loose/preserve-comments/input.js
+x Output mismatch
+
+* private-static-method-loose/reassignment/input.js
+x Output mismatch
+
+* private-static-method-loose/super/input.js
+x Output mismatch
+
+* private-static-method-loose/this/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsProperties/async/input.js
+
+  x TS(1108): A 'return' statement can only be used within a function body.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-private-methods/test/fixtures/private-static-method-privateFieldsAsProperties/async/input.js:11:1]
+ 10 | 
+ 11 | return new Cl().test().then(val => {
+    : ^^^^^^
+ 12 |   expect(val).toBe(2);
+    `----
+
+
+* private-static-method-privateFieldsAsProperties/basic/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsProperties/class-check/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsProperties/class-expression/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsProperties/exfiltrated/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsProperties/generator/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsProperties/reassignment/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsProperties/super/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsProperties/this/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsSymbols/async/input.js
+
+  x TS(1108): A 'return' statement can only be used within a function body.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-private-methods/test/fixtures/private-static-method-privateFieldsAsSymbols/async/input.js:11:1]
+ 10 | 
+ 11 | return new Cl().test().then(val => {
+    : ^^^^^^
+ 12 |   expect(val).toBe(2);
+    `----
+
+
+* private-static-method-privateFieldsAsSymbols/basic/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsSymbols/class-check/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsSymbols/class-expression/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsSymbols/exfiltrated/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsSymbols/generator/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsSymbols/reassignment/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsSymbols/super/input.js
+x Output mismatch
+
+* private-static-method-privateFieldsAsSymbols/this/input.js
+x Output mismatch
+
+* static-accessors/get-only-setter/input.js
+x Output mismatch
+
+* static-accessors/set-only-getter/input.js
+x Output mismatch
+
+* static-accessors/tagged-template/input.js
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
+
+* static-accessors-loose/basic/input.js
+x Output mismatch
+
+* static-accessors-loose/destructure-set/input.js
+x Output mismatch
+
+* static-accessors-loose/get-only-setter/input.js
+x Output mismatch
+
+* static-accessors-loose/preserve-comments/input.js
+x Output mismatch
+
+* static-accessors-loose/set-only-getter/input.js
+x Output mismatch
+
+* static-accessors-loose/updates/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsProperties/basic/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsProperties/destructure-set/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsProperties/get-only-setter/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsProperties/preserve-comments/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsProperties/set-only-getter/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsProperties/updates/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsSymbols/basic/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsSymbols/destructure-set/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsSymbols/get-only-setter/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsSymbols/preserve-comments/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsSymbols/set-only-getter/input.js
+x Output mismatch
+
+* static-accessors-privateFieldsAsSymbols/updates/input.js
+x Output mismatch
+
+
+# babel-plugin-transform-private-property-in-object (25/59)
+* assumption-privateFieldsAsProperties/accessor/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/compiled-classes/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/field/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/method/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/nested-class/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/nested-class-other-redeclared/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/nested-class-redeclared/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/static-accessor/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/static-field/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsProperties/static-method/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/accessor/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/compiled-classes/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/field/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/method/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/nested-class/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/nested-class-other-redeclared/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/nested-class-redeclared/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/static-accessor/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/static-field/input.js
+x Output mismatch
+
+* assumption-privateFieldsAsSymbols/static-method/input.js
+x Output mismatch
+
+* private/static-shadow/input.js
+x Output mismatch
+
+* private-loose/accessor/input.js
+x Output mismatch
+
+* private-loose/field/input.js
+x Output mismatch
+
+* private-loose/method/input.js
+x Output mismatch
+
+* private-loose/nested-class/input.js
+x Output mismatch
+
+* private-loose/nested-class-other-redeclared/input.js
+x Output mismatch
+
+* private-loose/nested-class-redeclared/input.js
+x Output mismatch
+
+* private-loose/static-accessor/input.js
+x Output mismatch
+
+* private-loose/static-field/input.js
+x Output mismatch
+
+* private-loose/static-method/input.js
+x Output mismatch
+
+* private-loose/static-shadow/input.js
+x Output mismatch
+
+* to-native-fields/class-expression-in-default-param/input.js
+x Output mismatch
+
+* to-native-fields/static-shadow/input.js
+x Output mismatch
+
+* to-native-fields/static-shadowed-binding/input.js
 x Output mismatch
 
 
@@ -767,6 +1241,11 @@ rebuilt        : ["a"]
 Unresolved references mismatch:
 after transform: ["ExampleType", "o"]
 rebuilt        : ["o"]
+
+
+# babel-plugin-transform-async-generator-functions (19/20)
+* async-generators/class-private-method/input.js
+x Output mismatch
 
 
 # babel-plugin-transform-object-rest-spread (28/36)
@@ -1140,7 +1619,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (47/156)
+# babel-plugin-transform-typescript (47/157)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1189,6 +1668,9 @@ rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
+
+* class/private-method-override-transform-private/input.ts
+x Output mismatch
 
 * declarations/const-enum/input.ts
 Bindings mismatch:
@@ -1578,11 +2060,9 @@ after transform: ScopeId(0): ["React", "x"]
 rebuilt        : ScopeId(0): ["x"]
 
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
-Missing SymbolId: "foo"
-Missing SymbolId: "bar"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Bindings mismatch:
+after transform: ScopeId(0): ["bar", "foo", "nsa", "nsb"]
+rebuilt        : ScopeId(0): []
 
 * imports/elide-typeof/input.ts
 Bindings mismatch:
@@ -1679,19 +2159,17 @@ rebuilt        : ScopeId(0): []
 
 * imports/import=-module-to-cjs/input.ts
 Missing SymbolId: "lib"
-Missing ReferenceId: "require"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 Reference symbol mismatch for "lib":
 after transform: SymbolId(0) "lib"
 rebuilt        : SymbolId(0) "lib"
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
 
 * imports/only-remove-type-imports/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
+rebuilt        : ScopeId(0): ["L2", "a", "b", "c2", "d", "d2", "e", "e4"]
 
 * imports/property-signature/input.ts
 Bindings mismatch:
@@ -1722,7 +2200,9 @@ after transform: ScopeId(0): ["Foo1", "Foo2"]
 rebuilt        : ScopeId(0): []
 
 * imports/type-only-import-specifier-4/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["A"]
+rebuilt        : ScopeId(0): []
 
 * lvalues/TSTypeParameterInstantiation/input.ts
 Symbol reference IDs mismatch for "AbstractClass":
@@ -1733,23 +2213,22 @@ after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 
 * namespace/alias/input.ts
-Missing SymbolId: "b"
 Missing SymbolId: "AliasModule"
 Bindings mismatch:
 after transform: ScopeId(0): ["AliasModule", "LongNameModule", "b", "babel", "bar", "baz", "node", "some", "str"]
-rebuilt        : ScopeId(0): ["AliasModule", "b", "babel", "bar", "baz", "node", "some", "str"]
+rebuilt        : ScopeId(0): ["AliasModule", "bar", "baz", "node", "some", "str"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "AliasModule":
 after transform: SymbolId(8) "AliasModule"
-rebuilt        : SymbolId(2) "AliasModule"
+rebuilt        : SymbolId(0) "AliasModule"
 Reference symbol mismatch for "AliasModule":
 after transform: SymbolId(8) "AliasModule"
-rebuilt        : SymbolId(2) "AliasModule"
+rebuilt        : SymbolId(0) "AliasModule"
 Unresolved reference IDs mismatch for "LongNameModule":
 after transform: [ReferenceId(1), ReferenceId(5)]
-rebuilt        : [ReferenceId(1)]
+rebuilt        : [ReferenceId(0)]
 
 * namespace/clobber-class/input.ts
 Missing SymbolId: "_A"

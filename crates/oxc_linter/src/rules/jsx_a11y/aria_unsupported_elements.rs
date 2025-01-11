@@ -33,6 +33,7 @@ declare_oxc_lint! {
     /// ```
     ///
     AriaUnsupportedElements,
+    jsx_a11y,
     correctness,
     fix
 }
@@ -430,7 +431,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(AriaUnsupportedElements::NAME, AriaUnsupportedElements::CATEGORY, pass, fail)
+    Tester::new(AriaUnsupportedElements::NAME, AriaUnsupportedElements::PLUGIN, pass, fail)
         .with_jsx_a11y_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

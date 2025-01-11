@@ -31,6 +31,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoEmpty,
+    eslint,
     restriction,
     suggestion
 );
@@ -196,5 +197,5 @@ fn test() {
         ("try { foo(); } catch (ex) {} finally {}", "try { foo(); } catch (ex) {} ", None),
     ];
 
-    Tester::new(NoEmpty::NAME, NoEmpty::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoEmpty::NAME, NoEmpty::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

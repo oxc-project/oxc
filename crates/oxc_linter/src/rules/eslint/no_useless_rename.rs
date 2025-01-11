@@ -60,6 +60,7 @@ declare_oxc_lint!(
     /// export { baz };
     /// ```
     NoUselessRename,
+    eslint,
     correctness
 );
 
@@ -397,5 +398,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUselessRename::NAME, NoUselessRename::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessRename::NAME, NoUselessRename::PLUGIN, pass, fail).test_and_snapshot();
 }

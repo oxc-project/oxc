@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoScriptComponentInHead,
+    nextjs,
     correctness
 );
 
@@ -127,6 +128,6 @@ fn test() {
         "#,
     ];
 
-    Tester::new(NoScriptComponentInHead::NAME, NoScriptComponentInHead::CATEGORY, pass, fail)
+    Tester::new(NoScriptComponentInHead::NAME, NoScriptComponentInHead::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

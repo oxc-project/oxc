@@ -21,23 +21,14 @@ pub fn print_call_arguments<'a>(
     p: &mut Prettier<'a>,
     expression: &CallExpressionLike<'a, '_>,
 ) -> Doc<'a> {
-    let mut parts = Vec::new_in(p.allocator);
-    parts.push(text!("("));
-
-    let callee = expression.callee();
     let arguments = expression.arguments();
-    let should_break = if matches!(expression, CallExpressionLike::CallExpression(_)) {
-        !is_commons_js_or_amd_call(expression.callee(), arguments)
-    } else {
-        true
-    };
 
     if arguments.is_empty() {
-        parts.extend(p.print_inner_comment(Span::new(callee.span().end, expression.span().end)));
-        parts.push(text!(")"));
-
-        return array!(p, parts);
+        return array!(p, [text!("("), text!(")")]);
     }
+
+    let mut parts = Vec::new_in(p.allocator);
+    parts.push(text!("("));
 
     #[allow(clippy::cast_sign_loss)]
     let get_printed_arguments = |p: &mut Prettier<'a>, skip_index: isize| {
@@ -65,8 +56,8 @@ pub fn print_call_arguments<'a>(
             if i < len - 1 {
                 arg.push(text!(","));
                 if p.is_next_line_empty(element.span()) {
-                    arg.extend(hardline!());
-                    arg.extend(hardline!());
+                    arg.push(hardline!(p));
+                    arg.push(hardline!(p));
                 } else {
                     arg.push(line!());
                 }
@@ -194,6 +185,12 @@ pub fn print_call_arguments<'a>(
     }
 
     let mut printed_arguments = get_printed_arguments(p, 0);
+
+    let should_break = if matches!(expression, CallExpressionLike::CallExpression(_)) {
+        !is_commons_js_or_amd_call(expression.callee(), arguments)
+    } else {
+        true
+    };
 
     if should_break {
         printed_arguments.insert(0, softline!());

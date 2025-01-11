@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// <span tabIndex="-1">bar</span>
     /// ```
     TabindexNoPositive,
+    jsx_a11y,
     correctness,
     pending
 );
@@ -105,6 +106,6 @@ fn test() {
         (r"<div tabIndex={1.589} />", None),
     ];
 
-    Tester::new(TabindexNoPositive::NAME, TabindexNoPositive::CATEGORY, pass, fail)
+    Tester::new(TabindexNoPositive::NAME, TabindexNoPositive::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

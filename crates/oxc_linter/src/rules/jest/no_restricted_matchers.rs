@@ -72,6 +72,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoRestrictedMatchers,
+    jest,
     style,
 );
 
@@ -142,9 +143,7 @@ impl NoRestrictedMatchers {
 
     fn check_restriction(chain_call: &str, restriction: &str) -> bool {
         if MODIFIER_NAME.contains(restriction)
-            || Path::new(restriction)
-                .extension()
-                .map_or(false, |ext| ext.eq_ignore_ascii_case("not"))
+            || Path::new(restriction).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("not"))
         {
             return chain_call.starts_with(restriction);
         }
@@ -243,7 +242,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoRestrictedMatchers::NAME, NoRestrictedMatchers::CATEGORY, pass, fail)
+    Tester::new(NoRestrictedMatchers::NAME, NoRestrictedMatchers::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

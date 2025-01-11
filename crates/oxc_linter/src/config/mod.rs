@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 mod categories;
+mod config_builder;
 mod config_store;
 mod env;
 mod globals;
@@ -9,6 +10,7 @@ mod oxlintrc;
 mod plugins;
 mod rules;
 mod settings;
+pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
 pub use config_store::ConfigStore;
 pub(crate) use config_store::ResolvedLinterState;
 pub use env::OxlintEnv;
@@ -20,7 +22,7 @@ pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{jsdoc::JSDocPluginSettings, OxlintSettings};
 
 #[derive(Debug, Default, Clone)]
-pub(crate) struct LintConfig {
+pub struct LintConfig {
     pub(crate) plugins: LintPlugins,
     pub(crate) settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.

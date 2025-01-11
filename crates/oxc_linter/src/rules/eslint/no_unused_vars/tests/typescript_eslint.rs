@@ -1699,7 +1699,7 @@ fn test() {
         ("const foo: number = 1;", None),
     ];
 
-    Tester::new(NoUnusedVars::NAME, NoUnusedVars::CATEGORY, pass, fail)
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .change_rule_path_extension("ts")
         .with_snapshot_suffix("typescript-eslint")
@@ -1867,7 +1867,7 @@ fn test_tsx() {
         //         },
     ];
 
-    Tester::new(NoUnusedVars::NAME, NoUnusedVars::CATEGORY, pass, fail)
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("typescript-eslint-tsx")
         .test_and_snapshot();
@@ -1908,7 +1908,7 @@ fn test_d_ts() {
     ];
     let fail = vec![];
 
-    Tester::new(NoUnusedVars::NAME, NoUnusedVars::CATEGORY, pass, fail)
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .change_rule_path_extension("d.ts")
         .test();

@@ -428,7 +428,7 @@ impl<'a> KnownMemberExpressionProperty<'a> {
     }
 
     pub fn is_name_equal(&self, name: &str) -> bool {
-        self.name().map_or(false, |n| n == name)
+        self.name().is_some_and(|n| n == name)
     }
 
     pub fn is_name_unequal(&self, name: &str) -> bool {
@@ -436,7 +436,7 @@ impl<'a> KnownMemberExpressionProperty<'a> {
     }
 
     pub fn is_name_in_modifiers(&self, modifiers: &[ModifierName]) -> bool {
-        self.name().map_or(false, |name| {
+        self.name().is_some_and(|name| {
             if let Some(modifier_name) = ModifierName::from(name.as_ref()) {
                 return modifiers.contains(&modifier_name);
             }

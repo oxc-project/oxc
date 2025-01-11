@@ -27,58 +27,10 @@ impl ContentEq for NullLiteral {
     }
 }
 
-impl ContentEq for NumericLiteral<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.raw, &other.raw)
-            && ContentEq::content_eq(&self.base, &other.base)
-    }
-}
-
-impl ContentEq for StringLiteral<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.value, &other.value)
-            && ContentEq::content_eq(&self.raw, &other.raw)
-    }
-}
-
-impl ContentEq for BigIntLiteral<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.raw, &other.raw)
-            && ContentEq::content_eq(&self.base, &other.base)
-    }
-}
-
-impl ContentEq for RegExpLiteral<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.regex, &other.regex)
-            && ContentEq::content_eq(&self.raw, &other.raw)
-    }
-}
-
 impl ContentEq for RegExp<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.pattern, &other.pattern)
             && ContentEq::content_eq(&self.flags, &other.flags)
-    }
-}
-
-impl ContentEq for RegExpPattern<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match self {
-            Self::Raw(it) => match other {
-                Self::Raw(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::Invalid(it) => match other {
-                Self::Invalid(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::Pattern(it) => match other {
-                Self::Pattern(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-        }
     }
 }
 

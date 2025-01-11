@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// const size = new Set([1, 2, 3]).size;
     /// ```
     PreferSetSize,
+    unicorn,
     correctness,
     fix
 );
@@ -182,7 +183,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferSetSize::NAME, PreferSetSize::CATEGORY, pass, fail)
+    Tester::new(PreferSetSize::NAME, PreferSetSize::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

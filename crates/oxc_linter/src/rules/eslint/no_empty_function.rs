@@ -57,6 +57,7 @@ declare_oxc_lint!(
     /// const add = (a, b) => a + b
     /// ```
     NoEmptyFunction,
+    eslint,
     restriction,
 );
 
@@ -226,5 +227,5 @@ fn test() {
     ",
     ];
 
-    Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyFunction::NAME, NoEmptyFunction::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -1,7 +1,7 @@
 use std::{borrow::Cow, cmp::Ordering};
 
 use num_bigint::BigInt;
-use num_traits::Zero;
+use num_traits::{ToPrimitive, Zero};
 
 use oxc_ast::ast::*;
 
@@ -124,13 +124,6 @@ pub trait ConstantEvaluation<'a> {
                     _ => None,
                 }
             }
-            Expression::AssignmentExpression(assign_expr) => {
-                match assign_expr.operator {
-                    AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => None,
-                    // For ASSIGN, the value is the value of the RHS.
-                    _ => self.get_boolean_value(&assign_expr.right),
-                }
-            }
             expr => {
                 use crate::ToBoolean;
                 expr.to_boolean()
@@ -156,6 +149,10 @@ pub trait ConstantEvaluation<'a> {
                 UnaryOperator::Void => Some(f64::NAN),
                 _ => None,
             },
+            Expression::SequenceExpression(s) => {
+                s.expressions.last().and_then(|e| self.eval_to_number(e))
+            }
+            Expression::ObjectExpression(e) if e.properties.is_empty() => Some(f64::NAN),
             expr => {
                 use crate::ToNumber;
                 expr.to_number()
@@ -193,6 +190,7 @@ pub trait ConstantEvaluation<'a> {
             Expression::StringLiteral(lit) => {
                 Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
             }
+            Expression::StaticMemberExpression(e) => self.eval_static_member_expression(e),
             _ => None,
         }
     }
@@ -253,54 +251,33 @@ pub trait ConstantEvaluation<'a> {
                 };
                 Some(ConstantValue::Number(val))
             }
-            #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
+            #[expect(clippy::cast_sign_loss)]
             BinaryOperator::ShiftLeft
             | BinaryOperator::ShiftRight
             | BinaryOperator::ShiftRightZeroFill => {
-                let left_num = self.get_side_free_number_value(left);
-                let right_num = self.get_side_free_number_value(right);
-                if let (Some(left_val), Some(right_val)) = (left_num, right_num) {
-                    if left_val.fract() != 0.0 || right_val.fract() != 0.0 {
-                        return None;
-                    }
-                    // only the lower 5 bits are used when shifting, so don't do anything
-                    // if the shift amount is outside [0,32)
-                    if !(0.0..32.0).contains(&right_val) {
-                        return None;
-                    }
-                    let right_val_int = right_val as u32;
-                    let bits = left_val.to_int_32();
-
-                    let result_val: f64 = match operator {
-                        BinaryOperator::ShiftLeft => f64::from(bits.wrapping_shl(right_val_int)),
-                        BinaryOperator::ShiftRight => f64::from(bits.wrapping_shr(right_val_int)),
-                        BinaryOperator::ShiftRightZeroFill => {
-                            // JavaScript always treats the result of >>> as unsigned.
-                            // We must force Rust to do the same here.
-                            let bits = bits as u32;
-                            let res = bits.wrapping_shr(right_val_int);
-                            f64::from(res)
-                        }
-                        _ => unreachable!(),
-                    };
-                    return Some(ConstantValue::Number(result_val));
-                }
-                None
+                let left = self.get_side_free_number_value(left)?;
+                let right = self.get_side_free_number_value(right)?;
+                let left = left.to_int_32();
+                let right = (right.to_int_32() as u32) & 31;
+                Some(ConstantValue::Number(match operator {
+                    BinaryOperator::ShiftLeft => f64::from(left << right),
+                    BinaryOperator::ShiftRight => f64::from(left >> right),
+                    BinaryOperator::ShiftRightZeroFill => f64::from((left as u32) >> right),
+                    _ => unreachable!(),
+                }))
             }
-            BinaryOperator::LessThan => {
-                self.is_less_than(left, right, true).map(|value| match value {
-                    ConstantValue::Undefined => ConstantValue::Boolean(false),
-                    _ => value,
-                })
-            }
+            BinaryOperator::LessThan => self.is_less_than(left, right).map(|value| match value {
+                ConstantValue::Undefined => ConstantValue::Boolean(false),
+                _ => value,
+            }),
             BinaryOperator::GreaterThan => {
-                self.is_less_than(right, left, false).map(|value| match value {
+                self.is_less_than(right, left).map(|value| match value {
                     ConstantValue::Undefined => ConstantValue::Boolean(false),
                     _ => value,
                 })
             }
             BinaryOperator::LessEqualThan => {
-                self.is_less_than(right, left, false).map(|value| match value {
+                self.is_less_than(right, left).map(|value| match value {
                     ConstantValue::Boolean(true) | ConstantValue::Undefined => {
                         ConstantValue::Boolean(false)
                     }
@@ -309,7 +286,7 @@ pub trait ConstantEvaluation<'a> {
                 })
             }
             BinaryOperator::GreaterEqualThan => {
-                self.is_less_than(left, right, true).map(|value| match value {
+                self.is_less_than(left, right).map(|value| match value {
                     ConstantValue::Boolean(true) | ConstantValue::Undefined => {
                         ConstantValue::Boolean(false)
                     }
@@ -319,17 +296,15 @@ pub trait ConstantEvaluation<'a> {
             }
             BinaryOperator::BitwiseAnd | BinaryOperator::BitwiseOR | BinaryOperator::BitwiseXOR => {
                 if left.is_big_int_literal() && right.is_big_int_literal() {
-                    let left_bigint = self.get_side_free_bigint_value(left);
-                    let right_bigint = self.get_side_free_bigint_value(right);
-                    if let (Some(left_val), Some(right_val)) = (left_bigint, right_bigint) {
-                        let result_val: BigInt = match operator {
-                            BinaryOperator::BitwiseAnd => left_val & right_val,
-                            BinaryOperator::BitwiseOR => left_val | right_val,
-                            BinaryOperator::BitwiseXOR => left_val ^ right_val,
-                            _ => unreachable!(),
-                        };
-                        return Some(ConstantValue::BigInt(result_val));
-                    }
+                    let left_val = self.get_side_free_bigint_value(left)?;
+                    let right_val = self.get_side_free_bigint_value(right)?;
+                    let result_val: BigInt = match operator {
+                        BinaryOperator::BitwiseAnd => left_val & right_val,
+                        BinaryOperator::BitwiseOR => left_val | right_val,
+                        BinaryOperator::BitwiseXOR => left_val ^ right_val,
+                        _ => unreachable!(),
+                    };
+                    return Some(ConstantValue::BigInt(result_val));
                 }
                 let left_num = self.get_side_free_number_value(left);
                 let right_num = self.get_side_free_number_value(right);
@@ -344,6 +319,22 @@ pub trait ConstantEvaluation<'a> {
                         _ => unreachable!(),
                     };
                     return Some(ConstantValue::Number(result_val));
+                }
+                None
+            }
+            BinaryOperator::Instanceof => {
+                if left.may_have_side_effects() {
+                    return None;
+                }
+                if let Expression::Identifier(right_ident) = right {
+                    let name = right_ident.name.as_str();
+                    if matches!(name, "Object" | "Number" | "Boolean" | "String")
+                        && self.is_global_reference(right_ident)
+                    {
+                        return Some(ConstantValue::Boolean(
+                            name == "Object" && ValueType::from(left).is_object(),
+                        ));
+                    }
                 }
                 None
             }
@@ -391,89 +382,97 @@ pub trait ConstantEvaluation<'a> {
                 };
                 Some(ConstantValue::String(Cow::Borrowed(s)))
             }
-            UnaryOperator::Void => {
-                if (!expr.argument.is_number() || !expr.argument.is_number_0())
-                    && !expr.may_have_side_effects()
-                {
-                    return Some(ConstantValue::Undefined);
-                }
-                None
-            }
+            UnaryOperator::Void => (expr.argument.is_literal() || !expr.may_have_side_effects())
+                .then_some(ConstantValue::Undefined),
             UnaryOperator::LogicalNot => {
                 self.get_boolean_value(&expr.argument).map(|b| !b).map(ConstantValue::Boolean)
             }
             UnaryOperator::UnaryPlus => {
                 self.eval_to_number(&expr.argument).map(ConstantValue::Number)
             }
-            UnaryOperator::UnaryNegation => {
-                let ty = ValueType::from(&expr.argument);
-                match ty {
-                    ValueType::BigInt => {
-                        self.eval_to_big_int(&expr.argument).map(|v| -v).map(ConstantValue::BigInt)
-                    }
-                    ValueType::Number => self
-                        .eval_to_number(&expr.argument)
-                        .map(|v| if v.is_nan() { v } else { -v })
-                        .map(ConstantValue::Number),
-                    _ => None,
+            UnaryOperator::UnaryNegation => match ValueType::from(&expr.argument) {
+                ValueType::BigInt => {
+                    self.eval_to_big_int(&expr.argument).map(|v| -v).map(ConstantValue::BigInt)
                 }
-            }
-            UnaryOperator::BitwiseNot => {
-                let ty = ValueType::from(&expr.argument);
-                match ty {
-                    ValueType::BigInt => {
-                        self.eval_to_big_int(&expr.argument).map(|v| !v).map(ConstantValue::BigInt)
-                    }
-                    #[expect(clippy::cast_lossless)]
-                    ValueType::Number => self
-                        .eval_to_number(&expr.argument)
-                        .map(|v| !v.to_int_32())
-                        .map(|v| v as f64)
-                        .map(ConstantValue::Number),
-                    _ => None,
+                ValueType::Number => self
+                    .eval_to_number(&expr.argument)
+                    .map(|v| if v.is_nan() { v } else { -v })
+                    .map(ConstantValue::Number),
+                ValueType::Undefined => Some(ConstantValue::Number(f64::NAN)),
+                ValueType::Null => Some(ConstantValue::Number(-0.0)),
+                _ => None,
+            },
+            UnaryOperator::BitwiseNot => match ValueType::from(&expr.argument) {
+                ValueType::BigInt => {
+                    self.eval_to_big_int(&expr.argument).map(|v| !v).map(ConstantValue::BigInt)
                 }
-            }
+                #[expect(clippy::cast_lossless)]
+                _ => self
+                    .eval_to_number(&expr.argument)
+                    .map(|v| (!v.to_int_32()) as f64)
+                    .map(ConstantValue::Number),
+            },
             UnaryOperator::Delete => None,
         }
     }
 
-    /// <https://tc39.es/ecma262/#sec-abstract-relational-comparison>
-    fn is_less_than(
+    fn eval_static_member_expression(
         &self,
-        left_expr: &Expression<'a>,
-        right_expr: &Expression<'a>,
-        _left_first: bool,
+        expr: &StaticMemberExpression<'a>,
     ) -> Option<ConstantValue<'a>> {
-        let left = ValueType::from(left_expr);
-        let right = ValueType::from(right_expr);
+        match expr.property.name.as_str() {
+            "length" => {
+                if let Some(ConstantValue::String(s)) = self.eval_expression(&expr.object) {
+                    // TODO(perf): no need to actually convert, only need the length
+                    Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
+                } else {
+                    if expr.object.may_have_side_effects() {
+                        return None;
+                    }
 
-        if left.is_string() && right.is_string() {
-            let left_string = self.get_side_free_string_value(left_expr);
-            let right_string = self.get_side_free_string_value(right_expr);
-            if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
-                // In JS, browsers parse \v differently. So do not compare strings if one contains \v.
-                if left_string.contains('\u{000B}') || right_string.contains('\u{000B}') {
-                    return None;
+                    if let Expression::ArrayExpression(arr) = &expr.object {
+                        Some(ConstantValue::Number(arr.elements.len().to_f64().unwrap()))
+                    } else {
+                        None
+                    }
                 }
-                return Some(ConstantValue::Boolean(
-                    left_string.cmp(&right_string) == Ordering::Less,
-                ));
             }
+            _ => None,
         }
+    }
 
+    /// <https://tc39.es/ecma262/#sec-abstract-relational-comparison>
+    fn is_less_than(&self, x: &Expression<'a>, y: &Expression<'a>) -> Option<ConstantValue<'a>> {
+        // a. Let px be ? ToPrimitive(x, number).
+        // b. Let py be ? ToPrimitive(y, number).
+        let px = ValueType::from(x);
+
+        // `.toString()` method is called and compared.
         // TODO: bigint is handled very differently in the spec
-        // See <https://tc39.es/ecma262/#sec-islessthan>
-        if left.is_bigint() || right.is_bigint() {
+        if px.is_object() || px.is_undetermined() || px.is_bigint() {
             return None;
         }
 
-        let left_num = self.get_side_free_number_value(left_expr)?;
-        let right_num = self.get_side_free_number_value(right_expr)?;
+        let py = ValueType::from(y);
 
-        if left_num.is_nan() || right_num.is_nan() {
-            return Some(ConstantValue::Undefined);
+        if py.is_object() || py.is_undetermined() || py.is_bigint() {
+            return None;
         }
 
+        if px.is_string() && py.is_string() {
+            let left_string = self.get_side_free_string_value(x)?;
+            let right_string = self.get_side_free_string_value(y)?;
+            return Some(ConstantValue::Boolean(left_string.cmp(&right_string) == Ordering::Less));
+        }
+
+        let left_num = self.get_side_free_number_value(x)?;
+        if left_num.is_nan() {
+            return Some(ConstantValue::Undefined);
+        }
+        let right_num = self.get_side_free_number_value(y)?;
+        if right_num.is_nan() {
+            return Some(ConstantValue::Undefined);
+        }
         Some(ConstantValue::Boolean(left_num < right_num))
     }
 }

@@ -160,6 +160,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     PreferLowercaseTitle,
+    jest,
     style,
     fix
 );

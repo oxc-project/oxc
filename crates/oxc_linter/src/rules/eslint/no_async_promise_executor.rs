@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// - If an async executor function throws an error, the error will be lost and won’t cause the newly-constructed `Promise` to reject.This could make it difficult to debug and handle some errors.
     /// - If a Promise executor function is using `await`, this is usually a sign that it is not actually necessary to use the `new Promise` constructor, or the scope of the `new Promise` constructor can be reduced.
     NoAsyncPromiseExecutor,
+    eslint,
     correctness
 );
 
@@ -85,6 +86,6 @@ fn test() {
         ("new Promise(((((async () => {})))))", None),
     ];
 
-    Tester::new(NoAsyncPromiseExecutor::NAME, NoAsyncPromiseExecutor::CATEGORY, pass, fail)
+    Tester::new(NoAsyncPromiseExecutor::NAME, NoAsyncPromiseExecutor::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// const arr: number[] = new Array<number>();
     /// ```
     ArrayType,
+    typescript,
     style,
     fix
 );
@@ -344,7 +345,7 @@ fn is_simple_type(ts_type: &TSType) -> bool {
         | TSType::TSQualifiedName(_)
         | TSType::TSThisType(_) => true,
         TSType::TSTypeReference(node) => {
-            let type_name = TSTypeName::get_first_name(&node.type_name);
+            let type_name = TSTypeName::get_identifier_reference(&node.type_name);
             if type_name.name.as_str() == "Array" {
                 if node.type_parameters.is_none() {
                     return true;
@@ -1644,7 +1645,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(ArrayType::NAME, ArrayType::CATEGORY, pass, fail)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(ArrayType::NAME, ArrayType::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

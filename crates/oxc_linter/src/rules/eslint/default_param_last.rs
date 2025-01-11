@@ -32,6 +32,7 @@ declare_oxc_lint!(
     /// createUser(undefined, "tabby")
     /// ```
     DefaultParamLast,
+    eslint,
     style
 );
 
@@ -97,5 +98,5 @@ fn test() {
         "const f = ([a, b] = [1, 2], c) => {}",
     ];
 
-    Tester::new(DefaultParamLast::NAME, DefaultParamLast::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(DefaultParamLast::NAME, DefaultParamLast::PLUGIN, pass, fail).test_and_snapshot();
 }

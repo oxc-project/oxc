@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_syntax::operator::UnaryOperator;
+use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 /// A "simple" operator is one whose children are expressions, has no direct side-effects.
 fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
@@ -26,8 +26,13 @@ impl<'a> CheckForStateChange<'a, '_> for Expression<'a> {
             | Self::RegExpLiteral(_)
             | Self::MetaProperty(_)
             | Self::ThisExpression(_)
-            | Self::ClassExpression(_)
+            | Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_) => false,
+            Self::ClassExpression(class_expr) => class_expr
+                .body
+                .body
+                .iter()
+                .any(|method| method.check_for_state_change(check_for_new_objects)),
             Self::TemplateLiteral(template) => template
                 .expressions
                 .iter()
@@ -58,7 +63,6 @@ impl<'a> CheckForStateChange<'a, '_> for Expression<'a> {
                 if check_for_new_objects {
                     return true;
                 }
-
                 object_expr
                     .properties
                     .iter()
@@ -73,6 +77,7 @@ impl<'a> CheckForStateChange<'a, '_> for Expression<'a> {
                     .iter()
                     .any(|element| element.check_for_state_change(check_for_new_objects))
             }
+
             _ => true,
         }
     }
@@ -89,10 +94,15 @@ impl<'a> CheckForStateChange<'a, '_> for UnaryExpression<'a> {
 
 impl<'a> CheckForStateChange<'a, '_> for BinaryExpression<'a> {
     fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        // `instanceof` and `in` can throw `TypeError`
+        if matches!(self.operator, BinaryOperator::In | BinaryOperator::Instanceof) {
+            return true;
+        }
         let left = self.left.check_for_state_change(check_for_new_objects);
-        let right = self.right.check_for_state_change(check_for_new_objects);
-
-        left || right
+        if left {
+            return true;
+        }
+        self.right.check_for_state_change(check_for_new_objects)
     }
 }
 
@@ -171,7 +181,7 @@ impl<'a> CheckForStateChange<'a, '_> for VariableDeclarator<'a> {
             || self
                 .init
                 .as_ref()
-                .map_or(false, |init| init.check_for_state_change(check_for_new_objects))
+                .is_some_and(|init| init.check_for_state_change(check_for_new_objects))
     }
 }
 
@@ -283,7 +293,7 @@ impl CheckForStateChange<'_, '_> for AssignmentTargetProperty<'_> {
             ) => assignment_target_property_identifier
                 .init
                 .as_ref()
-                .map_or(false, |init| init.check_for_state_change(check_for_new_objects)),
+                .is_some_and(|init| init.check_for_state_change(check_for_new_objects)),
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(
                 assignment_target_property_property,
             ) => {
@@ -315,6 +325,23 @@ impl CheckForStateChange<'_, '_> for AssignmentTargetMaybeDefault<'_> {
                     && assignment_target_with_default
                         .init
                         .check_for_state_change(check_for_new_objects)
+            }
+        }
+    }
+}
+
+impl<'a> CheckForStateChange<'a, '_> for ClassElement<'a> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        match self {
+            ClassElement::TSIndexSignature(_) | ClassElement::StaticBlock(_) => false,
+            ClassElement::MethodDefinition(method_definition) => {
+                method_definition.key.check_for_state_change(check_for_new_objects)
+            }
+            ClassElement::PropertyDefinition(property_definition) => {
+                property_definition.key.check_for_state_change(check_for_new_objects)
+            }
+            ClassElement::AccessorProperty(accessor_property) => {
+                accessor_property.key.check_for_state_change(check_for_new_objects)
             }
         }
     }

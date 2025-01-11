@@ -268,6 +268,11 @@ impl BinaryOperator {
         self == Self::In
     }
 
+    /// Returns `true` if this is an [`In`](BinaryOperator::Instanceof) operator.
+    pub fn is_instance_of(self) -> bool {
+        self == Self::Instanceof
+    }
+
     /// Returns `true` for any bitwise operator
     #[rustfmt::skip]
     pub fn is_bitwise(self) -> bool {
@@ -309,6 +314,25 @@ impl BinaryOperator {
             Self::Inequality => Some(Self::Equality),
             Self::StrictEquality => Some(Self::StrictInequality),
             Self::StrictInequality => Some(Self::StrictEquality),
+            _ => None,
+        }
+    }
+
+    /// Get [`AssignmentOperator`] corresponding to this [`BinaryOperator`].
+    pub fn to_assignment_operator(self) -> Option<AssignmentOperator> {
+        match self {
+            Self::Addition => Some(AssignmentOperator::Addition),
+            Self::Subtraction => Some(AssignmentOperator::Subtraction),
+            Self::Multiplication => Some(AssignmentOperator::Multiplication),
+            Self::Division => Some(AssignmentOperator::Division),
+            Self::Remainder => Some(AssignmentOperator::Remainder),
+            Self::Exponential => Some(AssignmentOperator::Exponential),
+            Self::ShiftLeft => Some(AssignmentOperator::ShiftLeft),
+            Self::ShiftRight => Some(AssignmentOperator::ShiftRight),
+            Self::ShiftRightZeroFill => Some(AssignmentOperator::ShiftRightZeroFill),
+            Self::BitwiseOR => Some(AssignmentOperator::BitwiseOR),
+            Self::BitwiseXOR => Some(AssignmentOperator::BitwiseXOR),
+            Self::BitwiseAnd => Some(AssignmentOperator::BitwiseAnd),
             _ => None,
         }
     }
@@ -425,6 +449,15 @@ impl LogicalOperator {
             Self::Coalesce => Precedence::Conditional,
         }
     }
+
+    /// Get [`AssignmentOperator`] corresponding to this [`LogicalOperator`].
+    pub fn to_assignment_operator(self) -> AssignmentOperator {
+        match self {
+            Self::Or => AssignmentOperator::LogicalOr,
+            Self::And => AssignmentOperator::LogicalAnd,
+            Self::Coalesce => AssignmentOperator::LogicalNullish,
+        }
+    }
 }
 
 impl GetPrecedence for LogicalOperator {
@@ -496,6 +529,11 @@ impl UnaryOperator {
     /// Returns `true` if this is the [`void`](UnaryOperator::Void) operator.
     pub fn is_void(self) -> bool {
         self == Self::Void
+    }
+
+    /// Returns `true` if this is the [`delete`](UnaryOperator::Delete) operator.
+    pub fn is_delete(self) -> bool {
+        self == Self::Delete
     }
 
     /// Returns `true` if this operator is a keyword instead of punctuation.

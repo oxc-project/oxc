@@ -62,6 +62,7 @@ declare_oxc_lint!(
     /// - `objectRestMessage`: A message to display when object rest properties are found.
     ///
     NoRestSpreadProperties,
+    oxc,
     restriction,
 );
 
@@ -164,6 +165,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoRestSpreadProperties::NAME, NoRestSpreadProperties::CATEGORY, pass, fail)
+    Tester::new(NoRestSpreadProperties::NAME, NoRestSpreadProperties::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

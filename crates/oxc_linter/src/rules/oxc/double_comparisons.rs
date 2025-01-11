@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// x >= y;
     /// ```
     DoubleComparisons,
+    oxc,
     correctness,
     fix
 );
@@ -161,7 +162,7 @@ fn test() {
         ("x > y || x === y", "x >= y"),
     ];
 
-    Tester::new(DoubleComparisons::NAME, DoubleComparisons::CATEGORY, pass, fail)
+    Tester::new(DoubleComparisons::NAME, DoubleComparisons::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

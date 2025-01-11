@@ -3,33 +3,48 @@
 use std::{
     mem::size_of,
     ops::{Deref, DerefMut},
+    ptr::NonNull,
 };
 
-use super::{NonNull, StackCapacity, StackCommon};
+use super::{StackCapacity, StackCommon};
 
 /// A simple stack.
 ///
 /// If a non-empty stack is viable for your use case, prefer [`NonEmptyStack`], which is cheaper for
 /// all operations.
 ///
-/// [`NonEmptyStack`] is usually the better choice, unless:
-/// 1. You want `new()` not to allocate.
-/// 2. Creating initial value for `NonEmptyStack::new()` is expensive.
+/// [`NonEmptyStack`] is usually the better choice, unless either:
+///
+/// 1. The stack will likely never have anything pushed to it.
+///    [`NonEmptyStack::new`] always allocates, whereas [`Stack::new`] does not.
+///    So if stack usually starts empty and remains empty, [`Stack`] will avoid an allocation.
+///    This is the same as how [`Vec`] does not allocate until you push a value into it.
+///
+/// 2. The type the stack holds is large or expensive to construct, so there's a high cost in having to
+///    create an initial dummy value (which [`NonEmptyStack`] requires, but [`Stack`] doesn't).
 ///
 /// To simplify implementation, zero size types are not supported (`Stack<()>`).
 ///
 /// ## Design
-/// Designed for maximally efficient `push`, `pop`, and reading/writing the last value on stack
-/// (although, unlike [`NonEmptyStack`], `last` and `last_mut` are fallible, and not branchless).
+/// Designed for maximally efficient [`push`], [`pop`], and reading/writing the last value on stack
+/// ([`last`] / [`last_mut`]). Although, unlike [`NonEmptyStack`], [`last`] and [`last_mut`] are
+/// fallible, and not branchless. So [`Stack::last`] and [`Stack::last_mut`] are a bit more expensive
+/// than [`NonEmptyStack`]'s equivalents.
 ///
-/// The alternative would likely be to use a `Vec`. But `Vec` is optimized for indexing into at
+/// The alternative would likely be to use a [`Vec`]. But `Vec` is optimized for indexing into at
 /// arbitrary positions, not for `push` and `pop`. `Vec` stores `len` and `capacity` as integers,
 /// so requires pointer maths on every operation: `let entry_ptr = base_ptr + index * size_of::<T>();`.
 ///
-/// In comparison, `Stack` uses a `cursor` pointer, so avoids these calculations.
-/// This is similar to how `std`'s slice iterators work.
+/// In comparison, [`Stack`] uses a `cursor` pointer, so avoids these calculations.
+/// This is similar to how [`std`'s slice iterators] work.
 ///
+/// [`push`]: Stack::push
+/// [`pop`]: Stack::pop
+/// [`last`]: Stack::last
+/// [`last_mut`]: Stack::last_mut
 /// [`NonEmptyStack`]: super::NonEmptyStack
+/// [`NonEmptyStack::new`]: super::NonEmptyStack::new
+/// [`std`'s slice iterators]: std::slice::Iter
 pub struct Stack<T> {
     // Pointer to *after* last entry on stack.
     cursor: NonNull<T>,

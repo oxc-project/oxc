@@ -26,7 +26,13 @@ fn mangler() {
         "import { x } from 's'; export { x }",
         "function _ (exports) { Object.defineProperty(exports, '__esModule', { value: true }) }",
     ];
-    let top_level_cases = ["function foo(a) {a}"];
+    let top_level_cases = [
+        "function foo(a) {a}",
+        "export function foo() {}; foo()",
+        "export default function foo() {}; foo()",
+        "export const foo = 1; foo",
+        "const foo = 1; foo; export { foo }",
+    ];
 
     let mut snapshot = String::new();
     cases.into_iter().fold(&mut snapshot, |w, case| {

@@ -68,6 +68,7 @@ declare_oxc_lint!(
     /// /[a-z-]/;
     /// ```
     NoUselessEscape,
+    eslint,
     correctness,
     fix
 );
@@ -671,7 +672,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUselessEscape::NAME, NoUselessEscape::CATEGORY, pass, fail)
+    Tester::new(NoUselessEscape::NAME, NoUselessEscape::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

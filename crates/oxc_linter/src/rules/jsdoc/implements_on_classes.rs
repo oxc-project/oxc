@@ -55,6 +55,7 @@ declare_oxc_lint!(
     /// function quux () {}
     /// ```
     ImplementsOnClasses,
+    jsdoc,
     correctness
 );
 
@@ -293,6 +294,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(ImplementsOnClasses::NAME, ImplementsOnClasses::CATEGORY, pass, fail)
+    Tester::new(ImplementsOnClasses::NAME, ImplementsOnClasses::PLUGIN, pass, fail)
         .test_and_snapshot();
 }
