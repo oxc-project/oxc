@@ -34,6 +34,7 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.try_replace_if(stmts, ctx);
+        let changed = self.changed;
         while self.changed {
             self.changed = false;
             self.try_replace_if(stmts, ctx);
@@ -41,6 +42,7 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
                 stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
             }
         }
+        self.changed = self.changed || changed;
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
