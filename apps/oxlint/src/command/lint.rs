@@ -1,7 +1,7 @@
-use std::{path::PathBuf, str::FromStr};
+use std::path::PathBuf;
 
 use bpaf::Bpaf;
-use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
+use oxc_linter::{output_formatter::OutputFormat, AllowWarnDeny, FixKind, LintPlugins};
 
 use super::{
     ignore::{ignore_options, IgnoreOptions},
@@ -182,32 +182,6 @@ pub struct OutputOptions {
     /// Use a specific output format (default, json, unix, checkstyle, github)
     #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
     pub format: OutputFormat,
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum OutputFormat {
-    Default,
-    /// GitHub Check Annotation
-    /// <https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-a-notice-message>
-    Github,
-    Json,
-    Unix,
-    Checkstyle,
-}
-
-impl FromStr for OutputFormat {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "json" => Ok(Self::Json),
-            "default" => Ok(Self::Default),
-            "unix" => Ok(Self::Unix),
-            "checkstyle" => Ok(Self::Checkstyle),
-            "github" => Ok(Self::Github),
-            _ => Err(format!("'{s}' is not a known format")),
-        }
-    }
 }
 
 /// Enable Plugins
