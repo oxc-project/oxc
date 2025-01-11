@@ -204,22 +204,33 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
             return Some(ctx.ast.statement_expression(if_stmt.span, expr));
         }
 
-        match ctx.get_boolean_value(&if_stmt.test) {
-            Some(true) => Some(ctx.ast.move_statement(&mut if_stmt.consequent)),
-            Some(false) => {
-                Some(if let Some(alternate) = &mut if_stmt.alternate {
-                    ctx.ast.move_statement(alternate)
+        if let Some(boolean) = ctx.get_side_free_boolean_value(&if_stmt.test) {
+            let mut keep_var = KeepVar::new(ctx.ast);
+            if boolean {
+                if let Some(alternate) = &if_stmt.alternate {
+                    keep_var.visit_statement(alternate);
+                }
+            } else {
+                keep_var.visit_statement(&if_stmt.consequent);
+            };
+            if let Some(var_stmt) = keep_var.get_variable_declaration_statement() {
+                if boolean {
+                    if_stmt.alternate = Some(var_stmt);
                 } else {
-                    // Keep hoisted `vars` from the consequent block.
-                    let mut keep_var = KeepVar::new(ctx.ast);
-                    keep_var.visit_statement(&if_stmt.consequent);
-                    keep_var
-                        .get_variable_declaration_statement()
-                        .unwrap_or_else(|| ctx.ast.statement_empty(SPAN))
-                })
+                    if_stmt.consequent = var_stmt;
+                }
+                return None;
             }
-            None => None,
+            return Some(if boolean {
+                ctx.ast.move_statement(&mut if_stmt.consequent)
+            } else {
+                if_stmt.alternate.as_mut().map_or_else(
+                    || ctx.ast.statement_empty(SPAN),
+                    |alternate| ctx.ast.move_statement(alternate),
+                )
+            });
         }
+        None
     }
 
     fn try_fold_for(

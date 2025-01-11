@@ -61,6 +61,19 @@ fn integration() {
     );
 
     test_same("a && (b && (c && (d && (e && (f && (g && (h && i && j && k && l && m && n && o && p && q && r && s && t && u && v && w && x && y && z)))))))");
+
+    test(
+        "if (((() => console.log('effect'))(), true)) {
+         } else {
+           var c = 1;
+           for (var c; unknownGlobal && true; unknownGlobal && true) var d;
+         }
+         console.log(c, d);
+        ",
+        "if ((() => console.log('effect'))(), !0) {} else for (var c = 1, c; unknownGlobal; unknownGlobal && !0) var d;
+        console.log(c, d);
+        ",
+    );
 }
 
 #[test] // https://github.com/oxc-project/oxc/issues/4341
