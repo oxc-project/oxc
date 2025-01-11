@@ -4,6 +4,72 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.45.0] - 2025-01-11
+
+### Features
+
+- 6c7acac allocator: Implement `IntoIterator` for `&mut Vec` (#8389) (overlookmotel)
+- 41ddf60 minfier: Add `CompressOptions::target` (#8179) (Boshen)
+- 0592a8b transformer/class-properties: Transform private in expression (#8202) (Dunqing)
+- ad77ad5 transformer/class-properties: Transform static/instance accessor methods (#8132) (Dunqing)
+- e405f79 transformer/class-properties: Transform static private method invoking (#8117) (Dunqing)
+- 3303e99 transformer/class-properties: Insert statements after statement of class expression (#8116) (Dunqing)
+- 0cc71cf transformer/class-properties: Transform super expressions and identifiers that refers to class binding in private method (#8106) (Dunqing)
+- 58ed832 transformer/class-properties: Transform private field expression which invokes private method (#8102) (Dunqing)
+- f14567a transformer/class-properties: Transform callee which invokes private method (#8100) (Dunqing)
+- 13349ef transformer/class-properties: Transform private methods (#8099) (Dunqing)
+
+### Bug Fixes
+
+- 3eaff2a transformer: Ensure last expression statement in arrow function expression is wrapped in return (#8192) (Dunqing)
+- 3feac27 transformer/arrow-functions: Outer `super()` in nested class (#8382) (Dunqing)
+- 335065d transformer/arrow-functions: Do not transform super that inside nested non-async method (#8335) (Dunqing)
+- e4d66e4 transformer/arrow-functions: Store `super_methods` on a `Stack` to fix nested async methods (#8331) (Dunqing)
+- 775a289 transformer/arrow-functions: `_this = this` should be inserted after super call expression (#8024) (Dunqing)
+- ac72adb transformer/private-methods: Fix panic if instance private accessor in class (#8362) (overlookmotel)
+- f1f129b transformer/private-methods: Create brand binding `var` in hoist scope (#8361) (overlookmotel)
+- ab61425 transformer/private-methods: No temp var for class when unused private methods (#8360) (overlookmotel)
+- 9a03bd2 transformer/typescript: Remove type-only `import =` when `only_remove_type_imports` is true (#8275) (Dunqing)
+- 0df1866 transformer/typescript: Create `Reference` for `require` (#8355) (overlookmotel)
+- 78d7c97 transformer/typescript: Create `Reference` for `Infinity` (#8354) (overlookmotel)
+- 2e7207f transformer/typescript: Should strip import specifiers type with `only_remove_type_imports` (#8141) (underfin)
+
+### Performance
+
+- 07edf74 transformer/arrow-function: Stop traversal at function as super() can't appear in a nested function (#8383) (Dunqing)
+- 62e3f7e transformer/arrow-functions: Reduce size of inlined visitor (#8322) (overlookmotel)
+- aebe0ea transformer/arrow-functions: Use `NonEmptyStack` instead of `Stack` (#8318) (overlookmotel)
+
+### Documentation
+
+- 05cba5b transformer/private-methods: Amend comments (#8398) (overlookmotel)
+
+### Refactor
+
+- 109b8fc transformer: Elide lifetimes where possible (#8285) (overlookmotel)
+- fb389f7 transformer/arrow-function: Create a new ident instead of clone (#8338) (Dunqing)
+- dddbd29 transformer/arrow-functions: Reorder assertions (#8386) (overlookmotel)
+- ce6c445 transformer/arrow-functions: Add TODO comments (#8328) (overlookmotel)
+- 73d0025 transformer/arrow-functions: Reduce repeated code (#8323) (overlookmotel)
+- 3dd08e9 transformer/arrow-functions: Do not inline non-trivial visitor method (#8321) (overlookmotel)
+- ea9cefb transformer/arrow-functions: Reorder visitor methods (#8320) (overlookmotel)
+- 37199a4 transformer/arrow-functions: Rename lifetime (#8319) (overlookmotel)
+- 57e9dcf transformer/arrow-functions: Shorten `AstBuilder` call (#8317) (overlookmotel)
+- a5e3528 transformer/async-to-generator: Pass `TraverseCtx` to function not `AstBuilder` (#8279) (overlookmotel)
+- e7c89ba transformer/class-properties: TODO comments (#8392) (overlookmotel)
+- 6790d1d transformer/class-properties: Simplify determining if class is declaration (#8357) (overlookmotel)
+- c786a13 transformer/class-properties: Share `replace_class_name_with_temp_var` in class_properties (#8105) (Dunqing)
+- f54f48e transformer/class-properties: Remove all `*_if_super` methods in `static_block_and_prop_init` (#8104) (Dunqing)
+- d82fb52 transformer/class-properties: Move `supers` to `super_converter` (#8103) (Dunqing)
+- 3dad85e transformer/private-methods: Remove unnecessary clone (#8400) (overlookmotel)
+- aa5e65f transformer/private-methods: Simplify finding parent statement of class expression (#8364) (overlookmotel)
+- c786fd1 transformer/private-methods: TODO comments (#8363) (overlookmotel)
+
+### Styling
+
+- 45e2402 transformer/private-methods: Move comments (#8399) (overlookmotel)
+- 0a1ffc0 transformer/private-methods: Rename var (#8397) (overlookmotel)
+
 ## [0.44.0] - 2024-12-25
 
 ### Features
