@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
 use bpaf::Bpaf;
-use oxc_linter::{output_formatter::OutputFormat, AllowWarnDeny, FixKind, LintPlugins};
+use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
+
+use crate::output_formatter::OutputFormat;
 
 use super::{
     ignore::{ignore_options, IgnoreOptions},

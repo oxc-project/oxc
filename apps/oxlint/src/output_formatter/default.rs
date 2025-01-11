@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use crate::RuleTable;
+use oxc_linter::table::RuleTable;
 
 pub struct DefaultOutputFormatter;
 

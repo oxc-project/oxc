@@ -9,10 +9,8 @@ use ignore::gitignore::Gitignore;
 
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
-    loader::LINT_PARTIAL_LOADER_EXT,
-    output_formatter::{OutputFormat, OutputFormatter},
-    AllowWarnDeny, ConfigStoreBuilder, InvalidFilterKind, LintFilter, LintOptions, LintService,
-    LintServiceOptions, Linter, Oxlintrc,
+    loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, ConfigStoreBuilder, InvalidFilterKind,
+    LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use oxc_span::VALID_EXTENSIONS;
 
@@ -20,6 +18,7 @@ use crate::{
     cli::{
         CliRunResult, LintCommand, LintResult, MiscOptions, OutputOptions, Runner, WarningOptions,
     },
+    output_formatter::{OutputFormat, OutputFormatter},
     walk::{Extensions, Walk},
 };
 

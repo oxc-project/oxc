@@ -1,5 +1,5 @@
-use crate::rules::RULES;
-use crate::RuleCategory;
+use oxc_linter::rules::RULES;
+use oxc_linter::RuleCategory;
 use std::io::Write;
 
 #[derive(Debug)]

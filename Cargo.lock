@@ -2217,6 +2217,8 @@ dependencies = [
  "oxc_linter",
  "oxc_span",
  "rayon",
+ "serde",
+ "serde_json",
  "tempfile",
  "tracing-subscriber",
 ]

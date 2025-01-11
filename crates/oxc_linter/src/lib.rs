@@ -15,12 +15,11 @@ mod module_graph_visitor;
 mod module_record;
 mod options;
 mod rule;
-mod rules;
 mod service;
 mod utils;
 
 pub mod loader;
-pub mod output_formatter;
+pub mod rules;
 pub mod table;
 
 use std::{path::Path, rc::Rc, sync::Arc};
@@ -45,7 +44,6 @@ use crate::{
     context::ContextHost,
     fixer::{Fixer, Message},
     rules::RuleEnum,
-    table::RuleTable,
     utils::iter_possible_jest_call_node,
 };
 
