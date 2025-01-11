@@ -117,14 +117,21 @@ impl<'a> PeepholeMinimizeConditions {
         expr: &mut UnaryExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if expr.operator.is_not() {
-            if let Expression::UnaryExpression(e1) = &mut expr.argument {
-                if e1.operator.is_not() && ValueType::from(&e1.argument).is_boolean() {
-                    return Some(ctx.ast.move_expression(&mut e1.argument));
-                }
-            }
+        if !expr.operator.is_not() {
+            return None;
         }
-        None
+        match &mut expr.argument {
+            Expression::UnaryExpression(e)
+                if e.operator.is_not() && ValueType::from(&e.argument).is_boolean() =>
+            {
+                Some(ctx.ast.move_expression(&mut e.argument))
+            }
+            Expression::BinaryExpression(e) if e.operator.is_equality() => {
+                e.operator = e.operator.equality_inverse_operator().unwrap();
+                Some(ctx.ast.move_expression(&mut expr.argument))
+            }
+            _ => None,
+        }
     }
 
     fn try_minimize_if(
@@ -1968,6 +1975,9 @@ mod test {
 
     #[test]
     fn minimize_nots_with_binary_expressions() {
+        test("!(x === undefined)", "x !== undefined");
+        test("!(typeof(x) === 'undefined')", "typeof x != 'undefined'");
+        test("!(x === void 0)", "x !== void 0");
         test("!!delete x.y", "delete x.y");
         test("!!!delete x.y", "!delete x.y");
         test("!!!!delete x.y", "delete x.y");
