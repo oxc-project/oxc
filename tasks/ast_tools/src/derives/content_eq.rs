@@ -7,20 +7,11 @@ use crate::{
     util::ToIdent,
 };
 
-use super::{define_derive, Derive};
+use super::{content_hash::IGNORE_FIELD_TYPES, define_derive, Derive};
 
 pub struct DeriveContentEq;
 
 define_derive!(DeriveContentEq);
-
-const IGNORE_FIELDS: [(/* field name */ &str, /* field type */ &str); 6] = [
-    ("span", "Span"),
-    ("trailing_comma", "Span"),
-    ("this_span", "Span"),
-    ("scope_id", "ScopeId"),
-    ("symbol_id", "SymbolId"),
-    ("reference_id", "ReferenceId"),
-];
 
 impl Derive for DeriveContentEq {
     fn trait_name() -> &'static str {
@@ -86,10 +77,7 @@ fn derive_struct(def: &StructDef) -> (&str, TokenStream) {
             .fields
             .iter()
             .filter(|field| {
-                let Some(name) = field.name.as_ref() else { return false };
-                !IGNORE_FIELDS
-                    .iter()
-                    .any(|it| name == it.0 && field.typ.name().inner_name() == it.1)
+                !IGNORE_FIELD_TYPES.iter().any(|it| field.typ.name().inner_name() == *it)
             })
             .map(|field| {
                 let ident = field.ident();
