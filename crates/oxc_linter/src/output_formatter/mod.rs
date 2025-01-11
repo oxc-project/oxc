@@ -1,12 +1,10 @@
-mod default_output_formatter;
-mod json_output_formatter;
+mod default;
+mod json;
 
 use std::io::Write;
 use std::str::FromStr;
 
-use crate::output_formatter::{
-    default_output_formatter::DefaultOutputFormatter, json_output_formatter::JsonOutputFormatter,
-};
+use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputFormatter};
 
 pub struct OutputFormatter {
     format: OutputFormat,

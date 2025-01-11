@@ -17,7 +17,7 @@ impl DefaultOutputFormatter {
 
 #[cfg(test)]
 mod test {
-    use crate::output_formatter::default_output_formatter::DefaultOutputFormatter;
+    use crate::output_formatter::default::DefaultOutputFormatter;
 
     #[test]
     fn all_rules() {
