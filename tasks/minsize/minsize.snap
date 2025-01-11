@@ -11,7 +11,7 @@ Original   | minified   | minified   | gzip       | gzip       | Fixture
 
 544.10 kB  | 71.76 kB   | 72.48 kB   | 26.15 kB   | 26.20 kB   | lodash.js 
 
-555.77 kB  | 273.16 kB  | 270.13 kB  | 90.92 kB   | 90.80 kB   | d3.js     
+555.77 kB  | 273.15 kB  | 270.13 kB  | 90.92 kB   | 90.80 kB   | d3.js     
 
 1.01 MB    | 460.18 kB  | 458.89 kB  | 126.77 kB  | 126.71 kB  | bundle.min.js
 
