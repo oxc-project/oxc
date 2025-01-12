@@ -773,7 +773,7 @@ mod test {
         let options = lint_command().run_inner(args).unwrap();
         let ret = LintRunner::new(options).run();
         let CliRunResult::ConfigFileInitResult { message } = ret else {
-            panic!("Expected configuation file to be created, got {ret:?}")
+            panic!("Expected configuration file to be created, got {ret:?}")
         };
         assert_eq!(message, "Configuration file created");
         fs::remove_file(LintRunner::DEFAULT_OXLINTRC).unwrap();
