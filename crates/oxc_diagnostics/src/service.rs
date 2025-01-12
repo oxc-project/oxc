@@ -6,7 +6,7 @@ use std::{
 };
 
 use crate::{
-    reporter::{DiagnosticReporter, GraphicalReporter},
+    reporter::DiagnosticReporter,
     Error, NamedSource, OxcDiagnostic, Severity,
 };
 
@@ -67,12 +67,6 @@ pub struct DiagnosticService {
 
     sender: DiagnosticSender,
     receiver: DiagnosticReceiver,
-}
-
-impl Default for DiagnosticService {
-    fn default() -> Self {
-        Self::new(Box::new(GraphicalReporter::default()))
-    }
 }
 
 impl DiagnosticService {
