@@ -28,7 +28,7 @@ impl InternalFormatter for GithubOutputFormatter {
 struct GithubReporter;
 
 impl DiagnosticReporter for GithubReporter {
-    fn finish(&mut self, writer: &mut BufWriter<Stdout>) {
+    fn finish(&mut self, writer: &mut dyn Write) {
         writer.flush().unwrap();
     }
 

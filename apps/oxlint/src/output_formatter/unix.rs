@@ -29,7 +29,7 @@ struct UnixReporter {
 }
 
 impl DiagnosticReporter for UnixReporter {
-    fn finish(&mut self, writer: &mut BufWriter<Stdout>) {
+    fn finish(&mut self, writer: &mut dyn Write) {
         let total = self.total;
         if total > 0 {
             let line = format!("\n{total} problem{}\n", if total > 1 { "s" } else { "" });

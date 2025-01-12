@@ -1,6 +1,6 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
-use std::io::{BufWriter, Stdout};
+use std::io::{BufWriter, Stdout, Write};
 
 use crate::{Error, Severity};
 
@@ -60,7 +60,7 @@ pub trait DiagnosticReporter {
     /// upheld in Oxc's API. Do not rely on this behavior.
     ///
     /// [`JSONReporter`]: crate::reporter::JsonReporter
-    fn finish(&mut self, writer: &mut BufWriter<Stdout>);
+    fn finish(&mut self, writer: &mut dyn Write);
 
     /// Write a rendered collection of diagnostics to this reporter's output stream.
     fn render_diagnostics(&mut self, writer: &mut BufWriter<Stdout>, s: &[u8]);

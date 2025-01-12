@@ -26,13 +26,14 @@ impl InternalFormatter for CheckStyleOutputFormatter {
 }
 
 #[derive(Default)]
-pub struct CheckstyleReporter {
+struct CheckstyleReporter {
     diagnostics: Vec<Error>,
 }
 
 impl DiagnosticReporter for CheckstyleReporter {
-    fn finish(&mut self, writer: &mut BufWriter<Stdout>) {
+    fn finish(&mut self, writer: &mut dyn Write) {
         writer.write_all(format_checkstyle(&self.diagnostics).as_bytes()).unwrap();
+        writer.flush().unwrap();
     }
 
     fn render_diagnostics(&mut self, _writer: &mut BufWriter<Stdout>, _s: &[u8]) {}

@@ -26,7 +26,7 @@ impl InternalFormatter for DefaultOutputFormatter {
 /// Pretty-prints diagnostics. Primarily meant for human-readable output in a terminal.
 ///
 /// See [`GraphicalReportHandler`] for how to configure colors, context lines, etc.
-pub struct GraphicalReporter {
+struct GraphicalReporter {
     handler: GraphicalReportHandler,
 }
 
@@ -37,7 +37,7 @@ impl Default for GraphicalReporter {
 }
 
 impl DiagnosticReporter for GraphicalReporter {
-    fn finish(&mut self, writer: &mut BufWriter<Stdout>) {
+    fn finish(&mut self, writer: &mut dyn Write) {
         writer
             .flush()
             .or_else(|e| {
