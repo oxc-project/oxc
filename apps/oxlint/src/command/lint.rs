@@ -71,6 +71,10 @@ pub struct BasicOptions {
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
+
+    /// Initialize oxlint configuration with default values 
+    #[bpaf(switch, hide_usage)]
+    pub init: bool,
 }
 
 // This is formatted according to
