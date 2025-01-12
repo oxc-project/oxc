@@ -12,13 +12,13 @@ pub(crate) fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefin
     let source_type = SourceType::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let mut program = ret.program;
+    let program = ret.program;
     let (symbols, scopes) =
-        SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
-    let _ = ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, &mut program);
+        SemanticBuilder::new().build(program).semantic.into_symbol_table_and_scope_tree();
+    let _ = ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, program);
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
-        .build(&program)
+        .build(program)
         .code;
     let expected = codegen(expected, source_type);
     assert_eq!(result, expected, "for source {source_text}");
@@ -266,17 +266,17 @@ log(__MEMBER__);
     let source_type = SourceType::default();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let mut program = ret.program;
+    let program = ret.program;
     let (symbols, scopes) =
-        SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
-    let _ = ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, &mut program);
+        SemanticBuilder::new().build(program).semantic.into_symbol_table_and_scope_tree();
+    let _ = ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, program);
     let result = CodeGenerator::new()
         .with_options(CodegenOptions {
             single_quote: true,
             source_map_path: Some(std::path::Path::new(&"test.js.map").to_path_buf()),
             ..CodegenOptions::default()
         })
-        .build(&program);
+        .build(program);
 
     let output = result.code;
     let output_map = result.map.unwrap();

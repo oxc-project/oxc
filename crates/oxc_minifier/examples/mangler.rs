@@ -40,6 +40,6 @@ fn mangler(source_text: &str, source_type: SourceType, debug: bool) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mangler = Mangler::new()
         .with_options(MangleOptions { debug, top_level: source_type.is_module() })
-        .build(&ret.program);
-    CodeGenerator::new().with_mangler(Some(mangler)).build(&ret.program).code
+        .build(ret.program);
+    CodeGenerator::new().with_mangler(Some(mangler)).build(ret.program).code
 }

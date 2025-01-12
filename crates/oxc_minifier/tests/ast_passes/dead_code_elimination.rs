@@ -9,8 +9,8 @@ use oxc_span::SourceType;
 
 fn run(source_text: &str, source_type: SourceType) -> String {
     let allocator = Allocator::default();
-    let mut ret = Parser::new(&allocator, source_text, source_type).parse();
-    let program = &mut ret.program;
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let program = ret.program;
     Compressor::new(&allocator, CompressOptions::default()).dead_code_elimination(program);
     Codegen::new().build(program).code
 }

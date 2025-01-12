@@ -135,19 +135,19 @@ fn minify_twice(file: &TestFile) -> String {
 fn minify(source_text: &str, source_type: SourceType) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let mut program = ret.program;
+    let program = ret.program;
     let (symbols, scopes) =
-        SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
+        SemanticBuilder::new().build(program).semantic.into_symbol_table_and_scope_tree();
     let _ = ReplaceGlobalDefines::new(
         &allocator,
         ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'development'")]).unwrap(),
     )
-    .build(symbols, scopes, &mut program);
-    let ret = Minifier::new(MinifierOptions::default()).build(&allocator, &mut program);
+    .build(symbols, scopes, program);
+    let ret = Minifier::new(MinifierOptions::default()).build(&allocator, program);
     CodeGenerator::new()
         .with_options(CodegenOptions { minify: true, comments: false, ..CodegenOptions::default() })
         .with_mangler(ret.mangler)
-        .build(&program)
+        .build(program)
         .code
 }
 

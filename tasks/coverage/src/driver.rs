@@ -1,10 +1,10 @@
-use std::{ops::ControlFlow, path::PathBuf};
+use std::{hint::unreachable_unchecked, ops::ControlFlow, path::PathBuf};
 
 use rustc_hash::FxHashSet;
 
 use oxc::{
     allocator::Allocator,
-    ast::{ast::Program, Comment},
+    ast::{ast::Program, AstKind, Comment},
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
@@ -80,12 +80,12 @@ impl CompilerInterface for Driver {
         ControlFlow::Continue(())
     }
 
-    fn after_semantic(
-        &mut self,
-        program: &mut Program<'_>,
-        ret: &mut SemanticBuilderReturn,
-    ) -> ControlFlow<()> {
+    fn after_semantic(&mut self, ret: &mut SemanticBuilderReturn) -> ControlFlow<()> {
         if self.check_semantic {
+            let AstKind::Program(program) = ret.semantic.nodes().root_node().unwrap().kind() else {
+                // SAFETY: root_node is guaranteed to be Program
+                unsafe { unreachable_unchecked() };
+            };
             if let Some(errors) = check_semantic_ids(program) {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());

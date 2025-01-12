@@ -35,5 +35,5 @@ fn test_prop_name() {
     assert!(ret.errors.is_empty());
 
     let mut visitor = TestVisitor;
-    visitor.visit_program(&ret.program);
+    visitor.visit_program(ret.program);
 }

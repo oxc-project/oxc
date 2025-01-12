@@ -311,7 +311,7 @@ impl TestCase {
                             comments: false,
                             ..CodegenOptions::default()
                         })
-                        .build(&ret.program)
+                        .build(ret.program)
                         .code
                 },
             );

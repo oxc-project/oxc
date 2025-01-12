@@ -78,7 +78,7 @@ impl<'a> IsolatedDeclarations<'a> {
     /// # Errors
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
-    pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
+    pub fn build(mut self, program: &'a Program<'a>) -> IsolatedDeclarationsReturn<'a> {
         self.internal_annotations = self
             .strip_internal
             .then(|| Self::build_internal_annotations(program))

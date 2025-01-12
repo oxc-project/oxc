@@ -28,7 +28,7 @@ pub fn test_options_with_source_type(
 ) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let result = CodeGenerator::new().with_options(options).build(&ret.program).code;
+    let result = CodeGenerator::new().with_options(options).build(ret.program).code;
     assert_eq!(result, expected, "\nfor source: {source_text:?}");
 }
 
@@ -38,7 +38,7 @@ pub fn test_minify(source_text: &str, expected: &str) {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
-        .build(&ret.program)
+        .build(ret.program)
         .code;
     assert_eq!(result, expected, "\nfor minify source: {source_text}");
 }

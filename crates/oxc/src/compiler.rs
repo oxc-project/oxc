@@ -101,11 +101,7 @@ pub trait CompilerInterface {
         ControlFlow::Continue(())
     }
 
-    fn after_semantic(
-        &mut self,
-        _program: &mut Program<'_>,
-        _semantic_return: &mut SemanticBuilderReturn,
-    ) -> ControlFlow<()> {
+    fn after_semantic(&mut self, _semantic_return: &mut SemanticBuilderReturn) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
 
@@ -134,21 +130,21 @@ pub trait CompilerInterface {
             self.handle_errors(parser_return.errors);
         }
 
-        let mut program = parser_return.program;
+        let program = parser_return.program;
 
         /* Isolated Declarations */
         if let Some(options) = self.isolated_declaration_options() {
-            self.isolated_declaration(options, &allocator, &program, source_path);
+            self.isolated_declaration(options, &allocator, program, source_path);
         }
 
         /* Semantic */
 
-        let mut semantic_return = self.semantic(&program);
+        let mut semantic_return = self.semantic(program);
         if !semantic_return.errors.is_empty() {
             self.handle_errors(semantic_return.errors);
             return;
         }
-        if self.after_semantic(&mut program, &mut semantic_return).is_break() {
+        if self.after_semantic(&mut semantic_return).is_break() {
             return;
         }
 
@@ -159,14 +155,14 @@ pub trait CompilerInterface {
 
         if let Some(options) = self.transform_options() {
             let mut transformer_return =
-                self.transform(options, &allocator, &mut program, source_path, symbols, scopes);
+                self.transform(options, &allocator, program, source_path, symbols, scopes);
 
             if !transformer_return.errors.is_empty() {
                 self.handle_errors(transformer_return.errors);
                 return;
             }
 
-            if self.after_transform(&mut program, &mut transformer_return).is_break() {
+            if self.after_transform(program, &mut transformer_return).is_break() {
                 return;
             }
 
@@ -180,30 +176,23 @@ pub trait CompilerInterface {
         if inject_options.is_some() || define_options.is_some() {
             (symbols, scopes) = SemanticBuilder::new()
                 .with_stats(stats)
-                .build(&program)
+                .build(program)
                 .semantic
                 .into_symbol_table_and_scope_tree();
         }
 
         if let Some(options) = inject_options {
-            let ret = InjectGlobalVariables::new(&allocator, options).build(
-                symbols,
-                scopes,
-                &mut program,
-            );
+            let ret =
+                InjectGlobalVariables::new(&allocator, options).build(symbols, scopes, program);
             symbols = ret.symbols;
             scopes = ret.scopes;
         }
 
         if let Some(options) = define_options {
             let ret =
-                ReplaceGlobalDefines::new(&allocator, options).build(symbols, scopes, &mut program);
+                ReplaceGlobalDefines::new(&allocator, options).build(symbols, scopes, program);
             Compressor::new(&allocator, CompressOptions::default())
-                .dead_code_elimination_with_symbols_and_scopes(
-                    ret.symbols,
-                    ret.scopes,
-                    &mut program,
-                );
+                .dead_code_elimination_with_symbols_and_scopes(ret.symbols, ret.scopes, program);
             // symbols = ret.symbols;
             // scopes = ret.scopes;
         }
@@ -211,17 +200,17 @@ pub trait CompilerInterface {
         /* Compress */
 
         if let Some(options) = self.compress_options() {
-            self.compress(&allocator, &mut program, options);
+            self.compress(&allocator, program, options);
         }
 
         /* Mangler */
 
-        let mangler = self.mangle_options().map(|options| self.mangle(&mut program, options));
+        let mangler = self.mangle_options().map(|options| self.mangle(program, options));
 
         /* Codegen */
 
         if let Some(options) = self.codegen_options() {
-            let ret = self.codegen(&program, source_path, mangler, options);
+            let ret = self.codegen(program, source_path, mangler, options);
             self.after_codegen(ret);
         }
     }
@@ -235,7 +224,7 @@ pub trait CompilerInterface {
         Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
     }
 
-    fn semantic<'a>(&self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
+    fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         let mut builder = SemanticBuilder::new();
 
         if self.transform_options().is_some() {

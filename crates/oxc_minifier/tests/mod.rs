@@ -22,12 +22,12 @@ pub(crate) fn run(
 ) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let mut program = ret.program;
+    let program = ret.program;
     if let Some(options) = options {
-        Compressor::new(&allocator, options).build(&mut program);
+        Compressor::new(&allocator, options).build(program);
     }
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
-        .build(&program)
+        .build(program)
         .code
 }

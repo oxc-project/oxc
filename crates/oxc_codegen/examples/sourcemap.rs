@@ -32,7 +32,7 @@ fn main() -> std::io::Result<()> {
             source_map_path: Some(path.to_path_buf()),
             ..CodegenOptions::default()
         })
-        .build(&ret.program);
+        .build(ret.program);
 
     if let Some(source_map) = map {
         let result = source_map.to_json_string();

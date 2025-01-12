@@ -37,7 +37,7 @@ fn main() -> std::io::Result<()> {
     let semantic = SemanticBuilder::new()
         // Enable additional syntax checks not performed by the parser
         .with_check_syntax_error(true)
-        .build(&program);
+        .build(program);
 
     if !semantic.errors.is_empty() {
         let error_message: String = semantic

@@ -35,7 +35,7 @@ fn main() {
     // - RegExpLiteral
     // - new RegExp() with string or template literal if static
     RegularExpressionVisitor { source_text: Arc::clone(&source_text) }
-        .visit_program(&parser_ret.program);
+        .visit_program(parser_ret.program);
 }
 
 struct RegularExpressionVisitor {

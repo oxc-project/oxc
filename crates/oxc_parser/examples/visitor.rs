@@ -32,7 +32,7 @@ fn main() -> std::io::Result<()> {
     let program = ret.program;
 
     let mut ast_pass = CountASTNodes::default();
-    ast_pass.visit_program(&program);
+    ast_pass.visit_program(program);
     println!("{ast_pass:?}");
 
     Ok(())

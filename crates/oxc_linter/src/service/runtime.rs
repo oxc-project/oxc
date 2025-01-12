@@ -223,7 +223,7 @@ impl Runtime {
             .with_scope_tree_child_ids(true)
             .with_build_jsdoc(true)
             .with_check_syntax_error(check_syntax_errors)
-            .build(&ret.program);
+            .build(ret.program);
 
         if !semantic_ret.errors.is_empty() {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
