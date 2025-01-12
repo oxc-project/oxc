@@ -28,12 +28,9 @@ struct CheckstyleReporter {
 }
 
 impl DiagnosticReporter for CheckstyleReporter {
-    fn finish(&mut self, writer: &mut dyn Write) {
-        writer.write_all(format_checkstyle(&self.diagnostics).as_bytes()).unwrap();
-        writer.flush().unwrap();
+    fn finish(&mut self) -> Option<String> {
+        Some(format_checkstyle(&self.diagnostics))
     }
-
-    fn render_diagnostics(&mut self, _writer: &mut dyn Write, _s: &[u8]) {}
 
     fn render_error(&mut self, error: Error) -> Option<String> {
         self.diagnostics.push(error);

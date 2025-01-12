@@ -1,6 +1,6 @@
 use std::{
     cell::Cell,
-    io::{BufWriter, Stdout},
+    io::{ErrorKind, Write},
     path::{Path, PathBuf},
     sync::{mpsc, Arc},
 };
@@ -165,7 +165,7 @@ impl DiagnosticService {
     /// # Panics
     ///
     /// * When the writer fails to write
-    pub fn run(&mut self, writer: &mut BufWriter<Stdout>) {
+    pub fn run(&mut self, writer: &mut dyn Write) {
         while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
             let mut output = String::new();
             for diagnostic in diagnostics {
@@ -207,9 +207,44 @@ impl DiagnosticService {
                     output.push_str(&err_str);
                 }
             }
-            self.reporter.render_diagnostics(writer, output.as_bytes());
+
+            writer
+                .write_all(output.as_bytes())
+                .or_else(|e| {
+                    // Do not panic when the process is skill (e.g. piping into `less`).
+                    if matches!(e.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+                        Ok(())
+                    } else {
+                        Err(e)
+                    }
+                })
+                .unwrap();
         }
 
-        self.reporter.finish(writer);
+        if let Some(finish_output) = self.reporter.finish() {
+            writer
+                .write_all(finish_output.as_bytes())
+                .or_else(|e| {
+                    // Do not panic when the process is skill (e.g. piping into `less`).
+                    if matches!(e.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+                        Ok(())
+                    } else {
+                        Err(e)
+                    }
+                })
+                .unwrap();
+        }
+
+        writer
+            .flush()
+            .or_else(|e| {
+                // Do not panic when the process is skill (e.g. piping into `less`).
+                if matches!(e.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+                    Ok(())
+                } else {
+                    Err(e)
+                }
+            })
+            .unwrap();
     }
 }

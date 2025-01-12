@@ -1,4 +1,4 @@
-use std::io::{ErrorKind, Write};
+use std::io::Write;
 
 use oxc_diagnostics::{reporter::DiagnosticReporter, Error, GraphicalReportHandler};
 use oxc_linter::table::RuleTable;
@@ -37,32 +37,8 @@ impl Default for GraphicalReporter {
 }
 
 impl DiagnosticReporter for GraphicalReporter {
-    fn finish(&mut self, writer: &mut dyn Write) {
-        writer
-            .flush()
-            .or_else(|e| {
-                // Do not panic when the process is skill (e.g. piping into `less`).
-                if matches!(e.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
-                    Ok(())
-                } else {
-                    Err(e)
-                }
-            })
-            .unwrap();
-    }
-
-    fn render_diagnostics(&mut self, writer: &mut dyn Write, s: &[u8]) {
-        writer
-            .write_all(s)
-            .or_else(|e| {
-                // Do not panic when the process is skill (e.g. piping into `less`).
-                if matches!(e.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
-                    Ok(())
-                } else {
-                    Err(e)
-                }
-            })
-            .unwrap();
+    fn finish(&mut self) -> Option<String> {
+        None
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {

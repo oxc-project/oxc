@@ -1,7 +1,5 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
-use std::io::Write;
-
 use crate::{Error, Severity};
 
 /// Reporters are responsible for rendering diagnostics to some format and writing them to some
@@ -58,10 +56,7 @@ pub trait DiagnosticReporter {
     ///
     /// While this method _should_ only ever be called a single time, this is not a guarantee
     /// upheld in Oxc's API. Do not rely on this behavior.
-    fn finish(&mut self, writer: &mut dyn Write);
-
-    /// Write a rendered collection of diagnostics to this reporter's output stream.
-    fn render_diagnostics(&mut self, writer: &mut dyn Write, s: &[u8]);
+    fn finish(&mut self) -> Option<String>;
 
     /// Render a diagnostic into this reporter's desired format. For example, a JSONLinesReporter
     /// might return a stringified JSON object on a single line. Returns [`None`] to skip reporting

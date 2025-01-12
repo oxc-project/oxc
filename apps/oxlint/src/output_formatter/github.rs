@@ -25,12 +25,8 @@ impl InternalFormatter for GithubOutputFormatter {
 struct GithubReporter;
 
 impl DiagnosticReporter for GithubReporter {
-    fn finish(&mut self, writer: &mut dyn Write) {
-        writer.flush().unwrap();
-    }
-
-    fn render_diagnostics(&mut self, writer: &mut dyn Write, s: &[u8]) {
-        writer.write_all(s).unwrap();
+    fn finish(&mut self) -> Option<String> {
+        None
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {

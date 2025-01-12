@@ -26,17 +26,13 @@ struct UnixReporter {
 }
 
 impl DiagnosticReporter for UnixReporter {
-    fn finish(&mut self, writer: &mut dyn Write) {
+    fn finish(&mut self) -> Option<String> {
         let total = self.total;
         if total > 0 {
-            let line = format!("\n{total} problem{}\n", if total > 1 { "s" } else { "" });
-            writer.write_all(line.as_bytes()).unwrap();
+            return Some(format!("\n{total} problem{}\n", if total > 1 { "s" } else { "" }));
         }
-        writer.flush().unwrap();
-    }
 
-    fn render_diagnostics(&mut self, writer: &mut dyn Write, s: &[u8]) {
-        writer.write_all(s).unwrap();
+        None
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {

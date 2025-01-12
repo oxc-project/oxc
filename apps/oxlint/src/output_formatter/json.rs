@@ -52,12 +52,9 @@ struct JsonReporter {
 impl DiagnosticReporter for JsonReporter {
     // NOTE: this output does not conform to eslint json format yet
     // https://eslint.org/docs/latest/use/formatters/#json
-    fn finish(&mut self, writer: &mut dyn Write) {
-        writer.write_all(format_json(&mut self.diagnostics).as_bytes()).unwrap();
-        writer.flush().unwrap();
+    fn finish(&mut self) -> Option<String> {
+        Some(format_json(&mut self.diagnostics))
     }
-
-    fn render_diagnostics(&mut self, _writer: &mut dyn Write, _s: &[u8]) {}
 
     fn render_error(&mut self, error: Error) -> Option<String> {
         self.diagnostics.push(error);
