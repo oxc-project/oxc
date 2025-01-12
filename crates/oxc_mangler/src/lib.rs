@@ -83,9 +83,19 @@ impl Mangler {
     }
 
     #[must_use]
-    pub fn build<'a>(mut self, program: &'a Program<'a>) -> Mangler {
+    pub fn build(self, program: &Program<'_>) -> Mangler {
         let semantic = SemanticBuilder::new().build(program).semantic;
+        let (symbol_table, scope_tree) = semantic.into_symbol_table_and_scope_tree();
+        self.build_with_symbols_and_scopes(symbol_table, &scope_tree, program)
+    }
 
+    #[must_use]
+    pub fn build_with_symbols_and_scopes(
+        mut self,
+        symbol_table: SymbolTable,
+        scope_tree: &ScopeTree,
+        program: &Program<'_>,
+    ) -> Mangler {
         let (exported_names, exported_symbols) = if self.options.top_level {
             Mangler::collect_exported_symbols(program)
         } else {
@@ -94,7 +104,7 @@ impl Mangler {
 
         // Mangle the symbol table by computing slots from the scope tree.
         // A slot is the occurrence index of a binding identifier inside a scope.
-        let (mut symbol_table, scope_tree) = semantic.into_symbol_table_and_scope_tree();
+        let mut symbol_table = symbol_table;
 
         // Total number of slots for all scopes
         let mut total_number_of_slots: Slot = 0;
@@ -136,7 +146,7 @@ impl Mangler {
         let frequencies = self.tally_slot_frequencies(
             &symbol_table,
             &exported_symbols,
-            &scope_tree,
+            scope_tree,
             total_number_of_slots,
             &slots,
         );
