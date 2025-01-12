@@ -1,6 +1,6 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
-use std::io::{BufWriter, Stdout, Write};
+use std::io::Write;
 
 use crate::{Error, Severity};
 
@@ -63,7 +63,7 @@ pub trait DiagnosticReporter {
     fn finish(&mut self, writer: &mut dyn Write);
 
     /// Write a rendered collection of diagnostics to this reporter's output stream.
-    fn render_diagnostics(&mut self, writer: &mut BufWriter<Stdout>, s: &[u8]);
+    fn render_diagnostics(&mut self, writer: &mut dyn Write, s: &[u8]);
 
     /// Render a diagnostic into this reporter's desired format. For example, a JSONLinesReporter
     /// might return a stringified JSON object on a single line. Returns [`None`] to skip reporting

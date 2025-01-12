@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    io::{BufWriter, Stdout, Write},
-};
+use std::{borrow::Cow, io::Write};
 
 use oxc_diagnostics::{
     reporter::{DiagnosticReporter, Info},
@@ -14,7 +11,7 @@ use crate::output_formatter::InternalFormatter;
 pub struct UnixOutputFormatter;
 
 impl InternalFormatter for UnixOutputFormatter {
-    fn all_rules(&mut self, writer: &mut BufWriter<Stdout>) {
+    fn all_rules(&mut self, writer: &mut dyn Write) {
         writeln!(writer, "flag --rules with flag --format=unix is not allowed").unwrap();
     }
 
@@ -38,7 +35,7 @@ impl DiagnosticReporter for UnixReporter {
         writer.flush().unwrap();
     }
 
-    fn render_diagnostics(&mut self, writer: &mut BufWriter<Stdout>, s: &[u8]) {
+    fn render_diagnostics(&mut self, writer: &mut dyn Write, s: &[u8]) {
         writer.write_all(s).unwrap();
     }
 

@@ -4,7 +4,7 @@ mod github;
 mod json;
 mod unix;
 
-use std::io::{BufWriter, Stdout};
+use std::io::{BufWriter, Stdout, Write};
 use std::str::FromStr;
 
 use checkstyle::CheckStyleOutputFormatter;
@@ -43,7 +43,7 @@ impl FromStr for OutputFormat {
 
 trait InternalFormatter {
     // print all rules which are currently supported by oxlint
-    fn all_rules(&mut self, writer: &mut BufWriter<Stdout>);
+    fn all_rules(&mut self, writer: &mut dyn Write);
 
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter>;
 }

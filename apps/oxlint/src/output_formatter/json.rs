@@ -1,4 +1,4 @@
-use std::io::{BufWriter, Stdout, Write};
+use std::io::Write;
 
 use oxc_diagnostics::{reporter::DiagnosticReporter, Error};
 use oxc_linter::rules::RULES;
@@ -12,7 +12,7 @@ use crate::output_formatter::InternalFormatter;
 pub struct JsonOutputFormatter;
 
 impl InternalFormatter for JsonOutputFormatter {
-    fn all_rules(&mut self, writer: &mut BufWriter<Stdout>) {
+    fn all_rules(&mut self, writer: &mut dyn Write) {
         #[derive(Debug, serde::Serialize)]
         struct RuleInfoJson<'a> {
             scope: &'a str,
@@ -57,7 +57,7 @@ impl DiagnosticReporter for JsonReporter {
         writer.flush().unwrap();
     }
 
-    fn render_diagnostics(&mut self, _writer: &mut BufWriter<Stdout>, _s: &[u8]) {}
+    fn render_diagnostics(&mut self, _writer: &mut dyn Write, _s: &[u8]) {}
 
     fn render_error(&mut self, error: Error) -> Option<String> {
         self.diagnostics.push(error);

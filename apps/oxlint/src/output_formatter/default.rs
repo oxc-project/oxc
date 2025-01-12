@@ -1,4 +1,4 @@
-use std::io::{BufWriter, ErrorKind, Stdout, Write};
+use std::io::{ErrorKind, Write};
 
 use oxc_diagnostics::{reporter::DiagnosticReporter, Error, GraphicalReportHandler};
 use oxc_linter::table::RuleTable;
@@ -9,7 +9,7 @@ use crate::output_formatter::InternalFormatter;
 pub struct DefaultOutputFormatter;
 
 impl InternalFormatter for DefaultOutputFormatter {
-    fn all_rules(&mut self, writer: &mut BufWriter<Stdout>) {
+    fn all_rules(&mut self, writer: &mut dyn Write) {
         let table = RuleTable::new();
         for section in table.sections {
             writeln!(writer, "{}", section.render_markdown_table(None)).unwrap();
@@ -51,7 +51,7 @@ impl DiagnosticReporter for GraphicalReporter {
             .unwrap();
     }
 
-    fn render_diagnostics(&mut self, writer: &mut BufWriter<Stdout>, s: &[u8]) {
+    fn render_diagnostics(&mut self, writer: &mut dyn Write, s: &[u8]) {
         writer
             .write_all(s)
             .or_else(|e| {
@@ -75,14 +75,13 @@ impl DiagnosticReporter for GraphicalReporter {
 #[cfg(test)]
 mod test {
     use crate::output_formatter::{default::DefaultOutputFormatter, InternalFormatter};
-    use std::io::BufWriter;
 
     #[test]
     fn all_rules() {
-        let mut writer = BufWriter::new(std::io::stdout());
+        let mut writer = Vec::new();
         let mut formatter = DefaultOutputFormatter;
 
         formatter.all_rules(&mut writer);
-        assert!(!writer.buffer().is_empty());
+        assert!(!writer.is_empty());
     }
 }

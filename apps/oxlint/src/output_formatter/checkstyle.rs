@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    io::{BufWriter, Stdout, Write},
-};
+use std::{borrow::Cow, io::Write};
 
 use rustc_hash::FxHashMap;
 
@@ -16,7 +13,7 @@ use crate::output_formatter::InternalFormatter;
 pub struct CheckStyleOutputFormatter;
 
 impl InternalFormatter for CheckStyleOutputFormatter {
-    fn all_rules(&mut self, writer: &mut BufWriter<Stdout>) {
+    fn all_rules(&mut self, writer: &mut dyn Write) {
         writeln!(writer, "flag --rules with flag --format=checkstyle is not allowed").unwrap();
     }
 
@@ -36,7 +33,7 @@ impl DiagnosticReporter for CheckstyleReporter {
         writer.flush().unwrap();
     }
 
-    fn render_diagnostics(&mut self, _writer: &mut BufWriter<Stdout>, _s: &[u8]) {}
+    fn render_diagnostics(&mut self, _writer: &mut dyn Write, _s: &[u8]) {}
 
     fn render_error(&mut self, error: Error) -> Option<String> {
         self.diagnostics.push(error);
