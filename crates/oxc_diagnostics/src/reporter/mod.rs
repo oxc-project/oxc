@@ -14,12 +14,6 @@ pub use self::{
 };
 use crate::{Error, Severity};
 
-/// stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
-/// See `https://github.com/rust-lang/rust/issues/60673`.
-fn writer() -> BufWriter<Stdout> {
-    BufWriter::new(std::io::stdout())
-}
-
 /// Reporters are responsible for rendering diagnostics to some format and writing them to some
 /// form of output stream.
 ///
@@ -76,10 +70,10 @@ pub trait DiagnosticReporter {
     /// upheld in Oxc's API. Do not rely on this behavior.
     ///
     /// [`JSONReporter`]: crate::reporter::JsonReporter
-    fn finish(&mut self);
+    fn finish(&mut self, writer: &mut BufWriter<Stdout>);
 
     /// Write a rendered collection of diagnostics to this reporter's output stream.
-    fn render_diagnostics(&mut self, s: &[u8]);
+    fn render_diagnostics(&mut self, writer: &mut BufWriter<Stdout>, s: &[u8]);
 
     /// Render a diagnostic into this reporter's desired format. For example, a JSONLinesReporter
     /// might return a stringified JSON object on a single line. Returns [`None`] to skip reporting

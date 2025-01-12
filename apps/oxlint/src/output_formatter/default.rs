@@ -1,12 +1,15 @@
-use std::io::Write;
+use std::io::{BufWriter, Stdout, Write};
 
+use oxc_diagnostics::reporter::{DiagnosticReporter, GraphicalReporter};
 use oxc_linter::table::RuleTable;
-use oxc_diagnostics::{GraphicalReportHandler, Error};
 
+use crate::output_formatter::InternalFormatter;
+
+#[derive(Debug)]
 pub struct DefaultOutputFormatter;
 
-impl DefaultOutputFormatter {
-    pub fn all_rules<T: Write>(writer: &mut T) {
+impl InternalFormatter for DefaultOutputFormatter {
+    fn all_rules(&mut self, writer: &mut BufWriter<Stdout>) {
         let table = RuleTable::new();
         for section in table.sections {
             writeln!(writer, "{}", section.render_markdown_table(None)).unwrap();
@@ -15,24 +18,22 @@ impl DefaultOutputFormatter {
         writeln!(writer, "Total: {}", table.total).unwrap();
     }
 
-    pub fn diagnostics<T: Write + std::fmt::Write>(writer: &mut T, diagnostics: &mut Vec<Error>) {
-        let handler = GraphicalReportHandler::new();
-
-        for error in diagnostics {
-            handler.render_report( writer, error.as_ref()).unwrap();
-        }
+    fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
+        Box::new(GraphicalReporter::default())
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::output_formatter::default::DefaultOutputFormatter;
+    use crate::output_formatter::{default::DefaultOutputFormatter, InternalFormatter};
+    use std::io::BufWriter;
 
     #[test]
     fn all_rules() {
-        let mut writer = Vec::new();
+        let mut writer = BufWriter::new(std::io::stdout());
+        let mut formatter = DefaultOutputFormatter;
 
-        DefaultOutputFormatter::all_rules(&mut writer);
-        assert!(!writer.is_empty());
-    } 
+        formatter.all_rules(&mut writer);
+        assert!(!writer.buffer().is_empty());
+    }
 }

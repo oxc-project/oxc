@@ -1,14 +1,16 @@
-use miette::JSONReportHandler;
-use oxc_diagnostics::Error;
+use std::io::{BufWriter, Stdout, Write};
+
+use oxc_diagnostics::reporter::{DiagnosticReporter, JsonReporter};
 use oxc_linter::rules::RULES;
 use oxc_linter::RuleCategory;
-use std::io::Write;
 
-#[derive(Debug)]
+use crate::output_formatter::InternalFormatter;
+
+#[derive(Debug, Default)]
 pub struct JsonOutputFormatter;
 
-impl JsonOutputFormatter {
-    pub fn all_rules<T: Write>(writer: &mut T) {
+impl InternalFormatter for JsonOutputFormatter {
+    fn all_rules(&mut self, writer: &mut BufWriter<Stdout>) {
         #[derive(Debug, serde::Serialize)]
         struct RuleInfoJson<'a> {
             scope: &'a str,
@@ -31,18 +33,7 @@ impl JsonOutputFormatter {
             .unwrap();
     }
 
-    pub fn diagnostics<T: Write>(writer: &mut T, diagnostics: &mut Vec<Error>) {
-        let handler = JSONReportHandler::new();
-        let messages = diagnostics
-            .drain(..)
-            .map(|error| {
-                let mut output = String::from("\t");
-                handler.render_report(&mut output, error.as_ref()).unwrap();
-                output
-            })
-            .collect::<Vec<_>>()
-            .join(",\n");
-
-        writer.write_all(format!("[\n{messages}\n]").as_bytes()).unwrap();
+    fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
+        Box::new(JsonReporter::default())
     }
 }

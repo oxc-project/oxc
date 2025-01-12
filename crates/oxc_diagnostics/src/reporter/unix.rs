@@ -3,32 +3,26 @@ use std::{
     io::{BufWriter, Stdout, Write},
 };
 
-use super::{writer, DiagnosticReporter, Info};
+use super::{DiagnosticReporter, Info};
 use crate::{Error, Severity};
 
+#[derive(Default)]
 pub struct UnixReporter {
     total: usize,
-    writer: BufWriter<Stdout>,
-}
-
-impl Default for UnixReporter {
-    fn default() -> Self {
-        Self { total: 0, writer: writer() }
-    }
 }
 
 impl DiagnosticReporter for UnixReporter {
-    fn finish(&mut self) {
+    fn finish(&mut self, writer: &mut BufWriter<Stdout>) {
         let total = self.total;
         if total > 0 {
             let line = format!("\n{total} problem{}\n", if total > 1 { "s" } else { "" });
-            self.writer.write_all(line.as_bytes()).unwrap();
+            writer.write_all(line.as_bytes()).unwrap();
         }
-        self.writer.flush().unwrap();
+        writer.flush().unwrap();
     }
 
-    fn render_diagnostics(&mut self, s: &[u8]) {
-        self.writer.write_all(s).unwrap();
+    fn render_diagnostics(&mut self, writer: &mut BufWriter<Stdout>, s: &[u8]) {
+        writer.write_all(s).unwrap();
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {

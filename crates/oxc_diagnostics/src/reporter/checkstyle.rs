@@ -1,4 +1,7 @@
-use std::borrow::Cow;
+use std::{
+    borrow::Cow,
+    io::{BufWriter, Stdout, Write},
+};
 
 use rustc_hash::FxHashMap;
 
@@ -11,11 +14,11 @@ pub struct CheckstyleReporter {
 }
 
 impl DiagnosticReporter for CheckstyleReporter {
-    fn finish(&mut self) {
-        format_checkstyle(&self.diagnostics);
+    fn finish(&mut self, writer: &mut BufWriter<Stdout>) {
+        writer.write_all(format_checkstyle(&self.diagnostics).as_bytes()).unwrap();
     }
 
-    fn render_diagnostics(&mut self, _s: &[u8]) {}
+    fn render_diagnostics(&mut self, _writer: &mut BufWriter<Stdout>, _s: &[u8]) {}
 
     fn render_error(&mut self, error: Error) -> Option<String> {
         self.diagnostics.push(error);
@@ -24,7 +27,7 @@ impl DiagnosticReporter for CheckstyleReporter {
 }
 
 #[allow(clippy::print_stdout)]
-fn format_checkstyle(diagnostics: &[Error]) {
+fn format_checkstyle(diagnostics: &[Error]) -> String {
     let infos = diagnostics.iter().map(Info::new).collect::<Vec<_>>();
     let mut grouped: FxHashMap<String, Vec<Info>> = FxHashMap::default();
     for info in infos {
@@ -48,9 +51,9 @@ fn format_checkstyle(diagnostics: &[Error]) {
          let filename = &infos[0].filename;
          format!(r#"<file name="{filename}">{messages}</file>"#)
      }).collect::<Vec<_>>().join(" ");
-    println!(
+    format!(
         r#"<?xml version="1.0" encoding="utf-8"?><checkstyle version="4.3">{messages}</checkstyle>"#
-    );
+    )
 }
 
 /// <https://github.com/tafia/quick-xml/blob/6e34a730853fe295d68dc28460153f08a5a12955/src/escapei.rs#L84-L86>

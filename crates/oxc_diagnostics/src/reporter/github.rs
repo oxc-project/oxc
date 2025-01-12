@@ -3,32 +3,24 @@ use std::{
     io::{BufWriter, Stdout, Write},
 };
 
-use super::{writer, DiagnosticReporter, Info};
+use super::{DiagnosticReporter, Info};
 use crate::{Error, Severity};
 
 /// Formats reports using [GitHub Actions
 /// annotations](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message). Useful for reporting in CI.
-pub struct GithubReporter {
-    writer: BufWriter<Stdout>,
-}
-
-impl Default for GithubReporter {
-    fn default() -> Self {
-        Self { writer: writer() }
-    }
-}
+pub struct GithubReporter;
 
 impl DiagnosticReporter for GithubReporter {
-    fn finish(&mut self) {
-        self.writer.flush().unwrap();
+    fn finish(&mut self, writer: &mut BufWriter<Stdout>) {
+        writer.flush().unwrap();
     }
 
-    fn render_diagnostics(&mut self, _s: &[u8]) {}
+    fn render_diagnostics(&mut self, writer: &mut BufWriter<Stdout>, s: &[u8]) {
+        writer.write_all(s).unwrap();
+    }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
-        let message = format_github(&error);
-        self.writer.write_all(message.as_bytes()).unwrap();
-        None
+        Some(format_github(&error))
     }
 }
 

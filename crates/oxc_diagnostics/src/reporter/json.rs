@@ -1,3 +1,5 @@
+use std::io::{BufWriter, Stdout, Write};
+
 use miette::JSONReportHandler;
 
 use super::DiagnosticReporter;
@@ -15,11 +17,11 @@ pub struct JsonReporter {
 impl DiagnosticReporter for JsonReporter {
     // NOTE: this output does not conform to eslint json format yet
     // https://eslint.org/docs/latest/use/formatters/#json
-    fn finish(&mut self) {
-        format_json(&mut self.diagnostics);
+    fn finish(&mut self, writer: &mut BufWriter<Stdout>) {
+        writer.write_all(format_json(&mut self.diagnostics).as_bytes()).unwrap();
     }
 
-    fn render_diagnostics(&mut self, _s: &[u8]) {}
+    fn render_diagnostics(&mut self, _writer: &mut BufWriter<Stdout>, _s: &[u8]) {}
 
     fn render_error(&mut self, error: Error) -> Option<String> {
         self.diagnostics.push(error);
@@ -29,7 +31,7 @@ impl DiagnosticReporter for JsonReporter {
 
 /// <https://github.com/fregante/eslint-formatters/tree/ae1fd9748596447d1fd09625c33d9e7ba9a3d06d/packages/eslint-formatter-json>
 #[allow(clippy::print_stdout)]
-fn format_json(diagnostics: &mut Vec<Error>) {
+fn format_json(diagnostics: &mut Vec<Error>) -> String {
     let handler = JSONReportHandler::new();
     let messages = diagnostics
         .drain(..)
@@ -40,5 +42,5 @@ fn format_json(diagnostics: &mut Vec<Error>) {
         })
         .collect::<Vec<_>>()
         .join(",\n");
-    println!("[\n{messages}\n]");
+    format!("[\n{messages}\n]")
 }

@@ -1,14 +1,12 @@
 use std::{
     cell::Cell,
+    io::{BufWriter, Stdout},
     path::{Path, PathBuf},
     sync::{mpsc, Arc},
 };
 
 use crate::{
-    reporter::{
-        CheckstyleReporter, DiagnosticReporter, GithubReporter, GraphicalReporter, JsonReporter,
-        UnixReporter,
-    },
+    reporter::{DiagnosticReporter, GraphicalReporter},
     Error, NamedSource, OxcDiagnostic, Severity,
 };
 
@@ -73,20 +71,17 @@ pub struct DiagnosticService {
 
 impl Default for DiagnosticService {
     fn default() -> Self {
-        Self::new(GraphicalReporter::default())
+        Self::new(Box::new(GraphicalReporter::default()))
     }
 }
 
 impl DiagnosticService {
     /// Create a new [`DiagnosticService`] that will render and report diagnostics using the
     /// provided [`DiagnosticReporter`].
-    ///
-    /// TODO(@DonIsaac): make `DiagnosticReporter` public so oxc consumers can create their own
-    /// implementations.
-    pub(crate) fn new<R: DiagnosticReporter + 'static>(reporter: R) -> Self {
+    pub fn new(reporter: Box<dyn DiagnosticReporter>) -> Self {
         let (sender, receiver) = mpsc::channel();
         Self {
-            reporter: Box::new(reporter) as Box<dyn DiagnosticReporter>,
+            reporter,
             quiet: false,
             silent: false,
             max_warnings: None,
@@ -95,25 +90,6 @@ impl DiagnosticService {
             sender,
             receiver,
         }
-    }
-
-    /// Configure this service to format reports as a JSON array of objects.
-    pub fn set_json_reporter(&mut self) {
-        self.reporter = Box::<JsonReporter>::default();
-    }
-
-    pub fn set_unix_reporter(&mut self) {
-        self.reporter = Box::<UnixReporter>::default();
-    }
-
-    pub fn set_checkstyle_reporter(&mut self) {
-        self.reporter = Box::<CheckstyleReporter>::default();
-    }
-
-    /// Configure this service to formats reports using [GitHub Actions
-    /// annotations](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message).
-    pub fn set_github_reporter(&mut self) {
-        self.reporter = Box::<GithubReporter>::default();
     }
 
     /// Set to `true` to only report errors and ignore warnings.
@@ -198,7 +174,7 @@ impl DiagnosticService {
     /// # Panics
     ///
     /// * When the writer fails to write
-    pub fn run(&mut self) {
+    pub fn run(&mut self, writer: &mut BufWriter<Stdout>) {
         while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
             let mut output = String::new();
             for diagnostic in diagnostics {
@@ -240,9 +216,9 @@ impl DiagnosticService {
                     output.push_str(&err_str);
                 }
             }
-            self.reporter.render_diagnostics(output.as_bytes());
+            self.reporter.render_diagnostics(writer, output.as_bytes());
         }
 
-        self.reporter.finish();
+        self.reporter.finish(writer);
     }
 }
