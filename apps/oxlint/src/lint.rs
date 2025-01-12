@@ -16,9 +16,9 @@ use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
     cli::{
-        CliRunResult, LintCommand, LintResult, MiscOptions, OutputFormat, OutputOptions, Runner,
-        WarningOptions,
+        CliRunResult, LintCommand, LintResult, MiscOptions, OutputOptions, Runner, WarningOptions,
     },
+    output_formatter::{OutputFormat, OutputFormatter},
     walk::{Extensions, Walk},
 };
 
@@ -36,13 +36,12 @@ impl Runner for LintRunner {
     }
 
     fn run(self) -> CliRunResult {
+        let format_str = self.options.output_options.format;
+        let output_formatter = OutputFormatter::new(format_str);
+
         if self.options.list_rules {
             let mut stdout = BufWriter::new(std::io::stdout());
-            if self.options.output_options.format == OutputFormat::Json {
-                Linter::print_rules_json(&mut stdout);
-            } else {
-                Linter::print_rules(&mut stdout);
-            }
+            output_formatter.all_rules(&mut stdout);
             return CliRunResult::None;
         }
 
