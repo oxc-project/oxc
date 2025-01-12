@@ -72,7 +72,7 @@ pub struct BasicOptions {
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
 
-    /// Initialize oxlint configuration with default values 
+    /// Initialize oxlint configuration with default values
     #[bpaf(switch, hide_usage)]
     pub init: bool,
 }

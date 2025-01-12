@@ -93,7 +93,7 @@ impl Termination for CliRunResult {
             Self::PrintConfigResult { config_file } => {
                 println!("{config_file}");
                 ExitCode::from(0)
-            },
+            }
             Self::ConfigFileInitResult { message } => {
                 println!("{message}");
                 ExitCode::from(0)
