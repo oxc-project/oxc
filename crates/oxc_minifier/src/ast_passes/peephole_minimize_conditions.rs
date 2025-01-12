@@ -764,6 +764,11 @@ impl<'a> PeepholeMinimizeConditions {
                     return true;
                 }
             }
+            Expression::BooleanLiteral(lit) => {
+                let value = f64::from(lit.value);
+                *expr =
+                    ctx.ast.expression_numeric_literal(lit.span, value, None, NumberBase::Decimal);
+            }
             _ => {}
         }
         false
@@ -851,7 +856,6 @@ mod test {
     /** Check that removing blocks with 1 child works */
     #[test]
     fn test_fold_one_child_blocks() {
-        // late = false;
         fold("function f(){if(x)a();x=3}", "function f(){x&&a();x=3}");
         fold("function f(){if(x)a?.();x=3}", "function f(){x&&a?.();x=3}");
 
@@ -1010,9 +1014,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_remove_duplicate_statements() {
-        // enableNormalize();
-        // TODO(bradfordcsmith): Stop normalizing the expected output or document why it is necessary.
-        // enableNormalizeExpectedOutput();
         fold("if (a) { x = 1; x++ } else { x = 2; x++ }", "x=(a) ? 1 : 2; x++");
         fold(
             concat!(
@@ -1052,9 +1053,6 @@ mod test {
 
     #[test]
     fn test_fold_returns_integration2() {
-        // late = true;
-        // disableNormalize();
-
         // if-then-else duplicate statement removal handles this case:
         test_same(
             "function test(a) {if (a) {const a = Math.random();if(a) {return a;}} return a; }",
@@ -1129,13 +1127,13 @@ mod test {
         fold("(x ? true : y) && y()", "(x || y) && y();");
         fold("(x ? y : false) && y()", "(x && y) && y()");
         fold("var x; (x && true) && y()", "var x; x && y()");
-        fold("var x; (x && false) && y()", "var x; x && false && y()");
+        fold("var x; (x && false) && y()", "var x; x && 0 && y()");
         fold("(x && true) && y()", "x && y()");
-        fold("(x && false) && y()", "x && false && y()");
-        fold("var x; (x || true) && y()", "var x; (x || true) && y()");
+        fold("(x && false) && y()", "x && 0 && y()");
+        fold("var x; (x || true) && y()", "var x; (x || 1) && y()");
         fold("var x; (x || false) && y()", "var x; x && y()");
 
-        fold_same("(x || true) && y()");
+        fold("(x || true) && y()", "(x || 1) && y()");
         fold("(x || false) && y()", "x && y()");
 
         fold("let x = foo ? true : false", "let x = !!foo");
@@ -1155,26 +1153,22 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_minimize_while_condition() {
-        // This test uses constant folding logic, so is only here for completeness.
-        fold("while(!!true) foo()", "while(1) foo()");
-        // These test tryMinimizeCondition
-        fold("while(!!x) foo()", "while(x) foo()");
-        fold("while(!(!x&&!y)) foo()", "while(x||y) foo()");
-        fold("while(x||!!y) foo()", "while(x||y) foo()");
-        fold("while(!(!!x&&y)) foo()", "while(!x||!y) foo()");
-        fold("while(!(!x&&y)) foo()", "while(x||!y) foo()");
-        fold("while(!(x||!y)) foo()", "while(!x&&y) foo()");
-        fold("while(!(x||y)) foo()", "while(!x&&!y) foo()");
-        fold("while(!(!x||y-z)) foo()", "while(x&&!(y-z)) foo()");
-        fold("while(!(!(x/y)||z+w)) foo()", "while(x/y&&!(z+w)) foo()");
-        fold_same("while(!(x+y||z)) foo()");
-        fold_same("while(!(x&&y*z)) foo()");
-        fold("while(!(!!x&&y)) foo()", "while(!x||!y) foo()");
-        fold("while(x&&!0) foo()", "while(x) foo()");
-        fold("while(x||!1) foo()", "while(x) foo()");
-        fold("while(!((x,y)&&z)) foo()", "while((x,!y)||!z) foo()");
+        fold("while(!!true) foo()", "for(;1;) foo()");
+        fold("while(!!x) foo()", "for(;x;) foo()");
+        // fold("while(!(!x&&!y)) foo()", "for(;x||y;) foo()");
+        fold("while(x||!!y) foo()", "for(;x||y;) foo()");
+        // fold("while(!(!!x&&y)) foo()", "for(;!x||!y;) foo()");
+        // fold("while(!(!x&&y)) foo()", "for(;x||!y;) foo()");
+        // fold("while(!(x||!y)) foo()", "for(;!x&&y;) foo()");
+        // fold("while(!(x||y)) foo()", "for(;!x&&!y;) foo()");
+        // fold("while(!(!x||y-z)) foo()", "for(;x&&!(y-z);) foo()");
+        // fold("while(!(!(x/y)||z+w)) foo()", "for(;x/y&&!(z+w);) foo()");
+        fold("while(!(x+y||z)) foo()", "for(;!(x+y||z);) foo()");
+        fold("while(!(x&&y*z)) foo()", "for(;!(x&&y*z);) foo()");
+        // fold("while(x&&!0) foo()", "for(;x;) foo()");
+        // fold("while(x||!1) foo()", "for(;x;) foo()");
+        // fold("while(!((x,y)&&z)) foo()", "for(;(x,!y)||!z;) foo()");
     }
 
     #[test]
@@ -1300,7 +1294,7 @@ mod test {
     fn test_minimize_for_condition() {
         // This test uses constant folding logic, so is only here for completeness.
         // These could be simplified to "for(;;) ..."
-        fold("for(;!!true;) foo()", "for(;true;) foo()");
+        fold("for(;!!true;) foo()", "for(;1;) foo()");
         // Verify function deletion tracking.
         // fold("if(!!true||function(){}) {}", "if(1) {}");
         // Don't bother with FOR inits as there are normalized out.
@@ -1329,7 +1323,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_fold_loop_break_late() {
-        // late = true;
         fold("for(;;) if (a) break", "for(;!a;);");
         fold_same("for(;;) if (a) { f(); break }");
         fold("for(;;) if (a) break; else f()", "for(;!a;) { { f(); } }");
@@ -1337,17 +1330,12 @@ mod test {
         fold("for(;a;) { if (b) break; if (c) break; }", "for(;(a && !b);) if (c) break;");
         fold("for(;(a && !b);) if (c) break;", "for(;(a && !b) && !c;);");
         fold("for(;;) { if (foo) { break; var x; } } x;", "var x; for(;!foo;) {} x;");
-
-        // 'while' is normalized to 'for'
-        // enableNormalize();
         fold("while(true) if (a) break", "for(;1&&!a;);");
-        // disableNormalize();
     }
 
     #[test]
     #[ignore]
     fn test_fold_loop_break_early() {
-        // late = false;
         fold_same("for(;;) if (a) break");
         fold_same("for(;;) if (a) { f(); break }");
         fold_same("for(;;) if (a) break; else f()");
@@ -1355,7 +1343,6 @@ mod test {
         fold_same("for(;a;) { if (b) break; if (c) break; }");
 
         fold_same("while(1) if (a) break");
-        // enableNormalize();
         fold_same("for (; 1; ) if (a) break");
     }
 
@@ -1386,11 +1373,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_substitute_return() {
-        // late = false;
-        // enableNormalize();
-        // TODO(bradfordcsmith): Stop normalizing the expected output or document why it is necessary.
-        // enableNormalizeExpectedOutput();
-
         fold("function f() { while(x) { return }}", "function f() { while(x) { break }}");
 
         fold_same("function f() { while(x) { return 5 } }");
@@ -1488,11 +1470,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_substitute_break_for_throw() {
-        // late = false;
-        // enableNormalize();
-        // TODO(bradfordcsmith): Stop normalizing the expected output or document why it is necessary.
-        // enableNormalizeExpectedOutput();
-
         fold_same("function f() { while(x) { throw Error }}");
 
         fold(
@@ -1591,9 +1568,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_remove_duplicate_return() {
-        // late = false;
-        // enableNormalize();
-
         fold("function f() { return; }", "function f(){}");
         fold_same("function f() { return a; }");
         fold(
@@ -1629,9 +1603,6 @@ mod test {
     #[test]
     #[ignore]
     fn test_remove_duplicate_throw() {
-        // late = false;
-        // enableNormalize();
-
         fold_same("function f() { throw a; }");
         fold("function f() { if (x) { throw a } throw a; }", "function f() { if (x) {} throw a; }");
         fold_same("function f() { try { if (x) {throw a} } catch(e) {} throw a; }");
