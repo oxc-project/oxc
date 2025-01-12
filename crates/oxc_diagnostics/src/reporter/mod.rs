@@ -53,13 +53,11 @@ pub trait DiagnosticReporter {
     /// Lifecycle hook that gets called when no more diagnostics will be reported.
     ///
     /// Used primarily for flushing output stream buffers, but you don't just have to use it for
-    /// that. Some reporters (e.g. [`JSONReporter`]) store all diagnostics in memory, then write them
+    /// that. Some reporters (e.g. `JSONReporter`) store all diagnostics in memory, then write them
     /// all at once.
     ///
     /// While this method _should_ only ever be called a single time, this is not a guarantee
     /// upheld in Oxc's API. Do not rely on this behavior.
-    ///
-    /// [`JSONReporter`]: crate::reporter::JsonReporter
     fn finish(&mut self, writer: &mut dyn Write);
 
     /// Write a rendered collection of diagnostics to this reporter's output stream.
