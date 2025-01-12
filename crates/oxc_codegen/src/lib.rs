@@ -348,7 +348,8 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    #[inline]
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
     fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
         if wrap {
             self.print_ascii_byte(b'(');
