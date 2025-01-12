@@ -2,6 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ValueType},
+    side_effects::MayHaveSideEffects,
     ToInt32, ToJsString, ToNumber,
 };
 use oxc_span::cmp::ContentEq;
@@ -636,10 +637,24 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         stmt: &mut ReturnStatement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if stmt.argument.as_ref().is_some_and(|expr| Ctx(ctx).is_expression_undefined(expr)) {
-            stmt.argument = None;
-            self.changed = true;
+        let Some(argument) = &stmt.argument else { return };
+        if !match argument {
+            Expression::Identifier(ident) => Ctx(ctx).is_identifier_undefined(ident),
+            Expression::UnaryExpression(e) => e.operator.is_void() && !e.may_have_side_effects(),
+            _ => false,
+        } {
+            return;
         }
+        // `return undefined` has a different semantic in async generator function.
+        for ancestor in ctx.ancestors() {
+            if let Ancestor::FunctionBody(func) = ancestor {
+                if *func.r#async() && *func.generator() {
+                    return;
+                }
+            }
+        }
+        stmt.argument = None;
+        self.changed = true;
     }
 
     fn compress_variable_declarator(
@@ -1252,9 +1267,16 @@ mod test {
         test("function f(){return void 0;}", "function f(){return}");
         test("function f(){return void foo();}", "function f(){return void foo()}");
         test("function f(){return undefined;}", "function f(){return}");
-        // Here we handle the block in dce.
         test("function f(){if(a()){return undefined;}}", "function f(){if(a()){return}}");
         test_same("function a(undefined) { return undefined; }");
+        test_same("function f(){return foo()");
+
+        // `return undefined` has a different semantic in async generator function.
+        test("function foo() { return undefined }", "function foo() { return }");
+        test("function* foo() { return undefined }", "function* foo() { return }");
+        test("async function foo() { return undefined }", "async function foo() { return }");
+        test_same("async function* foo() { return void 0 }");
+        test_same("class Foo { async * foo() { return void 0 } }");
     }
 
     #[test]
