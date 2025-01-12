@@ -151,7 +151,7 @@ pub struct ParserReturn<'a> {
     ///
     /// To ensure a valid AST, check that [`errors`](ParserReturn::errors) is empty. Then, run
     /// semantic analysis with syntax error checking enabled.
-    pub program: Program<'a>,
+    pub program: &'a mut Program<'a>,
 
     /// See <https://tc39.es/ecma262/#sec-abstract-module-records>
     pub module_record: ModuleRecord<'a>,
@@ -411,11 +411,11 @@ impl<'a> ParserImpl<'a> {
     /// Recoverable errors are stored inside `errors`.
     #[inline]
     pub fn parse(mut self) -> ParserReturn<'a> {
-        let (mut program, panicked) = match self.parse_program() {
+        let (program, panicked) = match self.parse_program() {
             Ok(program) => (program, false),
             Err(error) => {
                 self.error(self.overlong_error().unwrap_or(error));
-                let program = self.ast.program(
+                let program = ArenaBox::leak(self.ast.alloc_program(
                     Span::default(),
                     self.source_type,
                     self.source_text,
@@ -423,7 +423,7 @@ impl<'a> ParserImpl<'a> {
                     None,
                     self.ast.vec(),
                     self.ast.vec(),
-                );
+                ));
                 (program, true)
             }
         };
@@ -483,7 +483,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    fn parse_program(&mut self) -> Result<Program<'a>> {
+    fn parse_program(&mut self) -> Result<&'a mut Program<'a>> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
 
@@ -493,7 +493,7 @@ impl<'a> ParserImpl<'a> {
 
         let span = Span::new(0, self.source_text.len() as u32);
         let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
-        Ok(self.ast.program(
+        Ok(ArenaBox::leak(self.ast.alloc_program(
             span,
             self.source_type,
             self.source_text,
@@ -501,7 +501,7 @@ impl<'a> ParserImpl<'a> {
             hashbang,
             directives,
             statements,
-        ))
+        )))
     }
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
@@ -679,7 +679,7 @@ mod test {
         let source_type = SourceType::default();
         let source = "#!/usr/bin/node\n;";
         let ret = Parser::new(&allocator, source, source_type).parse();
-        assert_eq!(ret.program.hashbang.unwrap().value.as_str(), "/usr/bin/node");
+        assert_eq!(ret.program.hashbang.as_ref().unwrap().value.as_str(), "/usr/bin/node");
     }
 
     #[test]

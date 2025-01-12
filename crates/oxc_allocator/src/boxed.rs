@@ -28,7 +28,7 @@ use crate::Allocator;
 /// being called to guarantee soundness.
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
-impl<T> Box<'_, T> {
+impl<'a, T> Box<'a, T> {
     /// Take ownership of the value stored in this [`Box`], consuming the box in
     /// the process.
     ///
@@ -53,6 +53,28 @@ impl<T> Box<'_, T> {
         // construct a `Box` with a borrowed reference, only with a fresh
         // one just allocated from a Bump.
         unsafe { ptr::read(self.0.as_ptr()) }
+    }
+
+    /// Consumes and leaks the `Box`, returning a mutable reference,
+    /// `&'a mut T`.
+    ///
+    /// ## Example
+    /// ```
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let arena = Allocator::default();
+    ///
+    /// // Put `5` into the arena and on the heap.
+    /// let boxed: Box<i32> = Box::new_in(5, &arena);
+    /// // Get a reference to the underlying value within the `arena`. `boxed` has been consumed.
+    /// let i = boxed.unbox();
+    ///
+    /// assert_eq!(i, 5);
+    /// ```
+    #[inline]
+    pub fn leak(mut b: Self) -> &'a mut T {
+        // SAFETY: reference obtained from value stored in the box will always be valid
+        unsafe { b.0.as_mut() }
     }
 }
 
