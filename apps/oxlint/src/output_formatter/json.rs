@@ -1,3 +1,5 @@
+use miette::JSONReportHandler;
+use oxc_diagnostics::Error;
 use oxc_linter::rules::RULES;
 use oxc_linter::RuleCategory;
 use std::io::Write;
@@ -27,5 +29,20 @@ impl JsonOutputFormatter {
                     .as_bytes(),
             )
             .unwrap();
+    }
+
+    pub fn diagnostics<T: Write>(writer: &mut T, diagnostics: &mut Vec<Error>) {
+        let handler = JSONReportHandler::new();
+        let messages = diagnostics
+            .drain(..)
+            .map(|error| {
+                let mut output = String::from("\t");
+                handler.render_report(&mut output, error.as_ref()).unwrap();
+                output
+            })
+            .collect::<Vec<_>>()
+            .join(",\n");
+
+        writer.write_all(format!("[\n{messages}\n]").as_bytes()).unwrap();
     }
 }

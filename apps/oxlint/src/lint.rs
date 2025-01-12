@@ -1,6 +1,6 @@
 use std::{
     env,
-    io::BufWriter,
+    io::{BufWriter, Write},
     path::{Path, PathBuf},
     time::Instant,
 };
@@ -42,6 +42,7 @@ impl Runner for LintRunner {
         if self.options.list_rules {
             let mut stdout = BufWriter::new(std::io::stdout());
             output_formatter.all_rules(&mut stdout);
+            stdout.flush().unwrap();
             return CliRunResult::None;
         }
 

@@ -4,6 +4,8 @@ mod json;
 use std::io::Write;
 use std::str::FromStr;
 
+use oxc_diagnostics::Error;
+
 use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputFormatter};
 
 pub struct OutputFormatter {
@@ -45,6 +47,13 @@ impl OutputFormatter {
         match self.format {
             OutputFormat::Json => JsonOutputFormatter::all_rules(writer),
             _ => DefaultOutputFormatter::all_rules(writer),
+        }
+    }
+
+    pub fn diagnostics<T: Write + std::fmt::Write>(&self, writer: &mut T, diagnostics: &mut Vec<Error>) {
+        match self.format {
+            OutputFormat::Json => JsonOutputFormatter::diagnostics(writer, diagnostics),
+            _ => DefaultOutputFormatter::diagnostics(writer, diagnostics),
         }
     }
 }
