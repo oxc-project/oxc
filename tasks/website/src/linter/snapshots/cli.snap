@@ -16,7 +16,7 @@ snapshot_kind: text
 - **`    --tsconfig`**=_`<./tsconfig.json>`_ &mdash; 
   TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
 - **`    --init`** &mdash; 
-  Initialize oxlint configuration with default values 
+  Initialize oxlint configuration with default values
 
 
 
