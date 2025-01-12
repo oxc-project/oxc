@@ -1693,7 +1693,6 @@ name = "oxc_diagnostics"
 version = "0.45.0"
 dependencies = [
  "oxc-miette",
- "rustc-hash",
 ]
 
 [[package]]
