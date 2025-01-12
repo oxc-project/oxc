@@ -5,10 +5,7 @@ use std::{
     sync::{mpsc, Arc},
 };
 
-use crate::{
-    reporter::DiagnosticReporter,
-    Error, NamedSource, OxcDiagnostic, Severity,
-};
+use crate::{reporter::DiagnosticReporter, Error, NamedSource, OxcDiagnostic, Severity};
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;

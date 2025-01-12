@@ -1,17 +1,7 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
-mod checkstyle;
-mod github;
-mod graphical;
-mod json;
-mod unix;
-
 use std::io::{BufWriter, Stdout};
 
-pub use self::{
-    checkstyle::CheckstyleReporter, github::GithubReporter, graphical::GraphicalReporter,
-    json::JsonReporter, unix::UnixReporter,
-};
 use crate::{Error, Severity};
 
 /// Reporters are responsible for rendering diagnostics to some format and writing them to some
@@ -84,17 +74,17 @@ pub trait DiagnosticReporter {
     fn render_error(&mut self, error: Error) -> Option<String>;
 }
 
-struct Info {
-    line: usize,
-    column: usize,
-    filename: String,
-    message: String,
-    severity: Severity,
-    rule_id: Option<String>,
+pub struct Info {
+    pub line: usize,
+    pub column: usize,
+    pub filename: String,
+    pub message: String,
+    pub severity: Severity,
+    pub rule_id: Option<String>,
 }
 
 impl Info {
-    fn new(diagnostic: &Error) -> Self {
+    pub fn new(diagnostic: &Error) -> Self {
         let mut line = 0;
         let mut column = 0;
         let mut filename = String::new();

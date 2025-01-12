@@ -1,7 +1,7 @@
 use std::{
     env,
     path::{Path, PathBuf},
-    sync::mpsc
+    sync::mpsc,
 };
 
 use cow_utils::CowUtils;
