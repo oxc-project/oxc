@@ -1,11 +1,12 @@
 use std::{
     env,
     path::{Path, PathBuf},
+    sync::mpsc
 };
 
 use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, GraphicalTheme, NamedSource};
+use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -471,9 +472,8 @@ impl Tester {
         let options =
             LintServiceOptions::new(cwd, paths).with_cross_module(self.plugins.has_import());
         let lint_service = LintService::from_linter(linter, options);
-        let diagnostic_service = DiagnosticService::default();
-        let tx_error = diagnostic_service.sender();
-        let result = lint_service.run_source(&allocator, source_text, false, tx_error);
+        let (sender, _receiver) = mpsc::channel();
+        let result = lint_service.run_source(&allocator, source_text, false, &sender);
 
         if result.is_empty() {
             return TestResult::Passed;
