@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_ecmascript::constant_evaluation::ConstantEvaluation;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
@@ -12,6 +13,7 @@ use crate::{ctx::Ctx, CompressorPass};
 /// * convert whiles to fors
 /// * convert `Infinity` to `f64::INFINITY`
 /// * convert `NaN` to `f64::NaN`
+/// * convert `var x; void x` to `void 0`
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Normalize.java>
 pub struct Normalize;
@@ -34,8 +36,14 @@ impl<'a> Traverse<'a> for Normalize {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Expression::Identifier(_) = expr {
-            Self::convert_infinity_or_nan_into_number(expr, ctx);
+        match expr {
+            Expression::Identifier(_) => {
+                Self::convert_infinity_or_nan_into_number(expr, ctx);
+            }
+            Expression::UnaryExpression(e) if e.operator.is_void() => {
+                Self::convert_void_ident(e, ctx);
+            }
+            _ => {}
         }
     }
 }
@@ -89,6 +97,15 @@ impl<'a> Normalize {
             }
         }
     }
+
+    fn convert_void_ident(e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        debug_assert!(e.operator.is_void());
+        let Expression::Identifier(ident) = &e.argument else { return };
+        if Ctx(ctx).is_global_reference(ident) {
+            return;
+        }
+        e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
+    }
 }
 
 #[cfg(test)]
@@ -107,5 +124,11 @@ mod test {
     fn test_while() {
         // Verify while loops are converted to FOR loops.
         test("while(c < b) foo()", "for(; c < b;) foo()");
+    }
+
+    #[test]
+    fn test_void_ident() {
+        test("var x; void x", "var x; void 0");
+        test("void x", "void x"); // reference error
     }
 }
