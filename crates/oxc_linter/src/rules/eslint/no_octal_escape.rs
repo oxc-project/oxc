@@ -37,6 +37,7 @@ declare_oxc_lint!(
     /// const str = "\xA9";
     /// ```
     NoOctalEscape,
+    eslint,
     correctness,
     pending
 );
@@ -166,5 +167,5 @@ fn test() {
         r"'foo \1 bar \2'",
     ];
 
-    Tester::new(NoOctalEscape::NAME, NoOctalEscape::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoOctalEscape::NAME, NoOctalEscape::PLUGIN, pass, fail).test_and_snapshot();
 }
