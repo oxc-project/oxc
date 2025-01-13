@@ -77,8 +77,8 @@ declare_oxc_lint!(
 
 impl Rule for PreferPromiseRejectErrors {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_empty_reject = value.get(0).map_or(false, |v| {
-            v.get("allowEmptyReject").map_or(false, |b| b.as_bool().unwrap_or(false))
+        let allow_empty_reject = value.get(0).is_some_and(|v| {
+            v.get("allowEmptyReject").is_some_and(|b| b.as_bool().unwrap_or(false))
         });
 
         Self { allow_empty_reject }
