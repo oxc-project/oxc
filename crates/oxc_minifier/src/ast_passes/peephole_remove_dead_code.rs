@@ -4,7 +4,7 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, IsLiteralValue},
     side_effects::MayHaveSideEffects,
 };
-use oxc_span::SPAN;
+use oxc_span::GetSpan;
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::{ctx::Ctx, keep_var::KeepVar, CompressorPass};
@@ -225,7 +225,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                 ctx.ast.move_statement(&mut if_stmt.consequent)
             } else {
                 if_stmt.alternate.as_mut().map_or_else(
-                    || ctx.ast.statement_empty(SPAN),
+                    || ctx.ast.statement_empty(if_stmt.span),
                     |alternate| ctx.ast.move_statement(alternate),
                 )
             });
@@ -256,7 +256,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                         }
                     }
                     Some(var_decl.map_or_else(
-                        || ctx.ast.statement_empty(SPAN),
+                        || ctx.ast.statement_empty(for_stmt.span),
                         Statement::VariableDeclaration,
                     ))
                 }
@@ -264,7 +264,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     let mut keep_var = KeepVar::new(ctx.ast);
                     keep_var.visit_statement(&for_stmt.body);
                     Some(keep_var.get_variable_declaration().map_or_else(
-                        || ctx.ast.statement_empty(SPAN),
+                        || ctx.ast.statement_empty(for_stmt.span),
                         Statement::VariableDeclaration,
                     ))
                 }
@@ -301,7 +301,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         let mut var = KeepVar::new(ctx.ast);
         var.visit_statement(&s.body);
         let var_decl = var.get_variable_declaration_statement();
-        var_decl.unwrap_or(ctx.ast.statement_empty(SPAN)).into()
+        var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span)).into()
     }
 
     fn try_fold_expression_stmt(
@@ -320,7 +320,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
 
         stmt.expression
             .is_literal_value(false)
-            .then(|| Some(ctx.ast.statement_empty(SPAN)))
+            .then(|| Some(ctx.ast.statement_empty(stmt.span)))
             .unwrap_or_else(|| match &mut stmt.expression {
                 Expression::ArrayExpression(expr) => Self::try_fold_array_expression(expr, ctx),
                 Expression::ObjectExpression(object_expr) => {
@@ -332,7 +332,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     }
                     let mut expressions = ctx.ast.move_vec(&mut template_lit.expressions);
                     if expressions.len() == 0 {
-                        return Some(ctx.ast.statement_empty(SPAN));
+                        return Some(ctx.ast.statement_empty(stmt.span));
                     } else if expressions.len() == 1 {
                         return Some(
                             ctx.ast.statement_expression(
@@ -347,15 +347,15 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     ))
                 }
                 Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
-                    Some(ctx.ast.statement_empty(SPAN))
+                    Some(ctx.ast.statement_empty(stmt.span))
                 }
-                Expression::ArrowFunctionExpression(_) => Some(ctx.ast.statement_empty(SPAN)),
+                Expression::ArrowFunctionExpression(_) => Some(ctx.ast.statement_empty(stmt.span)),
                 // `typeof x` -> ``
                 Expression::UnaryExpression(unary_expr)
                     if unary_expr.operator.is_typeof()
                         && unary_expr.argument.is_identifier_reference() =>
                 {
-                    Some(ctx.ast.statement_empty(SPAN))
+                    Some(ctx.ast.statement_empty(stmt.span))
                 }
                 // `typeof x.y` -> `x.y`, `void x` -> `x`
                 // `+0n` -> `Uncaught TypeError: Cannot convert a BigInt value to a number`
@@ -382,7 +382,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
             if finalizer.body.is_empty() {
                 Some(ctx.ast.statement_empty(s.span))
             } else {
-                let mut block = ctx.ast.block_statement(SPAN, ctx.ast.vec());
+                let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
                 std::mem::swap(&mut **finalizer, &mut block);
                 Some(Statement::BlockStatement(ctx.ast.alloc(block)))
             }
@@ -430,7 +430,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                         if pending_spread_elements.len() > 0 {
                             // flush pending spread elements
                             transformed_elements.push(ctx.ast.expression_array(
-                                SPAN,
+                                el_expr.span(),
                                 pending_spread_elements,
                                 None,
                             ));
@@ -444,14 +444,14 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
 
         if pending_spread_elements.len() > 0 {
             transformed_elements.push(ctx.ast.expression_array(
-                SPAN,
+                array_expr.span,
                 pending_spread_elements,
                 None,
             ));
         }
 
         if transformed_elements.is_empty() {
-            return Some(ctx.ast.statement_empty(SPAN));
+            return Some(ctx.ast.statement_empty(array_expr.span));
         } else if transformed_elements.len() == 1 {
             return Some(
                 ctx.ast.statement_expression(array_expr.span, transformed_elements.pop().unwrap()),
@@ -535,10 +535,13 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
             }
 
             if should_keep_as_sequence_expr && new_exprs.len() == 1 {
-                new_exprs.insert(
-                    0,
-                    ctx.ast.expression_numeric_literal(SPAN, 1.0, None, NumberBase::Decimal),
+                let number = ctx.ast.expression_numeric_literal(
+                    sequence_expr.span,
+                    1.0,
+                    None,
+                    NumberBase::Decimal,
                 );
+                new_exprs.insert(0, number);
             }
 
             if new_exprs.len() == 1 {

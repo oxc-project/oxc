@@ -6,7 +6,7 @@ use oxc_ecmascript::{
     ToInt32, ToJsString, ToNumber,
 };
 use oxc_span::cmp::ContentEq;
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::GetSpan;
 use oxc_syntax::{
     es_target::ESTarget,
     identifier::is_identifier_name,
@@ -282,7 +282,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         };
         // XOR: We should use `!neg` when it is not in binary expression.
         let num = ctx.ast.expression_numeric_literal(
-            SPAN,
+            lit.span,
             if lit.value ^ no_unary { 0.0 } else { 1.0 },
             None,
             NumberBase::Decimal,
@@ -290,7 +290,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         Some(if no_unary {
             num
         } else {
-            ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num)
+            ctx.ast.expression_unary(lit.span, UnaryOperator::LogicalNot, num)
         })
     }
 
@@ -308,9 +308,8 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 if let Statement::ReturnStatement(ret_stmt) = body {
                     let return_stmt_arg =
                         ret_stmt.argument.as_mut().map(|arg| ctx.ast.move_expression(arg));
-
-                    if let Some(return_stmt_arg) = return_stmt_arg {
-                        *body = ctx.ast.statement_expression(SPAN, return_stmt_arg);
+                    if let Some(arg) = return_stmt_arg {
+                        *body = ctx.ast.statement_expression(arg.span(), arg);
                         arrow_expr.expression = true;
                         self.changed = true;
                     }
@@ -744,9 +743,9 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                 // The `_` will not be placed to the target code.
                 let target = std::mem::replace(
                     target,
-                    ctx.ast.simple_assignment_target_identifier_reference(SPAN, "_"),
+                    ctx.ast.simple_assignment_target_identifier_reference(target.span(), "_"),
                 );
-                Some(ctx.ast.expression_update(SPAN, UpdateOperator::Decrement, true, target))
+                Some(ctx.ast.expression_update(expr.span, UpdateOperator::Decrement, true, target))
             }
             Expression::UnaryExpression(un)
                 if matches!(un.operator, UnaryOperator::UnaryNegation) =>
@@ -756,9 +755,9 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                     // The `_` will not be placed to the target code.
                     let target = std::mem::replace(
                         target,
-                        ctx.ast.simple_assignment_target_identifier_reference(SPAN, "_"),
+                        ctx.ast.simple_assignment_target_identifier_reference(target.span(), "_"),
                     );
-                    ctx.ast.expression_update(SPAN, UpdateOperator::Increment, true, target)
+                    ctx.ast.expression_update(expr.span, UpdateOperator::Increment, true, target)
                 })
             }
             _ => None,
@@ -793,11 +792,11 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         }
 
         Some(ctx.ast.expression_assignment(
-            SPAN,
+            expr.span,
             consequent.operator,
             ctx.ast.move_assignment_target(&mut alternate.left),
             ctx.ast.expression_conditional(
-                SPAN,
+                expr.span,
                 ctx.ast.move_expression(&mut expr.test),
                 ctx.ast.move_expression(&mut consequent.right),
                 ctx.ast.move_expression(&mut alternate.right),
@@ -869,7 +868,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                         }
                         Some(ctx.ast.expression_binary(
                             span,
-                            ctx.ast.expression_string_literal(SPAN, "", None),
+                            ctx.ast.expression_string_literal(call_expr.span, "", None),
                             BinaryOperator::Addition,
                             ctx.ast.move_expression(arg),
                         ))
@@ -949,24 +948,18 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                         if n.value.fract() == 0.0 {
                             let n_int = n.value as usize;
                             if (1..=6).contains(&n_int) {
-                                return Some(
-                                    ctx.ast.expression_array(
-                                        span,
-                                        ctx.ast.vec_from_iter(
-                                            std::iter::from_fn(|| {
-                                                Some(ArrayExpressionElement::Elision(
-                                                    ctx.ast.elision(SPAN),
-                                                ))
-                                            })
-                                            .take(n_int),
-                                        ),
-                                        None,
-                                    ),
-                                );
+                                let elisions = std::iter::from_fn(|| {
+                                    Some(ArrayExpressionElement::Elision(ctx.ast.elision(n.span)))
+                                })
+                                .take(n_int);
+                                return Some(ctx.ast.expression_array(
+                                    span,
+                                    ctx.ast.vec_from_iter(elisions),
+                                    None,
+                                ));
                             }
                         }
-
-                        let callee = ctx.ast.expression_identifier_reference(SPAN, "Array");
+                        let callee = ctx.ast.expression_identifier_reference(n.span, "Array");
                         let args = ctx.ast.move_vec(args);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
                     }
@@ -979,7 +972,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                     }
                     // `new Array(x)` -> `Array(x)`
                     else {
-                        let callee = ctx.ast.expression_identifier_reference(SPAN, "Array");
+                        let callee = ctx.ast.expression_identifier_reference(span, "Array");
                         let args = ctx.ast.move_vec(args);
                         Some(ctx.ast.expression_call(span, callee, NONE, args, false))
                     }
