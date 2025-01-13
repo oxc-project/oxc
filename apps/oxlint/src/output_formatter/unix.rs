@@ -20,6 +20,8 @@ impl InternalFormatter for UnixOutputFormatter {
     }
 }
 
+/// Reporter to output diagnostics in a simple one line output.
+/// At the end it reports the total numbers of diagnostics.
 #[derive(Default)]
 struct UnixReporter {
     total: usize,
@@ -61,12 +63,27 @@ mod test {
     use super::UnixReporter;
 
     #[test]
-    fn reporter_finish() {
+    fn reporter_finish_empty() {
         let mut reporter = UnixReporter::default();
 
         let result = reporter.finish();
 
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn reporter_finish_one_entry() {
+        let mut reporter = UnixReporter::default();
+
+        let error = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
+
+        let _ = reporter.render_error(error);
+        let result = reporter.finish();
+
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "\n1 problem\n");
     }
 
     #[test]

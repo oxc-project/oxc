@@ -22,6 +22,9 @@ impl InternalFormatter for CheckStyleOutputFormatter {
     }
 }
 
+/// Reporter to output diagnostics in checkstyle format
+/// 
+/// Checkstyle Format Documentation: <https://checkstyle.sourceforge.io/>
 #[derive(Default)]
 struct CheckstyleReporter {
     diagnostics: Vec<Error>,
