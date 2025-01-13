@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 126/147
+Passed: 126/148
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -47,7 +47,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (2/13)
+# babel-plugin-transform-typescript (2/14)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -153,6 +153,24 @@ rebuilt        : SymbolId(8): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+
+* namespace/export-import-=/input.ts
+Missing SymbolId: "X"
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(1): [SymbolId(2), SymbolId(3)]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "N1":
+after transform: SymbolId(1): SymbolFlags(NameSpaceModule)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N1":
+after transform: SymbolId(1): Span { start: 31, end: 33 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+Reference symbol mismatch for "X":
+after transform: SymbolId(2) "X"
+rebuilt        : SymbolId(3) "X"
 
 * namespace/import-=/input.ts
 Missing SymbolId: "X"
