@@ -305,7 +305,7 @@ fn report_if_needed<'a>(
             let needs_preceding_space = ctx
                 .nodes()
                 .parent_node(get_node_by_statement(body, ctx).id())
-                .map_or(false, |parent| matches!(parent.kind(), AstKind::DoWhileStatement(_)));
+                .is_some_and(|parent| matches!(parent.kind(), AstKind::DoWhileStatement(_)));
             let mut fixed = ctx.source_range(body.span()).to_string();
 
             if let Some(stripped) = fixed.strip_prefix(|c: char| c.is_whitespace() || c == '{') {
