@@ -60,7 +60,7 @@ pub fn isolated_declaration(
             strip_internal: options.strip_internal.unwrap_or(false),
         },
     )
-    .build(ret.program);
+    .build(&ret.program);
 
     let source_map_path = match options.sourcemap {
         Some(true) => Some(source_path.to_path_buf()),

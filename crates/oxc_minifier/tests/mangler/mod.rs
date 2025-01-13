@@ -12,8 +12,8 @@ fn mangle(source_text: &str, top_level: bool) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = ret.program;
     let mangler =
-        Mangler::new().with_options(MangleOptions { debug: false, top_level }).build(program);
-    CodeGenerator::new().with_mangler(Some(mangler)).build(program).code
+        Mangler::new().with_options(MangleOptions { debug: false, top_level }).build(&program);
+    CodeGenerator::new().with_mangler(Some(mangler)).build(&program).code
 }
 
 #[test]

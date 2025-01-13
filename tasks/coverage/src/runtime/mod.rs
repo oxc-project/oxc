@@ -181,22 +181,25 @@ impl Test262RuntimeCase {
         let is_only_strict = self.base.is_only_strict();
         let source_type = SourceType::cjs().with_module(is_module);
         let allocator = Allocator::default();
-        let program = Parser::new(&allocator, source_text, source_type).parse().program;
+        let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
 
         if transform {
             let (symbols, scopes) =
-                SemanticBuilder::new().build(program).semantic.into_symbol_table_and_scope_tree();
+                SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
             let mut options = TransformOptions::enable_all();
             options.jsx.refresh = None;
             options.helper_loader.mode = HelperLoaderMode::External;
             options.typescript.only_remove_type_imports = true;
-            Transformer::new(&allocator, self.path(), &options)
-                .build_with_symbols_and_scopes(symbols, scopes, program);
+            Transformer::new(&allocator, self.path(), &options).build_with_symbols_and_scopes(
+                symbols,
+                scopes,
+                &mut program,
+            );
         }
 
         let mangler = if minify {
             Minifier::new(MinifierOptions { mangle: None, ..MinifierOptions::default() })
-                .build(&allocator, program)
+                .build(&allocator, &mut program)
                 .mangler
         } else {
             None
@@ -205,7 +208,7 @@ impl Test262RuntimeCase {
         let mut text = CodeGenerator::new()
             .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
             .with_mangler(mangler)
-            .build(program)
+            .build(&program)
             .code;
         if is_only_strict {
             text = format!("\"use strict\";\n{text}");

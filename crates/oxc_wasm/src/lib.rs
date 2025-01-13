@@ -198,7 +198,7 @@ impl Oxc {
                 .preserve_parens
                 .unwrap_or(default_parser_options.preserve_parens),
         };
-        let ParserReturn { program, errors, module_record, .. } =
+        let ParserReturn { mut program, errors, module_record, .. } =
             Parser::new(&allocator, source_text, source_type)
                 .with_options(oxc_parser_options)
                 .parse();
@@ -213,7 +213,7 @@ impl Oxc {
             semantic_builder = semantic_builder.with_excess_capacity(2.0);
         }
         let semantic_ret =
-            semantic_builder.with_check_syntax_error(true).with_cfg(true).build(program);
+            semantic_builder.with_check_syntax_error(true).with_cfg(true).build(&program);
         let semantic = semantic_ret.semantic;
 
         self.control_flow_graph = semantic.cfg().map_or_else(String::default, |cfg| {
@@ -229,7 +229,7 @@ impl Oxc {
         }
 
         let module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
-        self.run_linter(&run_options, &path, program, &module_record);
+        self.run_linter(&run_options, &path, &program, &module_record);
 
         self.run_prettier(&run_options, source_text, source_type);
 
@@ -237,7 +237,7 @@ impl Oxc {
 
         if !source_type.is_typescript_definition() {
             if run_options.scope.unwrap_or_default() {
-                self.scope_text = Self::get_scope_text(program, &symbols, &scopes);
+                self.scope_text = Self::get_scope_text(&program, &symbols, &scopes);
             }
             if run_options.symbol.unwrap_or_default() {
                 self.symbols = self.get_symbols_text(&symbols)?;
@@ -259,7 +259,7 @@ impl Oxc {
                 })
                 .unwrap_or_default();
             let result = Transformer::new(&allocator, &path, &options)
-                .build_with_symbols_and_scopes(symbols, scopes, program);
+                .build_with_symbols_and_scopes(symbols, scopes, &mut program);
             if !result.errors.is_empty() {
                 self.save_diagnostics(result.errors.into_iter().collect::<Vec<_>>());
             }
@@ -281,7 +281,7 @@ impl Oxc {
                     CompressOptions::all_false()
                 },
             };
-            Minifier::new(options).build(&allocator, program).mangler
+            Minifier::new(options).build(&allocator, &mut program).mangler
         } else {
             None
         };
@@ -292,7 +292,7 @@ impl Oxc {
                 minify: minifier_options.whitespace.unwrap_or_default(),
                 ..CodegenOptions::default()
             })
-            .build(program)
+            .build(&program)
             .code;
 
         Ok(())
@@ -338,14 +338,14 @@ impl Oxc {
             let mut prettier = Prettier::new(&allocator, PrettierOptions::default());
 
             if run_options.prettier_format.unwrap_or_default() {
-                self.prettier_formatted_text = prettier.build(ret.program);
+                self.prettier_formatted_text = prettier.build(&ret.program);
             }
 
             if run_options.prettier_ir.unwrap_or_default() {
-                let prettier_doc = prettier.doc(ret.program).to_string();
+                let prettier_doc = prettier.doc(&ret.program).to_string();
                 self.prettier_ir_text = {
                     let ret = Parser::new(&allocator, &prettier_doc, SourceType::default()).parse();
-                    Prettier::new(&allocator, PrettierOptions::default()).build(ret.program)
+                    Prettier::new(&allocator, PrettierOptions::default()).build(&ret.program)
                 };
             }
         }

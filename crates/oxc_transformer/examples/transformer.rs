@@ -40,12 +40,12 @@ fn main() {
     println!("Original:\n");
     println!("{source_text}\n");
 
-    let program = ret.program;
+    let mut program = ret.program;
 
     let ret = SemanticBuilder::new()
         // Estimate transformer will triple scopes, symbols, references
         .with_excess_capacity(2.0)
-        .build(program);
+        .build(&program);
 
     if !ret.errors.is_empty() {
         println!("Semantic Errors:");
@@ -74,8 +74,11 @@ fn main() {
 
     transform_options.helper_loader.mode = HelperLoaderMode::External;
 
-    let ret = Transformer::new(&allocator, path, &transform_options)
-        .build_with_symbols_and_scopes(symbols, scopes, program);
+    let ret = Transformer::new(&allocator, path, &transform_options).build_with_symbols_and_scopes(
+        symbols,
+        scopes,
+        &mut program,
+    );
 
     if !ret.errors.is_empty() {
         println!("Transformer Errors:");
@@ -85,7 +88,7 @@ fn main() {
         }
     }
 
-    let printed = CodeGenerator::new().build(program).code;
+    let printed = CodeGenerator::new().build(&program).code;
     println!("Transformed:\n");
     println!("{printed}");
 }

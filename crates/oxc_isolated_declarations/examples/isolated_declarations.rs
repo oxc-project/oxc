@@ -34,7 +34,7 @@ fn main() {
 
     let id_ret =
         IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
-            .build(ret.program);
+            .build(&ret.program);
     let printed = CodeGenerator::new().build(&id_ret.program).code;
 
     println!("Dts Emit:\n");

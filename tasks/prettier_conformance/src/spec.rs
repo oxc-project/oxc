@@ -37,8 +37,8 @@ impl SpecParser {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(spec).unwrap_or_default();
 
-        let ret = Parser::new(&allocator, &spec_content, source_type).parse();
-        self.visit_program(ret.program);
+        let mut ret = Parser::new(&allocator, &spec_content, source_type).parse();
+        self.visit_program(&mut ret.program);
     }
 }
 

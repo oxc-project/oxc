@@ -180,7 +180,7 @@ fn transpile(path: &Path, source_text: &str) -> (String, Vec<OxcDiagnostic>) {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let ret =
         IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
-            .build(ret.program);
+            .build(&ret.program);
     let printed = CodeGenerator::new().build(&ret.program).code;
     (printed, ret.errors)
 }

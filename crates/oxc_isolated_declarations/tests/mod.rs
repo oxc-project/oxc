@@ -15,7 +15,7 @@ fn transform(path: &Path, source_text: &str) -> String {
 
     let id_ret =
         IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
-            .build(parser_ret.program);
+            .build(&parser_ret.program);
     let code = CodeGenerator::new().build(&id_ret.program).code;
 
     let mut snapshot =

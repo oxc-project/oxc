@@ -29,7 +29,7 @@ fn main() -> std::io::Result<()> {
         &allocator,
         PrettierOptions { semi, trailing_comma: TrailingComma::All, ..PrettierOptions::default() },
     )
-    .build(ret.program);
+    .build(&ret.program);
     println!("{output}");
 
     Ok(())

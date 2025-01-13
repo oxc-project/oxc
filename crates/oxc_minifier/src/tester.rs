@@ -38,15 +38,15 @@ fn run<'a, P: CompressorPass<'a>>(
     remove_whitespace: bool,
 ) -> String {
     let source_type = SourceType::mjs();
-    let program = Parser::new(allocator, source_text, source_type).parse().program;
+    let mut program = Parser::new(allocator, source_text, source_type).parse().program;
 
     if let Some(pass) = pass {
         let (symbols, scopes) =
-            SemanticBuilder::new().build(program).semantic.into_symbol_table_and_scope_tree();
+            SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
         let mut ctx = ReusableTraverseCtx::new(scopes, symbols, allocator);
-        RemoveSyntax::new(CompressOptions::all_false()).build(program, &mut ctx);
-        Normalize::new().build(program, &mut ctx);
-        pass.build(program, &mut ctx);
+        RemoveSyntax::new(CompressOptions::all_false()).build(&mut program, &mut ctx);
+        Normalize::new().build(&mut program, &mut ctx);
+        pass.build(&mut program, &mut ctx);
     }
 
     CodeGenerator::new()
@@ -55,6 +55,6 @@ fn run<'a, P: CompressorPass<'a>>(
             minify: remove_whitespace,
             ..CodegenOptions::default()
         })
-        .build(program)
+        .build(&program)
         .code
 }

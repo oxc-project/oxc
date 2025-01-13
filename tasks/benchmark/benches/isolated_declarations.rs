@@ -25,7 +25,7 @@ fn bench_isolated_declarations(criterion: &mut Criterion) {
                 &allocator,
                 IsolatedDeclarationsOptions { strip_internal: true },
             )
-            .build(program);
+            .build(&program);
         });
     });
 

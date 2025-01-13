@@ -35,7 +35,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 .with_build_jsdoc(true)
                 .with_scope_tree_child_ids(true)
                 .with_cfg(true)
-                .build(ret.program);
+                .build(&ret.program);
             let semantic = semantic_ret.semantic;
             let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
             let semantic = Rc::new(semantic);

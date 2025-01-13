@@ -685,7 +685,7 @@ fn main() {
             let ret = Parser::new(&allocator, &body, source_type).parse();
 
             let mut state = State::new(&body);
-            state.visit_program(ret.program);
+            state.visit_program(&ret.program);
 
             let pass_cases = state.pass_cases();
             let fail_cases = state.fail_cases();

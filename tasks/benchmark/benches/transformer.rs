@@ -31,12 +31,12 @@ fn bench_transformer(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST + semantic data for each iteration
-                let ParserReturn { program, .. } =
+                let ParserReturn { mut program, .. } =
                     Parser::new(&allocator, source_text, source_type).parse();
                 let (symbols, scopes) = SemanticBuilder::new()
                     // Estimate transformer will triple scopes, symbols, references
                     .with_excess_capacity(2.0)
-                    .build(program)
+                    .build(&program)
                     .semantic
                     .into_symbol_table_and_scope_tree();
 
@@ -46,7 +46,11 @@ fn bench_transformer(criterion: &mut Criterion) {
                         Path::new(&file.file_name),
                         &transform_options,
                     )
-                    .build_with_symbols_and_scopes(symbols, scopes, program);
+                    .build_with_symbols_and_scopes(
+                        symbols,
+                        scopes,
+                        &mut program,
+                    );
 
                     // Return the `TransformerReturn`, so it's dropped outside of the measured section.
                     // `TransformerReturn` contains `ScopeTree` and `SymbolTable` which are costly to drop.

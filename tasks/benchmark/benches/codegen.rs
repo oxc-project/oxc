@@ -19,22 +19,22 @@ fn bench_codegen(criterion: &mut Criterion) {
         // Codegen
         let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(parser_ret.errors.is_empty());
-        let program = parser_ret.program;
+        let mut program = parser_ret.program;
 
         let mut group = criterion.benchmark_group("codegen");
         group.bench_function(id.clone(), |b| {
-            b.iter_with_large_drop(|| CodeGenerator::new().build(program).map);
+            b.iter_with_large_drop(|| CodeGenerator::new().build(&program).map);
         });
         group.finish();
 
         // Codegen sourcemap
         let (symbols, scopes) =
-            SemanticBuilder::new().build(program).semantic.into_symbol_table_and_scope_tree();
+            SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
 
         let transform_options = TransformOptions::enable_all();
         let transformer_ret =
             Transformer::new(&allocator, Path::new(&file.file_name), &transform_options)
-                .build_with_symbols_and_scopes(symbols, scopes, program);
+                .build_with_symbols_and_scopes(symbols, scopes, &mut program);
         assert!(transformer_ret.errors.is_empty());
 
         let mut group = criterion.benchmark_group("codegen_sourcemap");
@@ -45,7 +45,7 @@ fn bench_codegen(criterion: &mut Criterion) {
                         source_map_path: Some(PathBuf::from(&file.file_name)),
                         ..CodegenOptions::default()
                     })
-                    .build(program)
+                    .build(&program)
             });
         });
         group.finish();

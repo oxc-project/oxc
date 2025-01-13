@@ -70,6 +70,6 @@ fn parse<'a>(
 fn codegen(ret: &ParserReturn<'_>, minify: bool) -> String {
     CodeGenerator::new()
         .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
-        .build(ret.program)
+        .build(&ret.program)
         .code
 }

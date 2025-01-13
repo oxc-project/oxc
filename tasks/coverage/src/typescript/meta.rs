@@ -203,7 +203,7 @@ impl Baseline {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(Path::new(&self.name)).unwrap();
         let ret = Parser::new(&allocator, &self.original, source_type).parse();
-        let printed = CodeGenerator::new().build(ret.program).code;
+        let printed = CodeGenerator::new().build(&ret.program).code;
         self.oxc_printed = printed;
     }
 
