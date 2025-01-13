@@ -145,7 +145,7 @@ fn mark_lone_block(parent_node: &AstNode, lone_blocks: &mut Vec<&AstNode>) {
         return;
     }
 
-    if lone_blocks.last().map_or(false, |last| last.id() == parent_node.id()) {
+    if lone_blocks.last().is_some_and(|last| last.id() == parent_node.id()) {
         lone_blocks.pop();
     }
 }
