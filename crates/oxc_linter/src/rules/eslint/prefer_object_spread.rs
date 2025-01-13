@@ -941,7 +941,7 @@ fn test() {
         ("const obj = Object.assign<{}, Record<string, string[]>>({}, getObject());", "const obj = { ...getObject()};", None),
         ("Object.assign<{}, A>({}, foo);", "({ ...foo});", None)
     ];
-    Tester::new(PreferObjectSpread::NAME, PreferObjectSpread::CATEGORY, pass, fail)
+    Tester::new(PreferObjectSpread::NAME, PreferObjectSpread::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }
