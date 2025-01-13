@@ -162,6 +162,12 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                             continue;
                         }
                         match decl {
+                            Declaration::TSImportEqualsDeclaration(ref import_equals) => {
+                                let binding =
+                                    BoundIdentifier::from_binding_ident(&import_equals.id);
+                                new_stmts.push(Statement::from(decl));
+                                Self::add_declaration(&uid_binding, &binding, &mut new_stmts, ctx);
+                            }
                             Declaration::TSEnumDeclaration(ref enum_decl) => {
                                 let binding = BoundIdentifier::from_binding_ident(&enum_decl.id);
                                 new_stmts.push(Statement::from(decl));
