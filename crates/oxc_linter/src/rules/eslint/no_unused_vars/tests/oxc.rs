@@ -1083,7 +1083,10 @@ fn test_namespaces() {
 
 #[test]
 fn test_type_aliases() {
-    let pass = vec!["type Foo = string; export default Foo;"];
+    let pass = vec![
+        "type Foo = string; export default Foo;",
+        "const a = { hello: 'world' }; export type a = typeof a;",
+    ];
 
     let fail = vec![
         // usages within own declaration do not count
