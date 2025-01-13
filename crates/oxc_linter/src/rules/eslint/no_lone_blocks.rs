@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoLoneBlocks,
+    eslint,
     style,
 );
 
@@ -371,5 +372,5 @@ fn test() {
 			            ", // { "ecmaVersion": 2022 }
     ];
 
-    Tester::new(NoLoneBlocks::NAME, NoLoneBlocks::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoLoneBlocks::NAME, NoLoneBlocks::PLUGIN, pass, fail).test_and_snapshot();
 }
