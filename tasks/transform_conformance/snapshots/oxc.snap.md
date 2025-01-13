@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 126/145
+Passed: 126/147
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -47,7 +47,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (2/11)
+# babel-plugin-transform-typescript (2/13)
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -158,6 +158,65 @@ rebuilt        : SymbolId(5) "Name"
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+
+* namespace/import-=/input.ts
+Missing SymbolId: "N1"
+Missing SymbolId: "_N"
+Missing ReferenceId: "N1"
+Missing ReferenceId: "N1"
+Missing SymbolId: "N2"
+Missing SymbolId: "_N2"
+Missing SymbolId: "X"
+Missing ReferenceId: "N2"
+Missing ReferenceId: "N2"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(4)]
+Bindings mismatch:
+after transform: ScopeId(1): ["V", "X", "_N"]
+rebuilt        : ScopeId(1): ["V", "_N"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Binding symbols mismatch:
+after transform: ScopeId(2): [SymbolId(5), SymbolId(6), SymbolId(8)]
+rebuilt        : ScopeId(2): [SymbolId(5), SymbolId(6), SymbolId(7)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Symbol reference IDs mismatch for "A":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+rebuilt        : SymbolId(0): [ReferenceId(2)]
+Reference symbol mismatch for "X":
+after transform: SymbolId(5) "X"
+rebuilt        : SymbolId(6) "X"
+
+* namespace/preserve-import-=/input.ts
+Missing SymbolId: "N1"
+Missing SymbolId: "_N"
+Missing SymbolId: "Foo"
+Missing ReferenceId: "N1"
+Missing ReferenceId: "N1"
+Missing SymbolId: "N2"
+Missing SymbolId: "_N2"
+Missing SymbolId: "Foo"
+Missing ReferenceId: "N2"
+Missing ReferenceId: "N2"
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(5)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(2), SymbolId(3), SymbolId(7)]
+rebuilt        : ScopeId(1): [SymbolId(2), SymbolId(3), SymbolId(4)]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Binding symbols mismatch:
+after transform: ScopeId(2): [SymbolId(5), SymbolId(6), SymbolId(8)]
+rebuilt        : ScopeId(2): [SymbolId(6), SymbolId(7), SymbolId(8)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 * preserve-import-=/input.js
 Missing SymbolId: "Foo"

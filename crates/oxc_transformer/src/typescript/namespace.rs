@@ -3,6 +3,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::BoundNames;
+use oxc_semantic::Reference;
 use oxc_span::{Atom, CompactStr, SPAN};
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
@@ -23,11 +24,16 @@ pub struct TypeScriptNamespace<'a, 'ctx> {
 
     // Options
     allow_namespaces: bool,
+    only_remove_type_imports: bool,
 }
 
 impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
     pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx, allow_namespaces: options.allow_namespaces }
+        Self {
+            ctx,
+            allow_namespaces: options.allow_namespaces,
+            only_remove_type_imports: options.only_remove_type_imports,
+        }
     }
 }
 
@@ -274,9 +280,20 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                 | Statement::TSEnumDeclaration(_) => {
                     names.insert(stmt.to_declaration().id().as_ref().unwrap().name.clone());
                 }
-                Statement::TSTypeAliasDeclaration(_)
-                | Statement::TSInterfaceDeclaration(_)
-                | Statement::TSImportEqualsDeclaration(_) => continue,
+                // Retain when `only_remove_type_imports` is true or there are value references
+                // The behavior is the same as `TypeScriptModule::transform_ts_import_equals`
+                Statement::TSImportEqualsDeclaration(decl)
+                    if !self.only_remove_type_imports
+                        && ctx
+                            .symbols()
+                            .get_resolved_references(decl.id.symbol_id())
+                            .all(Reference::is_type) =>
+                {
+                    continue;
+                }
+                Statement::TSTypeAliasDeclaration(_) | Statement::TSInterfaceDeclaration(_) => {
+                    continue
+                }
                 _ => {}
             }
             new_stmts.push(stmt);
