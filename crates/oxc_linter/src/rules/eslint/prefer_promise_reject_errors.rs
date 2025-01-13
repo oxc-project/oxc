@@ -68,6 +68,7 @@ declare_oxc_lint!(
     /// Promise.reject(foo);
     /// ```
     PreferPromiseRejectErrors,
+    eslint,
     style,
     none
 );
@@ -303,6 +304,6 @@ fn test() {
         ("Promise.reject(foo &&= 5)", None),
     ];
 
-    Tester::new(PreferPromiseRejectErrors::NAME, PreferPromiseRejectErrors::CATEGORY, pass, fail)
+    Tester::new(PreferPromiseRejectErrors::NAME, PreferPromiseRejectErrors::PLUGIN, pass, fail)
         .test_and_snapshot();
 }
