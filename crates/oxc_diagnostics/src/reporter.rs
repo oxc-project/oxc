@@ -10,28 +10,16 @@ use crate::{Error, Severity};
 ///
 /// ## Example
 /// ```
-/// use std::io::{self, Write, BufWriter, Stderr};
 /// use oxc_diagnostics::{DiagnosticReporter, Error, Severity};
 ///
-/// pub struct BufReporter {
-///     writer: BufWriter<Stderr>,
-/// }
-///
-/// impl Default for BufReporter {
-///    fn default() -> Self {
-///        Self { writer: BufWriter::new(io::stderr()) }
-///    }
-/// }
+/// #[derive(Default)]
+/// pub struct BufferedReporter;
 ///
 /// impl DiagnosticReporter for BufferedReporter {
-///     // flush all remaining bytes when no more diagnostics will be reported
-///     fn finish(&mut self) {
-///         self.writer.flush().unwrap();
-///     }
-///
-///     // write rendered reports to stderr
-///     fn render_diagnostics(&mut self, s: &[u8]) {
-///         self.writer.write_all(s).unwrap();
+///     // render the finished output, some reporters will store the errors in memory
+///     // to output all diagnostics at the end
+///     fn finish(&mut self) -> Option<String> {
+///         None
 ///     }
 ///
 ///     // render diagnostics to a simple Apache-like log format
@@ -50,8 +38,7 @@ use crate::{Error, Severity};
 pub trait DiagnosticReporter {
     /// Lifecycle hook that gets called when no more diagnostics will be reported.
     ///
-    /// Used primarily for flushing output stream buffers, but you don't just have to use it for
-    /// that. Some reporters (e.g. `JSONReporter`) store all diagnostics in memory, then write them
+    /// Some reporters (e.g. `JSONReporter`) store all diagnostics in memory, then write them
     /// all at once.
     ///
     /// While this method _should_ only ever be called a single time, this is not a guarantee
@@ -62,8 +49,7 @@ pub trait DiagnosticReporter {
     /// might return a stringified JSON object on a single line. Returns [`None`] to skip reporting
     /// of this diagnostic.
     ///
-    /// Reporters should not use this method to write diagnostics to their output stream. That
-    /// should be done in [`render_diagnostics`](DiagnosticReporter::render_diagnostics).
+    /// Reporters should use this method to write diagnostics to their output stream.
     fn render_error(&mut self, error: Error) -> Option<String>;
 }
 
