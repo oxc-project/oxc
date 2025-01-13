@@ -177,7 +177,7 @@ fn could_be_error(expr: &Expression) -> bool {
                 could_be_error(&expr.right)
             }
             AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish => {
-                expr.left.as_simple_assignment_target().map_or(false, |left| {
+                expr.left.as_simple_assignment_target().is_some_and(|left| {
                     matches!(
                         left,
                         SimpleAssignmentTarget::AssignmentTargetIdentifier(_)
