@@ -52,3 +52,33 @@ fn format_unix(diagnostic: &Error) -> String {
         rule_id.map_or_else(|| Cow::Borrowed(""), |rule_id| Cow::Owned(format!("/{rule_id}")));
     format!("{filename}:{line}:{column}: {message} [{severity}{rule_id}]\n")
 }
+
+#[cfg(test)]
+mod test {
+    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_span::Span;
+
+    use super::UnixReporter;
+
+    #[test]
+    fn reporter_finish() {
+        let mut reporter = UnixReporter::default();
+
+        let result = reporter.finish();
+
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn reporter_error() {
+        let mut reporter = UnixReporter::default();
+        let error = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
+
+        let result = reporter.render_error(error);
+
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "file://test.ts:1:1: error message [Warning]\n");
+    }
+}

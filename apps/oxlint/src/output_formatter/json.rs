@@ -77,3 +77,34 @@ fn format_json(diagnostics: &mut Vec<Error>) -> String {
         .join(",\n");
     format!("[\n{messages}\n]")
 }
+
+#[cfg(test)]
+mod test {
+    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_span::Span;
+
+    use super::JsonReporter;
+
+    #[test]
+    fn reporter() {
+        let mut reporter = JsonReporter::default();
+
+        let error = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
+
+        let first_result = reporter.render_error(error);
+
+        // reporter keeps it in memory
+        assert!(first_result.is_none());
+
+        // report not gives us all diagnostics at ones
+        let second_result = reporter.finish();
+
+        assert!(second_result.is_some());
+        assert_eq!(
+            second_result.unwrap(),
+            "[\n\t{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8}}],\"related\": []}\n]"
+        );
+    }
+}

@@ -61,7 +61,7 @@ impl OutputFormatter {
         match format {
             OutputFormat::Json => Box::<JsonOutputFormatter>::default(),
             OutputFormat::Checkstyle => Box::<CheckStyleOutputFormatter>::default(),
-            OutputFormat::Github => Box::<GithubOutputFormatter>::default(),
+            OutputFormat::Github => Box::new(GithubOutputFormatter),
             OutputFormat::Unix => Box::<UnixOutputFormatter>::default(),
             OutputFormat::Default => Box::new(DefaultOutputFormatter),
         }

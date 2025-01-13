@@ -117,3 +117,31 @@ fn xml_escape_impl<F: Fn(u8) -> bool>(raw: &str, escape_chars: F) -> Cow<str> {
         Cow::Borrowed(raw)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_span::Span;
+
+    use super::CheckstyleReporter;
+
+    #[test]
+    fn reporter() {
+        let mut reporter = CheckstyleReporter::default();
+
+        let error = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
+
+        let first_result = reporter.render_error(error);
+
+        // reporter keeps it in memory
+        assert!(first_result.is_none());
+
+        // report not gives us all diagnostics at ones
+        let second_result = reporter.finish();
+
+        assert!(second_result.is_some());
+        assert_eq!(second_result.unwrap(), "<?xml version=\"1.0\" encoding=\"utf-8\"?><checkstyle version=\"4.3\"><file name=\"file://test.ts\"><error line=\"1\" column=\"1\" severity=\"warning\" message=\"error message\" source=\"\" /></file></checkstyle>");
+    }
+}

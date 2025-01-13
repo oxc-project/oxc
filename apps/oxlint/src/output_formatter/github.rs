@@ -7,7 +7,7 @@ use oxc_diagnostics::{
 
 use crate::output_formatter::InternalFormatter;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct GithubOutputFormatter;
 
 impl InternalFormatter for GithubOutputFormatter {
@@ -80,4 +80,34 @@ fn escape_property(value: &str) -> String {
         }
     }
     result
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_span::Span;
+
+    use super::GithubReporter;
+
+    #[test]
+    fn reporter_finish() {
+        let mut reporter = GithubReporter;
+
+        let result = reporter.finish();
+
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn reporter_error() {
+        let mut reporter = GithubReporter;
+        let error = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
+
+        let result = reporter.render_error(error);
+
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=1,title=oxlint::error message\n");
+    }
 }
