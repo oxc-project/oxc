@@ -1,16 +1,18 @@
 use oxc_allocator::Box;
 use oxc_ast::{
-    ast::{
-        Argument, AssignmentOperator, CallExpression, Expression, FormalParameters,
-        LogicalOperator, SimpleAssignmentTarget,
-    },
+    ast::{Argument, CallExpression, Expression, FormalParameters},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{
+    ast_util::{could_be_error, is_method_call},
+    context::LintContext,
+    rule::Rule,
+    AstNode,
+};
 
 fn prefer_promise_reject_errors_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected the Promise rejection reason to be an Error").with_label(span)
@@ -127,7 +129,7 @@ fn check_reject_call(call_expr: &CallExpression, ctx: &LintContext, allow_empty_
     }
 
     if call_expr.arguments.len() == 0
-        || call_expr.arguments[0].as_expression().is_some_and(|e| !could_be_error(e))
+        || call_expr.arguments[0].as_expression().is_some_and(|e| !could_be_error(ctx, e))
         || is_undefined(&call_expr.arguments[0])
     {
         ctx.diagnostic(prefer_promise_reject_errors_diagnostic(call_expr.span));
@@ -155,55 +157,6 @@ fn check_reject_in_function(
             check_reject_call(call_expr, ctx, allow_empty_reject);
         }
     });
-}
-/**
- * Port from eslint.
- * @see <https://github.com/eslint/eslint/blob/36ef8bbeab495ef2598a4b1f52e32b4cb50be5e2/lib/rules/utils/ast-utils.js#L2079>
- */
-fn could_be_error(expr: &Expression) -> bool {
-    match expr.get_inner_expression() {
-        Expression::Identifier(_)
-        | Expression::CallExpression(_)
-        | Expression::NewExpression(_)
-        | Expression::StaticMemberExpression(_)
-        | Expression::ComputedMemberExpression(_)
-        | Expression::TaggedTemplateExpression(_)
-        | Expression::YieldExpression(_)
-        | Expression::AwaitExpression(_)
-        | Expression::ChainExpression(_)
-        | Expression::PrivateFieldExpression(_) => true,
-        Expression::AssignmentExpression(expr) => match expr.operator {
-            AssignmentOperator::Assign | AssignmentOperator::LogicalAnd => {
-                could_be_error(&expr.right)
-            }
-            AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish => {
-                expr.left.as_simple_assignment_target().is_some_and(|left| {
-                    matches!(
-                        left,
-                        SimpleAssignmentTarget::AssignmentTargetIdentifier(_)
-                            | SimpleAssignmentTarget::ComputedMemberExpression(_)
-                            | SimpleAssignmentTarget::StaticMemberExpression(_)
-                            | SimpleAssignmentTarget::PrivateFieldExpression(_)
-                    )
-                }) || could_be_error(&expr.right)
-            }
-            _ => false,
-        },
-        Expression::SequenceExpression(expr) => {
-            expr.expressions.len() != 0 && could_be_error(expr.expressions.last().unwrap())
-        }
-        Expression::LogicalExpression(expr) => {
-            if expr.operator == LogicalOperator::And {
-                return could_be_error(&expr.right);
-            }
-
-            could_be_error(&expr.left) || could_be_error(&expr.right)
-        }
-        Expression::ConditionalExpression(expr) => {
-            could_be_error(&expr.consequent) || could_be_error(&expr.alternate)
-        }
-        _ => false,
-    }
 }
 
 fn is_undefined(arg: &Argument) -> bool {
