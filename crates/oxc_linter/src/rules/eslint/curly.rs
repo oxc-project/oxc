@@ -90,6 +90,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     Curly,
+    eslint,
     style,
     fix
 );
@@ -1879,5 +1880,5 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(Curly::NAME, Curly::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(Curly::NAME, Curly::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }
