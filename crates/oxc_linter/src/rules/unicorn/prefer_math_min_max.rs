@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// Math.max(height, 50);
     /// ```
     PreferMathMinMax,
+    unicorn,
     pedantic,
     fix
 );
@@ -245,7 +246,7 @@ fn test() {
         ("return -10e4 <= height ? height : -10e4;", "return Math.max(height, -10e4);", None),
     ];
 
-    Tester::new(PreferMathMinMax::NAME, PreferMathMinMax::CATEGORY, pass, fail)
+    Tester::new(PreferMathMinMax::NAME, PreferMathMinMax::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

@@ -71,6 +71,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoConfusingSetTimeout,
+    jest,
     style
 );
 
@@ -484,7 +485,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoConfusingSetTimeout::NAME, NoConfusingSetTimeout::CATEGORY, pass, fail)
+    Tester::new(NoConfusingSetTimeout::NAME, NoConfusingSetTimeout::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

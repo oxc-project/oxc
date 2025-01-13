@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:20]
@@ -110,7 +109,7 @@ snapshot_kind: text
    ·                              ───────
  5 │                            */
    ╰────
-  help: Remove redundunt `@yields` tag.
+  help: Remove redundant `@yields` tag.
 
   ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:20]

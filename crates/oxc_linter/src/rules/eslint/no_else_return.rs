@@ -162,6 +162,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoElseReturn,
+    eslint,
     pedantic,
     conditional_fix
 );
@@ -833,7 +834,7 @@ fn test() {
         ),
         ("if (foo) { return true; } else { let a; }", "if (foo) { return true; } let a;", None),
     ];
-    Tester::new(NoElseReturn::NAME, NoElseReturn::CATEGORY, pass, fail)
+    Tester::new(NoElseReturn::NAME, NoElseReturn::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

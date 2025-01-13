@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// const regexp = new RegExp(String.raw`foo\.bar`);
     /// ```
     PreferStringRaw,
+    unicorn,
     style,
     fix,
 );
@@ -279,7 +280,7 @@ fn test() {
         (r"for (const f of'a\\b') {}", r"for (const f of String.raw`a\b`) {}", None),
     ];
 
-    Tester::new(PreferStringRaw::NAME, PreferStringRaw::CATEGORY, pass, fail)
+    Tester::new(PreferStringRaw::NAME, PreferStringRaw::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

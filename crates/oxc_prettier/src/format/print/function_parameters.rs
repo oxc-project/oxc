@@ -85,8 +85,8 @@ pub fn print_function_parameters<'a>(
                 if should_hug_the_only_function_parameter {
                     printed.push(text!(" "));
                 } else if p.is_next_line_empty(this_param.span) {
-                    printed.extend(hardline!());
-                    printed.extend(hardline!());
+                    printed.push(hardline!(p));
+                    printed.push(hardline!(p));
                 } else {
                     printed.push(line!());
                 }
@@ -116,8 +116,8 @@ pub fn print_function_parameters<'a>(
         if should_hug_the_only_function_parameter {
             printed.push(text!(" "));
         } else if p.is_next_line_empty(param.span) {
-            printed.extend(hardline!());
-            printed.extend(hardline!());
+            printed.push(hardline!(p));
+            printed.push(hardline!(p));
         } else {
             printed.push(line!());
         }

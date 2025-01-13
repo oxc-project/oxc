@@ -55,6 +55,7 @@ declare_oxc_lint!(
     /// import something from 'another-module';
     /// ```
     NoDuplicateImports,
+    eslint,
     style,
     pending);
 
@@ -470,6 +471,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoDuplicateImports::NAME, NoDuplicateImports::CATEGORY, pass, fail)
+    Tester::new(NoDuplicateImports::NAME, NoDuplicateImports::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

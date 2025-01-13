@@ -132,7 +132,7 @@ enum Bindings<'a, 'ctx> {
     AutomaticModule(AutomaticModuleBindings<'a, 'ctx>),
 }
 
-impl<'a, 'ctx> Bindings<'a, 'ctx> {
+impl Bindings<'_, '_> {
     #[inline]
     fn is_classic(&self) -> bool {
         matches!(self, Self::Classic(_))
@@ -486,7 +486,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for JsxImpl<'a, 'ctx> {
+impl<'a> Traverse<'a> for JsxImpl<'a, '_> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.insert_filename_var_statement(ctx);
     }
@@ -502,7 +502,7 @@ impl<'a, 'ctx> Traverse<'a> for JsxImpl<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
+impl<'a> JsxImpl<'a, '_> {
     fn is_script(&self) -> bool {
         self.ctx.source_type.is_script()
     }

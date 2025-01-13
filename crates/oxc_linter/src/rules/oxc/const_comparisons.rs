@@ -105,6 +105,7 @@ declare_oxc_lint!(
     /// a <= b;
     /// ```
     ConstComparisons,
+    oxc,
     correctness
 );
 
@@ -555,5 +556,5 @@ fn test() {
         "foo || !foo",
     ];
 
-    Tester::new(ConstComparisons::NAME, ConstComparisons::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(ConstComparisons::NAME, ConstComparisons::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -68,6 +68,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     PreferExpectResolves,
+    jest,
     style,
     fix
 );
@@ -261,7 +262,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferExpectResolves::NAME, PreferExpectResolves::CATEGORY, pass, fail)
+    Tester::new(PreferExpectResolves::NAME, PreferExpectResolves::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

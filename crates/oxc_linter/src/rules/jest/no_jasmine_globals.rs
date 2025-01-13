@@ -34,6 +34,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoJasmineGlobals,
+    jest,
     style,
     conditional_fix
 );
@@ -293,7 +294,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoJasmineGlobals::NAME, NoJasmineGlobals::CATEGORY, pass, fail)
+    Tester::new(NoJasmineGlobals::NAME, NoJasmineGlobals::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

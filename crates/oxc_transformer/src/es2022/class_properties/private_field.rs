@@ -22,7 +22,7 @@ use super::{
     ClassProperties, ResolvedPrivateProp,
 };
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Transform private field expression.
     ///
     /// Not loose:
@@ -140,14 +140,14 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 let class_ident = class_binding.create_read_expression(ctx);
                 if is_method {
                     if is_assignment {
+                        // `toSetter(_prop.bind(object), [])._`
                         let object =
                             self.create_assert_class_brand_without_value(class_ident, object, ctx);
-                        // `toSetter(_prop.bind(object), [])._`
                         self.create_to_setter_for_bind_call(prop_ident, object, span, ctx)
                     } else if is_accessor {
+                        // `_prop.bind(_assertClassBrand(Class, object))`
                         let object =
                             self.create_assert_class_brand_without_value(class_ident, object, ctx);
-                        // `_prop.bind(_assertClassBrand(Class, object))`
                         create_call_call(prop_ident, object, span, ctx)
                     } else {
                         self.create_assert_class_brand(class_ident, object, prop_ident, span, ctx)
@@ -165,12 +165,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
         } else if is_method {
             let brand_ident = class_bindings.brand().create_read_expression(ctx);
             if is_assignment {
-                let object = self.create_assert_class_brand_without_value(brand_ident, object, ctx);
                 // `_toSetter(_prop.call(_assertClassBrand(_Class_brand, object)))._`
+                let object = self.create_assert_class_brand_without_value(brand_ident, object, ctx);
                 self.create_to_setter_for_bind_call(prop_ident, object, span, ctx)
             } else if is_accessor {
-                let object = self.create_assert_class_brand_without_value(brand_ident, object, ctx);
                 // `_prop.bind(_assertClassBrand(_Class_brand, object))`
+                let object = self.create_assert_class_brand_without_value(brand_ident, object, ctx);
                 create_call_call(prop_ident, object, span, ctx)
             } else {
                 self.create_assert_class_brand(brand_ident, object, prop_ident, span, ctx)
@@ -390,9 +390,9 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 
                 let assert_obj = if is_method {
                     if is_accessor {
+                        // `_prop.call(_assertClassBrand(Class, object))`
                         let object =
                             self.create_assert_class_brand_without_value(class_ident, object1, ctx);
-                        // `_prop.call(_assertClassBrand(Class, object))`
                         create_call_call(prop_ident, object, span, ctx)
                     } else {
                         // `_assertClassBrand(Class, object, _prop)`
@@ -501,6 +501,12 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             return;
         }
 
+        // Note: `transform_static_assignment_expression` and `transform_instance_assignment_expression`
+        // are marked `#[inline]`, so hopefully compiler will see that clones of `BoundIdentifier`s
+        // can be elided.
+        // Can't break this up into separate functions otherwise, as `&BoundIdentifier`s keep `&self` ref
+        // taken by `lookup_private_property` alive.
+        // TODO: Try to find a way around this.
         if is_static && !is_method {
             // TODO: No temp var is required if able to use shortcut version, so want to skip calling
             // `class_bindings.get_or_init_temp_binding(ctx)` if shortcut can be used.
@@ -516,7 +522,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             let class_symbol_id = class_bindings.name_symbol_id();
             // Unwrap is safe because `is_method` is false, then static private prop is always have a `get_binding`
             // and `set_binding` and they are always are the same.
-            // Clone as borrow restrictions
             let prop_binding = get_binding.cloned().unwrap();
 
             self.transform_static_assignment_expression(
@@ -528,7 +533,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 ctx,
             );
         } else if !is_method || !assign_expr.operator.is_assign() || set_binding.is_none() {
-            // Clone as borrow restrictions
             let class_binding = is_method.then(|| {
                 if is_static {
                     class_bindings.get_or_init_static_binding(ctx).clone()
@@ -1076,7 +1080,8 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                 );
             }
         } else {
-            // Clone as borrow restrictions
+            // Clone as borrow restrictions.
+            // TODO: Try to find a way to avoid this.
             let class_binding = is_method.then(|| {
                 if is_static {
                     class_bindings.get_or_init_static_binding(ctx).clone()
@@ -1144,7 +1149,6 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
                     ]),
                 );
 
-                let set_binding = set_binding.clone();
                 // `_classPrivateFieldSet(_prop, object, <value>)`
                 let set_call = self.create_private_setter(
                     &private_name,

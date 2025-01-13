@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// const bar = Number.parseFloat('10.5');
     /// ```
     PreferNumberProperties,
+    unicorn,
     restriction,
     pending
 );
@@ -258,6 +259,6 @@ fn test() {
         (r"-globalThis.Infinity", None),
     ];
 
-    Tester::new(PreferNumberProperties::NAME, PreferNumberProperties::CATEGORY, pass, fail)
+    Tester::new(PreferNumberProperties::NAME, PreferNumberProperties::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

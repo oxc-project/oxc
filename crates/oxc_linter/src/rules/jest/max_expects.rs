@@ -61,6 +61,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     MaxExpects,
+    jest,
     style,
 );
 
@@ -470,7 +471,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxExpects::NAME, MaxExpects::CATEGORY, pass, fail)
+    Tester::new(MaxExpects::NAME, MaxExpects::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

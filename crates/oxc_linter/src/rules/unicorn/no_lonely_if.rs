@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// if (foo && bar) baz();
     /// ```
     NoLonelyIf,
+    unicorn,
     pedantic
 );
 
@@ -211,5 +212,5 @@ fn test() {
     ",
     ];
 
-    Tester::new(NoLonelyIf::NAME, NoLonelyIf::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoLonelyIf::NAME, NoLonelyIf::PLUGIN, pass, fail).test_and_snapshot();
 }

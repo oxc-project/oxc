@@ -715,7 +715,7 @@ fn assignment_target_from_expr(expr: Expression) -> Option<AssignmentTarget> {
 
 struct RemoveSpans;
 
-impl<'ast> VisitMut<'ast> for RemoveSpans {
+impl VisitMut<'_> for RemoveSpans {
     fn visit_span(&mut self, span: &mut Span) {
         *span = SPAN;
     }

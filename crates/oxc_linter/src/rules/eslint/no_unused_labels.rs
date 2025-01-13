@@ -33,6 +33,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUnusedLabels,
+    eslint,
     correctness,
     fix
 );
@@ -95,7 +96,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUnusedLabels::NAME, NoUnusedLabels::CATEGORY, pass, fail)
+    Tester::new(NoUnusedLabels::NAME, NoUnusedLabels::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

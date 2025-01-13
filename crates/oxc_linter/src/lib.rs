@@ -15,17 +15,16 @@ mod module_graph_visitor;
 mod module_record;
 mod options;
 mod rule;
-mod rules;
 mod service;
 mod utils;
 
 pub mod loader;
+pub mod rules;
 pub mod table;
 
-use std::{io::Write, path::Path, rc::Rc, sync::Arc};
+use std::{path::Path, rc::Rc, sync::Arc};
 
 use oxc_semantic::{AstNode, Semantic};
-use rules::RULES;
 
 pub use crate::{
     config::{
@@ -45,7 +44,6 @@ use crate::{
     context::ContextHost,
     fixer::{Fixer, Message},
     rules::RuleEnum,
-    table::RuleTable,
     utils::iter_possible_jest_call_node,
 };
 
@@ -183,52 +181,11 @@ impl Linter {
 
         ctx_host.take_diagnostics()
     }
-
-    /// # Panics
-    pub fn print_rules<W: Write>(writer: &mut W) {
-        let table = RuleTable::new();
-        for section in table.sections {
-            writeln!(writer, "{}", section.render_markdown_table(None)).unwrap();
-        }
-        writeln!(writer, "Default: {}", table.turned_on_by_default_count).unwrap();
-        writeln!(writer, "Total: {}", table.total).unwrap();
-    }
-
-    /// # Panics
-    pub fn print_rules_json<W: Write>(writer: &mut W) {
-        #[derive(Debug, serde::Serialize)]
-        struct RuleInfoJson<'a> {
-            scope: &'a str,
-            value: &'a str,
-            category: RuleCategory,
-        }
-
-        let rules_info = RULES.iter().map(|rule| RuleInfoJson {
-            scope: rule.plugin_name(),
-            value: rule.name(),
-            category: rule.category(),
-        });
-
-        writer
-            .write_all(
-                serde_json::to_string_pretty(&rules_info.collect::<Vec<_>>())
-                    .expect("Failed to serialize")
-                    .as_bytes(),
-            )
-            .unwrap();
-    }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{Linter, Oxlintrc};
-
-    #[test]
-    fn print_rules() {
-        let mut writer = Vec::new();
-        Linter::print_rules(&mut writer);
-        assert!(!writer.is_empty());
-    }
+    use super::Oxlintrc;
 
     #[test]
     fn test_schema_json() {

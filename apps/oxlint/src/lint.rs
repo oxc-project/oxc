@@ -16,9 +16,9 @@ use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
     cli::{
-        CliRunResult, LintCommand, LintResult, MiscOptions, OutputFormat, OutputOptions, Runner,
-        WarningOptions,
+        CliRunResult, LintCommand, LintResult, MiscOptions, OutputOptions, Runner, WarningOptions,
     },
+    output_formatter::{OutputFormat, OutputFormatter},
     walk::{Extensions, Walk},
 };
 
@@ -36,13 +36,12 @@ impl Runner for LintRunner {
     }
 
     fn run(self) -> CliRunResult {
+        let format_str = self.options.output_options.format;
+        let output_formatter = OutputFormatter::new(format_str);
+
         if self.options.list_rules {
             let mut stdout = BufWriter::new(std::io::stdout());
-            if self.options.output_options.format == OutputFormat::Json {
-                Linter::print_rules_json(&mut stdout);
-            } else {
-                Linter::print_rules(&mut stdout);
-            }
+            output_formatter.all_rules(&mut stdout);
             return CliRunResult::None;
         }
 
@@ -74,14 +73,7 @@ impl Runner for LintRunner {
         }
 
         // Append cwd to all paths
-        paths = paths
-            .into_iter()
-            .map(|x| {
-                let mut path_with_cwd = self.cwd.clone();
-                path_with_cwd.push(x);
-                path_with_cwd
-            })
-            .collect();
+        paths = paths.into_iter().map(|x| self.cwd.join(x)).collect();
 
         if paths.is_empty() {
             // If explicit paths were provided, but all have been
@@ -268,9 +260,7 @@ impl LintRunner {
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, CliRunResult> {
         if let Some(config_path) = config {
-            let mut full_path = cwd.to_path_buf();
-            full_path.push(config_path);
-
+            let full_path = cwd.join(config_path);
             return match Oxlintrc::from_file(&full_path) {
                 Ok(config) => Ok(config),
                 Err(diagnostic) => {
@@ -283,13 +273,10 @@ impl LintRunner {
                 }
             };
         }
-
         // no config argument is provided,
         // auto detect default config file from current work directory
         // or return the default configuration, when no valid file is found
-        let mut config_path = cwd.to_path_buf();
-        config_path.push(Self::DEFAULT_OXLINTRC);
-
+        let config_path = cwd.join(Self::DEFAULT_OXLINTRC);
         Oxlintrc::from_file(&config_path).or_else(|_| Ok(Oxlintrc::default()))
     }
 }
@@ -365,8 +352,6 @@ mod test {
         assert_eq!(result.number_of_errors, 0);
     }
 
-    // exclude because we are working with Glob, which only supports the current working directory
-    #[cfg(all(test, not(target_os = "windows")))]
     #[test]
     fn cwd() {
         let args = &["debugger.js"];
@@ -395,8 +380,6 @@ mod test {
         assert_eq!(result.number_of_errors, 0);
     }
 
-    // ToDo: lints all files under windows
-    #[cfg(all(test, not(target_os = "windows")))]
     #[test]
     fn wrong_extension() {
         let args = &["foo.asdf"];

@@ -9,7 +9,7 @@ use oxc_ecmascript::{
 };
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{node_util::Ctx, CompressorPass};
+use crate::{ctx::Ctx, CompressorPass};
 
 /// Minimize With Known Methods
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
@@ -41,89 +41,107 @@ impl<'a> PeepholeReplaceKnownMethods {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::CallExpression(ce) = node else { return };
-        let Expression::StaticMemberExpression(member) = &ce.callee else { return };
-        let replacement = match &member.object {
-            Expression::StringLiteral(s) => match member.property.name.as_str() {
-                "toLowerCase" | "toUpperCase" | "trim" => {
-                    let value = match member.property.name.as_str() {
-                        "toLowerCase" => s.value.cow_to_lowercase(),
-                        "toUpperCase" => s.value.cow_to_uppercase(),
-                        "trim" => Cow::Borrowed(s.value.trim()),
-                        _ => return,
-                    };
-                    Some(ctx.ast.expression_string_literal(ce.span, value, None))
-                }
-                "indexOf" | "lastIndexOf" => Self::try_fold_string_index_of(ce, member, s, ctx),
-                "substring" | "slice" => Self::try_fold_string_substring_or_slice(ce, s, ctx),
-                "charAt" => Self::try_fold_string_char_at(ce, s, ctx),
-                "charCodeAt" => Self::try_fold_string_char_code_at(ce, s, ctx),
-                "replace" | "replaceAll" => Self::try_fold_string_replace(ce, member, s, ctx),
-                _ => None,
-            },
-            Expression::Identifier(ident)
-                if ident.name == "String"
-                    && member.property.name == "fromCharCode"
-                    && Ctx(ctx).is_global_reference(ident) =>
-            {
-                Self::try_fold_string_from_char_code(ce, ctx)
+        let (name, object) = match &ce.callee {
+            Expression::StaticMemberExpression(member) if !member.optional => {
+                (member.property.name.as_str(), &member.object)
             }
+            Expression::ComputedMemberExpression(member) if !member.optional => {
+                match &member.expression {
+                    Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
+                    _ => return,
+                }
+            }
+            _ => return,
+        };
+        let replacement = match name {
+            "toLowerCase" | "toUpperCase" | "trim" => {
+                Self::try_fold_string_casing(ce, name, object, ctx)
+            }
+            "substring" | "slice" => Self::try_fold_string_substring_or_slice(ce, object, ctx),
+            "indexOf" | "lastIndexOf" => Self::try_fold_string_index_of(ce, name, object, ctx),
+            "charAt" => Self::try_fold_string_char_at(ce, object, ctx),
+            "charCodeAt" => Self::try_fold_string_char_code_at(ce, object, ctx),
+            "replace" | "replaceAll" => Self::try_fold_string_replace(ce, name, object, ctx),
+            "fromCharCode" => Self::try_fold_string_from_char_code(ce, object, ctx),
+            "toString" => Self::try_fold_to_string(ce, object, ctx),
             _ => None,
         };
-
         if let Some(replacement) = replacement {
             self.changed = true;
             *node = replacement;
         }
     }
 
-    fn try_fold_string_index_of(
-        call_expr: &CallExpression<'a>,
-        member: &StaticMemberExpression<'a>,
-        string_lit: &StringLiteral<'a>,
+    fn try_fold_string_casing(
+        ce: &CallExpression<'a>,
+        name: &str,
+        object: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let search_value = match call_expr.arguments.first() {
+        if ce.arguments.len() >= 1 {
+            return None;
+        }
+        let Expression::StringLiteral(s) = object else { return None };
+        let value = match name {
+            "toLowerCase" => s.value.cow_to_lowercase(),
+            "toUpperCase" => s.value.cow_to_uppercase(),
+            "trim" => Cow::Borrowed(s.value.trim()),
+            _ => return None,
+        };
+        Some(ctx.ast.expression_string_literal(ce.span, value, None))
+    }
+
+    fn try_fold_string_index_of(
+        ce: &CallExpression<'a>,
+        name: &str,
+        object: &Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let args = &ce.arguments;
+        if args.len() >= 3 {
+            return None;
+        }
+        let Expression::StringLiteral(s) = object else { return None };
+        let search_value = match args.first() {
             Some(Argument::StringLiteral(string_lit)) => Some(string_lit.value.as_str()),
             None => None,
             _ => return None,
         };
-        let search_start_index = match call_expr.arguments.get(1) {
+        let search_start_index = match args.get(1) {
             Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
             None => None,
             _ => return None,
         };
-        let result = match member.property.name.as_str() {
-            "indexOf" => string_lit.value.as_str().index_of(search_value, search_start_index),
-            "lastIndexOf" => {
-                string_lit.value.as_str().last_index_of(search_value, search_start_index)
-            }
+        let result = match name {
+            "indexOf" => s.value.as_str().index_of(search_value, search_start_index),
+            "lastIndexOf" => s.value.as_str().last_index_of(search_value, search_start_index),
             _ => unreachable!(),
         };
-        let span = call_expr.span;
         #[expect(clippy::cast_precision_loss)]
-        Some(ctx.ast.expression_numeric_literal(span, result as f64, None, NumberBase::Decimal))
+        Some(ctx.ast.expression_numeric_literal(ce.span, result as f64, None, NumberBase::Decimal))
     }
 
     fn try_fold_string_substring_or_slice(
-        call_expr: &CallExpression<'a>,
-        string_lit: &StringLiteral<'a>,
+        ce: &CallExpression<'a>,
+        object: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if call_expr.arguments.len() > 2 {
+        let args = &ce.arguments;
+        if args.len() > 2 {
             return None;
         }
-        let span = call_expr.span;
-        let start_idx = call_expr.arguments.first().and_then(|arg| match arg {
+        let Expression::StringLiteral(s) = object else { return None };
+        let start_idx = args.first().and_then(|arg| match arg {
             Argument::SpreadElement(_) => None,
             _ => Ctx(ctx).get_side_free_number_value(arg.to_expression()),
         });
-        let end_idx = call_expr.arguments.get(1).and_then(|arg| match arg {
+        let end_idx = args.get(1).and_then(|arg| match arg {
             Argument::SpreadElement(_) => None,
             _ => Ctx(ctx).get_side_free_number_value(arg.to_expression()),
         });
         #[expect(clippy::cast_precision_loss)]
-        if start_idx.is_some_and(|start| start > string_lit.value.len() as f64 || start < 0.0)
-            || end_idx.is_some_and(|end| end > string_lit.value.len() as f64 || end < 0.0)
+        if start_idx.is_some_and(|start| start > s.value.len() as f64 || start < 0.0)
+            || end_idx.is_some_and(|end| end > s.value.len() as f64 || end < 0.0)
         {
             return None;
         }
@@ -133,22 +151,23 @@ impl<'a> PeepholeReplaceKnownMethods {
             }
         };
         Some(ctx.ast.expression_string_literal(
-            span,
-            string_lit.value.as_str().substring(start_idx, end_idx),
+            ce.span,
+            s.value.as_str().substring(start_idx, end_idx),
             None,
         ))
     }
 
     fn try_fold_string_char_at(
-        call_expr: &CallExpression<'a>,
-        string_lit: &StringLiteral<'a>,
+        ce: &CallExpression<'a>,
+        object: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if call_expr.arguments.len() > 1 {
+        let args = &ce.arguments;
+        if args.len() > 1 {
             return None;
         }
-        let span = call_expr.span;
-        let char_at_index: Option<f64> = match call_expr.arguments.first() {
+        let Expression::StringLiteral(s) = object else { return None };
+        let char_at_index: Option<f64> = match args.first() {
             Some(Argument::NumericLiteral(numeric_lit)) => Some(numeric_lit.value),
             Some(Argument::UnaryExpression(unary_expr))
                 if unary_expr.operator == UnaryOperator::UnaryNegation =>
@@ -161,50 +180,47 @@ impl<'a> PeepholeReplaceKnownMethods {
             None => None,
             _ => return None,
         };
-
-        let result = &string_lit
-            .value
-            .as_str()
-            .char_at(char_at_index)
-            .map_or(String::new(), |v| v.to_string());
-
-        Some(ctx.ast.expression_string_literal(span, result, None))
+        let result =
+            &s.value.as_str().char_at(char_at_index).map_or(String::new(), |v| v.to_string());
+        Some(ctx.ast.expression_string_literal(ce.span, result, None))
     }
 
     fn try_fold_string_char_code_at(
-        call_expr: &CallExpression<'a>,
-        string_lit: &StringLiteral<'a>,
+        ce: &CallExpression<'a>,
+        object: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let char_at_index = call_expr.arguments.first().and_then(|arg| match arg {
-            Argument::SpreadElement(_) => None,
-            _ => Ctx(ctx).get_side_free_number_value(arg.to_expression()),
-        })?;
-        let span = call_expr.span;
+        let Expression::StringLiteral(s) = object else { return None };
+        let char_at_index = match ce.arguments.first() {
+            None => Some(0.0),
+            Some(Argument::SpreadElement(_)) => None,
+            Some(e) => Ctx(ctx).get_side_free_number_value(e.to_expression()),
+        }?;
         // TODO: if `result` is `None`, return `NaN` instead of skipping the optimization
-        let result = string_lit.value.as_str().char_code_at(Some(char_at_index))?;
+        let result = s.value.as_str().char_code_at(Some(char_at_index))?;
         #[expect(clippy::cast_lossless)]
-        Some(ctx.ast.expression_numeric_literal(span, result as f64, None, NumberBase::Decimal))
+        Some(ctx.ast.expression_numeric_literal(ce.span, result as f64, None, NumberBase::Decimal))
     }
 
     fn try_fold_string_replace(
-        call_expr: &CallExpression<'a>,
-        member: &StaticMemberExpression<'a>,
-        string_lit: &StringLiteral<'a>,
+        ce: &CallExpression<'a>,
+        name: &str,
+        object: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if call_expr.arguments.len() != 2 {
+        if ce.arguments.len() != 2 {
             return None;
         }
-        let span = call_expr.span;
-        let search_value = call_expr.arguments.first().unwrap();
+        let Expression::StringLiteral(s) = object else { return None };
+        let span = ce.span;
+        let search_value = ce.arguments.first().unwrap();
         let search_value = match search_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
                 Ctx(ctx).get_side_free_string_value(search_value.to_expression())?
             }
         };
-        let replace_value = call_expr.arguments.get(1).unwrap();
+        let replace_value = ce.arguments.get(1).unwrap();
         let replace_value = match replace_value {
             Argument::SpreadElement(_) => return None,
             match_expression!(Argument) => {
@@ -214,41 +230,110 @@ impl<'a> PeepholeReplaceKnownMethods {
         if replace_value.contains('$') {
             return None;
         }
-        let result = match member.property.name.as_str() {
-            "replace" => {
-                string_lit.value.as_str().cow_replacen(search_value.as_ref(), &replace_value, 1)
-            }
-            "replaceAll" => {
-                string_lit.value.as_str().cow_replace(search_value.as_ref(), &replace_value)
-            }
+        let result = match name {
+            "replace" => s.value.as_str().cow_replacen(search_value.as_ref(), &replace_value, 1),
+            "replaceAll" => s.value.as_str().cow_replace(search_value.as_ref(), &replace_value),
             _ => unreachable!(),
         };
         Some(ctx.ast.expression_string_literal(span, result, None))
     }
 
+    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
     fn try_fold_string_from_char_code(
         ce: &CallExpression<'a>,
+        object: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let args = &ce.arguments;
-        if args.iter().any(|arg| !matches!(arg, Argument::NumericLiteral(_))) {
+        let Expression::Identifier(ident) = object else { return None };
+        let ctx = Ctx(ctx);
+        if !ctx.is_global_reference(ident) {
             return None;
         }
+        let args = &ce.arguments;
         let mut s = String::with_capacity(args.len());
         for arg in args {
-            let Argument::NumericLiteral(lit) = arg else { unreachable!() };
-            if lit.value.is_nan() || lit.value.is_infinite() {
-                return None;
-            }
-            let v = lit.value.to_int_32();
-            if v >= 65535 {
-                return None;
-            }
-            let Ok(v) = u32::try_from(v) else { return None };
-            let Ok(c) = char::try_from(v) else { return None };
+            let expr = arg.as_expression()?;
+            let v = ctx.get_side_free_number_value(expr)?;
+            let v = v.to_int_32() as u16 as u32;
+            let c = char::try_from(v).ok()?;
             s.push(c);
         }
         Some(ctx.ast.expression_string_literal(ce.span, s, None))
+    }
+
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        clippy::cast_lossless,
+        clippy::float_cmp
+    )]
+    fn try_fold_to_string(
+        ce: &CallExpression<'a>,
+        object: &Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let args = &ce.arguments;
+        match object {
+            // Number.prototype.toString()
+            // Number.prototype.toString(radix)
+            Expression::NumericLiteral(lit) if args.len() <= 1 => {
+                let mut radix: u32 = 0;
+                if args.is_empty() {
+                    radix = 10;
+                }
+                if let Some(Argument::NumericLiteral(n)) = args.first() {
+                    if n.value >= 2.0 && n.value <= 36.0 && n.value.fract() == 0.0 {
+                        radix = n.value as u32;
+                    }
+                }
+                if radix == 0 {
+                    return None;
+                }
+                if lit.value.is_nan() {
+                    return Some(ctx.ast.expression_string_literal(ce.span, "NaN", None));
+                }
+                if lit.value.is_infinite() {
+                    return Some(ctx.ast.expression_string_literal(ce.span, "Infinity", None));
+                }
+                if radix == 10 {
+                    use oxc_syntax::number::ToJsString;
+                    return Some(ctx.ast.expression_string_literal(
+                        ce.span,
+                        lit.value.to_js_string(),
+                        None,
+                    ));
+                }
+                // Only convert integers for other radix values.
+                let value = lit.value;
+                if value >= 0.0 && value.fract() != 0.0 {
+                    return None;
+                }
+                let i = value as u32;
+                if i as f64 != value {
+                    return None;
+                }
+                Some(ctx.ast.expression_string_literal(ce.span, Self::format_radix(i, radix), None))
+            }
+            e if e.is_literal() && args.is_empty() => {
+                use oxc_ecmascript::ToJsString;
+                e.to_js_string().map(|s| ctx.ast.expression_string_literal(ce.span, s, None))
+            }
+            _ => None,
+        }
+    }
+
+    fn format_radix(mut x: u32, radix: u32) -> String {
+        debug_assert!((2..=36).contains(&radix));
+        let mut result = vec![];
+        loop {
+            let m = x % radix;
+            x /= radix;
+            result.push(std::char::from_digit(m, radix).unwrap());
+            if x == 0 {
+                break;
+            }
+        }
+        result.into_iter().rev().collect()
     }
 }
 
@@ -508,6 +593,7 @@ mod test {
 
     #[test]
     fn test_fold_string_char_code_at() {
+        fold("x = 'abcde'.charCodeAt()", "x = 97");
         fold("x = 'abcde'.charCodeAt(0)", "x = 97");
         fold("x = 'abcde'.charCodeAt(1)", "x = 98");
         fold("x = 'abcde'.charCodeAt(2)", "x = 99");
@@ -1099,17 +1185,59 @@ mod test {
         test("String.fromCharCode(120)", "'x'");
         test("String.fromCharCode(120, 121)", "'xy'");
         test_same("String.fromCharCode(55358, 56768)");
-        test("String.fromCharCode(0x10000)", "String.fromCharCode(65536)");
-        test("String.fromCharCode(0x10078, 0x10079)", "String.fromCharCode(0x10078, 0x10079)");
-        test("String.fromCharCode(0x1_0000_FFFF)", "String.fromCharCode(4295032831)");
-        test_same("String.fromCharCode(NaN)");
-        test_same("String.fromCharCode(-Infinity)");
-        test_same("String.fromCharCode(Infinity)");
-        test_same("String.fromCharCode(null)");
-        test_same("String.fromCharCode(undefined)");
-        test_same("String.fromCharCode('123')");
+        test("String.fromCharCode(0x10000)", "'\\0'");
+        test("String.fromCharCode(0x10078, 0x10079)", "'xy'");
+        test("String.fromCharCode(0x1_0000_FFFF)", "'\u{ffff}'");
+        test("String.fromCharCode(NaN)", "'\\0'");
+        test("String.fromCharCode(-Infinity)", "'\\0'");
+        test("String.fromCharCode(Infinity)", "'\\0'");
+        test("String.fromCharCode(null)", "'\\0'");
+        test("String.fromCharCode(undefined)", "'\\0'");
+        test("String.fromCharCode('123')", "'{'");
         test_same("String.fromCharCode(x)");
-        test_same("String.fromCharCode('x')");
-        test_same("String.fromCharCode('0.5')");
+        test("String.fromCharCode('x')", "'\\0'");
+        test("String.fromCharCode('0.5')", "'\\0'");
+    }
+
+    #[test]
+    fn test_to_string() {
+        test("false['toString']()", "'false';");
+        test("false.toString()", "'false';");
+        test("true.toString()", "'true';");
+        test("'xy'.toString()", "'xy';");
+        test("0 .toString()", "'0';");
+        test("123 .toString()", "'123';");
+        test("NaN.toString()", "'NaN';");
+        test("Infinity.toString()", "'Infinity';");
+        // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
+
+        test("100 .toString(0)", "100 .toString(0)");
+        test("100 .toString(1)", "100 .toString(1)");
+        test("100 .toString(2)", "'1100100'");
+        test("100 .toString(5)", "'400'");
+        test("100 .toString(8)", "'144'");
+        test("100 .toString(13)", "'79'");
+        test("100 .toString(16)", "'64'");
+        test("10000 .toString(19)", "'18d6'");
+        test("10000 .toString(23)", "'iki'");
+        test("1000000 .toString(29)", "'1c01m'");
+        test("1000000 .toString(31)", "'12hi2'");
+        test("1000000 .toString(36)", "'lfls'");
+        test("0 .toString(36)", "'0'");
+        test("0.5.toString()", "'0.5'");
+
+        test("false.toString(b)", "false.toString(b)");
+        test("true.toString(b)", "true.toString(b)");
+        test("'xy'.toString(b)", "'xy'.toString(b)");
+        test("123 .toString(b)", "123 .toString(b)");
+        test("1e99.toString(b)", "1e99.toString(b)");
+        test("/./.toString(b)", "/./.toString(b)");
+
+        // Will get constant folded into positive values
+        test_same("(-0).toString()");
+        test_same("(-123).toString()");
+        test_same("(-Infinity).toString()");
+        test_same("(-1000000).toString(36)");
+        test_same("(-0).toString(36)");
     }
 }

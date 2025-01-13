@@ -2,8 +2,8 @@
 
 mod ast_passes;
 mod compressor;
+mod ctx;
 mod keep_var;
-mod node_util;
 mod options;
 
 #[cfg(test)]
@@ -12,6 +12,7 @@ mod tester;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;
+use oxc_semantic::SemanticBuilder;
 
 pub use oxc_mangler::MangleOptions;
 
@@ -43,11 +44,18 @@ impl Minifier {
     }
 
     pub fn build<'a>(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        Compressor::new(allocator, self.options.compress).build(program);
-        let mangler = self
-            .options
-            .mangle
-            .map(|options| Mangler::default().with_options(options).build(program));
+        let semantic = SemanticBuilder::new().build(program).semantic;
+        let stats = semantic.stats();
+        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+        Compressor::new(allocator, self.options.compress)
+            .build_with_symbols_and_scopes(symbols, scopes, program);
+        let mangler = self.options.mangle.map(|options| {
+            let semantic = SemanticBuilder::new().with_stats(stats).build(program).semantic;
+            let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+            Mangler::default()
+                .with_options(options)
+                .build_with_symbols_and_scopes(symbols, &scopes, program)
+        });
         MinifierReturn { mangler }
     }
 }

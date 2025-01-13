@@ -14,7 +14,7 @@ use super::{
 };
 
 // Instance properties
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Convert instance property to initialization expression.
     /// Property `prop = 123;` -> Expression `this.prop = 123` or `_defineProperty(this, "prop", 123)`.
     pub(super) fn convert_instance_property(
@@ -80,7 +80,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 }
 
 // Static properties
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Convert static property to initialization expression.
     /// Property `static prop = 123;` -> Expression `C.prop = 123` or `_defineProperty(C, "prop", 123)`.
     pub(super) fn convert_static_property(
@@ -203,7 +203,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
 }
 
 // Used for both instance and static properties
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// `assignee.prop = value` or `_defineProperty(assignee, "prop", value)`
     fn create_init_assignment(
         &mut self,

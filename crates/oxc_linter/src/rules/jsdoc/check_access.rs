@@ -53,6 +53,7 @@ declare_oxc_lint!(
     /// /** @private */
     /// ```
     CheckAccess,
+    jsdoc,
     restriction
 );
 
@@ -368,5 +369,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(CheckAccess::NAME, CheckAccess::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(CheckAccess::NAME, CheckAccess::PLUGIN, pass, fail).test_and_snapshot();
 }

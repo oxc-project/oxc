@@ -2,8 +2,8 @@
 #![warn(missing_docs)]
 use std::{borrow::Cow, fmt};
 
-use oxc_allocator::{Box, FromIn, Vec};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_allocator::{Box, Vec};
+use oxc_span::{Atom, Span};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
 use crate::ast::*;
@@ -261,6 +261,18 @@ impl<'a> Expression<'a> {
     /// (either [`Function`] or [`ArrowFunctionExpression`]).
     pub fn is_function(&self) -> bool {
         matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
+    }
+
+    /// Returns `true` if this [`Expression`] is an anonymous function definition.
+    /// Note that this includes [`Class`]s.
+    /// <https://262.ecma-international.org/15.0/#sec-isanonymousfunctiondefinition>
+    pub fn is_anonymous_function_definition(&self) -> bool {
+        match self {
+            Self::ArrowFunctionExpression(_) => true,
+            Self::FunctionExpression(func) => func.name().is_none(),
+            Self::ClassExpression(class) => class.name().is_none(),
+            _ => false,
+        }
     }
 
     /// Returns `true` if this [`Expression`] is a [`CallExpression`].
@@ -790,15 +802,6 @@ impl Statement<'_> {
     }
 }
 
-impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
-    fn from_in(expression: Expression<'a>, allocator: &'a oxc_allocator::Allocator) -> Self {
-        Statement::ExpressionStatement(Box::from_in(
-            ExpressionStatement { span: expression.span(), expression },
-            allocator,
-        ))
-    }
-}
-
 impl Directive<'_> {
     /// A Use Strict Directive is an ExpressionStatement in a Directive Prologue whose StringLiteral is either of the exact code point sequences "use strict" or 'use strict'.
     /// A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
@@ -1169,7 +1172,13 @@ impl<'a> ArrowFunctionExpression<'a> {
     }
 }
 
-impl Class<'_> {
+impl<'a> Class<'a> {
+    /// Returns this [`Class`]'s name, if it has one.
+    #[inline]
+    pub fn name(&self) -> Option<Atom<'a>> {
+        self.id.as_ref().map(|id| id.name.clone())
+    }
+
     /// `true` if this [`Class`] is an expression.
     ///
     /// For example,
@@ -1488,7 +1497,7 @@ impl ExportNamedDeclaration<'_> {
     #[allow(missing_docs)]
     pub fn is_typescript_syntax(&self) -> bool {
         self.export_kind == ImportOrExportKind::Type
-            || self.declaration.as_ref().map_or(false, Declaration::is_typescript_syntax)
+            || self.declaration.as_ref().is_some_and(Declaration::is_typescript_syntax)
     }
 }
 

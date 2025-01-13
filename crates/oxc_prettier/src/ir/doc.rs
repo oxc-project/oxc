@@ -16,6 +16,7 @@ pub enum Doc<'a> {
     Indent(Vec<'a, Doc<'a>>),
     IndentIfBreak(IndentIfBreak<'a>),
     LineSuffix(Vec<'a, Doc<'a>>),
+    LineSuffixBoundary,
 }
 
 #[derive(Debug)]

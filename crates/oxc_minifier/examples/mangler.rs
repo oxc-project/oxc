@@ -15,9 +15,9 @@ use pico_args::Arguments;
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
 
-    let name = args.subcommand().ok().flatten().unwrap_or_else(|| String::from("test.js"));
     let debug = args.contains("--debug");
     let twice = args.contains("--twice");
+    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path)?;

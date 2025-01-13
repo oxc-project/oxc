@@ -138,6 +138,7 @@ declare_oxc_lint!(
     ///   }
     /// }
     PreferHooksInOrder,
+    jest,
     style,
 );
 
@@ -1264,7 +1265,7 @@ fn test() {
     pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
     fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
 
-    Tester::new(PreferHooksInOrder::NAME, PreferHooksInOrder::CATEGORY, pass, fail)
+    Tester::new(PreferHooksInOrder::NAME, PreferHooksInOrder::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();

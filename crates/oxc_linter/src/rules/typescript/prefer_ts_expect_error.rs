@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// const multiLine: number = 'value';
     /// ```
     PreferTsExpectError,
+    typescript,
     pedantic,
     fix
 );
@@ -215,7 +216,7 @@ console.log('hello');
         ),
     ];
 
-    Tester::new(PreferTsExpectError::NAME, PreferTsExpectError::CATEGORY, pass, fail)
+    Tester::new(PreferTsExpectError::NAME, PreferTsExpectError::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

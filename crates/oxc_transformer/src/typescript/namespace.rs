@@ -31,7 +31,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for TypeScriptNamespace<'a, 'ctx> {
+impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // namespace declaration is only allowed at the top level
@@ -142,7 +142,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptNamespace<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
+impl<'a> TypeScriptNamespace<'a, '_> {
     fn handle_nested(
         &self,
         decl: TSModuleDeclaration<'a>,

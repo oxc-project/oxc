@@ -13,7 +13,7 @@ use super::{
     ClassProperties,
 };
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl<'a> ClassProperties<'a, '_> {
     /// Convert method definition where the key is a private identifier and
     /// insert it after the class.
     ///
@@ -21,7 +21,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// class C {
     ///    #method() {}
     ///    set #prop(value) {}
-    ///    get #prop() {return 0}
+    ///    get #prop() { return 0; }
     /// }
     /// ```
     ///
@@ -31,7 +31,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     /// class C {}
     /// function _method() {}
     /// function _set_prop(value) {}
-    /// function _get_prop() {return 0}
+    /// function _get_prop() { return 0; }
     /// ```
     ///
     /// Returns `true` if the method was converted.
@@ -92,7 +92,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 }
 
-/// Visitor to transform:
+/// Visitor to transform private methods.
 ///
 /// Almost the same as `super::static_block_and_prop_init::StaticVisitor`,
 /// but only does following:
@@ -107,11 +107,11 @@ struct PrivateMethodVisitor<'a, 'ctx, 'v> {
 
 impl<'a, 'ctx, 'v> PrivateMethodVisitor<'a, 'ctx, 'v> {
     fn new(
-        r#static: bool,
+        is_static: bool,
         class_properties: &'v mut ClassProperties<'a, 'ctx>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
-        let mode = if r#static {
+        let mode = if is_static {
             ClassPropertiesSuperConverterMode::StaticPrivateMethod
         } else {
             ClassPropertiesSuperConverterMode::PrivateMethod
@@ -120,7 +120,7 @@ impl<'a, 'ctx, 'v> PrivateMethodVisitor<'a, 'ctx, 'v> {
     }
 }
 
-impl<'a, 'ctx, 'v> VisitMut<'a> for PrivateMethodVisitor<'a, 'ctx, 'v> {
+impl<'a> VisitMut<'a> for PrivateMethodVisitor<'a, '_, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
@@ -160,7 +160,12 @@ impl<'a, 'ctx, 'v> VisitMut<'a> for PrivateMethodVisitor<'a, 'ctx, 'v> {
     #[inline]
     fn visit_class(&mut self, _class: &mut Class<'a>) {
         // Ignore because we don't need to transform `super` for other classes.
+
+        // TODO: Actually we do need to transform `super` in:
+        // 1. Class decorators
+        // 2. Class `extends` clause
+        // 3. Class property/method/accessor computed keys
+        // 4. Class property/method/accessor decorators
+        //    (or does `super` in a decorator refer to inner class?)
     }
 }
-
-impl<'a, 'ctx, 'v> PrivateMethodVisitor<'a, 'ctx, 'v> {}

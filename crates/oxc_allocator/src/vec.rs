@@ -245,12 +245,21 @@ impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
     }
 }
 
-impl<'alloc, T> IntoIterator for &'alloc Vec<'alloc, T> {
-    type IntoIter = std::slice::Iter<'alloc, T>;
-    type Item = &'alloc T;
+impl<'i, T> IntoIterator for &'i Vec<'_, T> {
+    type IntoIter = std::slice::Iter<'i, T>;
+    type Item = &'i T;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
+    }
+}
+
+impl<'i, T> IntoIterator for &'i mut Vec<'_, T> {
+    type IntoIter = std::slice::IterMut<'i, T>;
+    type Item = &'i mut T;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
     }
 }
 

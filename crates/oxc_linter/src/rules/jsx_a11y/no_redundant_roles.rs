@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// <nav />
     /// ```
     NoRedundantRoles,
+    jsx_a11y,
     correctness,
     fix
 );
@@ -69,7 +70,7 @@ impl Rule for NoRedundantRoles {
                 let roles = role_values.value.split_whitespace().collect::<Vec<_>>();
                 for role in &roles {
                     let exceptions = DEFAULT_ROLE_EXCEPTIONS.get(&component);
-                    if exceptions.map_or(false, |set| set.contains(role)) {
+                    if exceptions.is_some_and(|set| set.contains(role)) {
                         ctx.diagnostic_with_fix(
                             no_redundant_roles_diagnostic(attr.span, &component, role),
                             |fixer| fixer.delete_range(attr.span),
@@ -114,7 +115,7 @@ fn test() {
         ("<body role='document' />", "<body  />"),
     ];
 
-    Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::CATEGORY, pass, fail)
+    Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

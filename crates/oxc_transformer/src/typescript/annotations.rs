@@ -60,7 +60,7 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
+impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut no_modules_remaining = true;
         let mut some_modules_deleted = false;
@@ -95,8 +95,6 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                 Statement::ImportDeclaration(decl) => {
                     if decl.import_kind.is_type() {
                         false
-                    } else if self.only_remove_type_imports {
-                        true
                     } else if let Some(specifiers) = &mut decl.specifiers {
                         if specifiers.is_empty() {
                             // import {} from 'mod' -> import 'mod'
@@ -118,17 +116,39 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
                                         &s.local
                                     }
                                 };
-                                self.has_value_reference(&id.name, ctx)
+                                // If `only_remove_type_imports` is true, then we can return `true` to keep it because
+                                // it is not a type import, otherwise we need to check if the identifier is referenced
+                                if self.only_remove_type_imports {
+                                    true
+                                } else {
+                                    self.has_value_reference(&id.name, ctx)
+                                }
                             });
-                            !specifiers.is_empty()
+
+                            if specifiers.is_empty() {
+                                // `import { type A } from 'mod'`
+                                if self.only_remove_type_imports {
+                                    // -> `import 'mod'`
+                                    decl.specifiers = None;
+                                    true
+                                } else {
+                                    // Remove the import declaration if all specifiers are removed
+                                    false
+                                }
+                            } else {
+                                true
+                            }
                         }
                     } else {
                         true
                     }
                 }
-                Statement::TSExportAssignment(_) | Statement::TSNamespaceExportDeclaration(_) => {
-                    false
-                }
+                // `import Binding = X.Y.Z`
+                // `Binding` can be referenced as a value or a type, but here we already know it only as a type
+                // See `TypeScriptModule::transform_ts_import_equals`
+                Statement::TSTypeAliasDeclaration(_)
+                | Statement::TSExportAssignment(_)
+                | Statement::TSNamespaceExportDeclaration(_) => false,
                 _ => return true,
             };
 
@@ -544,7 +564,7 @@ impl<'a, 'ctx> Traverse<'a> for TypeScriptAnnotations<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
+impl<'a> TypeScriptAnnotations<'a, '_> {
     /// Check if the given name is a JSX pragma or fragment pragma import
     /// and if the file contains JSX elements or fragments
     fn is_jsx_imports(&self, name: &str) -> bool {

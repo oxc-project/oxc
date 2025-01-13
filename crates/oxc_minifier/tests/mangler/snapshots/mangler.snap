@@ -35,3 +35,22 @@ function foo(a) {a}
 function a(b) {
 	b;
 }
+
+export function foo() {}; foo()
+export function foo() {}
+;
+foo();
+
+export default function foo() {}; foo()
+export default function a() {}
+;
+a();
+
+export const foo = 1; foo
+export const foo = 1;
+foo;
+
+const foo = 1; foo; export { foo }
+const a = 1;
+a;
+export { a as foo };

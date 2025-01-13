@@ -11,7 +11,7 @@ use crate::{
     schema::{
         EnumDef, FieldDef, GetIdent, Schema, StructDef, ToType, TypeDef, TypeName, VariantDef,
     },
-    util::{TypeAnalysis, TypeWrapper},
+    util::{is_reserved_name, TypeAnalysis, TypeWrapper},
     Generator,
 };
 
@@ -93,13 +93,14 @@ fn enum_builder_name(enum_name: String, var_name: String) -> Ident {
     format_ident!("{}_{}", fn_ident_name(enum_name), fn_ident_name(var_name))
 }
 
-fn struct_builder_name(struct_: &StructDef) -> Ident {
-    static RUST_KEYWORDS: [&str; 1] = ["super"];
-    let mut ident = fn_ident_name(struct_.name.as_str());
-    if RUST_KEYWORDS.contains(&ident.as_str()) {
-        ident.push('_');
+fn struct_builder_name(name: &str, does_alloc: bool) -> Ident {
+    if does_alloc {
+        format_ident!("alloc_{name}")
+    } else if is_reserved_name(name) {
+        format_ident!("{name}_")
+    } else {
+        format_ident!("{name}")
     }
-    format_ident!("{ident}")
 }
 
 fn generate_builder_fn(def: &TypeDef, schema: &Schema) -> TokenStream {
@@ -131,21 +132,17 @@ fn generate_enum_variant_builder_fn(
         .or_else(|| var_type.transparent_type_id())
         .and_then(|id| schema.get(id))
         .expect("type not found!");
-    let (params, inner_builder) = match ty {
-        TypeDef::Struct(it) => (get_struct_params(it, schema), struct_builder_name(it)),
-        TypeDef::Enum(_) => panic!("Unsupported!"),
-    };
 
+    let TypeDef::Struct(field_def) = ty else { panic!("Unsupported!") };
+
+    let params = get_struct_params(field_def, schema);
     let params = params.into_iter().filter(Param::not_default).collect_vec();
     let fields = params.iter().map(|it| it.ident.clone());
     let (generic_params, where_clause) = get_generic_params(&params);
 
-    let mut inner = quote!(self.#inner_builder(#(#fields),*));
-    let mut does_alloc = false;
-    if matches!(var_type_name, TypeName::Box(_)) {
-        inner = quote!(self.alloc(#inner));
-        does_alloc = true;
-    }
+    let does_alloc = matches!(var_type_name, TypeName::Box(_));
+    let inner_builder = struct_builder_name(&fn_ident_name(&field_def.name), does_alloc);
+    let inner = quote!(self.#inner_builder(#(#fields),*));
 
     let article = article_for(enum_ident.to_string());
     let mut docs = DocComment::new(format!(" Build {article} [`{enum_ident}::{var_ident}`]"))
@@ -191,8 +188,9 @@ fn default_init_field(field: &FieldDef) -> bool {
 fn generate_struct_builder_fn(ty: &StructDef, schema: &Schema) -> TokenStream {
     let ident = ty.ident();
     let as_type = ty.to_type();
-    let fn_name = struct_builder_name(ty);
-    let alloc_fn_name = format_ident!("alloc_{fn_name}");
+    let ty_name = fn_ident_name(&ty.name);
+    let fn_name = struct_builder_name(&ty_name, false);
+    let alloc_fn_name = struct_builder_name(&ty_name, true);
 
     let params_incl_defaults = get_struct_params(ty, schema);
     let (generic_params, where_clause) = get_generic_params(&params_incl_defaults);
@@ -288,7 +286,7 @@ fn generate_struct_builder_fn(ty: &StructDef, schema: &Schema) -> TokenStream {
     };
 
     if has_default_fields {
-        let fn_name = format_ident!("{fn_name}_with_{}", default_field_names.join("_and_"));
+        let fn_name = format_ident!("{ty_name}_with_{}", default_field_names.join("_and_"));
         let alloc_fn_name = format_ident!("alloc_{fn_name}");
 
         let with = format!(" with `{}`", default_field_type_names.iter().join("` and `"));

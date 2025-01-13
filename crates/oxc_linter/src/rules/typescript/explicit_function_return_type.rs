@@ -105,6 +105,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ExplicitFunctionReturnType,
+    typescript,
     restriction,
 );
 
@@ -2182,6 +2183,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(ExplicitFunctionReturnType::NAME, ExplicitFunctionReturnType::CATEGORY, pass, fail)
+    Tester::new(ExplicitFunctionReturnType::NAME, ExplicitFunctionReturnType::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

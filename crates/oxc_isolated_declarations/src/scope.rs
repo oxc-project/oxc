@@ -112,7 +112,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
 
     fn visit_ts_type_query(&mut self, ty: &TSTypeQuery<'a>) {
         if let Some(type_name) = ty.expr_name.as_ts_type_name() {
-            let ident = TSTypeName::get_first_name(type_name);
+            let ident = TSTypeName::get_identifier_reference(type_name);
             self.add_reference(ident.name.clone(), KindFlags::Value);
         } else {
             walk_ts_type_query(self, ty);

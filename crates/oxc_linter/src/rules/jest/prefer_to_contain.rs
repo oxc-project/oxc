@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferToContain,
+    jest,
     style,
 );
 
@@ -219,7 +220,7 @@ fn tests() {
         ("expect(a.includes(b)).toEqual(false as boolean);", None),
     ];
 
-    Tester::new(PreferToContain::NAME, PreferToContain::CATEGORY, pass, fail)
+    Tester::new(PreferToContain::NAME, PreferToContain::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

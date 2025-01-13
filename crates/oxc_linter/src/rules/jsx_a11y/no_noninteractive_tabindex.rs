@@ -77,6 +77,7 @@ declare_oxc_lint!(
     /// <article tabIndex="-1" />
     /// ```
     NoNoninteractiveTabindex,
+    jsx_a11y,
     correctness,
 );
 
@@ -212,6 +213,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoNoninteractiveTabindex::NAME, NoNoninteractiveTabindex::CATEGORY, pass, fail)
+    Tester::new(NoNoninteractiveTabindex::NAME, NoNoninteractiveTabindex::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

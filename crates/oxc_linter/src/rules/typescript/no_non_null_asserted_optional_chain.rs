@@ -38,6 +38,7 @@ declare_oxc_lint!(
     /// foo?.bar()!;
     /// ```
     NoNonNullAssertedOptionalChain,
+    typescript,
     correctness
 );
 
@@ -143,7 +144,7 @@ fn test() {
 
     Tester::new(
         NoNonNullAssertedOptionalChain::NAME,
-        NoNonNullAssertedOptionalChain::CATEGORY,
+        NoNonNullAssertedOptionalChain::PLUGIN,
         pass,
         fail,
     )

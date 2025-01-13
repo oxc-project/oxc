@@ -32,6 +32,7 @@ declare_oxc_lint!(
     /// const C = <B />
     /// ```
     JsxNoUndef,
+    react,
     correctness
 );
 
@@ -142,9 +143,9 @@ fn test() {
         ("var React; enum A { App }; React.render(<App />);", None),
     ];
 
-    Tester::new(JsxNoUndef::NAME, JsxNoUndef::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(JsxNoUndef::NAME, JsxNoUndef::PLUGIN, pass, fail).test_and_snapshot();
 
     let pass = vec![("let x = <A.B />;", None, Some(json!({ "globals": {"A": "readonly" } })))];
     let fail = vec![("let x = <A.B />;", None, None)];
-    Tester::new(JsxNoUndef::NAME, JsxNoUndef::CATEGORY, pass, fail).test();
+    Tester::new(JsxNoUndef::NAME, JsxNoUndef::PLUGIN, pass, fail).test();
 }

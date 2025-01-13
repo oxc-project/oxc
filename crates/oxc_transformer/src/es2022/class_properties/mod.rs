@@ -319,7 +319,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
+impl<'a> Traverse<'a> for ClassProperties<'a, '_> {
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.transform_class_body_on_entry(body, ctx);
     }

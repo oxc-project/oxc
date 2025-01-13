@@ -83,7 +83,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ObjectRestSpread<'a, 'ctx> {
+impl<'a> Traverse<'a> for ObjectRestSpread<'a, '_> {
     // For excluded keys when destructuring inside a function.
     // `function foo() { ({a, ...b} = c) }` -> `const _excluded = ["a"]; function foo() { ... }`
     fn exit_program(&mut self, _node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -181,7 +181,7 @@ impl<'a, 'ctx> Traverse<'a> for ObjectRestSpread<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
+impl<'a> ObjectRestSpread<'a, '_> {
     // Transform `({ x, ..y } = foo)`.
     // Transform `([{ x, ..y }] = foo)`.
     fn transform_assignment_expression(
@@ -287,7 +287,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
         match target {
             AssignmentTarget::ObjectAssignmentTarget(t) => {
                 let mut data = vec![];
-                for prop in t.properties.iter_mut() {
+                for prop in &mut t.properties {
                     if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) = prop {
                         data.extend(match &mut p.binding {
                             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => {
@@ -419,7 +419,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
                 }
             }
             AssignmentTarget::ObjectAssignmentTarget(t) => {
-                for p in t.properties.iter_mut() {
+                for p in &mut t.properties {
                     if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(e) = p {
                         Self::recursive_walk_assignment_target_maybe_default(
                             &mut e.binding,
@@ -532,12 +532,12 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
+impl<'a> ObjectRestSpread<'a, '_> {
     // Transform `function foo({...x}) {}`.
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
         let Some(body) = func.body.as_mut() else { return };
-        for param in func.params.items.iter_mut() {
+        for param in &mut func.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
@@ -554,7 +554,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     fn transform_arrow(arrow: &mut ArrowFunctionExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = arrow.scope_id();
         let mut replaced = false;
-        for param in arrow.params.items.iter_mut() {
+        for param in &mut arrow.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
@@ -599,7 +599,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        for declarator in decl.declarations.iter_mut() {
+        for declarator in &mut decl.declarations {
             if Self::has_nested_object_rest(&declarator.id) {
                 let new_scope_id = Self::try_replace_statement_with_block(body, scope_id, ctx);
                 let Statement::BlockStatement(block) = body else {
@@ -769,7 +769,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
+impl<'a> ObjectRestSpread<'a, '_> {
     // Transform `let { x, ..y } = foo`.
     // Transform `let [{ x, ..y }] = foo`.
     fn transform_variable_declaration(

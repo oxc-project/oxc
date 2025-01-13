@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoCssTags,
+    nextjs,
     correctness
 );
 
@@ -158,7 +159,7 @@ fn test() {
 			      </div>"#,
     ];
 
-    Tester::new(NoCssTags::NAME, NoCssTags::CATEGORY, pass, fail)
+    Tester::new(NoCssTags::NAME, NoCssTags::PLUGIN, pass, fail)
         .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// ReactDOM.render(<App />, document.body);
     /// ```
     NoRenderReturnValue,
+    react,
     correctness
 );
 
@@ -148,6 +149,6 @@ fn test() {
         // ("var inst = React.render(<div />, document.body);", None),
     ];
 
-    Tester::new(NoRenderReturnValue::NAME, NoRenderReturnValue::CATEGORY, pass, fail)
+    Tester::new(NoRenderReturnValue::NAME, NoRenderReturnValue::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

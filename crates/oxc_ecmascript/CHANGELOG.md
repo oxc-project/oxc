@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.45.0] - 2025-01-11
+
+### Features
+
+- 438a6e7 minifier: Minimize conditions in boolean context (#8381) (Boshen)
+- e88a6bd minifier: Minimize `!0 + null !== 1` -> `!0 + null != 1` (#8332) (Boshen)
+- 922c514 minifier: Fold `.toString()` (#8308) (Boshen)
+- 66a2443 minifier: Minify sequence expressions (#8305) (camc314)
+- f000596 minifier: Minify call expressionsto `Number` (#8267) (camc314)
+- cec63e2 minifier: `{}` evals to `f64::NaN` (Boshen)
+- 4d8a08d minifier: Improve constant evaluation (#8252) (Boshen)
+- bd8d677 minifier: Minimize `~undefined`, `~null`, `~true`, `~false` (#8247) (Boshen)
+- f73dc9e minifier: Constant fold `'x'.toString()` and `true.toString()` (#8246) (Boshen)
+- fc43ec5 minifier: Fold `string.length` / `array.length` (#8172) (sapphi-red)
+- 6615e1e minifier: Constant fold `instanceof` (#8142) (翠 / green)
+- ad9a0a9 mininifier: Minimize variants of `a instanceof b == true` (#8241) (Boshen)
+
+### Bug Fixes
+
+- 74572de ecmascript: Incorrect `to_int_32` value for Infinity (#8144) (翠 / green)
+- 0efc845 minifier: `+0n` produces `TypeError` (#8410) (Boshen)
+- 7ce6a7c minifier: `a in b` has error throwing side effect (#8406) (Boshen)
+- c0a3dda minifier: `instanceof` has error throwing side effect (#8378) (Boshen)
+- 5516f7f minifier: Do not fold object comparisons (#8375) (Boshen)
+- 05be1fc minifier: Remove incorrect fold `Expression::AssignmentExpression` (#8211) (Boshen)
+- 56b7f13 minifier: Do not constant fold `0 instanceof F` (#8199) (Boshen)
+
+### Refactor
+
+- 1835687 ecmascript: Remove unnecessary `use` statement (#8284) (overlookmotel)
+- 9a5c66a minifier: Clean up (#8346) (Boshen)
+
 ## [0.44.0] - 2024-12-25
 
 ### Features

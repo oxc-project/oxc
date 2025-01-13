@@ -92,6 +92,7 @@ mod eslint {
     pub mod no_iterator;
     pub mod no_label_var;
     pub mod no_labels;
+    pub mod no_lone_blocks;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_multi_assign;
@@ -380,6 +381,7 @@ mod unicorn {
     pub mod prefer_regexp_test;
     pub mod prefer_set_has;
     pub mod prefer_set_size;
+    pub mod prefer_spread;
     pub mod prefer_string_raw;
     pub mod prefer_string_replace_all;
     pub mod prefer_string_slice;
@@ -548,6 +550,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_multi_assign,
     eslint::no_nested_ternary,
     eslint::no_labels,
+    eslint::no_lone_blocks,
     eslint::no_restricted_imports,
     eslint::no_object_constructor,
     eslint::no_duplicate_imports,
@@ -957,6 +960,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,
+    unicorn::prefer_spread,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat,
     unicorn::prefer_array_flat_map,

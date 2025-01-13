@@ -23,42 +23,14 @@ impl ContentHash for BooleanLiteral {
     }
 }
 
-impl ContentHash for StringLiteral<'_> {
-    fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.value, state);
-        ContentHash::content_hash(&self.raw, state);
-    }
-}
-
-impl ContentHash for BigIntLiteral<'_> {
-    fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.raw, state);
-        ContentHash::content_hash(&self.base, state);
-    }
-}
-
-impl ContentHash for RegExpLiteral<'_> {
-    fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.regex, state);
-        ContentHash::content_hash(&self.raw, state);
-    }
+impl ContentHash for NullLiteral {
+    fn content_hash<H: Hasher>(&self, _: &mut H) {}
 }
 
 impl ContentHash for RegExp<'_> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.pattern, state);
         ContentHash::content_hash(&self.flags, state);
-    }
-}
-
-impl ContentHash for RegExpPattern<'_> {
-    fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&discriminant(self), state);
-        match self {
-            Self::Raw(it) => ContentHash::content_hash(it, state),
-            Self::Invalid(it) => ContentHash::content_hash(it, state),
-            Self::Pattern(it) => ContentHash::content_hash(it, state),
-        }
     }
 }
 

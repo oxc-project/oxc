@@ -188,6 +188,7 @@ declare_oxc_lint!(
     ///     return <div />;
     /// }
     ExhaustiveDeps,
+    react,
     nursery
 );
 
@@ -3532,5 +3533,5 @@ fn test() {
         }",
     ];
 
-    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, fail).test_and_snapshot();
 }

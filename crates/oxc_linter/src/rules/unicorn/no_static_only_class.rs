@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoStaticOnlyClass,
+    unicorn,
     pedantic,
     pending
 );
@@ -151,6 +152,5 @@ fn test() {
         r"class A { static a() {} }",
     ];
 
-    Tester::new(NoStaticOnlyClass::NAME, NoStaticOnlyClass::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(NoStaticOnlyClass::NAME, NoStaticOnlyClass::PLUGIN, pass, fail).test_and_snapshot();
 }

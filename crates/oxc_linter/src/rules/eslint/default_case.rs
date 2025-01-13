@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     DefaultCase,
+    eslint,
     restriction,
 );
 
@@ -255,5 +256,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(DefaultCase::NAME, DefaultCase::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(DefaultCase::NAME, DefaultCase::PLUGIN, pass, fail).test_and_snapshot();
 }

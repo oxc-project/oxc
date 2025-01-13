@@ -77,7 +77,7 @@ pub fn is_hidden_from_screen_reader<'a>(
         }
     }
 
-    has_jsx_prop_ignore_case(node, "aria-hidden").map_or(false, |v| match get_prop_value(v) {
+    has_jsx_prop_ignore_case(node, "aria-hidden").is_some_and(|v| match get_prop_value(v) {
         None => true,
         Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
         Some(JSXAttributeValue::ExpressionContainer(container)) => {

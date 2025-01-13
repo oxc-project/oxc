@@ -17,34 +17,6 @@ use crate::{
     line, text, Format, Prettier,
 };
 
-pub fn print_assignment_expression<'a>(
-    p: &mut Prettier<'a>,
-    assignment_expr: &AssignmentExpression<'a>,
-) -> Doc<'a> {
-    let left_doc = assignment_expr.left.format(p);
-    print_assignment(
-        p,
-        AssignmentLikeNode::AssignmentExpression(assignment_expr),
-        left_doc,
-        array!(p, [text!(" "), text!(assignment_expr.operator.as_str())]),
-        Some(&assignment_expr.right),
-    )
-}
-
-pub fn print_variable_declarator<'a>(
-    p: &mut Prettier<'a>,
-    variable_declarator: &VariableDeclarator<'a>,
-) -> Doc<'a> {
-    let left_doc = variable_declarator.id.format(p);
-    print_assignment(
-        p,
-        AssignmentLikeNode::VariableDeclarator(variable_declarator),
-        left_doc,
-        text!(" ="),
-        variable_declarator.init.as_ref(),
-    )
-}
-
 #[derive(Debug, Clone, Copy)]
 pub enum AssignmentLikeNode<'a, 'b> {
     AssignmentExpression(&'b AssignmentExpression<'a>),
@@ -77,14 +49,14 @@ pub fn print_assignment<'a>(
     let layout = choose_layout(p, &node, &left_doc, right_expr);
 
     // TODO: set the layout in options so that when we print the right-hand side, we can refer to it.
-    let right_doc = if let Some(expr) = right_expr { expr.format(p) } else { array!(p, []) };
+    let right_doc = if let Some(expr) = right_expr { expr.format(p) } else { text!("") };
 
     match layout {
         Layout::BreakAfterOperator => {
             group!(p, [group!(p, [left_doc]), op, group!(p, [indent!(p, [line!(), right_doc])])])
         }
         Layout::NeverBreakAfterOperator => {
-            group!(p, [group!(p, [left_doc]), op, text!(" "), group!(p, [right_doc])])
+            group!(p, [group!(p, [left_doc]), op, text!(" "), right_doc])
         }
         // First break right-hand side, then after operator
         Layout::Fluid => {

@@ -94,7 +94,7 @@ impl<'a> StatementFusion {
             }
             Statement::BlockStatement(block) => {
                 can_merge_block_stmt(block)
-                    && block.body.first().map_or(false, Self::is_fusable_control_statement)
+                    && block.body.first().is_some_and(Self::is_fusable_control_statement)
             }
             _ => false,
         }

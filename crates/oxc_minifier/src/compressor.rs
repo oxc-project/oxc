@@ -34,8 +34,10 @@ impl<'a> Compressor<'a> {
         RemoveSyntax::new(self.options).build(program, &mut ctx);
         // RemoveUnusedCode::new(self.options).build(program, &mut ctx);
         Normalize::new().build(program, &mut ctx);
-        PeepholeOptimizations::new(true, self.options).run_in_loop(program, &mut ctx);
-        PeepholeOptimizations::new(false, self.options).build(program, &mut ctx);
+        PeepholeOptimizations::new(self.options.target, true, self.options)
+            .run_in_loop(program, &mut ctx);
+        PeepholeOptimizations::new(self.options.target, false, self.options)
+            .build(program, &mut ctx);
     }
 
     pub fn dead_code_elimination(self, program: &mut Program<'a>) {

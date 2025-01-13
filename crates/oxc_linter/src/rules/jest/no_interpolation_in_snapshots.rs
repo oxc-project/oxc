@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// );
     /// ```
     NoInterpolationInSnapshots,
+    jest,
     style
 );
 
@@ -122,7 +123,7 @@ fn test() {
         ("expect(something).not.toThrowErrorMatchingInlineSnapshot(`${interpolated}`);", None),
     ];
 
-    Tester::new(NoInterpolationInSnapshots::NAME, NoInterpolationInSnapshots::CATEGORY, pass, fail)
+    Tester::new(NoInterpolationInSnapshots::NAME, NoInterpolationInSnapshots::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

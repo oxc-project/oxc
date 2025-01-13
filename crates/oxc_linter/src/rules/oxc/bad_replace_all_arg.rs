@@ -46,6 +46,7 @@ declare_oxc_lint!(
     /// withSpaces.replaceAll(/\s+/g, ',');
     /// ```
     BadReplaceAllArg,
+    oxc,
     correctness
 );
 
@@ -158,5 +159,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(BadReplaceAllArg::NAME, BadReplaceAllArg::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(BadReplaceAllArg::NAME, BadReplaceAllArg::PLUGIN, pass, fail).test_and_snapshot();
 }

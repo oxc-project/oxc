@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoAsyncAwait,
+    oxc,
     restriction
 );
 
@@ -101,5 +102,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoAsyncAwait::NAME, NoAsyncAwait::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoAsyncAwait::NAME, NoAsyncAwait::PLUGIN, pass, fail).test_and_snapshot();
 }

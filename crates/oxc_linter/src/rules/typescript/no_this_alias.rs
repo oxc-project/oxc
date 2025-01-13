@@ -73,6 +73,7 @@ declare_oxc_lint!(
     /// sampe with `obj.<allowedName> = this`
     /// ```
     NoThisAlias,
+    typescript,
     correctness
 );
 
@@ -236,5 +237,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoThisAlias::NAME, NoThisAlias::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoThisAlias::NAME, NoThisAlias::PLUGIN, pass, fail).test_and_snapshot();
 }

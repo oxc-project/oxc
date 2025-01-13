@@ -69,6 +69,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoEmptyPattern,
+    eslint,
     correctness,
 );
 
@@ -110,5 +111,5 @@ fn test() {
         ("function foo({a: []}) {}", None),
     ];
 
-    Tester::new(NoEmptyPattern::NAME, NoEmptyPattern::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyPattern::NAME, NoEmptyPattern::PLUGIN, pass, fail).test_and_snapshot();
 }

@@ -1,6 +1,6 @@
 [package]
 name = "oxc_mangler"
-version = "0.44.0"
+version = "0.45.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -26,3 +26,4 @@ oxc_ast = { workspace = true }
 oxc_index = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
+rustc-hash = { workspace = true }

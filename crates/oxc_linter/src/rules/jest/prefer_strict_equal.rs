@@ -33,6 +33,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferStrictEqual,
+    jest,
     style,
     fix
 );
@@ -104,7 +105,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(PreferStrictEqual::NAME, PreferStrictEqual::CATEGORY, pass, fail)
+    Tester::new(PreferStrictEqual::NAME, PreferStrictEqual::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

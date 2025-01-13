@@ -45,6 +45,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     RequireRenderReturn,
+    react,
     nursery
 );
 
@@ -363,6 +364,6 @@ fn test() {
          ",
     ];
 
-    Tester::new(RequireRenderReturn::NAME, RequireRenderReturn::CATEGORY, pass, fail)
+    Tester::new(RequireRenderReturn::NAME, RequireRenderReturn::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

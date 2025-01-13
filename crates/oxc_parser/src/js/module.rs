@@ -297,7 +297,7 @@ impl<'a> ParserImpl<'a> {
 
         // ExportDeclaration : export NamedExports ;
         if source.is_none() {
-            for specifier in specifiers.iter_mut() {
+            for specifier in &mut specifiers {
                 match &specifier.local {
                     // It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
                     ModuleExportName::StringLiteral(literal) => {

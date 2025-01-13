@@ -93,6 +93,7 @@ impl<'a> From<&Expression<'a>> for ValueType {
             Expression::SequenceExpression(e) => {
                 e.expressions.last().map_or(ValueType::Undetermined, Self::from)
             }
+            Expression::AssignmentExpression(e) => Self::from(&e.right),
             _ => Self::Undetermined,
         }
     }
@@ -102,21 +103,45 @@ impl<'a> From<&BinaryExpression<'a>> for ValueType {
     fn from(e: &BinaryExpression<'a>) -> Self {
         match e.operator {
             BinaryOperator::Addition => {
-                let left_ty = Self::from(&e.left);
-                let right_ty = Self::from(&e.right);
-                if left_ty == Self::String || right_ty == Self::String {
+                let left = Self::from(&e.left);
+                let right = Self::from(&e.right);
+                if left == Self::Boolean
+                    && matches!(right, Self::Undefined | Self::Null | Self::Number)
+                {
+                    return Self::Number;
+                }
+                if left == Self::String || right == Self::String {
                     return Self::String;
                 }
                 // There are some pretty weird cases for object types:
                 //   {} + [] === "0"
                 //   [] + {} === "[object Object]"
-                if left_ty == Self::Object || right_ty == Self::Object {
+                if left == Self::Object || right == Self::Object {
                     return Self::Undetermined;
                 }
                 Self::Undetermined
             }
-            BinaryOperator::Instanceof => Self::Boolean,
-            _ => Self::Undetermined,
+            BinaryOperator::Subtraction
+            | BinaryOperator::Multiplication
+            | BinaryOperator::Division
+            | BinaryOperator::Remainder
+            | BinaryOperator::ShiftLeft
+            | BinaryOperator::BitwiseOR
+            | BinaryOperator::ShiftRight
+            | BinaryOperator::BitwiseXOR
+            | BinaryOperator::BitwiseAnd
+            | BinaryOperator::Exponential
+            | BinaryOperator::ShiftRightZeroFill => Self::Number,
+            BinaryOperator::Instanceof
+            | BinaryOperator::In
+            | BinaryOperator::Equality
+            | BinaryOperator::Inequality
+            | BinaryOperator::StrictEquality
+            | BinaryOperator::StrictInequality
+            | BinaryOperator::LessThan
+            | BinaryOperator::LessEqualThan
+            | BinaryOperator::GreaterThan
+            | BinaryOperator::GreaterEqualThan => Self::Boolean,
         }
     }
 }

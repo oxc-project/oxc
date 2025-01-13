@@ -790,54 +790,62 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
         );
     };
 
-    // skip(1) is the self `Super`
-    // skip(2) is the parent `CallExpression` or `NewExpression`
-    for node_id in ctx.nodes.ancestor_ids(node.id()).skip(2) {
-        match ctx.nodes.kind(node_id) {
-            AstKind::MethodDefinition(def) => {
-                // ClassElement : MethodDefinition
-                // It is a Syntax Error if PropName of MethodDefinition is not "constructor" and HasDirectSuper of MethodDefinition is true.
-                if let Some(super_call_span) = super_call_span {
-                    if def.kind == MethodDefinitionKind::Constructor {
-                        // It is a Syntax Error if SuperCall in nested set/get function
-                        if ctx.scope.get_flags(node.scope_id()).is_set_or_get_accessor() {
-                            return ctx.error(unexpected_super_call(super_call_span));
-                        }
+    let class_node_id = ctx.class_table_builder.classes.get_node_id(class_id);
+    let AstKind::Class(class) = ctx.nodes.kind(class_node_id) else { unreachable!() };
+    let class_scope_id = class.scope_id();
 
-                        // check ClassHeritage
-                        if let AstKind::Class(class) =
-                            ctx.nodes.kind(ctx.class_table_builder.classes.get_node_id(class_id))
-                        {
-                            // ClassTail : ClassHeritageopt { ClassBody }
-                            // It is a Syntax Error if ClassHeritage is not present and the following algorithm returns true:
-                            // 1. Let constructor be ConstructorMethod of ClassBody.
-                            // 2. If constructor is empty, return false.
-                            // 3. Return HasDirectSuper of constructor.
-                            if class.super_class.is_none() {
-                                return ctx.error(super_without_derived_class(sup.span, class.span));
-                            }
-                        }
-                        break;
-                    }
-                    return ctx.error(unexpected_super_call(super_call_span));
-                }
-                // super references are allowed in method
-                break;
+    for scope_id in ctx.scope.ancestors(ctx.current_scope_id) {
+        let flags = ctx.scope.get_flags(scope_id);
+
+        if flags.intersects(ScopeFlags::Constructor) {
+            // ClassTail : ClassHeritageopt { ClassBody }
+            // * It is a Syntax Error if ClassHeritage is not present and the following algorithm returns true:
+            // 1. Let constructor be ConstructorMethod of ClassBody.
+            // 2. If constructor is empty, return false.
+            // 3. Return HasDirectSuper of constructor.
+            if class.super_class.is_none() && super_call_span.is_some() {
+                ctx.error(super_without_derived_class(sup.span, class.span));
             }
+            return;
+        }
+
+        if let Some(super_call_span) = super_call_span {
+            // ClassElement : MethodDefinition
+            // * It is a Syntax Error if PropName of MethodDefinition is not "constructor" and HasDirectSuper of MethodDefinition is true.
+            // * It is a Syntax Error if SuperCall in nested set/get function
+            if flags.is_function() && !flags.is_arrow() {
+                return ctx.error(unexpected_super_call(super_call_span));
+            }
+
             // FieldDefinition : ClassElementName Initializer opt
             // * It is a Syntax Error if Initializer is present and Initializer Contains SuperCall is true.
             // PropertyDefinition : MethodDefinition
             // * It is a Syntax Error if HasDirectSuper of MethodDefinition is true.
-            AstKind::PropertyDefinition(_)
+            let is_class_scope = class_scope_id == scope_id;
             // ClassStaticBlockBody : ClassStaticBlockStatementList
             // * It is a Syntax Error if ClassStaticBlockStatementList Contains SuperCall is true.
-            | AstKind::StaticBlock(_) => {
-                if let Some(super_call_span) = super_call_span {
-                    return ctx.error(unexpected_super_call(super_call_span));
-                }
-                break;
+            let is_class_static_block_scope = flags.is_class_static_block();
+            if is_class_scope || is_class_static_block_scope {
+                return ctx.error(unexpected_super_call(super_call_span));
             }
-            _ => {}
+        }
+
+        if class_scope_id == scope_id {
+            break;
+        }
+
+        if flags.is_function() && !flags.is_arrow() {
+            // * It is a Syntax Error if FunctionBody Contains SuperProperty is true.
+            // Check this function if is a class method, if it isn't, then it a plain function
+            let function_node_id = ctx.scope.get_node_id(scope_id);
+            let is_class_method = matches!(
+                ctx.nodes.parent_kind(function_node_id),
+                Some(AstKind::MethodDefinition(_))
+            );
+            if !is_class_method {
+                ctx.error(unexpected_super_reference(sup.span));
+            }
+            return;
         }
     }
 }

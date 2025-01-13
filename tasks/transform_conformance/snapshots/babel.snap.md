@@ -2060,11 +2060,9 @@ after transform: ScopeId(0): ["React", "x"]
 rebuilt        : ScopeId(0): ["x"]
 
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
-Missing SymbolId: "foo"
-Missing SymbolId: "bar"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
+Bindings mismatch:
+after transform: ScopeId(0): ["bar", "foo", "nsa", "nsb"]
+rebuilt        : ScopeId(0): []
 
 * imports/elide-typeof/input.ts
 Bindings mismatch:
@@ -2161,19 +2159,17 @@ rebuilt        : ScopeId(0): []
 
 * imports/import=-module-to-cjs/input.ts
 Missing SymbolId: "lib"
-Missing ReferenceId: "require"
 Binding symbols mismatch:
 after transform: ScopeId(0): [SymbolId(0)]
 rebuilt        : ScopeId(0): [SymbolId(0)]
 Reference symbol mismatch for "lib":
 after transform: SymbolId(0) "lib"
 rebuilt        : SymbolId(0) "lib"
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["require"]
 
 * imports/only-remove-type-imports/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
+rebuilt        : ScopeId(0): ["L2", "a", "b", "c2", "d", "d2", "e", "e4"]
 
 * imports/property-signature/input.ts
 Bindings mismatch:
@@ -2204,7 +2200,9 @@ after transform: ScopeId(0): ["Foo1", "Foo2"]
 rebuilt        : ScopeId(0): []
 
 * imports/type-only-import-specifier-4/input.ts
-x Output mismatch
+Bindings mismatch:
+after transform: ScopeId(0): ["A"]
+rebuilt        : ScopeId(0): []
 
 * lvalues/TSTypeParameterInstantiation/input.ts
 Symbol reference IDs mismatch for "AbstractClass":
@@ -2215,23 +2213,22 @@ after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 
 * namespace/alias/input.ts
-Missing SymbolId: "b"
 Missing SymbolId: "AliasModule"
 Bindings mismatch:
 after transform: ScopeId(0): ["AliasModule", "LongNameModule", "b", "babel", "bar", "baz", "node", "some", "str"]
-rebuilt        : ScopeId(0): ["AliasModule", "b", "babel", "bar", "baz", "node", "some", "str"]
+rebuilt        : ScopeId(0): ["AliasModule", "bar", "baz", "node", "some", "str"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "AliasModule":
 after transform: SymbolId(8) "AliasModule"
-rebuilt        : SymbolId(2) "AliasModule"
+rebuilt        : SymbolId(0) "AliasModule"
 Reference symbol mismatch for "AliasModule":
 after transform: SymbolId(8) "AliasModule"
-rebuilt        : SymbolId(2) "AliasModule"
+rebuilt        : SymbolId(0) "AliasModule"
 Unresolved reference IDs mismatch for "LongNameModule":
 after transform: [ReferenceId(1), ReferenceId(5)]
-rebuilt        : [ReferenceId(1)]
+rebuilt        : [ReferenceId(0)]
 
 * namespace/clobber-class/input.ts
 Missing SymbolId: "_A"

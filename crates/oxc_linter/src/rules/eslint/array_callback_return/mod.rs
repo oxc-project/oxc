@@ -60,6 +60,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     ArrayCallbackReturn,
+    eslint,
     pedantic
 );
 
@@ -580,6 +581,6 @@ fn test() {
         ("foo?.filter((function() { return () => { console.log('hello') } })?.())", None),
     ];
 
-    Tester::new(ArrayCallbackReturn::NAME, ArrayCallbackReturn::CATEGORY, pass, fail)
+    Tester::new(ArrayCallbackReturn::NAME, ArrayCallbackReturn::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

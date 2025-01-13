@@ -44,6 +44,7 @@ declare_oxc_lint!(
     /// [bar, baz] = [bar, qiz];
     /// ```
     NoSelfAssign,
+    eslint,
     correctness
 );
 
@@ -365,5 +366,5 @@ fn test() {
         ("a ??= a", None),
     ];
 
-    Tester::new(NoSelfAssign::NAME, NoSelfAssign::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoSelfAssign::NAME, NoSelfAssign::PLUGIN, pass, fail).test_and_snapshot();
 }
