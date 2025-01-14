@@ -7,6 +7,11 @@ use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, Travers
 
 use crate::{ctx::Ctx, CompressOptions, CompressorPass};
 
+#[derive(Default)]
+pub struct NormalizeOptions {
+    pub convert_while_to_fors: bool,
+}
+
 /// Normalize AST
 ///
 /// Make subsequent AST passes easier to analyze:
@@ -24,7 +29,8 @@ use crate::{ctx::Ctx, CompressOptions, CompressorPass};
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Normalize.java>
 pub struct Normalize {
-    options: CompressOptions,
+    options: NormalizeOptions,
+    compress_options: CompressOptions,
 }
 
 impl<'a> CompressorPass<'a> for Normalize {
@@ -44,10 +50,10 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
-            Statement::WhileStatement(_) => {
+            Statement::IfStatement(s) => Self::wrap_to_avoid_ambiguous_else(s, ctx),
+            Statement::WhileStatement(_) if self.options.convert_while_to_fors => {
                 Self::convert_while_to_for(stmt, ctx);
             }
-            Statement::IfStatement(s) => Self::wrap_to_avoid_ambiguous_else(s, ctx),
             _ => {}
         }
     }
@@ -66,7 +72,7 @@ impl<'a> Traverse<'a> for Normalize {
             Expression::ArrowFunctionExpression(e) => {
                 self.recover_arrow_expression_after_drop_console(e);
             }
-            Expression::CallExpression(_) if self.options.drop_console => {
+            Expression::CallExpression(_) if self.compress_options.drop_console => {
                 self.compress_console(expr, ctx);
             }
             _ => {}
@@ -75,31 +81,31 @@ impl<'a> Traverse<'a> for Normalize {
 }
 
 impl<'a> Normalize {
-    pub fn new(options: CompressOptions) -> Self {
-        Self { options }
+    pub fn new(options: NormalizeOptions, compress_options: CompressOptions) -> Self {
+        Self { options, compress_options }
     }
 
     /// Drop `drop_debugger` statement.
     ///
     /// Enabled by `compress.drop_debugger`
     fn drop_debugger(&mut self, stmt: &Statement<'a>) -> bool {
-        matches!(stmt, Statement::DebuggerStatement(_)) && self.options.drop_debugger
+        matches!(stmt, Statement::DebuggerStatement(_)) && self.compress_options.drop_debugger
     }
 
     fn compress_console(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        debug_assert!(self.options.drop_console);
+        debug_assert!(self.compress_options.drop_console);
         if Self::is_console(expr) {
             *expr = ctx.ast.void_0(expr.span());
         }
     }
 
     fn drop_console(&mut self, stmt: &Statement<'a>) -> bool {
-        self.options.drop_console
+        self.compress_options.drop_console
             && matches!(stmt, Statement::ExpressionStatement(expr) if Self::is_console(&expr.expression))
     }
 
     fn recover_arrow_expression_after_drop_console(&self, expr: &mut ArrowFunctionExpression<'a>) {
-        if self.options.drop_console && expr.expression && expr.body.is_empty() {
+        if self.compress_options.drop_console && expr.expression && expr.body.is_empty() {
             expr.expression = false;
         }
     }
@@ -171,16 +177,18 @@ impl<'a> Normalize {
 mod test {
     use oxc_allocator::Allocator;
 
+    use super::NormalizeOptions;
     use crate::{tester, CompressOptions};
 
     fn test(source_text: &str, expected: &str) {
         let allocator = Allocator::default();
-        let options = CompressOptions {
+        let compress_options = CompressOptions {
             drop_debugger: true,
             drop_console: true,
             ..CompressOptions::default()
         };
-        let mut pass = super::Normalize::new(options);
+        let options = NormalizeOptions { convert_while_to_fors: true };
+        let mut pass = super::Normalize::new(options, compress_options);
         tester::test(&allocator, source_text, expected, &mut pass);
     }
 

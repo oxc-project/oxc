@@ -20,7 +20,7 @@ pub use collapse_variable_declarations::CollapseVariableDeclarations;
 pub use convert_to_dotted_properties::ConvertToDottedProperties;
 pub use exploit_assigns::ExploitAssigns;
 pub use minimize_exit_points::MinimizeExitPoints;
-pub use normalize::Normalize;
+pub use normalize::{Normalize, NormalizeOptions};
 pub use peephole_fold_constants::PeepholeFoldConstants;
 pub use peephole_minimize_conditions::PeepholeMinimizeConditions;
 pub use peephole_remove_dead_code::PeepholeRemoveDeadCode;

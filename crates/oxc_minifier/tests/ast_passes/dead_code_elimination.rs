@@ -111,6 +111,12 @@ fn dce_if_statement() {
 }
 
 #[test]
+fn dce_while_statement() {
+    test_same("while (true);");
+    test_same("while (false);");
+}
+
+#[test]
 fn dce_conditional_expression() {
     test("false ? foo : bar;", "bar");
     test("true ? foo : bar;", "foo");
