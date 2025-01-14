@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 126/148
+Passed: 129/150
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -10,6 +10,7 @@ Passed: 126/148
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-async-generator-functions
 * babel-plugin-transform-object-rest-spread
+* babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
@@ -44,11 +45,6 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(8), R
 Symbol reference IDs mismatch for "X":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(9), ReferenceId(12)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
-
-
-# babel-plugin-transform-async-to-generator (20/21)
-* class/static-block/input.js
-x Output mismatch
 
 
 # babel-plugin-transform-typescript (2/13)
