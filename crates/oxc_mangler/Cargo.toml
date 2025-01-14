@@ -29,3 +29,4 @@ oxc_span = { workspace = true }
 
 itertools = { workspace = true }
 rustc-hash = { workspace = true }
+compact_str = { workspace = true }

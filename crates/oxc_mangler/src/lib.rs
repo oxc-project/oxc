@@ -1,3 +1,4 @@
+use compact_str::CompactString;
 use itertools::Itertools;
 use rustc_hash::FxHashSet;
 
@@ -334,18 +335,18 @@ fn base54(n: usize) -> CompactStr {
     // Base 54 at first because these are the usable first characters in JavaScript identifiers
     // <https://tc39.es/ecma262/#prod-IdentifierStart>
     let base = 54usize;
-    let mut ret = String::new();
-    ret.push(BASE54_CHARS[num % base] as char);
+    // SAFETY: `BASE54_CHARS` is utf8.
+    let mut s = unsafe { CompactString::from_utf8_unchecked([BASE54_CHARS[num % base]]) };
     num /= base;
     // Base 64 for the rest because after the first character we can also use 0-9 too
     // <https://tc39.es/ecma262/#prod-IdentifierPart>
     let base = 64usize;
     while num > 0 {
         num -= 1;
-        ret.push(BASE54_CHARS[num % base] as char);
+        s.push(BASE54_CHARS[num % base] as char);
         num /= base;
     }
-    CompactStr::new(&ret)
+    CompactStr::from(s)
 }
 
 fn debug_name(n: usize) -> CompactStr {
