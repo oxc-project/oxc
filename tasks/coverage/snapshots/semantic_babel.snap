@@ -2,7 +2,7 @@ commit: 54a8389f
 
 semantic_babel Summary:
 AST Parsed     : 2218/2218 (100.00%)
-Positive Passed: 1885/2218 (84.99%)
+Positive Passed: 1893/2218 (85.35%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -128,11 +128,6 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/impor
 semantic error: Unresolved references mismatch:
 after transform: ["Y", "foo"]
 rebuilt        : []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/import-require/input.js
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["x"]
-rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/literals/input.js
 semantic error: Scope children mismatch:
@@ -717,62 +712,19 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["B"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-in-unambiguous/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["B"]
 rebuilt        : []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-unambiguous/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import/input.ts
-semantic error: Missing SymbolId: "A"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-require/input.ts
-semantic error: Missing SymbolId: "a"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-as-identifier/input.ts
-semantic error: Missing SymbolId: "type"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-require/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["a"]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-named-import-require/input.ts
-semantic error: Missing SymbolId: "a"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "a":
-after transform: SymbolId(0) "a"
-rebuilt        : SymbolId(0) "a"
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-default-and-named-id-type/input.ts
 semantic error: Bindings mismatch:
@@ -792,11 +744,6 @@ rebuilt        : ScopeId(0): []
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-star-as/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["a"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-type-as-identifier/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["type"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/internal-comments/input.ts
@@ -1418,7 +1365,7 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-equals-var/input.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M", "a"]
+after transform: ScopeId(0): ["M"]
 rebuilt        : ScopeId(0): ["a"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]

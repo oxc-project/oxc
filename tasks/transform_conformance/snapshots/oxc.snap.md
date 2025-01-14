@@ -1,10 +1,6 @@
 commit: 54a8389f
 
-<<<<<<< HEAD
-Passed: 129/150
-=======
-Passed: 126/148
->>>>>>> 92283dbb1 (fix(transformer/typescript): retain TSImportEqualsDeclaration when it is exported)
+Passed: 129/151
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -159,10 +155,6 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 * namespace/export-import-=/input.ts
-Missing SymbolId: "X"
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(1): [SymbolId(2), SymbolId(3)]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -172,21 +164,14 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N1":
 after transform: SymbolId(1): Span { start: 31, end: 33 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
-Reference symbol mismatch for "X":
-after transform: SymbolId(2) "X"
-rebuilt        : SymbolId(3) "X"
 
 * namespace/import-=/input.ts
-Missing SymbolId: "X"
 Bindings mismatch:
 after transform: ScopeId(1): ["V", "X", "_N"]
 rebuilt        : ScopeId(1): ["V", "_N"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(5), SymbolId(6), SymbolId(8)]
-rebuilt        : ScopeId(2): [SymbolId(5), SymbolId(6), SymbolId(7)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function)
@@ -205,22 +190,11 @@ rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N2":
 after transform: SymbolId(4): Span { start: 130, end: 132 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
-Reference symbol mismatch for "X":
-after transform: SymbolId(5) "X"
-rebuilt        : SymbolId(6) "X"
 
 * namespace/preserve-import-=/input.ts
-Missing SymbolId: "Foo"
-Missing SymbolId: "Foo"
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(2), SymbolId(3), SymbolId(7)]
-rebuilt        : ScopeId(1): [SymbolId(2), SymbolId(3), SymbolId(4)]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
-Binding symbols mismatch:
-after transform: ScopeId(2): [SymbolId(5), SymbolId(6), SymbolId(8)]
-rebuilt        : ScopeId(2): [SymbolId(6), SymbolId(7), SymbolId(8)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function)
@@ -236,12 +210,14 @@ rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N2":
 after transform: SymbolId(4): Span { start: 145, end: 147 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(5): [ReferenceId(2)]
+rebuilt        : SymbolId(7): []
 
 * preserve-import-=/input.js
-Missing SymbolId: "Foo"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(1): [ReferenceId(1)]
+rebuilt        : SymbolId(1): []
 
 * redeclarations/input.ts
 Bindings mismatch:

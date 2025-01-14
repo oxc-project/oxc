@@ -1,6 +1,6 @@
 commit: 54a8389f
 
-Passed: 686/1154
+Passed: 688/1154
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1619,7 +1619,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (47/157)
+# babel-plugin-transform-typescript (49/157)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1976,12 +1976,6 @@ Symbol reference IDs mismatch for "None":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(0): [ReferenceId(1)]
 
-* exports/export-import=/input.ts
-Missing SymbolId: "JGraph"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-
 * exports/export-type/input.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -2061,7 +2055,7 @@ rebuilt        : ScopeId(0): ["x"]
 
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["bar", "foo", "nsa", "nsb"]
+after transform: ScopeId(0): ["nsa", "nsb"]
 rebuilt        : ScopeId(0): []
 
 * imports/elide-typeof/input.ts
@@ -2157,15 +2151,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["A", "B"]
 rebuilt        : ScopeId(0): []
 
-* imports/import=-module-to-cjs/input.ts
-Missing SymbolId: "lib"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "lib":
-after transform: SymbolId(0) "lib"
-rebuilt        : SymbolId(0) "lib"
-
 * imports/only-remove-type-imports/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
@@ -2213,19 +2198,15 @@ after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 
 * namespace/alias/input.ts
-Missing SymbolId: "AliasModule"
 Bindings mismatch:
-after transform: ScopeId(0): ["AliasModule", "LongNameModule", "b", "babel", "bar", "baz", "node", "some", "str"]
+after transform: ScopeId(0): ["AliasModule", "LongNameModule", "babel", "bar", "baz", "node", "some", "str"]
 rebuilt        : ScopeId(0): ["AliasModule", "bar", "baz", "node", "some", "str"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "AliasModule":
-after transform: SymbolId(8) "AliasModule"
-rebuilt        : SymbolId(0) "AliasModule"
-Reference symbol mismatch for "AliasModule":
-after transform: SymbolId(8) "AliasModule"
-rebuilt        : SymbolId(0) "AliasModule"
+Symbol reference IDs mismatch for "AliasModule":
+after transform: SymbolId(8): [ReferenceId(2), ReferenceId(3), ReferenceId(4)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2)]
 Unresolved reference IDs mismatch for "LongNameModule":
 after transform: [ReferenceId(1), ReferenceId(5)]
 rebuilt        : [ReferenceId(0)]

@@ -2,7 +2,7 @@ commit: d85767ab
 
 semantic_typescript Summary:
 AST Parsed     : 6503/6503 (100.00%)
-Positive Passed: 2832/6503 (43.55%)
+Positive Passed: 2923/6503 (44.95%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -11,163 +11,67 @@ Symbol reference IDs mismatch for "Ship":
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(2): []
 
-tasks/coverage/typescript/tests/cases/compiler/APILibCheck.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ts", "tsInternal", "tsserverlibrary", "tsserverlibraryInternal"]
-rebuilt        : ScopeId(0): []
-
 tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
-semantic error: Missing SymbolId: "ts"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["console", "formatHost", "os", "process", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
 rebuilt        : ScopeId(0): ["formatHost", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
+Symbol reference IDs mismatch for "ts":
+after transform: SymbolId(3): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(8), ReferenceId(10), ReferenceId(11), ReferenceId(28), ReferenceId(30), ReferenceId(33), ReferenceId(36), ReferenceId(38)]
+rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(8), ReferenceId(10), ReferenceId(11), ReferenceId(27), ReferenceId(31), ReferenceId(35)]
 Reference symbol mismatch for "console":
 after transform: SymbolId(1) "console"
 rebuilt        : <None>
 Reference symbol mismatch for "console":
 after transform: SymbolId(1) "console"
 rebuilt        : <None>
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
 Reference symbol mismatch for "console":
 after transform: SymbolId(1) "console"
 rebuilt        : <None>
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
 Reference symbol mismatch for "console":
 after transform: SymbolId(1) "console"
 rebuilt        : <None>
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
 Unresolved references mismatch:
 after transform: ["Error", "ReadonlyArray", "require"]
 rebuilt        : ["Error", "console", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithDefaults.ts
-semantic error: Missing SymbolId: "ts"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["console", "ts", "watchMain"]
 rebuilt        : ScopeId(0): ["ts", "watchMain"]
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
 Reference symbol mismatch for "console":
 after transform: SymbolId(0) "console"
 rebuilt        : <None>
 Reference symbol mismatch for "console":
 after transform: SymbolId(0) "console"
 rebuilt        : <None>
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
 Unresolved references mismatch:
 after transform: ["Error", "require"]
 rebuilt        : ["Error", "console", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithOwnWatchHost.ts
-semantic error: Missing SymbolId: "ts"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["console", "ts", "watchMain"]
 rebuilt        : ScopeId(0): ["ts", "watchMain"]
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
+Symbol reference IDs mismatch for "ts":
+after transform: SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(32)]
+rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(30)]
 Reference symbol mismatch for "console":
 after transform: SymbolId(0) "console"
 rebuilt        : <None>
 Reference symbol mismatch for "console":
 after transform: SymbolId(0) "console"
 rebuilt        : <None>
-Reference symbol mismatch for "ts":
-after transform: SymbolId(1) "ts"
-rebuilt        : SymbolId(0) "ts"
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["console", "require"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_compile.ts
-semantic error: Missing SymbolId: "ts"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["compile", "console", "os", "process", "ts"]
 rebuilt        : ScopeId(0): ["compile", "ts"]
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
+Symbol reference IDs mismatch for "ts":
+after transform: SymbolId(3): [ReferenceId(0), ReferenceId(1), ReferenceId(5), ReferenceId(8), ReferenceId(27), ReferenceId(28)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(5), ReferenceId(8), ReferenceId(27), ReferenceId(28)]
 Reference symbol mismatch for "console":
 after transform: SymbolId(1) "console"
 rebuilt        : <None>
@@ -183,12 +87,6 @@ rebuilt        : <None>
 Reference symbol mismatch for "process":
 after transform: SymbolId(0) "process"
 rebuilt        : <None>
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["console", "process", "require"]
@@ -228,25 +126,18 @@ after transform: []
 rebuilt        : ["console", "process", "readFileSync"]
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_parseConfig.ts
-semantic error: Missing SymbolId: "ts"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["console", "createProgram", "os", "printError", "process", "ts"]
 rebuilt        : ScopeId(0): ["createProgram", "printError", "ts"]
+Symbol reference IDs mismatch for "ts":
+after transform: SymbolId(3): [ReferenceId(0), ReferenceId(6), ReferenceId(7), ReferenceId(14), ReferenceId(22)]
+rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(13), ReferenceId(21)]
 Reference symbol mismatch for "console":
 after transform: SymbolId(1) "console"
 rebuilt        : <None>
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
 Reference symbol mismatch for "process":
 after transform: SymbolId(0) "process"
 rebuilt        : <None>
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
-Reference symbol mismatch for "ts":
-after transform: SymbolId(3) "ts"
-rebuilt        : SymbolId(0) "ts"
 Unresolved references mismatch:
 after transform: ["require", "undefined"]
 rebuilt        : ["console", "process", "require", "undefined"]
@@ -334,11 +225,7 @@ after transform: ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/acceptableAlias1.ts
-semantic error: Missing SymbolId: "X"
-Bindings mismatch:
-after transform: ScopeId(0): ["M", "r"]
-rebuilt        : ScopeId(0): ["M"]
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
 rebuilt        : ScopeId(1): ["X", "_M"]
 Scope flags mismatch:
@@ -353,9 +240,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Reference symbol mismatch for "X":
-after transform: SymbolId(2) "X"
-rebuilt        : SymbolId(2) "X"
 Unresolved references mismatch:
 after transform: ["M", "N"]
 rebuilt        : ["N"]
@@ -381,8 +265,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/aliasInaccessibleModule.ts
-semantic error: Missing SymbolId: "X"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
 rebuilt        : ScopeId(1): ["X", "_M"]
 Scope flags mismatch:
@@ -397,17 +280,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Reference symbol mismatch for "X":
-after transform: SymbolId(2) "X"
-rebuilt        : SymbolId(2) "X"
 
 tasks/coverage/typescript/tests/cases/compiler/aliasInaccessibleModule2.ts
-semantic error: Missing SymbolId: "R"
-Missing SymbolId: "X"
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(3), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(5), SymbolId(6)]
-Scope flags mismatch:
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope flags mismatch:
@@ -425,12 +300,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "N":
 after transform: SymbolId(1): Span { start: 22, end: 23 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Reference symbol mismatch for "R":
-after transform: SymbolId(3) "R"
-rebuilt        : SymbolId(5) "R"
-Reference symbol mismatch for "X":
-after transform: SymbolId(4) "X"
-rebuilt        : SymbolId(6) "X"
 
 tasks/coverage/typescript/tests/cases/compiler/aliasOfGenericFunctionWithRestBehavedSameAsUnaliased.ts
 semantic error: Scope children mismatch:
@@ -438,89 +307,53 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInAccessorsOfClass.ts
-semantic error: Missing SymbolId: "Backbone"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Backbone":
-after transform: SymbolId(0) "Backbone"
-rebuilt        : SymbolId(0) "Backbone"
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInArray.ts
-semantic error: Missing SymbolId: "Backbone"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Backbone":
-after transform: SymbolId(0) "Backbone"
-rebuilt        : SymbolId(0) "Backbone"
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Symbol reference IDs mismatch for "moduleA":
+after transform: SymbolId(1): [ReferenceId(2), ReferenceId(3), ReferenceId(4)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInFunctionExpression.ts
-semantic error: Missing SymbolId: "Backbone"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Backbone":
-after transform: SymbolId(0) "Backbone"
-rebuilt        : SymbolId(0) "Backbone"
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInGenericFunction.ts
-semantic error: Missing SymbolId: "Backbone"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Backbone":
-after transform: SymbolId(0) "Backbone"
-rebuilt        : SymbolId(0) "Backbone"
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInIndexerOfClass.ts
-semantic error: Missing SymbolId: "Backbone"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Backbone":
-after transform: SymbolId(0) "Backbone"
-rebuilt        : SymbolId(0) "Backbone"
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+Symbol reference IDs mismatch for "moduleA":
+after transform: SymbolId(1): [ReferenceId(2), ReferenceId(3)]
+rebuilt        : SymbolId(1): [ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInObjectLiteral.ts
-semantic error: Missing SymbolId: "Backbone"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Backbone":
-after transform: SymbolId(0) "Backbone"
-rebuilt        : SymbolId(0) "Backbone"
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+Symbol reference IDs mismatch for "moduleA":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInTypeArgumentOfExtendsClause.ts
-semantic error: Missing SymbolId: "Backbone"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Backbone":
-after transform: SymbolId(0) "Backbone"
-rebuilt        : SymbolId(0) "Backbone"
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInVarAssignment.ts
-semantic error: Missing SymbolId: "Backbone"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Backbone":
-after transform: SymbolId(0) "Backbone"
-rebuilt        : SymbolId(0) "Backbone"
-
-tasks/coverage/typescript/tests/cases/compiler/aliasUsedAsNameValue.ts
-semantic error: Missing SymbolId: "mod"
-Missing SymbolId: "b"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "b":
-after transform: SymbolId(1) "b"
-rebuilt        : SymbolId(1) "b"
-Reference symbol mismatch for "mod":
-after transform: SymbolId(0) "mod"
-rebuilt        : SymbolId(0) "mod"
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/allowJsCrossMonorepoPackage.ts
 semantic error: Bindings mismatch:
@@ -888,11 +721,6 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(6)]
 
-tasks/coverage/typescript/tests/cases/compiler/arrayOfExportedClass.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Car", "Road", "_defineProperty"]
-rebuilt        : ScopeId(0): ["Road", "_defineProperty"]
-
 tasks/coverage/typescript/tests/cases/compiler/arrayToLocaleStringES2015.ts
 semantic error: Unresolved references mismatch:
 after transform: ["Date", "Float32Array", "Float64Array", "Int16Array", "Int32Array", "Int8Array", "ReadonlyArray", "Uint16Array", "Uint32Array", "Uint8Array", "Uint8ClampedArray"]
@@ -1178,31 +1006,23 @@ tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3_1.ts
-semantic error: Missing SymbolId: "x"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["file1", "x"]
 rebuilt        : ScopeId(0): ["x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : SymbolId(0) "x"
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4_1.ts
-semantic error: Missing SymbolId: "x"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["file1", "x"]
 rebuilt        : ScopeId(0): ["x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch for "x":
-after transform: SymbolId(0) "x"
-rebuilt        : SymbolId(0) "x"
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals5.ts
 semantic error: Bindings mismatch:
@@ -1217,7 +1037,7 @@ semantic error: Namespaces exporting non-const are not supported by Babel. Chang
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6_1.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["file1", "x"]
+after transform: ScopeId(0): ["file1"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -2559,27 +2379,12 @@ after transform: SymbolId(5): Span { start: 209, end: 211 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 
 tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndInternalModuleAliasInGlobalFile.ts
-semantic error: Missing SymbolId: "exports"
-Missing SymbolId: "require"
-Missing SymbolId: "exports"
-Missing SymbolId: "require"
-Missing SymbolId: "exports"
-Missing SymbolId: "require"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(7)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(9)]
-Scope flags mismatch:
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
-Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(5), SymbolId(6), SymbolId(11)]
-rebuilt        : ScopeId(3): [SymbolId(6), SymbolId(7), SymbolId(8)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
-Binding symbols mismatch:
-after transform: ScopeId(4): [SymbolId(8), SymbolId(9), SymbolId(12)]
-rebuilt        : ScopeId(4): [SymbolId(10), SymbolId(11), SymbolId(12)]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -2601,30 +2406,6 @@ rebuilt        : SymbolId(9): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m2":
 after transform: SymbolId(7): Span { start: 282, end: 284 }
 rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
-Reference symbol mismatch for "exports":
-after transform: SymbolId(2) "exports"
-rebuilt        : SymbolId(3) "exports"
-Reference symbol mismatch for "require":
-after transform: SymbolId(3) "require"
-rebuilt        : SymbolId(4) "require"
-Reference symbol mismatch for "exports":
-after transform: SymbolId(5) "exports"
-rebuilt        : SymbolId(7) "exports"
-Reference symbol mismatch for "require":
-after transform: SymbolId(6) "require"
-rebuilt        : SymbolId(8) "require"
-Reference symbol mismatch for "exports":
-after transform: SymbolId(8) "exports"
-rebuilt        : SymbolId(11) "exports"
-Reference symbol mismatch for "require":
-after transform: SymbolId(9) "require"
-rebuilt        : SymbolId(12) "require"
-Reference symbol mismatch for "exports":
-after transform: SymbolId(8) "exports"
-rebuilt        : SymbolId(11) "exports"
-Reference symbol mismatch for "require":
-after transform: SymbolId(9) "require"
-rebuilt        : SymbolId(12) "require"
 
 tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndUninstantiatedModule.ts
 semantic error: Bindings mismatch:
@@ -3136,7 +2917,7 @@ rebuilt        : SymbolId(10): Span { start: 0, end: 0 }
 
 tasks/coverage/typescript/tests/cases/compiler/commonJsImportClassExpression.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Chunk", "c"]
+after transform: ScopeId(0): ["c"]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "c":
 after transform: SymbolId(1) "c"
@@ -3182,15 +2963,6 @@ tasks/coverage/typescript/tests/cases/compiler/compositeContextualSignature.ts
 semantic error: Unresolved references mismatch:
 after transform: ["ReadonlyArray", "console", "undefined"]
 rebuilt        : ["console", "undefined"]
-
-tasks/coverage/typescript/tests/cases/compiler/compositeWithNodeModulesSourceFile.ts
-semantic error: Missing SymbolId: "myModule"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "myModule":
-after transform: SymbolId(0) "myModule"
-rebuilt        : SymbolId(0) "myModule"
 
 tasks/coverage/typescript/tests/cases/compiler/compoundVarDecl1.ts
 semantic error: Scope flags mismatch:
@@ -3728,13 +3500,7 @@ after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnums.ts
-semantic error: Missing SymbolId: "I"
-Missing SymbolId: "I1"
-Missing SymbolId: "I2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(31), SymbolId(39), SymbolId(50), SymbolId(56), SymbolId(63), SymbolId(64), SymbolId(65), SymbolId(66), SymbolId(68), SymbolId(70), SymbolId(72), SymbolId(74), SymbolId(76)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(5), SymbolId(19), SymbolId(26), SymbolId(35), SymbolId(36), SymbolId(37), SymbolId(38), SymbolId(40), SymbolId(42), SymbolId(44), SymbolId(46), SymbolId(48)]
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A0", "Enum1"]
 rebuilt        : ScopeId(1): ["Enum1"]
 Scope flags mismatch:
@@ -3917,6 +3683,15 @@ rebuilt        : SymbolId(30): Span { start: 0, end: 0 }
 Symbol redeclarations mismatch for "C":
 after transform: SymbolId(58): [Span { start: 1524, end: 1525 }]
 rebuilt        : SymbolId(30): []
+Symbol reference IDs mismatch for "I":
+after transform: SymbolId(63): [ReferenceId(35), ReferenceId(37), ReferenceId(39)]
+rebuilt        : SymbolId(35): [ReferenceId(169), ReferenceId(171)]
+Symbol reference IDs mismatch for "I1":
+after transform: SymbolId(64): [ReferenceId(40), ReferenceId(42), ReferenceId(44)]
+rebuilt        : SymbolId(36): [ReferenceId(173), ReferenceId(175)]
+Symbol reference IDs mismatch for "I2":
+after transform: SymbolId(65): [ReferenceId(45), ReferenceId(47), ReferenceId(49)]
+rebuilt        : SymbolId(37): [ReferenceId(177), ReferenceId(179)]
 Reference symbol mismatch for "Enum1":
 after transform: SymbolId(0) "Enum1"
 rebuilt        : SymbolId(2) "Enum1"
@@ -3953,24 +3728,6 @@ rebuilt        : <None>
 Reference symbol mismatch for "E":
 after transform: SymbolId(59) "E"
 rebuilt        : <None>
-Reference symbol mismatch for "I":
-after transform: SymbolId(63) "I"
-rebuilt        : SymbolId(35) "I"
-Reference symbol mismatch for "I":
-after transform: SymbolId(63) "I"
-rebuilt        : SymbolId(35) "I"
-Reference symbol mismatch for "I1":
-after transform: SymbolId(64) "I1"
-rebuilt        : SymbolId(36) "I1"
-Reference symbol mismatch for "I1":
-after transform: SymbolId(64) "I1"
-rebuilt        : SymbolId(36) "I1"
-Reference symbol mismatch for "I2":
-after transform: SymbolId(65) "I2"
-rebuilt        : SymbolId(37) "I2"
-Reference symbol mismatch for "I2":
-after transform: SymbolId(65) "I2"
-rebuilt        : SymbolId(37) "I2"
 Unresolved references mismatch:
 after transform: ["A", "A0"]
 rebuilt        : ["E"]
@@ -4967,11 +4724,6 @@ Symbol reference IDs mismatch for "x":
 after transform: SymbolId(5): [ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(3): [ReferenceId(1)]
 
-tasks/coverage/typescript/tests/cases/compiler/declFileAliasUseBeforeDeclaration.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["bar", "foo"]
-rebuilt        : ScopeId(0): ["bar"]
-
 tasks/coverage/typescript/tests/cases/compiler/declFileAliasUseBeforeDeclaration2.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["test"]
@@ -5121,22 +4873,6 @@ tasks/coverage/typescript/tests/cases/compiler/declFileForClassWithPrivateOverlo
 semantic error: Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
-
-tasks/coverage/typescript/tests/cases/compiler/declFileForExportedImport.ts
-semantic error: Missing SymbolId: "a"
-Missing SymbolId: "b"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-Reference symbol mismatch for "a":
-after transform: SymbolId(0) "a"
-rebuilt        : SymbolId(0) "a"
-Reference symbol mismatch for "a":
-after transform: SymbolId(0) "a"
-rebuilt        : SymbolId(0) "a"
-Reference symbol mismatch for "b":
-after transform: SymbolId(2) "b"
-rebuilt        : SymbolId(2) "b"
 
 tasks/coverage/typescript/tests/cases/compiler/declFileForFunctionTypeAsTypeParameter.ts
 semantic error: Scope children mismatch:
@@ -5291,12 +5027,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(7), ReferenceId(9)
 rebuilt        : [ReferenceId(1), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(30), ReferenceId(31)]
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportChainInExportAssignment.ts
-semantic error: Missing SymbolId: "a"
-Missing SymbolId: "b"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5), SymbolId(6)]
-Symbol flags mismatch for "m":
+semantic error: Symbol flags mismatch for "m":
 after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m":
@@ -5308,12 +5039,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "c":
 after transform: SymbolId(1): Span { start: 29, end: 30 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Reference symbol mismatch for "a":
-after transform: SymbolId(3) "a"
-rebuilt        : SymbolId(5) "a"
-Reference symbol mismatch for "b":
-after transform: SymbolId(4) "b"
-rebuilt        : SymbolId(6) "b"
 
 tasks/coverage/typescript/tests/cases/compiler/declFileImportModuleWithExportAssignment.ts
 semantic error: Scope children mismatch:
@@ -7027,17 +6752,9 @@ after transform: ["require", "this"]
 rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitUnnessesaryTypeReferenceNotAdded.ts
-semantic error: Missing SymbolId: "minimist"
-Missing SymbolId: "process"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "minimist":
-after transform: SymbolId(0) "minimist"
-rebuilt        : SymbolId(0) "minimist"
-Reference symbol mismatch for "process":
-after transform: SymbolId(1) "process"
-rebuilt        : SymbolId(1) "process"
+semantic error: Symbol reference IDs mismatch for "minimist":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+rebuilt        : SymbolId(0): [ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules1.ts
 semantic error: Scope children mismatch:
@@ -7226,16 +6943,12 @@ after transform: [ReferenceId(10), ReferenceId(16), ReferenceId(34), ReferenceId
 rebuilt        : [ReferenceId(0), ReferenceId(6), ReferenceId(11)]
 
 tasks/coverage/typescript/tests/cases/compiler/declareDottedExtend.ts
-semantic error: Missing SymbolId: "ab"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["A", "D", "E", "ab"]
 rebuilt        : ScopeId(0): ["D", "E", "ab"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Reference symbol mismatch for "ab":
-after transform: SymbolId(3) "ab"
-rebuilt        : SymbolId(0) "ab"
 
 tasks/coverage/typescript/tests/cases/compiler/declareDottedModuleName.ts
 semantic error: Bindings mismatch:
@@ -7431,22 +7144,12 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Database", "MyClass", "_defineProperty", "someDecorator"]
 rebuilt        : ScopeId(0): ["MyClass", "_defineProperty", "someDecorator"]
 
-tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision3.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["MyClass", "_defineProperty", "db", "someDecorator"]
-rebuilt        : ScopeId(0): ["MyClass", "_defineProperty", "someDecorator"]
-
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision5.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["MyClass", "_defineProperty", "db", "someDecorator"]
 rebuilt        : ScopeId(0): ["MyClass", "_defineProperty", "someDecorator"]
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision6.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["MyClass", "_defineProperty", "database", "someDecorator"]
-rebuilt        : ScopeId(0): ["MyClass", "_defineProperty", "someDecorator"]
-
-tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision8.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["MyClass", "_defineProperty", "database", "someDecorator"]
 rebuilt        : ScopeId(0): ["MyClass", "_defineProperty", "someDecorator"]
@@ -7790,19 +7493,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Partial"]
 rebuilt        : ["a", "b", "f", "g"]
-
-tasks/coverage/typescript/tests/cases/compiler/dependencyViaImportAlias.ts
-semantic error: Missing SymbolId: "a"
-Missing SymbolId: "A"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "a":
-after transform: SymbolId(0) "a"
-rebuilt        : SymbolId(0) "a"
-Reference symbol mismatch for "A":
-after transform: SymbolId(1) "A"
-rebuilt        : SymbolId(1) "A"
 
 tasks/coverage/typescript/tests/cases/compiler/dependentReturnType8.ts
 semantic error: Bindings mismatch:
@@ -8439,7 +8129,7 @@ rebuilt        : ScopeId(0): ["a", "o"]
 
 tasks/coverage/typescript/tests/cases/compiler/duplicateVarAndImport.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M", "a"]
+after transform: ScopeId(0): ["M"]
 rebuilt        : ScopeId(0): ["a"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -8486,17 +8176,9 @@ tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedW
 semantic error: 'with' statements are not allowed
 
 tasks/coverage/typescript/tests/cases/compiler/elidingImportNames.ts
-semantic error: Missing SymbolId: "a"
-Missing SymbolId: "a2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Reference symbol mismatch for "a":
-after transform: SymbolId(0) "a"
-rebuilt        : SymbolId(0) "a"
-Reference symbol mismatch for "a2":
-after transform: SymbolId(3) "a2"
-rebuilt        : SymbolId(3) "a2"
+semantic error: Symbol reference IDs mismatch for "a":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+rebuilt        : SymbolId(0): [ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/emitClassExpressionInDeclarationFile.ts
 semantic error: Scope children mismatch:
@@ -11465,15 +11147,6 @@ Unresolved references mismatch:
 after transform: ["Date", "module"]
 rebuilt        : ["module", "x"]
 
-tasks/coverage/typescript/tests/cases/compiler/exportAssignmentClass.ts
-semantic error: Missing SymbolId: "D"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "D":
-after transform: SymbolId(0) "D"
-rebuilt        : SymbolId(0) "D"
-
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "E"]
@@ -11487,15 +11160,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentError.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-
-tasks/coverage/typescript/tests/cases/compiler/exportAssignmentFunction.ts
-semantic error: Missing SymbolId: "fooFunc"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "fooFunc":
-after transform: SymbolId(0) "fooFunc"
-rebuilt        : SymbolId(0) "fooFunc"
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentInterface.ts
 semantic error: Scope children mismatch:
@@ -11526,25 +11190,9 @@ after transform: ["T"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentOfGenericType1.ts
-semantic error: Missing SymbolId: "q"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-Symbol reference IDs mismatch for "M":
+semantic error: Symbol reference IDs mismatch for "M":
 after transform: SymbolId(1): [ReferenceId(1)]
 rebuilt        : SymbolId(1): []
-Reference symbol mismatch for "q":
-after transform: SymbolId(0) "q"
-rebuilt        : SymbolId(0) "q"
-
-tasks/coverage/typescript/tests/cases/compiler/exportAssignmentVariable.ts
-semantic error: Missing SymbolId: "y"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "y":
-after transform: SymbolId(0) "y"
-rebuilt        : SymbolId(0) "y"
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithImportStatementPrivacyError.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -11653,15 +11301,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/typescript/tests/cases/compiler/exportEqualCallable.ts
-semantic error: Missing SymbolId: "connect"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "connect":
-after transform: SymbolId(0) "connect"
-rebuilt        : SymbolId(0) "connect"
-
 tasks/coverage/typescript/tests/cases/compiler/exportEqualNamespaces.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["x"]
@@ -11725,19 +11364,15 @@ after transform: SymbolId(0): [Span { start: 116, end: 117 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportImport.ts
-semantic error: Missing SymbolId: "w"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
+semantic error: Symbol reference IDs mismatch for "e":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+rebuilt        : SymbolId(0): [ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportAndClodule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportCanSubstituteConstEnumForValue.ts
-semantic error: Missing SymbolId: "ReExportedEnum"
-Missing SymbolId: "DialogButtons"
-Missing SymbolId: "Callback"
-Scope flags mismatch:
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope flags mismatch:
@@ -11764,9 +11399,6 @@ rebuilt        : ScopeId(6): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Binding symbols mismatch:
-after transform: ScopeId(9): [SymbolId(21), SymbolId(22), SymbolId(23), SymbolId(24), SymbolId(31)]
-rebuilt        : ScopeId(8): [SymbolId(13), SymbolId(14), SymbolId(15), SymbolId(16), SymbolId(17)]
 Scope flags mismatch:
 after transform: ScopeId(9): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(8): ScopeFlags(Function)
@@ -11803,42 +11435,17 @@ rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "ViewModels":
 after transform: SymbolId(20): Span { start: 537, end: 547 }
 rebuilt        : SymbolId(12): Span { start: 0, end: 0 }
-Reference symbol mismatch for "ReExportedEnum":
-after transform: SymbolId(21) "ReExportedEnum"
-rebuilt        : SymbolId(14) "ReExportedEnum"
-Reference symbol mismatch for "Callback":
-after transform: SymbolId(23) "Callback"
-rebuilt        : SymbolId(16) "Callback"
-Reference symbol mismatch for "ReExportedEnum":
-after transform: SymbolId(21) "ReExportedEnum"
-rebuilt        : SymbolId(14) "ReExportedEnum"
-Reference symbol mismatch for "DialogButtons":
-after transform: SymbolId(22) "DialogButtons"
-rebuilt        : SymbolId(15) "DialogButtons"
 Unresolved references mismatch:
 after transform: ["Dialogs", "MsPortalFx", "console"]
 rebuilt        : ["Dialogs", "console"]
 
-tasks/coverage/typescript/tests/cases/compiler/exportImportMultipleFiles.ts
-semantic error: Missing SymbolId: "math"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "math":
-after transform: SymbolId(0) "math"
-rebuilt        : SymbolId(0) "math"
-
 tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule.ts
-semantic error: Missing SymbolId: "A1"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "x"]
 rebuilt        : ScopeId(0): ["B", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(3), SymbolId(6)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -11848,9 +11455,6 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "B":
 after transform: SymbolId(2): Span { start: 58, end: 59 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Reference symbol mismatch for "A1":
-after transform: SymbolId(3) "A1"
-rebuilt        : SymbolId(2) "A1"
 Unresolved references mismatch:
 after transform: ["A", "B"]
 rebuilt        : ["A"]
@@ -12056,13 +11660,9 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/extendingClassFromAliasAndUsageInIndexer.ts
-semantic error: Missing SymbolId: "Backbone"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Backbone":
-after transform: SymbolId(0) "Backbone"
-rebuilt        : SymbolId(0) "Backbone"
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/externFunc.ts
 semantic error: Scope children mismatch:
@@ -12081,30 +11681,15 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3)
 rebuilt        : [ReferenceId(0)]
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleAssignToVar.ts
-semantic error: Missing SymbolId: "ext"
-Missing SymbolId: "ext2"
-Missing SymbolId: "ext3"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
-Reference symbol mismatch for "ext":
-after transform: SymbolId(0) "ext"
-rebuilt        : SymbolId(0) "ext"
-Reference symbol mismatch for "ext":
-after transform: SymbolId(0) "ext"
-rebuilt        : SymbolId(0) "ext"
-Reference symbol mismatch for "ext2":
-after transform: SymbolId(2) "ext2"
-rebuilt        : SymbolId(2) "ext2"
-Reference symbol mismatch for "ext2":
-after transform: SymbolId(2) "ext2"
-rebuilt        : SymbolId(2) "ext2"
-Reference symbol mismatch for "ext3":
-after transform: SymbolId(4) "ext3"
-rebuilt        : SymbolId(4) "ext3"
-Reference symbol mismatch for "ext3":
-after transform: SymbolId(4) "ext3"
-rebuilt        : SymbolId(4) "ext3"
+semantic error: Symbol reference IDs mismatch for "ext":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(3)]
+Symbol reference IDs mismatch for "ext2":
+after transform: SymbolId(2): [ReferenceId(4), ReferenceId(5), ReferenceId(7)]
+rebuilt        : SymbolId(2): [ReferenceId(5), ReferenceId(7)]
+Symbol reference IDs mismatch for "ext3":
+after transform: SymbolId(4): [ReferenceId(8), ReferenceId(9), ReferenceId(11)]
+rebuilt        : SymbolId(4): [ReferenceId(9), ReferenceId(11)]
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleQualification.ts
 semantic error: Symbol reference IDs mismatch for "DiffEditor":
@@ -12121,15 +11706,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/externalModuleReferenceOfImportDeclarationWithExportModifier.ts
-semantic error: Missing SymbolId: "file1"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "file1":
-after transform: SymbolId(0) "file1"
-rebuilt        : SymbolId(0) "file1"
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -13620,15 +13196,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 
-tasks/coverage/typescript/tests/cases/compiler/globalThisDeclarationEmit3.ts
-semantic error: Missing SymbolId: "mod"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "mod":
-after transform: SymbolId(0) "mod"
-rebuilt        : SymbolId(0) "mod"
-
 tasks/coverage/typescript/tests/cases/compiler/hidingCallSignatures.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
@@ -13846,11 +13413,6 @@ Unresolved references mismatch:
 after transform: ["x"]
 rebuilt        : []
 
-tasks/coverage/typescript/tests/cases/compiler/importDeclarationUsedAsTypeQuery.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a", "x"]
-rebuilt        : ScopeId(0): ["x"]
-
 tasks/coverage/typescript/tests/cases/compiler/importElisionEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["MyEnum", "a", "b", "c", "d"]
@@ -13970,31 +13532,15 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["NotFound"]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/typescript/tests/cases/compiler/importShadowsGlobalName.ts
-semantic error: Missing SymbolId: "Error"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Error":
-after transform: SymbolId(0) "Error"
-rebuilt        : SymbolId(0) "Error"
-
 tasks/coverage/typescript/tests/cases/compiler/importTypeGenericArrowTypeParenthesized.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 
 tasks/coverage/typescript/tests/cases/compiler/importUsedInExtendsList1.ts
-semantic error: Missing SymbolId: "foo"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-Symbol reference IDs mismatch for "Sub":
+semantic error: Symbol reference IDs mismatch for "Sub":
 after transform: SymbolId(1): [ReferenceId(1)]
 rebuilt        : SymbolId(1): []
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : SymbolId(0) "foo"
 
 tasks/coverage/typescript/tests/cases/compiler/importUsedInGenericImportResolves.ts
 semantic error: Unresolved references mismatch:
@@ -14002,11 +13548,7 @@ after transform: ["T", "theme"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/import_reference-exported-alias.ts
-semantic error: Missing SymbolId: "Mod"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5)]
-Symbol flags mismatch for "App":
+semantic error: Symbol flags mismatch for "App":
 after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "App":
@@ -14018,9 +13560,6 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "Services":
 after transform: SymbolId(1): Span { start: 31, end: 39 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Reference symbol mismatch for "Mod":
-after transform: SymbolId(3) "Mod"
-rebuilt        : SymbolId(5) "Mod"
 
 tasks/coverage/typescript/tests/cases/compiler/import_reference-to-type-alias.ts
 semantic error: Symbol flags mismatch for "App":
@@ -14043,15 +13582,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/import_var-referencing-an-imported-module-alias.ts
-semantic error: Missing SymbolId: "host"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "host":
-after transform: SymbolId(0) "host"
-rebuilt        : SymbolId(0) "host"
 
 tasks/coverage/typescript/tests/cases/compiler/importedAliasedConditionalTypeInstantiation.ts
 semantic error: Bindings mismatch:
@@ -14089,7 +13619,7 @@ rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 
 tasks/coverage/typescript/tests/cases/compiler/importedModuleClassNameClash.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["foo", "m1"]
+after transform: ScopeId(0): ["m1"]
 rebuilt        : ScopeId(0): ["foo"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -14896,13 +14426,9 @@ after transform: SymbolId(5): [ReferenceId(0), ReferenceId(1), ReferenceId(2), R
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/innerAliases2.ts
-semantic error: Missing SymbolId: "provider"
-Scope flags mismatch:
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
-Binding symbols mismatch:
-after transform: ScopeId(4): [SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(8)]
-rebuilt        : ScopeId(4): [SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -14918,9 +14444,9 @@ rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "consumer":
 after transform: SymbolId(2): Span { start: 171, end: 179 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
-Reference symbol mismatch for "provider":
-after transform: SymbolId(3) "provider"
-rebuilt        : SymbolId(5) "provider"
+Symbol reference IDs mismatch for "provider":
+after transform: SymbolId(3): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4)]
+rebuilt        : SymbolId(5): [ReferenceId(5)]
 
 tasks/coverage/typescript/tests/cases/compiler/innerBoundLambdaEmit.ts
 semantic error: Scope children mismatch:
@@ -15010,15 +14536,6 @@ rebuilt        : SymbolId(4): [ReferenceId(8)]
 Unresolved reference IDs mismatch for "Array":
 after transform: [ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(32), ReferenceId(33), ReferenceId(35)]
 rebuilt        : [ReferenceId(12), ReferenceId(30)]
-
-tasks/coverage/typescript/tests/cases/compiler/instanceOfInExternalModules.ts
-semantic error: Missing SymbolId: "Bar"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Bar":
-after transform: SymbolId(0) "Bar"
-rebuilt        : SymbolId(0) "Bar"
 
 tasks/coverage/typescript/tests/cases/compiler/instanceSubtypeCheck1.ts
 semantic error: Scope children mismatch:
@@ -15477,34 +14994,20 @@ tasks/coverage/typescript/tests/cases/compiler/internalAliasClassInsideLocalModu
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasClassInsideTopLevelModuleWithExport.ts
-semantic error: Missing SymbolId: "xc"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(4), SymbolId(5), SymbolId(6)]
-Symbol flags mismatch for "x":
+semantic error: Symbol flags mismatch for "x":
 after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "x":
 after transform: SymbolId(0): Span { start: 14, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Reference symbol mismatch for "xc":
-after transform: SymbolId(3) "xc"
-rebuilt        : SymbolId(4) "xc"
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasClassInsideTopLevelModuleWithoutExport.ts
-semantic error: Missing SymbolId: "xc"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(4), SymbolId(5), SymbolId(6)]
-Symbol flags mismatch for "x":
+semantic error: Symbol flags mismatch for "x":
 after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "x":
 after transform: SymbolId(0): Span { start: 14, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Reference symbol mismatch for "xc":
-after transform: SymbolId(3) "xc"
-rebuilt        : SymbolId(4) "xc"
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasEnum.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -15516,11 +15019,7 @@ tasks/coverage/typescript/tests/cases/compiler/internalAliasEnumInsideLocalModul
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasEnumInsideTopLevelModuleWithExport.ts
-semantic error: Missing SymbolId: "b"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(4), SymbolId(5)]
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["Friday", "Saturday", "Sunday", "weekend"]
 rebuilt        : ScopeId(2): ["weekend"]
 Scope flags mismatch:
@@ -15535,16 +15034,12 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol flags mismatch for "weekend":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Reference symbol mismatch for "b":
-after transform: SymbolId(5) "b"
-rebuilt        : SymbolId(4) "b"
+Symbol reference IDs mismatch for "b":
+after transform: SymbolId(5): [ReferenceId(1), ReferenceId(2)]
+rebuilt        : SymbolId(4): [ReferenceId(12)]
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasEnumInsideTopLevelModuleWithoutExport.ts
-semantic error: Missing SymbolId: "b"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(4), SymbolId(5)]
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["Friday", "Saturday", "Sunday", "weekend"]
 rebuilt        : ScopeId(2): ["weekend"]
 Scope flags mismatch:
@@ -15559,9 +15054,9 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol flags mismatch for "weekend":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Reference symbol mismatch for "b":
-after transform: SymbolId(5) "b"
-rebuilt        : SymbolId(4) "b"
+Symbol reference IDs mismatch for "b":
+after transform: SymbolId(5): [ReferenceId(1), ReferenceId(2)]
+rebuilt        : SymbolId(4): [ReferenceId(12)]
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasFunction.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -15575,11 +15070,7 @@ tasks/coverage/typescript/tests/cases/compiler/internalAliasFunctionInsideLocalM
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasFunctionInsideTopLevelModuleWithExport.ts
-semantic error: Missing SymbolId: "b"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(4), SymbolId(5), SymbolId(6)]
-Symbol flags mismatch for "a":
+semantic error: Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "a":
@@ -15588,19 +15079,9 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol flags mismatch for "foo":
 after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Reference symbol mismatch for "b":
-after transform: SymbolId(3) "b"
-rebuilt        : SymbolId(4) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(3) "b"
-rebuilt        : SymbolId(4) "b"
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasFunctionInsideTopLevelModuleWithoutExport.ts
-semantic error: Missing SymbolId: "b"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(4), SymbolId(5), SymbolId(6)]
-Symbol flags mismatch for "a":
+semantic error: Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "a":
@@ -15609,12 +15090,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol flags mismatch for "foo":
 after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
-Reference symbol mismatch for "b":
-after transform: SymbolId(3) "b"
-rebuilt        : SymbolId(4) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(3) "b"
-rebuilt        : SymbolId(4) "b"
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasInitializedModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -15626,11 +15101,7 @@ tasks/coverage/typescript/tests/cases/compiler/internalAliasInitializedModuleIns
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasInitializedModuleInsideTopLevelModuleWithExport.ts
-semantic error: Missing SymbolId: "b"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5), SymbolId(6)]
-Symbol flags mismatch for "a":
+semantic error: Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "a":
@@ -15642,16 +15113,12 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "b":
 after transform: SymbolId(1): Span { start: 36, end: 37 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Reference symbol mismatch for "b":
-after transform: SymbolId(3) "b"
-rebuilt        : SymbolId(5) "b"
+Symbol reference IDs mismatch for "b":
+after transform: SymbolId(3): [ReferenceId(1), ReferenceId(2)]
+rebuilt        : SymbolId(5): [ReferenceId(9)]
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasInitializedModuleInsideTopLevelModuleWithoutExport.ts
-semantic error: Missing SymbolId: "b"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5), SymbolId(6)]
-Symbol flags mismatch for "a":
+semantic error: Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "a":
@@ -15663,9 +15130,9 @@ rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "b":
 after transform: SymbolId(1): Span { start: 36, end: 37 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Reference symbol mismatch for "b":
-after transform: SymbolId(3) "b"
-rebuilt        : SymbolId(5) "b"
+Symbol reference IDs mismatch for "b":
+after transform: SymbolId(3): [ReferenceId(1), ReferenceId(2)]
+rebuilt        : SymbolId(5): [ReferenceId(9)]
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasInterface.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -15677,17 +15144,19 @@ tasks/coverage/typescript/tests/cases/compiler/internalAliasInterfaceInsideLocal
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasInterfaceInsideTopLevelModuleWithExport.ts
-semantic error: Missing SymbolId: "b"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["a", "b", "x"]
 rebuilt        : ScopeId(0): ["b", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Symbol reference IDs mismatch for "b":
+after transform: SymbolId(2): [ReferenceId(1)]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasInterfaceInsideTopLevelModuleWithoutExport.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a", "b", "x"]
+after transform: ScopeId(0): ["a", "x"]
 rebuilt        : ScopeId(0): ["x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -15706,17 +15175,19 @@ tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModuleI
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModuleInsideTopLevelModuleWithExport.ts
-semantic error: Missing SymbolId: "b"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["a", "b", "x"]
 rebuilt        : ScopeId(0): ["b", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Symbol reference IDs mismatch for "b":
+after transform: SymbolId(3): [ReferenceId(1)]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModuleInsideTopLevelModuleWithoutExport.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a", "b", "x"]
+after transform: ScopeId(0): ["a", "x"]
 rebuilt        : ScopeId(0): ["x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -16155,15 +15626,6 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/typescript/tests/cases/compiler/isolatedModulesReExportAlias.ts
-semantic error: Missing SymbolId: "events"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "events":
-after transform: SymbolId(0) "events"
-rebuilt        : SymbolId(0) "events"
-
 tasks/coverage/typescript/tests/cases/compiler/isolatedModulesShadowGlobalTypeNotValue.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Event"]
@@ -16175,11 +15637,6 @@ rebuilt        : ScopeId(0): []
 tasks/coverage/typescript/tests/cases/compiler/isolatedModulesSketchyAliasLocalMerge.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/isolatedModules_resolveJsonModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["j"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModules_resolveJsonModule_strict_outDir_commonJs.ts
@@ -16448,29 +15905,14 @@ after transform: [ReferenceId(2), ReferenceId(4), ReferenceId(7)]
 rebuilt        : [ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxInferenceProducesLiteralAsExpected.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "Test", "TestObject", "_defineProperty", "_jsxFileName", "el1", "el2", "model"]
-rebuilt        : ScopeId(0): ["Test", "TestObject", "_defineProperty", "_jsxFileName", "el1", "el2", "model"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
 Symbol reference IDs mismatch for "TestObject":
 after transform: SymbolId(4): [ReferenceId(11), ReferenceId(16)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : <None>
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : <None>
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : <None>
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function"]
+after transform: ["Function", "React"]
 rebuilt        : ["React"]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicElementsCompatability.tsx
@@ -16762,15 +16204,6 @@ Unresolved references mismatch:
 after transform: ["Math"]
 rebuilt        : ["Math", "literalUnion", "numLiteral"]
 
-tasks/coverage/typescript/tests/cases/compiler/localAliasExportAssignment.ts
-semantic error: Missing SymbolId: "connect"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "connect":
-after transform: SymbolId(0) "connect"
-rebuilt        : SymbolId(0) "connect"
-
 tasks/coverage/typescript/tests/cases/compiler/localClassesInLoop.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -16782,8 +16215,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/localImportNameVsGlobalName.ts
-semantic error: Missing SymbolId: "Key"
-Scope flags mismatch:
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
@@ -16792,9 +16224,6 @@ rebuilt        : ScopeId(2): ["Key"]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(0x0)
 rebuilt        : ScopeId(2): ScopeFlags(Function)
-Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(7), SymbolId(8), SymbolId(11)]
-rebuilt        : ScopeId(3): [SymbolId(5), SymbolId(6), SymbolId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
@@ -16813,15 +16242,9 @@ rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "App":
 after transform: SymbolId(6): Span { start: 72, end: 75 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
-Reference symbol mismatch for "Key":
-after transform: SymbolId(7) "Key"
-rebuilt        : SymbolId(6) "Key"
-Reference symbol mismatch for "Key":
-after transform: SymbolId(7) "Key"
-rebuilt        : SymbolId(6) "Key"
-Reference symbol mismatch for "Key":
-after transform: SymbolId(7) "Key"
-rebuilt        : SymbolId(6) "Key"
+Symbol reference IDs mismatch for "Key":
+after transform: SymbolId(7): [ReferenceId(1), ReferenceId(3), ReferenceId(5), ReferenceId(7)]
+rebuilt        : SymbolId(6): [ReferenceId(17), ReferenceId(19), ReferenceId(21)]
 
 tasks/coverage/typescript/tests/cases/compiler/localTypeParameterInferencePriority.ts
 semantic error: Scope children mismatch:
@@ -17693,23 +17116,8 @@ Unresolved references mismatch:
 after transform: ["Array", "Map", "Math", "Promise", "Proxy", "Reflect", "RegExp", "Symbol", "arguments", "require"]
 rebuilt        : ["Array", "Map", "Math", "Promise", "Proxy", "Reflect", "RegExp", "Symbol", "arguments", "console", "require"]
 
-tasks/coverage/typescript/tests/cases/compiler/moduleAliasAsFunctionArgument.ts
-semantic error: Missing SymbolId: "a"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "a":
-after transform: SymbolId(0) "a"
-rebuilt        : SymbolId(0) "a"
-Reference symbol mismatch for "a":
-after transform: SymbolId(0) "a"
-rebuilt        : SymbolId(0) "a"
-
 tasks/coverage/typescript/tests/cases/compiler/moduleAliasInterface.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["A1", "B1", "_modes", "editor", "editor2", "modesOuter"]
-rebuilt        : ScopeId(0): ["A1", "B1", "_modes", "editor", "editor2"]
-Scope flags mismatch:
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope children mismatch:
@@ -17942,7 +17350,7 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports4.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./f1", "A", "B", "C", "I", "N"]
+after transform: ScopeId(0): ["./f1", "A", "B", "N"]
 rebuilt        : ScopeId(0): ["A"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5)]
@@ -17953,7 +17361,7 @@ rebuilt        : ["undefined"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports5.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./f1", "A", "B", "C", "I", "N"]
+after transform: ScopeId(0): ["./f1", "A", "B", "N"]
 rebuilt        : ScopeId(0): ["A"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5)]
@@ -17964,7 +17372,7 @@ rebuilt        : ["undefined"]
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports6.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["./f1", "A", "B", "C", "I", "N"]
+after transform: ScopeId(0): ["./f1", "A", "B", "N"]
 rebuilt        : ScopeId(0): ["A"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5)]
@@ -18182,15 +17590,6 @@ Symbol span mismatch for "Foo":
 after transform: SymbolId(0): Span { start: 7, end: 10 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
-tasks/coverage/typescript/tests/cases/compiler/moduleNodeImportRequireEmit.ts
-semantic error: Missing SymbolId: "foo"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : SymbolId(0) "foo"
-
 tasks/coverage/typescript/tests/cases/compiler/moduleOuterQualification.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["outer"]
@@ -18202,18 +17601,9 @@ Unresolved references mismatch:
 after transform: ["outer"]
 rebuilt        : []
 
-tasks/coverage/typescript/tests/cases/compiler/modulePreserve1.ts
-semantic error: Missing SymbolId: "B"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "B":
-after transform: SymbolId(1) "B"
-rebuilt        : SymbolId(1) "B"
-
 tasks/coverage/typescript/tests/cases/compiler/modulePreserve2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["cjs", "esm"]
+after transform: ScopeId(0): ["esm"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/modulePreserve5.ts
@@ -18294,11 +17684,6 @@ rebuilt        : ScopeId(0): []
 tasks/coverage/typescript/tests/cases/compiler/moduleResolutionAsTypeReferenceDirectiveAmbient.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["a2"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/moduleResolutionNoResolve.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["a"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleResolutionPackageIdWithRelativeAndAbsolutePath.ts
@@ -18505,8 +17890,7 @@ after transform: SymbolId(6): Span { start: 207, end: 208 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
 
 tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt.ts
-semantic error: Missing SymbolId: "M"
-Scope flags mismatch:
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope flags mismatch:
@@ -18515,9 +17899,6 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
-Binding symbols mismatch:
-after transform: ScopeId(5): [SymbolId(5), SymbolId(6), SymbolId(10)]
-rebuilt        : ScopeId(5): [SymbolId(8), SymbolId(9), SymbolId(10)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -18545,13 +17926,9 @@ rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(4): Span { start: 77, end: 78 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
-Reference symbol mismatch for "M":
-after transform: SymbolId(5) "M"
-rebuilt        : SymbolId(9) "M"
 
 tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt2.ts
-semantic error: Missing SymbolId: "M"
-Scope flags mismatch:
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope flags mismatch:
@@ -18560,9 +17937,6 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
-Binding symbols mismatch:
-after transform: ScopeId(5): [SymbolId(5), SymbolId(6), SymbolId(10)]
-rebuilt        : ScopeId(5): [SymbolId(8), SymbolId(9), SymbolId(10)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -18590,16 +17964,9 @@ rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(4): Span { start: 77, end: 78 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
-Reference symbol mismatch for "M":
-after transform: SymbolId(5) "M"
-rebuilt        : SymbolId(9) "M"
-Reference symbol mismatch for "M":
-after transform: SymbolId(5) "M"
-rebuilt        : SymbolId(9) "M"
 
 tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt4.ts
-semantic error: Missing SymbolId: "M"
-Scope flags mismatch:
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Scope flags mismatch:
@@ -18641,9 +18008,15 @@ rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M":
 after transform: SymbolId(4): Span { start: 77, end: 78 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
-Reference symbol mismatch for "M":
-after transform: SymbolId(5) "M"
-rebuilt        : SymbolId(9) "M"
+Symbol flags mismatch for "M":
+after transform: SymbolId(5): SymbolFlags(FunctionScopedVariable | Interface)
+rebuilt        : SymbolId(9): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "M":
+after transform: SymbolId(5): Span { start: 95, end: 96 }
+rebuilt        : SymbolId(9): Span { start: 112, end: 113 }
+Symbol redeclarations mismatch for "M":
+after transform: SymbolId(5): [Span { start: 112, end: 113 }]
+rebuilt        : SymbolId(9): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt6.ts
 semantic error: Scope flags mismatch:
@@ -18766,15 +18139,6 @@ tasks/coverage/typescript/tests/cases/compiler/multiExtendsSplitInterfaces2.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/multiImportExport.ts
-semantic error: Missing SymbolId: "Drawing"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "Drawing":
-after transform: SymbolId(0) "Drawing"
-rebuilt        : SymbolId(0) "Drawing"
 
 tasks/coverage/typescript/tests/cases/compiler/multiModuleClodule1.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -19037,27 +18401,6 @@ rebuilt        : SymbolId(0): [ReferenceId(9), ReferenceId(11)]
 Symbol reference IDs mismatch for "FileMatch":
 after transform: SymbolId(1): [ReferenceId(2), ReferenceId(7), ReferenceId(9)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(5)]
-
-tasks/coverage/typescript/tests/cases/compiler/narrowedImports.ts
-semantic error: Missing SymbolId: "b1"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
-Reference symbol mismatch for "b1":
-after transform: SymbolId(4) "b1"
-rebuilt        : SymbolId(4) "b1"
-Reference symbol mismatch for "b1":
-after transform: SymbolId(4) "b1"
-rebuilt        : SymbolId(4) "b1"
-
-tasks/coverage/typescript/tests/cases/compiler/narrowedImports_assumeInitialized.ts
-semantic error: Missing SymbolId: "a"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "a":
-after transform: SymbolId(0) "a"
-rebuilt        : SymbolId(0) "a"
 
 tasks/coverage/typescript/tests/cases/compiler/narrowingAssignmentReadonlyRespectsAssertion.ts
 semantic error: Scope children mismatch:
@@ -19565,46 +18908,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["enhancePrisma"]
-
-tasks/coverage/typescript/tests/cases/compiler/nodeResolution1.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["y"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/nodeResolution2.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["y"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/nodeResolution3.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["y"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/nodeResolution4.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["y"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/nodeResolution5.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["y"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/nodeResolution6.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["y"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/nodeResolution7.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["y"]
-rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/nodeResolution8.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["y"]
-rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/nonConflictingRecursiveBaseTypeMembers.ts
 semantic error: Scope children mismatch:
@@ -20771,10 +20074,7 @@ tasks/coverage/typescript/tests/cases/compiler/privacyCheckExportAssignmentOnExp
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/privacyCheckExternalModuleExportAssignmentOfGenericClass.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "Bar":
@@ -22827,16 +22127,9 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/compiler/reactHOCSpreadprops.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(1) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(1) "React"
+semantic error: Symbol reference IDs mismatch for "React":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/reactNamespaceImportPresevation.tsx
 semantic error: Bindings mismatch:
@@ -23118,15 +22411,6 @@ tasks/coverage/typescript/tests/cases/compiler/recursiveExcessPropertyChecks.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-
-tasks/coverage/typescript/tests/cases/compiler/recursiveExportAssignmentAndFindAliasedType7.ts
-semantic error: Missing SymbolId: "self"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "self":
-after transform: SymbolId(0) "self"
-rebuilt        : SymbolId(0) "self"
 
 tasks/coverage/typescript/tests/cases/compiler/recursiveFieldSetting.ts
 semantic error: Symbol reference IDs mismatch for "Recursive1":
@@ -23485,130 +22769,6 @@ Symbol span mismatch for "Models":
 after transform: SymbolId(0): Span { start: 14, end: 20 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile.ts
-semantic error: Missing SymbolId: "b1"
-Missing SymbolId: "b2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-Reference symbol mismatch for "b2":
-after transform: SymbolId(2) "b2"
-rebuilt        : SymbolId(2) "b2"
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelative.ts
-semantic error: Missing SymbolId: "b1"
-Missing SymbolId: "b2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-Reference symbol mismatch for "b2":
-after transform: SymbolId(2) "b2"
-rebuilt        : SymbolId(2) "b2"
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelativeWithoutExtensionResolvesToTs.ts
-semantic error: Missing SymbolId: "f"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "f":
-after transform: SymbolId(0) "f"
-rebuilt        : SymbolId(0) "f"
-
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileTypes.ts
-semantic error: Missing SymbolId: "b"
-Missing SymbolId: "c"
-Missing SymbolId: "d"
-Missing SymbolId: "e"
-Missing SymbolId: "f"
-Missing SymbolId: "g"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10)]
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "c":
-after transform: SymbolId(1) "c"
-rebuilt        : SymbolId(1) "c"
-Reference symbol mismatch for "d":
-after transform: SymbolId(2) "d"
-rebuilt        : SymbolId(2) "d"
-Reference symbol mismatch for "e":
-after transform: SymbolId(3) "e"
-rebuilt        : SymbolId(3) "e"
-Reference symbol mismatch for "f":
-after transform: SymbolId(4) "f"
-rebuilt        : SymbolId(4) "f"
-Reference symbol mismatch for "g":
-after transform: SymbolId(5) "g"
-rebuilt        : SymbolId(5) "g"
-
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithAlwaysStrictWithoutErrors.ts
-semantic error: Missing SymbolId: "b1"
-Missing SymbolId: "b2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-Reference symbol mismatch for "b2":
-after transform: SymbolId(2) "b2"
-rebuilt        : SymbolId(2) "b2"
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithDeclaration.ts
-semantic error: Missing SymbolId: "b1"
-Missing SymbolId: "b2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-Reference symbol mismatch for "b2":
-after transform: SymbolId(2) "b2"
-rebuilt        : SymbolId(2) "b2"
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithEmptyObject.ts
-semantic error: Missing SymbolId: "b1"
-Missing SymbolId: "b2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-Reference symbol mismatch for "b2":
-after transform: SymbolId(2) "b2"
-rebuilt        : SymbolId(2) "b2"
-
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithModuleEmitUndefined.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["b"]
@@ -23639,90 +22799,10 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["b"]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithSourceMap.ts
-semantic error: Missing SymbolId: "b1"
-Missing SymbolId: "b2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-Reference symbol mismatch for "b2":
-after transform: SymbolId(2) "b2"
-rebuilt        : SymbolId(2) "b2"
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithTraillingComma.ts
-semantic error: Missing SymbolId: "b1"
-Missing SymbolId: "b2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-Reference symbol mismatch for "b2":
-after transform: SymbolId(2) "b2"
-rebuilt        : SymbolId(2) "b2"
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutAllowJs.ts
-semantic error: Missing SymbolId: "b1"
-Missing SymbolId: "b2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-Reference symbol mismatch for "b2":
-after transform: SymbolId(2) "b2"
-rebuilt        : SymbolId(2) "b2"
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutEsModuleInterop.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["test"]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutExtensionResolvesToTs.ts
-semantic error: Missing SymbolId: "c1"
-Missing SymbolId: "c2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "c1":
-after transform: SymbolId(0) "c1"
-rebuilt        : SymbolId(0) "c1"
-Reference symbol mismatch for "c2":
-after transform: SymbolId(2) "c2"
-rebuilt        : SymbolId(2) "c2"
-Reference symbol mismatch for "c1":
-after transform: SymbolId(0) "c1"
-rebuilt        : SymbolId(0) "c1"
-
-tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutOutDir.ts
-semantic error: Missing SymbolId: "b1"
-Missing SymbolId: "b2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
-Reference symbol mismatch for "b2":
-after transform: SymbolId(2) "b2"
-rebuilt        : SymbolId(2) "b2"
-Reference symbol mismatch for "b1":
-after transform: SymbolId(0) "b1"
-rebuilt        : SymbolId(0) "b1"
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile_PathMapping.ts
 semantic error: Bindings mismatch:
@@ -23921,13 +23001,9 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), Sc
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/returnTypeParameterWithModules.ts
-semantic error: Missing SymbolId: "A"
-Scope flags mismatch:
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
-Binding symbols mismatch:
-after transform: ScopeId(3): [SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(17)]
-rebuilt        : ScopeId(3): [SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
@@ -23943,9 +23019,6 @@ rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "M2":
 after transform: SymbolId(6): Span { start: 149, end: 151 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
-Reference symbol mismatch for "A":
-after transform: SymbolId(7) "A"
-rebuilt        : SymbolId(8) "A"
 Unresolved reference IDs mismatch for "Array":
 after transform: [ReferenceId(0), ReferenceId(2)]
 rebuilt        : [ReferenceId(0)]
@@ -25751,23 +24824,12 @@ after transform: []
 rebuilt        : ["console"]
 
 tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationImport.ts
-semantic error: Missing SymbolId: "a"
-Missing SymbolId: "b"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6)]
-Symbol flags mismatch for "m":
+semantic error: Symbol flags mismatch for "m":
 after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch for "m":
 after transform: SymbolId(0): Span { start: 14, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Reference symbol mismatch for "a":
-after transform: SymbolId(2) "a"
-rebuilt        : SymbolId(3) "a"
-Reference symbol mismatch for "b":
-after transform: SymbolId(3) "b"
-rebuilt        : SymbolId(4) "b"
 
 tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationModule.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -26481,12 +25543,6 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
-tasks/coverage/typescript/tests/cases/compiler/systemModule18.ts
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-
 tasks/coverage/typescript/tests/cases/compiler/systemModule7.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -27179,15 +26235,6 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
-tasks/coverage/typescript/tests/cases/compiler/typeCheckObjectCreationExpressionWithUndefinedCallResolutionData.ts
-semantic error: Missing SymbolId: "f"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "f":
-after transform: SymbolId(0) "f"
-rebuilt        : SymbolId(0) "f"
-
 tasks/coverage/typescript/tests/cases/compiler/typeConstraintsWithConstructSignatures.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
@@ -27415,10 +26462,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 
 tasks/coverage/typescript/tests/cases/compiler/typeInferenceWithExcessPropertiesJsx.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
@@ -28400,47 +27444,9 @@ tasks/coverage/typescript/tests/cases/compiler/unusedClassesinNamespace3.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImportDeclaration.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["B", "thingy"]
-rebuilt        : ScopeId(0): ["thingy"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/compiler/unusedImports11.ts
-semantic error: Missing SymbolId: "r"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Reference symbol mismatch for "r":
-after transform: SymbolId(4) "r"
-rebuilt        : SymbolId(4) "r"
-
-tasks/coverage/typescript/tests/cases/compiler/unusedImports13.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["FooComponent", "React", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["FooComponent", "_jsx", "_jsxFileName"]
-
-tasks/coverage/typescript/tests/cases/compiler/unusedImports14.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["FooComponent", "React", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["FooComponent", "_jsxFileName"]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["React"]
-
-tasks/coverage/typescript/tests/cases/compiler/unusedImports15.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Element", "FooComponent", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["FooComponent", "_jsx", "_jsxFileName"]
-
-tasks/coverage/typescript/tests/cases/compiler/unusedImports16.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Element", "FooComponent", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["FooComponent", "_jsxFileName"]
 
 tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace4.ts
 semantic error: Scope flags mismatch:
@@ -28894,10 +27900,7 @@ tasks/coverage/typescript/tests/cases/compiler/visSyntax.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/visibilityOfCrossModuleTypeUsage.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["fs", "server"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
@@ -28990,8 +27993,7 @@ after transform: SymbolId(22): SymbolFlags(BlockScopedVariable | Function)
 rebuilt        : SymbolId(18): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/typescript/tests/cases/compiler/withImportDecl.ts
-semantic error: Missing SymbolId: "m3"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["anotherVar", "arrayVar", "b", "deckareVarWithType", "declareVar2", "declaredVar", "m1", "m3", "simpleFunction", "simpleVar", "varWithArrayType", "varWithInitialValue", "varWithSimpleType", "withComplicatedValue"]
 rebuilt        : ScopeId(0): ["anotherVar", "arrayVar", "b", "m1", "m3", "simpleFunction", "simpleVar", "varWithArrayType", "varWithInitialValue", "varWithSimpleType", "withComplicatedValue"]
 Symbol flags mismatch for "m1":
@@ -29003,9 +28005,6 @@ rebuilt        : SymbolId(8): Span { start: 0, end: 0 }
 Symbol flags mismatch for "foo":
 after transform: SymbolId(12): SymbolFlags(BlockScopedVariable | Function)
 rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
-Reference symbol mismatch for "m3":
-after transform: SymbolId(13) "m3"
-rebuilt        : SymbolId(11) "m3"
 
 tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 semantic error: 'with' statements are not allowed
@@ -29068,16 +28067,12 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleMerging.ts
-semantic error: Missing SymbolId: "M"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "M":
-after transform: SymbolId(0) "M"
-rebuilt        : SymbolId(0) "M"
-Reference symbol mismatch for "M":
-after transform: SymbolId(0) "M"
-rebuilt        : SymbolId(0) "M"
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["M"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientInsideNonAmbient.ts
 semantic error: Bindings mismatch:
@@ -29109,15 +28104,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand.ts
-semantic error: Missing SymbolId: "boom"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-Reference symbol mismatch for "boom":
-after transform: SymbolId(3) "boom"
-rebuilt        : SymbolId(3) "boom"
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_declarationEmit.ts
 semantic error: Bindings mismatch:
@@ -30516,15 +29502,6 @@ rebuilt        : ScopeId(1): ["b"]
 Symbol scope ID mismatch for "_Class":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(1): ScopeId(0)
-
-tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/extendClassExpressionFromModule.ts
-semantic error: Missing SymbolId: "foo1"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "foo1":
-after transform: SymbolId(0) "foo1"
-rebuilt        : SymbolId(0) "foo1"
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock11.ts
 semantic error: Symbol reference IDs mismatch for "C":
@@ -33800,33 +32777,6 @@ semantic error: Namespaces exporting non-const are not supported by Babel. Chang
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-
-tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4-amd.ts
-semantic error: Missing SymbolId: "a"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
-Reference symbol mismatch for "a":
-after transform: SymbolId(0) "a"
-rebuilt        : SymbolId(0) "a"
-
-tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4-es6.ts
-semantic error: Missing SymbolId: "a"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
-Reference symbol mismatch for "a":
-after transform: SymbolId(0) "a"
-rebuilt        : SymbolId(0) "a"
-
-tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4.ts
-semantic error: Missing SymbolId: "a"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
-Reference symbol mismatch for "a":
-after transform: SymbolId(0) "a"
-rebuilt        : SymbolId(0) "a"
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports5.ts
 semantic error: Scope children mismatch:
@@ -38138,15 +37088,6 @@ Symbol span mismatch for "container":
 after transform: SymbolId(2): Span { start: 49, end: 58 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 
-tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportAsPrimaryExpression.ts
-semantic error: Missing SymbolId: "foo"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : SymbolId(0) "foo"
-
 tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportNotAsPrimaryExpression.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C1", "E1", "M1", "_defineProperty"]
@@ -38361,71 +37302,13 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignDottedName.ts
-semantic error: Missing SymbolId: "foo1"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "foo1":
-after transform: SymbolId(0) "foo1"
-rebuilt        : SymbolId(0) "foo1"
-
-tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignImportedIdentifier.ts
-semantic error: Missing SymbolId: "foo1"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "foo1":
-after transform: SymbolId(0) "foo1"
-rebuilt        : SymbolId(0) "foo1"
-
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignTypes.ts
-semantic error: Missing SymbolId: "iString"
-Missing SymbolId: "iNumber"
-Missing SymbolId: "iBoolean"
-Missing SymbolId: "iArray"
-Missing SymbolId: "iObject"
-Missing SymbolId: "iAny"
-Missing SymbolId: "iGeneric"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13)]
-Reference symbol mismatch for "iString":
-after transform: SymbolId(0) "iString"
-rebuilt        : SymbolId(0) "iString"
-Reference symbol mismatch for "iNumber":
-after transform: SymbolId(2) "iNumber"
-rebuilt        : SymbolId(2) "iNumber"
-Reference symbol mismatch for "iBoolean":
-after transform: SymbolId(4) "iBoolean"
-rebuilt        : SymbolId(4) "iBoolean"
-Reference symbol mismatch for "iArray":
-after transform: SymbolId(6) "iArray"
-rebuilt        : SymbolId(6) "iArray"
-Reference symbol mismatch for "iObject":
-after transform: SymbolId(8) "iObject"
-rebuilt        : SymbolId(8) "iObject"
-Reference symbol mismatch for "iAny":
-after transform: SymbolId(10) "iAny"
-rebuilt        : SymbolId(10) "iAny"
-Reference symbol mismatch for "iGeneric":
-after transform: SymbolId(12) "iGeneric"
-rebuilt        : SymbolId(12) "iGeneric"
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["Array", "Object", "require"]
 rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentCircularModules.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-
-tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentGenericType.ts
-semantic error: Missing SymbolId: "foo"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : SymbolId(0) "foo"
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedInterface.ts
 semantic error: Scope children mismatch:
@@ -38486,71 +37369,13 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/typescript/tests/cases/conformance/externalModules/importImportOnlyModule.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["answer", "c1"]
-rebuilt        : ScopeId(0): ["answer"]
-
 tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithExtensions.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["a"]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleScoping.ts
-semantic error: Missing SymbolId: "file3"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Reference symbol mismatch for "file3":
-after transform: SymbolId(0) "file3"
-rebuilt        : SymbolId(0) "file3"
-
-tasks/coverage/typescript/tests/cases/conformance/externalModules/nameDelimitedBySlashes.ts
-semantic error: Missing SymbolId: "foo"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : SymbolId(0) "foo"
-
-tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithFileExtension.ts
-semantic error: Missing SymbolId: "foo"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : SymbolId(0) "foo"
-
 tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithRelativePaths.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-
-tasks/coverage/typescript/tests/cases/conformance/externalModules/reexportClassDefinition.ts
-semantic error: Missing SymbolId: "foo1"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "foo1":
-after transform: SymbolId(0) "foo1"
-rebuilt        : SymbolId(0) "foo1"
-
-tasks/coverage/typescript/tests/cases/conformance/externalModules/relativePathToDeclarationFile.ts
-semantic error: Missing SymbolId: "foo"
-Missing SymbolId: "other"
-Missing SymbolId: "relMod"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : SymbolId(0) "foo"
-Reference symbol mismatch for "relMod":
-after transform: SymbolId(2) "relMod"
-rebuilt        : SymbolId(2) "relMod"
-Reference symbol mismatch for "other":
-after transform: SymbolId(1) "other"
-rebuilt        : SymbolId(1) "other"
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/nodeModulesTsFiles.ts
 semantic error: Bindings mismatch:
@@ -38581,7 +37406,7 @@ rebuilt        : ["dec", "f"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.2.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["await", "foo"]
+after transform: ScopeId(0): ["foo"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -38589,19 +37414,6 @@ rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["foo"]
 rebuilt        : []
-
-tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelFileModule.ts
-semantic error: Missing SymbolId: "foo"
-Missing SymbolId: "fum"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : SymbolId(0) "foo"
-Reference symbol mismatch for "fum":
-after transform: SymbolId(1) "fum"
-rebuilt        : SymbolId(1) "fum"
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/typeAndNamespaceExportMerge.ts
 semantic error: Scope children mismatch:
@@ -39725,10 +38537,7 @@ semantic error: Namespaces exporting non-const are not supported by Babel. Chang
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/importDeclarations/importAliasIdentifiers.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["_defineProperty", "alias", "clodule", "clolias", "fundule", "funlias", "moduleA", "p"]
-rebuilt        : ScopeId(0): ["_defineProperty", "clodule", "fundule", "moduleA", "p"]
-Scope flags mismatch:
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
@@ -39834,8 +38643,7 @@ tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarat
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/reExportAliasMakesInstantiated.ts
-semantic error: Missing SymbolId: "test1"
-Bindings mismatch:
+semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["mod1", "mod2", "pack1", "pack2", "test1", "test2"]
 rebuilt        : ScopeId(0): ["test1", "test2"]
 Scope children mismatch:
@@ -39983,10 +38791,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty1.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Comp", "React", "_jsxFileName", "_reactJsxRuntime", "k", "k1", "k2"]
-rebuilt        : ScopeId(0): ["Comp", "_jsxFileName", "_reactJsxRuntime", "k", "k1", "k2"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
@@ -40010,28 +38815,15 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty12.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(6)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
 Symbol reference IDs mismatch for "Button":
 after transform: SymbolId(2): [ReferenceId(0)]
 rebuilt        : SymbolId(4): []
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty16.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "Test", "_Fragment", "_jsx", "_jsxFileName", "_jsxs"]
-rebuilt        : ScopeId(0): ["Test", "_Fragment", "_jsx", "_jsxFileName", "_jsxs"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
@@ -40039,54 +38831,28 @@ after transform: ["Foo", "JSX", "true"]
 rebuilt        : ["Foo"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty3.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4), SymbolId(6), SymbolId(8), SymbolId(9)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(6)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty6.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(6), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty8.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(6), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty9.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxIntersectionElementPropsType.tsx
 semantic error: Bindings mismatch:
@@ -40114,11 +38880,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 Unresolved references mismatch:
 after transform: ["console", "true"]
 rebuilt        : ["console"]
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/commentEmittingInPreserveJsx1.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx
 semantic error: Bindings mismatch:
@@ -40250,16 +39011,9 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution16.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution8.tsx
 semantic error: Bindings mismatch:
@@ -40287,28 +39041,14 @@ after transform: [ReferenceId(2)]
 rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolution1.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDefaultAttributesResolution2.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(2) "React"
 Unresolved references mismatch:
 after transform: ["require", "true"]
 rebuilt        : ["require"]
@@ -40562,69 +39302,8 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["React"]
 
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType1.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "decorator", "decorator2", "decorator3"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "decorator", "decorator2", "decorator3"]
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType2.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "decorator4"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "decorator4"]
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType3.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType4.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType5.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(9)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(4) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(4) "React"
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType6.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(9)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(4) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(4) "React"
-
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType7.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "decorator", "decorator1"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "decorator", "decorator1"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Unresolved references mismatch:
@@ -40632,10 +39311,7 @@ after transform: ["Component", "JSX", "require"]
 rebuilt        : ["Component", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType8.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "decorator", "decorator1"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "decorator", "decorator1"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Unresolved references mismatch:
@@ -40643,13 +39319,9 @@ after transform: ["Component", "JSX", "require"]
 rebuilt        : ["Component", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxGenericAttributesType9.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(4), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
+semantic error: Symbol reference IDs mismatch for "React":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+rebuilt        : SymbolId(3): [ReferenceId(1)]
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
@@ -40712,22 +39384,20 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter1.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
+Symbol reference IDs mismatch for "React":
+after transform: SymbolId(0): [ReferenceId(1)]
+rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactComponentWithDefaultTypeParameter2.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
+Symbol reference IDs mismatch for "React":
+after transform: SymbolId(0): [ReferenceId(1)]
+rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmit1.tsx
 semantic error: Bindings mismatch:
@@ -41013,106 +39683,46 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["React"]
 
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSfcReturnNull.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "G", "Greet", "React", "_jsxFileName", "_reactJsxRuntime", "foo"]
-rebuilt        : ScopeId(0): ["Foo", "G", "Greet", "_jsxFileName", "_reactJsxRuntime", "foo"]
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSfcReturnNullStrictNullChecks.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "G", "Greet", "React", "_jsxFileName", "_reactJsxRuntime", "foo"]
-rebuilt        : ScopeId(0): ["Foo", "G", "Greet", "_jsxFileName", "_reactJsxRuntime", "foo"]
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution1.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
-
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution11.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13), SymbolId(14), SymbolId(15)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12), SymbolId(13), SymbolId(14)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
 Unresolved references mismatch:
 after transform: ["require", "true"]
 rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution13.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["ChildComponent", "Component", "React", "_jsx", "_jsxFileName", "_objectSpread"]
-rebuilt        : ScopeId(0): ["ChildComponent", "Component", "_jsx", "_jsxFileName", "_objectSpread"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution15.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["AnotherComponent", "Component", "React", "_jsx", "_jsxFileName", "_objectSpread"]
-rebuilt        : ScopeId(0): ["AnotherComponent", "Component", "_jsx", "_jsxFileName", "_objectSpread"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution3.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution7.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
 Unresolved references mismatch:
 after transform: ["require", "true"]
 rebuilt        : ["require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution8.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadAttributesResolution9.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11), SymbolId(12)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3), SymbolId(4), SymbolId(5), SymbolId(6), SymbolId(7), SymbolId(8), SymbolId(9), SymbolId(10), SymbolId(11)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(3) "React"
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadChildren.tsx
 semantic error: Spread children are not supported in React.
@@ -41122,10 +39732,7 @@ semantic error: Spread children are not supported in React.
 Spread children are not supported in React.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload2.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "c1", "c10", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "defaultObj", "obj", "obj1", "obj2"]
-rebuilt        : ScopeId(0): ["_jsxFileName", "_objectSpread", "_reactJsxRuntime", "c1", "c10", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "defaultObj", "obj", "obj1", "obj2"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
@@ -41141,10 +39748,7 @@ after transform: ["JSX", "ThreeThing", "ZeroThingOrTwoThing", "require"]
 rebuilt        : ["ThreeThing", "ZeroThingOrTwoThing", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload6.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["MainButton", "React", "_jsx", "_jsxFileName", "_objectSpread", "b0", "b1", "b10", "b11", "b12", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "obj", "obj1", "obj2"]
-rebuilt        : ScopeId(0): ["MainButton", "_jsx", "_jsxFileName", "_objectSpread", "b0", "b1", "b10", "b11", "b12", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "obj", "obj1", "obj2"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 Unresolved references mismatch:
@@ -41152,23 +39756,12 @@ after transform: ["JSX", "console"]
 rebuilt        : ["console"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentWithDefaultTypeParameter1.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["MyComponent", "React", "_jsxFileName", "_reactJsxRuntime", "i", "i1"]
-rebuilt        : ScopeId(0): ["MyComponent", "_jsxFileName", "_reactJsxRuntime", "i", "i1"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponents3.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["App", "Foo", "MainMenu", "React", "_jsxFileName", "_reactJsxRuntime", "foo"]
-rebuilt        : ScopeId(0): ["App", "Foo", "MainMenu", "_jsxFileName", "_reactJsxRuntime", "foo"]
-
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments1.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Baz", "React", "_jsxFileName", "_react", "_reactJsxRuntime", "createLink", "createLink1", "i"]
-rebuilt        : ScopeId(0): ["Baz", "_jsxFileName", "_react", "_reactJsxRuntime", "createLink", "createLink1", "i"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Unresolved references mismatch:
@@ -41176,10 +39769,7 @@ after transform: ["Array", "ComponentWithTwoAttributes", "InferParamComponent", 
 rebuilt        : ["ComponentWithTwoAttributes", "InferParamComponent", "Link", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments3.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Baz", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "createLink"]
-rebuilt        : ScopeId(0): ["Baz", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "createLink"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Unresolved references mismatch:
@@ -41187,10 +39777,7 @@ after transform: ["JSX", "Link", "OverloadComponent", "require"]
 rebuilt        : ["Link", "OverloadComponent", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments5.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "React", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "createComponent"]
-rebuilt        : ScopeId(0): ["Bar", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "createComponent"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Unresolved references mismatch:
@@ -41198,65 +39785,17 @@ after transform: ["Component", "ComponentSpecific", "ComponentSpecific1", "JSX",
 rebuilt        : ["Component", "ComponentSpecific", "ComponentSpecific1", "require"]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxTypeArgumentsJsxPreserveOutput.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "React", "_jsxFileName", "_reactJsxRuntime"]
-rebuilt        : ScopeId(0): ["Foo", "_jsxFileName", "_reactJsxRuntime"]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType5.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["EmptySFC1", "EmptySFC2", "EmptySFCComp", "React", "SFC2", "SFC2AndEmptyComp", "_jsxFileName", "a", "a1", "b"]
-rebuilt        : ScopeId(0): ["EmptySFC1", "EmptySFC2", "EmptySFCComp", "SFC2", "SFC2AndEmptyComp", "_jsxFileName", "a", "a1", "b"]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : <None>
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : <None>
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : <None>
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : <None>
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : <None>
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["React"]
-
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionTypeComponent1.tsx
-semantic error: Missing SymbolId: "React"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(2), SymbolId(4), SymbolId(5)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(4)]
-Scope children mismatch:
+semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(1) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(1) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(1) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(1) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(1) "React"
-Reference symbol mismatch for "React":
-after transform: SymbolId(0) "React"
-rebuilt        : SymbolId(1) "React"
+Symbol reference IDs mismatch for "React":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17)]
+rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(5), ReferenceId(7), ReferenceId(10), ReferenceId(11)]
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/allowImportingTypesDtsExtension.ts
 semantic error: Bindings mismatch:
@@ -41282,23 +39821,6 @@ tasks/coverage/typescript/tests/cases/conformance/moduleResolution/extensionLoad
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["a", "dir"]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/conformance/moduleResolution/packageJsonMain.ts
-semantic error: Missing SymbolId: "foo"
-Missing SymbolId: "bar"
-Missing SymbolId: "baz"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Reference symbol mismatch for "foo":
-after transform: SymbolId(0) "foo"
-rebuilt        : SymbolId(0) "foo"
-Reference symbol mismatch for "bar":
-after transform: SymbolId(1) "bar"
-rebuilt        : SymbolId(1) "bar"
-Reference symbol mismatch for "baz":
-after transform: SymbolId(2) "baz"
-rebuilt        : SymbolId(2) "baz"
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeImportType1.ts
 semantic error: Scope children mismatch:
@@ -41351,16 +39873,6 @@ semantic error: Expected a semicolon or an implicit semicolon after a statement,
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_vsAmbient.ts
 semantic error: Expected a semicolon or an implicit semicolon after a statement, but found none
-
-tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAssignments.ts
-semantic error: Missing SymbolId: "fs"
-Missing SymbolId: "fs2"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Reference symbol mismatch for "fs":
-after transform: SymbolId(0) "fs"
-rebuilt        : SymbolId(0) "fs"
 
 tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmit.ts
 semantic error: Scope children mismatch:
@@ -41427,15 +39939,6 @@ tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesTripleSlashRef
 semantic error: Unresolved references mismatch:
 after transform: ["const"]
 rebuilt        : []
-
-tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFilesForNodeNativeModules.ts
-semantic error: Missing SymbolId: "mod"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "mod":
-after transform: SymbolId(0) "mod"
-rebuilt        : SymbolId(0) "mod"
 
 tasks/coverage/typescript/tests/cases/conformance/override/override10.ts
 semantic error: Scope children mismatch:
@@ -41934,72 +40437,6 @@ rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["Partial"]
 rebuilt        : []
-
-tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias.ts
-semantic error: Missing SymbolId: "b"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
-Reference symbol mismatch for "b":
-after transform: SymbolId(0) "b"
-rebuilt        : SymbolId(0) "b"
 
 tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSRedeclare3.ts
 semantic error: Identifier `orbitol` has already been declared
