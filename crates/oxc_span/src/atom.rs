@@ -22,14 +22,14 @@ pub struct Atom<'a>(&'a str);
 impl Atom<'static> {
     /// Get an [`Atom`] containing a static string.
     #[inline]
-    pub const fn r#static(s: &'static str) -> Self {
+    pub const fn new_const(s: &'static str) -> Self {
         Atom(s)
     }
 
     /// Get an [`Atom`] containing the empty string (`""`).
     #[inline]
     pub const fn empty() -> Self {
-        Self::r#static("")
+        Self::new_const("")
     }
 }
 
