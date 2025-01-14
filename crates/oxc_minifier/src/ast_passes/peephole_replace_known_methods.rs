@@ -314,9 +314,16 @@ impl<'a> PeepholeReplaceKnownMethods {
                 }
                 Some(ctx.ast.expression_string_literal(ce.span, Self::format_radix(i, radix), None))
             }
-            e if e.is_literal() && args.is_empty() => {
+            // `null` returns type errors
+            Expression::BooleanLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::RegExpLiteral(_)
+            | Expression::StringLiteral(_)
+                if args.is_empty() =>
+            {
                 use oxc_ecmascript::ToJsString;
-                e.to_js_string().map(|s| ctx.ast.expression_string_literal(ce.span, s, None))
+                object.to_js_string().map(|s| ctx.ast.expression_string_literal(ce.span, s, None))
             }
             _ => None,
         }
@@ -1209,7 +1216,10 @@ mod test {
         test("123 .toString()", "'123';");
         test("NaN.toString()", "'NaN';");
         test("Infinity.toString()", "'Infinity';");
-        // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
+        test("1n.toString()", "'1'");
+        test_same("254n.toString(16);"); // unimplemented
+                                         // test("/a\\\\b/ig.toString()", "'/a\\\\\\\\b/ig';");
+        test_same("null.toString()"); // type error
 
         test("100 .toString(0)", "100 .toString(0)");
         test("100 .toString(1)", "100 .toString(1)");

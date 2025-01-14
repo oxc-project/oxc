@@ -92,6 +92,7 @@ mod eslint {
     pub mod no_iterator;
     pub mod no_label_var;
     pub mod no_labels;
+    pub mod no_lone_blocks;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_multi_assign;
@@ -145,6 +146,7 @@ mod eslint {
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
+    pub mod prefer_promise_reject_errors;
     pub mod prefer_rest_params;
     pub mod prefer_spread;
     pub mod radix;
@@ -548,6 +550,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_multi_assign,
     eslint::no_nested_ternary,
     eslint::no_labels,
+    eslint::no_lone_blocks,
     eslint::no_restricted_imports,
     eslint::no_object_constructor,
     eslint::no_duplicate_imports,
@@ -641,6 +644,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
+    eslint::prefer_promise_reject_errors,
     eslint::prefer_rest_params,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,

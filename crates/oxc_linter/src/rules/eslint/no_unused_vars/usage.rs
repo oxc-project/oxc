@@ -291,7 +291,9 @@ impl<'a> Symbol<'_, 'a> {
                 | AstKind::ExportNamedDeclaration(_)
                 | AstKind::ExportDefaultDeclaration(_)
                 | AstKind::ExportAllDeclaration(_)
-                | AstKind::Program(_) => {
+                | AstKind::Program(_)
+                // It refers to value bindings, not types
+                | AstKind::TSTypeQuery(_) => {
                     return false;
                 }
 

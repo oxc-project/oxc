@@ -1594,6 +1594,7 @@ dependencies = [
  "oxc_codegen",
  "oxc_isolated_declarations",
  "oxc_linter",
+ "oxc_mangler",
  "oxc_minifier",
  "oxc_parser",
  "oxc_prettier",
@@ -1768,7 +1769,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.15.5"
+version = "0.15.6"
 dependencies = [
  "bitflags 2.7.0",
  "convert_case",
@@ -1828,7 +1829,9 @@ dependencies = [
 name = "oxc_mangler"
 version = "0.45.0"
 dependencies = [
+ "compact_str",
  "itertools",
+ "oxc_allocator",
  "oxc_ast",
  "oxc_index",
  "oxc_semantic",
@@ -2206,7 +2209,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.15.5"
+version = "0.15.6"
 dependencies = [
  "bpaf",
  "ignore",
