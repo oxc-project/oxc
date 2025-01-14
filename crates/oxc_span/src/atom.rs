@@ -20,10 +20,16 @@ use crate::{cmp::ContentEq, hash::ContentHash, CompactStr};
 pub struct Atom<'a>(&'a str);
 
 impl Atom<'static> {
+    /// Get an [`Atom`] containing a static string.
+    #[inline]
+    pub const fn r#static(s: &'static str) -> Self {
+        Atom(s)
+    }
+
     /// Get an [`Atom`] containing the empty string (`""`).
     #[inline]
     pub const fn empty() -> Self {
-        Atom("")
+        Self::r#static("")
     }
 }
 
