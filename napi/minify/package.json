@@ -4,10 +4,7 @@
   "scripts": {
     "build-dev": "napi build --platform",
     "build": "napi build --platform --release",
-    "test": "echo 'skip'"
-  },
-  "engines": {
-    "node": ">=14.*"
+    "test": "vitest --typecheck run ./test"
   },
   "napi": {
     "binaryName": "minify",

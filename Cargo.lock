@@ -1870,7 +1870,9 @@ dependencies = [
  "oxc_codegen",
  "oxc_minifier",
  "oxc_parser",
+ "oxc_sourcemap",
  "oxc_span",
+ "oxc_syntax",
 ]
 
 [[package]]
