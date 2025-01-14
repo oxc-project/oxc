@@ -16,29 +16,25 @@ impl<'a> IsolatedDeclarations<'a> {
         &mut self,
         func: &Function<'a>,
         declare: Option<bool>,
-    ) -> Option<Box<'a, Function<'a>>> {
-        if func.declare {
-            None
-        } else {
-            let return_type = self.infer_function_return_type(func);
-            if return_type.is_none() {
-                self.error(function_must_have_explicit_return_type(get_function_span(func)));
-            }
-            let params = self.transform_formal_parameters(&func.params);
-            Some(self.ast.alloc_function(
-                func.span,
-                func.r#type,
-                func.id.clone_in(self.ast.allocator),
-                false,
-                false,
-                declare.unwrap_or_else(|| self.is_declare()),
-                func.type_parameters.clone_in(self.ast.allocator),
-                func.this_param.clone_in(self.ast.allocator),
-                params,
-                return_type,
-                NONE,
-            ))
+    ) -> Box<'a, Function<'a>> {
+        let return_type = self.infer_function_return_type(func);
+        if return_type.is_none() {
+            self.error(function_must_have_explicit_return_type(get_function_span(func)));
         }
+        let params = self.transform_formal_parameters(&func.params);
+        self.ast.alloc_function(
+            func.span,
+            func.r#type,
+            func.id.clone_in(self.ast.allocator),
+            false,
+            false,
+            declare.unwrap_or_else(|| self.is_declare()),
+            func.type_parameters.clone_in(self.ast.allocator),
+            func.this_param.clone_in(self.ast.allocator),
+            params,
+            return_type,
+            NONE,
+        )
     }
 
     pub(crate) fn transform_formal_parameter(

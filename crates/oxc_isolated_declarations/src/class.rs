@@ -347,11 +347,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         decl: &Class<'a>,
         declare: Option<bool>,
-    ) -> Option<Box<'a, Class<'a>>> {
-        if decl.declare {
-            return None;
-        }
-
+    ) -> Box<'a, Class<'a>> {
         if let Some(super_class) = &decl.super_class {
             let is_not_allowed = match super_class {
                 Expression::Identifier(_) => false,
@@ -500,7 +496,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
 
                     if property.computed && self.report_property_key(&property.key) {
-                        return None;
+                        continue;
                     }
 
                     if property.key.is_private_identifier() {
@@ -550,7 +546,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let body = self.ast.class_body(decl.body.span, elements);
 
-        Some(self.ast.alloc_class(
+        self.ast.alloc_class(
             decl.span,
             decl.r#type,
             self.ast.vec(),
@@ -562,7 +558,7 @@ impl<'a> IsolatedDeclarations<'a> {
             body,
             decl.r#abstract,
             declare.unwrap_or_else(|| self.is_declare()),
-        ))
+        )
     }
 
     pub(crate) fn create_formal_parameters(
