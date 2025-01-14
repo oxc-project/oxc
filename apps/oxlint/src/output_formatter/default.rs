@@ -47,6 +47,13 @@ impl DiagnosticReporter for GraphicalReporter {
         Some(output)
     }
 }
+impl GraphicalReporter {
+    #[cfg(test)]
+    pub fn with_handler(mut self, handler: GraphicalReportHandler) -> Self {
+        self.handler = handler;
+        self
+    }
+}
 
 #[cfg(test)]
 mod test {
@@ -54,7 +61,7 @@ mod test {
         default::{DefaultOutputFormatter, GraphicalReporter},
         InternalFormatter,
     };
-    use miette::NamedSource;
+    use miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
     use oxc_diagnostics::{reporter::DiagnosticReporter, OxcDiagnostic};
     use oxc_span::Span;
 
@@ -78,7 +85,10 @@ mod test {
 
     #[test]
     fn reporter_error() {
-        let mut reporter = GraphicalReporter::default();
+        let mut reporter = GraphicalReporter::default().with_handler(
+            GraphicalReportHandler::new_themed(GraphicalTheme::none()).with_links(false),
+        );
+
         let error = OxcDiagnostic::warn("error message")
             .with_label(Span::new(0, 8))
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
@@ -88,7 +98,7 @@ mod test {
         assert!(result.is_some());
         assert_eq!(
             result.unwrap(),
-            "\n  \u{1b}[38;2;244;191;117;1m⚠\u{1b}[0m \u{1b}[38;2;244;191;117;1merror message\u{1b}[0m\n   ╭─[\u{1b}[38;2;92;157;255;1mfile://test.ts\u{1b}[0m:1:1]\n \u{1b}[2m1\u{1b}[0m │ debugger;\n   · \u{1b}[38;2;246;87;248m────────\u{1b}[0m\n   ╰────\n"
+            "\n  ! error message\n   ,-[file://test.ts:1:1]\n 1 | debugger;\n   : ^^^^^^^^\n   `----\n"
         );
     }
 }
