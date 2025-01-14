@@ -32,8 +32,30 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    pub(crate) fn report_property_key(&self, key: &PropertyKey<'a>, computed: bool) -> bool {
-        if computed && !self.is_literal_key(key) {
+    /// Check the property key whether it is a `Symbol.iterator` or `global.Symbol.iterator`
+    pub(crate) fn is_global_symbol(key: &PropertyKey<'a>) -> bool {
+        let PropertyKey::StaticMemberExpression(member) = key else {
+            return false;
+        };
+
+        // TODO: Unsupported checking if it is a global Symbol yet
+        match &member.object {
+            // `Symbol.iterator`
+            Expression::Identifier(ident) => ident.name == "Symbol",
+            // `global.Symbol.iterator`
+            Expression::StaticMemberExpression(expr) => {
+                expr.property.name == "Symbol"
+                    && matches!(
+                        &expr.object, Expression::Identifier(ident)
+                        if matches!(ident.name.as_str(), "window" | "globalThis")
+                    )
+            }
+            _ => false,
+        }
+    }
+
+    pub(crate) fn report_property_key(&self, key: &PropertyKey<'a>) -> bool {
+        if !self.is_literal_key(key) && !Self::is_global_symbol(key) {
             self.error(computed_property_name(key.span()));
             true
         } else {
@@ -367,7 +389,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         has_private_key = true;
                         continue;
                     }
-                    if self.report_property_key(&method.key, method.computed) {
+                    if method.computed && self.report_property_key(&method.key) {
                         continue;
                     }
 
@@ -462,7 +484,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
-                    if self.report_property_key(&property.key, property.computed) {
+                    if property.computed && self.report_property_key(&property.key) {
                         continue;
                     }
 
@@ -477,7 +499,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
-                    if self.report_property_key(&property.key, property.computed) {
+                    if property.computed && self.report_property_key(&property.key) {
                         return None;
                     }
 
