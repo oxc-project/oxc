@@ -496,8 +496,6 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         sequence_expr: &mut SequenceExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        let should_include_ret_val =
-            !matches!(ctx.parent(), Ancestor::ExpressionStatementExpression(_));
         let should_keep_as_sequence_expr = matches!(
             ctx.parent(),
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
@@ -510,9 +508,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         let (should_fold, new_len) = sequence_expr.expressions.iter().enumerate().fold(
             (false, 0),
             |(mut should_fold, mut new_len), (i, expr)| {
-                if expr.may_have_side_effects()
-                    || (should_include_ret_val && i == sequence_expr.expressions.len() - 1)
-                {
+                if i == sequence_expr.expressions.len() - 1 || expr.may_have_side_effects() {
                     new_len += 1;
                 } else {
                     should_fold = true;
@@ -529,7 +525,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
             let mut new_exprs = ctx.ast.vec_with_capacity(new_len);
             let len = sequence_expr.expressions.len();
             for (i, expr) in sequence_expr.expressions.iter_mut().enumerate() {
-                if expr.may_have_side_effects() || (should_include_ret_val && i == len - 1) {
+                if i == len - 1 || expr.may_have_side_effects() {
                     new_exprs.push(ctx.ast.move_expression(expr));
                 }
             }
@@ -744,6 +740,7 @@ mod test {
         fold("var obj = Object((null, 2, 3), 1, 2);", "var obj = Object(3, 1, 2);");
         fold_same("(0 instanceof 0, foo)");
         fold_same("(0 in 0, foo)");
+        fold_same("React.useEffect(() => (isMountRef.current = false, () => { isMountRef.current = true; }), [])");
     }
 
     #[test]
