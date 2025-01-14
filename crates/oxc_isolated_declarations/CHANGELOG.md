@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.46.0] - 2025-01-14
+
+### Bug Fixes
+
+- 4071878 isolated-declarations: Retain `declare` declarations when they are exported (#8477) (Dunqing)
+- 7ee7634 isolated-declarations: Import statement disappears when import binding is referenced in nested `typeof` (#8476) (Dunqing)
+- 7252cb0 isolated-declarations: Unexpected error when global `Symbol` as property key (#8475) (Dunqing)
+
 ## [0.45.0] - 2025-01-11
 
 ### Refactor

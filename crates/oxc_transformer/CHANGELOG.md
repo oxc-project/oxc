@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.46.0] - 2025-01-14
+
+### Bug Fixes
+
+- c444de8 transformer/arrow-functions: Transform `this` and `super` incorrectly in async arrow function (#8435) (Dunqing)
+- 270245f transformer/typescript: Correct the semantic for TSImportEqualsDeclaration transformation (#8463) (Dunqing)
+- 2a400d6 transformer/typescript: Retain TSImportEqualsDeclaration when it is exported (Dunqing)
+- ab694b0 transformer/typescript: Retain `TSImportEqualsDeclaration` in `namespace` when its binding has been referenced or `onlyRemoveTypeImports` is true (#8458) (Dunqing)
+
+### Refactor
+
+- c83ce5c transformer/typescript: Improve transforming namespace (#8459) (Dunqing)
+
 ## [0.45.0] - 2025-01-11
 
 ### Features
