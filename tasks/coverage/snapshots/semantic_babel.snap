@@ -676,17 +676,12 @@ after transform: SymbolId(3): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/nested-same-name/input.ts
-semantic error: Missing SymbolId: "N"
-Missing SymbolId: "_N"
-Missing ReferenceId: "_N"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(2), SymbolId(3)]
-rebuilt        : ScopeId(1): [SymbolId(2), SymbolId(3)]
+semantic error: Symbol flags mismatch for "N":
+after transform: SymbolId(1): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N":
+after transform: SymbolId(1): Span { start: 37, end: 38 }
+rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/anonymous-generator/input.ts
 semantic error: Unresolved references mismatch:
@@ -1036,16 +1031,12 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body/input.ts
-semantic error: Missing SymbolId: "N"
-Missing SymbolId: "_N"
-Missing ReferenceId: "N"
-Missing ReferenceId: "N"
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-Binding symbols mismatch:
-after transform: ScopeId(1): [SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+semantic error: Symbol flags mismatch for "N":
+after transform: SymbolId(0): SymbolFlags(NameSpaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "N":
+after transform: SymbolId(0): Span { start: 10, end: 11 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare/input.ts
 semantic error: Bindings mismatch:
@@ -1096,12 +1087,7 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["M", "N", "m"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6)]
-rebuilt        : ScopeId(0): []
+semantic error: Ambient modules cannot be nested in other modules or namespaces.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare/input.ts
 semantic error: Bindings mismatch:
