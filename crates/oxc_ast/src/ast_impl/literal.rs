@@ -206,12 +206,6 @@ impl ContentEq for RegExpLiteral<'_> {
     }
 }
 
-impl ContentHash for RegExpLiteral<'_> {
-    fn content_hash<H: Hasher>(&self, state: &mut H) {
-        ContentHash::content_hash(&self.regex, state);
-    }
-}
-
 impl fmt::Display for RegExp<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "/{}/{}", self.pattern, self.flags)
