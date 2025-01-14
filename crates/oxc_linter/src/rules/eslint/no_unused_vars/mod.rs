@@ -337,8 +337,7 @@ impl NoUnusedVars {
     }
 
     fn should_skip_symbol(symbol: &Symbol<'_, '_>) -> bool {
-        const AMBIENT_NAMESPACE_FLAGS: SymbolFlags =
-            SymbolFlags::NameSpaceModule;
+        const AMBIENT_NAMESPACE_FLAGS: SymbolFlags = SymbolFlags::NameSpaceModule;
 
         let flags = symbol.flags();
 
