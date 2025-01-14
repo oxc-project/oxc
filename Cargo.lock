@@ -1830,6 +1830,7 @@ name = "oxc_mangler"
 version = "0.45.0"
 dependencies = [
  "itertools",
+ "oxc_allocator",
  "oxc_ast",
  "oxc_index",
  "oxc_semantic",
