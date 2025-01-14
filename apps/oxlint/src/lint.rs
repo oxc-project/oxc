@@ -1,5 +1,5 @@
 use std::{
-    env,
+    env, fs,
     io::BufWriter,
     path::{Path, PathBuf},
     time::Instant,
@@ -118,15 +118,32 @@ impl Runner for LintRunner {
 
         enable_plugins.apply_overrides(&mut oxlintrc.plugins);
 
-        let oxlintrc_for_print =
-            if misc_options.print_config { Some(oxlintrc.clone()) } else { None };
+        let oxlintrc_for_print = if misc_options.print_config || basic_options.init {
+            Some(oxlintrc.clone())
+        } else {
+            None
+        };
         let config_builder =
             ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).with_filters(filter);
 
         if let Some(basic_config_file) = oxlintrc_for_print {
-            return CliRunResult::PrintConfigResult {
-                config_file: config_builder.resolve_final_config_file(basic_config_file),
-            };
+            let config_file = config_builder.resolve_final_config_file(basic_config_file);
+            if misc_options.print_config {
+                return CliRunResult::PrintConfigResult { config_file };
+            } else if basic_options.init {
+                match fs::write(Self::DEFAULT_OXLINTRC, config_file) {
+                    Ok(()) => {
+                        return CliRunResult::ConfigFileInitResult {
+                            message: "Configuration file created".to_string(),
+                        }
+                    }
+                    Err(_) => {
+                        return CliRunResult::ConfigFileInitResult {
+                            message: "Failed to create configuration file".to_string(),
+                        }
+                    }
+                }
+            }
         }
 
         let mut options = LintServiceOptions::new(self.cwd, paths)
@@ -283,7 +300,7 @@ impl LintRunner {
 
 #[cfg(test)]
 mod test {
-    use std::{env, path::MAIN_SEPARATOR_STR};
+    use std::{env, fs, path::MAIN_SEPARATOR_STR};
 
     use super::LintRunner;
     use crate::cli::{lint_command, CliRunResult, LintResult, Runner};
@@ -748,6 +765,18 @@ mod test {
             .replace("\r\n", "\n");
 
         assert_eq!(config, expect_json.trim());
+    }
+
+    #[test]
+    fn test_init_config() {
+        let args = &["--init"];
+        let options = lint_command().run_inner(args).unwrap();
+        let ret = LintRunner::new(options).run();
+        let CliRunResult::ConfigFileInitResult { message } = ret else {
+            panic!("Expected configuration file to be created, got {ret:?}")
+        };
+        assert_eq!(message, "Configuration file created");
+        fs::remove_file(LintRunner::DEFAULT_OXLINTRC).unwrap();
     }
 
     #[test]
