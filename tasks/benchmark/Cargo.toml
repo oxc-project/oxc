@@ -69,6 +69,7 @@ oxc_codegen = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
 oxc_linter = { workspace = true, optional = true }
 oxc_minifier = { workspace = true, optional = true }
+oxc_mangler = { workspace = true, optional = true }
 oxc_parser = { workspace = true, features = ["benchmarking"], optional = true }
 oxc_prettier = { workspace = true, optional = true }
 oxc_semantic = { workspace = true, optional = true }
@@ -89,6 +90,7 @@ default = [
   "dep:oxc_isolated_declarations",
   "dep:oxc_linter",
   "dep:oxc_minifier",
+  "dep:oxc_mangler",
   "dep:oxc_parser",
   "dep:oxc_prettier",
   "dep:oxc_semantic",
@@ -115,6 +117,7 @@ semantic = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_semantic", "dep:oxc_
 minifier = [
   "dep:oxc_allocator",
   "dep:oxc_minifier",
+  "dep:oxc_mangler",
   "dep:oxc_parser",
   "dep:oxc_semantic",
   "dep:oxc_span",
