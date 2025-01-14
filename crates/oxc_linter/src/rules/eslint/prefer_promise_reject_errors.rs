@@ -1,4 +1,5 @@
 use oxc_allocator::Box;
+use oxc_ast::ast::MemberExpression;
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression, FormalParameters},
     AstKind,
@@ -136,31 +137,65 @@ fn check_reject_call(call_expr: &CallExpression, ctx: &LintContext, allow_empty_
     }
 }
 
+#[allow(clippy::float_cmp, clippy::cast_precision_loss)]
 fn check_reject_in_function(
     params: &Box<'_, FormalParameters<'_>>,
     ctx: &LintContext,
     allow_empty_reject: bool,
 ) {
-    if params.parameters_count() <= 1 {
+    if params.items.len() >= 2 {
+        let Some(reject_arg) = params.items[1].pattern.get_binding_identifier() else {
+            return;
+        };
+
+        ctx.symbol_references(reject_arg.symbol_id()).for_each(|reference| {
+            let Some(node) = ctx.nodes().parent_node(reference.node_id()) else {
+                return;
+            };
+            if let AstKind::CallExpression(call_expr) = node.kind() {
+                check_reject_call(call_expr, ctx, allow_empty_reject);
+            }
+        });
         return;
     }
 
-    let Some(reject_arg) = params.items[1].pattern.get_binding_identifier() else {
-        return;
-    };
+    let Some(rest_param) = &params.rest else { return };
+    let Some(rest_arg) = rest_param.argument.get_binding_identifier() else { return };
+    let rest_index = (1 - params.items.len()) as f64;
+    for reference in ctx.symbol_references(rest_arg.symbol_id()) {
+        let node = ctx.nodes().get_node(reference.node_id());
 
-    ctx.symbol_references(reject_arg.symbol_id()).for_each(|reference| {
-        let Some(node) = ctx.nodes().parent_node(reference.node_id()) else {
-            return;
+        if !matches!(node.kind(), AstKind::IdentifierReference(_)) {
+            continue;
+        }
+
+        let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else { continue };
+        let AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(member_expr)) =
+            parent.kind()
+        else {
+            continue;
         };
+
+        let Expression::NumericLiteral(literal) = &member_expr.expression else {
+            continue;
+        };
+
+        if literal.value != rest_index {
+            continue;
+        }
+
+        let Some(node) = ctx.nodes().parent_node(parent.id()) else {
+            continue;
+        };
+
         if let AstKind::CallExpression(call_expr) = node.kind() {
             check_reject_call(call_expr, ctx, allow_empty_reject);
         }
-    });
+    }
 }
 
 fn is_undefined(arg: &Argument) -> bool {
-    match arg.as_expression().map(oxc_ast::ast::Expression::get_inner_expression) {
+    match arg.as_expression().map(Expression::get_inner_expression) {
         Some(Expression::Identifier(ident)) => ident.name == "undefined",
         _ => false,
     }
@@ -196,7 +231,12 @@ fn test() {
         ("Promise.reject(foo.bar ??= 5)", None),
         ("Promise.reject(foo[bar] ??= 5)", None),
         ("class C { #reject; foo() { Promise.#reject(5); } }", None),
-        ("class C { #error; foo() { Promise.reject(this.#error); } }", None)
+        ("class C { #error; foo() { Promise.reject(this.#error); } }", None),
+        ("new Promise(function (resolve, ...rest) { rest[0](new Error('')); });", None),
+        ("new Promise(function (...rest) { rest[0](new Error('')); });", None),
+        ("new Promise(function (...rest) { rest[1](new Error('')); });", None),
+        // This is fundamentally false, but we can not recognize the value of `i`.
+        ("new Promise(function (resolve, ...rest) { rest[i](5); });", None),
     ];
 
     let fail = vec![
@@ -255,6 +295,8 @@ fn test() {
         // evaluates either to a falsy value of `foo` (which, then, cannot be an Error object), or to `5`
         ("Promise.reject(foo && 5)", None),
         ("Promise.reject(foo &&= 5)", None),
+        ("new Promise(function (resolve, ...rest) { rest[0](5); });", None),
+        ("new Promise(function (...rest) { rest[1](5); });", None),
     ];
 
     Tester::new(PreferPromiseRejectErrors::NAME, PreferPromiseRejectErrors::PLUGIN, pass, fail)

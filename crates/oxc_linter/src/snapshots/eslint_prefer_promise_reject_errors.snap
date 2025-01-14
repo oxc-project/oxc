@@ -1,7 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 356
-snapshot_kind: text
 ---
   ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
    ╭─[prefer_promise_reject_errors.tsx:1:1]
@@ -239,4 +237,16 @@ snapshot_kind: text
    ╭─[prefer_promise_reject_errors.tsx:1:1]
  1 │ Promise.reject(foo &&= 5)
    · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:43]
+ 1 │ new Promise(function (resolve, ...rest) { rest[0](5); });
+   ·                                           ──────────
+   ╰────
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:34]
+ 1 │ new Promise(function (...rest) { rest[1](5); });
+   ·                                  ──────────
    ╰────
