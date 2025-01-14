@@ -238,6 +238,7 @@ mod jest {
     pub mod no_untyped_mock_factory;
     pub mod prefer_called_with;
     pub mod prefer_comparison_matcher;
+    pub mod prefer_each;
     pub mod prefer_equality_matcher;
     pub mod prefer_expect_resolves;
     pub mod prefer_hooks_in_order;
@@ -517,7 +518,6 @@ mod promise {
 mod vitest {
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
-    pub mod prefer_each;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
@@ -708,6 +708,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_test_prefixes,
     jest::no_test_return_statement,
     jest::no_untyped_mock_factory,
+    jest::prefer_each,
     jest::prefer_called_with,
     jest::prefer_comparison_matcher,
     jest::prefer_equality_matcher,
@@ -1004,7 +1005,6 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::throw_new_error,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
-    vitest::prefer_each,
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
