@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.46.0] - 2025-01-14
+
+### Performance
+
+- 7a8200c mangler: Allocate base54 name without heap allocation (#8472) (Boshen)
+- 31dac22 mangler: Allocate data in arena (#8471) (Boshen)
+- 372eb09 minifier: Preallocate mangler's semantic data (#8451) (Boshen)
+
 ## [0.45.0] - 2025-01-11
 
 ### Bug Fixes

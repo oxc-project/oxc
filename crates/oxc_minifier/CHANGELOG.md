@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.46.0] - 2025-01-14
+
+### Features
+
+- 8accfef minifier: Minify `var x; void x` -> `void 0` (#8466) (Boshen)
+- 870a583 minifier: Fold `false['toString']` (#8447) (Boshen)
+- 4ad695d napi/minify: Implement napi (#8478) (Boshen)
+
+### Bug Fixes
+
+- 4c6675c minifier: Do not convert while to fors in DCE (#8484) (Boshen)
+- 1d6e84d minifier: Fix incorrect `null.toString()` and `1n.toString()` (#8464) (Boshen)
+- 25d4bf9 minifier: Remove usage of empty spans (#8462) (Boshen)
+- dd64340 minifier: Keep `return undefined` in async generator function (#8439) (Boshen)
+
+### Performance
+
+- 8fc238a minifier: Merge `Normalize` and `RemoveSyntax` pass (#8467) (Boshen)
+- 372eb09 minifier: Preallocate mangler's semantic data (#8451) (Boshen)
+
 ## [0.45.0] - 2025-01-11
 
 ### Features
