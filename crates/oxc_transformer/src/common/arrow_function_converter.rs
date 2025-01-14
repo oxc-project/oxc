@@ -270,7 +270,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
             let previous = *self.arguments_needs_transform_stack.last();
             self.arguments_needs_transform_stack.push(previous || arrow.r#async);
 
-            if Self::if_ancestor_of_class_property_definition_value(ctx) {
+            if Self::in_class_property_definition_value(ctx) {
                 self.this_var_stack.push(None);
                 self.super_methods_stack.push(FxIndexMap::default());
             }
@@ -285,7 +285,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if self.is_async_only() {
-            if Self::if_ancestor_of_class_property_definition_value(ctx) {
+            if Self::in_class_property_definition_value(ctx) {
                 let this_var = self.this_var_stack.pop();
                 let super_methods = self.super_methods_stack.pop();
                 self.insert_variable_statement_at_the_top_of_statements(
@@ -403,7 +403,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
                 // TODO: If the async arrow function without `this` or `super` usage, we can skip this step.
                 if self.is_async_only()
                     && arrow.r#async
-                    && Self::if_ancestor_of_class_property_definition_value(ctx)
+                    && Self::in_class_property_definition_value(ctx)
                 {
                     // Inside class property definition value, since async arrow function will be
                     // converted to a generator function by `AsyncToGenerator` plugin, ensure
@@ -681,9 +681,9 @@ impl<'a> ArrowFunctionConverter<'a> {
         }
     }
 
-    /// Check whether the ancestor is an [`Ancestor::PropertyDefinitionValue`],
-    /// return false if it's reached the statement.
-    fn if_ancestor_of_class_property_definition_value(ctx: &mut TraverseCtx<'a>) -> bool {
+    /// Check whether currently in a class property initializer.
+    /// e.g. `x` in `class C { prop = [foo(x)]; }`
+    fn in_class_property_definition_value(ctx: &mut TraverseCtx<'a>) -> bool {
         for ancestor in ctx.ancestors() {
             if ancestor.is_parent_of_statement() {
                 return false;
