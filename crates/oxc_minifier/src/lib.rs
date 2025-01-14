@@ -12,7 +12,7 @@ mod tester;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;
-use oxc_semantic::SemanticBuilder;
+use oxc_semantic::{SemanticBuilder, Stats};
 
 pub use oxc_mangler::MangleOptions;
 
@@ -21,12 +21,12 @@ pub use crate::{ast_passes::CompressorPass, compressor::Compressor, options::Com
 #[derive(Debug, Clone, Copy)]
 pub struct MinifierOptions {
     pub mangle: Option<MangleOptions>,
-    pub compress: CompressOptions,
+    pub compress: Option<CompressOptions>,
 }
 
 impl Default for MinifierOptions {
     fn default() -> Self {
-        Self { mangle: Some(MangleOptions::default()), compress: CompressOptions::default() }
+        Self { mangle: Some(MangleOptions::default()), compress: Some(CompressOptions::default()) }
     }
 }
 
@@ -44,11 +44,16 @@ impl Minifier {
     }
 
     pub fn build<'a>(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        let semantic = SemanticBuilder::new().build(program).semantic;
-        let stats = semantic.stats();
-        let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-        Compressor::new(allocator, self.options.compress)
-            .build_with_symbols_and_scopes(symbols, scopes, program);
+        let stats = if let Some(compress) = self.options.compress {
+            let semantic = SemanticBuilder::new().build(program).semantic;
+            let stats = semantic.stats();
+            let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+            Compressor::new(allocator, compress)
+                .build_with_symbols_and_scopes(symbols, scopes, program);
+            stats
+        } else {
+            Stats::default()
+        };
         let mangler = self.options.mangle.map(|options| {
             let semantic = SemanticBuilder::new().with_stats(stats).build(program).semantic;
             let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();

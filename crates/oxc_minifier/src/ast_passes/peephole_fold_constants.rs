@@ -3,7 +3,7 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::GetSpan;
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, LogicalOperator},
@@ -192,7 +192,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                         ctx.ast.move_expression(&mut logical_expr.left),
                         ctx.ast.move_expression(&mut logical_expr.right),
                     ]);
-                    ctx.ast.expression_sequence(SPAN, expressions)
+                    ctx.ast.expression_sequence(logical_expr.span, expressions)
                 } else {
                     // nullish condition => this expression evaluates to the right side.
                     ctx.ast.move_expression(&mut logical_expr.right)

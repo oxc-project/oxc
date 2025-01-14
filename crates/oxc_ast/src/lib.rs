@@ -62,7 +62,6 @@ mod generated {
     pub mod ast_kind;
     pub mod derive_clone_in;
     pub mod derive_content_eq;
-    pub mod derive_content_hash;
     #[cfg(feature = "serialize")]
     pub mod derive_estree;
     pub mod derive_get_address;

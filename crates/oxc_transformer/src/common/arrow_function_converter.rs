@@ -144,7 +144,8 @@ pub struct ArrowFunctionConverter<'a> {
     renamed_arguments_symbol_ids: FxHashSet<SymbolId>,
     // TODO(improve-on-babel): `FxHashMap` would suffice here. Iteration order is not important.
     // Only using `FxIndexMap` for predictable iteration order to match Babel's output.
-    super_methods_stack: SparseStack<FxIndexMap<SuperMethodKey<'a>, SuperMethodInfo<'a>>>,
+    super_methods_stack: NonEmptyStack<FxIndexMap<SuperMethodKey<'a>, SuperMethodInfo<'a>>>,
+    super_needs_transform_stack: NonEmptyStack<bool>,
 }
 
 impl ArrowFunctionConverter<'_> {
@@ -164,7 +165,8 @@ impl ArrowFunctionConverter<'_> {
             constructor_super_stack: NonEmptyStack::new(false),
             arguments_needs_transform_stack: NonEmptyStack::new(false),
             renamed_arguments_symbol_ids: FxHashSet::default(),
-            super_methods_stack: SparseStack::new(),
+            super_methods_stack: NonEmptyStack::new(FxIndexMap::default()),
+            super_needs_transform_stack: NonEmptyStack::new(false),
         }
     }
 }
@@ -198,10 +200,12 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         debug_assert!(self.constructor_super_stack.len() == 1);
         // TODO: This assertion currently failing because we don't handle `super` in arrow functions
         // in class static properties correctly.
-        // e.g. `class C { static f = async () => super.prop; }`
+        // e.g. `class C { static f = () => super.prop; }`
         // debug_assert!(self.constructor_super_stack.last() == &false);
         debug_assert!(self.super_methods_stack.len() == 1);
-        debug_assert!(self.super_methods_stack.last().is_none());
+        debug_assert!(self.super_methods_stack.last().is_empty());
+        debug_assert!(self.super_needs_transform_stack.len() == 1);
+        debug_assert!(self.super_needs_transform_stack.last() == &false);
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -213,32 +217,9 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         self.arguments_var_stack.push(None);
         self.constructor_super_stack.push(false);
 
-        if self.is_async_only()
-            && (func.r#async || self.super_methods_stack.len() > 1)
-            && Self::is_class_method_like_ancestor(ctx.parent())
-        {
-            // `self.super_methods_stack.len() > 1` means we are in a nested class method
-            //
-            // Only `super` that inside async methods need to be transformed, if it is a
-            // nested class method and it is not async, we still need to push a `None` to
-            // `self.super_methods_stack`, because if we don't get a `FxIndexMap` from
-            // `self.super_methods_stack.last_mut()`, that means we don't need to transform.
-            // See how to transform `super` in `self.transform_member_expression_for_super`
-            //
-            // ```js
-            // class Outer {
-            //   async method() {
-            //     class Inner extends Outer {
-            //       normal() {
-            //         // `super.value` should not be transformed, because it is not in an async method
-            //         super.value
-            //       }
-            //     }
-            //   }
-            // }
-            // ```
-            let super_methods = if func.r#async { Some(FxIndexMap::default()) } else { None };
-            self.super_methods_stack.push(super_methods);
+        if Self::is_class_method_like_ancestor(ctx.parent()) {
+            self.super_methods_stack.push(FxIndexMap::default());
+            self.super_needs_transform_stack.push(func.r#async);
         }
     }
 
@@ -264,14 +245,11 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         };
         let this_var = self.this_var_stack.pop();
         let arguments_var = self.arguments_var_stack.pop();
-        let super_methods = if self.is_async_only()
-            && (func.r#async || self.super_methods_stack.len() > 1)
-            && Self::is_class_method_like_ancestor(ctx.parent())
-        {
+        let super_methods = Self::is_class_method_like_ancestor(ctx.parent()).then(|| {
+            self.super_needs_transform_stack.pop();
             self.super_methods_stack.pop()
-        } else {
-            None
-        };
+        });
+
         self.insert_variable_statement_at_the_top_of_statements(
             scope_id,
             &mut body.statements,
@@ -286,11 +264,41 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
     fn enter_arrow_function_expression(
         &mut self,
         arrow: &mut ArrowFunctionExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if self.is_async_only() {
             let previous = *self.arguments_needs_transform_stack.last();
             self.arguments_needs_transform_stack.push(previous || arrow.r#async);
+
+            if Self::in_class_property_definition_value(ctx) {
+                self.this_var_stack.push(None);
+                self.super_methods_stack.push(FxIndexMap::default());
+            }
+            self.super_needs_transform_stack
+                .push(arrow.r#async || *self.super_needs_transform_stack.last());
+        }
+    }
+
+    fn exit_arrow_function_expression(
+        &mut self,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.is_async_only() {
+            if Self::in_class_property_definition_value(ctx) {
+                let this_var = self.this_var_stack.pop();
+                let super_methods = self.super_methods_stack.pop();
+                self.insert_variable_statement_at_the_top_of_statements(
+                    arrow.scope_id(),
+                    &mut arrow.body.statements,
+                    this_var,
+                    None,
+                    Some(super_methods),
+                    ctx,
+                );
+            }
+
+            self.super_needs_transform_stack.pop();
         }
     }
 
@@ -318,6 +326,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         }
 
         self.this_var_stack.push(None);
+        self.super_methods_stack.push(FxIndexMap::default());
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -326,14 +335,14 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         }
 
         let this_var = self.this_var_stack.pop();
+        let super_methods = self.super_methods_stack.pop();
         self.insert_variable_statement_at_the_top_of_statements(
             block.scope_id(),
             &mut block.body,
             this_var,
             // `arguments` is not allowed to be used in static blocks
             None,
-            // `super()` Only allowed in class constructor
-            None,
+            Some(super_methods),
             ctx,
         );
     }
@@ -390,6 +399,36 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
             match_member_expression!(Expression) => {
                 self.transform_member_expression_for_super(expr, None, ctx)
             }
+            Expression::ArrowFunctionExpression(arrow) => {
+                // TODO: If the async arrow function without `this` or `super` usage, we can skip this step.
+                if self.is_async_only()
+                    && arrow.r#async
+                    && Self::in_class_property_definition_value(ctx)
+                {
+                    // Inside class property definition value, since async arrow function will be
+                    // converted to a generator function by `AsyncToGenerator` plugin, ensure
+                    // `_this = this` and `super` methods are inserted correctly. We need to
+                    // wrap the async arrow function with an normal arrow function IIFE.
+                    //
+                    // ```js
+                    // class A {
+                    //   prop = async () => {}
+                    // }
+                    // // to
+                    // class A {
+                    //   prop = (() => { return async () => {} })();
+                    // }
+                    // ```
+                    Some(Self::wrap_arrow_function_with_iife(
+                        arrow.span,
+                        arrow.scope_id(),
+                        expr,
+                        ctx,
+                    ))
+                } else {
+                    return;
+                }
+            }
             _ => return,
         };
 
@@ -404,7 +443,9 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
         }
 
         if let Expression::ArrowFunctionExpression(arrow_function_expr) = expr {
-            if self.is_async_only() && !arrow_function_expr.r#async {
+            // TODO: Here should return early as long as the async-to-generator plugin is enabled,
+            // but currently we don't know which plugin is enabled.
+            if self.is_async_only() || arrow_function_expr.r#async {
                 return;
             }
 
@@ -640,6 +681,19 @@ impl<'a> ArrowFunctionConverter<'a> {
         }
     }
 
+    /// Check whether currently in a class property initializer.
+    /// e.g. `x` in `class C { prop = [foo(x)]; }`
+    fn in_class_property_definition_value(ctx: &mut TraverseCtx<'a>) -> bool {
+        for ancestor in ctx.ancestors() {
+            if ancestor.is_parent_of_statement() {
+                return false;
+            } else if matches!(ancestor, Ancestor::PropertyDefinitionValue(_)) {
+                return true;
+            }
+        }
+        unreachable!()
+    }
+
     /// Transforms a `MemberExpression` whose object is a `super` expression.
     ///
     /// In the [`AsyncToGenerator`](crate::es2017::AsyncToGenerator) and
@@ -679,7 +733,11 @@ impl<'a> ArrowFunctionConverter<'a> {
         assign_value: Option<&mut Expression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        let super_methods = self.super_methods_stack.last_mut()?;
+        if !*self.super_needs_transform_stack.last() {
+            return None;
+        }
+
+        let super_methods = self.super_methods_stack.last_mut();
 
         let mut argument = None;
         let mut property = "";
@@ -757,7 +815,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         call: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if self.super_methods_stack.last().is_none() || !call.callee.is_member_expression() {
+        if !*self.super_needs_transform_stack.last() || !call.callee.is_member_expression() {
             return None;
         }
 
@@ -796,7 +854,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // Check if the left of the assignment is a `super` member expression.
-        if self.super_methods_stack.last().is_none()
+        if !*self.super_needs_transform_stack.last()
             || !assignment.left.as_member_expression().is_some_and(|m| m.object().is_super())
         {
             return None;
@@ -1149,6 +1207,43 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         statements.insert(0, stmt);
     }
+
+    /// Wrap an arrow function with IIFE
+    ///
+    /// `() => {}` ->  `(() => { return () => {}; })()`
+    fn wrap_arrow_function_with_iife(
+        span: Span,
+        scope_id: ScopeId,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let kind = FormalParameterKind::ArrowFormalParameters;
+        let params = ctx.ast.formal_parameters(SPAN, kind, ctx.ast.vec(), NONE);
+        let statement = ctx.ast.statement_return(SPAN, Some(ctx.ast.move_expression(expr)));
+        let statements = ctx.ast.vec1(statement);
+        let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), statements);
+        let parent_scope_id = ctx
+            .create_child_scope(ctx.current_scope_id(), ScopeFlags::Arrow | ScopeFlags::Function);
+        ctx.scopes_mut().change_parent_id(scope_id, Some(parent_scope_id));
+        let arrow = ctx.ast.alloc_arrow_function_expression_with_scope_id(
+            SPAN,
+            false,
+            false,
+            NONE,
+            params,
+            NONE,
+            body,
+            parent_scope_id,
+        );
+        // IIFE
+        ctx.ast.expression_call(
+            span,
+            Expression::ArrowFunctionExpression(arrow),
+            NONE,
+            ctx.ast.vec(),
+            false,
+        )
+    }
 }
 
 /// Visitor for inserting `this` after `super` in constructor body.
@@ -1215,24 +1310,24 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
         // `super()` can't appear in a nested function
     }
 
-    /// `super()` -> `super(); _this = this;`
+    /// `super();` -> `super(); _this = this;`
     fn visit_statements(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
-        let mut new_stmts = vec![];
-
         for (index, stmt) in statements.iter_mut().enumerate() {
             if matches!(stmt, Statement::ExpressionStatement(expr_stmt) if expr_stmt.expression.is_super_call_expression())
             {
                 let assignment = self.create_assignment_to_this_temp_var();
-                let new_stmt = self.ctx.ast.statement_expression(SPAN, assignment);
-                new_stmts.push((index, new_stmt));
-            } else {
-                self.visit_statement(stmt);
+                let assignment = self.ctx.ast.statement_expression(SPAN, assignment);
+                statements.insert(index + 1, assignment);
+                // `super();` found as top-level statement in this block of statements.
+                // No need to continue visiting later statements, because `_this` is definitely assigned
+                // to at this point - no need to assign to it again.
+                // This means we don't visit the whole constructor in the common case where `super();`
+                // appears as a top-level statement early in class constructor
+                // `constructor() { super(); blah; blah; blah; }`.
+                break;
             }
-        }
 
-        for (index, new_stmt) in new_stmts.into_iter().rev() {
-            // insert the new statement after the super call
-            statements.insert(index + 1, new_stmt);
+            self.visit_statement(stmt);
         }
     }
 

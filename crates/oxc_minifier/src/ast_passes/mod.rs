@@ -13,7 +13,6 @@ mod peephole_minimize_conditions;
 mod peephole_remove_dead_code;
 mod peephole_replace_known_methods;
 mod peephole_substitute_alternate_syntax;
-mod remove_syntax;
 mod remove_unused_code;
 mod statement_fusion;
 
@@ -21,13 +20,12 @@ pub use collapse_variable_declarations::CollapseVariableDeclarations;
 pub use convert_to_dotted_properties::ConvertToDottedProperties;
 pub use exploit_assigns::ExploitAssigns;
 pub use minimize_exit_points::MinimizeExitPoints;
-pub use normalize::Normalize;
+pub use normalize::{Normalize, NormalizeOptions};
 pub use peephole_fold_constants::PeepholeFoldConstants;
 pub use peephole_minimize_conditions::PeepholeMinimizeConditions;
 pub use peephole_remove_dead_code::PeepholeRemoveDeadCode;
 pub use peephole_replace_known_methods::PeepholeReplaceKnownMethods;
 pub use peephole_substitute_alternate_syntax::PeepholeSubstituteAlternateSyntax;
-pub use remove_syntax::RemoveSyntax;
 #[expect(unused)]
 pub use remove_unused_code::RemoveUnusedCode;
 pub use statement_fusion::StatementFusion;

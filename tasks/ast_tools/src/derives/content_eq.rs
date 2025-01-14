@@ -7,7 +7,14 @@ use crate::{
     util::ToIdent,
 };
 
-use super::{content_hash::IGNORE_FIELD_TYPES, define_derive, Derive};
+use super::{define_derive, Derive};
+
+const IGNORE_FIELD_TYPES: [/* type name */ &str; 4] = [
+    "Span",
+    "ScopeId",
+    "SymbolId",
+    "ReferenceId",
+];
 
 pub struct DeriveContentEq;
 

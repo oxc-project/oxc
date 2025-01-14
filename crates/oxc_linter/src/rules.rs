@@ -92,6 +92,7 @@ mod eslint {
     pub mod no_iterator;
     pub mod no_label_var;
     pub mod no_labels;
+    pub mod no_lone_blocks;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
     pub mod no_multi_assign;
@@ -145,6 +146,7 @@ mod eslint {
     pub mod prefer_exponentiation_operator;
     pub mod prefer_numeric_literals;
     pub mod prefer_object_has_own;
+    pub mod prefer_promise_reject_errors;
     pub mod prefer_rest_params;
     pub mod prefer_spread;
     pub mod radix;
@@ -236,6 +238,7 @@ mod jest {
     pub mod no_untyped_mock_factory;
     pub mod prefer_called_with;
     pub mod prefer_comparison_matcher;
+    pub mod prefer_each;
     pub mod prefer_equality_matcher;
     pub mod prefer_expect_resolves;
     pub mod prefer_hooks_in_order;
@@ -515,7 +518,6 @@ mod promise {
 mod vitest {
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
-    pub mod prefer_each;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
@@ -548,6 +550,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_multi_assign,
     eslint::no_nested_ternary,
     eslint::no_labels,
+    eslint::no_lone_blocks,
     eslint::no_restricted_imports,
     eslint::no_object_constructor,
     eslint::no_duplicate_imports,
@@ -641,6 +644,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
+    eslint::prefer_promise_reject_errors,
     eslint::prefer_rest_params,
     eslint::prefer_exponentiation_operator,
     eslint::prefer_numeric_literals,
@@ -704,6 +708,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_test_prefixes,
     jest::no_test_return_statement,
     jest::no_untyped_mock_factory,
+    jest::prefer_each,
     jest::prefer_called_with,
     jest::prefer_comparison_matcher,
     jest::prefer_equality_matcher,
@@ -1000,7 +1005,6 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::throw_new_error,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
-    vitest::prefer_each,
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,

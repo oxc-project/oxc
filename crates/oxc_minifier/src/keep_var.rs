@@ -73,8 +73,7 @@ impl<'a> KeepVar<'a> {
             self.ast.variable_declarator(span, kind, id, None, false)
         }));
 
-        let decl = self.ast.alloc_variable_declaration(SPAN, kind, decls, false);
-        Some(decl)
+        Some(self.ast.alloc_variable_declaration(SPAN, kind, decls, false))
     }
 
     pub fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {
