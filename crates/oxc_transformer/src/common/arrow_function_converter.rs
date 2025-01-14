@@ -1310,24 +1310,24 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
         // `super()` can't appear in a nested function
     }
 
-    /// `super()` -> `super(); _this = this;`
+    /// `super();` -> `super(); _this = this;`
     fn visit_statements(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
-        let mut new_stmts = vec![];
-
         for (index, stmt) in statements.iter_mut().enumerate() {
             if matches!(stmt, Statement::ExpressionStatement(expr_stmt) if expr_stmt.expression.is_super_call_expression())
             {
                 let assignment = self.create_assignment_to_this_temp_var();
-                let new_stmt = self.ctx.ast.statement_expression(SPAN, assignment);
-                new_stmts.push((index, new_stmt));
-            } else {
-                self.visit_statement(stmt);
+                let assignment = self.ctx.ast.statement_expression(SPAN, assignment);
+                statements.insert(index + 1, assignment);
+                // `super();` found as top-level statement in this block of statements.
+                // No need to continue visiting later statements, because `_this` is definitely assigned
+                // to at this point - no need to assign to it again.
+                // This means we don't visit the whole constructor in the common case where `super();`
+                // appears as a top-level statement early in class constructor
+                // `constructor() { super(); blah; blah; blah; }`.
+                break;
             }
-        }
 
-        for (index, new_stmt) in new_stmts.into_iter().rev() {
-            // insert the new statement after the super call
-            statements.insert(index + 1, new_stmt);
+            self.visit_statement(stmt);
         }
     }
 
