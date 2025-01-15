@@ -325,6 +325,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "convert_case"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb402b8d4c85569410425650ce3eddc7d698ed96d39a73f941b08fb63082f1e7"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "cow-utils"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1323,7 +1332,7 @@ version = "3.0.0-alpha.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "70412f9791322124132363db0eeb3ea0e7e7c29604840e228881c83d2b1b9a85"
 dependencies = [
- "convert_case",
+ "convert_case 0.6.0",
  "napi-derive-backend",
  "proc-macro2",
  "quote",
@@ -1336,7 +1345,7 @@ version = "2.0.0-alpha.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f70fd2c8a3ea7a17b75eeae87653c286345a6e7eb3f5bdcf3f3d4a368cb09831"
 dependencies = [
- "convert_case",
+ "convert_case 0.6.0",
  "proc-macro2",
  "quote",
  "semver",
@@ -1571,7 +1580,7 @@ name = "oxc_ast_tools"
 version = "0.0.0"
 dependencies = [
  "bpaf",
- "convert_case",
+ "convert_case 0.7.1",
  "cow-utils",
  "itertools",
  "lazy_static",
@@ -1772,7 +1781,7 @@ name = "oxc_linter"
 version = "0.15.6"
 dependencies = [
  "bitflags 2.7.0",
- "convert_case",
+ "convert_case 0.7.1",
  "cow-utils",
  "dashmap 6.1.0",
  "fast-glob",
@@ -1818,7 +1827,7 @@ dependencies = [
 name = "oxc_macros"
 version = "0.0.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.7.1",
  "itertools",
  "proc-macro2",
  "quote",
@@ -2534,7 +2543,7 @@ dependencies = [
 name = "rulegen"
 version = "0.0.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.7.1",
  "handlebars",
  "lazy_static",
  "oxc_allocator",
