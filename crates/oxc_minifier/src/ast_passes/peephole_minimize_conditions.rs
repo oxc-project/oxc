@@ -258,9 +258,35 @@ impl<'a> PeepholeMinimizeConditions {
                     if_stmt.test = test;
                     stmts[i] = Statement::IfStatement(if_stmt);
                     self.changed = true;
+                } else if next_if
+                    .alternate
+                    .as_ref()
+                    .is_some_and(|alternate| alternate.content_eq(then_branch))
+                {
+                    // `if (x) return 1; if (y) foo() else return 1;` -> `if (!x&&y) foo() else return 1;`
+                    let Statement::IfStatement(mut if_stmt) = ctx.ast.move_statement(current_node)
+                    else {
+                        unreachable!()
+                    };
+                    let Statement::IfStatement(mut next) = ctx.ast.move_statement(next_node) else {
+                        unreachable!()
+                    };
+                    let test = ctx.ast.expression_logical(
+                        next.test.span(),
+                        ctx.ast.expression_unary(
+                            if_stmt.test.span(),
+                            UnaryOperator::LogicalNot,
+                            ctx.ast.move_expression(&mut if_stmt.test),
+                        ),
+                        LogicalOperator::And,
+                        ctx.ast.move_expression(&mut next.test),
+                    );
+                    if_stmt.test = test;
+                    if_stmt.consequent = ctx.ast.move_statement(&mut next.consequent);
+                    if_stmt.alternate = next.alternate.take();
+                    stmts[i] = Statement::IfStatement(if_stmt);
+                    self.changed = true;
                 }
-
-                // TODO: `if (x) return 1; if (y) foo() else return 1;` -> `if (!x&&y) foo() else return 1;`
             } else if next_node.as_deref().is_some_and(Self::is_return_expression)
                 && else_branch.is_none()
                 && Self::is_return_block(then_branch)
@@ -994,7 +1020,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_combine_ifs1() {
         fold(
             "function f() {if (x) return 1; if (y) foo(); else return 1}",
@@ -1003,7 +1028,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_combine_ifs2() {
         fold(
             "function f() {if (x) throw 1; if (y) throw 1}",
@@ -1020,7 +1044,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_combine_ifs3() {
         fold_same("function f() {if (x) return 1; if (y) {g();f()}}");
     }
