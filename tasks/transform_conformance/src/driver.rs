@@ -4,6 +4,7 @@ use oxc::{
     ast::ast::Program,
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
+    parser::ParseOptions,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
@@ -12,12 +13,20 @@ use oxc_tasks_transform_checker::check_semantic_after_transform;
 
 pub struct Driver {
     check_semantic: bool,
+    allow_return_outside_function: bool,
     options: TransformOptions,
     printed: String,
     errors: Vec<OxcDiagnostic>,
 }
 
 impl CompilerInterface for Driver {
+    fn parse_options(&self) -> ParseOptions {
+        ParseOptions {
+            allow_return_outside_function: self.allow_return_outside_function,
+            ..Default::default()
+        }
+    }
+
     fn transform_options(&self) -> Option<&TransformOptions> {
         Some(&self.options)
     }
@@ -61,8 +70,18 @@ impl CompilerInterface for Driver {
 }
 
 impl Driver {
-    pub fn new(check_semantic: bool, options: TransformOptions) -> Self {
-        Self { check_semantic, options, printed: String::new(), errors: vec![] }
+    pub fn new(
+        check_semantic: bool,
+        allow_return_outside_function: bool,
+        options: TransformOptions,
+    ) -> Self {
+        Self {
+            check_semantic,
+            allow_return_outside_function,
+            options,
+            printed: String::new(),
+            errors: vec![],
+        }
     }
 
     pub fn errors(&mut self) -> Vec<OxcDiagnostic> {

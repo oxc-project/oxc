@@ -207,7 +207,15 @@ impl TestCase {
         false
     }
 
-    fn transform(&self, mode: HelperLoaderMode) -> Result<String, String> {
+    /// Transform test case source.
+    ///
+    /// `allow_return_outside_function` is for exec tests which sometimes include `return` at top level.
+    /// This option is passed to parser to prevent it failing to pass those exec tests.
+    fn transform(
+        &self,
+        mode: HelperLoaderMode,
+        allow_return_outside_function: bool,
+    ) -> Result<String, String> {
         let path = &self.path;
         let transform_options = match &self.transform_options {
             Ok(transform_options) => transform_options,
@@ -227,8 +235,11 @@ impl TestCase {
             .as_ref()
             .and_then(|cwd| path.strip_prefix(cwd).ok().map(|p| Path::new("<CWD>").join(p)))
             .unwrap_or(path.clone());
-        let mut driver =
-            Driver::new(false, options).execute(&source_text, self.source_type, cwd_path.as_path());
+        let mut driver = Driver::new(false, allow_return_outside_function, options).execute(
+            &source_text,
+            self.source_type,
+            cwd_path.as_path(),
+        );
         let errors = driver.errors();
         if !errors.is_empty() {
             let source = NamedSource::new(
@@ -275,7 +286,7 @@ impl TestCase {
         let mut actual_errors = None;
         let mut transform_options = None;
 
-        match self.transform(HelperLoaderMode::External) {
+        match self.transform(HelperLoaderMode::External, false) {
             Err(error) => {
                 actual_errors.replace(get_babel_error(&error));
             }
@@ -365,7 +376,7 @@ impl TestCase {
         if passed {
             if let Some(options) = transform_options {
                 let mismatch_errors =
-                    Driver::new(/* check transform mismatch */ true, options)
+                    Driver::new(/* check transform mismatch */ true, false, options)
                         .execute(&input, self.source_type, &self.path)
                         .errors();
                 self.errors.extend(mismatch_errors);
@@ -381,13 +392,14 @@ impl TestCase {
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
         }
 
-        let result = match self.transform(HelperLoaderMode::Runtime) {
+        let result = match self.transform(HelperLoaderMode::Runtime, true) {
             Ok(code) => code,
             Err(error) => {
                 if filtered {
-                    println!("Transform Errors:\n{error:?}\n",);
+                    println!("Transform Errors:\n{error:?}\n");
+                    return;
                 }
-                return;
+                "throw new Error('Transform error');".to_string()
             }
         };
         self.write_to_test_files(&result);

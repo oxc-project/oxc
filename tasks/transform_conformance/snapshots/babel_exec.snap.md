@@ -2,7 +2,7 @@ commit: 54a8389f
 
 node: v22.12.0
 
-Passed: 291 of 374 (77.81%)
+Passed: 318 of 406 (78.33%)
 
 Failures:
 
@@ -181,6 +181,11 @@ ReferenceError: _Foo_brand is not defined
     at new Foo (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-assignment-exec.test.js:8:38)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-assignment-exec.test.js:15:9
 
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-async-exec.test.js
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-async-exec.test.js:8:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-async-exec.test.js:17:9
+
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-before-fields-exec.test.js
 ReferenceError: _Cl_brand is not defined
     at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-loose-before-fields-exec.test.js:10:38)
@@ -220,6 +225,11 @@ ReferenceError: _Foo_brand is not defined
     at new Foo (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-assignment-exec.test.js:8:38)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-assignment-exec.test.js:15:9
 
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-async-exec.test.js
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-async-exec.test.js:8:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-async-exec.test.js:17:9
+
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-before-fields-exec.test.js
 ReferenceError: _Cl_brand is not defined
     at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-before-fields-exec.test.js:11:38)
@@ -249,6 +259,11 @@ ReferenceError: _Cl_brand is not defined
 ReferenceError: _Sub_brand is not defined
     at new Sub (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-super-exec.test.js:16:38)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsProperties-super-exec.test.js:29:9
+
+./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-async-exec.test.js
+ReferenceError: _Cl_brand is not defined
+    at new Cl (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-async-exec.test.js:8:38)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-method-privateFieldsAsSymbols-async-exec.test.js:17:9
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-basic-exec.test.js
 TypeError: attempted to use private field on non-instance
@@ -435,6 +450,14 @@ AssertionError: expected true to be false // Object.is equality
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js
 AssertionError: expected 2 to be 5 // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-to-native-fields-static-shadow-exec.test.js:18:25
+
+./fixtures/babel/babel-plugin-transform-react-jsx-source-test-fixtures-react-source-basic-sample-exec.test.js
+ReferenceError: transformAsync is not defined
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-react-jsx-source-test-fixtures-react-source-basic-sample-exec.test.js:4:16
+
+./fixtures/babel/babel-plugin-transform-react-jsx-source-test-fixtures-react-source-with-source-exec.test.js
+ReferenceError: transformAsync is not defined
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-react-jsx-source-test-fixtures-react-source-with-source-exec.test.js:4:16
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
