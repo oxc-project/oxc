@@ -2,6 +2,8 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/content_eq.rs`
 
 #![allow(clippy::match_like_matches_macro)]
+#[allow(unused)]
+use std::mem;
 
 use oxc_span::cmp::ContentEq;
 

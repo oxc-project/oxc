@@ -30,6 +30,9 @@ impl Derive for DeriveContentEq {
             // NOTE: writing long match expressions formats better than using `matches` macro.
             #![allow(clippy::match_like_matches_macro)]
 
+            #[allow(unused)]
+            use std::mem;
+
             ///@@line_break
             use oxc_span::cmp::ContentEq;
         }
@@ -67,6 +70,9 @@ fn derive_enum(def: &EnumDef) -> (&str, TokenStream) {
             }
         });
         quote! {
+            if mem::discriminant(self) != mem::discriminant(other) {
+                return false;
+            }
             match self {
                 #(#matches),*
             }

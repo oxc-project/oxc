@@ -2,6 +2,8 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/content_eq.rs`
 
 #![allow(clippy::match_like_matches_macro)]
+#[allow(unused)]
+use std::mem;
 
 use oxc_span::cmp::ContentEq;
 
@@ -27,6 +29,9 @@ impl ContentEq for Alternative<'_> {
 
 impl ContentEq for Term<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::BoundaryAssertion(it) => match other {
                 Self::BoundaryAssertion(other) if ContentEq::content_eq(it, other) => true,
@@ -171,6 +176,9 @@ impl ContentEq for CharacterClassContentsKind {
 
 impl ContentEq for CharacterClassContents<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::CharacterClassRange(it) => match other {
                 Self::CharacterClassRange(other) if ContentEq::content_eq(it, other) => true,

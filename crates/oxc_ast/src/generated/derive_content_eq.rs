@@ -2,6 +2,8 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/content_eq.rs`
 
 #![allow(clippy::match_like_matches_macro)]
+#[allow(unused)]
+use std::mem;
 
 use oxc_span::cmp::ContentEq;
 
@@ -47,6 +49,9 @@ impl ContentEq for Program<'_> {
 
 impl ContentEq for Expression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::BooleanLiteral(it) => match other {
                 Self::BooleanLiteral(other) if ContentEq::content_eq(it, other) => true,
@@ -258,6 +263,9 @@ impl ContentEq for ArrayExpression<'_> {
 
 impl ContentEq for ArrayExpressionElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::SpreadElement(it) => match other {
                 Self::SpreadElement(other) if ContentEq::content_eq(it, other) => true,
@@ -453,6 +461,9 @@ impl ContentEq for ObjectExpression<'_> {
 
 impl ContentEq for ObjectPropertyKind<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::ObjectProperty(it) => match other {
                 Self::ObjectProperty(other) if ContentEq::content_eq(it, other) => true,
@@ -479,6 +490,9 @@ impl ContentEq for ObjectProperty<'_> {
 
 impl ContentEq for PropertyKey<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::StaticIdentifier(it) => match other {
                 Self::StaticIdentifier(other) if ContentEq::content_eq(it, other) => true,
@@ -697,6 +711,9 @@ impl ContentEq for TemplateElementValue<'_> {
 
 impl ContentEq for MemberExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::ComputedMemberExpression(it) => match other {
                 Self::ComputedMemberExpression(other) if ContentEq::content_eq(it, other) => true,
@@ -770,6 +787,9 @@ impl ContentEq for SpreadElement<'_> {
 
 impl ContentEq for Argument<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::SpreadElement(it) => match other {
                 Self::SpreadElement(other) if ContentEq::content_eq(it, other) => true,
@@ -1004,6 +1024,9 @@ impl ContentEq for AssignmentExpression<'_> {
 
 impl ContentEq for AssignmentTarget<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::AssignmentTargetIdentifier(it) => match other {
                 Self::AssignmentTargetIdentifier(other) if ContentEq::content_eq(it, other) => true,
@@ -1055,6 +1078,9 @@ impl ContentEq for AssignmentTarget<'_> {
 
 impl ContentEq for SimpleAssignmentTarget<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::AssignmentTargetIdentifier(it) => match other {
                 Self::AssignmentTargetIdentifier(other) if ContentEq::content_eq(it, other) => true,
@@ -1098,6 +1124,9 @@ impl ContentEq for SimpleAssignmentTarget<'_> {
 
 impl ContentEq for AssignmentTargetPattern<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::ArrayAssignmentTarget(it) => match other {
                 Self::ArrayAssignmentTarget(other) if ContentEq::content_eq(it, other) => true,
@@ -1133,6 +1162,9 @@ impl ContentEq for AssignmentTargetRest<'_> {
 
 impl ContentEq for AssignmentTargetMaybeDefault<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::AssignmentTargetWithDefault(it) => match other {
                 Self::AssignmentTargetWithDefault(other) if ContentEq::content_eq(it, other) => {
@@ -1197,6 +1229,9 @@ impl ContentEq for AssignmentTargetWithDefault<'_> {
 
 impl ContentEq for AssignmentTargetProperty<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::AssignmentTargetPropertyIdentifier(it) => match other {
                 Self::AssignmentTargetPropertyIdentifier(other)
@@ -1259,6 +1294,9 @@ impl ContentEq for ChainExpression<'_> {
 
 impl ContentEq for ChainElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::CallExpression(it) => match other {
                 Self::CallExpression(other) if ContentEq::content_eq(it, other) => true,
@@ -1292,6 +1330,9 @@ impl ContentEq for ParenthesizedExpression<'_> {
 
 impl ContentEq for Statement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::BlockStatement(it) => match other {
                 Self::BlockStatement(other) if ContentEq::content_eq(it, other) => true,
@@ -1448,6 +1489,9 @@ impl ContentEq for BlockStatement<'_> {
 
 impl ContentEq for Declaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::VariableDeclaration(it) => match other {
                 Self::VariableDeclaration(other) if ContentEq::content_eq(it, other) => true,
@@ -1553,6 +1597,9 @@ impl ContentEq for ForStatement<'_> {
 
 impl ContentEq for ForStatementInit<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::VariableDeclaration(it) => match other {
                 Self::VariableDeclaration(other) if ContentEq::content_eq(it, other) => true,
@@ -1740,6 +1787,9 @@ impl ContentEq for ForInStatement<'_> {
 
 impl ContentEq for ForStatementLeft<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::VariableDeclaration(it) => match other {
                 Self::VariableDeclaration(other) if ContentEq::content_eq(it, other) => true,
@@ -1891,6 +1941,9 @@ impl ContentEq for BindingPattern<'_> {
 
 impl ContentEq for BindingPatternKind<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::BindingIdentifier(it) => match other {
                 Self::BindingIdentifier(other) if ContentEq::content_eq(it, other) => true,
@@ -2047,6 +2100,9 @@ impl ContentEq for ClassBody<'_> {
 
 impl ContentEq for ClassElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::StaticBlock(it) => match other {
                 Self::StaticBlock(other) if ContentEq::content_eq(it, other) => true,
@@ -2137,6 +2193,9 @@ impl ContentEq for StaticBlock<'_> {
 
 impl ContentEq for ModuleDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::ImportDeclaration(it) => match other {
                 Self::ImportDeclaration(other) if ContentEq::content_eq(it, other) => true,
@@ -2214,6 +2273,9 @@ impl ContentEq for ImportPhase {
 
 impl ContentEq for ImportDeclarationSpecifier<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::ImportSpecifier(it) => match other {
                 Self::ImportSpecifier(other) if ContentEq::content_eq(it, other) => true,
@@ -2267,6 +2329,9 @@ impl ContentEq for ImportAttribute<'_> {
 
 impl ContentEq for ImportAttributeKey<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::Identifier(it) => match other {
                 Self::Identifier(other) if ContentEq::content_eq(it, other) => true,
@@ -2316,6 +2381,9 @@ impl ContentEq for ExportSpecifier<'_> {
 
 impl ContentEq for ExportDefaultDeclarationKind<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::FunctionDeclaration(it) => match other {
                 Self::FunctionDeclaration(other) if ContentEq::content_eq(it, other) => true,
@@ -2503,6 +2571,9 @@ impl ContentEq for ExportDefaultDeclarationKind<'_> {
 
 impl ContentEq for ModuleExportName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::IdentifierName(it) => match other {
                 Self::IdentifierName(other) if ContentEq::content_eq(it, other) => true,
@@ -2544,6 +2615,9 @@ impl ContentEq for TSEnumMember<'_> {
 
 impl ContentEq for TSEnumMemberName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::Identifier(it) => match other {
                 Self::Identifier(other) if ContentEq::content_eq(it, other) => true,
@@ -2571,6 +2645,9 @@ impl ContentEq for TSLiteralType<'_> {
 
 impl ContentEq for TSLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::BooleanLiteral(it) => match other {
                 Self::BooleanLiteral(other) if ContentEq::content_eq(it, other) => true,
@@ -2610,6 +2687,9 @@ impl ContentEq for TSLiteral<'_> {
 
 impl ContentEq for TSType<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::TSAnyKeyword(it) => match other {
                 Self::TSAnyKeyword(other) if ContentEq::content_eq(it, other) => true,
@@ -2848,6 +2928,9 @@ impl ContentEq for TSRestType<'_> {
 
 impl ContentEq for TSTupleElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::TSOptionalType(it) => match other {
                 Self::TSOptionalType(other) if ContentEq::content_eq(it, other) => true,
@@ -3106,6 +3189,9 @@ impl ContentEq for TSTypeReference<'_> {
 
 impl ContentEq for TSTypeName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::IdentifierReference(it) => match other {
                 Self::IdentifierReference(other) if ContentEq::content_eq(it, other) => true,
@@ -3199,6 +3285,9 @@ impl ContentEq for TSPropertySignature<'_> {
 
 impl ContentEq for TSSignature<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::TSIndexSignature(it) => match other {
                 Self::TSIndexSignature(other) if ContentEq::content_eq(it, other) => true,
@@ -3297,6 +3386,9 @@ impl ContentEq for TSTypePredicate<'_> {
 
 impl ContentEq for TSTypePredicateName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::Identifier(it) => match other {
                 Self::Identifier(other) if ContentEq::content_eq(it, other) => true,
@@ -3327,6 +3419,9 @@ impl ContentEq for TSModuleDeclarationKind {
 
 impl ContentEq for TSModuleDeclarationName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::Identifier(it) => match other {
                 Self::Identifier(other) if ContentEq::content_eq(it, other) => true,
@@ -3342,6 +3437,9 @@ impl ContentEq for TSModuleDeclarationName<'_> {
 
 impl ContentEq for TSModuleDeclarationBody<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::TSModuleDeclaration(it) => match other {
                 Self::TSModuleDeclaration(other) if ContentEq::content_eq(it, other) => true,
@@ -3383,6 +3481,9 @@ impl ContentEq for TSTypeQuery<'_> {
 
 impl ContentEq for TSTypeQueryExprName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::TSImportType(it) => match other {
                 Self::TSImportType(other) if ContentEq::content_eq(it, other) => true,
@@ -3426,6 +3527,9 @@ impl ContentEq for TSImportAttribute<'_> {
 
 impl ContentEq for TSImportAttributeName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::Identifier(it) => match other {
                 Self::Identifier(other) if ContentEq::content_eq(it, other) => true,
@@ -3511,6 +3615,9 @@ impl ContentEq for TSImportEqualsDeclaration<'_> {
 
 impl ContentEq for TSModuleReference<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::ExternalModuleReference(it) => match other {
                 Self::ExternalModuleReference(other) if ContentEq::content_eq(it, other) => true,
@@ -3636,6 +3743,9 @@ impl ContentEq for JSXClosingFragment {
 
 impl ContentEq for JSXElementName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::Identifier(it) => match other {
                 Self::Identifier(other) if ContentEq::content_eq(it, other) => true,
@@ -3677,6 +3787,9 @@ impl ContentEq for JSXMemberExpression<'_> {
 
 impl ContentEq for JSXMemberExpressionObject<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::IdentifierReference(it) => match other {
                 Self::IdentifierReference(other) if ContentEq::content_eq(it, other) => true,
@@ -3702,6 +3815,9 @@ impl ContentEq for JSXExpressionContainer<'_> {
 
 impl ContentEq for JSXExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::EmptyExpression(it) => match other {
                 Self::EmptyExpression(other) if ContentEq::content_eq(it, other) => true,
@@ -3887,6 +4003,9 @@ impl ContentEq for JSXEmptyExpression {
 
 impl ContentEq for JSXAttributeItem<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::Attribute(it) => match other {
                 Self::Attribute(other) if ContentEq::content_eq(it, other) => true,
@@ -3915,6 +4034,9 @@ impl ContentEq for JSXSpreadAttribute<'_> {
 
 impl ContentEq for JSXAttributeName<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::Identifier(it) => match other {
                 Self::Identifier(other) if ContentEq::content_eq(it, other) => true,
@@ -3930,6 +4052,9 @@ impl ContentEq for JSXAttributeName<'_> {
 
 impl ContentEq for JSXAttributeValue<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::StringLiteral(it) => match other {
                 Self::StringLiteral(other) if ContentEq::content_eq(it, other) => true,
@@ -3959,6 +4084,9 @@ impl ContentEq for JSXIdentifier<'_> {
 
 impl ContentEq for JSXChild<'_> {
     fn content_eq(&self, other: &Self) -> bool {
+        if mem::discriminant(self) != mem::discriminant(other) {
+            return false;
+        }
         match self {
             Self::Text(it) => match other {
                 Self::Text(other) if ContentEq::content_eq(it, other) => true,
