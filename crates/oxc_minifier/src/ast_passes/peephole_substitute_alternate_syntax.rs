@@ -1131,7 +1131,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         t.to_js_string().map(|val| ctx.ast.expression_string_literal(t.span(), val, None))
     }
 
-    // https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs
+    // <https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs>
     #[allow(clippy::cast_lossless)]
     fn try_compress_property_key(
         &mut self,
@@ -1152,22 +1152,29 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         if matches!(value, "__proto__" | "prototype" | "constructor" | "#constructor") {
             return;
         }
-        if *computed {
-            *computed = false;
-        }
         if is_identifier_name(value) {
-            self.changed = true;
+            *computed = false;
             *key = PropertyKey::StaticIdentifier(
                 ctx.ast.alloc_identifier_name(s.span, s.value.clone()),
             );
-        } else if let Some(value) = Ctx::string_to_equivalent_number_value(value) {
             self.changed = true;
-            *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
-                s.span,
-                value,
-                None,
-                NumberBase::Decimal,
-            ));
+            return;
+        }
+        if let Some(value) = Ctx::string_to_equivalent_number_value(value) {
+            if value >= 0.0 {
+                *computed = false;
+                *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
+                    s.span,
+                    value,
+                    None,
+                    NumberBase::Decimal,
+                ));
+                self.changed = true;
+            }
+            return;
+        }
+        if *computed {
+            *computed = false;
         }
     }
 
@@ -1933,6 +1940,7 @@ mod test {
             "class F { accessor  0 = _;  accessor  a = _;    accessor 1 = _;accessor     1 = _; accessor     b = _; accessor   'c.c' = _; accessor '1.1' = _; accessor '😊' = _; accessor 'd.d' = _ }"
         );
 
+        test_same("class C { ['-1']() {} }");
         test_same("class C { ['prototype']() {} }");
         test_same("class C { ['__proto__']() {} }");
         test_same("class C { ['constructor']() {} }");

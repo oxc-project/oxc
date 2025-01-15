@@ -44,24 +44,23 @@ impl<'a> ConvertToDottedProperties {
         expr: &mut MemberExpression<'a>,
         ctx: Ctx<'a, '_>,
     ) {
-        if let MemberExpression::ComputedMemberExpression(e) = expr {
-            let Expression::StringLiteral(s) = &e.expression else { return };
-            if is_identifier_name(&s.value) {
-                let property = ctx.ast.identifier_name(s.span, s.value.clone());
-                let object = ctx.ast.move_expression(&mut e.object);
-                *expr = MemberExpression::StaticMemberExpression(
-                    ctx.ast.alloc_static_member_expression(e.span, object, property, e.optional),
-                );
-                self.changed = true;
-                return;
-            }
-            let v = s.value.as_str();
-            if !e.optional {
-                if let Some(n) = Ctx::string_to_equivalent_number_value(v) {
-                    e.expression =
-                        ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
-                }
-            }
+        let MemberExpression::ComputedMemberExpression(e) = expr else { return };
+        let Expression::StringLiteral(s) = &e.expression else { return };
+        if is_identifier_name(&s.value) {
+            let property = ctx.ast.identifier_name(s.span, s.value.clone());
+            let object = ctx.ast.move_expression(&mut e.object);
+            *expr = MemberExpression::StaticMemberExpression(
+                ctx.ast.alloc_static_member_expression(e.span, object, property, e.optional),
+            );
+            self.changed = true;
+            return;
+        }
+        let v = s.value.as_str();
+        if e.optional {
+            return;
+        }
+        if let Some(n) = Ctx::string_to_equivalent_number_value(v) {
+            e.expression = ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
         }
     }
 }
