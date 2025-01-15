@@ -8,7 +8,7 @@ use oxc_allocator::{Allocator, CloneIn, FromIn};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
-use crate::{cmp::ContentEq, hash::ContentHash, CompactStr};
+use crate::{cmp::ContentEq, CompactStr};
 
 /// An inlinable string for oxc_allocator.
 ///
@@ -193,12 +193,6 @@ impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
 impl ContentEq for Atom<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
-    }
-}
-
-impl ContentHash for Atom<'_> {
-    fn content_hash<H: hash::Hasher>(&self, state: &mut H) {
-        hash::Hash::hash(self, state);
     }
 }
 
