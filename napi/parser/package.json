@@ -2,8 +2,8 @@
   "name": "@oxc-parser/binding",
   "private": true,
   "scripts": {
-    "build-dev": "napi build --platform --js bindings.js",
-    "build": "napi build --platform --js bindings.js --release",
+    "build-dev": "napi build --no-dts-cache --platform --js bindings.js",
+    "build": "napi build --no-dts-cache --platform --js bindings.js --release",
     "test": "vitest --typecheck run ./test"
   },
   "napi": {

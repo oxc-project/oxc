@@ -68,4 +68,3 @@ export interface SourceMap {
   version: number
   x_google_ignoreList?: Array<number>
 }
-

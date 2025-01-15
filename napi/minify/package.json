@@ -2,8 +2,8 @@
   "name": "@oxc-minify/binding",
   "private": true,
   "scripts": {
-    "build-dev": "napi build --platform",
-    "build": "napi build --platform --release",
+    "build-dev": "napi build --no-dts-cache --platform",
+    "build": "napi build --no-dts-cache --platform --release",
     "test": "vitest --typecheck run ./test"
   },
   "napi": {
