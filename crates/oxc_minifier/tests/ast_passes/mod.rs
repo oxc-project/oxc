@@ -1,4 +1,5 @@
 mod dead_code_elimination;
+mod esbuild;
 
 use oxc_minifier::CompressOptions;
 use oxc_span::SourceType;
