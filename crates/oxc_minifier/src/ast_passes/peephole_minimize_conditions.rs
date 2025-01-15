@@ -215,19 +215,53 @@ impl<'a> PeepholeMinimizeConditions {
 
     fn try_replace_if(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         for i in 0..stmts.len() {
-            let Statement::IfStatement(if_stmt) = &stmts[i] else {
+            let (current_node, next_node) = {
+                if i == stmts.len() - 1 {
+                    (stmts.get_mut(i).unwrap(), None)
+                } else {
+                    let (left, right) = stmts.split_at_mut(i + 1);
+                    (left.last_mut().unwrap(), right.first_mut())
+                }
+            };
+
+            let Statement::IfStatement(if_stmt) = &current_node else {
                 continue;
             };
+
             let then_branch = &if_stmt.consequent;
             let else_branch = &if_stmt.alternate;
-            let next_node = stmts.get(i + 1);
 
-            if next_node.is_some_and(|s| matches!(s, Statement::IfStatement(_)))
+            if next_node.as_ref().is_some_and(|s| matches!(s, Statement::IfStatement(_)))
                 && else_branch.is_none()
-                && Self::is_return_block(then_branch)
+                && Self::statement_must_exit_parent(then_branch)
             {
-                /* TODO */
-            } else if next_node.is_some_and(Self::is_return_expression)
+                let next_node = next_node.unwrap();
+                // `if (x) return; if (y) return;` -> `if (x || y) return;`
+                let Statement::IfStatement(next_if) = next_node else { unreachable!() };
+
+                if next_if.alternate.is_none() && next_if.consequent.content_eq(&if_stmt.consequent)
+                {
+                    let Statement::IfStatement(mut if_stmt) = ctx.ast.move_statement(current_node)
+                    else {
+                        unreachable!()
+                    };
+
+                    let Statement::IfStatement(mut next) = ctx.ast.move_statement(next_node) else {
+                        unreachable!()
+                    };
+                    let test = ctx.ast.expression_logical(
+                        next.test.span(),
+                        ctx.ast.move_expression(&mut if_stmt.test),
+                        LogicalOperator::Or,
+                        ctx.ast.move_expression(&mut next.test),
+                    );
+                    if_stmt.test = test;
+                    stmts[i] = Statement::IfStatement(if_stmt);
+                    self.changed = true;
+                }
+
+                // TODO: `if (x) return 1; if (y) foo() else return 1;` -> `if (!x&&y) foo() else return 1;`
+            } else if next_node.as_deref().is_some_and(Self::is_return_expression)
                 && else_branch.is_none()
                 && Self::is_return_block(then_branch)
             {
@@ -248,6 +282,7 @@ impl<'a> PeepholeMinimizeConditions {
                 self.changed = true;
                 break;
             } else if else_branch.is_some() && Self::statement_must_exit_parent(then_branch) {
+                // `if (x) return; else return 1` -> `return x ? void 0 : 1`
                 let Statement::IfStatement(if_stmt) = &mut stmts[i] else {
                     unreachable!();
                 };
@@ -951,12 +986,16 @@ mod test {
     }
 
     #[test]
-    #[ignore]
-    fn test_combine_ifs1() {
+    fn test_combine_ifs() {
         fold(
             "function f() {if (x) return 1; if (y) return 1}",
             "function f() {if (x||y) return 1;}",
         );
+    }
+
+    #[test]
+    #[ignore]
+    fn test_combine_ifs1() {
         fold(
             "function f() {if (x) return 1; if (y) foo(); else return 1}",
             "function f() {if ((!x)&&y) foo(); else return 1;}",
@@ -966,8 +1005,10 @@ mod test {
     #[test]
     #[ignore]
     fn test_combine_ifs2() {
-        // combinable but not yet done
-        fold_same("function f() {if (x) throw 1; if (y) throw 1}");
+        fold(
+            "function f() {if (x) throw 1; if (y) throw 1}",
+            "function f() {if (x || y) throw 1;}",
+        );
         // Can't combine, side-effect
         fold("function f(){ if (x) g(); if (y) g() }", "function f(){ x&&g(); y&&g() }");
         fold("function f(){ if (x) g?.(); if (y) g?.() }", "function f(){ x&&g?.(); y&&g?.() }");
