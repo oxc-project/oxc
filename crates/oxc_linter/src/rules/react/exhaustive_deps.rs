@@ -56,9 +56,9 @@ fn unknown_dependencies_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic
 
 fn async_effect_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Effect callbacks are synchronous to prevent race conditions.")
-      .with_label(span)
-      .with_help("Consider putting the asynchronous code inside a function and calling it from the effect.")
-      .with_error_code_scope(SCOPE)
+        .with_label(span)
+        .with_help("Consider putting the asynchronous code inside a function and calling it from the effect.")
+        .with_error_code_scope(SCOPE)
 }
 
 fn missing_dependency_diagnostic(hook_name: &str, deps: &[String], span: Span) -> OxcDiagnostic {
