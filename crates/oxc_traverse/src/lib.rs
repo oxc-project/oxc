@@ -80,7 +80,7 @@ mod generated {
     pub(super) mod walk;
 }
 pub use generated::{ancestor, ancestor::Ancestor, traverse::Traverse};
-use generated::{scopes_collector, walk::walk_program};
+use generated::{scopes_collector, walk::walk_ast};
 
 mod compile_fail_tests;
 
@@ -170,8 +170,33 @@ pub fn traverse_mut_with_ctx<'a, Tr: Traverse<'a>>(
     program: &mut Program<'a>,
     ctx: &mut ReusableTraverseCtx<'a>,
 ) {
+    let program = ptr::from_mut(program);
+
     let ctx = ctx.get_mut();
-    // SAFETY: Walk functions are constructed to avoid unsoundness
-    unsafe { walk_program(traverser, ptr::from_mut(program), ctx) };
+
+    // Check that `TraverseAncestry`'s stack is in correct state
     debug_assert!(ctx.ancestors_depth() == 1);
+    debug_assert!(matches!(ctx.parent(), Ancestor::None));
+
+    // SAFETY:
+    // `program` is a valid pointer to a `Program<'a>` - it was created from a `&mut Program<'a>`.
+    //
+    // `TraverseCtx`s are always created with only `Ancestor::None` on `TraverseAncestry` stack.
+    // `TraverseCtx` provides no external interfaces for caller to mutate `TraverseAncestry`,
+    // so that cannot be changed by the caller.
+    //
+    // `walk_*` methods never alter the initial entry on `TraverseAncestry`'s stack.
+    // `walk_*` methods always follow a `push` to `TraverseAncestry`'s stack with a corresponding `pop`.
+    // So at end of traversal, `TraverseAncestry`'s stack is always back in the state it was at start
+    // of traversal (single `Ancestor::None` entry).
+    //
+    // `ctx` was contained in a `ReusableTraverseCtx<'a>`. `ReusableTraverseCtx<'a>` provides no external
+    // interfaces for caller to mutate the `TraverseCtx` it contains.
+    //
+    // Therefore `TraverseAncestry`'s stack is guaranteed to only contain single `Ancestor::None` entry.
+    unsafe { walk_ast(traverser, program, ctx) };
+
+    // Check that `TraverseAncestry`'s stack is in correct state
+    debug_assert!(ctx.ancestors_depth() == 1);
+    debug_assert!(matches!(ctx.parent(), Ancestor::None));
 }

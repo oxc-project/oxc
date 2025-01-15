@@ -147,6 +147,7 @@ impl<'a> TraverseAncestry<'a> {
     /// # SAFETY
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
+    #[must_use] // `PopToken` must be passed to `pop_stack` to pop this entry off the stack again
     pub(crate) fn push_stack(&mut self, ancestor: Ancestor<'a, 'static>) -> PopToken {
         self.stack.push(ancestor);
 
