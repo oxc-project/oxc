@@ -19,6 +19,7 @@ mod common;
 mod compiler_assumptions;
 mod context;
 mod options;
+mod utils;
 
 // Presets: <https://babel.dev/docs/presets>
 mod es2015;
