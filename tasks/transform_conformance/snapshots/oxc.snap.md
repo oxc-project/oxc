@@ -1,6 +1,6 @@
 commit: acbc09a8
 
-Passed: 130/152
+Passed: 131/153
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -18,7 +18,7 @@ Passed: 130/152
 * regexp
 
 
-# babel-plugin-transform-class-properties (19/26)
+# babel-plugin-transform-class-properties (20/27)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
