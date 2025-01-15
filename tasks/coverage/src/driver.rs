@@ -1,4 +1,4 @@
-use std::{hint::unreachable_unchecked, ops::ControlFlow, path::PathBuf};
+use std::{ops::ControlFlow, path::PathBuf};
 
 use rustc_hash::FxHashSet;
 
@@ -86,8 +86,7 @@ impl CompilerInterface for Driver {
                 return ControlFlow::Break(());
             };
             let AstKind::Program(program) = root_node.kind() else {
-                // SAFETY: root_node is guaranteed to be Program
-                unsafe { unreachable_unchecked() };
+                return ControlFlow::Break(());
             };
             if let Some(errors) = check_semantic_ids(program) {
                 self.errors.extend(errors);
