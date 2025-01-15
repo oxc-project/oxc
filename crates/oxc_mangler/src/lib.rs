@@ -127,6 +127,7 @@ impl Mangler {
         }
 
         // Walk the scope tree and compute the slot number for each scope
+        let mut tmp_bindings = std::vec::Vec::with_capacity(100);
         for scope_id in scope_tree.descendants_from_root() {
             let bindings = scope_tree.get_bindings(scope_id);
 
@@ -139,9 +140,10 @@ impl Mangler {
 
             if !bindings.is_empty() {
                 // Sort `bindings` in declaration order.
-                let mut bindings = bindings.values().copied().collect::<std::vec::Vec<_>>();
-                bindings.sort_unstable();
-                for symbol_id in bindings {
+                tmp_bindings.clear();
+                tmp_bindings.extend(bindings.values().copied());
+                tmp_bindings.sort_unstable();
+                for symbol_id in &tmp_bindings {
                     slots[symbol_id.index()] = slot;
                     slot += 1;
                 }
@@ -203,6 +205,8 @@ impl Mangler {
         //    function fa() { .. } function ga() { .. }
 
         let mut freq_iter = frequencies.iter();
+        let mut symbols_renamed_in_this_batch = std::vec::Vec::with_capacity(100);
+        let mut slice_of_same_len_strings = std::vec::Vec::with_capacity(100);
         // 2. "N number of vars are going to be assigned names of the same length"
         for (_, slice_of_same_len_strings_group) in
             &reserved_names.into_iter().chunk_by(CompactStr::len)
@@ -210,13 +214,13 @@ impl Mangler {
             // 1. "The most frequent vars get the shorter names"
             // (freq_iter is sorted by frequency from highest to lowest,
             //  so taking means take the N most frequent symbols remaining)
-            let slice_of_same_len_strings = slice_of_same_len_strings_group.collect_vec();
-            let mut symbols_renamed_in_this_batch = freq_iter
-                .by_ref()
-                .take(slice_of_same_len_strings.len())
-                .collect::<std::vec::Vec<_>>();
+            slice_of_same_len_strings.clear();
+            slice_of_same_len_strings.extend(slice_of_same_len_strings_group);
+            symbols_renamed_in_this_batch.clear();
+            symbols_renamed_in_this_batch
+                .extend(freq_iter.by_ref().take(slice_of_same_len_strings.len()));
 
-            debug_assert!(symbols_renamed_in_this_batch.len() == slice_of_same_len_strings.len());
+            debug_assert_eq!(symbols_renamed_in_this_batch.len(), slice_of_same_len_strings.len());
 
             // 2. "we assign the N names based on the order at which the vars first appear in the source."
             // sorting by slot enables us to sort by the order at which the vars first appear in the source
