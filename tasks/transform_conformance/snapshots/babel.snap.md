@@ -1,6 +1,6 @@
-commit: 54a8389f
+commit: acbc09a8
 
-Passed: 688/1154
+Passed: 692/1168
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -915,7 +915,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-nullish-coalescing-operator (5/12)
+# babel-plugin-transform-nullish-coalescing-operator (9/24)
 * assumption-noDocumentAll/transform/input.js
 x Output mismatch
 
@@ -934,7 +934,31 @@ x Output mismatch
 * assumption-noDocumentAll/transform-static-refs-in-function/input.js
 x Output mismatch
 
+* assumption-pureGetters/logical-assignment/input.js
+x Output mismatch
+
+* assumption-pureGetters/logical-assignment-undeclared/input.js
+x Output mismatch
+
+* assumption-pureGetters/transform-in-default-param/input.js
+x Output mismatch
+
+* assumption-pureGetters/transform-static-refs-in-function/input.js
+x Output mismatch
+
+* nullish-coalescing/logical-assignment/input.js
+x Output mismatch
+
+* nullish-coalescing/logical-assignment-undeclared/input.js
+x Output mismatch
+
 * nullish-coalescing/transform-loose/input.js
+x Output mismatch
+
+* nullish-coalescing/transform-static-refs-in-function/input.js
+x Output mismatch
+
+* nullish-coalescing/undeclared/input.js
 x Output mismatch
 
 
@@ -1619,7 +1643,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (49/157)
+# babel-plugin-transform-typescript (49/159)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1832,6 +1856,9 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 * enum/mix-references/input.ts
+x Output mismatch
+
+* enum/non-constant-member-reference/input.ts
 x Output mismatch
 
 * enum/non-foldable-constant/input.ts
@@ -2153,8 +2180,8 @@ rebuilt        : ScopeId(0): []
 
 * imports/only-remove-type-imports/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
-rebuilt        : ScopeId(0): ["L2", "a", "b", "c2", "d", "d2", "e", "e4"]
+after transform: ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d", "d2", "e", "e4", "x"]
+rebuilt        : ScopeId(0): ["L2", "a", "b", "c2", "d", "d2", "e", "e4", "x"]
 
 * imports/property-signature/input.ts
 Bindings mismatch:
@@ -2848,6 +2875,9 @@ x Output mismatch
 x Output mismatch
 
 * optimize-const-enums/merged-exported/input.ts
+x Output mismatch
+
+* optimize-const-enums/namespace/input.ts
 x Output mismatch
 
 * regression/15768/input.ts
