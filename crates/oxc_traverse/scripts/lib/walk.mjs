@@ -22,15 +22,10 @@ export default function generateWalkFunctionsCode(types) {
   }
 
   return `
-    #![allow(
-      unsafe_code,
-      clippy::missing_safety_doc,
-      clippy::missing_panics_doc,
-      clippy::undocumented_unsafe_blocks,
+    #![expect(
       clippy::semicolon_if_nothing_returned,
       clippy::ptr_as_ptr,
       clippy::ref_as_ptr,
-      clippy::borrow_as_ptr,
       clippy::cast_ptr_alignment
     )]
 
