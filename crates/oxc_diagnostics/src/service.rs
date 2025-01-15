@@ -167,7 +167,6 @@ impl DiagnosticService {
     /// * When the writer fails to write
     pub fn run(&mut self, writer: &mut dyn Write) {
         while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
-            let mut output = String::new();
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
                 let is_warning = severity == Some(Severity::Warning);
@@ -192,7 +191,7 @@ impl DiagnosticService {
                     continue;
                 }
 
-                if let Some(mut err_str) = self.reporter.render_error(diagnostic) {
+                if let Some(err_str) = self.reporter.render_error(diagnostic) {
                     // Skip large output and print only once.
                     // Setting to 1200 because graphical output may contain ansi escape codes and other decorations.
                     if err_str.lines().any(|line| line.len() >= 1200) {
@@ -200,51 +199,40 @@ impl DiagnosticService {
                             OxcDiagnostic::warn("File is too long to fit on the screen")
                                 .with_help(format!("{path:?} seems like a minified file")),
                         );
-                        err_str = format!("{minified_diagnostic:?}");
-                        output = err_str;
+
+                        if let Some(err_str) = self.reporter.render_error(minified_diagnostic) {
+                            writer
+                                .write_all(err_str.as_bytes())
+                                .or_else(Self::check_for_writer_error)
+                                .unwrap();
+                        }
                         break;
                     }
-                    output.push_str(&err_str);
+
+                    writer
+                        .write_all(err_str.as_bytes())
+                        .or_else(Self::check_for_writer_error)
+                        .unwrap();
                 }
             }
-
-            writer
-                .write_all(output.as_bytes())
-                .or_else(|e| {
-                    // Do not panic when the process is skill (e.g. piping into `less`).
-                    if matches!(e.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
-                        Ok(())
-                    } else {
-                        Err(e)
-                    }
-                })
-                .unwrap();
         }
 
         if let Some(finish_output) = self.reporter.finish() {
             writer
                 .write_all(finish_output.as_bytes())
-                .or_else(|e| {
-                    // Do not panic when the process is skill (e.g. piping into `less`).
-                    if matches!(e.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
-                        Ok(())
-                    } else {
-                        Err(e)
-                    }
-                })
+                .or_else(Self::check_for_writer_error)
                 .unwrap();
         }
 
-        writer
-            .flush()
-            .or_else(|e| {
-                // Do not panic when the process is skill (e.g. piping into `less`).
-                if matches!(e.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
-                    Ok(())
-                } else {
-                    Err(e)
-                }
-            })
-            .unwrap();
+        writer.flush().or_else(Self::check_for_writer_error).unwrap();
+    }
+
+    fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
+        // Do not panic when the process is skill (e.g. piping into `less`).
+        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+            Ok(())
+        } else {
+            Err(error)
+        }
     }
 }
