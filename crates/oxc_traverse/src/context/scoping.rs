@@ -173,6 +173,30 @@ impl TraverseScoping {
         self.scopes.delete_scope(scope_id);
     }
 
+    /// Change parent scope for an expression.
+    ///
+    /// Set parent of its child scopes to the given parent scope.
+    ///
+    /// Use this when wrapping an expression with an arrow function, or similar.
+    /// For example when wrapping `() => foo` to `() => { return () => foo }`,
+    /// the parent scope of inner arrow function `() => foo` should be the
+    /// new outside arrow function.
+    pub fn change_parent_scope_for_expression(
+        &mut self,
+        parent_scope_id: ScopeId,
+        expr: &Expression,
+    ) {
+        let mut collector = ChildScopeCollector::new();
+        collector.visit_expression(expr);
+
+        let child_ids = collector.scope_ids;
+        if !child_ids.is_empty() {
+            for child_id in child_ids {
+                self.scopes.set_parent_id(child_id, Some(parent_scope_id));
+            }
+        }
+    }
+
     /// Add binding to [`ScopeTree`] and [`SymbolTable`].
     #[inline]
     pub(crate) fn add_binding(

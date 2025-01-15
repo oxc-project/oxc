@@ -313,6 +313,21 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.remove_scope_for_expression(scope_id, expr);
     }
 
+    /// Change parent scope for an expression.
+    ///
+    /// Set parent of its child scopes to the given parent scope.
+    ///
+    /// Use this when wrapping an expression with an arrow function, or similar.
+    /// For example when wrapping `() => foo` to `() => { return () => foo }`,
+    /// the parent scope of inner arrow function `() => foo` should be the
+    /// new outside arrow function.
+    ///
+    /// This is a shortcut for `ctx.scoping.change_parent_scope_for_expression`.
+    #[inline]
+    pub fn change_parent_scope_for_expression(&mut self, scope_id: ScopeId, expr: &Expression) {
+        self.scoping.change_parent_scope_for_expression(scope_id, expr);
+    }
+
     /// Generate binding.
     ///
     /// Creates a symbol with the provided name and flags and adds it to the specified scope.
