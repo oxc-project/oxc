@@ -22,8 +22,6 @@ use crate::{Allocator, Box, String};
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
-/// Should only be used for storing AST types.
-///
 /// Must NOT be used to store types which have a [`Drop`] implementation.
 /// `T::drop` will NOT be called on the `Vec`'s contents when the `Vec` is dropped.
 /// If `T` owns memory outside of the arena, this will be a memory leak.
