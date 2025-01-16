@@ -419,7 +419,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
                     //   prop = (() => { return async () => {} })();
                     // }
                     // ```
-                    Some(wrap_arrow_function_iife(expr, ctx))
+                    Some(wrap_arrow_function_iife(ctx.ast.move_expression(expr), ctx))
                 } else {
                     return;
                 }

@@ -37,20 +37,20 @@ pub(crate) fn create_call_call<'a>(
     ctx.ast.expression_call(span, callee, NONE, arguments, false)
 }
 
-/// Wrap the expression with an arrow function iife.
+/// Wrap an `Expression` in an arrow function IIFE (immediately invoked function expression)
+/// with a body block.
 ///
 /// `expr` ->  `(() => { return expr; })()`
 pub(crate) fn wrap_arrow_function_iife<'a>(
-    expr: &mut Expression<'a>,
+    expr: Expression<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     let scope_id =
-        ctx.insert_scope_below_expression(expr, ScopeFlags::Arrow | ScopeFlags::Function);
+        ctx.insert_scope_below_expression(&expr, ScopeFlags::Arrow | ScopeFlags::Function);
 
     let kind = FormalParameterKind::ArrowFormalParameters;
     let params = ctx.ast.formal_parameters(SPAN, kind, ctx.ast.vec(), NONE);
-    let statements =
-        ctx.ast.vec1(ctx.ast.statement_return(SPAN, Some(ctx.ast.move_expression(expr))));
+    let statements = ctx.ast.vec1(ctx.ast.statement_return(SPAN, Some(expr)));
     let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), statements);
     let arrow = ctx.ast.alloc_arrow_function_expression_with_scope_id(
         SPAN, false, false, NONE, params, NONE, body, scope_id,
