@@ -7,7 +7,6 @@ use oxc_ast::{
     ast::*,
     visit::{walk_mut, VisitMut},
 };
-use oxc_span::SPAN;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::TraverseCtx;
 
@@ -90,7 +89,7 @@ impl<'a> ClassProperties<'a, '_> {
         let outer_scope_id = ctx.current_scope_id();
         ctx.scopes_mut().change_parent_id(scope_id, Some(outer_scope_id));
 
-        wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, SPAN, ctx)
+        wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, block.span, ctx)
     }
 
     fn convert_static_block_with_single_expression_to_expression(

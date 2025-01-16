@@ -159,7 +159,7 @@ impl ClassStaticBlock {
         // Always strict mode since we're in a class.
         *ctx.scopes_mut().get_flags_mut(scope_id) =
             ScopeFlags::Function | ScopeFlags::Arrow | ScopeFlags::StrictMode;
-        wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, SPAN, ctx)
+        wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, block.span, ctx)
     }
 
     /// Convert static block to expression which will be value of private field,
