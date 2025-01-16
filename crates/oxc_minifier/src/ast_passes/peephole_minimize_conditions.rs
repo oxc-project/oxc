@@ -739,11 +739,11 @@ impl<'a> PeepholeMinimizeConditions {
                         *expr =
                             ctx.ast.expression_logical(e.span(), left, LogicalOperator::Or, right);
                     } else {
-                        // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 || anything2)"
+                        // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 && anything2)"
                         let left =
                             ctx.ast.expression_unary(left.span(), UnaryOperator::LogicalNot, left);
                         *expr =
-                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::Or, right);
+                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::And, right);
                     }
                     return true;
                 }
@@ -2028,7 +2028,7 @@ mod test {
         test("if (anything || (0, false));", "if (anything);");
         test("if (a ? !!b : !!c);", "if (a ? b : c);");
         test("if (anything1 ? (0, true) : anything2);", "if (anything1 || anything2);");
-        test("if (anything1 ? (0, false) : anything2);", "if (!anything1 || anything2);");
+        test("if (anything1 ? (0, false) : anything2);", "if (!anything1 && anything2);");
         test("if (anything1 ? anything2 : (0, true));", "if (!anything1 || anything2);");
         test("if (anything1 ? anything2 : (0, false));", "if (anything1 && anything2);");
         test("if(!![]);", "if([]);");
