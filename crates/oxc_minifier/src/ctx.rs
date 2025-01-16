@@ -94,21 +94,24 @@ impl<'a> Ctx<'a, '_> {
         let bytes = s.as_bytes();
         if bytes[0] == b'-' && s.len() > 1 {
             is_negative = true;
+            int_value = -int_value;
             start += 1;
         }
         if bytes[start] == b'0' && s.len() > 1 {
             return None;
         }
         for b in &bytes[start..] {
-            if b.is_ascii_digit() {
-                int_value =
-                    int_value.checked_mul(10).and_then(|v| v.checked_add(i32::from(b & 15)))?;
-            } else {
+            if !b.is_ascii_digit() {
                 return None;
             }
-        }
-        if is_negative {
-            int_value = -int_value;
+            int_value = int_value.checked_mul(10).and_then(|v| {
+                let n = i32::from(b & 15);
+                if is_negative {
+                    v.checked_sub(n)
+                } else {
+                    v.checked_add(n)
+                }
+            })?;
         }
         Some(f64::from(int_value))
     }
