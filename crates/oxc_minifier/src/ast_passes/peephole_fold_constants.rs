@@ -1113,6 +1113,7 @@ mod test {
         test("a=!10", "a=false");
         test("a=!false", "a=true");
         test_same("a=!foo()");
+        test_same("a = !!void b");
 
         test("a=-0", "a=-0");
         test("a=-(0)", "a=-0");

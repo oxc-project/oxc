@@ -384,9 +384,10 @@ pub trait ConstantEvaluation<'a> {
             }
             UnaryOperator::Void => (expr.argument.is_literal() || !expr.may_have_side_effects())
                 .then_some(ConstantValue::Undefined),
-            UnaryOperator::LogicalNot => {
-                self.get_boolean_value(&expr.argument).map(|b| !b).map(ConstantValue::Boolean)
-            }
+            UnaryOperator::LogicalNot => self
+                .get_side_free_boolean_value(&expr.argument)
+                .map(|b| !b)
+                .map(ConstantValue::Boolean),
             UnaryOperator::UnaryPlus => {
                 self.eval_to_number(&expr.argument).map(ConstantValue::Number)
             }
