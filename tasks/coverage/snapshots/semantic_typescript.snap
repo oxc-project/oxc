@@ -2,7 +2,7 @@ commit: d85767ab
 
 semantic_typescript Summary:
 AST Parsed     : 6503/6503 (100.00%)
-Positive Passed: 2923/6503 (44.95%)
+Positive Passed: 2925/6503 (44.98%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -36428,34 +36428,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["o1", "o2", "o3", "o4", "o5", "o6"]
-
-tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInParameterBindingPattern.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Bindings mismatch:
-after transform: ScopeId(2): ["_a", "c"]
-rebuilt        : ScopeId(3): ["_a"]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(0))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Symbol scope ID mismatch for "c":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(1): ScopeId(2)
-
-tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInParameterInitializer.ts
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Bindings mismatch:
-after transform: ScopeId(2): ["_a", "b"]
-rebuilt        : ScopeId(3): ["_a"]
-Scope parent mismatch:
-after transform: ScopeId(2): Some(ScopeId(0))
-rebuilt        : ScopeId(3): Some(ScopeId(2))
-Symbol scope ID mismatch for "b":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(1): ScopeId(2)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInference.ts
 semantic error: Bindings mismatch:
