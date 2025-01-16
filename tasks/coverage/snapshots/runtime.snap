@@ -1,8 +1,8 @@
 commit: c4317b0c
 
 runtime Summary:
-AST Parsed     : 18055/18055 (100.00%)
-Positive Passed: 17736/18055 (98.23%)
+AST Parsed     : 17878/17878 (100.00%)
+Positive Passed: 17625/17878 (98.58%)
 tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 codegen error: Test262Error: descriptor value should be ; object value should be 
 
@@ -213,37 +213,6 @@ transform error: Test262Error: reject reason Expected SameValue(«TypeError: The
 tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-sync-throw.js
 transform error: throw-arg-1
 
-tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-direct-eval-err-contains-newtarget.js
-transform error: Test262Error: Expected SameValue(«class {
-	constructor() {
-		babelHelpers.defineProperty(this, "x", eval("executed = true; () => new.target;"));
-	}
-}», «undefined») to be true
-
-tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-private-direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/expressions/class/elements/async-gen-private-method/yield-star-async-next.js
 transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
 
@@ -313,25 +282,6 @@ transform error: Test262Error: Expected SameValue(«"_Class"», «"default"») t
 tasks/coverage/test262/test/language/expressions/class/elements/computed-name-toprimitive-symbol.js
 transform error: TypeError: Cannot convert a Symbol value to a string
 
-tasks/coverage/test262/test/language/expressions/class/elements/derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/expressions/class/elements/direct-eval-err-contains-newtarget.js
-transform error: Test262Error: Expected SameValue(«class {
-	constructor() {
-		babelHelpers.defineProperty(this, "x", eval("executed = true; new.target;"));
-	}
-}», «undefined») to be true
-
 tasks/coverage/test262/test/language/expressions/class/elements/evaluation-error/computed-name-toprimitive-err.js
 transform error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
 
@@ -347,54 +297,11 @@ transform error: Test262Error: Expected a Test262Error to be thrown but no excep
 tasks/coverage/test262/test/language/expressions/class/elements/evaluation-error/computed-name-valueof-err.js
 transform error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/expressions/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/nested-derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/nested-direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError but got a TypeError
-
-tasks/coverage/test262/test/language/expressions/class/elements/nested-direct-eval-err-contains-newtarget.js
-transform error: Test262Error: Expected SameValue(«class {
-	constructor() {
-		babelHelpers.defineProperty(this, "x", eval("executed = true; new.target;"));
-	}
-}», «undefined») to be true
-
-tasks/coverage/test262/test/language/expressions/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/nested-private-direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/expressions/class/elements/private-async-generator-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
 
 tasks/coverage/test262/test/language/expressions/class/elements/private-async-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
-
-tasks/coverage/test262/test/language/expressions/class/elements/private-derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/private-derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/private-derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/expressions/class/elements/private-direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
 
 tasks/coverage/test262/test/language/expressions/class/elements/private-generator-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
@@ -669,37 +576,6 @@ transform error: Test262Error: reject reason Expected SameValue(«TypeError: The
 tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-sync-throw.js
 transform error: throw-arg-1
 
-tasks/coverage/test262/test/language/statements/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/arrow-body-direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/statements/class/elements/arrow-body-direct-eval-err-contains-newtarget.js
-transform error: Test262Error: Expected SameValue(«class C {
-	constructor() {
-		babelHelpers.defineProperty(this, "x", eval("executed = true; () => new.target;"));
-	}
-}», «undefined») to be true
-
-tasks/coverage/test262/test/language/statements/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a TypeError
-
-tasks/coverage/test262/test/language/statements/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a TypeError
-
-tasks/coverage/test262/test/language/statements/class/elements/arrow-body-private-derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a TypeError
-
-tasks/coverage/test262/test/language/statements/class/elements/arrow-body-private-direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/statements/class/elements/async-gen-private-method/yield-star-async-next.js
 transform error: Test262Error: Expected SameValue(«"get next done (1)"», «"get next value (1)"») to be true
 
@@ -766,25 +642,6 @@ transform error: Test262Error: Frozen objects can't be changed Expected a TypeEr
 tasks/coverage/test262/test/language/statements/class/elements/computed-name-toprimitive-symbol.js
 transform error: TypeError: Cannot convert a Symbol value to a string
 
-tasks/coverage/test262/test/language/statements/class/elements/derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/statements/class/elements/direct-eval-err-contains-newtarget.js
-transform error: Test262Error: Expected SameValue(«class C {
-	constructor() {
-		babelHelpers.defineProperty(this, "x", eval("executed = true; new.target;"));
-	}
-}», «undefined») to be true
-
 tasks/coverage/test262/test/language/statements/class/elements/evaluation-error/computed-name-toprimitive-err.js
 transform error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
 
@@ -800,75 +657,14 @@ transform error: Test262Error: Expected a Test262Error to be thrown but no excep
 tasks/coverage/test262/test/language/statements/class/elements/evaluation-error/computed-name-valueof-err.js
 transform error: Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
 
-tasks/coverage/test262/test/language/statements/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/nested-derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/nested-derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/nested-direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/statements/class/elements/nested-direct-eval-err-contains-newtarget.js
-transform error: Test262Error: Expected SameValue(«class C {
-	constructor() {
-		babelHelpers.defineProperty(this, "x", eval("executed = true; new.target;"));
-	}
-}», «undefined») to be true
-
-tasks/coverage/test262/test/language/statements/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/nested-private-derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/nested-private-direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
 tasks/coverage/test262/test/language/statements/class/elements/private-async-generator-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
 
 tasks/coverage/test262/test/language/statements/class/elements/private-async-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
 
-tasks/coverage/test262/test/language/statements/class/elements/private-derived-cls-direct-eval-err-contains-supercall-1.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/private-derived-cls-direct-eval-err-contains-supercall-2.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/private-derived-cls-direct-eval-err-contains-supercall.js
-transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
-
-tasks/coverage/test262/test/language/statements/class/elements/private-direct-eval-err-contains-arguments.js
-transform error: Test262Error: Expected a SyntaxError to be thrown but no exception was thrown at all
-
-tasks/coverage/test262/test/language/statements/class/elements/private-field-visible-to-direct-eval-on-initializer.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
-
-tasks/coverage/test262/test/language/statements/class/elements/private-field-visible-to-direct-eval.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
-
 tasks/coverage/test262/test/language/statements/class/elements/private-generator-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
-
-tasks/coverage/test262/test/language/statements/class/elements/private-getter-visible-to-direct-eval-on-initializer.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
-
-tasks/coverage/test262/test/language/statements/class/elements/private-getter-visible-to-direct-eval.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
-
-tasks/coverage/test262/test/language/statements/class/elements/private-method-visible-to-direct-eval-on-initializer.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
-
-tasks/coverage/test262/test/language/statements/class/elements/private-method-visible-to-direct-eval.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
 
 tasks/coverage/test262/test/language/statements/class/elements/private-methods/prod-private-async-generator.js
 transform error: Test262Error: function name inside constructor Expected SameValue(«"_m"», «"#m"») to be true
@@ -882,35 +678,17 @@ transform error: Test262Error: function name inside constructor Expected SameVal
 tasks/coverage/test262/test/language/statements/class/elements/private-methods/prod-private-method.js
 transform error: Test262Error: function name inside constructor Expected SameValue(«"_m"», «"#m"») to be true
 
-tasks/coverage/test262/test/language/statements/class/elements/private-setter-visible-to-direct-eval-on-initializer.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
-
-tasks/coverage/test262/test/language/statements/class/elements/private-setter-visible-to-direct-eval.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
-
 tasks/coverage/test262/test/language/statements/class/elements/private-static-async-generator-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
 
 tasks/coverage/test262/test/language/statements/class/elements/private-static-async-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
 
-tasks/coverage/test262/test/language/statements/class/elements/private-static-field-visible-to-direct-eval.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
-
 tasks/coverage/test262/test/language/statements/class/elements/private-static-generator-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
 
-tasks/coverage/test262/test/language/statements/class/elements/private-static-getter-visible-to-direct-eval.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
-
 tasks/coverage/test262/test/language/statements/class/elements/private-static-method-name.js
 transform error: Test262Error: Expected SameValue(«"_method"», «"#method"») to be true
-
-tasks/coverage/test262/test/language/statements/class/elements/private-static-method-visible-to-direct-eval.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
-
-tasks/coverage/test262/test/language/statements/class/elements/private-static-setter-visible-to-direct-eval.js
-transform error: SyntaxError: Private field '#m' must be declared in an enclosing class
 
 tasks/coverage/test262/test/language/statements/class/elements/static-field-anonymous-function-name.js
 transform error: Test262Error: Expected SameValue(«"_"», «"#field"») to be true
