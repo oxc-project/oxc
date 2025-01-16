@@ -1,7 +1,8 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools;
+use proc_macro2::Span;
 use quote::{format_ident, quote};
-use syn::{parse_quote, Arm, ImplItemFn, Variant};
+use syn::{parse_quote, Arm, ImplItemFn, LitInt};
 
 use crate::{
     output::{output_path, Output},
@@ -97,10 +98,17 @@ impl Generator for AstKindGenerator {
             })
             .collect_vec();
 
-        let types = have_kinds.iter().map(|(ident, _)| ident).collect_vec();
-
-        let kinds: Vec<Variant> =
-            have_kinds.iter().map(|(ident, typ)| parse_quote!(#ident(&'a #typ))).collect_vec();
+        let (types, kinds): (Vec<_>, Vec<_>) = have_kinds
+            .iter()
+            .enumerate()
+            .map(|(index, (ident, typ))| {
+                let index = u8::try_from(index).unwrap();
+                let index = LitInt::new(&index.to_string(), Span::call_site());
+                let type_variant = quote!( #ident = #index );
+                let kind_variant = quote!( #ident(&'a #typ) = AstType::#ident as u8 );
+                (type_variant, kind_variant)
+            })
+            .unzip();
 
         let span_matches: Vec<Arm> = have_kinds
             .iter()
@@ -132,13 +140,17 @@ impl Generator for AstKindGenerator {
                 #![allow(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
 
                 ///@@line_break
+                use std::ptr;
+
+                ///@@line_break
                 use oxc_span::{GetSpan, Span};
 
                 ///@@line_break
                 use crate::ast::*;
 
                 ///@@line_break
-                #[derive(Debug, Clone, Copy)]
+                #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+                #[repr(u8)]
                 pub enum AstType {
                     #(#types),*,
                 }
@@ -146,8 +158,22 @@ impl Generator for AstKindGenerator {
                 ///@@line_break
                 /// Untyped AST Node Kind
                 #[derive(Debug, Clone, Copy)]
+                #[repr(C, u8)]
                 pub enum AstKind<'a> {
                     #(#kinds),*,
+                }
+
+                ///@@line_break
+                impl AstKind<'_> {
+                    /// Get the [`AstType`] of an [`AstKind`].
+                    #[inline]
+                    pub fn ty(&self) -> AstType {
+                        ///@ SAFETY: `AstKind` is `#[repr(C, u8)]`, so discriminant is stored in first byte,
+                        ///@ and it's valid to read it.
+                        ///@ `AstType` is also `#[repr(u8)]` and `AstKind` and `AstType` both have the same
+                        ///@ discriminants, so it's valid to read `AstKind`'s discriminant as `AstType`.
+                        unsafe { *ptr::from_ref(self).cast::<AstType>().as_ref().unwrap_unchecked() }
+                    }
                 }
 
                 ///@@line_break
