@@ -308,10 +308,10 @@ test('issue_334', () => {
   run(code, expected);
 });
 
-test.skip('issue_508', () => {
+test('issue_508', () => {
   const code =
     'const foo=()=>{let a;{let b=[];{console.log()}a=b;{let c=a;let b=123456;console.log(b);c.push(b)}}};foo();';
-  const expected = ['123456'];
+  const expected = ['', '123456'];
   run(code, expected);
 });
 
@@ -5562,10 +5562,10 @@ test('sequence_2', () => {
   run(code, expected);
 });
 
-test.skip('return_template_string_with_trailing_backslash', () => {
+test('return_template_string_with_trailing_backslash', () => {
   const code =
     'function a(){return`foo`}function b(){return`\\nbar`}function c(){return;`baz`}function d(){return;`qux`}function e(){return`\\nfin`}console.log(a(),b(),c(),d(),e());';
-  const expected = ['foo ', 'bar undefined undefined ', 'fin'];
+  const expected = ['foo \nbar undefined undefined \nfin'];
   run(code, expected);
 });
 
