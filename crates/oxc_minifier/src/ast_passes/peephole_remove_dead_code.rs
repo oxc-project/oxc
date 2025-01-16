@@ -414,10 +414,11 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         let mut pending_spread_elements = ctx.ast.vec();
 
         if array_expr.elements.len() == 0
-            || array_expr
-                .elements
-                .iter()
-                .all(|el| matches!(el, ArrayExpressionElement::SpreadElement(_)))
+            || array_expr.elements.iter().all(|el| match el {
+                ArrayExpressionElement::SpreadElement(_) => true,
+                ArrayExpressionElement::Identifier(ident) => ctx.is_global_reference(ident),
+                _ => false,
+            })
         {
             return None;
         }
@@ -433,7 +434,7 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
                     let el = el.to_expression_mut();
                     let el_expr = ctx.ast.move_expression(el);
                     if !el_expr.is_literal_value(false)
-                        && !matches!(el_expr, Expression::Identifier(_))
+                        && !matches!(&el_expr, Expression::Identifier(ident) if !ctx.is_global_reference(ident))
                     {
                         if pending_spread_elements.len() > 0 {
                             // flush pending spread elements
@@ -703,7 +704,8 @@ mod test {
     fn test_array_literal() {
         fold("([])", "");
         fold("([1])", "");
-        fold("([a])", "");
+        fold("([a])", "[a]");
+        fold("var a; ([a])", "var a;");
         fold("([foo()])", "foo()");
         fold_same("baz.map((v) => [v])");
     }
@@ -711,9 +713,11 @@ mod test {
     #[test]
     fn test_array_literal_containing_spread() {
         fold_same("([...c])");
-        fold("([4, ...c, a])", "([...c])");
+        fold("([4, ...c, a])", "([...c], a)");
+        fold("var a; ([4, ...c, a])", "var a; ([...c])");
         fold("([foo(), ...c, bar()])", "(foo(), [...c], bar())");
-        fold("([...a, b, ...c])", "([...a, ...c])");
+        fold("([...a, b, ...c])", "([...a, b, ...c])");
+        fold("var b; ([...a, b, ...c])", "var b; ([...a, ...c])");
         fold_same("([...b, ...c])"); // It would also be fine if the spreads were split apart.
     }
 
