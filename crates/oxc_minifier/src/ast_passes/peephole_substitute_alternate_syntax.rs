@@ -250,6 +250,12 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         if !ctx.is_identifier_undefined(ident) {
             return None;
         }
+        // `delete undefined` returns `false`
+        // `delete void 0` returns `true`
+        if matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete())
+        {
+            return None;
+        }
         Some(ctx.ast.void_0(ident.span))
     }
 
@@ -1297,6 +1303,9 @@ mod test {
         // destructuring throw error side effect
         test_same("var {} = void 0");
         test_same("var [] = void 0");
+        // `delete undefined` returns `false`
+        // `delete void 0` returns `true`
+        test_same("delete undefined");
     }
 
     #[test]
