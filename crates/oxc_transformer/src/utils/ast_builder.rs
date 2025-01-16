@@ -1,6 +1,6 @@
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::ScopeFlags;
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::TraverseCtx;
 
 /// `object` -> `object.call`.
@@ -48,6 +48,7 @@ pub(crate) fn wrap_expression_in_arrow_function_iife<'a>(
     let scope_id =
         ctx.insert_scope_below_expression(&expr, ScopeFlags::Arrow | ScopeFlags::Function);
 
+    let span = expr.span();
     let kind = FormalParameterKind::ArrowFormalParameters;
     let params = ctx.ast.formal_parameters(SPAN, kind, ctx.ast.vec(), NONE);
     let statements = ctx.ast.vec1(ctx.ast.statement_return(SPAN, Some(expr)));
@@ -57,7 +58,7 @@ pub(crate) fn wrap_expression_in_arrow_function_iife<'a>(
     );
     // IIFE
     ctx.ast.expression_call(
-        SPAN,
+        span,
         Expression::ArrowFunctionExpression(arrow),
         NONE,
         ctx.ast.vec(),
