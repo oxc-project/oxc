@@ -194,6 +194,8 @@ impl RequireTopLevelDescribe {
 fn test() {
     use crate::tester::Tester;
 
+    // Note: Both Jest and Vitest share the same unit tests
+
     let pass = vec![
         ("it.each()", None),
         ("describe(\"test suite\", () => { test(\"my test\") });", None),
