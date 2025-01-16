@@ -578,18 +578,15 @@ impl IdentifierReferenceRename<'_, '_> {
 
 impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        let new_expr = match expr {
+        match expr {
             Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
                 let object = self.ctx.ast.expression_identifier_reference(SPAN, &self.enum_name);
                 let property = self.ctx.ast.identifier_name(SPAN, &ident.name);
-                Some(self.ctx.ast.member_expression_static(SPAN, object, property, false).into())
+                *expr = self.ctx.ast.member_expression_static(SPAN, object, property, false).into();
             }
-            _ => None,
+            _ => {
+                walk_mut::walk_expression(self, expr);
+            }
         };
-        if let Some(new_expr) = new_expr {
-            *expr = new_expr;
-        } else {
-            walk_mut::walk_expression(self, expr);
-        }
     }
 }
