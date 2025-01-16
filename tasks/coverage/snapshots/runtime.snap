@@ -2,7 +2,7 @@ commit: c4317b0c
 
 runtime Summary:
 AST Parsed     : 18055/18055 (100.00%)
-Positive Passed: 17718/18055 (98.13%)
+Positive Passed: 17736/18055 (98.23%)
 tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 codegen error: Test262Error: descriptor value should be ; object value should be 
 
@@ -212,24 +212,6 @@ transform error: Test262Error: reject reason Expected SameValue(«TypeError: The
 
 tasks/coverage/test262/test/language/expressions/class/async-gen-method-static/yield-star-sync-throw.js
 transform error: throw-arg-1
-
-tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-abrupt.js
-transform error: Test262Error: 
-
-tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-ref-later.js
-transform error: ReferenceError: Cannot access 'y' before initialization
-
-tasks/coverage/test262/test/language/expressions/class/async-method/dflt-params-ref-self.js
-transform error: ReferenceError: Cannot access 'x' before initialization
-
-tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-abrupt.js
-transform error: Test262Error: 
-
-tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-ref-later.js
-transform error: ReferenceError: Cannot access 'y' before initialization
-
-tasks/coverage/test262/test/language/expressions/class/async-method-static/dflt-params-ref-self.js
-transform error: ReferenceError: Cannot access 'x' before initialization
 
 tasks/coverage/test262/test/language/expressions/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-1.js
 transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
@@ -549,21 +531,6 @@ transform error: Test262Error: reject reason Expected SameValue(«TypeError: The
 tasks/coverage/test262/test/language/expressions/object/method-definition/async-gen-yield-star-sync-throw.js
 transform error: throw-arg-1
 
-tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-abrupt.js
-transform error: Test262Error: 
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-ref-later.js
-transform error: ReferenceError: Cannot access 'y' before initialization
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-dflt-params-ref-self.js
-transform error: ReferenceError: Cannot access 'x' before initialization
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/async-meth-eval-var-scope-syntax-err.js
-transform error: SyntaxError: Identifier 'a' has already been declared
-
-tasks/coverage/test262/test/language/expressions/object/method-definition/async-super-call-param.js
-transform error: ReferenceError: _superprop_getMethod is not defined
-
 tasks/coverage/test262/test/language/expressions/object/object-spread-proxy-get-not-called-on-dontenum-keys.js
 transform error: Test262Error: Actual [dontEnumString, 0, enumerableString, 1, Symbol(dont_enum_symbol), Symbol(enumerable_symbol)] and expected [Symbol(dont_enum_symbol), dontEnumString, 0, Symbol(enumerable_symbol), enumerableString, 1] should have the same contents. 
 
@@ -701,27 +668,6 @@ transform error: Test262Error: reject reason Expected SameValue(«TypeError: The
 
 tasks/coverage/test262/test/language/statements/class/async-gen-method-static/yield-star-sync-throw.js
 transform error: throw-arg-1
-
-tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-abrupt.js
-transform error: Test262Error: 
-
-tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-ref-later.js
-transform error: ReferenceError: Cannot access 'y' before initialization
-
-tasks/coverage/test262/test/language/statements/class/async-method/dflt-params-ref-self.js
-transform error: ReferenceError: Cannot access 'x' before initialization
-
-tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-abrupt.js
-transform error: Test262Error: 
-
-tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-ref-later.js
-transform error: ReferenceError: Cannot access 'y' before initialization
-
-tasks/coverage/test262/test/language/statements/class/async-method-static/dflt-params-ref-self.js
-transform error: ReferenceError: Cannot access 'x' before initialization
-
-tasks/coverage/test262/test/language/statements/class/definition/methods-async-super-call-param.js
-transform error: ReferenceError: _superprop_getMethod is not defined
 
 tasks/coverage/test262/test/language/statements/class/elements/arrow-body-derived-cls-direct-eval-err-contains-supercall-1.js
 transform error: Test262Error: Expected a SyntaxError but got a ReferenceError
