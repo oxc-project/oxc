@@ -1,3 +1,4 @@
+use oxc_semantic::ScopeId;
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Vec as ArenaVec;
@@ -12,8 +13,11 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
 
+/// enum member values (or None if it can't be evaluated at build time) keyed by names
+type PrevMembers<'a> = FxHashMap<Atom<'a>, Option<ConstantValue>>;
+
 pub struct TypeScriptEnum<'a> {
-    enums: FxHashMap<Atom<'a>, FxHashMap<Atom<'a>, ConstantValue>>,
+    enums: FxHashMap<Atom<'a>, PrevMembers<'a>>,
 }
 
 impl TypeScriptEnum<'_> {
@@ -97,7 +101,8 @@ impl<'a> TypeScriptEnum<'a> {
         // Foo[Foo["X"] = 0] = "X";
         let is_already_declared = self.enums.contains_key(&enum_name);
 
-        let statements = self.transform_ts_enum_members(&mut decl.members, &param_binding, ctx);
+        let statements =
+            self.transform_ts_enum_members(decl.scope_id(), &mut decl.members, &param_binding, ctx);
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
         let callee = Expression::FunctionExpression(ctx.ast.alloc_function_with_scope_id(
             SPAN,
@@ -176,6 +181,7 @@ impl<'a> TypeScriptEnum<'a> {
 
     fn transform_ts_enum_members(
         &mut self,
+        enum_scope_id: ScopeId,
         members: &mut ArenaVec<'a, TSEnumMember<'a>>,
         param_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -199,44 +205,34 @@ impl<'a> TypeScriptEnum<'a> {
                 let constant_value =
                     self.computed_constant_value(initializer, &previous_enum_members);
 
+                previous_enum_members.insert(member_name.clone(), constant_value.clone());
+
                 // prev_constant_value = constant_value
                 let init = match constant_value {
                     None => {
                         prev_constant_value = None;
                         let mut new_initializer = ast.move_expression(initializer);
 
-                        // If the initializer is a binding identifier,
-                        // and it is not a binding in the current scope and parent scopes,
-                        // we need to rename it to the enum name. e.g. `d = c` to `d = A.c`
-                        // same behavior in https://github.com/babel/babel/blob/610897a9a96c5e344e77ca9665df7613d2f88358/packages/babel-plugin-transform-typescript/src/enum.ts#L145-L150
-                        let has_binding = matches!(
-                            &new_initializer,
-                            Expression::Identifier(ident) if ctx.scopes().has_binding(ctx.current_scope_id(), &ident.name)
-                        );
-                        if !has_binding {
-                            IdentifierReferenceRename::new(
-                                param_binding.name.clone(),
-                                previous_enum_members.clone(),
-                                ctx,
-                            )
-                            .visit_expression(&mut new_initializer);
-                        }
+                        IdentifierReferenceRename::new(
+                            param_binding.name.clone(),
+                            enum_scope_id,
+                            previous_enum_members.clone(),
+                            ctx,
+                        )
+                        .visit_expression(&mut new_initializer);
 
                         new_initializer
                     }
-                    Some(constant_value) => {
-                        previous_enum_members.insert(member_name.clone(), constant_value.clone());
-                        match constant_value {
-                            ConstantValue::Number(v) => {
-                                prev_constant_value = Some(ConstantValue::Number(v));
-                                Self::get_initializer_expr(v, ctx)
-                            }
-                            ConstantValue::String(str) => {
-                                prev_constant_value = None;
-                                ast.expression_string_literal(SPAN, str, None)
-                            }
+                    Some(constant_value) => match constant_value {
+                        ConstantValue::Number(v) => {
+                            prev_constant_value = Some(ConstantValue::Number(v));
+                            Self::get_initializer_expr(v, ctx)
                         }
-                    }
+                        ConstantValue::String(str) => {
+                            prev_constant_value = None;
+                            ast.expression_string_literal(SPAN, str, None)
+                        }
+                    },
                 };
 
                 init
@@ -246,12 +242,13 @@ impl<'a> TypeScriptEnum<'a> {
                         let value = value + 1.0;
                         let constant_value = ConstantValue::Number(value);
                         prev_constant_value = Some(constant_value.clone());
-                        previous_enum_members.insert(member_name.clone(), constant_value);
+                        previous_enum_members.insert(member_name.clone(), Some(constant_value));
                         Self::get_initializer_expr(value, ctx)
                     }
                     ConstantValue::String(_) => unreachable!(),
                 }
             } else if let Some(prev_member_name) = prev_member_name {
+                previous_enum_members.insert(member_name.clone(), None);
                 let self_ref = {
                     let obj = param_binding.create_read_expression(ctx);
                     let expr = ctx.ast.expression_string_literal(SPAN, prev_member_name, None);
@@ -262,6 +259,7 @@ impl<'a> TypeScriptEnum<'a> {
                 let one = Self::get_number_literal_expression(1.0, ctx);
                 ast.expression_binary(SPAN, one, BinaryOperator::Addition, self_ref)
             } else {
+                previous_enum_members.insert(member_name.clone(), Some(ConstantValue::Number(1.0)));
                 Self::get_number_literal_expression(0.0, ctx)
             };
 
@@ -345,7 +343,7 @@ impl<'a> TypeScriptEnum<'a> {
     fn computed_constant_value(
         &self,
         expr: &Expression<'a>,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &PrevMembers<'a>,
     ) -> Option<ConstantValue> {
         self.evaluate(expr, prev_members)
     }
@@ -353,7 +351,7 @@ impl<'a> TypeScriptEnum<'a> {
     fn evaluate_ref(
         &self,
         expr: &Expression<'a>,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &PrevMembers<'a>,
     ) -> Option<ConstantValue> {
         match expr {
             match_member_expression!(Expression) => {
@@ -361,7 +359,7 @@ impl<'a> TypeScriptEnum<'a> {
                 let Expression::Identifier(ident) = expr.object() else { return None };
                 let members = self.enums.get(&ident.name)?;
                 let property = expr.static_property_name()?;
-                members.get(property).cloned()
+                members.get(property).cloned()?
             }
             Expression::Identifier(ident) => {
                 if ident.name == "Infinity" {
@@ -371,7 +369,7 @@ impl<'a> TypeScriptEnum<'a> {
                 }
 
                 if let Some(value) = prev_members.get(&ident.name) {
-                    return Some(value.clone());
+                    return value.clone();
                 }
 
                 // TODO:
@@ -388,7 +386,7 @@ impl<'a> TypeScriptEnum<'a> {
     fn evaluate(
         &self,
         expr: &Expression<'a>,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &PrevMembers<'a>,
     ) -> Option<ConstantValue> {
         match expr {
             Expression::Identifier(_)
@@ -417,7 +415,7 @@ impl<'a> TypeScriptEnum<'a> {
     fn eval_binary_expression(
         &self,
         expr: &BinaryExpression<'a>,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &PrevMembers<'a>,
     ) -> Option<ConstantValue> {
         let left = self.evaluate(&expr.left, prev_members)?;
         let right = self.evaluate(&expr.right, prev_members)?;
@@ -482,7 +480,7 @@ impl<'a> TypeScriptEnum<'a> {
     fn eval_unary_expression(
         &self,
         expr: &UnaryExpression<'a>,
-        prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
+        prev_members: &PrevMembers<'a>,
     ) -> Option<ConstantValue> {
         let value = self.evaluate(&expr.argument, prev_members)?;
 
@@ -527,46 +525,61 @@ impl<'a> TypeScriptEnum<'a> {
 /// ```
 struct IdentifierReferenceRename<'a, 'ctx> {
     enum_name: Atom<'a>,
+    enum_scope_id: ScopeId,
     ctx: &'ctx TraverseCtx<'a>,
-    previous_enum_members: FxHashMap<Atom<'a>, ConstantValue>,
+    previous_enum_members: PrevMembers<'a>,
 }
 
 impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
     fn new(
         enum_name: Atom<'a>,
-        previous_enum_members: FxHashMap<Atom<'a>, ConstantValue>,
+        enum_scope_id: ScopeId,
+        previous_enum_members: PrevMembers<'a>,
         ctx: &'ctx TraverseCtx<'a>,
     ) -> Self {
-        IdentifierReferenceRename { enum_name, ctx, previous_enum_members }
+        IdentifierReferenceRename { enum_name, enum_scope_id, ctx, previous_enum_members }
+    }
+}
+
+impl IdentifierReferenceRename<'_, '_> {
+    fn should_reference_enum_member(&self, ident: &IdentifierReference<'_>) -> bool {
+        // don't need to rename the identifier if it's not a member of the enum,
+        if !self.previous_enum_members.contains_key(&ident.name) {
+            return false;
+        };
+
+        let symbol_table = self.ctx.scoping.symbols();
+        let Some(symbol_id) = symbol_table.get_reference(ident.reference_id()).symbol_id() else {
+            // No symbol found, yet the name is found in previous_enum_members.
+            // It must be referencing a member declared in a previous enum block: `enum Foo { A }; enum Foo { B = A }`
+            return true;
+        };
+        let symbol_scope_id = symbol_table.get_scope_id(symbol_id);
+
+        let mut ancestors = self.ctx.scopes().ancestors(symbol_scope_id);
+        if ancestors.next().unwrap() == self.enum_scope_id {
+            // referecing to a member in this enum block without intermediate scopes: `enum Foo { A, B = A }`
+            return true;
+        }
+        if ancestors.any(|scope_id| scope_id == self.enum_scope_id) {
+            /* The symbol is declared inside enum:
+            enum Foo {
+                A,
+                B = (() => {
+                    const A = 1;
+                    return A;
+                })())
+            } */
+            return false;
+        }
+        true
     }
 }
 
 impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         let new_expr = match expr {
-            match_member_expression!(Expression) => {
-                // handle a.toString() -> A.a.toString()
-                let expr = expr.to_member_expression();
-                if let Expression::Identifier(ident) = expr.object() {
-                    if !self.previous_enum_members.contains_key(&ident.name) {
-                        return;
-                    }
-                };
-                None
-            }
-            Expression::Identifier(ident) => {
-                // If the identifier is binding in current/parent scopes,
-                // and it is not a member of the enum,
-                // we don't need to rename it.
-                // `var c = 1; enum A { a = c }` -> `var c = 1; enum A { a = c }
-                if !self.previous_enum_members.contains_key(&ident.name)
-                    && self.ctx.scopes().has_binding(self.ctx.current_scope_id(), &ident.name)
-                {
-                    return;
-                }
-
-                // TODO: shadowed case, e.g. let ident = 1; ident; // ident is not an enum
-                // enum_name.identifier
+            Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
                 let object = self.ctx.ast.expression_identifier_reference(SPAN, &self.enum_name);
                 let property = self.ctx.ast.identifier_name(SPAN, &ident.name);
                 Some(self.ctx.ast.member_expression_static(SPAN, object, property, false).into())
