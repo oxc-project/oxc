@@ -17,6 +17,8 @@ use crate::{ctx::Ctx, keep_var::KeepVar, CompressorPass};
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 pub struct PeepholeRemoveDeadCode {
     pub(crate) changed: bool,
+
+    in_fixed_loop: bool,
 }
 
 impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {
@@ -70,11 +72,17 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
             self.changed = true;
         }
     }
+
+    fn exit_class_body(&mut self, body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {
+        if !self.in_fixed_loop {
+            Self::remove_empty_class_static_block(body);
+        }
+    }
 }
 
 impl<'a, 'b> PeepholeRemoveDeadCode {
-    pub fn new() -> Self {
-        Self { changed: false }
+    pub fn new(in_fixed_loop: bool) -> Self {
+        Self { changed: false, in_fixed_loop }
     }
 
     /// Removes dead code thats comes after `return` statements after inlining `if` statements
@@ -562,6 +570,10 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         };
         (params_empty && body_empty).then(|| ctx.ast.statement_empty(e.span))
     }
+
+    fn remove_empty_class_static_block(body: &mut ClassBody<'a>) {
+        body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
+    }
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
@@ -573,7 +585,7 @@ mod test {
 
     fn test(source_text: &str, positive: &str) {
         let allocator = Allocator::default();
-        let mut pass = super::PeepholeRemoveDeadCode::new();
+        let mut pass = super::PeepholeRemoveDeadCode::new(false);
         tester::test(&allocator, source_text, positive, &mut pass);
     }
 
@@ -790,5 +802,11 @@ mod test {
         // test("(() => x)()", "x;");
         // test("/* @__PURE__ */ (() => x)()", "");
         // test("/* @__PURE__ */ (() => x)(y, z)", "y, z;");
+    }
+
+    #[test]
+    fn test_remove_empty_static_block() {
+        test("class Foo { static {}; foo }", "class Foo { foo }");
+        test_same("class Foo { static { foo() }");
     }
 }

@@ -60,7 +60,7 @@ impl PeepholeOptimizations {
             x3_collapse_variable_declarations: CollapseVariableDeclarations::new(),
             x4_peephole_fold_constants: PeepholeFoldConstants::new(),
             x5_peephole_minimize_conditions: PeepholeMinimizeConditions::new(target),
-            x6_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
+            x6_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(in_fixed_loop),
             x7_convert_to_dotted_properties: ConvertToDottedProperties::new(in_fixed_loop),
             x8_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
             x9_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax::new(
@@ -147,6 +147,10 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
 
     fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_minimize_exit_points.exit_function_body(body, ctx);
+    }
+
+    fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x6_peephole_remove_dead_code.exit_class_body(body, ctx);
     }
 
     fn exit_variable_declaration(
@@ -236,7 +240,7 @@ impl DeadCodeElimination {
     pub fn new() -> Self {
         Self {
             x1_peephole_fold_constants: PeepholeFoldConstants::new(),
-            x2_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(),
+            x2_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(false),
         }
     }
 }
