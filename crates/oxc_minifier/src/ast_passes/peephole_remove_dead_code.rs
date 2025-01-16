@@ -27,6 +27,13 @@ impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {
 }
 
 impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        if stmts.iter().any(|stmt| matches!(stmt, Statement::EmptyStatement(_))) {
+            stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
+        }
+        self.dead_code_elimination(stmts, Ctx(ctx));
+    }
+
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx(ctx);
         if let Some(new_stmt) = match stmt {
@@ -48,13 +55,6 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
                 self.changed = true;
             }
         }
-    }
-
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        if stmts.iter().any(|stmt| matches!(stmt, Statement::EmptyStatement(_))) {
-            stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
-        }
-        self.dead_code_elimination(stmts, Ctx(ctx));
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

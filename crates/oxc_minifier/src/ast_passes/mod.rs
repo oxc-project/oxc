@@ -130,7 +130,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.x0_statement_fusion.exit_statements(stmts, ctx);
-        self.x1_minimize_exit_points.exit_statements(stmts, ctx);
         self.x2_exploit_assigns.exit_statements(stmts, ctx);
         self.x3_collapse_variable_declarations.exit_statements(stmts, ctx);
         self.x5_peephole_minimize_conditions.exit_statements(stmts, ctx);
