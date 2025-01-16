@@ -170,6 +170,8 @@ impl NoRestrictedMatchers {
 fn test() {
     use crate::tester::Tester;
 
+    // Note: Both Jest and Vitest share the same unit tests
+
     let pass = vec![
         ("expect(a).toHaveBeenCalled()", None),
         ("expect(a).not.toHaveBeenCalled()", None),
