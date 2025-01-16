@@ -28,9 +28,22 @@ function run(input: string, expected: string[], prepend_code?: string) {
   expect(minified).not.toBeFalsy();
   // Use `consoleMock` instead of the returned output.
   const _ = run_code(minified, prepend_code);
-  const calls = consoleMock.mock.calls.map((args) => args.map((arg) => arg == null ? 'undefined' : '' + arg).join(' '));
+  const calls = consoleMock.mock.calls.map((args) => args.map(convert).join(' '));
   expect(calls).toStrictEqual(expected);
   consoleMock.mockReset();
+}
+
+function convert(arg: any) {
+  if (arg == null) {
+    return 'undefined';
+  }
+  if (typeof arg == 'string') {
+    return arg;
+  }
+  if (arg && arg.length >= 0) {
+    return JSON.stringify(arg);
+  }
+  return arg;
 }
 
 test('replace_index', () => {
@@ -1252,7 +1265,7 @@ test('mangle_destructuring_assign_toplevel_false', () => {
 
 test('mangle_destructuring_decl_array', () => {
   const code = 'var[,t,e,n,s,o=2,r=[1+2]]=[9,8,7,6];console.log(t,e,n,s,o,r);';
-  const expected = ['8 7 6 undefined 2 3'];
+  const expected = ['8 7 6 undefined 2 [3]'];
   run(code, expected);
 });
 
@@ -1540,7 +1553,7 @@ test('issue_2105_2', () => {
   run(code, expected);
 });
 
-test.skip('issue_2136_1', () => {
+test('issue_2136_1', () => {
   const code = '!function(a,...b){console.log(b)}();';
   const expected = ['[]'];
   run(code, expected);
@@ -1975,7 +1988,7 @@ test('issue_2968', () => {
 test('avoid_spread_in_ternary', () => {
   const code =
     'function print(...x){console.log(...x)}var a=[1,2],b=[3,4],m=Math;if(m)print(a);else print(b);if(m)print(...a);else print(b);if(m.no_such_property)print(a);else print(...b);';
-  const expected = ['1,2', '1 2', '3 4'];
+  const expected = ['[1,2]', '1 2', '3 4'];
   run(code, expected);
 });
 
@@ -2498,7 +2511,7 @@ test('issue_2028', () => {
 
 test('array_spread_of_sequence', () => {
   const code = 'var a=[1];console.log([...(a,a)]);console.log([...a,a]);console.log([...a||a]);console.log([...a||a]);';
-  const expected = ['1', '1,1', '1', '1'];
+  const expected = ['[1]', '[1,[1]]', '[1]', '[1]'];
   run(code, expected);
 });
 
@@ -2511,14 +2524,14 @@ test('issue_2345', () => {
 test('issue_2349', () => {
   const code =
     'function foo(boo,key){const value=boo.get();return value.map(({[key]:bar})=>bar)}console.log(foo({get:()=>[{blah:42}]},"blah"));';
-  const expected = ['42'];
+  const expected = ['[42]'];
   run(code, expected);
 });
 
 test('issue_2349b', () => {
   const code =
     'function foo(boo,key){const value=boo.get();return value.map((function({[key]:bar}){return bar}))}console.log(foo({get:function(){return[{blah:42}]}},"blah"));';
-  const expected = ['42'];
+  const expected = ['[42]'];
   run(code, expected);
 });
 
@@ -5695,7 +5708,7 @@ test('issue_2728_6', () => {
 test('issue_3271', () => {
   const code =
     'function string2buf(str){var i=0,buf=new Array(2),c=str.charCodeAt(0);if(c<2048){buf[i++]=192|c>>>6;buf[i++]=128|c&63}else{buf[i++]=224|c>>>12;buf[i++]=128|c>>>6&63;buf[i++]=128|c&63}return buf}console.log(string2buf("é"));';
-  const expected = ['195,169'];
+  const expected = ['[195,169]'];
   run(code, expected);
 });
 
