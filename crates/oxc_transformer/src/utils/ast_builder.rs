@@ -1,5 +1,6 @@
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{ast::*, NONE};
-use oxc_semantic::ScopeFlags;
+use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::TraverseCtx;
 
@@ -40,28 +41,33 @@ pub(crate) fn create_call_call<'a>(
 /// Wrap an `Expression` in an arrow function IIFE (immediately invoked function expression)
 /// with a body block.
 ///
-/// `expr` ->  `(() => { return expr; })()`
+/// `expr` -> `(() => { return expr; })()`
 pub(crate) fn wrap_expression_in_arrow_function_iife<'a>(
     expr: Expression<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     let scope_id =
         ctx.insert_scope_below_expression(&expr, ScopeFlags::Arrow | ScopeFlags::Function);
-
     let span = expr.span();
+    let stmts = ctx.ast.vec1(ctx.ast.statement_return(SPAN, Some(expr)));
+    wrap_statements_in_arrow_function_iife(stmts, scope_id, span, ctx)
+}
+
+/// Wrap statements in an IIFE (immediately invoked function expression).
+///
+/// `x; y; z;` -> `(() => { x; y; z; })()`
+pub(crate) fn wrap_statements_in_arrow_function_iife<'a>(
+    stmts: ArenaVec<'a, Statement<'a>>,
+    scope_id: ScopeId,
+    span: Span,
+    ctx: &mut TraverseCtx<'a>,
+) -> Expression<'a> {
     let kind = FormalParameterKind::ArrowFormalParameters;
-    let params = ctx.ast.formal_parameters(SPAN, kind, ctx.ast.vec(), NONE);
-    let statements = ctx.ast.vec1(ctx.ast.statement_return(SPAN, Some(expr)));
-    let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), statements);
-    let arrow = ctx.ast.alloc_arrow_function_expression_with_scope_id(
-        SPAN, false, false, NONE, params, NONE, body, scope_id,
-    );
-    // IIFE
-    ctx.ast.expression_call(
-        span,
-        Expression::ArrowFunctionExpression(arrow),
-        NONE,
-        ctx.ast.vec(),
-        false,
-    )
+    let params = ctx.ast.alloc_formal_parameters(SPAN, kind, ctx.ast.vec(), NONE);
+    let body = ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), stmts);
+    let arrow =
+        Expression::ArrowFunctionExpression(ctx.ast.alloc_arrow_function_expression_with_scope_id(
+            SPAN, false, false, NONE, params, NONE, body, scope_id,
+        ));
+    ctx.ast.expression_call(span, arrow, NONE, ctx.ast.vec(), false)
 }
