@@ -131,14 +131,13 @@ impl Rule for NoUselessRename {
                     else {
                         continue;
                     };
-
                     let Some(key) = property.name.static_name() else {
                         continue;
                     };
-                    let Some(renamed_key) = property.binding.name() else {
+                    let Some(renamed_key) = property.binding.identifier().map(|ident| &ident.name)
+                    else {
                         continue;
                     };
-
                     if key == renamed_key {
                         ctx.diagnostic(no_useless_rename_diagnostic(property.span));
                     }

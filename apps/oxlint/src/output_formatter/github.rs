@@ -1,34 +1,36 @@
-use std::{
-    borrow::Cow,
-    io::{BufWriter, Stdout, Write},
+use std::{borrow::Cow, io::Write};
+
+use oxc_diagnostics::{
+    reporter::{DiagnosticReporter, Info},
+    Error, Severity,
 };
 
-use super::{writer, DiagnosticReporter, Info};
-use crate::{Error, Severity};
+use crate::output_formatter::InternalFormatter;
+
+#[derive(Debug)]
+pub struct GithubOutputFormatter;
+
+impl InternalFormatter for GithubOutputFormatter {
+    fn all_rules(&mut self, writer: &mut dyn Write) {
+        writeln!(writer, "flag --rules with flag --format=github is not allowed").unwrap();
+    }
+
+    fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
+        Box::new(GithubReporter)
+    }
+}
 
 /// Formats reports using [GitHub Actions
 /// annotations](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message). Useful for reporting in CI.
-pub struct GithubReporter {
-    writer: BufWriter<Stdout>,
-}
-
-impl Default for GithubReporter {
-    fn default() -> Self {
-        Self { writer: writer() }
-    }
-}
+struct GithubReporter;
 
 impl DiagnosticReporter for GithubReporter {
-    fn finish(&mut self) {
-        self.writer.flush().unwrap();
+    fn finish(&mut self) -> Option<String> {
+        None
     }
 
-    fn render_diagnostics(&mut self, _s: &[u8]) {}
-
     fn render_error(&mut self, error: Error) -> Option<String> {
-        let message = format_github(&error);
-        self.writer.write_all(message.as_bytes()).unwrap();
-        None
+        Some(format_github(&error))
     }
 }
 
@@ -78,4 +80,34 @@ fn escape_property(value: &str) -> String {
         }
     }
     result
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_span::Span;
+
+    use super::GithubReporter;
+
+    #[test]
+    fn reporter_finish() {
+        let mut reporter = GithubReporter;
+
+        let result = reporter.finish();
+
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn reporter_error() {
+        let mut reporter = GithubReporter;
+        let error = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
+
+        let result = reporter.render_error(error);
+
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=1,title=oxlint::error message\n");
+    }
 }

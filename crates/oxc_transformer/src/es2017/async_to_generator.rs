@@ -220,23 +220,70 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             return;
         };
 
+        // If parameters could throw errors, we need to move them to the inner function,
+        // because it is an async function, which should return a rejecting promise if
+        // there is an error.
+        let needs_move_parameters_to_inner_function =
+            Self::could_throw_errors_parameters(&func.params);
+
         let (generator_scope_id, wrapper_scope_id) = {
             let new_scope_id = ctx.create_child_scope(ctx.current_scope_id(), ScopeFlags::Function);
             let scope_id = func.scope_id.replace(Some(new_scope_id)).unwrap();
             // We need to change the parent id to new scope id because we need to this function's body inside the wrapper function,
             // and then the new scope id will be wrapper function's scope id.
             ctx.scopes_mut().change_parent_id(scope_id, Some(new_scope_id));
-            // We need to transform formal parameters change back to the original scope,
-            // because we only move out the function body.
-            Self::move_formal_parameters_to_target_scope(new_scope_id, &func.params, ctx);
+            if !needs_move_parameters_to_inner_function {
+                // We need to change formal parameters's scope back to the original scope,
+                // because we only move out the function body.
+                Self::move_formal_parameters_to_target_scope(new_scope_id, &func.params, ctx);
+            }
 
             (scope_id, new_scope_id)
         };
 
-        let params = Self::create_empty_params(ctx);
-        let expression = self.create_async_to_generator_call(params, body, generator_scope_id, ctx);
-        // Construct the IIFE
-        let expression = ctx.ast.expression_call(SPAN, expression, NONE, ctx.ast.vec(), false);
+        let params = if needs_move_parameters_to_inner_function {
+            // Make sure to not change the value of the "length" property. This is
+            // done by generating dummy arguments for the outer function equal to
+            // the expected length of the function:
+            //
+            //   async function foo(a, b, c = d, ...e) {
+            //   }
+            //
+            // This turns into:
+            //
+            //   function foo(_x, _x1) {
+            //     return _asyncToGenerator(function* (a, b, c = d, ...e) {
+            //     }).call(this, arguments);
+            //   }
+            //
+            // The "_x" and "_x1" are dummy variables to ensure "foo.length" is 2.
+            let new_params = Self::create_placeholder_params(&func.params, wrapper_scope_id, ctx);
+            mem::replace(&mut func.params, new_params)
+        } else {
+            Self::create_empty_params(ctx)
+        };
+
+        let callee = self.create_async_to_generator_call(params, body, generator_scope_id, ctx);
+        let (callee, arguments) = if needs_move_parameters_to_inner_function {
+            // callee.apply(this, arguments)
+            let property = ctx.ast.identifier_name(SPAN, "apply");
+            let callee =
+                Expression::from(ctx.ast.member_expression_static(SPAN, callee, property, false));
+
+            // this, arguments
+            let this_argument = Argument::from(ctx.ast.expression_this(SPAN));
+            let arguments_argument = Argument::from(ctx.create_unbound_ident_expr(
+                SPAN,
+                Atom::new_const("arguments"),
+                ReferenceFlags::Read,
+            ));
+            (callee, ctx.ast.vec_from_iter([this_argument, arguments_argument]))
+        } else {
+            // callee()
+            (callee, ctx.ast.vec())
+        };
+
+        let expression = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         let statement = ctx.ast.statement_return(SPAN, Some(expression));
 
         // Modify the wrapper function
@@ -786,6 +833,32 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     #[inline]
     fn is_function_length_affected(params: &FormalParameters<'_>) -> bool {
         params.items.first().is_some_and(|param| !param.pattern.kind.is_assignment_pattern())
+    }
+
+    /// Check whether the function parameters could throw errors.
+    #[inline]
+    fn could_throw_errors_parameters(params: &FormalParameters<'a>) -> bool {
+        params.items.iter().any(|param|
+            matches!(
+                &param.pattern.kind,
+                BindingPatternKind::AssignmentPattern(pattern) if Self::could_potentially_throw_error_expression(&pattern.right)
+            )
+        )
+    }
+
+    /// Check whether the expression could potentially throw an error.
+    #[inline]
+    fn could_potentially_throw_error_expression(expr: &Expression<'a>) -> bool {
+        !(matches!(
+            expr,
+            Expression::NullLiteral(_)
+                | Expression::BooleanLiteral(_)
+                | Expression::NumericLiteral(_)
+                | Expression::StringLiteral(_)
+                | Expression::BigIntLiteral(_)
+                | Expression::ArrowFunctionExpression(_)
+                | Expression::FunctionExpression(_)
+        ) || expr.is_undefined())
     }
 
     #[inline]

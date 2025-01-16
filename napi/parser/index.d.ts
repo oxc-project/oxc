@@ -274,4 +274,3 @@ export interface ValueSpan {
   start: number
   end: number
 }
-

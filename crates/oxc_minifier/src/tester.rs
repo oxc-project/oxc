@@ -6,7 +6,7 @@ use oxc_span::SourceType;
 use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
-    ast_passes::{CompressorPass, Normalize, RemoveSyntax},
+    ast_passes::{CompressorPass, Normalize, NormalizeOptions},
     CompressOptions,
 };
 
@@ -44,8 +44,9 @@ fn run<'a, P: CompressorPass<'a>>(
         let (symbols, scopes) =
             SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
         let mut ctx = ReusableTraverseCtx::new(scopes, symbols, allocator);
-        RemoveSyntax::new(CompressOptions::all_false()).build(&mut program, &mut ctx);
-        Normalize::new().build(&mut program, &mut ctx);
+        let normalize_options = NormalizeOptions { convert_while_to_fors: true };
+        Normalize::new(normalize_options, CompressOptions::all_false())
+            .build(&mut program, &mut ctx);
         pass.build(&mut program, &mut ctx);
     }
 

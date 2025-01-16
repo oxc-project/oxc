@@ -45,10 +45,10 @@ use oxc_estree::ESTree;
 /// assert_eq!(s.expand(5), s.expand_left(5).expand_right(5));
 /// ```
 ///
-/// ## Hashing
-/// [`Span`] has a normal implementation of [`Hash`]. If you want to compare two
+/// ## Comparison
+/// [`Span`] has a normal implementation of [`PartialEq`]. If you want to compare two
 /// AST nodes without considering their locations (e.g. to see if they have the
-/// same content), use [`ContentHash`](crate::hash::ContentHash) instead.
+/// same content), use [`ContentEq`](crate::cmp::ContentEq) instead.
 ///
 /// ## Implementation Notes
 /// See the [`text-size`](https://docs.rs/text-size) crate for details.

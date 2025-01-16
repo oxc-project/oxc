@@ -22,15 +22,10 @@ export default function generateWalkFunctionsCode(types) {
   }
 
   return `
-    #![allow(
-      unsafe_code,
-      clippy::missing_safety_doc,
-      clippy::missing_panics_doc,
-      clippy::undocumented_unsafe_blocks,
+    #![expect(
       clippy::semicolon_if_nothing_returned,
       clippy::ptr_as_ptr,
       clippy::ref_as_ptr,
-      clippy::borrow_as_ptr,
       clippy::cast_ptr_alignment
     )]
 
@@ -42,9 +37,24 @@ export default function generateWalkFunctionsCode(types) {
 
     use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse, TraverseCtx};
 
+    /// Walk AST with \`Traverse\` impl.
+    ///
+    /// SAFETY:
+    /// * \`program\` must be a pointer to a valid \`Program\` which has lifetime \`'a\`
+    ///   (\`Program<'a>\`).
+    /// * \`ctx\` must contain a \`TraverseAncestry<'a>\` with single \`Ancestor::None\` on its stack.
+    #[inline]
+    pub(crate) unsafe fn walk_ast<'a, Tr: Traverse<'a>>(
+      traverser: &mut Tr,
+      program: *mut Program<'a>,
+      ctx: &mut TraverseCtx<'a>,
+    ) {
+      walk_program(traverser, program, ctx);
+    }
+
     ${walkMethods}
 
-    pub(crate) unsafe fn walk_statements<'a, Tr: Traverse<'a>>(
+    unsafe fn walk_statements<'a, Tr: Traverse<'a>>(
       traverser: &mut Tr,
       stmts: *mut Vec<'a, Statement<'a>>,
       ctx: &mut TraverseCtx<'a>
@@ -254,7 +264,7 @@ function generateWalkForStruct(type, types) {
 
   const typeSnakeName = camelToSnake(type.name);
   return `
-    pub(crate) unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
+    unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
       traverser: &mut Tr,
       node: *mut ${type.rawName},
       ctx: &mut TraverseCtx<'a>
@@ -319,7 +329,7 @@ function generateWalkForEnum(type, types) {
 
   const typeSnakeName = camelToSnake(type.name);
   return `
-    pub(crate) unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
+    unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
       traverser: &mut Tr,
       node: *mut ${type.rawName},
       ctx: &mut TraverseCtx<'a>

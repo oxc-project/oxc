@@ -89,10 +89,10 @@ impl<'a> ToJsString<'a> for NumericLiteral<'a> {
     }
 }
 
+/// <https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-bigint.prototype.tostring>
 impl<'a> ToJsString<'a> for BigIntLiteral<'a> {
     fn to_js_string(&self) -> Option<Cow<'a, str>> {
-        // FIXME: to js bigint string
-        Some(Cow::Owned(self.raw.to_string()))
+        self.base.is_base_10().then(|| Cow::Owned(self.raw.trim_end_matches('n').to_string()))
     }
 }
 

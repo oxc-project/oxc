@@ -433,10 +433,8 @@ impl Gen for ForOfStatement<'_> {
 impl Gen for ForStatementInit<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            match_expression!(ForStatementInit) => {
-                self.to_expression().print_expr(p, Precedence::Lowest, ctx);
-            }
             Self::VariableDeclaration(var) => var.print(p, ctx),
+            _ => self.to_expression().print_expr(p, Precedence::Lowest, ctx),
         }
     }
 }
@@ -1159,11 +1157,6 @@ impl Gen for ExportDefaultDeclaration<'_> {
 impl Gen for ExportDefaultDeclarationKind<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            match_expression!(Self) => {
-                p.start_of_default_export = p.code_len();
-                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
-                p.print_semicolon_after_statement();
-            }
             Self::FunctionDeclaration(fun) => {
                 fun.print(p, ctx);
                 p.print_soft_newline();
@@ -1173,6 +1166,11 @@ impl Gen for ExportDefaultDeclarationKind<'_> {
                 p.print_soft_newline();
             }
             Self::TSInterfaceDeclaration(interface) => interface.print(p, ctx),
+            _ => {
+                p.start_of_default_export = p.code_len();
+                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
+                p.print_semicolon_after_statement();
+            }
         }
     }
 }
@@ -1472,9 +1470,7 @@ impl Gen for Argument<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::SpreadElement(elem) => elem.print(p, ctx),
-            match_expression!(Self) => {
-                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
-            }
+            _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
         }
     }
 }
@@ -1482,11 +1478,9 @@ impl Gen for Argument<'_> {
 impl Gen for ArrayExpressionElement<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            match_expression!(Self) => {
-                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
-            }
             Self::SpreadElement(elem) => elem.print(p, ctx),
             Self::Elision(_span) => {}
+            _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
         }
     }
 }
@@ -1675,9 +1669,7 @@ impl Gen for PropertyKey<'_> {
             Self::StringLiteral(s) => {
                 p.print_quoted_utf16(s.value.as_str(), /* allow_backtick */ false);
             }
-            match_expression!(Self) => {
-                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
-            }
+            _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
         }
     }
 }
@@ -2029,8 +2021,12 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
                 PropertyKey::StaticIdentifier(ident) => Some(&ident.name),
                 _ => None,
             };
-            let value_name = self.binding.name();
-            key_name.is_some() && value_name.is_some() && key_name == value_name.as_ref()
+            let value_name =
+                self.binding.identifier().map(|id| p.get_identifier_reference_name(id));
+            match (key_name, value_name) {
+                (Some(key_name), Some(value_name)) => key_name == value_name,
+                _ => false,
+            }
         } else {
             false
         };
@@ -2042,7 +2038,7 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
                 PropertyKey::PrivateIdentifier(ident) => {
                     ident.print(p, ctx);
                 }
-                key @ match_expression!(PropertyKey) => {
+                key => {
                     if self.computed {
                         p.print_ascii_byte(b'[');
                     }
@@ -2451,8 +2447,8 @@ impl Gen for JSXEmptyExpression {
 impl Gen for JSXExpression<'_> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            match_expression!(Self) => p.print_expression(self.to_expression()),
             Self::EmptyExpression(expr) => expr.print(p, ctx),
+            _ => p.print_expression(self.to_expression()),
         }
     }
 }
@@ -3408,7 +3404,7 @@ impl Gen for TSSignature<'_> {
                         PropertyKey::PrivateIdentifier(key) => {
                             p.print_str(key.name.as_str());
                         }
-                        key @ match_expression!(PropertyKey) => {
+                        key => {
                             key.to_expression().print_expr(p, Precedence::Comma, ctx);
                         }
                     }
@@ -3474,7 +3470,7 @@ impl Gen for TSSignature<'_> {
                         PropertyKey::PrivateIdentifier(key) => {
                             p.print_str(key.name.as_str());
                         }
-                        key @ match_expression!(PropertyKey) => {
+                        key => {
                             key.to_expression().print_expr(p, Precedence::Comma, ctx);
                         }
                     }

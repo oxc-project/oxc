@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "0.15.5"
+version = "0.15.6"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -39,6 +39,7 @@ bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"]
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
 rayon = { workspace = true }
+rustc-hash = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tempfile = { workspace = true }

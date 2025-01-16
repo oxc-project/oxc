@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ValueType};
-use oxc_span::{cmp::ContentEq, GetSpan, SPAN};
+use oxc_span::{cmp::ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
 use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
@@ -433,9 +433,9 @@ impl<'a> PeepholeMinimizeConditions {
         if let Expression::ConditionalExpression(consequent) = &mut expr.consequent {
             if consequent.alternate.content_eq(&expr.alternate) {
                 return Some(ctx.ast.expression_conditional(
-                    SPAN,
+                    expr.span,
                     ctx.ast.expression_logical(
-                        SPAN,
+                        expr.test.span(),
                         ctx.ast.move_expression(&mut expr.test),
                         LogicalOperator::And,
                         ctx.ast.move_expression(&mut consequent.test),
@@ -450,9 +450,9 @@ impl<'a> PeepholeMinimizeConditions {
         if let Expression::ConditionalExpression(alternate) = &mut expr.alternate {
             if alternate.consequent.content_eq(&expr.consequent) {
                 return Some(ctx.ast.expression_conditional(
-                    SPAN,
+                    expr.span,
                     ctx.ast.expression_logical(
-                        SPAN,
+                        expr.test.span(),
                         ctx.ast.move_expression(&mut expr.test),
                         LogicalOperator::Or,
                         ctx.ast.move_expression(&mut alternate.test),
@@ -469,10 +469,10 @@ impl<'a> PeepholeMinimizeConditions {
                 && alternate.expressions[1].content_eq(&expr.consequent)
             {
                 return Some(ctx.ast.expression_sequence(
-                    SPAN,
+                    expr.span,
                     ctx.ast.vec_from_array([
                         ctx.ast.expression_logical(
-                            SPAN,
+                            expr.test.span(),
                             ctx.ast.move_expression(&mut expr.test),
                             LogicalOperator::Or,
                             ctx.ast.move_expression(&mut alternate.expressions[0]),
@@ -489,10 +489,10 @@ impl<'a> PeepholeMinimizeConditions {
                 && consequent.expressions[1].content_eq(&expr.alternate)
             {
                 return Some(ctx.ast.expression_sequence(
-                    SPAN,
+                    expr.span,
                     ctx.ast.vec_from_array([
                         ctx.ast.expression_logical(
-                            SPAN,
+                            expr.test.span(),
                             ctx.ast.move_expression(&mut expr.test),
                             LogicalOperator::And,
                             ctx.ast.move_expression(&mut consequent.expressions[0]),
@@ -509,9 +509,9 @@ impl<'a> PeepholeMinimizeConditions {
                 && logical_expr.right.content_eq(&expr.alternate)
             {
                 return Some(ctx.ast.expression_logical(
-                    SPAN,
+                    expr.span,
                     ctx.ast.expression_logical(
-                        SPAN,
+                        expr.test.span(),
                         ctx.ast.move_expression(&mut expr.test),
                         LogicalOperator::And,
                         ctx.ast.move_expression(&mut logical_expr.left),
@@ -528,9 +528,9 @@ impl<'a> PeepholeMinimizeConditions {
                 && logical_expr.right.content_eq(&expr.consequent)
             {
                 return Some(ctx.ast.expression_logical(
-                    SPAN,
+                    expr.span,
                     ctx.ast.expression_logical(
-                        SPAN,
+                        expr.test.span(),
                         ctx.ast.move_expression(&mut expr.test),
                         LogicalOperator::Or,
                         ctx.ast.move_expression(&mut logical_expr.left),
@@ -579,9 +579,9 @@ impl<'a> PeepholeMinimizeConditions {
                     };
                     let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
                     args[0] = ctx.ast.argument_spread_element(
-                        SPAN,
+                        expr.span,
                         ctx.ast.expression_conditional(
-                            SPAN,
+                            expr.test.span(),
                             ctx.ast.move_expression(&mut expr.test),
                             consequent_first_arg,
                             alternate_first_arg,
@@ -602,7 +602,7 @@ impl<'a> PeepholeMinimizeConditions {
                         ctx.ast.move_expression(alternate.arguments[0].to_expression_mut());
                     let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
                     args[0] = Argument::from(ctx.ast.expression_conditional(
-                        SPAN,
+                        expr.test.span(),
                         ctx.ast.move_expression(&mut expr.test),
                         consequent_first_arg,
                         alternate_first_arg,
@@ -626,9 +626,9 @@ impl<'a> PeepholeMinimizeConditions {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
                     ctx.ast.expression_unary(
-                        SPAN,
+                        ident.span(),
                         UnaryOperator::LogicalNot,
-                        ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, ident),
+                        ctx.ast.expression_unary(ident.span(), UnaryOperator::LogicalNot, ident),
                     ),
                     LogicalOperator::Or,
                     ctx.ast.move_expression(&mut expr.alternate),
@@ -661,9 +661,9 @@ impl<'a> PeepholeMinimizeConditions {
             return Some(ctx.ast.expression_logical(
                 expr.span,
                 ctx.ast.expression_unary(
-                    SPAN,
+                    expr.span,
                     UnaryOperator::LogicalNot,
-                    ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, ident),
+                    ctx.ast.expression_unary(ident.span(), UnaryOperator::LogicalNot, ident),
                 ),
                 LogicalOperator::And,
                 ctx.ast.move_expression(&mut expr.consequent),

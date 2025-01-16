@@ -639,9 +639,16 @@ impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
                 if let Statement::ExpressionStatement(expr_stmt) = stmt {
                     if let Expression::CallExpression(call_expr) = &mut expr_stmt.expression {
                         if let Expression::Super(super_) = &call_expr.callee {
+                            let span = super_.span;
+
+                            // Visit arguments in `super(x, y, z)` call.
+                            // Required to handle edge case `super(self = super())`.
+                            self.visit_arguments(&mut call_expr.arguments);
+
                             // Found `super()` as top-level statement
                             if self.super_binding.is_none() {
-                                // This is the first `super()` found.
+                                // This is the first `super()` found
+                                // (and no further `super()` calls within `super()` call's arguments).
                                 // So can just insert initializers after it - no need for `_super` function.
                                 let insert_location =
                                     InstanceInitsInsertLocation::ExistingConstructor(index + 1);
@@ -652,7 +659,6 @@ impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
                             // So we do need a `_super` function.
                             // But we don't need to look any further for any other `super()` calls,
                             // because calling `super()` after this would be an immediate error.
-                            let span = super_.span;
                             self.replace_super(call_expr, span);
 
                             break 'outer;

@@ -325,6 +325,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "convert_case"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb402b8d4c85569410425650ce3eddc7d698ed96d39a73f941b08fb63082f1e7"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "cow-utils"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1323,7 +1332,7 @@ version = "3.0.0-alpha.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "70412f9791322124132363db0eeb3ea0e7e7c29604840e228881c83d2b1b9a85"
 dependencies = [
- "convert_case",
+ "convert_case 0.6.0",
  "napi-derive-backend",
  "proc-macro2",
  "quote",
@@ -1336,7 +1345,7 @@ version = "2.0.0-alpha.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f70fd2c8a3ea7a17b75eeae87653c286345a6e7eb3f5bdcf3f3d4a368cb09831"
 dependencies = [
- "convert_case",
+ "convert_case 0.6.0",
  "proc-macro2",
  "quote",
  "semver",
@@ -1468,7 +1477,7 @@ checksum = "fb37767f6569cd834a413442455e0f066d0d522de8630436e2a1761d9726ba56"
 
 [[package]]
 name = "oxc"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1530,7 +1539,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -1541,7 +1550,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "bitflags 2.7.0",
  "cow-utils",
@@ -1559,7 +1568,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1571,7 +1580,7 @@ name = "oxc_ast_tools"
 version = "0.0.0"
 dependencies = [
  "bpaf",
- "convert_case",
+ "convert_case 0.7.1",
  "cow-utils",
  "itertools",
  "lazy_static",
@@ -1594,6 +1603,7 @@ dependencies = [
  "oxc_codegen",
  "oxc_isolated_declarations",
  "oxc_linter",
+ "oxc_mangler",
  "oxc_minifier",
  "oxc_parser",
  "oxc_prettier",
@@ -1607,7 +1617,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "bitflags 2.7.0",
  "itertools",
@@ -1620,7 +1630,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "assert-unchecked",
  "base64",
@@ -1682,7 +1692,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_data_structures"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "assert-unchecked",
  "ropey",
@@ -1690,15 +1700,14 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "oxc-miette",
- "rustc-hash",
 ]
 
 [[package]]
 name = "oxc_ecmascript"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "num-bigint",
  "num-traits",
@@ -1709,7 +1718,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_estree"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "serde",
 ]
@@ -1726,7 +1735,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "bitflags 2.7.0",
  "insta",
@@ -1768,10 +1777,10 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.15.5"
+version = "0.15.6"
 dependencies = [
  "bitflags 2.7.0",
- "convert_case",
+ "convert_case 0.7.1",
  "cow-utils",
  "dashmap 6.1.0",
  "fast-glob",
@@ -1817,7 +1826,7 @@ dependencies = [
 name = "oxc_macros"
 version = "0.0.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.7.1",
  "itertools",
  "proc-macro2",
  "quote",
@@ -1826,9 +1835,11 @@ dependencies = [
 
 [[package]]
 name = "oxc_mangler"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
+ "compact_str",
  "itertools",
+ "oxc_allocator",
  "oxc_ast",
  "oxc_index",
  "oxc_semantic",
@@ -1838,7 +1849,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -1867,7 +1878,9 @@ dependencies = [
  "oxc_codegen",
  "oxc_minifier",
  "oxc_parser",
+ "oxc_sourcemap",
  "oxc_span",
+ "oxc_syntax",
 ]
 
 [[package]]
@@ -1891,7 +1904,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_napi"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "napi",
  "napi-derive",
@@ -1900,7 +1913,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.7.0",
@@ -1923,7 +1936,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser_napi"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "napi",
  "napi-build",
@@ -1982,7 +1995,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_regular_expression"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast_macros",
@@ -2016,7 +2029,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "assert-unchecked",
  "hashbrown 0.15.2",
@@ -2057,7 +2070,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "compact_str",
  "oxc-miette",
@@ -2070,7 +2083,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.7.0",
@@ -2129,7 +2142,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "napi",
  "napi-build",
@@ -2142,7 +2155,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "base64",
  "compact_str",
@@ -2175,7 +2188,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "compact_str",
  "itoa",
@@ -2206,7 +2219,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.15.5"
+version = "0.15.6"
 dependencies = [
  "bpaf",
  "ignore",
@@ -2217,6 +2230,7 @@ dependencies = [
  "oxc_linter",
  "oxc_span",
  "rayon",
+ "rustc-hash",
  "serde",
  "serde_json",
  "tempfile",
@@ -2529,7 +2543,7 @@ dependencies = [
 name = "rulegen"
 version = "0.0.0"
 dependencies = [
- "convert_case",
+ "convert_case 0.7.1",
  "handlebars",
  "lazy_static",
  "oxc_allocator",

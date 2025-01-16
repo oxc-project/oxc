@@ -1,17 +1,20 @@
+use compact_str::CompactString;
 use itertools::Itertools;
-use oxc_ast::ast::{Declaration, Program, Statement};
-use oxc_index::{index_vec, Idx, IndexVec};
-use oxc_semantic::{ReferenceId, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
-use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
 
-type Slot = usize;
+use oxc_allocator::{Allocator, Vec};
+use oxc_ast::ast::{Declaration, Program, Statement};
+use oxc_index::Idx;
+use oxc_semantic::{ReferenceId, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
+use oxc_span::{Atom, CompactStr};
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
     pub top_level: bool,
     pub debug: bool,
 }
+
+type Slot = usize;
 
 /// # Name Mangler / Symbol Minification
 ///
@@ -83,29 +86,48 @@ impl Mangler {
     }
 
     #[must_use]
-    pub fn build<'a>(mut self, program: &'a Program<'a>) -> Mangler {
+    pub fn build(self, program: &Program<'_>) -> Mangler {
         let semantic = SemanticBuilder::new().build(program).semantic;
+        let (symbol_table, scope_tree) = semantic.into_symbol_table_and_scope_tree();
+        self.build_with_symbols_and_scopes(symbol_table, &scope_tree, program)
+    }
 
+    #[must_use]
+    pub fn build_with_symbols_and_scopes(
+        mut self,
+        symbol_table: SymbolTable,
+        scope_tree: &ScopeTree,
+        program: &Program<'_>,
+    ) -> Mangler {
         let (exported_names, exported_symbols) = if self.options.top_level {
             Mangler::collect_exported_symbols(program)
         } else {
             Default::default()
         };
 
+        let allocator = Allocator::default();
+
         // Mangle the symbol table by computing slots from the scope tree.
         // A slot is the occurrence index of a binding identifier inside a scope.
-        let (mut symbol_table, scope_tree) = semantic.into_symbol_table_and_scope_tree();
+        let mut symbol_table = symbol_table;
 
         // Total number of slots for all scopes
         let mut total_number_of_slots: Slot = 0;
 
-        // All symbols with their assigned slots
-        let mut slots: IndexVec<SymbolId, Slot> = index_vec![0; symbol_table.len()];
+        // All symbols with their assigned slots. Keyed by symbol id.
+        let mut slots: Vec<'_, Slot> = Vec::with_capacity_in(symbol_table.len(), &allocator);
+        for _ in 0..symbol_table.len() {
+            slots.push(0);
+        }
 
         // Keep track of the maximum slot number for each scope
-        let mut max_slot_for_scope = vec![0; scope_tree.len()];
+        let mut max_slot_for_scope = Vec::with_capacity_in(scope_tree.len(), &allocator);
+        for _ in 0..scope_tree.len() {
+            max_slot_for_scope.push(0);
+        }
 
         // Walk the scope tree and compute the slot number for each scope
+        let mut tmp_bindings = std::vec::Vec::with_capacity(100);
         for scope_id in scope_tree.descendants_from_root() {
             let bindings = scope_tree.get_bindings(scope_id);
 
@@ -118,10 +140,11 @@ impl Mangler {
 
             if !bindings.is_empty() {
                 // Sort `bindings` in declaration order.
-                let mut bindings = bindings.values().copied().collect::<Vec<_>>();
-                bindings.sort_unstable();
-                for symbol_id in bindings {
-                    slots[symbol_id] = slot;
+                tmp_bindings.clear();
+                tmp_bindings.extend(bindings.values().copied());
+                tmp_bindings.sort_unstable();
+                for symbol_id in &tmp_bindings {
+                    slots[symbol_id.index()] = slot;
                     slot += 1;
                 }
             }
@@ -136,15 +159,16 @@ impl Mangler {
         let frequencies = self.tally_slot_frequencies(
             &symbol_table,
             &exported_symbols,
-            &scope_tree,
+            scope_tree,
             total_number_of_slots,
             &slots,
+            &allocator,
         );
 
         let root_unresolved_references = scope_tree.root_unresolved_references();
         let root_bindings = scope_tree.get_bindings(scope_tree.root_scope_id());
 
-        let mut reserved_names = Vec::with_capacity(total_number_of_slots);
+        let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, &allocator);
 
         let generate_name = if self.options.debug { debug_name } else { base54 };
         let mut count = 0;
@@ -181,6 +205,8 @@ impl Mangler {
         //    function fa() { .. } function ga() { .. }
 
         let mut freq_iter = frequencies.iter();
+        let mut symbols_renamed_in_this_batch = std::vec::Vec::with_capacity(100);
+        let mut slice_of_same_len_strings = std::vec::Vec::with_capacity(100);
         // 2. "N number of vars are going to be assigned names of the same length"
         for (_, slice_of_same_len_strings_group) in
             &reserved_names.into_iter().chunk_by(CompactStr::len)
@@ -188,11 +214,13 @@ impl Mangler {
             // 1. "The most frequent vars get the shorter names"
             // (freq_iter is sorted by frequency from highest to lowest,
             //  so taking means take the N most frequent symbols remaining)
-            let slice_of_same_len_strings = slice_of_same_len_strings_group.collect_vec();
-            let mut symbols_renamed_in_this_batch =
-                freq_iter.by_ref().take(slice_of_same_len_strings.len()).collect::<Vec<_>>();
+            slice_of_same_len_strings.clear();
+            slice_of_same_len_strings.extend(slice_of_same_len_strings_group);
+            symbols_renamed_in_this_batch.clear();
+            symbols_renamed_in_this_batch
+                .extend(freq_iter.by_ref().take(slice_of_same_len_strings.len()));
 
-            debug_assert!(symbols_renamed_in_this_batch.len() == slice_of_same_len_strings.len());
+            debug_assert_eq!(symbols_renamed_in_this_batch.len(), slice_of_same_len_strings.len());
 
             // 2. "we assign the N names based on the order at which the vars first appear in the source."
             // sorting by slot enables us to sort by the order at which the vars first appear in the source
@@ -216,17 +244,23 @@ impl Mangler {
         self
     }
 
-    fn tally_slot_frequencies(
-        &self,
+    fn tally_slot_frequencies<'a>(
+        &'a self,
         symbol_table: &SymbolTable,
         exported_symbols: &FxHashSet<SymbolId>,
         scope_tree: &ScopeTree,
         total_number_of_slots: usize,
-        slots: &IndexVec<SymbolId, Slot>,
-    ) -> Vec<SlotFrequency> {
+        slots: &[Slot],
+        allocator: &'a Allocator,
+    ) -> Vec<'a, SlotFrequency<'a>> {
         let root_scope_id = scope_tree.root_scope_id();
-        let mut frequencies = vec![SlotFrequency::default(); total_number_of_slots];
-        for (symbol_id, slot) in slots.iter_enumerated() {
+        let mut frequencies = Vec::with_capacity_in(total_number_of_slots, allocator);
+        for _ in 0..total_number_of_slots {
+            frequencies.push(SlotFrequency::new(allocator));
+        }
+
+        for (symbol_id, slot) in slots.iter().copied().enumerate() {
+            let symbol_id = SymbolId::from_usize(symbol_id);
             if symbol_table.get_scope_id(symbol_id) == root_scope_id
                 && (!self.options.top_level || exported_symbols.contains(&symbol_id))
             {
@@ -235,8 +269,8 @@ impl Mangler {
             if is_special_name(symbol_table.get_name(symbol_id)) {
                 continue;
             }
-            let index = *slot;
-            frequencies[index].slot = *slot;
+            let index = slot;
+            frequencies[index].slot = slot;
             frequencies[index].frequency +=
                 symbol_table.get_resolved_reference_ids(symbol_id).len();
             frequencies[index].symbol_ids.push(symbol_id);
@@ -245,7 +279,9 @@ impl Mangler {
         frequencies
     }
 
-    fn collect_exported_symbols(program: &Program) -> (FxHashSet<CompactStr>, FxHashSet<SymbolId>) {
+    fn collect_exported_symbols<'a>(
+        program: &Program<'a>,
+    ) -> (FxHashSet<Atom<'a>>, FxHashSet<SymbolId>) {
         program
             .body
             .iter()
@@ -264,7 +300,7 @@ impl Mangler {
                     itertools::Either::Right(decl.id().into_iter())
                 }
             })
-            .map(|id| (id.name.to_compact_str(), id.symbol_id()))
+            .map(|id| (id.name.clone(), id.symbol_id()))
             .collect()
     }
 }
@@ -273,11 +309,17 @@ fn is_special_name(name: &str) -> bool {
     matches!(name, "exports" | "arguments")
 }
 
-#[derive(Debug, Default, Clone)]
-struct SlotFrequency {
+#[derive(Debug)]
+struct SlotFrequency<'a> {
     pub slot: Slot,
     pub frequency: usize,
-    pub symbol_ids: Vec<SymbolId>,
+    pub symbol_ids: Vec<'a, SymbolId>,
+}
+
+impl<'a> SlotFrequency<'a> {
+    fn new(allocator: &'a Allocator) -> Self {
+        Self { slot: 0, frequency: 0, symbol_ids: Vec::new_in(allocator) }
+    }
 }
 
 #[rustfmt::skip]
@@ -297,18 +339,18 @@ fn base54(n: usize) -> CompactStr {
     // Base 54 at first because these are the usable first characters in JavaScript identifiers
     // <https://tc39.es/ecma262/#prod-IdentifierStart>
     let base = 54usize;
-    let mut ret = String::new();
-    ret.push(BASE54_CHARS[num % base] as char);
+    // SAFETY: `BASE54_CHARS` is utf8.
+    let mut s = unsafe { CompactString::from_utf8_unchecked([BASE54_CHARS[num % base]]) };
     num /= base;
     // Base 64 for the rest because after the first character we can also use 0-9 too
     // <https://tc39.es/ecma262/#prod-IdentifierPart>
     let base = 64usize;
     while num > 0 {
         num -= 1;
-        ret.push(BASE54_CHARS[num % base] as char);
+        s.push(BASE54_CHARS[num % base] as char);
         num /= base;
     }
-    CompactStr::new(&ret)
+    CompactStr::from(s)
 }
 
 fn debug_name(n: usize) -> CompactStr {

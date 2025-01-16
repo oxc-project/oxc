@@ -223,7 +223,7 @@ impl<'a> SemanticBuilder<'a> {
     /// Finalize the builder.
     ///
     /// # Panics
-    pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
+    pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         self.source_text = program.source_text;
         self.source_type = program.source_type;
         if self.build_jsdoc {

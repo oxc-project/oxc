@@ -1,12 +1,11 @@
 use std::{
-    env,
-    io::BufWriter,
+    env, fs,
+    io::{BufWriter, Write},
     path::{Path, PathBuf},
     time::Instant,
 };
 
 use ignore::gitignore::Gitignore;
-
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
     loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, ConfigStoreBuilder, InvalidFilterKind,
@@ -15,9 +14,7 @@ use oxc_linter::{
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
-    cli::{
-        CliRunResult, LintCommand, LintResult, MiscOptions, OutputOptions, Runner, WarningOptions,
-    },
+    cli::{CliRunResult, LintCommand, LintResult, MiscOptions, Runner, WarningOptions},
     output_formatter::{OutputFormat, OutputFormatter},
     walk::{Extensions, Walk},
 };
@@ -37,11 +34,15 @@ impl Runner for LintRunner {
 
     fn run(self) -> CliRunResult {
         let format_str = self.options.output_options.format;
-        let output_formatter = OutputFormatter::new(format_str);
+        let mut output_formatter = OutputFormatter::new(format_str);
+
+        // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
+        // See `https://github.com/rust-lang/rust/issues/60673`.
+        let mut stdout = BufWriter::new(std::io::stdout());
 
         if self.options.list_rules {
-            let mut stdout = BufWriter::new(std::io::stdout());
             output_formatter.all_rules(&mut stdout);
+            stdout.flush().unwrap();
             return CliRunResult::None;
         }
 
@@ -118,15 +119,32 @@ impl Runner for LintRunner {
 
         enable_plugins.apply_overrides(&mut oxlintrc.plugins);
 
-        let oxlintrc_for_print =
-            if misc_options.print_config { Some(oxlintrc.clone()) } else { None };
+        let oxlintrc_for_print = if misc_options.print_config || basic_options.init {
+            Some(oxlintrc.clone())
+        } else {
+            None
+        };
         let config_builder =
             ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).with_filters(filter);
 
         if let Some(basic_config_file) = oxlintrc_for_print {
-            return CliRunResult::PrintConfigResult {
-                config_file: config_builder.resolve_final_config_file(basic_config_file),
-            };
+            let config_file = config_builder.resolve_final_config_file(basic_config_file);
+            if misc_options.print_config {
+                return CliRunResult::PrintConfigResult { config_file };
+            } else if basic_options.init {
+                match fs::write(Self::DEFAULT_OXLINTRC, config_file) {
+                    Ok(()) => {
+                        return CliRunResult::ConfigFileInitResult {
+                            message: "Configuration file created".to_string(),
+                        }
+                    }
+                    Err(_) => {
+                        return CliRunResult::ConfigFileInitResult {
+                            message: "Failed to create configuration file".to_string(),
+                        }
+                    }
+                }
+            }
         }
 
         let mut options = LintServiceOptions::new(self.cwd, paths)
@@ -163,7 +181,7 @@ impl Runner for LintRunner {
 
         let lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
-            Self::get_diagnostic_service(&warning_options, &output_options, &misc_options);
+            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn({
@@ -173,7 +191,7 @@ impl Runner for LintRunner {
                 lint_service.run(&tx_error);
             }
         });
-        diagnostic_service.run();
+        diagnostic_service.run(&mut stdout);
 
         CliRunResult::LintResult(LintResult {
             duration: now.elapsed(),
@@ -198,23 +216,14 @@ impl LintRunner {
     }
 
     fn get_diagnostic_service(
+        reporter: &OutputFormatter,
         warning_options: &WarningOptions,
-        output_options: &OutputOptions,
         misc_options: &MiscOptions,
     ) -> DiagnosticService {
-        let mut diagnostic_service = DiagnosticService::default()
+        DiagnosticService::new(reporter.get_diagnostic_reporter())
             .with_quiet(warning_options.quiet)
             .with_silent(misc_options.silent)
-            .with_max_warnings(warning_options.max_warnings);
-
-        match output_options.format {
-            OutputFormat::Default => {}
-            OutputFormat::Json => diagnostic_service.set_json_reporter(),
-            OutputFormat::Unix => diagnostic_service.set_unix_reporter(),
-            OutputFormat::Checkstyle => diagnostic_service.set_checkstyle_reporter(),
-            OutputFormat::Github => diagnostic_service.set_github_reporter(),
-        }
-        diagnostic_service
+            .with_max_warnings(warning_options.max_warnings)
     }
 
     // moved into a separate function for readability, but it's only ever used
@@ -283,7 +292,7 @@ impl LintRunner {
 
 #[cfg(test)]
 mod test {
-    use std::{env, path::MAIN_SEPARATOR_STR};
+    use std::{env, fs, path::MAIN_SEPARATOR_STR};
 
     use super::LintRunner;
     use crate::cli::{lint_command, CliRunResult, LintResult, Runner};
@@ -748,6 +757,18 @@ mod test {
             .replace("\r\n", "\n");
 
         assert_eq!(config, expect_json.trim());
+    }
+
+    #[test]
+    fn test_init_config() {
+        let args = &["--init"];
+        let options = lint_command().run_inner(args).unwrap();
+        let ret = LintRunner::new(options).run();
+        let CliRunResult::ConfigFileInitResult { message } = ret else {
+            panic!("Expected configuration file to be created, got {ret:?}")
+        };
+        assert_eq!(message, "Configuration file created");
+        fs::remove_file(LintRunner::DEFAULT_OXLINTRC).unwrap();
     }
 
     #[test]

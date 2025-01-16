@@ -1,4 +1,5 @@
 mod dead_code_elimination;
+mod esbuild;
 
 use oxc_minifier::CompressOptions;
 use oxc_span::SourceType;
@@ -74,6 +75,15 @@ fn integration() {
         console.log(c, d);
         ",
     );
+}
+
+#[test]
+fn fold() {
+    test("var x = (-0).toString()", "var x = '0'");
+    test("var x = (-0).toString(36)", "var x = '0'");
+    test("var x = (-123).toString()", "var x = '-123'");
+    test("var x = (-Infinity).toString()", "var x = '-Infinity'");
+    test("var x = (-1000000).toString(36)", "var x = (-1e6).toString(36)");
 }
 
 #[test] // https://github.com/oxc-project/oxc/issues/4341

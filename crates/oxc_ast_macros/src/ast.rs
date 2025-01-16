@@ -81,8 +81,6 @@ fn abs_trait(
         (quote!(::oxc_allocator::GetAddress), TokenStream::default())
     } else if ident == "ContentEq" {
         (quote!(::oxc_span::cmp::ContentEq), TokenStream::default())
-    } else if ident == "ContentHash" {
-        (quote!(::oxc_span::hash::ContentHash), TokenStream::default())
     } else if ident == "ESTree" {
         (quote!(::oxc_estree::ESTree), TokenStream::default())
     } else {

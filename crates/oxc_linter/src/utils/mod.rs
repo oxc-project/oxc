@@ -39,6 +39,7 @@ const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
     "no-test-prefixes",
     "no-test-return-statement",
     "prefer-comparison-matcher",
+    "prefer-each",
     "prefer-equality-matcher",
     "prefer-expect-resolves",
     "prefer-hooks-in-order",

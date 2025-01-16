@@ -157,25 +157,19 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Option<Declaration<'a>> {
         match decl {
             Declaration::FunctionDeclaration(func) => {
-                if !check_binding
-                    || func.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name))
-                {
-                    self.transform_function(func, None).map(Declaration::FunctionDeclaration)
-                } else {
-                    None
-                }
+                let needs_transform = !check_binding
+                    || func.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name));
+                needs_transform
+                    .then(|| Declaration::FunctionDeclaration(self.transform_function(func, None)))
             }
             Declaration::VariableDeclaration(decl) => self
                 .transform_variable_declaration(decl, check_binding)
                 .map(Declaration::VariableDeclaration),
             Declaration::ClassDeclaration(decl) => {
-                if !check_binding
-                    || decl.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name))
-                {
-                    self.transform_class(decl, None).map(Declaration::ClassDeclaration)
-                } else {
-                    None
-                }
+                let needs_transform = !check_binding
+                    || decl.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name));
+                needs_transform
+                    .then(|| Declaration::ClassDeclaration(self.transform_class(decl, None)))
             }
             Declaration::TSTypeAliasDeclaration(alias_decl) => {
                 if !check_binding || self.scope.has_reference(&alias_decl.id.name) {
