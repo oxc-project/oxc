@@ -712,8 +712,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
             self.scope.cell.with_dependent_mut(|allocator, inner| {
                 if !inner.bindings[parent_scope_id].is_empty() {
-                    let mut parent_bindings =
-                        Bindings::with_hasher_in(rustc_hash::FxBuildHasher, allocator);
+                    let mut parent_bindings = Bindings::new_in(allocator);
                     mem::swap(&mut inner.bindings[parent_scope_id], &mut parent_bindings);
                     for &symbol_id in parent_bindings.values() {
                         self.symbols.set_scope_id(symbol_id, self.current_scope_id);
