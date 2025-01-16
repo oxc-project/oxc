@@ -185,6 +185,7 @@ impl<'a> PeepholeReplaceKnownMethods {
         Some(ctx.ast.expression_string_literal(ce.span, result, None))
     }
 
+    #[expect(clippy::cast_lossless)]
     fn try_fold_string_char_code_at(
         ce: &CallExpression<'a>,
         object: &Expression<'a>,
@@ -196,10 +197,14 @@ impl<'a> PeepholeReplaceKnownMethods {
             Some(Argument::SpreadElement(_)) => None,
             Some(e) => Ctx(ctx).get_side_free_number_value(e.to_expression()),
         }?;
-        // TODO: if `result` is `None`, return `NaN` instead of skipping the optimization
-        let result = s.value.as_str().char_code_at(Some(char_at_index))?;
-        #[expect(clippy::cast_lossless)]
-        Some(ctx.ast.expression_numeric_literal(ce.span, result as f64, None, NumberBase::Decimal))
+        let value = if (0.0..65536.0).contains(&char_at_index) {
+            s.value.as_str().char_code_at(Some(char_at_index))? as f64
+        } else if char_at_index.is_nan() || char_at_index.is_infinite() {
+            return None;
+        } else {
+            f64::NAN
+        };
+        Some(ctx.ast.expression_numeric_literal(ce.span, value, None, NumberBase::Decimal))
     }
 
     fn try_fold_string_replace(
@@ -606,18 +611,15 @@ mod test {
         fold("x = 'abcde'.charCodeAt(2)", "x = 99");
         fold("x = 'abcde'.charCodeAt(3)", "x = 100");
         fold("x = 'abcde'.charCodeAt(4)", "x = 101");
-        fold_same("x = 'abcde'.charCodeAt(5)"); // or x = (0/0)
-        fold_same("x = 'abcde'.charCodeAt(-1)"); // or x = (0/0)
+        fold_same("x = 'abcde'.charCodeAt(5)");
+        fold("x = 'abcde'.charCodeAt(-1)", "x = NaN");
         fold_same("x = 'abcde'.charCodeAt(y)");
-        // Seems that it does not handle this case
-        // fold("x = 'abcde'.charCodeAt()", "x = 97");
+        fold("x = 'abcde'.charCodeAt()", "x = 97");
         fold("x = 'abcde'.charCodeAt(0, ++z)", "x = 97");
         fold("x = 'abcde'.charCodeAt(null)", "x = 97");
         fold("x = 'abcde'.charCodeAt(true)", "x = 98");
         // fold("x = '\\ud834\udd1e'.charCodeAt(0)", "x = 55348");
         // fold("x = '\\ud834\udd1e'.charCodeAt(1)", "x = 56606");
-
-        // Template strings
         fold_same("x = `abcdef`.charCodeAt(0)");
         fold_same("x = `abcdef ${abc}`.charCodeAt(0)");
     }
