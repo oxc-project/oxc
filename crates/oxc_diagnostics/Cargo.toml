@@ -20,4 +20,3 @@ doctest = false
 
 [dependencies]
 miette = { workspace = true }
-rustc-hash = { workspace = true }

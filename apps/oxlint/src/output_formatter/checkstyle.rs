@@ -1,21 +1,39 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, io::Write};
 
 use rustc_hash::FxHashMap;
 
-use super::{DiagnosticReporter, Info};
-use crate::{Error, Severity};
+use oxc_diagnostics::{
+    reporter::{DiagnosticReporter, Info},
+    Error, Severity,
+};
 
+use crate::output_formatter::InternalFormatter;
+
+#[derive(Debug, Default)]
+pub struct CheckStyleOutputFormatter;
+
+impl InternalFormatter for CheckStyleOutputFormatter {
+    fn all_rules(&mut self, writer: &mut dyn Write) {
+        writeln!(writer, "flag --rules with flag --format=checkstyle is not allowed").unwrap();
+    }
+
+    fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
+        Box::new(CheckstyleReporter::default())
+    }
+}
+
+/// Reporter to output diagnostics in checkstyle format
+///
+/// Checkstyle Format Documentation: <https://checkstyle.sourceforge.io/>
 #[derive(Default)]
-pub struct CheckstyleReporter {
+struct CheckstyleReporter {
     diagnostics: Vec<Error>,
 }
 
 impl DiagnosticReporter for CheckstyleReporter {
-    fn finish(&mut self) {
-        format_checkstyle(&self.diagnostics);
+    fn finish(&mut self) -> Option<String> {
+        Some(format_checkstyle(&self.diagnostics))
     }
-
-    fn render_diagnostics(&mut self, _s: &[u8]) {}
 
     fn render_error(&mut self, error: Error) -> Option<String> {
         self.diagnostics.push(error);
@@ -23,8 +41,7 @@ impl DiagnosticReporter for CheckstyleReporter {
     }
 }
 
-#[allow(clippy::print_stdout)]
-fn format_checkstyle(diagnostics: &[Error]) {
+fn format_checkstyle(diagnostics: &[Error]) -> String {
     let infos = diagnostics.iter().map(Info::new).collect::<Vec<_>>();
     let mut grouped: FxHashMap<String, Vec<Info>> = FxHashMap::default();
     for info in infos {
@@ -48,9 +65,9 @@ fn format_checkstyle(diagnostics: &[Error]) {
          let filename = &infos[0].filename;
          format!(r#"<file name="{filename}">{messages}</file>"#)
      }).collect::<Vec<_>>().join(" ");
-    println!(
+    format!(
         r#"<?xml version="1.0" encoding="utf-8"?><checkstyle version="4.3">{messages}</checkstyle>"#
-    );
+    )
 }
 
 /// <https://github.com/tafia/quick-xml/blob/6e34a730853fe295d68dc28460153f08a5a12955/src/escapei.rs#L84-L86>
@@ -101,5 +118,33 @@ fn xml_escape_impl<F: Fn(u8) -> bool>(raw: &str, escape_chars: F) -> Cow<str> {
         Cow::Owned(unsafe { String::from_utf8_unchecked(escaped) })
     } else {
         Cow::Borrowed(raw)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_span::Span;
+
+    use super::CheckstyleReporter;
+
+    #[test]
+    fn reporter() {
+        let mut reporter = CheckstyleReporter::default();
+
+        let error = OxcDiagnostic::warn("error message")
+            .with_label(Span::new(0, 8))
+            .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
+
+        let first_result = reporter.render_error(error);
+
+        // reporter keeps it in memory
+        assert!(first_result.is_none());
+
+        // report not gives us all diagnostics at ones
+        let second_result = reporter.finish();
+
+        assert!(second_result.is_some());
+        assert_eq!(second_result.unwrap(), "<?xml version=\"1.0\" encoding=\"utf-8\"?><checkstyle version=\"4.3\"><file name=\"file://test.ts\"><error line=\"1\" column=\"1\" severity=\"warning\" message=\"error message\" source=\"\" /></file></checkstyle>");
     }
 }

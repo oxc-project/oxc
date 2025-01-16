@@ -1,14 +1,19 @@
+mod checkstyle;
 mod default;
+mod github;
 mod json;
+mod unix;
 
-use std::io::Write;
+use std::io::{BufWriter, Stdout, Write};
 use std::str::FromStr;
 
-use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputFormatter};
+use checkstyle::CheckStyleOutputFormatter;
+use github::GithubOutputFormatter;
+use unix::UnixOutputFormatter;
 
-pub struct OutputFormatter {
-    format: OutputFormat,
-}
+use oxc_diagnostics::reporter::DiagnosticReporter;
+
+use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputFormatter};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum OutputFormat {
@@ -36,15 +41,38 @@ impl FromStr for OutputFormat {
     }
 }
 
+trait InternalFormatter {
+    // print all rules which are currently supported by oxlint
+    fn all_rules(&mut self, writer: &mut dyn Write);
+
+    fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter>;
+}
+
+pub struct OutputFormatter {
+    internal_formatter: Box<dyn InternalFormatter>,
+}
+
 impl OutputFormatter {
     pub fn new(format: OutputFormat) -> Self {
-        Self { format }
+        Self { internal_formatter: Self::get_internal_formatter(format) }
     }
-    // print all rules which are currently supported by oxlint
-    pub fn all_rules<T: Write>(&self, writer: &mut T) {
-        match self.format {
-            OutputFormat::Json => JsonOutputFormatter::all_rules(writer),
-            _ => DefaultOutputFormatter::all_rules(writer),
+
+    fn get_internal_formatter(format: OutputFormat) -> Box<dyn InternalFormatter> {
+        match format {
+            OutputFormat::Json => Box::<JsonOutputFormatter>::default(),
+            OutputFormat::Checkstyle => Box::<CheckStyleOutputFormatter>::default(),
+            OutputFormat::Github => Box::new(GithubOutputFormatter),
+            OutputFormat::Unix => Box::<UnixOutputFormatter>::default(),
+            OutputFormat::Default => Box::new(DefaultOutputFormatter),
         }
+    }
+
+    // print all rules which are currently supported by oxlint
+    pub fn all_rules(&mut self, writer: &mut BufWriter<Stdout>) {
+        self.internal_formatter.all_rules(writer);
+    }
+
+    pub fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
+        self.internal_formatter.get_diagnostic_reporter()
     }
 }
