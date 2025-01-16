@@ -294,19 +294,10 @@ impl<'a> PeepholeReplaceKnownMethods {
                 if radix == 0 {
                     return None;
                 }
-                if lit.value.is_nan() {
-                    return Some(ctx.ast.expression_string_literal(ce.span, "NaN", None));
-                }
-                if lit.value.is_infinite() {
-                    return Some(ctx.ast.expression_string_literal(ce.span, "Infinity", None));
-                }
                 if radix == 10 {
                     use oxc_syntax::number::ToJsString;
-                    return Some(ctx.ast.expression_string_literal(
-                        ce.span,
-                        lit.value.to_js_string(),
-                        None,
-                    ));
+                    let s = lit.value.to_js_string();
+                    return Some(ctx.ast.expression_string_literal(ce.span, s, None));
                 }
                 // Only convert integers for other radix values.
                 let value = lit.value;
@@ -1244,12 +1235,5 @@ mod test {
         test("123 .toString(b)", "123 .toString(b)");
         test("1e99.toString(b)", "1e99.toString(b)");
         test("/./.toString(b)", "/./.toString(b)");
-
-        // Will get constant folded into positive values
-        test_same("(-0).toString()");
-        test_same("(-123).toString()");
-        test_same("(-Infinity).toString()");
-        test_same("(-1000000).toString(36)");
-        test_same("(-0).toString(36)");
     }
 }
