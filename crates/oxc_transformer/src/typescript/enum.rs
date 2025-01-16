@@ -259,7 +259,7 @@ impl<'a> TypeScriptEnum<'a> {
                 let one = Self::get_number_literal_expression(1.0, ctx);
                 ast.expression_binary(SPAN, one, BinaryOperator::Addition, self_ref)
             } else {
-                previous_enum_members.insert(member_name.clone(), Some(ConstantValue::Number(1.0)));
+                previous_enum_members.insert(member_name.clone(), Some(ConstantValue::Number(0.0)));
                 Self::get_number_literal_expression(0.0, ctx)
             };
 
