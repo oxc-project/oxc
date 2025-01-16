@@ -41,7 +41,7 @@ pub(crate) fn create_call_call<'a>(
 /// with a body block.
 ///
 /// `expr` ->  `(() => { return expr; })()`
-pub(crate) fn wrap_arrow_function_iife<'a>(
+pub(crate) fn wrap_expression_in_arrow_function_iife<'a>(
     expr: Expression<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {

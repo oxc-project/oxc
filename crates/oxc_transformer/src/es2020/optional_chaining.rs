@@ -54,7 +54,7 @@ use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{utils::ast_builder::wrap_arrow_function_iife, TransformCtx};
+use crate::{utils::ast_builder::wrap_expression_in_arrow_function_iife, TransformCtx};
 
 #[derive(Debug)]
 enum CallContext<'a> {
@@ -283,7 +283,7 @@ impl<'a> OptionalChaining<'a, '_> {
             // To insert the temp binding in the correct scope, we wrap the expression with
             // an arrow function. During the chain expression transformation, the temp binding
             // will be inserted into the arrow function's body.
-            wrap_arrow_function_iife(ctx.ast.move_expression(expr), ctx)
+            wrap_expression_in_arrow_function_iife(ctx.ast.move_expression(expr), ctx)
         } else {
             self.transform_chain_expression_impl(false, expr, ctx)
         }
@@ -297,7 +297,7 @@ impl<'a> OptionalChaining<'a, '_> {
     ) {
         *expr = if self.is_inside_function_parameter {
             // Same as the above `transform_chain_expression` explanation
-            wrap_arrow_function_iife(ctx.ast.move_expression(expr), ctx)
+            wrap_expression_in_arrow_function_iife(ctx.ast.move_expression(expr), ctx)
         } else {
             // Unfortunately no way to get compiler to see that this branch is provably unreachable.
             // We don't want to inline this function, to keep `enter_expression` as small as possible.

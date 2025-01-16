@@ -102,7 +102,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{utils::ast_builder::wrap_arrow_function_iife, EnvOptions};
+use crate::{utils::ast_builder::wrap_expression_in_arrow_function_iife, EnvOptions};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
@@ -419,7 +419,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
                     //   prop = (() => { return async () => {} })();
                     // }
                     // ```
-                    Some(wrap_arrow_function_iife(ctx.ast.move_expression(expr), ctx))
+                    Some(wrap_expression_in_arrow_function_iife(ctx.ast.move_expression(expr), ctx))
                 } else {
                     return;
                 }
