@@ -52,12 +52,14 @@ mod allocator_api2;
 mod boxed;
 mod clone_in;
 mod convert;
+pub mod hash_map;
 mod vec;
 
 pub use address::{Address, GetAddress};
 pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
+pub use hash_map::HashMap;
 pub use vec::Vec;
 
 /// A bump-allocated memory arena based on [bumpalo].

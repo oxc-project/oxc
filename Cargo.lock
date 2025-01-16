@@ -1543,6 +1543,8 @@ version = "0.46.0"
 dependencies = [
  "allocator-api2",
  "bumpalo",
+ "hashbrown 0.15.2",
+ "rustc-hash",
  "serde",
  "serde_json",
  "simdutf8",
