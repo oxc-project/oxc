@@ -1,9 +1,9 @@
-use oxc_semantic::ScopeId;
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
 use oxc_ecmascript::ToInt32;
+use oxc_semantic::ScopeId;
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
