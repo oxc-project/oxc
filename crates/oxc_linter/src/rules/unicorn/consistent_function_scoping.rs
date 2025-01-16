@@ -1,9 +1,10 @@
-use oxc_ast::{AstKind, Visit};
+use rustc_hash::FxHashSet;
+
+use oxc_ast::{visit::walk, AstKind, Visit};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ReferenceId;
+use oxc_semantic::{ReferenceId, ScopeFlags};
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashSet;
 
 use crate::{
     ast_util::{get_function_like_declaration, nth_outermost_paren_parent, outermost_paren_parent},
@@ -283,16 +284,10 @@ impl<'a> Visit<'a> for ReferencesFinder {
         }
     }
 
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        if let AstKind::Function(_) = kind {
-            self.in_function += 1;
-        }
-    }
-
-    fn leave_node(&mut self, kind: AstKind<'a>) {
-        if let AstKind::Function(_) = kind {
-            self.in_function -= 1;
-        }
+    fn visit_function(&mut self, func: &oxc_ast::ast::Function<'a>, flags: ScopeFlags) {
+        self.in_function += 1;
+        walk::walk_function(self, func, flags);
+        self.in_function -= 1;
     }
 }
 
