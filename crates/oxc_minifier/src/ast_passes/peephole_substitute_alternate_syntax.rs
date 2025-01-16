@@ -665,7 +665,9 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         if decl.kind.is_const() || decl.id.kind.is_destructuring_pattern() {
             return;
         }
-        if decl.init.as_ref().is_some_and(|init| ctx.is_expression_undefined(init)) {
+        if !decl.kind.is_var()
+            && decl.init.as_ref().is_some_and(|init| ctx.is_expression_undefined(init))
+        {
             decl.init = None;
             self.changed = true;
         }
@@ -1281,17 +1283,17 @@ mod test {
 
     #[test]
     fn test_undefined() {
-        test("var x = undefined", "var x");
+        test("let x = undefined", "let x");
+        test("const x = undefined", "const x = void 0");
+        test("var x = undefined", "var x = void 0");
         test_same("var undefined = 1;function f() {var undefined=2;var x;}");
         test_same("function f(undefined) {}");
         test_same("try {} catch(undefined) {foo(undefined)}");
         test("for (undefined in {}) {}", "for(undefined in {}){}");
         test("undefined++;", "undefined++");
         test("undefined += undefined;", "undefined+=void 0");
-
-        // shadowd
+        // shadowed
         test_same("(function(undefined) { let x = typeof undefined; })()");
-
         // destructuring throw error side effect
         test_same("var {} = void 0");
         test_same("var [] = void 0");
