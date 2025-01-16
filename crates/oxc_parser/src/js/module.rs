@@ -34,7 +34,10 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.and_in(has_in);
         self.bump(Kind::Comma);
         self.expect(Kind::RParen)?;
-        Ok(self.ast.expression_import(self.end_span(span), expression, arguments, phase))
+        let expr =
+            self.ast.alloc_import_expression(self.end_span(span), expression, arguments, phase);
+        self.module_record_builder.visit_import_expression(&expr);
+        Ok(Expression::ImportExpression(expr))
     }
 
     /// Section 16.2.2 Import Declaration
