@@ -2021,8 +2021,12 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
                 PropertyKey::StaticIdentifier(ident) => Some(&ident.name),
                 _ => None,
             };
-            let value_name = self.binding.name();
-            key_name.is_some() && value_name.is_some() && key_name == value_name.as_ref()
+            let value_name =
+                self.binding.identifier().map(|id| p.get_identifier_reference_name(id));
+            match (key_name, value_name) {
+                (Some(key_name), Some(value_name)) => key_name == value_name,
+                _ => false,
+            }
         } else {
             false
         };

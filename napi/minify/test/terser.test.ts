@@ -1369,13 +1369,13 @@ test('unused_destructuring_getter_side_effect_1', () => {
   run(code, expected);
 });
 
-test.skip('unused_destructuring_assign_1', () => {
+test('unused_destructuring_assign_1', () => {
   const code = 'function extract(obj){var a;let b;({a:a,b:b}=obj);console.log(b)}extract({a:1,b:2});extract({b:4});';
   const expected = ['2', '4'];
   run(code, expected);
 });
 
-test.skip('unused_destructuring_assign_2', () => {
+test('unused_destructuring_assign_2', () => {
   const code =
     'function extract(obj){var a;let b;({a:a,b:b}=obj);console.log(b)}extract({a:1,b:2});extract({get a(){var s="side effect";console.log(s);return s},b:4});';
   const expected = ['2', 'side effect', '4'];

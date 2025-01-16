@@ -744,12 +744,12 @@ impl<'a> ObjectAssignmentTarget<'a> {
 
 impl AssignmentTargetMaybeDefault<'_> {
     #[allow(missing_docs)]
-    pub fn name(&self) -> Option<Atom> {
+    pub fn identifier(&self) -> Option<&IdentifierReference<'_>> {
         match self {
-            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id.name.clone()),
+            AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
             Self::AssignmentTargetWithDefault(target) => {
                 if let AssignmentTarget::AssignmentTargetIdentifier(id) = &target.binding {
-                    Some(id.name.clone())
+                    Some(id)
                 } else {
                     None
                 }
