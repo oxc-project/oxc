@@ -31,6 +31,7 @@ const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
     "no-test-prefixes",
     "prefer-each",
     "prefer-hooks-in-order",
+    "prefer-lowercase-title",
     "valid-describe-callback",
     "valid-expect",
 };
