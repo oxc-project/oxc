@@ -117,12 +117,15 @@ impl<'a> ClassProperties<'a, '_> {
         prop: &mut PropertyDefinition<'a>,
         ctx: &TraverseCtx<'a>,
     ) {
-        // Exit if computed key is not an assignment (wasn't processed in 1st pass).
-        let PropertyKey::AssignmentExpression(assign_expr) = &prop.key else { return };
+        // Exit if computed key is not an assignment (wasn't processed in 1st pass)
+        if !matches!(&prop.key, PropertyKey::AssignmentExpression(_)) {
+            return;
+        }
 
         // Debug checks that we're removing what we think we are
         #[cfg(debug_assertions)]
         {
+            let PropertyKey::AssignmentExpression(assign_expr) = &prop.key else { unreachable!() };
             assert!(assign_expr.span.is_empty());
             let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign_expr.left else {
                 unreachable!();
