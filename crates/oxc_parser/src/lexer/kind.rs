@@ -5,12 +5,16 @@ use std::fmt;
 /// Lexer token kind
 ///
 /// Exported for other oxc crates to use. You generally don't need to use this directly.
+//
+// We set discriminant for `Eof` to 0 as it's the default, so that `Token::default()`
+// is a 16-byte write of all zeros. This removes one `xmm` memory read from a hot path.
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[non_exhaustive]
+#[repr(u8)]
 pub enum Kind {
-    Undetermined,
     #[default]
-    Eof,
+    Eof = 0,
+    Undetermined,
     Skip, // Whitespace, line breaks, comments
     // 12.5 Hashbang Comments
     HashbangComment,
