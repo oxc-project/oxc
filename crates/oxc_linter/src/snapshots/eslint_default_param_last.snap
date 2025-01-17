@@ -1,6 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
+assertion_line: 357
 ---
   ⚠ eslint(default-param-last): Default parameters should be last
    ╭─[default_param_last.tsx:1:12]
@@ -367,37 +367,37 @@ snapshot_kind: text
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:4:5]
- 3 │   constructor(
- 4 │     public a?: number,
-   ·     ─────────────────
- 5 │     private b: number,
+   ╭─[default_param_last.tsx:4:17]
+ 3 │             constructor(
+ 4 │                 public a?: number,
+   ·                 ─────────────────
+ 5 │                 private b: number,
    ╰────
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:2:21]
+   ╭─[default_param_last.tsx:3:25]
+ 2 │         class Foo {
+ 3 │             constructor(a = 0, b: number) {}
+   ·                         ─────
+ 4 │         }
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:2:25]
  1 │ class Foo {
- 2 │         constructor(a = 0, b: number) {}
-   ·                     ─────
+ 2 │             constructor(a?: number, b: number) {}
+   ·                         ──────────
  3 │         }
    ╰────
   help: Enforce default parameters to be last.
 
   ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:2:21]
- 1 │ class Foo {
- 2 │         constructor(a?: number, b: number) {}
-   ·                     ──────────
- 3 │         }
-   ╰────
-  help: Enforce default parameters to be last.
-
-  ⚠ eslint(default-param-last): Default parameters should be last
-   ╭─[default_param_last.tsx:3:5]
- 2 │   constructor(
- 3 │     public a = 0,
-   ·     ────────────
- 4 │     private b: number,
+   ╭─[default_param_last.tsx:3:17]
+ 2 │             constructor(
+ 3 │                 public a = 0,
+   ·                 ────────────
+ 4 │                 private b: number,
    ╰────
   help: Enforce default parameters to be last.

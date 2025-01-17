@@ -123,69 +123,61 @@ fn test() {
             constructor(a: number, b: number, c: number) {}
         }",
         "
-            class Foo {
+        class Foo {
             constructor(a: number, b?: number, c = 1) {}
-            }
-            ",
+        }",
         "
         class Foo {
-        constructor(a: number, b = 1, c?: number) {}
-        }
-            ",
+            constructor(a: number, b = 1, c?: number) {}
+        }",
         "
         class Foo {
-        constructor(
-            public a: number,
-            protected b: number,
-            private c: number,
-        ) {}
-        }
-            ",
+            constructor(
+                public a: number,
+                protected b: number,
+                private c: number,
+            ) {}
+        }",
         "
         class Foo {
-        constructor(
-            public a: number,
-            protected b?: number,
-            private c = 10,
-        ) {}
-        }
-            ",
+            constructor(
+                public a: number,
+                protected b?: number,
+                private c = 10,
+            ) {}
+        }",
         "
         class Foo {
-        constructor(
-            public a: number,
-            protected b = 10,
-            private c?: number,
-        ) {}
-        }
-            ",
+            constructor(
+                public a: number,
+                protected b = 10,
+                private c?: number,
+            ) {} 
+        }",
         "
         class Foo {
-        constructor(
-            a: number,
-            protected b?: number,
-            private c = 0,
-        ) {}
-        }
-            ",
+            constructor(
+                a: number,
+                protected b?: number,
+                private c = 0,
+            ) {}
+        }",
         "
         class Foo {
-        constructor(
-            a: number,
-            b?: number,
-            private c = 0,
-        ) {}
-        }
-            ",
+            constructor(
+                a: number,
+                b?: number,
+                private c = 0,
+            ) {}
+        }",
         "
         class Foo {
-        constructor(
-            a: number,
-            private b?: number,
-            c = 0,
-        ) {}
-        }
-            ",
+            constructor(
+                a: number,
+                private b?: number,
+                c = 0,
+            ) {}
+        }",
     ];
 
     let fail = vec![
@@ -235,21 +227,20 @@ fn test() {
             constructor(
                 public a?: number,
                 private b: number,
-            ) {}
-            }
-        ",
-        "class Foo {
-        constructor(a = 0, b: number) {}
+            ) {} 
+        }",
+        "
+        class Foo {
+            constructor(a = 0, b: number) {}
         }",
         "class Foo {
-        constructor(a?: number, b: number) {}
-        }
-            ",
+            constructor(a?: number, b: number) {}
+        }",
         "class Foo {
-        constructor(
-            public a = 0,
-            private b: number,
-        ) {}
+            constructor(
+                public a = 0,
+                private b: number,
+            ) {}
         }",
     ];
 
