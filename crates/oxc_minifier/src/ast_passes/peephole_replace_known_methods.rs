@@ -26,7 +26,7 @@ impl<'a> CompressorPass<'a> for PeepholeReplaceKnownMethods {
 
 impl<'a> Traverse<'a> for PeepholeReplaceKnownMethods {
     fn exit_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.try_fold_array_concat(node, ctx);
+        self.try_fold_concat_chain(node, ctx);
         self.try_fold_known_string_methods(node, ctx);
     }
 }
@@ -341,7 +341,8 @@ impl<'a> PeepholeReplaceKnownMethods {
     }
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
-    fn try_fold_array_concat(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
+    fn try_fold_concat_chain(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if matches!(ctx.parent(), Ancestor::StaticMemberExpressionObject(_)) {
             return;
         }
@@ -368,7 +369,7 @@ impl<'a> PeepholeReplaceKnownMethods {
 
             // We don't need to check if the arguments has a side effect here.
             //
-            // The only side effect Array::concat can cause is throwing an error when the created array is too long.
+            // The only side effect Array::concat / String::concat can cause is throwing an error when the created array is too long.
             // With the compressor assumption, that error can be moved.
             //
             // For example, if we have `[].concat(a).concat(b)`, the steps before the compression is:
@@ -387,10 +388,13 @@ impl<'a> PeepholeReplaceKnownMethods {
             let CallExpression { callee, arguments, .. } = ce.as_mut();
             collected_arguments.push(arguments);
 
-            // [].concat()
+            // [].concat() or "".concat()
             let is_root_expr_concat = {
                 let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
-                matches!(&member.object, Expression::ArrayExpression(_))
+                matches!(
+                    &member.object,
+                    Expression::ArrayExpression(_) | Expression::StringLiteral(_)
+                )
             };
             if is_root_expr_concat {
                 new_root_callee = callee;
@@ -1162,6 +1166,7 @@ mod test {
 
     #[test]
     fn test_fold_concat_chaining() {
+        // array
         fold("[1,2].concat(1).concat(2,['abc']).concat('abc')", "[1,2].concat(1,2,['abc'],'abc')");
         fold("[].concat(['abc']).concat(1).concat([2,3])", "[].concat(['abc'],1,[2,3])");
 
@@ -1170,6 +1175,18 @@ mod test {
         fold("var x; [1].concat(x.a).concat(x)", "var x; [1].concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
 
         fold_same("[].concat(1)");
+
+        // string
+        fold("'1'.concat(1).concat(2,['abc']).concat('abc')", "'1'.concat(1,2,['abc'],'abc')");
+        fold("''.concat(['abc']).concat(1).concat([2,3])", "''.concat(['abc'],1,[2,3])");
+
+        fold("var x, y; ''.concat(x).concat(y)", "var x, y; ''.concat(x, y)");
+        fold("var y; ''.concat(x).concat(y)", "var y; ''.concat(x, y)"); // x might have a getter that updates y, but that side effect is preserved correctly
+        fold("var x; ''.concat(x.a).concat(x)", "var x; ''.concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
+
+        fold_same("''.concat(1)");
+
+        // other
         fold_same("obj.concat([1,2]).concat(1)");
     }
 
