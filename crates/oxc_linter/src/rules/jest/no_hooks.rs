@@ -131,7 +131,7 @@ impl NoHooks {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("test(\"foo\")", None),
         ("describe(\"foo\", () => { it(\"bar\") })", None),
         ("test(\"foo\", () => { expect(subject.beforeEach()).toBe(true) })", None),
@@ -142,7 +142,7 @@ fn test() {
         ("test(\"foo\")", Some(serde_json::json!([{ "allow": "undefined" }]))),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("beforeAll(() => {})", None),
         ("beforeEach(() => {})", None),
         ("afterAll(() => {})", None),
@@ -161,6 +161,39 @@ fn test() {
             Some(serde_json::json!([{ "allow": ["afterEach"] }])),
         ),
     ];
+
+    let pass_vitest = vec![
+        (r#"test("foo")"#, None),
+        (r#"describe("foo", () => { it("bar") })"#, None),
+        (r#"test("foo", () => { expect(subject.beforeEach()).toBe(true) })"#, None),
+        (
+            "afterEach(() => {}); afterAll(() => {});",
+            Some(serde_json::json!([{ "allow": ["afterEach", "afterAll"] }])),
+        ),
+        (r#"test("foo")"#, Some(serde_json::json!([{ "allow": null }]))),
+    ];
+
+    let fail_vitest = vec![
+        ("beforeAll(() => {})", None),
+        ("beforeEach(() => {})", None),
+        ("afterAll(() => {})", None),
+        ("afterEach(() => {})", None),
+        (
+            "beforeEach(() => {}); afterEach(() => { vi.resetModules() });",
+            Some(serde_json::json!([{ "allow": ["afterEach"] }])),
+        ),
+        (
+            "
+			    import { beforeEach as afterEach, afterEach as beforeEach, vi } from 'vitest';
+			    afterEach(() => {});
+			    beforeEach(() => { vi.resetModules() });
+            ",
+            Some(serde_json::json!([{ "allow": ["afterEach"] }])),
+        ), // { "parserOptions": { "sourceType": "module" } }
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
 
     Tester::new(NoHooks::NAME, NoHooks::PLUGIN, pass, fail)
         .with_jest_plugin(true)

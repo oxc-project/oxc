@@ -98,6 +98,8 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 fn test() {
     use crate::tester::Tester;
 
+    // Note: Both Jest and Vitest share the same unit tests
+
     let pass = vec![
         ("expect('something').toEqual('else');", None),
         ("expect(something).toMatchInlineSnapshot();", None),
