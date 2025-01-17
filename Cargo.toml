@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["apps/*", "crates/*", "napi/*", "tasks/*", "wasm/*"]
-exclude = ["tasks/lint_rules"]
+exclude = ["tasks/lint_rules", "tasks/e2e"]
 
 [workspace.package]
 authors = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
