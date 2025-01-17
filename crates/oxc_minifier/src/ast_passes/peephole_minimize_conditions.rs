@@ -769,6 +769,8 @@ impl<'a> PeepholeMinimizeConditions {
         false
     }
 
+    // `typeof foo === 'number'` -> `typeof foo == 'number'`
+    //  ^^^^^^^^^^ `ValueType::from(&e.left).is_string()` is `true`.
     // `a instanceof b === true` -> `a instanceof b`
     // `a instanceof b === false` -> `!(a instanceof b)`
     //  ^^^^^^^^^^^^^^ `ValueType::from(&e.left).is_boolean()` is `true`.
@@ -2032,5 +2034,17 @@ mod test {
         test("if (anything1 ? anything2 : (0, true));", "if (!anything1 || anything2);");
         test("if (anything1 ? anything2 : (0, false));", "if (anything1 && anything2);");
         test("if(!![]);", "if([]);");
+    }
+
+    #[test]
+    fn test_try_compress_type_of_equal_string() {
+        test("typeof foo === 'number'", "typeof foo == 'number'");
+        test("'number' === typeof foo", "'number' == typeof foo");
+        test("typeof foo === `number`", "typeof foo == `number`");
+        test("`number` === typeof foo", "`number` == typeof foo");
+        test("typeof foo !== 'number'", "typeof foo != 'number'");
+        test("'number' !== typeof foo", "'number' != typeof foo");
+        test("typeof foo !== `number`", "typeof foo != `number`");
+        test("`number` !== typeof foo", "`number` != typeof foo");
     }
 }
