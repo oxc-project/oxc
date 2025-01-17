@@ -2,23 +2,23 @@
 source: crates/oxc_minifier/tests/mangler/mod.rs
 ---
 function foo(a) {a}
-function foo(b) {
-	b;
+function foo(a) {
+	a;
 }
 
 function foo(a) { let _ = { x } }
-function foo(b) {
-	let c = { x };
+function foo(a) {
+	let b = { x };
 }
 
 function foo(a) { let { x } = y }
-function foo(b) {
-	let { x: c } = y;
+function foo(a) {
+	let { x: b } = y;
 }
 
 var x; function foo(a) { ({ x } = y) }
 var x;
-function foo(c) {
+function foo(b) {
 	({x} = y);
 }
 
@@ -32,8 +32,8 @@ function _(exports) {
 }
 
 function foo(a) {a}
-function a(b) {
-	b;
+function a(a) {
+	a;
 }
 
 export function foo() {}; foo()

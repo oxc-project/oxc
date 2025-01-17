@@ -306,7 +306,8 @@ impl TraverseScoping {
         symbol_id: SymbolId,
         flags: ReferenceFlags,
     ) -> ReferenceId {
-        let reference = Reference::new_with_symbol_id(NodeId::DUMMY, symbol_id, flags);
+        let reference =
+            Reference::new_with_symbol_id(NodeId::DUMMY, self.current_scope_id, symbol_id, flags);
         let reference_id = self.symbols.create_reference(reference);
         self.symbols.add_resolved_reference(symbol_id, reference_id);
         reference_id
@@ -314,7 +315,7 @@ impl TraverseScoping {
 
     /// Create an unbound reference
     pub fn create_unbound_reference(&mut self, name: &str, flags: ReferenceFlags) -> ReferenceId {
-        let reference = Reference::new(NodeId::DUMMY, flags);
+        let reference = Reference::new(NodeId::DUMMY, self.current_scope_id, flags);
         let reference_id = self.symbols.create_reference(reference);
         self.scopes.add_root_unresolved_reference(name, reference_id);
         reference_id

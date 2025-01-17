@@ -1,5 +1,7 @@
+use std::iter;
 use std::ops::Deref;
 
+use fixedbitset::FixedBitSet;
 use itertools::Itertools;
 use rustc_hash::FxHashSet;
 
@@ -88,11 +90,15 @@ impl Mangler {
 
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> Mangler {
-        let semantic = SemanticBuilder::new().build(program).semantic;
+        let semantic =
+            SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
         let (symbol_table, scope_tree) = semantic.into_symbol_table_and_scope_tree();
         self.build_with_symbols_and_scopes(symbol_table, &scope_tree, program)
     }
 
+    /// # Panics
+    ///
+    /// Panics if the child_ids does not exist in scope_tree.
     #[must_use]
     pub fn build_with_symbols_and_scopes(
         self,
@@ -117,6 +123,8 @@ impl Mangler {
         program: &Program<'_>,
         generate_name: G,
     ) -> Mangler {
+        assert!(scope_tree.has_child_ids(), "child_id needs to be generated");
+
         let (exported_names, exported_symbols) = if self.options.top_level {
             Mangler::collect_exported_symbols(program)
         } else {
@@ -129,50 +137,72 @@ impl Mangler {
         // A slot is the occurrence index of a binding identifier inside a scope.
         let mut symbol_table = symbol_table;
 
-        // Total number of slots for all scopes
-        let mut total_number_of_slots: Slot = 0;
-
         // All symbols with their assigned slots. Keyed by symbol id.
         let mut slots: Vec<'_, Slot> = Vec::with_capacity_in(symbol_table.len(), &allocator);
         for _ in 0..symbol_table.len() {
             slots.push(0);
         }
 
-        // Keep track of the maximum slot number for each scope
-        let mut max_slot_for_scope = Vec::with_capacity_in(scope_tree.len(), &allocator);
-        for _ in 0..scope_tree.len() {
-            max_slot_for_scope.push(0);
-        }
+        let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
 
         // Walk the scope tree and compute the slot number for each scope
         let mut tmp_bindings = std::vec::Vec::with_capacity(100);
-        for scope_id in scope_tree.descendants_from_root() {
+        for scope_id in iter::once(scope_tree.root_scope_id())
+            .chain(scope_tree.iter_all_child_ids(scope_tree.root_scope_id()))
+        {
+            let nearest_var_scope_id = scope_tree
+                .ancestors(scope_id)
+                .find(|s_id| scope_tree.get_flags(*s_id).is_var())
+                .unwrap_or(scope_tree.root_scope_id());
             let bindings = scope_tree.get_bindings(scope_id);
 
-            // The current slot number is continued by the maximum slot from the parent scope
-            let parent_max_slot = scope_tree
-                .get_parent_id(scope_id)
-                .map_or(0, |parent_scope_id| max_slot_for_scope[parent_scope_id.index()]);
-
-            let mut slot = parent_max_slot;
+            let mut slot = slot_liveness.len();
 
             if !bindings.is_empty() {
+                let reusable_slots = Vec::from_iter_in(
+                    slot_liveness
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, slot_liveness)| !slot_liveness.contains(scope_id.index()))
+                        .map(|(slot, _)| slot)
+                        .take(bindings.len()),
+                    &allocator,
+                );
+                let remaining_count = bindings.len() - reusable_slots.len();
+
+                let assignable_slots =
+                    reusable_slots.into_iter().chain(slot..slot + remaining_count);
+                slot += remaining_count;
+                if slot_liveness.len() < slot {
+                    slot_liveness
+                        .resize_with(slot, || FixedBitSet::with_capacity(scope_tree.len()));
+                }
+
                 // Sort `bindings` in declaration order.
                 tmp_bindings.clear();
                 tmp_bindings.extend(bindings.values().copied());
                 tmp_bindings.sort_unstable();
-                for symbol_id in &tmp_bindings {
-                    slots[symbol_id.index()] = slot;
-                    slot += 1;
+                for (symbol_id, assigned_slot) in tmp_bindings.iter().zip(assignable_slots) {
+                    slots[symbol_id.index()] = assigned_slot;
+
+                    let lived_scope_ids = symbol_table
+                        .get_resolved_references(*symbol_id)
+                        .flat_map(|reference| {
+                            // treat all symbols as var for now
+                            // the reusability can be improved by reducing the lived scope ids for const / let / class
+                            scope_tree
+                                .ancestors(reference.scope_id())
+                                .take_while(|s_id| *s_id != nearest_var_scope_id)
+                        })
+                        .chain(iter::once(nearest_var_scope_id));
+                    for scope_id in lived_scope_ids {
+                        slot_liveness[assigned_slot].insert(scope_id.index());
+                    }
                 }
             }
-
-            max_slot_for_scope[scope_id.index()] = slot;
-
-            if slot > total_number_of_slots {
-                total_number_of_slots = slot;
-            }
         }
+
+        let total_number_of_slots = slot_liveness.len();
 
         let frequencies = self.tally_slot_frequencies(
             &symbol_table,

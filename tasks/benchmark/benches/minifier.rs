@@ -59,6 +59,7 @@ fn bench_mangler(criterion: &mut Criterion) {
                 allocator.reset();
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
                 let (symbols, scopes) = SemanticBuilder::new()
+                    .with_scope_tree_child_ids(true)
                     .build(&program)
                     .semantic
                     .into_symbol_table_and_scope_tree();
