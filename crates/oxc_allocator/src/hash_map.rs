@@ -4,6 +4,9 @@
 //!
 //! [`FxHasher`]: rustc_hash::FxHasher
 
+// All methods which just delegate to `hashbrown::HashMap` methods marked `#[inline(always)]`
+#![expect(clippy::inline_always)]
+
 use std::{
     hash::Hash,
     mem::ManuallyDrop,
@@ -43,8 +46,6 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// [`FxHasher`]: rustc_hash::FxHasher
 pub struct HashMap<'alloc, K, V>(ManuallyDrop<FxHashMap<'alloc, K, V>>);
 
-// Note: All methods marked `#[inline]` as they just delegate to `hashbrown`'s methods.
-
 // TODO: `IntoIter`, `Drain`, and other consuming iterators provided by `hashbrown` are `Drop`.
 // Wrap them in `ManuallyDrop` to prevent that.
 
@@ -53,7 +54,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     ///
     /// The hash map is initially created with a capacity of 0, so it will not allocate
     /// until it is first inserted into.
-    #[inline]
+    #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
         let inner = FxHashMap::with_hasher_in(FxBuildHasher, allocator);
         Self(ManuallyDrop::new(inner))
@@ -63,7 +64,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     ///
     /// The hash map will be able to hold at least capacity elements without reallocating.
     /// If capacity is 0, the hash map will not allocate.
-    #[inline]
+    #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
         let inner = FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator);
         Self(ManuallyDrop::new(inner))
@@ -72,7 +73,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// Creates a consuming iterator visiting all the keys in arbitrary order.
     ///
     /// The map cannot be used after calling this. The iterator element type is `K`.
-    #[inline]
+    #[inline(always)]
     pub fn into_keys(self) -> IntoKeys<K, V, &'alloc Bump> {
         let inner = ManuallyDrop::into_inner(self.0);
         inner.into_keys()
@@ -81,7 +82,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// Creates a consuming iterator visiting all the values in arbitrary order.
     ///
     /// The map cannot be used after calling this. The iterator element type is `V`.
-    #[inline]
+    #[inline(always)]
     pub fn into_values(self) -> IntoValues<K, V, &'alloc Bump> {
         let inner = ManuallyDrop::into_inner(self.0);
         inner.into_values()
@@ -113,7 +114,7 @@ impl<'alloc, K, V> IntoIterator for HashMap<'alloc, K, V> {
     /// in arbitrary order.
     ///
     /// The map cannot be used after calling this.
-    #[inline]
+    #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
         let inner = ManuallyDrop::into_inner(self.0);
         // TODO: `hashbrown::hash_map::IntoIter` is `Drop`.
@@ -131,7 +132,7 @@ impl<'alloc, 'i, K, V> IntoIterator for &'i HashMap<'alloc, K, V> {
     /// The iterator element type is `(&'a K, &'a V)`.
     ///
     /// Return the same [`Iter`] struct as by the `iter` method on [`HashMap`].
-    #[inline]
+    #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
     }
@@ -147,7 +148,7 @@ impl<'alloc, 'i, K, V> IntoIterator for &'i mut HashMap<'alloc, K, V> {
     /// The iterator element type is `(&'a K, &'a mut V)`.
     ///
     /// Return the same [`IterMut`] struct as by the `iter_mut` method on [`HashMap`].
-    #[inline]
+    #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter_mut()
     }
@@ -158,7 +159,7 @@ where
     K: Eq + Hash,
     V: PartialEq,
 {
-    #[inline]
+    #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
         self.0.eq(&other.0)
     }
