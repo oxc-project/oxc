@@ -9,6 +9,7 @@ use crate::{
         serialize::{enum_variant_name, get_always_flatten_structs, get_type_tag},
         EnumDef, FieldDef, GetGenerics, GetIdent, Schema, StructDef, TypeDef,
     },
+    util::ToIdent,
 };
 
 use super::{define_derive, Derive};
@@ -139,6 +140,14 @@ fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
                         array: &self.#ident,
                         after: &self.#after_ident
                     }
+                )?;
+            });
+        } else if let Some(with) = &field.markers.derive_attributes.estree.with {
+            let with_ident = with.to_ident();
+            fields.push(quote! {
+                map.serialize_entry(
+                    #name,
+                    &crate::serialize::#with_ident(&self.#ident)
                 )?;
             });
         } else {
