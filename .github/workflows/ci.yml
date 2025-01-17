@@ -162,6 +162,7 @@ jobs:
           cache-key: clippy
           components: clippy
       - run: cargo lint -- -D warnings
+      - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
       - name: Check Char and Byte Offset
         run: |
           npm i @ast-grep/cli -g
