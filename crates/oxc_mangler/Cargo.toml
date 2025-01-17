@@ -27,6 +27,5 @@ oxc_index = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 
-compact_str = { workspace = true }
 itertools = { workspace = true }
 rustc-hash = { workspace = true }
