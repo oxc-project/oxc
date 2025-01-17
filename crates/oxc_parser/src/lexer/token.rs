@@ -5,6 +5,8 @@ use oxc_span::Span;
 use super::kind::Kind;
 
 #[derive(Debug, Clone, Copy, Default)]
+// Align `Token` on 8 on 64-bit platforms (same alignment as `Span`)
+#[cfg_attr(target_pointer_width = "64", repr(align(8)))]
 pub struct Token {
     /// Token Kind
     pub kind: Kind,
