@@ -588,7 +588,7 @@ impl<'a> Format<'a> for VariableDeclarator<'a> {
             let left_doc = self.id.format(p);
             assignment::print_assignment(
                 p,
-                assignment::AssignmentLikeNode::VariableDeclarator(self),
+                assignment::AssignmentLike::VariableDeclarator(self),
                 left_doc,
                 text!(" ="),
                 self.init.as_ref(),
@@ -1065,7 +1065,7 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
 
             assignment::print_assignment(
                 p,
-                assignment::AssignmentLikeNode::ObjectProperty(self),
+                assignment::AssignmentLike::ObjectProperty(self),
                 left_doc,
                 text!(":"),
                 Some(&self.value),
@@ -1273,7 +1273,7 @@ impl<'a> Format<'a> for AssignmentExpression<'a> {
             let left_doc = self.left.format(p);
             assignment::print_assignment(
                 p,
-                assignment::AssignmentLikeNode::AssignmentExpression(self),
+                assignment::AssignmentLike::AssignmentExpression(self),
                 left_doc,
                 array!(p, [text!(" "), text!(self.operator.as_str())]),
                 Some(&self.right),
@@ -1531,21 +1531,21 @@ impl<'a> Format<'a> for StaticBlock<'a> {
 
 impl<'a> Format<'a> for MethodDefinition<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, MethodDefinition, { function::print_method(p, self) })
+        wrap!(p, self, MethodDefinition, { class::print_class_method(p, self) })
     }
 }
 
 impl<'a> Format<'a> for PropertyDefinition<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, PropertyDefinition, {
-            class::print_class_property(p, &class::ClassMemberish::PropertyDefinition(self))
+            class::print_class_property(p, &class::ClassPropertyLike::PropertyDefinition(self))
         })
     }
 }
 
 impl<'a> Format<'a> for AccessorProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        class::print_class_property(p, &class::ClassMemberish::AccessorProperty(self))
+        class::print_class_property(p, &class::ClassPropertyLike::AccessorProperty(self))
     }
 }
 

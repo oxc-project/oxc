@@ -73,23 +73,6 @@ pub fn print_function<'a>(
 pub fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
 
-    if let Some(accessibility) = &method.accessibility {
-        parts.push(text!(accessibility.as_str()));
-        parts.push(text!(" "));
-    }
-
-    if method.r#static {
-        parts.push(text!("static "));
-    }
-
-    if matches!(method.r#type, MethodDefinitionType::TSAbstractMethodDefinition) {
-        parts.push(text!("abstract "));
-    }
-
-    if method.r#override {
-        parts.push(text!("override "));
-    }
-
     match method.kind {
         MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
         MethodDefinitionKind::Get => {
