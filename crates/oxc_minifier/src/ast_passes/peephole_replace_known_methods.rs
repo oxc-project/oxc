@@ -7,7 +7,7 @@ use oxc_ecmascript::{
     constant_evaluation::ConstantEvaluation, StringCharAt, StringCharCodeAt, StringIndexOf,
     StringLastIndexOf, StringSubstring, ToInt32,
 };
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::{ctx::Ctx, CompressorPass};
 
@@ -26,6 +26,7 @@ impl<'a> CompressorPass<'a> for PeepholeReplaceKnownMethods {
 
 impl<'a> Traverse<'a> for PeepholeReplaceKnownMethods {
     fn exit_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.try_fold_array_concat(node, ctx);
         self.try_fold_known_string_methods(node, ctx);
     }
 }
@@ -337,6 +338,83 @@ impl<'a> PeepholeReplaceKnownMethods {
             }
         }
         result.into_iter().rev().collect()
+    }
+
+    /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
+    fn try_fold_array_concat(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if matches!(ctx.parent(), Ancestor::StaticMemberExpressionObject(_)) {
+            return;
+        }
+
+        let original_span = if let Expression::CallExpression(root_call_expr) = node {
+            root_call_expr.span
+        } else {
+            return;
+        };
+
+        let mut current_node: &mut Expression = node;
+        let mut collected_arguments = ctx.ast.vec();
+        let new_root_callee: &mut Expression<'a>;
+        loop {
+            let Expression::CallExpression(ce) = current_node else {
+                return;
+            };
+            let Expression::StaticMemberExpression(member) = &ce.callee else {
+                return;
+            };
+            if member.optional || member.property.name != "concat" {
+                return;
+            }
+
+            // We don't need to check if the arguments has a side effect here.
+            //
+            // The only side effect Array::concat can cause is throwing an error when the created array is too long.
+            // With the compressor assumption, that error can be moved.
+            //
+            // For example, if we have `[].concat(a).concat(b)`, the steps before the compression is:
+            // 1. evaluate `a`
+            // 2. `[].concat(a)` creates `[a]`
+            // 3. evaluate `b`
+            // 4. `.concat(b)` creates `[a, b]`
+            //
+            // The steps after the compression (`[].concat(a, b)`) is:
+            // 1. evaluate `a`
+            // 2. evaluate `b`
+            // 3. `[].concat(a, b)` creates `[a, b]`
+            //
+            // The error that has to be thrown in the second step before the compression will be thrown in the third step.
+
+            let CallExpression { callee, arguments, .. } = ce.as_mut();
+            collected_arguments.push(arguments);
+
+            // [].concat()
+            let is_root_expr_concat = {
+                let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
+                matches!(&member.object, Expression::ArrayExpression(_))
+            };
+            if is_root_expr_concat {
+                new_root_callee = callee;
+                break;
+            }
+
+            let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
+            current_node = &mut member.object;
+        }
+
+        if collected_arguments.len() <= 1 {
+            return;
+        }
+
+        *node = ctx.ast.expression_call(
+            original_span,
+            ctx.ast.move_expression(new_root_callee),
+            Option::<TSTypeParameterInstantiation>::None,
+            ctx.ast.vec_from_iter(
+                collected_arguments.into_iter().rev().flat_map(|arg| ctx.ast.move_vec(arg)),
+            ),
+            false,
+        );
+        self.changed = true;
     }
 }
 
@@ -1083,25 +1161,15 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_concat_chaining() {
-        // enableTypeCheck();
-
         fold("[1,2].concat(1).concat(2,['abc']).concat('abc')", "[1,2].concat(1,2,['abc'],'abc')");
-        fold("[].concat(['abc']).concat(1).concat([2,3])", "['abc'].concat(1,[2,3])");
+        fold("[].concat(['abc']).concat(1).concat([2,3])", "[].concat(['abc'],1,[2,3])");
 
-        // cannot fold concat based on type information
-        fold_same("returnArrayType().concat(returnArrayType()).concat(1).concat(2)");
-        fold_same("returnArrayType().concat(returnUnionType()).concat(1).concat(2)");
-        fold(
-            "[1,2,1].concat(1).concat(returnArrayType()).concat(2)",
-            "[1,2,1].concat(1).concat(returnArrayType(),2)",
-        );
-        fold(
-            "[1].concat(1).concat(2).concat(returnArrayType())",
-            "[1].concat(1,2).concat(returnArrayType())",
-        );
-        fold_same("[].concat(1).concat(returnArrayType())");
+        fold("var x, y; [1].concat(x).concat(y)", "var x, y; [1].concat(x, y)");
+        fold("var y; [1].concat(x).concat(y)", "var y; [1].concat(x, y)"); // x might have a getter that updates y, but that side effect is preserved correctly
+        fold("var x; [1].concat(x.a).concat(x)", "var x; [1].concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
+
+        fold_same("[].concat(1)");
         fold_same("obj.concat([1,2]).concat(1)");
     }
 
