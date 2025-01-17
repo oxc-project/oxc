@@ -1,13 +1,12 @@
 use std::ops::Deref;
 
 use itertools::Itertools;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_index::Idx;
 use oxc_semantic::{ReferenceId, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
-use oxc_span::Atom;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
@@ -183,9 +182,28 @@ impl Mangler {
             &allocator,
         );
 
+        // Create `HashSet` of symbol names which are unavailable
+        // (keywords, unresolved references, and top level bindings)
         let root_unresolved_references = scope_tree.root_unresolved_references();
         let root_bindings = scope_tree.get_bindings(scope_tree.root_scope_id());
 
+        let unavailable_names_count = KEYWORDS_AND_SPECIAL_NAMES.len()
+            + root_unresolved_references.len()
+            + root_bindings.len();
+        let mut unavailable_names =
+            FxHashSet::with_capacity_and_hasher(unavailable_names_count, FxBuildHasher);
+
+        unavailable_names.extend(KEYWORDS_AND_SPECIAL_NAMES);
+        unavailable_names.extend(root_unresolved_references.keys().copied());
+
+        if self.options.top_level {
+            unavailable_names
+                .extend(root_bindings.keys().copied().filter(|name| exported_names.contains(name)));
+        } else {
+            unavailable_names.extend(root_bindings.keys().copied());
+        }
+
+        // Create list of symbol names to use
         let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, &allocator);
 
         let mut count = 0;
@@ -193,14 +211,7 @@ impl Mangler {
             let name = loop {
                 let name = generate_name(count);
                 count += 1;
-                // Do not mangle keywords and unresolved references
-                let n = name.as_str();
-                if !is_keyword(n)
-                    && !is_special_name(n)
-                    && !root_unresolved_references.contains_key(n)
-                    && !(root_bindings.contains_key(n)
-                        && (!self.options.top_level || exported_names.contains(n)))
-                {
+                if !unavailable_names.contains(name.as_str()) {
                     break name;
                 }
             };
@@ -298,7 +309,7 @@ impl Mangler {
 
     fn collect_exported_symbols<'a>(
         program: &Program<'a>,
-    ) -> (FxHashSet<Atom<'a>>, FxHashSet<SymbolId>) {
+    ) -> (FxHashSet<&'a str>, FxHashSet<SymbolId>) {
         program
             .body
             .iter()
@@ -317,7 +328,7 @@ impl Mangler {
                     itertools::Either::Right(decl.id().into_iter())
                 }
             })
-            .map(|id| (id.name.clone(), id.symbol_id()))
+            .map(|id| (id.name.as_str(), id.symbol_id()))
             .collect()
     }
 }
@@ -325,6 +336,17 @@ impl Mangler {
 fn is_special_name(name: &str) -> bool {
     matches!(name, "exports" | "arguments")
 }
+
+#[rustfmt::skip]
+static KEYWORDS_AND_SPECIAL_NAMES: [&str; 28] = [
+    // Keywords
+    "as", "do", "if", "in", "is", "of", "any", "for", "get",
+    "let", "new", "out", "set", "try", "var", "case", "else",
+    "enum", "from", "meta", "null", "this", "true", "type",
+    "void", "with",
+    // Special names
+    "exports", "arguments",
+];
 
 #[derive(Debug)]
 struct SlotFrequency<'a> {
@@ -337,14 +359,6 @@ impl<'a> SlotFrequency<'a> {
     fn new(allocator: &'a Allocator) -> Self {
         Self { slot: 0, frequency: 0, symbol_ids: Vec::new_in(allocator) }
     }
-}
-
-#[rustfmt::skip]
-fn is_keyword(s: &str) -> bool {
-    matches!(s, "as" | "do" | "if" | "in" | "is" | "of" | "any" | "for" | "get"
-            | "let" | "new" | "out" | "set" | "try" | "var" | "case" | "else"
-            | "enum" | "from" | "meta" | "null" | "this" | "true" | "type"
-            | "void" | "with")
 }
 
 #[repr(C, align(64))]
