@@ -1,4 +1,5 @@
-use compact_str::CompactString;
+use std::ops::Deref;
+
 use itertools::Itertools;
 use rustc_hash::FxHashSet;
 
@@ -6,7 +7,7 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_index::Idx;
 use oxc_semantic::{ReferenceId, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
-use oxc_span::{Atom, CompactStr};
+use oxc_span::Atom;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub struct MangleOptions {
@@ -94,10 +95,27 @@ impl Mangler {
 
     #[must_use]
     pub fn build_with_symbols_and_scopes(
+        self,
+        symbol_table: SymbolTable,
+        scope_tree: &ScopeTree,
+        program: &Program<'_>,
+    ) -> Mangler {
+        if self.options.debug {
+            self.build_with_symbols_and_scopes_impl(symbol_table, scope_tree, program, debug_name)
+        } else {
+            self.build_with_symbols_and_scopes_impl(symbol_table, scope_tree, program, base54)
+        }
+    }
+
+    fn build_with_symbols_and_scopes_impl<
+        const CAPACITY: usize,
+        G: Fn(usize) -> InlineString<CAPACITY>,
+    >(
         mut self,
         symbol_table: SymbolTable,
         scope_tree: &ScopeTree,
         program: &Program<'_>,
+        generate_name: G,
     ) -> Mangler {
         let (exported_names, exported_symbols) = if self.options.top_level {
             Mangler::collect_exported_symbols(program)
@@ -170,7 +188,6 @@ impl Mangler {
 
         let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, &allocator);
 
-        let generate_name = if self.options.debug { debug_name } else { base54 };
         let mut count = 0;
         for _ in 0..total_number_of_slots {
             let name = loop {
@@ -209,7 +226,7 @@ impl Mangler {
         let mut slice_of_same_len_strings = std::vec::Vec::with_capacity(100);
         // 2. "N number of vars are going to be assigned names of the same length"
         for (_, slice_of_same_len_strings_group) in
-            &reserved_names.into_iter().chunk_by(CompactStr::len)
+            &reserved_names.into_iter().chunk_by(InlineString::len)
         {
             // 1. "The most frequent vars get the shorter names"
             // (freq_iter is sorted by frequency from highest to lowest,
@@ -235,7 +252,7 @@ impl Mangler {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for &symbol_id in &symbol_to_rename.symbol_ids {
-                    symbol_table.set_name(symbol_id, new_name.as_str());
+                    symbol_table.set_name(symbol_id, new_name);
                 }
             }
         }
@@ -330,29 +347,145 @@ fn is_keyword(s: &str) -> bool {
             | "void" | "with")
 }
 
-const BASE54_CHARS: &[u8; 64] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789";
+#[repr(C, align(64))]
+struct Aligned64([u8; 64]);
+
+const BASE54_CHARS: Aligned64 =
+    Aligned64(*b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789");
 
 /// Get the shortest mangled name for a given n.
 /// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)
-fn base54(n: usize) -> CompactStr {
+//
+// Maximum length of string is 11 (`ZrN6rN6rN6r` for `u64::MAX`), but set `CAPACITY` as 12,
+// so the total size of `InlineString` is 16, including the `len` field.
+// Then initializing the `InlineString` is a single `xmm` set, and with luck it'll sit in a register
+// throughout this function.
+#[expect(clippy::items_after_statements)]
+fn base54(n: usize) -> InlineString<12> {
+    let mut str = InlineString::new();
+
     let mut num = n;
+
     // Base 54 at first because these are the usable first characters in JavaScript identifiers
     // <https://tc39.es/ecma262/#prod-IdentifierStart>
-    let base = 54usize;
-    // SAFETY: `BASE54_CHARS` is utf8.
-    let mut s = unsafe { CompactString::from_utf8_unchecked([BASE54_CHARS[num % base]]) };
-    num /= base;
+    const FIRST_BASE: usize = 54;
+    let byte = BASE54_CHARS.0[num % FIRST_BASE];
+    // SAFETY: All `BASE54_CHARS` are ASCII. This is first byte we push, so can't be out of bounds.
+    unsafe { str.push(byte) };
+    num /= FIRST_BASE;
+
     // Base 64 for the rest because after the first character we can also use 0-9 too
     // <https://tc39.es/ecma262/#prod-IdentifierPart>
-    let base = 64usize;
+    const REST_BASE: usize = 64;
     while num > 0 {
         num -= 1;
-        s.push(BASE54_CHARS[num % base] as char);
-        num /= base;
+        let byte = BASE54_CHARS.0[num % REST_BASE];
+        // SAFETY: All `BASE54_CHARS` are ASCII.
+        // Encoded string for `u64::MAX` is `ZrN6rN6rN6r` (11 bytes), so cannot push more `CAPACITY` (12).
+        unsafe { str.push(byte) };
+        num /= REST_BASE;
     }
-    CompactStr::from(s)
+
+    str
 }
 
-fn debug_name(n: usize) -> CompactStr {
-    CompactStr::from(format!("slot_{n}"))
+// Maximum length of string is 25 (`slot_18446744073709551615` for `u64::MAX`)
+// but set `CAPACITY` as 28 so the total size of `InlineString` is 32, including the `len` field.
+fn debug_name(n: usize) -> InlineString<28> {
+    InlineString::from_str(&format!("slot_{n}"))
+}
+
+/// Short inline string.
+///
+/// `CAPACITY` determines the maximum length of the string.
+#[repr(align(16))]
+struct InlineString<const CAPACITY: usize> {
+    len: u32,
+    bytes: [u8; CAPACITY],
+}
+
+impl<const CAPACITY: usize> InlineString<CAPACITY> {
+    /// Create empty [`InlineString`].
+    #[inline]
+    fn new() -> Self {
+        const { assert!(CAPACITY <= u32::MAX as usize) };
+
+        Self { bytes: [0; CAPACITY], len: 0 }
+    }
+
+    /// Create [`InlineString`] from `&str`.
+    ///
+    /// # Panics
+    /// Panics if `s.len() > CAPACITY`.
+    fn from_str(s: &str) -> Self {
+        let mut bytes = [0; CAPACITY];
+        let slice = &mut bytes[..s.len()];
+        slice.copy_from_slice(s.as_bytes());
+        Self { bytes, len: u32::try_from(s.len()).unwrap() }
+    }
+
+    /// Push a byte to the string.
+    ///
+    /// # SAFETY
+    /// * Must not push more than `CAPACITY` bytes.
+    /// * `byte` must be < 128 (an ASCII character).
+    #[inline]
+    unsafe fn push(&mut self, byte: u8) {
+        debug_assert!((self.len as usize) < CAPACITY);
+        debug_assert!(byte.is_ascii());
+
+        *self.bytes.get_unchecked_mut(self.len as usize) = byte;
+        self.len += 1;
+    }
+
+    /// Get length of string as `u32`.
+    #[inline]
+    fn len(&self) -> u32 {
+        self.len
+    }
+
+    /// Get string as `&str` slice.
+    #[inline]
+    fn as_str(&self) -> &str {
+        // SAFETY: If safety invariants of `push` have be complied with,
+        // slice cannot be out of bounds, and contents of that slice is a valid UTF-8 string
+        unsafe {
+            let slice = self.bytes.get_unchecked(..self.len as usize);
+            std::str::from_utf8_unchecked(slice)
+        }
+    }
+}
+
+impl<const CAPACITY: usize> Deref for InlineString<CAPACITY> {
+    type Target = str;
+
+    #[inline]
+    fn deref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::base54;
+
+    #[test]
+    fn test_base54() {
+        assert_eq!(&*base54(0), "a");
+        assert_eq!(&*base54(25), "z");
+        assert_eq!(&*base54(26), "A");
+        assert_eq!(&*base54(51), "Z");
+        assert_eq!(&*base54(52), "$");
+        assert_eq!(&*base54(53), "_");
+        assert_eq!(&*base54(54), "aa");
+        assert_eq!(&*base54(55), "ab");
+
+        if cfg!(target_pointer_width = "64") {
+            assert_eq!(&*base54(usize::MAX), "ZrN6rN6rN6r");
+        }
+
+        if cfg!(target_pointer_width = "32") {
+            assert_eq!(&*base54(usize::MAX), "vUdzUd");
+        }
+    }
 }

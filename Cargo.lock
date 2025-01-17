@@ -1839,7 +1839,6 @@ dependencies = [
 name = "oxc_mangler"
 version = "0.46.0"
 dependencies = [
- "compact_str",
  "itertools",
  "oxc_allocator",
  "oxc_ast",
