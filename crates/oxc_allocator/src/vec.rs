@@ -12,7 +12,7 @@ use std::{
     slice::SliceIndex,
 };
 
-use allocator_api2::vec;
+use allocator_api2::vec::Vec as InnerVec;
 use bumpalo::Bump;
 #[cfg(any(feature = "serialize", test))]
 use serde::{ser::SerializeSeq, Serialize, Serializer};
@@ -29,7 +29,7 @@ use crate::{Allocator, Box, String};
 /// Note: This is not a soundness issue, as Rust does not support relying on `drop`
 /// being called to guarantee soundness.
 #[derive(PartialEq, Eq)]
-pub struct Vec<'alloc, T>(ManuallyDrop<vec::Vec<T, &'alloc Bump>>);
+pub struct Vec<'alloc, T>(ManuallyDrop<InnerVec<T, &'alloc Bump>>);
 
 /// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
 unsafe impl<T> Send for Vec<'_, T> {}
@@ -53,7 +53,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        Self(ManuallyDrop::new(vec::Vec::new_in(allocator)))
+        Self(ManuallyDrop::new(InnerVec::new_in(allocator)))
     }
 
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
@@ -105,7 +105,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        Self(ManuallyDrop::new(vec::Vec::with_capacity_in(capacity, allocator)))
+        Self(ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator)))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and
@@ -117,7 +117,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         let iter = iter.into_iter();
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);
-        let mut vec = ManuallyDrop::new(vec::Vec::with_capacity_in(capacity, &**allocator));
+        let mut vec = ManuallyDrop::new(InnerVec::with_capacity_in(capacity, &**allocator));
         vec.extend(iter);
         Self(vec)
     }
@@ -146,7 +146,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         // `ptr` was allocated with correct size for `[T; N]`.
         // `len` and `capacity` are both `N`.
         // Allocated size cannot be larger than `isize::MAX`, or `Box::new_in` would have failed.
-        let vec = unsafe { vec::Vec::from_raw_parts_in(ptr, N, N, &**allocator) };
+        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, &**allocator) };
         Self(ManuallyDrop::new(vec))
     }
 
@@ -218,7 +218,7 @@ impl<'alloc> Vec<'alloc, u8> {
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
-    type Target = vec::Vec<T, &'alloc Bump>;
+    type Target = InnerVec<T, &'alloc Bump>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -226,13 +226,13 @@ impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
 }
 
 impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
-    fn deref_mut(&mut self) -> &mut vec::Vec<T, &'alloc Bump> {
+    fn deref_mut(&mut self) -> &mut InnerVec<T, &'alloc Bump> {
         &mut self.0
     }
 }
 
 impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
-    type IntoIter = <vec::Vec<T, &'alloc Bump> as IntoIterator>::IntoIter;
+    type IntoIter = <InnerVec<T, &'alloc Bump> as IntoIterator>::IntoIter;
     type Item = T;
 
     fn into_iter(self) -> Self::IntoIter {
