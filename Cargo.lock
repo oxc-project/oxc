@@ -1840,6 +1840,7 @@ dependencies = [
 name = "oxc_mangler"
 version = "0.47.1"
 dependencies = [
+ "fixedbitset",
  "itertools",
  "oxc_allocator",
  "oxc_ast",

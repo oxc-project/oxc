@@ -6,7 +6,7 @@ use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
-use crate::{node::NodeId, symbol::SymbolId};
+use crate::{node::NodeId, scope::ScopeId, symbol::SymbolId};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ReferenceId(NonMaxU32);
@@ -234,6 +234,8 @@ impl<'alloc> CloneIn<'alloc> for ReferenceFlags {
 pub struct Reference {
     /// The AST node making the reference.
     node_id: NodeId,
+    /// The scope of the AST node making the reference.
+    scope_id: ScopeId,
     /// The symbol being referenced.
     ///
     /// This will be [`None`] if no symbol could be found within
@@ -248,20 +250,31 @@ pub struct Reference {
 impl Reference {
     /// Create a new unresolved reference.
     #[inline]
-    pub fn new(node_id: NodeId, flags: ReferenceFlags) -> Self {
-        Self { node_id, symbol_id: None, flags }
+    pub fn new(node_id: NodeId, scope_id: ScopeId, flags: ReferenceFlags) -> Self {
+        Self { node_id, scope_id, symbol_id: None, flags }
     }
 
     /// Create a new resolved reference on a symbol.
     #[inline]
-    pub fn new_with_symbol_id(node_id: NodeId, symbol_id: SymbolId, flags: ReferenceFlags) -> Self {
-        Self { node_id, symbol_id: Some(symbol_id), flags }
+    pub fn new_with_symbol_id(
+        node_id: NodeId,
+        scope_id: ScopeId,
+        symbol_id: SymbolId,
+        flags: ReferenceFlags,
+    ) -> Self {
+        Self { node_id, scope_id, symbol_id: Some(symbol_id), flags }
     }
 
     /// Get the id of the node that is referencing the symbol.
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.node_id
+    }
+
+    /// Get the id of the scope that is referencing the symbol.
+    #[inline]
+    pub fn scope_id(&self) -> ScopeId {
+        self.scope_id
     }
 
     /// Get the id of the symbol being referenced.
