@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     array,
-    format::print::assignment::{print_assignment, AssignmentLikeNode},
+    format::print::{assignment, function},
     group, hardline, if_break, indent,
     ir::{Doc, JoinSeparator},
     join, line, softline, text, Format, Prettier,
@@ -93,103 +93,105 @@ pub fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
 }
 
 pub fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<'a>) -> Doc<'a> {
-    let mut parts_inner = Vec::new_in(p.allocator);
+    let mut parts = Vec::new_in(p.allocator);
 
     for (i, node) in class_body.body.iter().enumerate() {
-        parts_inner.push(node.format(p));
+        parts.push(node.format(p));
 
         if !p.options.semi
             && node.is_property()
             && should_print_semicolon_after_class_property(node, class_body.body.get(i + 1))
         {
-            parts_inner.push(text!(";"));
+            parts.push(text!(";"));
         }
 
         if i < class_body.body.len() - 1 {
-            parts_inner.push(hardline!(p));
+            parts.push(hardline!(p));
 
             if p.is_next_line_empty(node.span()) {
-                parts_inner.push(hardline!(p));
+                parts.push(hardline!(p));
             }
         }
     }
 
     // TODO: if there are any dangling comments, print them
 
-    let mut parts = Vec::new_in(p.allocator);
-    parts.push(text!("{"));
-    if !parts_inner.is_empty() {
-        parts.push(array!(p, [indent!(p, [hardline!(p), array!(p, parts_inner)])]));
-        parts.push(hardline!(p));
+    if parts.is_empty() {
+        return array!(p, [text!("{"), text!("}")]);
     }
-
-    parts.push(text!("}"));
-
-    array!(p, parts)
+    array!(p, [text!("{"), indent!(p, [hardline!(p), array!(p, parts)]), hardline!(p), text!("}")])
 }
 
 #[derive(Debug)]
-pub enum ClassMemberish<'a, 'b> {
+pub enum ClassPropertyLike<'a, 'b> {
     PropertyDefinition(&'b PropertyDefinition<'a>),
     AccessorProperty(&'b AccessorProperty<'a>),
 }
 
-impl<'a> ClassMemberish<'a, '_> {
+impl<'a> ClassPropertyLike<'a, '_> {
     fn format_key(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => {
+            ClassPropertyLike::PropertyDefinition(property_definition) => {
                 property_definition.key.format(p)
             }
-            ClassMemberish::AccessorProperty(accessor_property) => accessor_property.key.format(p),
+            ClassPropertyLike::AccessorProperty(accessor_property) => {
+                accessor_property.key.format(p)
+            }
         }
     }
 
     fn decorators(&self) -> Option<&oxc_allocator::Vec<Decorator<'a>>> {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => {
+            ClassPropertyLike::PropertyDefinition(property_definition) => {
                 Some(&property_definition.decorators)
             }
 
-            ClassMemberish::AccessorProperty(accessor_property) => None,
+            ClassPropertyLike::AccessorProperty(accessor_property) => None,
         }
     }
 
     fn is_static(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => property_definition.r#static,
-            ClassMemberish::AccessorProperty(accessor_property) => accessor_property.r#static,
+            ClassPropertyLike::PropertyDefinition(property_definition) => {
+                property_definition.r#static
+            }
+            ClassPropertyLike::AccessorProperty(accessor_property) => accessor_property.r#static,
         }
     }
 
     fn is_override(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => {
+            ClassPropertyLike::PropertyDefinition(property_definition) => {
                 property_definition.r#override
             }
-            ClassMemberish::AccessorProperty(accessor_property) => false,
+            ClassPropertyLike::AccessorProperty(accessor_property) => false,
         }
     }
 
     fn is_readonly(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => property_definition.readonly,
-            ClassMemberish::AccessorProperty(_) => true,
+            ClassPropertyLike::PropertyDefinition(property_definition) => {
+                property_definition.readonly
+            }
+            ClassPropertyLike::AccessorProperty(_) => true,
         }
     }
 
     fn is_declare(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => property_definition.declare,
-            ClassMemberish::AccessorProperty(_) => false,
+            ClassPropertyLike::PropertyDefinition(property_definition) => {
+                property_definition.declare
+            }
+            ClassPropertyLike::AccessorProperty(_) => false,
         }
     }
 
     fn is_abstract(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => {
+            ClassPropertyLike::PropertyDefinition(property_definition) => {
                 property_definition.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition
             }
-            ClassMemberish::AccessorProperty(accessor_property) => {
+            ClassPropertyLike::AccessorProperty(accessor_property) => {
                 accessor_property.r#type == AccessorPropertyType::TSAbstractAccessorProperty
             }
         }
@@ -197,47 +199,55 @@ impl<'a> ClassMemberish<'a, '_> {
 
     fn is_optional(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => property_definition.optional,
-            ClassMemberish::AccessorProperty(_) => false,
+            ClassPropertyLike::PropertyDefinition(property_definition) => {
+                property_definition.optional
+            }
+            ClassPropertyLike::AccessorProperty(_) => false,
         }
     }
 
     fn is_definite(&self) -> bool {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => property_definition.definite,
-            ClassMemberish::AccessorProperty(accessor_property) => accessor_property.definite,
+            ClassPropertyLike::PropertyDefinition(property_definition) => {
+                property_definition.definite
+            }
+            ClassPropertyLike::AccessorProperty(accessor_property) => accessor_property.definite,
         }
     }
 
     fn right_expr(&self) -> Option<&Expression<'a>> {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => {
+            ClassPropertyLike::PropertyDefinition(property_definition) => {
                 property_definition.value.as_ref()
             }
-            ClassMemberish::AccessorProperty(_) => None,
+            ClassPropertyLike::AccessorProperty(_) => None,
         }
     }
 
     fn format_accessibility(&self, p: &mut Prettier<'a>) -> Option<Doc<'a>> {
         match self {
-            ClassMemberish::AccessorProperty(def) => def.accessibility.map(|v| text!(v.as_str())),
-            ClassMemberish::PropertyDefinition(def) => def.accessibility.map(|v| text!(v.as_str())),
+            ClassPropertyLike::AccessorProperty(def) => {
+                def.accessibility.map(|v| text!(v.as_str()))
+            }
+            ClassPropertyLike::PropertyDefinition(def) => {
+                def.accessibility.map(|v| text!(v.as_str()))
+            }
         }
     }
 
     fn format_type_annotation(&self, p: &mut Prettier<'a>) -> Option<Doc<'a>> {
         match self {
-            ClassMemberish::PropertyDefinition(property_definition) => {
+            ClassPropertyLike::PropertyDefinition(property_definition) => {
                 property_definition.type_annotation.as_ref().map(|v| v.type_annotation.format(p))
             }
-            ClassMemberish::AccessorProperty(accessor_definition) => {
+            ClassPropertyLike::AccessorProperty(accessor_definition) => {
                 accessor_definition.type_annotation.as_ref().map(|v| v.type_annotation.format(p))
             }
         }
     }
 }
 
-pub fn print_class_property<'a>(p: &mut Prettier<'a>, node: &ClassMemberish<'a, '_>) -> Doc<'a> {
+pub fn print_class_property<'a>(p: &mut Prettier<'a>, node: &ClassPropertyLike<'a, '_>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
 
     if let Some(decarators) = node.decorators() {
@@ -248,13 +258,12 @@ pub fn print_class_property<'a>(p: &mut Prettier<'a>, node: &ClassMemberish<'a, 
         }
     }
 
+    if node.is_declare() {
+        parts.push(text!("declare "));
+    }
     if let Some(accessibility) = node.format_accessibility(p) {
         parts.push(accessibility);
         parts.push(text!(" "));
-    }
-
-    if node.is_declare() {
-        parts.push(text!("declare "));
     }
 
     if node.is_static() {
@@ -288,18 +297,46 @@ pub fn print_class_property<'a>(p: &mut Prettier<'a>, node: &ClassMemberish<'a, 
 
     let right_expr = node.right_expr();
     let node = match node {
-        ClassMemberish::PropertyDefinition(v) => AssignmentLikeNode::PropertyDefinition(v),
-        ClassMemberish::AccessorProperty(v) => AssignmentLikeNode::AccessorProperty(v),
+        ClassPropertyLike::PropertyDefinition(v) => {
+            assignment::AssignmentLike::PropertyDefinition(v)
+        }
+        ClassPropertyLike::AccessorProperty(v) => assignment::AssignmentLike::AccessorProperty(v),
     };
-    let mut result = print_assignment(p, node, array!(p, parts), text!(" ="), right_expr);
+    let mut result =
+        assignment::print_assignment(p, node, array!(p, parts), text!(" ="), right_expr);
 
-    if p.options.semi {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(result);
-        parts.push(text!(";"));
-        result = array!(p, parts);
+    if let Some(semi) = p.semi() {
+        return array!(p, [result, semi]);
     }
+
     result
+}
+
+pub fn print_class_method<'a>(p: &mut Prettier<'a>, node: &MethodDefinition<'a>) -> Doc<'a> {
+    let mut parts = Vec::new_in(p.allocator);
+
+    // TODO: Decorators
+
+    if let Some(accessibility) = &node.accessibility {
+        parts.push(text!(accessibility.as_str()));
+        parts.push(text!(" "));
+    }
+
+    if node.r#static {
+        parts.push(text!("static "));
+    }
+
+    if matches!(node.r#type, MethodDefinitionType::TSAbstractMethodDefinition) {
+        parts.push(text!("abstract "));
+    }
+
+    if node.r#override {
+        parts.push(text!("override "));
+    }
+
+    parts.push(function::print_method(p, node));
+
+    array!(p, parts)
 }
 
 fn should_print_semicolon_after_class_property<'a>(
