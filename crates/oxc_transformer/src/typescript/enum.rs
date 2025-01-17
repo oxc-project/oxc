@@ -543,36 +543,13 @@ impl<'a, 'ctx> IdentifierReferenceRename<'a, 'ctx> {
 
 impl IdentifierReferenceRename<'_, '_> {
     fn should_reference_enum_member(&self, ident: &IdentifierReference<'_>) -> bool {
-        // don't need to rename the identifier if it's not a member of the enum,
-        if !self.previous_enum_members.contains_key(&ident.name) {
-            return false;
-        };
-
         let symbol_table = self.ctx.scoping.symbols();
         let Some(symbol_id) = symbol_table.get_reference(ident.reference_id()).symbol_id() else {
-            // No symbol found, yet the name is found in previous_enum_members.
-            // It must be referencing a member declared in a previous enum block: `enum Foo { A }; enum Foo { B = A }`
-            return true;
+            // No symbol found. If the name is found in previous_enum_members,
+            // it must be referencing a member declared in a previous enum block: `enum Foo { A }; enum Foo { B = A }`
+            return self.previous_enum_members.contains_key(&ident.name);
         };
-        let symbol_scope_id = symbol_table.get_scope_id(symbol_id);
-
-        let mut ancestors = self.ctx.scopes().ancestors(symbol_scope_id);
-        if ancestors.next().unwrap() == self.enum_scope_id {
-            // referecing to a member in this enum block without intermediate scopes: `enum Foo { A, B = A }`
-            return true;
-        }
-        if ancestors.any(|scope_id| scope_id == self.enum_scope_id) {
-            /* The symbol is declared inside enum:
-            enum Foo {
-                A,
-                B = (() => {
-                    const A = 1;
-                    return A;
-                })())
-            } */
-            return false;
-        }
-        true
+        symbol_table.get_scope_id(symbol_id) == self.enum_scope_id
     }
 }
 
