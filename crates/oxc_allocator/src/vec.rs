@@ -2,6 +2,9 @@
 //!
 //! Originally based on [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/24004745a8ed4939fc0dc7332bfd1268ac52285f/crates/ast/src/arena.rs)
 
+// All methods which just delegate to `allocator_api2::vec::Vec` methods marked `#[inline(always)]`
+#![expect(clippy::inline_always)]
+
 use std::{
     self,
     fmt::{self, Debug},
@@ -51,7 +54,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// let mut vec: Vec<i32> = Vec::new_in(&arena);
     /// assert!(vec.is_empty());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
         Self(ManuallyDrop::new(InnerVec::new_in(allocator)))
     }
@@ -103,7 +106,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// let vec_units = Vec::<()>::with_capacity_in(10, &arena);
     /// assert_eq!(vec_units.capacity(), usize::MAX);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
         Self(ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator)))
     }
@@ -170,6 +173,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     ///
     /// [owned slice]: Box
+    #[inline]
     pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
         let inner = ManuallyDrop::into_inner(self.0);
         let slice = inner.leak();
@@ -205,7 +209,7 @@ impl<'alloc> Vec<'alloc, u8> {
     /// # SAFETY
     /// Caller must ensure this `Vec<u8>` comprises a valid UTF-8 string.
     #[expect(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
-    #[inline] // `#[inline]` because this is a no-op at runtime
+    #[inline(always)] // `#[inline(always)]` because this is a no-op at runtime
     pub unsafe fn into_string_unchecked(self) -> String<'alloc> {
         // Cannot use `bumpalo::String::from_utf8_unchecked` because it takes a `bumpalo::collections::Vec`,
         // and our inner `Vec` type is `allocator_api2::vec::Vec`.
@@ -220,12 +224,14 @@ impl<'alloc> Vec<'alloc, u8> {
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
     type Target = InnerVec<T, &'alloc Bump>;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
+    #[inline]
     fn deref_mut(&mut self) -> &mut InnerVec<T, &'alloc Bump> {
         &mut self.0
     }
@@ -235,6 +241,7 @@ impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
     type IntoIter = <InnerVec<T, &'alloc Bump> as IntoIterator>::IntoIter;
     type Item = T;
 
+    #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
         let inner = ManuallyDrop::into_inner(self.0);
         // TODO: `allocator_api2::vec::Vec::IntoIter` is `Drop`.
@@ -247,6 +254,7 @@ impl<'i, T> IntoIterator for &'i Vec<'_, T> {
     type IntoIter = std::slice::Iter<'i, T>;
     type Item = &'i T;
 
+    #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
     }
@@ -256,6 +264,7 @@ impl<'i, T> IntoIterator for &'i mut Vec<'_, T> {
     type IntoIter = std::slice::IterMut<'i, T>;
     type Item = &'i mut T;
 
+    #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter_mut()
     }
@@ -267,7 +276,7 @@ where
 {
     type Output = I::Output;
 
-    #[inline]
+    #[inline(always)]
     fn index(&self, index: I) -> &Self::Output {
         self.0.index(index)
     }
@@ -277,7 +286,7 @@ impl<T, I> ops::IndexMut<I> for Vec<'_, T>
 where
     I: SliceIndex<[T]>,
 {
-    #[inline]
+    #[inline(always)]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         self.0.index_mut(index)
     }
@@ -301,10 +310,9 @@ where
 }
 
 impl<T: Hash> Hash for Vec<'_, T> {
+    #[inline(always)]
     fn hash<H: Hasher>(&self, state: &mut H) {
-        for e in self.0.iter() {
-            e.hash(state);
-        }
+        self.0.hash(state);
     }
 }
 
