@@ -80,6 +80,8 @@ importers:
 
   napi/transform: {}
 
+  npm/oxc-minify: {}
+
   npm/oxc-parser:
     dependencies:
       '@oxc-project/types':
