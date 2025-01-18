@@ -69,7 +69,7 @@ impl Rule for NoRenderReturnValue {
                                 | AstKind::AssignmentExpression(_)
                         ) {
                             ctx.diagnostic(no_render_return_value_diagnostic(
-                                ident.span.merge(&property_span),
+                                ident.span.merge(property_span),
                             ));
                         }
 
@@ -80,7 +80,7 @@ impl Rule for NoRenderReturnValue {
                             {
                                 if e.expression {
                                     ctx.diagnostic(no_render_return_value_diagnostic(
-                                        ident.span.merge(&property_span),
+                                        ident.span.merge(property_span),
                                     ));
                                 }
                             }

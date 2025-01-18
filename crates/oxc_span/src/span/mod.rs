@@ -77,7 +77,7 @@ impl Span {
     /// assert_eq!(Span::new(0, 5).size(), 5);
     /// assert_eq!(Span::new(5, 10).size(), 5);
     /// ```
-    pub const fn size(&self) -> u32 {
+    pub const fn size(self) -> u32 {
         debug_assert!(self.start <= self.end);
         self.end - self.start
     }
@@ -92,7 +92,7 @@ impl Span {
     /// assert!(Span::new(5, 5).is_empty());
     /// assert!(!Span::new(0, 5).is_empty());
     /// ```
-    pub const fn is_empty(&self) -> bool {
+    pub const fn is_empty(self) -> bool {
         debug_assert!(self.start <= self.end);
         self.start == self.end
     }
@@ -108,7 +108,7 @@ impl Span {
     /// assert!(!Span::new(0, 5).is_unspanned());
     /// assert!(!Span::new(5, 5).is_unspanned());
     /// ```
-    pub const fn is_unspanned(&self) -> bool {
+    pub const fn is_unspanned(self) -> bool {
         self.start == SPAN.start && self.end == SPAN.end
     }
 
@@ -148,7 +148,7 @@ impl Span {
     /// assert_eq!(merged_span, Span::new(0, 8));
     /// ```
     #[must_use]
-    pub fn merge(&self, other: &Self) -> Self {
+    pub fn merge(self, other: Self) -> Self {
         Self::new(self.start.min(other.start), self.end.max(other.end))
     }
 
@@ -324,7 +324,7 @@ impl Span {
     /// let name = name_span.source_text(source);
     /// assert_eq!(name_span.size(), name.len() as u32);
     /// ```
-    pub fn source_text<'a>(&self, source_text: &'a str) -> &'a str {
+    pub fn source_text(self, source_text: &str) -> &str {
         &source_text[self.start as usize..self.end as usize]
     }
 

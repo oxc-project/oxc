@@ -40,7 +40,7 @@ pub struct JSDocTag<'a> {
 
 impl<'a> JSDocTag<'a> {
     pub fn new(kind: JSDocTagKindPart<'a>, body_content: &'a str, body_span: Span) -> JSDocTag<'a> {
-        Self { span: kind.span.merge(&body_span), kind, body_raw: body_content, body_span }
+        Self { span: kind.span.merge(body_span), kind, body_raw: body_content, body_span }
     }
 
     /// Use for various simple tags like `@access`, `@deprecated`, ...etc.

@@ -350,7 +350,7 @@ impl GetSpan for CompositeFix<'_> {
         match self {
             CompositeFix::Single(fix) => fix.span,
             CompositeFix::Multiple(fixes) => {
-                fixes.iter().map(|fix| fix.span).reduce(|a, b| a.merge(&b)).unwrap_or(SPAN)
+                fixes.iter().map(|fix| fix.span).reduce(Span::merge).unwrap_or(SPAN)
             }
             CompositeFix::None => SPAN,
         }
