@@ -56,7 +56,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// until it is first inserted into.
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        let inner = FxHashMap::with_hasher_in(FxBuildHasher, allocator);
+        let inner = FxHashMap::with_hasher_in(FxBuildHasher, allocator.bump());
         Self(ManuallyDrop::new(inner))
     }
 
@@ -66,7 +66,8 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// If capacity is 0, the hash map will not allocate.
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        let inner = FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator);
+        let inner =
+            FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
         Self(ManuallyDrop::new(inner))
     }
 

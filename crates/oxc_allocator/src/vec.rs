@@ -56,7 +56,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        Self(ManuallyDrop::new(InnerVec::new_in(allocator)))
+        Self(ManuallyDrop::new(InnerVec::new_in(allocator.bump())))
     }
 
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
@@ -108,7 +108,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        Self(ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator)))
+        Self(ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator.bump())))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and
@@ -120,7 +120,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         let iter = iter.into_iter();
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);
-        let mut vec = ManuallyDrop::new(InnerVec::with_capacity_in(capacity, &**allocator));
+        let mut vec = ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator.bump()));
         vec.extend(iter);
         Self(vec)
     }
@@ -149,7 +149,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         // `ptr` was allocated with correct size for `[T; N]`.
         // `len` and `capacity` are both `N`.
         // Allocated size cannot be larger than `isize::MAX`, or `Box::new_in` would have failed.
-        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, &**allocator) };
+        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.bump()) };
         Self(ManuallyDrop::new(vec))
     }
 
