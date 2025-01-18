@@ -300,7 +300,7 @@
     },
     "OxlintCategories": {
       "title": "Rule Categories",
-      "description": "Configure an entire category of rules all at once.\n\nRules enabled or disabled this way will be overwritten by individual rules in the `rules` field.\n\n# Example\n```json\n{\n    \"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n    \"categories\": {\n        \"correctness\": \"warn\"\n    },\n    \"rules\": {\n        \"eslint/no-unused-vars\": \"error\"\n    }\n}\n```",
+      "description": "Configure an entire category of rules all at once.\n\nRules enabled or disabled this way will be overwritten by individual rules in the `rules` field.\n\nExample\n```json\n{\n    \"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n    \"categories\": {\n        \"correctness\": \"warn\"\n    },\n    \"rules\": {\n        \"eslint/no-unused-vars\": \"error\"\n    }\n}\n```",
       "examples": [
         {
           "correctness": "warn"
