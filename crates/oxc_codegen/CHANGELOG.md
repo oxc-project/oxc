@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.47.0] - 2025-01-18
+
+### Bug Fixes
+
+- 855c839 codegen: Shorthand assignment target identifier consider mangled names (#8536) (Boshen)
+
 ## [0.46.0] - 2025-01-14
 
 ### Refactor

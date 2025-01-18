@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.47.0] - 2025-01-18
+
+- fae4cd2 allocator: [**BREAKING**] Remove `Vec::into_string` (#8571) (overlookmotel)
+
+### Features
+
+- f413bb5 transformer/optional-chaining: Change parent scope for expression when it wrapped with an arrow function (#8511) (Dunqing)
+
+### Bug Fixes
+
+- b552f5c transformer: `wrap_in_arrow_function_iife` take span of input `Expression` (#8547) (overlookmotel)
+- 9963533 transformer/arrow-functions: Visit arguments to `super()` call (#8494) (overlookmotel)
+- 06ccb51 transformer/async-to-generator: Move parameters to the inner generator function when they could throw errors (#8500) (Dunqing)
+- 356f0c1 transformer/class-properties: Handle nested `super()` calls (#8506) (overlookmotel)
+- a048337 transformer/class-static-blocks: Static block converted to IIFE use span of original block (#8549) (overlookmotel)
+
+### Performance
+
+- 53ef263 transformer/arrow-functions: Bail out of visiting early when inserting `_this = this` after `super()` (#8482) (overlookmotel)
+
+### Refactor
+
+- 712633f transformer: `wrap_statements_in_arrow_function_iife` utility function (#8548) (overlookmotel)
+- 5206c6a transformer: Rename `wrap_in_arrow_function_iife` (#8546) (overlookmotel)
+- 61077ca transformer: `wrap_arrow_function_iife` receive an owned `Expression` (#8545) (overlookmotel)
+- 6820d24 transformer: Move `wrap_arrow_function_iife` to root utils module (#8529) (Dunqing)
+- 52bd0b1 transformer: Move common utils functions to the root module (#8513) (Dunqing)
+- c30654a transformer/arrow-function: Wrapping arrow function iife by using `wrap_arrow_function_iife` (#8530) (Dunqing)
+- 2bc5175 transformer/arrow-functions: Rename method (#8481) (overlookmotel)
+- 72f425f transformer/class-properties: Fix lint warning in release mode (#8539) (overlookmotel)
+- 7e61b23 transformer/typescript: Shorten code (#8504) (overlookmotel)
+
 ## [0.46.0] - 2025-01-14
 
 ### Bug Fixes

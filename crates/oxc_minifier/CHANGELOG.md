@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.47.0] - 2025-01-18
+
+### Features
+
+- 4d4e805 minifier: Collapse if stmt with empty consequent (#8577) (camc314)
+- 991a22f minifier: Fold `Array::concat` into literal (#8442) (sapphi-red)
+- 3dc2d8b minifier: Fold string concat chaining (#8441) (sapphi-red)
+- a4ae450 minifier: Fold array concat chaining (#8440) (sapphi-red)
+- 7cc81ef minifier: Fold invalid typeof comparisons (#8550) (camc314)
+- 927f43f minifier: Improve `.charCodeAt(arg)` when arg is valid (#8534) (Boshen)
+- 06f14d5 minifier: Remove empty class static block `class Foo { static {} }` (#8525) (Boshen)
+- 1860411 minifier: Remove last redundant return statement (#8523) (Boshen)
+
+### Bug Fixes
+
+- 65c596d minifer: Keep idents if not in scope when minimizing array exprs (#8551) (camc314)
+- f57aac2 minifier: Incorrect folding of expr in bool ctx (#8542) (camc314)
+- 946ad76 minifier: `(-Infinity).toString()` -> `'-Infinity'` (#8535) (Boshen)
+- b1d0186 minifier: Do not fold `!!void b` (#8533) (Boshen)
+- 53adde5 minifier: `x['-2147483648']` -> `x[-2147483648]` (#8528) (Boshen)
+- 405b73d minifier: Do not change `delete undefined` to `delete void 0` (#8527) (Boshen)
+- 92e44cb minifier: Do not remove `undefined` in `var x = undefined` (#8526) (Boshen)
+- 209e313 minifier: `class C { ['-1']() {} }` cannot be minifized (#8516) (Boshen)
+- 6585463 minifier: Always keep the last value of sequence expression (#8490) (Boshen)
+
+### Refactor
+
+- 8f57929 minifier: Merge `try_compress_type_of_equal_string` into `try_minimize_binary` (#8561) (sapphi-red)
+
+### Testing
+
+- e0f5d6c minifier: Update esbuild test (Boshen)
+- 629c417 minifier: Port esbuild minification tests (#8497) (Boshen)
+
 ## [0.46.0] - 2025-01-14
 
 ### Features
