@@ -29,7 +29,9 @@ describe('simple', () => {
     expect(code.substring(ms.getUtf16ByteOffset(start), ms.getUtf16ByteOffset(end))).toEqual('测试');
 
     // Magic string manipulation.
+    expect(ms.hasChanged()).toBe(false);
     ms.remove(start, end).append(';');
+    expect(ms.hasChanged()).toBe(true);
     expect(ms.toString()).toEqual('const s: String = /* 🤨 */ "";');
   });
 
@@ -43,7 +45,6 @@ describe('simple', () => {
     });
     expect(map.toUrl()).toBeTypeOf('string');
     expect(map.toString()).toBeTypeOf('string');
-    console.log(map.toMap());
     expect(map.toMap()).toEqual({
       mappings:
         'CAAA,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,EAAE,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC',

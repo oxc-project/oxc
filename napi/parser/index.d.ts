@@ -11,6 +11,7 @@ export declare class MagicString {
   getUtf16ByteOffset(offset: number): number
   length(): number
   toString(): string
+  hasChanged(): boolean
   append(input: string): this
   appendLeft(index: number, input: string): this
   appendRight(index: number, input: string): this

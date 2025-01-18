@@ -123,6 +123,11 @@ impl MagicString {
     }
 
     #[napi]
+    pub fn has_changed(&self) -> bool {
+        self.cell.borrow_dependent().has_changed()
+    }
+
+    #[napi]
     pub fn append(&mut self, input: String) -> &Self {
         self.cell.with_dependent_mut(|_, ms| {
             ms.append(input);
