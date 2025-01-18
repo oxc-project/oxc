@@ -1602,6 +1602,7 @@ version = "0.0.0"
 dependencies = [
  "criterion2",
  "oxc_allocator",
+ "oxc_ast",
  "oxc_codegen",
  "oxc_isolated_declarations",
  "oxc_linter",
