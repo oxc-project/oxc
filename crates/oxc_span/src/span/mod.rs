@@ -108,8 +108,9 @@ impl Span {
     /// assert!(!Span::new(0, 5).is_unspanned());
     /// assert!(!Span::new(5, 5).is_unspanned());
     /// ```
+    #[inline]
     pub const fn is_unspanned(self) -> bool {
-        self.start == SPAN.start && self.end == SPAN.end
+        self.const_eq(SPAN)
     }
 
     /// Check if this [`Span`] contains another [`Span`].
@@ -360,6 +361,21 @@ impl Span {
             ((self.start as u64) << 32) | (self.end as u64)
         }
     }
+
+    /// Compare two [`Span`]s.
+    ///
+    /// Same as `PartialEq::eq`, but a const function, and takes owned `Span`s.
+    //
+    // `#[inline(always)]` because want to make sure this is inlined into `PartialEq::eq`.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    const fn const_eq(self, other: Self) -> bool {
+        if cfg!(target_pointer_width = "64") {
+            self.as_u64() == other.as_u64()
+        } else {
+            self.start == other.start && self.end == other.end
+        }
+    }
 }
 
 impl Index<Span> for str {
@@ -394,6 +410,15 @@ impl From<Span> for SourceSpan {
 impl From<Span> for LabeledSpan {
     fn from(val: Span) -> Self {
         LabeledSpan::underline(val)
+    }
+}
+
+// On 64-bit platforms, compare `Span`s as single `u64`s, which is faster when used with `&Span` refs.
+// https://godbolt.org/z/sEf9MGvsr
+impl PartialEq for Span {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.const_eq(*other)
     }
 }
 
@@ -511,7 +536,13 @@ mod test {
     fn test_eq() {
         assert_eq!(Span::new(0, 0), Span::new(0, 0));
         assert_eq!(Span::new(0, 1), Span::new(0, 1));
+        assert_eq!(Span::new(1, 5), Span::new(1, 5));
+
         assert_ne!(Span::new(0, 0), Span::new(0, 1));
+        assert_ne!(Span::new(1, 5), Span::new(0, 5));
+        assert_ne!(Span::new(1, 5), Span::new(2, 5));
+        assert_ne!(Span::new(1, 5), Span::new(1, 4));
+        assert_ne!(Span::new(1, 5), Span::new(1, 6));
     }
 
     #[test]

@@ -59,7 +59,7 @@ use super::PointerAlign;
 /// [`expand`]: Span::expand
 /// [`shrink`]: Span::shrink
 #[ast(visit)]
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Clone, Copy, Eq, PartialOrd, Ord)]
 #[generate_derive(ESTree)]
 #[estree(no_type, always_flatten)]
 pub struct Span {
