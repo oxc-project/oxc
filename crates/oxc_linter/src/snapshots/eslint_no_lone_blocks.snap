@@ -19,6 +19,12 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──
    ╰────
 
+  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+   ╭─[no_lone_blocks.tsx:1:19]
+ 1 │ function test() { { console.log(6); } }
+   ·                   ───────────────────
+   ╰────
+
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:1:19]
  1 │ if (foo) { bar(); {} baz(); }
