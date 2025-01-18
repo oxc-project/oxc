@@ -227,7 +227,7 @@ pub struct ESTreeFieldAttribute {
     pub rename: Option<String>,
     pub typescript_type: Option<String>,
     pub append_to: Option<String>,
-    pub with: Option<String>,
+    pub via: Option<String>,
 }
 
 impl Parse for ESTreeFieldAttribute {
@@ -237,7 +237,7 @@ impl Parse for ESTreeFieldAttribute {
         let mut rename = None;
         let mut typescript_type = None;
         let mut append_to = None;
-        let mut with = None;
+        let mut via = None;
 
         loop {
             let is_type = input.peek(Token![type]);
@@ -283,10 +283,10 @@ impl Parse for ESTreeFieldAttribute {
                         "Duplicate estree(append_to)"
                     );
                 }
-                "with" => {
+                "via" => {
                     input.parse::<Token![=]>()?;
                     assert!(
-                        with.replace(input.parse::<LitStr>()?.value()).is_none(),
+                        via.replace(input.parse::<LitStr>()?.value()).is_none(),
                         "Duplicate estree(with)"
                     );
                 }
@@ -299,7 +299,7 @@ impl Parse for ESTreeFieldAttribute {
                 break;
             }
         }
-        Ok(Self { flatten, skip, rename, typescript_type, append_to, with })
+        Ok(Self { flatten, skip, rename, typescript_type, append_to, via })
     }
 }
 

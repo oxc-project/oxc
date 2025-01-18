@@ -142,7 +142,7 @@ fn serialize_struct(def: &StructDef, schema: &Schema) -> TokenStream {
                     }
                 )?;
             });
-        } else if let Some(with) = &field.markers.derive_attributes.estree.with {
+        } else if let Some(with) = &field.markers.derive_attributes.estree.via {
             let with_ident = with.to_ident();
             fields.push(quote! {
                 map.serialize_entry(
