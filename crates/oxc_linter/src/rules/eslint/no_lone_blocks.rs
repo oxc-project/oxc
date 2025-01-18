@@ -63,7 +63,9 @@ impl Rule for NoLoneBlocks {
 
         let body = &stmt.body;
         if body.is_empty() {
-            report(ctx, node, parent_node);
+            if !matches!(parent_node.kind(), AstKind::TryStatement(_) | AstKind::CatchClause(_)) {
+                report(ctx, node, parent_node);
+            }
             return;
         }
 
@@ -206,6 +208,8 @@ fn test() {
 			{
 			  await using x = makeDisposable();
 			}", // {                "parser": require(parser("typescript-parsers/no-lone-blocks/await-using")),                "ecmaVersion": 2022            }
+        // Issue: <https://github.com/oxc-project/oxc/issues/8515>
+        "try {} catch {}",
     ];
 
     let fail = vec![
@@ -213,20 +217,20 @@ fn test() {
         "{var x = 1;}",
         "foo(); {} bar();",
         "if (foo) { bar(); {} baz(); }",
-        "{ 
+        "{
 			{ } }",
         "function foo() { bar(); {} baz(); }",
         "while (foo) { {} }",
         // MEMO: Currently, this rule always analyzes in strict mode (as it cannot retrieve ecmaFeatures).
         // "{ function bar() {} }", // { "ecmaVersion": 6 },
         "{var x = 1;}", // { "ecmaVersion": 6 },
-        "{ 
+        "{
 			{var x = 1;}
 			 let y = 2; } {let z = 1;}", // { "ecmaVersion": 6 },
-        "{ 
+        "{
 			{let x = 1;}
 			 var y = 2; } {let z = 1;}", // { "ecmaVersion": 6 },
-        "{ 
+        "{
 			{var x = 1;}
 			 var y = 2; }
 			 {var z = 1;}", // { "ecmaVersion": 6 },
