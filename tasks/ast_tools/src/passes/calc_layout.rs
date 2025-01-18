@@ -300,5 +300,7 @@ lazy_static! {
         ("Cell<Option<ReferenceId>>", PlatformLayout::of::<u32>()),
         // Unsupported: this is a `bitflags` generated type, we don't expand macros
         ("RegExpFlags", PlatformLayout::of::<u8>()),
+        // `PointerAlign` is a field of `Span`. ZST with pointer alignment.
+        ("PointerAlign", PlatformLayout(Layout::known(0, 8, 0), Layout::known(0, 4, 0))),
     ]);
 }

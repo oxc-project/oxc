@@ -1,6 +1,8 @@
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
+use super::PointerAlign;
+
 /// A range in text, represented by a zero-indexed start and end offset.
 ///
 /// It is a logical error for `end` to be less than `start`.
@@ -57,9 +59,8 @@ use oxc_estree::ESTree;
 /// [`expand`]: Span::expand
 /// [`shrink`]: Span::shrink
 #[ast(visit)]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[generate_derive(ESTree)]
-#[non_exhaustive] // Disallow struct expression constructor `Span {}`
 #[estree(no_type, always_flatten)]
 pub struct Span {
     /// The zero-based start offset of the span
@@ -67,6 +68,9 @@ pub struct Span {
     /// The zero-based end offset of the span. This may be equal to [`start`](Span::start) if
     /// the span is empty, but should not be less than it.
     pub end: u32,
+    /// Align `Span` on 8 on 64-bit platforms
+    #[estree(skip)]
+    pub(super) _align: PointerAlign,
 }
 
 #[cfg(test)]

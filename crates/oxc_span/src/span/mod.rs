@@ -1,4 +1,8 @@
-use std::ops::{Index, IndexMut, Range};
+use std::{
+    fmt::{self, Debug},
+    hash::{Hash, Hasher},
+    ops::{Index, IndexMut, Range},
+};
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
 
@@ -8,6 +12,18 @@ pub use types::Span;
 
 /// An Empty span useful for creating AST nodes.
 pub const SPAN: Span = Span::new(0, 0);
+
+/// Zero-sized type which has pointer alignment (8 on 64-bit, 4 on 32-bit).
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(transparent)]
+struct PointerAlign([usize; 0]);
+
+impl PointerAlign {
+    #[inline]
+    const fn new() -> Self {
+        Self([])
+    }
+}
 
 impl Span {
     /// Create a new [`Span`] from a start and end position.
@@ -19,7 +35,7 @@ impl Span {
     ///
     #[inline]
     pub const fn new(start: u32, end: u32) -> Self {
-        Self { start, end }
+        Self { start, end, _align: PointerAlign::new() }
     }
 
     /// Create a new empty [`Span`] that starts and ends at an offset position.
@@ -34,7 +50,7 @@ impl Span {
     /// assert_eq!(fifth, Span::new(5, 5));
     /// ```
     pub fn empty(at: u32) -> Self {
-        Self { start: at, end: at }
+        Self::new(at, at)
     }
 
     /// Create a new [`Span`] starting at `start` and covering `size` bytes.
@@ -362,6 +378,23 @@ impl From<Span> for LabeledSpan {
     }
 }
 
+// Skip hashing `_align` field
+impl Hash for Span {
+    #[inline] // We exclusively use `FxHasher`, which produces small output hashing `u32`s
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        self.start.hash(hasher);
+        self.end.hash(hasher);
+    }
+}
+
+// Skip `_align` field in `Debug` output
+#[expect(clippy::missing_fields_in_debug)]
+impl Debug for Span {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Span").field("start", &self.start).field("end", &self.end).finish()
+    }
+}
+
 /// Get the span for an AST node
 pub trait GetSpan {
     /// Get the [`Span`] for an AST node
@@ -413,13 +446,29 @@ mod test {
     }
 
     #[test]
+    #[expect(clippy::items_after_statements)]
     fn test_hash() {
         use std::hash::{DefaultHasher, Hash, Hasher};
-        let mut first = DefaultHasher::new();
-        let mut second = DefaultHasher::new();
-        Span::new(0, 5).hash(&mut first);
-        Span::new(0, 5).hash(&mut second);
-        assert_eq!(first.finish(), second.finish());
+        fn hash<T: Hash>(value: T) -> u64 {
+            let mut hasher = DefaultHasher::new();
+            value.hash(&mut hasher);
+            hasher.finish()
+        }
+
+        let first_hash = hash(Span::new(0, 5));
+        let second_hash = hash(Span::new(0, 5));
+        assert_eq!(first_hash, second_hash);
+
+        // Check `_align` field does not alter hash
+        #[derive(Hash)]
+        #[repr(C)]
+        struct PlainSpan {
+            start: u32,
+            end: u32,
+        }
+
+        let plain_hash = hash(PlainSpan { start: 0, end: 5 });
+        assert_eq!(plain_hash, first_hash);
     }
 
     #[test]
@@ -480,4 +529,19 @@ mod test {
         let span = Span::new(5, 10);
         let _ = span.shrink(5);
     }
+}
+
+#[cfg(test)]
+mod size_asserts {
+    use std::mem::{align_of, size_of};
+
+    use super::Span;
+
+    const _: () = assert!(size_of::<Span>() == 8);
+
+    #[cfg(target_pointer_width = "64")]
+    const _: () = assert!(align_of::<Span>() == 8);
+
+    #[cfg(not(target_pointer_width = "64"))]
+    const _: () = assert!(align_of::<Span>() == 4);
 }
