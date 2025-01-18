@@ -48,6 +48,7 @@ impl<T> Box<'_, T> {
     ///
     /// assert_eq!(i, 5);
     /// ```
+    #[inline]
     pub fn unbox(self) -> T {
         // SAFETY:
         // This pointer read is safe because the reference `self.0` is
@@ -70,6 +71,11 @@ impl<T> Box<'_, T> {
     /// let arena = Allocator::default();
     /// let in_arena: Box<i32> = Box::new_in(5, &arena);
     /// ```
+    //
+    // `#[inline(always)]` because this is a hot path and `Allocator::alloc` is a very small function.
+    // We always want it to be inlined.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub fn new_in(value: T, allocator: &Allocator) -> Self {
         const {
             assert!(!needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
@@ -106,7 +112,10 @@ impl<T: ?Sized> Box<'_, T> {
     /// with no other aliases. You must not, for example, create 2 `Box`es from the same pointer.
     ///
     /// `ptr` must have been created from a `*mut T` or `&mut T` (not a `*const T` / `&T`).
-    #[inline]
+    //
+    // `#[inline(always)]` because this is a no-op
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
         const {
             assert!(!needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
@@ -116,8 +125,10 @@ impl<T: ?Sized> Box<'_, T> {
     }
 
     /// Consume a [`Box`] and return a [`NonNull`] pointer to its contents.
-    #[inline]
-    #[expect(clippy::needless_pass_by_value)]
+    //
+    // `#[inline(always)]` because this is a no-op
+    #[expect(clippy::inline_always, clippy::needless_pass_by_value)]
+    #[inline(always)]
     pub fn into_non_null(boxed: Self) -> NonNull<T> {
         boxed.0
     }
@@ -126,6 +137,7 @@ impl<T: ?Sized> Box<'_, T> {
 impl<T: ?Sized> ops::Deref for Box<'_, T> {
     type Target = T;
 
+    #[inline]
     fn deref(&self) -> &T {
         // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
         unsafe { self.0.as_ref() }
@@ -133,6 +145,7 @@ impl<T: ?Sized> ops::Deref for Box<'_, T> {
 }
 
 impl<T: ?Sized> ops::DerefMut for Box<'_, T> {
+    #[inline]
     fn deref_mut(&mut self) -> &mut T {
         // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
         unsafe { self.0.as_mut() }
@@ -140,18 +153,21 @@ impl<T: ?Sized> ops::DerefMut for Box<'_, T> {
 }
 
 impl<T: ?Sized> AsRef<T> for Box<'_, T> {
+    #[inline]
     fn as_ref(&self) -> &T {
         self
     }
 }
 
 impl<T: ?Sized> AsMut<T> for Box<'_, T> {
+    #[inline]
     fn as_mut(&mut self) -> &mut T {
         self
     }
 }
 
 impl<T: ?Sized + Debug> Debug for Box<'_, T> {
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         self.deref().fmt(f)
     }
@@ -181,6 +197,7 @@ where
 }
 
 impl<T: Hash> Hash for Box<'_, T> {
+    #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.deref().hash(state);
     }
