@@ -19,7 +19,7 @@ use allocator_api2::vec::Vec as InnerVec;
 use bumpalo::Bump;
 #[cfg(any(feature = "serialize", test))]
 use serde::{ser::SerializeSeq, Serialize, Serializer};
-use simdutf8::basic::{from_utf8, Utf8Error};
+use simdutf8::basic::Utf8Error;
 
 use crate::{Allocator, Box, String};
 
@@ -32,7 +32,7 @@ use crate::{Allocator, Box, String};
 /// Note: This is not a soundness issue, as Rust does not support relying on `drop`
 /// being called to guarantee soundness.
 #[derive(PartialEq, Eq)]
-pub struct Vec<'alloc, T>(ManuallyDrop<InnerVec<T, &'alloc Bump>>);
+pub struct Vec<'alloc, T>(pub(crate) ManuallyDrop<InnerVec<T, &'alloc Bump>>);
 
 /// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
 unsafe impl<T> Send for Vec<'_, T> {}
@@ -190,16 +190,12 @@ impl<'alloc, T> Vec<'alloc, T> {
 }
 
 impl<'alloc> Vec<'alloc, u8> {
-    /// Convert `Vec<u8>` into `String`.
+    /// Convert `Vec<u8>` into [`String`].
     ///
     /// # Errors
     /// Returns [`Err`] if the `Vec` does not comprise a valid UTF-8 string.
     pub fn into_string(self) -> Result<String<'alloc>, Utf8Error> {
-        // Check vec comprises a valid UTF-8 string.
-        from_utf8(&self.0)?;
-        // SAFETY: We just checked it's a valid UTF-8 string
-        let s = unsafe { self.into_string_unchecked() };
-        Ok(s)
+        String::from_utf8(self)
     }
 
     /// Convert `Vec<u8>` into [`String`], without checking bytes comprise a valid UTF-8 string.
@@ -211,13 +207,8 @@ impl<'alloc> Vec<'alloc, u8> {
     #[expect(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
     #[inline(always)] // `#[inline(always)]` because this is a no-op at runtime
     pub unsafe fn into_string_unchecked(self) -> String<'alloc> {
-        // Cannot use `bumpalo::String::from_utf8_unchecked` because it takes a `bumpalo::collections::Vec`,
-        // and our inner `Vec` type is `allocator_api2::vec::Vec`.
-        // SAFETY: Conversion is safe because both types store data in arena in same way.
-        // Lifetime of returned `String` is same as lifetime of original `Vec<u8>`.
-        let inner = ManuallyDrop::into_inner(self.0);
-        let (ptr, len, cap, bump) = inner.into_raw_parts_with_alloc();
-        String::from_raw_parts_in(ptr, len, cap, bump)
+        // SAFETY: Caller guarantees vec comprises a valid UTF-8 string.
+        String::from_utf8_unchecked(self)
     }
 }
 

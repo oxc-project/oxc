@@ -8,7 +8,7 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
+use oxc_allocator::{Allocator, Box, FromIn, Vec};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
@@ -78,7 +78,7 @@ impl<'a> AstBuilder<'a> {
     /// in the heap.
     #[inline]
     pub fn str(self, value: &str) -> &'a str {
-        String::from_str_in(value, self.allocator).into_bump_str()
+        self.allocator.alloc_str(value)
     }
 
     /// Allocate an [`Atom`] from a string slice.
