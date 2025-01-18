@@ -50,6 +50,11 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// [`FxHasher`]: rustc_hash::FxHasher
 pub struct HashMap<'alloc, K, V>(ManuallyDrop<FxHashMap<'alloc, K, V>>);
 
+/// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
+unsafe impl<K, V> Send for HashMap<'_, K, V> {}
+/// SAFETY: Not actually safe, but for enabling `Sync` for downstream crates.
+unsafe impl<K, V> Sync for HashMap<'_, K, V> {}
+
 // TODO: `IntoIter`, `Drain`, and other consuming iterators provided by `hashbrown` are `Drop`.
 // Wrap them in `ManuallyDrop` to prevent that.
 
