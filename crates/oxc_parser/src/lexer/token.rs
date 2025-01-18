@@ -76,10 +76,9 @@ impl Token {
             self.start + u32::from(self.len)
         } else {
             cold_branch(|| {
-                long_ends.get(&self.start).copied().unwrap_or(
+                long_ends.get(&self.start).copied().unwrap_or_else(||
                     // The token's length happens to be exact `u16::MAX`
-                    u32::from(u16::MAX),
-                )
+                    self.start + u32::from(u16::MAX))
             })
         }
     }
