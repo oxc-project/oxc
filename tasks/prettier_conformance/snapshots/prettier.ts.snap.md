@@ -1,4 +1,4 @@
-ts compatibility: 193/568 (33.98%)
+ts compatibility: 194/568 (34.15%)
 
 # Failed
 
@@ -154,7 +154,6 @@ ts compatibility: 193/568 (33.98%)
 
 ### typescript/class
 * typescript/class/constructor.ts
-* typescript/class/declare-field.ts
 * typescript/class/empty-method-body.ts
 * typescript/class/extends_implements.ts
 * typescript/class/generics.ts

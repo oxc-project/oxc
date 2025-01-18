@@ -102,7 +102,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::EnvOptions;
+use crate::{utils::ast_builder::wrap_expression_in_arrow_function_iife, EnvOptions};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
@@ -419,12 +419,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
                     //   prop = (() => { return async () => {} })();
                     // }
                     // ```
-                    Some(Self::wrap_arrow_function_with_iife(
-                        arrow.span,
-                        arrow.scope_id(),
-                        expr,
-                        ctx,
-                    ))
+                    Some(wrap_expression_in_arrow_function_iife(ctx.ast.move_expression(expr), ctx))
                 } else {
                     return;
                 }
@@ -1206,43 +1201,6 @@ impl<'a> ArrowFunctionConverter<'a> {
         let stmt = Statement::VariableDeclaration(stmt);
 
         statements.insert(0, stmt);
-    }
-
-    /// Wrap an arrow function with IIFE
-    ///
-    /// `() => {}` ->  `(() => { return () => {}; })()`
-    fn wrap_arrow_function_with_iife(
-        span: Span,
-        scope_id: ScopeId,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let kind = FormalParameterKind::ArrowFormalParameters;
-        let params = ctx.ast.formal_parameters(SPAN, kind, ctx.ast.vec(), NONE);
-        let statement = ctx.ast.statement_return(SPAN, Some(ctx.ast.move_expression(expr)));
-        let statements = ctx.ast.vec1(statement);
-        let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), statements);
-        let parent_scope_id = ctx
-            .create_child_scope(ctx.current_scope_id(), ScopeFlags::Arrow | ScopeFlags::Function);
-        ctx.scopes_mut().change_parent_id(scope_id, Some(parent_scope_id));
-        let arrow = ctx.ast.alloc_arrow_function_expression_with_scope_id(
-            SPAN,
-            false,
-            false,
-            NONE,
-            params,
-            NONE,
-            body,
-            parent_scope_id,
-        );
-        // IIFE
-        ctx.ast.expression_call(
-            span,
-            Expression::ArrowFunctionExpression(arrow),
-            NONE,
-            ctx.ast.vec(),
-            false,
-        )
     }
 }
 

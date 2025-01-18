@@ -911,7 +911,7 @@ export interface ImportExpression extends Span {
 
 export interface ImportDeclaration extends Span {
   type: 'ImportDeclaration';
-  specifiers: Array<ImportDeclarationSpecifier> | null;
+  specifiers: Array<ImportDeclarationSpecifier>;
   source: StringLiteral;
   phase: ImportPhase | null;
   withClause: WithClause | null;

@@ -99,7 +99,7 @@ impl PreferEqualityMatcher {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("expect.hasAssertions", None),
         ("expect.hasAssertions()", None),
         ("expect.assertions(1)", None),
@@ -109,7 +109,7 @@ fn test() {
         ("expect(a == b).toBe(true)", None),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("expect(a !== b).toBe(true)", None),
         ("expect(a !== b).toBe(false)", None),
         ("expect(a !== b).resolves.toBe(true)", None),
@@ -119,6 +119,48 @@ fn test() {
         ("expect(a !== b).resolves.not.toBe(true)", None),
         ("expect(a !== b).resolves.not.toBe(false)", None),
     ];
+
+    let pass_vitest = vec![
+        ("expect.hasAssertions", None),
+        ("expect.hasAssertions()", None),
+        ("expect.assertions(1)", None),
+        ("expect(true).toBe(...true)", None),
+        ("expect(a == 1).toBe(true)", None),
+        ("expect(1 == a).toBe(true)", None),
+        ("expect(a == b).toBe(true)", None),
+        ("expect.hasAssertions", None),
+        ("expect.hasAssertions()", None),
+        ("expect.assertions(1)", None),
+        ("expect(true).toBe(...true)", None),
+        ("expect(a != 1).toBe(true)", None),
+        ("expect(1 != a).toBe(true)", None),
+        ("expect(a != b).toBe(true)", None),
+    ];
+
+    let fail_vitest = vec![
+        ("expect(a === b).toBe(true);", None),
+        ("expect(a === b,).toBe(true,);", None), // { "parserOptions": { "ecmaVersion": 2017 } },
+        ("expect(a === b).toBe(false);", None),
+        ("expect(a === b).resolves.toBe(true);", None),
+        ("expect(a === b).resolves.toBe(false);", None),
+        ("expect(a === b).not.toBe(true);", None),
+        ("expect(a === b).not.toBe(false);", None),
+        ("expect(a === b).resolves.not.toBe(true);", None),
+        ("expect(a === b).resolves.not.toBe(false);", None),
+        (r#"expect(a === b)["resolves"].not.toBe(false);"#, None),
+        (r#"expect(a === b)["resolves"]["not"]["toBe"](false);"#, None),
+        ("expect(a !== b).toBe(true);", None),
+        ("expect(a !== b).toBe(false);", None),
+        ("expect(a !== b).resolves.toBe(true);", None),
+        ("expect(a !== b).resolves.toBe(false);", None),
+        ("expect(a !== b).not.toBe(true);", None),
+        ("expect(a !== b).not.toBe(false);", None),
+        ("expect(a !== b).resolves.not.toBe(true);", None),
+        ("expect(a !== b).resolves.not.toBe(false);", None),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
 
     Tester::new(PreferEqualityMatcher::NAME, PreferEqualityMatcher::PLUGIN, pass, fail)
         .with_jest_plugin(true)

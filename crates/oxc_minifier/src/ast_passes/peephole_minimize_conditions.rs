@@ -68,7 +68,7 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
 
         if let Some(folded_stmt) = match stmt {
             // If the condition is a literal, we'll let other optimizations try to remove useless code.
-            Statement::IfStatement(s) if !s.test.is_literal() => Self::try_minimize_if(stmt, ctx),
+            Statement::IfStatement(_) => Self::try_minimize_if(stmt, ctx),
             _ => None,
         } {
             *stmt = folded_stmt;
@@ -139,75 +139,108 @@ impl<'a> PeepholeMinimizeConditions {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
-        let then_branch = &if_stmt.consequent;
-        let else_branch = &if_stmt.alternate;
-        match else_branch {
-            None => {
-                if Self::is_foldable_express_block(&if_stmt.consequent) {
-                    let right = Self::get_block_expression(&mut if_stmt.consequent, ctx);
-                    let test = ctx.ast.move_expression(&mut if_stmt.test);
-                    // `if(!x) foo()` -> `x || foo()`
-                    if let Expression::UnaryExpression(unary_expr) = test {
-                        if unary_expr.operator.is_not() {
-                            let left = unary_expr.unbox().argument;
+
+        // `if (x) foo()` -> `x && foo()`
+        if !if_stmt.test.is_literal() {
+            let then_branch = &if_stmt.consequent;
+            let else_branch = &if_stmt.alternate;
+            match else_branch {
+                None => {
+                    if Self::is_foldable_express_block(&if_stmt.consequent) {
+                        let right = Self::get_block_expression(&mut if_stmt.consequent, ctx);
+                        let test = ctx.ast.move_expression(&mut if_stmt.test);
+                        // `if(!x) foo()` -> `x || foo()`
+                        if let Expression::UnaryExpression(unary_expr) = test {
+                            if unary_expr.operator.is_not() {
+                                let left = unary_expr.unbox().argument;
+                                let logical_expr = ctx.ast.expression_logical(
+                                    if_stmt.span,
+                                    left,
+                                    LogicalOperator::Or,
+                                    right,
+                                );
+                                return Some(
+                                    ctx.ast.statement_expression(if_stmt.span, logical_expr),
+                                );
+                            }
+                        } else {
+                            // `if(x) foo()` -> `x && foo()`
                             let logical_expr = ctx.ast.expression_logical(
                                 if_stmt.span,
-                                left,
-                                LogicalOperator::Or,
+                                test,
+                                LogicalOperator::And,
                                 right,
                             );
                             return Some(ctx.ast.statement_expression(if_stmt.span, logical_expr));
                         }
                     } else {
-                        // `if(x) foo()` -> `x && foo()`
-                        let logical_expr = ctx.ast.expression_logical(
-                            if_stmt.span,
-                            test,
-                            LogicalOperator::And,
-                            right,
-                        );
-                        return Some(ctx.ast.statement_expression(if_stmt.span, logical_expr));
-                    }
-                } else {
-                    // `if (x) if (y) z` -> `if (x && y) z`
-                    if let Some(Statement::IfStatement(then_if_stmt)) = then_branch.get_one_child()
-                    {
-                        if then_if_stmt.alternate.is_none() {
-                            let and_left = ctx.ast.move_expression(&mut if_stmt.test);
-                            let Some(then_if_stmt) = if_stmt.consequent.get_one_child_mut() else {
-                                unreachable!()
-                            };
-                            let Statement::IfStatement(mut then_if_stmt) =
-                                ctx.ast.move_statement(then_if_stmt)
-                            else {
-                                unreachable!()
-                            };
-                            let and_right = ctx.ast.move_expression(&mut then_if_stmt.test);
-                            then_if_stmt.test = ctx.ast.expression_logical(
-                                and_left.span(),
-                                and_left,
-                                LogicalOperator::And,
-                                and_right,
-                            );
-                            return Some(Statement::IfStatement(then_if_stmt));
+                        // `if (x) if (y) z` -> `if (x && y) z`
+                        if let Some(Statement::IfStatement(then_if_stmt)) =
+                            then_branch.get_one_child()
+                        {
+                            if then_if_stmt.alternate.is_none() {
+                                let and_left = ctx.ast.move_expression(&mut if_stmt.test);
+                                let Some(then_if_stmt) = if_stmt.consequent.get_one_child_mut()
+                                else {
+                                    unreachable!()
+                                };
+                                let Statement::IfStatement(mut then_if_stmt) =
+                                    ctx.ast.move_statement(then_if_stmt)
+                                else {
+                                    unreachable!()
+                                };
+                                let and_right = ctx.ast.move_expression(&mut then_if_stmt.test);
+                                then_if_stmt.test = ctx.ast.expression_logical(
+                                    and_left.span(),
+                                    and_left,
+                                    LogicalOperator::And,
+                                    and_right,
+                                );
+                                return Some(Statement::IfStatement(then_if_stmt));
+                            }
                         }
                     }
                 }
-            }
-            Some(else_branch) => {
-                let then_branch_is_expression_block = Self::is_foldable_express_block(then_branch);
-                let else_branch_is_expression_block = Self::is_foldable_express_block(else_branch);
-                // `if(foo) bar else baz` -> `foo ? bar : baz`
-                if then_branch_is_expression_block && else_branch_is_expression_block {
-                    let test = ctx.ast.move_expression(&mut if_stmt.test);
-                    let consequent = Self::get_block_expression(&mut if_stmt.consequent, ctx);
-                    let else_branch = if_stmt.alternate.as_mut().unwrap();
-                    let alternate = Self::get_block_expression(else_branch, ctx);
-                    let expr =
-                        ctx.ast.expression_conditional(if_stmt.span, test, consequent, alternate);
-                    return Some(ctx.ast.statement_expression(if_stmt.span, expr));
+                Some(else_branch) => {
+                    let then_branch_is_expression_block =
+                        Self::is_foldable_express_block(then_branch);
+                    let else_branch_is_expression_block =
+                        Self::is_foldable_express_block(else_branch);
+                    // `if(foo) bar else baz` -> `foo ? bar : baz`
+                    if then_branch_is_expression_block && else_branch_is_expression_block {
+                        let test = ctx.ast.move_expression(&mut if_stmt.test);
+                        let consequent = Self::get_block_expression(&mut if_stmt.consequent, ctx);
+                        let else_branch = if_stmt.alternate.as_mut().unwrap();
+                        let alternate = Self::get_block_expression(else_branch, ctx);
+                        let expr = ctx.ast.expression_conditional(
+                            if_stmt.span,
+                            test,
+                            consequent,
+                            alternate,
+                        );
+                        return Some(ctx.ast.statement_expression(if_stmt.span, expr));
+                    }
                 }
             }
+        }
+
+        // `if (x) {} else foo` -> `if (!x) foo`
+        if match &if_stmt.consequent {
+            Statement::EmptyStatement(_) => true,
+            Statement::BlockStatement(block_stmt) => block_stmt.body.is_empty(),
+            _ => false,
+        } && if_stmt.alternate.is_some()
+        {
+            return Some(ctx.ast.statement_if(
+                if_stmt.span,
+                ctx.ast.expression_unary(
+                    if_stmt.test.span(),
+                    UnaryOperator::LogicalNot,
+                    ctx.ast.move_expression(&mut if_stmt.test),
+                ),
+                ctx.ast.move_statement(if_stmt.alternate.as_mut().unwrap()),
+                None,
+            ));
         }
 
         None
@@ -739,11 +772,11 @@ impl<'a> PeepholeMinimizeConditions {
                         *expr =
                             ctx.ast.expression_logical(e.span(), left, LogicalOperator::Or, right);
                     } else {
-                        // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 || anything2)"
+                        // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 && anything2)"
                         let left =
                             ctx.ast.expression_unary(left.span(), UnaryOperator::LogicalNot, left);
                         *expr =
-                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::Or, right);
+                            ctx.ast.expression_logical(e.span(), left, LogicalOperator::And, right);
                     }
                     return true;
                 }
@@ -769,6 +802,8 @@ impl<'a> PeepholeMinimizeConditions {
         false
     }
 
+    // `typeof foo === 'number'` -> `typeof foo == 'number'`
+    //  ^^^^^^^^^^ `ValueType::from(&e.left).is_string()` is `true`.
     // `a instanceof b === true` -> `a instanceof b`
     // `a instanceof b === false` -> `!(a instanceof b)`
     //  ^^^^^^^^^^^^^^ `ValueType::from(&e.left).is_boolean()` is `true`.
@@ -2028,9 +2063,31 @@ mod test {
         test("if (anything || (0, false));", "if (anything);");
         test("if (a ? !!b : !!c);", "if (a ? b : c);");
         test("if (anything1 ? (0, true) : anything2);", "if (anything1 || anything2);");
-        test("if (anything1 ? (0, false) : anything2);", "if (!anything1 || anything2);");
+        test("if (anything1 ? (0, false) : anything2);", "if (!anything1 && anything2);");
         test("if (anything1 ? anything2 : (0, true));", "if (!anything1 || anything2);");
         test("if (anything1 ? anything2 : (0, false));", "if (anything1 && anything2);");
         test("if(!![]);", "if([]);");
+    }
+
+    #[test]
+    fn test_try_compress_type_of_equal_string() {
+        test("typeof foo === 'number'", "typeof foo == 'number'");
+        test("'number' === typeof foo", "'number' == typeof foo");
+        test("typeof foo === `number`", "typeof foo == `number`");
+        test("`number` === typeof foo", "`number` == typeof foo");
+        test("typeof foo !== 'number'", "typeof foo != 'number'");
+        test("'number' !== typeof foo", "'number' != typeof foo");
+        test("typeof foo !== `number`", "typeof foo != `number`");
+        test("`number` !== typeof foo", "`number` != typeof foo");
+    }
+
+    #[test]
+    fn test_negate_empty_if_stmt_consequent() {
+        test("if (x) {} else { foo }", "if (!x) { foo }");
+        test("if (x) ;else { foo }", "if (!x) { foo }");
+        test("if (x) {;} else { foo }", "if (!x) { foo }");
+
+        test_same("if (x) { var foo } else { bar }");
+        test_same("if (x) foo; else { var bar }");
     }
 }

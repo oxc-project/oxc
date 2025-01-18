@@ -7,7 +7,7 @@ use oxc_ecmascript::{
     constant_evaluation::ConstantEvaluation, StringCharAt, StringCharCodeAt, StringIndexOf,
     StringLastIndexOf, StringSubstring, ToInt32,
 };
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::{ctx::Ctx, CompressorPass};
 
@@ -26,6 +26,7 @@ impl<'a> CompressorPass<'a> for PeepholeReplaceKnownMethods {
 
 impl<'a> Traverse<'a> for PeepholeReplaceKnownMethods {
     fn exit_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.try_fold_concat_chain(node, ctx);
         self.try_fold_known_string_methods(node, ctx);
     }
 }
@@ -61,6 +62,7 @@ impl<'a> PeepholeReplaceKnownMethods {
             "indexOf" | "lastIndexOf" => Self::try_fold_string_index_of(ce, name, object, ctx),
             "charAt" => Self::try_fold_string_char_at(ce, object, ctx),
             "charCodeAt" => Self::try_fold_string_char_code_at(ce, object, ctx),
+            "concat" => Self::try_fold_concat(ce, ctx),
             "replace" | "replaceAll" => Self::try_fold_string_replace(ce, name, object, ctx),
             "fromCharCode" => Self::try_fold_string_from_char_code(ce, object, ctx),
             "toString" => Self::try_fold_to_string(ce, object, ctx),
@@ -337,6 +339,149 @@ impl<'a> PeepholeReplaceKnownMethods {
             }
         }
         result.into_iter().rev().collect()
+    }
+
+    /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
+    /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
+    fn try_fold_concat_chain(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if matches!(ctx.parent(), Ancestor::StaticMemberExpressionObject(_)) {
+            return;
+        }
+
+        let original_span = if let Expression::CallExpression(root_call_expr) = node {
+            root_call_expr.span
+        } else {
+            return;
+        };
+
+        let mut current_node: &mut Expression = node;
+        let mut collected_arguments = ctx.ast.vec();
+        let new_root_callee: &mut Expression<'a>;
+        loop {
+            let Expression::CallExpression(ce) = current_node else {
+                return;
+            };
+            let Expression::StaticMemberExpression(member) = &ce.callee else {
+                return;
+            };
+            if member.optional || member.property.name != "concat" {
+                return;
+            }
+
+            // We don't need to check if the arguments has a side effect here.
+            //
+            // The only side effect Array::concat / String::concat can cause is throwing an error when the created array is too long.
+            // With the compressor assumption, that error can be moved.
+            //
+            // For example, if we have `[].concat(a).concat(b)`, the steps before the compression is:
+            // 1. evaluate `a`
+            // 2. `[].concat(a)` creates `[a]`
+            // 3. evaluate `b`
+            // 4. `.concat(b)` creates `[a, b]`
+            //
+            // The steps after the compression (`[].concat(a, b)`) is:
+            // 1. evaluate `a`
+            // 2. evaluate `b`
+            // 3. `[].concat(a, b)` creates `[a, b]`
+            //
+            // The error that has to be thrown in the second step before the compression will be thrown in the third step.
+
+            let CallExpression { callee, arguments, .. } = ce.as_mut();
+            collected_arguments.push(arguments);
+
+            // [].concat() or "".concat()
+            let is_root_expr_concat = {
+                let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
+                matches!(
+                    &member.object,
+                    Expression::ArrayExpression(_) | Expression::StringLiteral(_)
+                )
+            };
+            if is_root_expr_concat {
+                new_root_callee = callee;
+                break;
+            }
+
+            let Expression::StaticMemberExpression(member) = callee else { unreachable!() };
+            current_node = &mut member.object;
+        }
+
+        if collected_arguments.len() <= 1 {
+            return;
+        }
+
+        *node = ctx.ast.expression_call(
+            original_span,
+            ctx.ast.move_expression(new_root_callee),
+            Option::<TSTypeParameterInstantiation>::None,
+            ctx.ast.vec_from_iter(
+                collected_arguments.into_iter().rev().flat_map(|arg| ctx.ast.move_vec(arg)),
+            ),
+            false,
+        );
+        self.changed = true;
+    }
+
+    /// `[].concat(1, 2)` -> `[1, 2]`
+    fn try_fold_concat(
+        ce: &mut CallExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        // let concat chaining reduction handle it first
+        if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent() {
+            if parent_member.property().name.as_str() == "concat" {
+                return None;
+            }
+        }
+
+        let Expression::StaticMemberExpression(member) = &mut ce.callee else { unreachable!() };
+        let Expression::ArrayExpression(array_expr) = &mut member.object else { return None };
+
+        let can_merge_until = ce
+            .arguments
+            .iter()
+            .enumerate()
+            .take_while(|(_, argument)| match argument {
+                Argument::SpreadElement(_) => false,
+                match_expression!(Argument) => {
+                    let argument = argument.to_expression();
+                    if argument.is_literal() {
+                        true
+                    } else {
+                        matches!(argument, Expression::ArrayExpression(_))
+                    }
+                }
+            })
+            .map(|(i, _)| i)
+            .last();
+
+        if let Some(can_merge_until) = can_merge_until {
+            for argument in ce.arguments.drain(..=can_merge_until) {
+                let argument = argument.into_expression();
+                if argument.is_literal() {
+                    array_expr.elements.push(ArrayExpressionElement::from(argument));
+                } else {
+                    let Expression::ArrayExpression(mut argument_array) = argument else {
+                        unreachable!()
+                    };
+                    array_expr.elements.append(&mut argument_array.elements);
+                }
+            }
+        }
+
+        if ce.arguments.is_empty() {
+            Some(ctx.ast.move_expression(&mut member.object))
+        } else if can_merge_until.is_some() {
+            Some(ctx.ast.expression_call(
+                ce.span,
+                ctx.ast.move_expression(&mut ce.callee),
+                Option::<TSTypeParameterInstantiation>::None,
+                ctx.ast.move_vec(&mut ce.arguments),
+                false,
+            ))
+        } else {
+            None
+        }
     }
 }
 
@@ -1083,51 +1228,47 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_fold_concat_chaining() {
-        // enableTypeCheck();
+        // array
+        fold("[1,2].concat(1).concat(2,['abc']).concat('abc')", "[1,2,1,2,'abc','abc']");
+        fold("[].concat(['abc']).concat(1).concat([2,3])", "['abc',1,2,3]");
 
-        fold("[1,2].concat(1).concat(2,['abc']).concat('abc')", "[1,2].concat(1,2,['abc'],'abc')");
-        fold("[].concat(['abc']).concat(1).concat([2,3])", "['abc'].concat(1,[2,3])");
+        fold("var x, y; [1].concat(x).concat(y)", "var x, y; [1].concat(x, y)");
+        fold("var y; [1].concat(x).concat(y)", "var y; [1].concat(x, y)"); // x might have a getter that updates y, but that side effect is preserved correctly
+        fold("var x; [1].concat(x.a).concat(x)", "var x; [1].concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
 
-        // cannot fold concat based on type information
-        fold_same("returnArrayType().concat(returnArrayType()).concat(1).concat(2)");
-        fold_same("returnArrayType().concat(returnUnionType()).concat(1).concat(2)");
-        fold(
-            "[1,2,1].concat(1).concat(returnArrayType()).concat(2)",
-            "[1,2,1].concat(1).concat(returnArrayType(),2)",
-        );
-        fold(
-            "[1].concat(1).concat(2).concat(returnArrayType())",
-            "[1].concat(1,2).concat(returnArrayType())",
-        );
-        fold_same("[].concat(1).concat(returnArrayType())");
+        // string
+        fold("'1'.concat(1).concat(2,['abc']).concat('abc')", "'1'.concat(1,2,['abc'],'abc')");
+        fold("''.concat(['abc']).concat(1).concat([2,3])", "''.concat(['abc'],1,[2,3])");
+        fold_same("''.concat(1)");
+
+        fold("var x, y; ''.concat(x).concat(y)", "var x, y; ''.concat(x, y)");
+        fold("var y; ''.concat(x).concat(y)", "var y; ''.concat(x, y)"); // x might have a getter that updates y, but that side effect is preserved correctly
+        fold("var x; ''.concat(x.a).concat(x)", "var x; ''.concat(x.a, x)"); // x.a might have a getter that updates x, but that side effect is preserved correctly
+
+        // other
         fold_same("obj.concat([1,2]).concat(1)");
     }
 
     #[test]
-    #[ignore]
     fn test_remove_array_literal_from_front_of_concat() {
-        // enableTypeCheck();
+        fold("[].concat([1,2,3],1)", "[1,2,3,1]");
 
-        fold("[].concat([1,2,3],1)", "[1,2,3].concat(1)");
-
-        fold_same("[1,2,3].concat(returnArrayType())");
+        fold_same("[1,2,3].concat(foo())");
         // Call method with the same name as Array.prototype.concat
         fold_same("obj.concat([1,2,3])");
 
-        fold_same("[].concat(1,[1,2,3])");
-        fold_same("[].concat(1)");
-        fold("[].concat([1])", "[1].concat()");
+        fold("[].concat(1,[1,2,3])", "[1,1,2,3]");
+        fold("[].concat(1)", "[1]");
+        fold("[].concat([1])", "[1]");
 
         // Chained folding of empty array lit
-        fold("[].concat([], [1,2,3], [4])", "[1,2,3].concat([4])");
-        fold("[].concat([]).concat([1]).concat([2,3])", "[1].concat([2,3])");
+        fold("[].concat([], [1,2,3], [4])", "[1,2,3,4]");
+        fold("[].concat([]).concat([1]).concat([2,3])", "[1,2,3]");
 
-        // Cannot fold based on type information
-        fold_same("[].concat(returnArrayType(),1)");
-        fold_same("[].concat(returnArrayType())");
-        fold_same("[].concat(returnUnionType())");
+        fold("[].concat(1, x)", "[1].concat(x)"); // x might be an array or an object with `Symbol.isConcatSpreadable`
+        fold("[].concat(1, ...x)", "[1].concat(...x)");
+        fold_same("[].concat(x, 1)");
     }
 
     #[test]

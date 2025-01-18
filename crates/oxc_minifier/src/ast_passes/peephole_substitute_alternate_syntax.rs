@@ -133,10 +133,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         match expr {
             Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
             Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
-            Expression::BinaryExpression(e) => {
-                Self::swap_binary_expressions(e);
-                self.try_compress_type_of_equal_string(e);
-            }
+            Expression::BinaryExpression(e) => Self::swap_binary_expressions(e),
             Expression::AssignmentExpression(e) => {
                 self.try_compress_normal_assignment_to_combined_assignment(e, ctx);
                 self.try_compress_normal_assignment_to_combined_logical_assignment(e, ctx);
@@ -1097,24 +1094,6 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         )
     }
 
-    /// `typeof foo === 'number'` -> `typeof foo == 'number'`
-    fn try_compress_type_of_equal_string(&mut self, e: &mut BinaryExpression<'a>) {
-        let op = match e.operator {
-            BinaryOperator::StrictEquality => BinaryOperator::Equality,
-            BinaryOperator::StrictInequality => BinaryOperator::Inequality,
-            _ => return,
-        };
-        if !matches!(&e.left, Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_typeof())
-        {
-            return;
-        }
-        if !e.right.is_string_literal() {
-            return;
-        }
-        e.operator = op;
-        self.changed = true;
-    }
-
     fn try_compress_chain_call_expression(
         &mut self,
         chain_expr: &mut ChainExpression<'a>,
@@ -1904,18 +1883,6 @@ mod test {
         test("foo != void 0", "foo != null");
         test("undefined != foo", "foo != null");
         test("void 0 != foo", "foo != null");
-    }
-
-    #[test]
-    fn test_try_compress_type_of_equal_string() {
-        test("typeof foo === 'number'", "typeof foo == 'number'");
-        test("'number' === typeof foo", "typeof foo == 'number'");
-        test("typeof foo === `number`", "typeof foo == 'number'");
-        test("`number` === typeof foo", "typeof foo == 'number'");
-        test("typeof foo !== 'number'", "typeof foo != 'number'");
-        test("'number' !== typeof foo", "typeof foo != 'number'");
-        test("typeof foo !== `number`", "typeof foo != 'number'");
-        test("`number` !== typeof foo", "typeof foo != 'number'");
     }
 
     #[test]

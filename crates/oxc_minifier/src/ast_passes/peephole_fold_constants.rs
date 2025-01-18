@@ -607,12 +607,12 @@ impl<'a, 'b> PeepholeFoldConstants {
         ))
     }
 
-    // `typeof a === typeof b` -> `typeof a == typeof b`, `typeof a != typeof b` -> `typeof a != typeof b`,
-    // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
     fn try_fold_binary_typeof_comparison(
         bin_expr: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
+        // `typeof a === typeof b` -> `typeof a == typeof b`, `typeof a != typeof b` -> `typeof a != typeof b`,
+        // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
         if bin_expr.operator.is_equality() {
             if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
                 (&bin_expr.left, &bin_expr.right)
@@ -647,6 +647,41 @@ impl<'a, 'b> PeepholeFoldConstants {
                                 BinaryOperator::Inequality
                             },
                             ctx.ast.move_expression(&mut bin_expr.right),
+                        ));
+                    }
+                }
+            }
+        }
+
+        // `typeof a === 'asd` -> `false``
+        // `typeof a !== 'b'` -> `true``
+        if let Expression::UnaryExpression(left) = &bin_expr.left {
+            if left.operator.is_typeof() && bin_expr.operator.is_equality() {
+                let right_ty = ValueType::from(&bin_expr.right);
+
+                if !right_ty.is_undetermined() && right_ty != ValueType::String {
+                    return Some(ctx.ast.expression_boolean_literal(
+                        bin_expr.span,
+                        bin_expr.operator == BinaryOperator::Inequality
+                            || bin_expr.operator == BinaryOperator::StrictInequality,
+                    ));
+                }
+                if let Expression::StringLiteral(string_lit) = &bin_expr.right {
+                    if !matches!(
+                        string_lit.value.as_str(),
+                        "string"
+                            | "number"
+                            | "bigint"
+                            | "boolean"
+                            | "symbol"
+                            | "undefined"
+                            | "object"
+                            | "function"
+                    ) {
+                        return Some(ctx.ast.expression_boolean_literal(
+                            bin_expr.span,
+                            bin_expr.operator == BinaryOperator::Inequality
+                                || bin_expr.operator == BinaryOperator::StrictInequality,
                         ));
                     }
                 }
@@ -1734,6 +1769,20 @@ mod test {
         test("typeof foo !== typeof bar", "typeof foo != typeof bar");
         test("typeof foo.bar === typeof foo.bar", "typeof foo.bar == typeof foo.bar");
         test("typeof foo.bar !== typeof foo.bar", "typeof foo.bar != typeof foo.bar");
+    }
+
+    #[test]
+    fn test_fold_invalid_typeof_comparison() {
+        test("typeof foo == 123", "false");
+        test("typeof foo == '123'", "false");
+        test("typeof foo === null", "false");
+        test("typeof foo === undefined", "false");
+        test("typeof foo !== 123", "true");
+        test("typeof foo !== '123'", "true");
+        test("typeof foo != null", "true");
+        test("typeof foo != undefined", "true");
+        test_same("typeof foo === 'string'");
+        test_same("typeof foo === 'number'");
     }
 
     // TODO: All big ints are rare and difficult to handle.

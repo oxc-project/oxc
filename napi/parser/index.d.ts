@@ -37,6 +37,12 @@ export interface Comment {
   end: number
 }
 
+export interface DynamicImport {
+  start: number
+  end: number
+  moduleRequest: Span
+}
+
 export interface EcmaScriptModule {
   /**
    * Has ESM syntax.
@@ -46,10 +52,12 @@ export interface EcmaScriptModule {
    * Dynamic imports `import('foo')` are ignored since they can be used in non-ESM files.
    */
   hasModuleSyntax: boolean
-  /** Import Statements. */
+  /** Import statements. */
   staticImports: Array<StaticImport>
-  /** Export Statements. */
+  /** Export statements. */
   staticExports: Array<StaticExport>
+  /** Dynamic import expressions. */
+  dynamicImports: Array<DynamicImport>
   /** Span positions` of `import.meta` */
   importMetas: Array<Span>
 }

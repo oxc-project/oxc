@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.47.0] - 2025-01-18
+
+### Features
+
+- 927f43f minifier: Improve `.charCodeAt(arg)` when arg is valid (#8534) (Boshen)
+
+### Bug Fixes
+
+- b1d0186 minifier: Do not fold `!!void b` (#8533) (Boshen)
+
+### Refactor
+
+- 8f57929 minifier: Merge `try_compress_type_of_equal_string` into `try_minimize_binary` (#8561) (sapphi-red)
+
 ## [0.46.0] - 2025-01-14
 
 ### Bug Fixes

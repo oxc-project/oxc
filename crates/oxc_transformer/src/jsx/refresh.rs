@@ -7,7 +7,7 @@ use base64::{
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
-use oxc_allocator::{Address, CloneIn, GetAddress, Vec as ArenaVec};
+use oxc_allocator::{Address, CloneIn, GetAddress, String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{ast::*, match_expression, AstBuilder, NONE};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -555,7 +555,7 @@ impl<'a> ReactRefresh<'a, '_> {
             let mut hashed_key = ArenaVec::from_array_in([0; ENCODED_LEN], ctx.ast.allocator);
             let encoded_bytes = BASE64_STANDARD.encode_slice(hash, &mut hashed_key).unwrap();
             debug_assert_eq!(encoded_bytes, ENCODED_LEN);
-            let hashed_key = hashed_key.into_string().unwrap();
+            let hashed_key = ArenaString::from_utf8(hashed_key).unwrap();
             Atom::from(hashed_key)
         };
 

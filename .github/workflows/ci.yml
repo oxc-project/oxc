@@ -162,6 +162,7 @@ jobs:
           cache-key: clippy
           components: clippy
       - run: cargo lint -- -D warnings
+      - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
       - name: Check Char and Byte Offset
         run: |
           npm i @ast-grep/cli -g
@@ -313,9 +314,9 @@ jobs:
           cache-key: warm
       - uses: ./.github/actions/pnpm
         if: steps.filter.outputs.src == 'true'
-      - run: pnpm run build-dev
-        if: steps.filter.outputs.src == 'true'
-      - run: pnpm run test
-        if: steps.filter.outputs.src == 'true'
-      - run: git diff --exit-code # Must commit everything
-        if: steps.filter.outputs.src == 'true'
+      - if: steps.filter.outputs.src == 'true'
+        run: |
+          pnpm run build-dev
+          pnpm run test
+          pnpm --filter e2e run test
+          git diff --exit-code # Must commit everything

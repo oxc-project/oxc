@@ -3,7 +3,7 @@ use rustc_hash::FxHashMap;
 use oxc::syntax::module_record::{self, ModuleRecord};
 
 use crate::types::{
-    EcmaScriptModule, ExportExportName, ExportExportNameKind, ExportImportName,
+    DynamicImport, EcmaScriptModule, ExportExportName, ExportExportNameKind, ExportImportName,
     ExportImportNameKind, ExportLocalName, ExportLocalNameKind, ImportName, ImportNameKind, Span,
     StaticExport, StaticExportEntry, StaticImport, StaticImportEntry, ValueSpan,
 };
@@ -55,12 +55,23 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
             .collect::<Vec<_>>();
         static_exports.sort_unstable_by_key(|e| e.start);
 
+        let dynamic_imports = record
+            .dynamic_imports
+            .iter()
+            .map(|i| DynamicImport {
+                start: i.span.start,
+                end: i.span.end,
+                module_request: Span::from(&i.module_request),
+            })
+            .collect::<Vec<_>>();
+
         let import_metas = record.import_metas.iter().map(Span::from).collect();
 
         Self {
             has_module_syntax: record.has_module_syntax,
             static_imports,
             static_exports,
+            dynamic_imports,
             import_metas,
         }
     }

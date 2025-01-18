@@ -136,7 +136,7 @@ impl Rule for PreferQuerySelector {
                         }
                         _ => literal_value.to_string(),
                     };
-                    let span = property_span.merge(&argument_expr.span());
+                    let span = property_span.merge(argument_expr.span());
                     fixer.replace(
                         span,
                         format!("{preferred_selector}({quotes_symbol}{argument}{quotes_symbol}"),

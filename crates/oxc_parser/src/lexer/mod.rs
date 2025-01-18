@@ -136,6 +136,13 @@ impl<'a> Lexer<'a> {
         Self::new(allocator, source_text, source_type, unique)
     }
 
+    /// Get errors.
+    /// Only used in benchmarks.
+    #[cfg(feature = "benchmarking")]
+    pub fn errors(&self) -> &[OxcDiagnostic] {
+        &self.errors
+    }
+
     /// Remaining string from `Source`
     pub fn remaining(&self) -> &'a str {
         self.source.remaining()

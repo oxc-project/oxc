@@ -882,7 +882,7 @@ impl<'a> PatternParser<'a> {
 
                 body.push(ast::CharacterClassContents::CharacterClassRange(Box::new_in(
                     ast::CharacterClassRange {
-                        span: from.span.merge(&to.span),
+                        span: from.span.merge(to.span),
                         min: **from,
                         max: **to,
                     },
@@ -1236,7 +1236,7 @@ impl<'a> PatternParser<'a> {
                     // It is a Syntax Error if the CharacterValue of the first ClassSetCharacter is strictly greater than the CharacterValue of the second ClassSetCharacter.
                     if class_set_character_to.value < class_set_character.value {
                         return Err(diagnostics::character_class_range_out_of_order(
-                            class_set_character.span.merge(&class_set_character_to.span),
+                            class_set_character.span.merge(class_set_character_to.span),
                             "class set",
                         ));
                     }
@@ -1244,7 +1244,7 @@ impl<'a> PatternParser<'a> {
                     return Ok(Some(ast::CharacterClassContents::CharacterClassRange(
                         Box::new_in(
                             ast::CharacterClassRange {
-                                span: class_set_character.span.merge(&class_set_character_to.span),
+                                span: class_set_character.span.merge(class_set_character_to.span),
                                 min: class_set_character,
                                 max: class_set_character_to,
                             },

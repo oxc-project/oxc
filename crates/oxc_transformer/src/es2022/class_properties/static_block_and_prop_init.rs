@@ -10,7 +10,8 @@ use oxc_ast::{
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::TraverseCtx;
 
-use super::super::ClassStaticBlock;
+use crate::utils::ast_builder::wrap_statements_in_arrow_function_iife;
+
 use super::{
     super_converter::{ClassPropertiesSuperConverter, ClassPropertiesSuperConverterMode},
     ClassProperties,
@@ -88,7 +89,7 @@ impl<'a> ClassProperties<'a, '_> {
         let outer_scope_id = ctx.current_scope_id();
         ctx.scopes_mut().change_parent_id(scope_id, Some(outer_scope_id));
 
-        ClassStaticBlock::wrap_statements_in_iife(stmts, scope_id, ctx)
+        wrap_statements_in_arrow_function_iife(ctx.ast.move_vec(stmts), scope_id, block.span, ctx)
     }
 
     fn convert_static_block_with_single_expression_to_expression(

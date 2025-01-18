@@ -74,6 +74,7 @@ describe('hasModuleSyntax', () => {
   test('import expression', () => {
     const ret = parseSync('test.js', "import('foo')");
     expect(ret.module.hasModuleSyntax).toBe(false);
+    expect(ret.module.dynamicImports).toStrictEqual([{ start: 0, end: 13, moduleRequest: { start: 7, end: 12 } }]);
   });
 
   test('script', () => {
