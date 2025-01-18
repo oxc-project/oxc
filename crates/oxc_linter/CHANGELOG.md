@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.6] - 2025-01-13
+
+### Features
+
+- 457aa31 linter: Implement `no-lone-blocks` rule (#8145) (Yuichiro Yamashita)
+
+### Refactor
+
+- aea9551 ast: Simplify `get_identifier_reference` of `TSType` and `TSTypeName` (#8273) (Dunqing)
+- 43ed3e1 linter: Add output formatter (#8436) (Alexander S.)
+- b19d809 linter: Split `unicorn/prefer-spread` and `eslint/prefer-spread` into own rules (#8329) (Alexander S.)
+- 3c534ae linter: Refactor `LintBuilder` to prep for nested configs (#8034) (camc314)
+- 2f9fab9 linter: Remove remapping for plugin name in diagnostics (#8223) (Alexander S.)
+
+### Testing
+
+- b6c1546 linter: Use plugin name instead of category for finding rule (#8353) (Alexander S.)
+
+## [0.15.5] - 2025-01-02
+
+### Features
+
+- 0e168b8 linter: Catch more cases in const-comparisons (#8215) (Cameron)
+- bde44a3 linter: Add `statement_span` to `ModuleRecord/ImportEntry` (#8195) (Alexander S.)
+- ccaa9f7 linter: Implement `eslint/new-cap`  (#8146) (Alexander S.)
+
+### Bug Fixes
+
+- 2b14a6f linter: Fix `ignorePattern` config for windows  (#8214) (Alexander S.)
+
 ## [0.15.4] - 2024-12-30
 
 - ed75e42 semantic: [**BREAKING**] Make SymbolTable fields `pub(crate)` instead of `pub` (#7999) (Boshen)

@@ -7,11 +7,13 @@ use oxc_minifier::Compressor;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-fn run(source_text: &str, source_type: SourceType) -> String {
+fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = &mut ret.program;
-    Compressor::new(&allocator, CompressOptions::default()).dead_code_elimination(program);
+    if let Some(options) = options {
+        Compressor::new(&allocator, options).dead_code_elimination(program);
+    }
     Codegen::new().build(program).code
 }
 
@@ -22,8 +24,8 @@ fn test(source_text: &str, expected: &str) {
     let source_text = source_text.cow_replace("false", f);
 
     let source_type = SourceType::default();
-    let result = run(&source_text, source_type);
-    let expected = run(expected, source_type);
+    let result = run(&source_text, source_type, Some(CompressOptions::default()));
+    let expected = run(expected, source_type, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
@@ -58,7 +60,7 @@ fn dce_if_statement() {
     );
     test(
         "if (xxx) { foo } else if (false) { var a; var b; } else if (false) { var c; var d; }",
-        "if (xxx) foo; else var c, d;",
+        "if (xxx) foo; else if (false) var a, b; else if (false) var c, d;",
     );
 
     test("if (!false) { foo }", "foo");
@@ -78,22 +80,13 @@ fn dce_if_statement() {
 
     // Shadowed `undefined` as a variable should not be erased.
     // This is a rollup test.
-    test_same("function foo(undefined) { if (!undefined) { } }");
+    test_same("function foo(undefined) { if (!undefined) foo }");
 
     test("function foo() { if (undefined) { bar } }", "function foo() { }");
     test("function foo() { { bar } }", "function foo() { bar }");
 
     test("if (true) { foo; } if (true) { foo; }", "foo; foo;");
-
-    test(
-        "
-        if (true) { foo; return }
-        foo;
-        if (true) { bar; return }
-        bar;
-        ",
-        "{foo; return }",
-    );
+    test("if (true) { foo; return } foo; if (true) { bar; return } bar;", "{ foo; return }");
 
     // nested expression
     test(
@@ -108,6 +101,12 @@ fn dce_if_statement() {
     test("if (typeof 1 !== 'number') { REMOVE; }", "");
     test("if (typeof false !== 'boolean') { REMOVE; }", "");
     test("if (typeof 1 === 'string') { REMOVE; }", "");
+}
+
+#[test]
+fn dce_while_statement() {
+    test_same("while (true);");
+    test_same("while (false);");
 }
 
 #[test]
@@ -229,7 +228,7 @@ fn dce_from_terser() {
         console.log(foo, bar, Baz);
         ",
         "
-        var qux;
+        if (0) var qux;
         console.log(foo, bar, Baz);
         ",
     );

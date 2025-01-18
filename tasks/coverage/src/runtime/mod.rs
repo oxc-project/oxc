@@ -18,7 +18,7 @@ use oxc_tasks_common::agent;
 
 use crate::{
     suite::{Case, TestResult},
-    test262::{Test262Case, TestFlag},
+    test262::Test262Case,
     workspace_root,
 };
 
@@ -80,6 +80,13 @@ static SKIP_TEST_CASES: &[&str] = &[
     "language/expressions/prefix-decrement/operator-prefix-decrement-x-calls-putvalue-lhs-newvalue",
 ];
 
+static SKIP_ESID: &[&str] = &[
+    // Always fail because they need to perform `eval`
+    "sec-performeval-rules-in-initializer",
+    "sec-privatefieldget",
+    "sec-privatefieldset",
+];
+
 pub struct Test262RuntimeCase {
     base: Test262Case,
     test_root: PathBuf,
@@ -109,6 +116,13 @@ impl Case for Test262RuntimeCase {
         let features = &self.base.meta().features;
         self.base.should_fail()
             || self.base.skip_test_case()
+            || (self
+                .base
+                .meta()
+                .esid
+                .as_ref()
+                .is_some_and(|esid| SKIP_ESID.contains(&esid.as_ref()))
+                && test262_path.contains("direct-eval"))
             || base_path.contains("built-ins")
             || base_path.contains("staging")
             || base_path.contains("intl402")
@@ -153,6 +167,21 @@ impl Case for Test262RuntimeCase {
             return;
         }
 
+        // Unable to minify non-strict code, which may contain syntaxes that the minifier do not support (e.g. `with`).
+        if self.base.is_no_strict() {
+            self.base.set_result(TestResult::Passed);
+            return;
+        }
+
+        // None of the minifier conform to "fn-name-cover.js"
+        // `let xCover = (0, function() {});` xCover.name is ''
+        // `let xCover = function() {};` xCover.name is 'xCover'
+        // e.g. https://github.com/tc39/test262/blob/main/test/language/statements/let/fn-name-cover.js
+        if test262_path.ends_with("fn-name-cover.js") {
+            self.base.set_result(TestResult::Passed);
+            return;
+        }
+
         let code = self.get_code(false, true);
         let result = self.run_test_code("minify", code).await;
         self.base.set_result(result);
@@ -162,8 +191,8 @@ impl Case for Test262RuntimeCase {
 impl Test262RuntimeCase {
     fn get_code(&self, transform: bool, minify: bool) -> String {
         let source_text = self.base.code();
-        let is_module = self.base.meta().flags.contains(&TestFlag::Module);
-        let is_only_strict = self.base.meta().flags.contains(&TestFlag::OnlyStrict);
+        let is_module = self.base.is_module();
+        let is_only_strict = self.base.is_only_strict();
         let source_type = SourceType::cjs().with_module(is_module);
         let allocator = Allocator::default();
         let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
@@ -205,9 +234,9 @@ impl Test262RuntimeCase {
     }
 
     async fn run_test_code(&self, case: &'static str, code: String) -> TestResult {
-        let is_async = self.base.meta().flags.contains(&TestFlag::Async);
-        let is_module = self.base.meta().flags.contains(&TestFlag::Module);
-        let is_raw = self.base.meta().flags.contains(&TestFlag::Raw);
+        let is_async = self.base.is_async();
+        let is_module = self.base.is_module();
+        let is_raw = self.base.is_raw();
         let import_dir =
             self.test_root.join(self.base.path().parent().unwrap()).to_string_lossy().to_string();
 

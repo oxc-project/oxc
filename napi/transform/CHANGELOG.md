@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.46.0] - 2025-01-14
+
+### Features
+
+- 4ad695d napi/minify: Implement napi (#8478) (Boshen)
+
+## [0.45.0] - 2025-01-11
+
+### Bug Fixes
+
+- 9a03bd2 transformer/typescript: Remove type-only `import =` when `only_remove_type_imports` is true (#8275) (Dunqing)
+
 ## [0.42.0] - 2024-12-18
 
 ### Features

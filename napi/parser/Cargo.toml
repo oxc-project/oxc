@@ -1,13 +1,13 @@
 [package]
 name = "oxc_parser_napi"
-version = "0.0.0"
+version = "0.47.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 homepage.workspace = true
 keywords.workspace = true
 license.workspace = true
-publish = false
+publish = true
 repository.workspace = true
 rust-version.workspace = true
 description.workspace = true

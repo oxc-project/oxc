@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// ```
     ///
     GoogleFontDisplay,
+    nextjs,
     correctness
 );
 
@@ -244,7 +245,7 @@ fn test() {
 			     "#,
     ];
 
-    Tester::new(GoogleFontDisplay::NAME, GoogleFontDisplay::CATEGORY, pass, fail)
+    Tester::new(GoogleFontDisplay::NAME, GoogleFontDisplay::PLUGIN, pass, fail)
         .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

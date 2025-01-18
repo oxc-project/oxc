@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// ```
     ///
     PreferToHaveLength,
+    jest,
     style,
     fix
 );
@@ -190,6 +191,8 @@ impl PreferToHaveLength {
 fn tests() {
     use crate::tester::Tester;
 
+    // Note: Both Jest and Vitest share the same unit tests
+
     let pass = vec![
         ("expect.hasAssertions", None),
         ("expect.hasAssertions()", None),
@@ -201,6 +204,7 @@ fn tests() {
         ("expect(user.getUserName(5)).resolves.toEqual('Paul')", None),
         ("expect(user.getUserName(5)).rejects.toEqual('Paul')", None),
         ("expect(a);", None),
+        ("expect().toBe();", None),
     ];
 
     let fail = vec![
@@ -228,6 +232,7 @@ fn tests() {
 
     let fix = vec![
         ("expect(files[\"length\"]).not.toBe(1);", "expect(files).not.toHaveLength(1);", None),
+        (r#"expect(files["length"]).toBe(1,);"#, "expect(files).toHaveLength(1,);", None),
         (
             "expect(files[\"length\"])[\"resolves\"].toBe(1,);",
             "expect(files)[\"resolves\"].toHaveLength(1,);",
@@ -265,7 +270,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferToHaveLength::NAME, PreferToHaveLength::CATEGORY, pass, fail)
+    Tester::new(PreferToHaveLength::NAME, PreferToHaveLength::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

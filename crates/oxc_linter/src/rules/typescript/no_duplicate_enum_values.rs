@@ -82,6 +82,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoDuplicateEnumValues,
+    typescript,
     correctness
 );
 
@@ -269,6 +270,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoDuplicateEnumValues::NAME, NoDuplicateEnumValues::CATEGORY, pass, fail)
+    Tester::new(NoDuplicateEnumValues::NAME, NoDuplicateEnumValues::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

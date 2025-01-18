@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// );
     /// ```
     NoInterpolationInSnapshots,
+    jest,
     style
 );
 
@@ -97,6 +98,8 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 fn test() {
     use crate::tester::Tester;
 
+    // Note: Both Jest and Vitest share the same unit tests
+
     let pass = vec![
         ("expect('something').toEqual('else');", None),
         ("expect(something).toMatchInlineSnapshot();", None),
@@ -122,7 +125,7 @@ fn test() {
         ("expect(something).not.toThrowErrorMatchingInlineSnapshot(`${interpolated}`);", None),
     ];
 
-    Tester::new(NoInterpolationInSnapshots::NAME, NoInterpolationInSnapshots::CATEGORY, pass, fail)
+    Tester::new(NoInterpolationInSnapshots::NAME, NoInterpolationInSnapshots::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

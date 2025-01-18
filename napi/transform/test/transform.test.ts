@@ -101,7 +101,16 @@ describe('target', () => {
     const ret = transform('test.js', code, { target: 'es2015' });
     expect(ret.errors.length).toBe(0);
     expect(ret.code).toBeDefined();
-    expect(ret.code).toEqual(code);
+    expect(ret.code).toMatchInlineSnapshot(`
+      "import _classPrivateFieldInitSpec from "@babel/runtime/helpers/classPrivateFieldInitSpec";
+      var _a = new WeakMap();
+      class Foo {
+      	constructor() {
+      		_classPrivateFieldInitSpec(this, _a, void 0);
+      	}
+      }
+      "
+    `);
   });
 });
 
@@ -129,13 +138,19 @@ describe('modules', () => {
     const code = `
 export = function foo (): void {}
 import bar = require('bar')
+console.log(bar)
 `;
     const ret = transform('test.ts', code, {
       typescript: {
         declaration: {},
       },
     });
-    expect(ret.code).toEqual('module.exports = function foo() {};\nconst bar = require("bar");\n');
+    expect(ret.code).toMatchInlineSnapshot(`
+      "module.exports = function foo() {};
+      const bar = require("bar");
+      console.log(bar);
+      "
+    `);
     expect(ret.declaration).toEqual('declare const _default: () => void;\nexport = _default;\n');
   });
 });

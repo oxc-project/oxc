@@ -3,12 +3,13 @@
 use std::{
     alloc::{self, Layout},
     mem::{align_of, size_of},
-    ptr, slice,
+    ptr::{self, NonNull},
+    slice,
 };
 
 use assert_unchecked::assert_unchecked;
 
-use super::{NonNull, StackCapacity};
+use super::StackCapacity;
 
 pub trait StackCommon<T>: StackCapacity<T> {
     // Getter + setter methods defined by implementer

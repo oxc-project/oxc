@@ -98,7 +98,7 @@ struct DotDefineState<'a> {
     value_atom: Option<Atom<'a>>,
 }
 
-impl<'a> From<&InjectImport> for DotDefineState<'a> {
+impl From<&InjectImport> for DotDefineState<'_> {
     fn from(inject: &InjectImport) -> Self {
         let parts = inject.specifier.local().split('.').map(CompactStr::from).collect::<Vec<_>>();
         let value = inject.replace_value.clone().unwrap();

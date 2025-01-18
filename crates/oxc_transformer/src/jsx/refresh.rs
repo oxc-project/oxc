@@ -7,7 +7,7 @@ use base64::{
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
-use oxc_allocator::{Address, CloneIn, GetAddress, Vec as ArenaVec};
+use oxc_allocator::{Address, CloneIn, GetAddress, String as ArenaString, Vec as ArenaVec};
 use oxc_ast::{ast::*, match_expression, AstBuilder, NONE};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -137,7 +137,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
+impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len());
         for mut statement in program.body.drain(..) {
@@ -413,7 +413,7 @@ impl<'a, 'ctx> Traverse<'a> for ReactRefresh<'a, 'ctx> {
 }
 
 // Internal Methods
-impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
+impl<'a> ReactRefresh<'a, '_> {
     fn create_registration(
         &mut self,
         persistent_id: Atom<'a>,
@@ -555,7 +555,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
             let mut hashed_key = ArenaVec::from_array_in([0; ENCODED_LEN], ctx.ast.allocator);
             let encoded_bytes = BASE64_STANDARD.encode_slice(hash, &mut hashed_key).unwrap();
             debug_assert_eq!(encoded_bytes, ENCODED_LEN);
-            let hashed_key = hashed_key.into_string().unwrap();
+            let hashed_key = ArenaString::from_utf8(hashed_key).unwrap();
             Atom::from(hashed_key)
         };
 

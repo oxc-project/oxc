@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUselessLengthCheck,
+    unicorn,
     correctness,
     pending
 );
@@ -286,6 +287,6 @@ fn test() {
         "array.length === 0 || array.every(Boolean) || array.length === 0",
     ];
 
-    Tester::new(NoUselessLengthCheck::NAME, NoUselessLengthCheck::CATEGORY, pass, fail)
+    Tester::new(NoUselessLengthCheck::NAME, NoUselessLengthCheck::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

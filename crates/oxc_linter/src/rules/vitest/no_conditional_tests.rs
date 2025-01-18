@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// })
     /// ```
     NoConditionalTests,
+    vitest,
     correctness,
 );
 
@@ -141,7 +142,7 @@ fn test() {
 			   });"#,
     ];
 
-    Tester::new(NoConditionalTests::NAME, NoConditionalTests::CATEGORY, pass, fail)
+    Tester::new(NoConditionalTests::NAME, NoConditionalTests::PLUGIN, pass, fail)
         .with_vitest_plugin(true)
         .test_and_snapshot();
 }

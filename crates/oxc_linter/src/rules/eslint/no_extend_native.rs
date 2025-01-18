@@ -66,6 +66,7 @@ declare_oxc_lint!(
     /// Object.defineProperty(x.prototype, 'p', {value: 0})
     /// ```
     NoExtendNative,
+    eslint,
     suspicious,
 );
 
@@ -316,5 +317,5 @@ fn test() {
         ("Array.prototype.p ??= 0", None), // { "ecmaVersion": 2021 }
     ];
 
-    Tester::new(NoExtendNative::NAME, NoExtendNative::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoExtendNative::NAME, NoExtendNative::PLUGIN, pass, fail).test_and_snapshot();
 }

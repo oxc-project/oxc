@@ -165,6 +165,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoAsyncEndpointHandlers,
+    oxc,
     suspicious
 );
 
@@ -389,6 +390,6 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoAsyncEndpointHandlers::NAME, NoAsyncEndpointHandlers::CATEGORY, pass, fail)
+    Tester::new(NoAsyncEndpointHandlers::NAME, NoAsyncEndpointHandlers::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

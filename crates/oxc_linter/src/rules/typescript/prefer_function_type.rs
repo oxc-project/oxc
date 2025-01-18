@@ -81,6 +81,7 @@ declare_oxc_lint!(
     /// type Intersection = ((data: string) => number) & ((id: number) => string);
     /// ```
     PreferFunctionType,
+    typescript,
     style,
     conditional_fix
 );
@@ -730,7 +731,7 @@ type X = {} & (() => void);
         ),
     ];
 
-    Tester::new(PreferFunctionType::NAME, PreferFunctionType::CATEGORY, pass, fail)
+    Tester::new(PreferFunctionType::NAME, PreferFunctionType::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

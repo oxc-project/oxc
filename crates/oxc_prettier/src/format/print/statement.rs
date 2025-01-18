@@ -21,10 +21,10 @@ pub fn print_statement_sequence<'a>(
         parts.push(stmt.format(p));
 
         if Some(stmt.span()) != last_statement_span {
-            parts.extend(hardline!());
+            parts.push(hardline!(p));
 
             if p.is_next_line_empty(stmt.span()) {
-                parts.extend(hardline!());
+                parts.push(hardline!(p));
             }
         }
     }

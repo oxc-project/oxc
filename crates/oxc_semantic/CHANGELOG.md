@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.47.0] - 2025-01-18
+
+- 4ce6329 semantic: [**BREAKING**] Ensure program outlives semantic (#8455) (Valentinas Janeiko)
+
+### Bug Fixes
+
+
+### Performance
+
+- 30a869e semantic: Use `oxc_allocator::HashMap` in `ScopeTree` (#8554) (overlookmotel)
+
+### Refactor
+
+- b5ed58e span: All methods take owned `Span` (#8297) (overlookmotel)
+
+## [0.45.0] - 2025-01-11
+
+### Features
+
+- 55744fd semantic: Allow getting mutable reference to symbols table (#8189) (Max Stoumen)
+
+### Bug Fixes
+
+- 79a8fc6 semantic: Report error for super property appearing in function body (#8376) (Dunqing)
+- 79af100 semantic: Reference flags not correctly resolved when after an export stmt (#8134) (camc314)
+
+### Refactor
+
+- 0903501 semantic: Check super usage based on scope (#8377) (Dunqing)
+
 ## [0.44.0] - 2024-12-25
 
 ### Features

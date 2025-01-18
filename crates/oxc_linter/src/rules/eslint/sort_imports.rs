@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// import e from 'bar.js';
     /// ```
     SortImports,
+    eslint,
     style,
     conditional_fix
 );
@@ -306,7 +307,7 @@ impl SortImports {
 
         if is_fixable {
             // Safe to index because we know that `specifiers` is at least 2 element long
-            let specifiers_span = specifiers[0].span.merge(&specifiers[specifiers.len() - 1].span);
+            let specifiers_span = specifiers[0].span.merge(specifiers[specifiers.len() - 1].span);
             ctx.diagnostic_with_fix(
                 sort_members_alphabetically_diagnostic(unsorted_name, unsorted_span),
                 |fixer| {
@@ -828,7 +829,7 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(SortImports::NAME, SortImports::CATEGORY, pass, fail)
+    Tester::new(SortImports::NAME, SortImports::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

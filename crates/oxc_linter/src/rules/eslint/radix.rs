@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// var num = parseInt("071", 10);  // 71
     /// ```
     Radix,
+    eslint,
     pedantic
 );
 
@@ -226,5 +227,5 @@ fn test() {
         ("{ let Number; } (Number?.parseInt)();", None),
     ];
 
-    Tester::new(Radix::NAME, Radix::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(Radix::NAME, Radix::PLUGIN, pass, fail).test_and_snapshot();
 }

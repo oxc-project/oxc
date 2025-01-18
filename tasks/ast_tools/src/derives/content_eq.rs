@@ -9,18 +9,16 @@ use crate::{
 
 use super::{define_derive, Derive};
 
+const IGNORE_FIELD_TYPES: [/* type name */ &str; 4] = [
+    "Span",
+    "ScopeId",
+    "SymbolId",
+    "ReferenceId",
+];
+
 pub struct DeriveContentEq;
 
 define_derive!(DeriveContentEq);
-
-const IGNORE_FIELDS: [(/* field name */ &str, /* field type */ &str); 6] = [
-    ("span", "Span"),
-    ("trailing_comma", "Span"),
-    ("this_span", "Span"),
-    ("scope_id", "ScopeId"),
-    ("symbol_id", "SymbolId"),
-    ("reference_id", "ReferenceId"),
-];
 
 impl Derive for DeriveContentEq {
     fn trait_name() -> &'static str {
@@ -55,22 +53,16 @@ fn derive_enum(def: &EnumDef) -> (&str, TokenStream) {
         let matches = def.all_variants().map(|var| {
             let ident = var.ident();
             if var.is_unit() {
-                quote!(Self :: #ident => matches!(other, Self :: #ident))
+                quote!( (Self::#ident, Self::#ident) => true )
             } else {
-                quote! {
-                    Self :: #ident(it) => {
-                        // NOTE: writing the match expression formats better than using `matches` macro.
-                        match other {
-                            Self :: #ident (other) if ContentEq::content_eq(it, other) => true,
-                            _ => false,
-                        }
-                    }
-                }
+                quote!( (Self::#ident(a), Self::#ident(b)) => a.content_eq(b) )
             }
         });
         quote! {
-            match self {
-                #(#matches),*
+            #[allow(clippy::match_same_arms)]
+            match (self, other) {
+                #(#matches,)*
+                _ => false,
             }
         }
     };
@@ -86,10 +78,7 @@ fn derive_struct(def: &StructDef) -> (&str, TokenStream) {
             .fields
             .iter()
             .filter(|field| {
-                let Some(name) = field.name.as_ref() else { return false };
-                !IGNORE_FIELDS
-                    .iter()
-                    .any(|it| name == it.0 && field.typ.name().inner_name() == it.1)
+                !IGNORE_FIELD_TYPES.iter().any(|it| field.typ.name().inner_name() == *it)
             })
             .map(|field| {
                 let ident = field.ident();

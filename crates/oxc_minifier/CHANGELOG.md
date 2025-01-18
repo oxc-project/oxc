@@ -4,6 +4,212 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.47.0] - 2025-01-18
+
+### Features
+
+- 4d4e805 minifier: Collapse if stmt with empty consequent (#8577) (camc314)
+- 991a22f minifier: Fold `Array::concat` into literal (#8442) (sapphi-red)
+- 3dc2d8b minifier: Fold string concat chaining (#8441) (sapphi-red)
+- a4ae450 minifier: Fold array concat chaining (#8440) (sapphi-red)
+- 7cc81ef minifier: Fold invalid typeof comparisons (#8550) (camc314)
+- 927f43f minifier: Improve `.charCodeAt(arg)` when arg is valid (#8534) (Boshen)
+- 06f14d5 minifier: Remove empty class static block `class Foo { static {} }` (#8525) (Boshen)
+- 1860411 minifier: Remove last redundant return statement (#8523) (Boshen)
+
+### Bug Fixes
+
+- 65c596d minifer: Keep idents if not in scope when minimizing array exprs (#8551) (camc314)
+- f57aac2 minifier: Incorrect folding of expr in bool ctx (#8542) (camc314)
+- 946ad76 minifier: `(-Infinity).toString()` -> `'-Infinity'` (#8535) (Boshen)
+- b1d0186 minifier: Do not fold `!!void b` (#8533) (Boshen)
+- 53adde5 minifier: `x['-2147483648']` -> `x[-2147483648]` (#8528) (Boshen)
+- 405b73d minifier: Do not change `delete undefined` to `delete void 0` (#8527) (Boshen)
+- 92e44cb minifier: Do not remove `undefined` in `var x = undefined` (#8526) (Boshen)
+- 209e313 minifier: `class C { ['-1']() {} }` cannot be minifized (#8516) (Boshen)
+- 6585463 minifier: Always keep the last value of sequence expression (#8490) (Boshen)
+
+### Refactor
+
+- 8f57929 minifier: Merge `try_compress_type_of_equal_string` into `try_minimize_binary` (#8561) (sapphi-red)
+
+### Testing
+
+- e0f5d6c minifier: Update esbuild test (Boshen)
+- 629c417 minifier: Port esbuild minification tests (#8497) (Boshen)
+
+## [0.46.0] - 2025-01-14
+
+### Features
+
+- 8accfef minifier: Minify `var x; void x` -> `void 0` (#8466) (Boshen)
+- 870a583 minifier: Fold `false['toString']` (#8447) (Boshen)
+- 4ad695d napi/minify: Implement napi (#8478) (Boshen)
+
+### Bug Fixes
+
+- 4c6675c minifier: Do not convert while to fors in DCE (#8484) (Boshen)
+- 1d6e84d minifier: Fix incorrect `null.toString()` and `1n.toString()` (#8464) (Boshen)
+- 25d4bf9 minifier: Remove usage of empty spans (#8462) (Boshen)
+- dd64340 minifier: Keep `return undefined` in async generator function (#8439) (Boshen)
+
+### Performance
+
+- 8fc238a minifier: Merge `Normalize` and `RemoveSyntax` pass (#8467) (Boshen)
+- 372eb09 minifier: Preallocate mangler's semantic data (#8451) (Boshen)
+
+## [0.45.0] - 2025-01-11
+
+### Features
+
+- 6c7acac allocator: Implement `IntoIterator` for `&mut Vec` (#8389) (overlookmotel)
+- 41ddf60 minfier: Add `CompressOptions::target` (#8179) (Boshen)
+- d56020b minifier: Drop `0` from `new Int8Array(0)` and other TypedArrays (#8431) (sapphi-red)
+- f935d94 minifier: Remove `new` from NativeErrors / `AggregateError` (#8430) (sapphi-red)
+- dab7a51 minifier: Minimize not `!(x === undefined)` -> `x !== undefined` (#8429) (Boshen)
+- 0e7bab8 minifier: Remove `if(false){}` in a single pass (#8421) (Boshen)
+- 5b5b844 minifier: Fold `ambiguous if else` (#8415) (Boshen)
+- 438a6e7 minifier: Minimize conditions in boolean context (#8381) (Boshen)
+- 793cb43 minifier: `a != null ? a : b` -> `a ?? b` (#8352) (camc314)
+- 814da55 minifier: Compress `x = x || 1` to `x ||= 1` (#8368) (sapphi-red)
+- a596821 minifier: Compress `a.b = a.b + c` to `a.b += c` (#8367) (sapphi-red)
+- 579eb60 minifier: Compress `a.b || (a.b = c)` to `a.b ||= c` (#8366) (sapphi-red)
+- f367a16 minifier: Port esbuild conditional expr minification (#8351) (camc314)
+- 8d52cd0 minifier: Merge assign expression in conditional expression (#8345) (sapphi-red)
+- a69d15f minifier: Compress `new Array(2)` -> `[,,]` (#8344) (sapphi-red)
+- 819c475 minifier: Compress `new Array(7n)` -> `[7n]` (#8343) (sapphi-red)
+- e085d66 minifier: Remove empty IIFE (#8340) (Boshen)
+- 2c2e483 minifier: Fold object spread `({ ...null })` -> `({})` (#8339) (Boshen)
+- 6220e05 minifier: Remove empty if statment `if (test) {}` -> `test` (#8336) (Boshen)
+- a76dfae minifier: Remove label statement with empty body (#8333) (Boshen)
+- e88a6bd minifier: Minimize `!0 + null !== 1` -> `!0 + null != 1` (#8332) (Boshen)
+- ec88c68 minifier: Compress `a || (a = b)` to `a ||= b` (#8315) (sapphi-red)
+- e6fe84d minifier: Compress `a = a + b` to `a += b` (#8314) (sapphi-red)
+- 9ea4e31 minifier: Remove `new` from `new Error`/`new Function`/`new RegExp` (#8313) (sapphi-red)
+- 051fbb6 minifier: Minimize `x["0"]` -> x[0] (#8316) (Boshen)
+- a542013 minifier: Minimize `do{}while(true)` -> `do;while(true)` (#8311) (Boshen)
+- e3ff81e minifier: Minimize `(x = 1) === 1` -> `(x = 1) == 1` (#8310) (Boshen)
+- 4b68cc0 minifier: Minimize empty `try` statement (#8309) (Boshen)
+- 922c514 minifier: Fold `.toString()` (#8308) (Boshen)
+- 66a2443 minifier: Minify sequence expressions (#8305) (camc314)
+- af65c36 minifier: Minimize double negated binary expressions (#8304) (camc314)
+- 76c778b minifier: Remove logical nots when arg is a delete expression (#8303) (camc314)
+- 5ed439b minifier: Minify typeof in binary expressions (#8302) (camc314)
+- 6afc590 minifier: Compress typeof addition string (#8301) (camc314)
+- ecc789f minifier: Fold `if(x >> y == 0){}` -> `if(!(x >> y)){}` (#8277) (Boshen)
+- 0e3b79a minifier: Fold `String()` -> `''`, `Number()` -> `false` (#8274) (Boshen)
+- c9cf593 minifier: Compress  property key `{[1]: _}`  -> {1: _} (#8272) (Boshen)
+- b92b2ab minifier: Fold `BigInt(1n)` -> `1n` (#8270) (Boshen)
+- a4df387 minifier: Compress loose equals undefined (#8268) (camc314)
+- f000596 minifier: Minify call expressionsto `Number` (#8267) (camc314)
+- 092aeaf minifier: Flatten spread args in call expressions (#8266) (camc314)
+- 04ec38d minifier: Remove unused arrow function expressions (#8262) (camc314)
+- e446c15 minifier: Improve minimizing unary not expressions (#8261) (camc314)
+- 7f19211 minifier: Minimize unary expression statements (#8256) (camc314)
+- cec63e2 minifier: `{}` evals to `f64::NaN` (Boshen)
+- 4d8a08d minifier: Improve constant evaluation (#8252) (Boshen)
+- e84f267 minifier: Compress more property keys (#8253) (Boshen)
+- d1224f9 minifier: Improve minimizing conditional expressions (#8251) (camc314)
+- 65f46f5 minifier: Constant fold `String.fromCharCode` (#8248) (Boshen)
+- bd8d677 minifier: Minimize `~undefined`, `~null`, `~true`, `~false` (#8247) (Boshen)
+- f73dc9e minifier: Constant fold `'x'.toString()` and `true.toString()` (#8246) (Boshen)
+- fd5af73 minifier: Minimize `Number` constructor (#8245) (Boshen)
+- 2f52f33 minifier: Minsize `!!!foo ? bar : baz` -> `foo ? baz : bar` (#8244) (Boshen)
+- ccdc039 minifier: Always put literals on the rhs of equal op `1==x` => `x==1` (#8240) (Boshen)
+- 39353b2 minifier: Improve minimizing conditionals (#8238) (Cameron)
+- c90fc16 minifier: Restore conditional minification and fix edge case (#8235) (camc314)
+- 6c8ee9f minifier: Remove last redundant `return` statement (#8234) (Boshen)
+- 51f4792 minifier: Minimize `foo ? foo : bar` and `foo ? bar : foo` (#8229) (Boshen)
+- 6e2ec17 minifier: Statement fusion switch cases; improved minimize exit poitns (#8228) (Boshen)
+- 574a242 minifier: Minimize all variants of `typeof x == 'undefined'` (#8227) (Boshen)
+- 2041477 minifier: Fold `if(x)return;y` -> `if(!x)y` (#8226) (Boshen)
+- 9c1afa4 minifier: Optional catch binding when catch param is unused (#8221) (Boshen)
+- 4a29845 minifier: Add `ConvertToDottedProperties` (#8212) (Boshen)
+- 2786dea minifier: Add `RemoveUnusedCode` (#8210) (Boshen)
+- cd274ee minifier: Minimize logical exprs (#8209) (Cameron)
+- 4ae15df minifier: Imprve more conditional expr minification with boolean lit (#8208) (camc314)
+- 3202b4f minifier: Imprve conditional expr minification with boolean lit (#8207) (camc314)
+- 3b45011 minifier: Handle conditional expr with boolean lit (#8206) (camc314)
+- 4c2059a minifier: Reverse negated conditional exprs (#8205) (camc314)
+- 4804933 minifier: Add `MinimizeExitPoints` and ExploitAssigns` boilerplate (#8203) (Boshen)
+- bf266e1 minifier: Try collapse conditional to logical or expr (#8197) (Cameron)
+- 06e1780 minifier: Improve `StatementFusion` (#8194) (Boshen)
+- 42e211a minifier: Only constant fold numbers when result is smaller (#8092) (Boshen)
+- d0de560 minifier: Change `NaN` to `f64::NAN` (#8191) (Boshen)
+- cef8eb8 minifier: Change `foo?.['bar']` to `foo?.bar` (#8176) (翠 / green)
+- 8149e34 minifier: Optional catch binding when es target >= es2019 (#8180) (Boshen)
+- fc43ec5 minifier: Fold `string.length` / `array.length` (#8172) (sapphi-red)
+- 29dc0dc minifier: Change `foo['bar']` -> foo.bar (#8169) (Boshen)
+- 3c5718d minifier: Fold `typeof foo == undefined` into `foo == undefined` when possible (#8160) (翠 / green)
+- f3a36e1 minifier: Fold `typeof foo != "undefined"` into `typeof foo < "u"` (#8159) (翠 / green)
+- 37c9959 minifier: Normalize `Infinity` into `f64::Infinity` (#8148) (Boshen)
+- 8fb71f5 minifier: Minify string `PropertyKey` (#8147) (Boshen)
+- 6615e1e minifier: Constant fold `instanceof` (#8142) (翠 / green)
+- 2b2a373 minifier: Minimize `a + 'b' + 'c'` -> `a + 'bc'` (#8137) (Boshen)
+- 213364a minifier: Minimize `if (x) if (y) z` -> `if (x && y) z` (#8136) (Boshen)
+- 6b51e6d minifier: Minimize `if(foo) bar else baz` -> `foo ? bar : baz` (#8133) (Boshen)
+- f615bfa minifier: Minimize `if (x) return; return 1` -> `return x ? void 0 : 1` (#8130) (Boshen)
+- f0b1ee5 minifier: Minimize `if(!x) foo()` -> `x || foo()` (#8122) (Boshen)
+- f8200a8 minifier: Minimize `if(foo) bar` -> `foo && bar` (#8121) (Boshen)
+- 72d9967 minifier: Add `Normalize` ast pass (#8120) (Boshen)
+- fef0b25 minifier: Collapse `var` into for loop initializer (#8119) (Boshen)
+- 2331ea8 minifier: `typeof foo === 'number'` => `typeof foo == 'number'` (#8112) (Boshen)
+- ad9a0a9 mininifier: Minimize variants of `a instanceof b == true` (#8241) (Boshen)
+
+### Bug Fixes
+
+- 74572de ecmascript: Incorrect `to_int_32` value for Infinity (#8144) (翠 / green)
+- 5c63414 mangler: Keep exported symbols for `top_level: true` (#7927) (翠 / green)
+- 3c93549 minifier: Dce if statement should keep side effects and vars (#8433) (Boshen)
+- 52f88c0 minifier: Rotate associative operators to make it more idempotent (#8424) (camc314)
+- a80460c minifier: Correctly set `self.changed` when minimizing if stmts (#8420) (camc314)
+- d4ca8d4 minifier: `!!x` is not idempotent in `RemoveDeadCode` (#8419) (Boshen)
+- 357b61d minifier: Do not minify `Object.defineProperty` in sequence expressions (#8416) (Boshen)
+- 0efc845 minifier: `+0n` produces `TypeError` (#8410) (Boshen)
+- 7ce6a7c minifier: `a in b` has error throwing side effect (#8406) (Boshen)
+- 2f3a9dc minifier: Cannot transform property key `#constructor` (#8405) (Boshen)
+- c0a3dda minifier: `instanceof` has error throwing side effect (#8378) (Boshen)
+- 5516f7f minifier: Do not fold object comparisons (#8375) (Boshen)
+- cb098c7 minifier: Computed property key `prototype` cannot be changed (#8373) (Boshen)
+- 82ee77e minifier: Do not remove shadowned `undefined` in return statement (#8371) (Boshen)
+- f87da16 minifier: Do not fold literals in `-0 != +0` (#8278) (Boshen)
+- 62a2644 minifier: Handle arrow fn expressions correctly in `is_in_boolean_context` (#8260) (camc314)
+- d2f8eaa minifier: Fix panic in `peephole_minimize_conditions` (#8242) (Boshen)
+- a698def minifier: Fix incorrect return value for `(x ? true : y)` (#8233) (Boshen)
+- 56b7f13 minifier: Do not constant fold `0 instanceof F` (#8199) (Boshen)
+- 75d5f17 minifier: Minify string `PropertyKey` (#8177) (sapphi-red)
+
+### Documentation
+
+- aaa009d minifier: Clarify assumptions for compressor (#8404) (翠 / green)
+
+### Refactor
+
+- fb2acd8 minifier: Change minimize conditionals into a loop (#8413) (Boshen)
+- baaec60 minifier: Remove the buggy `??` transform (#8411) (Boshen)
+- 1c4658d minifier: Change ast passes order, `!in_fixed_loop` happen last (#8380) (Boshen)
+- 09f0f48 minifier: Remove the buggy `minimize_exit_points` implementation (#8349) (Boshen)
+- 9a5c66a minifier: Clean up (#8346) (Boshen)
+- 98f2b1c minifier: Clean up `peephole_substitute_alternate_syntax` (#8327) (Boshen)
+- fc662b7 minifier: Handle big int values later (#8324) (Boshen)
+- d16e598 minifier: Clean up `peephole_replace_known_methods` (#8306) (Boshen)
+- b8d26ea minifier: Move optional catch param to peephole_substitute_alternate_syntax (#8282) (Boshen)
+- 0845162 minifier: Clean up `ReplaceKnownMethods` (Boshen)
+- 7c7f5d7 minifier: Clean up `peephole_fold_constants` (Boshen)
+- bf0fbce minifier: Improve constant fold numbers (#8239) (Boshen)
+- 62f8fba minifier: Move all conditional minification logic to minimze_conditions (#8231) (camc314)
+- cfb51f2 minifier: Fuse ast passes (#8184) (Boshen)
+- bf9cafe minifier: Clean up `peephole_substitute_alternate_syntax` a little bit (Boshen)
+- 75264ed minifier: Clean up `try_optimize_block` (#8139) (Boshen)
+- c22062b minifier: Cleanup peephole_minimize_conditions (#8114) (Boshen)
+- e594c39 minifier: Clean up `peephole_substitute_alternate_syntax.rs` (#8111) (Boshen)
+
+### Testing
+
+- 3149fe0 minifier: Add anonymous function test case for logical expression to logical assignment compression (#8347) (sapphi-red)
+- 91b42de minifier: Enable some passing tests (#8250) (camc314)
+- 1fa5341 minifier: Port tests from ConvertToDottedPropertiesTest (#8175) (sapphi-red)
+
 ## [0.44.0] - 2024-12-25
 
 ### Features

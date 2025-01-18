@@ -4,7 +4,7 @@ use rustc_hash::FxHashSet;
 
 use oxc::{
     allocator::Allocator,
-    ast::{ast::Program, Comment},
+    ast::{ast::Program, AstKind, Comment},
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
@@ -80,12 +80,14 @@ impl CompilerInterface for Driver {
         ControlFlow::Continue(())
     }
 
-    fn after_semantic(
-        &mut self,
-        program: &mut Program<'_>,
-        ret: &mut SemanticBuilderReturn,
-    ) -> ControlFlow<()> {
+    fn after_semantic(&mut self, ret: &mut SemanticBuilderReturn) -> ControlFlow<()> {
         if self.check_semantic {
+            let Some(root_node) = ret.semantic.nodes().root_node() else {
+                return ControlFlow::Break(());
+            };
+            let AstKind::Program(program) = root_node.kind() else {
+                return ControlFlow::Break(());
+            };
             if let Some(errors) = check_semantic_ids(program) {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());

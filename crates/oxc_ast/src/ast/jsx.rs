@@ -7,7 +7,7 @@
 use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span};
+use oxc_span::{cmp::ContentEq, Atom, GetSpan, GetSpanMut, Span};
 
 use super::{inherit_variants, js::*, literal::*, ts::*};
 
@@ -32,7 +32,7 @@ use super::{inherit_variants, js::*, literal::*, ts::*};
 /// See: [JSX Syntax](https://facebook.github.io/jsx/)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXElement<'a> {
     /// Node location in source code
     pub span: Span,
@@ -61,7 +61,7 @@ pub struct JSXElement<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXOpeningElement<'a> {
     /// Node location in source code
     pub span: Span,
@@ -95,7 +95,7 @@ pub struct JSXOpeningElement<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXClosingElement<'a> {
     /// Node location in source code
     pub span: Span,
@@ -113,7 +113,7 @@ pub struct JSXClosingElement<'a> {
 /// See: [`React.Fragment`](https://react.dev/reference/react/Fragment)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXFragment<'a> {
     /// Node location in source code
     pub span: Span,
@@ -128,7 +128,7 @@ pub struct JSXFragment<'a> {
 /// JSX Opening Fragment (`<>`)
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXOpeningFragment {
     /// Node location in source code
     pub span: Span,
@@ -137,7 +137,7 @@ pub struct JSXOpeningFragment {
 /// JSX Closing Fragment (`</>`)
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXClosingFragment {
     /// Node location in source code
     pub span: Span,
@@ -146,7 +146,7 @@ pub struct JSXClosingFragment {
 /// JSX Element Name
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ContentHash)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq)]
 pub enum JSXElementName<'a> {
     /// `<div />`
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
@@ -169,7 +169,7 @@ pub enum JSXElementName<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXNamespacedName<'a> {
     /// Node location in source code
     pub span: Span,
@@ -196,7 +196,7 @@ pub struct JSXNamespacedName<'a> {
 /// [`member expression`]: JSXMemberExpressionObject::MemberExpression
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXMemberExpression<'a> {
     /// Node location in source code
     pub span: Span,
@@ -224,7 +224,7 @@ pub struct JSXMemberExpression<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ContentHash)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq)]
 pub enum JSXMemberExpressionObject<'a> {
     /// `<Apple.Orange />`
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
@@ -249,7 +249,7 @@ pub enum JSXMemberExpressionObject<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXExpressionContainer<'a> {
     /// Node location in source code
     pub span: Span,
@@ -266,7 +266,7 @@ inherit_variants! {
 /// [`ast` module docs]: `super`
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub enum JSXExpression<'a> {
     /// An empty expression
     ///
@@ -284,7 +284,7 @@ pub enum JSXExpression<'a> {
 /// An empty JSX expression (`{}`)
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXEmptyExpression {
     /// Node location in source code
     pub span: Span,
@@ -303,7 +303,7 @@ pub struct JSXEmptyExpression {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum JSXAttributeItem<'a> {
     /// A `key="value"` attribute
     Attribute(Box<'a, JSXAttribute<'a>>) = 0,
@@ -324,7 +324,7 @@ pub enum JSXAttributeItem<'a> {
 /// //                 name ^^^ ^^^^ value
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXAttribute<'a> {
     /// Node location in source code
     pub span: Span,
@@ -345,7 +345,7 @@ pub struct JSXAttribute<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXSpreadAttribute<'a> {
     /// Node location in source code
     pub span: Span,
@@ -370,7 +370,7 @@ pub struct JSXSpreadAttribute<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum JSXAttributeName<'a> {
     /// An attribute name without a namespace prefix, e.g. `foo` in `foo="bar"`.
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
@@ -398,7 +398,7 @@ pub enum JSXAttributeName<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum JSXAttributeValue<'a> {
     /// `<Component foo="bar" />`
     StringLiteral(Box<'a, StringLiteral<'a>>) = 0,
@@ -417,7 +417,7 @@ pub enum JSXAttributeValue<'a> {
 /// [`IdentifierName`]: super::IdentifierName
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXIdentifier<'a> {
     /// Node location in source code
     pub span: Span,
@@ -432,7 +432,7 @@ pub struct JSXIdentifier<'a> {
 /// Part of a [`JSXElement`].
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum JSXChild<'a> {
     /// `<Foo>Some Text</Foo>`
     Text(Box<'a, JSXText<'a>>) = 0,
@@ -451,7 +451,7 @@ pub enum JSXChild<'a> {
 /// Variant of [`JSXChild`] that represents an object spread (`{...expression}`).
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXSpreadChild<'a> {
     /// Node location in source code
     pub span: Span,
@@ -471,7 +471,7 @@ pub struct JSXSpreadChild<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash, ESTree)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXText<'a> {
     /// Node location in source code
     pub span: Span,

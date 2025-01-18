@@ -13,14 +13,12 @@ use crate::{
 
 mod clone_in;
 mod content_eq;
-mod content_hash;
 mod estree;
 mod get_address;
 mod get_span;
 
 pub use clone_in::DeriveCloneIn;
 pub use content_eq::DeriveContentEq;
-pub use content_hash::DeriveContentHash;
 pub use estree::DeriveESTree;
 pub use get_address::DeriveGetAddress;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};

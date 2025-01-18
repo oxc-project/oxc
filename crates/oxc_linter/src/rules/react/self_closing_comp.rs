@@ -58,6 +58,7 @@ declare_oxc_lint!(
     /// const dom_elem = <div id="oxlint" />
     /// ```
     SelfClosingComp,
+    react,
     style,
     pending
 );
@@ -350,5 +351,5 @@ fn test() {
             Some(serde_json::json!([{ "html": true }])),
         ),
     ];
-    Tester::new(SelfClosingComp::NAME, SelfClosingComp::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(SelfClosingComp::NAME, SelfClosingComp::PLUGIN, pass, fail).test_and_snapshot();
 }

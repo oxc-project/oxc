@@ -17,7 +17,7 @@ runs:
         show-progress: false
         repository: babel/babel
         path: tasks/coverage/babel
-        ref: 54a8389fa31ce4fd18b0335b05832dc1ad3cc21f
+        ref: acbc09a87016778c1551ab5e7162fdd0e70b6663
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:

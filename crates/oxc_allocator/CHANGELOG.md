@@ -4,6 +4,46 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.47.0] - 2025-01-18
+
+- fae4cd2 allocator: [**BREAKING**] Remove `Vec::into_string` (#8571) (overlookmotel)
+
+- 95bc0d7 allocator: [**BREAKING**] `Allocator` do not deref to `bumpalo::Bump` (#8569) (overlookmotel)
+
+### Features
+
+- bf4e5e1 allocator: Add `HashMap` (#8553) (overlookmotel)
+
+### Bug Fixes
+
+- e87c001 allocator: Statically prevent memory leaks in allocator (#8570) (overlookmotel)
+
+### Performance
+
+- 76ea52b allocator: Inline `Box` methods (#8572) (overlookmotel)
+- 93df57f allocator: `#[inline(always)]` methods of `Vec` which just delegate to `allocator_api2` (#8567) (overlookmotel)
+- 5a28d68 allocator: `#[inline(always)]` methods of `HashMap` which just delegate to `hashbrown` (#8565) (overlookmotel)
+
+### Documentation
+
+- fa1a6d5 allocator: Update docs for `Vec` (#8555) (overlookmotel)
+
+### Refactor
+
+- ac05134 allocator: `String` type (#8568) (overlookmotel)
+- 68fab81 allocator: Rename inner `Vec` type (#8566) (overlookmotel)
+
+## [0.45.0] - 2025-01-11
+
+### Features
+
+- 6c7acac allocator: Implement `IntoIterator` for `&mut Vec` (#8389) (overlookmotel)
+- 06e1780 minifier: Improve `StatementFusion` (#8194) (Boshen)
+
+### Bug Fixes
+
+- eb25bc0 allocator: Fix lifetimes on `IntoIterator` for `Vec` (#8388) (overlookmotel)
+
 ## [0.43.0] - 2024-12-21
 
 ### Features

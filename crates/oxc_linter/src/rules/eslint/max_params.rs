@@ -50,6 +50,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     MaxParams,
+    eslint,
     style
 );
 
@@ -157,5 +158,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(MaxParams::NAME, MaxParams::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(MaxParams::NAME, MaxParams::PLUGIN, pass, fail).test_and_snapshot();
 }

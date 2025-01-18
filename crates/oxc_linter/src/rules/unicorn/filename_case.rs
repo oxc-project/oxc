@@ -29,7 +29,7 @@ fn filename_case_diagnostic(filename: &str, valid_cases: &[(&str, Case)]) -> Oxc
         .iter()
         .map(|(_, case)| {
             let converter =
-                Converter::new().remove_boundaries(&[Boundary::LowerDigit, Boundary::DigitLower]);
+                Converter::new().remove_boundaries(&[Boundary::LOWER_DIGIT, Boundary::DIGIT_LOWER]);
             // get the leading characters that were trimmed, if any, else empty string
             let leading = filename.chars().take_while(|c| c == &'_').collect::<String>();
             let trailing = filename.chars().rev().take_while(|c| c == &'_').collect::<String>();
@@ -99,6 +99,7 @@ declare_oxc_lint!(
     /// - `SomeFileName.Test.js`
     /// - `SomeFileName.TestUtils.js`
     FilenameCase,
+    unicorn,
     style
 );
 
@@ -159,7 +160,7 @@ impl Rule for FilenameCase {
 
         if !enabled_cases.any(|(_, case, _)| {
             let converter =
-                Converter::new().remove_boundaries(&[Boundary::LowerDigit, Boundary::DigitLower]);
+                Converter::new().remove_boundaries(&[Boundary::LOWER_DIGIT, Boundary::DIGIT_LOWER]);
             converter.to_case(*case).convert(filename) == filename
         }) {
             let valid_cases = cases
@@ -310,5 +311,5 @@ fn test() {
         test_cases("src/foo/{foo_bar}.js", ["camelCase", "pascalCase", "kebabCase"]),
     ];
 
-    Tester::new(FilenameCase::NAME, FilenameCase::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(FilenameCase::NAME, FilenameCase::PLUGIN, pass, fail).test_and_snapshot();
 }

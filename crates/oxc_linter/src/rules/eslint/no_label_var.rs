@@ -55,6 +55,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoLabelVar,
+    eslint,
     style,
 );
 
@@ -91,5 +92,5 @@ fn test() {
         "function bar(x) { x: for(;;) { break x; } }",
     ];
 
-    Tester::new(NoLabelVar::NAME, NoLabelVar::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoLabelVar::NAME, NoLabelVar::PLUGIN, pass, fail).test_and_snapshot();
 }

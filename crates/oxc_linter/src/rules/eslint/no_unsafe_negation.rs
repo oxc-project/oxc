@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUnsafeNegation,
+    eslint,
     correctness,
     fix
 );
@@ -157,7 +158,7 @@ fn test() {
         // ("!a <= b", "!(a <= b)"),
     ];
 
-    Tester::new(NoUnsafeNegation::NAME, NoUnsafeNegation::CATEGORY, pass, fail)
+    Tester::new(NoUnsafeNegation::NAME, NoUnsafeNegation::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

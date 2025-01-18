@@ -215,8 +215,7 @@ impl GetSpan for Modifiers<'_> {
         debug_assert!(!modifiers.is_empty());
         // SAFETY: One of Modifier's invariants is that Some(modifiers) always
         // contains a non-empty Vec; otherwise it must be `None`.
-
-        unsafe { modifiers.iter().map(|m| m.span).reduce(|a, b| a.merge(&b)).unwrap_unchecked() }
+        unsafe { modifiers.iter().map(|m| m.span).reduce(Span::merge).unwrap_unchecked() }
     }
 }
 

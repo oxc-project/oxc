@@ -34,6 +34,7 @@ declare_oxc_lint!(
     /// foo.append(bar);
     /// ```
     PreferDomNodeAppend,
+    unicorn,
     pedantic,
     fix
 );
@@ -128,7 +129,7 @@ fn test() {
         (r"const foo = [node.appendChild(child)]", r"const foo = [node.append(child)]"),
     ];
 
-    Tester::new(PreferDomNodeAppend::NAME, PreferDomNodeAppend::CATEGORY, pass, fail)
+    Tester::new(PreferDomNodeAppend::NAME, PreferDomNodeAppend::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

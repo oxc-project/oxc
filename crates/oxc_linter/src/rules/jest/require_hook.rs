@@ -144,6 +144,7 @@ declare_oxc_lint!(
     /// ```
     ///
     RequireHook,
+    jest,
     style
 );
 
@@ -620,7 +621,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(RequireHook::NAME, RequireHook::CATEGORY, pass, fail)
+    Tester::new(RequireHook::NAME, RequireHook::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

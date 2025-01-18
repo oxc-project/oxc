@@ -76,6 +76,7 @@ declare_oxc_lint!(
     ///  const IconButton = <div aria-foo="bar" />;
     /// ```
     NoUnknownProperty,
+    react,
     restriction,
     pending
 );
@@ -757,6 +758,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUnknownProperty::NAME, NoUnknownProperty::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(NoUnknownProperty::NAME, NoUnknownProperty::PLUGIN, pass, fail).test_and_snapshot();
 }

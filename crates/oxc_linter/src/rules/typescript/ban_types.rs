@@ -53,6 +53,7 @@ declare_oxc_lint!(
     /// let bar: Boolean = true;
     /// ```
     BanTypes,
+    typescript,
     pedantic,
     pending
 );
@@ -170,5 +171,5 @@ type Props = {
         ),
     ];
 
-    Tester::new(BanTypes::NAME, BanTypes::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(BanTypes::NAME, BanTypes::PLUGIN, pass, fail).test_and_snapshot();
 }

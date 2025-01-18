@@ -1,6 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
+assertion_line: 357
 ---
   ⚠ eslint(default-param-last): Default parameters should be last
    ╭─[default_param_last.tsx:1:12]
@@ -90,5 +90,314 @@ snapshot_kind: text
    ╭─[default_param_last.tsx:1:12]
  1 │ const f = ([a, b] = [1, 2], c) => {}
    ·            ───────────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ function foo(a = 1, b: number) {}
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:21]
+ 1 │ function foo(a = 1, b = 2, c: number) {}
+   ·                     ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ function foo(a = 1, b = 2, c: number) {}
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:32]
+ 1 │ function foo(a = 1, b: number, c = 2, d: number) {}
+   ·                                ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ function foo(a = 1, b: number, c = 2, d: number) {}
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ function foo(a = 1, b: number, c = 2) {}
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ function foo(a = 1, b: number, ...c) {}
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ function foo(a?: number, b: number) {}
+   ·              ──────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:25]
+ 1 │ function foo(a: number, b?: number, c: number) {}
+   ·                         ──────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:21]
+ 1 │ function foo(a = 1, b?: number, c: number) {}
+   ·                     ──────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ function foo(a = 1, b?: number, c: number) {}
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ function foo(a = 1, { b }) {}
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ function foo({ a } = {}, b) {}
+   ·              ──────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ function foo({ a, b } = { a: 1, b: 2 }, c) {}
+   ·              ─────────────────────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ const foo = function (a = 1, b: number) {};
+   ·                       ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:30]
+ 1 │ const foo = function (a = 1, b = 2, c: number) {};
+   ·                              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ const foo = function (a = 1, b = 2, c: number) {};
+   ·                       ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:41]
+ 1 │ const foo = function (a = 1, b: number, c = 2, d: number) {};
+   ·                                         ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ const foo = function (a = 1, b: number, c = 2, d: number) {};
+   ·                       ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ const foo = function (a = 1, b: number, c = 2) {};
+   ·                       ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ const foo = function (a = 1, b: number, ...c) {};
+   ·                       ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ const foo = function (a?: number, b: number) {};
+   ·                       ──────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:34]
+ 1 │ const foo = function (a: number, b?: number, c: number) {};
+   ·                                  ──────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:30]
+ 1 │ const foo = function (a = 1, b?: number, c: number) {};
+   ·                              ──────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ const foo = function (a = 1, b?: number, c: number) {};
+   ·                       ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ const foo = function (a = 1, { b }) {};
+   ·                       ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ const foo = function ({ a } = {}, b) {};
+   ·                       ──────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:23]
+ 1 │ const foo = function ({ a, b } = { a: 1, b: 2 }, c) {};
+   ·                       ─────────────────────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ const foo = (a = 1, b: number) => {};
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:21]
+ 1 │ const foo = (a = 1, b = 2, c: number) => {};
+   ·                     ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ const foo = (a = 1, b = 2, c: number) => {};
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:32]
+ 1 │ const foo = (a = 1, b: number, c = 2, d: number) => {};
+   ·                                ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ const foo = (a = 1, b: number, c = 2, d: number) => {};
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ const foo = (a = 1, b: number, c = 2) => {};
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ const foo = (a = 1, b: number, ...c) => {};
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ const foo = (a?: number, b: number) => {};
+   ·              ──────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:25]
+ 1 │ const foo = (a: number, b?: number, c: number) => {};
+   ·                         ──────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:21]
+ 1 │ const foo = (a = 1, b?: number, c: number) => {};
+   ·                     ──────────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:1:14]
+ 1 │ const foo = (a = 1, b?: number, c: number) => {};
+   ·              ─────
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:4:17]
+ 3 │             constructor(
+ 4 │                 public a?: number,
+   ·                 ─────────────────
+ 5 │                 private b: number,
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:3:25]
+ 2 │         class Foo {
+ 3 │             constructor(a = 0, b: number) {}
+   ·                         ─────
+ 4 │         }
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:2:25]
+ 1 │ class Foo {
+ 2 │             constructor(a?: number, b: number) {}
+   ·                         ──────────
+ 3 │         }
+   ╰────
+  help: Enforce default parameters to be last.
+
+  ⚠ eslint(default-param-last): Default parameters should be last
+   ╭─[default_param_last.tsx:3:17]
+ 2 │             constructor(
+ 3 │                 public a = 0,
+   ·                 ────────────
+ 4 │                 private b: number,
    ╰────
   help: Enforce default parameters to be last.

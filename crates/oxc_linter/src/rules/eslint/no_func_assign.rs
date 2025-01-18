@@ -28,6 +28,7 @@ declare_oxc_lint!(
     /// foo = bar;
     /// ```
     NoFuncAssign,
+    eslint,
     correctness
 );
 
@@ -73,5 +74,5 @@ fn test() {
         ("var a = function foo() { foo = 123; };", None),
     ];
 
-    Tester::new(NoFuncAssign::NAME, NoFuncAssign::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoFuncAssign::NAME, NoFuncAssign::PLUGIN, pass, fail).test_and_snapshot();
 }

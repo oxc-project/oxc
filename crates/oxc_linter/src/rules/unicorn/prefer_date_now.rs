@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// const ts = Date.now();
     /// ```
     PreferDateNow,
+    unicorn,
     pedantic,
     fix
 );
@@ -238,7 +239,7 @@ fn test() {
         ("BigInt(new Date());", "Date.now();"),
     ];
 
-    Tester::new(PreferDateNow::NAME, PreferDateNow::CATEGORY, pass, fail)
+    Tester::new(PreferDateNow::NAME, PreferDateNow::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
 }

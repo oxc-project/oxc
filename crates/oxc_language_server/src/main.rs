@@ -20,7 +20,7 @@ use tower_lsp::{
     Client, LanguageServer, LspService, Server,
 };
 
-use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
+use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter, Oxlintrc};
 
 use crate::capabilities::{Capabilities, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC};
 use crate::linter::error_with_position::DiagnosticReport;
@@ -488,10 +488,11 @@ impl Backend {
             let mut linter = self.server_linter.write().await;
             let config = Oxlintrc::from_file(&config_path)
                 .expect("should have initialized linter with new options");
+            let config_store = ConfigStoreBuilder::from_oxlintrc(true, config.clone())
+                .build()
+                .expect("failed to build config");
             *linter = ServerLinter::new_with_linter(
-                LinterBuilder::from_oxlintrc(true, config.clone())
-                    .with_fix(FixKind::SafeFix)
-                    .build(),
+                Linter::new(LintOptions::default(), config_store).with_fix(FixKind::SafeFix),
             );
             return Some(config);
         }

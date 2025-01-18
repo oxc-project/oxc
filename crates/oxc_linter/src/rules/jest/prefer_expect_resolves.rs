@@ -68,6 +68,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     PreferExpectResolves,
+    jest,
     style,
     fix
 );
@@ -149,6 +150,8 @@ impl PreferExpectResolves {
 fn tests() {
     use crate::tester::Tester;
 
+    // Note: Both Jest and Vitest share the same unit tests
+
     let pass = vec![
         ("expect.hasAssertions()", None),
         (
@@ -178,6 +181,7 @@ fn tests() {
             ",
             None,
         ),
+        ("expect().nothing();", None),
     ];
 
     let fail = vec![
@@ -261,7 +265,7 @@ fn tests() {
         ),
     ];
 
-    Tester::new(PreferExpectResolves::NAME, PreferExpectResolves::CATEGORY, pass, fail)
+    Tester::new(PreferExpectResolves::NAME, PreferExpectResolves::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();

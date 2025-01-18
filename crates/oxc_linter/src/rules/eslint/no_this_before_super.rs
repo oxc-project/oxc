@@ -42,6 +42,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoThisBeforeSuper,
+    eslint,
     correctness
 );
 
@@ -486,6 +487,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoThisBeforeSuper::NAME, NoThisBeforeSuper::CATEGORY, pass, fail)
-        .test_and_snapshot();
+    Tester::new(NoThisBeforeSuper::NAME, NoThisBeforeSuper::PLUGIN, pass, fail).test_and_snapshot();
 }

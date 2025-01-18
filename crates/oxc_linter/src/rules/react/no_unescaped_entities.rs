@@ -43,6 +43,7 @@ declare_oxc_lint!(
     /// <div> {'>'} </div>
     /// ```
     NoUnescapedEntities,
+    react,
     pedantic
 );
 
@@ -193,6 +194,6 @@ fn test() {
         r#"<script>测试 " 测试</script>"#,
     ];
 
-    Tester::new(NoUnescapedEntities::NAME, NoUnescapedEntities::CATEGORY, pass, fail)
+    Tester::new(NoUnescapedEntities::NAME, NoUnescapedEntities::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

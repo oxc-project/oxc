@@ -1,4 +1,3 @@
-#![allow(clippy::needless_lifetimes)]
 //! Transformer / Transpiler
 //!
 //! References:
@@ -20,6 +19,7 @@ mod common;
 mod compiler_assumptions;
 mod context;
 mod options;
+mod utils;
 
 // Presets: <https://babel.dev/docs/presets>
 mod es2015;
@@ -156,7 +156,7 @@ struct TransformerImpl<'a, 'ctx> {
     common: Common<'a, 'ctx>,
 }
 
-impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
+impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_program(program, ctx);
@@ -282,6 +282,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
 
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.common.enter_expression(expr, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_expression(expr, ctx);
         }
@@ -291,15 +292,14 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         self.x2_es2018.enter_expression(expr, ctx);
         self.x2_es2016.enter_expression(expr, ctx);
         self.x4_regexp.enter_expression(expr, ctx);
-        self.common.enter_expression(expr, ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.common.exit_expression(expr, ctx);
         self.x1_jsx.exit_expression(expr, ctx);
         self.x2_es2022.exit_expression(expr, ctx);
         self.x2_es2018.exit_expression(expr, ctx);
         self.x2_es2017.exit_expression(expr, ctx);
-        self.common.exit_expression(expr, ctx);
     }
 
     fn enter_simple_assignment_target(
@@ -478,6 +478,8 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.common.exit_arrow_function_expression(arrow, ctx);
+
         // Some plugins may add new statements to the ArrowFunctionExpression's body,
         // which can cause issues with the `() => x;` case, as it only allows a single statement.
         // To address this, we wrap the last statement in a return statement and set the expression to false.

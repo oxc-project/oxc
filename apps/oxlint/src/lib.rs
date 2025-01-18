@@ -1,5 +1,6 @@
 mod command;
 mod lint;
+mod output_formatter;
 mod result;
 mod runner;
 mod walk;

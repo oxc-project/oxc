@@ -56,6 +56,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoStandaloneExpect,
+    jest,
     correctness
 );
 
@@ -386,7 +387,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoStandaloneExpect::NAME, NoStandaloneExpect::CATEGORY, pass, fail)
+    Tester::new(NoStandaloneExpect::NAME, NoStandaloneExpect::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

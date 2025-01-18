@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.6] - 2025-01-13
+
+### Refactor
+
+- 43ed3e1 linter: Add output formatter (#8436) (Alexander S.)
+- 4e05e66 linter: Remove glob for windows (#8390) (Alexander S.)
+- 3c534ae linter: Refactor `LintBuilder` to prep for nested configs (#8034) (camc314)
+
+## [0.15.5] - 2025-01-02
+
+### Bug Fixes
+
+- 2b14a6f linter: Fix `ignorePattern` config for windows  (#8214) (Alexander S.)
+
+### Testing
+
+- cb709c9 linter: Fix some oxlint tests on windows (#8204) (Cameron)
+
 ## [0.15.4] - 2024-12-30
 
 ### Bug Fixes

@@ -4,6 +4,44 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.47.0] - 2025-01-18
+
+### Features
+
+- c479a58 napi/parser: Expose dynamic import expressions (#8540) (Boshen)
+
+### Refactor
+
+- 2857ae1 parser: Refactor visitor in regexp example (#8524) (overlookmotel)
+- b5ed58e span: All methods take owned `Span` (#8297) (overlookmotel)
+
+## [0.45.0] - 2025-01-11
+
+### Features
+
+- 6c7acac allocator: Implement `IntoIterator` for `&mut Vec` (#8389) (overlookmotel)
+- 2da4365 parser: Missing initializer in destructuring declaration inside for loop head (#8222) (Boshen)
+
+### Bug Fixes
+
+- e1f8ea4 lexer: `Source` is not `Clone` (#8294) (overlookmotel)
+- f88acb3 parser: Allow line breaks between `const` and `enum` (#8193) (branchseer)
+
+### Refactor
+
+- 64bfdfe lexer: Tighten safety of lexer by always including lifetime on `SourcePosition` (#8293) (overlookmotel)
+- 0344e98 lexer: Make `handle_byte` a method of `Lexer` (#8291) (overlookmotel)
+- fabf116 lexer: Replace `#[allow]` with `#[expect]` (#8289) (overlookmotel)
+- 0462edb lexer: Rename function param (#8288) (overlookmotel)
+
+### Styling
+
+- 4d2888d lexer: Reorder imports (#8290) (overlookmotel)
+
+### Testing
+
+- 16dcdaf lexer: Assert size of `Token` in 32-bit WASM (#8292) (overlookmotel)
+
 ## [0.44.0] - 2024-12-25
 
 - ad2a620 ast: [**BREAKING**] Add missing `AssignmentTargetProperty::computed` (#8097) (Boshen)

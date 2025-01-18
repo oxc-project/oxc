@@ -35,6 +35,7 @@ declare_oxc_lint!(
     /// <script src='https://polyfill.io/v3/polyfill.min.js?features=WeakSet%2CPromise%2CPromise.prototype.finally%2Ces2015%2Ces5%2Ces6'></script>
     /// ```
     NoUnwantedPolyfillio,
+    nextjs,
     correctness
 );
 
@@ -262,6 +263,6 @@ fn test() {
                   }",
     ];
 
-    Tester::new(NoUnwantedPolyfillio::NAME, NoUnwantedPolyfillio::CATEGORY, pass, fail)
+    Tester::new(NoUnwantedPolyfillio::NAME, NoUnwantedPolyfillio::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

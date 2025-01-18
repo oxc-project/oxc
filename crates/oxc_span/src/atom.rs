@@ -8,7 +8,7 @@ use oxc_allocator::{Allocator, CloneIn, FromIn};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
-use crate::{cmp::ContentEq, hash::ContentHash, CompactStr};
+use crate::{cmp::ContentEq, CompactStr};
 
 /// An inlinable string for oxc_allocator.
 ///
@@ -20,10 +20,16 @@ use crate::{cmp::ContentEq, hash::ContentHash, CompactStr};
 pub struct Atom<'a>(&'a str);
 
 impl Atom<'static> {
+    /// Get an [`Atom`] containing a static string.
+    #[inline]
+    pub const fn new_const(s: &'static str) -> Self {
+        Atom(s)
+    }
+
     /// Get an [`Atom`] containing the empty string (`""`).
     #[inline]
     pub const fn empty() -> Self {
-        Atom("")
+        Self::new_const("")
     }
 }
 
@@ -73,7 +79,7 @@ impl<'alloc> FromIn<'alloc, &Atom<'alloc>> for Atom<'alloc> {
 
 impl<'alloc> FromIn<'alloc, &str> for Atom<'alloc> {
     fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
-        Self::from(oxc_allocator::String::from_str_in(s, allocator))
+        Self::from(&*allocator.alloc_str(s))
     }
 }
 
@@ -187,12 +193,6 @@ impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
 impl ContentEq for Atom<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
-    }
-}
-
-impl ContentHash for Atom<'_> {
-    fn content_hash<H: hash::Hasher>(&self, state: &mut H) {
-        hash::Hash::hash(self, state);
     }
 }
 

@@ -14,19 +14,30 @@ pub struct MinimizeExitPoints {
 
 impl<'a> CompressorPass<'a> for MinimizeExitPoints {
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = true;
+        self.changed = false;
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
-impl<'a> Traverse<'a> for MinimizeExitPoints {
-    fn exit_statements(&mut self, _stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
+impl Traverse<'_> for MinimizeExitPoints {
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'_>, _ctx: &mut TraverseCtx<'_>) {
+        self.remove_last_return(&mut body.statements);
     }
 }
 
-impl MinimizeExitPoints {
+impl<'a> MinimizeExitPoints {
     pub fn new() -> Self {
         Self { changed: false }
+    }
+
+    // `function foo() { return }` -> `function foo() {}`
+    fn remove_last_return(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        if let Some(last) = stmts.last() {
+            if matches!(last, Statement::ReturnStatement(ret) if ret.argument.is_none()) {
+                stmts.pop();
+                self.changed = true;
+            }
+        }
     }
 }
 
@@ -75,7 +86,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_function_return_optimization1() {
         fold("function f(){return}", "function f(){}");
     }
@@ -144,7 +154,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_function_return_scoped() {
         fold_same(
             "function f(a) {
@@ -370,7 +379,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_dont_remove_break_in_try_finally() {
         fold_same("function f() {b:try{throw 9} finally {break b} return 1;}");
     }
@@ -382,7 +390,6 @@ mod test {
      * @see https://github.com/google/closure-compiler/issues/554
      */
     #[test]
-    #[ignore]
     fn test_dont_fold_break_in_do_while_if_condition_has_side_effects() {
         fold_same("var b=true;do{break}while(b=false);");
     }

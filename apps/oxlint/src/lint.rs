@@ -1,6 +1,6 @@
 use std::{
-    env,
-    io::BufWriter,
+    env, fs,
+    io::{BufWriter, Write},
     path::{Path, PathBuf},
     time::Instant,
 };
@@ -8,19 +8,18 @@ use std::{
 use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
-    loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, InvalidFilterKind, LintFilter, LintService,
-    LintServiceOptions, Linter, LinterBuilder, Oxlintrc,
+    loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, ConfigStoreBuilder, InvalidFilterKind,
+    LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
-    cli::{
-        CliRunResult, LintCommand, LintResult, MiscOptions, OutputFormat, OutputOptions, Runner,
-        WarningOptions,
-    },
+    cli::{CliRunResult, LintCommand, LintResult, MiscOptions, Runner, WarningOptions},
+    output_formatter::{OutputFormat, OutputFormatter},
     walk::{Extensions, Walk},
 };
 
+#[derive(Debug)]
 pub struct LintRunner {
     options: LintCommand,
     cwd: PathBuf,
@@ -34,13 +33,16 @@ impl Runner for LintRunner {
     }
 
     fn run(self) -> CliRunResult {
+        let format_str = self.options.output_options.format;
+        let mut output_formatter = OutputFormatter::new(format_str);
+
+        // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
+        // See `https://github.com/rust-lang/rust/issues/60673`.
+        let mut stdout = BufWriter::new(std::io::stdout());
+
         if self.options.list_rules {
-            let mut stdout = BufWriter::new(std::io::stdout());
-            if self.options.output_options.format == OutputFormat::Json {
-                Linter::print_rules_json(&mut stdout);
-            } else {
-                Linter::print_rules(&mut stdout);
-            }
+            output_formatter.all_rules(&mut stdout);
+            stdout.flush().unwrap();
             return CliRunResult::None;
         }
 
@@ -72,14 +74,7 @@ impl Runner for LintRunner {
         }
 
         // Append cwd to all paths
-        paths = paths
-            .into_iter()
-            .map(|x| {
-                let mut path_with_cwd = self.cwd.clone();
-                path_with_cwd.push(x);
-                path_with_cwd
-            })
-            .collect();
+        paths = paths.into_iter().map(|x| self.cwd.join(x)).collect();
 
         if paths.is_empty() {
             // If explicit paths were provided, but all have been
@@ -114,13 +109,9 @@ impl Runner for LintRunner {
         }
 
         let mut oxlintrc = config_search_result.unwrap();
+        let oxlint_wd = oxlintrc.path.parent().unwrap_or(&self.cwd).to_path_buf();
 
-        let ignore_paths = oxlintrc
-            .ignore_patterns
-            .iter()
-            .map(|value| oxlintrc.path.parent().unwrap().join(value))
-            .collect::<Vec<_>>();
-        let paths = Walk::new(&paths, &ignore_options, &ignore_paths)
+        let paths = Walk::new(&oxlint_wd, &paths, &ignore_options, &oxlintrc.ignore_patterns)
             .with_extensions(Extensions(extensions))
             .paths();
 
@@ -128,22 +119,51 @@ impl Runner for LintRunner {
 
         enable_plugins.apply_overrides(&mut oxlintrc.plugins);
 
-        let oxlintrc_for_print =
-            if misc_options.print_config { Some(oxlintrc.clone()) } else { None };
-        let builder = LinterBuilder::from_oxlintrc(false, oxlintrc)
-            .with_filters(filter)
-            .with_fix(fix_options.fix_kind());
+        let oxlintrc_for_print = if misc_options.print_config || basic_options.init {
+            Some(oxlintrc.clone())
+        } else {
+            None
+        };
+        let config_builder =
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).with_filters(filter);
 
         if let Some(basic_config_file) = oxlintrc_for_print {
-            return CliRunResult::PrintConfigResult {
-                config_file: builder.resolve_final_config_file(basic_config_file),
-            };
+            let config_file = config_builder.resolve_final_config_file(basic_config_file);
+            if misc_options.print_config {
+                return CliRunResult::PrintConfigResult { config_file };
+            } else if basic_options.init {
+                match fs::write(Self::DEFAULT_OXLINTRC, config_file) {
+                    Ok(()) => {
+                        return CliRunResult::ConfigFileInitResult {
+                            message: "Configuration file created".to_string(),
+                        }
+                    }
+                    Err(_) => {
+                        return CliRunResult::ConfigFileInitResult {
+                            message: "Failed to create configuration file".to_string(),
+                        }
+                    }
+                }
+            }
         }
 
         let mut options = LintServiceOptions::new(self.cwd, paths)
-            .with_cross_module(builder.plugins().has_import());
+            .with_cross_module(config_builder.plugins().has_import());
 
-        let linter = builder.build();
+        let lint_config = match config_builder.build() {
+            Ok(config) => config,
+            Err(diagnostic) => {
+                let handler = GraphicalReportHandler::new();
+                let mut err = String::new();
+                handler.render_report(&mut err, &diagnostic).unwrap();
+                return CliRunResult::InvalidOptions {
+                    message: format!("Failed to parse configuration file.\n{err}"),
+                };
+            }
+        };
+
+        let linter =
+            Linter::new(LintOptions::default(), lint_config).with_fix(fix_options.fix_kind());
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
@@ -161,7 +181,7 @@ impl Runner for LintRunner {
 
         let lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
-            Self::get_diagnostic_service(&warning_options, &output_options, &misc_options);
+            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn({
@@ -171,7 +191,7 @@ impl Runner for LintRunner {
                 lint_service.run(&tx_error);
             }
         });
-        diagnostic_service.run();
+        diagnostic_service.run(&mut stdout);
 
         CliRunResult::LintResult(LintResult {
             duration: now.elapsed(),
@@ -196,23 +216,14 @@ impl LintRunner {
     }
 
     fn get_diagnostic_service(
+        reporter: &OutputFormatter,
         warning_options: &WarningOptions,
-        output_options: &OutputOptions,
         misc_options: &MiscOptions,
     ) -> DiagnosticService {
-        let mut diagnostic_service = DiagnosticService::default()
+        DiagnosticService::new(reporter.get_diagnostic_reporter())
             .with_quiet(warning_options.quiet)
             .with_silent(misc_options.silent)
-            .with_max_warnings(warning_options.max_warnings);
-
-        match output_options.format {
-            OutputFormat::Default => {}
-            OutputFormat::Json => diagnostic_service.set_json_reporter(),
-            OutputFormat::Unix => diagnostic_service.set_unix_reporter(),
-            OutputFormat::Checkstyle => diagnostic_service.set_checkstyle_reporter(),
-            OutputFormat::Github => diagnostic_service.set_github_reporter(),
-        }
-        diagnostic_service
+            .with_max_warnings(warning_options.max_warnings)
     }
 
     // moved into a separate function for readability, but it's only ever used
@@ -258,7 +269,8 @@ impl LintRunner {
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, CliRunResult> {
         if let Some(config_path) = config {
-            return match Oxlintrc::from_file(config_path) {
+            let full_path = cwd.join(config_path);
+            return match Oxlintrc::from_file(&full_path) {
                 Ok(config) => Ok(config),
                 Err(diagnostic) => {
                     let handler = GraphicalReportHandler::new();
@@ -270,20 +282,17 @@ impl LintRunner {
                 }
             };
         }
-
         // no config argument is provided,
         // auto detect default config file from current work directory
         // or return the default configuration, when no valid file is found
-        let mut config_path = cwd.to_path_buf();
-        config_path.push(Self::DEFAULT_OXLINTRC);
-
+        let config_path = cwd.join(Self::DEFAULT_OXLINTRC);
         Oxlintrc::from_file(&config_path).or_else(|_| Ok(Oxlintrc::default()))
     }
 }
 
-#[cfg(all(test, not(target_os = "windows")))]
+#[cfg(test)]
 mod test {
-    use std::env;
+    use std::{env, fs, path::MAIN_SEPARATOR_STR};
 
     use super::LintRunner;
     use crate::cli::{lint_command, CliRunResult, LintResult, Runner};
@@ -301,10 +310,19 @@ mod test {
     fn test_with_cwd(cwd: &str, args: &[&str]) -> LintResult {
         let mut new_args = vec!["--silent"];
         new_args.extend(args);
+
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
 
         let mut current_cwd = env::current_dir().unwrap();
-        current_cwd.push(cwd);
+
+        let part_cwd = if MAIN_SEPARATOR_STR == "/" {
+            cwd.into()
+        } else {
+            #[expect(clippy::disallowed_methods)]
+            cwd.replace('/', MAIN_SEPARATOR_STR)
+        };
+
+        current_cwd.push(part_cwd);
 
         match LintRunner::new(options).with_cwd(current_cwd).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
@@ -679,12 +697,16 @@ mod test {
         use std::fs;
         let file = "fixtures/linter/fix.js";
         let args = &["--fix", file];
-        let content = fs::read_to_string(file).unwrap();
+        let content_original = fs::read_to_string(file).unwrap();
+        #[expect(clippy::disallowed_methods)]
+        let content = content_original.replace("\r\n", "\n");
         assert_eq!(&content, "debugger\n");
 
         // Apply fix to the file.
         let _ = test(args);
-        assert_eq!(fs::read_to_string(file).unwrap(), "\n");
+        #[expect(clippy::disallowed_methods)]
+        let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
+        assert_eq!(new_content, "\n");
 
         // File should not be modified if no fix is applied.
         let modified_before = fs::metadata(file).unwrap().modified().unwrap();
@@ -693,7 +715,7 @@ mod test {
         assert_eq!(modified_before, modified_after);
 
         // Write the file back.
-        fs::write(file, content).unwrap();
+        fs::write(file, content_original).unwrap();
     }
 
     #[test]
@@ -705,8 +727,10 @@ mod test {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
 
-        let expect_json =
-            std::fs::read_to_string("fixtures/print_config/normal/expect.json").unwrap();
+        #[expect(clippy::disallowed_methods)]
+        let expect_json = std::fs::read_to_string("fixtures/print_config/normal/expect.json")
+            .unwrap()
+            .replace("\r\n", "\n");
         assert_eq!(config, expect_json.trim());
     }
 
@@ -727,9 +751,24 @@ mod test {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
 
-        let expect_json =
-            std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json").unwrap();
+        #[expect(clippy::disallowed_methods)]
+        let expect_json = std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json")
+            .unwrap()
+            .replace("\r\n", "\n");
+
         assert_eq!(config, expect_json.trim());
+    }
+
+    #[test]
+    fn test_init_config() {
+        let args = &["--init"];
+        let options = lint_command().run_inner(args).unwrap();
+        let ret = LintRunner::new(options).run();
+        let CliRunResult::ConfigFileInitResult { message } = ret else {
+            panic!("Expected configuration file to be created, got {ret:?}")
+        };
+        assert_eq!(message, "Configuration file created");
+        fs::remove_file(LintRunner::DEFAULT_OXLINTRC).unwrap();
     }
 
     #[test]
@@ -774,11 +813,10 @@ mod test {
 
     #[test]
     fn test_config_ignore_patterns_directory() {
-        let result = test(&[
-            "-c",
-            "fixtures/config_ignore_patterns/ignore_directory/eslintrc.json",
+        let result = test_with_cwd(
             "fixtures/config_ignore_patterns/ignore_directory",
-        ]);
+            &["-c", "eslintrc.json"],
+        );
         assert_eq!(result.number_of_files, 1);
     }
 

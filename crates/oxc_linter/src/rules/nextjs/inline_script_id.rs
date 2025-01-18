@@ -31,6 +31,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     InlineScriptId,
+    nextjs,
     correctness
 );
 
@@ -234,7 +235,7 @@ fn test() {
 			        }",
     ];
 
-    Tester::new(InlineScriptId::NAME, InlineScriptId::CATEGORY, pass, fail)
+    Tester::new(InlineScriptId::NAME, InlineScriptId::PLUGIN, pass, fail)
         .with_nextjs_plugin(true)
         .test_and_snapshot();
 }

@@ -632,7 +632,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 if can_expando_function_names.contains(&ident.name)
                                     && !assignable_properties_for_namespace
                                         .get(&ident.name.as_str())
-                                        .map_or(false, |properties| {
+                                        .is_some_and(|properties| {
                                             properties.contains(&static_member_expr.property.name)
                                         })
                                 {

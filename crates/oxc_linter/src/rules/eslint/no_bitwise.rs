@@ -45,6 +45,7 @@ declare_oxc_lint!(
     /// var x = y | z;
     /// ```
     NoBitwise,
+    eslint,
     restriction
 );
 
@@ -158,5 +159,5 @@ fn test() {
         ("a >>>= b", None),
     ];
 
-    Tester::new(NoBitwise::NAME, NoBitwise::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoBitwise::NAME, NoBitwise::PLUGIN, pass, fail).test_and_snapshot();
 }

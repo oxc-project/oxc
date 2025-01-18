@@ -41,6 +41,7 @@ declare_oxc_lint!(
     ///export default MyDocument
     /// ```
     NoDuplicateHead,
+    nextjs,
     correctness
 );
 
@@ -208,5 +209,5 @@ fn test() {
 			      "#,
     ];
 
-    Tester::new(NoDuplicateHead::NAME, NoDuplicateHead::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NoDuplicateHead::NAME, NoDuplicateHead::PLUGIN, pass, fail).test_and_snapshot();
 }

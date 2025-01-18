@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// const bar = new Array(1, 2, 3);
     /// ```
     NewForBuiltins,
+    unicorn,
     pedantic
 );
 
@@ -287,5 +288,5 @@ fn test() {
         ",
     ];
 
-    Tester::new(NewForBuiltins::NAME, NewForBuiltins::CATEGORY, pass, fail).test_and_snapshot();
+    Tester::new(NewForBuiltins::NAME, NewForBuiltins::PLUGIN, pass, fail).test_and_snapshot();
 }

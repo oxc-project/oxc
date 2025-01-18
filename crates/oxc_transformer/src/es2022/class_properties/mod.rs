@@ -183,7 +183,8 @@
 //! * `static_block_and_prop_init.rs`: Transform of static property initializers and static blocks.
 //! * `computed_key.rs`:               Transform of property/method computed keys.
 //! * `private_field.rs`:              Transform of private fields (`this.#prop`).
-//! * `super.rs`:                      Transform `super` expressions.
+//! * `private_method.rs`:             Transform of private methods (`this.#method()`).
+//! * `super_converter.rs`:            Transform `super` expressions.
 //! * `class_details.rs`:              Structures containing details of classes and private properties.
 //! * `class_bindings.rs`:             Structure containing bindings for class name and temp var.
 //! * `utils.rs`:                      Utility functions.
@@ -214,9 +215,10 @@ mod computed_key;
 mod constructor;
 mod instance_prop_init;
 mod private_field;
+mod private_method;
 mod prop_decl;
 mod static_block_and_prop_init;
-mod supers;
+mod super_converter;
 mod utils;
 use class_bindings::ClassBindings;
 use class_details::{ClassDetails, ClassesStack, PrivateProp, ResolvedPrivateProp};
@@ -317,7 +319,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 }
 
-impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
+impl<'a> Traverse<'a> for ClassProperties<'a, '_> {
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.transform_class_body_on_entry(body, ctx);
     }
@@ -365,6 +367,10 @@ impl<'a, 'ctx> Traverse<'a> for ClassProperties<'a, 'ctx> {
             // "object.#prop`xyz`"
             Expression::TaggedTemplateExpression(_) => {
                 self.transform_tagged_template_expression(expr, ctx);
+            }
+            // "#prop in object"
+            Expression::PrivateInExpression(_) => {
+                self.transform_private_in_expression(expr, ctx);
             }
             _ => {}
         }

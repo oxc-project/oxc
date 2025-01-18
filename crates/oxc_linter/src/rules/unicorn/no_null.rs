@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// let foo
     /// ```
     NoNull,
+    unicorn,
     style,
     conditional_fix
 );
@@ -411,5 +412,5 @@ fn test() {
             None,
         ),
     ];
-    Tester::new(NoNull::NAME, NoNull::CATEGORY, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoNull::NAME, NoNull::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

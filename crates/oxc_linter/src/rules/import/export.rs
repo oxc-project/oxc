@@ -44,6 +44,8 @@ declare_oxc_lint!(
     /// export * from "./export-all"; // No conflict if export-all.js also exports foo
     /// ```
     Export,
+
+    import,
     nursery
 );
 
@@ -338,7 +340,7 @@ fn test() {
             // "),
         ];
 
-        Tester::new(Export::NAME, Export::CATEGORY, pass, fail)
+        Tester::new(Export::NAME, Export::PLUGIN, pass, fail)
             .with_import_plugin(true)
             .change_rule_path("index.ts")
             .test_and_snapshot();
@@ -354,7 +356,7 @@ fn test() {
                 export {Baz as default};
             "),
         ];
-        Tester::new(Export::NAME, Export::CATEGORY, pass, fail)
+        Tester::new(Export::NAME, Export::PLUGIN, pass, fail)
             .with_import_plugin(true)
             .change_rule_path("export-star-4/index.js")
             .test();

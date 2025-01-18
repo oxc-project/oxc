@@ -10,3 +10,6 @@ rule = "run -p rulegen"
 
 # Build oxlint in release mode
 oxlint = "build --release --bin oxlint --features allocator"
+
+[resolver]
+incompatible-rust-versions = "fallback"

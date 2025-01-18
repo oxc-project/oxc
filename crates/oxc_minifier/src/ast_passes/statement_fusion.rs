@@ -1,7 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
-use oxc_span::SPAN;
+use oxc_span::GetSpan;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
 use crate::CompressorPass;
@@ -23,16 +23,8 @@ impl<'a> CompressorPass<'a> for StatementFusion {
 }
 
 impl<'a> Traverse<'a> for StatementFusion {
-    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fuse_statements(&mut program.body, ctx);
-    }
-
-    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fuse_statements(&mut body.statements, ctx);
-    }
-
-    fn exit_block_statement(&mut self, block: &mut BlockStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fuse_statements(&mut block.body, ctx);
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.fuse_statements(stmts, ctx);
     }
 }
 
@@ -102,7 +94,7 @@ impl<'a> StatementFusion {
             }
             Statement::BlockStatement(block) => {
                 can_merge_block_stmt(block)
-                    && block.body.first().map_or(false, Self::is_fusable_control_statement)
+                    && block.body.first().is_some_and(Self::is_fusable_control_statement)
             }
             _ => false,
         }
@@ -122,7 +114,7 @@ impl<'a> StatementFusion {
                 } else {
                     exprs.push(ctx.ast.move_expression(&mut expr_stmt.expression));
                 }
-                *stmt = ctx.ast.statement_empty(SPAN);
+                *stmt = ctx.ast.statement_empty(expr_stmt.span);
             } else {
                 break;
             }
@@ -148,8 +140,12 @@ impl<'a> StatementFusion {
                 if let Some(init) = for_stmt.init.as_mut() {
                     init.as_expression_mut().unwrap()
                 } else {
+                    let span = Span::new(
+                        exprs.first().map_or(0, |e| e.span().start),
+                        exprs.last().map_or(0, |e| e.span().end),
+                    );
                     for_stmt.init =
-                        Some(ForStatementInit::from(ctx.ast.expression_sequence(SPAN, exprs)));
+                        Some(ForStatementInit::from(ctx.ast.expression_sequence(span, exprs)));
                     return;
                 }
             }
@@ -175,7 +171,11 @@ impl<'a> StatementFusion {
             }
         };
         exprs.push(ctx.ast.move_expression(expr));
-        *expr = ctx.ast.expression_sequence(SPAN, exprs);
+        let span = Span::new(
+            exprs.first().map_or(0, |e| e.span().start),
+            exprs.last().map_or(0, |e| e.span().end),
+        );
+        *expr = ctx.ast.expression_sequence(span, exprs);
     }
 }
 
@@ -306,6 +306,11 @@ mod test {
         );
         fuse("a;b;c;{var x;d;e;}", "a,b,c;{var x;d,e;}");
         fuse("a;b;c;label:{break label;d;e;}", "a,b,c;label:{break label;d,e;}");
+    }
+
+    #[test]
+    fn fuse_into_switch_cases() {
+        fuse("switch (_) { case _: a; return b }", "switch (_) { case _: return a, b }");
     }
 
     #[test]

@@ -11,6 +11,7 @@ pub enum CliRunResult {
     PathNotFound { paths: Vec<PathBuf> },
     LintResult(LintResult),
     PrintConfigResult { config_file: String },
+    ConfigFileInitResult { message: String },
 }
 
 /// A summary of a complete linter run.
@@ -91,6 +92,10 @@ impl Termination for CliRunResult {
             }
             Self::PrintConfigResult { config_file } => {
                 println!("{config_file}");
+                ExitCode::from(0)
+            }
+            Self::ConfigFileInitResult { message } => {
+                println!("{message}");
                 ExitCode::from(0)
             }
         }

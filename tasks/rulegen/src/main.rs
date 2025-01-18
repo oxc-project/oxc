@@ -143,7 +143,7 @@ impl TestCase {
         );
 
         // ("null==null", "null === null", None),
-        Some(format!(r#"({code}, {output}, {config})"#))
+        Some(format!(r"({code}, {output}, {config})"))
     }
 }
 
@@ -320,7 +320,7 @@ impl<'a> Visit<'a> for TestCase {
 
 #[derive(Serialize)]
 pub struct Context {
-    plugin_name: String,
+    mod_name: String,
     kebab_rule_name: String,
     pascal_rule_name: String,
     snake_rule_name: String,
@@ -335,12 +335,14 @@ pub struct Context {
 }
 
 impl Context {
-    fn new(plugin_name: String, rule_name: &str, pass_cases: String, fail_cases: String) -> Self {
+    fn new(plugin_name: RuleKind, rule_name: &str, pass_cases: String, fail_cases: String) -> Self {
         let pascal_rule_name = rule_name.to_case(Case::Pascal);
         let kebab_rule_name = rule_name.to_case(Case::Kebab);
         let underscore_rule_name = rule_name.to_case(Case::Snake);
+        let mod_name = get_mod_name(plugin_name);
+
         Self {
-            plugin_name,
+            mod_name,
             kebab_rule_name,
             pascal_rule_name,
             snake_rule_name: underscore_rule_name,
@@ -649,7 +651,6 @@ fn main() {
     let rule_kind = args.next().map_or(RuleKind::ESLint, |kind| RuleKind::from(&kind));
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
     let camel_rule_name = rule_name.to_case(Case::Camel);
-    let plugin_name = rule_kind.to_string();
 
     let rule_test_path = match rule_kind {
         RuleKind::ESLint => format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js"),
@@ -741,18 +742,18 @@ fn main() {
             let (pass_cases, _) = gen_cases_string(pass_cases);
             let (fail_cases, fix_cases) = gen_cases_string(fail_cases);
 
-            Context::new(plugin_name, &rule_name, pass_cases, fail_cases)
+            Context::new(rule_kind, &rule_name, pass_cases, fail_cases)
                 .with_language(language)
                 .with_filename(has_filename)
                 .with_fix_cases(fix_cases)
         }
         Err(_err) => {
             println!("Rule {rule_name} cannot be found in {rule_kind}, use empty template.");
-            Context::new(plugin_name, &rule_name, String::new(), String::new())
+            Context::new(rule_kind, &rule_name, String::new(), String::new())
         }
         Ok(Err(err)) => {
             println!("Failed to convert rule source code to string: {err}, use empty template");
-            Context::new(plugin_name, &rule_name, String::new(), String::new())
+            Context::new(rule_kind, &rule_name, String::new(), String::new())
         }
     };
 
@@ -767,28 +768,32 @@ fn main() {
     }
 }
 
+fn get_mod_name(rule_kind: RuleKind) -> String {
+    match rule_kind {
+        RuleKind::ESLint => "eslint".into(),
+        RuleKind::Import => "import".into(),
+        RuleKind::Typescript => "typescript".into(),
+        RuleKind::Jest => "jest".into(),
+        RuleKind::React => "react".into(),
+        RuleKind::ReactPerf => "react_perf".into(),
+        RuleKind::Unicorn => "unicorn".into(),
+        RuleKind::JSDoc => "jsdoc".into(),
+        RuleKind::JSXA11y => "jsx_a11y".into(),
+        RuleKind::Oxc => "oxc".into(),
+        RuleKind::NextJS => "nextjs".into(),
+        RuleKind::Promise => "promise".into(),
+        RuleKind::Vitest => "vitest".into(),
+        RuleKind::Node => "node".into(),
+    }
+}
+
 /// Adds a module definition for the given rule to the `rules.rs` file, and adds the rule to the
 /// `declare_all_lint_rules!` macro block.
 fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std::error::Error>> {
     let rules_path = "crates/oxc_linter/src/rules.rs";
     let mut rules = std::fs::read_to_string(rules_path)?;
 
-    let mod_name = match rule_kind {
-        RuleKind::ESLint => "eslint",
-        RuleKind::Import => "import",
-        RuleKind::Typescript => "typescript",
-        RuleKind::Jest => "jest",
-        RuleKind::React => "react",
-        RuleKind::ReactPerf => "react_perf",
-        RuleKind::Unicorn => "unicorn",
-        RuleKind::JSDoc => "jsdoc",
-        RuleKind::JSXA11y => "jsx_a11y",
-        RuleKind::Oxc => "oxc",
-        RuleKind::NextJS => "nextjs",
-        RuleKind::Promise => "promise",
-        RuleKind::Vitest => "vitest",
-        RuleKind::Node => "node",
-    };
+    let mod_name = get_mod_name(rule_kind);
     let mod_def = format!("mod {mod_name}");
     let Some(mod_start) = rules.find(&mod_def) else {
         return Err(format!("failed to find '{mod_def}' in {rules_path}").into());

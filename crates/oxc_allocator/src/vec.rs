@@ -2,36 +2,40 @@
 //!
 //! Originally based on [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/24004745a8ed4939fc0dc7332bfd1268ac52285f/crates/ast/src/arena.rs)
 
+// All methods which just delegate to `allocator_api2::vec::Vec` methods marked `#[inline(always)]`
+#![expect(clippy::inline_always)]
+
 use std::{
     self,
     fmt::{self, Debug},
     hash::{Hash, Hasher},
-    mem::ManuallyDrop,
+    mem::{needs_drop, ManuallyDrop},
     ops,
     ptr::NonNull,
     slice::SliceIndex,
 };
 
-use allocator_api2::vec;
+use allocator_api2::vec::Vec as InnerVec;
 use bumpalo::Bump;
 #[cfg(any(feature = "serialize", test))]
 use serde::{ser::SerializeSeq, Serialize, Serializer};
-use simdutf8::basic::{from_utf8, Utf8Error};
 
-use crate::{Allocator, Box, String};
+use crate::{Allocator, Box};
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
-/// Should only be used for storing AST types.
+/// ## No `Drop`s
 ///
-/// Must NOT be used to store types which have a [`Drop`] implementation.
-/// `T::drop` will NOT be called on the `Vec`'s contents when the `Vec` is dropped.
-/// If `T` owns memory outside of the arena, this will be a memory leak.
+/// Objects allocated into Oxc memory arenas are never [`Dropped`](Drop). Memory is released in bulk
+/// when the allocator is dropped, without dropping the individual objects in the arena.
 ///
-/// Note: This is not a soundness issue, as Rust does not support relying on `drop`
-/// being called to guarantee soundness.
+/// Therefore, it would produce a memory leak if you allocated [`Drop`] types into the arena
+/// which own memory allocations outside the arena.
+///
+/// Static checks make this impossible to do. [`Vec::new_in`] and all other methods which create
+/// a [`Vec`] will refuse to compile if called with a [`Drop`] type.
 #[derive(PartialEq, Eq)]
-pub struct Vec<'alloc, T>(ManuallyDrop<vec::Vec<T, &'alloc Bump>>);
+pub struct Vec<'alloc, T>(pub(crate) ManuallyDrop<InnerVec<T, &'alloc Bump>>);
 
 /// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
 unsafe impl<T> Send for Vec<'_, T> {}
@@ -53,9 +57,13 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// let mut vec: Vec<i32> = Vec::new_in(&arena);
     /// assert!(vec.is_empty());
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        Self(ManuallyDrop::new(vec::Vec::new_in(allocator)))
+        const {
+            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
+        }
+
+        Self(ManuallyDrop::new(InnerVec::new_in(allocator.bump())))
     }
 
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
@@ -105,9 +113,13 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// let vec_units = Vec::<()>::with_capacity_in(10, &arena);
     /// assert_eq!(vec_units.capacity(), usize::MAX);
     /// ```
-    #[inline]
+    #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        Self(ManuallyDrop::new(vec::Vec::with_capacity_in(capacity, allocator)))
+        const {
+            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
+        }
+
+        Self(ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator.bump())))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and
@@ -116,10 +128,14 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// This is behaviorially identical to [`FromIterator::from_iter`].
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
+        const {
+            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
+        }
+
         let iter = iter.into_iter();
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);
-        let mut vec = ManuallyDrop::new(vec::Vec::with_capacity_in(capacity, &**allocator));
+        let mut vec = ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator.bump()));
         vec.extend(iter);
         Self(vec)
     }
@@ -142,13 +158,17 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline]
     pub fn from_array_in<const N: usize>(array: [T; N], allocator: &'alloc Allocator) -> Self {
+        const {
+            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
+        }
+
         let boxed = Box::new_in(array, allocator);
         let ptr = Box::into_non_null(boxed).as_ptr().cast::<T>();
         // SAFETY: `ptr` has correct alignment - it was just allocated as `[T; N]`.
         // `ptr` was allocated with correct size for `[T; N]`.
         // `len` and `capacity` are both `N`.
         // Allocated size cannot be larger than `isize::MAX`, or `Box::new_in` would have failed.
-        let vec = unsafe { vec::Vec::from_raw_parts_in(ptr, N, N, &**allocator) };
+        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.bump()) };
         Self(ManuallyDrop::new(vec))
     }
 
@@ -172,6 +192,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     ///
     /// [owned slice]: Box
+    #[inline]
     pub fn into_boxed_slice(self) -> Box<'alloc, [T]> {
         let inner = ManuallyDrop::into_inner(self.0);
         let slice = inner.leak();
@@ -187,56 +208,27 @@ impl<'alloc, T> Vec<'alloc, T> {
     }
 }
 
-impl<'alloc> Vec<'alloc, u8> {
-    /// Convert `Vec<u8>` into `String`.
-    ///
-    /// # Errors
-    /// Returns [`Err`] if the `Vec` does not comprise a valid UTF-8 string.
-    pub fn into_string(self) -> Result<String<'alloc>, Utf8Error> {
-        // Check vec comprises a valid UTF-8 string.
-        from_utf8(&self.0)?;
-        // SAFETY: We just checked it's a valid UTF-8 string
-        let s = unsafe { self.into_string_unchecked() };
-        Ok(s)
-    }
-
-    /// Convert `Vec<u8>` into [`String`], without checking bytes comprise a valid UTF-8 string.
-    ///
-    /// Does not copy the contents of the `Vec`, converts in place. This is a zero-cost operation.
-    ///
-    /// # SAFETY
-    /// Caller must ensure this `Vec<u8>` comprises a valid UTF-8 string.
-    #[expect(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
-    #[inline] // `#[inline]` because this is a no-op at runtime
-    pub unsafe fn into_string_unchecked(self) -> String<'alloc> {
-        // Cannot use `bumpalo::String::from_utf8_unchecked` because it takes a `bumpalo::collections::Vec`,
-        // and our inner `Vec` type is `allocator_api2::vec::Vec`.
-        // SAFETY: Conversion is safe because both types store data in arena in same way.
-        // Lifetime of returned `String` is same as lifetime of original `Vec<u8>`.
-        let inner = ManuallyDrop::into_inner(self.0);
-        let (ptr, len, cap, bump) = inner.into_raw_parts_with_alloc();
-        String::from_raw_parts_in(ptr, len, cap, bump)
-    }
-}
-
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
-    type Target = vec::Vec<T, &'alloc Bump>;
+    type Target = InnerVec<T, &'alloc Bump>;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
-    fn deref_mut(&mut self) -> &mut vec::Vec<T, &'alloc Bump> {
+    #[inline]
+    fn deref_mut(&mut self) -> &mut InnerVec<T, &'alloc Bump> {
         &mut self.0
     }
 }
 
 impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
-    type IntoIter = <vec::Vec<T, &'alloc Bump> as IntoIterator>::IntoIter;
+    type IntoIter = <InnerVec<T, &'alloc Bump> as IntoIterator>::IntoIter;
     type Item = T;
 
+    #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
         let inner = ManuallyDrop::into_inner(self.0);
         // TODO: `allocator_api2::vec::Vec::IntoIter` is `Drop`.
@@ -245,12 +237,23 @@ impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
     }
 }
 
-impl<'alloc, T> IntoIterator for &'alloc Vec<'alloc, T> {
-    type IntoIter = std::slice::Iter<'alloc, T>;
-    type Item = &'alloc T;
+impl<'i, T> IntoIterator for &'i Vec<'_, T> {
+    type IntoIter = std::slice::Iter<'i, T>;
+    type Item = &'i T;
 
+    #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
+    }
+}
+
+impl<'i, T> IntoIterator for &'i mut Vec<'_, T> {
+    type IntoIter = std::slice::IterMut<'i, T>;
+    type Item = &'i mut T;
+
+    #[inline(always)]
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter_mut()
     }
 }
 
@@ -260,7 +263,7 @@ where
 {
     type Output = I::Output;
 
-    #[inline]
+    #[inline(always)]
     fn index(&self, index: I) -> &Self::Output {
         self.0.index(index)
     }
@@ -270,7 +273,7 @@ impl<T, I> ops::IndexMut<I> for Vec<'_, T>
 where
     I: SliceIndex<[T]>,
 {
-    #[inline]
+    #[inline(always)]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         self.0.index_mut(index)
     }
@@ -294,10 +297,9 @@ where
 }
 
 impl<T: Hash> Hash for Vec<'_, T> {
+    #[inline(always)]
     fn hash<H: Hasher>(&self, state: &mut H) {
-        for e in self.0.iter() {
-            e.hash(state);
-        }
+        self.0.hash(state);
     }
 }
 

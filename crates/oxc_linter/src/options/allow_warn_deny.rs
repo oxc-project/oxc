@@ -73,7 +73,7 @@ impl TryFrom<&Value> for AllowWarnDeny {
 
 fn invalid_int_severity<D: Display>(value: D) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
-        r#"Failed to parse rule severity, expected one of `0`, `1` or `2`, but got {value}"#
+        r"Failed to parse rule severity, expected one of `0`, `1` or `2`, but got {value}"
     ))
 }
 

@@ -96,10 +96,14 @@ export interface B {
 	[Math.random() > .5 ? "f1" : "f2"]: number;
 }
 export declare class C {
+	[Symbol.iterator]: number;
+	[globalThis.Symbol.toStringTag]: number;
 	[1]: number;
 	["2"]: number;
 }
 export declare const D: {
+	Symbol.iterator: number;
+	globalThis.Symbol.toStringTag: number;
 	1: number;
 	"2": number;
 };
@@ -197,24 +201,6 @@ export {};
 
   x TS9038: Computed property names on class or object literals cannot be
   | inferred with --isolatedDeclarations.
-    ,-[declarationComputedPropertyNames.d.ts:39:6]
- 38 |     [presentNs.a]: number = 1;
- 39 |     [Symbol.iterator]: number = 1;
-    :      ^^^^^^^^^^^^^^^
- 40 |     [globalThis.Symbol.toStringTag]: number = 1;
-    `----
-
-  x TS9038: Computed property names on class or object literals cannot be
-  | inferred with --isolatedDeclarations.
-    ,-[declarationComputedPropertyNames.d.ts:40:6]
- 39 |     [Symbol.iterator]: number = 1;
- 40 |     [globalThis.Symbol.toStringTag]: number = 1;
-    :      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 41 |     [(globalThis.Symbol).unscopables]: number = 1;
-    `----
-
-  x TS9038: Computed property names on class or object literals cannot be
-  | inferred with --isolatedDeclarations.
     ,-[declarationComputedPropertyNames.d.ts:41:6]
  40 |     [globalThis.Symbol.toStringTag]: number = 1;
  41 |     [(globalThis.Symbol).unscopables]: number = 1;
@@ -274,24 +260,6 @@ export {};
  52 |     [presentNs.a]: 1,
     :      ^^^^^^^^^^^
  53 |     [Symbol.iterator]: 1,
-    `----
-
-  x TS9038: Computed property names on class or object literals cannot be
-  | inferred with --isolatedDeclarations.
-    ,-[declarationComputedPropertyNames.d.ts:53:6]
- 52 |     [presentNs.a]: 1,
- 53 |     [Symbol.iterator]: 1,
-    :      ^^^^^^^^^^^^^^^
- 54 |     [globalThis.Symbol.toStringTag]: 1,
-    `----
-
-  x TS9038: Computed property names on class or object literals cannot be
-  | inferred with --isolatedDeclarations.
-    ,-[declarationComputedPropertyNames.d.ts:54:6]
- 53 |     [Symbol.iterator]: 1,
- 54 |     [globalThis.Symbol.toStringTag]: 1,
-    :      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 55 |     [(globalThis.Symbol).unscopables]: 1,
     `----
 
   x TS9038: Computed property names on class or object literals cannot be

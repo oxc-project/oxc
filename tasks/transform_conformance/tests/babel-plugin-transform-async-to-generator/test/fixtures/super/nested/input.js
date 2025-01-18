@@ -5,6 +5,9 @@ const outer = {
 
     const inner = {
       value: 0,
+      normal() {
+        console.log(super.value);
+      },
       async method() {
         () => super.value;
       }

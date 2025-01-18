@@ -132,6 +132,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoLargeSnapshots,
+    jest,
     style,
 );
 
@@ -161,8 +162,8 @@ impl Rule for NoLargeSnapshots {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let is_snap = ctx.file_path().to_str().map_or(false, |p| {
-            Path::new(p).extension().map_or(false, |ext| ext.eq_ignore_ascii_case("snap"))
+        let is_snap = ctx.file_path().to_str().is_some_and(|p| {
+            Path::new(p).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("snap"))
         });
 
         if is_snap {
@@ -485,7 +486,7 @@ fn test() {
         // ),
     ];
 
-    Tester::new(NoLargeSnapshots::NAME, NoLargeSnapshots::CATEGORY, pass, fail)
+    Tester::new(NoLargeSnapshots::NAME, NoLargeSnapshots::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
 }

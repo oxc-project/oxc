@@ -24,7 +24,7 @@ use oxc::{
     transformer::{TransformOptions, Transformer},
 };
 use oxc_index::Idx;
-use oxc_linter::{Linter, ModuleRecord};
+use oxc_linter::{ConfigStoreBuilder, LintOptions, Linter, ModuleRecord};
 use oxc_prettier::{Prettier, PrettierOptions};
 
 use crate::options::{OxcOptions, OxcRunOptions};
@@ -271,7 +271,7 @@ impl Oxc {
             let compress_options = minifier_options.compress_options.unwrap_or_default();
             let options = MinifierOptions {
                 mangle: minifier_options.mangle.unwrap_or_default().then(MangleOptions::default),
-                compress: if minifier_options.compress.unwrap_or_default() {
+                compress: Some(if minifier_options.compress.unwrap_or_default() {
                     CompressOptions {
                         drop_console: compress_options.drop_console,
                         drop_debugger: compress_options.drop_debugger,
@@ -279,7 +279,7 @@ impl Oxc {
                     }
                 } else {
                     CompressOptions::all_false()
-                },
+                }),
             };
             Minifier::new(options).build(&allocator, &mut program).mangler
         } else {
@@ -309,8 +309,13 @@ impl Oxc {
         if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = Rc::new(semantic_ret.semantic);
-            let linter_ret =
-                Linter::default().run(path, Rc::clone(&semantic), Arc::clone(module_record));
+            let lint_config =
+                ConfigStoreBuilder::default().build().expect("Failed to build config store");
+            let linter_ret = Linter::new(LintOptions::default(), lint_config).run(
+                path,
+                Rc::clone(&semantic),
+                Arc::clone(module_record),
+            );
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
         }
