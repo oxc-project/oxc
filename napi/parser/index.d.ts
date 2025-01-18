@@ -20,6 +20,20 @@ export declare class MagicString {
   prependRight(index: number, input: string): this
   relocate(start: number, end: number, to: number): this
   remove(start: number, end: number): this
+  generateMap(options?: Partial<GenerateDecodedMapOptions>): {
+    toString: () => string;
+    toUrl: () => string;
+    toMap: () => {
+      file?: string
+      mappings: string
+      names: Array<string>
+      sourceRoot?: string
+      sources: Array<string>
+      sourcesContent?: Array<string>
+      version: number
+      x_google_ignoreList?: Array<number>
+    }
+  }
 }
 
 export declare class ParseResult {
@@ -121,6 +135,15 @@ export declare const enum ExportLocalNameKind {
   None = 'None'
 }
 
+export interface GenerateDecodedMapOptions {
+  /** The filename of the file containing the original source. */
+  source?: string
+  /** Whether to include the original content in the map's `sourcesContent` array. */
+  includeContent: boolean
+  /** Whether the mapping should be high-resolution. */
+  hires: boolean | 'boundary'
+}
+
 export interface ImportName {
   kind: ImportNameKind
   name?: string
@@ -190,6 +213,17 @@ export declare const enum Severity {
   Error = 'Error',
   Warning = 'Warning',
   Advice = 'Advice'
+}
+
+export interface SourceMap {
+  file?: string
+  mappings: string
+  names: Array<string>
+  sourceRoot?: string
+  sources: Array<string>
+  sourcesContent?: Array<string>
+  version: number
+  x_google_ignoreList?: Array<number>
 }
 
 export interface SourceMapOptions {

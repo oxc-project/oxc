@@ -32,4 +32,25 @@ describe('simple', () => {
     ms.remove(start, end).append(';');
     expect(ms.toString()).toEqual('const s: String = /* 🤨 */ "";');
   });
+
+  it('returns sourcemap', () => {
+    const { magicString: ms } = parseSync('test.ts', code);
+    ms.indent();
+    const map = ms.generateMap({
+      source: 'test.ts',
+      includeContent: true,
+      hires: true,
+    });
+    expect(map.toUrl()).toBeTypeOf('string');
+    expect(map.toString()).toBeTypeOf('string');
+    console.log(map.toMap());
+    expect(map.toMap()).toEqual({
+      mappings:
+        'CAAA,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,EAAE,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC',
+      names: [],
+      sources: ['test.ts'],
+      sourcesContent: ['const s: String = /* 🤨 */ "测试"'],
+      version: 3,
+    });
+  });
 });
