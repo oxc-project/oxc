@@ -8,5 +8,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Features
 
-- c479a58 napi/parser: Expose dynamic import expressions (#8540) (Boshen)
+- 2f0314e npm/oxc-minify: Npm package and publish script (#8579) (Boshen)
 
