@@ -52,7 +52,7 @@ pub trait ConstantEvaluation<'a> {
     }
 
     fn get_side_free_boolean_value(&self, expr: &Expression<'a>) -> Option<bool> {
-        let value = expr.to_boolean();
+        let value = self.get_boolean_value(expr);
         if value.is_some() && !expr.may_have_side_effects() {
             return value;
         }
@@ -124,10 +124,7 @@ pub trait ConstantEvaluation<'a> {
                     _ => None,
                 }
             }
-            expr => {
-                use crate::ToBoolean;
-                expr.to_boolean()
-            }
+            expr => expr.to_boolean(),
         }
     }
 
