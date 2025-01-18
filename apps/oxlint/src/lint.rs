@@ -5,7 +5,7 @@ use std::{
     time::Instant,
 };
 
-use ignore::gitignore::Gitignore;
+use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
     loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, ConfigStoreBuilder, InvalidFilterKind,
@@ -63,33 +63,6 @@ impl Runner for LintRunner {
         let provided_path_count = paths.len();
         let now = Instant::now();
 
-        // The ignore crate whitelists explicit paths, but priority
-        // should be given to the ignore file. Many users lint
-        // automatically and pass a list of changed files explicitly.
-        // To accommodate this, unless `--no-ignore` is passed,
-        // pre-filter the paths.
-        if !paths.is_empty() && !ignore_options.no_ignore {
-            let (ignore, _err) = Gitignore::new(&ignore_options.ignore_path);
-            paths.retain(|p| if p.is_dir() { true } else { !ignore.matched(p, false).is_ignore() });
-        }
-
-        // Append cwd to all paths
-        paths = paths.into_iter().map(|x| self.cwd.join(x)).collect();
-
-        if paths.is_empty() {
-            // If explicit paths were provided, but all have been
-            // filtered, return early.
-            if provided_path_count > 0 {
-                return CliRunResult::LintResult(LintResult {
-                    duration: now.elapsed(),
-                    deny_warnings: warning_options.deny_warnings,
-                    ..LintResult::default()
-                });
-            }
-
-            paths.push(self.cwd.clone());
-        }
-
         let filter = match Self::get_filters(filter) {
             Ok(filter) => filter,
             Err(e) => return e,
@@ -111,9 +84,62 @@ impl Runner for LintRunner {
         let mut oxlintrc = config_search_result.unwrap();
         let oxlint_wd = oxlintrc.path.parent().unwrap_or(&self.cwd).to_path_buf();
 
-        let paths = Walk::new(&oxlint_wd, &paths, &ignore_options, &oxlintrc.ignore_patterns)
-            .with_extensions(Extensions(extensions))
-            .paths();
+        let mut override_builder = OverrideBuilder::new(self.cwd.clone());
+        if !ignore_options.ignore_pattern.is_empty() {
+            for pattern in &ignore_options.ignore_pattern {
+                // Meaning of ignore pattern is reversed
+                // <https://docs.rs/ignore/latest/ignore/overrides/struct.OverrideBuilder.html#method.add>
+                let pattern = format!("!{pattern}");
+                override_builder.add(&pattern).unwrap();
+            }
+        }
+        if !oxlintrc.ignore_patterns.is_empty() {
+            for pattern in &oxlintrc.ignore_patterns {
+                let pattern = format!("!{pattern}");
+                override_builder.add(&pattern).unwrap();
+            }
+        }
+        let override_builder = override_builder.build().unwrap();
+
+        // The ignore crate whitelists explicit paths, but priority
+        // should be given to the ignore file. Many users lint
+        // automatically and pass a list of changed files explicitly.
+        // To accommodate this, unless `--no-ignore` is passed,
+        // pre-filter the paths.
+        if !paths.is_empty() && !ignore_options.no_ignore {
+            let (ignore, _err) = Gitignore::new(&ignore_options.ignore_path);
+
+            paths.retain_mut(|p| {
+                // Append cwd to all paths
+                let mut path = self.cwd.join(&p);
+
+                std::mem::swap(p, &mut path);
+
+                if path.is_dir() {
+                    true
+                } else {
+                    !(override_builder.matched(p, false).is_ignore()
+                        || ignore.matched(path, false).is_ignore())
+                }
+            });
+        }
+
+        if paths.is_empty() {
+            // If explicit paths were provided, but all have been
+            // filtered, return early.
+            if provided_path_count > 0 {
+                return CliRunResult::LintResult(LintResult {
+                    duration: now.elapsed(),
+                    deny_warnings: warning_options.deny_warnings,
+                    ..LintResult::default()
+                });
+            }
+
+            paths.push(oxlint_wd.clone());
+        }
+
+        let walker = Walk::new(&paths, &ignore_options, override_builder);
+        let paths = walker.with_extensions(Extensions(extensions)).paths();
 
         let number_of_files = paths.len();
 
@@ -809,6 +835,16 @@ mod test {
             "fixtures/config_ignore_patterns/ignore_extension",
         ]);
         assert_eq!(result.number_of_files, 1);
+    }
+
+    #[test]
+    fn test_config_ignore_patterns_special_extension() {
+        let result = test(&[
+            "-c",
+            "fixtures/config_ignore_patterns/ignore_extension/eslintrc.json",
+            "fixtures/config_ignore_patterns/ignore_extension/main.js",
+        ]);
+        assert_eq!(result.number_of_files, 0);
     }
 
     #[test]
