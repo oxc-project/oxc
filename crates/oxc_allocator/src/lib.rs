@@ -5,27 +5,41 @@
 //! memory management data types from `std` adapted to use this arena.
 //!
 //! ## No `Drop`s
-//! Objects allocated into oxc memory arenas are never [`Dropped`](Drop), making
-//! it relatively easy to leak memory if you're not careful. Memory is released
-//! in bulk when the allocator is dropped.
+//!
+//! Objects allocated into Oxc memory arenas are never [`Dropped`](Drop).
+//! Memory is released in bulk when the allocator is dropped, without dropping the individual
+//! objects in the arena.
+//!
+//! Therefore, it would produce a memory leak if you allocated [`Drop`] types into the arena
+//! which own memory allocations outside the arena.
+//!
+//! Static checks make this impossible to do. [`Allocator::alloc`], [`Box::new_in`], [`Vec::new_in`],
+//! and all other methods which store data in the arena will refuse to compile if called with
+//! a [`Drop`] type.
 //!
 //! ## Examples
-//! ```
+//!
+//! ```ignore
 //! use oxc_allocator::{Allocator, Box};
 //!
 //! struct Foo {
 //!     pub a: i32
 //! }
+//!
 //! impl std::ops::Drop for Foo {
-//!     fn drop(&mut self) {
-//!         // Arena boxes are never dropped.
-//!         unreachable!();
-//!     }
+//!     fn drop(&mut self) {}
+//! }
+//!
+//! struct Bar {
+//!     v: std::vec::Vec<u8>,
 //! }
 //!
 //! let allocator = Allocator::default();
+//!
+//! // This will fail to compile because `Foo` implements `Drop`
 //! let foo = Box::new_in(Foo { a: 0 }, &allocator);
-//! drop(foo);
+//! // This will fail to compile because `Bar` contains a `std::vec::Vec`, and it implements `Drop`
+//! let bar = Box::new_in(Bar { v: vec![1, 2, 3] }, &allocator);
 //! ```
 //!
 //! Consumers of the [`oxc` umbrella crate](https://crates.io/crates/oxc) pass
@@ -40,6 +54,8 @@
 //! ```
 
 #![warn(missing_docs)]
+
+use std::mem::needs_drop;
 
 use bumpalo::Bump;
 
@@ -92,6 +108,10 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn alloc<T>(&self, val: T) -> &mut T {
+        const {
+            assert!(!needs_drop::<T>(), "Cannot allocate Drop type in arena");
+        }
+
         self.bump.alloc(val)
     }
 

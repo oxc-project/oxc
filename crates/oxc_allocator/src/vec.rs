@@ -9,7 +9,7 @@ use std::{
     self,
     fmt::{self, Debug},
     hash::{Hash, Hasher},
-    mem::ManuallyDrop,
+    mem::{needs_drop, ManuallyDrop},
     ops,
     ptr::NonNull,
     slice::SliceIndex,
@@ -25,12 +25,16 @@ use crate::{Allocator, Box, String};
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
-/// Must NOT be used to store types which have a [`Drop`] implementation.
-/// `T::drop` will NOT be called on the `Vec`'s contents when the `Vec` is dropped.
-/// If `T` owns memory outside of the arena, this will be a memory leak.
+/// ## No `Drop`s
 ///
-/// Note: This is not a soundness issue, as Rust does not support relying on `drop`
-/// being called to guarantee soundness.
+/// Objects allocated into Oxc memory arenas are never [`Dropped`](Drop). Memory is released in bulk
+/// when the allocator is dropped, without dropping the individual objects in the arena.
+///
+/// Therefore, it would produce a memory leak if you allocated [`Drop`] types into the arena
+/// which own memory allocations outside the arena.
+///
+/// Static checks make this impossible to do. [`Vec::new_in`] and all other methods which create
+/// a [`Vec`] will refuse to compile if called with a [`Drop`] type.
 #[derive(PartialEq, Eq)]
 pub struct Vec<'alloc, T>(pub(crate) ManuallyDrop<InnerVec<T, &'alloc Bump>>);
 
@@ -56,6 +60,10 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
+        const {
+            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
+        }
+
         Self(ManuallyDrop::new(InnerVec::new_in(allocator.bump())))
     }
 
@@ -108,6 +116,10 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
+        const {
+            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
+        }
+
         Self(ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator.bump())))
     }
 
@@ -117,6 +129,10 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// This is behaviorially identical to [`FromIterator::from_iter`].
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
+        const {
+            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
+        }
+
         let iter = iter.into_iter();
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);
@@ -143,6 +159,10 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline]
     pub fn from_array_in<const N: usize>(array: [T; N], allocator: &'alloc Allocator) -> Self {
+        const {
+            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
+        }
+
         let boxed = Box::new_in(array, allocator);
         let ptr = Box::into_non_null(boxed).as_ptr().cast::<T>();
         // SAFETY: `ptr` has correct alignment - it was just allocated as `[T; N]`.

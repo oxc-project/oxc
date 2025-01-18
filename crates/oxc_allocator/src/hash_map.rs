@@ -9,7 +9,7 @@
 
 use std::{
     hash::Hash,
-    mem::ManuallyDrop,
+    mem::{needs_drop, ManuallyDrop},
     ops::{Deref, DerefMut},
 };
 
@@ -36,12 +36,16 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// All APIs are the same, except create a [`HashMap`] with
 /// either [`new_in`](HashMap::new_in) or [`with_capacity_in`](HashMap::with_capacity_in).
 ///
-/// Must NOT be used to store types which have a [`Drop`] implementation.
-/// `K::drop` and `V::drop` will NOT be called on the `HashMap`'s contents when the `HashMap` is dropped.
-/// If `K` or `V` own memory outside of the arena, this will be a memory leak.
+/// ## No `Drop`s
 ///
-/// Note: This is not a soundness issue, as Rust does not support relying on `drop`
-/// being called to guarantee soundness.
+/// Objects allocated into Oxc memory arenas are never [`Dropped`](Drop). Memory is released in bulk
+/// when the allocator is dropped, without dropping the individual objects in the arena.
+///
+/// Therefore, it would produce a memory leak if you allocated [`Drop`] types into the arena
+/// which own memory allocations outside the arena.
+///
+/// Static checks make this impossible to do. [`HashMap::new_in`] and all other methods which create
+/// a [`HashMap`] will refuse to compile if called with a [`Drop`] type.
 ///
 /// [`FxHasher`]: rustc_hash::FxHasher
 pub struct HashMap<'alloc, K, V>(ManuallyDrop<FxHashMap<'alloc, K, V>>);
@@ -56,6 +60,11 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// until it is first inserted into.
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
+        const {
+            assert!(!needs_drop::<K>(), "Cannot create a HashMap<K, V> where K is a Drop type");
+            assert!(!needs_drop::<V>(), "Cannot create a HashMap<K, V> where V is a Drop type");
+        }
+
         let inner = FxHashMap::with_hasher_in(FxBuildHasher, allocator.bump());
         Self(ManuallyDrop::new(inner))
     }
@@ -66,6 +75,11 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// If capacity is 0, the hash map will not allocate.
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
+        const {
+            assert!(!needs_drop::<K>(), "Cannot create a HashMap<K, V> where K is a Drop type");
+            assert!(!needs_drop::<V>(), "Cannot create a HashMap<K, V> where V is a Drop type");
+        }
+
         let inner =
             FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
         Self(ManuallyDrop::new(inner))

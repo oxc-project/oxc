@@ -7,6 +7,7 @@ use std::{
     fmt::{self, Debug, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
+    mem::needs_drop,
     ops::{self, Deref},
     ptr::{self, NonNull},
 };
@@ -18,14 +19,16 @@ use crate::Allocator;
 
 /// A `Box` without [`Drop`], which stores its data in the arena allocator.
 ///
-/// Should only be used for storing AST types.
+/// ## No `Drop`s
 ///
-/// Must NOT be used to store types which have a [`Drop`] implementation.
-/// `T::drop` will NOT be called on the `Box`'s contents when the `Box` is dropped.
-/// If `T` owns memory outside of the arena, this will be a memory leak.
+/// Objects allocated into Oxc memory arenas are never [`Dropped`](Drop). Memory is released in bulk
+/// when the allocator is dropped, without dropping the individual objects in the arena.
 ///
-/// Note: This is not a soundness issue, as Rust does not support relying on `drop`
-/// being called to guarantee soundness.
+/// Therefore, it would produce a memory leak if you allocated [`Drop`] types into the arena
+/// which own memory allocations outside the arena.
+///
+/// Static checks make this impossible to do. [`Box::new_in`] will refuse to compile if called
+/// with a [`Drop`] type.
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 impl<T> Box<'_, T> {
@@ -68,6 +71,10 @@ impl<T> Box<'_, T> {
     /// let in_arena: Box<i32> = Box::new_in(5, &arena);
     /// ```
     pub fn new_in(value: T, allocator: &Allocator) -> Self {
+        const {
+            assert!(!needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
+        }
+
         Self(NonNull::from(allocator.alloc(value)), PhantomData)
     }
 
@@ -78,6 +85,10 @@ impl<T> Box<'_, T> {
     /// Only purpose is for mocking types without allocating for const assertions.
     #[allow(unsafe_code, clippy::missing_safety_doc)]
     pub const unsafe fn dangling() -> Self {
+        const {
+            assert!(!needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
+        }
+
         Self(NonNull::dangling(), PhantomData)
     }
 }
@@ -97,6 +108,10 @@ impl<T: ?Sized> Box<'_, T> {
     /// `ptr` must have been created from a `*mut T` or `&mut T` (not a `*const T` / `&T`).
     #[inline]
     pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
+        const {
+            assert!(!needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
+        }
+
         Self(ptr, PhantomData)
     }
 
