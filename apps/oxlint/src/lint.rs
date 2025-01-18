@@ -82,9 +82,8 @@ impl Runner for LintRunner {
         }
 
         let mut oxlintrc = config_search_result.unwrap();
-        let oxlint_wd = oxlintrc.path.parent().unwrap_or(&self.cwd).to_path_buf();
 
-        let mut override_builder = OverrideBuilder::new(self.cwd.clone());
+        let mut override_builder = OverrideBuilder::new(&self.cwd);
         if !ignore_options.ignore_pattern.is_empty() {
             for pattern in &ignore_options.ignore_pattern {
                 // Meaning of ignore pattern is reversed
@@ -135,7 +134,7 @@ impl Runner for LintRunner {
                 });
             }
 
-            paths.push(oxlint_wd.clone());
+            paths.push(self.cwd.clone());
         }
 
         let walker = Walk::new(&paths, &ignore_options, override_builder);
