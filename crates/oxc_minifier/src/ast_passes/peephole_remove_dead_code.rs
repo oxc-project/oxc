@@ -495,8 +495,24 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
         }
 
         match ctx.get_boolean_value(&expr.test) {
-            Some(true) => Some(ctx.ast.move_expression(&mut expr.consequent)),
-            Some(false) => Some(ctx.ast.move_expression(&mut expr.alternate)),
+            Some(v) => {
+                if expr.test.may_have_side_effects() {
+                    let mut exprs = ctx.ast.vec_with_capacity(2);
+                    exprs.push(ctx.ast.move_expression(&mut expr.test));
+                    exprs.push(ctx.ast.move_expression(if v {
+                        &mut expr.consequent
+                    } else {
+                        &mut expr.alternate
+                    }));
+                    Some(ctx.ast.expression_sequence(expr.span, exprs))
+                } else {
+                    Some(ctx.ast.move_expression(if v {
+                        &mut expr.consequent
+                    } else {
+                        &mut expr.alternate
+                    }))
+                }
+            }
             None => None,
         }
     }
@@ -780,6 +796,14 @@ mod test {
         test("if (foo) {} else {}", "foo");
         test("if (false) {}", "");
         test("if (true) {}", "");
+    }
+
+    #[test]
+    fn test_fold_conditional() {
+        test("true ? foo() : bar()", "foo()");
+        test("false ? foo() : bar()", "bar()");
+        test_same("foo() ? bar() : baz()");
+        test("foo && false ? foo() : bar()", "(foo && false, bar());");
     }
 
     #[test]
