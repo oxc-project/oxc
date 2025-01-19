@@ -81,10 +81,10 @@ impl<'a> Traverse<'a> for ReactDisplayName<'a, '_> {
                 // `foo = React.createClass({})`
                 Ancestor::AssignmentExpressionRight(assign_expr) => match assign_expr.left() {
                     AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                        break ident.name.clone();
+                        break ident.name;
                     }
                     AssignmentTarget::StaticMemberExpression(expr) => {
-                        break expr.property.name.clone();
+                        break expr.property.name;
                     }
                     // Babel does not handle computed member expressions e.g. `foo["bar"]`,
                     // so we diverge from Babel here, but that's probably an improvement
@@ -99,7 +99,7 @@ impl<'a> Traverse<'a> for ReactDisplayName<'a, '_> {
                 // `let foo = React.createClass({})`
                 Ancestor::VariableDeclaratorInit(declarator) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &declarator.id().kind {
-                        break ident.name.clone();
+                        break ident.name;
                     }
                     return;
                 }

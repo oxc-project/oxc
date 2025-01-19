@@ -406,7 +406,7 @@ impl<'a> PropertyKey<'a> {
     #[allow(missing_docs)]
     pub fn private_name(&self) -> Option<Atom<'a>> {
         match self {
-            Self::PrivateIdentifier(ident) => Some(ident.name.clone()),
+            Self::PrivateIdentifier(ident) => Some(ident.name),
             _ => None,
         }
     }
@@ -451,7 +451,7 @@ impl<'a> TemplateLiteral<'a> {
 
     /// Get single quasi from `template`
     pub fn quasi(&self) -> Option<Atom<'a>> {
-        self.quasis.first().and_then(|quasi| quasi.value.cooked.clone())
+        self.quasis.first().and_then(|quasi| quasi.value.cooked)
     }
 }
 
@@ -548,13 +548,13 @@ impl<'a> ComputedMemberExpression<'a> {
     #[allow(missing_docs)]
     pub fn static_property_name(&self) -> Option<Atom<'a>> {
         match &self.expression {
-            Expression::StringLiteral(lit) => Some(lit.value.clone()),
+            Expression::StringLiteral(lit) => Some(lit.value),
             Expression::TemplateLiteral(lit)
                 if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
             {
-                Some(lit.quasis[0].value.raw.clone())
+                Some(lit.quasis[0].value.raw)
             }
-            Expression::RegExpLiteral(lit) => lit.raw.clone(),
+            Expression::RegExpLiteral(lit) => lit.raw,
             _ => None,
         }
     }
@@ -953,7 +953,7 @@ impl<'a> BindingPatternKind<'a> {
     #[allow(missing_docs)]
     pub fn get_identifier(&self) -> Option<Atom<'a>> {
         match self {
-            Self::BindingIdentifier(ident) => Some(ident.name.clone()),
+            Self::BindingIdentifier(ident) => Some(ident.name),
             Self::AssignmentPattern(assign) => assign.left.get_identifier(),
             _ => None,
         }
@@ -1026,7 +1026,7 @@ impl<'a> Function<'a> {
     /// Returns this [`Function`]'s name, if it has one.
     #[inline]
     pub fn name(&self) -> Option<Atom<'a>> {
-        self.id.as_ref().map(|id| id.name.clone())
+        self.id.as_ref().map(|id| id.name)
     }
 
     /// Get the [`SymbolId`] this [`Function`] is bound to.
@@ -1176,7 +1176,7 @@ impl<'a> Class<'a> {
     /// Returns this [`Class`]'s name, if it has one.
     #[inline]
     pub fn name(&self) -> Option<Atom<'a>> {
-        self.id.as_ref().map(|id| id.name.clone())
+        self.id.as_ref().map(|id| id.name)
     }
 
     /// `true` if this [`Class`] is an expression.
@@ -1487,8 +1487,8 @@ impl<'a> ImportAttributeKey<'a> {
     #[allow(missing_docs)]
     pub fn as_atom(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(identifier) => identifier.name.clone(),
-            Self::StringLiteral(literal) => literal.value.clone(),
+            Self::Identifier(identifier) => identifier.name,
+            Self::StringLiteral(literal) => literal.value,
         }
     }
 }
@@ -1543,17 +1543,17 @@ impl<'a> ModuleExportName<'a> {
     #[allow(missing_docs)]
     pub fn name(&self) -> Atom<'a> {
         match self {
-            Self::IdentifierName(identifier) => identifier.name.clone(),
-            Self::IdentifierReference(identifier) => identifier.name.clone(),
-            Self::StringLiteral(literal) => literal.value.clone(),
+            Self::IdentifierName(identifier) => identifier.name,
+            Self::IdentifierReference(identifier) => identifier.name,
+            Self::StringLiteral(literal) => literal.value,
         }
     }
 
     #[allow(missing_docs)]
     pub fn identifier_name(&self) -> Option<Atom<'a>> {
         match self {
-            Self::IdentifierName(identifier) => Some(identifier.name.clone()),
-            Self::IdentifierReference(identifier) => Some(identifier.name.clone()),
+            Self::IdentifierName(identifier) => Some(identifier.name),
+            Self::IdentifierReference(identifier) => Some(identifier.name),
             Self::StringLiteral(_) => None,
         }
     }

@@ -450,7 +450,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         return false;
                     }
                 } else {
-                    last_function_name = Some(name.clone());
+                    last_function_name = Some(*name);
                 }
                 true
             }
@@ -470,7 +470,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             return false;
                         }
                     } else {
-                        last_function_name = Some(name.clone());
+                        last_function_name = Some(*name);
                     }
                     true
                 } else {
@@ -546,14 +546,14 @@ impl<'a> IsolatedDeclarations<'a> {
                             assignable_properties_for_namespace
                                 .entry(&ident.name)
                                 .or_default()
-                                .insert(id.name.clone());
+                                .insert(id.name);
                         }
                     }
                     Some(Declaration::TSEnumDeclaration(decl)) => {
                         assignable_properties_for_namespace
                             .entry(&ident.name)
                             .or_default()
-                            .insert(decl.id.name.clone());
+                            .insert(decl.id.name);
                     }
                     _ => {}
                 }
@@ -573,7 +573,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     Some(Declaration::FunctionDeclaration(func)) => {
                         if func.body.is_some() {
                             if let Some(id) = func.id.as_ref() {
-                                can_expando_function_names.insert(id.name.clone());
+                                can_expando_function_names.insert(id.name);
                             }
                         }
                     }
@@ -583,7 +583,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 && declarator.init.as_ref().is_some_and(Expression::is_function)
                             {
                                 if let Some(name) = declarator.id.get_identifier() {
-                                    can_expando_function_names.insert(name.clone());
+                                    can_expando_function_names.insert(name);
                                 }
                             }
                         }
@@ -617,7 +617,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         {
                             if let Some(name) = declarator.id.get_identifier() {
                                 if self.scope.has_reference(&name) {
-                                    can_expando_function_names.insert(name.clone());
+                                    can_expando_function_names.insert(name);
                                 }
                             }
                         }

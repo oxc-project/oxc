@@ -1141,9 +1141,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         }
         if is_identifier_name(value) {
             *computed = false;
-            *key = PropertyKey::StaticIdentifier(
-                ctx.ast.alloc_identifier_name(s.span, s.value.clone()),
-            );
+            *key = PropertyKey::StaticIdentifier(ctx.ast.alloc_identifier_name(s.span, s.value));
             self.changed = true;
             return;
         }

@@ -308,7 +308,7 @@ pub fn extract_regex_flags<'a>(
         return None;
     }
     let flag_arg = match &args[1] {
-        Argument::StringLiteral(flag_arg) => flag_arg.value.clone(),
+        Argument::StringLiteral(flag_arg) => flag_arg.value,
         Argument::TemplateLiteral(template) if template.is_no_substitution_template() => {
             template.quasi().expect("no-substitution templates always have a quasi")
         }

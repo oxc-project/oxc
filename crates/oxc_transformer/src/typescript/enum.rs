@@ -78,13 +78,10 @@ impl<'a> TypeScriptEnum<'a> {
         let is_export = export_span.is_some();
         let is_not_top_scope = !ctx.scopes().get_flags(ctx.current_scope_id()).is_top();
 
-        let enum_name = decl.id.name.clone();
+        let enum_name = decl.id.name;
         let func_scope_id = decl.scope_id();
-        let param_binding = ctx.generate_binding(
-            enum_name.clone(),
-            func_scope_id,
-            SymbolFlags::FunctionScopedVariable,
-        );
+        let param_binding =
+            ctx.generate_binding(enum_name, func_scope_id, SymbolFlags::FunctionScopedVariable);
 
         let id = param_binding.create_binding_pattern(ctx);
 
@@ -129,7 +126,7 @@ impl<'a> TypeScriptEnum<'a> {
             let op = LogicalOperator::Or;
             let left = ctx.create_bound_ident_expr(
                 decl.id.span,
-                enum_name.clone(),
+                enum_name,
                 var_symbol_id,
                 ReferenceFlags::Read,
             );
@@ -144,7 +141,7 @@ impl<'a> TypeScriptEnum<'a> {
             let op = AssignmentOperator::Assign;
             let left = ctx.create_bound_ident_reference(
                 decl.id.span,
-                enum_name.clone(),
+                enum_name,
                 var_symbol_id,
                 ReferenceFlags::Write,
             );
@@ -190,8 +187,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         let mut statements = ast.vec();
         let mut prev_constant_value = Some(ConstantValue::Number(-1.0));
-        let mut previous_enum_members =
-            self.enums.entry(param_binding.name.clone()).or_default().clone();
+        let mut previous_enum_members = self.enums.entry(param_binding.name).or_default().clone();
 
         let mut prev_member_name: Option<Atom<'a>> = None;
 
@@ -205,7 +201,7 @@ impl<'a> TypeScriptEnum<'a> {
                 let constant_value =
                     self.computed_constant_value(initializer, &previous_enum_members);
 
-                previous_enum_members.insert(member_name.clone(), constant_value.clone());
+                previous_enum_members.insert(*member_name, constant_value.clone());
 
                 // prev_constant_value = constant_value
                 let init = match constant_value {
@@ -214,7 +210,7 @@ impl<'a> TypeScriptEnum<'a> {
                         let mut new_initializer = ast.move_expression(initializer);
 
                         IdentifierReferenceRename::new(
-                            param_binding.name.clone(),
+                            param_binding.name,
                             enum_scope_id,
                             previous_enum_members.clone(),
                             ctx,
@@ -242,13 +238,13 @@ impl<'a> TypeScriptEnum<'a> {
                         let value = value + 1.0;
                         let constant_value = ConstantValue::Number(value);
                         prev_constant_value = Some(constant_value.clone());
-                        previous_enum_members.insert(member_name.clone(), Some(constant_value));
+                        previous_enum_members.insert(*member_name, Some(constant_value));
                         Self::get_initializer_expr(value, ctx)
                     }
                     ConstantValue::String(_) => unreachable!(),
                 }
             } else if let Some(prev_member_name) = prev_member_name {
-                previous_enum_members.insert(member_name.clone(), None);
+                previous_enum_members.insert(*member_name, None);
                 let self_ref = {
                     let obj = param_binding.create_read_expression(ctx);
                     let expr = ctx.ast.expression_string_literal(SPAN, prev_member_name, None);
@@ -259,7 +255,7 @@ impl<'a> TypeScriptEnum<'a> {
                 let one = Self::get_number_literal_expression(1.0, ctx);
                 ast.expression_binary(SPAN, one, BinaryOperator::Addition, self_ref)
             } else {
-                previous_enum_members.insert(member_name.clone(), Some(ConstantValue::Number(0.0)));
+                previous_enum_members.insert(*member_name, Some(ConstantValue::Number(0.0)));
                 Self::get_number_literal_expression(0.0, ctx)
             };
 
@@ -288,11 +284,11 @@ impl<'a> TypeScriptEnum<'a> {
                     ast.expression_assignment(SPAN, AssignmentOperator::Assign, left.into(), right);
             }
 
-            prev_member_name = Some(member_name.clone());
+            prev_member_name = Some(*member_name);
             statements.push(ast.statement_expression(member.span, expr));
         }
 
-        self.enums.insert(param_binding.name.clone(), previous_enum_members.clone());
+        self.enums.insert(param_binding.name, previous_enum_members.clone());
 
         let enum_ref = param_binding.create_read_expression(ctx);
         // return Foo;
@@ -557,8 +553,8 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
             Expression::Identifier(ident) if self.should_reference_enum_member(ident) => {
-                let object = self.ctx.ast.expression_identifier_reference(SPAN, &self.enum_name);
-                let property = self.ctx.ast.identifier_name(SPAN, &ident.name);
+                let object = self.ctx.ast.expression_identifier_reference(SPAN, self.enum_name);
+                let property = self.ctx.ast.identifier_name(SPAN, ident.name);
                 *expr = self.ctx.ast.member_expression_static(SPAN, object, property, false).into();
             }
             _ => {

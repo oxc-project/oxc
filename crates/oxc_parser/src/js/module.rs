@@ -473,7 +473,7 @@ impl<'a> ParserImpl<'a> {
             (imported, local)
         } else {
             let local = self.parse_binding_identifier()?;
-            (self.ast.module_export_name_identifier_name(local.span, local.name.clone()), local)
+            (self.ast.module_export_name_identifier_name(local.span, local.name), local)
         };
         Ok(self.ast.import_declaration_specifier_import_specifier(
             self.end_span(specifier_span),

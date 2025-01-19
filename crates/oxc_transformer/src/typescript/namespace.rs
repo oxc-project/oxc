@@ -328,7 +328,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                     AssignmentTarget::from(ctx.ast.member_expression_static(
                         SPAN,
                         parent_binding.create_read_expression(ctx),
-                        ctx.ast.identifier_name(SPAN, binding.name.clone()),
+                        ctx.ast.identifier_name(SPAN, binding.name),
                         false,
                     ))
                 } else {
@@ -347,7 +347,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
             if let Some(parent_binding) = parent_binding {
                 let assign_left = binding.create_write_target(ctx);
                 let assign_right = {
-                    let property = ctx.ast.identifier_name(SPAN, binding.name.clone());
+                    let property = ctx.ast.identifier_name(SPAN, binding.name);
                     let logical_left = ctx.ast.member_expression_static(
                         SPAN,
                         parent_binding.create_read_expression(ctx),
@@ -392,7 +392,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let object = object_binding.create_read_expression(ctx);
-        let property = ctx.ast.identifier_name(SPAN, &value_binding.name);
+        let property = ctx.ast.identifier_name(SPAN, value_binding.name);
         let left = ctx.ast.member_expression_static(SPAN, object, property, false);
         let left = AssignmentTarget::from(left);
         let right = value_binding.create_read_expression(ctx);

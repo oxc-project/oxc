@@ -1057,7 +1057,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             ctx.symbols_mut().add_resolved_reference(binding.symbol_id, reference_id);
         }
 
-        ident.name = binding.name.clone();
+        ident.name = binding.name;
     }
 
     /// Transform the binding identifier for `arguments` if it's affected after transformation.
@@ -1081,7 +1081,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
             // Record the symbol ID as a renamed `arguments` variable.
             self.renamed_arguments_symbol_ids.insert(symbol_id);
-            BoundIdentifier::new(ident.name.clone(), symbol_id)
+            BoundIdentifier::new(ident.name, symbol_id)
         });
     }
 

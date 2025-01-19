@@ -184,7 +184,7 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
 fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
     let mut idents: FxHashMap<Atom<'a>, Span> = FxHashMap::default();
     bound_names.bound_names(&mut |ident| {
-        if let Some(old_span) = idents.insert(ident.name.clone(), ident.span) {
+        if let Some(old_span) = idents.insert(ident.name, ident.span) {
             ctx.error(redeclaration(&ident.name, old_span, ident.span));
         }
     });

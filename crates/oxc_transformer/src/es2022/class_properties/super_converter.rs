@@ -63,8 +63,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let property = &member.property;
-        let property =
-            ctx.ast.expression_string_literal(property.span, property.name.clone(), None);
+        let property = ctx.ast.expression_string_literal(property.span, property.name, None);
         self.create_super_prop_get(member.span, property, is_callee, ctx)
     }
 
@@ -211,11 +210,8 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         };
         let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
         let AssignmentTarget::StaticMemberExpression(member) = left else { unreachable!() };
-        let property = ctx.ast.expression_string_literal(
-            member.property.span,
-            member.property.name.clone(),
-            None,
-        );
+        let property =
+            ctx.ast.expression_string_literal(member.property.span, member.property.name, None);
         *expr =
             self.transform_super_assignment_expression_impl(span, operator, property, value, ctx);
     }
@@ -382,11 +378,8 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
 
         let temp_var_name_base = get_var_name_from_node(member.as_ref());
 
-        let property = ctx.ast.expression_string_literal(
-            member.property.span,
-            member.property.name.clone(),
-            None,
-        );
+        let property =
+            ctx.ast.expression_string_literal(member.property.span, member.property.name, None);
 
         *expr = self.transform_super_update_expression_impl(
             &temp_var_name_base,

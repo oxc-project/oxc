@@ -89,7 +89,7 @@ impl<'a> ClassProperties<'a, '_> {
                         // Note: Current scope is outside class.
                         let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
                         private_props.insert(
-                            ident.name.clone(),
+                            ident.name,
                             PrivateProp::new(binding, prop.r#static, None, false),
                         );
                     }
@@ -133,7 +133,7 @@ impl<'a> ClassProperties<'a, '_> {
                             SymbolFlags::FunctionScopedVariable,
                         );
 
-                        match private_props.entry(ident.name.clone()) {
+                        match private_props.entry(ident.name) {
                             Entry::Occupied(mut entry) => {
                                 // If there's already a binding for this private property,
                                 // it's a setter or getter, so store the binding in `binding2`.
@@ -156,7 +156,7 @@ impl<'a> ClassProperties<'a, '_> {
                     if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
                         let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
                         private_props.insert(
-                            ident.name.clone(),
+                            ident.name,
                             PrivateProp::new(dummy_binding, prop.r#static, None, true),
                         );
                     }
@@ -803,11 +803,7 @@ impl<'a> ClassProperties<'a, '_> {
         transform_ctx.helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
             SPAN,
-            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(
-                SPAN,
-                name.clone(),
-                None,
-            ))),
+            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, *name, None))),
             ctx,
         )
     }
