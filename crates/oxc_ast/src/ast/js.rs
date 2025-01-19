@@ -2196,7 +2196,7 @@ pub struct ImportExpression<'a> {
 pub struct ImportDeclaration<'a> {
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
-    #[estree(via = "OptionVecDefault", type = "Array<ImportDeclarationSpecifier>")]
+    #[estree(via = crate::serialize::OptionVecDefault, type = "Array<ImportDeclarationSpecifier>")]
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
     pub phase: Option<ImportPhase>,

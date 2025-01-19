@@ -286,7 +286,7 @@ impl Parse for ESTreeFieldAttribute {
                 "via" => {
                     input.parse::<Token![=]>()?;
                     assert!(
-                        via.replace(input.parse::<LitStr>()?.value()).is_none(),
+                        via.replace(input.parse::<Path>()?.to_token_stream().to_string()).is_none(),
                         "Duplicate estree(with)"
                     );
                 }
