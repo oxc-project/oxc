@@ -326,60 +326,55 @@ impl<'a, 'b> PeepholeRemoveDeadCode {
             }
         }
 
-        stmt.expression
-            .is_literal_value(false)
-            .then(|| Some(ctx.ast.statement_empty(stmt.span)))
-            .unwrap_or_else(|| match &mut stmt.expression {
-                Expression::ArrayExpression(expr) => Self::try_fold_array_expression(expr, ctx),
-                Expression::ObjectExpression(object_expr) => {
-                    Self::try_fold_object_expression(object_expr, ctx)
+        if stmt.expression.is_literal_value(false) {
+            return Some(ctx.ast.statement_empty(stmt.span));
+        }
+
+        match &mut stmt.expression {
+            Expression::ArrayExpression(expr) => Self::try_fold_array_expression(expr, ctx),
+            Expression::ObjectExpression(object_expr) => {
+                Self::try_fold_object_expression(object_expr, ctx)
+            }
+            Expression::TemplateLiteral(template_lit) => {
+                if !template_lit.expressions.is_empty() {
+                    return None;
                 }
-                Expression::TemplateLiteral(template_lit) => {
-                    if !template_lit.expressions.is_empty() {
-                        return None;
-                    }
-                    let mut expressions = ctx.ast.move_vec(&mut template_lit.expressions);
-                    if expressions.len() == 0 {
-                        return Some(ctx.ast.statement_empty(stmt.span));
-                    } else if expressions.len() == 1 {
-                        return Some(
-                            ctx.ast.statement_expression(
-                                template_lit.span,
-                                expressions.pop().unwrap(),
-                            ),
-                        );
-                    }
-                    Some(ctx.ast.statement_expression(
-                        template_lit.span,
-                        ctx.ast.expression_sequence(template_lit.span, expressions),
-                    ))
+                let mut expressions = ctx.ast.move_vec(&mut template_lit.expressions);
+                if expressions.len() == 0 {
+                    return Some(ctx.ast.statement_empty(stmt.span));
+                } else if expressions.len() == 1 {
+                    return Some(
+                        ctx.ast.statement_expression(template_lit.span, expressions.pop().unwrap()),
+                    );
                 }
-                Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
-                    Some(ctx.ast.statement_empty(stmt.span))
-                }
-                Expression::ArrowFunctionExpression(_) => Some(ctx.ast.statement_empty(stmt.span)),
-                // `typeof x` -> ``
-                Expression::UnaryExpression(unary_expr)
-                    if unary_expr.operator.is_typeof()
-                        && unary_expr.argument.is_identifier_reference() =>
-                {
-                    Some(ctx.ast.statement_empty(stmt.span))
-                }
-                // `typeof x.y` -> `x.y`, `void x` -> `x`
-                // `+0n` -> `Uncaught TypeError: Cannot convert a BigInt value to a number`
-                Expression::UnaryExpression(unary_expr)
-                    if matches!(
-                        unary_expr.operator,
-                        UnaryOperator::Typeof | UnaryOperator::Void
-                    ) =>
-                {
-                    Some(ctx.ast.statement_expression(
-                        unary_expr.span,
-                        ctx.ast.move_expression(&mut unary_expr.argument),
-                    ))
-                }
-                _ => None,
-            })
+                Some(ctx.ast.statement_expression(
+                    template_lit.span,
+                    ctx.ast.expression_sequence(template_lit.span, expressions),
+                ))
+            }
+            Expression::FunctionExpression(function_expr) if function_expr.id.is_none() => {
+                Some(ctx.ast.statement_empty(stmt.span))
+            }
+            Expression::ArrowFunctionExpression(_) => Some(ctx.ast.statement_empty(stmt.span)),
+            // `typeof x` -> ``
+            Expression::UnaryExpression(unary_expr)
+                if unary_expr.operator.is_typeof()
+                    && unary_expr.argument.is_identifier_reference() =>
+            {
+                Some(ctx.ast.statement_empty(stmt.span))
+            }
+            // `typeof x.y` -> `x.y`, `void x` -> `x`
+            // `+0n` -> `Uncaught TypeError: Cannot convert a BigInt value to a number`
+            Expression::UnaryExpression(unary_expr)
+                if matches!(unary_expr.operator, UnaryOperator::Typeof | UnaryOperator::Void) =>
+            {
+                Some(ctx.ast.statement_expression(
+                    unary_expr.span,
+                    ctx.ast.move_expression(&mut unary_expr.argument),
+                ))
+            }
+            _ => None,
+        }
     }
 
     fn try_fold_try(s: &mut TryStatement<'a>, ctx: Ctx<'a, 'b>) -> Option<Statement<'a>> {
@@ -836,5 +831,13 @@ mod test {
     fn test_remove_empty_static_block() {
         test("class Foo { static {}; foo }", "class Foo { foo }");
         test_same("class Foo { static { foo() }");
+    }
+
+    #[test]
+    fn remove_expression_statement() {
+        test("void 0", "");
+        test("-1", "");
+        test("!1", "");
+        test("1", "");
     }
 }
