@@ -599,7 +599,7 @@ mod test {
         ];
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
-        assert_eq!(result.number_of_warnings, 3);
+        assert_eq!(result.number_of_warnings, 2);
         assert_eq!(result.number_of_errors, 0);
     }
 
