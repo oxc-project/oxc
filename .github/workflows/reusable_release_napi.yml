@@ -27,8 +27,8 @@ jobs:
         id: version
         with:
           static-checking: localIsNew
-          file-url: https://unpkg.com/oxc-${name}@latest/package.json
-          file-name: npm/oxc-${name}/package.json
+          file-url: https://unpkg.com/oxc-${{ inputs.name }}@latest/package.json
+          file-name: npm/oxc-${{ inputs.name }}/package.json
 
       - name: Set version name
         if: steps.version.outputs.changed == 'true'
@@ -49,6 +49,9 @@ jobs:
       name: ${{ inputs.name }}
     outputs:
       version: ${{ env.version }}
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -136,7 +139,7 @@ jobs:
         if: ${{ contains(matrix.target, 'x86') && !contains(matrix.target, 'musl') }} # Need docker for aarch64
 
       - name: Test
-        working-directory: napi/${name}
+        working-directory: napi/${{ inputs.name }}
         if: ${{ contains(matrix.target, 'x86') && !contains(matrix.target, 'musl') }} # Need docker for aarch64
         run: pnpm run test
 
