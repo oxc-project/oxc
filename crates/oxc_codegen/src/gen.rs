@@ -19,6 +19,7 @@ pub trait Gen: GetSpan {
     fn gen(&self, p: &mut Codegen, ctx: Context);
 
     /// Generate code for an AST node. Alias for `gen`.
+    #[inline]
     fn print(&self, p: &mut Codegen, ctx: Context) {
         self.gen(p, ctx);
     }
@@ -30,6 +31,7 @@ pub trait GenExpr: GetSpan {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context);
 
     /// Generate code for an expression, respecting operator precedence. Alias for `gen_expr`.
+    #[inline]
     fn print_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         self.gen_expr(p, precedence, ctx);
     }
@@ -1186,9 +1188,9 @@ impl GenExpr for Expression<'_> {
             Self::StringLiteral(lit) => lit.print(p, ctx),
             Self::Identifier(ident) => ident.print(p, ctx),
             Self::ThisExpression(expr) => expr.print(p, ctx),
-            match_member_expression!(Self) => {
-                self.to_member_expression().print_expr(p, precedence, ctx);
-            }
+            Self::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::StaticMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::PrivateFieldExpression(expr) => expr.print_expr(p, precedence, ctx),
             Self::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
             Self::ArrayExpression(expr) => expr.print(p, ctx),
             Self::ObjectExpression(expr) => expr.print_expr(p, precedence, ctx),
@@ -1899,9 +1901,9 @@ impl GenExpr for SimpleAssignmentTarget<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.print(p, ctx),
-            match_member_expression!(Self) => {
-                self.to_member_expression().print_expr(p, precedence, ctx);
-            }
+            Self::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::StaticMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::PrivateFieldExpression(expr) => expr.print_expr(p, precedence, ctx),
             Self::TSAsExpression(e) => e.print_expr(p, precedence, ctx),
             Self::TSSatisfiesExpression(e) => e.print_expr(p, precedence, ctx),
             Self::TSNonNullExpression(e) => e.print_expr(p, precedence, ctx),
@@ -2174,9 +2176,9 @@ impl GenExpr for ChainExpression<'_> {
         p.wrap(precedence >= Precedence::Postfix, |p| match &self.expression {
             ChainElement::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
             ChainElement::TSNonNullExpression(expr) => expr.print_expr(p, precedence, ctx),
-            match_member_expression!(ChainElement) => {
-                self.expression.to_member_expression().print_expr(p, precedence, ctx);
-            }
+            ChainElement::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ChainElement::StaticMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
+            ChainElement::PrivateFieldExpression(expr) => expr.print_expr(p, precedence, ctx),
         });
     }
 }
