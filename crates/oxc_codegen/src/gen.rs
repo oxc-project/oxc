@@ -1447,10 +1447,12 @@ impl GenExpr for CallExpression<'_> {
                 type_parameters.print(p, ctx);
             }
             p.print_ascii_byte(b'(');
+            let print_comments = p.options.print_comments();
             let has_comment_before_right_paren =
-                self.span.end > 0 && p.has_comment(self.span.end - 1);
-            let has_comment = has_comment_before_right_paren
-                || self.arguments.iter().any(|item| p.has_comment(item.span().start));
+                print_comments && self.span.end > 0 && p.has_comment(self.span.end - 1);
+            let has_comment = print_comments
+                && (has_comment_before_right_paren
+                    || self.arguments.iter().any(|item| p.has_comment(item.span().start)));
             if has_comment {
                 p.indent();
                 p.print_list_with_comments(&self.arguments, ctx);
@@ -2075,10 +2077,17 @@ impl GenExpr for SequenceExpression<'_> {
 impl GenExpr for ImportExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        let has_comment_before_right_paren = self.span.end > 0 && p.has_comment(self.span.end - 1);
-        let has_comment = has_comment_before_right_paren
-            || p.has_comment(self.source.span().start)
-            || self.arguments.first().is_some_and(|argument| p.has_comment(argument.span().start));
+
+        let print_comments = p.options.print_comments();
+        let has_comment_before_right_paren =
+            print_comments && self.span.end > 0 && p.has_comment(self.span.end - 1);
+        let has_comment = print_comments
+            && (has_comment_before_right_paren
+                || p.has_comment(self.source.span().start)
+                || self
+                    .arguments
+                    .first()
+                    .is_some_and(|argument| p.has_comment(argument.span().start)));
 
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
