@@ -6,7 +6,7 @@ export class ConfigService implements IDisposable {
   private static readonly _namespace = 'oxc';
   private readonly _disposables: IDisposable[] = [];
 
-  public config: Config;
+  public readonly config: Config;
 
   public onConfigChange:
     | ((this: ConfigService, config: ConfigurationChangeEvent) => void)
