@@ -131,8 +131,10 @@ impl OxlintRules {
                             ));
                         }
                     } else if rule_configs.iter().all(|r| r.severity.is_allow()) {
-                        if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
-                            rules_to_remove.push(rule.clone());
+                        for rule in rules_for_override.iter() {
+                            if rule.name() == *name {
+                                rules_to_remove.push(rule.clone());
+                            }
                         }
                     }
                 }
