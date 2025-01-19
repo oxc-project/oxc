@@ -78,7 +78,7 @@ impl<'a> IsolatedDeclarations<'a> {
             // declare const _default: Type
             let kind = VariableDeclarationKind::Const;
             let name = self.create_unique_name("_default");
-            let id = self.ast.binding_pattern_kind_binding_identifier(SPAN, &name);
+            let id = self.ast.binding_pattern_kind_binding_identifier(SPAN, name);
             let type_annotation = self
                 .infer_type_from_expression(expr)
                 .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type));
@@ -97,7 +97,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 declarations,
                 self.is_declare(),
             ));
-            Some((Some(variable_statement), self.ast.expression_identifier_reference(SPAN, &name)))
+            Some((Some(variable_statement), self.ast.expression_identifier_reference(SPAN, name)))
         }
     }
 

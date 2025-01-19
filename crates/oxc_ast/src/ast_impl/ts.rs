@@ -14,8 +14,8 @@ impl<'a> TSEnumMemberName<'a> {
     /// Get the name of this enum member.
     pub fn static_name(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(ident) => ident.name.clone(),
-            Self::String(lit) => lit.value.clone(),
+            Self::Identifier(ident) => ident.name,
+            Self::String(lit) => lit.value,
         }
     }
 }
@@ -211,8 +211,8 @@ impl<'a> TSModuleDeclarationName<'a> {
     /// Get the static name of this module declaration name.
     pub fn name(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(ident) => ident.name.clone(),
-            Self::StringLiteral(lit) => lit.value.clone(),
+            Self::Identifier(ident) => ident.name,
+            Self::StringLiteral(lit) => lit.value,
         }
     }
 }

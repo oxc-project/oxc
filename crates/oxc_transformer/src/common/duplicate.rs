@@ -96,7 +96,7 @@ impl<'a> TransformCtx<'a> {
                     if !mutated_symbol_needs_temp_var || !ctx.symbols().symbol_is_mutated(symbol_id)
                     {
                         // Reading bound identifier cannot have side effects, so no need for temp var
-                        let binding = BoundIdentifier::new(ident.name.clone(), symbol_id);
+                        let binding = BoundIdentifier::new(ident.name, symbol_id);
                         let references = create_array(|| {
                             binding.create_spanned_read_expression(ident.span, ctx)
                         });

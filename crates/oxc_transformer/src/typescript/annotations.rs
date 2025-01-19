@@ -331,7 +331,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
                     if let Some(id) = param.pattern.get_binding_identifier() {
                         self.assignments.push(Assignment {
                             span: id.span,
-                            name: id.name.clone(),
+                            name: id.name,
                             symbol_id: id.symbol_id(),
                         });
                     }
@@ -560,7 +560,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
         // NB: Namespace transform happens in `enter_program` visitor, and replaces retained
         // namespaces with functions. This visitor is called after, by which time any remaining
         // namespaces need to be deleted.
-        self.type_identifier_names.insert(decl.id.name().clone());
+        self.type_identifier_names.insert(decl.id.name());
     }
 }
 
@@ -637,11 +637,7 @@ impl<'a> Assignment<'a> {
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
         let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlags::Read);
-        let id = ctx.ast.identifier_reference_with_reference_id(
-            self.span,
-            self.name.clone(),
-            reference_id,
-        );
+        let id = ctx.ast.identifier_reference_with_reference_id(self.span, self.name, reference_id);
 
         ctx.ast.statement_expression(
             SPAN,
@@ -651,7 +647,7 @@ impl<'a> Assignment<'a> {
                 SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
                     SPAN,
                     ctx.ast.expression_this(SPAN),
-                    ctx.ast.identifier_name(self.span, &self.name),
+                    ctx.ast.identifier_name(self.span, self.name),
                     false,
                 ))
                 .into(),

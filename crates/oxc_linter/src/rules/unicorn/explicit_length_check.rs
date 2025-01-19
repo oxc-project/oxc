@@ -224,7 +224,7 @@ impl ExplicitLengthCheck {
             if need_paren { ")" } else { "" },
             if need_pad_end { " " } else { "" },
         );
-        let property = static_member_expr.property.name.clone();
+        let property = static_member_expr.property.name;
         let help = if auto_fix {
             None
         } else {

@@ -67,10 +67,10 @@ impl<'a> AstKind<'a> {
 
     pub fn identifier_name(self) -> Option<Atom<'a>> {
         match self {
-            Self::BindingIdentifier(ident) => Some(ident.name.clone()),
-            Self::IdentifierReference(ident) => Some(ident.name.clone()),
-            Self::LabelIdentifier(ident) => Some(ident.name.clone()),
-            Self::IdentifierName(ident) => Some(ident.name.clone()),
+            Self::BindingIdentifier(ident) => Some(ident.name),
+            Self::IdentifierReference(ident) => Some(ident.name),
+            Self::LabelIdentifier(ident) => Some(ident.name),
+            Self::IdentifierName(ident) => Some(ident.name),
             _ => None,
         }
     }

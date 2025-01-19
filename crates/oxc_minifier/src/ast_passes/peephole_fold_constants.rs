@@ -590,8 +590,7 @@ impl<'a, 'b> PeepholeFoldConstants {
                 // `Number("a")` -> `+"a"` -> `NaN`
                 // `Number("1")` -> `+"1"` -> `1`
                 Argument::StringLiteral(n) => {
-                    let argument =
-                        ctx.ast.expression_string_literal(n.span, n.value.clone(), n.raw.clone());
+                    let argument = ctx.ast.expression_string_literal(n.span, n.value, n.raw);
                     if let Some(n) = ctx.eval_to_number(&argument) {
                         n
                     } else {

@@ -88,11 +88,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             // Finally, add the variable to all hoisted scopes
             // to support redeclaration checks when declaring variables with the same name later.
             for &scope_id in &var_scope_ids {
-                builder
-                    .hoisting_variables
-                    .entry(scope_id)
-                    .or_default()
-                    .insert(name.clone(), symbol_id);
+                builder.hoisting_variables.entry(scope_id).or_default().insert(*name, symbol_id);
             }
         });
     }
@@ -155,7 +151,7 @@ impl<'a> Binder<'a> for Function<'a> {
             if is_function_part_of_if_statement(self, builder) {
                 let symbol_id = builder.symbols.create_symbol(
                     ident.span,
-                    ident.name.clone().into(),
+                    ident.name.into(),
                     SymbolFlags::Function,
                     ScopeId::new(u32::MAX - 1), // Not bound to any scope.
                     builder.current_node_id,

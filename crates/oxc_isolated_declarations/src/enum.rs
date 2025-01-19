@@ -48,7 +48,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     TSEnumMemberName::Identifier(id) => &id.name,
                     TSEnumMemberName::String(str) => &str.value,
                 };
-                prev_members.insert(member_name.clone(), value.clone());
+                prev_members.insert(*member_name, value.clone());
             }
 
             let member = self.ast.ts_enum_member(

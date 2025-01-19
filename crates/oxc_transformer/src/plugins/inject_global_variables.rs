@@ -254,7 +254,7 @@ impl<'a> InjectGlobalVariables<'a> {
                             .push((dot_define.parts[0].clone(), dot_define.value.clone()));
                         self.ast.atom(dot_define.value.as_str())
                     });
-                    let value_atom = value_atom.clone();
+                    let value_atom = *value_atom;
 
                     let value = self.ast.expression_identifier_reference(SPAN, value_atom);
                     *expr = value;

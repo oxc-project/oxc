@@ -53,13 +53,15 @@ impl Rule for NoSyncScripts {
             .filter_map(
                 |v| if let JSXAttributeItem::Attribute(v) = v { Some(&v.name) } else { None },
             )
-            .filter_map(|v| {
-                if let JSXAttributeName::Identifier(v) = v {
-                    Some(v.name.clone())
-                } else {
-                    None
-                }
-            })
+            .filter_map(
+                |v| {
+                    if let JSXAttributeName::Identifier(v) = v {
+                        Some(v.name)
+                    } else {
+                        None
+                    }
+                },
+            )
             .collect::<FxHashSet<_>>();
 
         if attributes_hs.contains("src")

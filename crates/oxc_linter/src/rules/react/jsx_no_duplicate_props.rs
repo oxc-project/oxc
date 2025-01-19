@@ -67,7 +67,7 @@ impl Rule for JsxNoDuplicateProps {
                 continue;
             };
 
-            if let Some(old_span) = props.insert(ident.name.clone(), ident.span) {
+            if let Some(old_span) = props.insert(ident.name, ident.span) {
                 ctx.diagnostic(jsx_no_duplicate_props_diagnostic(
                     ident.name.as_str(),
                     old_span,

@@ -515,12 +515,12 @@ impl Rule for NewCap {
 
 fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactStr> {
     if let Some(identifier) = expression.get_identifier_reference() {
-        return Some(identifier.name.clone().into());
+        return Some(identifier.name.into());
     }
 
     match expression.without_parentheses() {
         Expression::StaticMemberExpression(expression) => {
-            let prop_name = expression.property.name.clone().into_compact_str();
+            let prop_name = expression.property.name.into_compact_str();
             let obj_name =
                 extract_name_deep_from_expression(expression.object.without_parentheses());
 
@@ -549,7 +549,7 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
                 extract_name_deep_from_expression(&non_null.expression)
             }
             ChainElement::StaticMemberExpression(expression) => {
-                let prop_name = expression.property.name.clone().into_compact_str();
+                let prop_name = expression.property.name.into_compact_str();
                 let obj_name =
                     extract_name_deep_from_expression(expression.object.without_parentheses());
 
@@ -586,19 +586,19 @@ fn get_computed_member_name(computed_member: &ComputedMemberExpression) -> Optio
         Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
             Some(lit.quasis[0].value.raw.as_ref().into())
         }
-        Expression::RegExpLiteral(lit) => lit.raw.as_ref().map(|x| x.clone().into_compact_str()),
+        Expression::RegExpLiteral(lit) => lit.raw.as_ref().map(|x| (*x).into_compact_str()),
         _ => None,
     }
 }
 
 fn extract_name_from_expression(expression: &Expression) -> Option<CompactStr> {
     if let Some(identifier) = expression.get_identifier_reference() {
-        return Some(identifier.name.clone().into());
+        return Some(identifier.name.into());
     }
 
     match expression.without_parentheses() {
         Expression::StaticMemberExpression(expression) => {
-            Some(expression.property.name.clone().into_compact_str())
+            Some(expression.property.name.into_compact_str())
         }
         Expression::ComputedMemberExpression(expression) => get_computed_member_name(expression),
         Expression::ChainExpression(chain) => match &chain.expression {
@@ -607,7 +607,7 @@ fn extract_name_from_expression(expression: &Expression) -> Option<CompactStr> {
                 extract_name_from_expression(&non_null.expression)
             }
             ChainElement::StaticMemberExpression(expression) => {
-                Some(expression.property.name.clone().into_compact_str())
+                Some(expression.property.name.into_compact_str())
             }
             ChainElement::ComputedMemberExpression(expression) => {
                 get_computed_member_name(expression)

@@ -281,7 +281,7 @@ impl<'a> ClassProperties<'a, '_> {
     ) -> Expression<'a> {
         let key = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
-                ctx.ast.expression_string_literal(ident.span, ident.name.clone(), None)
+                ctx.ast.expression_string_literal(ident.span, ident.name, None)
             }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();

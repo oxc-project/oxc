@@ -1095,7 +1095,7 @@ impl<'a> ClassProperties<'a, '_> {
             });
             let get_binding = get_binding.cloned();
             let set_binding = set_binding.cloned();
-            let private_name = field_expr.field.name.clone();
+            let private_name = field_expr.field.name;
 
             // Make 2 copies of `object`
             let (object1, object2) = self.duplicate_object(object, ctx);
