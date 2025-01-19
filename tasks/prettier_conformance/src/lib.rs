@@ -17,6 +17,13 @@ use oxc_span::SourceType;
 
 use crate::{ignore_list::IGNORE_TESTS, options::TestRunnerOptions, spec::parse_spec};
 
+#[test]
+#[cfg(any(coverage, coverage_nightly))]
+fn test() {
+    TestRunner::new(TestRunnerOptions { filter: None, language: TestLanguage::Js }).run();
+    TestRunner::new(TestRunnerOptions { filter: None, language: TestLanguage::Ts }).run();
+}
+
 fn root() -> PathBuf {
     oxc_tasks_common::project_root().join("tasks").join("prettier_conformance")
 }
