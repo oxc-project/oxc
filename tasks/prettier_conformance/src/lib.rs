@@ -20,6 +20,7 @@ use crate::{ignore_list::IGNORE_TESTS, options::TestRunnerOptions, spec::parse_s
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
 fn test() {
+    use crate::options::TestLanguage;
     TestRunner::new(TestRunnerOptions { filter: None, language: TestLanguage::Js }).run();
     TestRunner::new(TestRunnerOptions { filter: None, language: TestLanguage::Ts }).run();
 }
