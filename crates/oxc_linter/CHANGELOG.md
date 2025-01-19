@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.7] - 2025-01-19
+
+- 4ce6329 semantic: [**BREAKING**] Ensure program outlives semantic (#8455) (Valentinas Janeiko)
+
+### Features
+
+- 01ac773 linter: Support `ignoreTypeOfTestName` for `jest/valid-title` (#8589) (dalaoshu)
+- 538b24a linter: Format the configuration documentation correctly (#8583) (Tapan Prakash)
+- 7ab14cc linter: Add more Vitest compatible Jest rules (#8445) (Anson Heung)
+- d178360 linter: Implement `eslint/prefer-promise-reject-errors` (#8254) (tbashiyy)
+
+### Bug Fixes
+
+- 855c839 codegen: Shorthand assignment target identifier consider mangled names (#8536) (Boshen)
+- c15af02 linter: False positive in `eslint/no-lone-blocks` (#8587) (dalaoshu)
+- 41f2070 linter: Rule `no-restricted-imports` support missing options (#8076) (Alexander S.)
+- 869bc73 linter: Enhance `default_param_last` rule to handle optional parameters (#8563) (Tapan Prakash)
+- c6260c2 linter: Support rest params for `prefer_promise_reject_errors` (#8468) (Yuichiro Yamashita)
+- 2be1e82 linter/no-unused-vars: False positives when variable and type have same name (#8465) (Dunqing)
+
+### Performance
+
+- 250bbd1 linter/react-exhaustive-deps: Use stack of `AstType`s instead of `AstKind`s (#8522) (overlookmotel)
+
+### Refactor
+
+- 40f5165 linter: Improve `eslint/no-lone-blocks` (#8588) (dalaoshu)
+- b4c87e2 linter: Move DiagnosticsReporters to oxlint (#8454) (Alexander S.)
+- bf00f82 linter: Move rule `prefer-each` from vitest to jest + remapping (#8448) (Alexander S.)
+- 8dd0013 linter/consistent-function-scoping: Remove `Visit::enter_node` usage (#8538) (overlookmotel)
+- 30c0689 linter/no-map-spread: Remove `Visit::enter_node` usage (#8537) (overlookmotel)
+- b5ed58e span: All methods take owned `Span` (#8297) (overlookmotel)
+
+### Styling
+
+- 3789d2f linter/react-exhaustive-deps: Fix indentation (#8520) (overlookmotel)
+
 ## [0.15.6] - 2025-01-13
 
 ### Features
