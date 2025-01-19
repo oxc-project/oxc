@@ -163,7 +163,7 @@ impl Mangler {
                     slot_liveness
                         .iter()
                         .enumerate()
-                        .filter(|(slot, _)| !slot_liveness[*slot].contains(scope_id.index()))
+                        .filter(|(_, slot_liveness)| !slot_liveness.contains(scope_id.index()))
                         .map(|(slot, _)| slot)
                         .take(bindings.len()),
                     &allocator,
@@ -193,8 +193,7 @@ impl Mangler {
                                 .ancestors(reference.scope_id())
                                 .take_while(|s_id| *s_id != nearest_var_scope_id)
                         })
-                        .chain(iter::once(nearest_var_scope_id))
-                        .dedup();
+                        .chain(iter::once(nearest_var_scope_id));
                     for scope_id in lived_scope_ids {
                         slot_liveness[assigned_slot].insert(scope_id.index());
                     }
