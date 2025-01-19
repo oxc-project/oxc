@@ -14,7 +14,7 @@ use crate::{cmp::ContentEq, CompactStr};
 ///
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for
 /// the lifetimeless form.
-#[derive(Clone, Eq)]
+#[derive(Clone, Copy, Eq)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(transparent))]
 pub struct Atom<'a>(&'a str);
