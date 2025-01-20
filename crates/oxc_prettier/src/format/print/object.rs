@@ -15,7 +15,6 @@ pub enum ObjectLike<'a, 'b> {
     Expression(&'b ObjectExpression<'a>),
     AssignmentTarget(&'b ObjectAssignmentTarget<'a>),
     Pattern(&'b ObjectPattern<'a>),
-    WithClause(&'b WithClause<'a>),
     TSTypeLiteral(&'b TSTypeLiteral<'a>),
 }
 
@@ -25,7 +24,6 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::Expression(expr) => expr.properties.len(),
             Self::AssignmentTarget(target) => target.properties.len(),
             Self::Pattern(object) => object.properties.len(),
-            Self::WithClause(attributes) => attributes.with_entries.len(),
             Self::TSTypeLiteral(literal) => literal.members.len(),
         }
     }
@@ -35,7 +33,7 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::Expression(expr) => false,
             Self::AssignmentTarget(target) => target.rest.is_some(),
             Self::Pattern(object) => object.rest.is_some(),
-            Self::WithClause(_) | Self::TSTypeLiteral(_) => false,
+            Self::TSTypeLiteral(_) => false,
         }
     }
 
@@ -44,7 +42,6 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::Expression(object) => object.properties.is_empty(),
             Self::AssignmentTarget(object) => object.is_empty(),
             Self::Pattern(object) => object.is_empty(),
-            Self::WithClause(attributes) => attributes.with_entries.is_empty(),
             Self::TSTypeLiteral(literal) => literal.members.is_empty(),
         }
     }
@@ -58,7 +55,6 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
             Self::Expression(object) => object.span,
             Self::AssignmentTarget(object) => object.span,
             Self::Pattern(object) => object.span,
-            Self::WithClause(attributes) => attributes.span,
             Self::TSTypeLiteral(literal) => literal.span,
         }
     }
@@ -72,9 +68,6 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
                 Box::new(object.properties.iter().map(|prop| prop.format(p)))
             }
             Self::Pattern(object) => Box::new(object.properties.iter().map(|prop| prop.format(p))),
-            Self::WithClause(attributes) => {
-                Box::new(attributes.with_entries.iter().map(|entry| entry.format(p)))
-            }
             Self::TSTypeLiteral(literal) => {
                 Box::new(literal.members.iter().map(|member| member.format(p)))
             }
@@ -127,9 +120,7 @@ pub fn print_object<'a>(p: &mut Prettier<'a>, object: ObjectLike<'a, '_>) -> Doc
             }
 
             match object {
-                ObjectLike::Expression(_)
-                | ObjectLike::WithClause(_)
-                | ObjectLike::TSTypeLiteral(_) => {}
+                ObjectLike::Expression(_) | ObjectLike::TSTypeLiteral(_) => {}
                 ObjectLike::AssignmentTarget(target) => {
                     if let Some(rest) = &target.rest {
                         indent_parts.push(rest.format(p));

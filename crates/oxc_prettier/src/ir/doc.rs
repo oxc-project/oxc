@@ -88,5 +88,6 @@ pub enum JoinSeparator {
     Softline,
     Hardline,
     CommaLine, // [",", line]
+    CommaSpace, // ", "
     Literalline,
 }

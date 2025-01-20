@@ -627,39 +627,7 @@ impl<'a> Format<'a> for FormalParameter<'a> {
 
 impl<'a> Format<'a> for ImportDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(text!("import"));
-        if self.import_kind.is_type() {
-            parts.push(text!(" type"));
-        }
-
-        if let Some(specifiers) = &self.specifiers {
-            let is_default = specifiers.first().is_some_and(|x| {
-                matches!(x, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
-            });
-
-            let validate_namespace = |x: &ImportDeclarationSpecifier| {
-                matches!(x, ImportDeclarationSpecifier::ImportNamespaceSpecifier(_))
-            };
-
-            let is_namespace = specifiers.first().is_some_and(validate_namespace)
-                || specifiers.get(1).is_some_and(validate_namespace);
-
-            parts.push(module::print_module_specifiers(p, specifiers, is_default, is_namespace));
-            parts.push(text!(" from"));
-        }
-        parts.push(text!(" "));
-        parts.push(self.source.format(p));
-
-        if let Some(with_clause) = &self.with_clause {
-            parts.push(text!(" "));
-            parts.push(with_clause.format(p));
-        }
-
-        if let Some(semi) = p.semi() {
-            parts.push(semi);
-        }
-        array!(p, parts)
+        wrap!(p, self, ImportDeclaration, { module::print_import_declaration(p, self) })
     }
 }
 
@@ -701,16 +669,9 @@ impl<'a> Format<'a> for ImportNamespaceSpecifier<'a> {
     }
 }
 
-impl<'a> Format<'a> for WithClause<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let attribute_keyword_doc = self.attributes_keyword.format(p);
-        let with_clause_doc = object::print_object(p, object::ObjectLike::WithClause(self));
-        array!(p, [attribute_keyword_doc, text!(" "), with_clause_doc])
-    }
-}
-
 impl<'a> Format<'a> for ImportAttribute<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        // TODO: Use `print_property`
         let key_doc = match &self.key {
             ImportAttributeKey::Identifier(ident) => ident.format(p),
             ImportAttributeKey::StringLiteral(literal) => literal.format(p),
