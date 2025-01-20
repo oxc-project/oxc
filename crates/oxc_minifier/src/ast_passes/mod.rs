@@ -62,7 +62,7 @@ impl PeepholeOptimizations {
             x5_peephole_minimize_conditions: PeepholeMinimizeConditions::new(target),
             x6_peephole_remove_dead_code: PeepholeRemoveDeadCode::new(in_fixed_loop),
             x7_convert_to_dotted_properties: ConvertToDottedProperties::new(in_fixed_loop),
-            x8_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(),
+            x8_peephole_replace_known_methods: PeepholeReplaceKnownMethods::new(target),
             x9_peephole_substitute_alternate_syntax: PeepholeSubstituteAlternateSyntax::new(
                 options.target,
                 in_fixed_loop,
