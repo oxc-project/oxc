@@ -866,9 +866,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                     None => Some(ctx.ast.expression_string_literal(span, "", None)),
                     // `String(a)` -> `'' + (a)`
                     Some(arg) => {
-                        if !matches!(arg, Expression::Identifier(_) | Expression::CallExpression(_))
-                            && !arg.is_literal()
-                        {
+                        if !arg.is_literal() {
                             return None;
                         }
                         Some(ctx.ast.expression_binary(
@@ -1972,6 +1970,8 @@ mod test {
         test("var a = String('hello')", "var a = '' + 'hello'");
         // Don't fold the existence check to preserve behavior
         test_same("var a = String?.('hello')");
+
+        test_same("var s = Symbol();var a = String(s);");
 
         test_same("var a = String('hello', bar());");
         test_same("var a = String({valueOf: function() { return 1; }});");
