@@ -866,8 +866,7 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
                     None => Some(ctx.ast.expression_string_literal(span, "", None)),
                     // `String(a)` -> `'' + (a)`
                     Some(arg) => {
-                        if !arg.is_literal()
-                        {
+                        if !arg.is_literal() {
                             return None;
                         }
                         Some(ctx.ast.expression_binary(
