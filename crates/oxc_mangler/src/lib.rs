@@ -6,7 +6,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_index::Idx;
-use oxc_semantic::{ReferenceId, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
+use oxc_semantic::{Key, ReferenceId, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::Atom;
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -195,14 +195,22 @@ impl Mangler {
                 count += 1;
                 // Do not mangle keywords and unresolved references
                 let n = name.as_str();
-                if !is_keyword(n)
-                    && !is_special_name(n)
-                    && !root_unresolved_references.contains_key(n)
-                    && !(root_bindings.contains_key(n)
-                        && (!self.options.top_level || exported_names.contains(n)))
-                {
-                    break name;
+                if is_keyword(n) {
+                    continue;
                 }
+                if is_special_name(n) {
+                    continue;
+                }
+                let key = Key::new(n);
+                if root_unresolved_references.contains_key(&key) {
+                    continue;
+                }
+                if root_bindings.contains_key(&key)
+                    && (!self.options.top_level || exported_names.contains(n))
+                {
+                    continue;
+                }
+                break name;
             };
             reserved_names.push(name);
         }

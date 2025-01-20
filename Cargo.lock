@@ -2035,6 +2035,7 @@ name = "oxc_semantic"
 version = "0.47.1"
 dependencies = [
  "assert-unchecked",
+ "hashbrown 0.15.2",
  "insta",
  "itertools",
  "oxc_allocator",

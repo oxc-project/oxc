@@ -2,10 +2,10 @@
 
 use std::{
     cell::{Cell, RefCell},
+    hash::BuildHasherDefault,
     mem,
 };
 
-use oxc_data_structures::stack::Stack;
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{ast::*, AstKind, Visit};
@@ -13,6 +13,7 @@ use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
 };
+use oxc_data_structures::stack::Stack;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::{
@@ -30,7 +31,7 @@ use crate::{
     jsdoc::JSDocBuilder,
     label::UnusedLabels,
     node::AstNodes,
-    scope::{Bindings, ScopeTree},
+    scope::{Bindings, IdentityHasher, Key, ScopeTree},
     stats::Stats,
     symbol::SymbolTable,
     unresolved_stack::UnresolvedReferencesStack,
@@ -279,9 +280,8 @@ impl<'a> SemanticBuilder<'a> {
         if self.check_syntax_error && !self.source_type.is_typescript() {
             checker::check_unresolved_exports(&self);
         }
-        self.scope.set_root_unresolved_references(
-            self.unresolved_references.into_root().into_iter().map(|(k, v)| (k.as_str(), v)),
-        );
+        self.scope
+            .set_root_unresolved_references(self.unresolved_references.into_root().into_iter());
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
@@ -446,13 +446,8 @@ impl<'a> SemanticBuilder<'a> {
     /// Declare an unresolved reference in the current scope.
     ///
     /// # Panics
-    pub(crate) fn declare_reference(
-        &mut self,
-        name: Atom<'a>,
-        reference: Reference,
-    ) -> ReferenceId {
+    pub(crate) fn declare_reference(&mut self, name: Key<'a>, reference: Reference) -> ReferenceId {
         let reference_id = self.symbols.create_reference(reference);
-
         self.unresolved_references.current_mut().entry(name).or_default().push(reference_id);
         reference_id
     }
@@ -487,7 +482,7 @@ impl<'a> SemanticBuilder<'a> {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
             let bindings = self.scope.get_bindings(self.current_scope_id);
-            if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
+            if let Some(symbol_id) = bindings.get(&name).copied() {
                 let symbol_flags = self.symbols.get_flags(symbol_id);
                 references.retain(|&reference_id| {
                     let reference = &mut self.symbols.references[reference_id];
@@ -712,7 +707,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
             self.scope.cell.with_dependent_mut(|allocator, inner| {
                 if !inner.bindings[parent_scope_id].is_empty() {
-                    let mut parent_bindings = Bindings::new_in(allocator);
+                    let mut parent_bindings = Bindings::with_hasher_in(
+                        BuildHasherDefault::<IdentityHasher>::default(),
+                        allocator,
+                    );
                     mem::swap(&mut inner.bindings[parent_scope_id], &mut parent_bindings);
                     for &symbol_id in parent_bindings.values() {
                         self.symbols.set_scope_id(symbol_id, self.current_scope_id);
@@ -2120,7 +2118,7 @@ impl<'a> SemanticBuilder<'a> {
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
         let reference = Reference::new(self.current_node_id, flags);
-        let reference_id = self.declare_reference(ident.name, reference);
+        let reference_id = self.declare_reference(Key::new(ident.name.as_str()), reference);
         ident.reference_id.set(Some(reference_id));
     }
 

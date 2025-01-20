@@ -340,7 +340,7 @@ impl PostTransformChecker<'_, '_> {
                     .scopes
                     .get_bindings(scope_id)
                     .keys()
-                    .map(|k| CompactStr::new(k))
+                    .map(|k| CompactStr::new(k.name))
                     .collect::<Vec<_>>();
                 binding_names.sort_unstable();
                 binding_names
@@ -510,7 +510,7 @@ impl PostTransformChecker<'_, '_> {
                 .scopes
                 .root_unresolved_references()
                 .keys()
-                .map(ToString::to_string)
+                .map(|key| ToString::to_string(&key.name))
                 .collect::<Vec<_>>();
             names.sort_unstable();
             names
@@ -519,11 +519,11 @@ impl PostTransformChecker<'_, '_> {
             self.errors.push_mismatch_single("Unresolved references mismatch", unresolved_names);
         }
 
-        for (name, reference_ids_after_transform) in
+        for (key, reference_ids_after_transform) in
             self.scoping_after_transform.scopes.root_unresolved_references()
         {
             if let Some(reference_ids_rebuilt) =
-                self.scoping_rebuilt.scopes.root_unresolved_references().get(name)
+                self.scoping_rebuilt.scopes.root_unresolved_references().get(key)
             {
                 let reference_ids_after_transform =
                     reference_ids_after_transform.iter().copied().collect::<Vec<_>>();
@@ -532,7 +532,7 @@ impl PostTransformChecker<'_, '_> {
                 let reference_ids = Pair::new(reference_ids_after_transform, reference_ids_rebuilt);
                 if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
                     self.errors.push_mismatch_single(
-                        &format!("Unresolved reference IDs mismatch for {name:?}"),
+                        &format!("Unresolved reference IDs mismatch for {:?}", &key.name),
                         reference_ids,
                     );
                 }
