@@ -1,5 +1,7 @@
 name: GitHub Actions Security Analysis
 
+permissions: {}
+
 on:
   workflow_dispatch:
   pull_request:
@@ -20,10 +22,7 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-        with:
-          persist-credentials: false
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - uses: taiki-e/install-action@a7adeb15af2926b0ac7478ad165047cd2d8ba350 # v2.47.18
         with:

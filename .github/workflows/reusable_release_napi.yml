@@ -1,5 +1,7 @@
 name: Release NAPI
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:

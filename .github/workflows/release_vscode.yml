@@ -1,6 +1,6 @@
-# Reference: https://github.com/biomejs/biome/blob/main/.github/workflows/release_lsp.yml
-
 name: Release VSCode
+
+permissions: {}
 
 on:
   push:

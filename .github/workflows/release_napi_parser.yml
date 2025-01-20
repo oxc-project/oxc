@@ -1,5 +1,7 @@
 name: Release NAPI Parser
 
+permissions: {}
+
 on:
   push:
     branches:

@@ -2,6 +2,8 @@
 
 name: Code Coverage
 
+permissions: {}
+
 on:
   workflow_dispatch:
   push:
