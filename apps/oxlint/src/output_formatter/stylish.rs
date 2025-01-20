@@ -59,7 +59,6 @@ fn format_stylish(diagnostics: &[Error]) -> String {
 
     for diagnostics in grouped.values() {
         let diagnostic = diagnostics[0];
-        // output.push_str(&format!("\n\u{1b}[4mFile\u{1b}[0m\n"));
         let info = Info::new(diagnostic);
         let filename = info.filename;
         let filename = if let Some(path) =

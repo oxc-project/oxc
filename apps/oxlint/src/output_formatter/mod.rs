@@ -20,6 +20,8 @@ use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputF
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum OutputFormat {
     Default,
+    /// GitHub Check Annotation
+    /// <https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-a-notice-message>
     Github,
     Json,
     Unix,
