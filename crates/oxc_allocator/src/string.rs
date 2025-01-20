@@ -63,7 +63,6 @@ impl<'alloc> String<'alloc> {
     /// Construct a new [`String`] from a string slice.
     ///
     /// # Examples
-    ///
     /// ```
     /// use oxc_allocator::{Allocator, String};
     ///
@@ -126,9 +125,6 @@ impl<'alloc> String<'alloc> {
     /// nothing else uses the pointer after calling this function.
     ///
     /// # Examples
-    ///
-    /// Basic usage:
-    ///
     /// ```
     /// use std::mem;
     /// use oxc_allocator::{Allocator, String};
@@ -163,8 +159,7 @@ impl<'alloc> String<'alloc> {
     /// Convert this `String<'alloc>` into an `&'alloc str`. This is analogous to
     /// [`std::string::String::into_boxed_str`].
     ///
-    /// # Example
-    ///
+    /// # Examples
     /// ```
     /// use oxc_allocator::{Allocator, String};
     ///

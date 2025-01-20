@@ -94,7 +94,7 @@ impl Allocator {
     /// # Panics
     /// Panics if reserving space for `T` fails.
     ///
-    /// # Example
+    /// # Examples
     /// ```
     /// use oxc_allocator::Allocator;
     ///
@@ -120,7 +120,7 @@ impl Allocator {
     /// # Panics
     /// Panics if reserving space for the string fails.
     ///
-    /// # Example
+    /// # Examples
     /// ```
     /// use oxc_allocator::Allocator;
     /// let allocator = Allocator::default();
@@ -145,8 +145,7 @@ impl Allocator {
     /// If this arena has allocated multiple chunks to bump allocate into, then the excess chunks
     /// are returned to the global allocator.
     ///
-    /// ## Example
-    ///
+    /// # Examples
     /// ```
     /// use oxc_allocator::Allocator;
     ///

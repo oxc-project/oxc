@@ -24,7 +24,7 @@ use crate::{Allocator, Box};
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
-/// ## No `Drop`s
+/// # No `Drop`s
 ///
 /// Objects allocated into Oxc memory arenas are never [`Dropped`](Drop). Memory is released in bulk
 /// when the allocator is dropped, without dropping the individual objects in the arena.
@@ -48,7 +48,6 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// The vector will not allocate until elements are pushed onto it.
     ///
     /// # Examples
-    ///
     /// ```
     /// use oxc_allocator::{Allocator, Vec};
     ///
@@ -84,7 +83,6 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// Panics if the new capacity exceeds `isize::MAX` bytes.
     ///
     /// # Examples
-    ///
     /// ```
     /// use oxc_allocator::{Allocator, Vec};
     ///
@@ -147,7 +145,6 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// on stack and then copying to arena.
     ///
     /// # Examples
-    ///
     /// ```
     /// use oxc_allocator::{Allocator, Vec};
     ///
@@ -178,7 +175,6 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// The excess memory will be leaked in the arena (i.e. not reused by another allocation).
     ///
     /// # Examples
-    ///
     /// ```
     /// use oxc_allocator::{Allocator, Vec};
     ///

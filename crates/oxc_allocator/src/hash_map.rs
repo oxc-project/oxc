@@ -36,7 +36,7 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// All APIs are the same, except create a [`HashMap`] with
 /// either [`new_in`](HashMap::new_in) or [`with_capacity_in`](HashMap::with_capacity_in).
 ///
-/// ## No `Drop`s
+/// # No `Drop`s
 ///
 /// Objects allocated into Oxc memory arenas are never [`Dropped`](Drop). Memory is released in bulk
 /// when the allocator is dropped, without dropping the individual objects in the arena.
