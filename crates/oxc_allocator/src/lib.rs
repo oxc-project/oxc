@@ -89,6 +89,35 @@ pub struct Allocator {
 }
 
 impl Allocator {
+    /// Create a new [`Allocator`] with no initial capacity.
+    ///
+    /// This method does not reserve any memory to back the allocator. Memory for allocator's initial
+    /// chunk will be reserved lazily, when you make the first allocation into this [`Allocator`]
+    /// (e.g. with [`Allocator::alloc`], [`Box::new_in`], [`Vec::new_in`], [`HashMap::new_in`]).
+    ///
+    /// If you can estimate the amount of memory the allocator will require to fit what you intend to
+    /// allocate into it, it is generally preferable to create that allocator with [`with_capacity`]
+    /// which reserves that amount of memory upfront. This will avoid further system calls to allocate
+    /// further chunks later on.
+    ///
+    /// [`with_capacity`]: Allocator::with_capacity
+    //
+    // `#[inline(always)]` because just delegates to `bumpalo` method
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn new() -> Self {
+        Self { bump: Bump::new() }
+    }
+
+    /// Create a new [`Allocator`] with specified capacity.
+    //
+    // `#[inline(always)]` because just delegates to `bumpalo` method
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self { bump: Bump::with_capacity(capacity) }
+    }
+
     /// Allocate an object in this [`Allocator`] and return an exclusive reference to it.
     ///
     /// # Panics
