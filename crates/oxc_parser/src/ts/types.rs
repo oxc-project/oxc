@@ -338,7 +338,8 @@ impl<'a> ParserImpl<'a> {
             | Kind::Boolean
             | Kind::Undefined
             | Kind::Never
-            | Kind::Object => {
+            | Kind::Object
+            | Kind::Intrinsic => {
                 if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
                     Ok(ty)
                 } else {
