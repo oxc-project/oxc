@@ -47,8 +47,7 @@ fn format_stylish(diagnostics: &[Error]) -> String {
     let mut total_warnings = 0;
 
     let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::default();
-    let sorted = diagnostics.iter().collect::<Vec<_>>();
-    let mut sorted = sorted.clone();
+    let mut sorted = diagnostics.iter().collect::<Vec<_>>();
 
     sorted.sort_by_key(|diagnostic| Info::new(diagnostic).line);
 
