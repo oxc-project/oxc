@@ -1,5 +1,7 @@
 name: Check PR
 
+permissions: {}
+
 on:
   pull_request_target: # zizmor: ignore[dangerous-triggers]
     types:
@@ -27,12 +29,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           requireScope: true
-          disallowScopes: |
-            build
-            chore
-            ci
-            release
-            revert
           types: |
             build
             chore

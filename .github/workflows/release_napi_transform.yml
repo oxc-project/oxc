@@ -1,5 +1,7 @@
 name: Release NAPI Transform
 
+permissions: {}
+
 on:
   push:
     branches:

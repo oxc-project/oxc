@@ -1,5 +1,7 @@
 name: Prepare Release
 
+permissions: {}
+
 on:
   workflow_call:
     inputs:

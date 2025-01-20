@@ -1,5 +1,7 @@
 name: Update implementation status of all linter plugins
 
+permissions: {}
+
 on:
   push:
     branches:
@@ -13,6 +15,9 @@ on:
 jobs:
   lint_rules:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1

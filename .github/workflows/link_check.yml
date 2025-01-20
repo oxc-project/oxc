@@ -1,5 +1,7 @@
 name: Check Links
 
+permissions: {}
+
 on:
   workflow_dispatch:
   push:
