@@ -188,7 +188,8 @@ impl Mangler {
                     let lived_scope_ids = symbol_table
                         .get_resolved_references(*symbol_id)
                         .flat_map(|reference| {
-                            // treat all symbols as var
+                            // treat all symbols as var for now
+                            // the reusability can be improved by reducing the lived scope ids for const / let / class
                             scope_tree
                                 .ancestors(reference.scope_id())
                                 .take_while(|s_id| *s_id != nearest_var_scope_id)
