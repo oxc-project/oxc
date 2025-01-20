@@ -138,7 +138,10 @@ impl Runner for LintRunner {
                     let mut config_json: Value = serde_json::from_str(&config_file).unwrap();
                     if let Value::Object(ref mut obj) = config_json {
                         let mut json_object = serde_json::Map::new();
-                        json_object.insert("$schema".to_string(), format!("./{}", schema_relative_path).into());
+                        json_object.insert(
+                            "$schema".to_string(),
+                            format!("./{}", schema_relative_path).into(),
+                        );
                         json_object.extend(obj.clone());
                         *obj = json_object;
                     }
