@@ -338,8 +338,7 @@ impl<'a> ParserImpl<'a> {
             | Kind::Boolean
             | Kind::Undefined
             | Kind::Never
-            | Kind::Object
-            | Kind::Intrinsic => {
+            | Kind::Object => {
                 if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
                     Ok(ty)
                 } else {
@@ -433,10 +432,6 @@ impl<'a> ParserImpl<'a> {
             Kind::Boolean => {
                 self.bump_any();
                 self.ast.ts_type_boolean_keyword(self.end_span(span))
-            }
-            Kind::Intrinsic => {
-                self.bump_any();
-                self.ast.ts_type_intrinsic_keyword(self.end_span(span))
             }
             Kind::Never => {
                 self.bump_any();
