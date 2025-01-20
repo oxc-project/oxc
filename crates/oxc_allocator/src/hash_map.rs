@@ -45,7 +45,7 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// which own memory allocations outside the arena.
 ///
 /// Static checks make this impossible to do. [`HashMap::new_in`] and all other methods which create
-/// a [`HashMap`] will refuse to compile if called with a [`Drop`] type.
+/// a [`HashMap`] will refuse to compile if either key or value is a [`Drop`] type.
 ///
 /// [`FxHasher`]: rustc_hash::FxHasher
 pub struct HashMap<'alloc, K, V>(ManuallyDrop<FxHashMap<'alloc, K, V>>);
