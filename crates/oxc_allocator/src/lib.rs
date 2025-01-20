@@ -87,7 +87,6 @@ pub use vec::Vec;
 pub struct Allocator {
     bump: Bump,
 }
-
 impl Allocator {
     /// Allocate an object in this [`Allocator`] and return an exclusive reference to it.
     ///
@@ -189,6 +188,12 @@ impl Allocator {
     }
 }
 
+impl Allocator {
+    /// Create a new bump-allocated memory arena.
+    pub fn with_capacity(size: usize) -> Self {
+        Self { bump: Bump::with_capacity(size) }
+    }
+}
 /// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
 unsafe impl Send for Allocator {}
 /// SAFETY: Not actually safe, but for enabling `Sync` for downstream crates.

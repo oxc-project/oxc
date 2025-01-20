@@ -11,6 +11,14 @@ use crate::{node::NodeId, symbol::SymbolId};
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ReferenceId(NonMaxU32);
 
+impl<'alloc> CloneIn<'alloc> for ReferenceId {
+    type Cloned = Self;
+
+    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+        *self
+    }
+}
+
 impl Idx for ReferenceId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
