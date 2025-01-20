@@ -19,7 +19,7 @@ use crate::Allocator;
 
 /// A `Box` without [`Drop`], which stores its data in the arena allocator.
 ///
-/// ## No `Drop`s
+/// # No `Drop`s
 ///
 /// Objects allocated into Oxc memory arenas are never [`Dropped`](Drop). Memory is released in bulk
 /// when the allocator is dropped, without dropping the individual objects in the arena.
@@ -35,7 +35,7 @@ impl<T> Box<'_, T> {
     /// Take ownership of the value stored in this [`Box`], consuming the box in
     /// the process.
     ///
-    /// ## Example
+    /// # Examples
     /// ```
     /// use oxc_allocator::{Allocator, Box};
     ///
@@ -64,7 +64,7 @@ impl<T> Box<'_, T> {
     /// Put a `value` into a memory arena and get back a [`Box`] with ownership
     /// to the allocation.
     ///
-    /// ## Example
+    /// # Examples
     /// ```
     /// use oxc_allocator::{Allocator, Box};
     ///

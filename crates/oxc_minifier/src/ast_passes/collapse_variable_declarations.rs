@@ -235,19 +235,7 @@ impl<'a> CollapseVariableDeclarations {
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/CollapseVariableDeclarationsTest.java>
 #[cfg(test)]
 mod test {
-    use oxc_allocator::Allocator;
-
-    use crate::tester;
-
-    fn test(source_text: &str, expected: &str) {
-        let allocator = Allocator::default();
-        let mut pass = super::CollapseVariableDeclarations::new();
-        tester::test(&allocator, source_text, expected, &mut pass);
-    }
-
-    fn test_same(source_text: &str) {
-        test(source_text, source_text);
-    }
+    use crate::tester::{test, test_same};
 
     mod join_vars {
         use super::{test, test_same};
@@ -286,7 +274,7 @@ mod test {
 
             test(
                 "var x = 2; foo(x); x = 3; x = 1; var y = 2; var z = 4; x = 5",
-                "var x = 2; foo(x); x = 3; x = 1; var y = 2, z = 4; x = 5",
+                "var x = 2; foo(x), x = 3, x = 1; var y = 2, z = 4; x = 5",
             );
         }
 
@@ -304,9 +292,9 @@ mod test {
 
         #[test]
         fn test_aggressive_redeclaration_in_for() {
-            test_same("for(var x = 1; x = 2; x = 3) {x = 4}");
+            test_same("for(var x = 1; x = 2; x = 3) x = 4");
             test_same("for(var x = 1; y = 2; z = 3) {var a = 4}");
-            test_same("var x; for(x = 1; x = 2; z = 3) {x = 4}");
+            test_same("var x; for(x = 1; x = 2; z = 3) x = 4");
         }
 
         #[test]
@@ -354,9 +342,9 @@ mod test {
 
         #[test]
         fn test_aggressive_redeclaration_of_let_in_for() {
-            test_same("for(let x = 1; x = 2; x = 3) {x = 4}");
+            test_same("for(let x = 1; x = 2; x = 3) x = 4");
             test_same("for(let x = 1; y = 2; z = 3) {let a = 4}");
-            test_same("let x; for(x = 1; x = 2; z = 3) {x = 4}");
+            test_same("let x; for(x = 1; x = 2; z = 3) x = 4");
         }
 
         #[test]
@@ -374,16 +362,19 @@ mod test {
 
             // do not redeclare function parameters
             // incompatible with strict mode
-            test_same("function f(x) { let y = 3; x = 4; x + y; }");
+            test_same("function f(x) { let y = 3; x = 4, x + y; }");
         }
 
         #[test]
         fn test_arrow_function() {
-            test("() => {let x = 1; let y = 2; x + y; }", "() => {let x = 1, y = 2; x + y; }");
+            test(
+                "(() => { let x = 1; let y = 2; x + y; })()",
+                "(() => { let x = 1, y = 2; x + y; })()",
+            );
 
             // do not redeclare function parameters
             // incompatible with strict mode
-            test_same("(x) => {x = 4; let y = 2; x + y; }");
+            test_same("((x) => { x = 4; let y = 2; x + y; })()");
         }
 
         #[test]
@@ -430,7 +421,7 @@ mod test {
             // Verify FOR inside IFs.
             test(
                 "if(x){var a = 0; for(; c < b; c++) foo()}",
-                "if(x){for(var a = 0; c < b; c++) foo()}",
+                "if(x)for(var a = 0; c < b; c++) foo()",
             );
 
             // Any other expression.
@@ -441,7 +432,7 @@ mod test {
                 "function f(){ var a; for(; a < 2 ; a++) foo() }",
                 "function f(){ for(var a; a < 2 ; a++) foo() }",
             );
-            test_same("function f(){ return; for(; a < 2 ; a++) foo() }");
+            test_same("function f(){ for(; a < 2 ; a++) foo() }");
 
             // TODO
             // Verify destructuring assignments are moved.
@@ -459,7 +450,7 @@ mod test {
         #[test]
         fn test_for_in() {
             test("var a; for(a in b) foo()", "for (var a in b) foo()");
-            test_same("a = 0; for(a in b) foo()");
+            test("a = 0; for(a in b) foo()", "for (a in a = 0, b) foo();");
             test_same("var a = 0; for(a in b) foo()");
 
             // We don't handle labels yet.
@@ -467,13 +458,13 @@ mod test {
             test_same("var a; a:b:for(a in b) foo()");
 
             // Verify FOR inside IFs.
-            test("if(x){var a; for(a in b) foo()}", "if(x){for(var a in b) foo()}");
+            test("if(x){var a; for(a in b) foo()}", "if(x) for(var a in b) foo()");
 
             // Any other expression.
-            test_same("init(); for(a in b) foo()");
+            test("init(); for(a in b) foo()", "for (a in init(), b) foo();");
 
             // Other statements are left as is.
-            test_same("function f(){ return; for(a in b) foo() }");
+            test_same("function f(){ for(a in b) foo() }");
 
             // We don't handle destructuring patterns yet.
             test("var a; var b; for ([a, b] in c) foo();", "var a, b; for ([a, b] in c) foo();");
@@ -490,13 +481,13 @@ mod test {
             test_same("var a; a: b: for (a of b) foo()");
 
             // Verify FOR inside IFs.
-            test("if (x) { var a; for (a of b) foo() }", "if (x) { for (var a of b) foo() }");
+            test("if (x) { var a; for (a of b) foo() }", "if (x) for (var a of b) foo()");
 
             // Any other expression.
             test_same("init(); for (a of b) foo()");
 
             // Other statements are left as is.
-            test_same("function f() { return; for (a of b) foo() }");
+            test_same("function f() { for (a of b) foo() }");
 
             // We don't handle destructuring patterns yet.
             test("var a; var b; for ([a, b] of c) foo();", "var a, b; for ([a, b] of c) foo();");

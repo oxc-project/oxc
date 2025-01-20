@@ -1,5 +1,7 @@
 name: Release NAPI Minify
 
+permissions: {}
+
 on:
   push:
     branches:

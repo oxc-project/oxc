@@ -1,59 +1,31 @@
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_traverse::ReusableTraverseCtx;
 
-use crate::{
-    ast_passes::{CompressorPass, Normalize, NormalizeOptions},
-    CompressOptions,
-};
+use crate::{CompressOptions, Compressor};
 
-pub fn test<'a, P: CompressorPass<'a>>(
-    allocator: &'a Allocator,
-    source_text: &'a str,
-    expected: &'a str,
-    pass: &mut P,
-) {
-    test_impl(allocator, source_text, expected, pass, false);
+pub fn test_same(source_text: &str) {
+    test(source_text, source_text);
 }
 
-pub fn test_impl<'a, P: CompressorPass<'a>>(
-    allocator: &'a Allocator,
-    source_text: &'a str,
-    expected: &'a str,
-    pass: &mut P,
-    remove_whitespace: bool,
-) {
-    let result = run(allocator, source_text, Some(pass), remove_whitespace);
-    let expected = run::<P>(allocator, expected, None, remove_whitespace);
+pub fn test(source_text: &str, expected: &str) {
+    let result = run(source_text, Some(CompressOptions::all_true()));
+    let expected = run(expected, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
-fn run<'a, P: CompressorPass<'a>>(
-    allocator: &'a Allocator,
-    source_text: &'a str,
-    pass: Option<&mut P>,
-    remove_whitespace: bool,
-) -> String {
+pub fn run(source_text: &str, options: Option<CompressOptions>) -> String {
+    let allocator = Allocator::default();
     let source_type = SourceType::mjs();
-    let mut program = Parser::new(allocator, source_text, source_type).parse().program;
-
-    if let Some(pass) = pass {
-        let (symbols, scopes) =
-            SemanticBuilder::new().build(&program).semantic.into_symbol_table_and_scope_tree();
-        let mut ctx = ReusableTraverseCtx::new(scopes, symbols, allocator);
-        let normalize_options = NormalizeOptions { convert_while_to_fors: true };
-        Normalize::new(normalize_options, CompressOptions::all_false())
-            .build(&mut program, &mut ctx);
-        pass.build(&mut program, &mut ctx);
+    let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
+    if let Some(options) = options {
+        Compressor::new(&allocator, options).build(&mut program);
     }
-
     CodeGenerator::new()
         .with_options(CodegenOptions {
             single_quote: true,
-            minify: remove_whitespace,
+            minify: false,
             ..CodegenOptions::default()
         })
         .build(&program)

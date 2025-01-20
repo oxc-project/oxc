@@ -67,19 +67,7 @@ impl<'a> ConvertToDottedProperties {
 
 #[cfg(test)]
 mod test {
-    use oxc_allocator::Allocator;
-
-    use crate::tester;
-
-    fn test(source_text: &str, expected: &str) {
-        let allocator = Allocator::default();
-        let mut pass = super::ConvertToDottedProperties::new(false);
-        tester::test(&allocator, source_text, expected, &mut pass);
-    }
-
-    fn test_same(source_text: &str) {
-        test(source_text, source_text);
-    }
+    use crate::tester::{test, test_same};
 
     #[test]
     fn test_computed_to_member_expression() {
@@ -117,7 +105,7 @@ mod test {
         test_same("a[':']");
         test_same("a['.']");
         test_same("a['p ']");
-        test_same("a['p' + '']");
+        test("a['p' + '']", "a.p");
         test_same("a[p]");
         test_same("a[P]");
         test_same("a[$]");
@@ -134,10 +122,10 @@ mod test {
 
     #[test]
     fn test_convert_to_dotted_properties_quoted_props() {
-        test_same("({'':0})");
-        test_same("({'1.0':0})");
-        test_same("({'\\u1d17A':0})");
-        test_same("({'a\\u0004b':0})");
+        test("({'':0})", "");
+        test("({'1.0':0})", "");
+        test("({'\\u1d17A':0})", "");
+        test("({'a\\u0004b':0})", "");
     }
 
     #[test]
@@ -160,7 +148,7 @@ mod test {
         test_same("a?.['.']");
         test_same("a?.['0']");
         test_same("a?.['p ']");
-        test_same("a?.['p' + '']");
+        test("a?.['p' + '']", "a?.p");
         test_same("a?.[p]");
         test_same("a?.[P]");
         test_same("a?.[$]");
@@ -296,8 +284,8 @@ mod test {
         test_same("x?.['y z']");
         test("x?.['y']()", "x?.y();");
         test_same("x?.['y z']()");
-        test_same("x['y' + 'z']");
-        test_same("x?.['y' + 'z']");
+        test("x['y' + 'z']", "x.yz");
+        test("x?.['y' + 'z']", "x?.yz");
         test("x['0']", "x[0];");
         test("x['123']", "x[123];");
         test("x['-123']", "x[-123];");

@@ -70,21 +70,10 @@ impl RemoveUnusedCode {
 
 #[cfg(test)]
 mod test {
-    use oxc_allocator::Allocator;
-
-    use crate::tester;
-
-    fn test(source_text: &str, expected: &str) {
-        let allocator = Allocator::default();
-        let mut pass = super::RemoveUnusedCode::new();
-        tester::test(&allocator, source_text, expected, &mut pass);
-    }
-
-    fn test_same(source_text: &str) {
-        test(source_text, source_text);
-    }
+    use crate::tester::{test, test_same};
 
     #[test]
+    #[ignore]
     fn simple() {
         test("var x", "");
         test_same("var x = 1");

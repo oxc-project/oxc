@@ -27,7 +27,6 @@ use super::test;
 /// }
 /// ```
 #[test]
-#[ignore]
 fn js_parser_test() {
     test("x = {['_proto_']: x}", "x = { _proto_: x };");
     test("x = {['__proto__']: x}", "x = { ['__proto__']: x };");
@@ -646,6 +645,11 @@ fn js_parser_test() {
     // );
     test("if (a) return c; if (b) return d;", "if (a) return c;if (b) return d;");
     // test("if (a) return c; if (b) return c;", "if (a || b) return c;");
+}
+
+#[test]
+#[ignore]
+fn test_ignored() {
     test("if (a) return c; if (b) return;", "if (a) return c;if (b) return;");
     test("if (a) return; if (b) return c;", "if (a) return;if (b) return c;");
     test("if (a) return; if (b) return;", "if (a || b) return;");
