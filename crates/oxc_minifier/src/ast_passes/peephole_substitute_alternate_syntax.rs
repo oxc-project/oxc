@@ -13,41 +13,34 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
-use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, TraverseCtx};
 
-use crate::{ctx::Ctx, CompressorPass};
+use crate::ctx::Ctx;
+
+use super::PeepholeOptimizations;
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
-pub struct PeepholeSubstituteAlternateSyntax {
-    target: ESTarget,
-
-    in_fixed_loop: bool,
-
-    in_define_export: bool,
-
-    pub(crate) changed: bool,
-}
-
-impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = false;
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
-    fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+impl<'a, 'b> PeepholeOptimizations {
+    pub fn substitute_catch_clause(
+        &mut self,
+        catch: &mut CatchClause<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.compress_catch_clause(catch, ctx);
     }
 
-    fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn substitute_object_property(
+        &mut self,
+        prop: &mut ObjectProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    fn exit_assignment_target_property_property(
+    pub fn substitute_assignment_target_property_property(
         &mut self,
         prop: &mut AssignmentTargetPropertyProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -55,11 +48,15 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
     }
 
-    fn exit_binding_property(&mut self, prop: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn substitute_binding_property(
+        &mut self,
+        prop: &mut BindingProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    fn exit_method_definition(
+    pub fn substitute_method_definition(
         &mut self,
         prop: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -67,7 +64,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    fn exit_property_definition(
+    pub fn substitute_property_definition(
         &mut self,
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -75,7 +72,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    fn exit_accessor_property(
+    pub fn substitute_accessor_property(
         &mut self,
         prop: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -83,11 +80,15 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn substitute_return_statement(
+        &mut self,
+        stmt: &mut ReturnStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.compress_return_statement(stmt, ctx);
     }
 
-    fn exit_variable_declaration(
+    pub fn substitute_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -97,36 +98,19 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    /// Set `in_define_export` flag if this is a top-level statement of form:
-    /// ```js
-    /// Object.defineProperty(exports, 'Foo', {
-    ///   enumerable: true,
-    ///   get: function() { return Foo_1.Foo; }
-    /// });
-    /// ```
-    fn enter_call_expression(
+    pub fn substitute_call_expression(
         &mut self,
-        call_expr: &mut CallExpression<'a>,
+        expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !self.in_fixed_loop {
-            let parent = ctx.parent();
-            if (parent.is_expression_statement() || parent.is_sequence_expression())
-                && Self::is_object_define_property_exports(call_expr)
-            {
-                self.in_define_export = true;
-            }
-        }
-    }
-
-    fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.in_fixed_loop {
-            self.in_define_export = false;
-        }
         self.try_compress_call_expression_arguments(expr, ctx);
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn substitute_exit_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let ctx = Ctx(ctx);
 
         // Change syntax
@@ -188,12 +172,6 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
             self.changed = true;
         }
     }
-}
-
-impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
-    pub fn new(target: ESTarget, in_fixed_loop: bool) -> Self {
-        Self { target, in_fixed_loop, in_define_export: false, changed: false }
-    }
 
     fn compress_catch_clause(&mut self, catch: &mut CatchClause<'_>, ctx: &mut TraverseCtx<'a>) {
         if !self.in_fixed_loop && self.target >= ESTarget::ES2019 {
@@ -216,25 +194,6 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         {
             std::mem::swap(&mut e.left, &mut e.right);
         }
-    }
-
-    /// Test `Object.defineProperty(exports, ...)`
-    fn is_object_define_property_exports(call_expr: &CallExpression<'a>) -> bool {
-        let Some(Argument::Identifier(ident)) = call_expr.arguments.first() else { return false };
-        if ident.name != "exports" {
-            return false;
-        }
-
-        // Use tighter check than `call_expr.callee.is_specific_member_access("Object", "defineProperty")`
-        // because we're looking for `Object.defineProperty` specifically, not e.g. `Object['defineProperty']`
-        if let Expression::StaticMemberExpression(callee) = &call_expr.callee {
-            if let Expression::Identifier(id) = &callee.object {
-                if id.name == "Object" && callee.property.name == "defineProperty" {
-                    return true;
-                }
-            }
-        }
-        false
     }
 
     /// Transforms `undefined` => `void 0`
@@ -265,9 +224,6 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     ) -> Option<Expression<'a>> {
         debug_assert!(!self.in_fixed_loop);
         let Expression::BooleanLiteral(lit) = expr else { return None };
-        if self.in_define_export {
-            return None;
-        }
         let parent = ctx.ancestry.parent();
         let no_unary = {
             if let Ancestor::BinaryExpressionRight(u) = parent {

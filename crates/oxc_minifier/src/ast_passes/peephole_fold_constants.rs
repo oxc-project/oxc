@@ -8,26 +8,21 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, LogicalOperator},
 };
-use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, TraverseCtx};
 
-use crate::{ctx::Ctx, CompressorPass};
+use crate::ctx::Ctx;
 
-/// Constant Folding
-///
-/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-pub struct PeepholeFoldConstants {
-    pub(crate) changed: bool,
-}
+use super::PeepholeOptimizations;
 
-impl<'a> CompressorPass<'a> for PeepholeFoldConstants {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = false;
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl<'a> Traverse<'a> for PeepholeFoldConstants {
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+impl<'a, 'b> PeepholeOptimizations {
+    /// Constant Folding
+    ///
+    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
+    pub fn fold_constants_exit_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
             Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx)
@@ -43,12 +38,6 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
             *expr = folded_expr;
             self.changed = true;
         };
-    }
-}
-
-impl<'a, 'b> PeepholeFoldConstants {
-    pub fn new() -> Self {
-        Self { changed: false }
     }
 
     #[expect(clippy::float_cmp)]

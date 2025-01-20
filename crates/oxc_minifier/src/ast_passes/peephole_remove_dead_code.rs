@@ -5,9 +5,11 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::GetSpan;
-use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, TraverseCtx};
 
-use crate::{ctx::Ctx, keep_var::KeepVar, CompressorPass};
+use crate::{ctx::Ctx, keep_var::KeepVar};
+
+use super::PeepholeOptimizations;
 
 /// Remove Dead Code from the AST.
 ///
@@ -15,28 +17,23 @@ use crate::{ctx::Ctx, keep_var::KeepVar, CompressorPass};
 ///
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
-pub struct PeepholeRemoveDeadCode {
-    pub(crate) changed: bool,
-
-    in_fixed_loop: bool,
-}
-
-impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = false;
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+impl<'a, 'b> PeepholeOptimizations {
+    pub fn remove_dead_code_exit_statements(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if stmts.iter().any(|stmt| matches!(stmt, Statement::EmptyStatement(_))) {
             stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
         }
         self.dead_code_elimination(stmts, Ctx(ctx));
     }
 
-    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn remove_dead_code_exit_statement(
+        &mut self,
+        stmt: &mut Statement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let ctx = Ctx(ctx);
         if let Some(new_stmt) = match stmt {
             Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
@@ -59,7 +56,11 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
         }
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn remove_dead_code_exit_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
             Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
@@ -73,16 +74,14 @@ impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
         }
     }
 
-    fn exit_class_body(&mut self, body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {
+    pub fn remove_dead_code_exit_class_body(
+        &mut self,
+        body: &mut ClassBody<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
         if !self.in_fixed_loop {
             Self::remove_empty_class_static_block(body);
         }
-    }
-}
-
-impl<'a, 'b> PeepholeRemoveDeadCode {
-    pub fn new(in_fixed_loop: bool) -> Self {
-        Self { changed: false, in_fixed_loop }
     }
 
     /// Removes dead code thats comes after `return` statements after inlining `if` statements

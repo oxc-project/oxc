@@ -1,33 +1,20 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::TraverseCtx;
 
-use crate::CompressorPass;
+use super::PeepholeOptimizations;
 
-/// Transform the structure of the AST so that the number of explicit exits
-/// are minimized and instead flows to implicit exits conditions.
-///
-/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
-pub struct MinimizeExitPoints {
-    pub(crate) changed: bool,
-}
-
-impl<'a> CompressorPass<'a> for MinimizeExitPoints {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = false;
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl Traverse<'_> for MinimizeExitPoints {
-    fn exit_function_body(&mut self, body: &mut FunctionBody<'_>, _ctx: &mut TraverseCtx<'_>) {
+impl<'a> PeepholeOptimizations {
+    /// Transform the structure of the AST so that the number of explicit exits
+    /// are minimized and instead flows to implicit exits conditions.
+    ///
+    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
+    pub fn minimize_exit_points(
+        &mut self,
+        body: &mut FunctionBody<'_>,
+        _ctx: &mut TraverseCtx<'_>,
+    ) {
         self.remove_last_return(&mut body.statements);
-    }
-}
-
-impl<'a> MinimizeExitPoints {
-    pub fn new() -> Self {
-        Self { changed: false }
     }
 
     // `function foo() { return }` -> `function foo() {}`

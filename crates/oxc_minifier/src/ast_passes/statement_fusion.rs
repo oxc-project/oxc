@@ -2,35 +2,22 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 use oxc_span::GetSpan;
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::TraverseCtx;
 
-use crate::CompressorPass;
+use super::PeepholeOptimizations;
 
 /// Statement Fusion
 ///
 /// Tries to fuse all the statements in a block into a one statement by using COMMAs or statements.
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/StatementFusion.java>
-pub struct StatementFusion {
-    pub(crate) changed: bool,
-}
-
-impl<'a> CompressorPass<'a> for StatementFusion {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = false;
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl<'a> Traverse<'a> for StatementFusion {
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+impl<'a> PeepholeOptimizations {
+    pub fn statement_fusion_exit_statements(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.fuse_statements(stmts, ctx);
-    }
-}
-
-impl<'a> StatementFusion {
-    pub fn new() -> Self {
-        Self { changed: false }
     }
 
     fn fuse_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {

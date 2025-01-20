@@ -34,10 +34,8 @@ impl<'a> Compressor<'a> {
         // RemoveUnusedCode::new(self.options).build(program, &mut ctx);
         let normalize_options = NormalizeOptions { convert_while_to_fors: true };
         Normalize::new(normalize_options, self.options).build(program, &mut ctx);
-        PeepholeOptimizations::new(self.options.target, true, self.options)
-            .run_in_loop(program, &mut ctx);
-        PeepholeOptimizations::new(self.options.target, false, self.options)
-            .build(program, &mut ctx);
+        PeepholeOptimizations::new(self.options.target, true).run_in_loop(program, &mut ctx);
+        PeepholeOptimizations::new(self.options.target, false).build(program, &mut ctx);
     }
 
     pub fn dead_code_elimination(self, program: &mut Program<'a>) {
