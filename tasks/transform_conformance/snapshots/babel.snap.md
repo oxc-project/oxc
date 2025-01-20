@@ -1,6 +1,6 @@
 commit: acbc09a8
 
-Passed: 698/1168
+Passed: 696/1168
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1355,7 +1355,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (49/159)
+# babel-plugin-transform-typescript (47/159)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1727,6 +1727,16 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "None":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(0): [ReferenceId(1)]
+
+* exports/export-context-variables/input.ts
+Reference flags mismatch for "undefined":
+after transform: ReferenceId(0): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read)
+
+* exports/export-globals/input.ts
+Reference flags mismatch for "Math":
+after transform: ReferenceId(0): ReferenceFlags(Read | Type)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read)
 
 * exports/export-type/input.ts
 Scope children mismatch:

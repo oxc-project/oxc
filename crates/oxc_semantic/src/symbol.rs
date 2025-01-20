@@ -278,6 +278,16 @@ impl SymbolTable {
             .map(|&reference_id| &self.references[reference_id])
     }
 
+    pub fn extend_resolved_reference_ids(
+        &mut self,
+        symbol_id: SymbolId,
+        reference_ids: Vec<ReferenceId>,
+    ) {
+        self.inner.with_dependent_mut(|_, inner| {
+            inner.resolved_references[symbol_id.index()].extend(reference_ids);
+        });
+    }
+
     /// Get whether a symbol is mutated (i.e. assigned to).
     ///
     /// If symbol is `const`, always returns `false`.
