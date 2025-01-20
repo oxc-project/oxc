@@ -361,7 +361,7 @@ impl<'a> ParserImpl<'a> {
             // return parseJSDocFunctionType();
             Kind::Question => self.parse_js_doc_unknown_or_nullable_type(),
             Kind::Bang => self.parse_js_doc_non_nullable_type(),
-            Kind::NoSubstitutionTemplate | Kind::Str | Kind::False | Kind::Null => {
+            Kind::NoSubstitutionTemplate | Kind::Str | Kind::True | Kind::False | Kind::Null => {
                 self.parse_literal_type_node(/* negative */ false)
             }
             kind if kind.is_number() => {
