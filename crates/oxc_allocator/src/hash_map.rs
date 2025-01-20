@@ -20,7 +20,7 @@ use rustc_hash::FxBuildHasher;
 pub use hashbrown::{
     hash_map::{
         Drain, Entry, EntryRef, ExtractIf, IntoIter, IntoKeys, IntoValues, Iter, IterMut, Keys,
-        OccupiedError, RawEntryBuilder, RawEntryBuilderMut, Values, ValuesMut,
+        OccupiedError, Values, ValuesMut,
     },
     Equivalent, TryReserveError,
 };
