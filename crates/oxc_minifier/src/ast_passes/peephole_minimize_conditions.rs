@@ -2,10 +2,11 @@ use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ValueType};
 use oxc_span::{cmp::ContentEq, GetSpan};
-use oxc_syntax::es_target::ESTarget;
-use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, TraverseCtx};
 
-use crate::{ctx::Ctx, CompressorPass};
+use crate::ctx::Ctx;
+
+use super::PeepholeOptimizations;
 
 /// Minimize Conditions
 ///
@@ -14,21 +15,8 @@ use crate::{ctx::Ctx, CompressorPass};
 /// with `? :` and short-circuit binary operators.
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
-pub struct PeepholeMinimizeConditions {
-    #[allow(unused)]
-    target: ESTarget,
-    pub(crate) changed: bool,
-}
-
-impl<'a> CompressorPass<'a> for PeepholeMinimizeConditions {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = false;
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
-    fn exit_statements(
+impl<'a> PeepholeOptimizations {
+    pub fn minimize_conditions_exit_statements(
         &mut self,
         stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
@@ -45,7 +33,11 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
         self.changed = self.changed || changed;
     }
 
-    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn minimize_conditions_exit_statement(
+        &mut self,
+        stmt: &mut Statement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let expr = match stmt {
             Statement::IfStatement(s) => Some(&mut s.test),
             Statement::WhileStatement(s) => Some(&mut s.test),
@@ -76,7 +68,11 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
         };
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn minimize_conditions_exit_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         loop {
             let mut changed = false;
             if let Expression::ConditionalExpression(logical_expr) = expr {
@@ -105,12 +101,6 @@ impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
             *expr = folded_expr;
             self.changed = true;
         };
-    }
-}
-
-impl<'a> PeepholeMinimizeConditions {
-    pub fn new(target: ESTarget) -> Self {
-        Self { target, changed: false }
     }
 
     fn try_minimize_not(

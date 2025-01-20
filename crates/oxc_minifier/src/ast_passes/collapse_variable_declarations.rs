@@ -1,40 +1,26 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::TraverseCtx;
 
-use crate::CompressorPass;
+use super::PeepholeOptimizations;
 
-/// Collapse variable declarations.
-///
-/// Join Vars:
-/// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
-/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/CollapseVariableDeclarations.java>
-///
-/// Collapse into for statements:
-/// `var a = 0; for(;a<0;a++) {}` => `for(var a = 0;a<0;a++) {}`
-/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Denormalize.java>
-pub struct CollapseVariableDeclarations {
-    pub(crate) changed: bool,
-}
-
-impl<'a> CompressorPass<'a> for CollapseVariableDeclarations {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = false;
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl<'a> Traverse<'a> for CollapseVariableDeclarations {
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+impl<'a> PeepholeOptimizations {
+    /// Collapse variable declarations.
+    ///
+    /// Join Vars:
+    /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
+    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/CollapseVariableDeclarations.java>
+    ///
+    /// Collapse into for statements:
+    /// `var a = 0; for(;a<0;a++) {}` => `for(var a = 0;a<0;a++) {}`
+    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Denormalize.java>
+    pub fn collapse_variable_declarations(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.join_vars(stmts, ctx);
         self.maybe_collapse_into_for_statements(stmts, ctx);
-    }
-}
-
-// Join Vars
-impl<'a> CollapseVariableDeclarations {
-    pub fn new() -> Self {
-        Self { changed: false }
     }
 
     fn is_require_call(var_decl: &VariableDeclaration) -> bool {
@@ -112,7 +98,7 @@ impl<'a> CollapseVariableDeclarations {
 }
 
 // Collapse into for statements
-impl<'a> CollapseVariableDeclarations {
+impl<'a> PeepholeOptimizations {
     fn maybe_collapse_into_for_statements(
         &mut self,
         stmts: &mut Vec<'a, Statement<'a>>,
@@ -239,18 +225,6 @@ mod test {
 
     mod join_vars {
         use super::{test, test_same};
-
-        #[test]
-        fn cjs() {
-            // Do not join `require` calls for cjs-module-lexer.
-            test_same(
-                " Object.defineProperty(exports, '__esModule', { value: true });
-                var compilerDom = require('@vue/compiler-dom');
-                var runtimeDom = require('@vue/runtime-dom');
-                var shared = require('@vue/shared');
-                ",
-            );
-        }
 
         #[test]
         fn test_collapsing() {

@@ -7,33 +7,22 @@ use oxc_ecmascript::{
     constant_evaluation::ConstantEvaluation, StringCharAt, StringCharCodeAt, StringIndexOf,
     StringLastIndexOf, StringSubstring, ToInt32,
 };
-use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, TraverseCtx};
 
-use crate::{ctx::Ctx, CompressorPass};
+use crate::ctx::Ctx;
 
-/// Minimize With Known Methods
-/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
-pub struct PeepholeReplaceKnownMethods {
-    pub(crate) changed: bool,
-}
+use super::PeepholeOptimizations;
 
-impl<'a> CompressorPass<'a> for PeepholeReplaceKnownMethods {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = false;
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl<'a> Traverse<'a> for PeepholeReplaceKnownMethods {
-    fn exit_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+impl<'a> PeepholeOptimizations {
+    /// Minimize With Known Methods
+    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
+    pub fn replace_known_methods_exit_expression(
+        &mut self,
+        node: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.try_fold_concat_chain(node, ctx);
         self.try_fold_known_string_methods(node, ctx);
-    }
-}
-
-impl<'a> PeepholeReplaceKnownMethods {
-    pub fn new() -> Self {
-        Self { changed: false }
     }
 
     fn try_fold_known_string_methods(
