@@ -51,7 +51,7 @@ impl IsolatedLintHandler {
             // a diagnostics connected from related_info to original diagnostic
             let mut inverted_diagnostics = vec![];
             for d in &diagnostics {
-                let Some(ref related_info) = d.diagnostic.related_information else {
+                let Some(related_info) = &d.diagnostic.related_information else {
                     continue;
                 };
                 let related_information = Some(vec![DiagnosticRelatedInformation {

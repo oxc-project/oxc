@@ -22,7 +22,7 @@ impl<'a> PeepholeOptimizations {
         if let Some(last) = stmts.last() {
             if matches!(last, Statement::ReturnStatement(ret) if ret.argument.is_none()) {
                 stmts.pop();
-                self.changed = true;
+                self.mark_current_function_as_changed();
             }
         }
     }

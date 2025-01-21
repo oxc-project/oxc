@@ -1,7 +1,6 @@
 ---
 source: tasks/website/src/linter/cli.rs
 expression: snapshot
-snapshot_kind: text
 ---
 Usage: [-c=<./oxlintrc.json>] [PATH]...
 
@@ -68,7 +67,8 @@ Handle Warnings
                               your project
 
 Output
-    -f, --format=ARG          Use a specific output format (default, json, unix, checkstyle, github)
+    -f, --format=ARG          Use a specific output format (default, json, unix, checkstyle, github,
+                              stylish)
 
 Miscellaneous
         --silent              Do not display any diagnostics

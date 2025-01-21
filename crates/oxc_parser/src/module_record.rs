@@ -65,10 +65,10 @@ impl<'a> ModuleRecordBuilder<'a> {
         errors
     }
 
-    fn add_module_request(&mut self, name: &Atom<'a>, requested_module: RequestedModule) {
+    fn add_module_request(&mut self, name: Atom<'a>, requested_module: RequestedModule) {
         self.module_record
             .requested_modules
-            .entry(*name)
+            .entry(name)
             .or_insert_with(|| oxc_allocator::Vec::new_in(self.allocator))
             .push(requested_module);
     }
@@ -240,7 +240,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             }
         }
         self.add_module_request(
-            &module_request.name,
+            module_request.name,
             RequestedModule {
                 statement_span: decl.span,
                 span: module_request.span,
@@ -271,7 +271,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             self.add_export_binding(exported_name.name(), exported_name.span());
         }
         self.add_module_request(
-            &module_request.name,
+            module_request.name,
             RequestedModule {
                 statement_span: decl.span,
                 span: module_request.span,
@@ -330,7 +330,7 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         if let Some(module_request) = &module_request {
             self.add_module_request(
-                &module_request.name,
+                module_request.name,
                 RequestedModule {
                     statement_span: decl.span,
                     span: module_request.span,

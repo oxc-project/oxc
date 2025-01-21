@@ -202,7 +202,7 @@ impl Rule for BanTsComment {
                             ));
                         }
 
-                        if let DirectiveConfig::DescriptionFormat(Some(ref re)) = config {
+                        if let DirectiveConfig::DescriptionFormat(Some(re)) = config {
                             if !re.is_match(description) {
                                 ctx.diagnostic(comment_description_not_match_pattern(
                                     directive,

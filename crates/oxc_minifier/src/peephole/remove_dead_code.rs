@@ -45,13 +45,13 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => None,
         } {
             *stmt = new_stmt;
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
 
         if let Statement::ExpressionStatement(s) = stmt {
             if let Some(new_stmt) = Self::try_fold_expression_stmt(s, ctx) {
                 *stmt = new_stmt;
-                self.changed = true;
+                self.mark_current_function_as_changed();
             }
         }
     }
@@ -70,7 +70,7 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => None,
         } {
             *expr = folded_expr;
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
     }
 
@@ -134,12 +134,12 @@ impl<'a, 'b> PeepholeOptimizations {
         if let Some(stmt) = keep_var.get_variable_declaration_statement() {
             stmts.push(stmt);
             if !all_hoisted {
-                self.changed = true;
+                self.mark_current_function_as_changed();
             }
         }
 
         if stmts.len() != len {
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
     }
 
@@ -185,16 +185,16 @@ impl<'a, 'b> PeepholeOptimizations {
                     } else {
                         if_stmt.alternate = Some(new_stmt);
                     }
-                    self.changed = true;
+                    self.mark_current_function_as_changed();
                 }
             }
             Some(Statement::BlockStatement(s)) if s.body.is_empty() => {
                 if_stmt.alternate = None;
-                self.changed = true;
+                self.mark_current_function_as_changed();
             }
             Some(Statement::EmptyStatement(_)) => {
                 if_stmt.alternate = None;
-                self.changed = true;
+                self.mark_current_function_as_changed();
             }
             _ => {}
         }
@@ -280,7 +280,7 @@ impl<'a, 'b> PeepholeOptimizations {
             Some(true) => {
                 // Remove the test expression.
                 for_stmt.test = None;
-                self.changed = true;
+                self.mark_current_function_as_changed();
                 None
             }
             None => None,

@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ValueType},
@@ -7,6 +7,7 @@ use oxc_ecmascript::{
 };
 use oxc_span::cmp::ContentEq;
 use oxc_span::GetSpan;
+use oxc_span::SPAN;
 use oxc_syntax::{
     es_target::ESTarget,
     identifier::is_identifier_name,
@@ -134,6 +135,7 @@ impl<'a, 'b> PeepholeOptimizations {
                 Self::try_compress_assignment_to_update_expression(e, ctx)
             }
             Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx)
+                .or_else(|| Self::try_compress_is_object_and_not_null(e, ctx))
                 .or_else(|| self.try_compress_logical_expression_to_assignment_expression(e, ctx))
                 .or_else(|| Self::try_rotate_logical_expression(e, ctx)),
             Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
@@ -155,7 +157,7 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => None,
         } {
             *expr = folded_expr;
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
 
         // Out of fixed loop syntax changes happen last.
@@ -169,7 +171,7 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => None,
         } {
             *expr = folded_expr;
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
     }
 
@@ -270,7 +272,7 @@ impl<'a, 'b> PeepholeOptimizations {
                     if let Some(arg) = return_stmt_arg {
                         *body = ctx.ast.statement_expression(arg.span(), arg);
                         arrow_expr.expression = true;
-                        self.changed = true;
+                        self.mark_current_function_as_changed();
                     }
                 }
             }
@@ -331,6 +333,9 @@ impl<'a, 'b> PeepholeOptimizations {
     /// `foo === null || foo === undefined` => `foo == null`
     /// `foo !== null && foo !== undefined` => `foo != null`
     ///
+    /// Also supports `(a = foo.bar) === null || a === undefined` which commonly happens when
+    /// optional chaining is lowered. (`(a=foo.bar)==null`)
+    ///
     /// This compression assumes that `document.all` is a normal object.
     /// If that assumption does not hold, this compression is not allowed.
     /// - `document.all === null || document.all === undefined` is `false`
@@ -346,8 +351,8 @@ impl<'a, 'b> PeepholeOptimizations {
             LogicalOperator::Coalesce => return None,
         };
         if let Some(new_expr) = Self::try_compress_is_null_or_undefined_for_left_and_right(
-            &expr.left,
-            &expr.right,
+            &mut expr.left,
+            &mut expr.right,
             expr.span,
             target_ops,
             ctx,
@@ -360,10 +365,11 @@ impl<'a, 'b> PeepholeOptimizations {
         if left.operator != op {
             return None;
         }
+        let new_span = Span::new(left.right.span().start, expr.span.end);
         Self::try_compress_is_null_or_undefined_for_left_and_right(
-            &left.right,
-            &expr.right,
-            Span::new(left.right.span().start, expr.span.end),
+            &mut left.right,
+            &mut expr.right,
+            new_span,
             target_ops,
             ctx,
         )
@@ -378,60 +384,93 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_compress_is_null_or_undefined_for_left_and_right(
-        left: &Expression<'a>,
-        right: &Expression<'a>,
+        left: &mut Expression<'a>,
+        right: &mut Expression<'a>,
         span: Span,
         (find_op, replace_op): (BinaryOperator, BinaryOperator),
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
-        let pair = Self::commutative_pair(
-            (&left, &right),
-            |a| {
-                if let Expression::BinaryExpression(op) = a {
-                    if op.operator == find_op {
-                        return Self::commutative_pair(
-                            (&op.left, &op.right),
-                            |a_a| a_a.is_null().then_some(a_a.span()),
-                            |a_b| {
-                                if let Expression::Identifier(id) = a_b {
-                                    Some((a_b.span(), (*id).clone()))
-                                } else {
-                                    None
-                                }
-                            },
-                        );
-                    }
-                }
-                None
-            },
-            |b| {
-                if let Expression::BinaryExpression(op) = b {
-                    if op.operator == find_op {
-                        return Self::commutative_pair(
-                            (&op.left, &op.right),
-                            |b_a| b_a.evaluate_to_undefined().then_some(()),
-                            |b_b| {
-                                if let Expression::Identifier(id) = b_b {
-                                    Some((*id).clone())
-                                } else {
-                                    None
-                                }
-                            },
-                        )
-                        .map(|v| v.1);
-                    }
-                }
-                None
-            },
-        );
-        let ((null_expr_span, (left_id_expr_span, left_id_ref)), right_id_ref) = pair?;
-        if left_id_ref.name != right_id_ref.name {
+        enum LeftPairValueResult {
+            Null(Span),
+            Undefined,
+        }
+
+        let (
+            Expression::BinaryExpression(left_binary_expr),
+            Expression::BinaryExpression(right_binary_expr),
+        ) = (left, right)
+        else {
+            return None;
+        };
+        if left_binary_expr.operator != find_op || right_binary_expr.operator != find_op {
             return None;
         }
-        let left_id_expr =
-            ctx.ast.expression_identifier_reference(left_id_expr_span, left_id_ref.name);
-        let null_expr = ctx.ast.expression_null_literal(null_expr_span);
-        Some(ctx.ast.expression_binary(span, left_id_expr, replace_op, null_expr))
+
+        let is_null_or_undefined = |a: &Expression| {
+            if a.is_null() {
+                Some(LeftPairValueResult::Null(a.span()))
+            } else if a.evaluate_to_undefined() {
+                Some(LeftPairValueResult::Undefined)
+            } else {
+                None
+            }
+        };
+        let is_id_or_assign_to_id = |b: &Expression| match b {
+            Expression::Identifier(id) => Some(id.name.clone_in(ctx.ast.allocator)),
+            Expression::AssignmentExpression(assign_expr) => {
+                if assign_expr.operator == AssignmentOperator::Assign {
+                    if let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left {
+                        return Some(id.name.clone_in(ctx.ast.allocator));
+                    }
+                }
+                None
+            }
+            _ => None,
+        };
+        let (left_value, (left_non_value_expr, left_id_name)) = {
+            let left_value;
+            let left_non_value;
+            if let Some(v) = is_null_or_undefined(&left_binary_expr.left) {
+                left_value = v;
+                let left_non_value_id = is_id_or_assign_to_id(&left_binary_expr.right)?;
+                left_non_value = (&mut left_binary_expr.right, left_non_value_id);
+            } else {
+                left_value = is_null_or_undefined(&left_binary_expr.right)?;
+                let left_non_value_id = is_id_or_assign_to_id(&left_binary_expr.left)?;
+                left_non_value = (&mut left_binary_expr.left, left_non_value_id);
+            }
+            (left_value, left_non_value)
+        };
+
+        let (right_value, right_id) = Self::commutative_pair(
+            (&right_binary_expr.left, &right_binary_expr.right),
+            |a| match left_value {
+                LeftPairValueResult::Null(_) => a.evaluate_to_undefined().then_some(None),
+                LeftPairValueResult::Undefined => a.is_null().then_some(Some(a.span())),
+            },
+            |b| {
+                if let Expression::Identifier(id) = b {
+                    Some(id)
+                } else {
+                    None
+                }
+            },
+        )?;
+
+        if left_id_name != right_id.name {
+            return None;
+        }
+
+        let null_expr_span = match left_value {
+            LeftPairValueResult::Null(span) => span,
+            LeftPairValueResult::Undefined => right_value.unwrap(),
+        };
+        Some(ctx.ast.expression_binary(
+            span,
+            ctx.ast.move_expression(left_non_value_expr),
+            replace_op,
+            ctx.ast.expression_null_literal(null_expr_span),
+        ))
     }
 
     /// Compress `a || (a = b)` to `a ||= b`
@@ -539,14 +578,179 @@ impl<'a, 'b> PeepholeOptimizations {
         }
     }
 
-    fn commutative_pair<A, F, G, RetF: 'a, RetG: 'a>(
-        pair: (&A, &A),
+    /// Compress `typeof foo === 'object' && foo !== null` into `typeof foo == 'object' && !!foo`.
+    ///
+    /// - `typeof foo === 'object' && foo !== null` => `typeof foo == 'object' && !!foo`
+    /// - `typeof foo == 'object' && foo != null` => `typeof foo == 'object' && !!foo`
+    /// - `typeof foo !== 'object' || foo === null` => `typeof foo != 'object' || !foo`
+    /// - `typeof foo != 'object' || foo == null` => `typeof foo != 'object' || !foo`
+    ///
+    /// If `typeof foo == 'object'`, then `foo` is guaranteed to be an object or null.
+    /// - If `foo` is an object, then `foo !== null` is `true`. If `foo` is null, then `foo !== null` is `false`.
+    /// - If `foo` is an object, then `foo != null` is `true`. If `foo` is null, then `foo != null` is `false`.
+    /// - If `foo` is an object, then `!!foo` is `true`. If `foo` is null, then `!!foo` is `false`.
+    ///
+    /// This compression is safe for `document.all` because `typeof document.all` is not `'object'`.
+    fn try_compress_is_object_and_not_null(
+        expr: &mut LogicalExpression<'a>,
+        ctx: Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        let inversed = match expr.operator {
+            LogicalOperator::And => false,
+            LogicalOperator::Or => true,
+            LogicalOperator::Coalesce => return None,
+        };
+
+        if let Some(new_expr) = Self::try_compress_is_object_and_not_null_for_left_and_right(
+            &expr.left,
+            &expr.right,
+            expr.span,
+            ctx,
+            inversed,
+        ) {
+            return Some(new_expr);
+        }
+
+        let Expression::LogicalExpression(left) = &mut expr.left else {
+            return None;
+        };
+        let inversed = match expr.operator {
+            LogicalOperator::And => false,
+            LogicalOperator::Or => true,
+            LogicalOperator::Coalesce => return None,
+        };
+
+        Self::try_compress_is_object_and_not_null_for_left_and_right(
+            &left.right,
+            &expr.right,
+            Span::new(left.right.span().start, expr.span.end),
+            ctx,
+            inversed,
+        )
+        .map(|new_expr| {
+            ctx.ast.expression_logical(
+                expr.span,
+                ctx.ast.move_expression(&mut left.left),
+                expr.operator,
+                new_expr,
+            )
+        })
+    }
+
+    fn try_compress_is_object_and_not_null_for_left_and_right(
+        left: &Expression<'a>,
+        right: &Expression<'a>,
+        span: Span,
+        ctx: Ctx<'a, 'b>,
+        inversed: bool,
+    ) -> Option<Expression<'a>> {
+        let pair = Self::commutative_pair(
+            (&left, &right),
+            |a_expr| {
+                let Expression::BinaryExpression(a) = a_expr else { return None };
+                let is_target_ops = if inversed {
+                    matches!(
+                        a.operator,
+                        BinaryOperator::StrictInequality | BinaryOperator::Inequality
+                    )
+                } else {
+                    matches!(a.operator, BinaryOperator::StrictEquality | BinaryOperator::Equality)
+                };
+                if !is_target_ops {
+                    return None;
+                }
+                let (id, ()) = Self::commutative_pair(
+                    (&a.left, &a.right),
+                    |a_a| {
+                        let Expression::UnaryExpression(a_a) = a_a else { return None };
+                        if a_a.operator != UnaryOperator::Typeof {
+                            return None;
+                        }
+                        let Expression::Identifier(id) = &a_a.argument else { return None };
+                        Some(id)
+                    },
+                    |b| b.is_specific_string_literal("object").then_some(()),
+                )?;
+                Some((id, a_expr))
+            },
+            |b| {
+                let Expression::BinaryExpression(b) = b else {
+                    return None;
+                };
+                let is_target_ops = if inversed {
+                    matches!(b.operator, BinaryOperator::StrictEquality | BinaryOperator::Equality)
+                } else {
+                    matches!(
+                        b.operator,
+                        BinaryOperator::StrictInequality | BinaryOperator::Inequality
+                    )
+                };
+                if !is_target_ops {
+                    return None;
+                }
+                let (id, ()) = Self::commutative_pair(
+                    (&b.left, &b.right),
+                    |a_a| {
+                        let Expression::Identifier(id) = a_a else { return None };
+                        Some(id)
+                    },
+                    |b| b.is_null().then_some(()),
+                )?;
+                Some(id)
+            },
+        );
+        let ((typeof_id_ref, typeof_binary_expr), is_null_id_ref) = pair?;
+        if typeof_id_ref.name != is_null_id_ref.name {
+            return None;
+        }
+        // It should also return None when the reference might refer to a reference value created by a with statement
+        // when the minifier supports with statements
+        if ctx.is_global_reference(typeof_id_ref) {
+            return None;
+        }
+
+        let mut new_left_expr = typeof_binary_expr.clone_in(ctx.ast.allocator);
+        if let Expression::BinaryExpression(new_left_expr_binary) = &mut new_left_expr {
+            new_left_expr_binary.operator =
+                if inversed { BinaryOperator::Inequality } else { BinaryOperator::Equality };
+        } else {
+            unreachable!();
+        }
+
+        let new_right_expr = if inversed {
+            ctx.ast.expression_unary(
+                SPAN,
+                UnaryOperator::LogicalNot,
+                ctx.ast.expression_identifier_reference(is_null_id_ref.span, is_null_id_ref.name),
+            )
+        } else {
+            ctx.ast.expression_unary(
+                SPAN,
+                UnaryOperator::LogicalNot,
+                ctx.ast.expression_unary(
+                    SPAN,
+                    UnaryOperator::LogicalNot,
+                    ctx.ast
+                        .expression_identifier_reference(is_null_id_ref.span, is_null_id_ref.name),
+                ),
+            )
+        };
+        Some(ctx.ast.expression_logical(
+            span,
+            new_left_expr,
+            if inversed { LogicalOperator::Or } else { LogicalOperator::And },
+            new_right_expr,
+        ))
+    }
+
+    fn commutative_pair<'x, A, F, G, RetF: 'x, RetG: 'x>(
+        pair: (&'x A, &'x A),
         check_a: F,
         check_b: G,
     ) -> Option<(RetF, RetG)>
     where
-        F: Fn(&A) -> Option<RetF>,
-        G: Fn(&A) -> Option<RetG>,
+        F: Fn(&'x A) -> Option<RetF>,
+        G: Fn(&'x A) -> Option<RetG>,
     {
         if let Some(a) = check_a(pair.0) {
             if let Some(b) = check_b(pair.1) {
@@ -559,6 +763,7 @@ impl<'a, 'b> PeepholeOptimizations {
         }
         None
     }
+
     fn try_fold_loose_equals_undefined(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, 'b>,
@@ -612,7 +817,7 @@ impl<'a, 'b> PeepholeOptimizations {
             }
         }
         stmt.argument = None;
-        self.changed = true;
+        self.mark_current_function_as_changed();
     }
 
     fn compress_variable_declarator(
@@ -628,7 +833,7 @@ impl<'a, 'b> PeepholeOptimizations {
             && decl.init.as_ref().is_some_and(|init| ctx.is_expression_undefined(init))
         {
             decl.init = None;
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
     }
 
@@ -652,7 +857,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
         expr.operator = new_op;
         expr.right = ctx.ast.move_expression(&mut binary_expr.right);
-        self.changed = true;
+        self.mark_current_function_as_changed();
     }
 
     /// Compress `a = a || b` to `a ||= b`
@@ -688,7 +893,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
         expr.operator = new_op;
         expr.right = ctx.ast.move_expression(&mut logical_expr.right);
-        self.changed = true;
+        self.mark_current_function_as_changed();
     }
 
     fn try_compress_assignment_to_update_expression(
@@ -1024,7 +1229,7 @@ impl<'a, 'b> PeepholeOptimizations {
             && e.arguments[0].as_expression().is_some_and(Expression::is_number_0)
         {
             e.arguments.clear();
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
     }
 
@@ -1063,7 +1268,7 @@ impl<'a, 'b> PeepholeOptimizations {
             {
                 call_expr.callee =
                     ctx.ast.expression_identifier_reference(call_expr.callee.span(), "Object");
-                self.changed = true;
+                self.mark_current_function_as_changed();
             }
         }
     }
@@ -1096,7 +1301,7 @@ impl<'a, 'b> PeepholeOptimizations {
         if is_identifier_name(value) {
             *computed = false;
             *key = PropertyKey::StaticIdentifier(ctx.ast.alloc_identifier_name(s.span, s.value));
-            self.changed = true;
+            self.mark_current_function_as_changed();
             return;
         }
         if let Some(value) = Ctx::string_to_equivalent_number_value(value) {
@@ -1108,7 +1313,7 @@ impl<'a, 'b> PeepholeOptimizations {
                     None,
                     NumberBase::Decimal,
                 ));
-                self.changed = true;
+                self.mark_current_function_as_changed();
             }
             return;
         }
@@ -1175,7 +1380,7 @@ impl<'a, 'b> PeepholeOptimizations {
                     new_args.push(arg);
                 }
             }
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
     }
 }
@@ -1782,6 +1987,71 @@ mod test {
         test("foo !== 1 && foo !== null && foo !== void 0", "foo !== 1 && foo != null");
         test("foo !== 1 || foo !== void 0 && foo !== null", "foo !== 1 || foo != null");
         test_same("foo !== void 0 && bar !== null");
+
+        test("(_foo = foo) === null || _foo === undefined", "(_foo = foo) == null");
+        test("(_foo = foo) === null || _foo === void 0", "(_foo = foo) == null");
+        test("(_foo = foo.bar) === null || _foo === undefined", "(_foo = foo.bar) == null");
+        test("(_foo = foo) !== null && _foo !== undefined", "(_foo = foo) != null");
+        test("(_foo = foo) === undefined || _foo === null", "(_foo = foo) == null");
+        test("(_foo = foo) === void 0 || _foo === null", "(_foo = foo) == null");
+        test(
+            "(_foo = foo) === null || _foo === void 0 || _foo === 1",
+            "(_foo = foo) == null || _foo === 1",
+        );
+        test(
+            "_foo === 1 || (_foo = foo) === null || _foo === void 0",
+            "_foo === 1 || (_foo = foo) == null",
+        );
+        test_same("(_foo = foo) === void 0 || bar === null");
+    }
+
+    #[test]
+    fn test_fold_is_object_and_not_null() {
+        test(
+            "var foo; v = typeof foo === 'object' && foo !== null",
+            "var foo; v = typeof foo == 'object' && !!foo",
+        );
+        test(
+            "var foo; v = typeof foo == 'object' && foo !== null",
+            "var foo; v = typeof foo == 'object' && !!foo",
+        );
+        test(
+            "var foo; v = typeof foo === 'object' && foo != null",
+            "var foo; v = typeof foo == 'object' && !!foo",
+        );
+        test(
+            "var foo; v = typeof foo == 'object' && foo != null",
+            "var foo; v = typeof foo == 'object' && !!foo",
+        );
+        test(
+            "var foo; v = typeof foo !== 'object' || foo === null",
+            "var foo; v = typeof foo != 'object' || !foo",
+        );
+        test(
+            "var foo; v = typeof foo != 'object' || foo === null",
+            "var foo; v = typeof foo != 'object' || !foo",
+        );
+        test(
+            "var foo; v = typeof foo !== 'object' || foo == null",
+            "var foo; v = typeof foo != 'object' || !foo",
+        );
+        test(
+            "var foo; v = typeof foo != 'object' || foo == null",
+            "var foo; v = typeof foo != 'object' || !foo",
+        );
+        test(
+            "var foo, bar; v = typeof foo === 'object' && foo !== null && bar !== 1",
+            "var foo, bar; v = typeof foo == 'object' && !!foo && bar !== 1",
+        );
+        test(
+            "var foo, bar; v = bar !== 1 && typeof foo === 'object' && foo !== null",
+            "var foo, bar; v = bar !== 1 && typeof foo == 'object' && !!foo",
+        );
+        test_same("var foo; v = typeof foo.a == 'object' && foo.a !== null"); // cannot be folded because accessing foo.a might have a side effect
+        test_same("v = foo !== null && typeof foo == 'object'"); // cannot be folded because accessing foo might have a side effect
+        test_same("v = typeof foo == 'object' && foo !== null"); // cannot be folded because accessing foo might have a side effect
+        test_same("var foo, bar; v = typeof foo == 'object' && bar !== null");
+        test_same("var foo; v = typeof foo == 'string' && foo !== null");
     }
 
     #[test]

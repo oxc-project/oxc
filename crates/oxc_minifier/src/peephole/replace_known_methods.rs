@@ -58,7 +58,7 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         };
         if let Some(replacement) = replacement {
-            self.changed = true;
+            self.mark_current_function_as_changed();
             *node = replacement;
         }
     }
@@ -408,7 +408,7 @@ impl<'a> PeepholeOptimizations {
             ),
             false,
         );
-        self.changed = true;
+        self.mark_current_function_as_changed();
     }
 
     /// `[].concat(1, 2)` -> `[1, 2]`

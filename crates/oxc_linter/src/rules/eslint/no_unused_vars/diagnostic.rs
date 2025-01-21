@@ -45,7 +45,7 @@ where
         IgnorePattern::Default => {
             name.strip_prefix('_').map_or(".".into(), |name| format!(" to '{name}'."))
         }
-        IgnorePattern::Some(ref r) => {
+        IgnorePattern::Some(r) => {
             format!(" to match the pattern /{r}/.")
         }
     };

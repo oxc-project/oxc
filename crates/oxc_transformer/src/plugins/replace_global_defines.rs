@@ -359,10 +359,10 @@ impl<'a> ReplaceGlobalDefines<'a> {
             .left
             .as_simple_assignment_target_mut()
             .and_then(|item| match item {
-                SimpleAssignmentTarget::ComputedMemberExpression(ref mut computed_member_expr) => {
+                SimpleAssignmentTarget::ComputedMemberExpression(computed_member_expr) => {
                     self.replace_dot_computed_member_expr(ctx, computed_member_expr)
                 }
-                SimpleAssignmentTarget::StaticMemberExpression(ref mut member) => {
+                SimpleAssignmentTarget::StaticMemberExpression(member) => {
                     self.replace_dot_static_member_expr(ctx, member)
                 }
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
@@ -387,10 +387,10 @@ impl<'a> ReplaceGlobalDefines<'a> {
             Expression::ChainExpression(chain) => {
                 let Some(new_expr) =
                     chain.expression.as_member_expression_mut().and_then(|item| match item {
-                        MemberExpression::ComputedMemberExpression(
-                            ref mut computed_member_expr,
-                        ) => self.replace_dot_computed_member_expr(ctx, computed_member_expr),
-                        MemberExpression::StaticMemberExpression(ref mut member) => {
+                        MemberExpression::ComputedMemberExpression(computed_member_expr) => {
+                            self.replace_dot_computed_member_expr(ctx, computed_member_expr)
+                        }
+                        MemberExpression::StaticMemberExpression(member) => {
                             self.replace_dot_static_member_expr(ctx, member)
                         }
                         MemberExpression::PrivateFieldExpression(_) => None,
@@ -414,7 +414,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 }
             }
             Expression::MetaProperty(meta_property) => {
-                if let Some(ref replacement) = self.config.0.import_meta {
+                if let Some(replacement) = &self.config.0.import_meta {
                     if meta_property.meta.name == "import" && meta_property.property.name == "meta"
                     {
                         let value = self.parse_value(replacement);
@@ -476,8 +476,8 @@ impl<'a> ReplaceGlobalDefines<'a> {
         member: &StaticMemberExpression<'a>,
     ) -> bool {
         if meta_define.parts.is_empty() && meta_define.postfix_wildcard {
-            match member.object {
-                Expression::MetaProperty(ref meta) => {
+            match &member.object {
+                Expression::MetaProperty(meta) => {
                     return meta.meta.name == "import" && meta.property.name == "meta";
                 }
                 _ => return false,
@@ -642,11 +642,11 @@ fn destructing_dot_define_optimizer<'ast>(
     mut expr: Expression<'ast>,
     ctx: &mut TraverseCtx<'ast>,
 ) -> Expression<'ast> {
-    let Expression::ObjectExpression(ref mut obj) = expr else { return expr };
+    let Expression::ObjectExpression(obj) = &mut expr else { return expr };
     let parent = ctx.parent();
     let destruct_obj_pat = match parent {
-        Ancestor::VariableDeclaratorInit(declarator) => match declarator.id().kind {
-            BindingPatternKind::ObjectPattern(ref pat) => pat,
+        Ancestor::VariableDeclaratorInit(declarator) => match &declarator.id().kind {
+            BindingPatternKind::ObjectPattern(pat) => pat,
             _ => return expr,
         },
         _ => {

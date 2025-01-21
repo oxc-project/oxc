@@ -313,7 +313,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
 
         let hook_name = match &call_expr.callee {
             Expression::Identifier(ident) => ident.name,
-            Expression::StaticMemberExpression(ref member) => member.property.name,
+            Expression::StaticMemberExpression(member) => member.property.name,
             _ => return,
         };
 
@@ -434,7 +434,7 @@ impl<'a> ReactRefresh<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         match expr {
-            Expression::Identifier(ref ident) => {
+            Expression::Identifier(ident) => {
                 // For case like:
                 // export const Something = hoc(Foo)
                 // we don't want to wrap Foo inside the call.
@@ -451,7 +451,7 @@ impl<'a> ReactRefresh<'a, '_> {
                     return false;
                 }
             }
-            Expression::CallExpression(ref mut call_expr) => {
+            Expression::CallExpression(call_expr) => {
                 let allowed_callee = matches!(
                     call_expr.callee,
                     Expression::Identifier(_)
@@ -660,7 +660,7 @@ impl<'a> ReactRefresh<'a, '_> {
                     None
                 }
             }
-            Statement::ExportDefaultDeclaration(ref mut stmt_decl) => {
+            Statement::ExportDefaultDeclaration(stmt_decl) => {
                 match &mut stmt_decl.declaration {
                     declaration @ match_expression!(ExportDefaultDeclarationKind) => {
                         let expression = declaration.to_expression_mut();

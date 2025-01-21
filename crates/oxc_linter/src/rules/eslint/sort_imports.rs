@@ -266,7 +266,7 @@ impl SortImports {
         let specifiers: Vec<_> = specifiers
             .iter()
             .filter_map(|specifier| {
-                if let ImportDeclarationSpecifier::ImportSpecifier(ref specifier) = specifier {
+                if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier {
                     Some(specifier)
                 } else {
                     None

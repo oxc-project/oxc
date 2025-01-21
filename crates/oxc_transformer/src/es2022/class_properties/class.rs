@@ -451,7 +451,7 @@ impl<'a> ClassProperties<'a, '_> {
                 // TODO: Only call `insert_many_before` if some private *props*
                 self.ctx.statement_injector.insert_many_before(
                     &stmt_address,
-                    private_props.iter().filter_map(|(name, prop)| {
+                    private_props.iter().filter_map(|(&name, prop)| {
                         // TODO: Output `var _C_brand = new WeakSet();` for private instance method
                         if prop.is_method() || prop.is_accessor {
                             return None;
@@ -592,7 +592,7 @@ impl<'a> ClassProperties<'a, '_> {
             // `c = class C { #x = 1; static y = 2; }` -> `var _C, _x;`
             // TODO(improve-on-babel): Simplify this.
             if self.private_fields_as_properties {
-                exprs.extend(private_props.iter().filter_map(|(name, prop)| {
+                exprs.extend(private_props.iter().filter_map(|(&name, prop)| {
                     // TODO: Output `_C_brand = new WeakSet()` for private instance method
                     if prop.is_method() || prop.is_accessor {
                         return None;
@@ -796,14 +796,14 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// `_classPrivateFieldLooseKey("prop")`
     fn create_private_prop_key_loose(
-        name: &Atom<'a>,
+        name: Atom<'a>,
         transform_ctx: &TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         transform_ctx.helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
             SPAN,
-            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, *name, None))),
+            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, name, None))),
             ctx,
         )
     }
