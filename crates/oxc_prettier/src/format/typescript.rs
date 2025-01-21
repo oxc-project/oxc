@@ -1041,11 +1041,11 @@ impl<'a> Format<'a> for TSMethodSignature<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
 
-        let key_doc = property::print_property_key(
-            p,
-            &property::PropertyKeyLike::PropertyKey(&self.key),
-            self.computed,
-        );
+        let key_doc = if self.computed {
+            array!(p, [text!("["), self.key.format(p), text!("]")])
+        } else {
+            self.key.format(p)
+        };
         parts.push(key_doc);
 
         if self.optional {
