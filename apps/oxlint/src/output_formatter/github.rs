@@ -35,7 +35,7 @@ impl DiagnosticReporter for GithubReporter {
 }
 
 fn format_github(diagnostic: &Error) -> String {
-    let Info { line, column, filename, message, severity, rule_id } = Info::new(diagnostic);
+    let Info { start, end, filename, message, severity, rule_id } = Info::new(diagnostic);
     let severity = match severity {
         Severity::Error => "error",
         Severity::Warning | miette::Severity::Advice => "warning",
@@ -44,7 +44,11 @@ fn format_github(diagnostic: &Error) -> String {
     let filename = escape_property(&filename);
     let message = escape_data(&message);
     format!(
-        "::{severity} file={filename},line={line},endLine={line},col={column},endColumn={column},title={title}::{message}\n"
+        "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
+        start.line,
+        end.line,
+        start.column,
+        end.column
     )
 }
 
@@ -108,6 +112,6 @@ mod test {
         let result = reporter.render_error(error);
 
         assert!(result.is_some());
-        assert_eq!(result.unwrap(), "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=1,title=oxlint::error message\n");
+        assert_eq!(result.unwrap(), "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n");
     }
 }
