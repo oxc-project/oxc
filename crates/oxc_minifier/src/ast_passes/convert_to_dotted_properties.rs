@@ -1,27 +1,16 @@
 use oxc_ast::ast::*;
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::TraverseCtx;
 
-use crate::{ctx::Ctx, CompressorPass};
+use super::PeepholeOptimizations;
+use crate::ctx::Ctx;
 
-/// Converts property accesses from quoted string or bracket access syntax to dot or unquoted string
-/// syntax, where possible. Dot syntax is more compact.
-///
-/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/ConvertToDottedProperties.java>
-pub struct ConvertToDottedProperties {
-    pub(crate) changed: bool,
-    in_fixed_loop: bool,
-}
-
-impl<'a> CompressorPass<'a> for ConvertToDottedProperties {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = true;
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl<'a> Traverse<'a> for ConvertToDottedProperties {
-    fn exit_member_expression(
+impl<'a> PeepholeOptimizations {
+    /// Converts property accesses from quoted string or bracket access syntax to dot or unquoted string
+    /// syntax, where possible. Dot syntax is more compact.
+    ///
+    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/ConvertToDottedProperties.java>
+    pub fn convert_to_dotted_properties(
         &mut self,
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -29,12 +18,6 @@ impl<'a> Traverse<'a> for ConvertToDottedProperties {
         if !self.in_fixed_loop {
             self.try_compress_computed_member_expression(expr, Ctx(ctx));
         }
-    }
-}
-
-impl<'a> ConvertToDottedProperties {
-    pub fn new(in_fixed_loop: bool) -> Self {
-        Self { changed: false, in_fixed_loop }
     }
 
     /// `foo['bar']` -> `foo.bar`
@@ -67,19 +50,7 @@ impl<'a> ConvertToDottedProperties {
 
 #[cfg(test)]
 mod test {
-    use oxc_allocator::Allocator;
-
-    use crate::tester;
-
-    fn test(source_text: &str, expected: &str) {
-        let allocator = Allocator::default();
-        let mut pass = super::ConvertToDottedProperties::new(false);
-        tester::test(&allocator, source_text, expected, &mut pass);
-    }
-
-    fn test_same(source_text: &str) {
-        test(source_text, source_text);
-    }
+    use crate::tester::{test, test_same};
 
     #[test]
     fn test_computed_to_member_expression() {
@@ -117,7 +88,7 @@ mod test {
         test_same("a[':']");
         test_same("a['.']");
         test_same("a['p ']");
-        test_same("a['p' + '']");
+        test("a['p' + '']", "a.p");
         test_same("a[p]");
         test_same("a[P]");
         test_same("a[$]");
@@ -134,10 +105,10 @@ mod test {
 
     #[test]
     fn test_convert_to_dotted_properties_quoted_props() {
-        test_same("({'':0})");
-        test_same("({'1.0':0})");
-        test_same("({'\\u1d17A':0})");
-        test_same("({'a\\u0004b':0})");
+        test("({'':0})", "");
+        test("({'1.0':0})", "");
+        test("({'\\u1d17A':0})", "");
+        test("({'a\\u0004b':0})", "");
     }
 
     #[test]
@@ -160,7 +131,7 @@ mod test {
         test_same("a?.['.']");
         test_same("a?.['0']");
         test_same("a?.['p ']");
-        test_same("a?.['p' + '']");
+        test("a?.['p' + '']", "a?.p");
         test_same("a?.[p]");
         test_same("a?.[P]");
         test_same("a?.[$]");
@@ -296,8 +267,8 @@ mod test {
         test_same("x?.['y z']");
         test("x?.['y']()", "x?.y();");
         test_same("x?.['y z']()");
-        test_same("x['y' + 'z']");
-        test_same("x?.['y' + 'z']");
+        test("x['y' + 'z']", "x.yz");
+        test("x?.['y' + 'z']", "x?.yz");
         test("x['0']", "x[0];");
         test("x['123']", "x[123];");
         test("x['-123']", "x[-123];");

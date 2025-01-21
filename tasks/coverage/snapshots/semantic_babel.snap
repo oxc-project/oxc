@@ -2,7 +2,7 @@ commit: acbc09a8
 
 semantic_babel Summary:
 AST Parsed     : 2292/2292 (100.00%)
-Positive Passed: 1908/2292 (83.25%)
+Positive Passed: 1909/2292 (83.29%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -179,9 +179,6 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/liter
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["true"]
-rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/loc-index-property/input.js
 semantic error: Bindings mismatch:
@@ -2289,17 +2286,11 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-argumen
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(8)]
-Unresolved references mismatch:
-after transform: ["f", "true"]
-rebuilt        : ["f"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-asi-babel-7/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(8)]
-Unresolved references mismatch:
-after transform: ["f", "true"]
-rebuilt        : ["f"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-binary-operator/input.ts
 semantic error: Unresolved references mismatch:
@@ -2540,22 +2531,11 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrin
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["intrinsic"]
-rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword-babel-7/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["intrinsic"]
-rebuilt        : []
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/literal-boolean/input.ts
-semantic error: Unresolved references mismatch:
-after transform: ["true"]
-rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-2/input.ts
 semantic error: Unresolved references mismatch:

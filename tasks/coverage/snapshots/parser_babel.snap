@@ -3,7 +3,7 @@ commit: acbc09a8
 parser_babel Summary:
 AST Parsed     : 2277/2292 (99.35%)
 Positive Passed: 2256/2292 (98.43%)
-Negative Passed: 1541/1662 (92.72%)
+Negative Passed: 1542/1662 (92.78%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -121,7 +121,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration-error/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-dynamic-errors-babel-7/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword-error/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled-invalid-optional/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-optional-invalid/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-required-after-labeled-optional/input.ts
@@ -12755,6 +12754,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ import typ\u{65} typescript from "typescript";
    ·        ─────────
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword-error/input.ts:1:21]
+ 1 │ type Foo = intrinsic["foo"];
+   ·                     ▲
+ 2 │ 
+   ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-3/input.ts:1:19]

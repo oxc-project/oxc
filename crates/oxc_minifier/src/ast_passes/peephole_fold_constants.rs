@@ -8,26 +8,21 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, LogicalOperator},
 };
-use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, TraverseCtx};
 
-use crate::{ctx::Ctx, CompressorPass};
+use crate::ctx::Ctx;
 
-/// Constant Folding
-///
-/// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-pub struct PeepholeFoldConstants {
-    pub(crate) changed: bool,
-}
+use super::PeepholeOptimizations;
 
-impl<'a> CompressorPass<'a> for PeepholeFoldConstants {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = false;
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl<'a> Traverse<'a> for PeepholeFoldConstants {
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+impl<'a, 'b> PeepholeOptimizations {
+    /// Constant Folding
+    ///
+    /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
+    pub fn fold_constants_exit_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
             Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx)
@@ -43,12 +38,6 @@ impl<'a> Traverse<'a> for PeepholeFoldConstants {
             *expr = folded_expr;
             self.changed = true;
         };
-    }
-}
-
-impl<'a, 'b> PeepholeFoldConstants {
-    pub fn new() -> Self {
-        Self { changed: false }
     }
 
     #[expect(clippy::float_cmp)]
@@ -726,8 +715,6 @@ impl<'a, 'b> PeepholeFoldConstants {
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeFoldConstantsTest.java>
 #[cfg(test)]
 mod test {
-    use oxc_allocator::Allocator;
-
     static MAX_SAFE_FLOAT: f64 = 9_007_199_254_740_991_f64;
     static NEG_MAX_SAFE_FLOAT: f64 = -9_007_199_254_740_991_f64;
 
@@ -736,10 +723,11 @@ mod test {
 
     use crate::tester;
 
+    // wrap with a function call so it doesn't get removed.
     fn test(source_text: &str, expected: &str) {
-        let allocator = Allocator::default();
-        let mut pass = super::PeepholeFoldConstants::new();
-        tester::test(&allocator, source_text, expected, &mut pass);
+        let source_text = format!("NOOP({source_text})");
+        let expected = format!("NOOP({expected})");
+        tester::test(&source_text, &expected);
     }
 
     fn test_same(source_text: &str) {
@@ -748,7 +736,7 @@ mod test {
 
     #[test]
     fn test_comparison() {
-        test("(1, 2) !== 2", "false");
+        test("(1, 2) !== 2", "!1");
         test_same("({} <= {})");
         test_same("({} >= {})");
         test_same("({} > {})");
@@ -761,218 +749,218 @@ mod test {
 
     #[test]
     fn undefined_comparison1() {
-        test("undefined == undefined", "true");
-        test("undefined == null", "true");
-        test("undefined == void 0", "true");
+        test("undefined == undefined", "!0");
+        test("undefined == null", "!0");
+        test("undefined == void 0", "!0");
 
-        test("undefined == 0", "false");
-        test("undefined == 1", "false");
-        test("undefined == 'hi'", "false");
-        test("undefined == true", "false");
-        test("undefined == false", "false");
+        test("undefined == 0", "!1");
+        test("undefined == 1", "!1");
+        test("undefined == 'hi'", "!1");
+        test("undefined == true", "!1");
+        test("undefined == false", "!1");
 
-        test("undefined === undefined", "true");
-        test("undefined === null", "false");
-        test("undefined === void 0", "true");
+        test("undefined === undefined", "!0");
+        test("undefined === null", "!1");
+        test("undefined === void 0", "!0");
 
-        test_same("undefined == this");
-        test_same("undefined == x");
+        test("undefined == this", "this == null");
+        test("undefined == x", "x == null");
 
-        test("undefined != undefined", "false");
-        test("undefined != null", "false");
-        test("undefined != void 0", "false");
+        test("undefined != undefined", "!1");
+        test("undefined != null", "!1");
+        test("undefined != void 0", "!1");
 
-        test("undefined != 0", "true");
-        test("undefined != 1", "true");
-        test("undefined != 'hi'", "true");
-        test("undefined != true", "true");
-        test("undefined != false", "true");
+        test("undefined != 0", "!0");
+        test("undefined != 1", "!0");
+        test("undefined != 'hi'", "!0");
+        test("undefined != true", "!0");
+        test("undefined != false", "!0");
 
-        test("undefined !== undefined", "false");
-        test("undefined !== void 0", "false");
-        test("undefined !== null", "true");
+        test("undefined !== undefined", "!1");
+        test("undefined !== void 0", "!1");
+        test("undefined !== null", "!0");
 
-        test_same("undefined != this");
-        test_same("undefined != x");
+        test("undefined != this", "this != null");
+        test("undefined != x", "x != null");
 
-        test("undefined < undefined", "false");
-        test("undefined > undefined", "false");
-        test("undefined >= undefined", "false");
-        test("undefined <= undefined", "false");
+        test("undefined < undefined", "!1");
+        test("undefined > undefined", "!1");
+        test("undefined >= undefined", "!1");
+        test("undefined <= undefined", "!1");
 
-        test("0 < undefined", "false");
-        test("true > undefined", "false");
-        test("'hi' >= undefined", "false");
-        test("null <= undefined", "false");
+        test("0 < undefined", "!1");
+        test("true > undefined", "!1");
+        test("'hi' >= undefined", "!1");
+        test("null <= undefined", "!1");
 
-        test("undefined < 0", "false");
-        test("undefined > true", "false");
-        test("undefined >= 'hi'", "false");
-        test("undefined <= null", "false");
+        test("undefined < 0", "!1");
+        test("undefined > true", "!1");
+        test("undefined >= 'hi'", "!1");
+        test("undefined <= null", "!1");
 
-        test("null == undefined", "true");
-        test("0 == undefined", "false");
-        test("1 == undefined", "false");
-        test("'hi' == undefined", "false");
-        test("true == undefined", "false");
-        test("false == undefined", "false");
-        test("null === undefined", "false");
-        test("void 0 === undefined", "true");
+        test("null == undefined", "!0");
+        test("0 == undefined", "!1");
+        test("1 == undefined", "!1");
+        test("'hi' == undefined", "!1");
+        test("true == undefined", "!1");
+        test("false == undefined", "!1");
+        test("null === undefined", "!1");
+        test("void 0 === undefined", "!0");
 
-        test("undefined == NaN", "false");
-        test("NaN == undefined", "false");
-        test("undefined == Infinity", "false");
-        test("Infinity == undefined", "false");
-        test("undefined == -Infinity", "false");
-        test("-Infinity == undefined", "false");
-        test("({}) == undefined", "false");
-        test("undefined == ({})", "false");
-        test("([]) == undefined", "false");
-        test("undefined == ([])", "false");
-        test("(/a/g) == undefined", "false");
-        test("undefined == (/a/g)", "false");
-        test("(function(){}) == undefined", "false");
-        test("undefined == (function(){})", "false");
+        test("undefined == NaN", "!1");
+        test("NaN == undefined", "!1");
+        test("undefined == Infinity", "!1");
+        test("Infinity == undefined", "!1");
+        test("undefined == -Infinity", "!1");
+        test("-Infinity == undefined", "!1");
+        test("({}) == undefined", "!1");
+        test("undefined == ({})", "!1");
+        test("([]) == undefined", "!1");
+        test("undefined == ([])", "!1");
+        test("(/a/g) == undefined", "!1");
+        test("undefined == (/a/g)", "!1");
+        test("(function(){}) == undefined", "!1");
+        test("undefined == (function(){})", "!1");
 
-        test("undefined != NaN", "true");
-        test("NaN != undefined", "true");
-        test("undefined != Infinity", "true");
-        test("Infinity != undefined", "true");
-        test("undefined != -Infinity", "true");
-        test("-Infinity != undefined", "true");
-        test("({}) != undefined", "true");
-        test("undefined != ({})", "true");
-        test("([]) != undefined", "true");
-        test("undefined != ([])", "true");
-        test("(/a/g) != undefined", "true");
-        test("undefined != (/a/g)", "true");
-        test("(function(){}) != undefined", "true");
-        test("undefined != (function(){})", "true");
+        test("undefined != NaN", "!0");
+        test("NaN != undefined", "!0");
+        test("undefined != Infinity", "!0");
+        test("Infinity != undefined", "!0");
+        test("undefined != -Infinity", "!0");
+        test("-Infinity != undefined", "!0");
+        test("({}) != undefined", "!0");
+        test("undefined != ({})", "!0");
+        test("([]) != undefined", "!0");
+        test("undefined != ([])", "!0");
+        test("(/a/g) != undefined", "!0");
+        test("undefined != (/a/g)", "!0");
+        test("(function(){}) != undefined", "!0");
+        test("undefined != (function(){})", "!0");
 
-        test_same("this == undefined");
-        test_same("x == undefined");
+        test("this == undefined", "this == null");
+        test("x == undefined", "x == null");
     }
 
     #[test]
     fn test_undefined_comparison2() {
-        test("\"123\" !== void 0", "true");
-        test("\"123\" === void 0", "false");
+        test("\"123\" !== void 0", "!0");
+        test("\"123\" === void 0", "!1");
 
-        test("void 0 !== \"123\"", "true");
-        test("void 0 === \"123\"", "false");
+        test("void 0 !== \"123\"", "!0");
+        test("void 0 === \"123\"", "!1");
     }
 
     #[test]
     fn test_undefined_comparison3() {
-        test("\"123\" !== undefined", "true");
-        test("\"123\" === undefined", "false");
+        test("\"123\" !== undefined", "!0");
+        test("\"123\" === undefined", "!1");
 
-        test("undefined !== \"123\"", "true");
-        test("undefined === \"123\"", "false");
+        test("undefined !== \"123\"", "!0");
+        test("undefined === \"123\"", "!1");
     }
 
     #[test]
     fn test_null_comparison1() {
-        test("null == undefined", "true");
-        test("null == null", "true");
-        test("null == void 0", "true");
+        test("null == undefined", "!0");
+        test("null == null", "!0");
+        test("null == void 0", "!0");
 
-        test("null == 0", "false");
-        test("null == 1", "false");
-        // test("null == 0n", "false");
-        // test("null == 1n", "false");
-        test("null == 'hi'", "false");
-        test("null == true", "false");
-        test("null == false", "false");
+        test("null == 0", "!1");
+        test("null == 1", "!1");
+        // test("null == 0n", "!1");
+        // test("null == 1n", "!1");
+        test("null == 'hi'", "!1");
+        test("null == true", "!1");
+        test("null == false", "!1");
 
-        test("null === undefined", "false");
-        test("null === null", "true");
-        test("null === void 0", "false");
+        test("null === undefined", "!1");
+        test("null === null", "!0");
+        test("null === void 0", "!1");
         test_same("x===null");
 
         test_same("this==null");
         test_same("x==null");
 
-        test("null != undefined", "false");
-        test("null != null", "false");
-        test("null != void 0", "false");
+        test("null != undefined", "!1");
+        test("null != null", "!1");
+        test("null != void 0", "!1");
 
-        test("null != 0", "true");
-        test("null != 1", "true");
-        // test("null != 0n", "true");
-        // test("null != 1n", "true");
-        test("null != 'hi'", "true");
-        test("null != true", "true");
-        test("null != false", "true");
+        test("null != 0", "!0");
+        test("null != 1", "!0");
+        // test("null != 0n", "!0");
+        // test("null != 1n", "!0");
+        test("null != 'hi'", "!0");
+        test("null != true", "!0");
+        test("null != false", "!0");
 
-        test("null !== undefined", "true");
-        test("null !== void 0", "true");
-        test("null !== null", "false");
+        test("null !== undefined", "!0");
+        test("null !== void 0", "!0");
+        test("null !== null", "!1");
 
         test_same("this!=null");
         test_same("x!=null");
 
-        test("null < null", "false");
-        test("null > null", "false");
-        test("null >= null", "true");
-        test("null <= null", "true");
+        test("null < null", "!1");
+        test("null > null", "!1");
+        test("null >= null", "!0");
+        test("null <= null", "!0");
 
-        test("0 < null", "false");
-        test("0 > null", "false");
-        test("0 >= null", "true");
-        // test("0n < null", "false");
-        // test("0n > null", "false");
-        // test("0n >= null", "true");
-        test("true > null", "true");
-        test("'hi' < null", "false");
-        test("'hi' >= null", "false");
-        test("null <= null", "true");
+        test("0 < null", "!1");
+        test("0 > null", "!1");
+        test("0 >= null", "!0");
+        // test("0n < null", "!1");
+        // test("0n > null", "!1");
+        // test("0n >= null", "!0");
+        test("true > null", "!0");
+        test("'hi' < null", "!1");
+        test("'hi' >= null", "!1");
+        test("null <= null", "!0");
 
-        test("null < 0", "false");
-        // test("null < 0n", "false");
-        test("null > true", "false");
-        test("null < 'hi'", "false");
-        test("null >= 'hi'", "false");
-        test("null <= null", "true");
+        test("null < 0", "!1");
+        // test("null < 0n", "!1");
+        test("null > true", "!1");
+        test("null < 'hi'", "!1");
+        test("null >= 'hi'", "!1");
+        test("null <= null", "!0");
 
-        test("null == null", "true");
-        test("0 == null", "false");
-        test("1 == null", "false");
-        test("'hi' == null", "false");
-        test("true == null", "false");
-        test("false == null", "false");
-        test("null === null", "true");
-        test("void 0 === null", "false");
+        test("null == null", "!0");
+        test("0 == null", "!1");
+        test("1 == null", "!1");
+        test("'hi' == null", "!1");
+        test("true == null", "!1");
+        test("false == null", "!1");
+        test("null === null", "!0");
+        test("void 0 === null", "!1");
 
-        test("null == NaN", "false");
-        test("NaN == null", "false");
-        test("null == Infinity", "false");
-        test("Infinity == null", "false");
-        test("null == -Infinity", "false");
-        test("-Infinity == null", "false");
-        test("({}) == null", "false");
-        test("null == ({})", "false");
-        test("([]) == null", "false");
-        test("null == ([])", "false");
-        test("(/a/g) == null", "false");
-        test("null == (/a/g)", "false");
-        test("(function(){}) == null", "false");
-        test("null == (function(){})", "false");
+        test("null == NaN", "!1");
+        test("NaN == null", "!1");
+        test("null == Infinity", "!1");
+        test("Infinity == null", "!1");
+        test("null == -Infinity", "!1");
+        test("-Infinity == null", "!1");
+        test("({}) == null", "!1");
+        test("null == ({})", "!1");
+        test("([]) == null", "!1");
+        test("null == ([])", "!1");
+        test("(/a/g) == null", "!1");
+        test("null == (/a/g)", "!1");
+        test("(function(){}) == null", "!1");
+        test("null == (function(){})", "!1");
 
-        test("null != NaN", "true");
-        test("NaN != null", "true");
-        test("null != Infinity", "true");
-        test("Infinity != null", "true");
-        test("null != -Infinity", "true");
-        test("-Infinity != null", "true");
-        test("({}) != null", "true");
-        test("null != ({})", "true");
-        test("([]) != null", "true");
-        test("null != ([])", "true");
-        test("(/a/g) != null", "true");
-        test("null != (/a/g)", "true");
-        test("(function(){}) != null", "true");
-        test("null != (function(){})", "true");
+        test("null != NaN", "!0");
+        test("NaN != null", "!0");
+        test("null != Infinity", "!0");
+        test("Infinity != null", "!0");
+        test("null != -Infinity", "!0");
+        test("-Infinity != null", "!0");
+        test("({}) != null", "!0");
+        test("null != ({})", "!0");
+        test("([]) != null", "!0");
+        test("null != ([])", "!0");
+        test("(/a/g) != null", "!0");
+        test("null != (/a/g)", "!0");
+        test("(function(){}) != null", "!0");
+        test("null != (function(){})", "!0");
 
         test_same("({a:f()})==null");
         test_same("[f()]==null");
@@ -983,13 +971,13 @@ mod test {
 
     #[test]
     fn test_boolean_boolean_comparison() {
-        test_same("!x==!y");
-        test_same("!x<!y");
-        test_same("!x!==!y");
+        test_same("!x == !y");
+        test_same("!x < !y");
+        test("!x!==!y", "!x != !y");
 
-        test_same("!x==!x"); // foldable
-        test_same("!x<!x"); // foldable
-        test_same("!x!==!x"); // foldable
+        test_same("!x == !x"); // foldable
+        test_same("!x <! x"); // foldable
+        test("!x !== !x", "!x != !x"); // foldable
     }
 
     #[test]
@@ -1022,44 +1010,44 @@ mod test {
 
     #[test]
     fn test_string_string_comparison() {
-        test("'a' < 'b'", "true");
-        test("'a' <= 'b'", "true");
-        test("'a' > 'b'", "false");
-        test("'a' >= 'b'", "false");
-        test("+'a' < +'b'", "false");
+        test("'a' < 'b'", "!0");
+        test("'a' <= 'b'", "!0");
+        test("'a' > 'b'", "!1");
+        test("'a' >= 'b'", "!1");
+        test("+'a' < +'b'", "!1");
         test_same("typeof a < 'a'");
         test_same("'a' >= typeof a");
         test_same("typeof a < typeof a");
         test_same("typeof a >= typeof a");
-        test("typeof 3 > typeof 4", "false");
-        test("typeof function() {} < typeof function() {}", "false");
-        test("'a' == 'a'", "true");
-        test("'b' != 'a'", "true");
+        test("typeof 3 > typeof 4", "!1");
+        test("typeof function() {} < typeof function() {}", "!1");
+        test("'a' == 'a'", "!0");
+        test("'b' != 'a'", "!0");
         test_same("typeof a != 'number'");
-        test("'a' === 'a'", "true");
-        test("'b' !== 'a'", "true");
+        test("'a' === 'a'", "!0");
+        test("'b' !== 'a'", "!0");
         test_same("'' + x <= '' + y");
         test_same("'' + x != '' + y");
-        test_same("'' + x === '' + y");
+        test("'' + x === '' + y", "'' + x == '' + y");
 
         test_same("'' + x <= '' + x"); // potentially foldable
         test_same("'' + x != '' + x"); // potentially foldable
-        test_same("'' + x === '' + x"); // potentially foldable
+        test("'' + x === '' + x", "'' + x == '' + x"); // potentially foldable
 
         test(r#"if ("string" !== "\u000Bstr\u000Bing\u000B") {}"#, "if (false) {}\n");
     }
 
     #[test]
     fn test_number_string_comparison() {
-        test("1 < '2'", "true");
-        test("2 > '1'", "true");
-        test("123 > '34'", "true");
-        test("NaN >= 'NaN'", "false");
-        test("1 == '2'", "false");
-        test("1 != '1'", "false");
-        test("NaN == 'NaN'", "false");
-        test("1 === '1'", "false");
-        test("1 !== '1'", "true");
+        test("1 < '2'", "!0");
+        test("2 > '1'", "!0");
+        test("123 > '34'", "!0");
+        test("NaN >= 'NaN'", "!1");
+        test("1 == '2'", "!1");
+        test("1 != '1'", "!1");
+        test("NaN == 'NaN'", "!1");
+        test("1 === '1'", "!1");
+        test("1 !== '1'", "!0");
         test_same("+x>''+y");
         test_same("+x==''+y");
         test_same("+x !== '' + y");
@@ -1067,15 +1055,15 @@ mod test {
 
     #[test]
     fn test_string_number_comparison() {
-        test("'1' < 2", "true");
-        test("'2' > 1", "true");
-        test("'123' > 34", "true");
-        test("'NaN' < NaN", "false");
-        test("'1' == 2", "false");
-        test("'1' != 1", "false");
-        test("'NaN' == NaN", "false");
-        test("'1' === 1", "false");
-        test("'1' !== 1", "true");
+        test("'1' < 2", "!0");
+        test("'2' > 1", "!0");
+        test("'123' > 34", "!0");
+        test("'NaN' < NaN", "!1");
+        test("'1' == 2", "!1");
+        test("'1' != 1", "!1");
+        test("'NaN' == NaN", "!1");
+        test("'1' === 1", "!1");
+        test("'1' !== 1", "!0");
         test_same("''+x<+y");
         test_same("''+x==+y");
         test_same("'' + x === +y");
@@ -1083,39 +1071,39 @@ mod test {
 
     #[test]
     fn test_nan_comparison() {
-        test("NaN < 1", "false");
-        test("NaN <= 1", "false");
-        test("NaN > 1", "false");
-        test("NaN >= 1", "false");
-        // test("NaN < 1n", "false");
-        // test("NaN <= 1n", "false");
-        // test("NaN > 1n", "false");
-        // test("NaN >= 1n", "false");
+        test("NaN < 1", "!1");
+        test("NaN <= 1", "!1");
+        test("NaN > 1", "!1");
+        test("NaN >= 1", "!1");
+        // test("NaN < 1n", "!1");
+        // test("NaN <= 1n", "!1");
+        // test("NaN > 1n", "!1");
+        // test("NaN >= 1n", "!1");
 
-        test("NaN < NaN", "false");
-        test("NaN >= NaN", "false");
-        test("NaN == NaN", "false");
-        test("NaN === NaN", "false");
+        test("NaN < NaN", "!1");
+        test("NaN >= NaN", "!1");
+        test("NaN == NaN", "!1");
+        test("NaN === NaN", "!1");
 
-        test("NaN < null", "false");
-        test("null >= NaN", "false");
-        test("NaN == null", "false");
-        test("null != NaN", "true");
-        test("null === NaN", "false");
+        test("NaN < null", "!1");
+        test("null >= NaN", "!1");
+        test("NaN == null", "!1");
+        test("null != NaN", "!0");
+        test("null === NaN", "!1");
 
-        test("NaN < undefined", "false");
-        test("undefined >= NaN", "false");
-        test("NaN == undefined", "false");
-        test("undefined != NaN", "true");
-        test("undefined === NaN", "false");
+        test("NaN < undefined", "!1");
+        test("undefined >= NaN", "!1");
+        test("NaN == undefined", "!1");
+        test("undefined != NaN", "!0");
+        test("undefined === NaN", "!1");
 
         test_same("NaN<x");
         test_same("x>=NaN");
-        test_same("NaN==x");
+        test("NaN==x", "x==NaN");
         test_same("x!=NaN");
-        test_same("NaN === x");
+        test("NaN === x", "x === NaN");
         test_same("x !== NaN");
-        test_same("NaN==foo()");
+        test("NaN==foo()", "foo()==NaN");
     }
 
     #[test]
@@ -1143,9 +1131,9 @@ mod test {
         test_same("~foo()");
         test_same("-foo()");
 
-        test("a=!true", "a=false");
-        test("a=!10", "a=false");
-        test("a=!false", "a=true");
+        test("a=!true", "a=!1");
+        test("a=!10", "a=!1");
+        test("a=!false", "a=!0");
         test_same("a=!foo()");
         test_same("a = !!void b");
 
@@ -1183,7 +1171,7 @@ mod test {
     fn test_fold_unary_big_int() {
         test("-(1n)", "-1n");
         test("- -1n", "1n");
-        test("!1n", "false");
+        test("!1n", "!1");
         test("~0n", "-1n");
 
         test("~-1n", "0n");
@@ -1215,8 +1203,8 @@ mod test {
         test("x = true && x", "x = x");
         test("x = [foo()] && x", "x = ([foo()],x)");
 
-        test("x = false && x", "x = false");
-        test("x = true || x", "x = true");
+        test("x = false && x", "x = !1");
+        test("x = true || x", "x = !0");
         test("x = false || x", "x = x");
         test("x = 0 && x", "x = 0");
         test("x = 3 || x", "x = 3");
@@ -1225,28 +1213,27 @@ mod test {
         test("x = false || 0", "x = 0");
 
         // unfoldable, because the right-side may be the result
-        test("a = x && true", "a=x && true");
-        test("a = x && false", "a=x && false");
+        test("a = x && true", "a=x && !0");
+        test("a = x && false", "a=x && !1");
         test("a = x || 3", "a=x || 3");
-        test("a = x || false", "a=x || false");
-        test("a = b ? c : x || false", "a=b ? c:x || false");
-        test("a = b ? x || false : c", "a=b ? x || false:c");
-        test("a = b ? c : x && true", "a=b ? c:x && true");
-        test("a = b ? x && true : c", "a=b ? x && true:c");
+        test("a = x || false", "a=x || !1");
+        test("a = b ? c : x || false", "a=b ? c : x || !1");
+        test("a = b ? x || false : c", "a=b ? x || !1 : c");
+        test("a = b ? c : x && true", "a=b ? c : x && !0");
+        test("a = b ? x && true : c", "a=b ? x && !0 : c");
 
-        // folded, but not here.
-        test_same("a = x || false ? b : c");
-        test_same("a = x && true ? b : c");
+        test("a = x || false ? b : c", "a = x ? b : c");
+        test("a = x && true ? b : c", "a = x ? b : c");
 
-        test("x = foo() || true || bar()", "x = foo() || true");
+        test("x = foo() || true || bar()", "x = foo() || !0");
         test("x = foo() || true && bar()", "x = foo() || bar()");
-        test("x = foo() || false && bar()", "x = foo() || false");
-        test("x = foo() && false && bar()", "x = foo() && false");
-        test("x = foo() && false || bar()", "x = (foo() && false,bar())");
+        test("x = foo() || false && bar()", "x = foo() || !1");
+        test("x = foo() && false && bar()", "x = foo() && !1");
+        test("x = foo() && false || bar()", "x = (foo() && !1, bar())");
         test("x = foo() || false || bar()", "x = foo() || bar()");
         test("x = foo() && true && bar()", "x = foo() && bar()");
-        test("x = foo() || true || bar()", "x = foo() || true");
-        test("x = foo() && false && bar()", "x = foo() && false");
+        test("x = foo() || true || bar()", "x = foo() || !0");
+        test("x = foo() && false && bar()", "x = foo() && !1");
         test("x = foo() && 0 && bar()", "x = foo() && 0");
         test("x = foo() && 1 && bar()", "x = foo() && bar()");
         test("x = foo() || 0 || bar()", "x = foo() || bar()");
@@ -1263,10 +1250,10 @@ mod test {
         test("a() && (1 && b())", "a() && b()");
         test("(a() && 1) && b()", "a() && b()");
 
-        test("(x || '') || y;", "x || y");
-        test("false || (x || '');", "x || ''");
-        test("(x && 1) && y;", "x && y");
-        test("true && (x && 1);", "x && 1");
+        test("(x || '') || y", "x || y");
+        test("false || (x || '')", "x || ''");
+        test("(x && 1) && y", "x && y");
+        test("true && (x && 1)", "x && 1");
 
         // Really not foldable, because it would change the type of the
         // expression if foo() returns something truthy but not true.
@@ -1274,8 +1261,8 @@ mod test {
         // An example would be if foo() is 1 (truthy) and bar() is 0 (falsey):
         // (1 && true) || 0 == true
         // 1 || 0 == 1, but true =/= 1
-        test_same("x = foo() && true || bar()");
-        test_same("foo() && true || bar()");
+        test("x = foo() && true || bar()", "x = foo() && !0 || bar()");
+        test("foo() && true || bar()", "foo() && !0 || bar()");
     }
 
     #[test]
@@ -1289,31 +1276,31 @@ mod test {
     fn test_fold_nullish_coalesce() {
         // fold if left is null/undefined
         test("null ?? 1", "1");
-        test("undefined ?? false", "false");
+        test("undefined ?? false", "!1");
         test("(a(), null) ?? 1", "(a(), null, 1)");
 
         test("x = [foo()] ?? x", "x = [foo()]");
 
         // short circuit on all non nullish LHS
-        test("x = false ?? x", "x = false");
-        test("x = true ?? x", "x = true");
+        test("x = false ?? x", "x = !1");
+        test("x = true ?? x", "x = !0");
         test("x = 0 ?? x", "x = 0");
         test("x = 3 ?? x", "x = 3");
 
         // unfoldable, because the right-side may be the result
-        test_same("a = x ?? true");
-        test_same("a = x ?? false");
+        test("a = x ?? true", "a = x ?? !0");
+        test("a = x ?? false", "a = x ?? !1");
         test_same("a = x ?? 3");
-        test_same("a = b ? c : x ?? false");
-        test_same("a = b ? x ?? false : c");
+        test("a = b ? c : x ?? false", "a = b ? c : x ?? !1");
+        test("a = b ? x ?? false : c", "a = b ? x ?? !1 : c");
 
         // folded, but not here.
-        test_same("a = x ?? false ? b : c");
-        test_same("a = x ?? true ? b : c");
+        test("a = x ?? false ? b : c", "a = x ?? !1 ? b : c");
+        test("a = x ?? true ? b : c", "a = x ?? !0 ? b : c");
 
-        test_same("x = foo() ?? true ?? bar()");
+        test("x = foo() ?? true ?? bar()", "x = foo() ?? !0 ?? bar()");
         test("x = foo() ?? (true && bar())", "x = foo() ?? bar()");
-        test_same("x = (foo() || false) ?? bar()");
+        test("x = (foo() || false) ?? bar()", "x = (foo() || !1) ?? bar()");
 
         test("a() ?? (1 ?? b())", "a() ?? 1");
         test("(a() ?? 1) ?? b()", "a() ?? 1 ?? b()");
@@ -1653,23 +1640,23 @@ mod test {
     #[test]
     fn test_fold_instance_of() {
         // Non object types are never instances of anything.
-        test("64 instanceof Object", "false");
-        test("64 instanceof Number", "false");
-        test("'' instanceof Object", "false");
-        test("'' instanceof String", "false");
-        test("true instanceof Object", "false");
-        test("true instanceof Boolean", "false");
-        test("!0 instanceof Object", "false");
-        test("!0 instanceof Boolean", "false");
-        test("false instanceof Object", "false");
-        test("null instanceof Object", "false");
-        test("undefined instanceof Object", "false");
-        test("NaN instanceof Object", "false");
-        test("Infinity instanceof Object", "false");
+        test("64 instanceof Object", "!1");
+        test("64 instanceof Number", "!1");
+        test("'' instanceof Object", "!1");
+        test("'' instanceof String", "!1");
+        test("true instanceof Object", "!1");
+        test("true instanceof Boolean", "!1");
+        test("!0 instanceof Object", "!1");
+        test("!0 instanceof Boolean", "!1");
+        test("false instanceof Object", "!1");
+        test("null instanceof Object", "!1");
+        test("undefined instanceof Object", "!1");
+        test("NaN instanceof Object", "!1");
+        test("Infinity instanceof Object", "!1");
 
         // Array and object literals are known to be objects.
-        test("[] instanceof Object", "true");
-        test("({}) instanceof Object", "true");
+        test("[] instanceof Object", "!0");
+        test("({}) instanceof Object", "!0");
 
         // These cases is foldable, but no handled currently.
         test_same("new Foo() instanceof Object");
@@ -1677,7 +1664,7 @@ mod test {
         test_same("[] instanceof Foo");
         test_same("({}) instanceof Foo");
 
-        test("(function() {}) instanceof Object", "true");
+        test("(function() {}) instanceof Object", "!0");
 
         // An unknown value should never be folded.
         test_same("x instanceof Foo");
@@ -1686,8 +1673,8 @@ mod test {
 
     #[test]
     fn test_fold_instance_of_additional() {
-        test("(typeof {}) instanceof Object", "false");
-        test("(+{}) instanceof Number", "false");
+        test("(typeof {}) instanceof Object", "!1");
+        test("(+{}) instanceof Number", "!1");
     }
 
     #[test]
@@ -1772,16 +1759,16 @@ mod test {
 
     #[test]
     fn test_fold_invalid_typeof_comparison() {
-        test("typeof foo == 123", "false");
-        test("typeof foo == '123'", "false");
-        test("typeof foo === null", "false");
-        test("typeof foo === undefined", "false");
-        test("typeof foo !== 123", "true");
-        test("typeof foo !== '123'", "true");
-        test("typeof foo != null", "true");
-        test("typeof foo != undefined", "true");
-        test_same("typeof foo === 'string'");
-        test_same("typeof foo === 'number'");
+        test("typeof foo == 123", "!1");
+        test("typeof foo == '123'", "!1");
+        test("typeof foo === null", "!1");
+        test("typeof foo === undefined", "!1");
+        test("typeof foo !== 123", "!0");
+        test("typeof foo !== '123'", "!0");
+        test("typeof foo != null", "!0");
+        test("typeof foo != undefined", "!0");
+        test("typeof foo === 'string'", "typeof foo == 'string'");
+        test("typeof foo === 'number'", "typeof foo == 'number'");
     }
 
     // TODO: All big ints are rare and difficult to handle.
@@ -1851,68 +1838,68 @@ mod test {
         #[test]
         #[ignore]
         fn test_bigint_number_comparison() {
-            test("1n < 2", "true");
-            test("1n > 2", "false");
-            test("1n == 1", "true");
-            test("1n == 2", "false");
+            test("1n < 2", "!0");
+            test("1n > 2", "!1");
+            test("1n == 1", "!0");
+            test("1n == 2", "!1");
 
             // comparing with decimals is allowed
-            test("1n < 1.1", "true");
-            test("1n < 1.9", "true");
-            test("1n < 0.9", "false");
-            test("-1n < -1.1", "false");
-            test("-1n < -1.9", "false");
-            test("-1n < -0.9", "true");
-            test("1n > 1.1", "false");
-            test("1n > 0.9", "true");
-            test("-1n > -1.1", "true");
-            test("-1n > -0.9", "false");
+            test("1n < 1.1", "!0");
+            test("1n < 1.9", "!0");
+            test("1n < 0.9", "!1");
+            test("-1n < -1.1", "!1");
+            test("-1n < -1.9", "!1");
+            test("-1n < -0.9", "!0");
+            test("1n > 1.1", "!1");
+            test("1n > 0.9", "!0");
+            test("-1n > -1.1", "!0");
+            test("-1n > -0.9", "!1");
 
             // Don't fold unsafely large numbers because there might be floating-point error
-            test(&format!("0n > {MAX_SAFE_INT}"), "false");
-            test(&format!("0n < {MAX_SAFE_INT}"), "true");
-            test(&format!("0n > {NEG_MAX_SAFE_INT}"), "true");
-            test(&format!("0n < {NEG_MAX_SAFE_INT}"), "false");
-            test(&format!("0n > {MAX_SAFE_FLOAT}"), "false");
-            test(&format!("0n < {MAX_SAFE_FLOAT}"), "true");
-            test(&format!("0n > {NEG_MAX_SAFE_FLOAT}"), "true");
-            test(&format!("0n < {NEG_MAX_SAFE_FLOAT}"), "false");
+            test(&format!("0n > {MAX_SAFE_INT}"), "!1");
+            test(&format!("0n < {MAX_SAFE_INT}"), "!0");
+            test(&format!("0n > {NEG_MAX_SAFE_INT}"), "!0");
+            test(&format!("0n < {NEG_MAX_SAFE_INT}"), "!1");
+            test(&format!("0n > {MAX_SAFE_FLOAT}"), "!1");
+            test(&format!("0n < {MAX_SAFE_FLOAT}"), "!0");
+            test(&format!("0n > {NEG_MAX_SAFE_FLOAT}"), "!0");
+            test(&format!("0n < {NEG_MAX_SAFE_FLOAT}"), "!1");
 
             // comparing with Infinity is allowed
-            test("1n < Infinity", "true");
-            test("1n > Infinity", "false");
-            test("1n < -Infinity", "false");
-            test("1n > -Infinity", "true");
+            test("1n < Infinity", "!0");
+            test("1n > Infinity", "!1");
+            test("1n < -Infinity", "!1");
+            test("1n > -Infinity", "!0");
 
             // null is interpreted as 0 when comparing with bigint
-            // test("1n < null", "false");
-            // test("1n > null", "true");
+            // test("1n < null", "!1");
+            // test("1n > null", "!0");
         }
 
         #[test]
         #[ignore]
         fn test_bigint_string_comparison() {
-            test("1n < '2'", "true");
-            test("2n > '1'", "true");
-            test("123n > '34'", "true");
-            test("1n == '1'", "true");
-            test("1n == '2'", "false");
-            test("1n != '1'", "false");
-            test("1n === '1'", "false");
-            test("1n !== '1'", "true");
+            test("1n < '2'", "!0");
+            test("2n > '1'", "!0");
+            test("123n > '34'", "!0");
+            test("1n == '1'", "!0");
+            test("1n == '2'", "!1");
+            test("1n != '1'", "!1");
+            test("1n === '1'", "!1");
+            test("1n !== '1'", "!0");
         }
 
         #[test]
         #[ignore]
         fn test_string_bigint_comparison() {
-            test("'1' < 2n", "true");
-            test("'2' > 1n", "true");
-            test("'123' > 34n", "true");
-            test("'1' == 1n", "true");
-            test("'1' == 2n", "false");
-            test("'1' != 1n", "false");
-            test("'1' === 1n", "false");
-            test("'1' !== 1n", "true");
+            test("'1' < 2n", "!0");
+            test("'2' > 1n", "!0");
+            test("'123' > 34n", "!0");
+            test("'1' == 1n", "!0");
+            test("'1' == 2n", "!1");
+            test("'1' != 1n", "!1");
+            test("'1' === 1n", "!1");
+            test("'1' !== 1n", "!0");
         }
 
         #[test]

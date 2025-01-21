@@ -89,12 +89,41 @@ pub struct Allocator {
 }
 
 impl Allocator {
+    /// Create a new [`Allocator`] with no initial capacity.
+    ///
+    /// This method does not reserve any memory to back the allocator. Memory for allocator's initial
+    /// chunk will be reserved lazily, when you make the first allocation into this [`Allocator`]
+    /// (e.g. with [`Allocator::alloc`], [`Box::new_in`], [`Vec::new_in`], [`HashMap::new_in`]).
+    ///
+    /// If you can estimate the amount of memory the allocator will require to fit what you intend to
+    /// allocate into it, it is generally preferable to create that allocator with [`with_capacity`]
+    /// which reserves that amount of memory upfront. This will avoid further system calls to allocate
+    /// further chunks later on.
+    ///
+    /// [`with_capacity`]: Allocator::with_capacity
+    //
+    // `#[inline(always)]` because just delegates to `bumpalo` method
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn new() -> Self {
+        Self { bump: Bump::new() }
+    }
+
+    /// Create a new [`Allocator`] with specified capacity.
+    //
+    // `#[inline(always)]` because just delegates to `bumpalo` method
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self { bump: Bump::with_capacity(capacity) }
+    }
+
     /// Allocate an object in this [`Allocator`] and return an exclusive reference to it.
     ///
     /// # Panics
     /// Panics if reserving space for `T` fails.
     ///
-    /// # Example
+    /// # Examples
     /// ```
     /// use oxc_allocator::Allocator;
     ///
@@ -120,7 +149,7 @@ impl Allocator {
     /// # Panics
     /// Panics if reserving space for the string fails.
     ///
-    /// # Example
+    /// # Examples
     /// ```
     /// use oxc_allocator::Allocator;
     /// let allocator = Allocator::default();
@@ -145,8 +174,7 @@ impl Allocator {
     /// If this arena has allocated multiple chunks to bump allocate into, then the excess chunks
     /// are returned to the global allocator.
     ///
-    /// ## Example
-    ///
+    /// # Examples
     /// ```
     /// use oxc_allocator::Allocator;
     ///
@@ -174,6 +202,100 @@ impl Allocator {
     #[inline(always)]
     pub fn reset(&mut self) {
         self.bump.reset();
+    }
+
+    /// Calculate the total capacity of this [`Allocator`] including all chunks, in bytes.
+    ///
+    /// Note: This is the total amount of memory the [`Allocator`] owns NOT the total size of data
+    /// that's been allocated in it. If you want the latter, use [`used_bytes`] instead.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_allocator::Allocator;
+    ///
+    /// let capacity = 64 * 1024; // 64 KiB
+    /// let mut allocator = Allocator::with_capacity(capacity);
+    /// allocator.alloc(123u64); // 8 bytes
+    ///
+    /// // Result is the capacity (64 KiB), not the size of allocated data (8 bytes).
+    /// // `Allocator::with_capacity` may allocate a bit more than requested.
+    /// assert!(allocator.capacity() >= capacity);
+    /// ```
+    ///
+    /// [`used_bytes`]: Allocator::used_bytes
+    //
+    // `#[inline(always)]` because it just delegates to `bumpalo`
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn capacity(&self) -> usize {
+        self.bump.allocated_bytes()
+    }
+
+    /// Calculate the total size of data used in this [`Allocator`], in bytes.
+    ///
+    /// This is the total amount of memory that has been *used* in the [`Allocator`], NOT the amount of
+    /// memory the [`Allocator`] owns. If you want the latter, use [`capacity`] instead.
+    ///
+    /// The result includes:
+    ///
+    /// 1. Padding bytes between objects which have been allocated to preserve alignment of types
+    ///    where they have different alignments or have larger-than-typical alignment.
+    /// 2. Excess capacity in [`Vec`]s, [`String`]s and [`HashMap`]s.
+    /// 3. Objects which were allocated but later dropped. [`Allocator`] does not re-use allocations,
+    ///    so anything which is allocated into arena continues to take up "dead space", even after it's
+    ///    no longer referenced anywhere.
+    /// 4. "Dead space" left over where a [`Vec`], [`String`] or [`HashMap`] has grown and had to make
+    ///    a new allocation to accommodate its new larger size. Its old allocation continues to take up
+    ///    "dead" space in the allocator, unless it was the most recent allocation.
+    ///
+    /// In practice, this almost always means that the result returned from this function will be an
+    /// over-estimate vs the amount of "live" data in the arena.
+    ///
+    /// However, if you are using the result of this method to create a new `Allocator` to clone
+    /// an AST into, it is theoretically possible (though very unlikely) that it may be a slight
+    /// under-estimate of the capacity required in new allocator to clone the AST into, depending
+    /// on the order that `&str`s were allocated into arena in parser vs the order they get allocated
+    /// during cloning. The order allocations are made in affects the amount of padding bytes required.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_allocator::{Allocator, Vec};
+    ///
+    /// let capacity = 64 * 1024; // 64 KiB
+    /// let mut allocator = Allocator::with_capacity(capacity);
+    ///
+    /// allocator.alloc(1u8); // 1 byte with alignment 1
+    /// allocator.alloc(2u8); // 1 byte with alignment 1
+    /// allocator.alloc(3u64); // 8 bytes with alignment 8
+    ///
+    /// // Only 10 bytes were allocated, but 16 bytes were used, in order to align `3u64` on 8
+    /// assert_eq!(allocator.used_bytes(), 16);
+    ///
+    /// allocator.reset();
+    ///
+    /// let mut vec = Vec::<u64>::with_capacity_in(2, &allocator);
+    ///
+    /// // Allocate something else, so `vec`'s allocation is not the most recent
+    /// allocator.alloc(123u64);
+    ///
+    /// // `vec` has to grow beyond it's initial capacity
+    /// vec.extend([1, 2, 3, 4]);
+    ///
+    /// // `vec` takes up 32 bytes, and `123u64` takes up 8 bytes = 40 total.
+    /// // But there's an additional 16 bytes consumed for `vec`'s original capacity of 2,
+    /// // which is still using up space
+    /// assert_eq!(allocator.used_bytes(), 56);
+    /// ```
+    ///
+    /// [`capacity`]: Allocator::capacity
+    pub fn used_bytes(&self) -> usize {
+        let mut bytes = 0;
+        // SAFETY: No allocations are made while `chunks_iter` is alive. No data is read from the chunks.
+        let chunks_iter = unsafe { self.bump.iter_allocated_chunks_raw() };
+        for (_, size) in chunks_iter {
+            bytes += size;
+        }
+        bytes
     }
 
     /// Get inner [`bumpalo::Bump`].

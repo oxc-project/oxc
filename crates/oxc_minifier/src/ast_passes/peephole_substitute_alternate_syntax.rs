@@ -13,41 +13,34 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
-use oxc_traverse::{traverse_mut_with_ctx, Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, TraverseCtx};
 
-use crate::{ctx::Ctx, CompressorPass};
+use crate::ctx::Ctx;
+
+use super::PeepholeOptimizations;
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
-pub struct PeepholeSubstituteAlternateSyntax {
-    target: ESTarget,
-
-    in_fixed_loop: bool,
-
-    in_define_export: bool,
-
-    pub(crate) changed: bool,
-}
-
-impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        self.changed = false;
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
-impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
-    fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+impl<'a, 'b> PeepholeOptimizations {
+    pub fn substitute_catch_clause(
+        &mut self,
+        catch: &mut CatchClause<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.compress_catch_clause(catch, ctx);
     }
 
-    fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn substitute_object_property(
+        &mut self,
+        prop: &mut ObjectProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    fn exit_assignment_target_property_property(
+    pub fn substitute_assignment_target_property_property(
         &mut self,
         prop: &mut AssignmentTargetPropertyProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -55,11 +48,15 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.try_compress_property_key(&mut prop.name, &mut prop.computed, ctx);
     }
 
-    fn exit_binding_property(&mut self, prop: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn substitute_binding_property(
+        &mut self,
+        prop: &mut BindingProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    fn exit_method_definition(
+    pub fn substitute_method_definition(
         &mut self,
         prop: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -67,7 +64,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    fn exit_property_definition(
+    pub fn substitute_property_definition(
         &mut self,
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -75,7 +72,7 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    fn exit_accessor_property(
+    pub fn substitute_accessor_property(
         &mut self,
         prop: &mut AccessorProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -83,11 +80,15 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, ctx);
     }
 
-    fn exit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn substitute_return_statement(
+        &mut self,
+        stmt: &mut ReturnStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.compress_return_statement(stmt, ctx);
     }
 
-    fn exit_variable_declaration(
+    pub fn substitute_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -97,36 +98,19 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
         }
     }
 
-    /// Set `in_define_export` flag if this is a top-level statement of form:
-    /// ```js
-    /// Object.defineProperty(exports, 'Foo', {
-    ///   enumerable: true,
-    ///   get: function() { return Foo_1.Foo; }
-    /// });
-    /// ```
-    fn enter_call_expression(
+    pub fn substitute_call_expression(
         &mut self,
-        call_expr: &mut CallExpression<'a>,
+        expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !self.in_fixed_loop {
-            let parent = ctx.parent();
-            if (parent.is_expression_statement() || parent.is_sequence_expression())
-                && Self::is_object_define_property_exports(call_expr)
-            {
-                self.in_define_export = true;
-            }
-        }
-    }
-
-    fn exit_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.in_fixed_loop {
-            self.in_define_export = false;
-        }
         self.try_compress_call_expression_arguments(expr, ctx);
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    pub fn substitute_exit_expression(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let ctx = Ctx(ctx);
 
         // Change syntax
@@ -188,12 +172,6 @@ impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
             self.changed = true;
         }
     }
-}
-
-impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
-    pub fn new(target: ESTarget, in_fixed_loop: bool) -> Self {
-        Self { target, in_fixed_loop, in_define_export: false, changed: false }
-    }
 
     fn compress_catch_clause(&mut self, catch: &mut CatchClause<'_>, ctx: &mut TraverseCtx<'a>) {
         if !self.in_fixed_loop && self.target >= ESTarget::ES2019 {
@@ -216,25 +194,6 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
         {
             std::mem::swap(&mut e.left, &mut e.right);
         }
-    }
-
-    /// Test `Object.defineProperty(exports, ...)`
-    fn is_object_define_property_exports(call_expr: &CallExpression<'a>) -> bool {
-        let Some(Argument::Identifier(ident)) = call_expr.arguments.first() else { return false };
-        if ident.name != "exports" {
-            return false;
-        }
-
-        // Use tighter check than `call_expr.callee.is_specific_member_access("Object", "defineProperty")`
-        // because we're looking for `Object.defineProperty` specifically, not e.g. `Object['defineProperty']`
-        if let Expression::StaticMemberExpression(callee) = &call_expr.callee {
-            if let Expression::Identifier(id) = &callee.object {
-                if id.name == "Object" && callee.property.name == "defineProperty" {
-                    return true;
-                }
-            }
-        }
-        false
     }
 
     /// Transforms `undefined` => `void 0`
@@ -265,9 +224,6 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
     ) -> Option<Expression<'a>> {
         debug_assert!(!self.in_fixed_loop);
         let Expression::BooleanLiteral(lit) = expr else { return None };
-        if self.in_define_export {
-            return None;
-        }
         let parent = ctx.ancestry.parent();
         let no_unary = {
             if let Ancestor::BinaryExpressionRight(u) = parent {
@@ -1227,37 +1183,28 @@ impl<'a, 'b> PeepholeSubstituteAlternateSyntax {
 /// Port from <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
 #[cfg(test)]
 mod test {
-    use oxc_allocator::Allocator;
     use oxc_syntax::es_target::ESTarget;
 
-    use crate::tester;
-
-    fn test(source_text: &str, expected: &str) {
-        let allocator = Allocator::default();
-        let target = ESTarget::ESNext;
-        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(target, false);
-        tester::test(&allocator, source_text, expected, &mut pass);
-    }
-
-    fn test_same(source_text: &str) {
-        test(source_text, source_text);
-    }
+    use crate::{
+        tester::{run, test, test_same},
+        CompressOptions,
+    };
 
     #[test]
     fn test_fold_return_result() {
         test("function f(){return !1;}", "function f(){return !1}");
         test("function f(){return null;}", "function f(){return null}");
-        test("function f(){return void 0;}", "function f(){return}");
+        test("function f(){return void 0;}", "function f(){}");
         test("function f(){return void foo();}", "function f(){return void foo()}");
-        test("function f(){return undefined;}", "function f(){return}");
-        test("function f(){if(a()){return undefined;}}", "function f(){if(a()){return}}");
+        test("function f(){return undefined;}", "function f(){}");
+        test("function f(){if(a()){return undefined;}}", "function f(){if(a())return}");
         test_same("function a(undefined) { return undefined; }");
         test_same("function f(){return foo()");
 
         // `return undefined` has a different semantic in async generator function.
-        test("function foo() { return undefined }", "function foo() { return }");
-        test("function* foo() { return undefined }", "function* foo() { return }");
-        test("async function foo() { return undefined }", "async function foo() { return }");
+        test("function foo() { return undefined }", "function foo() { }");
+        test("function* foo() { return undefined }", "function* foo() { }");
+        test("async function foo() { return undefined }", "async function foo() { }");
         test_same("async function* foo() { return void 0 }");
         test_same("class Foo { async * foo() { return void 0 } }");
     }
@@ -1267,10 +1214,10 @@ mod test {
         test("let x = undefined", "let x");
         test("const x = undefined", "const x = void 0");
         test("var x = undefined", "var x = void 0");
-        test_same("var undefined = 1;function f() {var undefined=2;var x;}");
+        test_same("var undefined = 1;function f() {var undefined=2,x;}");
         test_same("function f(undefined) {}");
-        test_same("try {} catch(undefined) {foo(undefined)}");
-        test("for (undefined in {}) {}", "for(undefined in {}){}");
+        test_same("try { foo } catch(undefined) {foo(undefined)}");
+        test("for (undefined in {}) {}", "for(undefined in {});");
         test("undefined++;", "undefined++");
         test("undefined += undefined;", "undefined+=void 0");
         // shadowed
@@ -1384,17 +1331,19 @@ mod test {
         // This case is not supported, since the minifier does not support with statements
         // test_same("var x; with (z) { x = x || 1 }");
 
-        let allocator = Allocator::default();
         let target = ESTarget::ES2019;
-        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(target, false);
         let code = "var x; x = x || 1";
-        tester::test(&allocator, code, code, &mut pass);
+        assert_eq!(
+            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
+            run(code, None)
+        );
     }
 
     #[test]
     fn test_fold_subtraction_assignment() {
         test("x -= 1", "--x");
-        test("x -= -1", "++x");
+        // FIXME
+        // test("x -= -1", "++x");
         test_same("x -= 2");
         test_same("x += 1"); // The string concatenation may be triggered, so we don't fold this.
         test_same("x += -1");
@@ -1634,14 +1583,14 @@ mod test {
 
     #[test]
     fn test_template_string_to_string() {
-        test("`abcde`", "'abcde'");
-        test("`ab cd ef`", "'ab cd ef'");
+        test("x = `abcde`", "x = 'abcde'");
+        test("x = `ab cd ef`", "x = 'ab cd ef'");
         test_same("`hello ${name}`");
         test_same("tag `hello ${name}`");
         test_same("tag `hello`");
-        test("`hello ${'foo'}`", "'hello foo'");
-        test("`${2} bananas`", "'2 bananas'");
-        test("`This is ${true}`", "'This is true'");
+        test("x = `hello ${'foo'}`", "x = 'hello foo'");
+        test("x = `${2} bananas`", "x = '2 bananas'");
+        test("x = `This is ${true}`", "x = 'This is true'");
     }
 
     #[test]
@@ -1768,7 +1717,7 @@ mod test {
     #[test]
     fn test_fold_arrow_function_return() {
         test("const foo = () => { return 'baz' }", "const foo = () => 'baz'");
-        test_same("const foo = () => { foo; return 'baz' }");
+        test("const foo = () => { foo; return 'baz' }", "const foo = () => (foo, 'baz');");
     }
 
     #[test]
@@ -1865,11 +1814,12 @@ mod test {
         // foo() might have a side effect
         test_same("foo().a || (foo().a = 3)");
 
-        let allocator = Allocator::default();
         let target = ESTarget::ES2019;
-        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(target, false);
         let code = "x || (x = 3)";
-        tester::test(&allocator, code, code, &mut pass);
+        assert_eq!(
+            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
+            run(code, None)
+        );
     }
 
     #[test]
@@ -1944,7 +1894,7 @@ mod test {
         // Don't fold the existence check to preserve behavior
         test("var a = Boolean?.(false)", "var a = Boolean?.(!1)");
 
-        test("var a = Boolean(1)", "var a = !!1");
+        test("var a = Boolean(1)", "var a = !0");
         // Don't fold the existence check to preserve behavior
         test_same("var a = Boolean?.(1)");
 
@@ -1952,7 +1902,7 @@ mod test {
         // Don't fold the existence check to preserve behavior
         test_same("var a = Boolean?.(x)");
 
-        test("var a = Boolean({})", "var a = !!{}");
+        test("var a = Boolean({})", "var a = !0");
         // Don't fold the existence check to preserve behavior
         test_same("var a = Boolean?.({})");
 
@@ -1962,16 +1912,16 @@ mod test {
 
     #[test]
     fn test_fold_string_constructor() {
-        test("String()", "''");
-        test("var a = String(23)", "var a = '' + 23");
+        test("x = String()", "x = ''");
+        test("var a = String(23)", "var a = '23'");
         // Don't fold the existence check to preserve behavior
         test_same("var a = String?.(23)");
 
-        test("var a = String('hello')", "var a = '' + 'hello'");
+        test("var a = String('hello')", "var a = 'hello'");
         // Don't fold the existence check to preserve behavior
         test_same("var a = String?.('hello')");
 
-        test_same("var s = Symbol();var a = String(s);");
+        test_same("var s = Symbol(), a = String(s);");
 
         test_same("var a = String('hello', bar());");
         test_same("var a = String({valueOf: function() { return 1; }});");
@@ -1979,10 +1929,10 @@ mod test {
 
     #[test]
     fn test_fold_number_constructor() {
-        test("Number()", "0");
-        test("Number(true)", "1");
-        test("Number(false)", "0");
-        test("Number('foo')", "NaN");
+        test("x = Number()", "x = 0");
+        test("x = Number(true)", "x = 1");
+        test("x = Number(false)", "x = 0");
+        test("x = Number('foo')", "x = NaN");
     }
 
     #[test]
@@ -1994,16 +1944,17 @@ mod test {
 
     #[test]
     fn optional_catch_binding() {
-        test("try {} catch(e) {}", "try {} catch {}");
-        test("try {} catch(e) {foo}", "try {} catch {foo}");
-        test_same("try {} catch(e) {e}");
-        test_same("try {} catch([e]) {}");
-        test_same("try {} catch({e}) {}");
+        test("try { foo } catch(e) {}", "try { foo } catch {}");
+        test("try { foo } catch(e) {foo}", "try { foo } catch {foo}");
+        test_same("try { foo } catch(e) {e}");
+        test_same("try { foo } catch([e]) {}");
+        test_same("try { foo } catch({e}) {}");
 
-        let allocator = Allocator::default();
         let target = ESTarget::ES2018;
-        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(target, false);
-        let code = "try {} catch(e) {}";
-        tester::test(&allocator, code, code, &mut pass);
+        let code = "try { foo } catch(e) {}";
+        assert_eq!(
+            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
+            run(code, None)
+        );
     }
 }

@@ -175,22 +175,7 @@ impl<'a> Normalize {
 
 #[cfg(test)]
 mod test {
-    use oxc_allocator::Allocator;
-
-    use super::NormalizeOptions;
-    use crate::{tester, CompressOptions};
-
-    fn test(source_text: &str, expected: &str) {
-        let allocator = Allocator::default();
-        let compress_options = CompressOptions {
-            drop_debugger: true,
-            drop_console: true,
-            ..CompressOptions::default()
-        };
-        let options = NormalizeOptions { convert_while_to_fors: true };
-        let mut pass = super::Normalize::new(options, compress_options);
-        tester::test(&allocator, source_text, expected, &mut pass);
-    }
+    use crate::tester::test;
 
     #[test]
     fn test_while() {
@@ -200,8 +185,8 @@ mod test {
 
     #[test]
     fn test_void_ident() {
-        test("var x; void x", "var x; void 0");
-        test("void x", "void x"); // reference error
+        test("var x; void x", "var x");
+        test("void x", "x"); // reference error
     }
 
     #[test]
@@ -212,8 +197,8 @@ mod test {
 
     #[test]
     fn drop_console() {
-        test("console.log()", "void 0;\n");
-        test("() => console.log()", "() => void 0");
+        test("console.log()", "");
+        test("(() => console.log())()", "(() => void 0)()");
     }
 
     #[test]

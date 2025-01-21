@@ -20,7 +20,7 @@ use rustc_hash::FxBuildHasher;
 pub use hashbrown::{
     hash_map::{
         Drain, Entry, EntryRef, ExtractIf, IntoIter, IntoKeys, IntoValues, Iter, IterMut, Keys,
-        OccupiedError, RawEntryBuilder, RawEntryBuilderMut, Values, ValuesMut,
+        OccupiedError, Values, ValuesMut,
     },
     Equivalent, TryReserveError,
 };
@@ -36,7 +36,7 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// All APIs are the same, except create a [`HashMap`] with
 /// either [`new_in`](HashMap::new_in) or [`with_capacity_in`](HashMap::with_capacity_in).
 ///
-/// ## No `Drop`s
+/// # No `Drop`s
 ///
 /// Objects allocated into Oxc memory arenas are never [`Dropped`](Drop). Memory is released in bulk
 /// when the allocator is dropped, without dropping the individual objects in the arena.
@@ -45,7 +45,7 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// which own memory allocations outside the arena.
 ///
 /// Static checks make this impossible to do. [`HashMap::new_in`] and all other methods which create
-/// a [`HashMap`] will refuse to compile if called with a [`Drop`] type.
+/// a [`HashMap`] will refuse to compile if either key or value is a [`Drop`] type.
 ///
 /// [`FxHasher`]: rustc_hash::FxHasher
 pub struct HashMap<'alloc, K, V>(ManuallyDrop<FxHashMap<'alloc, K, V>>);
