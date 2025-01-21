@@ -41,7 +41,7 @@ fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a Identifi
         JSXElementName::Identifier(_)
         | JSXElementName::NamespacedName(_)
         | JSXElementName::ThisExpression(_) => None,
-        JSXElementName::IdentifierReference(ref ident) => Some(ident),
+        JSXElementName::IdentifierReference(ident) => Some(ident),
         JSXElementName::MemberExpression(expr) => get_member_ident(expr),
     }
 }

@@ -124,7 +124,7 @@ impl DebugDot for BasicBlock {
 
 impl DebugDot for Instruction {
     fn debug_dot(&self, ctx: DebugDotContext) -> String {
-        match self.kind {
+        match &self.kind {
             InstructionKind::Statement => {
                 self.node_id.map_or("None".to_string(), |id| ctx.debug_ast_kind(id))
             }
@@ -136,7 +136,7 @@ impl DebugDot for Instruction {
                     ctx.try_eval_literal(id).unwrap_or_else(|| ctx.debug_ast_kind(id))
                 )
             }),
-            InstructionKind::Iteration(ref kind) => {
+            InstructionKind::Iteration(kind) => {
                 format!(
                     "Iteration({} {} {})",
                     self.node_id.map_or("None".to_string(), |id| ctx.debug_ast_kind(id)),

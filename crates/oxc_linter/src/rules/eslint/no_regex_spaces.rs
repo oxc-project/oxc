@@ -158,7 +158,7 @@ impl<'a> Visit<'a> for ConsecutiveSpaceFinder {
         if ch.value != u32::from(b' ') {
             return;
         }
-        if let Some(ref mut space_span) = self.last_space_span {
+        if let Some(space_span) = &mut self.last_space_span {
             // If this is consecutive with the last space, extend it
             if space_span.end == ch.span.start {
                 space_span.end = ch.span.end;

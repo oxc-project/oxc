@@ -69,7 +69,7 @@ impl Rule for NoTypos {
         if let AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(en_decl)) =
             node.kind()
         {
-            if let Some(ref decl) = en_decl.declaration {
+            if let Some(decl) = &en_decl.declaration {
                 match decl {
                     Declaration::VariableDeclaration(decl) => {
                         for decl in &decl.declarations {

@@ -56,7 +56,7 @@ impl Rule for NoAmd {
             return;
         }
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Expression::Identifier(ref identifier) = &call_expr.callee {
+            if let Expression::Identifier(identifier) = &call_expr.callee {
                 if identifier.name != "define" && identifier.name != "require" {
                     return;
                 }

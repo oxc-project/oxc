@@ -339,7 +339,7 @@ impl<'a> PeepholeOptimizations {
             if sequence_expr.expressions.len() > 1 {
                 let span = expr.span();
                 let mut sequence = ctx.ast.move_expression(&mut expr.test);
-                let Expression::SequenceExpression(ref mut sequence_expr) = &mut sequence else {
+                let Expression::SequenceExpression(sequence_expr) = &mut sequence else {
                     unreachable!()
                 };
                 let test = sequence_expr.expressions.pop().unwrap();
@@ -587,15 +587,13 @@ impl<'a> PeepholeOptimizations {
                 {
                     let callee = ctx.ast.move_expression(&mut consequent.callee);
                     let consequent_first_arg = {
-                        let Argument::SpreadElement(ref mut el) = &mut consequent.arguments[0]
-                        else {
+                        let Argument::SpreadElement(el) = &mut consequent.arguments[0] else {
                             unreachable!()
                         };
                         ctx.ast.move_expression(&mut el.argument)
                     };
                     let alternate_first_arg = {
-                        let Argument::SpreadElement(ref mut el) = &mut alternate.arguments[0]
-                        else {
+                        let Argument::SpreadElement(el) = &mut alternate.arguments[0] else {
                             unreachable!()
                         };
                         ctx.ast.move_expression(&mut el.argument)

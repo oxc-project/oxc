@@ -232,7 +232,7 @@ impl<'a> TypeScriptEnum<'a> {
                 };
 
                 init
-            } else if let Some(ref value) = prev_constant_value {
+            } else if let Some(value) = &prev_constant_value {
                 match value {
                     ConstantValue::Number(value) => {
                         let value = value + 1.0;
