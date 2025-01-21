@@ -15,11 +15,27 @@ pub use typescript::TypescriptGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
 
 pub trait Generator {
-    // Methods defined by implementer
+    // Methods which can/must be defined by implementer.
 
+    /// Attributes on types that this derive uses.
+    fn type_attrs(&self) -> &[&'static str] {
+        &[]
+    }
+
+    /// Attributes on struct fields that this derive uses.
+    fn field_attrs(&self) -> &[&'static str] {
+        &[]
+    }
+
+    /// Attributes on enum variants that this derive uses.
+    fn variant_attrs(&self) -> &[&'static str] {
+        &[]
+    }
+
+    /// Generate output.
     fn generate(&mut self, schema: &Schema) -> Output;
 
-    // Standard methods
+    // Standard methods. Should not be overriden.
 
     fn output(&mut self, schema: &Schema) -> Result<Vec<Output>> {
         Ok(vec![self.generate(schema)])

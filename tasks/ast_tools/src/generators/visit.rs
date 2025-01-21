@@ -23,6 +23,18 @@ pub struct VisitGenerator;
 define_generator!(VisitGenerator);
 
 impl Generator for VisitGenerator {
+    fn type_attrs(&self) -> &[&'static str] {
+        &["scope"]
+    }
+
+    fn field_attrs(&self) -> &[&'static str] {
+        &["visit", "scope"]
+    }
+
+    fn variant_attrs(&self) -> &[&'static str] {
+        &["visit"]
+    }
+
     fn generate(&mut self, schema: &Schema) -> Output {
         Output::Rust {
             path: output_path(crate::AST_CRATE, "visit.rs"),

@@ -15,11 +15,15 @@ pub struct DeriveCloneIn;
 define_derive!(DeriveCloneIn);
 
 impl Derive for DeriveCloneIn {
-    fn trait_name() -> &'static str {
+    fn trait_name(&self) -> &'static str {
         "CloneIn"
     }
 
-    fn prelude() -> TokenStream {
+    fn field_attrs(&self) -> &[&'static str] {
+        &["clone_in"]
+    }
+
+    fn prelude(&self) -> TokenStream {
         quote! {
             #![allow(clippy::default_trait_access)]
 

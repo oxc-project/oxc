@@ -13,11 +13,11 @@ pub struct DeriveGetAddress;
 define_derive!(DeriveGetAddress);
 
 impl Derive for DeriveGetAddress {
-    fn trait_name() -> &'static str {
+    fn trait_name(&self) -> &'static str {
         "GetAddress"
     }
 
-    fn prelude() -> TokenStream {
+    fn prelude(&self) -> TokenStream {
         quote! {
             #![allow(clippy::match_same_arms)]
 

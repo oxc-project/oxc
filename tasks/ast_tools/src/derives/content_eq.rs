@@ -21,11 +21,11 @@ pub struct DeriveContentEq;
 define_derive!(DeriveContentEq);
 
 impl Derive for DeriveContentEq {
-    fn trait_name() -> &'static str {
+    fn trait_name(&self) -> &'static str {
         "ContentEq"
     }
 
-    fn prelude() -> TokenStream {
+    fn prelude(&self) -> TokenStream {
         quote! {
             // NOTE: writing long match expressions formats better than using `matches` macro.
             #![allow(clippy::match_like_matches_macro)]

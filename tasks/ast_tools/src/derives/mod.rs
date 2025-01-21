@@ -23,25 +23,50 @@ pub use estree::DeriveESTree;
 pub use get_address::DeriveGetAddress;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
 
-pub trait Derive {
-    // Methods defined by implementer
+pub trait Derive: Sync {
+    // Methods which can/must be defined by implementer.
 
-    fn trait_name() -> &'static str;
+    /// Get trait name.
+    fn trait_name(&self) -> &'static str;
 
-    fn snake_name() -> String {
-        Self::trait_name().to_case(Case::Snake)
+    /// Get snake case trait name.
+    ///
+    /// Defaults to `trait_name()` converted to snake case.
+    /// Can be overridden.
+    fn snake_name(&self) -> String {
+        self.trait_name().to_case(Case::Snake)
     }
 
-    fn prelude() -> TokenStream {
+    /// Attributes on types that this derive uses.
+    fn type_attrs(&self) -> &[&'static str] {
+        &[]
+    }
+
+    /// Attributes on struct fields that this derive uses.
+    fn field_attrs(&self) -> &[&'static str] {
+        &[]
+    }
+
+    /// Attributes on enum variants that this derive uses.
+    fn variant_attrs(&self) -> &[&'static str] {
+        &[]
+    }
+
+    /// Generate prelude to be output at top of generated files.
+    ///
+    /// Defaults to no prelude.
+    /// Can be overridden.
+    fn prelude(&self) -> TokenStream {
         TokenStream::default()
     }
 
+    /// Generate trait implementation for a type.
     fn derive(&mut self, def: &TypeDef, schema: &Schema) -> TokenStream;
 
-    // Standard methods
+    // Standard methods. Should not be overriden.
 
-    fn template(module_paths: Vec<&str>, impls: TokenStream) -> TokenStream {
-        let prelude = Self::prelude();
+    fn template(&self, module_paths: Vec<&str>, impls: TokenStream) -> TokenStream {
+        let prelude = self.prelude();
 
         // from `x::y::z` to `crate::y::z::*`
         let use_modules = module_paths.into_iter().map(|module_path| {
@@ -69,8 +94,8 @@ pub trait Derive {
     }
 
     fn output(&mut self, schema: &Schema) -> Result<Vec<Output>> {
-        let trait_name = Self::trait_name();
-        let filename = format!("derive_{}.rs", Self::snake_name());
+        let trait_name = self.trait_name();
+        let filename = format!("derive_{}.rs", self.snake_name());
         let output = schema
             .defs
             .iter()
@@ -95,7 +120,7 @@ pub trait Derive {
 
                 let output = Output::Rust {
                     path: output_path(&format!("crates/{krate}"), &filename),
-                    tokens: Self::template(
+                    tokens: self.template(
                         modules,
                         streams.into_iter().fold(TokenStream::new(), |mut acc, it| {
                             acc.extend(quote! {

@@ -1576,6 +1576,7 @@ dependencies = [
  "bpaf",
  "convert_case 0.7.1",
  "cow-utils",
+ "indexmap",
  "itertools",
  "lazy_static",
  "prettyplease",

@@ -5,7 +5,9 @@ use codegen::{AstCodegen, AstCodegenResult};
 use itertools::Itertools;
 use syn::parse_file;
 
+mod analyse;
 mod codegen;
+mod codegen2;
 mod derives;
 mod generators;
 mod layout;
@@ -17,8 +19,10 @@ mod rust_ast;
 mod schema;
 mod util;
 
+use codegen2::Codegen;
 use derives::{
-    DeriveCloneIn, DeriveContentEq, DeriveESTree, DeriveGetAddress, DeriveGetSpan, DeriveGetSpanMut,
+    Derive, DeriveCloneIn, DeriveContentEq, DeriveESTree, DeriveGetAddress, DeriveGetSpan,
+    DeriveGetSpanMut,
 };
 use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GetIdGenerator,
@@ -48,6 +52,25 @@ const TYPESCRIPT_PACKAGE: &str = "npm/oxc-types";
 const GITHUB_WATCH_LIST_PATH: &str = ".github/.generated_ast_watch_list.yml";
 const SCHEMA_PATH: &str = "schema.json";
 
+const DERIVES: &[&dyn Derive] = &[
+    &DeriveCloneIn,
+    &DeriveGetAddress,
+    &DeriveGetSpan,
+    &DeriveGetSpanMut,
+    &DeriveContentEq,
+    &DeriveESTree,
+];
+
+const GENERATORS: &[&dyn Generator] = &[
+    &AssertLayouts,
+    &AstKindGenerator,
+    &AstBuilderGenerator,
+    &GetIdGenerator,
+    &VisitGenerator,
+    &VisitMutGenerator,
+    &TypescriptGenerator,
+];
+
 type Result<R> = std::result::Result<R, String>;
 type TypeId = usize;
 
@@ -62,12 +85,19 @@ pub struct CliOptions {
     schema: bool,
 }
 
+#[expect(unreachable_code)]
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let cli_options = cli_options().run();
 
     if cli_options.quiet {
         logger::quiet().normalize_with("Failed to set logger to `quiet` mode.")?;
     }
+
+    let codegen = Codegen::new();
+
+    // TODO: Work in progress
+    analyse::analyse(SOURCE_PATHS, &codegen);
+    return Ok(());
 
     let AstCodegenResult { mut outputs, schema } = SOURCE_PATHS
         .iter()

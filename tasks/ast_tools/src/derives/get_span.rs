@@ -14,11 +14,15 @@ pub struct DeriveGetSpan;
 define_derive!(DeriveGetSpan);
 
 impl Derive for DeriveGetSpan {
-    fn trait_name() -> &'static str {
+    fn trait_name(&self) -> &'static str {
         "GetSpan"
     }
 
-    fn prelude() -> TokenStream {
+    fn field_attrs(&self) -> &[&'static str] {
+        &["span"]
+    }
+
+    fn prelude(&self) -> TokenStream {
         quote! {
             #![allow(clippy::match_same_arms)]
 
@@ -35,7 +39,7 @@ impl Derive for DeriveGetSpan {
         let reference = |it| quote!(&#it);
 
         derive(
-            Self::trait_name(),
+            self.trait_name(),
             "span",
             &self_type,
             &result_type,
@@ -52,11 +56,11 @@ pub struct DeriveGetSpanMut;
 define_derive!(DeriveGetSpanMut);
 
 impl Derive for DeriveGetSpanMut {
-    fn trait_name() -> &'static str {
+    fn trait_name(&self) -> &'static str {
         "GetSpanMut"
     }
 
-    fn prelude() -> TokenStream {
+    fn prelude(&self) -> TokenStream {
         quote! {
             #![allow(clippy::match_same_arms)]
 
@@ -73,7 +77,7 @@ impl Derive for DeriveGetSpanMut {
         let reference = |it| quote!(&mut #it);
 
         derive(
-            Self::trait_name(),
+            self.trait_name(),
             "span_mut",
             &self_type,
             &result_type,

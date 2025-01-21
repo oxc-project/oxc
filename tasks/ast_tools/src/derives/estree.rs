@@ -18,15 +18,23 @@ pub struct DeriveESTree;
 define_derive!(DeriveESTree);
 
 impl Derive for DeriveESTree {
-    fn trait_name() -> &'static str {
+    fn trait_name(&self) -> &'static str {
         "ESTree"
     }
 
-    fn snake_name() -> String {
+    fn snake_name(&self) -> String {
         "estree".to_string()
     }
 
-    fn prelude() -> TokenStream {
+    fn type_attrs(&self) -> &[&'static str] {
+        &["estree"]
+    }
+
+    fn field_attrs(&self) -> &[&'static str] {
+        &["estree"]
+    }
+
+    fn prelude(&self) -> TokenStream {
         quote! {
             #![allow(unused_imports, unused_mut, clippy::match_same_arms)]
 
