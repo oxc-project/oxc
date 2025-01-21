@@ -26,7 +26,7 @@ impl<'a> ParserImpl<'a> {
         self.at(Kind::Function)
             || self.at(Kind::Async)
                 && self.peek_at(Kind::Function)
-                && !self.peek_token().is_on_new_line
+                && !self.peek_token().is_on_new_line()
     }
 
     pub(crate) fn parse_function_body(&mut self) -> Result<Box<'a, FunctionBody<'a>>> {
@@ -99,7 +99,7 @@ impl<'a> ParserImpl<'a> {
         let element = self.parse_rest_element()?;
         if self.at(Kind::Comma) {
             if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {
-                let span = self.cur_token().span();
+                let span = self.cur_token_span();
                 self.bump_any();
                 self.error(diagnostics::binding_rest_element_trailing_comma(span));
             }
@@ -293,7 +293,7 @@ impl<'a> ParserImpl<'a> {
         let mut delegate = false;
         let mut argument = None;
 
-        if !self.cur_token().is_on_new_line {
+        if !self.cur_token().is_on_new_line() {
             delegate = self.eat(Kind::Star);
             let not_assignment_expr = matches!(
                 self.cur_kind(),
@@ -336,7 +336,7 @@ impl<'a> ParserImpl<'a> {
         if kind.is_id_required() && id.is_none() {
             match self.cur_kind() {
                 Kind::LParen => {
-                    self.error(diagnostics::expect_function_name(self.cur_token().span()));
+                    self.error(diagnostics::expect_function_name(self.cur_token_span()));
                 }
                 kind if kind.is_reserved_keyword() => self.expect_without_advance(Kind::Ident)?,
                 _ => {}
