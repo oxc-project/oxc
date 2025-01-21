@@ -106,6 +106,7 @@ mod eslint {
     pub mod no_nonoctal_decimal_escape;
     pub mod no_obj_calls;
     pub mod no_object_constructor;
+    pub mod no_octal_escape;
     pub mod no_plusplus;
     pub mod no_proto;
     pub mod no_prototype_builtins;
@@ -549,6 +550,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_extra_label,
     eslint::no_multi_assign,
     eslint::no_nested_ternary,
+    eslint::no_octal_escape,
     eslint::no_labels,
     eslint::no_lone_blocks,
     eslint::no_restricted_imports,
