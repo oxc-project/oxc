@@ -13,6 +13,7 @@ use super::{
         BoxDef, CellDef, EnumDef, FieldDef, OptionDef, PrimitiveDef, StructDef, TypeDef,
         VariantDef, VecDef,
     },
+    ident_name,
     schema::{File, FileId, Schema, TypeId},
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
     Derives, FxIndexMap, FxIndexSet,
@@ -34,8 +35,8 @@ pub fn parse(
         })
         .collect();
 
-    let state = Parser::new(type_names, files, codegen);
-    state.parse_all(skeletons_vec)
+    let parser = Parser::new(type_names, files, codegen);
+    parser.parse_all(skeletons_vec)
 }
 
 /// Types parser.
@@ -112,10 +113,10 @@ impl<'c> Parser<'c> {
                 name: "RegExpFlags".to_string(),
                 has_lifetime: false,
                 fields: vec![FieldDef { name: None, type_id: self.type_id("u8") }],
-                is_visitable: false,
-                generated_derives: Derives::none(),
                 file_id: self.get_file_id("oxc_ast::ast::literal"),
                 item: parse_quote! { struct RegExpFlags(u8); },
+                generated_derives: Derives::none(),
+                is_visitable: false,
             }),
             _ => panic!("Unknown type: {name}"),
         };
@@ -126,19 +127,20 @@ impl<'c> Parser<'c> {
     /// Create a new type definition.
     fn create_new_type(&mut self, name: String, def: TypeDef) -> TypeId {
         let type_id = self.type_names.len();
-        self.type_names.insert(name);
+        let was_inserted = self.type_names.insert(name);
+        assert!(was_inserted);
         self.extra_types.push(def);
         type_id
     }
 
     /// Get `FileId` for file with provided import path.
     fn get_file_id(&self, import_path: &str) -> FileId {
-        for (file_id, file) in self.files.iter().enumerate() {
-            if file.import_path == import_path {
-                return file_id;
-            }
+        let file_and_id =
+            self.files.iter().enumerate().find(|(_, file)| file.import_path == import_path);
+        match file_and_id {
+            Some((file_id, _)) => file_id,
+            None => panic!("Could not find file with import path: {import_path}"),
         }
-        panic!("Could not find file with import path: {import_path}");
     }
 
     /// Parse `Skeleton` to yield a `TypeDef`.
@@ -154,15 +156,15 @@ impl<'c> Parser<'c> {
         let StructSkeleton { name, item, file_id } = skeleton;
         let has_lifetime = check_generics(&item.generics, &name);
         let fields = self.parse_fields(&item.fields);
-        let is_visitable = check_ast_attr(&item.attrs);
         let generated_derives = self.get_generated_derives(&item.attrs);
+        let is_visitable = check_ast_attr(&item.attrs);
         TypeDef::Struct(StructDef {
             name,
             has_lifetime,
             fields,
-            generated_derives,
             file_id,
             item,
+            generated_derives,
             is_visitable,
         })
     }
@@ -173,16 +175,16 @@ impl<'c> Parser<'c> {
         let has_lifetime = check_generics(&item.generics, &name);
         let variants = item.variants.iter().map(|variant| self.parse_variant(variant)).collect();
         let inherits = inherits.into_iter().map(|name| self.type_id(&name)).collect();
-        let is_visitable = check_ast_attr(&item.attrs);
         let generated_derives = self.get_generated_derives(&item.attrs);
+        let is_visitable = check_ast_attr(&item.attrs);
         TypeDef::Enum(EnumDef {
             name,
             has_lifetime,
             variants,
             inherits,
-            generated_derives,
             file_id,
             item,
+            generated_derives,
             is_visitable,
         })
     }
@@ -317,7 +319,7 @@ impl<'c> Parser<'c> {
                 let args: Punctuated<Ident, Token![,]> =
                     attr.parse_args_with(Punctuated::parse_terminated).unwrap();
                 for arg in args {
-                    let derive_id = self.codegen.get_derive_id_by_name(&arg.to_string());
+                    let derive_id = self.codegen.get_derive_id_by_name(&ident_name(&arg));
                     derives.add(derive_id);
                 }
             }
@@ -371,11 +373,6 @@ fn check_ast_attr(attrs: &[Attribute]) -> bool {
     }
 
     panic!("Invalid `#[ast] attr: {}", ast_attr.to_token_stream());
-}
-
-/// Convert `Ident` to `String`, removing `r#` from start.
-fn ident_name(ident: &Ident) -> String {
-    ident.to_string().trim_start_matches("r#").to_string()
 }
 
 /// Get first segment from `TypePath`.

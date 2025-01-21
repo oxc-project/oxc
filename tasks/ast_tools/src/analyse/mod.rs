@@ -44,6 +44,7 @@ use std::hash::BuildHasherDefault;
 use indexmap::{IndexMap, IndexSet};
 use itertools::Itertools;
 use rustc_hash::FxHasher;
+use syn::Ident;
 
 use crate::{log, log_success, Codegen};
 
@@ -108,4 +109,9 @@ fn get_import_path(file_path: &str) -> String {
     assert_eq!(parts.next(), Some("src"));
 
     [krate].into_iter().chain(parts).join("::")
+}
+
+/// Convert `Ident` to `String`, removing `r#` from start.
+fn ident_name(ident: &Ident) -> String {
+    ident.to_string().trim_start_matches("r#").to_string()
 }

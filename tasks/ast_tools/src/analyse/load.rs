@@ -11,6 +11,7 @@ use syn::{
 };
 
 use super::{
+    ident_name,
     schema::FileId,
     skeleton::{EnumSkeleton, Skeleton, StructSkeleton},
     FxIndexMap,
@@ -63,7 +64,7 @@ fn parse_struct(item: ItemStruct, file_id: FileId) -> Option<StructSkeleton> {
         return None;
     }
 
-    let name = item.ident.to_string();
+    let name = ident_name(&item.ident);
     Some(StructSkeleton { name, item, file_id })
 }
 
@@ -72,7 +73,7 @@ fn parse_enum(item: ItemEnum, file_id: FileId) -> Option<EnumSkeleton> {
         return None;
     }
 
-    let name = item.ident.to_string();
+    let name = ident_name(&item.ident);
     Some(EnumSkeleton { name, item, inherits: vec![], file_id })
 }
 
@@ -96,7 +97,7 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
             let ident = input.parse::<Ident>()?;
             let generics = input.parse::<Generics>()?;
 
-            let name = ident.to_string();
+            let name = ident_name(&ident);
 
             let where_clause = input.parse::<Option<WhereClause>>()?;
             assert!(where_clause.is_none(), "Types with `where` clauses are not supported");
@@ -119,7 +120,7 @@ fn parse_macro(item: &ItemMacro, file_id: FileId) -> Option<EnumSkeleton> {
                     && content.parse::<Ident>().is_ok_and(|id| id == "inherit")
                 {
                     let inherit_ident = content.parse::<Ident>().expect("Invalid `@inherits`");
-                    inherits.push(inherit_ident.to_string());
+                    inherits.push(ident_name(&inherit_ident));
                 } else {
                     panic!("Invalid `inherit_variants!` macro usage");
                 }

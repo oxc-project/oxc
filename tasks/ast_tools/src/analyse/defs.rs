@@ -65,9 +65,9 @@ pub struct StructDef {
     pub name: String,
     pub has_lifetime: bool,
     pub fields: Vec<FieldDef>,
-    pub generated_derives: Derives,
     pub file_id: FileId,
     pub item: ItemStruct,
+    pub generated_derives: Derives,
     pub is_visitable: bool,
 }
 
@@ -78,9 +78,9 @@ pub struct EnumDef {
     pub variants: Vec<VariantDef>,
     /// For `@inherits` inherited enum variants
     pub inherits: Vec<TypeId>,
-    pub generated_derives: Derives,
     pub file_id: FileId,
     pub item: ItemEnum,
+    pub generated_derives: Derives,
     pub is_visitable: bool,
 }
 
