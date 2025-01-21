@@ -184,12 +184,6 @@ impl PartialEq<Atom<'_>> for Cow<'_, str> {
     }
 }
 
-impl PartialEq<&Atom<'_>> for Cow<'_, str> {
-    fn eq(&self, other: &&Atom<'_>) -> bool {
-        self.as_ref() == other.as_str()
-    }
-}
-
 impl ContentEq for Atom<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
