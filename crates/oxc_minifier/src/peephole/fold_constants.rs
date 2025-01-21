@@ -36,7 +36,7 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => None,
         } {
             *expr = folded_expr;
-            self.changed = true;
+            self.mark_current_function_as_changed();
         };
     }
 
@@ -706,7 +706,7 @@ impl<'a, 'b> PeepholeOptimizations {
             true
         });
         if e.properties.len() != len {
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
         None
     }

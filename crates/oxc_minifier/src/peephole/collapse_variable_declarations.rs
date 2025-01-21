@@ -93,7 +93,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         *stmts = new_stmts;
-        self.changed = true;
+        self.mark_current_function_as_changed();
     }
 }
 
@@ -133,7 +133,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        if self.changed {
+        if self.is_current_function_changed() {
             stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
         }
     }
@@ -147,7 +147,7 @@ impl<'a> PeepholeOptimizations {
         if let Statement::ExpressionStatement(expr_stmt) = ctx.ast.move_statement(&mut stmts[i]) {
             if let Statement::ForStatement(for_stmt) = &mut stmts[i + 1] {
                 for_stmt.init = Some(ForStatementInit::from(expr_stmt.unbox().expression));
-                self.changed = true;
+                self.mark_current_function_as_changed();
             };
         }
     }
@@ -163,11 +163,11 @@ impl<'a> PeepholeOptimizations {
                 match for_stmt.init.as_mut() {
                     Some(ForStatementInit::VariableDeclaration(for_var)) => {
                         for_var.declarations.splice(0..0, var.unbox().declarations);
-                        self.changed = true;
+                        self.mark_current_function_as_changed();
                     }
                     None => {
                         for_stmt.init = Some(ForStatementInit::VariableDeclaration(var));
-                        self.changed = true;
+                        self.mark_current_function_as_changed();
                     }
                     _ => {
                         unreachable!()
@@ -209,7 +209,7 @@ impl<'a> PeepholeOptimizations {
                                 _ => unreachable!(),
                             };
                             *left = ForStatementLeft::VariableDeclaration(var);
-                            self.changed = true;
+                            self.mark_current_function_as_changed();
                         }
                     }
                 }
