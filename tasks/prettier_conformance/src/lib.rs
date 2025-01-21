@@ -89,10 +89,12 @@ impl TestRunner {
                     &dir.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
                 ));
                 // Each failed test file
-                for path in failed_test_files {
+                for (path, (failed, passed)) in failed_test_files {
                     failed_reports.push_str(&format!(
-                        "* {}\n",
-                        path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
+                        "* {} | {}{}\n",
+                        path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
+                        "💥".repeat(failed),
+                        "✨".repeat(passed),
                     ));
                 }
             }
@@ -185,7 +187,11 @@ fn collect_test_files(dir: &Path, filter: Option<&String>) -> Vec<PathBuf> {
 }
 
 /// Run `oxc_prettier` and compare the output with the Prettier's snapshot
-fn test_snapshots(dir: &Path, test_files: &Vec<PathBuf>, has_debug_filter: bool) -> Vec<PathBuf> {
+fn test_snapshots(
+    dir: &Path,
+    test_files: &Vec<PathBuf>,
+    has_debug_filter: bool,
+) -> Vec<(PathBuf, (usize, usize))> {
     // Parse all `runFormatTest()` calls and collect format options
     let spec_path = &dir.join(FORMAT_TEST_SPEC_NAME);
     let spec_calls = parse_spec(spec_path);
@@ -202,8 +208,10 @@ fn test_snapshots(dir: &Path, test_files: &Vec<PathBuf>, has_debug_filter: bool)
     for path in test_files {
         // Single source text is used for multiple options
         let source_text = std::fs::read_to_string(path).unwrap();
+
+        let mut failed_count = 0;
         // Check every combination of options!
-        let result = spec_calls.iter().all(|(prettier_options, snapshot_options)| {
+        for (prettier_options, snapshot_options) in &spec_calls {
             // Single snapshot file contains multiple test cases, so need to find the right one
             let expected = find_output_from_snapshots(
                 &snapshots,
@@ -223,6 +231,10 @@ fn test_snapshots(dir: &Path, test_files: &Vec<PathBuf>, has_debug_filter: bool)
             );
 
             let result = expected == actual;
+
+            if !result {
+                failed_count += 1;
+            }
 
             if has_debug_filter {
                 let print_with_border = |title: &str| {
@@ -257,12 +269,11 @@ fn test_snapshots(dir: &Path, test_files: &Vec<PathBuf>, has_debug_filter: bool)
                 }
                 println!();
             }
+        }
 
-            result
-        });
-
-        if !result {
-            failed_test_files.push(path.clone());
+        if failed_count != 0 {
+            let passed_count = spec_calls.len() - failed_count;
+            failed_test_files.push((path.clone(), (failed_count, passed_count)));
         }
     }
 
