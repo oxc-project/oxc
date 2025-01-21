@@ -684,7 +684,7 @@ impl<'a> Format<'a> for ImportAttribute<'a> {
 
         assignment::print_assignment(
             p,
-            assignment::AssignmentLike::ImportAtrribute(self),
+            assignment::AssignmentLike::ImportAttribute(self),
             left_doc,
             text!(":"),
             // PERF: Can be better without clone...?
