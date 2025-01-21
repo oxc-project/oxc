@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{ctx::Ctx, CompressOptions, CompressorPass};
+use crate::{ctx::Ctx, CompressOptions};
 
 #[derive(Default)]
 pub struct NormalizeOptions {
@@ -33,8 +33,8 @@ pub struct Normalize {
     compress_options: CompressOptions,
 }
 
-impl<'a> CompressorPass<'a> for Normalize {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+impl<'a> Normalize {
+    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 }

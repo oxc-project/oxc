@@ -1,57 +1,16 @@
 //! # ⚓ Oxc Memory Allocator
 //!
-//! Oxc uses a bump-based memory arena for faster AST allocations. This crate
-//! contains an [`Allocator`] for creating such arenas, as well as ports of
-//! memory management data types from `std` adapted to use this arena.
+//! Oxc uses a bump-based memory arena for faster AST allocations.
 //!
-//! ## No `Drop`s
+//! This crate contains an [`Allocator`] for creating such arenas, as well as ports of data types
+//! from `std` adapted to use this arena:
 //!
-//! Objects allocated into Oxc memory arenas are never [`Dropped`](Drop).
-//! Memory is released in bulk when the allocator is dropped, without dropping the individual
-//! objects in the arena.
+//! * [`Box`]
+//! * [`Vec`]
+//! * [`String`]
+//! * [`HashMap`]
 //!
-//! Therefore, it would produce a memory leak if you allocated [`Drop`] types into the arena
-//! which own memory allocations outside the arena.
-//!
-//! Static checks make this impossible to do. [`Allocator::alloc`], [`Box::new_in`], [`Vec::new_in`],
-//! and all other methods which store data in the arena will refuse to compile if called with
-//! a [`Drop`] type.
-//!
-//! ## Examples
-//!
-//! ```ignore
-//! use oxc_allocator::{Allocator, Box};
-//!
-//! struct Foo {
-//!     pub a: i32
-//! }
-//!
-//! impl std::ops::Drop for Foo {
-//!     fn drop(&mut self) {}
-//! }
-//!
-//! struct Bar {
-//!     v: std::vec::Vec<u8>,
-//! }
-//!
-//! let allocator = Allocator::default();
-//!
-//! // This will fail to compile because `Foo` implements `Drop`
-//! let foo = Box::new_in(Foo { a: 0 }, &allocator);
-//! // This will fail to compile because `Bar` contains a `std::vec::Vec`, and it implements `Drop`
-//! let bar = Box::new_in(Bar { v: vec![1, 2, 3] }, &allocator);
-//! ```
-//!
-//! Consumers of the [`oxc` umbrella crate](https://crates.io/crates/oxc) pass
-//! [`Allocator`] references to other tools.
-//!
-//! ```ignore
-//! use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
-//!
-//! let allocator = Allocator::default();
-//! let parsed = Parser::new(&allocator, "let x = 1;", SourceType::default());
-//! assert!(parsed.errors.is_empty());
-//! ```
+//! See [`Allocator`] docs for information on efficient use of [`Allocator`].
 
 #![warn(missing_docs)]
 
@@ -76,13 +35,203 @@ pub use hash_map::HashMap;
 pub use string::String;
 pub use vec::Vec;
 
-/// A bump-allocated memory arena based on [bumpalo].
+/// A bump-allocated memory arena.
 ///
-/// ## No `Drop`s
+/// # Anatomy of an Allocator
 ///
-/// Objects that are bump-allocated will never have their [`Drop`] implementation
-/// called &mdash; unless you do it manually yourself. This makes it relatively
-/// easy to leak memory or other resources.
+/// [`Allocator`] is flexibly sized. It grows as required as you allocate data into it.
+///
+/// To do that, an [`Allocator`] consists of multiple memory chunks.
+///
+/// [`Allocator::new`] creates a new allocator without any chunks. When you first allocate an object
+/// into it, it will lazily create an initial chunk, the size of which is determined by the size of that
+/// first allocation.
+///
+/// As more data is allocated into the [`Allocator`], it will likely run out of capacity. At that point,
+/// a new memory chunk is added, and further allocations will use this new chunk (until it too runs out
+/// of capacity, and *another* chunk is added).
+///
+/// The data from the 1st chunk is not copied into the 2nd one. It stays where it is, which means
+/// `&` or `&mut` references to data in the first chunk remain valid. This is unlike e.g. `Vec` which
+/// copies all existing data when it grows.
+///
+/// Each chunk is at least double the size of the last one, so growth in capacity is exponential.
+///
+/// [`Allocator::reset`] keeps only the last chunk (the biggest one), and discards any other chunks,
+/// returning their memory to the global allocator. The last chunk has its cursor rewound back to
+/// the start, so it's empty, ready to be re-used for allocating more data.
+///
+/// # Recycling allocators
+///
+/// For good performance, it's ideal to create an [`Allocator`], and re-use it over and over, rather than
+/// repeatedly creating and dropping [`Allocator`]s.
+///
+/// ```
+/// // This is good!
+/// use oxc_allocator::Allocator;
+/// let mut allocator = Allocator::new();
+///
+/// # fn do_stuff(_n: usize, _allocator: &Allocator) {}
+/// for i in 0..100 {
+///     do_stuff(i, &allocator);
+///     // Reset the allocator, freeing the memory used by `do_stuff`
+///     allocator.reset();
+/// }
+/// ```
+///
+/// ```
+/// // DON'T DO THIS!
+/// # use oxc_allocator::Allocator;
+/// # fn do_stuff(_n: usize, _allocator: &Allocator) {}
+/// for i in 0..100 {
+///     let allocator = Allocator::new();
+///     do_stuff(i, &allocator);
+/// }
+/// ```
+///
+/// ```
+/// // DON'T DO THIS EITHER!
+/// # use oxc_allocator::Allocator;
+/// # let allocator = Allocator::new();
+/// # fn do_stuff(_n: usize, _allocator: &Allocator) {}
+/// for i in 0..100 {
+///     do_stuff(i, &allocator);
+///     // We haven't reset the allocator, so we haven't freed the memory used by `do_stuff`.
+///     // The allocator will grow and grow, consuming more and more memory.
+/// }
+/// ```
+///
+/// ## Why is re-using an [`Allocator`] good for performance?
+///
+/// 3 reasons:
+///
+/// #### 1. Avoid expensive system calls
+///
+/// Creating an [`Allocator`] is a fairly expensive operation as it involves a call into global allocator,
+/// which in turn will likely make a system call. Ditto when the [`Allocator`] is dropped.
+/// Re-using an existing [`Allocator`] avoids these costs.
+///
+/// #### 2. CPU cache
+///
+/// Re-using an existing allocator means you're re-using the same block of memory. If that memory was
+/// recently accessed, it's likely to be warm in the CPU cache, so memory accesses will be much faster
+/// than accessing "cold" sections of main memory.
+///
+/// This can have a very significant positive impact on performance.
+///
+/// #### 3. Capacity stabilization
+///
+/// The most efficient [`Allocator`] is one with only 1 chunk which has sufficient capacity for
+/// everything you're going to allocate into it.
+///
+/// Why?
+///
+/// 1. Every allocation will occur without the allocator needing to grow.
+///
+/// 2. This makes the "is there sufficient capacity to allocate this?" check in [`alloc`] completely
+///    predictable (the answer is always "yes"). The CPU's branch predictor swiftly learns this,
+///    speeding up operation.
+///
+/// 3. When the [`Allocator`] is reset, there are no excess chunks to discard, so no system calls.
+///
+/// Because [`reset`] keeps only the biggest chunk (see above), re-using the same [`Allocator`]
+/// for multiple similar workloads will result in the [`Allocator`] swiftly stabilizing at a capacity
+/// which is sufficient to service those workloads with a single chunk.
+///
+/// If workload is completely uniform, it reaches stable state on the 3rd round.
+///
+/// ```
+/// # use oxc_allocator::Allocator;
+/// let mut allocator = Allocator::new();
+///
+/// fn workload(allocator: &Allocator) {
+///     // Allocate 4 MB of data in small chunks
+///     for i in 0..1_000_000u32 {
+///         allocator.alloc(i);
+///     }
+/// }
+///
+/// // 1st round
+/// workload(&allocator);
+///
+/// // `allocator` has capacity for 4 MB data, but split into many chunks.
+/// // `reset` throws away all chunks except the last one which will be approx 2 MB.
+/// allocator.reset();
+///
+/// // 2nd round
+/// workload(&allocator);
+///
+/// // `workload` filled the 2 MB chunk, so a 2nd chunk was created of double the size (4 MB).
+/// // `reset` discards the smaller chunk, leaving only a single 4 MB chunk.
+/// allocator.reset();
+///
+/// // 3rd round
+/// // `allocator` now has sufficient capacity for all allocations in a single 4 MB chunk.
+/// workload(&allocator);
+///
+/// // `reset` has no chunks to discard. It keeps the single 4 MB chunk. No system calls.
+/// allocator.reset();
+///
+/// // More rounds
+/// // All serviced without needing to grow the allocator, and with no system calls.
+/// for _ in 0..100 {
+///   workload(&allocator);
+///   allocator.reset();
+/// }
+/// ```
+///
+/// [`reset`]: Allocator::reset
+/// [`alloc`]: Allocator::alloc
+///
+/// # No `Drop`s
+///
+/// Objects allocated into Oxc memory arenas are never [`Dropped`](Drop).
+/// Memory is released in bulk when the allocator is dropped, without dropping the individual
+/// objects in the arena.
+///
+/// Therefore, it would produce a memory leak if you allocated [`Drop`] types into the arena
+/// which own memory allocations outside the arena.
+///
+/// Static checks make this impossible to do. [`Allocator::alloc`], [`Box::new_in`], [`Vec::new_in`],
+/// [`HashMap::new_in`], and all other methods which store data in the arena will refuse to compile
+/// if called with a [`Drop`] type.
+///
+/// ```ignore
+/// use oxc_allocator::{Allocator, Box};
+///
+/// let allocator = Allocator::new();
+///
+/// struct Foo {
+///     pub a: i32
+/// }
+///
+/// impl std::ops::Drop for Foo {
+///     fn drop(&mut self) {}
+/// }
+///
+/// // This will fail to compile because `Foo` implements `Drop`
+/// let foo = Box::new_in(Foo { a: 0 }, &allocator);
+///
+/// struct Bar {
+///     v: std::vec::Vec<u8>,
+/// }
+///
+/// // This will fail to compile because `Bar` contains a `std::vec::Vec`, and it implements `Drop`
+/// let bar = Box::new_in(Bar { v: vec![1, 2, 3] }, &allocator);
+/// ```
+///
+/// # Examples
+///
+/// Consumers of the [`oxc` umbrella crate](https://crates.io/crates/oxc) pass
+/// [`Allocator`] references to other tools.
+///
+/// ```ignore
+/// use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
+///
+/// let allocator = Allocator::default();
+/// let parsed = Parser::new(&allocator, "let x = 1;", SourceType::default());
+/// assert!(parsed.errors.is_empty());
+/// ```
 #[derive(Default)]
 pub struct Allocator {
     bump: Bump,
@@ -96,9 +245,12 @@ impl Allocator {
     /// (e.g. with [`Allocator::alloc`], [`Box::new_in`], [`Vec::new_in`], [`HashMap::new_in`]).
     ///
     /// If you can estimate the amount of memory the allocator will require to fit what you intend to
-    /// allocate into it, it is generally preferable to create that allocator with [`with_capacity`]
+    /// allocate into it, it is generally preferable to create that allocator with [`with_capacity`],
     /// which reserves that amount of memory upfront. This will avoid further system calls to allocate
-    /// further chunks later on.
+    /// further chunks later on. This point is less important if you're re-using the allocator multiple
+    /// times.
+    ///
+    /// See [`Allocator`] docs for more information on efficient use of [`Allocator`].
     ///
     /// [`with_capacity`]: Allocator::with_capacity
     //
@@ -110,6 +262,8 @@ impl Allocator {
     }
 
     /// Create a new [`Allocator`] with specified capacity.
+    ///
+    /// See [`Allocator`] docs for more information on efficient use of [`Allocator`].
     //
     // `#[inline(always)]` because just delegates to `bumpalo` method
     #[expect(clippy::inline_always)]

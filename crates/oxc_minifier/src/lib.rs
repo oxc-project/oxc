@@ -16,7 +16,7 @@ use oxc_semantic::{SemanticBuilder, Stats};
 
 pub use oxc_mangler::MangleOptions;
 
-pub use crate::{ast_passes::CompressorPass, compressor::Compressor, options::CompressOptions};
+pub use crate::{compressor::Compressor, options::CompressOptions};
 
 #[derive(Debug, Clone, Copy)]
 pub struct MinifierOptions {
