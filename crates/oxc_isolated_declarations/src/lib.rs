@@ -435,7 +435,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         stmts.retain(move |stmt| match stmt {
             Statement::FunctionDeclaration(ref func) => {
-                let name = &func
+                let name = func
                     .id
                     .as_ref()
                     .unwrap_or_else(|| {
@@ -446,17 +446,17 @@ impl<'a> IsolatedDeclarations<'a> {
                     .name;
 
                 if func.body.is_some() {
-                    if last_function_name.as_ref().is_some_and(|last_name| last_name == name) {
+                    if last_function_name.as_ref().is_some_and(|&last_name| last_name == name) {
                         return false;
                     }
                 } else {
-                    last_function_name = Some(*name);
+                    last_function_name = Some(name);
                 }
                 true
             }
             Statement::ExportNamedDeclaration(ref decl) => {
                 if let Some(Declaration::FunctionDeclaration(ref func)) = decl.declaration {
-                    let name = &func
+                    let name = func
                         .id
                         .as_ref()
                         .unwrap_or_else(|| {
@@ -466,11 +466,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         })
                         .name;
                     if func.body.is_some() {
-                        if last_function_name.as_ref().is_some_and(|last_name| last_name == name) {
+                        if last_function_name.as_ref().is_some_and(|&last_name| last_name == name) {
                             return false;
                         }
                     } else {
-                        last_function_name = Some(*name);
+                        last_function_name = Some(name);
                     }
                     true
                 } else {

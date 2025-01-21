@@ -347,9 +347,9 @@ impl<'a> ExportLocalName<'a> {
     }
 
     /// Get the bound name of this export. [`None`] for [`ExportLocalName::Null`].
-    pub fn name(&self) -> Option<&Atom<'a>> {
+    pub fn name(&self) -> Option<Atom<'a>> {
         match self {
-            Self::Name(name) | Self::Default(name) => Some(&name.name),
+            Self::Name(name) | Self::Default(name) => Some(name.name),
             Self::Null => None,
         }
     }

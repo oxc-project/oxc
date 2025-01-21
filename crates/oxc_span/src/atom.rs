@@ -73,7 +73,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Atom<'_> {
 
 impl<'alloc> FromIn<'alloc, &Atom<'alloc>> for Atom<'alloc> {
     fn from_in(s: &Atom<'alloc>, _: &'alloc Allocator) -> Self {
-        Self::from(s.0)
+        *s
     }
 }
 

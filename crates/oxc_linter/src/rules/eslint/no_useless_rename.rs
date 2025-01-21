@@ -104,13 +104,12 @@ impl Rule for NoUselessRename {
                         BindingPatternKind::AssignmentPattern(assignment_pattern) => {
                             match &assignment_pattern.left.kind {
                                 BindingPatternKind::BindingIdentifier(binding_ident) => {
-                                    &binding_ident.name
+                                    binding_ident.name
                                 }
                                 _ => continue,
                             }
                         }
-
-                        BindingPatternKind::BindingIdentifier(binding_ident) => &binding_ident.name,
+                        BindingPatternKind::BindingIdentifier(binding_ident) => binding_ident.name,
                         _ => continue,
                     };
 
@@ -134,7 +133,7 @@ impl Rule for NoUselessRename {
                     let Some(key) = property.name.static_name() else {
                         continue;
                     };
-                    let Some(renamed_key) = property.binding.identifier().map(|ident| &ident.name)
+                    let Some(renamed_key) = property.binding.identifier().map(|ident| ident.name)
                     else {
                         continue;
                     };
