@@ -2,8 +2,11 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    array, dynamic_text, format::print::function_parameters::should_group_function_parameters,
-    group, if_break, indent, ir::Doc, softline, text, Format, Prettier,
+    array, dynamic_text,
+    format::print::{function_parameters, property},
+    group, if_break, indent,
+    ir::Doc,
+    softline, text, Format, Prettier,
 };
 
 pub fn print_function<'a>(
@@ -44,7 +47,7 @@ pub fn print_function<'a>(
     parts.push(group!(
         p,
         [{
-            if should_group_function_parameters(func) {
+            if function_parameters::should_group_function_parameters(func) {
                 group!(p, [params_doc])
             } else {
                 params_doc
@@ -91,7 +94,11 @@ pub fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> 
         parts.push(text!("*"));
     }
 
-    parts.push(method.key.format(p));
+    parts.push(property::print_property_key(
+        p,
+        &property::PropertyKeyLike::PropertyKey(&method.key),
+        method.computed,
+    ));
 
     if method.optional {
         parts.push(text!("?"));
@@ -105,7 +112,7 @@ pub fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> 
 pub fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
     let parameters_doc = function.params.format(p);
-    let should_group_parameters = should_group_function_parameters(function);
+    let should_group_parameters = function_parameters::should_group_function_parameters(function);
     let parameters_doc =
         if should_group_parameters { group!(p, [parameters_doc]) } else { parameters_doc };
 

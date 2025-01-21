@@ -12,10 +12,12 @@ use crate::{
 #[derive(Debug, Clone, Copy)]
 pub enum AssignmentLike<'a, 'b> {
     AssignmentExpression(&'b AssignmentExpression<'a>),
+    AssignmentTargetPropertyProperty(&'b AssignmentTargetPropertyProperty<'a>),
     VariableDeclarator(&'b VariableDeclarator<'a>),
     PropertyDefinition(&'b PropertyDefinition<'a>),
     AccessorProperty(&'b AccessorProperty<'a>),
     ObjectProperty(&'b ObjectProperty<'a>),
+    BindingProperty(&'b BindingProperty<'a>),
     ImportAtrribute(&'b ImportAttribute<'a>),
 }
 
@@ -242,11 +244,7 @@ pub fn is_arrow_function_variable_declarator(expr: &AssignmentLike) -> bool {
             }
             false
         }
-        AssignmentLike::AssignmentExpression(_)
-        | AssignmentLike::PropertyDefinition(_)
-        | AssignmentLike::ObjectProperty(_)
-        | AssignmentLike::AccessorProperty(_)
-        | AssignmentLike::ImportAtrribute(_) => false,
+        _ => false,
     }
 }
 

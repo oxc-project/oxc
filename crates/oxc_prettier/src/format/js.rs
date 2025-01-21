@@ -10,10 +10,9 @@ use crate::{
     array, dynamic_text,
     format::{
         print::{
-            array, arrow_function,
-            assignment::{self, print_assignment},
-            binaryish, block, call_expression, class, function, function_parameters, literal, misc,
-            module, object, property, statement, template_literal, ternary,
+            array, arrow_function, assignment, binaryish, block, call_expression, class, function,
+            function_parameters, literal, misc, module, object, property, statement,
+            template_literal, ternary,
         },
         Format,
     },
@@ -675,15 +674,15 @@ impl<'a> Format<'a> for ImportAttribute<'a> {
         let left_doc = property::print_property_key(
             p,
             &property::PropertyKeyLike::ImportAttributeKey(&self.key),
-            false,
-            false, // TODO: check
+            false, // Can not be computed
         );
 
-        print_assignment(
+        assignment::print_assignment(
             p,
             assignment::AssignmentLike::ImportAtrribute(self),
             left_doc,
             text!(":"),
+            // PERF: Can be better without clone...?
             Some(&Expression::StringLiteral(Box::new_in(self.value.clone(), p.allocator))),
         )
     }
@@ -992,32 +991,23 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
         wrap!(p, self, ObjectProperty, {
             if self.method || self.kind == PropertyKind::Get || self.kind == PropertyKind::Set {
                 let mut parts = Vec::new_in(p.allocator);
-                let mut method = self.method;
                 match self.kind {
                     PropertyKind::Get => {
                         parts.push(text!("get "));
-                        method = true;
                     }
                     PropertyKind::Set => {
                         parts.push(text!("set "));
-                        method = true;
                     }
                     PropertyKind::Init => (),
                 }
-                if method {
-                    if let Expression::FunctionExpression(func_expr) = &self.value {
-                        parts.push(wrap!(p, func_expr, Function, {
-                            function::print_function(
-                                p,
-                                func_expr,
-                                Some(self.key.span().source_text(p.source_text)),
-                            )
-                        }));
-                    }
-                } else {
-                    parts.push(self.key.format(p));
-                    parts.push(text!(": "));
-                    parts.push(self.value.format(p));
+                if let Expression::FunctionExpression(func_expr) = &self.value {
+                    parts.push(wrap!(p, func_expr, Function, {
+                        function::print_function(
+                            p,
+                            func_expr,
+                            Some(self.key.span().source_text(p.source_text)),
+                        )
+                    }));
                 }
                 return group!(p, parts);
             }
@@ -1026,12 +1016,11 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
                 return self.value.format(p);
             }
 
-            let left_doc = if self.computed {
-                let key_doc = self.key.format(p);
-                array!(p, [text!("["), key_doc, text!("]")])
-            } else {
-                self.key.format(p)
-            };
+            let left_doc = property::print_property_key(
+                p,
+                &property::PropertyKeyLike::PropertyKey(&self.key),
+                self.computed,
+            );
 
             assignment::print_assignment(
                 p,
@@ -1046,41 +1035,11 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
 
 impl<'a> Format<'a> for PropertyKey<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        // NOTE: `current_kind` is not yet updated by `wrap!` here
-
-        // Prettier collects these info inside of `print_property_key` function
-        // But OXC AST doesn't have enough information to determine these
-
-        // `PropertyKey`'s parent only knows this
-        let is_computed = match p.current_kind() {
-            AstKind::MethodDefinition(node) => node.computed,
-            AstKind::PropertyDefinition(node) => node.computed,
-            _ => false,
-        };
-        // Check `PropertyKey`'s parent's parent to access siblings
-        // PERF: Cache this result by key holder to avoid checking this in each key
-        let has_quote_props = match p.parent_kind() {
-            AstKind::ObjectExpression(a) => a.properties.iter().any(|x| match x {
-                ObjectPropertyKind::ObjectProperty(p) => {
-                    property::is_property_key_has_quote(&p.key)
-                }
-                ObjectPropertyKind::SpreadProperty(_) => false,
-            }),
-            AstKind::ClassBody(a) => a.body.iter().any(|x| match x {
-                ClassElement::PropertyDefinition(p) => property::is_property_key_has_quote(&p.key),
-                _ => false,
-            }),
-            _ => false,
-        };
-
-        wrap!(p, self, PropertyKey, {
-            property::print_property_key(
-                p,
-                &property::PropertyKeyLike::PropertyKey(self),
-                is_computed,
-                has_quote_props,
-            )
-        })
+        match self {
+            PropertyKey::StaticIdentifier(ident) => ident.format(p),
+            PropertyKey::PrivateIdentifier(ident) => ident.format(p),
+            match_expression!(PropertyKey) => self.to_expression().format(p),
+        }
     }
 }
 
@@ -1259,9 +1218,11 @@ impl<'a> Format<'a> for ObjectAssignmentTarget<'a> {
 
 impl<'a> Format<'a> for AssignmentTargetWithDefault<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let binding_doc = self.binding.format(p);
-        let init_doc = self.init.format(p);
-        array!(p, [binding_doc, text!(" = "), init_doc])
+        wrap!(p, self, AssignmentTargetWithDefault, {
+            let binding_doc = self.binding.format(p);
+            let init_doc = self.init.format(p);
+            array!(p, [binding_doc, text!(" = "), init_doc])
+        })
     }
 }
 
@@ -1278,19 +1239,30 @@ impl<'a> Format<'a> for AssignmentTargetPropertyIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
         parts.push(self.binding.format(p));
+
         if let Some(init) = &self.init {
             parts.push(text!(" = "));
             parts.push(init.format(p));
         }
+
         array!(p, parts)
     }
 }
 
 impl<'a> Format<'a> for AssignmentTargetPropertyProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let name_doc = self.name.format(p);
-        let binding_doc = self.binding.format(p);
-        array!(p, [name_doc, text!(": "), binding_doc])
+        let left_doc = self.name.format(p);
+
+        // TODO: How to convert `AssignmentTargetMaybeDefault` to `Expression`?
+        // Or `print_assignment` is not needed?
+        // assignment::print_assignment(
+        //     p,
+        //     assignment::AssignmentLike::AssignmentTargetPropertyProperty(self),
+        //     left_doc,
+        //     text!(":"),
+        //     // self.binding
+        // )
+        group!(p, [left_doc, text!(": "), self.binding.format(p)])
     }
 }
 
@@ -1508,12 +1480,21 @@ impl<'a> Format<'a> for ObjectPattern<'a> {
 impl<'a> Format<'a> for BindingProperty<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         if self.shorthand {
-            self.value.format(p)
-        } else {
-            let key_doc = self.key.format(p);
-            let value_doc = self.value.format(p);
-            group!(p, [key_doc, text!(": "), value_doc])
+            return self.value.format(p);
         }
+
+        let left_doc = self.key.format(p);
+
+        // TODO: How to convert BindingPattern to Expression...?
+        // Or `print_assignment` is not needed?
+        // assignment::print_assignment(
+        //     p,
+        //     assignment::AssignmentLike::BindingProperty(self),
+        //     left_doc,
+        //     text!(":"),
+        //     Some(&self.value),
+        // )
+        group!(p, [left_doc, text!(": "), self.value.format(p)])
     }
 }
 
@@ -1533,9 +1514,7 @@ impl<'a> Format<'a> for ArrayPattern<'a> {
 impl<'a> Format<'a> for AssignmentPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, AssignmentPattern, {
-            let left_doc = self.left.format(p);
-            let right_doc = self.right.format(p);
-            array!(p, [left_doc, text!(" = "), right_doc])
+            array!(p, [self.left.format(p), text!(" = "), self.right.format(p)])
         })
     }
 }

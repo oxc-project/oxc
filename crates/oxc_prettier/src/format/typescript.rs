@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 use crate::{
     array, dynamic_text,
     format::{
-        print::{array, object, template_literal},
+        print::{array, object, property, template_literal},
         Format,
     },
     group, hardline, indent,
@@ -978,7 +978,12 @@ impl<'a> Format<'a> for TSPropertySignature<'a> {
             if self.readonly {
                 parts.push(text!("readonly "));
             }
-            parts.push(self.key.format(p));
+            let key_doc = property::print_property_key(
+                p,
+                &property::PropertyKeyLike::PropertyKey(&self.key),
+                self.computed,
+            );
+            parts.push(key_doc);
             if let Some(ty) = &self.type_annotation {
                 if self.optional {
                     parts.push(text!("?"));
@@ -1036,15 +1041,12 @@ impl<'a> Format<'a> for TSMethodSignature<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
 
-        if self.computed {
-            parts.push(text!("["));
-        }
-
-        parts.push(self.key.format(p));
-
-        if self.computed {
-            parts.push(text!("]"));
-        }
+        let key_doc = property::print_property_key(
+            p,
+            &property::PropertyKeyLike::PropertyKey(&self.key),
+            self.computed,
+        );
+        parts.push(key_doc);
 
         if self.optional {
             parts.push(text!("?"));
