@@ -643,16 +643,22 @@ impl<'a> Format<'a> for ImportDeclarationSpecifier<'a> {
 
 impl<'a> Format<'a> for ImportSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let typed = if self.import_kind.is_type() { text!("type ") } else { text!("") };
+        let mut parts = Vec::new_in(p.allocator);
 
-        if self.imported.span() == self.local.span {
-            let local_doc = self.local.format(p);
-            array!(p, [typed, local_doc])
-        } else {
-            let imported_doc = self.imported.format(p);
-            let local_doc = self.local.format(p);
-            array!(p, [typed, imported_doc, text!(" as "), local_doc])
+        if self.import_kind.is_type() {
+            parts.push(text!("type "));
         }
+
+        // If both imported and local are the same name
+        if self.imported.span() == self.local.span {
+            parts.push(self.local.format(p));
+            return array!(p, parts);
+        }
+
+        parts.push(self.imported.format(p));
+        parts.push(text!(" as "));
+        parts.push(self.local.format(p));
+        array!(p, parts)
     }
 }
 
@@ -664,8 +670,7 @@ impl<'a> Format<'a> for ImportDefaultSpecifier<'a> {
 
 impl<'a> Format<'a> for ImportNamespaceSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let local_doc = self.local.format(p);
-        array!(p, [text!("* as "), local_doc])
+        array!(p, [text!("* as "), self.local.format(p)])
     }
 }
 
@@ -708,13 +713,14 @@ impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
 
 impl<'a> Format<'a> for ExportSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        // If both exported and local are the same name
         if self.exported.span() == self.local.span() {
-            self.local.format(p)
-        } else {
-            let local_doc = self.local.format(p);
-            let exported_doc = self.exported.format(p);
-            array!(p, [local_doc, text!(" as "), exported_doc])
+            return self.local.format(p);
         }
+
+        let local_doc = self.local.format(p);
+        let exported_doc = self.exported.format(p);
+        array!(p, [local_doc, text!(" as "), exported_doc])
     }
 }
 
@@ -1485,7 +1491,7 @@ impl<'a> Format<'a> for BindingProperty<'a> {
 
         let left_doc = self.key.format(p);
 
-        // TODO: How to convert BindingPattern to Expression...?
+        // TODO: How to convert `BindingPattern` to `Expression`...?
         // Or `print_assignment` is not needed?
         // assignment::print_assignment(
         //     p,
