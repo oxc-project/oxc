@@ -2109,10 +2109,6 @@ impl<'a> SemanticBuilder<'a> {
                 continue;
             };
 
-            // Ambient modules cannot be value modules
-            if self.symbols.get_flags(symbol_id).intersects(SymbolFlags::Ambient) {
-                continue;
-            }
             self.symbols.union_flag(symbol_id, SymbolFlags::ValueModule);
         }
     }

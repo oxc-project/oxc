@@ -337,15 +337,11 @@ impl NoUnusedVars {
     }
 
     fn should_skip_symbol(symbol: &Symbol<'_, '_>) -> bool {
-        const AMBIENT_NAMESPACE_FLAGS: SymbolFlags =
-            SymbolFlags::NameSpaceModule.union(SymbolFlags::Ambient);
         let flags = symbol.flags();
 
         // 1. ignore enum members. Only enums get checked
         // 2. ignore all ambient TS declarations, e.g. `declare class Foo {}`
-        if flags.intersects(SymbolFlags::EnumMember.union(SymbolFlags::Ambient))
-            // ambient namespaces
-            || flags == AMBIENT_NAMESPACE_FLAGS
+        if flags.intersects(SymbolFlags::EnumMember)
             || (symbol.is_in_ts() && symbol.is_in_declare_global())
         {
             return true;

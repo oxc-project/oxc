@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
+assertion_line: 147
 input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/import.ts
-snapshot_kind: text
 ---
 [
   {
@@ -27,7 +27,7 @@ snapshot_kind: text
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(NameSpaceModule | Ambient)",
+        "flags": "SymbolFlags(NameSpaceModule)",
         "id": 0,
         "name": "foo",
         "node": "TSModuleDeclaration(foo)",

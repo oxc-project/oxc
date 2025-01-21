@@ -396,11 +396,10 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
 
         // At declaration time a module has no value declaration it is only when a value declaration
         // is made inside a the scope of a module that the symbol is modified
-        let ambient = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::None };
         let symbol_id = builder.declare_symbol(
             self.id.span(),
             self.id.name().as_str(),
-            SymbolFlags::NameSpaceModule | ambient,
+            SymbolFlags::NameSpaceModule,
             SymbolFlags::None,
         );
 
