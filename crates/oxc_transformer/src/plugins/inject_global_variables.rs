@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, AstBuilder, NONE};
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::{Key, ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::identifier;
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
@@ -181,7 +181,9 @@ impl<'a> InjectGlobalVariables<'a> {
                 } else if self.replaced_dot_defines.iter().any(|d| d.0 == i.specifier.local()) {
                     false
                 } else {
-                    scopes.root_unresolved_references().contains_key(i.specifier.local().as_str())
+                    scopes
+                        .root_unresolved_references()
+                        .contains_key(&Key::new(i.specifier.local().as_str()))
                 }
             })
             .cloned()

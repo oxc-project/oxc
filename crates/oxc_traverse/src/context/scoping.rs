@@ -429,6 +429,7 @@ impl TraverseScoping {
         self.scopes
             .root_unresolved_references()
             .keys()
+            .map(|key| &key.name)
             .copied()
             .chain(self.symbols.names())
             .filter(|name| name.as_bytes().first() == Some(&b'_'))

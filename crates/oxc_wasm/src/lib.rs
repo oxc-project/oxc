@@ -393,8 +393,9 @@ impl Oxc {
                 let bindings = self.scopes.get_bindings(scope_id);
                 if !bindings.is_empty() {
                     self.write_line("Bindings: {");
-                    for (name, &symbol_id) in bindings {
+                    for (key, &symbol_id) in bindings {
                         let symbol_flags = self.symbols.get_flags(symbol_id);
+                        let name = &key.name;
                         self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})",));
                     }
                     self.write_line("}");

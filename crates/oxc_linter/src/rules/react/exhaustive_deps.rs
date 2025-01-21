@@ -16,7 +16,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
+use oxc_semantic::{Key, ReferenceId, ScopeId, Semantic, SymbolId};
 use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
@@ -770,7 +770,7 @@ fn is_identifier_a_dependency<'a>(
     component_scope_id: ScopeId,
 ) -> bool {
     // if it is a global e.g. `console` or `window`, then it's not a dependency
-    if ctx.semantic().scopes().root_unresolved_references().contains_key(ident_name.as_str()) {
+    if ctx.semantic().scopes().root_unresolved_references().contains_key(&Key::new(ident_name)) {
         return false;
     }
 

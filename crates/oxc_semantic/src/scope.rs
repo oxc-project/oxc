@@ -1,6 +1,12 @@
-use std::{fmt, mem};
+use std::{
+    borrow::Borrow,
+    fmt,
+    hash::{BuildHasherDefault, Hash, Hasher},
+    mem,
+    ops::Deref,
+};
 
-use oxc_allocator::{Allocator, HashMap as ArenaHashMap, Vec as ArenaVec};
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_index::{Idx, IndexVec};
 use oxc_syntax::{
     node::NodeId,
@@ -8,11 +14,82 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
+use rustc_hash::FxHasher;
 
 use crate::SymbolTable;
 
-pub(crate) type Bindings<'a> = ArenaHashMap<'a, &'a str, SymbolId>;
-pub type UnresolvedReferences<'a> = ArenaHashMap<'a, &'a str, ArenaVec<'a, ReferenceId>>;
+#[derive(Default)]
+pub struct IdentityHasher(u64);
+
+impl Hasher for IdentityHasher {
+    fn write(&mut self, _: &[u8]) {
+        unreachable!("Invalid use of IdentityHasher")
+    }
+
+    fn write_u64(&mut self, n: u64) {
+        self.0 = n;
+    }
+
+    fn finish(&self) -> u64 {
+        self.0
+    }
+}
+
+/// A hash table key with precomputed hash.
+#[derive(Clone, Copy)]
+pub struct Key<'a> {
+    pub name: &'a str,
+    pub hash: u64,
+}
+
+impl PartialEq for Key<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
+impl Eq for Key<'_> {}
+
+impl Hash for Key<'_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.hash.hash(state);
+    }
+}
+
+impl Borrow<str> for Key<'_> {
+    fn borrow(&self) -> &str {
+        self.name
+    }
+}
+
+impl Deref for Key<'_> {
+    type Target = str;
+    fn deref(&self) -> &Self::Target {
+        self.name
+    }
+}
+
+impl AsRef<str> for Key<'_> {
+    fn as_ref(&self) -> &str {
+        self.name
+    }
+}
+
+impl<'a> Key<'a> {
+    pub fn new(name: &'a str) -> Self {
+        let mut hasher = FxHasher::default();
+        name.hash(&mut hasher);
+        let hash = hasher.finish();
+        Self { name, hash }
+    }
+}
+
+type IdentityHashMap<'a, K, V> =
+    hashbrown::HashMap<K, V, BuildHasherDefault<IdentityHasher>, &'a Allocator>;
+
+pub(crate) type Bindings<'a> = IdentityHashMap<'a, Key<'a>, SymbolId>;
+
+pub type UnresolvedReferences<'a> = IdentityHashMap<'a, Key<'a>, ArenaVec<'a, ReferenceId>>;
 
 /// Scope Tree
 ///
@@ -55,7 +132,10 @@ impl Default for ScopeTree {
             cell: ScopeTreeCell::new(Allocator::default(), |allocator| ScopeTreeInner {
                 bindings: IndexVec::new(),
                 child_ids: ArenaVec::new_in(allocator),
-                root_unresolved_references: UnresolvedReferences::new_in(allocator),
+                root_unresolved_references: UnresolvedReferences::with_hasher_in(
+                    BuildHasherDefault::<IdentityHasher>::default(),
+                    allocator,
+                ),
             }),
         }
     }
@@ -141,16 +221,14 @@ impl ScopeTree {
 
     pub(crate) fn set_root_unresolved_references<'a>(
         &mut self,
-        entries: impl Iterator<Item = (&'a str, Vec<ReferenceId>)>,
+        entries: impl Iterator<Item = (Key<'a>, Vec<ReferenceId>)>,
     ) {
         self.cell.with_dependent_mut(|allocator, inner| {
             for (k, v) in entries {
-                let k = allocator.alloc_str(k);
+                let k = Key { name: allocator.alloc_str(k.name), hash: k.hash };
                 let v = ArenaVec::from_iter_in(v, allocator);
                 inner.root_unresolved_references.insert(k, v);
             }
-            // =
-            // .extend_from(entries.map(|(k, v)| (allocator.alloc(k),)))
         });
     }
 
@@ -167,11 +245,12 @@ impl ScopeTree {
         // but `map.entry` requires an owned key to be provided. Currently we use `CompactStr`s as keys
         // which are not cheap to construct, so this is best we can do at present.
         // TODO: Switch to `Entry` API once we use `&str`s or `Atom`s as keys.
-        self.cell.with_dependent_mut(|_allocator, inner| {
-            let reference_ids = inner.root_unresolved_references.get_mut(name).unwrap();
+        self.cell.with_dependent_mut(|allocator, inner| {
+            let key = Key::new(allocator.alloc_str(name));
+            let reference_ids = inner.root_unresolved_references.get_mut(&key).unwrap();
             if reference_ids.len() == 1 {
                 assert_eq!(reference_ids[0], reference_id);
-                inner.root_unresolved_references.remove(name);
+                inner.root_unresolved_references.remove(&key);
             } else {
                 let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
                 reference_ids.swap_remove(index);
@@ -252,7 +331,7 @@ impl ScopeTree {
 
     pub fn add_root_unresolved_reference(&mut self, name: &str, reference_id: ReferenceId) {
         self.cell.with_dependent_mut(|allocator, inner| {
-            let name = allocator.alloc_str(name);
+            let name = Key::new(allocator.alloc_str(name));
             inner
                 .root_unresolved_references
                 .entry(name)
@@ -263,7 +342,7 @@ impl ScopeTree {
 
     /// Check if a symbol is declared in a certain scope.
     pub fn has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
-        self.cell.borrow_dependent().bindings[scope_id].contains_key(name)
+        self.cell.borrow_dependent().bindings[scope_id].contains_key(&Key::new(name))
     }
 
     /// Get the symbol bound to an identifier name in a scope.
@@ -275,7 +354,7 @@ impl ScopeTree {
     ///
     /// [`find_binding`]: ScopeTree::find_binding
     pub fn get_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
-        self.cell.borrow_dependent().bindings[scope_id].get(name).copied()
+        self.cell.borrow_dependent().bindings[scope_id].get(&Key::new(name)).copied()
     }
 
     /// Find a binding by name in a scope or its ancestors.
@@ -312,7 +391,7 @@ impl ScopeTree {
     /// [`iter_bindings_in`]: ScopeTree::iter_bindings_in
     pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, &str)> + '_ {
         self.cell.borrow_dependent().bindings.iter_enumerated().flat_map(|(scope_id, bindings)| {
-            bindings.iter().map(move |(&name, &symbol_id)| (scope_id, symbol_id, name))
+            bindings.iter().map(move |(&key, &symbol_id)| (scope_id, symbol_id, key.name))
         })
     }
 
@@ -325,8 +404,8 @@ impl ScopeTree {
     #[inline]
     pub(crate) fn insert_binding(&mut self, scope_id: ScopeId, name: &str, symbol_id: SymbolId) {
         self.cell.with_dependent_mut(|allocator, inner| {
-            let name = allocator.alloc_str(name);
-            inner.bindings[scope_id].insert(name, symbol_id);
+            let key = Key::new(allocator.alloc_str(name));
+            inner.bindings[scope_id].insert(key, symbol_id);
         });
     }
 
@@ -378,7 +457,10 @@ impl ScopeTree {
         let scope_id = self.parent_ids.push(parent_id);
         self.flags.push(flags);
         self.cell.with_dependent_mut(|allocator, inner| {
-            inner.bindings.push(Bindings::new_in(allocator));
+            inner.bindings.push(Bindings::with_hasher_in(
+                BuildHasherDefault::<IdentityHasher>::default(),
+                allocator,
+            ));
         });
         self.node_ids.push(node_id);
         if self.build_child_ids {
@@ -398,23 +480,26 @@ impl ScopeTree {
     pub fn add_binding(&mut self, scope_id: ScopeId, name: &str, symbol_id: SymbolId) {
         self.cell.with_dependent_mut(|allocator, inner| {
             let name = allocator.alloc_str(name);
-            inner.bindings[scope_id].insert(name, symbol_id);
+            inner.bindings[scope_id].insert(Key::new(name), symbol_id);
         });
     }
 
     /// Remove an existing binding from a scope.
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: &str) {
-        self.cell.with_dependent_mut(|_allocator, inner| {
-            inner.bindings[scope_id].remove(name);
+        self.cell.with_dependent_mut(|allocator, inner| {
+            let key = Key::new(allocator.alloc_str(name));
+            inner.bindings[scope_id].remove(&key);
         });
     }
 
     /// Move a binding from one scope to another.
     pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: &str) {
-        self.cell.with_dependent_mut(|_allocator, inner| {
+        self.cell.with_dependent_mut(|allocator, inner| {
             let from_map = &mut inner.bindings[from];
-            if let Some((name, symbol_id)) = from_map.remove_entry(name) {
-                inner.bindings[to].insert(name, symbol_id);
+            if let Some((key, symbol_id)) =
+                from_map.remove_entry(&Key::new(allocator.alloc_str(name)))
+            {
+                inner.bindings[to].insert(key, symbol_id);
             }
         });
     }
@@ -436,10 +521,10 @@ impl ScopeTree {
     ) {
         self.cell.with_dependent_mut(|allocator, inner| {
             let bindings = &mut inner.bindings[scope_id];
-            let old_symbol_id = bindings.remove(old_name);
+            let old_symbol_id = bindings.remove(&Key::new(allocator.alloc_str(old_name)));
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
-            let new_name = allocator.alloc_str(new_name);
-            let existing_symbol_id = bindings.insert(new_name, symbol_id);
+            let existing_symbol_id =
+                bindings.insert(Key::new(allocator.alloc_str(new_name)), symbol_id);
             debug_assert!(existing_symbol_id.is_none());
         });
     }

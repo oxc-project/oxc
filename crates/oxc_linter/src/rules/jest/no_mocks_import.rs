@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::Key;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -55,7 +56,8 @@ impl Rule for NoMocksImport {
             }
         }
 
-        let Some(require_reference_ids) = ctx.scopes().root_unresolved_references().get("require")
+        let Some(require_reference_ids) =
+            ctx.scopes().root_unresolved_references().get(&Key::new("require"))
         else {
             return;
         };

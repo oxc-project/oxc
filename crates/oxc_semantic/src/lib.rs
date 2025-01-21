@@ -38,7 +38,7 @@ mod unresolved_stack;
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
 pub use node::{AstNode, AstNodes};
-pub use scope::ScopeTree;
+pub use scope::{Key, ScopeTree};
 pub use stats::Stats;
 pub use symbol::{IsGlobalReference, SymbolTable};
 
@@ -196,7 +196,7 @@ impl<'a> Semantic<'a> {
         let AstKind::IdentifierReference(id) = reference_node.kind() else {
             return false;
         };
-        self.scopes().root_unresolved_references().contains_key(id.name.as_str())
+        self.scopes().root_unresolved_references().contains_key(&Key::new(id.name.as_str()))
     }
 
     /// Find which scope a symbol is declared in
@@ -214,7 +214,7 @@ impl<'a> Semantic<'a> {
     }
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
-        self.scopes().root_unresolved_references().contains_key(ident.name.as_str())
+        self.scopes().root_unresolved_references().contains_key(&Key::new(ident.name.as_str()))
     }
 
     pub fn reference_name(&self, reference: &Reference) -> &str {
