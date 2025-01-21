@@ -1,4 +1,4 @@
-js compatibility: 249/641 (38.85%)
+js compatibility: 250/641 (39.00%)
 
 # Failed
 
@@ -290,9 +290,6 @@ js compatibility: 249/641 (38.85%)
 * js/import-attributes/empty.js
 * js/import-attributes/keyword-detect.js
 * js/import-attributes/long-sources.js
-
-### js/import-attributes/quote-props
-* js/import-attributes/quote-props/quoted-keys.js
 
 ### js/label
 * js/label/comment.js
