@@ -17,10 +17,6 @@ impl<'a> PeepholeOptimizations {
         stmts: &mut Vec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.fuse_statements(stmts, ctx);
-    }
-
-    fn fuse_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let len = stmts.len();
 
         if len <= 1 {
@@ -56,10 +52,6 @@ impl<'a> PeepholeOptimizations {
                     }
                 }
             }
-        }
-
-        if self.is_current_function_changed() {
-            stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
         }
     }
 
