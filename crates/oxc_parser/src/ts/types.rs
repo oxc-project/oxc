@@ -433,10 +433,6 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any();
                 self.ast.ts_type_boolean_keyword(self.end_span(span))
             }
-            Kind::Intrinsic => {
-                self.bump_any();
-                self.ast.ts_type_intrinsic_keyword(self.end_span(span))
-            }
             Kind::Never => {
                 self.bump_any();
                 self.ast.ts_type_never_keyword(self.end_span(span))

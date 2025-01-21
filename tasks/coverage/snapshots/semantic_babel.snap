@@ -2531,17 +2531,11 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrin
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["intrinsic"]
-rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword-babel-7/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["intrinsic"]
-rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-2/input.ts
 semantic error: Unresolved references mismatch:
