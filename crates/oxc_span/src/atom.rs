@@ -119,16 +119,16 @@ impl<'a> From<Atom<'a>> for &'a str {
     }
 }
 
-impl<'a> From<Atom<'a>> for CompactStr {
+impl From<Atom<'_>> for CompactStr {
     #[inline]
-    fn from(val: Atom<'a>) -> Self {
+    fn from(val: Atom<'_>) -> Self {
         val.into_compact_str()
     }
 }
 
-impl<'a> From<Atom<'a>> for String {
+impl From<Atom<'_>> for String {
     #[inline]
-    fn from(val: Atom<'a>) -> Self {
+    fn from(val: Atom<'_>) -> Self {
         val.into_string()
     }
 }
@@ -166,8 +166,8 @@ impl<T: AsRef<str>> PartialEq<T> for Atom<'_> {
     }
 }
 
-impl<'a> PartialEq<Atom<'a>> for &str {
-    fn eq(&self, other: &Atom<'a>) -> bool {
+impl PartialEq<Atom<'_>> for &str {
+    fn eq(&self, other: &Atom<'_>) -> bool {
         *self == other.as_str()
     }
 }
@@ -178,14 +178,14 @@ impl PartialEq<str> for Atom<'_> {
     }
 }
 
-impl<'a> PartialEq<Atom<'a>> for Cow<'_, str> {
-    fn eq(&self, other: &Atom<'a>) -> bool {
+impl PartialEq<Atom<'_>> for Cow<'_, str> {
+    fn eq(&self, other: &Atom<'_>) -> bool {
         self.as_ref() == other.as_str()
     }
 }
 
-impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
-    fn eq(&self, other: &&Atom<'a>) -> bool {
+impl PartialEq<&Atom<'_>> for Cow<'_, str> {
+    fn eq(&self, other: &&Atom<'_>) -> bool {
         self.as_ref() == other.as_str()
     }
 }
