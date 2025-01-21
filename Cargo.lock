@@ -1858,7 +1858,6 @@ dependencies = [
  "oxc_syntax",
  "oxc_traverse",
  "pico-args",
- "rustc-hash",
 ]
 
 [[package]]

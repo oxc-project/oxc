@@ -5,7 +5,7 @@ use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
     ast_passes::{DeadCodeElimination, Normalize, NormalizeOptions, PeepholeOptimizations},
-    CompressOptions, CompressorPass,
+    CompressOptions,
 };
 
 pub struct Compressor<'a> {

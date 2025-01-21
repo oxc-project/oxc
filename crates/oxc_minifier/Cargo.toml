@@ -33,7 +33,6 @@ oxc_syntax = { workspace = true }
 oxc_traverse = { workspace = true }
 
 cow-utils = { workspace = true }
-rustc-hash = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }

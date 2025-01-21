@@ -5,7 +5,6 @@ use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, Travers
 
 mod collapse_variable_declarations;
 mod convert_to_dotted_properties;
-mod exploit_assigns;
 mod minimize_exit_points;
 mod normalize;
 mod peephole_fold_constants;
@@ -13,16 +12,9 @@ mod peephole_minimize_conditions;
 mod peephole_remove_dead_code;
 mod peephole_replace_known_methods;
 mod peephole_substitute_alternate_syntax;
-mod remove_unused_code;
 mod statement_fusion;
 
 pub use normalize::{Normalize, NormalizeOptions};
-#[expect(unused)]
-pub use remove_unused_code::RemoveUnusedCode;
-
-pub trait CompressorPass<'a>: Traverse<'a> {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>);
-}
 
 pub struct PeepholeOptimizations {
     target: ESTarget,
@@ -32,16 +24,16 @@ pub struct PeepholeOptimizations {
     in_fixed_loop: bool,
 }
 
-impl PeepholeOptimizations {
+impl<'a> PeepholeOptimizations {
     pub fn new(target: ESTarget, in_fixed_loop: bool) -> Self {
         Self { target, changed: false, in_fixed_loop }
     }
 
-    pub fn run_in_loop<'a>(
-        &mut self,
-        program: &mut Program<'a>,
-        ctx: &mut ReusableTraverseCtx<'a>,
-    ) {
+    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+        traverse_mut_with_ctx(self, program, ctx);
+    }
+
+    pub fn run_in_loop(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         let mut i = 0;
         loop {
             self.changed = false;
@@ -58,16 +50,9 @@ impl PeepholeOptimizations {
     }
 }
 
-impl<'a> CompressorPass<'a> for PeepholeOptimizations {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
-        traverse_mut_with_ctx(self, program, ctx);
-    }
-}
-
 impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.statement_fusion_exit_statements(stmts, ctx);
-        self.exploit_assigns(stmts, ctx);
         self.collapse_variable_declarations(stmts, ctx);
         self.minimize_conditions_exit_statements(stmts, ctx);
         self.remove_dead_code_exit_statements(stmts, ctx);
@@ -167,14 +152,12 @@ pub struct DeadCodeElimination {
     inner: PeepholeOptimizations,
 }
 
-impl DeadCodeElimination {
+impl<'a> DeadCodeElimination {
     pub fn new() -> Self {
         Self { inner: PeepholeOptimizations::new(ESTarget::ESNext, false) }
     }
-}
 
-impl<'a> CompressorPass<'a> for DeadCodeElimination {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
