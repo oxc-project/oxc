@@ -109,7 +109,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Program<'_> {
             hashbang: CloneIn::clone_in(&self.hashbang, allocator),
             directives: CloneIn::clone_in(&self.directives, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
-            scope_id: Default::default(),
+            scope_id: CloneIn::clone_in(&self.scope_id, allocator),
         }
     }
 }
@@ -244,7 +244,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for IdentifierReference<'_> {
         IdentifierReference {
             span: CloneIn::clone_in(&self.span, allocator),
             name: CloneIn::clone_in(&self.name, allocator),
-            reference_id: Default::default(),
+            reference_id: CloneIn::clone_in(&self.reference_id, allocator),
         }
     }
 }
@@ -255,7 +255,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for BindingIdentifier<'_> {
         BindingIdentifier {
             span: CloneIn::clone_in(&self.span, allocator),
             name: CloneIn::clone_in(&self.name, allocator),
-            symbol_id: Default::default(),
+            symbol_id: CloneIn::clone_in(&self.symbol_id, allocator),
         }
     }
 }
@@ -1345,7 +1345,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for BlockStatement<'_> {
         BlockStatement {
             span: CloneIn::clone_in(&self.span, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
-            scope_id: Default::default(),
+            scope_id: CloneIn::clone_in(&self.scope_id, allocator),
         }
     }
 }
@@ -1480,7 +1480,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatement<'_> {
             test: CloneIn::clone_in(&self.test, allocator),
             update: CloneIn::clone_in(&self.update, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
-            scope_id: Default::default(),
+            scope_id: CloneIn::clone_in(&self.scope_id, allocator),
         }
     }
 }
@@ -1624,7 +1624,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForInStatement<'_> {
             left: CloneIn::clone_in(&self.left, allocator),
             right: CloneIn::clone_in(&self.right, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
-            scope_id: Default::default(),
+            scope_id: CloneIn::clone_in(&self.scope_id, allocator),
         }
     }
 }
@@ -1682,7 +1682,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForOfStatement<'_> {
             left: CloneIn::clone_in(&self.left, allocator),
             right: CloneIn::clone_in(&self.right, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
-            scope_id: Default::default(),
+            scope_id: CloneIn::clone_in(&self.scope_id, allocator),
         }
     }
 }
@@ -1735,7 +1735,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for SwitchStatement<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             discriminant: CloneIn::clone_in(&self.discriminant, allocator),
             cases: CloneIn::clone_in(&self.cases, allocator),
-            scope_id: Default::default(),
+            scope_id: CloneIn::clone_in(&self.scope_id, allocator),
         }
     }
 }
@@ -1791,7 +1791,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for CatchClause<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             param: CloneIn::clone_in(&self.param, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
-            scope_id: Default::default(),
+            scope_id: CloneIn::clone_in(&self.scope_id, allocator),
         }
     }
 }
@@ -1915,7 +1915,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Function<'_> {
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
-            scope_id: Default::default(),
+            scope_id: CloneIn::clone_in(&self.scope_id, allocator),
         }
     }
 }
@@ -1992,7 +1992,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrowFunctionExpression<'_> {
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
-            scope_id: Default::default(),
+            scope_id: CloneIn::clone_in(&self.scope_id, allocator),
         }
     }
 }
@@ -2023,7 +2023,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Class<'_> {
             body: CloneIn::clone_in(&self.body, allocator),
             r#abstract: CloneIn::clone_in(&self.r#abstract, allocator),
             declare: CloneIn::clone_in(&self.declare, allocator),
-            scope_id: Default::default(),
+            scope_id: CloneIn::clone_in(&self.scope_id, allocator),
         }
     }
 }
@@ -2160,7 +2160,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for StaticBlock<'_> {
         StaticBlock {
             span: CloneIn::clone_in(&self.span, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
-            scope_id: Default::default(),
+            scope_id: CloneIn::clone_in(&self.scope_id, allocator),
         }
     }
 }
