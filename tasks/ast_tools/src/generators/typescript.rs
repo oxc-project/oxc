@@ -25,6 +25,11 @@ impl Generator for TypescriptGenerator {
         &["ts"]
     }
 
+    fn variant_attrs(&self) -> &[&'static str] {
+        // TODO: This generator doesn't actually use this attr. Nothing does at present.
+        &["ts"]
+    }
+
     fn generate(&mut self, schema: &Schema) -> Output {
         let mut code = String::new();
 
