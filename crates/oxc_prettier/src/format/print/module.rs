@@ -95,7 +95,7 @@ pub fn print_export_declaration<'a>(p: &mut Prettier<'a>, decl: &ModuleDeclarati
         ModuleDeclaration::ExportNamedDeclaration(decl) => decl.format(p),
         ModuleDeclaration::TSExportAssignment(decl) => decl.format(p),
         ModuleDeclaration::TSNamespaceExportDeclaration(decl) => decl.format(p),
-        _ => unreachable!(),
+        ModuleDeclaration::ImportDeclaration(_) => unreachable!(),
     });
 
     if let Some(source) = decl.source() {

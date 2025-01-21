@@ -87,7 +87,7 @@ impl<'a> Fill<'a> {
 pub enum JoinSeparator {
     Softline,
     Hardline,
-    CommaLine, // [",", line]
+    CommaLine,  // [",", line]
     CommaSpace, // ", "
     Literalline,
 }

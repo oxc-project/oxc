@@ -24,11 +24,15 @@ pub fn print_property_key<'a>(
     let need_quote = p.options.quote_props.consistent()
         && match p.parent_kind() {
             AstKind::ObjectExpression(oe) => oe.properties.iter().any(|opk| match opk {
-                ObjectPropertyKind::ObjectProperty(p) => !p.computed && is_property_key_has_quote(&p.key),
+                ObjectPropertyKind::ObjectProperty(p) => {
+                    !p.computed && is_property_key_has_quote(&p.key)
+                }
                 ObjectPropertyKind::SpreadProperty(_) => false,
             }),
             AstKind::ClassBody(cb) => cb.body.iter().any(|ce| match ce {
-                ClassElement::PropertyDefinition(d) => !d.computed && is_property_key_has_quote(&d.key),
+                ClassElement::PropertyDefinition(d) => {
+                    !d.computed && is_property_key_has_quote(&d.key)
+                }
                 _ => false,
             }),
             _ => false,
