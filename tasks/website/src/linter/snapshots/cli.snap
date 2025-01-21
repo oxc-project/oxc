@@ -1,7 +1,6 @@
 ---
 source: tasks/website/src/linter/cli.rs
 expression: snapshot
-snapshot_kind: text
 ---
 ## Usage
  **`oxlint`** \[**`-c`**=_`<./oxlintrc.json>`_\] \[_`PATH`_\]...
@@ -111,7 +110,7 @@ Arguments:
 
 ## Output
 - **`-f`**, **`--format`**=_`ARG`_ &mdash; 
-  Use a specific output format (default, json, unix, checkstyle, github)
+  Use a specific output format (default, json, unix, checkstyle, github, stylish)
 
 
 
