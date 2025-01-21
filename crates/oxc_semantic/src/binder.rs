@@ -157,7 +157,9 @@ impl<'a> Binder<'a> for Function<'a> {
                     builder.current_node_id,
                 );
                 ident.symbol_id.set(Some(symbol_id));
-            } else if self.r#type == FunctionType::FunctionDeclaration {
+            } else if self.r#type == FunctionType::FunctionDeclaration
+                || self.r#type == FunctionType::TSDeclareFunction
+            {
                 // The visitor is already inside the function scope,
                 // retrieve the parent scope for the function id to bind to.
 
