@@ -5,14 +5,14 @@ use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, Travers
 
 mod collapse_variable_declarations;
 mod convert_to_dotted_properties;
+mod fold_constants;
+mod minimize_conditions;
 mod minimize_exit_points;
 mod normalize;
-mod peephole_fold_constants;
-mod peephole_minimize_conditions;
-mod peephole_remove_dead_code;
-mod peephole_replace_known_methods;
-mod peephole_substitute_alternate_syntax;
+mod remove_dead_code;
+mod replace_known_methods;
 mod statement_fusion;
+mod substitute_alternate_syntax;
 
 pub use normalize::{Normalize, NormalizeOptions};
 
