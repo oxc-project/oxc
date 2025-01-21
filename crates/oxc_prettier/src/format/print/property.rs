@@ -21,7 +21,7 @@ pub fn print_property_key<'a>(
     }
 
     // PERF: Cache this result by key-holder to avoid re-calculation by each property
-    let need_quote = p.options.quote_props.consistent()
+    let needs_quote = p.options.quote_props.consistent()
         && match p.parent_kind() {
             AstKind::ObjectExpression(oe) => oe.properties.iter().any(|opk| match opk {
                 ObjectPropertyKind::ObjectProperty(p) => {
@@ -41,7 +41,7 @@ pub fn print_property_key<'a>(
     match property_key {
         PropertyKeyLike::ImportAttributeKey(import_attribute_key) => match import_attribute_key {
             ImportAttributeKey::Identifier(ident) => {
-                if need_quote {
+                if needs_quote {
                     literal::print_string_from_not_quoted_raw_text(
                         p,
                         &ident.name,
@@ -72,7 +72,7 @@ pub fn print_property_key<'a>(
         PropertyKeyLike::PropertyKey(property_key) => {
             match property_key {
                 PropertyKey::StaticIdentifier(ident) => {
-                    if need_quote {
+                    if needs_quote {
                         literal::print_string_from_not_quoted_raw_text(
                             p,
                             &ident.name,
@@ -100,7 +100,7 @@ pub fn print_property_key<'a>(
                     }
                 }
                 PropertyKey::NumericLiteral(literal) => {
-                    if need_quote {
+                    if needs_quote {
                         literal::print_string_from_not_quoted_raw_text(
                             p,
                             &literal.raw_str(),

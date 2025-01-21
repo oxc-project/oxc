@@ -718,9 +718,7 @@ impl<'a> Format<'a> for ExportSpecifier<'a> {
             return self.local.format(p);
         }
 
-        let local_doc = self.local.format(p);
-        let exported_doc = self.exported.format(p);
-        array!(p, [local_doc, text!(" as "), exported_doc])
+        array!(p, [self.local.format(p), text!(" as "), self.exported.format(p)])
     }
 }
 
@@ -1225,9 +1223,7 @@ impl<'a> Format<'a> for ObjectAssignmentTarget<'a> {
 impl<'a> Format<'a> for AssignmentTargetWithDefault<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, AssignmentTargetWithDefault, {
-            let binding_doc = self.binding.format(p);
-            let init_doc = self.init.format(p);
-            array!(p, [binding_doc, text!(" = "), init_doc])
+            array!(p, [self.binding.format(p), text!(" = "), self.init.format(p)])
         })
     }
 }

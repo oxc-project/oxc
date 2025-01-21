@@ -12,26 +12,11 @@ use crate::{
 #[derive(Debug, Clone, Copy)]
 pub enum AssignmentLike<'a, 'b> {
     AssignmentExpression(&'b AssignmentExpression<'a>),
-    AssignmentTargetPropertyProperty(&'b AssignmentTargetPropertyProperty<'a>),
     VariableDeclarator(&'b VariableDeclarator<'a>),
     PropertyDefinition(&'b PropertyDefinition<'a>),
     AccessorProperty(&'b AccessorProperty<'a>),
     ObjectProperty(&'b ObjectProperty<'a>),
-    BindingProperty(&'b BindingProperty<'a>),
     ImportAtrribute(&'b ImportAttribute<'a>),
-}
-
-impl<'a, 'b> From<class::ClassPropertyLike<'a, 'b>> for AssignmentLike<'a, 'b> {
-    fn from(class_memberish: class::ClassPropertyLike<'a, 'b>) -> Self {
-        match class_memberish {
-            class::ClassPropertyLike::PropertyDefinition(property_def) => {
-                Self::PropertyDefinition(property_def)
-            }
-            class::ClassPropertyLike::AccessorProperty(accessor_prop) => {
-                Self::AccessorProperty(accessor_prop)
-            }
-        }
-    }
 }
 
 pub fn print_assignment<'a>(
