@@ -415,7 +415,9 @@ impl<'a> Format<'a> for TSTupleType<'a> {
 
 impl<'a> Format<'a> for TSTypeLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        object::print_object(p, object::ObjectLike::TSTypeLiteral(self))
+        wrap!(p, self, TSTypeLiteral, {
+            object::print_object(p, object::ObjectLike::TSTypeLiteral(self))
+        })
     }
 }
 
@@ -538,62 +540,64 @@ impl<'a> Format<'a> for JSDocUnknownType {
 
 impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
+        wrap!(p, self, TSInterfaceDeclaration, {
+            let mut parts = Vec::new_in(p.allocator);
 
-        if self.declare {
-            parts.push(text!("declare "));
-        }
+            if self.declare {
+                parts.push(text!("declare "));
+            }
 
-        parts.push(text!("interface "));
-        parts.push(self.id.format(p));
+            parts.push(text!("interface "));
+            parts.push(self.id.format(p));
 
-        if let Some(type_parameters) = &self.type_parameters {
-            parts.push(type_parameters.format(p));
-        }
+            if let Some(type_parameters) = &self.type_parameters {
+                parts.push(type_parameters.format(p));
+            }
 
-        parts.push(text!(" "));
+            parts.push(text!(" "));
 
-        if let Some(extends) = &self.extends {
-            if extends.len() > 0 {
-                let mut extends_parts = Vec::new_in(p.allocator);
-                let mut display_comma = false;
+            if let Some(extends) = &self.extends {
+                if extends.len() > 0 {
+                    let mut extends_parts = Vec::new_in(p.allocator);
+                    let mut display_comma = false;
 
-                extends_parts.push(text!("extends "));
+                    extends_parts.push(text!("extends "));
 
-                for extend in extends {
-                    if display_comma {
-                        extends_parts.push(text!(", "));
-                    } else {
-                        display_comma = true;
+                    for extend in extends {
+                        if display_comma {
+                            extends_parts.push(text!(", "));
+                        } else {
+                            display_comma = true;
+                        }
+
+                        extends_parts.push(extend.expression.format(p));
+                        if let Some(type_parameters) = &extend.type_parameters {
+                            extends_parts.push(type_parameters.format(p));
+                        }
                     }
 
-                    extends_parts.push(extend.expression.format(p));
-                    if let Some(type_parameters) = &extend.type_parameters {
-                        extends_parts.push(type_parameters.format(p));
+                    parts.extend(extends_parts);
+                    parts.push(text!(" "));
+                }
+            }
+
+            parts.push(text!("{"));
+            if self.body.body.len() > 0 {
+                let mut indent_parts = Vec::new_in(p.allocator);
+                for sig in &self.body.body {
+                    indent_parts.push(hardline!(p));
+                    indent_parts.push(sig.format(p));
+
+                    if let Some(semi) = p.semi() {
+                        indent_parts.push(semi);
                     }
                 }
-
-                parts.extend(extends_parts);
-                parts.push(text!(" "));
+                parts.push(indent!(p, indent_parts));
+                parts.push(hardline!(p));
             }
-        }
-
-        parts.push(text!("{"));
-        if self.body.body.len() > 0 {
-            let mut indent_parts = Vec::new_in(p.allocator);
-            for sig in &self.body.body {
-                indent_parts.push(hardline!(p));
-                indent_parts.push(sig.format(p));
-
-                if let Some(semi) = p.semi() {
-                    indent_parts.push(semi);
-                }
-            }
-            parts.push(indent!(p, indent_parts));
-            parts.push(hardline!(p));
-        }
-        parts.push(text!("}"));
-        array!(p, parts)
+            parts.push(text!("}"));
+            array!(p, parts)
+        })
     }
 }
 
@@ -969,20 +973,22 @@ impl<'a> Format<'a> for TSIndexSignatureName<'a> {
 
 impl<'a> Format<'a> for TSPropertySignature<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        if self.readonly {
-            parts.push(text!("readonly "));
-        }
-        parts.push(self.key.format(p));
-        if let Some(ty) = &self.type_annotation {
-            if self.optional {
-                parts.push(text!("?"));
+        wrap!(p, self, TSPropertySignature, {
+            let mut parts = Vec::new_in(p.allocator);
+            if self.readonly {
+                parts.push(text!("readonly "));
             }
-            parts.push(text!(":"));
-            parts.push(text!(" "));
-            parts.push(ty.type_annotation.format(p));
-        }
-        array!(p, parts)
+            parts.push(self.key.format(p));
+            if let Some(ty) = &self.type_annotation {
+                if self.optional {
+                    parts.push(text!("?"));
+                }
+                parts.push(text!(":"));
+                parts.push(text!(" "));
+                parts.push(ty.type_annotation.format(p));
+            }
+            array!(p, parts)
+        })
     }
 }
 
