@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
-use oxc_allocator::Vec;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::{is_identifier_name, is_line_terminator};
@@ -10,9 +10,10 @@ use crate::{
     array, dynamic_text,
     format::{
         print::{
-            array, arrow_function, assignment, binaryish, block, call_expression, class, function,
-            function_parameters, literal, misc, module, object, property, statement,
-            template_literal, ternary,
+            array, arrow_function,
+            assignment::{self, print_assignment},
+            binaryish, block, call_expression, class, function, function_parameters, literal, misc,
+            module, object, property, statement, template_literal, ternary,
         },
         Format,
     },
@@ -671,12 +672,20 @@ impl<'a> Format<'a> for ImportNamespaceSpecifier<'a> {
 
 impl<'a> Format<'a> for ImportAttribute<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        // TODO: Use `print_property`
-        let key_doc = match &self.key {
-            ImportAttributeKey::Identifier(ident) => ident.format(p),
-            ImportAttributeKey::StringLiteral(literal) => literal.format(p),
-        };
-        group!(p, [group!(p, [key_doc]), text!(": "), self.value.format(p)])
+        let left_doc = property::print_property_key(
+            p,
+            &property::PropertyKeyLike::ImportAttributeKey(&self.key),
+            false,
+            false, // TODO: check
+        );
+
+        print_assignment(
+            p,
+            assignment::AssignmentLike::ImportAtrribute(self),
+            left_doc,
+            text!(":"),
+            Some(&Expression::StringLiteral(Box::new_in(self.value.clone(), p.allocator))),
+        )
     }
 }
 
@@ -1037,90 +1046,40 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
 
 impl<'a> Format<'a> for PropertyKey<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let is_parent_computed = match p.current_kind() {
+        // NOTE: `current_kind` is not yet updated by `wrap!` here
+
+        // Prettier collects these info inside of `print_property_key` function
+        // But OXC AST doesn't have enough information to determine these
+
+        // `PropertyKey`'s parent only knows this
+        let is_computed = match p.current_kind() {
             AstKind::MethodDefinition(node) => node.computed,
             AstKind::PropertyDefinition(node) => node.computed,
             _ => false,
         };
-        if is_parent_computed {
-            let mut parts = Vec::new_in(p.allocator);
-            parts.push(text!("["));
-            let doc = match self {
-                PropertyKey::StaticIdentifier(ident) => ident.format(p),
-                PropertyKey::PrivateIdentifier(ident) => ident.format(p),
-                match_expression!(PropertyKey) => self.to_expression().format(p),
-            };
-            parts.push(doc);
-            parts.push(text!("]"));
-            return array!(p, parts);
-        }
+        // Check `PropertyKey`'s parent's parent to access siblings
+        // PERF: Cache this result by key holder to avoid checking this in each key
+        let has_quote_props = match p.parent_kind() {
+            AstKind::ObjectExpression(a) => a.properties.iter().any(|x| match x {
+                ObjectPropertyKind::ObjectProperty(p) => {
+                    property::is_property_key_has_quote(&p.key)
+                }
+                ObjectPropertyKind::SpreadProperty(_) => false,
+            }),
+            AstKind::ClassBody(a) => a.body.iter().any(|x| match x {
+                ClassElement::PropertyDefinition(p) => property::is_property_key_has_quote(&p.key),
+                _ => false,
+            }),
+            _ => false,
+        };
 
         wrap!(p, self, PropertyKey, {
-            // Perf: Cache the result of `need_quote` to avoid checking it in each PropertyKey
-            let need_quote = p.options.quote_props.consistent()
-                && match p.parent_parent_kind() {
-                    Some(AstKind::ObjectExpression(a)) => a.properties.iter().any(|x| match x {
-                        ObjectPropertyKind::ObjectProperty(p) => {
-                            property::is_property_key_has_quote(&p.key)
-                        }
-                        ObjectPropertyKind::SpreadProperty(_) => false,
-                    }),
-                    Some(AstKind::ClassBody(a)) => a.body.iter().any(|x| match x {
-                        ClassElement::PropertyDefinition(p) => {
-                            property::is_property_key_has_quote(&p.key)
-                        }
-                        _ => false,
-                    }),
-                    _ => false,
-                };
-
-            match self {
-                PropertyKey::StaticIdentifier(ident) => {
-                    if need_quote {
-                        literal::print_string_from_not_quoted_raw_text(
-                            p,
-                            &ident.name,
-                            p.options.single_quote,
-                        )
-                    } else {
-                        ident.format(p)
-                    }
-                }
-                PropertyKey::PrivateIdentifier(ident) => ident.format(p),
-                PropertyKey::StringLiteral(literal) => {
-                    // This does not pass quotes/objects.js
-                    // because prettier uses the function `isEs5IdentifierName` based on unicode version 3,
-                    // but `is_identifier_name` uses the latest unicode version.
-                    if is_identifier_name(literal.value.as_str())
-                        && (p.options.quote_props.as_needed()
-                            || (p.options.quote_props.consistent()/* && !needsQuoteProps.get(parent) */))
-                    {
-                        dynamic_text!(p, literal.value.as_str())
-                    } else {
-                        literal::print_string_from_not_quoted_raw_text(
-                            p,
-                            literal.value.as_str(),
-                            p.options.single_quote,
-                        )
-                    }
-                }
-                PropertyKey::NumericLiteral(literal) => {
-                    if need_quote {
-                        literal::print_string_from_not_quoted_raw_text(
-                            p,
-                            &literal.raw_str(),
-                            p.options.single_quote,
-                        )
-                    } else {
-                        literal.format(p)
-                    }
-                }
-                PropertyKey::Identifier(ident) => {
-                    let ident_doc = ident.format(p);
-                    array!(p, [text!("["), ident_doc, text!("]")])
-                }
-                match_expression!(PropertyKey) => self.to_expression().format(p),
-            }
+            property::print_property_key(
+                p,
+                &property::PropertyKeyLike::PropertyKey(self),
+                is_computed,
+                has_quote_props,
+            )
         })
     }
 }

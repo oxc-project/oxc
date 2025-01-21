@@ -16,6 +16,7 @@ pub enum AssignmentLike<'a, 'b> {
     PropertyDefinition(&'b PropertyDefinition<'a>),
     AccessorProperty(&'b AccessorProperty<'a>),
     ObjectProperty(&'b ObjectProperty<'a>),
+    ImportAtrribute(&'b ImportAttribute<'a>),
 }
 
 impl<'a, 'b> From<class::ClassPropertyLike<'a, 'b>> for AssignmentLike<'a, 'b> {
@@ -135,6 +136,9 @@ fn choose_layout<'a>(
         return Layout::BreakAfterOperator;
     }
 
+    if let AssignmentLike::ImportAtrribute(import_attr) = assignment_like_node {
+        return Layout::NeverBreakAfterOperator;
+    }
     if let Expression::CallExpression(call_expr) = right_expr {
         if let Expression::Identifier(ident) = &call_expr.callee {
             if ident.name == "require" {
@@ -241,7 +245,8 @@ pub fn is_arrow_function_variable_declarator(expr: &AssignmentLike) -> bool {
         AssignmentLike::AssignmentExpression(_)
         | AssignmentLike::PropertyDefinition(_)
         | AssignmentLike::ObjectProperty(_)
-        | AssignmentLike::AccessorProperty(_) => false,
+        | AssignmentLike::AccessorProperty(_)
+        | AssignmentLike::ImportAtrribute(_) => false,
     }
 }
 

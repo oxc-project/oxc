@@ -4,15 +4,18 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    array, group, if_break, indent,
-    ir::{Doc, JoinSeparator},
-    join, line, softline, text, Format, Prettier,
+    array, dynamic_text, group, if_break, indent, ir::{Doc, JoinSeparator}, join, line, softline, text, Format, Prettier
 };
 
 pub fn print_import_declaration<'a>(p: &mut Prettier<'a>, decl: &ImportDeclaration<'a>) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
 
     parts.push(text!("import"));
+
+    if let Some(phase) = decl.phase {
+        parts.push(text!(" "));
+        parts.push(dynamic_text!(p, phase.as_str()));
+    }
 
     if decl.import_kind.is_type() {
         parts.push(text!(" type"));
