@@ -62,6 +62,14 @@ impl Token {
         debug_assert!(!self.has_separator || self.kind.is_number() || self.kind == Kind::default());
         self.has_separator = true;
     }
+
+    #[inline]
+    pub fn clear_kind_and_flags(&mut self) {
+        self.kind = Kind::default();
+        self.is_on_new_line = false;
+        self.escaped = false;
+        self.has_separator = false;
+    }
 }
 
 #[cfg(test)]
