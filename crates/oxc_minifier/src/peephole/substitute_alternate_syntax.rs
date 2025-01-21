@@ -157,7 +157,7 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => None,
         } {
             *expr = folded_expr;
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
 
         // Out of fixed loop syntax changes happen last.
@@ -171,7 +171,7 @@ impl<'a, 'b> PeepholeOptimizations {
             _ => None,
         } {
             *expr = folded_expr;
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
     }
 
@@ -272,7 +272,7 @@ impl<'a, 'b> PeepholeOptimizations {
                     if let Some(arg) = return_stmt_arg {
                         *body = ctx.ast.statement_expression(arg.span(), arg);
                         arrow_expr.expression = true;
-                        self.changed = true;
+                        self.mark_current_function_as_changed();
                     }
                 }
             }
@@ -817,7 +817,7 @@ impl<'a, 'b> PeepholeOptimizations {
             }
         }
         stmt.argument = None;
-        self.changed = true;
+        self.mark_current_function_as_changed();
     }
 
     fn compress_variable_declarator(
@@ -833,7 +833,7 @@ impl<'a, 'b> PeepholeOptimizations {
             && decl.init.as_ref().is_some_and(|init| ctx.is_expression_undefined(init))
         {
             decl.init = None;
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
     }
 
@@ -857,7 +857,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
         expr.operator = new_op;
         expr.right = ctx.ast.move_expression(&mut binary_expr.right);
-        self.changed = true;
+        self.mark_current_function_as_changed();
     }
 
     /// Compress `a = a || b` to `a ||= b`
@@ -893,7 +893,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
         expr.operator = new_op;
         expr.right = ctx.ast.move_expression(&mut logical_expr.right);
-        self.changed = true;
+        self.mark_current_function_as_changed();
     }
 
     fn try_compress_assignment_to_update_expression(
@@ -1229,7 +1229,7 @@ impl<'a, 'b> PeepholeOptimizations {
             && e.arguments[0].as_expression().is_some_and(Expression::is_number_0)
         {
             e.arguments.clear();
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
     }
 
@@ -1268,7 +1268,7 @@ impl<'a, 'b> PeepholeOptimizations {
             {
                 call_expr.callee =
                     ctx.ast.expression_identifier_reference(call_expr.callee.span(), "Object");
-                self.changed = true;
+                self.mark_current_function_as_changed();
             }
         }
     }
@@ -1301,7 +1301,7 @@ impl<'a, 'b> PeepholeOptimizations {
         if is_identifier_name(value) {
             *computed = false;
             *key = PropertyKey::StaticIdentifier(ctx.ast.alloc_identifier_name(s.span, s.value));
-            self.changed = true;
+            self.mark_current_function_as_changed();
             return;
         }
         if let Some(value) = Ctx::string_to_equivalent_number_value(value) {
@@ -1313,7 +1313,7 @@ impl<'a, 'b> PeepholeOptimizations {
                     None,
                     NumberBase::Decimal,
                 ));
-                self.changed = true;
+                self.mark_current_function_as_changed();
             }
             return;
         }
@@ -1380,7 +1380,7 @@ impl<'a, 'b> PeepholeOptimizations {
                     new_args.push(arg);
                 }
             }
-            self.changed = true;
+            self.mark_current_function_as_changed();
         }
     }
 }
