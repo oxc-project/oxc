@@ -34,11 +34,17 @@ impl<'a> UnresolvedReferencesStack<'a> {
     /// SAFETY: Must be >= 2 to ensure soundness of `current_and_parent_mut`.
     const INITIAL_SIZE: usize = 16;
 
-    /// Assert invariant
-    #[allow(clippy::assertions_on_constants)]
-    const _SIZE_CHECK: () = assert!(Self::INITIAL_SIZE > Self::INITIAL_DEPTH);
+    /// Assert invariants
+    const ASSERT_INVARIANTS: () = {
+        assert!(Self::INITIAL_DEPTH >= 1);
+        assert!(Self::INITIAL_SIZE >= 2);
+        assert!(Self::INITIAL_SIZE > Self::INITIAL_DEPTH);
+    };
 
     pub(crate) fn new() -> Self {
+        // Invoke `ASSERT_INVARIANTS` assertions. Without this line, the assertions are ignored.
+        const { Self::ASSERT_INVARIANTS };
+
         let mut stack = vec![];
         stack.resize_with(Self::INITIAL_SIZE, TempUnresolvedReferences::default);
         Self { stack, current_scope_depth: Self::INITIAL_DEPTH }
