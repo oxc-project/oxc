@@ -54,49 +54,118 @@ fn derive_enum(def: &EnumDef) -> TokenStream {
         .collect_vec();
 
     let alloc_ident = if used_alloc { format_ident!("allocator") } else { format_ident!("_") };
-    let body = quote! {
+    let clone_in_body = quote! {
         match self {
             #(#matches),*
         }
     };
 
-    impl_clone_in(&ty_ident, def.has_lifetime, &alloc_ident, &body)
+    let clone_in_with_semantic_ids_token_stream = if used_alloc {
+        let matches = def
+        .all_variants()
+        .map(|var| {
+            let ident = var.ident();
+            if var.is_unit() {
+                quote!(Self :: #ident => #ty_ident :: #ident)
+            } else {
+                quote!(Self :: #ident(it) => #ty_ident :: #ident(CloneIn::clone_in_with_semantic_ids(it, allocator)))
+            }
+        })
+        .collect_vec();
+
+        let alloc_ident_param = if def.has_lifetime {
+            quote!(#alloc_ident: &'new_alloc Allocator)
+        } else {
+            quote!(#alloc_ident: &'alloc Allocator)
+        };
+        quote!(
+            ///@@line_break
+            fn clone_in_with_semantic_ids(&self, #alloc_ident_param) -> Self::Cloned {
+                match self {
+                    #(#matches),*
+                }
+            }
+        )
+    } else {
+        quote!()
+    };
+
+    impl_clone_in(
+        &ty_ident,
+        def.has_lifetime,
+        &alloc_ident,
+        &clone_in_body,
+        &clone_in_with_semantic_ids_token_stream,
+    )
 }
 
 fn derive_struct(def: &StructDef) -> TokenStream {
     let ty_ident = def.ident();
-
-    let (alloc_ident, body) = if def.fields.is_empty() {
-        (format_ident!("_"), quote!(#ty_ident))
+    let (alloc_ident, clone_in_body, clone_in_with_semantic_ids_function) = if def.fields.is_empty()
+    {
+        (format_ident!("_"), quote!(#ty_ident), quote!())
     } else {
-        let fields = def.fields.iter().map(|field| {
+        let alloc_ident = format_ident!("allocator");
+        let clone_in_fields = def.fields.iter().map(|field| {
             let ident = field.ident();
             match field.markers.derive_attributes.clone_in {
-                CloneInAttribute::Default => quote!(#ident: Default::default()),
+                CloneInAttribute::Default => {
+                    quote!(#ident: Default::default())
+                }
                 CloneInAttribute::None => {
                     quote!(#ident: CloneIn::clone_in(&self.#ident, allocator))
                 }
             }
         });
-        (format_ident!("allocator"), quote!(#ty_ident { #(#fields),* }))
+        let clone_in_with_semantic_ids_token_stream = {
+            let fields = def.fields.iter().map(|field| {
+                let ident = field.ident();
+                quote!(#ident: CloneIn::clone_in_with_semantic_ids(&self.#ident, allocator))
+            });
+            let alloc_ident_param = if def.has_lifetime {
+                quote!(#alloc_ident: &'new_alloc Allocator)
+            } else {
+                quote!(#alloc_ident: &'alloc Allocator)
+            };
+            quote!(
+                ///@@line_break
+                fn clone_in_with_semantic_ids(&self, #alloc_ident_param) -> Self::Cloned {
+                    #ty_ident { #(#fields),* }
+                }
+            )
+        };
+        (
+            alloc_ident,
+            quote!(#ty_ident { #(#clone_in_fields),* }),
+            clone_in_with_semantic_ids_token_stream,
+        )
     };
 
-    impl_clone_in(&ty_ident, def.has_lifetime, &alloc_ident, &body)
+    impl_clone_in(
+        &ty_ident,
+        def.has_lifetime,
+        &alloc_ident,
+        &clone_in_body,
+        &clone_in_with_semantic_ids_function,
+    )
 }
 
 fn impl_clone_in(
     ty_ident: &Ident,
     has_lifetime: bool,
     alloc_ident: &Ident,
-    body: &TokenStream,
+    clone_in_body: &TokenStream,
+    clone_in_with_semantic_ids_function: &TokenStream,
 ) -> TokenStream {
     if has_lifetime {
         quote! {
             impl <'new_alloc> CloneIn<'new_alloc> for #ty_ident<'_> {
                 type Cloned = #ty_ident<'new_alloc>;
                 fn clone_in(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned {
-                    #body
+                    #clone_in_body
                 }
+
+                #clone_in_with_semantic_ids_function
             }
         }
     } else {
@@ -104,8 +173,10 @@ fn impl_clone_in(
             impl <'alloc> CloneIn<'alloc> for #ty_ident {
                 type Cloned = #ty_ident;
                 fn clone_in(&self, #alloc_ident: &'alloc Allocator) -> Self::Cloned {
-                    #body
+                    #clone_in_body
                 }
+
+                #clone_in_with_semantic_ids_function
             }
         }
     }

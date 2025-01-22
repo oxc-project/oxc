@@ -1,7 +1,7 @@
 #![allow(missing_docs)] // fixme
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
-use oxc_allocator::CloneIn;
+use oxc_allocator::{Allocator, CloneIn};
 use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
@@ -11,6 +11,18 @@ use crate::{node::NodeId, symbol::SymbolId};
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ReferenceId(NonMaxU32);
 
+impl<'alloc> CloneIn<'alloc> for ReferenceId {
+    type Cloned = Self;
+
+    fn clone_in(&self, _: &'alloc Allocator) -> Self {
+        // `clone_in` should never reach this, because `CloneIn` skips semantic ID fields
+        unreachable!();
+    }
+
+    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
+        *self
+    }
+}
 impl Idx for ReferenceId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {

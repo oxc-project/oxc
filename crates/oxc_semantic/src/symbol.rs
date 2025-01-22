@@ -1,6 +1,6 @@
 use std::{fmt, mem};
 
-use oxc_allocator::{Allocator, FromIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, CloneIn, FromIn, Vec as ArenaVec};
 use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_index::{Idx, IndexVec};
 use oxc_span::{Atom, Span};
@@ -319,6 +319,33 @@ impl SymbolTable {
             inner.resolved_references.reserve(additional_symbols);
         });
         self.references.reserve(additional_references);
+    }
+
+    /// Clone the `[SymbolTable]` with another `Allocator`.
+    /// and copy rest fields, this is used to cache the Ast in incremental compilation
+    /// use another `Allocator` to avoid memory leak
+    #[must_use]
+    pub fn clone_with_another_arena(&self) -> SymbolTable {
+        let allocator =
+            self.inner.with_dependent(|alloc, _| Allocator::with_capacity(alloc.capacity()));
+        Self {
+            spans: self.spans.clone(),
+            flags: self.flags.clone(),
+            scope_ids: self.scope_ids.clone(),
+            declarations: self.declarations.clone(),
+            redeclarations: self.redeclarations.clone(),
+            references: self.references.clone(),
+            inner: SymbolTableCell::new(allocator, |allocator| {
+                self.inner.with_dependent(|_allocator, inner| {
+                    let names = inner.names.clone_in_with_semantic_ids(allocator);
+                    let redeclaration_spans =
+                        inner.redeclaration_spans.clone_in_with_semantic_ids(allocator);
+                    let resolved_references =
+                        inner.resolved_references.clone_in_with_semantic_ids(allocator);
+                    SymbolTableInner { names, resolved_references, redeclaration_spans }
+                })
+            }),
+        }
     }
 }
 
