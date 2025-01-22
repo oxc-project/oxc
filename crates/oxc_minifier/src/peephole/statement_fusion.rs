@@ -42,11 +42,11 @@ impl<'a> PeepholeOptimizations {
                     let is_expr_stmt = matches!(&stmts[i], Statement::ExpressionStatement(_));
                     if i == 0 && is_expr_stmt {
                         Self::fuse_into_one_statement(&mut stmts[0..=j], ctx);
-                        self.changed = true;
+                        self.mark_current_function_as_changed();
                     } else if !is_expr_stmt {
                         if j - i > 1 {
                             Self::fuse_into_one_statement(&mut stmts[i + 1..=j], ctx);
-                            self.changed = true;
+                            self.mark_current_function_as_changed();
                         }
                         if Self::is_fusable_control_statement(&stmts[i]) {
                             end = Some(i);
@@ -58,7 +58,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        if self.changed {
+        if self.is_current_function_changed() {
             stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
         }
     }

@@ -187,11 +187,9 @@ impl<'a> ParserImpl<'a> {
         object: &JSXIdentifier<'a>,
     ) -> Result<Box<'a, JSXMemberExpression<'a>>> {
         let mut object = if object.name == "this" {
-            let object = self.ast.alloc_this_expression(object.span);
-            JSXMemberExpressionObject::ThisExpression(object)
+            self.ast.jsx_member_expression_object_this_expression(object.span)
         } else {
-            let object = self.ast.alloc_identifier_reference(object.span, object.name);
-            JSXMemberExpressionObject::IdentifierReference(object)
+            self.ast.jsx_member_expression_object_identifier_reference(object.span, object.name)
         };
 
         let mut span = span;

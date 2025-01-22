@@ -131,7 +131,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 diagnostic(ctx, fn_expr.span, Message::UnexpectedDescribeArgument);
             }
 
-            let Some(ref body) = fn_expr.body else {
+            let Some(body) = &fn_expr.body else {
                 return;
             };
             if let Some(span) = find_first_return_stmt_span(body) {

@@ -84,7 +84,7 @@ impl Rule for NoThenable {
             }
             AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(decl)) => {
                 // check declaration
-                if let Some(ref decl) = decl.declaration {
+                if let Some(decl) = &decl.declaration {
                     match decl {
                         Declaration::VariableDeclaration(decl) => {
                             for decl in &decl.declarations {
@@ -242,8 +242,8 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
                 let decl = ctx.semantic().nodes().get_node(symbols.get_declaration(symbol_id));
                 let var_decl = decl.kind().as_variable_declarator()?;
 
-                match var_decl.init {
-                    Some(Expression::StringLiteral(ref lit)) => {
+                match &var_decl.init {
+                    Some(Expression::StringLiteral(lit)) => {
                         if lit.value == "then" {
                             Some(lit.span)
                         } else {

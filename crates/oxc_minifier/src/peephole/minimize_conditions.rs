@@ -21,16 +21,20 @@ impl<'a> PeepholeOptimizations {
         stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.try_replace_if(stmts, ctx);
-        let changed = self.changed;
-        while self.changed {
-            self.changed = false;
-            self.try_replace_if(stmts, ctx);
+        let mut changed = false;
+        let mut changed2 = false;
+        Self::try_replace_if(stmts, &mut changed2, ctx);
+        while changed2 {
+            changed2 = false;
+            Self::try_replace_if(stmts, &mut changed2, ctx);
             if stmts.iter().any(|stmt| matches!(stmt, Statement::EmptyStatement(_))) {
                 stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
             }
+            changed = changed2;
         }
-        self.changed = self.changed || changed;
+        if changed {
+            self.mark_current_function_as_changed();
+        }
     }
 
     pub fn minimize_conditions_exit_statement(
@@ -64,7 +68,7 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         } {
             *stmt = folded_stmt;
-            self.changed = true;
+            self.mark_current_function_as_changed();
         };
     }
 
@@ -87,7 +91,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             if changed {
-                self.changed = true;
+                self.mark_current_function_as_changed();
             } else {
                 break;
             }
@@ -99,7 +103,7 @@ impl<'a> PeepholeOptimizations {
             _ => None,
         } {
             *expr = folded_expr;
-            self.changed = true;
+            self.mark_current_function_as_changed();
         };
     }
 
@@ -236,7 +240,11 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
-    fn try_replace_if(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn try_replace_if(
+        stmts: &mut Vec<'a, Statement<'a>>,
+        changed: &mut bool,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         for i in 0..stmts.len() {
             let Statement::IfStatement(if_stmt) = &stmts[i] else {
                 continue;
@@ -268,7 +276,7 @@ impl<'a> PeepholeOptimizations {
                     alternate,
                 );
                 stmts[i] = ctx.ast.statement_return(if_stmt.span, Some(argument));
-                self.changed = true;
+                *changed = true;
                 break;
             } else if else_branch.is_some() && Self::statement_must_exit_parent(then_branch) {
                 let Statement::IfStatement(if_stmt) = &mut stmts[i] else {
@@ -276,7 +284,7 @@ impl<'a> PeepholeOptimizations {
                 };
                 let else_branch = if_stmt.alternate.take().unwrap();
                 stmts.insert(i + 1, else_branch);
-                self.changed = true;
+                *changed = true;
             }
         }
     }
@@ -339,7 +347,7 @@ impl<'a> PeepholeOptimizations {
             if sequence_expr.expressions.len() > 1 {
                 let span = expr.span();
                 let mut sequence = ctx.ast.move_expression(&mut expr.test);
-                let Expression::SequenceExpression(ref mut sequence_expr) = &mut sequence else {
+                let Expression::SequenceExpression(sequence_expr) = &mut sequence else {
                     unreachable!()
                 };
                 let test = sequence_expr.expressions.pop().unwrap();
@@ -587,15 +595,13 @@ impl<'a> PeepholeOptimizations {
                 {
                     let callee = ctx.ast.move_expression(&mut consequent.callee);
                     let consequent_first_arg = {
-                        let Argument::SpreadElement(ref mut el) = &mut consequent.arguments[0]
-                        else {
+                        let Argument::SpreadElement(el) = &mut consequent.arguments[0] else {
                             unreachable!()
                         };
                         ctx.ast.move_expression(&mut el.argument)
                     };
                     let alternate_first_arg = {
-                        let Argument::SpreadElement(ref mut el) = &mut alternate.arguments[0]
-                        else {
+                        let Argument::SpreadElement(el) = &mut alternate.arguments[0] else {
                             unreachable!()
                         };
                         ctx.ast.move_expression(&mut el.argument)

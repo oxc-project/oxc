@@ -227,7 +227,7 @@ impl GetterReturn {
                 // If the signature of function supports the return of the `undefined` value,
                 // you do not need to check this rule
                 if let AstKind::Function(func) = node.kind() {
-                    if let Some(ref ret) = func.return_type {
+                    if let Some(ret) = &func.return_type {
                         if ret.type_annotation.is_maybe_undefined() {
                             break 'returns true;
                         }

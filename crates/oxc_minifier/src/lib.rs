@@ -1,10 +1,10 @@
 //! ECMAScript Minifier
 
-mod ast_passes;
 mod compressor;
 mod ctx;
 mod keep_var;
 mod options;
+mod peephole;
 
 #[cfg(test)]
 mod tester;

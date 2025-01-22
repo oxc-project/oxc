@@ -35,7 +35,7 @@ impl<'a> PeepholeOptimizations {
             *expr = MemberExpression::StaticMemberExpression(
                 ctx.ast.alloc_static_member_expression(e.span, object, property, e.optional),
             );
-            self.changed = true;
+            self.mark_current_function_as_changed();
             return;
         }
         let v = s.value.as_str();

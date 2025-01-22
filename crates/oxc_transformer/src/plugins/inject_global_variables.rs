@@ -249,12 +249,11 @@ impl<'a> InjectGlobalVariables<'a> {
                 ) {
                     // If this is first replacement made for this dot define,
                     // create `Atom` for replacement, and record in `replaced_dot_defines`
-                    let value_atom = value_atom.get_or_insert_with(|| {
+                    let value_atom = *value_atom.get_or_insert_with(|| {
                         self.replaced_dot_defines
                             .push((dot_define.parts[0].clone(), dot_define.value.clone()));
                         self.ast.atom(dot_define.value.as_str())
                     });
-                    let value_atom = *value_atom;
 
                     let value = self.ast.expression_identifier_reference(SPAN, value_atom);
                     *expr = value;

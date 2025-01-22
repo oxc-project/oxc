@@ -586,7 +586,7 @@ fn get_computed_member_name(computed_member: &ComputedMemberExpression) -> Optio
         Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
             Some(lit.quasis[0].value.raw.as_ref().into())
         }
-        Expression::RegExpLiteral(lit) => lit.raw.as_ref().map(|x| (*x).into_compact_str()),
+        Expression::RegExpLiteral(lit) => lit.raw.as_ref().map(|&x| x.into_compact_str()),
         _ => None,
     }
 }

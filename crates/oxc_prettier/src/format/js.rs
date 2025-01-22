@@ -1452,11 +1452,11 @@ impl<'a> Format<'a> for PrivateIdentifier<'a> {
 impl<'a> Format<'a> for BindingPattern<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = Vec::new_in(p.allocator);
-        parts.push(match self.kind {
-            BindingPatternKind::BindingIdentifier(ref ident) => ident.format(p),
-            BindingPatternKind::ObjectPattern(ref pattern) => pattern.format(p),
-            BindingPatternKind::ArrayPattern(ref pattern) => pattern.format(p),
-            BindingPatternKind::AssignmentPattern(ref pattern) => pattern.format(p),
+        parts.push(match &self.kind {
+            BindingPatternKind::BindingIdentifier(ident) => ident.format(p),
+            BindingPatternKind::ObjectPattern(pattern) => pattern.format(p),
+            BindingPatternKind::ArrayPattern(pattern) => pattern.format(p),
+            BindingPatternKind::AssignmentPattern(pattern) => pattern.format(p),
         });
 
         if self.optional {

@@ -267,7 +267,7 @@ impl<R> IgnorePattern<R> {
         match self {
             Self::Default => IgnorePattern::Default,
             Self::None => IgnorePattern::None,
-            Self::Some(ref r) => IgnorePattern::Some(r),
+            Self::Some(r) => IgnorePattern::Some(r),
         }
     }
 }

@@ -504,7 +504,7 @@ impl Rule for ExhaustiveDeps {
                 return false;
             }
 
-            if !is_identifier_a_dependency(&dep.name, dep.reference_id, ctx, component_scope_id) {
+            if !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id) {
                 return false;
             };
             true
@@ -764,7 +764,7 @@ fn concat_members<'a, 'b>(
 }
 
 fn is_identifier_a_dependency<'a>(
-    ident_name: &Atom<'a>,
+    ident_name: Atom<'a>,
     ident_reference_id: ReferenceId,
     ctx: &'_ LintContext<'a>,
     component_scope_id: ScopeId,
@@ -824,7 +824,7 @@ fn is_identifier_a_dependency<'a>(
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L164
 fn is_stable_value<'a, 'b>(
     node: &'b AstNode<'a>,
-    ident_name: &Atom<'a>,
+    ident_name: Atom<'a>,
     ident_reference_id: ReferenceId,
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
@@ -943,9 +943,8 @@ fn is_function_stable<'a, 'b>(
         collector.found_dependencies
     };
 
-    deps.iter().all(|dep| {
-        !is_identifier_a_dependency(&dep.name, dep.reference_id, ctx, component_scope_id)
-    })
+    deps.iter()
+        .all(|dep| !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id))
 }
 
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L1742

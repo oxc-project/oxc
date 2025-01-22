@@ -396,8 +396,8 @@ impl<'a> Pragma<'a> {
         };
 
         let mut expr = object;
-        for item in parts {
-            let name = ctx.ast.identifier_name(SPAN, *item);
+        for &item in parts {
+            let name = ctx.ast.identifier_name(SPAN, item);
             expr = ctx.ast.member_expression_static(SPAN, expr, name, false).into();
         }
         expr

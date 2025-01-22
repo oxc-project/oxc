@@ -368,7 +368,7 @@ impl<'a> IsolatedDeclarations<'a> {
         for element in &decl.body.body {
             match element {
                 ClassElement::StaticBlock(_) => {}
-                ClassElement::MethodDefinition(ref method) => {
+                ClassElement::MethodDefinition(method) => {
                     if self.has_internal_annotation(method.span) {
                         continue;
                     }
