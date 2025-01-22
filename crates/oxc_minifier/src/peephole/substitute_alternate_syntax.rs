@@ -123,9 +123,6 @@ impl<'a, 'b> PeepholeOptimizations {
                 self.try_compress_normal_assignment_to_combined_assignment(e, ctx);
                 self.try_compress_normal_assignment_to_combined_logical_assignment(e, ctx);
             }
-            Expression::NewExpression(e) => {
-                self.try_compress_typed_array_constructor(e, ctx);
-            }
             _ => {}
         }
 
@@ -163,6 +160,10 @@ impl<'a, 'b> PeepholeOptimizations {
         // Out of fixed loop syntax changes happen last.
         if self.in_fixed_loop {
             return;
+        }
+
+        if let Expression::NewExpression(e) = expr {
+            self.try_compress_typed_array_constructor(e, ctx);
         }
 
         if let Some(folded_expr) = match expr {
@@ -1219,17 +1220,16 @@ impl<'a, 'b> PeepholeOptimizations {
         e: &mut NewExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) {
+        debug_assert!(!self.in_fixed_loop);
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
         if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
             return;
         }
-
         if e.arguments.len() == 1
             && e.arguments[0].as_expression().is_some_and(Expression::is_number_0)
         {
             e.arguments.clear();
-            self.mark_current_function_as_changed();
         }
     }
 
