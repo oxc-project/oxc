@@ -20,8 +20,7 @@ const isMuslFromFilesystem = () => {
   const { readFileSync } = require("fs");
   try {
     return readFileSync("/usr/bin/ldd", "utf-8").includes("musl");
-  } catch(error) {
-    console.error(error);
+  } catch(_error) {
     return null;
   }
 };
@@ -99,18 +98,17 @@ let binPath = (
 ) || null;
 
 if (binPath) {
-  const newEnvObject = Object.assign({}, env, {
-    JS_RUNTIME_VERSION: version,
-    JS_RUNTIME_NAME: release.name,
-    NODE_PACKAGE_MANAGER: detectPackageManager(),
-  });
   const result = require("child_process").spawnSync(
     require.resolve(binPath),
     process.argv.slice(2),
     {
       shell: false,
       stdio: "inherit",
-      env: newEnvObject
+      env: Object.assign({}, env, {
+        JS_RUNTIME_VERSION: version,
+        JS_RUNTIME_NAME: release.name,
+        NODE_PACKAGE_MANAGER: detectPackageManager(),
+      }),
     }
   );
 
