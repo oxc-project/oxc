@@ -2,30 +2,20 @@ use oxc_ast::ast::*;
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::TraverseCtx;
 
-use super::PeepholeOptimizations;
+use super::LatePeepholeOptimizations;
 use crate::ctx::Ctx;
 
-impl<'a> PeepholeOptimizations {
+impl<'a> LatePeepholeOptimizations {
     /// Converts property accesses from quoted string or bracket access syntax to dot or unquoted string
     /// syntax, where possible. Dot syntax is more compact.
     ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/ConvertToDottedProperties.java>
-    pub fn convert_to_dotted_properties(
-        &mut self,
-        expr: &mut MemberExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !self.in_fixed_loop {
-            self.try_compress_computed_member_expression(expr, Ctx(ctx));
-        }
-    }
-
+    ///
     /// `foo['bar']` -> `foo.bar`
     /// `foo?.['bar']` -> `foo?.bar`
-    fn try_compress_computed_member_expression(
-        &mut self,
+    pub fn convert_to_dotted_properties(
         expr: &mut MemberExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
@@ -35,7 +25,6 @@ impl<'a> PeepholeOptimizations {
             *expr = MemberExpression::StaticMemberExpression(
                 ctx.ast.alloc_static_member_expression(e.span, object, property, e.optional),
             );
-            self.mark_current_function_as_changed();
             return;
         }
         let v = s.value.as_str();
@@ -43,7 +32,8 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(n) = Ctx::string_to_equivalent_number_value(v) {
-            e.expression = ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
+            e.expression =
+                Ctx(ctx).ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
         }
     }
 }

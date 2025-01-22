@@ -1,8 +1,9 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ValueType};
+use oxc_semantic::ReferenceFlags;
 use oxc_span::{cmp::ContentEq, GetSpan};
-use oxc_traverse::{Ancestor, TraverseCtx};
+use oxc_traverse::{Ancestor, MaybeBoundIdentifier, TraverseCtx};
 
 use crate::ctx::Ctx;
 
@@ -22,15 +23,15 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut changed = false;
-        let mut changed2 = false;
-        Self::try_replace_if(stmts, &mut changed2, ctx);
-        while changed2 {
-            changed2 = false;
-            Self::try_replace_if(stmts, &mut changed2, ctx);
-            if stmts.iter().any(|stmt| matches!(stmt, Statement::EmptyStatement(_))) {
+        loop {
+            let mut local_change = false;
+            Self::try_replace_if(stmts, &mut local_change, ctx);
+            if local_change {
                 stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
+                changed = local_change;
+            } else {
+                break;
             }
-            changed = changed2;
         }
         if changed {
             self.mark_current_function_as_changed();
@@ -77,24 +78,26 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        let mut changed = false;
         loop {
-            let mut changed = false;
-            if let Expression::ConditionalExpression(logical_expr) = expr {
-                if let Some(e) = Self::try_minimize_conditional(logical_expr, ctx) {
-                    *expr = e;
-                    changed = true;
-                }
-            }
+            let mut local_change = false;
             if let Expression::ConditionalExpression(logical_expr) = expr {
                 if Self::try_fold_expr_in_boolean_context(&mut logical_expr.test, Ctx(ctx)) {
-                    changed = true;
+                    local_change = true;
+                }
+                if let Some(e) = Self::try_minimize_conditional(logical_expr, ctx) {
+                    *expr = e;
+                    local_change = true;
                 }
             }
-            if changed {
-                self.mark_current_function_as_changed();
+            if local_change {
+                changed = true;
             } else {
                 break;
             }
+        }
+        if changed {
+            self.mark_current_function_as_changed();
         }
 
         if let Some(folded_expr) = match expr {
@@ -123,6 +126,15 @@ impl<'a> PeepholeOptimizations {
             Expression::BinaryExpression(e) if e.operator.is_equality() => {
                 e.operator = e.operator.equality_inverse_operator().unwrap();
                 Some(ctx.ast.move_expression(&mut expr.argument))
+            }
+            Expression::ConditionalExpression(conditional_expr) => {
+                if let Expression::BinaryExpression(e) = &mut conditional_expr.test {
+                    if e.operator.is_equality() {
+                        e.operator = e.operator.equality_inverse_operator().unwrap();
+                        return Some(ctx.ast.move_expression(&mut expr.argument));
+                    }
+                }
+                None
             }
             _ => None,
         }
@@ -331,9 +343,13 @@ impl<'a> PeepholeOptimizations {
             unreachable!()
         };
         let return_stmt = return_stmt.unbox();
-        match return_stmt.argument {
-            Some(e) => e,
-            None => ctx.ast.void_0(return_stmt.span),
+        if let Some(e) = return_stmt.argument {
+            e
+        } else {
+            let name = "undefined";
+            let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), name);
+            let ident = MaybeBoundIdentifier::new(Atom::from(name), symbol_id);
+            ident.create_expression(ReferenceFlags::read(), ctx)
         }
     }
 
