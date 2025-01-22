@@ -71,3 +71,13 @@ pub(crate) fn wrap_statements_in_arrow_function_iife<'a>(
         ));
     ctx.ast.expression_call(span, arrow, NONE, ctx.ast.vec(), false)
 }
+
+/// `object` -> `object.prototype`.
+pub(crate) fn create_prototype_member<'a>(
+    object: Expression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Expression<'a> {
+    let property = ctx.ast.identifier_name(SPAN, Atom::from("prototype"));
+    let static_member = ctx.ast.member_expression_static(SPAN, object, property, false);
+    Expression::from(static_member)
+}
