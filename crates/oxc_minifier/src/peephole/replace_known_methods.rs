@@ -333,15 +333,15 @@ impl<'a> PeepholeOptimizations {
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
     fn try_fold_concat_chain(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if matches!(ctx.parent(), Ancestor::StaticMemberExpressionObject(_)) {
-            return;
-        }
-
         let original_span = if let Expression::CallExpression(root_call_expr) = node {
             root_call_expr.span
         } else {
             return;
         };
+
+        if matches!(ctx.parent(), Ancestor::StaticMemberExpressionObject(_)) {
+            return;
+        }
 
         let mut current_node: &mut Expression = node;
         let mut collected_arguments = ctx.ast.vec();
