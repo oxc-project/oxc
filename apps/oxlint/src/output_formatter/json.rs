@@ -1,5 +1,6 @@
 use std::io::Write;
 
+use oxc_diagnostics::reporter::DiagnosticResult;
 use oxc_diagnostics::{reporter::DiagnosticReporter, Error};
 use oxc_linter::rules::RULES;
 use oxc_linter::RuleCategory;
@@ -52,7 +53,7 @@ struct JsonReporter {
 impl DiagnosticReporter for JsonReporter {
     // NOTE: this output does not conform to eslint json format yet
     // https://eslint.org/docs/latest/use/formatters/#json
-    fn finish(&mut self) -> Option<String> {
+    fn finish(&mut self, _: &DiagnosticResult) -> Option<String> {
         Some(format_json(&mut self.diagnostics))
     }
 
@@ -80,7 +81,10 @@ fn format_json(diagnostics: &mut Vec<Error>) -> String {
 
 #[cfg(test)]
 mod test {
-    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_diagnostics::{
+        reporter::{DiagnosticReporter, DiagnosticResult},
+        NamedSource, OxcDiagnostic,
+    };
     use oxc_span::Span;
 
     use super::JsonReporter;
@@ -99,7 +103,7 @@ mod test {
         assert!(first_result.is_none());
 
         // report not gives us all diagnostics at ones
-        let second_result = reporter.finish();
+        let second_result = reporter.finish(&DiagnosticResult::default());
 
         assert!(second_result.is_some());
         assert_eq!(

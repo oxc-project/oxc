@@ -1,7 +1,7 @@
 use std::{borrow::Cow, io::Write};
 
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
     Error, Severity,
 };
 
@@ -25,7 +25,7 @@ impl InternalFormatter for GithubOutputFormatter {
 struct GithubReporter;
 
 impl DiagnosticReporter for GithubReporter {
-    fn finish(&mut self) -> Option<String> {
+    fn finish(&mut self, _: &DiagnosticResult) -> Option<String> {
         None
     }
 
@@ -88,7 +88,10 @@ fn escape_property(value: &str) -> String {
 
 #[cfg(test)]
 mod test {
-    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_diagnostics::{
+        reporter::{DiagnosticReporter, DiagnosticResult},
+        NamedSource, OxcDiagnostic,
+    };
     use oxc_span::Span;
 
     use super::GithubReporter;
@@ -97,7 +100,7 @@ mod test {
     fn reporter_finish() {
         let mut reporter = GithubReporter;
 
-        let result = reporter.finish();
+        let result = reporter.finish(&DiagnosticResult::default());
 
         assert!(result.is_none());
     }
