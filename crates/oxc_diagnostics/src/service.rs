@@ -96,7 +96,7 @@ impl DiagnosticService {
     /// are too many warning-level rule violations in your project. Errors do not count towards the
     /// warning limit.
     ///
-    /// Use [`max_warnings_exceeded`](DiagnosticService::max_warnings_exceeded) to check if too
+    /// Use [`DiagnosticResult`](DiagnosticResult::max_warnings_exceeded) to check if too
     /// many warnings have been received.
     ///
     /// Default: [`None`]
