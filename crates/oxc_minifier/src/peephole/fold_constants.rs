@@ -29,6 +29,7 @@ impl<'a, 'b> PeepholeOptimizations {
                 .or_else(|| Self::try_fold_binary_typeof_comparison(e, ctx)),
             Expression::UnaryExpression(e) => Self::try_fold_unary_expr(e, ctx),
             Expression::StaticMemberExpression(e) => Self::try_fold_static_member_expr(e, ctx),
+            Expression::ComputedMemberExpression(e) => Self::try_fold_computed_member_expr(e, ctx),
             Expression::LogicalExpression(e) => Self::try_fold_logical_expr(e, ctx),
             Expression::ChainExpression(e) => Self::try_fold_optional_chain(e, ctx),
             Expression::CallExpression(e) => Self::try_fold_number_constructor(e, ctx),
@@ -56,12 +57,19 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     fn try_fold_static_member_expr(
-        static_member_expr: &mut StaticMemberExpression<'a>,
+        e: &mut StaticMemberExpression<'a>,
         ctx: Ctx<'a, 'b>,
     ) -> Option<Expression<'a>> {
         // TODO: tryFoldObjectPropAccess(n, left, name)
-        ctx.eval_static_member_expression(static_member_expr)
-            .map(|value| ctx.value_to_expr(static_member_expr.span, value))
+        ctx.eval_static_member_expression(e).map(|value| ctx.value_to_expr(e.span, value))
+    }
+
+    fn try_fold_computed_member_expr(
+        e: &mut ComputedMemberExpression<'a>,
+        ctx: Ctx<'a, 'b>,
+    ) -> Option<Expression<'a>> {
+        // TODO: tryFoldObjectPropAccess(n, left, name)
+        ctx.eval_computed_member_expression(e).map(|value| ctx.value_to_expr(e.span, value))
     }
 
     fn try_fold_logical_expr(
@@ -1618,6 +1626,7 @@ mod test {
         test("x = [].length", "x = 0");
         test("x = [1,2,3].length", "x = 3");
         // test("x = [a,b].length", "x = 2");
+        test("x = 'abc'['length']", "x = 3");
 
         // Not handled yet
         test("x = [,,1].length", "x = 3");

@@ -20,10 +20,6 @@ use rustc_hash::FxHashSet;
 pub struct PeepholeOptimizations {
     target: ESTarget,
 
-    /// `in_fixed_loop`: Do not compress syntaxes that are hard to analyze inside the fixed loop.
-    /// Opposite of `late` in Closure Compiler.
-    in_fixed_loop: bool,
-
     /// Walk the ast in a fixed point loop until no changes are made.
     /// `prev_function_changed`, `functions_changed` and `current_function` track changes
     /// in top level and each function. No minification code are run if the function is not changed
@@ -37,10 +33,9 @@ pub struct PeepholeOptimizations {
 }
 
 impl<'a> PeepholeOptimizations {
-    pub fn new(target: ESTarget, in_fixed_loop: bool) -> Self {
+    pub fn new(target: ESTarget) -> Self {
         Self {
             target,
-            in_fixed_loop,
             iteration: 0,
             prev_functions_changed: FxHashSet::default(),
             functions_changed: FxHashSet::default(),
@@ -84,7 +79,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_prev_function_changed(&self) -> bool {
-        if !self.in_fixed_loop || self.iteration == 0 {
+        if self.iteration == 0 {
             return true;
         }
         if let Some((_, prev_changed, _)) = self.current_function_stack.last() {
@@ -159,13 +154,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         self.minimize_exit_points(body, ctx);
     }
 
-    fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
-        self.remove_dead_code_exit_class_body(body, ctx);
-    }
-
     fn exit_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,
@@ -193,17 +181,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             return;
         }
         self.substitute_call_expression(expr, ctx);
-    }
-
-    fn exit_member_expression(
-        &mut self,
-        expr: &mut MemberExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
-        self.convert_to_dotted_properties(expr, ctx);
     }
 
     fn exit_object_property(&mut self, prop: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -263,11 +240,42 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         }
         self.substitute_accessor_property(prop, ctx);
     }
+}
+
+/// Changes that do not interfere with optimizations that are run inside the fixed-point loop,
+/// which can be done as a last AST pass.
+pub struct LatePeepholeOptimizations {
+    target: ESTarget,
+}
+
+impl<'a> LatePeepholeOptimizations {
+    pub fn new(target: ESTarget) -> Self {
+        Self { target }
+    }
+
+    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+        traverse_mut_with_ctx(self, program, ctx);
+    }
+}
+
+impl<'a> Traverse<'a> for LatePeepholeOptimizations {
+    fn exit_member_expression(
+        &mut self,
+        expr: &mut MemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::convert_to_dotted_properties(expr, ctx);
+    }
+
+    fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::remove_dead_code_exit_class_body(body, ctx);
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::substitute_exit_expression(expr, ctx);
+    }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_prev_function_changed() {
-            return;
-        }
         self.substitute_catch_clause(catch, ctx);
     }
 }
@@ -278,7 +286,7 @@ pub struct DeadCodeElimination {
 
 impl<'a> DeadCodeElimination {
     pub fn new() -> Self {
-        Self { inner: PeepholeOptimizations::new(ESTarget::ESNext, false) }
+        Self { inner: PeepholeOptimizations::new(ESTarget::ESNext) }
     }
 
     pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
