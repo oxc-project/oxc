@@ -108,7 +108,6 @@ macro_rules! byte_handler {
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     unsafe {
 ///       use assert_unchecked::assert_unchecked;
-///       let s = lexer.current.chars.as_str();
 ///       assert_unchecked!(!lexer.source.is_eof());
 ///       assert_unchecked!(lexer.source.peek_byte_unchecked() < 128);
 ///     }
