@@ -32,35 +32,6 @@ use crate::Allocator;
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 impl<T> Box<'_, T> {
-    /// Take ownership of the value stored in this [`Box`], consuming the box in
-    /// the process.
-    ///
-    /// # Examples
-    /// ```
-    /// use oxc_allocator::{Allocator, Box};
-    ///
-    /// let arena = Allocator::default();
-    ///
-    /// // Put `5` into the arena and on the heap.
-    /// let boxed: Box<i32> = Box::new_in(5, &arena);
-    /// // Move it back to the stack. `boxed` has been consumed.
-    /// let i = boxed.unbox();
-    ///
-    /// assert_eq!(i, 5);
-    /// ```
-    #[inline]
-    pub fn unbox(self) -> T {
-        // SAFETY:
-        // This pointer read is safe because the reference `self.0` is
-        // guaranteed to be unique--not just now, but we're guaranteed it's not
-        // borrowed from some other reference. This in turn is because we never
-        // construct a `Box` with a borrowed reference, only with a fresh
-        // one just allocated from a Bump.
-        unsafe { ptr::read(self.0.as_ptr()) }
-    }
-}
-
-impl<T> Box<'_, T> {
     /// Put a `value` into a memory arena and get back a [`Box`] with ownership
     /// to the allocation.
     ///
@@ -96,6 +67,33 @@ impl<T> Box<'_, T> {
         }
 
         Self(NonNull::dangling(), PhantomData)
+    }
+
+    /// Take ownership of the value stored in this [`Box`], consuming the box in
+    /// the process.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let arena = Allocator::default();
+    ///
+    /// // Put `5` into the arena and on the heap.
+    /// let boxed: Box<i32> = Box::new_in(5, &arena);
+    /// // Move it back to the stack. `boxed` has been consumed.
+    /// let i = boxed.unbox();
+    ///
+    /// assert_eq!(i, 5);
+    /// ```
+    #[inline]
+    pub fn unbox(self) -> T {
+        // SAFETY:
+        // This pointer read is safe because the reference `self.0` is
+        // guaranteed to be unique - not just now, but we're guaranteed it's not
+        // borrowed from some other reference. This in turn is because we never
+        // construct a `Box` with a borrowed reference, only with a fresh
+        // one just allocated from a `Bump`.
+        unsafe { ptr::read(self.0.as_ptr()) }
     }
 }
 
