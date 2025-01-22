@@ -7,7 +7,6 @@ use std::{
     fmt::{self, Debug, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
-    mem::needs_drop,
     ops::{self, Deref},
     ptr::{self, NonNull},
 };
@@ -31,6 +30,13 @@ use crate::Allocator;
 /// with a [`Drop`] type.
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
+impl<T: ?Sized> Box<'_, T> {
+    /// Const assertion that `T` is not `Drop`.
+    /// Must be referenced in all methods which create a `Box`.
+    const ASSERT_T_IS_NOT_DROP: () =
+        assert!(!std::mem::needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
+}
+
 impl<T> Box<'_, T> {
     /// Put a `value` into a memory arena and get back a [`Box`] with ownership
     /// to the allocation.
@@ -48,9 +54,7 @@ impl<T> Box<'_, T> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn new_in(value: T, allocator: &Allocator) -> Self {
-        const {
-            assert!(!needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
-        }
+        const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(NonNull::from(allocator.alloc(value)), PhantomData)
     }
@@ -62,9 +66,7 @@ impl<T> Box<'_, T> {
     /// Only purpose is for mocking types without allocating for const assertions.
     #[allow(unsafe_code, clippy::missing_safety_doc)]
     pub const unsafe fn dangling() -> Self {
-        const {
-            assert!(!needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
-        }
+        const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(NonNull::dangling(), PhantomData)
     }
@@ -115,9 +117,7 @@ impl<T: ?Sized> Box<'_, T> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
-        const {
-            assert!(!needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
-        }
+        const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(ptr, PhantomData)
     }

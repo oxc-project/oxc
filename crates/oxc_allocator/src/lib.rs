@@ -14,8 +14,6 @@
 
 #![warn(missing_docs)]
 
-use std::mem::needs_drop;
-
 use bumpalo::Bump;
 
 mod address;
@@ -291,9 +289,7 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn alloc<T>(&self, val: T) -> &mut T {
-        const {
-            assert!(!needs_drop::<T>(), "Cannot allocate Drop type in arena");
-        }
+        const { assert!(!std::mem::needs_drop::<T>(), "Cannot allocate Drop type in arena") };
 
         self.bump.alloc(val)
     }
