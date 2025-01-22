@@ -11,6 +11,7 @@ mod substitute_alternate_syntax;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_data_structures::stack::NonEmptyStack;
 use oxc_syntax::{es_target::ESTarget, scope::ScopeId};
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
@@ -28,8 +29,8 @@ pub struct PeepholeOptimizations {
     prev_functions_changed: FxHashSet<ScopeId>,
     functions_changed: FxHashSet<ScopeId>,
     /// Track the current function as a stack.
-    current_function_stack:
-        std::vec::Vec<(ScopeId, /* prev changed */ bool, /* current changed */ bool)>,
+    current_function:
+        NonEmptyStack<(ScopeId, /* prev changed */ bool, /* current changed */ bool)>,
 }
 
 impl<'a> PeepholeOptimizations {
@@ -39,7 +40,7 @@ impl<'a> PeepholeOptimizations {
             iteration: 0,
             prev_functions_changed: FxHashSet::default(),
             functions_changed: FxHashSet::default(),
-            current_function_stack: std::vec::Vec::new(),
+            current_function: NonEmptyStack::new((ScopeId::new(0), true, false)),
         }
     }
 
@@ -64,43 +65,32 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn mark_current_function_as_changed(&mut self) {
-        if let Some((_scope_id, _prev_changed, current_changed)) =
-            self.current_function_stack.last_mut()
-        {
-            *current_changed = true;
-        }
+        let (_scope_id, _prev_changed, current_changed) = self.current_function.last_mut();
+        *current_changed = true;
     }
 
     pub fn is_current_function_changed(&self) -> bool {
-        if let Some((_, _, current_changed)) = self.current_function_stack.last() {
-            return *current_changed;
-        }
-        false
+        let (_, _, current_changed) = self.current_function.last();
+        *current_changed
     }
 
     fn is_prev_function_changed(&self) -> bool {
-        if self.iteration == 0 {
-            return true;
-        }
-        if let Some((_, prev_changed, _)) = self.current_function_stack.last() {
-            return *prev_changed;
-        }
-        false
+        let (_, prev_changed, _) = self.current_function.last();
+        *prev_changed
     }
 
     fn enter_program_or_function(&mut self, scope_id: ScopeId) {
-        self.current_function_stack.push((
+        self.current_function.push((
             scope_id,
-            self.prev_functions_changed.contains(&scope_id),
+            self.iteration == 0 || self.prev_functions_changed.contains(&scope_id),
             false,
         ));
     }
 
     fn exit_program_or_function(&mut self) {
-        if let Some((scope_id, _, changed)) = self.current_function_stack.pop() {
-            if changed {
-                self.functions_changed.insert(scope_id);
-            }
+        let (scope_id, _, changed) = self.current_function.pop();
+        if changed {
+            self.functions_changed.insert(scope_id);
         }
     }
 }
