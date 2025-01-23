@@ -74,6 +74,7 @@ impl<'a> PeepholeOptimizations {
         *current_changed
     }
 
+    #[inline]
     fn is_prev_function_changed(&self) -> bool {
         let (_, prev_changed, _) = self.current_function.last();
         *prev_changed
