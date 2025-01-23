@@ -1075,16 +1075,13 @@ impl<'a> PeepholeOptimizations {
         if self.target < ESTarget::ES2020 {
             return None;
         }
-
         let Expression::AssignmentExpression(assignment_expr) = &mut expr.right else {
             return None;
         };
         if assignment_expr.operator != AssignmentOperator::Assign {
             return None;
         }
-
         let new_op = expr.operator.to_assignment_operator();
-
         if !Self::has_no_side_effect_for_evaluation_same_target(
             &assignment_expr.left,
             &expr.left,
@@ -1092,7 +1089,6 @@ impl<'a> PeepholeOptimizations {
         ) {
             return None;
         }
-
         assignment_expr.span = expr.span;
         assignment_expr.operator = new_op;
         Some(ctx.ast.move_expression(&mut expr.right))
@@ -1129,37 +1125,36 @@ impl<'a> PeepholeOptimizations {
     ///
     /// - `a`, `a`
     /// - `a.b`, `a.b`
-    /// - `a.#b`, `a.#b`
+    /// - `a["b"]`, `a["b"]`
     fn has_no_side_effect_for_evaluation_same_target(
         assignment_target: &AssignmentTarget,
         expr: &Expression,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        match (&assignment_target, &expr) {
-            (
-                AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
-                Expression::Identifier(read_id_ref),
-            ) => write_id_ref.name == read_id_ref.name,
-            (
-                AssignmentTarget::StaticMemberExpression(_),
-                Expression::StaticMemberExpression(_),
-            )
-            | (
-                AssignmentTarget::PrivateFieldExpression(_),
-                Expression::PrivateFieldExpression(_),
-            ) => {
-                let write_expr = assignment_target.to_member_expression();
-                let read_expr = expr.to_member_expression();
-                let Expression::Identifier(write_expr_object_id) = &write_expr.object() else {
+        if let (
+            AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
+            Expression::Identifier(read_id_ref),
+        ) = (assignment_target, expr)
+        {
+            return write_id_ref.name == read_id_ref.name;
+        }
+        if let Some(write_expr) = assignment_target.as_member_expression() {
+            if let MemberExpression::ComputedMemberExpression(e) = write_expr {
+                if !matches!(e.expression, Expression::StringLiteral(_)) {
                     return false;
-                };
+                }
+            }
+            let Expression::Identifier(write_expr_object_id) = &write_expr.object() else {
+                return false;
+            };
+            if let Some(read_expr) = expr.as_member_expression() {
                 // It should also return false when the reference might refer to a reference value created by a with statement
                 // when the minifier supports with statements
-                !Ctx(ctx).is_global_reference(write_expr_object_id)
-                    && write_expr.content_eq(read_expr)
+                return !Ctx(ctx).is_global_reference(write_expr_object_id)
+                    && write_expr.content_eq(read_expr);
             }
-            _ => false,
         }
+        false
     }
 
     /// Compress `a = a + b` to `a += b`
@@ -2475,6 +2470,7 @@ mod test {
 
         // GetValue(x) has no sideeffect when x is a resolved identifier
         test("var x; x.y || (x.y = 3)", "var x; x.y ||= 3");
+        test("var x; x['y'] || (x['y'] = 3)", "var x; x.y ||= 3");
         test("var x; x.#y || (x.#y = 3)", "var x; x.#y ||= 3");
         test_same("x.y || (x.y = 3)");
         // this can be compressed if `y` does not have side effect

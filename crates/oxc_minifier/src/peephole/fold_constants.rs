@@ -673,6 +673,7 @@ impl<'a, 'b> PeepholeOptimizations {
                             | "undefined"
                             | "object"
                             | "function"
+                            | "unknown" // IE
                     ) {
                         return Some(ctx.ast.expression_boolean_literal(
                             bin_expr.span,
@@ -1032,6 +1033,7 @@ mod test {
         test("'a' == 'a'", "!0");
         test("'b' != 'a'", "!0");
         test_same("typeof a != 'number'");
+        test_same("typeof a != 'unknown'"); // IE
         test("'a' === 'a'", "!0");
         test("'b' !== 'a'", "!0");
         test_same("'' + x <= '' + y");
