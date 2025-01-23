@@ -106,6 +106,12 @@ export enum DefinitionKind {
    */
   TS = 'TS',
 }
+export type TSTypeLiteral = {
+    /**
+     * Comment
+     */
+    foo: string
+}
 ",
     ];
 
