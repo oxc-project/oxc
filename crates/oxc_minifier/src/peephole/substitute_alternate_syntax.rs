@@ -3,9 +3,8 @@ use oxc_ast::{ast::*, NONE};
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ValueType},
     side_effects::MayHaveSideEffects,
-    ToInt32, ToJsString, ToNumber,
+    ToJsString, ToNumber,
 };
-use oxc_span::cmp::ContentEq;
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
 use oxc_syntax::{
@@ -111,21 +110,12 @@ impl<'a> PeepholeOptimizations {
             Expression::ArrowFunctionExpression(e) => self.try_compress_arrow_expression(e, ctx),
             Expression::ChainExpression(e) => self.try_compress_chain_call_expression(e, ctx),
             Expression::BinaryExpression(e) => Self::swap_binary_expressions(e),
-            Expression::AssignmentExpression(e) => {
-                self.try_compress_normal_assignment_to_combined_assignment(e, ctx);
-                self.try_compress_normal_assignment_to_combined_logical_assignment(e, ctx);
-            }
             _ => {}
         }
 
         // Fold
         if let Some(folded_expr) = match expr {
-            Expression::AssignmentExpression(e) => {
-                Self::try_compress_assignment_to_update_expression(e, ctx)
-            }
-            Expression::LogicalExpression(e) => Self::try_compress_is_null_or_undefined(e, ctx)
-                .or_else(|| Self::try_compress_is_object_and_not_null(e, ctx))
-                .or_else(|| self.try_compress_logical_expression_to_assignment_expression(e, ctx))
+            Expression::LogicalExpression(e) => Self::try_compress_is_object_and_not_null(e, ctx)
                 .or_else(|| Self::try_rotate_logical_expression(e, ctx)),
             Expression::TemplateLiteral(t) => Self::try_fold_template_literal(t, ctx),
             Expression::BinaryExpression(e) => Self::try_fold_loose_equals_undefined(e, ctx)
@@ -229,183 +219,6 @@ impl<'a> PeepholeOptimizations {
         Some(ctx.ast.expression_binary(expr.span, left, new_comp_op, right))
     }
 
-    /// Compress `foo === null || foo === undefined` into `foo == null`.
-    ///
-    /// `foo === null || foo === undefined` => `foo == null`
-    /// `foo !== null && foo !== undefined` => `foo != null`
-    ///
-    /// Also supports `(a = foo.bar) === null || a === undefined` which commonly happens when
-    /// optional chaining is lowered. (`(a=foo.bar)==null`)
-    ///
-    /// This compression assumes that `document.all` is a normal object.
-    /// If that assumption does not hold, this compression is not allowed.
-    /// - `document.all === null || document.all === undefined` is `false`
-    /// - `document.all == null` is `true`
-    fn try_compress_is_null_or_undefined(
-        expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        let op = expr.operator;
-        let target_ops = match op {
-            LogicalOperator::Or => (BinaryOperator::StrictEquality, BinaryOperator::Equality),
-            LogicalOperator::And => (BinaryOperator::StrictInequality, BinaryOperator::Inequality),
-            LogicalOperator::Coalesce => return None,
-        };
-        if let Some(new_expr) = Self::try_compress_is_null_or_undefined_for_left_and_right(
-            &mut expr.left,
-            &mut expr.right,
-            expr.span,
-            target_ops,
-            ctx,
-        ) {
-            return Some(new_expr);
-        }
-        let Expression::LogicalExpression(left) = &mut expr.left else {
-            return None;
-        };
-        if left.operator != op {
-            return None;
-        }
-        let new_span = Span::new(left.right.span().start, expr.span.end);
-        Self::try_compress_is_null_or_undefined_for_left_and_right(
-            &mut left.right,
-            &mut expr.right,
-            new_span,
-            target_ops,
-            ctx,
-        )
-        .map(|new_expr| {
-            ctx.ast.expression_logical(
-                expr.span,
-                ctx.ast.move_expression(&mut left.left),
-                expr.operator,
-                new_expr,
-            )
-        })
-    }
-
-    fn try_compress_is_null_or_undefined_for_left_and_right(
-        left: &mut Expression<'a>,
-        right: &mut Expression<'a>,
-        span: Span,
-        (find_op, replace_op): (BinaryOperator, BinaryOperator),
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        enum LeftPairValueResult {
-            Null(Span),
-            Undefined,
-        }
-
-        let (
-            Expression::BinaryExpression(left_binary_expr),
-            Expression::BinaryExpression(right_binary_expr),
-        ) = (left, right)
-        else {
-            return None;
-        };
-        if left_binary_expr.operator != find_op || right_binary_expr.operator != find_op {
-            return None;
-        }
-
-        let is_null_or_undefined = |a: &Expression| {
-            if a.is_null() {
-                Some(LeftPairValueResult::Null(a.span()))
-            } else if a.evaluate_to_undefined() {
-                Some(LeftPairValueResult::Undefined)
-            } else {
-                None
-            }
-        };
-        let is_id_or_assign_to_id = |b: &Expression| match b {
-            Expression::Identifier(id) => Some(id.name.clone_in(ctx.ast.allocator)),
-            Expression::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator == AssignmentOperator::Assign {
-                    if let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left {
-                        return Some(id.name.clone_in(ctx.ast.allocator));
-                    }
-                }
-                None
-            }
-            _ => None,
-        };
-        let (left_value, (left_non_value_expr, left_id_name)) = {
-            let left_value;
-            let left_non_value;
-            if let Some(v) = is_null_or_undefined(&left_binary_expr.left) {
-                left_value = v;
-                let left_non_value_id = is_id_or_assign_to_id(&left_binary_expr.right)?;
-                left_non_value = (&mut left_binary_expr.right, left_non_value_id);
-            } else {
-                left_value = is_null_or_undefined(&left_binary_expr.right)?;
-                let left_non_value_id = is_id_or_assign_to_id(&left_binary_expr.left)?;
-                left_non_value = (&mut left_binary_expr.left, left_non_value_id);
-            }
-            (left_value, left_non_value)
-        };
-
-        let (right_value, right_id) = Self::commutative_pair(
-            (&right_binary_expr.left, &right_binary_expr.right),
-            |a| match left_value {
-                LeftPairValueResult::Null(_) => a.evaluate_to_undefined().then_some(None),
-                LeftPairValueResult::Undefined => a.is_null().then_some(Some(a.span())),
-            },
-            |b| {
-                if let Expression::Identifier(id) = b {
-                    Some(id)
-                } else {
-                    None
-                }
-            },
-        )?;
-
-        if left_id_name != right_id.name {
-            return None;
-        }
-
-        let null_expr_span = match left_value {
-            LeftPairValueResult::Null(span) => span,
-            LeftPairValueResult::Undefined => right_value.unwrap(),
-        };
-        Some(ctx.ast.expression_binary(
-            span,
-            ctx.ast.move_expression(left_non_value_expr),
-            replace_op,
-            ctx.ast.expression_null_literal(null_expr_span),
-        ))
-    }
-
-    /// Compress `a || (a = b)` to `a ||= b`
-    fn try_compress_logical_expression_to_assignment_expression(
-        &self,
-        expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if self.target < ESTarget::ES2020 {
-            return None;
-        }
-
-        let Expression::AssignmentExpression(assignment_expr) = &mut expr.right else {
-            return None;
-        };
-        if assignment_expr.operator != AssignmentOperator::Assign {
-            return None;
-        }
-
-        let new_op = expr.operator.to_assignment_operator();
-
-        if !Self::has_no_side_effect_for_evaluation_same_target(
-            &assignment_expr.left,
-            &expr.left,
-            ctx,
-        ) {
-            return None;
-        }
-
-        assignment_expr.span = expr.span;
-        assignment_expr.operator = new_op;
-        Some(ctx.ast.move_expression(&mut expr.right))
-    }
-
     /// `a || (b || c);` -> `(a || b) || c;`
     fn try_rotate_logical_expression(
         expr: &mut LogicalExpression<'a>,
@@ -436,47 +249,6 @@ impl<'a> PeepholeOptimizations {
             expr.operator,
             ctx.ast.move_expression(&mut right.right),
         ))
-    }
-
-    /// Returns `true` if the assignment target and expression have no side effect for *evaluation* and points to the same reference.
-    ///
-    /// Evaluation here means `Evaluation` in the spec.
-    /// <https://tc39.es/ecma262/multipage/syntax-directed-operations.html#sec-evaluation>
-    ///
-    /// Matches the following cases:
-    ///
-    /// - `a`, `a`
-    /// - `a.b`, `a.b`
-    /// - `a.#b`, `a.#b`
-    fn has_no_side_effect_for_evaluation_same_target(
-        assignment_target: &AssignmentTarget,
-        expr: &Expression,
-        ctx: Ctx<'a, '_>,
-    ) -> bool {
-        match (&assignment_target, &expr) {
-            (
-                AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
-                Expression::Identifier(read_id_ref),
-            ) => write_id_ref.name == read_id_ref.name,
-            (
-                AssignmentTarget::StaticMemberExpression(_),
-                Expression::StaticMemberExpression(_),
-            )
-            | (
-                AssignmentTarget::PrivateFieldExpression(_),
-                Expression::PrivateFieldExpression(_),
-            ) => {
-                let write_expr = assignment_target.to_member_expression();
-                let read_expr = expr.to_member_expression();
-                let Expression::Identifier(write_expr_object_id) = &write_expr.object() else {
-                    return false;
-                };
-                // It should also return false when the reference might refer to a reference value created by a with statement
-                // when the minifier supports with statements
-                !ctx.is_global_reference(write_expr_object_id) && write_expr.content_eq(read_expr)
-            }
-            _ => false,
-        }
     }
 
     /// Compress `typeof foo === 'object' && foo !== null` into `typeof foo == 'object' && !!foo`.
@@ -644,27 +416,6 @@ impl<'a> PeepholeOptimizations {
         ))
     }
 
-    fn commutative_pair<'x, A, F, G, RetF: 'x, RetG: 'x>(
-        pair: (&'x A, &'x A),
-        check_a: F,
-        check_b: G,
-    ) -> Option<(RetF, RetG)>
-    where
-        F: Fn(&'x A) -> Option<RetF>,
-        G: Fn(&'x A) -> Option<RetG>,
-    {
-        if let Some(a) = check_a(pair.0) {
-            if let Some(b) = check_b(pair.1) {
-                return Some((a, b));
-            }
-        } else if let Some(a) = check_a(pair.1) {
-            if let Some(b) = check_b(pair.0) {
-                return Some((a, b));
-            }
-        }
-        None
-    }
-
     fn try_fold_loose_equals_undefined(
         e: &mut BinaryExpression<'a>,
         ctx: Ctx<'a, '_>,
@@ -735,99 +486,6 @@ impl<'a> PeepholeOptimizations {
         {
             decl.init = None;
             self.mark_current_function_as_changed();
-        }
-    }
-
-    /// Compress `a = a + b` to `a += b`
-    fn try_compress_normal_assignment_to_combined_assignment(
-        &mut self,
-        expr: &mut AssignmentExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) {
-        if !matches!(expr.operator, AssignmentOperator::Assign) {
-            return;
-        }
-
-        let Expression::BinaryExpression(binary_expr) = &mut expr.right else { return };
-        let Some(new_op) = binary_expr.operator.to_assignment_operator() else { return };
-
-        if !Self::has_no_side_effect_for_evaluation_same_target(&expr.left, &binary_expr.left, ctx)
-        {
-            return;
-        }
-
-        expr.operator = new_op;
-        expr.right = ctx.ast.move_expression(&mut binary_expr.right);
-        self.mark_current_function_as_changed();
-    }
-
-    /// Compress `a = a || b` to `a ||= b`
-    ///
-    /// This can only be done for resolved identifiers as this would avoid setting `a` when `a` is truthy.
-    fn try_compress_normal_assignment_to_combined_logical_assignment(
-        &mut self,
-        expr: &mut AssignmentExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) {
-        if self.target < ESTarget::ES2020 {
-            return;
-        }
-        if !matches!(expr.operator, AssignmentOperator::Assign) {
-            return;
-        }
-
-        let Expression::LogicalExpression(logical_expr) = &mut expr.right else { return };
-        let new_op = logical_expr.operator.to_assignment_operator();
-
-        let (
-            AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
-            Expression::Identifier(read_id_ref),
-        ) = (&expr.left, &logical_expr.left)
-        else {
-            return;
-        };
-        // It should also early return when the reference might refer to a reference value created by a with statement
-        // when the minifier supports with statements
-        if write_id_ref.name != read_id_ref.name || ctx.is_global_reference(write_id_ref) {
-            return;
-        }
-
-        expr.operator = new_op;
-        expr.right = ctx.ast.move_expression(&mut logical_expr.right);
-        self.mark_current_function_as_changed();
-    }
-
-    fn try_compress_assignment_to_update_expression(
-        expr: &mut AssignmentExpression<'a>,
-        ctx: Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        let target = expr.left.as_simple_assignment_target_mut()?;
-        if !matches!(expr.operator, AssignmentOperator::Subtraction) {
-            return None;
-        }
-        match &expr.right {
-            Expression::NumericLiteral(num) if num.value.to_int_32() == 1 => {
-                // The `_` will not be placed to the target code.
-                let target = std::mem::replace(
-                    target,
-                    ctx.ast.simple_assignment_target_identifier_reference(target.span(), "_"),
-                );
-                Some(ctx.ast.expression_update(expr.span, UpdateOperator::Decrement, true, target))
-            }
-            Expression::UnaryExpression(un)
-                if matches!(un.operator, UnaryOperator::UnaryNegation) =>
-            {
-                let Expression::NumericLiteral(num) = &un.argument else { return None };
-                (num.value.to_int_32() == 1).then(|| {
-                    // The `_` will not be placed to the target code.
-                    let target = std::mem::replace(
-                        target,
-                        ctx.ast.simple_assignment_target_identifier_reference(target.span(), "_"),
-                    );
-                    ctx.ast.expression_update(expr.span, UpdateOperator::Increment, true, target)
-                })
-            }
-            _ => None,
         }
     }
 
@@ -1444,28 +1102,6 @@ mod test {
     }
 
     #[test]
-    fn test_compress_normal_assignment_to_combined_logical_assignment() {
-        test("var x; x = x || 1", "var x; x ||= 1");
-        test("var x; x = x && 1", "var x; x &&= 1");
-        test("var x; x = x ?? 1", "var x; x ??= 1");
-
-        // `x` is a global reference and might have a setter
-        // Example case: `Object.defineProperty(globalThis, 'x', { get: () => true, set: () => console.log('x') }); x = x || 1`
-        test_same("x = x || 1");
-        // setting x.y might have a side effect
-        test_same("var x; x.y = x.y || 1");
-        // This case is not supported, since the minifier does not support with statements
-        // test_same("var x; with (z) { x = x || 1 }");
-
-        let target = ESTarget::ES2019;
-        let code = "var x; x = x || 1";
-        assert_eq!(
-            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(code, None)
-        );
-    }
-
-    #[test]
     fn test_fold_subtraction_assignment() {
         test("x -= 1", "--x");
         // FIXME
@@ -1869,42 +1505,6 @@ mod test {
     }
 
     #[test]
-    fn test_fold_is_null_or_undefined() {
-        test("foo === null || foo === undefined", "foo == null");
-        test("foo === undefined || foo === null", "foo == null");
-        test("foo === null || foo === void 0", "foo == null");
-        test("foo === null || foo === void 0 || foo === 1", "foo == null || foo === 1");
-        test("foo === 1 || foo === null || foo === void 0", "foo === 1 || foo == null");
-        test_same("foo === void 0 || bar === null");
-        test_same("foo !== 1 && foo === void 0 || foo === null");
-        test_same("foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
-
-        test("foo !== null && foo !== undefined", "foo != null");
-        test("foo !== undefined && foo !== null", "foo != null");
-        test("foo !== null && foo !== void 0", "foo != null");
-        test("foo !== null && foo !== void 0 && foo !== 1", "foo != null && foo !== 1");
-        test("foo !== 1 && foo !== null && foo !== void 0", "foo !== 1 && foo != null");
-        test("foo !== 1 || foo !== void 0 && foo !== null", "foo !== 1 || foo != null");
-        test_same("foo !== void 0 && bar !== null");
-
-        test("(_foo = foo) === null || _foo === undefined", "(_foo = foo) == null");
-        test("(_foo = foo) === null || _foo === void 0", "(_foo = foo) == null");
-        test("(_foo = foo.bar) === null || _foo === undefined", "(_foo = foo.bar) == null");
-        test("(_foo = foo) !== null && _foo !== undefined", "(_foo = foo) != null");
-        test("(_foo = foo) === undefined || _foo === null", "(_foo = foo) == null");
-        test("(_foo = foo) === void 0 || _foo === null", "(_foo = foo) == null");
-        test(
-            "(_foo = foo) === null || _foo === void 0 || _foo === 1",
-            "(_foo = foo) == null || _foo === 1",
-        );
-        test(
-            "_foo === 1 || (_foo = foo) === null || _foo === void 0",
-            "_foo === 1 || (_foo = foo) == null",
-        );
-        test_same("(_foo = foo) === void 0 || bar === null");
-    }
-
-    #[test]
     fn test_fold_is_object_and_not_null() {
         test(
             "var foo; v = typeof foo === 'object' && foo !== null",
@@ -1951,44 +1551,6 @@ mod test {
         test_same("v = typeof foo == 'object' && foo !== null"); // cannot be folded because accessing foo might have a side effect
         test_same("var foo, bar; v = typeof foo == 'object' && bar !== null");
         test_same("var foo; v = typeof foo == 'string' && foo !== null");
-    }
-
-    #[test]
-    fn test_fold_logical_expression_to_assignment_expression() {
-        test("x || (x = 3)", "x ||= 3");
-        test("x && (x = 3)", "x &&= 3");
-        test("x ?? (x = 3)", "x ??= 3");
-        test("x || (x = g())", "x ||= g()");
-        test("x && (x = g())", "x &&= g()");
-        test("x ?? (x = g())", "x ??= g()");
-
-        // `||=`, `&&=`, `??=` sets the name property of the function
-        // Example case: `let f = false; f || (f = () => {}); console.log(f.name)`
-        test("x || (x = () => 'a')", "x ||= () => 'a'");
-
-        test_same("x || (y = 3)");
-
-        // GetValue(x) has no sideeffect when x is a resolved identifier
-        test("var x; x.y || (x.y = 3)", "var x; x.y ||= 3");
-        test("var x; x.#y || (x.#y = 3)", "var x; x.#y ||= 3");
-        test_same("x.y || (x.y = 3)");
-        // this can be compressed if `y` does not have side effect
-        test_same("var x; x[y] || (x[y] = 3)");
-        // GetValue(x) has a side effect in this case
-        // Example case: `var a = { get b() { console.log('b'); return { get c() { console.log('c') } } } }; a.b.c || (a.b.c = 1)`
-        test_same("var x; x.y.z || (x.y.z = 3)");
-        // This case is not supported, since the minifier does not support with statements
-        // test_same("var x; with (z) { x.y || (x.y = 3) }");
-
-        // foo() might have a side effect
-        test_same("foo().a || (foo().a = 3)");
-
-        let target = ESTarget::ES2019;
-        let code = "x || (x = 3)";
-        assert_eq!(
-            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(code, None)
-        );
     }
 
     #[test]

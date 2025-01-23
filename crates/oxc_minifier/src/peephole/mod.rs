@@ -94,6 +94,27 @@ impl<'a> PeepholeOptimizations {
             self.functions_changed.insert(scope_id);
         }
     }
+
+    pub fn commutative_pair<'x, A, F, G, RetF: 'x, RetG: 'x>(
+        pair: (&'x A, &'x A),
+        check_a: F,
+        check_b: G,
+    ) -> Option<(RetF, RetG)>
+    where
+        F: Fn(&'x A) -> Option<RetF>,
+        G: Fn(&'x A) -> Option<RetG>,
+    {
+        if let Some(a) = check_a(pair.0) {
+            if let Some(b) = check_b(pair.1) {
+                return Some((a, b));
+            }
+        } else if let Some(a) = check_a(pair.1) {
+            if let Some(b) = check_b(pair.0) {
+                return Some((a, b));
+            }
+        }
+        None
+    }
 }
 
 impl<'a> Traverse<'a> for PeepholeOptimizations {
