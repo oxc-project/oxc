@@ -1,4 +1,4 @@
-ts compatibility: 195/568 (34.33%)
+ts compatibility: 199/568 (35.04%)
 
 # Failed
 
@@ -133,7 +133,6 @@ ts compatibility: 195/568 (34.33%)
 * typescript/assignment/issue-10846.ts | 💥
 * typescript/assignment/issue-10848.tsx | 💥
 * typescript/assignment/issue-10850.ts | 💥
-* typescript/assignment/issue-2482.ts | 💥
 * typescript/assignment/parenthesized.ts | 💥
 
 ### typescript/call-signature
@@ -267,9 +266,6 @@ ts compatibility: 195/568 (34.33%)
 * typescript/conformance/types/any/anyAsFunctionCall.ts | 💥
 * typescript/conformance/types/any/anyAsGenericFunctionCall.ts | 💥
 
-### typescript/conformance/types/firstTypeNode
-* typescript/conformance/types/firstTypeNode/firstTypeNode.ts | 💥
-
 ### typescript/conformance/types/functions
 * typescript/conformance/types/functions/functionImplementationErrors.ts | 💥
 * typescript/conformance/types/functions/functionImplementations.ts | 💥
@@ -389,7 +385,6 @@ ts compatibility: 195/568 (34.33%)
 ### typescript/export
 * typescript/export/comment.ts | 💥
 * typescript/export/export-type-star-from-2.ts | 💥
-* typescript/export/export-type-star-from.ts | 💥
 
 ### typescript/export-default
 * typescript/export-default/function_as.ts | 💥
@@ -410,9 +405,6 @@ ts compatibility: 195/568 (34.33%)
 ### typescript/import-export
 * typescript/import-export/empty-import.ts | 💥
 * typescript/import-export/type-modifier.ts | 💥
-
-### typescript/import-require
-* typescript/import-require/type-imports.ts | 💥
 
 ### typescript/import-type
 * typescript/import-type/import-type.ts | 💥💥

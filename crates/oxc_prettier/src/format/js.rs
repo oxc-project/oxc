@@ -506,13 +506,14 @@ impl<'a> Format<'a> for DebuggerStatement {
 
 impl<'a> Format<'a> for ModuleDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        wrap!(p, self, ModuleDeclaration, {
-            if let ModuleDeclaration::ImportDeclaration(decl) = self {
-                decl.format(p)
-            } else {
-                module::print_export_declaration(p, self)
-            }
-        })
+        match self {
+            ModuleDeclaration::ImportDeclaration(import) => import.format(p),
+            ModuleDeclaration::ExportDefaultDeclaration(export) => export.format(p),
+            ModuleDeclaration::ExportNamedDeclaration(export) => export.format(p),
+            ModuleDeclaration::ExportAllDeclaration(export) => export.format(p),
+            ModuleDeclaration::TSExportAssignment(export) => export.format(p),
+            ModuleDeclaration::TSNamespaceExportDeclaration(export) => export.format(p),
+        }
     }
 }
 
@@ -693,24 +694,6 @@ impl<'a> Format<'a> for ImportAttribute<'a> {
     }
 }
 
-impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        if let Some(decl) = &self.declaration {
-            parts.push(text!(" "));
-            parts.push(decl.format(p));
-        } else {
-            parts.push(module::print_module_specifiers(
-                p,
-                &self.specifiers,
-                /* include_default */ false,
-                /* include_namespace */ false,
-            ));
-        }
-        array!(p, parts)
-    }
-}
-
 impl<'a> Format<'a> for ExportSpecifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         // If both exported and local are the same name
@@ -734,26 +717,34 @@ impl<'a> Format<'a> for ModuleExportName<'a> {
 
 impl<'a> Format<'a> for ExportAllDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = Vec::new_in(p.allocator);
-        parts.push(text!(" *"));
-        if let Some(exported) = &self.exported {
-            parts.push(text!(" as "));
-            parts.push(exported.format(p));
-        }
-        array!(p, parts)
+        wrap!(p, self, ExportAllDeclaration, {
+            module::print_export_declaration(
+                p,
+                &module::ExportDeclarationLike::ExportAllDeclaration(self),
+            )
+        })
     }
 }
 
 impl<'a> Format<'a> for ExportDefaultDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match &self.declaration {
-            match_expression!(ExportDefaultDeclarationKind) => {
-                self.declaration.to_expression().format(p)
-            }
-            ExportDefaultDeclarationKind::FunctionDeclaration(decl) => decl.format(p),
-            ExportDefaultDeclarationKind::ClassDeclaration(decl) => decl.format(p),
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl) => decl.format(p),
-        }
+        wrap!(p, self, ExportDefaultDeclaration, {
+            module::print_export_declaration(
+                p,
+                &module::ExportDeclarationLike::ExportDefaultDeclaration(self),
+            )
+        })
+    }
+}
+
+impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        wrap!(p, self, ExportNamedDeclaration, {
+            module::print_export_declaration(
+                p,
+                &module::ExportDeclarationLike::ExportNamedDeclaration(self),
+            )
+        })
     }
 }
 
