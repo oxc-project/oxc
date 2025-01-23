@@ -9,7 +9,7 @@ use std::{
     self,
     fmt::{self, Debug},
     hash::{Hash, Hasher},
-    mem::{needs_drop, ManuallyDrop},
+    mem::ManuallyDrop,
     ops,
     ptr::NonNull,
     slice::SliceIndex,
@@ -43,6 +43,11 @@ unsafe impl<T> Send for Vec<'_, T> {}
 unsafe impl<T> Sync for Vec<'_, T> {}
 
 impl<'alloc, T> Vec<'alloc, T> {
+    /// Const assertion that `T` is not `Drop`.
+    /// Must be referenced in all methods which create a `Vec`.
+    const ASSERT_T_IS_NOT_DROP: () =
+        assert!(!std::mem::needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
+
     /// Constructs a new, empty `Vec<T>`.
     ///
     /// The vector will not allocate until elements are pushed onto it.
@@ -58,9 +63,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        const {
-            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
-        }
+        const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(ManuallyDrop::new(InnerVec::new_in(allocator.bump())))
     }
@@ -113,9 +116,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        const {
-            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
-        }
+        const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(ManuallyDrop::new(InnerVec::with_capacity_in(capacity, allocator.bump())))
     }
@@ -126,9 +127,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// This is behaviorially identical to [`FromIterator::from_iter`].
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
-        const {
-            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
-        }
+        const { Self::ASSERT_T_IS_NOT_DROP };
 
         let iter = iter.into_iter();
         let hint = iter.size_hint();
@@ -155,9 +154,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline]
     pub fn from_array_in<const N: usize>(array: [T; N], allocator: &'alloc Allocator) -> Self {
-        const {
-            assert!(!needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
-        }
+        const { Self::ASSERT_T_IS_NOT_DROP };
 
         let boxed = Box::new_in(array, allocator);
         let ptr = Box::into_non_null(boxed).as_ptr().cast::<T>();

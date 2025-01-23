@@ -188,6 +188,7 @@ pub trait ConstantEvaluation<'a> {
                 Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
             }
             Expression::StaticMemberExpression(e) => self.eval_static_member_expression(e),
+            Expression::ComputedMemberExpression(e) => self.eval_computed_member_expression(e),
             _ => None,
         }
     }
@@ -421,7 +422,30 @@ pub trait ConstantEvaluation<'a> {
         match expr.property.name.as_str() {
             "length" => {
                 if let Some(ConstantValue::String(s)) = self.eval_expression(&expr.object) {
-                    // TODO(perf): no need to actually convert, only need the length
+                    Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
+                } else {
+                    if expr.object.may_have_side_effects() {
+                        return None;
+                    }
+
+                    if let Expression::ArrayExpression(arr) = &expr.object {
+                        Some(ConstantValue::Number(arr.elements.len().to_f64().unwrap()))
+                    } else {
+                        None
+                    }
+                }
+            }
+            _ => None,
+        }
+    }
+
+    fn eval_computed_member_expression(
+        &self,
+        expr: &ComputedMemberExpression<'a>,
+    ) -> Option<ConstantValue<'a>> {
+        match &expr.expression {
+            Expression::StringLiteral(s) if s.value == "length" => {
+                if let Some(ConstantValue::String(s)) = self.eval_expression(&expr.object) {
                     Some(ConstantValue::Number(s.encode_utf16().count().to_f64().unwrap()))
                 } else {
                     if expr.object.may_have_side_effects() {

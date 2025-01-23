@@ -9,7 +9,7 @@
 
 use std::{
     hash::Hash,
-    mem::{needs_drop, ManuallyDrop},
+    mem::ManuallyDrop,
     ops::{Deref, DerefMut},
 };
 
@@ -59,16 +59,26 @@ unsafe impl<K, V> Sync for HashMap<'_, K, V> {}
 // Wrap them in `ManuallyDrop` to prevent that.
 
 impl<'alloc, K, V> HashMap<'alloc, K, V> {
+    /// Const assertions that `K` and `V` are not `Drop`.
+    /// Must be referenced in all methods which create a `HashMap`.
+    const ASSERT_K_AND_V_ARE_NOT_DROP: () = {
+        assert!(
+            !std::mem::needs_drop::<K>(),
+            "Cannot create a HashMap<K, V> where K is a Drop type"
+        );
+        assert!(
+            !std::mem::needs_drop::<V>(),
+            "Cannot create a HashMap<K, V> where V is a Drop type"
+        );
+    };
+
     /// Creates an empty [`HashMap`]. It will be allocated with the given allocator.
     ///
     /// The hash map is initially created with a capacity of 0, so it will not allocate
     /// until it is first inserted into.
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        const {
-            assert!(!needs_drop::<K>(), "Cannot create a HashMap<K, V> where K is a Drop type");
-            assert!(!needs_drop::<V>(), "Cannot create a HashMap<K, V> where V is a Drop type");
-        }
+        const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
         let inner = FxHashMap::with_hasher_in(FxBuildHasher, allocator.bump());
         Self(ManuallyDrop::new(inner))
@@ -80,10 +90,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// If capacity is 0, the hash map will not allocate.
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        const {
-            assert!(!needs_drop::<K>(), "Cannot create a HashMap<K, V> where K is a Drop type");
-            assert!(!needs_drop::<V>(), "Cannot create a HashMap<K, V> where V is a Drop type");
-        }
+        const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
         let inner =
             FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());

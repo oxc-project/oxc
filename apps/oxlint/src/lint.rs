@@ -12,6 +12,7 @@ use oxc_linter::{
     LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use oxc_span::VALID_EXTENSIONS;
+use serde_json::Value;
 
 use crate::{
     cli::{CliRunResult, LintCommand, LintResult, MiscOptions, Runner, WarningOptions},
@@ -132,7 +133,23 @@ impl Runner for LintRunner {
             if misc_options.print_config {
                 return CliRunResult::PrintConfigResult { config_file };
             } else if basic_options.init {
-                match fs::write(Self::DEFAULT_OXLINTRC, config_file) {
+                let schema_relative_path = "node_modules/oxlint/configuration_schema.json";
+                let configuration = if self.cwd.join(schema_relative_path).is_file() {
+                    let mut config_json: Value = serde_json::from_str(&config_file).unwrap();
+                    if let Value::Object(ref mut obj) = config_json {
+                        let mut json_object = serde_json::Map::new();
+                        json_object.insert(
+                            "$schema".to_string(),
+                            format!("./{schema_relative_path}").into(),
+                        );
+                        json_object.extend(obj.clone());
+                        *obj = json_object;
+                    }
+                    serde_json::to_string_pretty(&config_json).unwrap()
+                } else {
+                    config_file
+                };
+                match fs::write(Self::DEFAULT_OXLINTRC, configuration) {
                     Ok(()) => {
                         return CliRunResult::ConfigFileInitResult {
                             message: "Configuration file created".to_string(),

@@ -18,21 +18,13 @@ use oxc_traverse::{Ancestor, TraverseCtx};
 
 use crate::ctx::Ctx;
 
-use super::PeepholeOptimizations;
+use super::{LatePeepholeOptimizations, PeepholeOptimizations};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
-impl<'a, 'b> PeepholeOptimizations {
-    pub fn substitute_catch_clause(
-        &mut self,
-        catch: &mut CatchClause<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.compress_catch_clause(catch, ctx);
-    }
-
+impl<'a> PeepholeOptimizations {
     pub fn substitute_object_property(
         &mut self,
         prop: &mut ObjectProperty<'a>,
@@ -123,9 +115,6 @@ impl<'a, 'b> PeepholeOptimizations {
                 self.try_compress_normal_assignment_to_combined_assignment(e, ctx);
                 self.try_compress_normal_assignment_to_combined_logical_assignment(e, ctx);
             }
-            Expression::NewExpression(e) => {
-                self.try_compress_typed_array_constructor(e, ctx);
-            }
             _ => {}
         }
 
@@ -159,34 +148,6 @@ impl<'a, 'b> PeepholeOptimizations {
             *expr = folded_expr;
             self.mark_current_function_as_changed();
         }
-
-        // Out of fixed loop syntax changes happen last.
-        if self.in_fixed_loop {
-            return;
-        }
-
-        if let Some(folded_expr) = match expr {
-            Expression::Identifier(ident) => self.try_compress_undefined(ident, ctx),
-            Expression::BooleanLiteral(_) => self.try_compress_boolean(expr, ctx),
-            _ => None,
-        } {
-            *expr = folded_expr;
-            self.mark_current_function_as_changed();
-        }
-    }
-
-    fn compress_catch_clause(&mut self, catch: &mut CatchClause<'_>, ctx: &mut TraverseCtx<'a>) {
-        if !self.in_fixed_loop && self.target >= ESTarget::ES2019 {
-            if let Some(param) = &catch.param {
-                if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
-                    if catch.body.body.is_empty()
-                        || ctx.symbols().get_resolved_references(ident.symbol_id()).count() == 0
-                    {
-                        catch.param = None;
-                    }
-                };
-            }
-        }
     }
 
     fn swap_binary_expressions(e: &mut BinaryExpression<'a>) {
@@ -198,68 +159,11 @@ impl<'a, 'b> PeepholeOptimizations {
         }
     }
 
-    /// Transforms `undefined` => `void 0`
-    fn try_compress_undefined(
-        &self,
-        ident: &IdentifierReference<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Expression<'a>> {
-        debug_assert!(!self.in_fixed_loop);
-        if !ctx.is_identifier_undefined(ident) {
-            return None;
-        }
-        // `delete undefined` returns `false`
-        // `delete void 0` returns `true`
-        if matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete())
-        {
-            return None;
-        }
-        Some(ctx.ast.void_0(ident.span))
-    }
-
-    /// Transforms boolean expression `true` => `!0` `false` => `!1`.
-    /// Do not compress `true` in `Object.defineProperty(exports, 'Foo', {enumerable: true, ...})`.
-    fn try_compress_boolean(
-        &self,
-        expr: &mut Expression<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) -> Option<Expression<'a>> {
-        debug_assert!(!self.in_fixed_loop);
-        let Expression::BooleanLiteral(lit) = expr else { return None };
-        let parent = ctx.ancestry.parent();
-        let no_unary = {
-            if let Ancestor::BinaryExpressionRight(u) = parent {
-                !matches!(
-                    u.operator(),
-                    BinaryOperator::Addition // Other effect, like string concatenation.
-                            | BinaryOperator::Instanceof // Relational operator.
-                            | BinaryOperator::In
-                            | BinaryOperator::StrictEquality // It checks type, so we should not fold.
-                            | BinaryOperator::StrictInequality
-                )
-            } else {
-                false
-            }
-        };
-        // XOR: We should use `!neg` when it is not in binary expression.
-        let num = ctx.ast.expression_numeric_literal(
-            lit.span,
-            if lit.value ^ no_unary { 0.0 } else { 1.0 },
-            None,
-            NumberBase::Decimal,
-        );
-        Some(if no_unary {
-            num
-        } else {
-            ctx.ast.expression_unary(lit.span, UnaryOperator::LogicalNot, num)
-        })
-    }
-
     /// `() => { return foo })` -> `() => foo`
     fn try_compress_arrow_expression(
         &mut self,
         arrow_expr: &mut ArrowFunctionExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) {
         if !arrow_expr.expression
             && arrow_expr.body.directives.is_empty()
@@ -289,7 +193,7 @@ impl<'a, 'b> PeepholeOptimizations {
     /// Enabled by `compress.typeofs`
     fn try_compress_typeof_undefined(
         expr: &mut BinaryExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let Expression::UnaryExpression(unary_expr) = &expr.left else { return None };
         if !unary_expr.operator.is_typeof() {
@@ -342,7 +246,7 @@ impl<'a, 'b> PeepholeOptimizations {
     /// - `document.all == null` is `true`
     fn try_compress_is_null_or_undefined(
         expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = expr.operator;
         let target_ops = match op {
@@ -388,7 +292,7 @@ impl<'a, 'b> PeepholeOptimizations {
         right: &mut Expression<'a>,
         span: Span,
         (find_op, replace_op): (BinaryOperator, BinaryOperator),
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         enum LeftPairValueResult {
             Null(Span),
@@ -477,7 +381,7 @@ impl<'a, 'b> PeepholeOptimizations {
     fn try_compress_logical_expression_to_assignment_expression(
         &self,
         expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if self.target < ESTarget::ES2020 {
             return None;
@@ -508,7 +412,7 @@ impl<'a, 'b> PeepholeOptimizations {
     /// `a || (b || c);` -> `(a || b) || c;`
     fn try_rotate_logical_expression(
         expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let Expression::LogicalExpression(right) = &mut expr.right else { return None };
         if right.operator != expr.operator {
@@ -550,7 +454,7 @@ impl<'a, 'b> PeepholeOptimizations {
     fn has_no_side_effect_for_evaluation_same_target(
         assignment_target: &AssignmentTarget,
         expr: &Expression,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> bool {
         match (&assignment_target, &expr) {
             (
@@ -641,7 +545,7 @@ impl<'a, 'b> PeepholeOptimizations {
         left: &Expression<'a>,
         right: &Expression<'a>,
         span: Span,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
         inversed: bool,
     ) -> Option<Expression<'a>> {
         let pair = Self::commutative_pair(
@@ -766,7 +670,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
     fn try_fold_loose_equals_undefined(
         e: &mut BinaryExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // `foo == void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         // `foo != void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
@@ -823,7 +727,7 @@ impl<'a, 'b> PeepholeOptimizations {
     fn compress_variable_declarator(
         &mut self,
         decl: &mut VariableDeclarator<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) {
         // Destructuring Pattern has error throwing side effect.
         if decl.kind.is_const() || decl.id.kind.is_destructuring_pattern() {
@@ -841,7 +745,7 @@ impl<'a, 'b> PeepholeOptimizations {
     fn try_compress_normal_assignment_to_combined_assignment(
         &mut self,
         expr: &mut AssignmentExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) {
         if !matches!(expr.operator, AssignmentOperator::Assign) {
             return;
@@ -866,7 +770,7 @@ impl<'a, 'b> PeepholeOptimizations {
     fn try_compress_normal_assignment_to_combined_logical_assignment(
         &mut self,
         expr: &mut AssignmentExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) {
         if self.target < ESTarget::ES2020 {
             return;
@@ -898,7 +802,7 @@ impl<'a, 'b> PeepholeOptimizations {
 
     fn try_compress_assignment_to_update_expression(
         expr: &mut AssignmentExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let target = expr.left.as_simple_assignment_target_mut()?;
         if !matches!(expr.operator, AssignmentOperator::Subtraction) {
@@ -935,7 +839,7 @@ impl<'a, 'b> PeepholeOptimizations {
     /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
     fn try_merge_conditional_expression_inside(
         expr: &mut ConditionalExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let (
             Expression::AssignmentExpression(consequent),
@@ -978,7 +882,7 @@ impl<'a, 'b> PeepholeOptimizations {
     /// `BigInt(1)` -> `1`
     fn try_fold_simple_function_call(
         call_expr: &mut CallExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if call_expr.optional || call_expr.arguments.len() >= 2 {
             return None;
@@ -1059,7 +963,7 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 
     /// Fold `Object` or `Array` constructor
-    fn get_fold_constructor_name(callee: &Expression<'a>, ctx: Ctx<'a, 'b>) -> Option<&'a str> {
+    fn get_fold_constructor_name(callee: &Expression<'a>, ctx: Ctx<'a, '_>) -> Option<&'a str> {
         match callee {
             Expression::StaticMemberExpression(e) => {
                 if !matches!(&e.object, Expression::Identifier(ident) if ident.name == "window") {
@@ -1087,7 +991,7 @@ impl<'a, 'b> PeepholeOptimizations {
         span: Span,
         name: &'a str,
         args: &mut Vec<'a, Argument<'a>>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         match name {
             "Object" if args.is_empty() => {
@@ -1160,7 +1064,7 @@ impl<'a, 'b> PeepholeOptimizations {
     /// `new RegExp()` -> `RegExp()`
     fn try_fold_new_expression(
         e: &mut NewExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let Expression::Identifier(ident) = &e.callee else { return None };
         let name = ident.name.as_str();
@@ -1213,50 +1117,10 @@ impl<'a, 'b> PeepholeOptimizations {
         )
     }
 
-    /// `new Int8Array(0)` -> `new Int8Array()` (also for other TypedArrays)
-    fn try_compress_typed_array_constructor(
-        &mut self,
-        e: &mut NewExpression<'a>,
-        ctx: Ctx<'a, 'b>,
-    ) {
-        let Expression::Identifier(ident) = &e.callee else { return };
-        let name = ident.name.as_str();
-        if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
-            return;
-        }
-
-        if e.arguments.len() == 1
-            && e.arguments[0].as_expression().is_some_and(Expression::is_number_0)
-        {
-            e.arguments.clear();
-            self.mark_current_function_as_changed();
-        }
-    }
-
-    /// Whether the name matches any TypedArray name.
-    ///
-    /// See <https://tc39.es/ecma262/multipage/indexed-collections.html#sec-typedarray-objects> for the list of TypedArrays.
-    fn is_typed_array_name(name: &str) -> bool {
-        matches!(
-            name,
-            "Int8Array"
-                | "Uint8Array"
-                | "Uint8ClampedArray"
-                | "Int16Array"
-                | "Uint16Array"
-                | "Int32Array"
-                | "Uint32Array"
-                | "Float32Array"
-                | "Float64Array"
-                | "BigInt64Array"
-                | "BigUint64Array"
-        )
-    }
-
     fn try_compress_chain_call_expression(
         &mut self,
         chain_expr: &mut ChainExpression<'a>,
-        ctx: Ctx<'a, 'b>,
+        ctx: Ctx<'a, '_>,
     ) {
         if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
             // `window.Object?.()` -> `Object?.()`
@@ -1273,7 +1137,7 @@ impl<'a, 'b> PeepholeOptimizations {
         }
     }
 
-    fn try_fold_template_literal(t: &TemplateLiteral, ctx: Ctx<'a, 'b>) -> Option<Expression<'a>> {
+    fn try_fold_template_literal(t: &TemplateLiteral, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
         t.to_js_string().map(|val| ctx.ast.expression_string_literal(t.span(), val, None))
     }
 
@@ -1385,6 +1249,106 @@ impl<'a, 'b> PeepholeOptimizations {
     }
 }
 
+impl<'a> LatePeepholeOptimizations {
+    pub fn substitute_exit_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::NewExpression(e) = expr {
+            Self::try_compress_typed_array_constructor(e, ctx);
+        }
+
+        if let Some(folded_expr) = match expr {
+            Expression::Identifier(ident) => Self::try_compress_undefined(ident, ctx),
+            Expression::BooleanLiteral(_) => Self::try_compress_boolean(expr, ctx),
+            _ => None,
+        } {
+            *expr = folded_expr;
+        }
+    }
+
+    /// `new Int8Array(0)` -> `new Int8Array()` (also for other TypedArrays)
+    fn try_compress_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::Identifier(ident) = &e.callee else { return };
+        let name = ident.name.as_str();
+        if !Self::is_typed_array_name(name) || !Ctx(ctx).is_global_reference(ident) {
+            return;
+        }
+        if e.arguments.len() == 1
+            && e.arguments[0].as_expression().is_some_and(Expression::is_number_0)
+        {
+            e.arguments.clear();
+        }
+    }
+
+    /// Transforms `undefined` => `void 0`
+    fn try_compress_undefined(
+        ident: &IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if !Ctx(ctx).is_identifier_undefined(ident) {
+            return None;
+        }
+        // `delete undefined` returns `false`
+        // `delete void 0` returns `true`
+        if matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(e) if e.operator().is_delete())
+        {
+            return None;
+        }
+        Some(ctx.ast.void_0(ident.span))
+    }
+
+    /// Transforms boolean expression `true` => `!0` `false` => `!1`.
+    fn try_compress_boolean(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let Expression::BooleanLiteral(lit) = expr else { return None };
+        let num = ctx.ast.expression_numeric_literal(
+            lit.span,
+            if lit.value { 0.0 } else { 1.0 },
+            None,
+            NumberBase::Decimal,
+        );
+        Some(ctx.ast.expression_unary(lit.span, UnaryOperator::LogicalNot, num))
+    }
+
+    pub fn substitute_catch_clause(
+        &mut self,
+        catch: &mut CatchClause<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.target >= ESTarget::ES2019 {
+            if let Some(param) = &catch.param {
+                if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
+                    if catch.body.body.is_empty()
+                        || ctx.symbols().get_resolved_references(ident.symbol_id()).count() == 0
+                    {
+                        catch.param = None;
+                    }
+                };
+            }
+        }
+    }
+
+    /// Whether the name matches any TypedArray name.
+    ///
+    /// See <https://tc39.es/ecma262/multipage/indexed-collections.html#sec-typedarray-objects> for the list of TypedArrays.
+    fn is_typed_array_name(name: &str) -> bool {
+        matches!(
+            name,
+            "Int8Array"
+                | "Uint8Array"
+                | "Uint8ClampedArray"
+                | "Int16Array"
+                | "Uint16Array"
+                | "Int32Array"
+                | "Uint32Array"
+                | "Float32Array"
+                | "Float64Array"
+                | "BigInt64Array"
+                | "BigUint64Array"
+        )
+    }
+}
+
 /// Port from <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
 #[cfg(test)]
 mod test {
@@ -1437,20 +1401,20 @@ mod test {
 
     #[test]
     fn test_fold_true_false_comparison() {
-        test("x == true", "x == 1");
-        test("x == false", "x == 0");
-        test("x != true", "x != 1");
-        test("x < true", "x < 1");
-        test("x <= true", "x <= 1");
-        test("x > true", "x > 1");
-        test("x >= true", "x >= 1");
+        test("x == true", "x == !0");
+        test("x == false", "x == !1");
+        test("x != true", "x != !0");
+        test("x < true", "x < !0");
+        test("x <= true", "x <= !0");
+        test("x > true", "x > !0");
+        test("x >= true", "x >= !0");
 
         test("x instanceof true", "x instanceof !0");
         test("x + false", "x + !1");
 
         // Order: should perform the nearest.
         test("x == x instanceof false", "x == x instanceof !1");
-        test("x in x >> true", "x in x >> 1");
+        test("x in x >> true", "x in x >> !0");
         test("x == fake(false)", "x == fake(!1)");
 
         // The following should not be folded.

@@ -51,14 +51,14 @@ fn format_checkstyle(diagnostics: &[Error]) -> String {
          let messages = infos
              .iter()
              .fold(String::new(), |mut acc, info| {
-                 let Info { line, column, message, severity, rule_id, .. } = info;
+                 let Info { start, message, severity, rule_id, .. } = info;
                  let severity = match severity {
                      Severity::Error => "error",
                      _ => "warning",
                  };
                  let message = rule_id.as_ref().map_or_else(|| xml_escape(message), |rule_id| Cow::Owned(format!("{} ({rule_id})", xml_escape(message))));
                  let source = rule_id.as_ref().map_or_else(|| Cow::Borrowed(""), |rule_id| Cow::Owned(format!("eslint.rules.{rule_id}")));
-                 let line = format!(r#"<error line="{line}" column="{column}" severity="{severity}" message="{message}" source="{source}" />"#);
+                 let line = format!(r#"<error line="{}" column="{}" severity="{severity}" message="{message}" source="{source}" />"#, start.line, start.column);
                  acc.push_str(&line);
                  acc
              });

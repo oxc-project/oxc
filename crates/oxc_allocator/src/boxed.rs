@@ -7,7 +7,6 @@ use std::{
     fmt::{self, Debug, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
-    mem::needs_drop,
     ops::{self, Deref},
     ptr::{self, NonNull},
 };
@@ -31,7 +30,47 @@ use crate::Allocator;
 /// with a [`Drop`] type.
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
+impl<T: ?Sized> Box<'_, T> {
+    /// Const assertion that `T` is not `Drop`.
+    /// Must be referenced in all methods which create a `Box`.
+    const ASSERT_T_IS_NOT_DROP: () =
+        assert!(!std::mem::needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
+}
+
 impl<T> Box<'_, T> {
+    /// Put a `value` into a memory arena and get back a [`Box`] with ownership
+    /// to the allocation.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let arena = Allocator::default();
+    /// let in_arena: Box<i32> = Box::new_in(5, &arena);
+    /// ```
+    //
+    // `#[inline(always)]` because this is a hot path and `Allocator::alloc` is a very small function.
+    // We always want it to be inlined.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn new_in(value: T, allocator: &Allocator) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        Self(NonNull::from(allocator.alloc(value)), PhantomData)
+    }
+
+    /// Create a fake [`Box`] with a dangling pointer.
+    ///
+    /// # SAFETY
+    /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
+    /// Only purpose is for mocking types without allocating for const assertions.
+    #[allow(unsafe_code, clippy::missing_safety_doc)]
+    pub const unsafe fn dangling() -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        Self(NonNull::dangling(), PhantomData)
+    }
+
     /// Take ownership of the value stored in this [`Box`], consuming the box in
     /// the process.
     ///
@@ -52,50 +91,11 @@ impl<T> Box<'_, T> {
     pub fn unbox(self) -> T {
         // SAFETY:
         // This pointer read is safe because the reference `self.0` is
-        // guaranteed to be unique--not just now, but we're guaranteed it's not
+        // guaranteed to be unique - not just now, but we're guaranteed it's not
         // borrowed from some other reference. This in turn is because we never
         // construct a `Box` with a borrowed reference, only with a fresh
-        // one just allocated from a Bump.
+        // one just allocated from a `Bump`.
         unsafe { ptr::read(self.0.as_ptr()) }
-    }
-}
-
-impl<T> Box<'_, T> {
-    /// Put a `value` into a memory arena and get back a [`Box`] with ownership
-    /// to the allocation.
-    ///
-    /// # Examples
-    /// ```
-    /// use oxc_allocator::{Allocator, Box};
-    ///
-    /// let arena = Allocator::default();
-    /// let in_arena: Box<i32> = Box::new_in(5, &arena);
-    /// ```
-    //
-    // `#[inline(always)]` because this is a hot path and `Allocator::alloc` is a very small function.
-    // We always want it to be inlined.
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    pub fn new_in(value: T, allocator: &Allocator) -> Self {
-        const {
-            assert!(!needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
-        }
-
-        Self(NonNull::from(allocator.alloc(value)), PhantomData)
-    }
-
-    /// Create a fake [`Box`] with a dangling pointer.
-    ///
-    /// # SAFETY
-    /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
-    /// Only purpose is for mocking types without allocating for const assertions.
-    #[allow(unsafe_code, clippy::missing_safety_doc)]
-    pub const unsafe fn dangling() -> Self {
-        const {
-            assert!(!needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
-        }
-
-        Self(NonNull::dangling(), PhantomData)
     }
 }
 
@@ -117,9 +117,7 @@ impl<T: ?Sized> Box<'_, T> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub(crate) const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
-        const {
-            assert!(!needs_drop::<T>(), "Cannot create a Box<T> where T is a Drop type");
-        }
+        const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(ptr, PhantomData)
     }

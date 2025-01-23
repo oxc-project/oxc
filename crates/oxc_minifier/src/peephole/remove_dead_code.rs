@@ -9,7 +9,7 @@ use oxc_traverse::{Ancestor, TraverseCtx};
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
-use super::PeepholeOptimizations;
+use super::{LatePeepholeOptimizations, PeepholeOptimizations};
 
 /// Remove Dead Code from the AST.
 ///
@@ -71,16 +71,6 @@ impl<'a, 'b> PeepholeOptimizations {
         } {
             *expr = folded_expr;
             self.mark_current_function_as_changed();
-        }
-    }
-
-    pub fn remove_dead_code_exit_class_body(
-        &mut self,
-        body: &mut ClassBody<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !self.in_fixed_loop {
-            Self::remove_empty_class_static_block(body);
         }
     }
 
@@ -581,8 +571,10 @@ impl<'a, 'b> PeepholeOptimizations {
         };
         (params_empty && body_empty).then(|| ctx.ast.statement_empty(e.span))
     }
+}
 
-    fn remove_empty_class_static_block(body: &mut ClassBody<'a>) {
+impl<'a> LatePeepholeOptimizations {
+    pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {
         body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
     }
 }

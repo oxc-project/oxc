@@ -1,5 +1,7 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
+use miette::SourceSpan;
+
 use crate::{Error, Severity};
 
 /// Reporters are responsible for rendering diagnostics to some format and writing them to some
@@ -54,18 +56,23 @@ pub trait DiagnosticReporter {
 }
 
 pub struct Info {
-    pub line: usize,
-    pub column: usize,
+    pub start: InfoPosition,
+    pub end: InfoPosition,
     pub filename: String,
     pub message: String,
     pub severity: Severity,
     pub rule_id: Option<String>,
 }
 
+pub struct InfoPosition {
+    pub line: usize,
+    pub column: usize,
+}
+
 impl Info {
     pub fn new(diagnostic: &Error) -> Self {
-        let mut line = 0;
-        let mut column = 0;
+        let mut start = InfoPosition { line: 0, column: 0 };
+        let mut end = InfoPosition { line: 0, column: 0 };
         let mut filename = String::new();
         let mut message = String::new();
         let mut severity = Severity::Warning;
@@ -74,8 +81,18 @@ impl Info {
             if let Some(source) = diagnostic.source_code() {
                 if let Some(label) = labels.next() {
                     if let Ok(span_content) = source.read_span(label.inner(), 0, 0) {
-                        line = span_content.line() + 1;
-                        column = span_content.column() + 1;
+                        start.line = span_content.line() + 1;
+                        start.column = span_content.column() + 1;
+
+                        let end_offset = label.inner().offset() + label.inner().len();
+
+                        if let Ok(span_content) =
+                            source.read_span(&SourceSpan::from((end_offset, 0)), 0, 0)
+                        {
+                            end.line = span_content.line() + 1;
+                            end.column = span_content.column() + 1;
+                        }
+
                         if let Some(name) = span_content.name() {
                             filename = name.to_string();
                         };
@@ -92,6 +109,7 @@ impl Info {
                 }
             }
         }
-        Self { line, column, filename, message, severity, rule_id }
+
+        Self { start, end, filename, message, severity, rule_id }
     }
 }
