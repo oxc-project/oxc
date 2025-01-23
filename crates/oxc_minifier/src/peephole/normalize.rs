@@ -50,7 +50,6 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
-            Statement::IfStatement(s) => Self::wrap_to_avoid_ambiguous_else(s, ctx),
             Statement::WhileStatement(_) if self.options.convert_while_to_fors => {
                 Self::convert_while_to_for(stmt, ctx);
             }
@@ -144,22 +143,6 @@ impl<'a> Normalize {
             };
             *expr =
                 ctx.ast.expression_numeric_literal(ident.span, value, None, NumberBase::Decimal);
-        }
-    }
-
-    // Wrap to avoid ambiguous else.
-    // `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
-    fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
-            if if2.alternate.is_some() {
-                let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-                if_stmt.consequent =
-                    Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
-                        if_stmt.consequent.span(),
-                        ctx.ast.vec1(ctx.ast.move_statement(&mut if_stmt.consequent)),
-                        scope_id,
-                    ));
-            }
         }
     }
 
