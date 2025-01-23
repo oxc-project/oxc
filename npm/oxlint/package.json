@@ -20,7 +20,7 @@
     "url": "https://github.com/sponsors/Boshen"
   },
   "engines": {
-    "node": ">=14.*"
+    "node": ">=8.*"
   },
   "files": [
     "bin/oxlint",
