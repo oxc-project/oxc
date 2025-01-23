@@ -29,7 +29,7 @@ impl<'a> PeepholeOptimizations {
         let mut changed = false;
         loop {
             let mut local_change = false;
-            Self::try_replace_if(stmts, &mut local_change, ctx);
+            self.try_replace_if(stmts, &mut local_change, ctx);
             if local_change {
                 stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
                 changed = local_change;
@@ -273,6 +273,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn try_replace_if(
+        &mut self,
         stmts: &mut Vec<'a, Statement<'a>>,
         changed: &mut bool,
         ctx: &mut TraverseCtx<'a>,
@@ -301,13 +302,14 @@ impl<'a> PeepholeOptimizations {
                 let mut if_stmt = if_stmt.unbox();
                 let consequent = Self::get_block_return_expression(&mut if_stmt.consequent, ctx);
                 let alternate = Self::take_return_argument(&mut stmts[i + 1], ctx);
-                let argument = Self::minimize_conditional(
+                let mut argument = Self::minimize_conditional(
                     if_stmt.span,
                     if_stmt.test,
                     consequent,
                     alternate,
                     ctx,
                 );
+                self.minimize_conditions_exit_expression(&mut argument, ctx);
                 stmts[i] = ctx.ast.statement_return(if_stmt.span, Some(argument));
                 *changed = true;
                 break;
@@ -486,7 +488,7 @@ impl<'a> PeepholeOptimizations {
 
         // "a ? b ? c : d : d" => "a && b ? c : d"
         if let Expression::ConditionalExpression(consequent) = &mut expr.consequent {
-            if consequent.alternate.content_eq(&expr.alternate) {
+            if Ctx(ctx).expr_eq(&consequent.alternate, &expr.alternate) {
                 return Some(ctx.ast.expression_conditional(
                     expr.span,
                     ctx.ast.expression_logical(
@@ -503,7 +505,7 @@ impl<'a> PeepholeOptimizations {
 
         // "a ? b : c ? b : d" => "a || c ? b : d"
         if let Expression::ConditionalExpression(alternate) = &mut expr.alternate {
-            if alternate.consequent.content_eq(&expr.consequent) {
+            if Ctx(ctx).expr_eq(&alternate.consequent, &expr.consequent) {
                 return Some(ctx.ast.expression_conditional(
                     expr.span,
                     ctx.ast.expression_logical(
@@ -521,7 +523,7 @@ impl<'a> PeepholeOptimizations {
         // "a ? c : (b, c)" => "(a || b), c"
         if let Expression::SequenceExpression(alternate) = &mut expr.alternate {
             if alternate.expressions.len() == 2
-                && alternate.expressions[1].content_eq(&expr.consequent)
+                && Ctx(ctx).expr_eq(&alternate.expressions[1], &expr.consequent)
             {
                 return Some(ctx.ast.expression_sequence(
                     expr.span,
@@ -541,7 +543,7 @@ impl<'a> PeepholeOptimizations {
         // "a ? (b, c) : c" => "(a && b), c"
         if let Expression::SequenceExpression(consequent) = &mut expr.consequent {
             if consequent.expressions.len() == 2
-                && consequent.expressions[1].content_eq(&expr.alternate)
+                && Ctx(ctx).expr_eq(&consequent.expressions[1], &expr.alternate)
             {
                 return Some(ctx.ast.expression_sequence(
                     expr.span,
@@ -561,7 +563,7 @@ impl<'a> PeepholeOptimizations {
         // "a ? b || c : c" => "(a && b) || c"
         if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent {
             if logical_expr.operator == LogicalOperator::Or
-                && logical_expr.right.content_eq(&expr.alternate)
+                && Ctx(ctx).expr_eq(&logical_expr.right, &expr.alternate)
             {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
@@ -580,7 +582,7 @@ impl<'a> PeepholeOptimizations {
         // "a ? c : b && c" => "(a || b) && c"
         if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate {
             if logical_expr.operator == LogicalOperator::And
-                && logical_expr.right.content_eq(&expr.consequent)
+                && Ctx(ctx).expr_eq(&logical_expr.right, &expr.consequent)
             {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
@@ -605,7 +607,7 @@ impl<'a> PeepholeOptimizations {
         {
             if consequent.arguments.len() == alternate.arguments.len()
                 && !Ctx(ctx).is_global_reference(test)
-                && consequent.callee.content_eq(&alternate.callee)
+                && Ctx(ctx).expr_eq(&consequent.callee, &alternate.callee)
                 && consequent
                     .arguments
                     .iter()
@@ -673,7 +675,7 @@ impl<'a> PeepholeOptimizations {
 
         // TODO: Try using the "??" or "?." operators
 
-        if expr.alternate.content_eq(&expr.consequent) {
+        if Ctx(ctx).expr_eq(&expr.alternate, &expr.consequent) {
             // TODO:
             // "/* @__PURE__ */ a() ? b : b" => "b"
             // if ctx.ExprCanBeRemovedIfUnused(test) {
