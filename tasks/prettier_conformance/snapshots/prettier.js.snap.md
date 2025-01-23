@@ -1,4 +1,4 @@
-js compatibility: 250/641 (39.00%)
+js compatibility: 251/641 (39.16%)
 
 # Failed
 
@@ -83,7 +83,6 @@ js compatibility: 250/641 (39.00%)
 * js/call/first-argument-expansion/expression-2nd-arg.js | 💥
 * js/call/first-argument-expansion/issue-13237.js | 💥
 * js/call/first-argument-expansion/issue-2456.js | 💥
-* js/call/first-argument-expansion/issue-4401.js | 💥
 * js/call/first-argument-expansion/issue-5172.js | 💥
 * js/call/first-argument-expansion/jsx.js | 💥
 * js/call/first-argument-expansion/test.js | 💥
