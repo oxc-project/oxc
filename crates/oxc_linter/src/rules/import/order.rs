@@ -443,10 +443,10 @@ fn test() {
 
             import bar from './bar';
             ",
-            Some(serde_json::json!({
+            Some(serde_json::json!([{
                 "groups": ["builtin", "external", "parent", "sibling", "index"],
                 "newlines-between": "always"
-            })),
+            }])),
         ),
         // Alphabetical order
         (
@@ -455,12 +455,12 @@ fn test() {
             import b from 'b';
             import c from 'c';
             ",
-            Some(serde_json::json!({
+            Some(serde_json::json!([{
                 "alphabetize": {
                     "order": "asc",
                     "caseInsensitive": true
                 }
-            })),
+            }])),
         ),
         // Mixed groups with correct newlines
         (
@@ -473,10 +473,10 @@ fn test() {
             import foo from '../foo';
             import bar from './bar';
             ",
-            Some(serde_json::json!({
+            Some(serde_json::json!([{
                 "groups": ["builtin", "external", ["parent", "sibling"]],
                 "newlines-between": "always"
-            })),
+            }])),
         ),
         // Test with pathGroups
         (
@@ -486,14 +486,14 @@ fn test() {
             import MyComponent from '~/components/MyComponent';
             import utils from './utils';
             ",
-            Some(serde_json::json!({
+            Some(serde_json::json!([{
                 "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
                 "pathGroups": [{
                     "pattern": "~/components/**",
                     "group": "internal",
                     "position": "after"
                 }]
-            })),
+            }])),
         ),
     ];
 
@@ -504,9 +504,9 @@ fn test() {
             import _ from 'lodash';
             import fs from 'fs';
             ",
-            Some(serde_json::json!({
+            Some(serde_json::json!([{
                 "groups": ["builtin", "external"]
-            })),
+            }])),
         ),
         // Missing newline between groups
         (
@@ -514,10 +514,10 @@ fn test() {
             import fs from 'fs';
             import _ from 'lodash';  // Should have newline before this
             ",
-            Some(serde_json::json!({
+            Some(serde_json::json!([{
                 "groups": ["builtin", "external"],
                 "newlines-between": "always"
-            })),
+            }])),
         ),
         // Wrong alphabetical order
         (
@@ -525,25 +525,25 @@ fn test() {
             import b from 'b';
             import a from 'a';
             ",
-            Some(serde_json::json!({
+            Some(serde_json::json!([{
                 "alphabetize": {
                     "order": "asc"
                 }
-            })),
+            }])),
         ),
         (
             r"
             import MyComponent from '~/components/MyComponent';
             import _ from 'lodash';
             ",
-            Some(serde_json::json!({
+            Some(serde_json::json!([{
                 "groups": ["builtin", "external", "internal"],
                 "pathGroups": [{
                     "pattern": "~/components/**",
                     "group": "internal",
                     "position": "after"
                 }]
-            })),
+            }])),
         ),
     ];
 
