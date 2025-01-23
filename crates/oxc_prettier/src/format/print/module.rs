@@ -181,12 +181,16 @@ fn print_semicolon_after_export_declaration<'a>(
                 return true;
             };
 
+            // Prettier's `shouldOmitSemicolon()` function
             !matches!(
                 declaration,
-                Declaration::TSInterfaceDeclaration(_)
+                Declaration::ClassDeclaration(_)
                     | Declaration::VariableDeclaration(_)
-                    | Declaration::ClassDeclaration(_)
+                    | Declaration::FunctionDeclaration(_)
+                    | Declaration::TSInterfaceDeclaration(_)
+                    | Declaration::TSEnumDeclaration(_)
                     | Declaration::TSModuleDeclaration(_)
+                    | Declaration::TSImportEqualsDeclaration(_)
             )
         }
         ExportDeclarationLike::ExportDefaultDeclaration(decl) => {
