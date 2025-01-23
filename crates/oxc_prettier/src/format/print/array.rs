@@ -11,6 +11,7 @@ use crate::{
     line, softline, text, Format, Prettier,
 };
 
+// TODO: Rename `ArrayLike`
 #[allow(clippy::enum_variant_names)]
 pub enum Array<'a, 'b> {
     ArrayExpression(&'b ArrayExpression<'a>),

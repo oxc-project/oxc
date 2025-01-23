@@ -1,4 +1,4 @@
-ts compatibility: 194/568 (34.15%)
+ts compatibility: 195/568 (34.33%)
 
 # Failed
 
@@ -323,9 +323,6 @@ ts compatibility: 194/568 (34.15%)
 
 ### typescript/const
 * typescript/const/initializer-ambient-context.ts | 💥
-
-### typescript/custom/computedProperties
-* typescript/custom/computedProperties/symbol.ts | 💥
 
 ### typescript/custom/modifiers
 * typescript/custom/modifiers/minustoken.ts | 💥
