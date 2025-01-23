@@ -1,9 +1,18 @@
 export interface X {
+  /**
+   * Comment
+   */
   set value(_: string);
 }
 
 export type A = {
+  /**
+   * Comment
+   */
   set value({ a, b, c }: { a: string; b: string; c: string });
+  /**
+   * Comment
+   */
   get value();
 };
 
