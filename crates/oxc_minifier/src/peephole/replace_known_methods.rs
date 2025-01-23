@@ -23,6 +23,7 @@ impl<'a> PeepholeOptimizations {
     ) {
         self.try_fold_concat_chain(node, ctx);
         self.try_fold_known_string_methods(node, ctx);
+        self.try_fold_known_property_access(node, ctx);
     }
 
     fn try_fold_known_string_methods(
@@ -471,6 +472,63 @@ impl<'a> PeepholeOptimizations {
         } else {
             None
         }
+    }
+
+    fn try_fold_known_property_access(
+        &mut self,
+        node: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let (name, object, span) = match &node {
+            Expression::StaticMemberExpression(member) if !member.optional => {
+                (member.property.name.as_str(), &member.object, member.span)
+            }
+            Expression::ComputedMemberExpression(member) if !member.optional => {
+                match &member.expression {
+                    Expression::StringLiteral(s) => (s.value.as_str(), &member.object, member.span),
+                    _ => return,
+                }
+            }
+            _ => return,
+        };
+        let replacement = match name {
+            "POSITIVE_INFINITY" | "NEGATIVE_INFINITY" | "NaN" => {
+                Self::try_fold_number_constants(object, name, span, ctx)
+            }
+            _ => None,
+        };
+        if let Some(replacement) = replacement {
+            self.mark_current_function_as_changed();
+            *node = replacement;
+        }
+    }
+
+    /// replace `Number.*` constants
+    fn try_fold_number_constants(
+        object: &Expression<'a>,
+        name: &str,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let ctx = Ctx(ctx);
+        let Expression::Identifier(ident) = object else { return None };
+        if ident.name != "Number" || !ctx.is_global_reference(ident) {
+            return None;
+        }
+
+        Some(match name {
+            "POSITIVE_INFINITY" => {
+                ctx.ast.expression_numeric_literal(span, f64::INFINITY, None, NumberBase::Decimal)
+            }
+            "NEGATIVE_INFINITY" => ctx.ast.expression_numeric_literal(
+                span,
+                f64::NEG_INFINITY,
+                None,
+                NumberBase::Decimal,
+            ),
+            "NaN" => ctx.ast.expression_numeric_literal(span, f64::NAN, None, NumberBase::Decimal),
+            _ => return None,
+        })
     }
 }
 
@@ -1345,5 +1403,16 @@ mod test {
         test("123 .toString(b)", "123 .toString(b)");
         test("1e99.toString(b)", "1e99.toString(b)");
         test("/./.toString(b)", "/./.toString(b)");
+    }
+
+    #[test]
+    fn test_number_constants() {
+        test("v = Number.POSITIVE_INFINITY", "v = Infinity");
+        test("v = Number.NEGATIVE_INFINITY", "v = -Infinity");
+        test("v = Number.NaN", "v = NaN");
+
+        test_same("Number.POSITIVE_INFINITY = 1");
+        test_same("Number.NEGATIVE_INFINITY = 1");
+        test_same("Number.NaN = 1");
     }
 }
