@@ -5,8 +5,8 @@
 use oxc_ast::{
     ast::{
         match_member_expression, AssignmentTarget, ChainElement, ExportDefaultDeclarationKind,
-        Expression, ForStatementInit, ForStatementLeft, MemberExpression,
-        ObjectExpression, SimpleAssignmentTarget,
+        Expression, ForStatementInit, ForStatementLeft, MemberExpression, ObjectExpression,
+        SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -493,10 +493,7 @@ impl<'a> Prettier<'a> {
 
     fn should_wrap_function_for_export_default(&mut self) -> bool {
         let kind = self.current_kind();
-        let b = matches!(
-            self.parent_kind(),
-            AstKind::ExportDefaultDeclaration(_)
-        );
+        let b = matches!(self.parent_kind(), AstKind::ExportDefaultDeclaration(_));
         if matches!(kind, AstKind::Function(f) if f.is_expression())
             || matches!(kind, AstKind::Class(c) if c.is_expression())
         {
