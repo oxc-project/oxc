@@ -888,15 +888,33 @@ impl<'a> Format<'a> for TSTupleElement<'a> {
 
 impl<'a> Format<'a> for TSExportAssignment<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let expression_doc = self.expression.format(p);
-        array!(p, [text!(" = "), expression_doc])
+        wrap!(p, self, TSExportAssignment, {
+            let mut parts = Vec::new_in(p.allocator);
+
+            parts.push(text!("export = "));
+            parts.push(self.expression.format(p));
+            if let Some(semi) = p.semi() {
+                parts.push(semi);
+            }
+
+            array!(p, parts)
+        })
     }
 }
 
 impl<'a> Format<'a> for TSNamespaceExportDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let id_doc = self.id.format(p);
-        array!(p, [text!(" as namespace "), id_doc, text!(";")])
+        // wrap!(p, self, TSNamespaceExportDeclaration, {
+        let mut parts = Vec::new_in(p.allocator);
+
+        parts.push(text!("export as namespace "));
+        parts.push(self.id.format(p));
+        if let Some(semi) = p.semi() {
+            parts.push(semi);
+        }
+
+        array!(p, parts)
+        // })
     }
 }
 

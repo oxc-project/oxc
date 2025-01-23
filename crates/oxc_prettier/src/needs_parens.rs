@@ -5,7 +5,7 @@
 use oxc_ast::{
     ast::{
         match_member_expression, AssignmentTarget, ChainElement, ExportDefaultDeclarationKind,
-        Expression, ForStatementInit, ForStatementLeft, MemberExpression, ModuleDeclaration,
+        Expression, ForStatementInit, ForStatementLeft, MemberExpression,
         ObjectExpression, SimpleAssignmentTarget,
     },
     AstKind,
@@ -146,7 +146,7 @@ impl<'a> Prettier<'a> {
                 | AstKind::SpreadElement(_)
                 | AstKind::BinaryExpression(_)
                 | AstKind::LogicalExpression(_)
-                | AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(_))
+                | AstKind::ExportDefaultDeclaration(_)
                 | AstKind::AwaitExpression(_)
                 | AstKind::JSXSpreadAttribute(_)
                 | AstKind::TSAsExpression(_)
@@ -217,7 +217,7 @@ impl<'a> Prettier<'a> {
                     }
                 }
             }
-            AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(decl)) => {
+            AstKind::ExportDefaultDeclaration(decl) => {
                 return matches!(
                     decl.declaration,
                     ExportDefaultDeclarationKind::SequenceExpression(_)
@@ -495,7 +495,7 @@ impl<'a> Prettier<'a> {
         let kind = self.current_kind();
         let b = matches!(
             self.parent_kind(),
-            AstKind::ModuleDeclaration(ModuleDeclaration::ExportDefaultDeclaration(_))
+            AstKind::ExportDefaultDeclaration(_)
         );
         if matches!(kind, AstKind::Function(f) if f.is_expression())
             || matches!(kind, AstKind::Class(c) if c.is_expression())

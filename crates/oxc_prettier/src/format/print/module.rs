@@ -79,36 +79,88 @@ fn print_import_attributes<'a>(p: &mut Prettier<'a>, with_clause: &WithClause<'a
     array!(p, parts)
 }
 
-pub fn print_export_declaration<'a>(p: &mut Prettier<'a>, decl: &ModuleDeclaration<'a>) -> Doc<'a> {
-    debug_assert!(decl.is_export());
+#[allow(clippy::enum_variant_names)]
+pub enum ExportDeclarationLike<'a, 'b> {
+    ExportAllDeclaration(&'b ExportAllDeclaration<'a>),
+    ExportNamedDeclaration(&'b ExportNamedDeclaration<'a>),
+    ExportDefaultDeclaration(&'b ExportDefaultDeclaration<'a>),
+}
 
+pub fn print_export_declaration<'a>(
+    p: &mut Prettier<'a>,
+    decl: &ExportDeclarationLike<'a, '_>,
+) -> Doc<'a> {
     let mut parts = Vec::new_in(p.allocator);
+
+    // TODO: Print decorators before export for ExportDefaultDeclaration and ExportNamedDeclaration
+    // ```
+    // @deco export class X {}
+    // ```
+    // Print decorators here, then skip them in the Class.decorators
+
     parts.push(text!("export"));
 
-    if decl.is_default_export() {
+    if matches!(decl, ExportDeclarationLike::ExportDefaultDeclaration(_)) {
         parts.push(text!(" default "));
     }
 
-    parts.push(match decl {
-        ModuleDeclaration::ExportAllDeclaration(decl) => decl.format(p),
-        ModuleDeclaration::ExportDefaultDeclaration(decl) => decl.format(p),
-        ModuleDeclaration::ExportNamedDeclaration(decl) => decl.format(p),
-        ModuleDeclaration::TSExportAssignment(decl) => decl.format(p),
-        ModuleDeclaration::TSNamespaceExportDeclaration(decl) => decl.format(p),
-        ModuleDeclaration::ImportDeclaration(_) => unreachable!(),
-    });
+    // TODO: Dangling comments
 
-    if let Some(source) = decl.source() {
-        parts.push(text!(" from "));
-        parts.push(source.format(p));
+    match decl {
+        ExportDeclarationLike::ExportAllDeclaration(decl) => {
+            if decl.export_kind.is_type() {
+                parts.push(text!(" type"));
+            }
+            parts.push(text!(" *"));
+            if let Some(exported) = &decl.exported {
+                parts.push(text!(" as "));
+                parts.push(exported.format(p));
+            }
+        }
+        ExportDeclarationLike::ExportNamedDeclaration(decl) => {
+            if decl.export_kind.is_type() {
+                parts.push(text!(" type"));
+            }
+            if let Some(decl) = &decl.declaration {
+                parts.push(text!(" "));
+                parts.push(decl.format(p));
+            } else {
+                parts.push(print_module_specifiers(p, &decl.specifiers, false, false));
+            }
+        }
+        ExportDeclarationLike::ExportDefaultDeclaration(decl) => {
+            parts.push(match &decl.declaration {
+                match_expression!(ExportDefaultDeclarationKind) => {
+                    decl.declaration.to_expression().format(p)
+                }
+                ExportDefaultDeclarationKind::FunctionDeclaration(decl) => decl.format(p),
+                ExportDefaultDeclarationKind::ClassDeclaration(decl) => decl.format(p),
+                ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl) => decl.format(p),
+            });
+        }
     }
 
-    if let Some(with_clause) = decl.with_clause() {
+    if let Some(source_doc) = match decl {
+        ExportDeclarationLike::ExportAllDeclaration(decl) => Some(decl.source.format(p)),
+        ExportDeclarationLike::ExportNamedDeclaration(decl) => {
+            decl.source.as_ref().map(|s| s.format(p))
+        }
+        ExportDeclarationLike::ExportDefaultDeclaration(_) => None,
+    } {
+        parts.push(text!(" from "));
+        parts.push(source_doc);
+    }
+
+    if let Some(with_clause) = match decl {
+        ExportDeclarationLike::ExportAllDeclaration(decl) => decl.with_clause.as_ref(),
+        ExportDeclarationLike::ExportNamedDeclaration(decl) => decl.with_clause.as_ref(),
+        ExportDeclarationLike::ExportDefaultDeclaration(_) => None,
+    } {
         parts.push(print_import_attributes(p, with_clause));
     }
 
-    if let Some(doc) = print_semicolon_after_export_declaration(p, decl) {
-        parts.push(doc);
+    if print_semicolon_after_export_declaration(p, decl) {
+        parts.push(text!(";"));
     }
 
     array!(p, parts)
@@ -116,38 +168,35 @@ pub fn print_export_declaration<'a>(p: &mut Prettier<'a>, decl: &ModuleDeclarati
 
 fn print_semicolon_after_export_declaration<'a>(
     p: &Prettier<'a>,
-    decl: &ModuleDeclaration<'a>,
-) -> Option<Doc<'a>> {
+    decl: &ExportDeclarationLike<'a, '_>,
+) -> bool {
     if !p.options.semi {
-        return None;
+        return false;
     }
 
     match decl {
-        ModuleDeclaration::ExportDefaultDeclaration(decl) => match decl.declaration {
-            match_expression!(ExportDefaultDeclarationKind) => Some(text!(";")),
-            _ => None,
-        },
-        ModuleDeclaration::ExportNamedDeclaration(decl) => {
+        ExportDeclarationLike::ExportAllDeclaration(_) => true,
+        ExportDeclarationLike::ExportNamedDeclaration(decl) => {
             let Some(declaration) = &decl.declaration else {
-                return Some(text!(";"));
+                return true;
             };
 
-            match declaration {
+            !matches!(
+                declaration,
                 Declaration::TSInterfaceDeclaration(_)
-                | Declaration::VariableDeclaration(_)
-                | Declaration::ClassDeclaration(_)
-                | Declaration::TSModuleDeclaration(_) => None,
-                _ => Some(text!(";")),
-            }
+                    | Declaration::VariableDeclaration(_)
+                    | Declaration::ClassDeclaration(_)
+                    | Declaration::TSModuleDeclaration(_)
+            )
         }
-        ModuleDeclaration::ExportAllDeclaration(_) | ModuleDeclaration::TSExportAssignment(_) => {
-            Some(text!(";"))
+        ExportDeclarationLike::ExportDefaultDeclaration(decl) => {
+            matches!(decl.declaration, match_expression!(ExportDefaultDeclarationKind))
         }
-        _ => None,
+        _ => false,
     }
 }
 
-pub fn print_module_specifiers<'a, T: Format<'a>>(
+fn print_module_specifiers<'a, T: Format<'a>>(
     p: &mut Prettier<'a>,
     specifiers: &Vec<'a, T>,
     include_default: bool,
