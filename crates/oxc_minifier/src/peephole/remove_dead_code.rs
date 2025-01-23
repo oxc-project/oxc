@@ -113,8 +113,10 @@ impl<'a, 'b> PeepholeOptimizations {
             if i - 1 <= index {
                 return true;
             }
-            // keep function declaration
-            if matches!(s.as_declaration(), Some(Declaration::FunctionDeclaration(_))) {
+            // Keep module syntax and function declaration
+            if s.is_module_declaration()
+                || matches!(s.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
+            {
                 return true;
             }
             false
@@ -811,5 +813,11 @@ mod test {
         test("-1", "");
         test("!1", "");
         test("1", "");
+    }
+
+    #[test]
+    fn keep_module_syntax() {
+        test_same("throw foo; export let bar");
+        test_same("throw foo; export default bar");
     }
 }
