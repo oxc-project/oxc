@@ -1294,6 +1294,7 @@ impl<'a> Format<'a> for ParenthesizedExpression<'a> {
 impl<'a> Format<'a> for ImportExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, ImportExpression, {
+            // TODO: Use `print_call_expression`?
             let mut parts = Vec::new_in(p.allocator);
             parts.push(text!("import"));
             parts.push(text!("("));
