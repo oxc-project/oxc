@@ -2,7 +2,6 @@
 source: crates/oxc_semantic/tests/integration/cfg.rs
 expression: snapshot
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/function_in_finally.js
-snapshot_kind: text
 ---
 bb0: {
 

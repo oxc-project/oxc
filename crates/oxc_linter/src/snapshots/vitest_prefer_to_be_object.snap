@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-vitest(prefer-to-be-object): Prefer `toBeObject()` for object assertions
    ╭─[prefer_to_be_object.tsx:1:36]

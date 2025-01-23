@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimStart` over `trimLeft`
    ╭─[prefer_string_trim_start_end.tsx:1:5]

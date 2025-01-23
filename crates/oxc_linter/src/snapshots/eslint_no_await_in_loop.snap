@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:38]

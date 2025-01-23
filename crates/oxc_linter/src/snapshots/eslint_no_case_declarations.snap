@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-case-declarations): Unexpected lexical declaration in case block.
    ╭─[no_case_declarations.tsx:1:22]

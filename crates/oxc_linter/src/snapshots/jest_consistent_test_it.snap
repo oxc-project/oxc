@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]

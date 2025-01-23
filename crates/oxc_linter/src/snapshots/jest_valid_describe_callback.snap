@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-jest(valid-describe-callback): Describe requires name and callback arguments
    ╭─[valid_describe_callback.tsx:1:1]
