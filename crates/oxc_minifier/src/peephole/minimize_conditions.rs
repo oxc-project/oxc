@@ -218,16 +218,13 @@ impl<'a> PeepholeOptimizations {
                         let consequent = Self::get_block_expression(&mut if_stmt.consequent, ctx);
                         let else_branch = if_stmt.alternate.as_mut().unwrap();
                         let alternate = Self::get_block_expression(else_branch, ctx);
-                        let mut cond_expr = ctx.ast.conditional_expression(
+                        let expr = Self::minimize_conditional(
                             if_stmt.span,
                             test,
                             consequent,
                             alternate,
+                            ctx,
                         );
-                        let expr = Self::try_minimize_conditional(&mut cond_expr, ctx)
-                            .unwrap_or_else(|| {
-                                Expression::ConditionalExpression(ctx.ast.alloc(cond_expr))
-                            });
                         return Some(ctx.ast.statement_expression(if_stmt.span, expr));
                     }
                 }
@@ -285,14 +282,13 @@ impl<'a> PeepholeOptimizations {
                 let mut if_stmt = if_stmt.unbox();
                 let consequent = Self::get_block_return_expression(&mut if_stmt.consequent, ctx);
                 let alternate = Self::take_return_argument(&mut stmts[i + 1], ctx);
-                let mut cond_expr = ctx.ast.conditional_expression(
+                let argument = Self::minimize_conditional(
                     if_stmt.span,
                     if_stmt.test,
                     consequent,
                     alternate,
+                    ctx,
                 );
-                let argument = Self::try_minimize_conditional(&mut cond_expr, ctx)
-                    .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)));
                 stmts[i] = ctx.ast.statement_return(if_stmt.span, Some(argument));
                 *changed = true;
                 break;
@@ -359,6 +355,18 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    pub fn minimize_conditional(
+        span: Span,
+        test: Expression<'a>,
+        consequent: Expression<'a>,
+        alternate: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
+        Self::try_minimize_conditional(&mut cond_expr, ctx)
+            .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)))
+    }
+
     // <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
     fn try_minimize_conditional(
         expr: &mut ConditionalExpression<'a>,
@@ -373,16 +381,13 @@ impl<'a> PeepholeOptimizations {
                     let Expression::SequenceExpression(sequence_expr) = &mut sequence else {
                         unreachable!()
                     };
-                    let mut cond_expr = ctx.ast.conditional_expression(
+                    let expr = Self::minimize_conditional(
                         span,
                         sequence_expr.expressions.pop().unwrap(),
                         ctx.ast.move_expression(&mut expr.consequent),
                         ctx.ast.move_expression(&mut expr.alternate),
+                        ctx,
                     );
-                    let expr =
-                        Self::try_minimize_conditional(&mut cond_expr, ctx).unwrap_or_else(|| {
-                            Expression::ConditionalExpression(ctx.ast.alloc(cond_expr))
-                        });
                     sequence_expr.expressions.push(expr);
                     return Some(sequence);
                 }
@@ -572,16 +577,16 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        // `a ? b(c, d) : b(e, d)` -> `b(a ? c : e, d)``
+        // `a ? b(c, d) : b(e, d)` -> `b(a ? c : e, d)`
         if let (
             Expression::Identifier(test),
             Expression::CallExpression(consequent),
             Expression::CallExpression(alternate),
         ) = (&expr.test, &mut expr.consequent, &mut expr.alternate)
         {
-            if consequent.callee.content_eq(&alternate.callee)
-                && consequent.arguments.len() == alternate.arguments.len()
-                && ctx.scopes().find_binding(ctx.current_scope_id(), &test.name).is_some()
+            if consequent.arguments.len() == alternate.arguments.len()
+                && !Ctx(ctx).is_global_reference(test)
+                && consequent.callee.content_eq(&alternate.callee)
                 && consequent
                     .arguments
                     .iter()
@@ -616,10 +621,9 @@ impl<'a> PeepholeOptimizations {
                             alternate_first_arg,
                         ),
                     );
-
                     return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
                 }
-                // `a ? b(c) : b(e)` -> `b(a ? c : e)``
+                // `a ? b(c) : b(e)` -> `b(a ? c : e)`
                 if !matches!(consequent.arguments[0], Argument::SpreadElement(_))
                     && !matches!(alternate.arguments[0], Argument::SpreadElement(_))
                 {
@@ -630,15 +634,22 @@ impl<'a> PeepholeOptimizations {
                     let alternate_first_arg =
                         ctx.ast.move_expression(alternate.arguments[0].to_expression_mut());
                     let mut args = std::mem::replace(&mut consequent.arguments, ctx.ast.vec());
-                    args[0] = Argument::from(ctx.ast.expression_conditional(
+                    let cond_expr = Self::minimize_conditional(
                         expr.test.span(),
                         ctx.ast.move_expression(&mut expr.test),
                         consequent_first_arg,
                         alternate_first_arg,
-                    ));
+                        ctx,
+                    );
+                    args[0] = Argument::from(cond_expr);
                     return Some(ctx.ast.expression_call(expr.span, callee, NONE, args, false));
                 }
             }
+        }
+
+        // Not part of esbuild
+        if let Some(e) = Self::try_merge_conditional_expression_inside(expr, ctx) {
+            return Some(e);
         }
 
         // TODO: Try using the "??" or "?." operators
@@ -659,6 +670,47 @@ impl<'a> PeepholeOptimizations {
         }
 
         None
+    }
+
+    /// Merge `consequent` and `alternate` of `ConditionalExpression` inside.
+    ///
+    /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
+    fn try_merge_conditional_expression_inside(
+        expr: &mut ConditionalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let (
+            Expression::AssignmentExpression(consequent),
+            Expression::AssignmentExpression(alternate),
+        ) = (&mut expr.consequent, &mut expr.alternate)
+        else {
+            return None;
+        };
+        if !matches!(consequent.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
+            return None;
+        }
+        if consequent.right.is_anonymous_function_definition() {
+            return None;
+        }
+        if consequent.operator != AssignmentOperator::Assign
+            || consequent.operator != alternate.operator
+            || consequent.left.content_ne(&alternate.left)
+        {
+            return None;
+        }
+        let cond_expr = Self::minimize_conditional(
+            expr.span,
+            ctx.ast.move_expression(&mut expr.test),
+            ctx.ast.move_expression(&mut consequent.right),
+            ctx.ast.move_expression(&mut alternate.right),
+            ctx,
+        );
+        Some(ctx.ast.expression_assignment(
+            expr.span,
+            consequent.operator,
+            ctx.ast.move_assignment_target(&mut alternate.left),
+            cond_expr,
+        ))
     }
 
     /// Simplify syntax when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
@@ -2008,5 +2060,27 @@ mod test {
 
         test("if (x) { var foo } else { bar }", "if (x) { var foo } else bar");
         test_same("if (x) foo; else { var bar }");
+    }
+
+    #[test]
+    fn test_compress_conditional_expression_inside() {
+        test("x ? a = 0 : a = 1", "a = x ? 0 : 1");
+        test(
+            "x ? a = function foo() { return 'a' } : a = function bar() { return 'b' }",
+            "a = x ? function foo() { return 'a' } : function bar() { return 'b' }",
+        );
+
+        // a.b might have a side effect
+        test_same("x ? a.b = 0 : a.b = 1");
+        // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function
+        test_same("x ? a = () => 'a' : a = () => 'b'");
+        test_same("x ? a = function () { return 'a' } : a = function () { return 'b' }");
+        test_same("x ? a = class { foo = 'a' } : a = class { foo = 'b' }");
+
+        // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`
+        // so cannot be fold to `a += x ? 0 : 1`
+        // example case: `(()=>{"use strict"; (console.log("log"), 1) ? a += 0 : a += 1; })()`
+        test_same("x ? a += 0 : a += 1");
+        test_same("x ? a &&= 0 : a &&= 1");
     }
 }
