@@ -1346,7 +1346,7 @@ impl Gen for RegExpLiteral<'_> {
         let pattern_text = self.regex.pattern.source_text(p.source_text);
         // Avoid forming a single-line comment or "</script" sequence
         if last == Some(b'/')
-            || (last == Some(b'<') && pattern_text.cow_to_lowercase().starts_with("script"))
+            || (last == Some(b'<') && pattern_text.cow_to_ascii_lowercase().starts_with("script"))
         {
             p.print_hard_space();
         }

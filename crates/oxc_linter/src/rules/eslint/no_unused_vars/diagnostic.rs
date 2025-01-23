@@ -54,7 +54,7 @@ where
         .with_label(symbol.span().label(format!("'{name}' is declared here")))
         .with_help(format!(
             "Consider renaming this {}{help_suffix}",
-            pronoun_singular.cow_to_lowercase()
+            pronoun_singular.cow_to_ascii_lowercase()
         ))
 }
 /// Variable 'x' is declared but never used.

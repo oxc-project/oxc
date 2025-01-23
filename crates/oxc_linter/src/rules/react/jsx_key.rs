@@ -101,7 +101,7 @@ pub fn import_matcher<'a>(
     actual_local_name: &'a str,
     expected_module_name: &'a str,
 ) -> bool {
-    let expected_module_name = expected_module_name.cow_to_lowercase();
+    let expected_module_name = expected_module_name.cow_to_ascii_lowercase();
     ctx.module_record().import_entries.iter().any(|import| {
         import.module_request.name() == expected_module_name
             && import.local_name.name() == actual_local_name

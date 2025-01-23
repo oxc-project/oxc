@@ -427,10 +427,11 @@ const DOM_PROPERTIES_IGNORE_CASE: [&str; 5] = [
 ];
 
 lazy_static! {
-    static ref DOM_PROPERTIES_LOWER_MAP: FxHashMap<String, &'static str> = DOM_PROPERTIES_NAMES
-        .iter()
-        .map(|it| (it.cow_to_lowercase().into_owned(), *it))
-        .collect::<FxHashMap<_, _>>();
+    static ref DOM_PROPERTIES_LOWER_MAP: FxHashMap<Cow<'static, str>, &'static str> =
+        DOM_PROPERTIES_NAMES
+            .iter()
+            .map(|it| (it.cow_to_ascii_lowercase(), *it))
+            .collect::<FxHashMap<_, _>>();
 }
 
 /// Checks if an attribute name is a valid `data-*` attribute:
@@ -442,7 +443,7 @@ fn is_valid_data_attr(name: &str) -> bool {
         return false;
     }
 
-    if name.cow_to_lowercase().starts_with("data-xml") {
+    if name.cow_to_ascii_lowercase().starts_with("data-xml") {
         return false;
     }
 
@@ -519,7 +520,7 @@ impl Rule for NoUnknownProperty {
                     if self.0.require_data_lowercase && has_uppercase(&actual_name) {
                         ctx.diagnostic(data_lowercase_required(
                             span,
-                            &actual_name.cow_to_lowercase(),
+                            &actual_name.cow_to_ascii_lowercase(),
                         ));
                     }
                     return;
@@ -544,7 +545,7 @@ impl Rule for NoUnknownProperty {
                 }
 
                 DOM_PROPERTIES_LOWER_MAP
-                    .get(&name.cow_to_lowercase().into_owned())
+                    .get(&name.cow_to_ascii_lowercase())
                     .or_else(|| DOM_ATTRIBUTES_TO_CAMEL.get(name))
                     .map_or_else(
                         || {
