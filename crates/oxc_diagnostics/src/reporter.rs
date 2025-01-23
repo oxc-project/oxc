@@ -45,7 +45,7 @@ pub trait DiagnosticReporter {
     ///
     /// While this method _should_ only ever be called a single time, this is not a guarantee
     /// upheld in Oxc's API. Do not rely on this behavior.
-    fn finish(&mut self) -> Option<String>;
+    fn finish(&mut self, result: &DiagnosticResult) -> Option<String>;
 
     /// Render a diagnostic into this reporter's desired format. For example, a JSONLinesReporter
     /// might return a stringified JSON object on a single line. Returns [`None`] to skip reporting
@@ -53,6 +53,42 @@ pub trait DiagnosticReporter {
     ///
     /// Reporters should use this method to write diagnostics to their output stream.
     fn render_error(&mut self, error: Error) -> Option<String>;
+}
+
+/// DiagnosticResult will be submitted to the Reporter when the [`DiagnosticService`](crate::service::DiagnosticService)
+/// is finished receiving all files
+#[derive(Default)]
+pub struct DiagnosticResult {
+    /// Total number of warnings received
+    warnings_count: usize,
+
+    /// Total number of errors received
+    errors_count: usize,
+
+    /// Did the threshold for warnings exceeded the max_warnings?
+    /// ToDo: We giving the input from outside, let the owner calculate the result
+    max_warnings_exceeded: bool,
+}
+
+impl DiagnosticResult {
+    pub fn new(warnings_count: usize, errors_count: usize, max_warnings_exceeded: bool) -> Self {
+        Self { warnings_count, errors_count, max_warnings_exceeded }
+    }
+
+    /// Get the number of warning-level diagnostics received.
+    pub fn warnings_count(&self) -> usize {
+        self.warnings_count
+    }
+
+    /// Get the number of error-level diagnostics received.
+    pub fn errors_count(&self) -> usize {
+        self.errors_count
+    }
+
+    /// Did the threshold for warnings exceeded the max_warnings?
+    pub fn max_warnings_exceeded(&self) -> bool {
+        self.max_warnings_exceeded
+    }
 }
 
 pub struct Info {

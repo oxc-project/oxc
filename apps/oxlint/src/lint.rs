@@ -208,15 +208,16 @@ impl Runner for LintRunner {
                 lint_service.run(&tx_error);
             }
         });
-        diagnostic_service.run(&mut stdout);
+
+        let diagnostic_result = diagnostic_service.run(&mut stdout);
 
         CliRunResult::LintResult(LintResult {
             duration: now.elapsed(),
             number_of_rules: lint_service.linter().number_of_rules(),
             number_of_files,
-            number_of_warnings: diagnostic_service.warnings_count(),
-            number_of_errors: diagnostic_service.errors_count(),
-            max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
+            number_of_warnings: diagnostic_result.warnings_count(),
+            number_of_errors: diagnostic_result.errors_count(),
+            max_warnings_exceeded: diagnostic_result.max_warnings_exceeded(),
             deny_warnings: warning_options.deny_warnings,
             print_summary: matches!(output_options.format, OutputFormat::Default),
         })

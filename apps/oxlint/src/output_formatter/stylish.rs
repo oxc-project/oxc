@@ -1,7 +1,7 @@
 use std::io::Write;
 
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
     Error, Severity,
 };
 use rustc_hash::FxHashMap;
@@ -27,7 +27,7 @@ struct StylishReporter {
 }
 
 impl DiagnosticReporter for StylishReporter {
-    fn finish(&mut self) -> Option<String> {
+    fn finish(&mut self, _: &DiagnosticResult) -> Option<String> {
         Some(format_stylish(&self.diagnostics))
     }
 
@@ -116,7 +116,7 @@ fn format_stylish(diagnostics: &[Error]) -> String {
 #[cfg(test)]
 mod test {
     use super::*;
-    use oxc_diagnostics::{NamedSource, OxcDiagnostic};
+    use oxc_diagnostics::{reporter::DiagnosticResult, NamedSource, OxcDiagnostic};
     use oxc_span::Span;
 
     #[test]
@@ -134,7 +134,7 @@ mod test {
         reporter.render_error(error);
         reporter.render_error(warning);
 
-        let output = reporter.finish().unwrap();
+        let output = reporter.finish(&DiagnosticResult::default()).unwrap();
 
         assert!(output.contains("error message"), "Output should contain 'error message'");
         assert!(output.contains("warning message"), "Output should contain 'warning message'");

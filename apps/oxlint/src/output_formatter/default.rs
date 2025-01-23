@@ -1,6 +1,9 @@
 use std::io::Write;
 
-use oxc_diagnostics::{reporter::DiagnosticReporter, Error, GraphicalReportHandler};
+use oxc_diagnostics::{
+    reporter::{DiagnosticReporter, DiagnosticResult},
+    Error, GraphicalReportHandler,
+};
 use oxc_linter::table::RuleTable;
 
 use crate::output_formatter::InternalFormatter;
@@ -37,7 +40,7 @@ impl Default for GraphicalReporter {
 }
 
 impl DiagnosticReporter for GraphicalReporter {
-    fn finish(&mut self) -> Option<String> {
+    fn finish(&mut self, _: &DiagnosticResult) -> Option<String> {
         None
     }
 
@@ -62,7 +65,10 @@ mod test {
         InternalFormatter,
     };
     use miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
-    use oxc_diagnostics::{reporter::DiagnosticReporter, OxcDiagnostic};
+    use oxc_diagnostics::{
+        reporter::{DiagnosticReporter, DiagnosticResult},
+        OxcDiagnostic,
+    };
     use oxc_span::Span;
 
     #[test]
@@ -78,7 +84,7 @@ mod test {
     fn reporter_finish() {
         let mut reporter = GraphicalReporter::default();
 
-        let result = reporter.finish();
+        let result = reporter.finish(&DiagnosticResult::default());
 
         assert!(result.is_none());
     }

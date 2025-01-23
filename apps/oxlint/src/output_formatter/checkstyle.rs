@@ -3,7 +3,7 @@ use std::{borrow::Cow, io::Write};
 use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
     Error, Severity,
 };
 
@@ -31,7 +31,7 @@ struct CheckstyleReporter {
 }
 
 impl DiagnosticReporter for CheckstyleReporter {
-    fn finish(&mut self) -> Option<String> {
+    fn finish(&mut self, _: &DiagnosticResult) -> Option<String> {
         Some(format_checkstyle(&self.diagnostics))
     }
 
@@ -123,7 +123,10 @@ fn xml_escape_impl<F: Fn(u8) -> bool>(raw: &str, escape_chars: F) -> Cow<str> {
 
 #[cfg(test)]
 mod test {
-    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_diagnostics::{
+        reporter::{DiagnosticReporter, DiagnosticResult},
+        NamedSource, OxcDiagnostic,
+    };
     use oxc_span::Span;
 
     use super::CheckstyleReporter;
@@ -142,7 +145,7 @@ mod test {
         assert!(first_result.is_none());
 
         // report not gives us all diagnostics at ones
-        let second_result = reporter.finish();
+        let second_result = reporter.finish(&DiagnosticResult::default());
 
         assert!(second_result.is_some());
         assert_eq!(second_result.unwrap(), "<?xml version=\"1.0\" encoding=\"utf-8\"?><checkstyle version=\"4.3\"><file name=\"file://test.ts\"><error line=\"1\" column=\"1\" severity=\"warning\" message=\"error message\" source=\"\" /></file></checkstyle>");
