@@ -2227,6 +2227,7 @@ dependencies = [
  "oxc_linter",
  "oxc_span",
  "rayon",
+ "regex",
  "rustc-hash",
  "serde",
  "serde_json",

@@ -1,12 +1,11 @@
 use std::time::Duration;
 
+use crate::output_formatter::InternalFormatter;
 use oxc_diagnostics::{
     reporter::{DiagnosticReporter, DiagnosticResult},
     Error, GraphicalReportHandler,
 };
 use oxc_linter::table::RuleTable;
-
-use crate::output_formatter::InternalFormatter;
 
 #[derive(Debug)]
 pub struct DefaultOutputFormatter;
@@ -59,9 +58,22 @@ struct GraphicalReporter {
     handler: GraphicalReportHandler,
 }
 
+#[cfg(not(test))]
 impl Default for GraphicalReporter {
     fn default() -> Self {
         Self { handler: GraphicalReportHandler::new() }
+    }
+}
+
+#[cfg(test)]
+use oxc_diagnostics::GraphicalTheme;
+
+/// we need to override the GraphicalReport for the tests
+/// because our CI can not handle colors output and [`GraphicalReportHandler`] will auto detect the environment
+#[cfg(test)]
+impl Default for GraphicalReporter {
+    fn default() -> Self {
+        Self { handler: GraphicalReportHandler::new_themed(GraphicalTheme::none()) }
     }
 }
 
@@ -103,13 +115,6 @@ impl DiagnosticReporter for GraphicalReporter {
         Some(output)
     }
 }
-impl GraphicalReporter {
-    #[cfg(test)]
-    pub fn with_handler(mut self, handler: GraphicalReportHandler) -> Self {
-        self.handler = handler;
-        self
-    }
-}
 
 #[cfg(test)]
 mod test {
@@ -119,7 +124,7 @@ mod test {
         default::{DefaultOutputFormatter, GraphicalReporter},
         InternalFormatter, LintCommandInfo,
     };
-    use miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
+    use miette::NamedSource;
     use oxc_diagnostics::{
         reporter::{DiagnosticReporter, DiagnosticResult},
         OxcDiagnostic,
@@ -196,9 +201,7 @@ mod test {
 
     #[test]
     fn reporter_error() {
-        let mut reporter = GraphicalReporter::default().with_handler(
-            GraphicalReportHandler::new_themed(GraphicalTheme::none()).with_links(false),
-        );
+        let mut reporter = GraphicalReporter::default();
 
         let error = OxcDiagnostic::warn("error message")
             .with_label(Span::new(0, 8))
