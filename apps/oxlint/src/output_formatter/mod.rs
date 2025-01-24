@@ -7,6 +7,7 @@ mod unix;
 
 use std::io::{BufWriter, Stdout, Write};
 use std::str::FromStr;
+use std::time::Duration;
 
 use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
@@ -45,19 +46,45 @@ impl FromStr for OutputFormat {
     }
 }
 
+/// Some extra lint information, which can be outputted
+/// at the end of the command
+pub struct LintCommandInfo {
+    /// The number of files that were linted.
+    pub number_of_files: usize,
+    /// The number of lint rules that were run.
+    pub number_of_rules: usize,
+    /// The used CPU threads count
+    pub threads_count: usize,
+    /// Some reporters want to output the duration it took to finished the task
+    pub start_time: Duration,
+}
+
+/// An Interface for the different output formats.
+/// The Formatter is then managed by [`OutputFormatter`].
 trait InternalFormatter {
+    /// Print all available rules by oxlint
+    /// Some Formatter do not know how to output the rules in the style,
+    /// instead you should print out that this combination of flags is not supported.
+    /// Example: "flag --rules with flag --format=checkstyle is not allowed"
     fn all_rules(&mut self, writer: &mut dyn Write);
 
+    /// At the end of the Lint command the Formatter can output extra information.
+    fn lint_command_info(&self, _lint_command_info: &LintCommandInfo) -> Option<String> {
+        None
+    }
+
+    /// oxlint words with [`DiagnosticService`](oxc_diagnostics::DiagnosticService),
+    /// which uses a own reporter to output to stdout.
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter>;
 }
 
 pub struct OutputFormatter {
-    internal_formatter: Box<dyn InternalFormatter>,
+    internal: Box<dyn InternalFormatter>,
 }
 
 impl OutputFormatter {
     pub fn new(format: OutputFormat) -> Self {
-        Self { internal_formatter: Self::get_internal_formatter(format) }
+        Self { internal: Self::get_internal_formatter(format) }
     }
 
     fn get_internal_formatter(format: OutputFormat) -> Box<dyn InternalFormatter> {
@@ -71,11 +98,20 @@ impl OutputFormatter {
         }
     }
 
+    /// Print all available rules by oxlint
+    /// See [`InternalFormatter::all_rules`] for more details.
     pub fn all_rules(&mut self, writer: &mut BufWriter<Stdout>) {
-        self.internal_formatter.all_rules(writer);
+        self.internal.all_rules(writer);
     }
 
+    /// At the end of the Lint command we may output extra information.
+    pub fn lint_command_info(&self, lint_command_info: &LintCommandInfo) -> Option<String> {
+        self.internal.lint_command_info(lint_command_info)
+    }
+
+    /// Returns the [`DiagnosticReporter`] which then will be used by [`DiagnosticService`](oxc_diagnostics::DiagnosticService)
+    /// See [`InternalFormatter::get_diagnostic_reporter`] for more details.
     pub fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
-        self.internal_formatter.get_diagnostic_reporter()
+        self.internal.get_diagnostic_reporter()
     }
 }

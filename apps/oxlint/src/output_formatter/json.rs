@@ -76,7 +76,7 @@ fn format_json(diagnostics: &mut Vec<Error>) -> String {
         })
         .collect::<Vec<_>>()
         .join(",\n");
-    format!("[\n{messages}\n]")
+    format!("[\n{messages}\n]\n")
 }
 
 #[cfg(test)]
@@ -108,7 +108,7 @@ mod test {
         assert!(second_result.is_some());
         assert_eq!(
             second_result.unwrap(),
-            "[\n\t{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8}}],\"related\": []}\n]"
+            "[\n\t{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8}}],\"related\": []}\n]\n"
         );
     }
 }

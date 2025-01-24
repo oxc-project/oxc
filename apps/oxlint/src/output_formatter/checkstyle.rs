@@ -66,7 +66,7 @@ fn format_checkstyle(diagnostics: &[Error]) -> String {
          format!(r#"<file name="{filename}">{messages}</file>"#)
      }).collect::<Vec<_>>().join(" ");
     format!(
-        r#"<?xml version="1.0" encoding="utf-8"?><checkstyle version="4.3">{messages}</checkstyle>"#
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?><checkstyle version=\"4.3\">{messages}</checkstyle>\n"
     )
 }
 
@@ -148,6 +148,6 @@ mod test {
         let second_result = reporter.finish(&DiagnosticResult::default());
 
         assert!(second_result.is_some());
-        assert_eq!(second_result.unwrap(), "<?xml version=\"1.0\" encoding=\"utf-8\"?><checkstyle version=\"4.3\"><file name=\"file://test.ts\"><error line=\"1\" column=\"1\" severity=\"warning\" message=\"error message\" source=\"\" /></file></checkstyle>");
+        assert_eq!(second_result.unwrap(), "<?xml version=\"1.0\" encoding=\"utf-8\"?><checkstyle version=\"4.3\"><file name=\"file://test.ts\"><error line=\"1\" column=\"1\" severity=\"warning\" message=\"error message\" source=\"\" /></file></checkstyle>\n");
     }
 }

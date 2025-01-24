@@ -1,7 +1,6 @@
 use std::{
     path::PathBuf,
     process::{ExitCode, Termination},
-    time::Duration,
 };
 
 #[derive(Debug)]
@@ -17,22 +16,14 @@ pub enum CliRunResult {
 /// A summary of a complete linter run.
 #[derive(Debug, Default)]
 pub struct LintResult {
-    /// The total time it took to run the linter.
-    pub duration: Duration,
-    /// The number of lint rules that were run.
-    pub number_of_rules: usize,
     /// The number of files that were linted.
     pub number_of_files: usize,
     /// The number of warnings that were found.
     pub number_of_warnings: usize,
     /// The number of errors that were found.
     pub number_of_errors: usize,
-    /// Whether or not the maximum number of warnings was exceeded.
-    pub max_warnings_exceeded: bool,
-    /// Whether or not warnings should be treated as errors (from `--deny-warnings` for example)
-    pub deny_warnings: bool,
-    /// Whether or not to print a summary of the results
-    pub print_summary: bool,
+    /// The exit unix code for, in general 0 or 1 (from `--deny-warnings` or `--max-warnings` for example)
+    pub exit_code: ExitCode,
 }
 
 impl Termination for CliRunResult {
@@ -49,47 +40,11 @@ impl Termination for CliRunResult {
                 ExitCode::from(1)
             }
             Self::LintResult(LintResult {
-                duration,
-                number_of_rules,
-                number_of_files,
-                number_of_warnings,
-                number_of_errors,
-                max_warnings_exceeded,
-                deny_warnings,
-                print_summary,
-            }) => {
-                if print_summary {
-                    let threads = rayon::current_num_threads();
-                    let number_of_diagnostics = number_of_warnings + number_of_errors;
-
-                    if number_of_diagnostics > 0 {
-                        println!();
-                    }
-
-                    let time = Self::get_execution_time(&duration);
-                    let s = if number_of_files == 1 { "" } else { "s" };
-                    println!(
-                        "Finished in {time} on {number_of_files} file{s} with {number_of_rules} rules using {threads} threads."
-                    );
-
-                    if max_warnings_exceeded {
-                        println!(
-                            "Exceeded maximum number of warnings. Found {number_of_warnings}."
-                        );
-                        return ExitCode::from(1);
-                    }
-
-                    println!(
-                        "Found {number_of_warnings} warning{} and {number_of_errors} error{}.",
-                        if number_of_warnings == 1 { "" } else { "s" },
-                        if number_of_errors == 1 { "" } else { "s" }
-                    );
-                }
-
-                let exit_code =
-                    u8::from((number_of_warnings > 0 && deny_warnings) || number_of_errors > 0);
-                ExitCode::from(exit_code)
-            }
+                number_of_files: _,    // ToDo: only for tests, make snapshots
+                number_of_warnings: _, // ToDo: only for tests, make snapshots
+                number_of_errors: _,
+                exit_code,
+            }) => exit_code,
             Self::PrintConfigResult { config_file } => {
                 println!("{config_file}");
                 ExitCode::from(0)
@@ -98,17 +53,6 @@ impl Termination for CliRunResult {
                 println!("{message}");
                 ExitCode::from(0)
             }
-        }
-    }
-}
-
-impl CliRunResult {
-    fn get_execution_time(duration: &Duration) -> String {
-        let ms = duration.as_millis();
-        if ms < 1000 {
-            format!("{ms}ms")
-        } else {
-            format!("{:.1}s", duration.as_secs_f64())
         }
     }
 }

@@ -1,7 +1,8 @@
 use std::{
     env, fs,
-    io::{BufWriter, Write},
+    io::{BufWriter, ErrorKind, Write},
     path::{Path, PathBuf},
+    process::ExitCode,
     time::Instant,
 };
 
@@ -16,7 +17,7 @@ use serde_json::Value;
 
 use crate::{
     cli::{CliRunResult, LintCommand, LintResult, MiscOptions, Runner, WarningOptions},
-    output_formatter::{OutputFormat, OutputFormatter},
+    output_formatter::{LintCommandInfo, OutputFormatter},
     walk::{Extensions, Walk},
 };
 
@@ -55,7 +56,6 @@ impl Runner for LintRunner {
             ignore_options,
             fix_options,
             enable_plugins,
-            output_options,
             misc_options,
             ..
         } = self.options;
@@ -81,11 +81,8 @@ impl Runner for LintRunner {
             // If explicit paths were provided, but all have been
             // filtered, return early.
             if provided_path_count > 0 {
-                return CliRunResult::LintResult(LintResult {
-                    duration: now.elapsed(),
-                    deny_warnings: warning_options.deny_warnings,
-                    ..LintResult::default()
-                });
+                // ToDo: when oxc_linter (config) validates the configuration, we can use exit_code = 1 to fail
+                return CliRunResult::LintResult(LintResult::default());
             }
 
             paths.push(self.cwd.clone());
@@ -211,15 +208,24 @@ impl Runner for LintRunner {
 
         let diagnostic_result = diagnostic_service.run(&mut stdout);
 
-        CliRunResult::LintResult(LintResult {
-            duration: now.elapsed(),
+        let diagnostic_failed = diagnostic_result.max_warnings_exceeded()
+            || diagnostic_result.errors_count() > 0
+            || (warning_options.deny_warnings && diagnostic_result.warnings_count() > 0);
+
+        if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
+            number_of_files,
             number_of_rules: lint_service.linter().number_of_rules(),
+            threads_count: rayon::current_num_threads(),
+            start_time: now.elapsed(),
+        }) {
+            stdout.write_all(end.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
+        };
+
+        CliRunResult::LintResult(LintResult {
             number_of_files,
             number_of_warnings: diagnostic_result.warnings_count(),
             number_of_errors: diagnostic_result.errors_count(),
-            max_warnings_exceeded: diagnostic_result.max_warnings_exceeded(),
-            deny_warnings: warning_options.deny_warnings,
-            print_summary: matches!(output_options.format, OutputFormat::Default),
+            exit_code: ExitCode::from(u8::from(diagnostic_failed)),
         })
     }
 }
@@ -306,6 +312,15 @@ impl LintRunner {
         let config_path = cwd.join(Self::DEFAULT_OXLINTRC);
         Oxlintrc::from_file(&config_path).or_else(|_| Ok(Oxlintrc::default()))
     }
+
+    fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
+        // Do not panic when the process is killed (e.g. piping into `less`).
+        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+            Ok(())
+        } else {
+            Err(error)
+        }
+    }
 }
 
 #[cfg(test)]
@@ -364,7 +379,6 @@ mod test {
     fn no_arg() {
         let args = &[];
         let result = test(args);
-        assert!(result.number_of_rules > 0);
         assert!(result.number_of_warnings > 0);
         assert_eq!(result.number_of_errors, 0);
     }
@@ -373,7 +387,6 @@ mod test {
     fn dir() {
         let args = &["fixtures/linter"];
         let result = test(args);
-        assert!(result.number_of_rules > 0);
         assert_eq!(result.number_of_files, 3);
         assert_eq!(result.number_of_warnings, 3);
         assert_eq!(result.number_of_errors, 0);
@@ -383,7 +396,6 @@ mod test {
     fn cwd() {
         let args = &["debugger.js"];
         let result = test_with_cwd("fixtures/linter", args);
-        assert!(result.number_of_rules > 0);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
