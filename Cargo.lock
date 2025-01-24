@@ -2219,6 +2219,7 @@ version = "0.15.8"
 dependencies = [
  "bpaf",
  "ignore",
+ "insta",
  "jemallocator",
  "mimalloc",
  "oxc-miette",

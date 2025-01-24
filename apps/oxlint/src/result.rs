@@ -9,7 +9,7 @@ pub enum CliRunResult {
     InvalidOptions { message: String },
     PathNotFound { paths: Vec<PathBuf> },
     LintResult(LintResult),
-    PrintConfigResult { config_file: String },
+    PrintConfigResult,
     ConfigFileInitResult { message: String },
 }
 
@@ -30,7 +30,7 @@ impl Termination for CliRunResult {
     #[allow(clippy::print_stdout, clippy::print_stderr)]
     fn report(self) -> ExitCode {
         match self {
-            Self::None => ExitCode::from(0),
+            Self::None | Self::PrintConfigResult => ExitCode::from(0),
             Self::InvalidOptions { message } => {
                 println!("Invalid Options: {message}");
                 ExitCode::from(1)
@@ -45,10 +45,6 @@ impl Termination for CliRunResult {
                 number_of_errors: _,
                 exit_code,
             }) => exit_code,
-            Self::PrintConfigResult { config_file } => {
-                println!("{config_file}");
-                ExitCode::from(0)
-            }
             Self::ConfigFileInitResult { message } => {
                 println!("{message}");
                 ExitCode::from(0)

@@ -37,6 +37,7 @@ oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 ignore = { workspace = true, features = ["simd-accel"] }
+insta = { workspace = true }
 miette = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
