@@ -21,3 +21,5 @@ jobs:
       name: parser
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    permissions:
+      id-token: write # for `pnpm publish --provenance`
