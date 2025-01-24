@@ -107,18 +107,65 @@ rebuilt        : ScopeId(0): []
 
 * enum-member-reference/input.ts
 Missing ReferenceId: "Foo"
+Missing ReferenceId: "Merge"
+Missing ReferenceId: "NestInner"
 Bindings mismatch:
 after transform: ScopeId(1): ["Foo", "a", "b", "c"]
 rebuilt        : ScopeId(1): ["Foo"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["Merge", "x"]
+rebuilt        : ScopeId(2): ["Merge"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(3): ["Merge", "y"]
+rebuilt        : ScopeId(3): ["Merge"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(4): ["NestOuter", "a", "b"]
+rebuilt        : ScopeId(4): ["NestOuter"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(0x0)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(6): ["NestInner", "a", "b"]
+rebuilt        : ScopeId(6): ["NestInner"]
+Scope flags mismatch:
+after transform: ScopeId(6): ScopeFlags(0x0)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
+Symbol reference IDs mismatch for "x":
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(4)]
+rebuilt        : SymbolId(0): [ReferenceId(7)]
 Symbol flags mismatch for "Foo":
 after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(5): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9)]
+after transform: SymbolId(14): [ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(14)]
 rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(8)]
+Symbol flags mismatch for "Merge":
+after transform: SymbolId(5): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
+Symbol redeclarations mismatch for "Merge":
+after transform: SymbolId(5): [Span { start: 103, end: 108 }]
+rebuilt        : SymbolId(3): []
+Symbol reference IDs mismatch for "Merge":
+after transform: SymbolId(16): [ReferenceId(20), ReferenceId(21), ReferenceId(22)]
+rebuilt        : SymbolId(5): [ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19)]
+Symbol flags mismatch for "NestOuter":
+after transform: SymbolId(8): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "NestInner":
+after transform: SymbolId(11): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable)
+Symbol reference IDs mismatch for "NestInner":
+after transform: SymbolId(18): [ReferenceId(31), ReferenceId(32), ReferenceId(33), ReferenceId(34), ReferenceId(35)]
+rebuilt        : SymbolId(9): [ReferenceId(25), ReferenceId(26), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(31)]
 
 * export-elimination/input.ts
 Bindings mismatch:
