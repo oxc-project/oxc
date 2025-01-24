@@ -7,6 +7,8 @@ use oxc_ecmascript::{
     constant_evaluation::ConstantEvaluation, StringCharAt, StringCharCodeAt, StringIndexOf,
     StringLastIndexOf, StringSubstring, ToInt32,
 };
+use oxc_span::SPAN;
+use oxc_syntax::es_target::ESTarget;
 use oxc_traverse::{Ancestor, TraverseCtx};
 
 use crate::ctx::Ctx;
@@ -491,10 +493,15 @@ impl<'a> PeepholeOptimizations {
             }
             _ => return,
         };
-        let replacement = match name {
-            "POSITIVE_INFINITY" | "NEGATIVE_INFINITY" | "NaN" => {
-                Self::try_fold_number_constants(object, name, span, ctx)
-            }
+        let Expression::Identifier(ident) = object else { return };
+
+        let ctx = &mut Ctx(ctx);
+        if !ctx.is_global_reference(ident) {
+            return;
+        }
+
+        let replacement = match ident.name.as_str() {
+            "Number" => self.try_fold_number_constants(name, span, ctx),
             _ => None,
         };
         if let Some(replacement) = replacement {
@@ -505,28 +512,68 @@ impl<'a> PeepholeOptimizations {
 
     /// replace `Number.*` constants
     fn try_fold_number_constants(
-        object: &Expression<'a>,
+        &self,
         name: &str,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        let ctx = Ctx(ctx);
-        let Expression::Identifier(ident) = object else { return None };
-        if ident.name != "Number" || !ctx.is_global_reference(ident) {
-            return None;
-        }
+        let num = |span: Span, n: f64| {
+            ctx.ast.expression_numeric_literal(span, n, None, NumberBase::Decimal)
+        };
+        // [neg] base ** exponent [op] a
+        let pow_with_expr =
+            |span: Span, base: f64, exponent: f64, op: BinaryOperator, a: f64| -> Expression<'a> {
+                ctx.ast.expression_binary(
+                    span,
+                    ctx.ast.expression_binary(
+                        SPAN,
+                        num(SPAN, base),
+                        BinaryOperator::Exponential,
+                        num(SPAN, exponent),
+                    ),
+                    op,
+                    num(SPAN, a),
+                )
+            };
 
         Some(match name {
-            "POSITIVE_INFINITY" => {
-                ctx.ast.expression_numeric_literal(span, f64::INFINITY, None, NumberBase::Decimal)
+            "POSITIVE_INFINITY" => num(span, f64::INFINITY),
+            "NEGATIVE_INFINITY" => num(span, f64::NEG_INFINITY),
+            "NaN" => num(span, f64::NAN),
+            "MAX_SAFE_INTEGER" => {
+                #[allow(clippy::cast_precision_loss)]
+                if self.target < ESTarget::ES2016 {
+                    num(span, 2.0f64.powf(53.0) - 1.0)
+                } else {
+                    // 2**53 - 1
+                    pow_with_expr(span, 2.0, 53.0, BinaryOperator::Subtraction, 1.0)
+                }
             }
-            "NEGATIVE_INFINITY" => ctx.ast.expression_numeric_literal(
-                span,
-                f64::NEG_INFINITY,
-                None,
-                NumberBase::Decimal,
-            ),
-            "NaN" => ctx.ast.expression_numeric_literal(span, f64::NAN, None, NumberBase::Decimal),
+            "MIN_SAFE_INTEGER" => {
+                #[allow(clippy::cast_precision_loss)]
+                if self.target < ESTarget::ES2016 {
+                    num(span, -(2.0f64.powf(53.0) - 1.0))
+                } else {
+                    // -(2**53 - 1)
+                    ctx.ast.expression_unary(
+                        span,
+                        UnaryOperator::UnaryNegation,
+                        pow_with_expr(SPAN, 2.0, 53.0, BinaryOperator::Subtraction, 1.0),
+                    )
+                }
+            }
+            "EPSILON" => {
+                if self.target < ESTarget::ES2016 {
+                    return None;
+                }
+                // 2**-52
+                ctx.ast.expression_binary(
+                    span,
+                    num(SPAN, 2.0),
+                    BinaryOperator::Exponential,
+                    num(SPAN, -52.0),
+                )
+            }
             _ => return None,
         })
     }
@@ -535,7 +582,17 @@ impl<'a> PeepholeOptimizations {
 /// Port from: <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeReplaceKnownMethodsTest.java>
 #[cfg(test)]
 mod test {
-    use crate::tester::{test, test_same};
+    use oxc_syntax::es_target::ESTarget;
+
+    use crate::{
+        tester::{run, test, test_same},
+        CompressOptions,
+    };
+
+    fn test_es2015(code: &str, expected: &str) {
+        let opts = CompressOptions { target: ESTarget::ES2015, ..CompressOptions::default() };
+        assert_eq!(run(code, Some(opts)), run(expected, None));
+    }
 
     #[test]
     fn test_string_index_of() {
@@ -1410,9 +1467,19 @@ mod test {
         test("v = Number.POSITIVE_INFINITY", "v = Infinity");
         test("v = Number.NEGATIVE_INFINITY", "v = -Infinity");
         test("v = Number.NaN", "v = NaN");
+        test("v = Number.MAX_SAFE_INTEGER", "v = 2**53-1");
+        test("v = Number.MIN_SAFE_INTEGER", "v = -(2**53-1)");
+        test("v = Number.EPSILON", "v = 2**-52");
 
         test_same("Number.POSITIVE_INFINITY = 1");
         test_same("Number.NEGATIVE_INFINITY = 1");
         test_same("Number.NaN = 1");
+        test_same("Number.MAX_SAFE_INTEGER = 1");
+        test_same("Number.MIN_SAFE_INTEGER = 1");
+        test_same("Number.EPSILON = 1");
+
+        test_es2015("v = Number.MAX_SAFE_INTEGER", "v = 9007199254740991");
+        test_es2015("v = Number.MIN_SAFE_INTEGER", "v = -9007199254740991");
+        test_es2015("v = Number.EPSILON", "v = Number.EPSILON");
     }
 }
