@@ -58,14 +58,10 @@ fn bench_mangler(criterion: &mut Criterion) {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let (symbols, scopes) = SemanticBuilder::new()
-                    .with_scope_tree_child_ids(true)
-                    .build(&program)
-                    .semantic
-                    .into_symbol_table_and_scope_tree();
+                let semantic =
+                    SemanticBuilder::new().with_scope_tree_child_ids(true).build(&program).semantic;
                 runner.run(|| {
-                    let _ =
-                        Mangler::new().build_with_symbols_and_scopes(symbols, &scopes, &program);
+                    let _ = Mangler::new().build_with_semantic(semantic, &program);
                 });
             });
         });

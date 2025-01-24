@@ -8,7 +8,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_index::Idx;
-use oxc_semantic::{ReferenceId, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
+use oxc_semantic::{ReferenceId, ScopeTree, Semantic, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::Atom;
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -92,24 +92,18 @@ impl Mangler {
     pub fn build(self, program: &Program<'_>) -> Mangler {
         let semantic =
             SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
-        let (symbol_table, scope_tree) = semantic.into_symbol_table_and_scope_tree();
-        self.build_with_symbols_and_scopes(symbol_table, &scope_tree, program)
+        self.build_with_semantic(semantic, program)
     }
 
     /// # Panics
     ///
     /// Panics if the child_ids does not exist in scope_tree.
     #[must_use]
-    pub fn build_with_symbols_and_scopes(
-        self,
-        symbol_table: SymbolTable,
-        scope_tree: &ScopeTree,
-        program: &Program<'_>,
-    ) -> Mangler {
+    pub fn build_with_semantic(self, semantic: Semantic<'_>, program: &Program<'_>) -> Mangler {
         if self.options.debug {
-            self.build_with_symbols_and_scopes_impl(symbol_table, scope_tree, program, debug_name)
+            self.build_with_symbols_and_scopes_impl(semantic, program, debug_name)
         } else {
-            self.build_with_symbols_and_scopes_impl(symbol_table, scope_tree, program, base54)
+            self.build_with_symbols_and_scopes_impl(semantic, program, base54)
         }
     }
 
@@ -118,11 +112,12 @@ impl Mangler {
         G: Fn(usize) -> InlineString<CAPACITY>,
     >(
         mut self,
-        symbol_table: SymbolTable,
-        scope_tree: &ScopeTree,
+        semantic: Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,
     ) -> Mangler {
+        let (mut symbol_table, scope_tree, ast_nodes) = semantic.into_symbols_scopes_nodes();
+
         assert!(scope_tree.has_child_ids(), "child_id needs to be generated");
 
         let (exported_names, exported_symbols) = if self.options.top_level {
@@ -132,10 +127,6 @@ impl Mangler {
         };
 
         let allocator = Allocator::default();
-
-        // Mangle the symbol table by computing slots from the scope tree.
-        // A slot is the occurrence index of a binding identifier inside a scope.
-        let mut symbol_table = symbol_table;
 
         // All symbols with their assigned slots. Keyed by symbol id.
         let mut slots: Vec<'_, Slot> = Vec::with_capacity_in(symbol_table.len(), &allocator);
@@ -150,54 +141,57 @@ impl Mangler {
         for scope_id in iter::once(scope_tree.root_scope_id())
             .chain(scope_tree.iter_all_child_ids(scope_tree.root_scope_id()))
         {
+            let bindings = scope_tree.get_bindings(scope_id);
+            if bindings.is_empty() {
+                continue;
+            }
+
+            let mut slot = slot_liveness.len();
+
             let nearest_var_scope_id = scope_tree
                 .ancestors(scope_id)
                 .find(|s_id| scope_tree.get_flags(*s_id).is_var())
                 .unwrap_or(scope_tree.root_scope_id());
-            let bindings = scope_tree.get_bindings(scope_id);
 
-            let mut slot = slot_liveness.len();
+            let reusable_slots = Vec::from_iter_in(
+                slot_liveness
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, slot_liveness)| !slot_liveness.contains(scope_id.index()))
+                    .map(|(slot, _)| slot)
+                    .take(bindings.len()),
+                &allocator,
+            );
 
-            if !bindings.is_empty() {
-                let reusable_slots = Vec::from_iter_in(
-                    slot_liveness
-                        .iter()
-                        .enumerate()
-                        .filter(|(_, slot_liveness)| !slot_liveness.contains(scope_id.index()))
-                        .map(|(slot, _)| slot)
-                        .take(bindings.len()),
-                    &allocator,
-                );
-                let remaining_count = bindings.len() - reusable_slots.len();
+            let remaining_count = bindings.len() - reusable_slots.len();
 
-                let assignable_slots =
-                    reusable_slots.into_iter().chain(slot..slot + remaining_count);
-                slot += remaining_count;
-                if slot_liveness.len() < slot {
-                    slot_liveness
-                        .resize_with(slot, || FixedBitSet::with_capacity(scope_tree.len()));
-                }
+            let assignable_slots = reusable_slots.into_iter().chain(slot..slot + remaining_count);
+            slot += remaining_count;
+            if slot_liveness.len() < slot {
+                slot_liveness.resize_with(slot, || FixedBitSet::with_capacity(scope_tree.len()));
+            }
 
-                // Sort `bindings` in declaration order.
-                tmp_bindings.clear();
-                tmp_bindings.extend(bindings.values().copied());
-                tmp_bindings.sort_unstable();
-                for (symbol_id, assigned_slot) in tmp_bindings.iter().zip(assignable_slots) {
-                    slots[symbol_id.index()] = assigned_slot;
+            // Sort `bindings` in declaration order.
+            tmp_bindings.clear();
+            tmp_bindings.extend(bindings.values().copied());
+            tmp_bindings.sort_unstable();
+            for (symbol_id, assigned_slot) in tmp_bindings.iter().zip(assignable_slots) {
+                slots[symbol_id.index()] = assigned_slot;
 
-                    let lived_scope_ids = symbol_table
-                        .get_resolved_references(*symbol_id)
-                        .flat_map(|reference| {
-                            // treat all symbols as var for now
-                            // the reusability can be improved by reducing the lived scope ids for const / let / class
-                            scope_tree
-                                .ancestors(reference.scope_id())
-                                .take_while(|s_id| *s_id != nearest_var_scope_id)
-                        })
-                        .chain(iter::once(nearest_var_scope_id));
-                    for scope_id in lived_scope_ids {
-                        slot_liveness[assigned_slot].insert(scope_id.index());
-                    }
+                let lived_scope_ids = symbol_table
+                    .get_resolved_references(*symbol_id)
+                    .flat_map(|reference| {
+                        let scope_id = ast_nodes.get_node(reference.node_id()).scope_id();
+                        // Treat all symbols as var for now.
+                        // Reusability can be improved by reducing the lived scope ids for const / let / class
+                        scope_tree
+                            .ancestors(scope_id)
+                            .take_while(|s_id| *s_id != nearest_var_scope_id)
+                    })
+                    .chain(iter::once(nearest_var_scope_id));
+
+                for scope_id in lived_scope_ids {
+                    slot_liveness[assigned_slot].insert(scope_id.index());
                 }
             }
         }
@@ -207,7 +201,7 @@ impl Mangler {
         let frequencies = self.tally_slot_frequencies(
             &symbol_table,
             &exported_symbols,
-            scope_tree,
+            &scope_tree,
             total_number_of_slots,
             &slots,
             &allocator,
