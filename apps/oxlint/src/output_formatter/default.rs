@@ -1,4 +1,4 @@
-use std::{io::Write, time::Duration};
+use std::time::Duration;
 
 use oxc_diagnostics::{
     reporter::{DiagnosticReporter, DiagnosticResult},
@@ -12,13 +12,16 @@ use crate::output_formatter::InternalFormatter;
 pub struct DefaultOutputFormatter;
 
 impl InternalFormatter for DefaultOutputFormatter {
-    fn all_rules(&mut self, writer: &mut dyn Write) {
+    fn all_rules(&self) -> Option<String> {
+        let mut output = String::new();
         let table = RuleTable::new();
         for section in table.sections {
-            writeln!(writer, "{}", section.render_markdown_table(None)).unwrap();
+            output.push_str(section.render_markdown_table(None).as_str());
+            output.push('\n');
         }
-        writeln!(writer, "Default: {}", table.turned_on_by_default_count).unwrap();
-        writeln!(writer, "Total: {}", table.total).unwrap();
+        output.push_str(format!("Default: {}\n", table.turned_on_by_default_count).as_str());
+        output.push_str(format!("Total: {}\n", table.total).as_str());
+        Some(output)
     }
 
     fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
@@ -125,11 +128,10 @@ mod test {
 
     #[test]
     fn all_rules() {
-        let mut writer = Vec::new();
-        let mut formatter = DefaultOutputFormatter;
+        let formatter = DefaultOutputFormatter;
+        let result = formatter.all_rules();
 
-        formatter.all_rules(&mut writer);
-        assert!(!writer.is_empty());
+        assert!(result.is_some());
     }
 
     #[test]

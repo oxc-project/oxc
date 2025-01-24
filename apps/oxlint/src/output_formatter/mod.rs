@@ -5,7 +5,6 @@ mod json;
 mod stylish;
 mod unix;
 
-use std::io::{BufWriter, Stdout, Write};
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -63,10 +62,7 @@ pub struct LintCommandInfo {
 /// The Formatter is then managed by [`OutputFormatter`].
 trait InternalFormatter {
     /// Print all available rules by oxlint
-    /// Some Formatter do not know how to output the rules in the style,
-    /// instead you should print out that this combination of flags is not supported.
-    /// Example: "flag --rules with flag --format=checkstyle is not allowed"
-    fn all_rules(&mut self, writer: &mut dyn Write);
+    fn all_rules(&self) -> Option<String>;
 
     /// At the end of the Lint command the Formatter can output extra information.
     fn lint_command_info(&self, _lint_command_info: &LintCommandInfo) -> Option<String> {
@@ -100,8 +96,8 @@ impl OutputFormatter {
 
     /// Print all available rules by oxlint
     /// See [`InternalFormatter::all_rules`] for more details.
-    pub fn all_rules(&mut self, writer: &mut BufWriter<Stdout>) {
-        self.internal.all_rules(writer);
+    pub fn all_rules(&self) -> Option<String> {
+        self.internal.all_rules()
     }
 
     /// At the end of the Lint command we may output extra information.

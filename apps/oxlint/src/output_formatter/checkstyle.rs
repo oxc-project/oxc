@@ -1,4 +1,4 @@
-use std::{borrow::Cow, io::Write};
+use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
 
@@ -13,8 +13,8 @@ use crate::output_formatter::InternalFormatter;
 pub struct CheckStyleOutputFormatter;
 
 impl InternalFormatter for CheckStyleOutputFormatter {
-    fn all_rules(&mut self, writer: &mut dyn Write) {
-        writeln!(writer, "flag --rules with flag --format=checkstyle is not allowed").unwrap();
+    fn all_rules(&self) -> Option<String> {
+        None
     }
 
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {

@@ -1,6 +1,6 @@
 use std::{
     env, fs,
-    io::{BufWriter, ErrorKind, Write},
+    io::{ErrorKind, Write},
     path::{Path, PathBuf},
     process::ExitCode,
     time::Instant,
@@ -34,16 +34,14 @@ impl Runner for LintRunner {
         Self { options, cwd: env::current_dir().expect("Failed to get current working directory") }
     }
 
-    fn run(self) -> CliRunResult {
+    fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
-        let mut output_formatter = OutputFormatter::new(format_str);
-
-        // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
-        // See `https://github.com/rust-lang/rust/issues/60673`.
-        let mut stdout = BufWriter::new(std::io::stdout());
+        let output_formatter = OutputFormatter::new(format_str);
 
         if self.options.list_rules {
-            output_formatter.all_rules(&mut stdout);
+            if let Some(output) = output_formatter.all_rules() {
+                stdout.write_all(output.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
+            }
             stdout.flush().unwrap();
             return CliRunResult::None;
         }
@@ -206,7 +204,7 @@ impl Runner for LintRunner {
             }
         });
 
-        let diagnostic_result = diagnostic_service.run(&mut stdout);
+        let diagnostic_result = diagnostic_service.run(stdout);
 
         let diagnostic_failed = diagnostic_result.max_warnings_exceeded()
             || diagnostic_result.errors_count() > 0
@@ -334,7 +332,9 @@ mod test {
         let mut new_args = vec!["--silent"];
         new_args.extend(args);
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
-        match LintRunner::new(options).run() {
+        let mut output = Vec::new();
+
+        match LintRunner::new(options).run(&mut output) {
             CliRunResult::LintResult(lint_result) => lint_result,
             other => panic!("{other:?}"),
         }
@@ -356,8 +356,9 @@ mod test {
         };
 
         current_cwd.push(part_cwd);
+        let mut output = Vec::new();
 
-        match LintRunner::new(options).with_cwd(current_cwd).run() {
+        match LintRunner::new(options).with_cwd(current_cwd).run(&mut output) {
             CliRunResult::LintResult(lint_result) => lint_result,
             other => panic!("{other:?}"),
         }
@@ -367,7 +368,9 @@ mod test {
         let mut new_args = vec!["--quiet"];
         new_args.extend(args);
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
-        match LintRunner::new(options).run() {
+        let mut output = Vec::new();
+
+        match LintRunner::new(options).run(&mut output) {
             CliRunResult::InvalidOptions { message } => message,
             other => {
                 panic!("Expected InvalidOptions, got {other:?}");
@@ -752,7 +755,8 @@ mod test {
     fn test_print_config_ban_all_rules() {
         let args = &["-A", "all", "--print-config"];
         let options = lint_command().run_inner(args).unwrap();
-        let ret = LintRunner::new(options).run();
+        let mut output = Vec::new();
+        let ret = LintRunner::new(options).run(&mut output);
         let CliRunResult::PrintConfigResult { config_file: config } = ret else {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
@@ -776,7 +780,8 @@ mod test {
             "--print-config",
         ];
         let options = lint_command().run_inner(args).unwrap();
-        let ret = LintRunner::new(options).run();
+        let mut output = Vec::new();
+        let ret = LintRunner::new(options).run(&mut output);
         let CliRunResult::PrintConfigResult { config_file: config } = ret else {
             panic!("Expected PrintConfigResult, got {ret:?}")
         };
@@ -793,7 +798,8 @@ mod test {
     fn test_init_config() {
         let args = &["--init"];
         let options = lint_command().run_inner(args).unwrap();
-        let ret = LintRunner::new(options).run();
+        let mut output = Vec::new();
+        let ret = LintRunner::new(options).run(&mut output);
         let CliRunResult::ConfigFileInitResult { message } = ret else {
             panic!("Expected configuration file to be created, got {ret:?}")
         };
