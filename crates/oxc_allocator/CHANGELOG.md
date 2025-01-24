@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.0] - 2025-01-24
+
+### Features
+
+- 2a2ad53 allocator: Add `Allocator::capacity` and `used_bytes` methods (#8621) (overlookmotel)
+- 6801c81 allocator: Add `Allocator::new` and `with_capacity` methods (#8620) (overlookmotel)
+
+### Performance
+
+- 787aaad allocator: Make `String` non-drop (#8617) (overlookmotel)
+
+### Documentation
+
+- c1d243b allocator: Improve docs for `Allocator` (#8623) (overlookmotel)
+- 01a5e5d allocator: Improve docs for `HashMap` (#8616) (overlookmotel)
+- 87568a1 allocator: Reformat docs (#8615) (overlookmotel)
+
+### Refactor
+
+- ae8db53 allocator: Move `Allocator` into own module (#8656) (overlookmotel)
+- 0f85bc6 allocator: Reduce repeat code to prevent `Drop` types in arena (#8655) (overlookmotel)
+- de76eb1 allocator: Reorder `Box` methods (#8654) (overlookmotel)
+
 ## [0.47.0] - 2025-01-18
 
 - fae4cd2 allocator: [**BREAKING**] Remove `Vec::into_string` (#8571) (overlookmotel)

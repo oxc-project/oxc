@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.0] - 2025-01-24
+
+### Bug Fixes
+
+- 4ff6e85 minifier: Remove expression statement `void 0` (#8602) (Boshen)
+
+### Performance
+
+- 9953ac7 minifier: Add `LatePeepholeOptimizations` (#8651) (Boshen)
+
 ## [0.47.1] - 2025-01-19
 
 ### Bug Fixes

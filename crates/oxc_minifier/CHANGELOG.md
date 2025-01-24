@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.0] - 2025-01-24
+
+### Features
+
+- 343690e minifier: Replace `Number.*_SAFE_INTEGER`/`Number.EPSILON` (#8682) (sapphi-red)
+- 0c5bb30 minifier: Replace `Number.POSITIVE_INFINITY`/`Number.NEGATIVE_INFINITY`/`Number.NaN` (#8681) (sapphi-red)
+- 835b258 minifier: Compress `typeof foo === 'object' && foo !== null` to `typeof foo == 'object' && !!foo` (#8638) (sapphi-red)
+- 2bcbed2 minifier: Compress `(a = b) === null || a === undefined` to `(a = b) == null` (#8637) (sapphi-red)
+
+### Bug Fixes
+
+- 883d25b minifier: Keep esm in dce (#8677) (Boshen)
+- 878ce10 minifier: `void 0` equals to `undefined` (#8673) (Boshen)
+- ba201a6 minifier: Remove "non esbuild optimizations" which is incorrect (#8668) (Boshen)
+- 8c8b5fa minifier: Avoid minifing `String(a)` into `"" + a` for symbols (#8612) (翠 / green)
+- 4ff6e85 minifier: Remove expression statement `void 0` (#8602) (Boshen)
+- 93d643e minifier: Keep side effects when folding const conditional exprs (#8591) (camc314)
+
+### Performance
+
+- 9953ac7 minifier: Add `LatePeepholeOptimizations` (#8651) (Boshen)
+- 00dc63f minifier: Only substitute typed array constructor once (#8649) (Boshen)
+- 3e19e4e minifier: Remove the useless empty statement removal code in statement fusion (#8646) (Boshen)
+- 5b3c412 minifier: Only run optimizations on local changes (#8644) (Boshen)
+
+### Refactor
+
+- e66da9f isolated_declarations, linter, minifier, prettier, semantic, transformer: Remove unnecessary `ref` / `ref mut` syntax (#8643) (overlookmotel)
+- ce2b9da minifier: Remove `wrap_to_avoid_ambiguous_else` (#8676) (Boshen)
+- 75a579b minifier: Clean up `has_no_side_effect_for_evaluation_same_target` (#8675) (Boshen)
+- 1bb2539 minifier: Move more code into `minimize_conditions` local loop (#8671) (Boshen)
+- 13e4a45 minifier: Move conditional assignment to `minimize_conditions` (#8669) (Boshen)
+- ae895d8 minifier: Use `NonEmptyStack` for function stack (#8661) (Boshen)
+- 3802d28 minifier: Clean up `try_minimize_conditional` (#8660) (Boshen)
+- dcc1f2b minifier: Rename `ast_passes` to `peephole` (#8635) (Boshen)
+- 52458de minifier: Remove unused code and traits (#8632) (Boshen)
+- 6f95cd5 minifier: Remove all the unnecessary fake ast passes (#8618) (Boshen)
+- 712cae0 minifier: Run the compressor on all test cases (#8604) (Boshen)
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
+### Testing
+
+- d9f5e7f minifier: Enable passed esbuild tests (Boshen)
+
 ## [0.47.1] - 2025-01-19
 
 ### Bug Fixes

@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.0] - 2025-01-24
+
+### Features
+
+- 99607d3 codegen: Print comments in `TSTypeLiteral` (#8679) (Boshen)
+
+### Performance
+
+- d966e0a codegen: Do not check for comments if turned off (#8598) (Boshen)
+
+### Refactor
+
+- db863a3 codegen: Use `Stack` for `binary_expr_stack` (#8663) (Boshen)
+- 8cce69a codegen: Remove `match_member_expression` (#8597) (Boshen)
+- a3dc4c3 crates: Clean up snapshot files (#8680) (Boshen)
+- 23b49a6 linter: Use `cow_to_ascii_lowercase` instead `cow_to_lowercase` (#8678) (Boshen)
+
+### Testing
+
+- 39dbd2d codegen: Fix snapshot file (#8685) (Boshen)
+
 ## [0.47.0] - 2025-01-18
 
 ### Bug Fixes
