@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.0] - 2025-01-24
+
+- 54d0fac span: [**BREAKING**] Remove `PartialEq` impl for `&Atom` (#8642) (overlookmotel)
+
+### Refactor
+
+- b8d9a51 span: Deal only in owned `Atom`s (#8641) (overlookmotel)
+- 20f52b1 span: Remove unnecessary lifetimes on `Atom` impls (#8639) (overlookmotel)
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+
 ## [0.47.0] - 2025-01-18
 
 - 7066d1c ast, span, syntax, regular_expression: [**BREAKING**] Remove `ContentHash` (#8512) (overlookmotel)
