@@ -82,6 +82,12 @@ impl<'a> Ctx<'a, '_> {
         }
         false
     }
+    /// If two expressions are equal.
+    /// Special case `undefined` == `void 0`
+    pub fn expr_eq(self, a: &Expression<'a>, b: &Expression<'a>) -> bool {
+        use oxc_span::cmp::ContentEq;
+        a.content_eq(b) || (self.is_expression_undefined(a) && self.is_expression_undefined(b))
+    }
 
     // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2641
     pub fn string_to_equivalent_number_value(s: &str) -> Option<f64> {

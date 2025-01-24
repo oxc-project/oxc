@@ -1,7 +1,7 @@
-use std::{borrow::Cow, io::Write};
+use std::borrow::Cow;
 
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
     Error, Severity,
 };
 
@@ -11,8 +11,8 @@ use crate::output_formatter::InternalFormatter;
 pub struct GithubOutputFormatter;
 
 impl InternalFormatter for GithubOutputFormatter {
-    fn all_rules(&mut self, writer: &mut dyn Write) {
-        writeln!(writer, "flag --rules with flag --format=github is not allowed").unwrap();
+    fn all_rules(&self) -> Option<String> {
+        None
     }
 
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
@@ -25,7 +25,7 @@ impl InternalFormatter for GithubOutputFormatter {
 struct GithubReporter;
 
 impl DiagnosticReporter for GithubReporter {
-    fn finish(&mut self) -> Option<String> {
+    fn finish(&mut self, _: &DiagnosticResult) -> Option<String> {
         None
     }
 
@@ -35,7 +35,7 @@ impl DiagnosticReporter for GithubReporter {
 }
 
 fn format_github(diagnostic: &Error) -> String {
-    let Info { line, column, filename, message, severity, rule_id } = Info::new(diagnostic);
+    let Info { start, end, filename, message, severity, rule_id } = Info::new(diagnostic);
     let severity = match severity {
         Severity::Error => "error",
         Severity::Warning | miette::Severity::Advice => "warning",
@@ -44,7 +44,11 @@ fn format_github(diagnostic: &Error) -> String {
     let filename = escape_property(&filename);
     let message = escape_data(&message);
     format!(
-        "::{severity} file={filename},line={line},endLine={line},col={column},endColumn={column},title={title}::{message}\n"
+        "::{severity} file={filename},line={},endLine={},col={},endColumn={},title={title}::{message}\n",
+        start.line,
+        end.line,
+        start.column,
+        end.column
     )
 }
 
@@ -84,7 +88,10 @@ fn escape_property(value: &str) -> String {
 
 #[cfg(test)]
 mod test {
-    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_diagnostics::{
+        reporter::{DiagnosticReporter, DiagnosticResult},
+        NamedSource, OxcDiagnostic,
+    };
     use oxc_span::Span;
 
     use super::GithubReporter;
@@ -93,7 +100,7 @@ mod test {
     fn reporter_finish() {
         let mut reporter = GithubReporter;
 
-        let result = reporter.finish();
+        let result = reporter.finish(&DiagnosticResult::default());
 
         assert!(result.is_none());
     }
@@ -108,6 +115,6 @@ mod test {
         let result = reporter.render_error(error);
 
         assert!(result.is_some());
-        assert_eq!(result.unwrap(), "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=1,title=oxlint::error message\n");
+        assert_eq!(result.unwrap(), "::warning file=file%3A//test.ts,line=1,endLine=1,col=1,endColumn=9,title=oxlint::error message\n");
     }
 }

@@ -53,17 +53,17 @@ impl<'a> BoundIdentifier<'a> {
 
     /// Create `BoundIdentifier` from a `BindingIdentifier`
     pub fn from_binding_ident(ident: &BindingIdentifier<'a>) -> Self {
-        Self { name: ident.name.clone(), symbol_id: ident.symbol_id() }
+        Self { name: ident.name, symbol_id: ident.symbol_id() }
     }
 
     /// Convert `BoundIdentifier` to `MaybeBoundIdentifier`
     pub fn to_maybe_bound_identifier(&self) -> MaybeBoundIdentifier<'a> {
-        MaybeBoundIdentifier::new(self.name.clone(), Some(self.symbol_id))
+        MaybeBoundIdentifier::new(self.name, Some(self.symbol_id))
     }
 
     /// Create `BindingIdentifier` for this binding
     pub fn create_binding_identifier(&self, ctx: &TraverseCtx<'a>) -> BindingIdentifier<'a> {
-        ctx.ast.binding_identifier_with_symbol_id(SPAN, self.name.clone(), self.symbol_id)
+        ctx.ast.binding_identifier_with_symbol_id(SPAN, self.name, self.symbol_id)
     }
 
     /// Create `BindingPattern` for this binding
@@ -281,7 +281,7 @@ impl<'a> BoundIdentifier<'a> {
         flags: ReferenceFlags,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        ctx.create_bound_ident_reference(span, self.name.clone(), self.symbol_id, flags)
+        ctx.create_bound_ident_reference(span, self.name, self.symbol_id, flags)
     }
 
     /// Create `Expression::Identifier` referencing this binding, with specified `Span` and `ReferenceFlags`

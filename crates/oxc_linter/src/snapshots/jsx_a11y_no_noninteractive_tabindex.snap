@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): tabIndex should only be declared on interactive elements
    ╭─[no_noninteractive_tabindex.tsx:1:22]

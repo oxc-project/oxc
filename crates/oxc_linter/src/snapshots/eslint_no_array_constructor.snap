@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-array-constructor): Do not use `new` to create arrays
    ╭─[no_array_constructor.tsx:1:1]

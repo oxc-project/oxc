@@ -1,7 +1,8 @@
 use std::{
     env, fs,
-    io::{BufWriter, Write},
+    io::{ErrorKind, Write},
     path::{Path, PathBuf},
+    process::ExitCode,
     time::Instant,
 };
 
@@ -12,10 +13,11 @@ use oxc_linter::{
     LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use oxc_span::VALID_EXTENSIONS;
+use serde_json::Value;
 
 use crate::{
     cli::{CliRunResult, LintCommand, LintResult, MiscOptions, Runner, WarningOptions},
-    output_formatter::{OutputFormat, OutputFormatter},
+    output_formatter::{LintCommandInfo, OutputFormatter},
     walk::{Extensions, Walk},
 };
 
@@ -32,16 +34,14 @@ impl Runner for LintRunner {
         Self { options, cwd: env::current_dir().expect("Failed to get current working directory") }
     }
 
-    fn run(self) -> CliRunResult {
+    fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
-        let mut output_formatter = OutputFormatter::new(format_str);
-
-        // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
-        // See `https://github.com/rust-lang/rust/issues/60673`.
-        let mut stdout = BufWriter::new(std::io::stdout());
+        let output_formatter = OutputFormatter::new(format_str);
 
         if self.options.list_rules {
-            output_formatter.all_rules(&mut stdout);
+            if let Some(output) = output_formatter.all_rules() {
+                stdout.write_all(output.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
+            }
             stdout.flush().unwrap();
             return CliRunResult::None;
         }
@@ -54,7 +54,6 @@ impl Runner for LintRunner {
             ignore_options,
             fix_options,
             enable_plugins,
-            output_options,
             misc_options,
             ..
         } = self.options;
@@ -80,11 +79,8 @@ impl Runner for LintRunner {
             // If explicit paths were provided, but all have been
             // filtered, return early.
             if provided_path_count > 0 {
-                return CliRunResult::LintResult(LintResult {
-                    duration: now.elapsed(),
-                    deny_warnings: warning_options.deny_warnings,
-                    ..LintResult::default()
-                });
+                // ToDo: when oxc_linter (config) validates the configuration, we can use exit_code = 1 to fail
+                return CliRunResult::LintResult(LintResult::default());
             }
 
             paths.push(self.cwd.clone());
@@ -130,9 +126,32 @@ impl Runner for LintRunner {
         if let Some(basic_config_file) = oxlintrc_for_print {
             let config_file = config_builder.resolve_final_config_file(basic_config_file);
             if misc_options.print_config {
-                return CliRunResult::PrintConfigResult { config_file };
+                stdout
+                    .write_all(config_file.as_bytes())
+                    .or_else(Self::check_for_writer_error)
+                    .unwrap();
+                stdout.write_all(b"\n").or_else(Self::check_for_writer_error).unwrap();
+                stdout.flush().unwrap();
+
+                return CliRunResult::PrintConfigResult;
             } else if basic_options.init {
-                match fs::write(Self::DEFAULT_OXLINTRC, config_file) {
+                let schema_relative_path = "node_modules/oxlint/configuration_schema.json";
+                let configuration = if self.cwd.join(schema_relative_path).is_file() {
+                    let mut config_json: Value = serde_json::from_str(&config_file).unwrap();
+                    if let Value::Object(ref mut obj) = config_json {
+                        let mut json_object = serde_json::Map::new();
+                        json_object.insert(
+                            "$schema".to_string(),
+                            format!("./{schema_relative_path}").into(),
+                        );
+                        json_object.extend(obj.clone());
+                        *obj = json_object;
+                    }
+                    serde_json::to_string_pretty(&config_json).unwrap()
+                } else {
+                    config_file
+                };
+                match fs::write(Self::DEFAULT_OXLINTRC, configuration) {
                     Ok(()) => {
                         return CliRunResult::ConfigFileInitResult {
                             message: "Configuration file created".to_string(),
@@ -191,17 +210,27 @@ impl Runner for LintRunner {
                 lint_service.run(&tx_error);
             }
         });
-        diagnostic_service.run(&mut stdout);
+
+        let diagnostic_result = diagnostic_service.run(stdout);
+
+        let diagnostic_failed = diagnostic_result.max_warnings_exceeded()
+            || diagnostic_result.errors_count() > 0
+            || (warning_options.deny_warnings && diagnostic_result.warnings_count() > 0);
+
+        if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
+            number_of_files,
+            number_of_rules: lint_service.linter().number_of_rules(),
+            threads_count: rayon::current_num_threads(),
+            start_time: now.elapsed(),
+        }) {
+            stdout.write_all(end.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
+        };
 
         CliRunResult::LintResult(LintResult {
-            duration: now.elapsed(),
-            number_of_rules: lint_service.linter().number_of_rules(),
             number_of_files,
-            number_of_warnings: diagnostic_service.warnings_count(),
-            number_of_errors: diagnostic_service.errors_count(),
-            max_warnings_exceeded: diagnostic_service.max_warnings_exceeded(),
-            deny_warnings: warning_options.deny_warnings,
-            print_summary: matches!(output_options.format, OutputFormat::Default),
+            number_of_warnings: diagnostic_result.warnings_count(),
+            number_of_errors: diagnostic_result.errors_count(),
+            exit_code: ExitCode::from(u8::from(diagnostic_failed)),
         })
     }
 }
@@ -288,65 +317,31 @@ impl LintRunner {
         let config_path = cwd.join(Self::DEFAULT_OXLINTRC);
         Oxlintrc::from_file(&config_path).or_else(|_| Ok(Oxlintrc::default()))
     }
+
+    fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
+        // Do not panic when the process is killed (e.g. piping into `less`).
+        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+            Ok(())
+        } else {
+            Err(error)
+        }
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use std::{env, fs, path::MAIN_SEPARATOR_STR};
+    use std::fs;
 
     use super::LintRunner;
-    use crate::cli::{lint_command, CliRunResult, LintResult, Runner};
-
-    fn test(args: &[&str]) -> LintResult {
-        let mut new_args = vec!["--silent"];
-        new_args.extend(args);
-        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
-        match LintRunner::new(options).run() {
-            CliRunResult::LintResult(lint_result) => lint_result,
-            other => panic!("{other:?}"),
-        }
-    }
-
-    fn test_with_cwd(cwd: &str, args: &[&str]) -> LintResult {
-        let mut new_args = vec!["--silent"];
-        new_args.extend(args);
-
-        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
-
-        let mut current_cwd = env::current_dir().unwrap();
-
-        let part_cwd = if MAIN_SEPARATOR_STR == "/" {
-            cwd.into()
-        } else {
-            #[expect(clippy::disallowed_methods)]
-            cwd.replace('/', MAIN_SEPARATOR_STR)
-        };
-
-        current_cwd.push(part_cwd);
-
-        match LintRunner::new(options).with_cwd(current_cwd).run() {
-            CliRunResult::LintResult(lint_result) => lint_result,
-            other => panic!("{other:?}"),
-        }
-    }
-
-    fn test_invalid_options(args: &[&str]) -> String {
-        let mut new_args = vec!["--quiet"];
-        new_args.extend(args);
-        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
-        match LintRunner::new(options).run() {
-            CliRunResult::InvalidOptions { message } => message,
-            other => {
-                panic!("Expected InvalidOptions, got {other:?}");
-            }
-        }
-    }
+    use crate::{
+        cli::{lint_command, CliRunResult, Runner},
+        tester::Tester,
+    };
 
     #[test]
     fn no_arg() {
         let args = &[];
-        let result = test(args);
-        assert!(result.number_of_rules > 0);
+        let result = Tester::new().get_lint_result(args);
         assert!(result.number_of_warnings > 0);
         assert_eq!(result.number_of_errors, 0);
     }
@@ -354,8 +349,7 @@ mod test {
     #[test]
     fn dir() {
         let args = &["fixtures/linter"];
-        let result = test(args);
-        assert!(result.number_of_rules > 0);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 3);
         assert_eq!(result.number_of_warnings, 3);
         assert_eq!(result.number_of_errors, 0);
@@ -364,8 +358,7 @@ mod test {
     #[test]
     fn cwd() {
         let args = &["debugger.js"];
-        let result = test_with_cwd("fixtures/linter", args);
-        assert!(result.number_of_rules > 0);
+        let result = Tester::new().with_cwd("fixtures/linter".into()).get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
@@ -374,7 +367,7 @@ mod test {
     #[test]
     fn file() {
         let args = &["fixtures/linter/debugger.js"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
@@ -383,7 +376,7 @@ mod test {
     #[test]
     fn multi_files() {
         let args = &["fixtures/linter/debugger.js", "fixtures/linter/nan.js"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 2);
         assert_eq!(result.number_of_warnings, 2);
         assert_eq!(result.number_of_errors, 0);
@@ -392,7 +385,7 @@ mod test {
     #[test]
     fn wrong_extension() {
         let args = &["foo.asdf"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -402,7 +395,7 @@ mod test {
     fn ignore_pattern() {
         let args =
             &["--ignore-pattern", "**/*.js", "--ignore-pattern", "**/*.vue", "fixtures/linter"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -414,7 +407,7 @@ mod test {
     #[test]
     fn ignore_file_overrides_explicit_args() {
         let args = &["--ignore-path", "fixtures/linter/.customignore", "fixtures/linter/nan.js"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -428,7 +421,7 @@ mod test {
             "--no-ignore",
             "fixtures/linter/nan.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
@@ -437,7 +430,7 @@ mod test {
     #[test]
     fn ignore_flow() {
         let args = &["--import-plugin", "fixtures/flow/index.mjs"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -447,7 +440,7 @@ mod test {
     // https://github.com/oxc-project/oxc/issues/7406
     fn ignore_flow_import_plugin_directory() {
         let args = &["--import-plugin", "-A all", "-D no-cycle", "fixtures/flow/"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 2);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -456,7 +449,7 @@ mod test {
     #[test]
     fn filter_allow_all() {
         let args = &["-A", "all", "fixtures/linter"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert!(result.number_of_files > 0);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -465,7 +458,7 @@ mod test {
     #[test]
     fn filter_allow_one() {
         let args = &["-W", "correctness", "-A", "no-debugger", "fixtures/linter/debugger.js"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -474,7 +467,7 @@ mod test {
     #[test]
     fn filter_error() {
         let args = &["-D", "correctness", "fixtures/linter/debugger.js"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
@@ -483,7 +476,7 @@ mod test {
     #[test]
     fn eslintrc_error() {
         let args = &["-c", "fixtures/linter/eslintrc.json", "fixtures/linter/debugger.js"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
@@ -492,7 +485,7 @@ mod test {
     #[test]
     fn eslintrc_off() {
         let args = &["-c", "fixtures/eslintrc_off/eslintrc.json", "fixtures/eslintrc_off/test.js"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1); // triggered by no_empty_file
         assert_eq!(result.number_of_errors, 0);
@@ -501,7 +494,9 @@ mod test {
     #[test]
     fn oxlint_config_auto_detection() {
         let args = &["debugger.js"];
-        let result = test_with_cwd("fixtures/auto_config_detection", args);
+        let result =
+            Tester::new().with_cwd("fixtures/auto_config_detection".into()).get_lint_result(args);
+
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
@@ -516,7 +511,7 @@ mod test {
             "fixtures/no_undef/eslintrc.json",
             "fixtures/no_undef/test.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
@@ -531,7 +526,7 @@ mod test {
             "fixtures/eslintrc_env/eslintrc_no_env.json",
             "fixtures/eslintrc_env/test.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
@@ -544,7 +539,7 @@ mod test {
             "fixtures/eslintrc_env/eslintrc_env_browser.json",
             "fixtures/eslintrc_env/test.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -559,7 +554,7 @@ mod test {
             "no-empty",
             "fixtures/no_empty_allow_empty_catch/test.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -574,7 +569,7 @@ mod test {
             "no-empty",
             "fixtures/no_empty_disallow_empty_catch/test.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
@@ -584,7 +579,7 @@ mod test {
     fn no_console_off() {
         let args =
             &["-c", "fixtures/no_console_off/eslintrc.json", "fixtures/no_console_off/test.js"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -597,7 +592,7 @@ mod test {
             "fixtures/typescript_eslint/eslintrc.json",
             "fixtures/typescript_eslint/test.ts",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 3);
         assert_eq!(result.number_of_errors, 0);
@@ -611,13 +606,16 @@ mod test {
             "--disable-typescript-plugin",
             "fixtures/typescript_eslint/test.ts",
         ];
-        test(args);
+        let result = Tester::new().get_lint_result(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 2);
+        assert_eq!(result.number_of_errors, 0);
     }
 
     #[test]
     fn lint_vue_file() {
         let args = &["fixtures/vue/debugger.vue"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 2);
         assert_eq!(result.number_of_errors, 0);
@@ -626,7 +624,7 @@ mod test {
     #[test]
     fn lint_empty_vue_file() {
         let args = &["fixtures/vue/empty.vue"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -635,7 +633,7 @@ mod test {
     #[test]
     fn lint_astro_file() {
         let args = &["fixtures/astro/debugger.astro"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 4);
         assert_eq!(result.number_of_errors, 0);
@@ -644,7 +642,7 @@ mod test {
     #[test]
     fn lint_svelte_file() {
         let args = &["fixtures/svelte/debugger.svelte"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 0);
@@ -653,10 +651,11 @@ mod test {
     #[test]
     fn test_tsconfig_option() {
         // passed
-        test(&["--tsconfig", "fixtures/tsconfig/tsconfig.json"]);
+        Tester::new().get_lint_result(&["--tsconfig", "fixtures/tsconfig/tsconfig.json"]);
 
         // failed
-        assert!(test_invalid_options(&["--tsconfig", "oxc/tsconfig.json"])
+        assert!(Tester::new()
+            .get_invalid_option_result(&["--tsconfig", "oxc/tsconfig.json"])
             .contains("oxc/tsconfig.json\" does not exist, Please provide a valid tsconfig file."));
     }
 
@@ -667,7 +666,10 @@ mod test {
             "fixtures/eslintrc_vitest_replace/eslintrc.json",
             "fixtures/eslintrc_vitest_replace/foo.test.js",
         ];
-        test(args);
+        let result = Tester::new().get_lint_result(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_warnings, 0);
+        assert_eq!(result.number_of_errors, 0);
     }
 
     #[test]
@@ -678,7 +680,7 @@ mod test {
             "fixtures/eslintrc_vitest_replace/eslintrc.json",
             "fixtures/eslintrc_vitest_replace/foo.test.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_errors, 1);
     }
@@ -686,7 +688,7 @@ mod test {
     #[test]
     fn test_import_plugin_enabled_in_config() {
         let args = &["-c", "fixtures/import/.oxlintrc.json", "fixtures/import/test.js"];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
@@ -703,14 +705,15 @@ mod test {
         assert_eq!(&content, "debugger\n");
 
         // Apply fix to the file.
-        let _ = test(args);
+        let _ = Tester::new().get_lint_result(args);
         #[expect(clippy::disallowed_methods)]
         let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
         assert_eq!(new_content, "\n");
 
         // File should not be modified if no fix is applied.
-        let modified_before = fs::metadata(file).unwrap().modified().unwrap();
-        let _ = test(args);
+        let modified_before: std::time::SystemTime =
+            fs::metadata(file).unwrap().modified().unwrap();
+        let _ = Tester::new().get_lint_result(args);
         let modified_after = fs::metadata(file).unwrap().modified().unwrap();
         assert_eq!(modified_before, modified_after);
 
@@ -721,17 +724,7 @@ mod test {
     #[test]
     fn test_print_config_ban_all_rules() {
         let args = &["-A", "all", "--print-config"];
-        let options = lint_command().run_inner(args).unwrap();
-        let ret = LintRunner::new(options).run();
-        let CliRunResult::PrintConfigResult { config_file: config } = ret else {
-            panic!("Expected PrintConfigResult, got {ret:?}")
-        };
-
-        #[expect(clippy::disallowed_methods)]
-        let expect_json = std::fs::read_to_string("fixtures/print_config/normal/expect.json")
-            .unwrap()
-            .replace("\r\n", "\n");
-        assert_eq!(config, expect_json.trim());
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
@@ -745,25 +738,15 @@ mod test {
             "eqeqeq",
             "--print-config",
         ];
-        let options = lint_command().run_inner(args).unwrap();
-        let ret = LintRunner::new(options).run();
-        let CliRunResult::PrintConfigResult { config_file: config } = ret else {
-            panic!("Expected PrintConfigResult, got {ret:?}")
-        };
-
-        #[expect(clippy::disallowed_methods)]
-        let expect_json = std::fs::read_to_string("fixtures/print_config/ban_rules/expect.json")
-            .unwrap()
-            .replace("\r\n", "\n");
-
-        assert_eq!(config, expect_json.trim());
+        Tester::new().test_and_snapshot(args);
     }
 
     #[test]
     fn test_init_config() {
         let args = &["--init"];
         let options = lint_command().run_inner(args).unwrap();
-        let ret = LintRunner::new(options).run();
+        let mut output = Vec::new();
+        let ret = LintRunner::new(options).run(&mut output);
         let CliRunResult::ConfigFileInitResult { message } = ret else {
             panic!("Expected configuration file to be created, got {ret:?}")
         };
@@ -773,20 +756,23 @@ mod test {
 
     #[test]
     fn test_overrides() {
-        let result =
-            test(&["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.js"]);
+        let args = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.js"];
+        let result = Tester::new().get_lint_result(args);
+
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
 
-        let result =
-            test(&["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.ts"]);
+        let args = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/test.ts"];
+        let result = Tester::new().get_lint_result(args);
+
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 1);
         assert_eq!(result.number_of_errors, 1);
 
-        let result =
-            test(&["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/other.jsx"]);
+        let args = &["-c", "fixtures/overrides/.oxlintrc.json", "fixtures/overrides/other.jsx"];
+        let result = Tester::new().get_lint_result(args);
+
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
@@ -794,8 +780,9 @@ mod test {
 
     #[test]
     fn test_overrides_directories() {
-        let result =
-            test(&["-c", "fixtures/overrides/directories-config.json", "fixtures/overrides"]);
+        let args = &["-c", "fixtures/overrides/directories-config.json", "fixtures/overrides"];
+        let result = Tester::new().get_lint_result(args);
+
         assert_eq!(result.number_of_files, 7);
         assert_eq!(result.number_of_warnings, 2);
         assert_eq!(result.number_of_errors, 2);
@@ -803,20 +790,22 @@ mod test {
 
     #[test]
     fn test_config_ignore_patterns_extension() {
-        let result = test(&[
+        let args = &[
             "-c",
             "fixtures/config_ignore_patterns/ignore_extension/eslintrc.json",
             "fixtures/config_ignore_patterns/ignore_extension",
-        ]);
+        ];
+        let result = Tester::new().get_lint_result(args);
+
         assert_eq!(result.number_of_files, 1);
     }
 
     #[test]
     fn test_config_ignore_patterns_directory() {
-        let result = test_with_cwd(
-            "fixtures/config_ignore_patterns/ignore_directory",
-            &["-c", "eslintrc.json"],
-        );
+        let result = Tester::new()
+            .with_cwd("fixtures/config_ignore_patterns/ignore_directory".into())
+            .get_lint_result(&["-c", "eslintrc.json"]);
+
         assert_eq!(result.number_of_files, 1);
     }
 
@@ -829,7 +818,7 @@ mod test {
             "fixtures/issue_7566/tests/main.js",
             "fixtures/issue_7566/tests/function/main.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 0);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 0);
@@ -842,7 +831,7 @@ mod test {
             "fixtures/jest_and_vitest_alias_rules/oxlint-jest.json",
             "fixtures/jest_and_vitest_alias_rules/test.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
@@ -852,7 +841,7 @@ mod test {
             "fixtures/jest_and_vitest_alias_rules/oxlint-vitest.json",
             "fixtures/jest_and_vitest_alias_rules/test.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
@@ -865,7 +854,7 @@ mod test {
             "fixtures/eslint_and_typescript_alias_rules/oxlint-eslint.json",
             "fixtures/eslint_and_typescript_alias_rules/test.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
@@ -875,9 +864,15 @@ mod test {
             "fixtures/eslint_and_typescript_alias_rules/oxlint-typescript.json",
             "fixtures/eslint_and_typescript_alias_rules/test.js",
         ];
-        let result = test(args);
+        let result = Tester::new().get_lint_result(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_warnings, 0);
         assert_eq!(result.number_of_errors, 1);
+    }
+
+    #[test]
+    fn test_print_config() {
+        let args = &["--print-config"];
+        Tester::new().test_and_snapshot(args);
     }
 }

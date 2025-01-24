@@ -130,7 +130,7 @@ impl<'a> ClassProperties<'a, '_> {
 
         // Identifier is reference to class name. Rename it.
         let temp_binding = class_details.bindings.get_or_init_static_binding(ctx);
-        ident.name = temp_binding.name.clone();
+        ident.name = temp_binding.name;
 
         let symbols = ctx.symbols_mut();
         symbols.get_reference_mut(reference_id).set_symbol_id(temp_binding.symbol_id);
@@ -155,6 +155,9 @@ impl<'a> ClassProperties<'a, '_> {
 ///    * Class expression:
 ///      * `x = class C { static x = C.y; }` -> `var _C; x = (_C = class C {}, _C.x = _C.y, _C)`
 ///      * `x = class C { static { C.x(); } }` -> `var _C; x = (_C = class C {}, _C.x(), _C)`
+/// 3. `super` to transpiled super.
+///    * e.g. `super.prop` -> `_superPropGet(_Class, "prop", this)` (in static private method)
+///      or `_superPropGet(_Class, "prop", _Class)` (in static property initializer or static block)
 ///
 /// Also:
 /// * Update parent `ScopeId` of first level of scopes, if `reparent_scopes == true`.

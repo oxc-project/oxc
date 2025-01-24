@@ -1,6 +1,6 @@
-mod ast_passes;
 mod ecmascript;
 mod mangler;
+mod peephole;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};

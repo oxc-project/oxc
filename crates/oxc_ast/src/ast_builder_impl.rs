@@ -233,7 +233,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn use_strict_directive(self) -> Directive<'a> {
         let use_strict = Atom::from("use strict");
-        self.directive(SPAN, self.string_literal(SPAN, use_strict.clone(), None), use_strict)
+        self.directive(SPAN, self.string_literal(SPAN, use_strict, None), use_strict)
     }
 
     /* ---------- Functions ---------- */

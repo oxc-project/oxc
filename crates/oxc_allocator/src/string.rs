@@ -22,8 +22,15 @@ use crate::{Allocator, Vec};
 ///
 /// UTF-8 encoded, growable string. Identical to [`std::string::String`] except that it stores
 /// string contents in arena allocator.
+//
+// We wrap the inner `BumpaloString` in `ManuallyDrop` to make `String` non-Drop.
+// `bumpalo::collections::String` is a wrapper around `bumpalo::collections::Vec<u8>`.
+// Even though a `Vec<u8>` cannot require dropping (because `u8` is not `Drop`), `Vec<u8>` still has
+// a `Drop` impl, which means `bumpalo::collections::String` is `Drop` too.
+// We want to make it clear to compiler that `String` doesn't require dropping, so it doesn't
+// produce pointless "drop guard" code to handle dropping a `String` in case of a panic.
 #[derive(PartialOrd, Eq, Ord)]
-pub struct String<'alloc>(BumpaloString<'alloc>);
+pub struct String<'alloc>(ManuallyDrop<BumpaloString<'alloc>>);
 
 impl<'alloc> String<'alloc> {
     /// Creates a new empty [`String`].
@@ -38,7 +45,7 @@ impl<'alloc> String<'alloc> {
     /// [`with_capacity_in`]: String::with_capacity_in
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> String<'alloc> {
-        Self(BumpaloString::new_in(allocator.bump()))
+        Self(ManuallyDrop::new(BumpaloString::new_in(allocator.bump())))
     }
 
     /// Creates a new empty [`String`] with specified capacity.
@@ -57,13 +64,12 @@ impl<'alloc> String<'alloc> {
     /// [`new_in`]: String::new_in
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> String<'alloc> {
-        Self(BumpaloString::with_capacity_in(capacity, allocator.bump()))
+        Self(ManuallyDrop::new(BumpaloString::with_capacity_in(capacity, allocator.bump())))
     }
 
     /// Construct a new [`String`] from a string slice.
     ///
     /// # Examples
-    ///
     /// ```
     /// use oxc_allocator::{Allocator, String};
     ///
@@ -74,7 +80,7 @@ impl<'alloc> String<'alloc> {
     /// ```
     #[inline(always)]
     pub fn from_str_in(s: &str, allocator: &'alloc Allocator) -> String<'alloc> {
-        Self(BumpaloString::from_str_in(s, allocator.bump()))
+        Self(ManuallyDrop::new(BumpaloString::from_str_in(s, allocator.bump())))
     }
 
     /// Convert `Vec<u8>` into [`String`].
@@ -106,7 +112,7 @@ impl<'alloc> String<'alloc> {
         // Lifetime of returned `String` is same as lifetime of original `Vec<u8>`.
         let inner = ManuallyDrop::into_inner(bytes.0);
         let (ptr, len, capacity, bump) = inner.into_raw_parts_with_alloc();
-        Self(BumpaloString::from_raw_parts_in(ptr, len, capacity, bump))
+        Self(ManuallyDrop::new(BumpaloString::from_raw_parts_in(ptr, len, capacity, bump)))
     }
 
     /// Creates a new [`String`] from a length, capacity, and pointer.
@@ -126,9 +132,6 @@ impl<'alloc> String<'alloc> {
     /// nothing else uses the pointer after calling this function.
     ///
     /// # Examples
-    ///
-    /// Basic usage:
-    ///
     /// ```
     /// use std::mem;
     /// use oxc_allocator::{Allocator, String};
@@ -140,8 +143,6 @@ impl<'alloc> String<'alloc> {
     ///     let ptr = s.as_mut_ptr();
     ///     let len = s.len();
     ///     let capacity = s.capacity();
-    ///
-    ///     mem::forget(s);
     ///
     ///     let s = String::from_raw_parts_in(ptr, len, capacity, &allocator);
     ///
@@ -157,14 +158,14 @@ impl<'alloc> String<'alloc> {
         allocator: &'alloc Allocator,
     ) -> String<'alloc> {
         // SAFETY: Safety conditions of this method are the same as `BumpaloString`'s method
-        Self(BumpaloString::from_raw_parts_in(buf, length, capacity, allocator.bump()))
+        let inner = BumpaloString::from_raw_parts_in(buf, length, capacity, allocator.bump());
+        Self(ManuallyDrop::new(inner))
     }
 
     /// Convert this `String<'alloc>` into an `&'alloc str`. This is analogous to
     /// [`std::string::String::into_boxed_str`].
     ///
-    /// # Example
-    ///
+    /// # Examples
     /// ```
     /// use oxc_allocator::{Allocator, String};
     ///
@@ -175,7 +176,8 @@ impl<'alloc> String<'alloc> {
     /// ```
     #[inline(always)]
     pub fn into_bump_str(self) -> &'alloc str {
-        self.0.into_bump_str()
+        let inner = ManuallyDrop::into_inner(self.0);
+        inner.into_bump_str()
     }
 }
 

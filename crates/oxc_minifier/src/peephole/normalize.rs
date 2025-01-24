@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::{traverse_mut_with_ctx, ReusableTraverseCtx, Traverse, TraverseCtx};
 
-use crate::{ctx::Ctx, CompressOptions, CompressorPass};
+use crate::{ctx::Ctx, CompressOptions};
 
 #[derive(Default)]
 pub struct NormalizeOptions {
@@ -33,8 +33,8 @@ pub struct Normalize {
     compress_options: CompressOptions,
 }
 
-impl<'a> CompressorPass<'a> for Normalize {
-    fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+impl<'a> Normalize {
+    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
@@ -50,7 +50,6 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
-            Statement::IfStatement(s) => Self::wrap_to_avoid_ambiguous_else(s, ctx),
             Statement::WhileStatement(_) if self.options.convert_while_to_fors => {
                 Self::convert_while_to_for(stmt, ctx);
             }
@@ -147,22 +146,6 @@ impl<'a> Normalize {
         }
     }
 
-    // Wrap to avoid ambiguous else.
-    // `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
-    fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
-            if if2.alternate.is_some() {
-                let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-                if_stmt.consequent =
-                    Statement::BlockStatement(ctx.ast.alloc_block_statement_with_scope_id(
-                        if_stmt.consequent.span(),
-                        ctx.ast.vec1(ctx.ast.move_statement(&mut if_stmt.consequent)),
-                        scope_id,
-                    ));
-            }
-        }
-    }
-
     fn convert_void_ident(e: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         debug_assert!(e.operator.is_void());
         let Expression::Identifier(ident) = &e.argument else { return };
@@ -175,22 +158,7 @@ impl<'a> Normalize {
 
 #[cfg(test)]
 mod test {
-    use oxc_allocator::Allocator;
-
-    use super::NormalizeOptions;
-    use crate::{tester, CompressOptions};
-
-    fn test(source_text: &str, expected: &str) {
-        let allocator = Allocator::default();
-        let compress_options = CompressOptions {
-            drop_debugger: true,
-            drop_console: true,
-            ..CompressOptions::default()
-        };
-        let options = NormalizeOptions { convert_while_to_fors: true };
-        let mut pass = super::Normalize::new(options, compress_options);
-        tester::test(&allocator, source_text, expected, &mut pass);
-    }
+    use crate::tester::test;
 
     #[test]
     fn test_while() {
@@ -200,8 +168,8 @@ mod test {
 
     #[test]
     fn test_void_ident() {
-        test("var x; void x", "var x; void 0");
-        test("void x", "void x"); // reference error
+        test("var x; void x", "var x");
+        test("void x", "x"); // reference error
     }
 
     #[test]
@@ -212,8 +180,8 @@ mod test {
 
     #[test]
     fn drop_console() {
-        test("console.log()", "void 0;\n");
-        test("() => console.log()", "() => void 0");
+        test("console.log()", "");
+        test("(() => console.log())()", "(() => void 0)()");
     }
 
     #[test]

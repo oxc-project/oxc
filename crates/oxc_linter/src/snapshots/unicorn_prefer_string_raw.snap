@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:14]

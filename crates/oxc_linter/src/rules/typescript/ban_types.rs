@@ -71,7 +71,7 @@ impl Rule for BanTypes {
                     "String" | "Boolean" | "Number" | "Symbol" | "BigInt" => {
                         ctx.diagnostic(type_diagnostic(
                             name.as_str(),
-                            &name.as_str().cow_to_lowercase(),
+                            &name.as_str().cow_to_ascii_lowercase(),
                             typ.span,
                         ));
                     }

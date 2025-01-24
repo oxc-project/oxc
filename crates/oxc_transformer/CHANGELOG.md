@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.48.0] - 2025-01-24
+
+### Refactor
+
+- a3dc4c3 crates: Clean up snapshot files (#8680) (Boshen)
+- e66da9f isolated_declarations, linter, minifier, prettier, semantic, transformer: Remove unnecessary `ref` / `ref mut` syntax (#8643) (overlookmotel)
+- b8d9a51 span: Deal only in owned `Atom`s (#8641) (overlookmotel)
+- ac4f98e span: Derive `Copy` on `Atom` (#8596) (branchseer)
+- a730f99 transformer: Move `create_prototype_member` to utils module (#8657) (Dunqing)
+- 61d96fd transformer/class-properties: Correct comments (#8636) (overlookmotel)
+
+## [0.47.1] - 2025-01-19
+
+### Bug Fixes
+
+- 7421a52 transformer/typescript: Correctly resolve references to non-constant enum members (#8543) (branchseer)
+
 ## [0.47.0] - 2025-01-18
 
 - fae4cd2 allocator: [**BREAKING**] Remove `Vec::into_string` (#8571) (overlookmotel)

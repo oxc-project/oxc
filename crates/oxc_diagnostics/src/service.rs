@@ -1,11 +1,13 @@
 use std::{
-    cell::Cell,
     io::{ErrorKind, Write},
     path::{Path, PathBuf},
     sync::{mpsc, Arc},
 };
 
-use crate::{reporter::DiagnosticReporter, Error, NamedSource, OxcDiagnostic, Severity};
+use crate::{
+    reporter::{DiagnosticReporter, DiagnosticResult},
+    Error, NamedSource, OxcDiagnostic, Severity,
+};
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
@@ -56,12 +58,6 @@ pub struct DiagnosticService {
     /// which can be used to force exit with an error status if there are too many warning-level rule violations in your project
     max_warnings: Option<usize>,
 
-    /// Total number of warnings received
-    warnings_count: Cell<usize>,
-
-    /// Total number of errors received
-    errors_count: Cell<usize>,
-
     sender: DiagnosticSender,
     receiver: DiagnosticReceiver,
 }
@@ -71,16 +67,7 @@ impl DiagnosticService {
     /// provided [`DiagnosticReporter`].
     pub fn new(reporter: Box<dyn DiagnosticReporter>) -> Self {
         let (sender, receiver) = mpsc::channel();
-        Self {
-            reporter,
-            quiet: false,
-            silent: false,
-            max_warnings: None,
-            warnings_count: Cell::new(0),
-            errors_count: Cell::new(0),
-            sender,
-            receiver,
-        }
+        Self { reporter, quiet: false, silent: false, max_warnings: None, sender, receiver }
     }
 
     /// Set to `true` to only report errors and ignore warnings.
@@ -109,7 +96,7 @@ impl DiagnosticService {
     /// are too many warning-level rule violations in your project. Errors do not count towards the
     /// warning limit.
     ///
-    /// Use [`max_warnings_exceeded`](DiagnosticService::max_warnings_exceeded) to check if too
+    /// Use [`DiagnosticResult`](DiagnosticResult::max_warnings_exceeded) to check if too
     /// many warnings have been received.
     ///
     /// Default: [`None`]
@@ -129,20 +116,10 @@ impl DiagnosticService {
         &self.sender
     }
 
-    /// Get the number of warning-level diagnostics received.
-    pub fn warnings_count(&self) -> usize {
-        self.warnings_count.get()
-    }
-
-    /// Get the number of error-level diagnostics received.
-    pub fn errors_count(&self) -> usize {
-        self.errors_count.get()
-    }
-
     /// Check if the max warning threshold, as set by
     /// [`with_max_warnings`](DiagnosticService::with_max_warnings), has been exceeded.
-    pub fn max_warnings_exceeded(&self) -> bool {
-        self.max_warnings.is_some_and(|max_warnings| self.warnings_count.get() > max_warnings)
+    fn max_warnings_exceeded(&self, warnings_count: usize) -> bool {
+        self.max_warnings.is_some_and(|max_warnings| warnings_count > max_warnings)
     }
 
     /// Wrap [diagnostics] with the source code and path, converting them into [Error]s.
@@ -165,7 +142,16 @@ impl DiagnosticService {
     /// # Panics
     ///
     /// * When the writer fails to write
-    pub fn run(&mut self, writer: &mut dyn Write) {
+    ///
+    /// ToDo:
+    /// We are passing [`DiagnosticResult`] to the [`DiagnosticReporter`] already
+    /// currently for the GraphicalReporter there is another extra output,
+    /// which does some more things. This is the reason why we are returning it.
+    /// Let's check at first it we can easily change for the default output before removing this return.
+    pub fn run(&mut self, writer: &mut dyn Write) -> DiagnosticResult {
+        let mut warnings_count: usize = 0;
+        let mut errors_count: usize = 0;
+
         while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
@@ -173,12 +159,10 @@ impl DiagnosticService {
                 let is_error = severity == Some(Severity::Error) || severity.is_none();
                 if is_warning || is_error {
                     if is_warning {
-                        let warnings_count = self.warnings_count() + 1;
-                        self.warnings_count.set(warnings_count);
+                        warnings_count += 1;
                     }
                     if is_error {
-                        let errors_count = self.errors_count() + 1;
-                        self.errors_count.set(errors_count);
+                        errors_count += 1;
                     }
                     // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
                     // Note that it does not disable ALL diagnostics, only Warning diagnostics
@@ -217,7 +201,13 @@ impl DiagnosticService {
             }
         }
 
-        if let Some(finish_output) = self.reporter.finish() {
+        let result = DiagnosticResult::new(
+            warnings_count,
+            errors_count,
+            self.max_warnings_exceeded(warnings_count),
+        );
+
+        if let Some(finish_output) = self.reporter.finish(&result) {
             writer
                 .write_all(finish_output.as_bytes())
                 .or_else(Self::check_for_writer_error)
@@ -225,10 +215,12 @@ impl DiagnosticService {
         }
 
         writer.flush().or_else(Self::check_for_writer_error).unwrap();
+
+        result
     }
 
     fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
-        // Do not panic when the process is skill (e.g. piping into `less`).
+        // Do not panic when the process is killed (e.g. piping into `less`).
         if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
             Ok(())
         } else {

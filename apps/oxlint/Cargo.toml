@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "0.15.6"
+version = "0.15.8"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -37,6 +37,7 @@ oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 ignore = { workspace = true, features = ["simd-accel"] }
+insta = { workspace = true }
 miette = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }

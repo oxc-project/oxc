@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     array,
-    format::print::{assignment, function},
+    format::print::{assignment, function, property},
     group, hardline, if_break, indent,
     ir::{Doc, JoinSeparator},
     join, line, softline, text, Format, Prettier,
@@ -130,14 +130,19 @@ pub enum ClassPropertyLike<'a, 'b> {
 
 impl<'a> ClassPropertyLike<'a, '_> {
     fn format_key(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        match self {
+        let (computed, property_key) = match self {
             ClassPropertyLike::PropertyDefinition(property_definition) => {
-                property_definition.key.format(p)
+                (property_definition.computed, &property_definition.key)
             }
             ClassPropertyLike::AccessorProperty(accessor_property) => {
-                accessor_property.key.format(p)
+                (accessor_property.computed, &accessor_property.key)
             }
-        }
+        };
+        property::print_property_key(
+            p,
+            &property::PropertyKeyLike::PropertyKey(property_key),
+            computed,
+        )
     }
 
     fn decorators(&self) -> Option<&oxc_allocator::Vec<Decorator<'a>>> {

@@ -71,7 +71,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
                 let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
                 Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
                     ident.span,
-                    ident.name.clone(),
+                    ident.name,
                     reference_id,
                 ))
             }
@@ -80,7 +80,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
                 let ident =
                     Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
                         ident.span,
-                        ident.name.clone(),
+                        ident.name,
                         reference_id,
                     ));
                 Expression::from(ctx.ast.member_expression_static(
@@ -312,8 +312,8 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
         }
 
         let hook_name = match &call_expr.callee {
-            Expression::Identifier(ident) => ident.name.clone(),
-            Expression::StaticMemberExpression(ref member) => member.property.name.clone(),
+            Expression::Identifier(ident) => ident.name,
+            Expression::StaticMemberExpression(member) => member.property.name,
             _ => return,
         };
 
@@ -324,10 +324,10 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
             let (binding_name, is_member_expression) = match &call_expr.callee {
-                Expression::Identifier(ident) => (Some(ident.name.clone()), false),
+                Expression::Identifier(ident) => (Some(ident.name), false),
                 Expression::StaticMemberExpression(member) => {
                     if let Expression::Identifier(object) = &member.object {
-                        (Some(object.name.clone()), true)
+                        (Some(object.name), true)
                     } else {
                         (None, false)
                     }
@@ -355,7 +355,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
                                 expr = Expression::from(ctx.ast.member_expression_static(
                                     SPAN,
                                     expr,
-                                    ctx.ast.identifier_name(SPAN, hook_name.clone()),
+                                    ctx.ast.identifier_name(SPAN, hook_name),
                                     false,
                                 ));
                             }
@@ -434,7 +434,7 @@ impl<'a> ReactRefresh<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         match expr {
-            Expression::Identifier(ref ident) => {
+            Expression::Identifier(ident) => {
                 // For case like:
                 // export const Something = hoc(Foo)
                 // we don't want to wrap Foo inside the call.
@@ -451,7 +451,7 @@ impl<'a> ReactRefresh<'a, '_> {
                     return false;
                 }
             }
-            Expression::CallExpression(ref mut call_expr) => {
+            Expression::CallExpression(call_expr) => {
                 let allowed_callee = matches!(
                     call_expr.callee,
                     Expression::Identifier(_)
@@ -516,13 +516,9 @@ impl<'a> ReactRefresh<'a, '_> {
         id: &BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let left = self.create_registration(id.name.clone(), ctx);
-        let right = ctx.create_bound_ident_expr(
-            SPAN,
-            id.name.clone(),
-            id.symbol_id(),
-            ReferenceFlags::Read,
-        );
+        let left = self.create_registration(id.name, ctx);
+        let right =
+            ctx.create_bound_ident_expr(SPAN, id.name, id.symbol_id(), ReferenceFlags::Read);
         let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, expr)
     }
@@ -664,7 +660,7 @@ impl<'a> ReactRefresh<'a, '_> {
                     None
                 }
             }
-            Statement::ExportDefaultDeclaration(ref mut stmt_decl) => {
+            Statement::ExportDefaultDeclaration(stmt_decl) => {
                 match &mut stmt_decl.declaration {
                     declaration @ match_expression!(ExportDefaultDeclarationKind) => {
                         let expression = declaration.to_expression_mut();

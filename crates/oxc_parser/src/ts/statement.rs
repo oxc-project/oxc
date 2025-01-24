@@ -124,7 +124,13 @@ impl<'a> ParserImpl<'a> {
         let params = self.parse_ts_type_parameters()?;
         self.expect(Kind::Eq)?;
 
-        let annotation = self.parse_ts_type()?;
+        let annotation = if self.at(Kind::Intrinsic) && !self.peek_at(Kind::Dot) {
+            let span = self.start_span();
+            self.bump_any();
+            self.ast.ts_type_intrinsic_keyword(self.end_span(span))
+        } else {
+            self.parse_ts_type()?
+        };
 
         self.asi()?;
         let span = self.end_span(span);

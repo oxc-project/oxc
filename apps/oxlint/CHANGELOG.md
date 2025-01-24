@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.8] - 2025-01-24
+
+### Features
+
+- 4ae568e linter: Add DiagnosticResult to the Reporters for receiving a sub part result (#8666) (Alexander S.)
+- 8a0eb2a oxlint: Add stylish formatter (#8607) (Andrew Powell)
+
+### Bug Fixes
+
+- 40316af linter: Fix github `endColumn` output (#8647) (Alexander S.)
+- dc912fa linter: Added missing $schema property to default config (#8625) (Tapan Prakash)
+
+## [0.15.7] - 2025-01-19
+
+### Features
+
+- 4ac2e99 oxlint: Implement `--init` cli option (#8453) (Tapan Prakash)
+
+### Refactor
+
+- b4c87e2 linter: Move DiagnosticsReporters to oxlint (#8454) (Alexander S.)
+
 ## [0.15.6] - 2025-01-13
 
 ### Refactor

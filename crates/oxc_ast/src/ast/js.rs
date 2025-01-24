@@ -432,7 +432,7 @@ pub struct TaggedTemplateExpression<'a> {
 ///
 /// Represents a quasi element in a template literal.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TemplateElement<'a> {
     pub span: Span,
@@ -442,7 +442,7 @@ pub struct TemplateElement<'a> {
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/js/book/ch_template-literals.html#template-strings-cooked-vs-raw)
 #[ast]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 #[estree(no_type)]
 pub struct TemplateElementValue<'a> {
@@ -2196,7 +2196,7 @@ pub struct ImportExpression<'a> {
 pub struct ImportDeclaration<'a> {
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
-    #[estree(via = "OptionVecDefault", type = "Array<ImportDeclarationSpecifier>")]
+    #[estree(via = crate::serialize::OptionVecDefault, type = "Array<ImportDeclarationSpecifier>")]
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
     pub phase: Option<ImportPhase>,

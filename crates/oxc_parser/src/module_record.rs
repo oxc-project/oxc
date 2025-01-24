@@ -65,10 +65,10 @@ impl<'a> ModuleRecordBuilder<'a> {
         errors
     }
 
-    fn add_module_request(&mut self, name: &Atom<'a>, requested_module: RequestedModule) {
+    fn add_module_request(&mut self, name: Atom<'a>, requested_module: RequestedModule) {
         self.module_record
             .requested_modules
-            .entry(name.clone())
+            .entry(name)
             .or_insert_with(|| oxc_allocator::Vec::new_in(self.allocator))
             .push(requested_module);
     }
@@ -94,7 +94,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     fn add_export_binding(&mut self, name: Atom<'a>, span: Span) {
-        if let Some(old_node) = self.module_record.exported_bindings.insert(name.clone(), span) {
+        if let Some(old_node) = self.module_record.exported_bindings.insert(name, span) {
             self.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
         }
     }
@@ -206,7 +206,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value.clone(), decl.source.span);
+        let module_request = NameSpan::new(decl.source.value, decl.source.span);
 
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
@@ -216,17 +216,17 @@ impl<'a> ModuleRecordBuilder<'a> {
                             specifier.imported.name(),
                             specifier.imported.span(),
                         )),
-                        NameSpan::new(specifier.local.name.clone(), specifier.local.span),
+                        NameSpan::new(specifier.local.name, specifier.local.span),
                         decl.import_kind.is_type() || specifier.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
                         ImportImportName::NamespaceObject,
-                        NameSpan::new(specifier.local.name.clone(), specifier.local.span),
+                        NameSpan::new(specifier.local.name, specifier.local.span),
                         decl.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => (
                         ImportImportName::Default(specifier.span),
-                        NameSpan::new(specifier.local.name.clone(), specifier.local.span),
+                        NameSpan::new(specifier.local.name, specifier.local.span),
                         decl.import_kind.is_type(),
                     ),
                 };
@@ -240,7 +240,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             }
         }
         self.add_module_request(
-            &module_request.name,
+            module_request.name,
             RequestedModule {
                 statement_span: decl.span,
                 span: module_request.span,
@@ -251,7 +251,7 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value.clone(), decl.source.span);
+        let module_request = NameSpan::new(decl.source.value, decl.source.span);
         let export_entry = ExportEntry {
             statement_span: decl.span,
             span: decl.span,
@@ -271,7 +271,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             self.add_export_binding(exported_name.name(), exported_name.span());
         }
         self.add_module_request(
-            &module_request.name,
+            module_request.name,
             RequestedModule {
                 statement_span: decl.span,
                 span: module_request.span,
@@ -290,17 +290,17 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         let local_name = match &decl.declaration {
             ExportDefaultDeclarationKind::Identifier(ident) => {
-                ExportLocalName::Default(NameSpan::new(ident.name.clone(), ident.span))
+                ExportLocalName::Default(NameSpan::new(ident.name, ident.span))
             }
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                 func.id.as_ref().map_or_else(
                     || ExportLocalName::Null,
-                    |id| ExportLocalName::Name(NameSpan::new(id.name.clone(), id.span)),
+                    |id| ExportLocalName::Name(NameSpan::new(id.name, id.span)),
                 )
             }
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref().map_or_else(
                 || ExportLocalName::Null,
-                |id| ExportLocalName::Name(NameSpan::new(id.name.clone(), id.span)),
+                |id| ExportLocalName::Name(NameSpan::new(id.name, id.span)),
             ),
             _ => ExportLocalName::Null,
         };
@@ -326,11 +326,11 @@ impl<'a> ModuleRecordBuilder<'a> {
         }
 
         let module_request =
-            decl.source.as_ref().map(|source| NameSpan::new(source.value.clone(), source.span));
+            decl.source.as_ref().map(|source| NameSpan::new(source.value, source.span));
 
         if let Some(module_request) = &module_request {
             self.add_module_request(
-                &module_request.name,
+                module_request.name,
                 RequestedModule {
                     statement_span: decl.span,
                     span: module_request.span,
@@ -342,10 +342,8 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         if let Some(d) = &decl.declaration {
             d.bound_names(&mut |ident| {
-                let export_name =
-                    ExportExportName::Name(NameSpan::new(ident.name.clone(), ident.span));
-                let local_name =
-                    ExportLocalName::Name(NameSpan::new(ident.name.clone(), ident.span));
+                let export_name = ExportExportName::Name(NameSpan::new(ident.name, ident.span));
+                let local_name = ExportLocalName::Name(NameSpan::new(ident.name, ident.span));
                 let export_entry = ExportEntry {
                     statement_span: decl.span,
                     span: d.span(),
@@ -356,18 +354,18 @@ impl<'a> ModuleRecordBuilder<'a> {
                     is_type: decl.export_kind.is_type(),
                 };
                 self.add_export_entry(export_entry);
-                self.add_export_binding(ident.name.clone(), ident.span);
+                self.add_export_binding(ident.name, ident.span);
             });
         }
 
         for specifier in &decl.specifiers {
             let export_name = ExportExportName::Name(NameSpan::new(
-                specifier.exported.name().clone(),
+                specifier.exported.name(),
                 specifier.exported.span(),
             ));
             let import_name = if module_request.is_some() {
                 ExportImportName::Name(NameSpan::new(
-                    specifier.local.name().clone(),
+                    specifier.local.name(),
                     specifier.local.span(),
                 ))
             } else {
@@ -376,10 +374,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             let local_name = if module_request.is_some() {
                 ExportLocalName::Null
             } else {
-                ExportLocalName::Name(NameSpan::new(
-                    specifier.local.name().clone(),
-                    specifier.local.span(),
-                ))
+                ExportLocalName::Name(NameSpan::new(specifier.local.name(), specifier.local.span()))
             };
             let export_entry = ExportEntry {
                 statement_span: decl.span,
@@ -391,7 +386,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                 is_type: specifier.export_kind.is_type() || decl.export_kind.is_type(),
             };
             self.add_export_entry(export_entry);
-            self.add_export_binding(specifier.exported.name().clone(), specifier.exported.span());
+            self.add_export_binding(specifier.exported.name(), specifier.exported.span());
         }
     }
 }

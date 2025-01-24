@@ -58,20 +58,20 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
         self.id.bound_names(&mut |ident| {
             let span = ident.span;
-            let name = &ident.name;
+            let name = ident.name;
             let mut declared_symbol_id = None;
 
             for &scope_id in &var_scope_ids {
                 if let Some(symbol_id) =
-                    builder.check_redeclaration(scope_id, span, name, excludes, true)
+                    builder.check_redeclaration(scope_id, span, &name, excludes, true)
                 {
                     builder.add_redeclare_variable(symbol_id, span);
                     declared_symbol_id = Some(symbol_id);
 
                     // remove current scope binding and add to target scope
                     // avoid same symbols appear in multi-scopes
-                    builder.scope.remove_binding(scope_id, name);
-                    builder.scope.add_binding(target_scope_id, name, symbol_id);
+                    builder.scope.remove_binding(scope_id, &name);
+                    builder.scope.add_binding(target_scope_id, &name, symbol_id);
                     builder.symbols.scope_ids[symbol_id] = target_scope_id;
                     break;
                 }
@@ -81,18 +81,14 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             // we don't need to create another symbol with the same name
             // to make sure they point to the same symbol.
             let symbol_id = declared_symbol_id.unwrap_or_else(|| {
-                builder.declare_symbol_on_scope(span, name, target_scope_id, includes, excludes)
+                builder.declare_symbol_on_scope(span, &name, target_scope_id, includes, excludes)
             });
             ident.symbol_id.set(Some(symbol_id));
 
             // Finally, add the variable to all hoisted scopes
             // to support redeclaration checks when declaring variables with the same name later.
             for &scope_id in &var_scope_ids {
-                builder
-                    .hoisting_variables
-                    .entry(scope_id)
-                    .or_default()
-                    .insert(name.clone(), symbol_id);
+                builder.hoisting_variables.entry(scope_id).or_default().insert(name, symbol_id);
             }
         });
     }
@@ -155,7 +151,7 @@ impl<'a> Binder<'a> for Function<'a> {
             if is_function_part_of_if_statement(self, builder) {
                 let symbol_id = builder.symbols.create_symbol(
                     ident.span,
-                    ident.name.clone().into(),
+                    ident.name.into(),
                     SymbolFlags::Function,
                     ScopeId::new(u32::MAX - 1), // Not bound to any scope.
                     builder.current_node_id,

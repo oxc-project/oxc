@@ -25,9 +25,6 @@ describe('parse', () => {
       'value': ' comment ',
     });
     expect(code.substring(comment.start, comment.end)).toBe('/*' + comment.value + '*/');
-
-    const ret2 = await parseAsync('test.js', code);
-    expect(ret).toEqual(ret2);
   });
 });
 

@@ -1,5 +1,7 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
+use miette::SourceSpan;
+
 use crate::{Error, Severity};
 
 /// Reporters are responsible for rendering diagnostics to some format and writing them to some
@@ -43,7 +45,7 @@ pub trait DiagnosticReporter {
     ///
     /// While this method _should_ only ever be called a single time, this is not a guarantee
     /// upheld in Oxc's API. Do not rely on this behavior.
-    fn finish(&mut self) -> Option<String>;
+    fn finish(&mut self, result: &DiagnosticResult) -> Option<String>;
 
     /// Render a diagnostic into this reporter's desired format. For example, a JSONLinesReporter
     /// might return a stringified JSON object on a single line. Returns [`None`] to skip reporting
@@ -53,19 +55,60 @@ pub trait DiagnosticReporter {
     fn render_error(&mut self, error: Error) -> Option<String>;
 }
 
+/// DiagnosticResult will be submitted to the Reporter when the [`DiagnosticService`](crate::service::DiagnosticService)
+/// is finished receiving all files
+#[derive(Default)]
+pub struct DiagnosticResult {
+    /// Total number of warnings received
+    warnings_count: usize,
+
+    /// Total number of errors received
+    errors_count: usize,
+
+    /// Did the threshold for warnings exceeded the max_warnings?
+    /// ToDo: We giving the input from outside, let the owner calculate the result
+    max_warnings_exceeded: bool,
+}
+
+impl DiagnosticResult {
+    pub fn new(warnings_count: usize, errors_count: usize, max_warnings_exceeded: bool) -> Self {
+        Self { warnings_count, errors_count, max_warnings_exceeded }
+    }
+
+    /// Get the number of warning-level diagnostics received.
+    pub fn warnings_count(&self) -> usize {
+        self.warnings_count
+    }
+
+    /// Get the number of error-level diagnostics received.
+    pub fn errors_count(&self) -> usize {
+        self.errors_count
+    }
+
+    /// Did the threshold for warnings exceeded the max_warnings?
+    pub fn max_warnings_exceeded(&self) -> bool {
+        self.max_warnings_exceeded
+    }
+}
+
 pub struct Info {
-    pub line: usize,
-    pub column: usize,
+    pub start: InfoPosition,
+    pub end: InfoPosition,
     pub filename: String,
     pub message: String,
     pub severity: Severity,
     pub rule_id: Option<String>,
 }
 
+pub struct InfoPosition {
+    pub line: usize,
+    pub column: usize,
+}
+
 impl Info {
     pub fn new(diagnostic: &Error) -> Self {
-        let mut line = 0;
-        let mut column = 0;
+        let mut start = InfoPosition { line: 0, column: 0 };
+        let mut end = InfoPosition { line: 0, column: 0 };
         let mut filename = String::new();
         let mut message = String::new();
         let mut severity = Severity::Warning;
@@ -74,8 +117,18 @@ impl Info {
             if let Some(source) = diagnostic.source_code() {
                 if let Some(label) = labels.next() {
                     if let Ok(span_content) = source.read_span(label.inner(), 0, 0) {
-                        line = span_content.line() + 1;
-                        column = span_content.column() + 1;
+                        start.line = span_content.line() + 1;
+                        start.column = span_content.column() + 1;
+
+                        let end_offset = label.inner().offset() + label.inner().len();
+
+                        if let Ok(span_content) =
+                            source.read_span(&SourceSpan::from((end_offset, 0)), 0, 0)
+                        {
+                            end.line = span_content.line() + 1;
+                            end.column = span_content.column() + 1;
+                        }
+
                         if let Some(name) = span_content.name() {
                             filename = name.to_string();
                         };
@@ -92,6 +145,7 @@ impl Info {
                 }
             }
         }
-        Self { line, column, filename, message, severity, rule_id }
+
+        Self { start, end, filename, message, severity, rule_id }
     }
 }

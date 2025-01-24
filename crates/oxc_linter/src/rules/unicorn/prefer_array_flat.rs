@@ -145,7 +145,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
             &first_argument.params.items[1].pattern.kind,
         ) {
             (
-                BindingPatternKind::BindingIdentifier(ref first_param),
+                BindingPatternKind::BindingIdentifier(first_param),
                 BindingPatternKind::BindingIdentifier(second_param),
             ) => Some((&first_param.name, &second_param.name)),
 

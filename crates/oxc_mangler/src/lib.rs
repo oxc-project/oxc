@@ -317,7 +317,7 @@ impl Mangler {
                     itertools::Either::Right(decl.id().into_iter())
                 }
             })
-            .map(|id| (id.name.clone(), id.symbol_id()))
+            .map(|id| (id.name, id.symbol_id()))
             .collect()
     }
 }

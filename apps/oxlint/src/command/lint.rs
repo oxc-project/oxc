@@ -185,7 +185,7 @@ pub struct WarningOptions {
 /// Output
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
-    /// Use a specific output format (default, json, unix, checkstyle, github)
+    /// Use a specific output format (default, json, unix, checkstyle, github, stylish)
     #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
     pub format: OutputFormat,
 }

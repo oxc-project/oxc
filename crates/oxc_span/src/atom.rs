@@ -14,7 +14,7 @@ use crate::{cmp::ContentEq, CompactStr};
 ///
 /// Use [CompactStr] with [Atom::to_compact_str] or [Atom::into_compact_str] for
 /// the lifetimeless form.
-#[derive(Clone, Eq)]
+#[derive(Clone, Copy, Eq)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(transparent))]
 pub struct Atom<'a>(&'a str);
@@ -73,7 +73,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Atom<'_> {
 
 impl<'alloc> FromIn<'alloc, &Atom<'alloc>> for Atom<'alloc> {
     fn from_in(s: &Atom<'alloc>, _: &'alloc Allocator) -> Self {
-        Self::from(s.0)
+        *s
     }
 }
 
@@ -119,16 +119,16 @@ impl<'a> From<Atom<'a>> for &'a str {
     }
 }
 
-impl<'a> From<Atom<'a>> for CompactStr {
+impl From<Atom<'_>> for CompactStr {
     #[inline]
-    fn from(val: Atom<'a>) -> Self {
+    fn from(val: Atom<'_>) -> Self {
         val.into_compact_str()
     }
 }
 
-impl<'a> From<Atom<'a>> for String {
+impl From<Atom<'_>> for String {
     #[inline]
-    fn from(val: Atom<'a>) -> Self {
+    fn from(val: Atom<'_>) -> Self {
         val.into_string()
     }
 }
@@ -166,8 +166,8 @@ impl<T: AsRef<str>> PartialEq<T> for Atom<'_> {
     }
 }
 
-impl<'a> PartialEq<Atom<'a>> for &str {
-    fn eq(&self, other: &Atom<'a>) -> bool {
+impl PartialEq<Atom<'_>> for &str {
+    fn eq(&self, other: &Atom<'_>) -> bool {
         *self == other.as_str()
     }
 }
@@ -178,14 +178,8 @@ impl PartialEq<str> for Atom<'_> {
     }
 }
 
-impl<'a> PartialEq<Atom<'a>> for Cow<'_, str> {
-    fn eq(&self, other: &Atom<'a>) -> bool {
-        self.as_ref() == other.as_str()
-    }
-}
-
-impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
-    fn eq(&self, other: &&Atom<'a>) -> bool {
+impl PartialEq<Atom<'_>> for Cow<'_, str> {
+    fn eq(&self, other: &Atom<'_>) -> bool {
         self.as_ref() == other.as_str()
     }
 }

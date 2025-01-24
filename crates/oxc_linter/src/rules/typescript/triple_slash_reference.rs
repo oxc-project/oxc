@@ -134,8 +134,8 @@ impl Rule for TripleSlashReference {
         if !refs_for_import.is_empty() {
             for stmt in &program.body {
                 match stmt {
-                    Statement::TSImportEqualsDeclaration(decl) => match decl.module_reference {
-                        TSModuleReference::ExternalModuleReference(ref mod_ref) => {
+                    Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
+                        TSModuleReference::ExternalModuleReference(mod_ref) => {
                             if let Some(v) = refs_for_import.get(mod_ref.expression.value.as_str())
                             {
                                 ctx.diagnostic(triple_slash_reference_diagnostic(

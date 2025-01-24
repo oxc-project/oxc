@@ -39,7 +39,7 @@ use crate::{
 
 macro_rules! control_flow {
     ($self:ident, |$cfg:tt| $body:expr) => {
-        if let Some(ref mut $cfg) = $self.cfg {
+        if let Some($cfg) = &mut $self.cfg {
             $body
         } else {
             Default::default()
@@ -2120,7 +2120,7 @@ impl<'a> SemanticBuilder<'a> {
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
         let reference = Reference::new(self.current_node_id, flags);
-        let reference_id = self.declare_reference(ident.name.clone(), reference);
+        let reference_id = self.declare_reference(ident.name, reference);
         ident.reference_id.set(Some(reference_id));
     }
 

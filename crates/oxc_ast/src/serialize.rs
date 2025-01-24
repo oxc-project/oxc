@@ -307,7 +307,7 @@ impl Serialize for JSXElementName<'_> {
         match self {
             Self::Identifier(ident) => ident.serialize(serializer),
             Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
+                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer)
             }
             Self::NamespacedName(name) => name.serialize(serializer),
             Self::MemberExpression(expr) => expr.serialize(serializer),
@@ -322,7 +322,7 @@ impl Serialize for JSXMemberExpressionObject<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Self::IdentifierReference(ident) => {
-                JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
+                JSXIdentifier { span: ident.span, name: ident.name }.serialize(serializer)
             }
             Self::MemberExpression(expr) => expr.serialize(serializer),
             Self::ThisExpression(expr) => {

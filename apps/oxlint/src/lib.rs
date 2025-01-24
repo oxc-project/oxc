@@ -3,6 +3,7 @@ mod lint;
 mod output_formatter;
 mod result;
 mod runner;
+mod tester;
 mod walk;
 
 pub mod cli {

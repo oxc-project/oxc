@@ -1,7 +1,7 @@
-use std::{borrow::Cow, io::Write};
+use std::borrow::Cow;
 
 use oxc_diagnostics::{
-    reporter::{DiagnosticReporter, Info},
+    reporter::{DiagnosticReporter, DiagnosticResult, Info},
     Error, Severity,
 };
 
@@ -11,8 +11,8 @@ use crate::output_formatter::InternalFormatter;
 pub struct UnixOutputFormatter;
 
 impl InternalFormatter for UnixOutputFormatter {
-    fn all_rules(&mut self, writer: &mut dyn Write) {
-        writeln!(writer, "flag --rules with flag --format=unix is not allowed").unwrap();
+    fn all_rules(&self) -> Option<String> {
+        None
     }
 
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
@@ -28,7 +28,7 @@ struct UnixReporter {
 }
 
 impl DiagnosticReporter for UnixReporter {
-    fn finish(&mut self) -> Option<String> {
+    fn finish(&mut self, _: &DiagnosticResult) -> Option<String> {
         let total = self.total;
         if total > 0 {
             return Some(format!("\n{total} problem{}\n", if total > 1 { "s" } else { "" }));
@@ -45,19 +45,22 @@ impl DiagnosticReporter for UnixReporter {
 
 /// <https://github.com/fregante/eslint-formatters/tree/ae1fd9748596447d1fd09625c33d9e7ba9a3d06d/packages/eslint-formatter-unix>
 fn format_unix(diagnostic: &Error) -> String {
-    let Info { line, column, filename, message, severity, rule_id } = Info::new(diagnostic);
+    let Info { start, end: _, filename, message, severity, rule_id } = Info::new(diagnostic);
     let severity = match severity {
         Severity::Error => "Error",
         _ => "Warning",
     };
     let rule_id =
         rule_id.map_or_else(|| Cow::Borrowed(""), |rule_id| Cow::Owned(format!("/{rule_id}")));
-    format!("{filename}:{line}:{column}: {message} [{severity}{rule_id}]\n")
+    format!("{filename}:{}:{}: {message} [{severity}{rule_id}]\n", start.line, start.column)
 }
 
 #[cfg(test)]
 mod test {
-    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_diagnostics::{
+        reporter::{DiagnosticReporter, DiagnosticResult},
+        NamedSource, OxcDiagnostic,
+    };
     use oxc_span::Span;
 
     use super::UnixReporter;
@@ -66,7 +69,7 @@ mod test {
     fn reporter_finish_empty() {
         let mut reporter = UnixReporter::default();
 
-        let result = reporter.finish();
+        let result = reporter.finish(&DiagnosticResult::default());
 
         assert!(result.is_none());
     }
@@ -80,7 +83,7 @@ mod test {
             .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
 
         let _ = reporter.render_error(error);
-        let result = reporter.finish();
+        let result = reporter.finish(&DiagnosticResult::default());
 
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "\n1 problem\n");

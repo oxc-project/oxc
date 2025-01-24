@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
    ╭─[self_closing_comp.tsx:1:49]

@@ -1,8 +1,8 @@
-use std::io::Write;
-
-use oxc_diagnostics::{reporter::DiagnosticReporter, Error};
-use oxc_linter::rules::RULES;
-use oxc_linter::RuleCategory;
+use oxc_diagnostics::{
+    reporter::{DiagnosticReporter, DiagnosticResult},
+    Error,
+};
+use oxc_linter::{rules::RULES, RuleCategory};
 
 use miette::JSONReportHandler;
 
@@ -12,7 +12,7 @@ use crate::output_formatter::InternalFormatter;
 pub struct JsonOutputFormatter;
 
 impl InternalFormatter for JsonOutputFormatter {
-    fn all_rules(&mut self, writer: &mut dyn Write) {
+    fn all_rules(&self) -> Option<String> {
         #[derive(Debug, serde::Serialize)]
         struct RuleInfoJson<'a> {
             scope: &'a str,
@@ -26,13 +26,10 @@ impl InternalFormatter for JsonOutputFormatter {
             category: rule.category(),
         });
 
-        writer
-            .write_all(
-                serde_json::to_string_pretty(&rules_info.collect::<Vec<_>>())
-                    .expect("Failed to serialize")
-                    .as_bytes(),
-            )
-            .unwrap();
+        Some(
+            serde_json::to_string_pretty(&rules_info.collect::<Vec<_>>())
+                .expect("Failed to serialize"),
+        )
     }
 
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
@@ -52,7 +49,7 @@ struct JsonReporter {
 impl DiagnosticReporter for JsonReporter {
     // NOTE: this output does not conform to eslint json format yet
     // https://eslint.org/docs/latest/use/formatters/#json
-    fn finish(&mut self) -> Option<String> {
+    fn finish(&mut self, _: &DiagnosticResult) -> Option<String> {
         Some(format_json(&mut self.diagnostics))
     }
 
@@ -75,12 +72,15 @@ fn format_json(diagnostics: &mut Vec<Error>) -> String {
         })
         .collect::<Vec<_>>()
         .join(",\n");
-    format!("[\n{messages}\n]")
+    format!("[\n{messages}\n]\n")
 }
 
 #[cfg(test)]
 mod test {
-    use oxc_diagnostics::{reporter::DiagnosticReporter, NamedSource, OxcDiagnostic};
+    use oxc_diagnostics::{
+        reporter::{DiagnosticReporter, DiagnosticResult},
+        NamedSource, OxcDiagnostic,
+    };
     use oxc_span::Span;
 
     use super::JsonReporter;
@@ -99,12 +99,12 @@ mod test {
         assert!(first_result.is_none());
 
         // report not gives us all diagnostics at ones
-        let second_result = reporter.finish();
+        let second_result = reporter.finish(&DiagnosticResult::default());
 
         assert!(second_result.is_some());
         assert_eq!(
             second_result.unwrap(),
-            "[\n\t{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8}}],\"related\": []}\n]"
+            "[\n\t{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8}}],\"related\": []}\n]\n"
         );
     }
 }

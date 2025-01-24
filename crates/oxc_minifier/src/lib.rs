@@ -1,10 +1,10 @@
 //! ECMAScript Minifier
 
-mod ast_passes;
 mod compressor;
 mod ctx;
 mod keep_var;
 mod options;
+mod peephole;
 
 #[cfg(test)]
 mod tester;
@@ -16,7 +16,7 @@ use oxc_semantic::{SemanticBuilder, Stats};
 
 pub use oxc_mangler::MangleOptions;
 
-pub use crate::{ast_passes::CompressorPass, compressor::Compressor, options::CompressOptions};
+pub use crate::{compressor::Compressor, options::CompressOptions};
 
 #[derive(Debug, Clone, Copy)]
 pub struct MinifierOptions {

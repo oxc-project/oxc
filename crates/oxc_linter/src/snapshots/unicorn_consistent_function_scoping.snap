@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
    ╭─[consistent_function_scoping.tsx:3:30]

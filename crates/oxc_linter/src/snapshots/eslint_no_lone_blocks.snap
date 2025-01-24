@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
    ╭─[no_lone_blocks.tsx:1:1]
@@ -20,6 +19,12 @@ snapshot_kind: text
    ·        ──
    ╰────
 
+  ⚠ eslint(no-lone-blocks): Block is unnecessary.
+   ╭─[no_lone_blocks.tsx:1:19]
+ 1 │ function test() { { console.log(6); } }
+   ·                   ───────────────────
+   ╰────
+
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:1:19]
  1 │ if (foo) { bar(); {} baz(); }
@@ -28,13 +33,13 @@ snapshot_kind: text
 
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
    ╭─[no_lone_blocks.tsx:1:1]
- 1 │ ╭─▶ { 
+ 1 │ ╭─▶ {
  2 │ ╰─▶             { } }
    ╰────
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:2:4]
- 1 │ { 
+ 1 │ {
  2 │             { } }
    ·             ───
    ╰────
@@ -59,7 +64,7 @@ snapshot_kind: text
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:2:4]
- 1 │ { 
+ 1 │ {
  2 │             {var x = 1;}
    ·             ────────────
  3 │              let y = 2; } {let z = 1;}
@@ -67,14 +72,14 @@ snapshot_kind: text
 
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
    ╭─[no_lone_blocks.tsx:1:1]
- 1 │ ╭─▶ { 
+ 1 │ ╭─▶ {
  2 │ │               {let x = 1;}
  3 │ ╰─▶              var y = 2; } {let z = 1;}
    ╰────
 
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
    ╭─[no_lone_blocks.tsx:1:1]
- 1 │ ╭─▶ { 
+ 1 │ ╭─▶ {
  2 │ │               {var x = 1;}
  3 │ ╰─▶              var y = 2; }
  4 │                  {var z = 1;}
@@ -82,7 +87,7 @@ snapshot_kind: text
 
   ⚠ eslint(no-lone-blocks): Nested block is redundant.
    ╭─[no_lone_blocks.tsx:2:4]
- 1 │ { 
+ 1 │ {
  2 │             {var x = 1;}
    ·             ────────────
  3 │              var y = 2; }

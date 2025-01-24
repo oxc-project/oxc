@@ -195,7 +195,7 @@ impl<'a> IsolatedDeclarations<'a> {
         // 2. Transform export declarations
         // 3. Collect all bindings / reference from module declarations
         // 4. Collect transformed indexes
-        for stmt in &stmts {
+        for &stmt in &stmts {
             match stmt {
                 match_declaration!(Statement) => {
                     if let Statement::TSModuleDeclaration(decl) = stmt {
@@ -433,9 +433,9 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut last_function_name: Option<Atom<'a>> = None;
         let mut is_export_default_function_overloads = false;
 
-        stmts.retain(move |stmt| match stmt {
-            Statement::FunctionDeclaration(ref func) => {
-                let name = &func
+        stmts.retain(move |&stmt| match stmt {
+            Statement::FunctionDeclaration(func) => {
+                let name = func
                     .id
                     .as_ref()
                     .unwrap_or_else(|| {
@@ -446,17 +446,17 @@ impl<'a> IsolatedDeclarations<'a> {
                     .name;
 
                 if func.body.is_some() {
-                    if last_function_name.as_ref().is_some_and(|last_name| last_name == name) {
+                    if last_function_name.as_ref().is_some_and(|&last_name| last_name == name) {
                         return false;
                     }
                 } else {
-                    last_function_name = Some(name.clone());
+                    last_function_name = Some(name);
                 }
                 true
             }
-            Statement::ExportNamedDeclaration(ref decl) => {
-                if let Some(Declaration::FunctionDeclaration(ref func)) = decl.declaration {
-                    let name = &func
+            Statement::ExportNamedDeclaration(decl) => {
+                if let Some(Declaration::FunctionDeclaration(func)) = &decl.declaration {
+                    let name = func
                         .id
                         .as_ref()
                         .unwrap_or_else(|| {
@@ -466,21 +466,19 @@ impl<'a> IsolatedDeclarations<'a> {
                         })
                         .name;
                     if func.body.is_some() {
-                        if last_function_name.as_ref().is_some_and(|last_name| last_name == name) {
+                        if last_function_name.as_ref().is_some_and(|&last_name| last_name == name) {
                             return false;
                         }
                     } else {
-                        last_function_name = Some(name.clone());
+                        last_function_name = Some(name);
                     }
                     true
                 } else {
                     true
                 }
             }
-            Statement::ExportDefaultDeclaration(ref decl) => {
-                if let ExportDefaultDeclarationKind::FunctionDeclaration(ref func) =
-                    decl.declaration
-                {
+            Statement::ExportDefaultDeclaration(decl) => {
+                if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &decl.declaration {
                     if is_export_default_function_overloads && func.body.is_some() {
                         is_export_default_function_overloads = false;
                         return false;
@@ -546,14 +544,14 @@ impl<'a> IsolatedDeclarations<'a> {
                             assignable_properties_for_namespace
                                 .entry(&ident.name)
                                 .or_default()
-                                .insert(id.name.clone());
+                                .insert(id.name);
                         }
                     }
                     Some(Declaration::TSEnumDeclaration(decl)) => {
                         assignable_properties_for_namespace
                             .entry(&ident.name)
                             .or_default()
-                            .insert(decl.id.name.clone());
+                            .insert(decl.id.name);
                     }
                     _ => {}
                 }
@@ -573,7 +571,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     Some(Declaration::FunctionDeclaration(func)) => {
                         if func.body.is_some() {
                             if let Some(id) = func.id.as_ref() {
-                                can_expando_function_names.insert(id.name.clone());
+                                can_expando_function_names.insert(id.name);
                             }
                         }
                     }
@@ -583,7 +581,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 && declarator.init.as_ref().is_some_and(Expression::is_function)
                             {
                                 if let Some(name) = declarator.id.get_identifier() {
-                                    can_expando_function_names.insert(name.clone());
+                                    can_expando_function_names.insert(name);
                                 }
                             }
                         }
@@ -617,7 +615,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         {
                             if let Some(name) = declarator.id.get_identifier() {
                                 if self.scope.has_reference(&name) {
-                                    can_expando_function_names.insert(name.clone());
+                                    can_expando_function_names.insert(name);
                                 }
                             }
                         }

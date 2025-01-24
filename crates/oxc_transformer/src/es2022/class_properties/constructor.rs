@@ -798,7 +798,7 @@ impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
     fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier<'a>) {
         let symbol_id = ident.symbol_id();
         if let Some(new_name) = self.clashing_symbols.get(&symbol_id) {
-            ident.name = new_name.clone();
+            ident.name = *new_name;
         }
     }
 
@@ -806,7 +806,7 @@ impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
         let reference_id = ident.reference_id();
         if let Some(symbol_id) = self.ctx.symbols().get_reference(reference_id).symbol_id() {
             if let Some(new_name) = self.clashing_symbols.get(&symbol_id) {
-                ident.name = new_name.clone();
+                ident.name = *new_name;
             }
         }
     }

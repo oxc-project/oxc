@@ -9,7 +9,7 @@
 
 use std::{
     hash::Hash,
-    mem::{needs_drop, ManuallyDrop},
+    mem::ManuallyDrop,
     ops::{Deref, DerefMut},
 };
 
@@ -20,7 +20,7 @@ use rustc_hash::FxBuildHasher;
 pub use hashbrown::{
     hash_map::{
         Drain, Entry, EntryRef, ExtractIf, IntoIter, IntoKeys, IntoValues, Iter, IterMut, Keys,
-        OccupiedError, RawEntryBuilder, RawEntryBuilderMut, Values, ValuesMut,
+        OccupiedError, Values, ValuesMut,
     },
     Equivalent, TryReserveError,
 };
@@ -36,7 +36,7 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// All APIs are the same, except create a [`HashMap`] with
 /// either [`new_in`](HashMap::new_in) or [`with_capacity_in`](HashMap::with_capacity_in).
 ///
-/// ## No `Drop`s
+/// # No `Drop`s
 ///
 /// Objects allocated into Oxc memory arenas are never [`Dropped`](Drop). Memory is released in bulk
 /// when the allocator is dropped, without dropping the individual objects in the arena.
@@ -45,7 +45,7 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// which own memory allocations outside the arena.
 ///
 /// Static checks make this impossible to do. [`HashMap::new_in`] and all other methods which create
-/// a [`HashMap`] will refuse to compile if called with a [`Drop`] type.
+/// a [`HashMap`] will refuse to compile if either key or value is a [`Drop`] type.
 ///
 /// [`FxHasher`]: rustc_hash::FxHasher
 pub struct HashMap<'alloc, K, V>(ManuallyDrop<FxHashMap<'alloc, K, V>>);
@@ -59,16 +59,26 @@ unsafe impl<K, V> Sync for HashMap<'_, K, V> {}
 // Wrap them in `ManuallyDrop` to prevent that.
 
 impl<'alloc, K, V> HashMap<'alloc, K, V> {
+    /// Const assertions that `K` and `V` are not `Drop`.
+    /// Must be referenced in all methods which create a `HashMap`.
+    const ASSERT_K_AND_V_ARE_NOT_DROP: () = {
+        assert!(
+            !std::mem::needs_drop::<K>(),
+            "Cannot create a HashMap<K, V> where K is a Drop type"
+        );
+        assert!(
+            !std::mem::needs_drop::<V>(),
+            "Cannot create a HashMap<K, V> where V is a Drop type"
+        );
+    };
+
     /// Creates an empty [`HashMap`]. It will be allocated with the given allocator.
     ///
     /// The hash map is initially created with a capacity of 0, so it will not allocate
     /// until it is first inserted into.
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        const {
-            assert!(!needs_drop::<K>(), "Cannot create a HashMap<K, V> where K is a Drop type");
-            assert!(!needs_drop::<V>(), "Cannot create a HashMap<K, V> where V is a Drop type");
-        }
+        const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
         let inner = FxHashMap::with_hasher_in(FxBuildHasher, allocator.bump());
         Self(ManuallyDrop::new(inner))
@@ -80,10 +90,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// If capacity is 0, the hash map will not allocate.
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        const {
-            assert!(!needs_drop::<K>(), "Cannot create a HashMap<K, V> where K is a Drop type");
-            assert!(!needs_drop::<V>(), "Cannot create a HashMap<K, V> where V is a Drop type");
-        }
+        const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
         let inner =
             FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());

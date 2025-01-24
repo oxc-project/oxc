@@ -43,7 +43,7 @@ impl<'a> Visit<'a> for KeepVar<'a> {
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
         if it.kind.is_var() {
             it.bound_names(&mut |ident| {
-                self.vars.push((ident.name.clone(), ident.span));
+                self.vars.push((ident.name, ident.span));
             });
             if it.has_init() {
                 self.all_hoisted = false;
