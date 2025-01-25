@@ -203,7 +203,6 @@ impl Mangler {
 
             let mut slot = slot_liveness.len();
 
-
             reusable_slots.clear();
             reusable_slots.extend(
                 // Slots that are already assigned to other symbols, but does not live in the current scope.

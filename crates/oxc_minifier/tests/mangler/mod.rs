@@ -37,7 +37,7 @@ fn mangler() {
         "function _() { let x; { class Y{} }}", // Y can shadow x
         "function _() { var x; try { throw 0 } catch (e) { e } }", // e can shadow x
         "function _() { var x; try { throw 0 } catch (e) { var e } }", // e can shadow x (not implemented)
-        "function _() { var x; try { throw 0 } catch { var e } }" // e should not shadow x
+        "function _() { var x; try { throw 0 } catch { var e } }",     // e should not shadow x
     ];
     let top_level_cases = [
         "function foo(a) {a}",
