@@ -24,17 +24,19 @@ type Slot = usize;
 /// See:
 ///   * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/docs/architecture.md#symbol-minification)
 ///
-/// This algorithm is targeted for better gzip compression.
+/// This algorithm is based on the implementation of esbuild and additionally implements improved name reuse functionality.
+/// It targets for better gzip compression.
 ///
-/// Visually, a slot is the index position for binding identifiers:
+/// A slot is a placeholder for binding identifiers that shares the same name.
+/// Visually, it is the index position for binding identifiers:
 ///
 /// ```javascript
-/// function slot0(slot2, slot3, slot4) {
+/// function slot0(slot1, slot2, slot3) {
 ///     slot2 = 1;
 /// }
-/// function slot1(slot2, slot3) {
-///     function slot4() {
-///         slot2 = 1;
+/// function slot1(slot0) {
+///     function slot2() {
+///         slot0 = 1;
 ///     }
 /// }
 /// ```
@@ -42,24 +44,73 @@ type Slot = usize;
 /// The slot number for a new scope starts after the maximum slot of the parent scope.
 ///
 /// Occurrences of slots and their corresponding newly assigned short identifiers are:
-/// - slot2: 4 - a
-/// - slot3: 2 - b
-/// - slot4: 2 - c
-/// - slot0: 1 - d
-/// - slot1: 1 - e
+/// - slot2: 3 - a
+/// - slot0: 2 - b
+/// - slot1: 2 - c
+/// - slot3: 1 - d
 ///
 /// After swapping out the mangled names:
 ///
 /// ```javascript
-/// function d(a, b, c) {
+/// function b(c, a, d) {
 ///     a = 1;
 /// }
-/// function e(a, b) {
-///     function c() {
-///         a = 1;
+/// function c(b) {
+///     function a() {
+///         b = 1;
 ///     }
 /// }
 /// ```
+///
+/// ## Name Reuse Calculation
+///
+/// This improvement was inspired by [evanw/esbuild#2614](https://github.com/evanw/esbuild/pull/2614).
+///
+/// For better compression, we shadow the variables where possible to reuse the same name.
+/// For example, the following code:
+/// ```javascript
+/// var top_level_a = 0;
+/// var top_level_b = 1;
+/// function foo() {
+///   var foo_a = 1;
+///   console.log(top_level_b, foo_a);
+/// }
+/// function bar() {
+///   var bar_a = 1;
+///   console.log(top_level_b, bar_a);
+/// }
+/// console.log(top_level_a, foo(), bar())
+/// ```
+/// `top_level_a` is declared in the root scope, but is not used in function `foo` and function `bar`.
+/// Therefore, we can reuse the same name for `top_level_a` and `foo_a` and `bar_a`.
+///
+/// To calculate whether the variable name can be reused in the desendant scopes,
+/// this mangler introduces a concept of symbol liveness and slot liveness.
+/// Symbol liveness is a subtree of the scope tree that contains the declared scope of the symbol and
+/// all the scopes that the symbol is used in. It is a subtree, so any scopes that are between the declared scope and the used scope
+/// are also included. This is to ensure that the symbol is not shadowed by a different symbol before the use in the decendant scope.
+///
+/// For the example above, the liveness of each symbols are:
+/// - `top_level_a`: root_scope
+/// - `top_level_b`: root_scope -> foo, root_scope -> bar
+/// - `foo_a`: root_scope -> foo
+/// - `bar_a`: root_scope -> bar
+/// - `foo`: root_scope
+/// - `bar`: root_scope
+///
+/// Slot liveness is the same as symbol liveness, but it is a subforest (multiple subtrees) of the scope tree that can contain
+/// multiple symbol liveness.
+///
+/// Now that we have the liveness of each symbol, we want to assign symbols to minimal number of slots.
+/// This is a graph coloring problem where the node of the graph is the symbol and the edge of the graph indicates whether
+/// the symbols has a common alive scope and the color of the node is the slot.
+/// This mangler uses a greedy algorithm to assign symbols to slots to achieve that.
+/// In other words, it assigns symbols to the first slot that does not live in the liveness of the symbol.
+/// For the example above, each symbol is assigned to the following slots:
+/// - slot 0: `top_level_a`
+/// - slot 1: `top_level_b`, `foo_a`, `bar_a`
+/// - slot 2: `foo`
+/// - slot 3: `bar`
 #[derive(Default)]
 pub struct Mangler {
     symbol_table: SymbolTable,
@@ -134,11 +185,14 @@ impl Mangler {
             slots.push(0);
         }
 
+        // Stores the lived scope ids for each slot. Keyed by slot number.
         let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
 
         let mut tmp_bindings = std::vec::Vec::with_capacity(100);
         let mut reusable_slots = std::vec::Vec::new();
-        // Walk the scope tree and compute the slot number for each scope
+        // Walk down the scope tree and assign a slot number for each symbol.
+        // It is possible to do this in a loop over the symbol list,
+        // but walking down the scope tree seems to generate a better code.
         for scope_id in iter::once(scope_tree.root_scope_id())
             .chain(scope_tree.iter_all_child_ids(scope_tree.root_scope_id()))
         {
@@ -149,13 +203,10 @@ impl Mangler {
 
             let mut slot = slot_liveness.len();
 
-            let nearest_var_scope_id = scope_tree
-                .ancestors(scope_id)
-                .find(|s_id| scope_tree.get_flags(*s_id).is_var())
-                .unwrap_or(scope_tree.root_scope_id());
 
             reusable_slots.clear();
             reusable_slots.extend(
+                // Slots that are already assigned to other symbols, but does not live in the current scope.
                 slot_liveness
                     .iter()
                     .enumerate()
@@ -164,8 +215,8 @@ impl Mangler {
                     .take(bindings.len()),
             );
 
+            // The number of new slots that needs to be allocated.
             let remaining_count = bindings.len() - reusable_slots.len();
-
             reusable_slots.extend(slot..slot + remaining_count);
 
             slot += remaining_count;
@@ -182,18 +233,16 @@ impl Mangler {
             {
                 slots[symbol_id.index()] = assigned_slot;
 
+                // Calculate the scope ids that this symbol is alive in.
                 let lived_scope_ids = symbol_table
                     .get_resolved_references(*symbol_id)
                     .flat_map(|reference| {
-                        let scope_id = ast_nodes.get_node(reference.node_id()).scope_id();
-                        // Treat all symbols as var for now.
-                        // Reusability can be improved by reducing the lived scope ids for const / let / class
-                        scope_tree
-                            .ancestors(scope_id)
-                            .take_while(|s_id| *s_id != nearest_var_scope_id)
+                        let used_scope_id = ast_nodes.get_node(reference.node_id()).scope_id();
+                        scope_tree.ancestors(used_scope_id).take_while(|s_id| *s_id != scope_id)
                     })
-                    .chain(iter::once(nearest_var_scope_id));
+                    .chain(iter::once(scope_id));
 
+                // Since the slot is now assigned to this symbol, it is alive in all the scopes that this symbol is alive in.
                 for scope_id in lived_scope_ids {
                     slot_liveness[assigned_slot].insert(scope_id.index());
                 }
