@@ -3,12 +3,12 @@ use oxc_ast::ast::*;
 /// Returns true if subtree changes application state.
 ///
 /// Ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L94)
-pub trait MayHaveSideEffects<'a> {
-    fn is_global_reference(&self, ident: &oxc_ast::ast::IdentifierReference<'a>) -> bool {
+pub trait MayHaveSideEffects {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
         matches!(ident.name.as_str(), "undefined" | "NaN" | "Infinity")
     }
 
-    fn expression_may_have_side_efffects(&self, e: &Expression<'a>) -> bool {
+    fn expression_may_have_side_efffects(&self, e: &Expression<'_>) -> bool {
         match e {
             // Reference read can have a side effect.
             Expression::Identifier(ident) => self.is_global_reference(ident),
@@ -50,7 +50,7 @@ pub trait MayHaveSideEffects<'a> {
         }
     }
 
-    fn unary_expression_may_have_side_effects(&self, e: &UnaryExpression<'a>) -> bool {
+    fn unary_expression_may_have_side_effects(&self, e: &UnaryExpression<'_>) -> bool {
         /// A "simple" operator is one whose children are expressions, has no direct side-effects.
         fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
             operator != UnaryOperator::Delete
@@ -61,7 +61,7 @@ pub trait MayHaveSideEffects<'a> {
         true
     }
 
-    fn binary_expression_may_have_side_effects(&self, e: &BinaryExpression<'a>) -> bool {
+    fn binary_expression_may_have_side_effects(&self, e: &BinaryExpression<'_>) -> bool {
         // `instanceof` and `in` can throw `TypeError`
         if matches!(e.operator, BinaryOperator::In | BinaryOperator::Instanceof) {
             return true;
@@ -72,7 +72,7 @@ pub trait MayHaveSideEffects<'a> {
 
     fn array_expression_element_may_have_side_effects(
         &self,
-        e: &ArrayExpressionElement<'a>,
+        e: &ArrayExpressionElement<'_>,
     ) -> bool {
         match e {
             ArrayExpressionElement::SpreadElement(e) => {
@@ -85,7 +85,7 @@ pub trait MayHaveSideEffects<'a> {
         }
     }
 
-    fn object_property_kind_may_have_side_effects(&self, e: &ObjectPropertyKind<'a>) -> bool {
+    fn object_property_kind_may_have_side_effects(&self, e: &ObjectPropertyKind<'_>) -> bool {
         match e {
             ObjectPropertyKind::ObjectProperty(o) => self.object_property_may_have_side_effects(o),
             ObjectPropertyKind::SpreadProperty(e) => {
@@ -94,12 +94,12 @@ pub trait MayHaveSideEffects<'a> {
         }
     }
 
-    fn object_property_may_have_side_effects(&self, e: &ObjectProperty<'a>) -> bool {
+    fn object_property_may_have_side_effects(&self, e: &ObjectProperty<'_>) -> bool {
         self.property_key_may_have_side_effects(&e.key)
             || self.expression_may_have_side_efffects(&e.value)
     }
 
-    fn property_key_may_have_side_effects(&self, key: &PropertyKey<'a>) -> bool {
+    fn property_key_may_have_side_effects(&self, key: &PropertyKey<'_>) -> bool {
         match key {
             PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => false,
             match_expression!(PropertyKey) => {

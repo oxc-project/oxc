@@ -14,7 +14,7 @@ pub use is_literal_value::IsLiteralValue;
 pub use value::ConstantValue;
 pub use value_type::ValueType;
 
-pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
+pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
     fn resolve_binding(&self, ident: &IdentifierReference<'a>) -> Option<ConstantValue<'a>> {
         match ident.name.as_str() {
             "undefined" if self.is_global_reference(ident) => Some(ConstantValue::Undefined),
