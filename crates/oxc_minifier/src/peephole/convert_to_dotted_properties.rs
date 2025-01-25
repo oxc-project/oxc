@@ -1,9 +1,9 @@
 use oxc_ast::ast::*;
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_traverse::TraverseCtx;
+
+use crate::ctx::Ctx;
 
 use super::LatePeepholeOptimizations;
-use crate::ctx::Ctx;
 
 impl<'a> LatePeepholeOptimizations {
     /// Converts property accesses from quoted string or bracket access syntax to dot or unquoted string
@@ -13,10 +13,7 @@ impl<'a> LatePeepholeOptimizations {
     ///
     /// `foo['bar']` -> `foo.bar`
     /// `foo?.['bar']` -> `foo?.bar`
-    pub fn convert_to_dotted_properties(
-        expr: &mut MemberExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: Ctx<'a, '_>) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
         if is_identifier_name(&s.value) {
@@ -32,8 +29,7 @@ impl<'a> LatePeepholeOptimizations {
             return;
         }
         if let Some(n) = Ctx::string_to_equivalent_number_value(v) {
-            e.expression =
-                Ctx(ctx).ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
+            e.expression = ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
         }
     }
 }

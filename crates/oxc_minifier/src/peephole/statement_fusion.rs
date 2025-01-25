@@ -1,7 +1,8 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_traverse::TraverseCtx;
+
+use crate::ctx::Ctx;
 
 use super::PeepholeOptimizations;
 
@@ -14,7 +15,7 @@ impl<'a> PeepholeOptimizations {
     pub fn statement_fusion_exit_statements(
         &mut self,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         let len = stmts.len();
 
@@ -81,7 +82,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn fuse_into_one_statement(stmts: &mut [Statement<'a>], ctx: &mut TraverseCtx<'a>) {
+    fn fuse_into_one_statement(stmts: &mut [Statement<'a>], ctx: Ctx<'a, '_>) {
         let mut exprs = ctx.ast.vec();
 
         let len = stmts.len();
@@ -108,7 +109,7 @@ impl<'a> PeepholeOptimizations {
     fn fuse_expression_into_control_flow_statement(
         stmt: &mut Statement<'a>,
         exprs: Vec<'a, Expression<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         let mut exprs = exprs;
         let expr = match stmt {

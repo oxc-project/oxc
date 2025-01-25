@@ -1,6 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_traverse::TraverseCtx;
+
+use crate::ctx::Ctx;
 
 use super::PeepholeOptimizations;
 
@@ -17,7 +18,7 @@ impl<'a> PeepholeOptimizations {
     pub fn collapse_variable_declarations(
         &mut self,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         self.join_vars(stmts, ctx);
         self.maybe_collapse_into_for_statements(stmts, ctx);
@@ -44,7 +45,7 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
-    fn join_vars(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn join_vars(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: Ctx<'a, '_>) {
         if stmts.len() < 2 {
             return;
         }
@@ -102,7 +103,7 @@ impl<'a> PeepholeOptimizations {
     fn maybe_collapse_into_for_statements(
         &mut self,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         if stmts.len() <= 1 {
             return;
@@ -142,7 +143,7 @@ impl<'a> PeepholeOptimizations {
         &mut self,
         i: usize,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         if let Statement::ExpressionStatement(expr_stmt) = ctx.ast.move_statement(&mut stmts[i]) {
             if let Statement::ForStatement(for_stmt) = &mut stmts[i + 1] {
@@ -156,7 +157,7 @@ impl<'a> PeepholeOptimizations {
         &mut self,
         i: usize,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         if let Statement::VariableDeclaration(var) = ctx.ast.move_statement(&mut stmts[i]) {
             if let Statement::ForStatement(for_stmt) = &mut stmts[i + 1] {
@@ -181,7 +182,7 @@ impl<'a> PeepholeOptimizations {
         &mut self,
         i: usize,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         if let Statement::VariableDeclaration(decl) = &stmts[i] {
             if decl.kind.is_var()

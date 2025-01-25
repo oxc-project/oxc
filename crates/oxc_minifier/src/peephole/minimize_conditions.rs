@@ -7,7 +7,7 @@ use oxc_ecmascript::{
 };
 use oxc_span::{cmp::ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
-use oxc_traverse::{Ancestor, TraverseCtx};
+use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
@@ -24,7 +24,7 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_conditions_exit_statements(
         &mut self,
         stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         let mut changed = false;
         loop {
@@ -45,7 +45,7 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_conditions_exit_statement(
         &mut self,
         stmt: &mut Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         let expr = match stmt {
             Statement::IfStatement(s) => Some(&mut s.test),
@@ -80,7 +80,7 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_conditions_exit_expression(
         &mut self,
         expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         let mut changed = false;
         loop {
@@ -123,7 +123,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn minimize_not(span: Span, expr: Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    fn minimize_not(span: Span, expr: Expression<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
         let mut unary = ctx.ast.unary_expression(span, UnaryOperator::LogicalNot, expr);
         Self::try_minimize_not(&mut unary, ctx)
             .unwrap_or_else(|| Expression::UnaryExpression(ctx.ast.alloc(unary)))
@@ -131,7 +131,7 @@ impl<'a> PeepholeOptimizations {
 
     fn try_minimize_not(
         expr: &mut UnaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if !expr.operator.is_not() {
             return None;
@@ -159,10 +159,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn try_minimize_if(
-        stmt: &mut Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Statement<'a>> {
+    fn try_minimize_if(stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Option<Statement<'a>> {
         let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
 
         // `if (x) foo()` -> `x && foo()`
@@ -276,7 +273,7 @@ impl<'a> PeepholeOptimizations {
         &mut self,
         stmts: &mut Vec<'a, Statement<'a>>,
         changed: &mut bool,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         for i in 0..stmts.len() {
             let Statement::IfStatement(if_stmt) = &stmts[i] else {
@@ -328,7 +325,7 @@ impl<'a> PeepholeOptimizations {
         matches!(stmt.get_one_child(), Some(Statement::ExpressionStatement(_)))
     }
 
-    fn get_block_expression(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    fn get_block_expression(stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
         let Some(Statement::ExpressionStatement(s)) = stmt.get_one_child_mut() else {
             unreachable!()
         };
@@ -353,15 +350,12 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn get_block_return_expression(
-        stmt: &mut Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
+    fn get_block_return_expression(stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
         let Some(stmt) = stmt.get_one_child_mut() else { unreachable!() };
         Self::take_return_argument(stmt, ctx)
     }
 
-    fn take_return_argument(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    fn take_return_argument(stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) -> Expression<'a> {
         let Statement::ReturnStatement(return_stmt) = ctx.ast.move_statement(stmt) else {
             unreachable!()
         };
@@ -377,7 +371,7 @@ impl<'a> PeepholeOptimizations {
         test: Expression<'a>,
         consequent: Expression<'a>,
         alternate: Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Expression<'a> {
         let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
         Self::try_minimize_conditional(&mut cond_expr, ctx)
@@ -387,7 +381,7 @@ impl<'a> PeepholeOptimizations {
     // <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
     fn try_minimize_conditional(
         expr: &mut ConditionalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         match &mut expr.test {
             // "(a, b) ? c : d" => "a, b ? c : d"
@@ -484,7 +478,7 @@ impl<'a> PeepholeOptimizations {
 
         // "a ? b ? c : d : d" => "a && b ? c : d"
         if let Expression::ConditionalExpression(consequent) = &mut expr.consequent {
-            if Ctx(ctx).expr_eq(&consequent.alternate, &expr.alternate) {
+            if ctx.expr_eq(&consequent.alternate, &expr.alternate) {
                 return Some(ctx.ast.expression_conditional(
                     expr.span,
                     ctx.ast.expression_logical(
@@ -501,7 +495,7 @@ impl<'a> PeepholeOptimizations {
 
         // "a ? b : c ? b : d" => "a || c ? b : d"
         if let Expression::ConditionalExpression(alternate) = &mut expr.alternate {
-            if Ctx(ctx).expr_eq(&alternate.consequent, &expr.consequent) {
+            if ctx.expr_eq(&alternate.consequent, &expr.consequent) {
                 return Some(ctx.ast.expression_conditional(
                     expr.span,
                     ctx.ast.expression_logical(
@@ -519,7 +513,7 @@ impl<'a> PeepholeOptimizations {
         // "a ? c : (b, c)" => "(a || b), c"
         if let Expression::SequenceExpression(alternate) = &mut expr.alternate {
             if alternate.expressions.len() == 2
-                && Ctx(ctx).expr_eq(&alternate.expressions[1], &expr.consequent)
+                && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
             {
                 return Some(ctx.ast.expression_sequence(
                     expr.span,
@@ -539,7 +533,7 @@ impl<'a> PeepholeOptimizations {
         // "a ? (b, c) : c" => "(a && b), c"
         if let Expression::SequenceExpression(consequent) = &mut expr.consequent {
             if consequent.expressions.len() == 2
-                && Ctx(ctx).expr_eq(&consequent.expressions[1], &expr.alternate)
+                && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
             {
                 return Some(ctx.ast.expression_sequence(
                     expr.span,
@@ -559,7 +553,7 @@ impl<'a> PeepholeOptimizations {
         // "a ? b || c : c" => "(a && b) || c"
         if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent {
             if logical_expr.operator == LogicalOperator::Or
-                && Ctx(ctx).expr_eq(&logical_expr.right, &expr.alternate)
+                && ctx.expr_eq(&logical_expr.right, &expr.alternate)
             {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
@@ -578,7 +572,7 @@ impl<'a> PeepholeOptimizations {
         // "a ? c : b && c" => "(a || b) && c"
         if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate {
             if logical_expr.operator == LogicalOperator::And
-                && Ctx(ctx).expr_eq(&logical_expr.right, &expr.consequent)
+                && ctx.expr_eq(&logical_expr.right, &expr.consequent)
             {
                 return Some(ctx.ast.expression_logical(
                     expr.span,
@@ -602,8 +596,8 @@ impl<'a> PeepholeOptimizations {
         ) = (&expr.test, &mut expr.consequent, &mut expr.alternate)
         {
             if consequent.arguments.len() == alternate.arguments.len()
-                && !Ctx(ctx).is_global_reference(test)
-                && Ctx(ctx).expr_eq(&consequent.callee, &alternate.callee)
+                && !ctx.is_global_reference(test)
+                && ctx.expr_eq(&consequent.callee, &alternate.callee)
                 && consequent
                     .arguments
                     .iter()
@@ -671,7 +665,7 @@ impl<'a> PeepholeOptimizations {
 
         // TODO: Try using the "??" or "?." operators
 
-        if Ctx(ctx).expr_eq(&expr.alternate, &expr.consequent) {
+        if ctx.expr_eq(&expr.alternate, &expr.consequent) {
             // TODO:
             // "/* @__PURE__ */ a() ? b : b" => "b"
             // if ctx.ExprCanBeRemovedIfUnused(test) {
@@ -694,7 +688,7 @@ impl<'a> PeepholeOptimizations {
     /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
     fn try_merge_conditional_expression_inside(
         expr: &mut ConditionalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let (
             Expression::AssignmentExpression(consequent),
@@ -733,10 +727,7 @@ impl<'a> PeepholeOptimizations {
     /// Simplify syntax when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
     ///
     /// <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>
-    fn try_fold_expr_in_boolean_context(
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> bool {
+    fn try_fold_expr_in_boolean_context(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> bool {
         match expr {
             // "!!a" => "a"
             Expression::UnaryExpression(u1) if u1.operator.is_not() => {
@@ -772,7 +763,7 @@ impl<'a> PeepholeOptimizations {
                 Self::try_fold_expr_in_boolean_context(&mut e.left, ctx);
                 Self::try_fold_expr_in_boolean_context(&mut e.right, ctx);
                 // "if (anything && truthyNoSideEffects)" => "if (anything)"
-                if Ctx(ctx).get_side_free_boolean_value(&e.right) == Some(true) {
+                if ctx.get_side_free_boolean_value(&e.right) == Some(true) {
                     *expr = ctx.ast.move_expression(&mut e.left);
                     return true;
                 }
@@ -782,7 +773,7 @@ impl<'a> PeepholeOptimizations {
                 Self::try_fold_expr_in_boolean_context(&mut e.left, ctx);
                 Self::try_fold_expr_in_boolean_context(&mut e.right, ctx);
                 // "if (anything || falsyNoSideEffects)" => "if (anything)"
-                if Ctx(ctx).get_side_free_boolean_value(&e.right) == Some(false) {
+                if ctx.get_side_free_boolean_value(&e.right) == Some(false) {
                     *expr = ctx.ast.move_expression(&mut e.left);
                     return true;
                 }
@@ -791,7 +782,7 @@ impl<'a> PeepholeOptimizations {
                 // "if (a ? !!b : !!c)" => "if (a ? b : c)"
                 Self::try_fold_expr_in_boolean_context(&mut e.consequent, ctx);
                 Self::try_fold_expr_in_boolean_context(&mut e.alternate, ctx);
-                if let Some(boolean) = Ctx(ctx).get_side_free_boolean_value(&e.consequent) {
+                if let Some(boolean) = ctx.get_side_free_boolean_value(&e.consequent) {
                     let right = ctx.ast.move_expression(&mut e.alternate);
                     let left = ctx.ast.move_expression(&mut e.test);
                     if boolean {
@@ -806,7 +797,7 @@ impl<'a> PeepholeOptimizations {
                     }
                     return true;
                 }
-                if let Some(boolean) = Ctx(ctx).get_side_free_boolean_value(&e.alternate) {
+                if let Some(boolean) = ctx.get_side_free_boolean_value(&e.alternate) {
                     let left = ctx.ast.move_expression(&mut e.test);
                     let right = ctx.ast.move_expression(&mut e.consequent);
                     if boolean {
@@ -836,7 +827,7 @@ impl<'a> PeepholeOptimizations {
     //  ^^^^^^ ValueType::from(&e.left).is_number()` is `true`.
     fn try_minimize_binary(
         e: &mut BinaryExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if !e.operator.is_equality() {
             return None;
@@ -895,7 +886,7 @@ impl<'a> PeepholeOptimizations {
     /// - `document.all == null` is `true`
     fn try_compress_is_null_or_undefined(
         expr: &mut LogicalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = expr.operator;
         let target_ops = match op {
@@ -941,7 +932,7 @@ impl<'a> PeepholeOptimizations {
         right: &mut Expression<'a>,
         span: Span,
         (find_op, replace_op): (BinaryOperator, BinaryOperator),
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         enum LeftPairValueResult {
             Null(Span),
@@ -1032,7 +1023,7 @@ impl<'a> PeepholeOptimizations {
     fn try_compress_normal_assignment_to_combined_logical_assignment(
         &mut self,
         expr: &mut AssignmentExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> bool {
         if self.target < ESTarget::ES2020 {
             return false;
@@ -1053,7 +1044,7 @@ impl<'a> PeepholeOptimizations {
         };
         // It should also early return when the reference might refer to a reference value created by a with statement
         // when the minifier supports with statements
-        if write_id_ref.name != read_id_ref.name || Ctx(ctx).is_global_reference(write_id_ref) {
+        if write_id_ref.name != read_id_ref.name || ctx.is_global_reference(write_id_ref) {
             return false;
         }
 
@@ -1066,7 +1057,7 @@ impl<'a> PeepholeOptimizations {
     fn try_compress_logical_expression_to_assignment_expression(
         &self,
         expr: &mut LogicalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if self.target < ESTarget::ES2020 {
             return None;
@@ -1093,7 +1084,7 @@ impl<'a> PeepholeOptimizations {
     /// Compress `a = a + b` to `a += b`
     fn try_compress_normal_assignment_to_combined_assignment(
         expr: &mut AssignmentExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> bool {
         if !matches!(expr.operator, AssignmentOperator::Assign) {
             return false;
@@ -1125,7 +1116,7 @@ impl<'a> PeepholeOptimizations {
     fn has_no_side_effect_for_evaluation_same_target(
         assignment_target: &AssignmentTarget,
         expr: &Expression,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> bool {
         if let (
             AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
@@ -1146,7 +1137,7 @@ impl<'a> PeepholeOptimizations {
             if let Some(read_expr) = expr.as_member_expression() {
                 // It should also return false when the reference might refer to a reference value created by a with statement
                 // when the minifier supports with statements
-                return !Ctx(ctx).is_global_reference(write_expr_object_id)
+                return !ctx.is_global_reference(write_expr_object_id)
                     && write_expr.content_eq(read_expr);
             }
         }
@@ -1156,7 +1147,7 @@ impl<'a> PeepholeOptimizations {
     /// Compress `a = a + b` to `a += b`
     fn try_compress_assignment_to_update_expression(
         expr: &mut AssignmentExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let target = expr.left.as_simple_assignment_target_mut()?;
         if !matches!(expr.operator, AssignmentOperator::Subtraction) {

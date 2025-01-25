@@ -8,7 +8,7 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, LogicalOperator},
 };
-use oxc_traverse::{Ancestor, TraverseCtx};
+use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
@@ -18,12 +18,7 @@ impl<'a, 'b> PeepholeOptimizations {
     /// Constant Folding
     ///
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-    pub fn fold_constants_exit_expression(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let ctx = Ctx(ctx);
+    pub fn fold_constants_exit_expression(&mut self, expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
         if let Some(folded_expr) = match expr {
             Expression::BinaryExpression(e) => Self::try_fold_binary_expr(e, ctx)
                 .or_else(|| Self::try_fold_binary_typeof_comparison(e, ctx)),

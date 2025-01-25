@@ -5,7 +5,7 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::GetSpan;
-use oxc_traverse::{Ancestor, TraverseCtx};
+use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
@@ -21,20 +21,15 @@ impl<'a, 'b> PeepholeOptimizations {
     pub fn remove_dead_code_exit_statements(
         &mut self,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
         if stmts.iter().any(|stmt| matches!(stmt, Statement::EmptyStatement(_))) {
             stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
         }
-        self.dead_code_elimination(stmts, Ctx(ctx));
+        self.dead_code_elimination(stmts, ctx);
     }
 
-    pub fn remove_dead_code_exit_statement(
-        &mut self,
-        stmt: &mut Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let ctx = Ctx(ctx);
+    pub fn remove_dead_code_exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: Ctx<'a, '_>) {
         if let Some(new_stmt) = match stmt {
             Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
             Statement::IfStatement(s) => self.try_fold_if(s, ctx),
@@ -59,9 +54,8 @@ impl<'a, 'b> PeepholeOptimizations {
     pub fn remove_dead_code_exit_expression(
         &mut self,
         expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: Ctx<'a, '_>,
     ) {
-        let ctx = Ctx(ctx);
         if let Some(folded_expr) = match expr {
             Expression::ConditionalExpression(e) => Self::try_fold_conditional_expression(e, ctx),
             Expression::SequenceExpression(sequence_expression) => {
@@ -578,7 +572,7 @@ impl<'a, 'b> PeepholeOptimizations {
 }
 
 impl<'a> LatePeepholeOptimizations {
-    pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {
+    pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: Ctx<'a, '_>) {
         body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
     }
 }
