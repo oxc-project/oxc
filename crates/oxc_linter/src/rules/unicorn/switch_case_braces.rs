@@ -227,6 +227,34 @@ fn test() {
             "switch(foo) { default: doSomething(); }",
             Some(serde_json::json!(["avoid"])),
         ),
+        (
+            "
+                const alpha = 7
+                let beta = ''
+                let gamma = 0
+
+                switch (alpha) {
+                    case 1: 
+                        beta = 'one'
+                        gamma = 1
+                        break
+                }
+            ",
+            "
+                const alpha = 7
+                let beta = ''
+                let gamma = 0
+
+                switch (alpha) {
+                    case 1: {
+                        beta = 'one'
+                        gamma = 1
+                        break
+                    }
+                }
+            ",
+            None,
+        )
     ];
 
     Tester::new(SwitchCaseBraces::NAME, SwitchCaseBraces::PLUGIN, pass, fail)
