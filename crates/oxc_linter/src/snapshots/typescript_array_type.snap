@@ -652,3 +652,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───────────────────────────────────────────
    ╰────
   help: Replace `ReadonlyArray<new (...args: any[]) => void>` with `readonly (new (...args: any[]) => void)[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
+   ╭─[array_type.tsx:1:16]
+ 1 │ let a: Promise<string[]> = Promise.resolve([]);
+   ·                ────────
+   ╰────
+  help: Replace `string[]` with `Array<string>`.
