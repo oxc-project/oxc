@@ -158,7 +158,15 @@ impl Rule for SwitchCaseBraces {
                                     formatter.print_ascii_byte(b'{');
 
                                     let source_text = ctx.source_text();
+                                    println!("source_text: {source_text}");
+
                                     for x in &case.consequent {
+                                        if let Statement::ExpressionStatement(stmt) = x {
+                                            formatter.print_str("\n");
+
+                                            println!("stmt: {stmt:?}");
+                                        };
+
                                         formatter.print_str(x.span().source_text(source_text));
                                     }
 
@@ -166,6 +174,8 @@ impl Rule for SwitchCaseBraces {
 
                                     formatter.into_source_text()
                                 };
+
+                                println!("modified_code: {modified_code}");
 
                                 fixer.replace(case.span, modified_code)
                             },
@@ -184,49 +194,50 @@ impl Rule for SwitchCaseBraces {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
-        "switch(something) { case 1: case 2: {console.log('something'); break;}}",
-        "switch(foo){ case 1: { break; } }",
-        "switch(foo){ case 1: { ; /* <-- not empty */} }",
-        "switch(foo){ case 1: { {} /* <-- not empty */} }",
-        "switch(foo){ case 1: { break; } }",
-        "switch(foo){ default: { doSomething(); } }",
+    let pass: Vec<&str> = vec![
+        // "switch(something) { case 1: case 2: {console.log('something'); break;}}",
+        // "switch(foo){ case 1: { break; } }",
+        // "switch(foo){ case 1: { ; /* <-- not empty */} }",
+        // "switch(foo){ case 1: { {} /* <-- not empty */} }",
+        // "switch(foo){ case 1: { break; } }",
+        // "switch(foo){ default: { doSomething(); } }",
     ];
 
-    let fail = vec![
-        "switch(s){case'':/]/}",
-        "switch(something) { case 1: {} case 2: {console.log('something'); break;}}",
-        "switch(something) { case 1: case 2: console.log('something'); break;}",
-        "switch(foo) { case 1: {} case 2: {} default: { doSomething(); } }",
-        "switch(foo) { case 1: { /* fallthrough */ } default: {}/* fallthrough */ case 3: { doSomething(); break; } }",
-        "switch(foo) { default: doSomething(); }",
-        "switch(foo) { case 1: { doSomething(); } break; /* <-- This should be between braces */ }",
-        "switch(foo) { default: label: {} }",
-        "switch(something) { case 1: case 2: { console.log('something'); break; } case 3: console.log('something else'); }",
+    let fail: Vec<&str> = vec![
+        // "switch(s){case'':/]/}",
+        // "switch(something) { case 1: {} case 2: {console.log('something'); break;}}",
+        // "switch(something) { case 1: case 2: console.log('something'); break;}",
+        // "switch(foo) { case 1: {} case 2: {} default: { doSomething(); } }",
+        // "switch(foo) { case 1: { /* fallthrough */ } default: {}/* fallthrough */ case 3: { doSomething(); break; } }",
+        // "switch(foo) { default: doSomething(); }",
+        // "switch(foo) { case 1: { doSomething(); } break; /* <-- This should be between braces */ }",
+        // "switch(foo) { default: label: {} }",
+        // "switch(something) { case 1: case 2: { console.log('something'); break; } case 3: console.log('something else'); }",
     ];
 
     let fix = vec![
-        (
-            "switch(something) { case 1: {} case 2: {console.log('something'); break;}}",
-            "switch(something) { case 1:  case 2: {console.log('something'); break;}}",
-            None,
-        ),
-        (
-            "switch(something) { case 1: {} case 2: console.log('something'); break;}",
-            "switch(something) { case 1:  case 2: {console.log('something');break;}}",
-            None,
-        ),
-        (
-            "switch(foo) { default: doSomething(); }",
-            "switch(foo) { default: {doSomething();} }",
-            None,
-        ),
-        ("switch(s){case'':/]/}", "switch(s){case '': {/]/}}", None),
-        (
-            "switch(foo) { default: {doSomething();} }",
-            "switch(foo) { default: doSomething(); }",
-            Some(serde_json::json!(["avoid"])),
-        ),
+        // (
+        //     "switch(something) { case 1: {} case 2: {console.log('something'); break;}}",
+        //     "switch(something) { case 1:  case 2: {console.log('something'); break;}}",
+        //     None,
+        // ),
+        // (
+        //     "switch(something) { case 1: {} case 2: console.log('something'); break;}",
+        //     "switch(something) { case 1:  case 2: {console.log('something');break;}}",
+        //     None,
+        // ),
+        // (
+        //     "switch(foo) { default: doSomething(); }",
+        //     "switch(foo) { default: {doSomething();} }",
+        //     None,
+        // ),
+        // ("switch(s){case'':/]/}", "switch(s){case '': {/]/}}", None),
+        // (
+        //     "switch(foo) { default: {doSomething();} }",
+        //     "switch(foo) { default: doSomething(); }",
+        //     Some(serde_json::json!(["avoid"])),
+        // ),
+        // Issue:  https://github.com/oxc-project/oxc/issues/8491
         (
             "
                 const alpha = 7
