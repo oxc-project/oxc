@@ -168,12 +168,14 @@ impl Rule for SwitchCaseBraces {
 
                                     for x in &case.consequent {
                                         if matches!(x, Statement::ExpressionStatement(_) | Statement::BreakStatement(_)) {
-                                            formatter.print_str("\n");
                                             let mut space_diff: usize = (x.span().start - prev_span_end).try_into().unwrap();
 
                                             if consequent_num == 0 {space_diff -= 3;} else {
                                                 space_diff -= 1;
                                             }
+
+                                            formatter.print_str("\n");
+
 
                                             let space = &" ".repeat(space_diff);
                                             println!("space_diff: {space_diff}");
@@ -194,6 +196,8 @@ impl Rule for SwitchCaseBraces {
                                     }
 
                                     formatter.print_ascii_byte(b'}');
+
+                                    // TODO: add space diff between discriminant and first case
 
                                     formatter.into_source_text()
                                 };
