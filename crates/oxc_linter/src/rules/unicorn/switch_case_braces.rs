@@ -160,12 +160,35 @@ impl Rule for SwitchCaseBraces {
                                     let source_text = ctx.source_text();
                                     println!("source_text: {source_text}");
 
-                                    for x in &case.consequent {
-                                        if let Statement::ExpressionStatement(stmt) = x {
-                                            formatter.print_str("\n");
+                                    let mut consequent_num = 0;
+                                    let case_test = case.test.as_ref().unwrap().span();
+                                    let mut prev_span_end = case_test.end;
 
-                                            println!("stmt: {stmt:?}");
-                                        };
+                                    println!("case_test: {:?}", case_test);
+
+                                    for x in &case.consequent {
+                                        if matches!(x, Statement::ExpressionStatement(_) | Statement::BreakStatement(_)) {
+                                            formatter.print_str("\n");
+                                            let mut space_diff: usize = (x.span().start - prev_span_end).try_into().unwrap();
+
+                                            if consequent_num == 0 {space_diff -= 3;} else {
+                                                space_diff -= 1;
+                                            }
+
+                                            let space = &" ".repeat(space_diff);
+                                            println!("space_diff: {space_diff}");
+                                            formatter.print_str(space);
+
+
+
+                                            prev_span_end = x.span().end;
+
+                                            consequent_num += 1;
+
+                                            // TODO: figure out how to add correct spaces using spans.
+                                            // println!("stmt: {x:?}");
+                                            // println!("stmt.span: {:?}", x.span());
+                                        }
 
                                         formatter.print_str(x.span().source_text(source_text));
                                     }
